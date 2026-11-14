@@ -1,5 +1,40 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:52 UTC / 12:22 IST
+
+**r7j HANDED BACK and committed (0c96e27c). Hashes checked by me: the three patch hashes match sha256-r7j.txt; apply matrix a-crlf, b-crlf, c-lf rc 0. All r7j test numbers are builder claims only (26 of 27 own mutants killed, J04b equivalent; 22 tests fail on r7i; exit 3 for given-up or stopped above 0).**
+**Mail pass 9 FINISHED: NOT CLEAN (handover/core/review/mail-pass9-r7g.md, 82 mutants written, 43 run, 26 killed, 17 survived).** 11 re-run on the big set, all survived: 9 REAL GAP (M9-22, 12, 02, 03, 18, 19, 08 [low], 32, 40), M9-30 EQUIVALENT in practice. r7i/r7j tests cover M9-22, 12, 02, 03, 18, 19, 08, 23, 30. **NEW gaps no test sees: M9-32 (live_claude.py:484 transport error text carries the key) and M9-40 (live_claude.py:183 ledger lock not obtained and spend goes on: MONEY path).** Not judged on the big set: M9-33 (environment proxy could get the key), M9-34, M9-64 (regfile over-cap line split silently), M9-65 (BOM), M9-67. NOT RUN at all: run_real_check mutants M9-68..82 (scrubber, Start question, secret order) and M9-05, 09, 10, 11, 13, 15, 16, 17, 24, 25, 26, 36, 42-47, 54-58, 63; no jsonread mutant.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6bc3c56 (r7k builder, fresh) | M9-32, 40, 33, 34, 64, 65, 67, 61 and the handshake-dribble sibling; new tests/test_r7k_findings.py; code fix if a leak is real | fix-dont-defer, money path uncapped | 06:52 / 12:22 | 50 min box (about 07:42) | r7k | RUNNING (just started) | hand-back; full run needed only if a source file changes |
+| a1b1e5cd (EV7J) | ONE full run on r7j, hostile table incl. burst:4 expect exit 3 | final-bytes run; compare ids with EV7I and EV7G | 06:51 / 12:21 | wrapper about 45 min | EV7J | RUNNING: ruff rc 0/0 at 06:51; full run launched | EV7J-EVIDENCE.md |
+| ac1a11a8 (r7j reviewer) | fresh review of r7j: O-mutants, exit 3, errno 97, look-up cap | independent | 06:52 / 12:22 | about 07:42 | review 1 of r7j | RUNNING | core-fix-on-frozen-r7j-review.md |
+| a5b69f39 (EV7I) | base full run on r7i | id base | 06:27 / 11:57 | wrapper limit about 07:12 | EV7I | RUNNING (about 75% at 06:50; an F near 76%, ids unknown until the end) | EV7I-EVIDENCE.md |
+| ae9c3a10 (r7i reviewer) | the 37 tests: vacuity, own mutants, server.py | independent | 06:27 / 11:57 | about 07:17 | review 1 of r7i | RUNNING: narrow-set survivors Y1, Y2, X02 and server.py V01-V03 being confirmed on the wide set; not findings until confirmed; verdict unknown | core-fix-on-frozen-r7i-review.md |
+| adb9596a (EV7H part 1) | non-full evidence on r7h | delta base | 06:10 / 11:40 | about 07:10 | part 1 | RUNNING (N05, N06, N08 wide re-runs; N05 re-run in a git-staged copy) | EV7H-NONFULL-EVIDENCE.md |
+
+Machine: load 2.6 with 6 agents. Done: pass 9, the r7h reviewer, the r7h, r7i, r7j builders.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7I failing ids vs EV7G; EV7J result | running | compare by test id |
+| r7i and r7j review verdicts, EV7H numbers | running | resolve; Blocker/Major to r7k |
+| M9-32, 40 (and 33, 34, 64, 65, 67) fix or pin | r7k running | verify; a full run on the final tree if source changes |
+| mutant pass 10: run_real_check M9-68..82 and the other unrun rows, jsonread | not started: slots busy (two full runs, two reviewers, EV7H, builder) | start when EV7I or EV7H ends |
+| slow byte-by-byte TLS handshake in smtp_provider may pass its total budget | sibling raised by pass 9 | in r7k |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell scripts never run, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7I (failing ids vs EV7G) at its end and the r7i review; start mutant pass 10 on the unrun rows in the freed slot.
+2. At the r7k hand-back: verify sha256, copy (CRLF as .gz); full run on the final tree if any source file changed; fresh reviewer.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 06:40 UTC / 12:10 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
