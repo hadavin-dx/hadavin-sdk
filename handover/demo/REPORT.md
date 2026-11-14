@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 11:35Z - heartbeat: idle, waiting for laptop results (first about 12:15Z)
+
+- Nothing running here (disk full, nothing started). Not reading anything under raw-designA-laptop before 12:15Z, as ordered.
+- Pushed since the last block: nothing new. Last push 11:3xZ (label note, v1/v2 table note).
+- Ready when results land: read count_table output and the per-run driver.out, report per kill point with sample sizes, fix the design or flows if a point fails.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No kill-point result yet; T4, T7, lead id pattern check, N8N-START.md, real-node flows, Design B on the same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the laptop results at 12:15Z. 2. Lead id pattern check and T7 plan (text only, no disk). 3. N8N-START.md text.
+
 ## Block 11:26Z - label column: v1 vs v2 mix-up, notes pushed; heartbeat (idle, waiting for laptop results)
 
 - Finding on lane3's report: StoredState, SaveLabel (mf-form) and RSaveLabel (mf-recovery) exist ONLY in the OLD v1 flows (n8n-flows/v1-superseded/). The v2 flows at n8n-flows/ top level have no such node and no `label` reference to the table (grep: 0 in mf-form, mf-recovery; the 2 hits in mf-sub-crm-mail.json are the stage answer field). So mf_leads.sql (v2, no label column) matches the v2 flows; lane3 most likely loaded the v1 files. build_mainframe.py (v2) does not read the column; build_mainframe_v1.py does.
