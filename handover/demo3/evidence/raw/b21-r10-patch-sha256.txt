@@ -1,8 +1,8 @@
-B21 round 10 patch check, 2026-11-14T09:19:02Z
-base tree 79006fe3e7dcf6d72db72c343c3e468697915462 (claims series + r6); the r10 patch is cumulative (r8 + r9 + r10)
-result tree: 8069ec3055cdbca0b50b4705de0b42239a493254 (b21-tree; b21-full clean archive; whole patch on a temporary index: 8069ec3055cdbca0b50b4705de0b42239a493254; the 4 parts in order: 8069ec3055cdbca0b50b4705de0b42239a493254)
-3edd5a98686e849f2b6af258e0e382384ef7c3873ab111a67640566eca1dba68  lane3-fix-5-r10.patch
+B21 round 10 patch check, 2026-11-14T09:37:48Z
+base tree 79006fe3e7dcf6d72db72c343c3e468697915462 (claims series + r6); cumulative (r8 + r9 + r10)
+result tree: b7841d401deeb3d19060bed139cd589d99ba018b (b21-tree; whole patch on a temporary index: b7841d401deeb3d19060bed139cd589d99ba018b; the 4 parts in order: b7841d401deeb3d19060bed139cd589d99ba018b)
+2ba89a361f294c99a5a0da94f57266d0adab75b625f742d11dd063f406de459d  lane3-fix-5-r10.patch
 23c487bc4a7ba2a2c9007279c61e859a58e6cc42ea02676e5ace12cffffdc814  lane3-fix-5-r10-parts/lane3-fix-5-r10-part-01-scripts-readme.patch
 116c9a309d8b4787938062c1e21d20ae32f5cd30df69353ddc9f8a29d24b504e  lane3-fix-5-r10-parts/lane3-fix-5-r10-part-02-order-and-words-tests.patch
 d20e488c2cbba93939340d79f39c7753da54c4bcd0a7227a4ee5e978d71be88f  lane3-fix-5-r10-parts/lane3-fix-5-r10-part-03-other-reset-tests.patch
-98b9aaa48104eb17d4d33f4339a8e7624c9541ef1277b7a3244b03e30e1af467  lane3-fix-5-r10-parts/lane3-fix-5-r10-part-04-other-tests.patch
+476ad6fa6bc6bebf42d25db892e3f1804d3479895827e0dc90d880f9c4097e99  lane3-fix-5-r10-parts/lane3-fix-5-r10-part-04-other-tests.patch

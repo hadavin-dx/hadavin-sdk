@@ -35,3 +35,6 @@ Done: all rows of the 08:01Z order except OPEN-FOR-STACK-DOCS ones; lint clean (
 
 ## Round 10 checkpoint 08:56Z
 Done: scripts (ps1 exit-5 mapping + $LASTEXITCODE reset, BASH_VERSINFO guard, exit 5 both meanings in headers/README, exit 8 for a refused setting per lead answer 08:50Z incl. Config refusal, python-missing 127 wording, pid-reuse comment), test edits (rows 5 ps1 part, 6, 8, 9, 14-16, labels), narrow run 355 passed 15 skipped. Next: failing-before, mutants (61+15+new), lint, one full run, patch, notes. Row 5 path_confinement literals: see notes (they are the inputs of the Windows-path refusal under test).
+
+## Round 10 final checkpoint
+Tree b7841d401deeb3d19060bed139cd589d99ba018b (git add -A, not committed). Notes: lane3-fix-5-r10-notes.md (FAILED/UNCERTAIN first: full run had 7 failures from my copy having no .git; re-run of git-using files passes; rest of suite not re-run on the final tree). Patch lane3-fix-5-r10.patch + 4 parts, sha256 in raw/b21-r10-patch-sha256.txt.

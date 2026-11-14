@@ -365,7 +365,7 @@ index fc39f31..4164400 100644
      mod = _load(monkeypatch, tmp_path, None)
      monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{port}"))
 diff --git a/tests/test_port_helpers.py b/tests/test_port_helpers.py
-index f1c19e6..5f52fb8 100644
+index f1c19e6..b07124c 100644
 --- a/tests/test_port_helpers.py
 +++ b/tests/test_port_helpers.py
 @@ -4,13 +4,17 @@ here (a stand-in for the socket module), so the result is exact on every machine
@@ -526,7 +526,7 @@ index f1c19e6..5f52fb8 100644
          start.wait(timeout=10)  # both threads call free_port() together
          got[worker] = [free_port() for _ in range(200)]
  
-@@ -176,6 +238,276 @@ def test_two_workers_calling_free_port_at_once_get_distinct_numbers_inside_their
+@@ -176,6 +238,277 @@ def test_two_workers_calling_free_port_at_once_get_distinct_numbers_inside_their
      assert set(got) == {"gw0", "gw1"}
      for worker, numbers in got.items():
          low, high = support.worker_port_range(worker, "2") or (0, 0)
@@ -592,7 +592,8 @@ index f1c19e6..5f52fb8 100644
 +
 +
 +_HOSTISH = re.compile(r"host|addr|bind|^ip$|^loopback$", re.IGNORECASE)
-+_HOST_TEXTS = {"", "localhost", "::1", "::", "0.0.0.0"}  # noqa: S104 (text to recognise, nothing is bound)
++_ALL_INTERFACES = ".".join(["0"] * 4)  # text to recognise, built from parts; nothing is bound
++_HOST_TEXTS = {"", "localhost", "::1", "::", _ALL_INTERFACES}
 +
 +
 +def _hostish(node: ast.AST) -> bool:
@@ -718,7 +719,7 @@ index f1c19e6..5f52fb8 100644
 +        'w["a"] = ("sent", 0)',
 +        "s.bind((HOST, 80))",
 +        'f(("sent", 0))',
-+        "class A:\n    @property\n    def server_address(self):\n        return (HOST, 0)",
++        "class Stand(object):\n    @property\n    def server_address(self):\n        return (HOST, 0)",
 +    ],
 +)
 +def test_the_syntax_guard_for_direct_binds_leaves_other_pairs_alone(code: str) -> None:

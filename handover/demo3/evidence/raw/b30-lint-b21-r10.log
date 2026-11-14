@@ -1,0 +1,16 @@
+## /home/user/work/lint-venv/bin/ruff check --no-cache .
+rc=0
+All checks passed!
+## /home/user/work/lint-venv/bin/ruff format --check --no-cache .
+rc=0
+164 files already formatted
+## /home/user/work/lint-venv/bin/mypy --platform linux
+rc=0
+Success: no issues found in 28 source files
+## /home/user/work/lint-venv/bin/mypy --platform win32
+rc=0
+Success: no issues found in 28 source files
+## /home/user/work/lint-venv/bin/bandit -ll -r src tools scripts -c pyproject.toml
+rc=0
+		High: 9
+Files skipped (0):

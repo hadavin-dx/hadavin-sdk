@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/work/py313-venv/bin/python
+rootdir: /home/user/work/b23-rerun
+configfile: pyproject.toml
+collecting ... collected 114 items
+
+tests/test_start_all_late_refusal.py::test_a_desk_that_refuses_a_late_setting_is_reported_not_started[leadflow_file_missing] PASSED [  0%]
+tests/test_start_all_late_refusal.py::test_a_desk_that_refuses_a_late_setting_is_reported_not_started[approvers_file_missing] PASSED [  1%]
+tests/test_start_all_late_refusal.py::test_a_desk_that_refuses_a_late_setting_is_reported_not_started[public_bind] PASSED [  2%]
+tests/test_start_all_late_refusal.py::test_a_desk_that_refuses_a_late_setting_is_reported_not_started[sender_address] PASSED [  3%]
+tests/test_start_all_late_refusal.py::test_a_desk_that_cannot_take_its_port_is_reported_with_its_own_code 
