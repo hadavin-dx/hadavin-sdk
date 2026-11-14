@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:19 UTC / 10:49 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| aaae555f (EV7G runner) | ONE full run of r7g under a recorded wrapper, then staged git copy, odd-file listing, fail-before on r7f, 15 mutants, hostile cases, ruff | independent proof of the final code | 05:12 / 10:42 | full run started 05:12:57 (load 0.77), box 90 min, wrapper limit 45 min | EV7G n1 | RUNNING: full run about 24% at 05:19 (output only, no result). The progress line shows 4 F (failures) around 24%; I do NOT know which tests yet (the failure list prints at the end). Likely the tests that need .git in the plain copy, but that is a guess | EV7G-EVIDENCE.md; read the failure ids first |
+| a68a37b4 (r7g reviewer, fresh) | whole-patch review of r7g | independent | 05:12 / 10:42 | 50 min box (about 06:02) | review 1 of r7g | RUNNING, no report file yet. Sent it your 05:10 rule: plant a mutant the OLD intent of the changed test would have killed (stopped count reads only driver:stopped lines) and check the NEW test kills it, plus a second mutant (exit 0 when the count is above 0) | core-fix-on-frozen-r7g-review.md |
+| ae345331 (EV7F-PARTIAL) | mutants on r7f, hostile table | delta base | 04:52 / 10:22 | box ends about 05:52 | retry 1 | RUNNING: all 7 clean sets rc 0 (last at 05:18); mutants started; first 6 results, all KILLED on r7f by the new tests: G03, T01, T02, B02, A01, A02. 8 to 12 more rows to come, then the hostile table | EV7F-PARTIAL.md |
+
+Facts: sha256 of the final r7g CRLF patch is d819e6a0fcce6d7f... (recorded in sha256-r7g.txt and in EV7G's patch-sha.txt; I did not re-hash it in this block). Machine: load 1.35 at 05:19, three heavy jobs at most.
+
+LINE-ENDING PROBLEM FOUND AND FIXED (05:13, my own check after the push): the repository setting `* text=auto eol=lf` rewrote the CRLF patches when I committed them: core-fix-on-frozen-r7g.patch and -r7f.patch in handover/core/fix/ became LF copies (r7g is now byte-identical to the -lf patch, so it no longer matches its hash in sha256-r7g.txt). The real CRLF patches are now stored gzipped (core-fix-on-frozen-r7g-crlf.patch.gz, -r7f-crlf.patch.gz; unpack check matches the original hash d819e6a0...), with CRLF-NOTE.md. Earlier packages in this folder (r7e and before) were copied the same way; I have NOT checked whether their committed CRLF patches suffered the same rewrite. The apply matrix results were taken on the files in the build folder, not on the committed copies.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7G result, the 4 failures in its progress line | run in progress | read the failure ids; separate git-copy failures from real ones |
+| r7g review verdict | in progress | resolve; r7h only for a real Blocker or Major |
+| committed CRLF patches r7c to r7e | not checked for the rewrite | gzip them too if the committed copy differs from the sha256 file |
+| mail pass 9 on r7g | held so heavy jobs stay at 3 or fewer | start when EV7F-PARTIAL ends (about 05:50) |
+| exit 2 vs 4 for a bad mailbox host | reviewer asked | its answer |
+| first clean-set CRASH, orphan-worker test | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the EV7G failure list the moment the run ends; any real failure goes to an r7h builder together with the reviewer's findings (one batch).
+2. Mail pass 9 on an exported r7g snapshot when a slot frees.
+3. On a clean pass: freeze, fix the CRLF copies of older packages, rewrite handover/core/fix/README.md, sweep agents and processes.
+
+
 ## STATUS (core lead) 05:12 UTC / 10:42 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
