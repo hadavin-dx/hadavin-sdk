@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 15:20 UTC / 20:50 IST
+
+**I READ the builder's settle fix (diff of src/lead_desk/crm_hubspot.py r7s -> r7t, the counting rule in run_real_check.py, run_stats.write_stats, and the t15 test names). I ran nothing. My review found TWO GAPS in the fix; I sent both to the builder (test-first) at 15:20Z.**
+
+**What the fix does (read):** `_call` writes `create_open` +1 in the same write as the first call counter, before the request leaves; `_settle_create(outcome)` adds the outcome and `create_open` -1 in ONE write; 201 -> created, 409 -> conflicts; run_real_check counts `possible = min(created + open_creates, leads)` and `unseen = possible - accounted`. write_stats IS atomic (temp file + os.replace; run_stats.py unchanged). The 429 retry loop opens only once.
+
+**GAP 1 (mine): an indeterminate create is closed as "none".** On any exception after the request left (timeout, transport error) and on any reply that is not 201/409 (5xx, unclear 2xx), the code settles with `None`. Then create_open returns to 0 although the contact may exist: the same undercount as before, only narrower. Fix asked: keep such outcomes counted as possibly created (separate `create_unknown` or leave open); only a reply that proves no create (clear 4xx) or a raise before the request leaves may settle as none; tests: fake CRM that creates then drops the connection, and one that answers 500 after creating -> run ends EXIT_FAILED if the list shows nothing, LEFT if listed.
+**GAP 2 (mine): the pre-request write can fail silently.** write_stats swallows OSError (`except OSError: pass`), so if the write of create_open=+1 fails (disk full, permission) the request still goes and the window is invisible. Fix asked: check that write; on failure do NOT send the create (fixed-text CrmError); test with an unwritable stats path.
+
+**t15 deterministic test of the window?** The test NAMES say: "the window after the request and before the count leaves the create open", "the window before the reply also leaves the create open", "every normal end of a create closes it", "a run with a window in the counter and a hidden contact ends as failed", "no false alarm", "429 opens and closes exactly once". **I have NOT read the bodies: whether the window is forced by a hook (no sleeps, no real kill) and whether each fails on r7s sources: NOT CONFIRMED by me.** The builder's before-final2.log run (old tree) should give the numbers; not read.
+
+**Builder state (checkpoint 15:14 / 15:18):** final code+tests in tree (before my two gaps); mutants rerun (mutX set, new mutY set); M2 survived -> test fixed (f(8,4,-3,9)==4); flake30 on r7s running (the 30-run rate is not in my files yet); guard run to restart on final bytes. The two gaps change source again, so mutants and the guard run repeat after them.
+
+**ETA of snapshot-r7t: builder hand-back about 15:50Z to 16:10Z** (the box ends 15:40Z by the original clock; I do not expect it by then; with the two added source changes plus guard re-run (about 14 min) plus 30-run series I will ask for a box extension of 30 min unless the lead says no). Then my hash/apply check (10 min), EV7T (about 60 min), the lead's fresh reviewer. Agents running: 1. **ASK: OK to extend the r7t builder box by 30 min (to about 16:10Z)? Default: yes, I extend.** Next block about 15:30Z.
+
+
 ## STATUS (core lead) 15:10 UTC / 20:40 IST
 
 **FLAKE INVESTIGATION (r7t builder aab061ec; all builder claims, I have read its checkpoint, logs and one grep of crm_hubspot.py; I did not run or review the fix):**
