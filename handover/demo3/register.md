@@ -385,3 +385,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B22 | checkpoint 09:26Z; full run hangs in varying places, being investigated | 09:32Z | in progress |
 | B21 | closed 09:38Z: fix-5 r10 handed back, tree b7841d40 (mine matches), lint rc 0 x5 by me (raw/b30-lint-b21-r10.log) | | closed |
 | R26a/R26b | egm-design / egm-codebase-details on fix-5 r10, started 09:38Z, expected end ~10:05Z | | in progress |
+| R26a/R26b | closed 09:43Z: reviews saved (0B/3M each way) | | closed |

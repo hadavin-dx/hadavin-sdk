@@ -1,3 +1,18 @@
+## HEARTBEAT 136 (09:43Z) - cut-off logs NAMED: my own git stash; B21 r10 reviewed (3 Major); B22 hang may be the same cause; B23 reruns 12/20 all pass
+
+| Agent / job | State at 09:43Z |
+|---|---|
+| Cut-off logs (B23 run 3 of r5, reruns 03 and 10 of r6) | NAMED CAUSE, mine: B23's reruns 03 and 10 end mid-test with rc=0, but their junit xml say 114 tests, 0 failures, full 60 s. My `git pull --rebase --autostash` ran at 09:32:35 (inside run 03: 09:31:43-09:32:44) and 09:38:56-09:39:09 (inside run 10: 09:38:53-09:39:54); stash and restore rewrote the live log files inside the git tree while pytest held them open. Almost certainly the earlier "run 3 cut-off" too. Fix: I now use fetch + merge only (never stash or rebase); builders write live logs outside the tree and copy at the end. Both builders told |
+| B22 fix-2 round 12 | its blocker "full run hangs in a different place each time" may be the same cause (its log was in the tree). Told to check whether pytest was really alive when the log stopped, and move logs out of the tree. Not yet answered. Last checkpoint 09:26Z |
+| B23 fix-10 round 6 | reruns 12 of 20 done, all rc=0 with full xml (112 passed, 2 skipped each); rows 3-20 coded; mutants, one final full run still to do |
+| B21 fix-5 round 10 | HANDED BACK 09:3xZ, tree b7841d40 (mine matches), my lint rc 0 x5. Reviews R26a/R26b saved: 0 Blocker, 3 Major each way: (1) the fake-ps test does not reach pass 2 and mutant M7 is killed only by a text pin; (2) reset.ps1:18 and :25 under ErrorActionPreference Stop: a missing python gives exit 1, not 8; (3) the gitleaks history hit is explainable (the first scratch commit held the two literals later fixed) but was never shown by rule name, and the final tree b7841d40 has no full run. Plus the open Row 5 second half (Windows path forms) |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: Row 5 second half of fix-5 (tests/test_path_confinement.py Windows path forms). Reviewer advice, which I follow unless you say no: keep the cases (they test refusal of network and device paths), write the literals plainly, add a NARROW path-and-regex exception with a stated reason in BOTH exceptions.txt and .gitleaks.toml (like the existing 0.0.0.0 one for tests/test_portal_api.py) plus a canary so it cannot widen; no whole-file allow-list. Also the same for 0.0.0.0 in test_port_helpers.py. Public-repo scan policy is yours: yes or no?
+FAILURES AND RETRIES: my git stash cut the logs (above), my fault, corrected. B21's first full run was a setup slip (git archive copy, no .git).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no bash 4.4; the final fix-5 tree has no full run yet; B22 cause of the hang not yet confirmed; WINDOWS-RUN-1 lines not yet written.
+WHAT I WOULD DO NEXT (ranked): 1) egm-resolve fix-5 r10 now and resume B21 for round 11 (3 Major + F8/F10); 2) confirm B22's hang cause and B23 row 2; 3) the stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 135 (09:32Z) - B22 full run HANGS in a different place each time (open bug); B23 on its 20 reruns; B21 r10 patch parts exist
 
 | Agent / job | State at 09:32Z (builders' checkpoints, not yet verified by me) |
