@@ -1,5 +1,10 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 17:31Z - FINAL lane3 lease-45 numbers in; agents running 0
+- Statement 20 and scene 4 caption: 18 kill runs, 60.1 to 61.9 s, all correct (RELAYED-INDEPENDENT, HB194); recovery from n8n up 52.9 to 54.9 s; ERROR 3 of 3 failed, 1 alert, 0 mails, ~4 min; alert crash during alert send up to 13 min late (n=2). PROVISIONAL tags removed. Naming: lane3 K3 = my K3B, lane3 K6 = my K3.
+- K1/K2 medians (60.8/60.9) are from the earlier relay; final per-test medians not re-relayed. Caption uses the range. Raw not seen.
+- NOT DONE / NOT CHECKED: T17/T18/M1/K1 v5 laptop results; real HubSpot id vs vid; why lane3 spread is tight (unknown).
+- WHAT I WOULD DO NEXT: (1) fold v5 results when relayed; (2) WP6 id/vid check list; (3) refresh DECISION-INPUTS with final numbers.
 ## Block 17:26Z - K3/K6 wording set from lead answer; agents running 0
 - Statement 20 and scene 4 caption: caption carries only K1 (n5 60.8/61.9) and K2 (n5 60.9/61.2). K3 (lane3: killed after the intake mail was sent, before the table update; n4) allowed only as "killed after the mail left: the lead ends unknown with one alert to the owner", no timing. K6 (n2) off screen; its exact variant text is not known to me, to ask lane3 via the numbers file when final.
 - Still PROVISIONAL until the last 2 lane3 runs. Raw file not in my checkout. Ran nothing myself.

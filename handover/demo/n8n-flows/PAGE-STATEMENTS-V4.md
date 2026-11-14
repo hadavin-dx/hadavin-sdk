@@ -17,7 +17,7 @@ Written 2026-11-14 by the cloud demo session. Replaces section C of PAGE-STATEME
 
 ## Two different K3 tests (never mix them)
 - demo K3 (n8n killed after the mail was delivered): the laptop harness test, statements 4 and 13.
-- lane3 K3 (killed after the CRM write, closest to demo K2): the lane3 test, relayed only. No lane3 K3 figure is used on this page.
+- lane3 K3 = this page's K3B and lane3 K6 = this page's demo K3 (lead naming, HB194). Statement 20 uses this page's names.
 
 ## Lane3 report check
 No lane3 report was found under handover/demo3. HB180 and HB186 are absent from the handover tree. The only report file in this checkout is handover/demo/REPORT.md, a different file, not used. Every lane3 number below is a lead relay only.
@@ -145,14 +145,17 @@ NOT RUN statements: 3, 14 (demo harness on v4). Part NOT RUN: 6 (normal-path ale
 - One machine, made-up data, stand-in services, n small (n=3 for each lane3 hold, n=1 for the laptop V4-par run, n=1 for the 272.1 s alert, n=1 for the 144.3 s figure).
 - Stale source note: the V7 numbers file still says v4 B90 n=2; the settled value is n=3 on lane3 plus 1 on the laptop. Fix it at its source (not done here).
 
-## Statement 20 (filled 17:25Z from the lead relay of lane3 lease-45 film-v4 numbers, as of 17:19Z; PROVISIONAL until lane3 kill/RESULTS.md Part 3 with the last 2 runs)
-20. "At the film lease of 45 s, a lead interrupted by an n8n crash was finished about a minute after the crash." Numbers, seconds from the kill to a final state (lane3, independent harness, n8n 2.46.6, one machine, made-up data, film-v4 flows; tag RELAYED-INDEPENDENT; raw file: lane3 kill/RESULTS.md Part 3, not in my checkout):
-- K1 (killed after the claim, before the CRM write): n=5, median 60.8, max 61.9, all done.
-- K2 (killed after the CRM write, before the mail step): n=5, median 60.9, max 61.2, all done.
-- K3 (lane3 meaning, lead-confirmed 17:3xZ: n8n killed after the intake mail was SENT but before the table update): n=4, median 61.0, max 61.6. Plain wording allowed: "killed after the mail left: the lead ends unknown with one alert to the owner". n is SMALL; no timing in a caption.
-- K6 (lead: same kind of kill, film K6 variant; exact variant text not given to me, ask lane3 via the numbers file when final): n=2, median 60.8, max 61.5, unknown + 1 intake + 1 alert. n is SMALL.
-- From n8n coming back up: 52.9 to 54.9 s (the restart of about 8 s is inside the kill-to-final numbers).
-- For contrast, lease 120 s (lane3): 144.2 to 144.4 s.
-Caption rule (lead): only K1 and K2 (done) in the caption; K3 only as the plain sentence above.
+## Statement 20 (FINAL, lead relay of lane3 HB194, lease 45 s, film-v4, n8n 2.46.6, independent harness)
+20. "At the film lease of 45 s, a lead interrupted by an n8n crash was finished about a minute after the crash." Seconds from the kill to a final state, all 18 kill runs correct: 60.1 to 61.9 s (K1 5 runs, K2 5, K3B 5, K3 3 in this page's names). Tag RELAYED-INDEPENDENT (one machine, made-up data, stand-in services). Raw: lane3 HB194 table; file name not given to me, not in my checkout, I read nothing.
+NAMING (lead, final): lane3 K3 = this page's K3B (killed after the mail left: unknown + 1 alert); lane3 K6 = this page's demo K3. Statement 12 naming: use this page's names only.
+- K1 (killed after the claim): n=5, done. Median 60.8, max 61.9 (from the 17:19Z relay; n unchanged, final per-test medians not re-relayed).
+- K2 (killed after the CRM write): n=5, done. Median 60.9, max 61.2 (same note).
+- K3B (n=5) and K3 (n=3): lead ends unknown with 1 alert to the owner, no second mail. Plain wording: "killed after the mail left: the lead ends unknown with one alert to the owner". n small; no timing in a caption.
+- From n8n coming back up: 52.9 to 54.9 s (about 8 s restart is inside the kill-to-final numbers).
+- CRM refuses every call (ERROR run), 3 of 3: lead failed, 1 alert, 0 mails, 0 CRM rows, about 4 min.
+- Alert after a crash DURING the alert send: up to 13 minutes late (KS n=2, 780 s), not lost (statement 19).
+- Lease 120 s for contrast: 144.2 to 144.4 s.
+- The spread here (60.1 to 61.9 s) is smaller than my lease-20 laptop runs; the cause is unknown. Do not explain it.
+Caption rule: only K1 and K2 (done), or the range. NEVER "within 60 s".
 
-Caption wording: "about a minute after the crash (measured at lease 45 s, K1 n=5 median 60.8 s max 61.9 s; K2 n=5 median 60.9 s max 61.2 s)". The caption clock starts at the kill. NEVER "within 60 s": the medians and maxima are above 60 s. Do not pool K1 and K2 into one median (I have only per-test medians). K3 and K6 are small samples: do not put them in a caption. Final n, median and max replace these when the last 2 runs are relayed.
+Caption wording: "about a minute after the crash (measured at lease 45 s: 18 kill runs, 60.1 to 61.9 s; K1 n=5 median 60.8 s, K2 n=5 median 60.9 s)". The clock starts at the kill. Do not pool medians.
