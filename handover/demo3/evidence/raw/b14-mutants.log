@@ -1,0 +1,17 @@
+M1 exit code 4->1 | KILLED | 1 failed in 0.18s
+M2 message to stdout | KILLED | 1 failed, 70 passed in 6.99s
+M3 no one-line cut | SURVIVED | 253 passed in 9.37s
+M4 catch nothing (return from_env raw) | KILLED | 1 failed in 0.17s
+M5 echo error text of env (value) in line | KILLED | 1 failed, 117 passed in 8.64s
+M6 nudge: drop one-@ rule | KILLED | 1 failed in 0.19s
+M7 nudge: drop length cap | KILLED | 1 failed, 2 passed in 0.39s
+M8 nudge: drop control-char rule | KILLED | 1 failed, 3 passed in 0.53s
+M9 crash_desk bare reader | KILLED | 1 failed in 0.16s
+M10 feed bare reader | KILLED | 1 failed, 14 passed in 1.83s
+M11 reset_check bare reader | KILLED | 1 failed, 28 passed in 3.04s
+M12 start_all.sh bare (first call) | KILLED | 1 failed, 70 passed in 7.07s
+M13 reset.sh bare | KILLED | 1 failed, 84 passed in 8.10s
+M14 start_all.ps1 no exit-code pass-on | KILLED | 1 failed, 252 passed in 8.89s
+M15 reset.ps1 back to bare reader | SURVIVED | 253 passed in 9.13s
+M3 no one-line cut | KILLED | 1 failed, 253 passed in 8.85s
+M15 reset.ps1 back to bare reader | KILLED | 1 failed, 251 passed in 8.86s

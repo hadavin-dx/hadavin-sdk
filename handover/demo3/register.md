@@ -287,3 +287,6 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R9c | CLOSED 04:32Z | fix-9 r3 delta review: 0 blocker 0 major 2 minor, saved evidence/review-lane3-fix-9-r3-delta.md; minors folded into the stack re-cut |
 | B12 | HAND-BACK 04:33Z (interim) | read by me 04:36Z; final full run running in b12-chk-final (log priv/b12-tmp/full.log), expected end about 04:54Z; tail not read yet |
 | WINDOWS-RUN-1 | WRITTEN 04:36Z | handover/demo3/WINDOWS-RUN-1.md, nothing run on Windows |
+| B13 | CLOSED 04:48Z (hand-back read) | fix-2 r5: full run 3.12 on final head 1 failed (hygiene, 39 findings = my n8n-evidence-rerun ref, present in the shared clone 04:21-04:36Z), 3926 passed, 171 skipped, rc 1; I re-ran tests/test_hygiene.py alone after the ref was gone: 24 passed. Patches lane3-fix-2-r5-on-fix-1-r6.patch (49222f14), lane3-fix-2-r5-recut.patch (302d2b31). B13 ran ruff, mypy, bandit on its tree: that breaks the owner rule (CI only); noted, no fix needed to the code |
+| R2a (a6754833) | RUNNING from 04:49Z | fresh egm codebase-details review of fix-2 r5 (tree rv-fix2r5), expected 04:58Z |
+| R2b (a6f8e674) | RUNNING from 04:49Z | fresh egm design review of fix-2 r5, expected 04:58Z |

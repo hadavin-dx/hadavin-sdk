@@ -1,0 +1,5 @@
+04:22:42 check 0: pytest runs machine-wide=3
+04:25:42 check 1: pytest runs machine-wide=2
+04:25:42 starting full run
+faeefe0c95751c4cf63acfb0d2cd8bc548d5756e
+04:45:35 full run ended
