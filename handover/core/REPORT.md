@@ -1,5 +1,38 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 07:49 UTC / 13:19 IST
+
+**r7l HANDED BACK (07:45Z), TEST-ONLY, committed: I verified the three patch hashes against sha256-r7l.txt and the apply matrix (a-crlf, b-crlf, c-lf all rc 0); CRLF patch and delta stored as .gz with the unpack hash checked.** Builder claims (not verified by me): no src file changed; new tests/test_r7l_findings.py (34 tests); edited tests/test_r7i_findings.py (i10 outbox/provider and i11 imap: 2 s budget to 5 s, `< 1.5` to `0 < t < 4.5`, the reviewer's own minor on a 1.4 s margin); closes F1 (3xx after text is not SENT, outbox and provider, ssl and starttls), F2 (stats written right after attempts += 1), F3 (each step gets the time left), F4 (server.py busy write, busy drain, body write, finish drain, reader, lingerer), F5-F11, G1 (login error never repeated), G4 (a guard test that FAILS when a fifth secret-reading adapter appears, checked by planting one), provider empty-key; reviewer mutants Y1, Y2, X01-X03, X05, X13, X14, X17, X20, X21, X27-X30, V01, V02, V05, PX05, X03P, PEK and its own Z1-Z13, V06, S2-S4, S11, S12 killed by the new file alone. **Not proven (builder's own list): no fail-before on r7j (no source change; pins pass by design); V03 (server.py settimeout inside _drain) and S13 (total-limit check in _drain) SURVIVE and the builder ARGUES them equivalent (the readinto limit is armed at the top of _drain): that is an argument, the fresh reviewer must test it; X32 bad mutant; X31/X33/X34 killed only by older tests; guard tests there ran only in a scratch git copy (182 passed, 4 skipped: no gitleaks on PATH, secret scan did not run); no full suite.**
+A fresh r7l reviewer is running (a376c5cc, started 07:47; it is told: one runner per tree copy, judge the V03/S13 argument with a slow-drip client, check the i10/i11 change is not weaker).
+
+**rc 1 with all-passed groups: ANSWER (r7k builder, 07:41): "cause found: tests/conftest.py tree guard (file changed during run)".** The repo's own guard reports a changed tree when the builder edited files while a group ran: a runner artefact, not a leak. It froze the tree at 07:46 and re-runs mail, crm, tls on frozen bytes before building patches (its 07:46 checkpoint: new k file 139 tests, all new mutants KILLED, claim only). Pass 10 so far: M9-68 argued equivalent; M9-69 and M9-16 REAL GAPS (sent to r7k); lane B jsonread J08 (infinity not found) KILLED; others not read by me.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6bc3c56 (r7k builder) | all r7j-review items, pass 9 gaps, N05/N06, M9-69, M9-16 | fix-dont-defer | 06:52 / 12:22 | allowed until about 08:10 | r7k | RUNNING: groups re-run on frozen bytes, then patch build | hand-back; merge with r7l into r7m; EV7K |
+| a376c5cc (r7l reviewer, fresh) | judge the 34 tests and the i10/i11 change | independent | 07:47 / 13:17 | about 08:37 | review 1 of r7l | RUNNING | core-fix-on-frozen-r7l-review.md |
+| a01f7117 (pass 10) | run_real_check M9-70..82, other unrun rows, jsonread | your order | 06:57 / 12:27 | about 07:57 | pass 10 | RUNNING | mail-pass10-r7j.md |
+
+Agents running: 3. Done: r7l builder, EV7J, EV7I, EV7H, r7i and r7j reviewers, pass 9.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7k hand-back, its fail-before and mutant numbers | running | verify hashes; merge r7k + r7l (r7l edits only tests/test_r7i_findings.py and its own new file; r7k adds its own new file and source: expect disjoint) |
+| EV7K on the merged tree (one full run), fresh reviewer on r7k | after hand-back | start both together |
+| r7l reviewer verdict, V03/S13 equivalence | running | resolve |
+| rest of pass 10 incl. M9-70..82 rows | running | forward real gaps (an r7m test-only delta if r7k has closed) |
+| older packages' hashes, first clean-set CRASH, orphan-worker test | no evidence | README |
+| PowerShell scripts never run, Windows, Python 3.14, real IPv6-less host, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7k hand-back: verify, copy, merge with r7l (apply matrix on the merged tree), EV7K plus a fresh r7k reviewer.
+2. Read pass 10's final report; open gaps go to r7m (test-only).
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep, report counts.
+
+
 ## STATUS (core lead) 07:41 UTC / 13:11 IST
 
 **FAILING ID ANSWER for the r7k "mail group": it did NOT fail on an id.** From the builder's own checkpoint file (I read every CLEAN line, all on its tree-R7K): 07:06 mail 1 failed / 556 passed; 07:08 live 1 failed / 472 passed (these two were the known r7f test on the not-yet-fixed tree); then after the M1 fix: 07:29 mail 593 passed **rc 1**, 07:31 live 509 passed rc 0, 07:34 crm 465 passed **rc 1**, 07:36 reg 587 passed rc 0, 07:40 tls 760 passed **rc 1**. So three groups print only passes but the wrapper returns 1: UNEXPLAINED. I did not see this in EV7I or EV7J (their rc matched their failure counts). Suspects: the lo_up driver exit code on a leftover socket or child, a leaked thread or process from a new r7k test, or a runner artefact in its cleans.py. I told the builder to find the cause, state it in R7K-RESULTS.md and fix a leaking test; it may not hand back with this open. EV7K (full run on the merged bytes) is the real check.
