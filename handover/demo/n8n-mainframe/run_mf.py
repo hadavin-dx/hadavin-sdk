@@ -27,7 +27,7 @@ def port_free(p):
         return s.connect_ex(("127.0.0.1", p)) != 0
 
 
-KEEP_ENV = ("RUN_ID", "MF_STAGE_PORT", "MF_CRM_PORT", "DN1_DESK_PORT", "DN1_FAKE_PORT", "DN1_MODEL_PORT", "DN1_PROXY_PORT", "DN1_MAIL_PORT", "MF_N8N_PORT", "MF_N8N_BROKER_PORT", "MF_PG_PORT", "MF_RUN_PORT", "PATH", "SystemRoot", "SystemDrive", "windir", "ComSpec", "PATHEXT", "TEMP", "TMP", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "HOMEDRIVE", "HOMEPATH",
+KEEP_ENV = ("RUN_ID", "MF_V4", "MF_B90_V3", "MF_LEASE", "MF_TRIES", "MF_TMO_MS", "MF_REPS", "MF_STAGE_PORT", "MF_CRM_PORT", "DN1_DESK_PORT", "DN1_FAKE_PORT", "DN1_MODEL_PORT", "DN1_PROXY_PORT", "DN1_MAIL_PORT", "MF_N8N_PORT", "MF_N8N_BROKER_PORT", "MF_PG_PORT", "MF_RUN_PORT", "PATH", "SystemRoot", "SystemDrive", "windir", "ComSpec", "PATHEXT", "TEMP", "TMP", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "HOMEDRIVE", "HOMEPATH",
             "HOME", "XDG_RUNTIME_DIR", "DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_CONFIG")  # HOME and XDG_RUNTIME_DIR for the docker client on Linux (rootless docker keeps its socket there)
 
 

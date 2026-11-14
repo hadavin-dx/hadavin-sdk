@@ -1,5 +1,12 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:27Z - patch pushed a5c401d4; my AF2/T12 lanes did NOT run (disk); agents running 0
+- DONE: LIB-PORT-PATCH applied to the scratch rig (lib, fakes2, setup, api; old literals are defaults), diffs + apply script in harness-patched/, commit a5c401d4. test_runcfg PASS. run_mf KEEP_ENV now also passes MF_V4, MF_LEASE, MF_TRIES, MF_TMO_MS, MF_REPS (needed, else MF_V4 never reached mf.py); not pushed yet before this block.
+- AF2/T12/K4/K5 on v4 in my sandbox: NOT RUN. Fact: 4 tries (l1 AF2, K4, K5, l2 T12) died within 7 s at Postgres initdb with "No space left on device" (shim log, scratch file /tmp/rr/shim.err, not in repo). Disk 153 MB free; one Postgres needs about 39 MB, the work dir and node hardlinks more. Zero test results, zero numbers. The shim is now port/dir aware (scratch), unused.
+- Disk: nothing of mine left to free that is not needed by the shim; I did not delete anything (refusal rule stands).
+- Page text v4: n8n-flows/PAGE-STATEMENTS-V4-DRAFT.md (5 sentences, tags; V4-3 waits for lane3 final B90 numbers and a named raw file).
+NOT DONE / NOT CHECKED: any v4 run by me; AF2 node timeout; K-series on v4; the laptop parallel runner result (I have none).
+WHAT I WOULD DO NEXT: 1. read the laptop v4 runner numbers file when pushed and fill V4-3. 2. K-SERIES-V4 text update with what ran. 3. hung-SMTP pile-up probe design for the laptop.
 ## Block 16:11Z - H-PARAM done in my files (pushed): RUN_ID + env ports, default = old values; BLOCKER: harness lib.py needs a patch; agents running 0
 
 Env names: RUN_ID; MF_STAGE_PORT MF_CRM_PORT; DN1_DESK_PORT DN1_FAKE_PORT DN1_MODEL_PORT DN1_PROXY_PORT DN1_MAIL_PORT; MF_N8N_PORT MF_N8N_BROKER_PORT MF_PG_PORT MF_RUN_PORT. RUN_ID suffixes the Postgres container name and the label VALUE (n8n-evidence.run=<RUN_ID>, default 1); cleanup removes only containers with THIS label value; run_chain tag defaults to RUN_ID. New n8n-tests/runcfg.py + test_runcfg.py (two RUN_IDs get disjoint ports/names/labels, defaults equal the old literals, bad ids refused): ran it here, it printed PASS (it starts nothing). Launch recipe (6 lines) and file list in RUN-PARALLEL.md. No flow, no test body changed.
