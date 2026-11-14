@@ -21,3 +21,5 @@ Blockers: none.
 ## Checkpoint 5, 07:38 UTC (final)
 Full run 1: 1 failed (own new test, flake, cause not found); run 2 same tree: 3962 passed. Guards alone rc 0, lint all rc 0, patch cut and apply-checked. Notes written. Handing back.
 ## Checkpoint r9 start 07:46 UTC: round 9 started from tree cb769b22
+
+## Checkpoint r9 07:53 UTC: reset.sh fixed at read_pid_file (bytes, NUL, non-ASCII, trim in C locale), guard, alive, recheck, check-crash exit 5; ps1 text edits; new tests/test_reset_pid_file_reading.py (54 pass; 48 failed before, raw/b21-r9-fails-before.log). Next: test refactor items 14-22,24,26, lint, mutants, full run.
