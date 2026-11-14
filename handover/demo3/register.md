@@ -248,3 +248,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | RD1 (a65de15183e3460b5) | STARTED 03:42Z | reader E3b cut runs; expected ~03:57Z |
 | RD2 (ae758410fb75bc52f) | STARTED 03:42Z | reader PR #12 E marks; expected ~03:57Z |
 | RD3 (ac317eb4ce63dcca5) | STARTED 03:42Z | reader xdist port flake; expected ~03:57Z |
+| R8 | CLOSED 03:46Z | report saved evidence/review-lane3-fix-8-r1.md: 0 blocker, 1 major, 5 minor; resolve pending |
+| R9 | CLOSED 03:48Z | report saved evidence/review-lane3-fix-9-r1.md: 0 blocker, 0 major, 7 minor; resolve pending |
