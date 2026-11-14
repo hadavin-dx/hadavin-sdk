@@ -1,15 +1,15 @@
-## HEARTBEAT 178 (15:43Z) - v3 case C PASS (n = 1); case B90 FAILS the "exactly 1 alert" rule (n = 1): 2 alerts
+## HEARTBEAT 179 (15:52Z) - v3: A passes twice (n = 2), B90 repeat running; v4 probe built (demo commit 7709d058), v4 runs queued right after the v3 B90 repeats
 
-| v3 flows 6ebb7f62, my own cases (plan: kill/PLAN-V3-ALERT.md) | n | Result |
+| v3 flows (6ebb7f62), my own cases | n | Result |
 |---|---|---|
-| A: SMTP refuses the alert recipient twice, then accepts | 1 | PASS: 1 alert (at 240 s), alert_sent true, 1 intake mail |
-| B20: SMTP holds the alert answer 20 s | 1 | PASS: 1 alert (at 50 s), alert_sent true |
-| C: SMTP dead 600 s, then restored | 1 | PASS: 4 refused tries (29, 119, 239, 419 s), 1 alert at 690 s, alert_sent true, 1 intake mail, no second alert in the 150 s watch |
-| B90: SMTP holds the alert answer 90 s (longer than the 60 s first claim window) | 1 | FAIL for "exactly 1 alert": 2 alerts, both stored at about 120 s. 1 intake mail, 1 CRM row, alert_sent true, alert_attempts 2. |
+| A (refuse alert recipient twice, then accept) | 2 | PASS both: exactly 1 alert each, at 240 s and 270 s, alert_sent true, 1 intake mail |
+| B20 (hold 20 s) | 1 | PASS: 1 alert at 50 s |
+| C (SMTP dead 600 s) | 1 | PASS: 1 alert at 690 s, 4 refused tries before |
+| B90 (hold 90 s) | 1 done, 2nd running (v3b90b, started 15:51Z), 3rd queued | run 1: 2 alerts (see HB178). Trace of run 1 from the fake SMTP log: first alert connected at 36 s, held 90 s, finished at 126 s; the second connection began at 126 s (claim 1 ran out at about 96 s, the next sweep re-claimed). Both stored at 126 s. |
 
-Cause of B90 (from the timeline, not yet traced in the node logs): the first claim lasts 60 s (alert_until = now + 60 s x (1 + attempts)). The send was held 90 s, so the claim ran out at about 60 s while send 1 was still waiting. The sweep at about 91 s claimed the row again (attempts 2) and sent alert 2. Both mails arrived at the fake at about 120 s. alert_sent turns true only after a send succeeds, so nothing stops the second claim. The demo README already says a duplicate can happen when a send outlasts the claim window; this run measures it: the owner gets 2 alerts, never 0. Danger direction is the safe one (duplicate, not loss). Fix options for the demo (not tested by me): make the claim window longer than the node timeout (the SMTP node timeout is the number to compare), or set the node timeout below the first claim window.
+Order now (queue script run_n.sh; the lead's order): v3 B90 run 2, v3 B90 run 3, then on v4 (flow files from demo commit 7709d058, folder n8n-flows-v4, table unchanged): B90, A, C, B90 again; then the remaining v3 repeats (C, B20, A) and v4 A, C repeats if time allows. Expected on v4 by the demo README (my criteria, written before running): B90 exactly 1 alert and alert_attempts 1; A first alert still near the old 60 to 300 s backoff (not 12 min); C 1 alert after restore. I will report exact-1-alert counts and the time of the first alert per run. First v4 result about 16:10Z.
 
-ASK for the lead: should the demo session decide if 2 alerts in the slow-SMTP case is accepted (then the owner-facing text must say "possible duplicate alert") or fixed? Please forward B90 to them.
-FAILURES AND RETRIES: none new. B90 is a named finding with a cause, not a flake.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): n = 1 for every case so far (repeats queued: A, C, B20, B90, A, about 40 min); B90 cause not yet traced in the n8n log; K3/K6/T12/T11 on v3 (not ordered); RESULTS.md and comparison with the demo table.
-WHAT I WOULD DO NEXT (ranked): 1) repeats, starting with B90 (is the duplicate always there?); 2) trace B90 in the n8n log; 3) RESULTS.md, then compare.
+ASK for the lead: none.
+FAILURES AND RETRIES: none new. (I stopped and restarted my own queue loop twice to reorder; the running test was not touched.)
+NOT DONE / NOT CHECKED (my list, for the lead to decide): v4 results; v3 B90 runs 2 and 3; K3/K6/T12/T11 on v3 or v4 (not ordered); the n8n node log gives no alert node lines (execution saving is off, so the trace of B90 comes from the fake SMTP log only); RESULTS.md and comparison with the demo table.
+WHAT I WOULD DO NEXT (ranked): 1) v3 B90 repeats, then v4 B90, A, C; 2) RESULTS.md including v3 and v4; 3) compare with the demo table.
