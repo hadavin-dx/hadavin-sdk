@@ -1,6 +1,25 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 08:50Z - Skip-on-Conflict: fresh-stack bursts 3 of 5 done
+
+- Why the 08:43 block is old: my first burst launches failed on my own script (executions list asked with limit 200, n8n answers HTTP 400 above 100). Fixed, rerun from 08:47Z. The failed attempts left no results.
+- In my runs (n8n 2.46.6, fresh stack = new work folder, new Postgres container, new n8n; 10 parallel calls with the SAME lead id; first burst on that stack; synthetic id), stacks f1, f2, f3 so far:
+  - Postgres Insert + Skip on Conflict (unique index on lead_id): rows for the id = 1 in 3 of 3 stacks. All 10 executions succeeded, the Insert node output 1 item in every one; 1 reply per burst carried the inserted row, 9 carried only success true. Same with the Always-Output-Data variant.
+  - Data Table Upsert: rows for the id = 1 in 3 of 3; 1 reply per burst had equal created and updated stamps (new), 9 had later updated stamps.
+  - Data Table "If Row Does Not Exist" then Insert (check, then write): rows for the id = 9, 10 and 1 in the three stacks; the other calls got HTTP 500 "No item to return was found" (1, 0 and 9 of the 10). So the check-then-insert is not safe against a burst in my runs.
+- Not yet: f4, f5, the reused stack (5 bursts), the report file.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Reused-stack numbers not in; no repeat of the single-call probe; the cause of the check-then-insert spread (9, 10, 1 rows) is not established.
+- Not tested: a table with a different key type, a second unique column, or a row that fails for another reason than a conflict.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish f4, f5 and the reused stack; fill the table.
+2. Write n8n-skip-on-conflict.md with the one-sentence answer.
+3. Checkpoint block at 08:55Z, then push the report.
+
+
 ## Block 08:43Z - Skip-on-Conflict: probe result in, burst series running
 
 - In my runs (n8n 2.46.6, one fresh stack, one probe each; synthetic ids): Postgres Insert with Skip on Conflict, NEW id: 1 output item holding the inserted row (id, lead_id, note). DUPLICATE id: also 1 output item, but it holds only {"success": true} and no row fields; the HTTP reply was 200. So the node does not return 0 items on a skip; a flow can tell new from skipped by checking whether the item has the lead_id field. Not yet burst-tested. One side effect seen: a skipped insert still used up a number of the serial id column (ids 1, 3, 5 for the three new rows).
