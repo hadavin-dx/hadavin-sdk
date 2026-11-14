@@ -20,3 +20,6 @@ Next: pristine-r5 red-first, mutants (row 13), mypy and bandit on a clean copy, 
 
 ## Round 6 checkpoint 3 (about 09:44 UTC) - row 2 cause
 Coordinator named the cause of the log cut-offs: a `git pull --rebase --autostash` run by the coordinator (09:32:35 inside run 03; 09:38:56-09:39:09 inside run 10) rewrote the live log file that sits inside the git tree while pytest held it open. I checked: runs 03 and 10 have rc=0 and a complete junit xml (114 tests, 0 failures, 0 errors, 2 skipped, about 60 s); their logs stop mid-test (5845 and 2223 bytes). Every other run (01-13 so far) has a full 14053-byte log and the same xml. Kept as "log truncated by git, xml complete". From now on live logs go outside the git tree (/home/user/work/b23-logs) and are copied at the end.
+
+## Round 6 final (10:26 UTC)
+Tree 8a5c446e3b59a87b7568497b5ace90631d9b303a staged, not committed. Final full run on a one-commit scratch repo: rc 0, 4409 passed, 179 skipped. Patch, 6 parts, sha256 and notes (lane3-fix-10-r6-notes.md) written. First full run (no .git) had 9 git-dependent failures: my setup slip; the rerun found 2 real slips of mine (demo_only paths in constants.py, hard-coded paths in tests), fixed.

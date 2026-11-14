@@ -1,3 +1,17 @@
+## HEARTBEAT 141 (10:26Z) - B23 HANDED BACK (tree reconciled, lint green, 2 reviewers running); B21 mutants; B22 r13 mutants
+
+| Agent / job | State at 10:26Z |
+|---|---|
+| B23 fix-10 round 6 | HAND-BACK received 10:25Z. My own check: git add -A, tree id 8a5c446e3b59a87b7568497b5ace90631d9b303a = builder's; clean git ls-files copy lint-b23: ruff check 0, ruff format --check 0, mypy linux 0, mypy win32 0, bandit -ll 0 (logs lint-logs/b32-*). Builder says final full run on a one-commit scratch repo: rc 0, 4409 passed, 179 skipped, 0 failed, 950 s (header raw/b23-r6-full-final.time); I have not read that log yet. Its FIRST full run (9 failures) was a no-.git copy: named setup slip, it also exposed 2 real faults of the builder's (demo_only paths in constants.py; hard-coded /usr/bin/grep), both fixed. Mutants (8 named, all killed) ran on tree 44219b37, NOT the final tree: builder says so itself. Row 21 declined to stack docs. Two fresh reviewers (egm-design, egm-codebase-details) started 10:27Z on lint-b23 |
+| B21 fix-5 round 11 | last checkpoint 10:05Z (121 mutants in 4 parts running, tree ad9c1a26). No newer checkpoint, no hand-back yet |
+| B22 fix-2 round 13 | checkpoint 10:15Z: mutation run (36 mutants, tree 682a6969) started 10:15Z; full runs follow. No hand-back yet |
+| Stack builder | STOPPED by lead order (10:2xZ). Not started |
+
+ASK for the lead: after B23's two reviews come back I will save and resolve them but resume NO builder (no new rounds, per your order); open findings go into the notes as a list for you. Tell me if you want B23's reviews not run.
+FAILURES AND RETRIES: B23 first full run red (9 failures, no .git in the run folder, named); rerun green per builder.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no bash 4.4; IPv6 end-to-end skipped; B23 mutants not rerun on the final tree; 179 skips not itemised by B23; crash_desk rows 2, 3, 5, 137 have no producing test; B21/B22 final full runs not read; WINDOWS-RUN-1 additions not written.
+WHAT I WOULD DO NEXT (ranked): 1) read B23 reviews, save, resolve; 2) on B21 and B22 hand-back: tree id, lint, one review each, no resume; 3) write WINDOWS-RUN-1 lines while waiting.
+
 ## HEARTBEAT 140 (10:15Z) - B23 rerun of the full suite in progress (not handed back); B21 in mutants; B22 r13 narrow set green
 
 | Agent / job | State at 10:15Z (builder logs and checkpoints, not yet verified by me) |
