@@ -1,3 +1,17 @@
+## HEARTBEAT 119 (07:32Z) - B21 full run red (1 failed), B22 r10 and B23 r4 building; nothing handed back
+
+| Agent / job | State at 07:32Z |
+|---|---|
+| B21 fix-5 r8 | full run finished 1 failed / 3961 passed / 183 skipped at tests/test_reset_order_and_words.py:268; sent the lead's 07:15Z plan (fix at the cause, affected files + guards alone + lint, no second full run unless source changed); no hand-back yet, deadline 07:41Z |
+| B22 fix-2 r10 | resumed for the 1 major (book path inside a file) + 4 minors; r10 logs exist (changed-run, fails-before); its last checkpoint line (07:20Z, tree 151f9eff) is an r9 line and is NOT reconciled with my r9 tree 047715c5: I will check on hand-back |
+| B23 fix-10 r4 | rows 1-4, 6, 8-20 written in b23-tree; not yet linted as a clean copy; fails-before, lint, mutation still to do |
+| Reviews | none running (all three fixes await a hand-back) |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B21 full run 1 red (a test at its own cause); r9 of fix-2 had a real Major (round 10).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no real non-root run of the unreadable-folder test (container is root; twin test runs); no ACL check; planted 0600 file read as root stays a recorded residual case; no PowerShell run anywhere.
+WHAT I WOULD DO NEXT (ranked): 1) on each hand-back lint the right tree myself, reconcile tree ids, start two fresh reviewers; 2) update WINDOWS-RUN-1 (final stack patch, ps1 checks, OutputEncoding line); 3) then the one stack builder, stack docs (settings.md:106) and the stack full run.
+
 ## HEARTBEAT 118 (07:24Z) - fix-2 r9 reviewed: 1 major (confirmed by me), sent back to B22 as round 10; B21 and B23 still working
 
 | Agent / job | State at 07:24Z |

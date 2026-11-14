@@ -1,0 +1,21 @@
+M1 plant a repeat of the rule in contract.md (a size): KILLED (1 failed, 359 passed in 10.09s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+M2 plant a repeat in docs/settings.md outside the section (line of DESK_HUBSPOT_KEY_FILE): KILLED (1 failed, 359 passed in 10.18s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+M3 plant a mode mask copy (S_IRWXO) outside envnum: KILLED (1 failed, 346 passed in 10.38s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_link_and_mode_rules_live_only_in_the_one_reader
+M4 plant S_IMODE outside envnum: KILLED (1 failed, 346 passed in 9.33s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_link_and_mode_rules_live_only_in_the_one_reader
+M5 plant 'st_mode &' outside envnum: KILLED (1 failed, 165 passed in 0.96s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_no_code_probes_a_setting_path_except_the_named_allow_list
+M6 mode text back to 'read by': KILLED (1 failed, 258 passed in 9.39s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
+M9 docs: mounts sentence removed: KILLED (1 failed, 359 passed in 9.85s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+M14 run_real_check: an unreadable book path is no longer refused: NOT APPLIED (pattern not found)
+M19 live key check: the live wrapper loses the mode refusal (read_secret_file mask removed): KILLED (1 failed, 258 passed in 9.21s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
+N1 run_real_check: a book path inside a file passes again (old path_kind-only look): KILLED (1 failed, 359 passed in 9.30s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+N2 run_real_check: a folder book path no longer named as a folder: KILLED (1 failed, 359 passed in 9.75s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+N3 repeat scan: case matters again: KILLED (1 failed, 359 passed in 9.71s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+N4 repeat scan: read per line again (a wrapped sentence is missed): KILLED (1 failed, 359 passed in 9.73s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+N5 mode check moved above the second look (link text lost): KILLED (1 failed, 258 passed in 9.78s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
+N6 docs: the overclaim 'the mode alone says who else can use the file' back: KILLED (1 failed, 197 passed in 3.26s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[1e2]
+N7 message: 'point the setting at the copy' back: KILLED (1 failed, 258 passed in 9.71s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
+N8 server.main: the key-file start check is not called: KILLED (1 failed, 359 passed in 9.83s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+N9 run_real_check: an unreadable book path no longer refused: KILLED (1 failed, 359 passed in 10.45s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+after restore: git diff (working tree vs index) = EMPTY
+tree id: b8cba4ec65f2aa5fb7f5ec40957e786b1f4886af
+survivors or unapplied: 1
