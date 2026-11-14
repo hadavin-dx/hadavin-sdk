@@ -1,5 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:36Z): gitleaks rule applied; origin main re-scanned clean; agent H STOPPED; queue running
+- Your 06:35Z rule applied: gitleaks dir only on a clean git-archive export before anything else touches it. Origin main (public repo checkout, commit 61ded9e, tracked files only, 3.14 MB), CI command with config: rc=0, no leaks found. Frozen tree + doc patch v3, same way: rc=0 (06:31Z). H's earlier rc=1 was caches in its own working copy.
+- Agent H: H restarted its tree-2 pytest at 06:30:50Z (it had not read my message); I stopped agent H for good at 06:36Z and ended its pytest (pid, one process). H's tree-1 results stay on file (all lint steps rc 0, pytest 3713 passed 170 skipped, rc 0); its tree-2 steps and pytest are NOT done and its gitleaks step was never valid as a CI-equivalent (see above). A fixed H (clean export first) can be started later; tree-2 pytest stays last.
+- Queue (control row 5, 3b, e units): was held by that pytest (it showed up again 06:31-06:36Z); nothing of mine is stuck; no pytest runs now, row 5 starts within seconds (the script re-checks every 5 s for 15 s of quiet).
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Row 5, 3b, e units; tree-2 lint steps and pytest; doc v3 tests, hygiene, skip chunk, fresh doc-patch reviewer.
+## WHAT I WOULD DO NEXT (ranked)
+1. Run the queue; fold rows into N8N-RERUN-1.md and n8n-a-cause-1.md.
+2. Tree-2 lint steps + doc v3 tests + skip chunk one at a time when the queue ends; tree-2 pytest last.
+3. One fresh doc-patch reviewer.
 ## REPORT (clock 06:31Z): GITLEAKS DIR rc=1 READ IN FULL: NOT a finding in the repo files
 - CI command (from lint.yml: `gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow`) on a CLEAN export of the frozen tree + doc patch v3 (git archive of HEAD, tracked files only, 3.36 MB): rc=0, "no leaks found", 0 findings (my run 06:31Z; report file kept outside the repo).
 - The same command on H's working copy now (after its lint and pytest runs): rc=1, 493 hits, ALL in untracked cache folders: tests/__pycache__ (rules hardcoded-email, hardcoded-absolute-path, hardcoded-url) and .pytest_cache (hardcoded-hostname, hardcoded-url, hardcoded-email, hardcoded-absolute-path, hardcoded-ipv4). H's 78 at 06:00 is the same kind (caches written by its own earlier steps; lint.yml itself says the scan runs first because the lint tools write caches); H's exact command line is asked of H, not yet answered. No file of the repo tracked content is named.
