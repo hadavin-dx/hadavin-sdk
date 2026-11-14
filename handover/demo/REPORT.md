@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 05:15Z): R2b e unit 3 half done (K3 5 rows in, K2 running), container up 2h25, nothing killed
+- Unit 3 (fresh stack, started 05:05:38Z): K3 5 rows: every row 1 CRM / 2 emails / sent (0 second CRM rows). K2 rows 1-2 in: same (1/2/sent); rows 3-5 running (K2 started 05:11:43Z). Machine idle 100% in the last load sample.
+- Unit 2 (complete): second CRM row 0 of 10. So far e: 0 second-CRM rows in 17 rows (unit 2 x10, unit 3 x7), R2 1 of 10, published 4 of 10.
+- Unit 4 not started yet (starts when unit 3 ends, about 05:17Z); units 4, 5 then 1b (retry of failed unit 1): ETA about 05:50Z.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Units 3 (K2 rest), 4, 5, 1b; combined e count.
+- N8N-RERUN-1.md R2b rows + mapping + READ (written in the 05:04 block already, not yet in the file).
+- R3-partial, doc tests, CI-equivalent, fresh doc reviewer, egm reviewer on the updated file.
+## WHAT I WOULD DO NEXT (ranked)
+1. Finish e units; then variant a: ask you 5 fresh stacks (about 1.5 min each) or accept the 5-burst single stack.
+2. Write N8N-RERUN-1.md R2b + mapping + READ; push.
+3. R3-partial (b K2/K3 only).
 ## REPORT (clock 05:05Z, real date -u; the 05:04Z label above was written at 05:03:20Z): R2b e unit 2 DONE, units 3-5 running
 - e kill-run unit 2 (fresh stack, K3 5 + K2 5, rc 0, ran 04:52:56-05:05Z): 10 rows, final at 60 s: every row 1 CRM / 2 emails / status sent. Second CRM row 0 of 10 (R2 1 of 10, published 4 of 10); 2 or more emails 10 of 10 (as published and R2). Client replies: RemoteDisconnected on 4-10 of 10 in every row.
 - Unit 1 failed at setup (password without a digit, harness random draw); redo later as 1b.
