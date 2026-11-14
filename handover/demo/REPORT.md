@@ -1,6 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:01Z - IF-branch burst test: 7 of 10 fresh stacks done
+
+- Built (scratch): workflow Webhook -> Postgres Insert (Skip on Conflict, unique index on lead_id) -> IF node (lead_id not empty, strict string check) -> NewBranch (true) / DupBranch (false), each a Code node that answers with its branch name. Reading of the order: "10 + 10 bursts" = 10 fresh stacks x 1 burst, plus 1 reused stack x 10 bursts (my reading; say if you meant otherwise).
+- In my runs (n8n 2.46.6, 10 at once, same id), fresh stacks 1 to 7 so far: every burst gave rows = 1, new branch hits = 1, duplicate branch hits = 9, all 10 executions success, no HTTP error. Distribution so far: 7 of 7 bursts are exactly (1 row, 1 new, 9 duplicate). The IF read the skipped item (success true, no lead_id) as the false branch every time.
+- Next: stacks 8 to 10, then the reused stack (10 bursts), then fold into the page, fresh reviewer, hygiene scan.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Reused-stack bursts not run yet; page fold, reviewer and hygiene scan not done.
+- Not tested: an IF on the row id instead of lead_id; more than 10 parallel; other n8n versions.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish the series and print the exact distribution.
+2. Fold the skip-on-conflict and IF results into n8n-owns-vs-desk-owns.md in plain words with conditions.
+3. Fresh comprehension reviewer on the changed lines, fold, hygiene scan, block.
+
+
 ## Block 08:54Z - Skip-on-Conflict DONE (checkpoint at 25 min): report n8n-skip-on-conflict.md pushed
 
 - Plain answer, in my runs (n8n 2.46.6): yes, a flow can branch on "was this new?". Postgres Insert with Skip on Conflict gives exactly one output item both times: a new row gives the inserted row (id, lead_id, note); a skipped duplicate gives only success true. An IF on "lead_id not empty" separates them. I read the shapes in the replies; I did not build the IF itself.
