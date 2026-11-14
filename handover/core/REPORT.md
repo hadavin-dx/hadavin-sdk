@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:15 UTC / 21:45 IST
+
+**AGENTS RUNNING: 4 (A, B, C, EV7T). DISK df: 2.8 GB free, 93% used (6.4 MB per tree copy; no growth seen since 16:06).** Builder numbers below are from their checkpoints, unverified.
+
+| id | what | why | started UTC/IST | expected end | round | state (checkpoint, builder's own numbers) | next action |
+|---|---|---|---|---|---|---|---|
+| a07e3822 (A) | M1 cap, m1-m4 in run_real_check.py | C-R7U | 16:07/21:37 | 17:07/22:37 | r7u | tests written; BEFORE on r7t: 27 failed, 10 passed (pins = the 10); code in tree 16:14, AFTER run started | RESULTS-A, then mutants |
+| a397ac1e (B) | m7 smtp checked reader, m8, m5 | C-R7U | 16:06/21:36 | 17:06/22:36 | r7u | BEFORE: 4 failed, 10 passed (6 pin-like: to check); code in, AFTER run started; mut_b.py written | RESULTS-B |
+| a489ebfb (C) | m6 light module src/lead_desk/loopback.py, docstrings, extra tests | C-R7U | 16:07/21:37 | 17:07/22:37 | r7u | code written 16:08; after1..3.log exist, before.log exists; no counts read by me yet; README-r7u-SNIPPET.md and mut_c.py already on disk | RESULTS-C |
+| acdc878b (EV7T) | evidence on r7t | ORDER 268 | 15:53/21:23 | about 17:15/22:45 | EV7T | full run at 45% at 16:06, flake series, mutant runners (it stopped its own mutY after N01 and reran in 3 runners); told to check logs for the disk incident and say which runs overlapped it | EV7T-EVIDENCE.md |
+
+**Mutant plan.** Each builder runs its own mutants on its own tree (A 20+, B 12+, C 12+, one runner per tree, byte-equal restore). After the merge (me: apply A+B+C diffs to a fresh tree-R7U, resolve conflicts, ONE guard run, hashes, apply matrix) ONE mutant agent runs on the merged tree: the builders' mutant rows re-pointed, the cross-builder seam (rrc: cap + checked smtp read + result JSON order), plus 30 fresh mutants on the merged changed lines. Then EV7U and the lead's fresh reviewer. I start the mutant agent only after the merged guard run so the disk and the 6-core budget are not shared with three builders.
+
+ASK: none.
+NOT DONE / NOT CHECKED: whether A, B, C diffs merge cleanly; B's pin-like 10 passes (I will read them); EV7T disk-overlap answer; README and ON-PATH-LIST.md; Windows/PowerShell/CI.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Next checkpoint read at 16:25; read two A tests and B's passing pins.
+2. Merge at hand-back; one guard run; patches; mutant agent.
+3. EV7U + fresh reviewer; README edits.
+
+
 ## STATUS (core lead) 16:06 UTC / 21:36 IST
 
 **AGENTS RUNNING: 4** (3 builders + EV7T). Order applied: r7u split into 3 parallel builders on separate tree copies. The single r7u builder (ac3fa2a3) was STOPPED by me after 4 min (it had only written a test file, kept at out/R7U/builder0-test_r7u_findings.py.txt for reuse). Disk is 2.8 GB free: no mutant copies in parallel; the mutant agent starts after the merge.
