@@ -1,12 +1,12 @@
 """Made-up CRM stand-in for the D-N2 tests (loopback only). Like HubSpot, it has NO unique constraint on the lead id property: search-then-create can double if two runs race.
-  POST /search {lead_key} -> {results:[...]}      POST /create {lead_key,...} -> 201      GET /rows      POST /control {search_delay_ms, create_ack_delay_ms, upsert_delay_ms, upsert_ack_delay_ms, search_blind_s}
+  POST /search {lead_key} -> {results:[...]}      POST /create {lead_key,...} -> 201      GET /rows      POST /control {search_delay_ms, create_ack_delay_ms, upsert_delay_ms, upsert_ack_delay_ms, search_blind_s, fail_status (HTTP status for EVERY call until set back to 0; persistent)}
   POST /upsert {hadavin_lead_id, email, label} -> 200 {id, created}: create-or-update keyed on the lead id property AND on the e-mail (Design A, v2). Fault modes (D-N2a): search_blind_s = search answers EMPTY for N s after a row was written (like a slow index);
   upsert_delay_ms = hold the request BEFORE it is stored (one-shot); upsert_ack_delay_ms = store FIRST, answer late (one-shot).
 A search delay holds the answer back; a create ack delay stores the row FIRST and answers late (a test kills n8n inside that gap). Every request is logged to FILE."""
 import json, sys, time, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 PORT, FILE = int(sys.argv[1]), sys.argv[2]
-ROWS, CTL, LK = [], {"search_delay_ms": 0, "create_ack_delay_ms": 0, "upsert_delay_ms": 0, "upsert_ack_delay_ms": 0, "search_blind_s": 0}, threading.Lock()
+ROWS, CTL, LK = [], {"search_delay_ms": 0, "create_ack_delay_ms": 0, "upsert_delay_ms": 0, "upsert_ack_delay_ms": 0, "search_blind_s": 0, "fail_status": 0}, threading.Lock()
 def log(**k):
     with LK, open(FILE, "a") as f: f.write(json.dumps(dict(t=time.time(), **k)) + "\n")
 class H(BaseHTTPRequestHandler):
@@ -19,6 +19,7 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0); o = json.loads(self.rfile.read(n) or b"{}")
         if self.path == "/control": CTL.update({k: o[k] for k in CTL if k in o}); return self._j(200, CTL)
+        if CTL["fail_status"] and self.path in ("/search", "/create", "/upsert"): log(op="refused", path=self.path, status=CTL["fail_status"]); return self._j(CTL["fail_status"], {"error": "refused"})   # persistent fault mode: the CRM refuses every call
         if self.path == "/search":
             log(op="search", lead_key=o.get("lead_key")); d = CTL["search_delay_ms"] / 1000
             hits = [r for r in ROWS if r["lead_key"] == o.get("lead_key") and time.time() - r.get("t", 0) >= CTL["search_blind_s"]]

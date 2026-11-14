@@ -1,5 +1,5 @@
 """D-N2 / D-N2a tests: Design A (n8n as the main frame, lease claim, create-or-update CRM, one CRM+mail sub-workflow) on the real n8n 2.46.6 with stand-ins (made-up data, loopback only, no spend).
-Runs inside a prepared harness work folder (see README.md).   python mf.py M0 M1 K1 K2 K3 K3B K4 K5 T8 T9 T10 T11 T12 T13 T14
+Runs inside a prepared harness work folder (see README.md).   python mf.py M0 M1 K1 K2 K3 K3B K4 K5 T8 T9 T10 T11 T12 T13 T14 T15
   env MF_REPS = kills per point (default 20), MF_LEASE = lease seconds used by the TESTS (default 20; the design value is 120, see README).
 COUNTS ARE TAKEN OUTSIDE THE FLOW: this driver reads the CRM stand-in, the mail stand-in's file and the model call log after each run; expected set (lead ids sent) against observed set; extras count as failures.
 Prints REC (raw) and RESULT lines; writes mf_result_<tests>.json."""
@@ -220,6 +220,16 @@ def t12():
         open(MAIL + ".drop", "w").write("1"); k = uid("t12-%d" % (i + 1)); ids.append(k); st, rep = req("mf-form", fbody(k)); t0 = time.time(); tf = wait_final(k, t0, 120); time.sleep(5); o = outcome(k); o.update(lead=k, reply=[st, rep.get("verdict") if isinstance(rep, dict) else rep], seconds_kill_to_final=tf); rows.append(o); rec("T12", **o)
     ok = all(o["mails"] == 1 and o["row"]["state"] == "unknown" and o["alerts"] == 1 and o["crm_rows"] == 1 for o in rows)
     summarize("T12", "SMTP stand-in accepts the mail then drops the connection (fault mode): expected 1 mail, state unknown, 1 alert, no resend", rows, ids, extra_ok=ok)
+def t15():
+    """ERROR case (lane3 finding, lost lead without alert): the CRM refuses EVERY call (HTTP 500) from the start. Expected: 3 tries (main run + 2 recovery claims), then state failed, exactly 1 alert naming the lead, 0 mails to the intake recipient, 0 CRM rows, nothing lost, within 3 x lease + 150 s."""
+    mf_stack(); n8n_prepare_mf(); restart_n8n(); crm_ctl(fail_status=500); rows = []; ids = []
+    for i in range(max(2, min(REPS, 3))):
+        k = uid("t15-%d" % (i + 1)); ids.append(k); t0 = time.time(); st, rep = req("mf-form", fbody(k)); tf = wait_final(k, t0, 3 * LEASE + 150)
+        time.sleep(35); o = outcome(k); o.update(lead=k, reply=[st, rep], seconds_to_final=tf, seconds_limit=3 * LEASE + 150); rows.append(o); rec("T15", **o)
+    refused = sum(1 for r in jl(CRMLOG) if r.get("op") == "refused")
+    ok = all(o["row"]["state"] == "failed" and o["alerts"] == 1 and o["mails"] == 0 and o["crm_rows"] == 0 and o["seconds_to_final"] is not None for o in rows)
+    result("T15", ok, "CRM refuses every call (HTTP 500) from the start: sample %d: state failed %d, alerts per lead %s, mails to intake %s, CRM rows %s, seconds to final %s (limit %d), CRM calls refused %d" % (
+        len(rows), sum(o["row"]["state"] == "failed" for o in rows), [o["alerts"] for o in rows], [o["mails"] for o in rows], [o["crm_rows"] for o in rows], [o["seconds_to_final"] for o in rows], 3 * LEASE + 150, refused), per_lead=rows)
 def t14():
     """IDLE stack (F-REC-EMPTY): no lead sent; the recovery flow runs every 30 s for IDLE_S seconds (default 120). Expected: 0 stage requests, 0 model calls, 0 CRM requests, 0 mails (no alert), 0 SMTP connections, 0 table rows."""
     mf_stack(); n8n_prepare_mf(); restart_n8n(); secs = int(os.environ.get("MF_IDLE_S", "120"))
@@ -238,7 +248,7 @@ def t13():
     time.sleep(3); subprocess.run(["docker", "kill", lib.PG], capture_output=True); time.sleep(3); subprocess.run(["docker", "start", lib.PG], capture_output=True); pg_ready()
     time.sleep(5); kill_n8n_now(); restart_n8n(); rows = final_rows(ids); [rec("T13", **o) for o in rows]
     summarize("T13", "duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n killed and restarted with half-done runs", rows, ids)
-TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14}
+TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15}
 if __name__ == "__main__":
     for t in sys.argv[1:]:
         try: TESTS[t]()

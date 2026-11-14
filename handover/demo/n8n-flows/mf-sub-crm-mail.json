@@ -90,7 +90,8 @@
    ],
    "retryOnFail": true,
    "maxTries": 3,
-   "waitBetweenTries": 1000
+   "waitBetweenTries": 1000,
+   "onError": "continueErrorOutput"
   },
   {
    "parameters": {
@@ -586,6 +587,13 @@
     [
      {
       "node": "SetCrmId",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "OutStage",
       "type": "main",
       "index": 0
      }

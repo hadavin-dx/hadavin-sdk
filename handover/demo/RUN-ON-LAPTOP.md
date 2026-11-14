@@ -24,6 +24,7 @@ The harness refuses a run folder that is not fresh, so run_chain.py copies this 
 ## 3. Ports (must be free; the driver waits up to 150 s after a stop because the stand-ins do not set address reuse)
 - n8n 5679, desk (unused by Design A but reserved by the base driver) 8765, fakes 8766, model stand-in 48767, counting proxy 8760 (reserved), CRM stand-in 8771, cap + model stage 8770, mail stand-in 8791, Postgres 55432 (container name n8n-publish-pg, label n8n-evidence.run=1).
 - T14 (new): idle stack for 120 s (MF_IDLE_S), recovery running, no lead sent: pass = 0 stage requests, 0 model calls, 0 CRM requests, 0 mails (so no alert), 0 SMTP connections, 0 table rows. Run: python run_chain.py --tests "T14" --reps 1 ...
+- T15 (new): CRM refuses every call (HTTP 500) from the start: pass = state failed, exactly 1 alert naming the lead, 0 mails to the intake recipient, 0 CRM rows, nothing lost, within 3 x lease + 150 s. Run it on the 11:05Z / 11:53Z flows (expected FAIL: lead stays processing, 0 alerts) and on the new flows.
 - Do not run two runs at once. Refuses to start if a container with that label exists or a port is busy.
 
 ## 4. Run

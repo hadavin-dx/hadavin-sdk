@@ -1,5 +1,19 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 13:01Z - TOP PRIORITY: lost lead without alert (CRM refuses every call): cause read, fix and T15 pushed, NOT RUN
+
+- Answer to (1): yes, the fixed flows (8e2b6960) can still let one branch's error stop the other. The two branches of mf-recovery run one after the other; if RunSub errors (a real lead's re-run fails every cycle, or the phantom item on the old flows), the execution ends and MarkFailed / AlertFailed do not run that cycle. With the old flows the phantom item made this happen every cycle, so the failure branch never ran = lane3's observation (state processing after attempts 1,2,3 for 700 s, 0 alerts). On 8e2b6960 the phantom is gone, so after attempt 3 an empty cycle would reach MarkFailed about 120 s after the third claim, but a steady stream of failing leads could still starve it. That is a hole, not proven by a run.
+- FIX (flows, not run): MarkFailed branch first in the timer's order; ClaimStuck, RunSub (recovery), MarkFailed, AlertFailed set to continue on error; in the sub-workflow the CRM call now has an error output (after its 3 tries) to the stage_failed outcome, so the main flow answers verdict processing, not HTTP 500.
+- T15 added to mf.py (n8n-mainframe/, the same driver file as T8 to T14): CRM refuses every call HTTP 500 from the start (new persistent fault mode fail_status in crm_stub.py). Pass: state failed, exactly 1 alert naming the lead, 0 mails to the intake recipient, 0 CRM rows, nothing lost, within 3 x lease + 150 s. Your limit was 3 x lease + 60 s: the recovery tick is 30 s and each expiry is seen up to one tick late, so the real bound is about 3 x lease + 90 s; I set 150 s; the measured seconds are recorded per lead.
+- Pushed: n8n-flows/ (rebuilt, lease 120), build_mainframe.py, crm_stub.py, mf.py, DESIGN-A-README.md, RUN-ON-LAPTOP.md. NOT RUN by me (no disk). Please run T15 on the old flows (expect FAIL) and on the new flows, plus T14, T8 and the kill points again on the new flows: the sub-workflow and recovery changed, so earlier laptop counts on the 11:53Z flows do not carry over.
+- Not checked: whether continue-on-error on Execute Workflow behaves as I read it in n8n 2.46.6 (the connection JSON is right; the behaviour is only a reading).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No run of any fix; the alert on a failed lead is exactly 1 only if MarkFailed can mark a row once (it can: state leaves the claimable set); kill-point results unread; T4, T7, pattern check, N8N-START.md, real-node flows, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the laptop T15 (old and new flows) as soon as it exists. 2. A second look for any other place where an error ends an execution before a needed alert (all error paths in sub-workflow and main flows). 3. Lead id pattern check.
+
 ## Block 12:55Z - heartbeat: idle, nothing running; laptop runner restarted as F8C after its leftover-port slip (the stand-ins' lack of address reuse can cause this, see RUN-ON-LAPTOP.md part 3); counts later; nothing new pushed, nothing read.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)

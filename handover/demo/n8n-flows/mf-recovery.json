@@ -39,7 +39,8 @@
      "name": "n8n-publish-pg"
     }
    },
-   "alwaysOutputData": false
+   "alwaysOutputData": false,
+   "onError": "continueRegularOutput"
   },
   {
    "parameters": {
@@ -92,7 +93,8 @@
    "position": [
     550,
     -160
-   ]
+   ],
+   "onError": "continueRegularOutput"
   },
   {
    "parameters": {
@@ -113,7 +115,8 @@
      "name": "n8n-publish-pg"
     }
    },
-   "alwaysOutputData": false
+   "alwaysOutputData": false,
+   "onError": "continueRegularOutput"
   },
   {
    "parameters": {
@@ -179,12 +182,12 @@
    "main": [
     [
      {
-      "node": "ClaimStuck",
+      "node": "MarkFailed",
       "type": "main",
       "index": 0
      },
      {
-      "node": "MarkFailed",
+      "node": "ClaimStuck",
       "type": "main",
       "index": 0
      }
