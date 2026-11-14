@@ -139,3 +139,13 @@ Both lines are therefore not backed by a published row; they come out of the REA
 | fresh stack 2 | 200 x1, 500 x9 | 1 / 1 | 0 | 99.8 / 99.0 |
 
 Plain sentence: both fresh-stack bursts ended with exactly one CRM row and one email, replay added nothing. In the one-stack run the first burst was also (1,1), then (2,2), (10,10), (1,1), (2,2). Two bursts cannot show whether stack reuse changes the count (the one-stack run had 2 of 5 at (1,1) and bursts 1 and 4 looked like these two); this control neither shows nor excludes an effect. A fair control would be five fresh-stack bursts; not run.
+
+## R3-PARTIAL: the 2 missing variant b rows (lead's order 4; ran 05:58:17 to 05:59:20Z, rc 0; files `R3p-*`)
+Scratch driver (copy of `run_all.py`, body cut: setup with P2, deploys, restart with P1, then `g3.py b K2 1` and `g3.py b K3 1`), fresh stack, quiet machine (CPU idle 97.5 to 100 percent, 4 samples). One row each, not repeated until they were valid:
+
+| row | killed | client replies | executions after restart | retries pressed | final CRM / email | wait for quiet | valid |
+|---|---|---|---|---|---|---|---|
+| b K2 (email stored, reply held) | yes | RemoteDisconnected x10 | crashed x10 | 10 | 1 / 1 | 3.0 s, no stale row | yes |
+| b K3 (CRM request in flight) | yes | RemoteDisconnected x10 | crashed x10 | 10 | 1 / 0 | 3.0 s, no stale row | yes |
+
+With these, b K2 and b K3 have 5 valid rows each when R2 and R3-partial are put together (R2's 4 valid + this 1). These two rows come from a different (fresh) stack than R2's rows, not from the same run: stated, not merged into the R2 tables. Both agree with the R2 b rows (1 / 1 and 1 / 0). This does not explain the two stale rows; it shows that on a fresh quiet stack both points gave all ten executions as `crashed`.

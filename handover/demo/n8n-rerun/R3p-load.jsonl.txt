@@ -1,0 +1,4 @@
+{"ts": "2026-11-14T05:58:42.162Z", "setup": "b kill runs K2", "when": "before", "cpu_idle_pct": 99.7, "free_ram_mb": 14309.8}
+{"ts": "2026-11-14T05:58:59.845Z", "setup": "b kill runs K2", "when": "after", "cpu_idle_pct": 100.0, "free_ram_mb": 14202.7}
+{"ts": "2026-11-14T05:59:01.847Z", "setup": "b kill runs K3", "when": "before", "cpu_idle_pct": 97.5, "free_ram_mb": 14224.8}
+{"ts": "2026-11-14T05:59:19.316Z", "setup": "b kill runs K3", "when": "after", "cpu_idle_pct": 100.0, "free_ram_mb": 14187.4}
