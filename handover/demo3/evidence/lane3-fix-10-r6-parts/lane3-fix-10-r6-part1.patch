@@ -1,0 +1,804 @@
+diff --git a/docs/settings.md b/docs/settings.md
+index 7388fb3..eeec818 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -4,7 +4,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ 
+ | Setting | Environment variable | Default | Meaning |
+ |---|---|---|---|
+-| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (`:memory:` is refused at start, exit code 4, before any file is made) |
++| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (`:memory:` is refused at start, the desk's refusal row of the table, before any file is made) |
+ | `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on. The default is this computer only. Any other address (the all-zeros address above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up. With any real service set (`DESK_CRM` not `fake`, `DESK_OUTBOX=smtp_provider` or `DESK_QUALIFIER=live_claude`) the desk refuses to start on any address that is not this computer's own, because anyone who could reach the port could write to that service |
+ | `port` | `DESK_PORT` | `8765` | desk port (0 = pick a free one, used by tests) |
+ | `adapters` | `DESK_ADAPTERS` | `demo` | the adapter set; only `demo` exists (the demo CRM, the mail stand-ins and the portal) |
+@@ -13,8 +13,8 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ | `crm` | `DESK_CRM` | `fake` | the CRM: `fake` (the demo servers) or `hubspot` (a free HubSpot account); its settings are listed under "CRM settings" below. The desk's HubSpot adapter has only been run against a local stand-in server; only `scripts/hubspot_probe.py` touched a real account (one free account, logs not shipped) |
+ | `later_mode` | `DESK_LATER_MODE` | `off` | `off`: a repeat that brings new details is only listed, and the desk refuses a decision on it. `approval`: a person approves or denies it (one decision per repeat, the first one wins; it is stored in the desk only and changes nothing else). Switching needs a restart; stored decisions stay |
+ | `approvers_path` | `DESK_APPROVERS_FILE` | none (in approval mode the loader uses the `approvers.json` inside `demo_only/`) | a JSON file `{"label": "...", "approvers": [{"id": "appr-01", "name": "..."}]}` (the label is optional): who may decide. Ids are lower-case letters, digits and `-`, at most 32 characters; names are unique, one line, at most 64 characters; the label is one line of at most 64 characters; the file is at most 16384 bytes; an empty list is refused in approval mode. Refused when approval mode is off |
+-| `leadflow_path` | `DESK_LEADFLOW_FILE` | none (off) | a JSON file with the lead owner list (`rota`), the lead stages (`steps`, `closed`, `first`, `after_followup`, `reminder_until`) and the optional reminder wait `nudge_after_seconds` (see `demo_only/leadflow.json`). Unset, empty or the exact lower-case word `off` turns the feature off and the desk behaves as before; a file really named `off` cannot be used. The file is read once at start; a refused file stops the start (exit 4). The demo start scripts (`scripts/start_all.ps1`, `scripts/start_all.sh`) name `demo_only/leadflow.json` unless you set `DESK_LEADFLOW_FILE` yourself; set `DESK_LEADFLOW_FILE=off` to turn the feature off there. WARNING: it writes the CRM lead status field, so automations in the CRM you connect that watch that field react (`docs/limits.md`) |
+-| `nudge_to` | `DESK_NUDGE_TO` | none | the one address that gets reminder emails; never logged. Refused unless `DESK_LEADFLOW_FILE` names a file, and refused when the file turns reminders on but this is not set. The demo start scripts set `reminder@example.test` unless you set it yourself (only when the feature is on) |
++| `leadflow_path` | `DESK_LEADFLOW_FILE` | none (off) | a JSON file with the lead owner list (`rota`), the lead stages (`steps`, `closed`, `first`, `after_followup`, `reminder_until`) and the optional reminder wait `nudge_after_seconds` (see `demo_only/leadflow.json`). Unset, empty or the exact lower-case word `off` turns the feature off and the desk behaves as before; a file really named `off` cannot be used. The file is read once at start; a refused file stops the start (the desk's own refusal code of the table under "Exit codes"). The demo start scripts (`scripts/start_all.ps1`, `scripts/start_all.sh`) name `demo_only/leadflow.json` unless you set `DESK_LEADFLOW_FILE` yourself; set `DESK_LEADFLOW_FILE=off` to turn the feature off there. WARNING: it writes the CRM lead status field, so automations in the CRM you connect that watch that field react (`docs/limits.md`) |
++| `nudge_to` | `DESK_NUDGE_TO` | none | the one address that gets reminder emails; never logged. It must be one plain address (the one rule for a plain address lives in `src/lead_desk/identity.py` and is shared with the sender and recipient addresses; it is not copied anywhere else). Refused unless `DESK_LEADFLOW_FILE` names a file, and refused when the file turns reminders on but this is not set. The demo start scripts set `reminder@example.test` unless you set it yourself (only when the feature is on) |
+ | `fakes_host`, `fakes_port` | `DESK_FAKES_HOST`, `DESK_FAKES_PORT` | `127.0.0.1`, `8766` | where the demo CRM and outbox listen; this computer only: `localhost` or a loopback address, anything else is refused |
+ | (both above) | `DESK_FAKES_URL` | built from the two above | one `http` address with host and port; wins over the two above |
+ | `replies_path` | `DESK_REPLIES_PATH` | none (the loader uses the `replies.json` inside `demo_only/`) | the pre-written AI replies |
+@@ -25,7 +25,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ 
+ ### Number settings: what is accepted
+ 
+-A number setting is plain ASCII text: digits with an optional sign (whole numbers), or digits with an optional point and exponent (seconds and money). Spaces, tabs and line ends around the value are ignored (`set DESK_PORT=8765 ` in cmd.exe works). A space inside the number, underscores, digits of other scripts (and a no-break space), an empty value, `nan`, `inf`, an exponent or a point in a whole number, and text such as `0x10` are refused. A value outside its range is refused too, with a message that names the setting (never the value) and the desk ends with exit code 4. The ceilings are named constants in `src/lead_desk/constants.py`. An address setting (`DESK_FAKES_URL`, `DESK_LIVE_BASE_URL`, `DESK_HUBSPOT_BASE_URL`) that cannot be read as an address, such as `http://[/`, is refused the same way ("... is not a valid address"). The 600-second ceiling of the two plain-SMTP/send timeouts is a sanity bound only: the desk itself cuts every send at 9 seconds.
++A number setting is plain ASCII text: digits with an optional sign (whole numbers), or digits with an optional point and exponent (seconds and money). Spaces, tabs and line ends around the value are ignored (`set DESK_PORT=8765 ` in cmd.exe works). A space inside the number, underscores, digits of other scripts (and a no-break space), an empty value, `nan`, `inf`, an exponent or a point in a whole number, and text such as `0x10` are refused. A value outside its range is refused too, with a message that names the setting (never the value) and the desk ends with its refusal row of the table. The ceilings are named constants in `src/lead_desk/constants.py`. An address setting (`DESK_FAKES_URL`, `DESK_LIVE_BASE_URL`, `DESK_HUBSPOT_BASE_URL`) that cannot be read as an address, such as `http://[/`, is refused the same way ("... is not a valid address"). The 600-second ceiling of the two plain-SMTP/send timeouts is a sanity bound only: the desk itself cuts every send at 9 seconds.
+ 
+ | Setting | Accepted values |
+ |---|---|
+@@ -43,7 +43,7 @@ A number setting is plain ASCII text: digits with an optional sign (whole number
+ 
+ ### The leadflow file: every bound the desk enforces
+ 
+-The file named by `DESK_LEADFLOW_FILE` is read once at start; anything outside these bounds stops the start with exit 4 and a message that names the entry and never prints a value (constants in `constants.py`, checks in `config.py`).
++The file named by `DESK_LEADFLOW_FILE` is read once at start; anything outside these bounds stops the start (the exit code is in the table under "Exit codes") with a message that names the entry and never prints a value (constants in `constants.py`, checks in `config.py`).
+ 
+ | Part | Bound |
+ |---|---|
+@@ -84,7 +84,7 @@ The default addresses below end in `example.test`, a name reserved for examples.
+ * `DESK_HUBSPOT_BASE_URL` (default: the vendor's own address, `HUBSPOT_BASE_URL` in `constants.py`), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2), `DESK_HUBSPOT_STATS_FILE`.
+ * `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`: the word `yes` lifts the check that the key goes only to the vendor's own host names.
+ 
+-Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4).
++Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (the exit code is in the table under "Exit codes" below).
+ 
+ ### Live model step (`DESK_QUALIFIER=live_claude`)
+ 
+@@ -113,14 +113,79 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ 
+ ## Settings of the helper scripts (not read by the desk)
+ 
+-* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start (exit code 2) when a required name is missing: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run), `DESK_HUBSPOT_KEY_FILE`, `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
++* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start when a required name is missing or a value cannot be used: a refused setting (a missing name, a number out of range, a bad mailbox folder, a book file that already exists, a config line that is not NAME=VALUE, a file the config names that cannot be used) has the setting-refused code of the table; only a wrong command line (no `--config`, or `--assume-yes` without `--dry-fakes`) or a missing tool has the command-line code. The required names are: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run), `DESK_HUBSPOT_KEY_FILE`, `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
+ * Optional names of that script: `REAL_PERSONS` (default 12, at least 8, at most 1000), `REAL_DRAIN_SECONDS` (seconds to wait for the desk, default 150), `REAL_MAIL_WAIT_SECONDS` (default 90), `REAL_MAIL_SETTLE_SECONDS` (default 10, the mail poll time: after every mail is seen once, wait this long and count once more), each of these three above 0 and at most 86,400; `REAL_RESULT_FILE` (where the JSON result goes; default `result.json` next to the database).
+ * The script forces `DESK_ADAPTERS=demo`, `DESK_CRM=hubspot`, `DESK_OUTBOX=smtp_provider` and, unless you pass `--live-model`, `DESK_QUALIFIER=recorded`, whatever the file says; it also reads the other `DESK_*` names (for example `DESK_PORT`, the `DESK_HUBSPOT_*`, `DESK_SMTPP_*` and `DESK_LIVE_*` names) from the same file and gives them to the desk processes. Defaults it sets when absent: `DESK_SEND_TIMEOUT_SECONDS=8`, `DESK_HUBSPOT_ALLOW_ANY_BASE_URL=no`, `DESK_LIVE_ALLOW_ANY_BASE_URL=no`.
+ * Mailboxes: blocks `REAL_IMAP_1_*`, `REAL_IMAP_2_*` and so on are read in order and stop at the first n that has no `REAL_IMAP_n_USER`; the user of block n must be the n-th address of `DESK_SMTPP_RECIPIENTS`. Per block: `USER` and `PASSWORD_FILE` (required), `HOST` (default: the mail provider's address, `MAIL_IMAP_DEFAULT_HOST` in `constants.py`), `PORT` (default 993), `CA_FILE`, `FOLDERS` (comma list; default `INBOX` and the provider's English spam folder, `MAIL_SPAM_FOLDER` in `constants.py`).
+-* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
+-* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
++* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them). Every other code, and what it means, is in the table under "Exit codes" below (stopped before calling anything, a wrong command line or a missing tool, a refused setting, a check that failed or contacts left behind).
++* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and a non-zero exit code (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
+ * `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Any other blank right after a `localhost` host (a space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it in the user name) does the same, but only when the next run of non-blank characters holds an at-sign before any `/`, `?` or `#` (`http://localhost @host`); `http://localhost:5678/x y` and `http://localhost y` (words after a space) are not touched. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+ * `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
+-* `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
++* `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (a non-zero exit) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
++
++### Exit codes
++
++One table, in one place: `EXIT_CODE_TABLE` in `src/lead_desk/constants.py`, one row per program, code and meaning; the table below is printed from it by `tools/render_exit_table.py` (a test fails when the two differ), so no other page repeats a program's exit numbers. A number can mean different things in different programs: several of the small numbers (the pinned list `SAME_NUMBER_DIFFERENT_MEANING`), so read a number together with the program that returned it. `server` is `python -m lead_desk.server` (the desk); `crash_desk`, `feed`, `reset_check` and `run_real_check` are the Python scripts; the other four are the shell and PowerShell scripts. Every program that reads the settings itself gives the same code (`EXIT_SCRIPT_SETTING_REFUSED`) for a refused setting, except the desk (its own refusal) and `crash_desk`/`start_all` (they pass on the desk's own refusal of a late setting). Two wait settings have their own code: a bad `START_ALL_WAIT_SECONDS` ends `start_all` with its own "start did not complete" row, and a bad `RESET_STOP_WAIT_SECONDS` ends `reset` with its own "refused" row. `start_all` passes on only the three codes of the desk that its rows name; every other end of the desk (including a desk that stopped with 0) is its own "start did not complete" row. The simulated-kill code (`EXIT_SIMULATED_KILL`) is only the crash script stopping the desk on purpose.
++
++<!-- exit-table:start (written by tools/render_exit_table.py; do not edit by hand) -->
++| Program | Code | Meaning | Run by a test here |
++|---|---|---|---|
++| `server` | 1 | the desk could not reach the demo server (the stand-in for the real mail and CRM services) when it started, or the program stopped with an unexpected Python error report | yes |
++| `server` | 2 | another desk is already running on the same database file | yes |
++| `server` | 3 | this computer allows too few open files for the desk's limits | yes |
++| `server` | 4 | the desk refused a setting (a value it does not accept) | yes |
++| `server` | 5 | the desk could not take its network port (another program holds it) | yes |
++| `crash_desk` | 1 | the desk could not reach the demo server (the stand-in for the real mail and CRM services) when it started, or the program stopped with an unexpected Python error report | yes |
++| `crash_desk` | 2 | another desk is already running on the same database file | not produced by a test on this build |
++| `crash_desk` | 3 | this computer allows too few open files for the desk's limits | not produced by a test on this build |
++| `crash_desk` | 4 | the desk refused a setting (a value it does not accept) | yes |
++| `crash_desk` | 5 | the desk could not take its network port (another program holds it) | not produced by a test on this build |
++| `crash_desk` | 8 | a setting is refused (same meaning as start_all and run_real_check) | yes |
++| `crash_desk` | 137 | the crash script stopped the desk on purpose, to test recovery | not produced by a test on this build |
++| `feed` | 8 | a setting is refused (same meaning as start_all and run_real_check) | yes |
++| `reset.sh` | 2 | refused before anything was stopped or deleted (including a bad RESET_STOP_WAIT_SECONDS value) | yes |
++| `reset.sh` | 3 | something still uses the database file, or the check for another desk could not be done | yes |
++| `reset.sh` | 4 | something still answers on the desk's port or the demo server's port | yes |
++| `reset.sh` | 5 | a process did not stop in time, or the check program crashed (nothing was deleted) | yes |
++| `reset.sh` | 6 | a file that holds a process number names a process that is not ours | yes |
++| `reset.sh` | 8 | a setting is refused (same meaning as start_all and run_real_check) | yes |
++| `reset.ps1` | 2 | refused before anything was stopped or deleted (including a bad RESET_STOP_WAIT_SECONDS value) | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `reset.ps1` | 3 | something still uses the database file, or the check for another desk could not be done | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `reset.ps1` | 4 | something still answers on the desk's port or the demo server's port | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `reset.ps1` | 5 | a process did not stop in time, or the check program crashed (nothing was deleted) | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `reset.ps1` | 6 | a file that holds a process number names a process that is not ours | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `reset.ps1` | 8 | a setting is refused (same meaning as start_all and run_real_check) | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `reset_check` | 3 | something still uses the database file, or the check for another desk could not be done | yes |
++| `reset_check` | 4 | something still answers on the desk's port or the demo server's port | yes |
++| `reset_check` | 8 | a setting is refused (same meaning as start_all and run_real_check) | yes |
++| `start_all.sh` | 1 | the start did not complete: a bad mode word, a bad START_ALL_WAIT_SECONDS value, a leftover file that holds a process number from an earlier start, something else already answering on the demo server port, the demo server or the desk not ready in time, or the desk ended with a code this table does not pass on (the desk itself never ends with the code of a refused script setting; if it did, that would land here too) | yes |
++| `start_all.sh` | 2 | refused: the script was run by a shell that is not bash | yes |
++| `start_all.sh` | 3 | this computer allows too few open files for the desk's limits | yes |
++| `start_all.sh` | 4 | the desk refused a setting (a value it does not accept); 4 here is the desk's own refusal passed on (start_all's own reading refused: 8) | yes |
++| `start_all.sh` | 5 | the desk could not take its network port (another program holds it) | yes |
++| `start_all.sh` | 8 | a setting is refused (same meaning as start_all and run_real_check) | yes |
++| `start_all.ps1` | 1 | the start did not complete: a bad mode word, a bad START_ALL_WAIT_SECONDS value, a leftover file that holds a process number from an earlier start, something else already answering on the demo server port, the demo server or the desk not ready in time, or the desk ended with a code this table does not pass on (the desk itself never ends with the code of a refused script setting; if it did, that would land here too) | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `start_all.ps1` | 3 | this computer allows too few open files for the desk's limits | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `start_all.ps1` | 4 | the desk refused a setting (a value it does not accept); 4 here is the desk's own refusal passed on (start_all's own reading refused: 8) | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `start_all.ps1` | 5 | the desk could not take its network port (another program holds it) | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `start_all.ps1` | 8 | a setting is refused (same meaning as start_all and run_real_check) | not produced on Linux; needs a run on Windows (WINDOWS-RUN-1) |
++| `run_real_check` | 1 | the check was stopped before anything real was called: the Start question was not answered yes, or the self-test could not start its local test servers | yes |
++| `run_real_check` | 2 | the check was started wrongly (command line) or a needed tool is missing; nothing real was called | yes |
++| `run_real_check` | 3 | the check ran and found a failure, or its read-back of the CRM stopped | yes |
++| `run_real_check` | 8 | a setting is refused (same meaning as start_all and run_real_check) | yes |
++| `check_schema` | 1 | a check of the database layout failed | not produced by a test on this build |
++| `hubspot_probe` | 1 | a step of the probe failed (the CRM answered wrongly or not at all) | not produced by a test on this build |
++| `hubspot_probe` | 2 | refused: a wrong command line, a missing token or a wrong call count; nothing was called | yes |
++| `run_live_check` | 1 | stopped: the Start question was not answered yes; nothing was called | not produced by a test on this build |
++| `run_live_check` | 2 | the spend record could not be read or written, so nothing more was called | not produced by a test on this build |
++| `n8n_api` | 1 | n8n did not answer with success, or the program stopped with one plain message | not produced by a test on this build |
++| `n8n_api` | 2 | the command line was wrong (the usage line is printed) | yes |
++| `check_invariants` | 1 | at least one of the seven checks did not hold | yes |
++| `check_invariants` | 2 | a file or an option was refused; nothing was checked | yes |
++| `load_driver` | 2 | the scenario, a path or the command line was refused; nothing was sent or written | not produced by a test on this build |
++| `catcher` | 2 | a path was refused; nothing was created | not produced by a test on this build |
++| `burst` | 1 | the number of accepted requests is not the number expected (MISMATCH line) | not produced by a test on this build |
++| `fake_model_server` | 2 | a path was refused; the stand-in model server did not start | not produced by a test on this build |
++<!-- exit-table:end -->
+diff --git a/tests/test_exit_code_table.py b/tests/test_exit_code_table.py
+new file mode 100644
+index 0000000..d2d5a40
+--- /dev/null
++++ b/tests/test_exit_code_table.py
+@@ -0,0 +1,663 @@
++"""The one table of exit codes (`constants.EXIT_CODE_TABLE`, keyed by PROGRAM) must say what the programs do.
++
++Checked here: inside one program a code has one meaning; the numbers that mean different things in different programs
++are exactly the pinned list `SAME_NUMBER_DIFFERENT_MEANING` (computed from the table and compared); every `EXIT_*`
++constant is in the table; the rows of each program are compared by constant NAME with an own list written here (a
++deleted or added row fails); the code a program really returns is one of its rows (programs are run, not read); the
++codes the shell and PowerShell scripts write as plain numbers are rows of that script; the codes start_all passes on are
++the same in the table, the .sh and the .ps1; every row is either produced by a named test that exists or listed as not
++produced (a row in neither list fails); no page repeats a program's exit numbers (they live in the table, printed into
++docs/settings.md by tools/render_exit_table.py, and a test compares the printed table with the generator). The text-only
++checks are labelled "text pin" in their names: they read a file and prove the text, not the behaviour. The test that
++runs
++each program with a bad setting and compares with the by-program table is in tests/test_bad_setting_entry_points.py.
++"""
++
++from __future__ import annotations
++
++import os
++import re
++import shutil
++import socket
++import subprocess
++import sys
++from collections import defaultdict
++from pathlib import Path
++
++import pytest
++from support import REPO, child_env
++
++from lead_desk import constants as c
++from tools import render_exit_table as render
++
++TABLE = c.EXIT_CODE_TABLE
++PROGRAMS = {program for program, _, _ in TABLE}
++SHELL_SCRIPTS = ("reset.sh", "reset.ps1", "start_all.sh", "start_all.ps1")
++
++
++def _rows(program: str) -> dict[int, str]:
++    return {code: meaning for p, code, meaning in TABLE if p == program}
++
++
++def _overlap(table: tuple[tuple[str, int, str], ...] = TABLE) -> set[int]:
++    meanings: dict[int, set[str]] = defaultdict(set)
++    for _, code, meaning in table:
++        meanings[code].add(meaning)
++    return {code for code, texts in meanings.items() if len(texts) > 1}
++
++
++def test_no_program_has_a_code_with_two_meanings() -> None:
++    seen: dict[tuple[str, int], str] = {}
++    for program, code, meaning in TABLE:
++        assert (program, code) not in seen, (program, code, meaning, seen[(program, code)])
++        seen[(program, code)] = meaning
++    assert all(meaning.strip() for _, _, meaning in TABLE)
++
++
++def test_every_program_of_the_table_exists() -> None:
++    for program in PROGRAMS - {"server"} - set(c.TOOL_PROGRAM_FILES):
++        name = program if "." in program else f"{program}.py"
++        assert (REPO / "scripts" / name).exists(), program
++    for program, relative in c.TOOL_PROGRAM_FILES.items():
++        assert program in PROGRAMS and (REPO / relative).exists(), program
++    assert set(SHELL_SCRIPTS) <= PROGRAMS
++
++
++def test_the_pinned_overlap_list_is_the_computed_overlap() -> None:
++    assert set(c.SAME_NUMBER_DIFFERENT_MEANING) == _overlap()
++    assert list(c.SAME_NUMBER_DIFFERENT_MEANING) == sorted(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_a_second_meaning_behind_a_free_number_is_seen_by_the_computation() -> None:
++    """The check itself: it is not vacuous (it finds an overlap that is not pinned)."""
++    extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, "something else entirely"))
++    assert c.EXIT_SIMULATED_KILL in _overlap(extra) - set(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_the_setting_refused_code_has_one_meaning_in_every_program_and_a_reuse_is_seen() -> None:
++    """Code 8 is NOT in the pinned overlap list: every program that returns it says the same thing. A table where
++    one program gives 8 another meaning (the failure this test is for) is shown to be caught."""
++    eight = {meaning for _, code, meaning in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED}
++    assert (
++        eight == {c.MEANING_SCRIPT_SETTING_REFUSED}
++        and c.EXIT_SCRIPT_SETTING_REFUSED not in c.SAME_NUMBER_DIFFERENT_MEANING
++    )
++    reused = (*TABLE, ("reset.sh", c.EXIT_SCRIPT_SETTING_REFUSED, "something else entirely"))
++    assert c.EXIT_SCRIPT_SETTING_REFUSED in _overlap(reused) - set(c.SAME_NUMBER_DIFFERENT_MEANING)
++    assert {m for p, k, m in TABLE if p.startswith("reset") and k == c.EXIT_RESET_NOT_STOPPED} == {
++        "a process did not stop in time, or the check program crashed (nothing was deleted)"
++    }
++
++
++def test_every_exit_constant_is_in_the_table() -> None:
++    codes = {code for _, code, _ in TABLE}
++    named = {v for k, v in vars(c).items() if k.startswith("EXIT_") and isinstance(v, int) and k != "EXIT_OK"}
++    assert named <= codes, named - codes
++
++
++def test_the_by_program_tables_name_only_programs_and_codes_of_the_table() -> None:
++    for by_program in (c.SETTING_REFUSED_EXIT_BY_PROGRAM, c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM):
++        for program, code in by_program.items():
++            assert program in PROGRAMS and code in _rows(program), (program, code)
++    assert set(c.SETTING_REFUSED_EXIT_BY_PROGRAM.values()) == {
++        c.EXIT_DESK_SETTING_REFUSED,
++        c.EXIT_SCRIPT_SETTING_REFUSED,
++    }
++    assert c.SETTING_REFUSED_EXIT_BY_PROGRAM["run_real_check"] == c.EXIT_SCRIPT_SETTING_REFUSED
++    assert c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM["crash_desk"] == c.EXIT_DESK_SETTING_REFUSED
++
++
++def test_the_numbers_each_shell_script_writes_are_rows_of_that_script() -> None:
++    for name in SHELL_SCRIPTS:
++        text = (REPO / "scripts" / name).read_text(encoding="utf-8")
++        code_lines = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
++        used = {int(n) for n in re.findall(r"\bexit ([0-9]+)\b", code_lines)} - {0}
++        assert used <= set(_rows(name)), (name, used - set(_rows(name)))
++        assert c.EXIT_SCRIPT_SETTING_REFUSED not in used, name  # 8 comes only from the reader, passed on
++
++
++def test_the_numbers_reset_check_returns_are_rows_of_reset_check() -> None:
++    text = (REPO / "scripts" / "reset_check.py").read_text(encoding="utf-8")
++    names = set(re.findall(r"return (EXIT_[A-Z_]+)", text))
++    assert names and not re.search(r"return [1-9]", text)  # by name, never a bare number
++    assert {getattr(c, n) for n in names} <= set(_rows("reset_check"))
++
++
++def test_the_two_reset_scripts_have_one_list_of_codes() -> None:
++    assert _rows("reset.sh") == _rows("reset.ps1")
++
++
++def test_no_script_uses_the_script_setting_code_as_a_bare_number() -> None:
++    for path in (REPO / "scripts").iterdir():
++        if path.suffix in {".sh", ".ps1", ".py"}:
++            pattern = rf"\b(?:exit|return|SystemExit\()\s*{c.EXIT_SCRIPT_SETTING_REFUSED}\b"
++            assert not re.search(pattern, path.read_text("utf-8")), path.name
++
++
++def _run(argv: list[str], tmp: Path, **extra: str) -> subprocess.CompletedProcess[str]:
++    env = child_env(DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), **extra)
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    return subprocess.run(  # noqa: S603 - fixed argv, made-up values
++        argv, cwd=REPO, env=env, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL, check=False
++    )
++
++
++def test_every_code_a_program_really_returns_is_one_of_its_rows(tmp_path: Path) -> None:
++    """The programs are RUN (each with a refusal it can really make); the code is looked up in that program's rows."""
++    py = sys.executable
++    scripts = REPO / "scripts"
++    runs: list[tuple[str, subprocess.CompletedProcess[str]]] = [
++        ("server", _run([py, "-m", "lead_desk.server"], tmp_path, DESK_PORT="abc")),
++        ("crash_desk", _run([py, str(scripts / "crash_desk.py")], tmp_path, DESK_PORT="abc")),
++        ("feed", _run([py, str(scripts / "feed.py"), "--source", "form", "--all"], tmp_path, DESK_PORT="abc")),
++        ("reset_check", _run([py, str(scripts / "reset_check.py")], tmp_path, DESK_PORT="abc")),
++        ("run_real_check", _run([py, str(scripts / "run_real_check.py")], tmp_path)),  # no --config: its own refusal
++    ]
++    if sys.platform != "win32":
++        bash = ["bash"]
++        runs += [
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, DESK_PORT="abc")),
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, RESET_STOP_WAIT_SECONDS="x")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, DESK_PORT="abc")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh"), "sideways"], tmp_path)),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, START_ALL_WAIT_SECONDS="0")),
++        ]
++    for program, done in runs:
++        assert done.returncode in _rows(program), (program, done.returncode, (done.stdout + done.stderr)[-300:])
++    assert runs[0][1].returncode == c.EXIT_DESK_SETTING_REFUSED
++    assert runs[4][1].returncode == c.EXIT_CHECK_REFUSED
++
++
++@pytest.mark.skipif(sys.platform == "win32", reason="the shell scripts are the non-Windows ones")
++def test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code(tmp_path: Path) -> None:
++    sh = shutil.which("sh")
++    probe = [sh, "-c", "[[ a == a ]]"] if sh else None
++    if probe is None or subprocess.run(probe, capture_output=True, check=False).returncode == 0:  # noqa: S603
++        pytest.skip("sh on this machine runs [[ ]] (it is bash): the refusal cannot be reached")
++    done = _run([sh, str(REPO / "scripts" / "start_all.sh")], tmp_path)
++    assert done.returncode == c.EXIT_NOT_BASH
++
++
++def test_contract_md_names_the_table_and_the_overlap_list() -> None:
++    text = (REPO / "contract.md").read_text(encoding="utf-8")
++    assert "EXIT_CODE_TABLE" in text and "SAME_NUMBER_DIFFERENT_MEANING" in text
++    assert "EXIT_SCRIPT_SETTING_REFUSED" in text and "EXIT_DESK_SETTING_REFUSED" in text
++
++
++# --- rows compared by constant NAME, per program (an own list, not read from the table) -------------------------------
++_DESK = {
++    "EXIT_ADAPTERS_UNREACHABLE": "MEANING_ADAPTERS_UNREACHABLE",
++    "EXIT_ANOTHER_DESK": "MEANING_ANOTHER_DESK",
++    "EXIT_OPEN_FILE_LIMIT": "MEANING_OPEN_FILE_LIMIT",
++    "EXIT_DESK_SETTING_REFUSED": "MEANING_DESK_SETTING_REFUSED",
++    "EXIT_PORT_UNAVAILABLE": "MEANING_PORT_UNAVAILABLE",
++}
++_SETTING = {"EXIT_SCRIPT_SETTING_REFUSED": "MEANING_SCRIPT_SETTING_REFUSED"}
++_RESET = {
++    "EXIT_RESET_REFUSED": "MEANING_RESET_REFUSED",
++    "EXIT_RESET_HELD": "MEANING_RESET_HELD",
++    "EXIT_RESET_ANSWERING": "MEANING_RESET_ANSWERING",
++    "EXIT_RESET_NOT_STOPPED": "MEANING_RESET_NOT_STOPPED",
++    "EXIT_RESET_WRONG_PROGRAM": "MEANING_RESET_WRONG_PROGRAM",
++    **_SETTING,
++}
++_START = {
++    "EXIT_START_NOT_DONE": "MEANING_START_NOT_DONE",
++    "EXIT_OPEN_FILE_LIMIT": "MEANING_OPEN_FILE_LIMIT",
++    "EXIT_DESK_SETTING_REFUSED": "MEANING_START_DESK_SETTING_REFUSED",
++    "EXIT_PORT_UNAVAILABLE": "MEANING_PORT_UNAVAILABLE",
++    **_SETTING,
++}
++EXPECTED_ROWS: dict[str, dict[str, str]] = {
++    "server": _DESK,
++    "crash_desk": {**_DESK, **_SETTING, "EXIT_SIMULATED_KILL": "MEANING_SIMULATED_KILL"},
++    "feed": _SETTING,
++    "reset.sh": _RESET,
++    "reset.ps1": _RESET,
++    "reset_check": {
++        "EXIT_RESET_HELD": "MEANING_RESET_HELD",
++        "EXIT_RESET_ANSWERING": "MEANING_RESET_ANSWERING",
++        **_SETTING,
++    },
++    "start_all.sh": {**_START, "EXIT_NOT_BASH": "MEANING_NOT_BASH"},
++    "start_all.ps1": _START,
++    "run_real_check": {
++        "EXIT_CHECK_STOPPED": "MEANING_CHECK_STOPPED",
++        "EXIT_CHECK_REFUSED": "MEANING_CHECK_REFUSED",
++        "EXIT_CHECK_FAILED": "MEANING_CHECK_FAILED",
++        **_SETTING,
++    },
++    "check_schema": {"EXIT_TOOL_FAILED": "MEANING_TOOL_SCHEMA_FAILED"},
++    "hubspot_probe": {
++        "EXIT_TOOL_FAILED": "MEANING_TOOL_PROBE_FAILED",
++        "EXIT_TOOL_REFUSED": "MEANING_TOOL_PROBE_REFUSED",
++    },
++    "run_live_check": {
++        "EXIT_TOOL_FAILED": "MEANING_TOOL_LIVE_STOPPED",
++        "EXIT_TOOL_REFUSED": "MEANING_TOOL_LIVE_REFUSED",
++    },
++    "n8n_api": {"EXIT_TOOL_FAILED": "MEANING_TOOL_N8N_FAILED", "EXIT_TOOL_REFUSED": "MEANING_TOOL_N8N_REFUSED"},
++    "check_invariants": {
++        "EXIT_TOOL_FAILED": "MEANING_TOOL_INVARIANTS_FAILED",
++        "EXIT_TOOL_REFUSED": "MEANING_TOOL_INVARIANTS_REFUSED",
++    },
++    "load_driver": {"EXIT_TOOL_REFUSED": "MEANING_TOOL_LOAD_REFUSED"},
++    "catcher": {"EXIT_TOOL_REFUSED": "MEANING_TOOL_CATCHER_REFUSED"},
++    "burst": {"EXIT_TOOL_FAILED": "MEANING_TOOL_BURST_FAILED"},
++    "fake_model_server": {"EXIT_TOOL_REFUSED": "MEANING_TOOL_FAKE_MODEL_REFUSED"},
++}
++
++
++def _expected_rows() -> set[tuple[str, int, str]]:
++    """EXPECTED_ROWS resolved by constant NAME to (program, code, meaning). A name that does not exist raises here."""
++    return {
++        (program, getattr(c, code_name), getattr(c, meaning_name))
++        for program, names in EXPECTED_ROWS.items()
++        for code_name, meaning_name in names.items()
++    }
++
++
++def test_each_program_has_exactly_the_rows_listed_here_by_constant_name() -> None:
++    assert len(TABLE) == len(set(TABLE))
++    assert set(TABLE) == _expected_rows(), set(TABLE) ^ _expected_rows()
++
++
++def test_a_deleted_or_a_wrong_row_is_seen_by_the_name_comparison() -> None:
++    """The check itself: it is not vacuous. A deleted row, an added row and a swapped meaning each make it fail."""
++    deleted = tuple(r for r in TABLE if not (r[0] == "run_real_check" and r[1] == c.EXIT_CHECK_STOPPED))
++    assert set(deleted) != _expected_rows()
++    added = (*TABLE, ("feed", c.EXIT_CHECK_FAILED, c.MEANING_CHECK_FAILED))
++    assert set(added) != _expected_rows()
++    swapped = tuple(
++        (p, code, c.MEANING_ANOTHER_DESK if (p, code) == ("server", c.EXIT_OPEN_FILE_LIMIT) else m)
++        for p, code, m in TABLE
++    )
++    assert set(swapped) != _expected_rows()
++
++
++def test_every_program_that_reads_the_settings_has_the_script_setting_code_exactly_once() -> None:
++    """The one script code is a row of every program except the desk, and has one meaning wherever it appears."""
++    with_it = {p for p, code, _ in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED}
++    assert with_it == PROGRAMS - {"server"} - set(c.TOOL_PROGRAM_FILES)
++    assert {m for _, code, m in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED} == {c.MEANING_SCRIPT_SETTING_REFUSED}
++
++
++# --- the three desk codes start_all passes on: the table, the .sh and the .ps1 say the same --------------------------
++def test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts() -> None:
++    sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    ps = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
++    sh_codes = re.search(r"case \"\$desk_code\" in ([0-9|]+)\)", sh)
++    ps_codes = re.search(r"\$deskCode -in ([0-9, ]+)\)", ps)
++    assert sh_codes and ps_codes
++    assert tuple(int(n) for n in sh_codes.group(1).split("|")) == c.PASSED_ON_DESK_CODES
++    assert tuple(int(n.strip()) for n in ps_codes.group(1).split(",")) == c.PASSED_ON_DESK_CODES
++    for program in ("start_all.sh", "start_all.ps1"):
++        assert set(c.PASSED_ON_DESK_CODES) <= set(_rows(program)), program
++    assert set(c.PASSED_ON_DESK_CODES) <= set(_rows("server"))
++
++
++# --- every row has a test that produces it, or is listed as not produced ----------------------------------------------
++_BAD_T = "test_bad_setting_entry_points.py::"
++_SELF_T = "test_exit_code_table.py::"
++_HTTP_T = "test_http.py::"
++_SETTINGS_TABLE_TEST = _BAD_T + "test_the_by_program_table_matches_what_every_program_returns"
++_RESET_T = "test_reset_scripts.py::"
++_START_T = "test_start_all_late_refusal.py::"
++_CHECK_T = "test_real_check_dry.py::"
++PRODUCED_BY: dict[tuple[str, int], str] = {
++    ("server", c.EXIT_ADAPTERS_UNREACHABLE): _SELF_T
++    + "test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down",
++    ("server", c.EXIT_ANOTHER_DESK): _HTTP_T + "test_second_desk_refuses_to_start",
++    ("server", c.EXIT_OPEN_FILE_LIMIT): "test_stall_eviction.py::" + "test_main_exits_3_on_a_too_small_limit",
++    ("server", c.EXIT_DESK_SETTING_REFUSED): "test_model_stamp_and_reaper.py::"
++    + "test_main_exits_4_when_the_desk_refuses",
++    ("server", c.EXIT_PORT_UNAVAILABLE): _HTTP_T + "test_second_desk_refuses_to_start",
++    ("crash_desk", c.EXIT_ADAPTERS_UNREACHABLE): _SELF_T
++    + "test_crash_desk_returns_the_unreachable_code_when_the_demo_server_is_down",
++    ("reset_check", c.EXIT_RESET_ANSWERING): _SELF_T
++    + "test_reset_check_returns_its_answering_code_when_a_port_answers",
++    ("crash_desk", c.EXIT_DESK_SETTING_REFUSED): _BAD_T + "test_crash_desk_gives_the_desks_own_code_for_a_late_refusal",
++    ("crash_desk", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("feed", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("reset.sh", c.EXIT_RESET_REFUSED): _RESET_T + "test_reset_refuses_a_database_outside_the_data_folder",
++    ("reset.sh", c.EXIT_RESET_HELD): _RESET_T + "test_reset_refuses_when_a_process_holds_the_database",
++    ("reset.sh", c.EXIT_RESET_ANSWERING): _RESET_T + "test_reset_refuses_when_something_answers_on_the_desk_port",
++    ("reset.sh", c.EXIT_RESET_NOT_STOPPED): _RESET_T + "test_reset_sh_refuses_when_the_desk_does_not_stop",
++    ("reset.sh", c.EXIT_RESET_WRONG_PROGRAM): _RESET_T + "test_reset_refuses_a_pid_file_of_another_program",
++    ("reset.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("reset_check", c.EXIT_RESET_HELD): _RESET_T
++    + "test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at",
++    ("reset_check", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("start_all.sh", c.EXIT_START_NOT_DONE): _START_T + "test_a_bad_wait_setting_is_refused_before_anything_is_started",
++    ("start_all.sh", c.EXIT_NOT_BASH): _SELF_T
++    + "test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code",
++    ("start_all.sh", c.EXIT_OPEN_FILE_LIMIT): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_DESK_SETTING_REFUSED): _START_T
++    + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_PORT_UNAVAILABLE): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("run_real_check", c.EXIT_CHECK_STOPPED): _CHECK_T + "test_no_terminal_to_answer_on_is_a_stop_not_a_traceback",
++    ("run_real_check", c.EXIT_CHECK_REFUSED): _CHECK_T + "test_refuses_without_config_and_without_required_names",
++    ("run_real_check", c.EXIT_CHECK_FAILED): _CHECK_T + "test_a_dry_run_where_every_send_ends_in_doubt_fails",
++    ("run_real_check", c.EXIT_SCRIPT_SETTING_REFUSED): _CHECK_T
++    + "test_swapped_mailbox_order_is_a_refused_setting_with_one_line",
++    (
++        "hubspot_probe",
++        c.EXIT_TOOL_REFUSED,
++    ): "test_hubspot_probe.py::test_refuses_wrong_count_missing_token_and_token_argument",
++    (
++        "n8n_api",
++        c.EXIT_TOOL_REFUSED,
++    ): "test_n8n_api_url.py::test_missing_or_unknown_arguments_print_the_usage_and_exit_2",
++    ("check_invariants", c.EXIT_TOOL_FAILED): "test_load_tools.py::test_cli_exit_codes",
++    ("check_invariants", c.EXIT_TOOL_REFUSED): "test_load_tools.py::test_cli_exit_codes",
++}
++
++
++# The causes inside the one start_all row 1 (MEANING_START_NOT_DONE lists them), each with the test that produces it.
++START_NOT_DONE_CAUSES: dict[str, str] = {
++    "a bad mode word": "test_reset_scripts.py::test_start_all_sh_refuses_an_unknown_mode_before_it_calls_python",
++    "a bad START_ALL_WAIT_SECONDS value": _START_T + "test_a_bad_wait_setting_is_refused_before_anything_is_started",
++    "a leftover pid file": "test_reset_scripts.py::"
++    + "test_start_all_sh_refuses_when_either_pid_file_exists_and_starts_nothing",
++    "something else already answering on the demo server port": _START_T
++    + "test_a_foreign_listener_on_the_demo_server_port_is_refused_before_anything_is_started",
++    "the demo server not ready in time": _START_T
++    + "test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk",
++    "the desk not ready in time": _START_T
++    + "test_a_desk_that_never_listens_is_reported_after_the_wait_and_left_for_reset",
++    "the desk ended with a code that is not passed on": _START_T
++    + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++}
++
++
++_START_CAUSE_WORDS = (
++    "a bad mode word",
++    "a bad START_ALL_WAIT_SECONDS value",
++    "a leftover file",
++    "already answering on the demo server port",
++    "not ready in time",
++    "does not pass on",
++)
++
++
++def test_every_cause_in_the_start_row_has_a_producing_test_and_is_named_in_the_meaning() -> None:
++    meaning = c.MEANING_START_NOT_DONE
++    assert [w for w in _START_CAUSE_WORDS if w not in meaning] == []
++    assert len(START_NOT_DONE_CAUSES) == 7
++    ids = sorted({f"tests/{where}" for where in START_NOT_DONE_CAUSES.values()})
++    found = _collected_ids(ids)
++    assert not [i for i in ids if i not in found], [i for i in ids if i not in found]
++
++
++def test_every_row_has_a_producing_test_or_is_listed_as_not_produced() -> None:
++    rows = {(p, code) for p, code, _ in TABLE}
++    not_produced = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
++    assert not (set(PRODUCED_BY) & not_produced), set(PRODUCED_BY) & not_produced
++    assert set(PRODUCED_BY) | not_produced == rows, (
++        rows - set(PRODUCED_BY) - not_produced,
++        (set(PRODUCED_BY) | not_produced) - rows,
++    )
++
++
++def _collected_ids(node_ids: list[str]) -> set[str]:
++    """What `pytest --collect-only` finds for the named tests (a name that no longer exists is an error)."""
++    done = subprocess.run(  # noqa: S603 - our own interpreter and our own test ids
++        [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", *node_ids],
++        cwd=REPO,
++        capture_output=True,
++        text=True,
++        timeout=240,
++        check=False,
++    )
++    assert done.returncode == 0, (done.returncode, done.stdout[-600:], done.stderr[-300:])
++    return {line.split("[")[0].strip() for line in done.stdout.splitlines() if "::" in line}
++
++
++def test_every_named_producing_test_exists() -> None:
++    """Collected by pytest itself, not matched by a regex: a renamed, deleted or misspelt test is seen."""
++    ids = sorted({f"tests/{where}" for where in PRODUCED_BY.values()})
++    found = _collected_ids(ids)
++    assert not [i for i in ids if i not in found], [i for i in ids if i not in found]
++
++
++def test_the_collection_check_sees_a_name_that_does_not_exist() -> None:
++    ids = ["tests/test_exit_code_table.py::test_no_such_test_exists_here"]
++    with pytest.raises(AssertionError):
++        _collected_ids(ids)
++
++
++def test_a_new_row_that_no_test_names_is_seen() -> None:
++    """The check itself: a row added to the table and to neither list is reported."""
++    extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, c.MEANING_SIMULATED_KILL))
++    rows = {(p, code) for p, code, _ in extra}
++    assert rows - set(PRODUCED_BY) - set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST) == {("feed", c.EXIT_SIMULATED_KILL)}
++
++
++def _free_port() -> int:
++    with socket.socket() as sock:
++        sock.bind(("127.0.0.1", 0))
++        return int(sock.getsockname()[1])
++
++
++def test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down(tmp_path: Path) -> None:
++    """Real behaviour: the desk is started with the demo server's port closed; code 1 of the `server` rows."""
++    done = _run([sys.executable, "-m", "lead_desk.server"], tmp_path, DESK_PORT="0", DESK_FAKES_PORT=str(_free_port()))
++    assert done.returncode == c.EXIT_ADAPTERS_UNREACHABLE, (done.stdout, done.stderr[-300:])
++    assert "Traceback" not in done.stderr
++
++
++def test_crash_desk_returns_the_unreachable_code_when_the_demo_server_is_down(tmp_path: Path) -> None:
++    """Real behaviour: crash_desk runs the desk's main, with the demo server's port closed."""
++    done = _run(
++        [sys.executable, str(REPO / "scripts" / "crash_desk.py")],
++        tmp_path,
++        DESK_PORT="0",
++        DESK_FAKES_PORT=str(_free_port()),
++    )
++    assert done.returncode == c.EXIT_ADAPTERS_UNREACHABLE, (done.stdout, done.stderr[-300:])
++    assert "Traceback" not in done.stderr
++
++
++def test_reset_check_returns_its_answering_code_when_a_port_answers(tmp_path: Path) -> None:
++    """Real behaviour: a listening socket on the desk's port, no lock file: the check answers with its own code."""
++    with socket.socket() as listener:
++        listener.bind(("127.0.0.1", 0))
++        listener.listen(1)
++        port = int(listener.getsockname()[1])
++        done = _run(
++            [sys.executable, str(REPO / "scripts" / "reset_check.py")],
++            tmp_path,
++            DESK_PORT=str(port),
++            DESK_FAKES_PORT=str(_free_port()),
++        )
++    assert done.returncode == c.EXIT_RESET_ANSWERING, (done.stdout, done.stderr[-300:])
++    assert "Traceback" not in done.stderr
++
++
++# --- the printed table and the pages that must not repeat it
++# ------------------------------------------------------------
++def test_the_table_printed_in_docs_settings_md_is_the_generated_one() -> None:
++    text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
++    assert render.current_block(text) == render.block()
++    assert text.count(render.START) == 1 and text.count(render.END) == 1
++
++
++def test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces() -> None:
++    lines = render.render().splitlines()
++    assert len(lines) == len(TABLE) + 2
++    marked = [ln for ln in lines if render.NOT_PRODUCED in ln or render.NOT_PRODUCED_ON_LINUX in ln]
++    assert len(marked) == len(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
++    windows = [ln for ln in lines if render.NOT_PRODUCED_ON_LINUX in ln]
++    assert windows and all(("`reset.ps1`" in ln or "`start_all.ps1`" in ln) for ln in windows)
++    assert not [ln for ln in lines if ("`reset.ps1`" in ln or "`start_all.ps1`" in ln) and ln not in windows]
++
++
++_PAGES = (
++    *sorted((REPO / "docs").glob("*.md")),
++    REPO / "README.md",
++    REPO / "contract.md",
++    REPO / "load_tools" / "README.md",
++)
++_PROGRAM_WORDS = (
++    "crash_desk",
++    "reset_check",
++    "run_real_check",
++    "reset.sh",
++    "reset.ps1",
++    "start_all",
++    "feed.py",
++    "desk",
++    "server",
++)
++# every way a page gives an exit number: "exit 4", "exit code 4", "(exit: 4)", "code 4", "returns/gives/ends with 4",
++# "its own `4`", "with its own 4"
++_EXIT_NUMBER = re.compile(
++    r"(?:\bexit(?:s| code| codes)?\s*[(:]?\s*|\bcode\s+|\b(?:gives|ends with)\s+(?:code\s+)?|\bits own\s+`?)(\d+)\b"
++)
++_MAX_EXIT_CODE = 255  # a larger number after "gives" or "code" is an HTTP status (400, 503), not an exit code
++_TABLE_CODES = {str(code) for _, code, _ in TABLE}
++
++
++def _outside_the_table(text: str) -> list[tuple[int, str]]:
++    kept: list[tuple[int, str]] = []
++    inside = False
++    for number, line in enumerate(text.splitlines(), 1):
++        if render.START in line:
++            inside = True
++        elif render.END in line:
++            inside = False
++        elif not inside:
++            kept.append((number, line))
++    return kept
++
++
++def _prose_numbers(text: str) -> list[tuple[int, str]]:
++    """Lines (outside the generated table) that name a program or the desk and give an exit number other than 0: the
++    numbers live only in the table."""
++    return [
++        (number, line[:90])
++        for number, line in _outside_the_table(text)
++        if any(word in line for word in _PROGRAM_WORDS)
++        and [n for n in _EXIT_NUMBER.findall(line) if n != "0" and int(n) <= _MAX_EXIT_CODE]
++    ]
++
++
++def _numbers_not_in_the_table(text: str) -> list[tuple[int, str]]:
++    """Any exit number, on any line, that is not a code of the table at all (a stale or invented number)."""
++    return [
++        (number, line[:90])
++        for number, line in _outside_the_table(text)
++        if [n for n in _EXIT_NUMBER.findall(line) if n != "0" and int(n) <= _MAX_EXIT_CODE and n not in _TABLE_CODES]
++    ]
++
++
++# --- the same rule for comments and docstrings of the code, and every program that ends with a code has rows ---------
++_NO_PROSE_CHECK = {"constants.py", "db.py"}  # the table itself; db.py speaks of SQLite's own result codes
++
++
++def _prose_of_code_files() -> list[tuple[Path, int, str]]:
++    """(file, line, text) of every comment and docstring in the code of src/, scripts/, load_tools/ and demo_only/,
++    and of
++    every comment line of the shell scripts and every line of the load_tools pages."""
++    import ast
++    import io
++    import tokenize
++
++    found: list[tuple[Path, int, str]] = []
++    files = [
++        *(REPO / "src").rglob("*.py"),
++        *(REPO / "scripts").glob("*"),
++        *(REPO / "load_tools").glob("*.py"),
++        *(REPO / "load_tools").glob("*.md"),
++        *(REPO / "demo_only").glob("*.py"),
++    ]
++    for path in files:
++        if path.name in _NO_PROSE_CHECK or path.is_dir() or path.suffix in {".pyc", ".example"}:
++            continue
++        source = path.read_text(encoding="utf-8")
++        if path.suffix == ".py":
++            for node in ast.walk(ast.parse(source)):
++                if isinstance(node, ast.Module | ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
++                    doc = ast.get_docstring(node, clean=False)
++                    if doc and node.body:
++                        found.extend((path, node.body[0].lineno + i, ln) for i, ln in enumerate(doc.splitlines()))
++            found.extend(
++                (path, tok.start[0], tok.string)
++                for tok in tokenize.generate_tokens(io.StringIO(source).readline)
++                if tok.type == tokenize.COMMENT
++            )
++        else:
++            found.extend(
++                (path, n, ln)
++                for n, ln in enumerate(source.splitlines(), 1)
++                if path.suffix == ".md" or ln.lstrip().startswith(("#", "<#"))
++            )
++    return found
++
++
++def _code_prose_numbers(lines: list[tuple[Path, int, str]]) -> list[str]:
++    return [
++        f"{path.relative_to(REPO) if path.is_relative_to(REPO) else path}:{number}"
++        for path, number, text in lines
++        if [n for n in _EXIT_NUMBER.findall(text) if n != "0" and int(n) <= _MAX_EXIT_CODE]
++    ]
++
++
++def test_no_comment_or_docstring_of_the_code_gives_an_exit_number() -> None:
++    assert not _code_prose_numbers(_prose_of_code_files())
++
++
++def test_the_code_prose_check_finds_a_number_in_a_docstring_and_a_comment(tmp_path: Path) -> None:
++    sample = [
++        (tmp_path / "a.py", 3, "the desk ends with exit code 4"),
++        (tmp_path / "b.sh", 1, "# exits 3 when too few files"),
++        (tmp_path / "c.py", 2, "the portal gives 503 and exit 0 is fine"),
++    ]
++    assert _code_prose_numbers(sample) == [f"{tmp_path / 'a.py'}:3", f"{tmp_path / 'b.sh'}:1"]
++
++
++def test_every_program_that_ends_with_a_code_has_rows_in_the_table() -> None:
++    """Reverse check: every file of scripts/, load_tools/ and demo_only/ that runs as a program and ends with a number
++    (`sys.exit(`, `raise SystemExit(`, `return EXIT_`) is a program of the table. `http_guard.py` is a module that
++    other programs import: it has no end of its own."""
++    known = {f"scripts/{p}" if "." in p else f"scripts/{p}.py" for p in PROGRAMS} | set(c.TOOL_PROGRAM_FILES.values())
++    known |= {"scripts/http_guard.py"}
++    unlisted: list[str] = []
++    for folder in ("scripts", "load_tools", "demo_only"):
++        for path in sorted((REPO / folder).glob("*.py")):
++            text = path.read_text(encoding="utf-8")
++            if "__main__" in text and re.search(r"sys\.exit\(|raise SystemExit\(", text):
++                relative = f"{folder}/{path.name}"
++                if relative not in known:
++                    unlisted.append(relative)
++    assert not unlisted, unlisted
++
++
++def test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table() -> None:
++    for page in _PAGES:
++        assert not _prose_numbers(page.read_text(encoding="utf-8")), page.name
++
++
++def test_no_page_gives_an_exit_number_that_is_not_in_the_table() -> None:
++    for page in _PAGES:
++        assert not _numbers_not_in_the_table(page.read_text(encoding="utf-8")), page.name
++
++
++def test_the_prose_check_finds_a_program_with_a_number() -> None:
++    """The check itself: it is not vacuous."""
++    assert _prose_numbers("`run_real_check` gives 2 for its own refusals")
++    assert _prose_numbers("start_all.sh ends with code 4")
++    assert _prose_numbers("reset.sh: exit 5 when it is slow")
++    assert _prose_numbers("the desk exits with exit code 4 on a refused setting")  # the `server` rows are covered too
++    assert _prose_numbers("a bad value ends `start_all` with its own `1`")  # the settings.md shape
++    assert _prose_numbers("the desk ends with exit code 4.")
++    assert not _prose_numbers("`run_real_check` gives the code of the table")
++    assert not _prose_numbers("the desk exits with the refusal row of the table")
++
++
++def test_the_number_check_finds_a_number_that_is_in_no_row() -> None:
++    assert not _numbers_not_in_the_table("the portal gives 503 and gives 400 with a message")  # HTTP, not exit codes
++    assert _numbers_not_in_the_table("a page that says exit 9 somewhere")
++    assert _numbers_not_in_the_table("the program ends with its own `77`")
++    assert not _numbers_not_in_the_table("exit code 4 is a code of the table")

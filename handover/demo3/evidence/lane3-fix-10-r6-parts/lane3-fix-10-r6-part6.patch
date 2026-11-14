@@ -1,0 +1,80 @@
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 89e6f8a..3f3b515 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -82,7 +82,7 @@ from lead_desk.constants import (
+     MIRROR_CALL_SHARE,
+     REPLY_MAX_BYTES,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import SettingRefused, env_number, env_path, split_url
+ from lead_desk.run_stats import write_stats
+ 
+ LEAD_ID_PROPERTY: Final = "hadavin_lead_id"  # created by hand in the CRM account; this module never creates one
+@@ -191,10 +191,10 @@ class HubspotSettings:
+             )
+         if env.get("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
+             kw["allow_any_base_url"] = True
+-        if env.get("DESK_HUBSPOT_STATS_FILE"):
+-            kw["stats_file"] = Path(env["DESK_HUBSPOT_STATS_FILE"])
++        if env.get("DESK_HUBSPOT_STATS_FILE", "").strip():  # optional: empty or white space only means unset
++            kw["stats_file"] = env_path(env, "DESK_HUBSPOT_STATS_FILE")
+         return cls(
+-            Path(env["DESK_HUBSPOT_KEY_FILE"]),
++            env_path(env, "DESK_HUBSPOT_KEY_FILE"),
+             env_number(env, "DESK_HUBSPOT_MAX_CALLS", int, low=1, high=CAP_COUNT_MAX),
+             **kw,
+         )
+diff --git a/demo_only/fake_model_server.py b/demo_only/fake_model_server.py
+index 39022df..1680f57 100644
+--- a/demo_only/fake_model_server.py
++++ b/demo_only/fake_model_server.py
+@@ -16,7 +16,8 @@ checker. `--control-file FILE` holds one mode word (or {"mode": ...}); it is rea
+ POST /control.
+ The three path options are checked like the load tools' paths (tools/pathconfine.py): the file must lie in the folder
+ you started in, the repository or the temporary folder, or in a folder listed in LEAD_DESK_PATH_ROOTS; a refused path
+-exits with code 2 before the server starts. An outside path that worked before this check is now refused. Start it from
++exits with EXIT_TOOL_REFUSED (EXIT_CODE_TABLE) before the server starts. An outside path that worked before this
++check is now refused. Start it from
+ the repository folder (``python -m demo_only.fake_model_server``): unlike the load tools it has no fallback for a start
+ from elsewhere, and a ``tools`` package of another project that comes first on the import path stops the start with a
+ traceback (ModuleNotFoundError): run it from the repository folder, without another project's ``tools`` on PYTHONPATH.
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index bbb2ca8..b13bdef 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -167,7 +167,8 @@ class _GateBusy(sqlite3.OperationalError):
+ 
+ class DeskSettingRefused(ValueError):
+     """The Desk refuses to be built with a setting that would break its once-only guarantee (the AI adapter declares a
+-    time limit that does not fit the stuck grace). The launcher turns exactly this one into exit code 4."""
++    time limit that does not fit the stuck grace). The launcher turns exactly this one into
++    EXIT_DESK_SETTING_REFUSED."""
+ 
+ 
+ class _IncompleteCheck(Exception):
+diff --git a/tests/test_stall_eviction.py b/tests/test_stall_eviction.py
+index 640e160..8b84356 100644
+--- a/tests/test_stall_eviction.py
++++ b/tests/test_stall_eviction.py
+@@ -220,7 +220,7 @@ def test_main_exits_3_on_a_too_small_limit(monkeypatch, capsys) -> None:
+     monkeypatch.setattr(server, "resource", _Res(soft=100, hard=100))
+     with pytest.raises(SystemExit) as info:
+         server.main()
+-    assert info.value.code == constants.EXIT_SETTING_REFUSED == 3
++    assert info.value.code == constants.EXIT_OPEN_FILE_LIMIT == 3
+     assert "MAX_HANDLER_THREADS" in capsys.readouterr().out
+ 
+ 
+diff --git a/scripts/check_schema.py b/scripts/check_schema.py
+index 65b3d2a..772d2ff 100644
+--- a/scripts/check_schema.py
++++ b/scripts/check_schema.py
+@@ -1,6 +1,6 @@
+ """Self-check: load schema.sql into sqlite3 (stdlib) and fire every trigger and constraint once.
+ 
+-Run: python scripts/check_schema.py   (prints one line per check, exits 1 if any check fails)
++Run: python scripts/check_schema.py   (prints one line per check, ends with EXIT_TOOL_FAILED if any check fails)
+ Made-up data only. Not a test suite; the tests are in tests/.
+ """
+ 
