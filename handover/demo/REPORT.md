@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 13:40Z - heartbeat; T7b first result read from the lead's message; why the key differs; page statement draft
+
+- Why the key is "gone": NOT because a flow change moved it out. I compared the flow JSON at 59202078 (11:05Z) and 1ced4e1f: neither version has any key, authorization, header, bearer or api-key text in any of the four flows (grep count 0 in both), and the diff between them is only the recovery IFs, continue-on-error, the CRM error output and the new guards. In my design the model key lives only in the stage server's key file; n8n never gets it as a parameter, header or output. So the same flows could not have carried it into n8n's files in either version. The likely difference is lane3's needle or where lane3 planted it (a field in the lead payload, or a header on a request through n8n) - I do not know; their 3 of 3 hits on the 11:05Z flows and the runner's 0 hits are both consistent with "the key reaches n8n only if the test sends it through n8n". NOT proven by me; lane3 should say how the key got to n8n on their run.
+- T7b first version result (laptop, 572 files, flows 1ced4e1f): hits only in database.sqlite-wal: name 3, e-mail 2; key 0 and SMTP password 0 everywhere. This matches my reading that lead data from the run sits in the write-ahead file; it does not yet say whether it is only the WAL or also freed pages (the extended T7b answers that).
+- Draft page statement (to be used ONLY if the extended T7b confirms): "In my runs, with execution saving off (environment and workflow level), a lead's name and e-mail were found in n8n's SQLite write-ahead file after runs, and [not in / also in] the main database file after a checkpoint; the fake model key and a fake SMTP password were found in no file of n8n's data folder, its log or the exported flow JSON. Keys are held in n8n credentials only. One machine, made-up data, flows at commit 1ced4e1f." If the checkpoint leaves them in freed pages of the main file, the statement says "lead name and e-mail may stay in n8n's database file (write-ahead file and freed pages)".
+- Nothing running here; nothing else pushed; T14 counts unread.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Extended T7b result; lane3's key placement; T14/T15/T10/K3/K3B counts; T4, pattern check, real-node flows, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the extended T7b, then fix the page statement and N8N-START.md to the measured words. 2. Read T14, T15 and the kill points. 3. Lead id pattern check.
+
 ## Block 13:30Z - T7b extended with the WAL checkpoint question (pushed, not run); idle otherwise
 
 - T7b now also: stops n8n, copies the data folder, opens the COPY with sqlite3, runs PRAGMA wal_checkpoint(TRUNCATE), counts needles in the main database file, and lists which tables hold a LIVE row with the needle (a needle in the main file but in no live row = freed pages; in a table = still stored). Written into the REC line `T7b after_stop_and_checkpoint`. The V4 chain on the laptop started T7b before this change (it has the first version: grep only), so for this answer the laptop needs one more T7b run on the pushed mf.py (about 2 minutes). I did not run it (no disk).
