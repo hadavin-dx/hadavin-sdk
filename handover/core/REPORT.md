@@ -1,5 +1,33 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:04 UTC / 11:34 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| ae16bd9e (r7h builder) | m1, m2, n1, three thread sites, my 05:48 note, M9-02 order fix (told about 05:56) | fix-dont-defer | 05:20 / 10:50 | 50 min box ends about 06:10 | r7h | RUNNING, NO HAND-BACK. Newest checkpoint 05:59 "runfinal started on stage2" (so it has moved to a final run; I do not know if M9-02 is in it, it has not said). Patch files in out/R7H are still the 05:46 ones | hand-back; verify sha256 and RESULTS; if M9-02 is missing, r7i |
+| aa54df08 (mail pass 9) | 30+ new mutants, mail/secret modules | fresh pass | 05:35 / 11:05 | box ends about 06:50 | pass 9 | RUNNING: 14 mutant rows. NO 22-file re-run result yet for any survivor (the checkpoint has no re-run line; I do not know when it starts them) | mail-pass9-r7g.md |
+
+**M9-02 on the 22-file set at 900 s: NOT RUN / NOT REPORTED YET.** Selector-set result only: SURVIVED. So I still cannot say if it is a real gap. Your 05:54 order is already with the builder.
+
+**Pass 9 rows (selector set, restore by sha OK on all):** KILLED 7: M9-01, M9-04, M9-07, M9-06, M9-14 (smtp_provider, as in my 06:00 block), M9-20 (smtp_outbox read: dribbled greeting deadline), M9-21 (read_reply: line without CRLF allowed unbounded; killed by test_f2 of r7f). SURVIVED the selector set 7, each a candidate only until the big-set re-run: M9-02 (password file read after the send counter), M9-08 (_wrap handshake no budget timeout), M9-12 (login accepted on any 2xx), M9-03 (provider timeout cap ignored), M9-18 (smtp_outbox timeout 0 means zero budget), M9-19 (line 254, new survivor), M9-22 (smtp_outbox: empty send key allowed). No BADMUT, no timeout so far. Seven survivors out of 14 is a high rate: either real test gaps in r7g or equivalent mutants; the 22-file re-run and the agent's EQUIVALENT arguments decide, I will read both.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| big-set re-runs of the 7 survivors | pass 9 has not reported them | read mail-pass9-r7g.md; message the builder at once for each real gap (M9-02 already sent) |
+| r7h final patch, EV7H, fresh r7h delta reviewer | builder running | start EV7H and reviewer together on the FINAL patch only |
+| two EV7G facts (raw gaierror text, burst:4 exit 0 with errors) | with the builder | its RESULTS |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7h hand-back: verify sha256, read RESULTS for M9-02, the two EV7G facts and the sweep, copy patches (CRLF as .gz), start EV7H and a fresh delta reviewer together.
+2. Ask pass 9 now for the big-set re-run order (survivors first, M9-02 first) so real gaps reach the builder or an r7i builder before the 06:50 box end.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 05:59 UTC / 11:29 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
