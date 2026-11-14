@@ -1,10 +1,10 @@
-## HEARTBEAT 117 (07:25Z) - B22 (fix-2 r9) HANDED BACK, my lint GREEN; fresh reviewers on r9 started; start_all 4/8 answer applied
+## HEARTBEAT 117 (07:22Z) - B22 (fix-2 r9) HANDED BACK, my lint GREEN; fresh reviewers on r9 started; start_all 4/8 answer applied
 
-| Agent / job | State at 07:25Z |
+| Agent / job | State at 07:22Z |
 |---|---|
 | B22 fix-2 r9 | HANDED BACK, tree 047715c5 (patch lane3-fix-2-r9-on-fix-1-r6.patch, applies on base+fix-1 r6 to the same tree). NO full run (your order). Changed 6 test files: 836 passed, 1 skipped; hygiene test alone rc 0 (its first run was red: the text "/mnt/c" in docs and a test; reworded); wall-clock guard alone rc 0. Old-code proof: 79 real-behaviour failures, 0 function-absent (taken before the last wording edits). Mutation 19 of 19 killed. Key-file option (a) built: mode refusal text now "the {what} file can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy"; docs carry the copy step; option (b) NOT added: residual case = a root process reading a 0600 file planted by another user is accepted (recorded in the notes; a few lines + test if you want it) |
 | LINT by me (clean copy of ls-files, tree 047715c5) | ruff check 0, format 0, mypy linux 0, mypy win32 0, bandit 0 |
-| fix-2 r9 reviewers | egm-design and egm-codebase-details started 07:25Z on the whole fix |
+| fix-2 r9 reviewers | egm-design and egm-codebase-details started 07:22Z on the whole fix |
 | B23 fix-10 r4 | building (started 07:19Z) |
 | B21 fix-5 r8 | fixing its one red test; no hand-back |
 
