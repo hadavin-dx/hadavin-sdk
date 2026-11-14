@@ -95,6 +95,10 @@ def crm(port, workdir):
             d = take("upsert_delay_ms")
             if d:
                 time.sleep(d / 1000)
+            refuse = read_ctl(ctl_path).get("upsert_status")  # persistent fault: the CRM answers an error for every call
+            if refuse:
+                event(workdir, "crm", "upsert_refused", lead=lead, status=int(refuse))
+                return int(refuse), {"error": "refused"}
             with lock:
                 hit = next((r for r in rows.values() if r["lead"] == lead or r["email"] == email), None)
                 created = hit is None

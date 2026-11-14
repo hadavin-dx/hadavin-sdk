@@ -399,3 +399,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | b23 | PAUSED by lead order L3-STOP 10:50Z; note evidence/paused-b23-2026-11-14.md | | paused |
 | KILL | started 11:06Z: n8n 2.46.6 install in /home/user/work/kill-n8n (bg, bounded), Postgres 16 binaries present, no docker daemon | | in progress |
 | KILL-RUN | started 11:45Z: kill/run_all.sh (pid in pgrep -f run_all.sh), sequence 18 runs one at a time, progress file /home/user/work/kill/run_all.progress; also Postgres 16 on port 55432 (scratch, uid 65534) | expected end ~12:50Z | last check 11:45Z; stop Postgres and the script before saying done |
+| KILL-RUN-B | queued 12:38Z: kill/run_b.sh (waits for run_all.sh, then BURST x3, ERROR x2, GREP x3 on the 11:05Z flows, then T14 idle 120 s x3 on the FIXED flows 8e2b6960); same progress file | expected end ~13:35Z | last check 12:38Z; stop Postgres, run_b.sh, run_all.sh before saying done |

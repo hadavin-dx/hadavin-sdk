@@ -18,7 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 K = "/home/user/work/kill"
 N8N_DIR = "/home/user/work/kill-n8n"
 NODE_BIN = "/home/user/work/node24/node_modules/node/bin"
-PROBE = os.path.join(K, "probe")
+PROBE = os.environ.get("FLOW_PROBE", os.path.join(K, "probe"))
 PSQL = ["psql", "-h", "127.0.0.1", "-p", "55432", "-U", "postgres", "-d", "kill_t", "-At", "-F", "|"]
 PORT = {"crm": 18101, "stage": 18102, "smtp": 2525, "n8n": 5690}
 FLOWS = ["mf-sub-crm-mail", "mf-form", "mf-hook", "mf-recovery"]
@@ -152,10 +152,26 @@ class Run:
                 p.kill()
 
     # ---- lead + waiting
-    def send(self, lead, email=None, path="mf-form"):
+    def send(self, lead, email=None, path="mf-form", extra=None, name="Test Person"):
         email = email or (lead.lower() + "@example.test")  # one e-mail per lead: the CRM upsert also matches on e-mail
-        return http("POST", "http://127.0.0.1:%d/webhook/%s" % (PORT["n8n"], path),
-                    {"submission_id": lead, "email": email, "name": "Test Person"}, timeout=40)
+        body = {"submission_id": lead, "email": email, "name": name}
+        body.update(extra or {})
+        return http("POST", "http://127.0.0.1:%d/webhook/%s" % (PORT["n8n"], path), body, timeout=60)
+
+    def grep_canaries(self, canary):
+        """Search n8n's own folder (database file and logs), n8n.log and an export of every workflow for each planted
+        value. The Postgres table is checked apart (it holds e-mail and name by design)."""
+        exp = os.path.join(self.wd, "export.json")
+        rc, _ = self.cli("export:workflow", "--all", "--output=" + exp)
+        hits = {"export_rc": rc}
+        targets = {"n8n_folder": self.home, "n8n_log": self.n8n_log, "export_json": exp}
+        for tname, path in targets.items():
+            for cname, val in canary.items():
+                r = subprocess.run(["grep", "-rlaF", "--", val, path], capture_output=True, text=True)
+                hits["%s:%s" % (tname, cname)] = [os.path.relpath(x, self.wd) for x in r.stdout.split()]
+        for cname, val in canary.items():
+            hits["postgres_row:%s" % cname] = sql("SELECT count(*) FROM mf_leads WHERE concat_ws(' ',lead_key,email,name,crm_id) LIKE '%%" + val + "%%'")
+        return hits
 
     def wait_event(self, src, ev, timeout=60):
         end = time.time() + timeout
@@ -268,8 +284,33 @@ def main():
             out["send"] = r.send(leads[0])
             r.wait_terminal(leads)
             time.sleep(100)  # recovery ticks on a table whose only row is done
-        elif point == "idle":
-            time.sleep(100)  # no lead at all: recovery ticks every 30 s on an empty table
+        elif point == "burst":
+            import concurrent.futures as cf3
+            with cf3.ThreadPoolExecutor(10) as ex:
+                futs = [ex.submit(r.send, leads[0]) for _ in range(10)]
+                rs = [f.result() for f in futs]
+            tally = {}
+            for code, body in rs:
+                try:
+                    j = json.loads(body)
+                    key = "%s/%s/repeat=%s" % (code, j.get("verdict"), j.get("repeat"))
+                except ValueError:
+                    key = "%s/%s" % (code, body[:50])
+                tally[key] = tally.get(key, 0) + 1
+            out["burst_answers"] = tally
+        elif point == "error":
+            r.ctl("crm.ctl", {"upsert_status": 500})  # the CRM refuses every call: three attempts, then failed + 1 alert
+            out["send"] = r.send(leads[0])
+        elif point == "grep":
+            canary = {"name": "Zelda" + " Quasar-Canary", "email": "zq" + ".canary@example.test",
+                      "key": "CANARY" + "KEY" + "-" + "7f3a9c2e"}
+            out["send"] = r.send(leads[0], email=canary["email"], name=canary["name"], extra={"api_key": canary["key"]})
+            r.wait_terminal(leads)
+            time.sleep(35)  # one recovery tick and one error-handler pass
+            r.kill_n8n()
+            out["grep"] = r.grep_canaries(canary)
+        elif point in ("idle", "t14"):
+            time.sleep(120 if point == "t14" else 100)  # no lead at all: recovery ticks every 30 s on an empty table
             leads = []
         elif point == "controlbad":
             out["send"] = r.send(leads[0], email="not-an-email")
@@ -282,12 +323,14 @@ def main():
         elif point == "Fc":
             r.ctl("smtp.ctl", {"pre_s": 40})
             out["send"] = r.send(leads[0])
-        out["reached_terminal"] = r.wait_terminal(leads) if leads else True
+        out["reached_terminal"] = r.wait_terminal(leads, 700 if point == "error" else 330) if leads else True
         time.sleep(20 if leads else 0)  # settle: a late double would show here
         out["states"] = r.states()
         out["counts"] = r.count(leads)
         out["events"] = len(r.lines("events.jsonl"))
         out["all_mails"] = [json.loads(x).get("subject") for x in r.lines("mails.jsonl")]
+        out["total_stage_requests"] = sum(1 for x in r.lines("events.jsonl") if "qualify_start" in x or "qualify_repeat" in x)
+        out["total_mails"] = len(r.lines("mails.jsonl"))
         out["stage_qualify_events"] = sum(1 for x in r.lines("events.jsonl") if "qualify_start" in x)
         out["crm_upsert_events"] = sum(1 for x in r.lines("events.jsonl") if "upsert_start" in x)
     except Exception as e:  # noqa: BLE001
