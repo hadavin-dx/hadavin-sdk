@@ -1,0 +1,2 @@
+{"ts": "2026-11-14T07:02:27.712Z", "setup": "a default", "when": "before", "cpu_idle_pct": 100.0, "free_ram_mb": 14231.3}
+{"ts": "2026-11-14T07:02:50.684Z", "setup": "a default", "when": "after", "cpu_idle_pct": 99.7, "free_ram_mb": 14110.0}

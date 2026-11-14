@@ -1,0 +1,9 @@
+#!/bin/bash
+export PATH=/tmp/rr/repo/data/venv/bin:/tmp/rr/repo/data/node/node-v24.22.2-linux-x64/bin:$PATH
+cd /tmp/rr/r2; B=/tmp/rr/repo/data/n8n_evidence_run; N=/tmp/rr/repo/data/node/node-v24.22.2-linux-x64/bin
+for i in 1 2 3 4 5; do
+  mkdir $B/r2d-a$i && (cd $B/r2d-a$i && cp -al ../smoke/node_modules ../smoke/package.json ../smoke/package-lock.json .)
+  echo "r2d-a$i start $(date -u +%H:%M:%SZ)" >> /tmp/rr/r2d.log
+  python demo_only/n8n_evidence/harness/run_r2d_a3.py --work-dir $B/r2d-a$i --node-dir $N > /tmp/rr/r2d-a$i.out 2>&1; echo $? > /tmp/rr/r2d-a$i.rc
+  echo "r2d-a$i end $(date -u +%H:%M:%SZ) rc $(cat /tmp/rr/r2d-a$i.rc)" >> /tmp/rr/r2d.log
+done
