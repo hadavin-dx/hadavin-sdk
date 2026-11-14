@@ -1,5 +1,42 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 04:25 UTC / 09:55 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| add05263 (EV7F runner) | ONE full run of r7f, odd-file listing per file, G03/T01/B02 + 14 rows on r7f, hostile drivers, pinned ruff | independent proof of r7f; never judges | 04:25 / 09:55 | 90 min box | EV7F n1 | RUNNING (waits up to 12 min for lanes to stop) | read EV7F-EVIDENCE.md |
+| a0da50e2 (r7f reviewer) | fresh whole-patch review of r7f (netconnect.py and the cipher test setup are explicit targets) | independent read | 04:19 / 09:49 | about 05:10 | review 1 | RUNNING | give it EV7F evidence when it lands |
+| aebef140, a7f6b110, aaabb673 (lanes A, B, C) | wave-2 mutants on r7e | superseded by lead answer | 03:56 / 09:26 | stop after current mutant | wave 2 | STOP ORDER SENT 04:25 (not yet confirmed) | read each final report: mutant running, restore-by-sha proof |
+| mail pass 9 reader | fresh mutant pass (30+) on r7f | order 268 | not started | needs an exported r7f snapshot | pass 9 | NOT STARTED | start once lanes confirm stopped, so the machine is quiet |
+
+Applied from the lead: ASK 1 yes (stop order sent to the three lanes, they finish the current mutant), ASK 2 yes (EV7F re-runs G03, T01, B02 and the 14 claimed rows on r7f), clean-set CRASH stays listed as NOT explained, EV7F does the per-file untracked listing for the stray a<newline>b file.
+
+ASK: none (defaults: if a lane has not confirmed stopping in 15 min I read its progress file and note the running mutant; I kill nothing by name).
+
+NEEDED-CHECK v1 verdicts (my own read of tree-R7F, quick, not a full audit):
+| item | verdict | evidence | next |
+|---|---|---|---|
+| G03, T01, B02 killer tests | NEEDED, three different tests, not one shared test | tests/test_r7f_findings.py lines 924 (reply cap counts waiting bytes), 993 (per-read time-out set from time left), 1009 (byte-order mark removed); they check three different behaviours in three modules. They survived 689/433/724 existing tests, so no existing test does the same job | none |
+| netconnect.py helper vs core helpers | NEEDED, one place for the look-up bound | the only getaddrinfo in the demo is in netconnect.py; used by smtp_provider.py and imap_count.py (one helper, two callers). Core src/hadavin_sdk has its own HTTP guard (guard/http.py), a different job (outbound HTTP policy), no look-up bound found there | not compared line by line |
+| direct create_connection calls outside the helper | OPEN QUESTION (not checked) | load_tools/load_driver.py:433 uses a host from a parsed address; scripts/reset_check.py:27 uses a fixed loopback name | the reviewer and EV7F hostile table should say whether a hung name look-up can still happen at load_driver.py:433; if yes it is an r7g item, not a note |
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7f full run, 22 unrun files, stray a<newline>b writer, G03/T01/B02 on r7f | EV7F just started | read EV7F-EVIDENCE.md |
+| the NEEDED-CHECK of netconnect vs core guard/http.py is a read of file names only | no line-by-line comparison | do it if the reviewer flags duplication |
+| load_driver.py:433 hung look-up | not examined | see above |
+| mail pass 9 | waits for a quiet machine | start after lanes stop |
+| about 10 TIMEOUT / 15 not-run r7e mutants | superseded by r7f proof | EV7F plus pass 9 cover the r7f ones |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI | no runtime here / stay for the end | owner Windows run; final run on the clean patch |
+| fix/README.md rewrite | final step | after freeze |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect lane stop reports (restore-by-sha), then start mail pass 9 on an exported r7f snapshot.
+2. Resolve the r7f reviewer report with EV7F evidence; build r7g only for a real Blocker or Major (money and mail path, no cap).
+3. After a clean pass: freeze, rewrite handover/core/fix/README.md, sweep every agent and process I started and report counts.
+
+
 ## STATUS (core lead) 04:21 UTC / 09:51 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
