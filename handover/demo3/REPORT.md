@@ -1,3 +1,17 @@
+## HEARTBEAT 106 (06:22Z) - B19, B20, B21 STILL BUILDING; B19 saved its failing-tests log, B21 wrote checkpoint 1
+
+| Agent / job | State at 06:22Z |
+|---|---|
+| B19 fix-2 r8 | raw/b19-fails-before-r8.log exists (tests written, run on the unchanged tree); no hand-back |
+| B20 fix-10 r3 | building, no file yet |
+| B21 fix-5 r8 | checkpoint-b21.md written; building |
+| Full runs | none running |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
+WHAT I WOULD DO NEXT (ranked): 1. read the checkpoints and B19's fails-before count; 2. fresh whole-patch reviewers on each result when handed back; 3. stack builder after all six patches are clean.
+
 ## HEARTBEAT 105 (06:17Z) - B19, B20, B21 BUILDING (trees made, no checkpoint yet); nothing else changed since HB104
 
 | Agent / job | State at 06:17Z |
