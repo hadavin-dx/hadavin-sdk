@@ -1,6 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:04Z - IF-branch test DONE (20 of 20 exact); page folded; reviewer running
+
+- In my runs (n8n 2.46.6, one machine, 10 at once, same id): Postgres Insert (Skip on Conflict) -> IF (lead_id not empty): 20 of 20 bursts (10 fresh stacks x 1 burst, 1 reused stack x 10 bursts) gave exactly rows 1, new path 1, duplicate path 9; all 200 executions success; no HTTP error; no other split in any burst. Raw files and the distribution table are in n8n-rerun/skip/ (if-*), section 3 added to n8n-skip-on-conflict.md.
+- Folded into n8n-owns-vs-desk-owns.md: new summary line 6 (now an 11-line summary), five Evidence rows (Postgres skip 20 of 20, IF branch 20 of 20, serial id burn, Data Table upsert 10 of 10, check-then-insert more than 1 row in 9 of 10 bursts with the HTTP 500 text), and one "what it means" bullet whose last sentence for a client build is: use a database unique index or the upsert, never check-then-insert. Hygiene grep of the page and evidence files: clean (no 40+ character runs, no links).
+- A fresh egm comprehension reviewer is reading the changed lines now; I fold its findings next.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Reviewer result not in yet; no second hygiene scan after the fold.
+- Not tested: IF on the id column; other n8n versions; more than 10 parallel calls; queue mode; Make.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Fold the reviewer findings, rescan hygiene, push, block.
+2. Hold for the atlas pass 2 (about 09:15Z).
+3. Scratch cleanup only when you say R2b is finished.
+
+
 ## Block 09:01Z - IF-branch burst test: 7 of 10 fresh stacks done
 
 - Built (scratch): workflow Webhook -> Postgres Insert (Skip on Conflict, unique index on lead_id) -> IF node (lead_id not empty, strict string check) -> NewBranch (true) / DupBranch (false), each a Code node that answers with its branch name. Reading of the order: "10 + 10 bursts" = 10 fresh stacks x 1 burst, plus 1 reused stack x 10 bursts (my reading; say if you meant otherwise).
