@@ -1,6 +1,24 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:42Z (15:12 IST) - blind rerun DONE (D2 and D1b match the published table); keyed C0/D2 fresh rerun running; compare file next
+
+- Blind rerun, in my runs (desk on this Linux machine, blind stand-in mail server confirmed by its own mode field, fresh server per kill, counters 1, made-up data, real process end exit code 137, 5 kills per point): D2 (after the e-mail was sent): 5 of 5 = 1 desk lead, 1 receipt, 1 CRM row, 1 e-mail, follow-up UNKNOWN, counts page unknown 1; D1b (before the e-mail): 5 of 5 = 1 lead, 1 CRM row, 0 e-mails, follow-up UNKNOWN. The same request again got 201 (replayed) every time. Lost 0 of 10, doubled 0 of 10; the unknown ones are marked for a person (the desk does not resend by itself, per repo text).
+- This matches the published table for D2 and D1b blind, so the earlier "sent" rows in the not-blind files are only the keyed behaviour (files renamed NOTBLIND; the wrong run is kept, not hidden).
+- Cause of the first failure: new servers could not bind the ports while the old ones were still in the closing state; the driver now waits for both ports and checks the mode. Keyed C0 and D2 had counters that ran on across series (same mode, per-kill change still exactly +1); I am rerunning both with fresh servers (running now, about 10 minutes) so the compare table uses clean rows.
+- Compare file n8n-vs-desk-kill-compare.md: gets written as soon as the keyed rerun ends; numbers are already in hand (A 5, D2 blind 5, D1b blind 5, n8n point 1: P1a lost 5 of 5, P1b 0 lost; n8n-only kill-between-steps lost 5 of 5).
+- Page n8n-owns-vs-desk-owns.md: item 9 (n8n loses the lead) is pushed. Desk lines follow with the compare.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Compare file, reviewer, hygiene scan; n8n-side kill after the work (point 3) and an n8n-side point 2; the desk series is one kill per start, loopback, stand-in mail, made-up data.
+- The box (45 min from 09:10) ends about 09:55; reviewer may run past it.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Compare file the moment the keyed rerun ends, then page fold.
+2. Fresh comprehension reviewer on the changed lines, fold, hygiene scan.
+3. n8n-only kill after the work, before the reply (5 kills).
+
+
 ## Block 09:32Z (15:02 IST) - n8n point 1 DONE (n8n-first loses the lead 5 of 5); blind desk rerun running
 
 - n8n point 1 (kill after the n8n insert, before the desk has the request). In my runs: n8n 2.46.6, regular mode, one machine, one fresh stack, desk and stand-ins started by my script, made-up data, kill 1.5 s after the call inside a 4 s Wait, 5 kills per flow, counts per lead id.
