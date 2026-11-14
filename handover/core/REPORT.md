@@ -1,5 +1,41 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 08:12 UTC / 13:42 IST
+
+**LEAD ORDER 08:01 APPLIED: EV7K and the r7k reviewer continue; pass 11 RESTARTED at 08:02 on the r7m bytes (a6bba99e, trees tree-M11c lane A and tree-M11d lane B; one runner per tree; real gaps are listed for a NEW test-first r7n builder, not sent to r7k).**
+
+**Early findings (checkpoint lines only; none is a verdict yet):**
+- **r7k reviewer (a092c900), 08:01 and 08:05: M9-32 sweep PROBE CONFIRMED a key leak the r7k builder did not close: imap_count._session keeps the IMAP4.error context with the echoed LOGIN line, which holds the PASSWORD.** If it holds up in the written report this is a secret-path Major in r7k (same class as M9-32 at live_claude._post, crm_hubspot._once, regfile). It will need a fix at imap_count (and a sweep of smtp_provider/smtp_outbox/run_real_check/server.py for the same pattern: the reviewer is asked to cover them). That fix is the "confirmed security Major, fix only" case: it goes to the r7n builder with the M9-70 gap below, and EV7K on r7m would then be superseded by a run on r7n (I will compare ids; the 8 git files and the r7f id are still read from EV7K). Reviewer run so far: the 139-test file passes 3 of 3 (third under 3 busy loops, 31.8 s); M9 mutants killed; its own 24 mutants (O01-O24) running.
+- **Pass 11 (08:11): M9-70 (run_real_check.py:1055, worst-case mail count in the banner not multiplied by the desk processes) SURVIVED the big set on r7m (476 s) = REAL GAP candidate** (money/mail path: the banner is what the person reads before typing the Start answer). Other rows not in yet.
+- **r7l reviewer (a376c5cc):** it found the r7f f1 test failing on its r7j-based copy (known r7j bug, fixed in r7k: r7l alone sits on r7j so this is expected); it discarded the earlier mail-set results and re-runs; it killed one of its own runners that was too slow (restored src by diff, ok); wrote a test for a new item A17 (past-deadline reply write) to run once its lanes finish. Still no verdict.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6dafd10 (EV7K) | patches for r7m, ONE full run, git files alone, ruff, hostile table | final-bytes run | 08:03 / 13:33 | about 09:15 | EV7K | RUNNING: it aborted its first full launch (stray files in the tree) and RELAUNCHED at 08:02:33, pid 30275. No result yet | EV7K-EVIDENCE.md |
+| a092c900 (r7k reviewer) | review of r7k | independent | 08:03 / 13:33 | about 09:05 | review 1 of r7k | RUNNING (above) | core-fix-on-frozen-r7k-review.md |
+| a376c5cc (r7l reviewer) | review of r7l | independent | 07:47 / 13:17 | about 08:37 | review 1 of r7l | RUNNING | core-fix-on-frozen-r7l-review.md |
+| a6bba99e (pass 11) | 14 unjudged survivors (big set), then M9-73..82, J12, J13 | your 08:01 order | 08:02 / 13:32 | about 09:02 | pass 11 | RUNNING: first big-set result M9-70 SURVIVED (above); a deviation of its own: it uses the big set directly instead of the narrow re-check (a superset, fine) | mail-pass11-r7m.md |
+
+Agents running: 4. Load 2.9. Done: r7k and r7l builders, pass 10, pass 9, EV7J, EV7I, EV7H, the r7i and r7j reviewers. Stopped by me earlier: the first pass 11 (no result).
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| imap_count password in the error context: written finding and fix | reviewer running | r7n (test-first) with M9-70 and further pass 11 gaps; then EV on r7n |
+| EV7K result; r7k and r7l verdicts; pass 11 rows | running | resolve |
+| r7n builder not started | waits for the reviewer's written finding and pass 11 gaps | start at the first confirmed security Major (soon) |
+| README, R7J count 41 | after the reviews | write |
+| older packages' hashes, first clean-set CRASH, orphan-worker test | no evidence | README |
+| PowerShell scripts never run, Windows, Python 3.14, real IPv6-less host, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. When the r7k reviewer's report lands: confirm the imap_count finding and start the r7n builder (test-first) with it, M9-70 and any other confirmed pass 11 gap, on tree-R7M.
+2. Read EV7K, the r7l verdict and the rest of pass 11.
+3. Then README, sweep, report counts.
+
+
 ## STATUS (core lead) 07:59 UTC / 13:29 IST
 
 **YOUR 07:55 NOTE APPLIED (n8n/Make direction, NEEDED-CHECK on the take harness): (1) I STOPPED mutant pass 11 (a5529136, started 07:57, i.e. after your note time: a new pass on run_real_check and mail-reading code) about 1 minute in. It had two runner lanes still going after the agent stop; I killed the lane scripts and runners by pid (14216, 14218, 14221, 14222, 16411, 16412, 16416; nothing else), removed its two scratch trees (tree-M11, tree-M11b), and checked no process of pass 11 is left. Pass 11 produced NO result. The unrun list stays open for the NEEDED-CHECK verdict: pass 10 left 14 selector survivors UNJUDGED (M9-43 money worst case, M9-70/71 mail and HubSpot call counts, M9-55 allow-any-base-url, M9-13, 17, 25, 54, 56, 57, 58, J02, J06, J09), M9-73..82 unrun (scrubber M9-80/81, secret order M9-76, mailbox login limit M9-77), J12, J13. (2) No new packages or rounds. What I am finishing, in flight: the r7k hand-back (below), a mechanical merge of the finished r7k and r7l deltas into one tree (r7m, no new code), ONE evidence run EV7K on it, and ONE review of r7k. If you read "finish what is in flight" as excluding EV7K or the r7k review, say so and I stop them (default: they continue). A security Major already confirmed is fixed in r7k (M9-69 Start answer, M9-32 key text, M9-40 ledger lock).**
