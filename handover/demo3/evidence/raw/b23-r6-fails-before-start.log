@@ -1,1 +1,82 @@
-.F.F
+.F.FF                                                                    [100%]
+=================================== FAILURES ===================================
+__________ test_a_desk_that_printed_its_line_and_died_is_not_a_start ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-482/test_a_desk_that_printed_its_l0')
+cleanup = None
+
+    def test_a_desk_that_printed_its_line_and_died_is_not_a_start(tmp_path: Path, cleanup: None) -> None:
+        """Bug class: "the line was seen" taken as "the desk is up". The desk prints its listening line and ends; the grep
+        stand-in holds the script until the desk is really gone. Exit with the table's code for a desk that ended (0 is the
+        script's own 1), the "ended at once" line, no "started:", no pid file."""
+        stub = _stub_python(tmp_path, "echo 'desk listening on x'; exit 0")
+        data = tmp_path / "data"
+        _grep_after_match(stub, "desk listening", f'pid="$(cat "$DESK_PID_FILE")"; {_WAIT_GONE}')
+        done = _run(
+            tmp_path, first_on_path=stub, SHIM_FLAG=str(tmp_path / "shim-flag"), DESK_PID_FILE=str(data / "desk.pid")
+        )
+        out = done.stdout + done.stderr
+        assert (tmp_path / "shim-flag").exists(), "the stand-in was never reached"
+>       assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, out[-500:])
+E       AssertionError: (0, 'started: demo servers (keyed outbox) pid 7722, desk pid 7739
+E         ports: desk 52361, demo CRM and outbox 49527 (check...that_printed_its_l0/data/fakes.log and /tmp/pytest-of-root/pytest-482/test_a_desk_that_printed_its_l0/data/desk.log
+E         ')
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b23-tree/scripts/start_all.sh'], returncode=0, stdout='started: demo s...d_its_l0/data/fakes.log and /tmp/pytest-of-root/pytest-482/test_a_desk_that_printed_its_l0/data/desk.log\n', stderr='').returncode
+
+tests/test_start_all_late_refusal.py:450: AssertionError
+_____ test_a_missing_timeout_program_is_refused_before_anything_is_started _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-482/test_a_missing_timeout_program0')
+cleanup = None
+
+    def test_a_missing_timeout_program_is_refused_before_anything_is_started(tmp_path: Path, cleanup: None) -> None:
+        """The port probe needs `timeout` (a connect to a dropped address must not hang the script). Without it: the table's
+        code 1, one fixed line, nothing started. No silent fall back to a probe that can hang."""
+        bin_dir = tmp_path / "onlybin"
+        bin_dir.mkdir()
+        for name in ("bash", "grep", "tail", "sleep", "rm", "mkdir", "cat", "touch", "kill", "seq"):
+            found = shutil.which(name)
+            if found:
+                (bin_dir / name).symlink_to(found)
+        (bin_dir / "python").symlink_to(sys.executable)
+        done = _run_with_path(tmp_path, str(bin_dir))
+>       assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (0, 'started: demo servers (keyed outbox) pid 7802, desk pid 7823
+E         ports: desk 40749, demo CRM and outbox 58421 (check...imeout_program0/data/fakes.log and /tmp/pytest-of-root/pytest-482/test_a_missing_timeout_program0/data/desk.log
+E         ', '')
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['/usr/bin/bash', '/home/user/work/b23-tree/scripts/start_all.sh'], returncode=0, stdout='starte...program0/data/fakes.log and /tmp/pytest-of-root/pytest-482/test_a_missing_timeout_program0/data/desk.log\n', stderr='').returncode
+
+tests/test_start_all_late_refusal.py:525: AssertionError
+_______________ test_a_slow_port_probe_does_not_stretch_the_wait _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-482/test_a_slow_port_probe_does_no0')
+cleanup = None
+
+    def test_a_slow_port_probe_does_not_stretch_the_wait(tmp_path: Path, cleanup: None) -> None:
+        """The wait is a clock deadline, not a count of short sleeps: every probe here takes about one second (a `timeout`
+        stand-in), the demo server never answers, the budget is 2 seconds. The old count (5 sleeps per second of budget, each
+        followed by a probe) took more than 10 seconds. The line states the seconds really waited."""
+        stub = _stub_python(tmp_path, "exec sleep 120", 'echo "fakes server keyed on port $DESK_FAKES_PORT"; exec sleep 120')
+        slow = stub / "timeout"
+        real = shutil.which("timeout")
+        assert real
+        slow.write_text(f'#!/bin/bash\nsleep 1\nexec {shlex.quote(real)} "$@"\n', encoding="utf-8")
+        slow.chmod(0o755)
+        start = time.monotonic()
+        done = _run(tmp_path, first_on_path=stub, wait="2")
+        elapsed = time.monotonic() - start
+        assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
+        assert "the demo server did not answer in " in done.stderr, done.stderr
+        waited = int(done.stderr.split("did not answer in ")[1].split(" ")[0])
+>       assert 2 <= waited <= 5 and elapsed < 9, (waited, elapsed)
+E       AssertionError: (2, 12.352945223999996)
+E       assert (2 <= 5 and 12.352945223999996 < 9)
+
+tests/test_start_all_late_refusal.py:563: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_all_late_refusal.py::test_a_desk_that_printed_its_line_and_died_is_not_a_start
+FAILED tests/test_start_all_late_refusal.py::test_a_missing_timeout_program_is_refused_before_anything_is_started
+FAILED tests/test_start_all_late_refusal.py::test_a_slow_port_probe_does_not_stretch_the_wait
+3 failed, 2 passed, 30 deselected in 16.55s

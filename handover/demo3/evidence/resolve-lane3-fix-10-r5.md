@@ -39,3 +39,5 @@ Checked by lane3 by reading: start_all.sh ready loop greps the desk line THEN `k
 ## Final fresh review must check
 Table is the only place exit numbers are stated (scan scope, every program has rows, pointers); no path prints "started" with a dead desk or dead/foreign demo server, race gone, r4-10 killed by its own test; run 3 named cause or 20 clean logged runs plus pid hardening; refusal lines and helper share one UTF-8 path; reset row has both causes and 8, consistent with fix-5 r10; honest counts; ps1 TEXT PIN; no unnamed "known limitation".
 For the lead: row 6 wording (reset 5 two causes, reset 8 refused setting) proposed above; confirm.
+
+## 2026-11-14 09:16Z lane3: lead confirmed row 6 text at 09:15Z; relayed to B23 (round 6, plus a new two-meanings test) and B21 (r10 wording).
