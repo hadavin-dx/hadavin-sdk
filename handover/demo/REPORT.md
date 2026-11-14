@@ -1,5 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 15:10Z-UNKNOWN-SCENE - what a viewer sees for an UNKNOWN lead, and what v3 produces (by design/reading; v3 NOT RUN, V7 pending)
+
+| What the viewer would see | v3 flows produce it today? | Basis |
+|---|---|---|
+| Alert e-mail to the owner address (DESK_ALERT_TO), subject "[demo] Lead desk: mail outcome unknown for <lead id>", text "the mail may or may not have been sent. A person decides." | YES, from the recovery sweep, up to about 30 s after the state is set; retried if the SMTP is down | design + nodes AlertSend; AF1 (not run) tests the retry |
+| Slack message to the owner | NO. No Slack node in any flow. A Slack alert would be a new node (not built, not tested) | flow files |
+| Table row for the lead: state unknown, mail_sent true, alert_sent true after the alert | YES, in Postgres. NO screen/dashboard: the viewer sees it only if the take shows a psql query or a table viewer (not built) | mf_leads.sql, MarkUnknownA/B, AlertMark |
+| No resend of the lead mail (intake mailbox shows 0 or 1 mail, never 2) | YES by design: unknown is excluded from recovery and MailClaim refuses a second send. Earlier v2 T12 sample 5 (my runs, one machine, raw not kept): 1 mail, unknown, 1 alert; v3 T12 not in V7 | design; T12 v2 |
+| Reply to the caller (webhook response) | The form flow replies with outcome "unknown" for the run that ended unknown (OutUnknown); exact JSON text not re-checked by me on v3 | OutUnknown node, unrun |
+| Subject tag "[demo] lead <id>" on the intake mail, so the viewer can match mail to row | YES (tag only, no custom header: the Send Email node cannot set one) | SendMail node |
+Not produced / limits: no Slack; no table screen; no second channel if the SMTP is down (no alert until it is back); an unknown caused by a recovery re-run after the first run was only slow can show an intake mail that DID arrive (viewer sees mail + unknown + alert: by design, "unknown" means undecided).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Whole table is reading of the flows; V7 raw files unread; v3 T12 not scheduled (add to V7 if the take shows this scene); caller reply text on v3 not checked.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Update PAGE-STATEMENTS-DRAFT.md for v3. 2. Read V7 raw when named. 3. If the take needs Slack: spec of a Slack alert node and its test (not before you decide).
+
 ## Block AF2-DOCS - AF2 spec + test added as a NEW name; DESIGN-A-README and N8N-START at v3 alert text (no flow change, no edit of listed tests)
 
 Not touched: build_mainframe.py, flows, and the bodies of AF1, T8, T15, T14, K3, K3B, K1, K2, T10, T11, T13 (V7 runs on 6ebb7f62e). Changed (new commit, additive): mf.py gets a NEW function af2 + TESTS entry "AF2" and ".rcpthold" in the state clean list; smtp_catcher.py gets an additive mode (.rcpthold, one-shot; the old modes are unchanged; the V7 runner keeps the old catcher from its own checkout).
