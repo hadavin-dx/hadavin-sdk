@@ -1,5 +1,26 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:26 UTC / 21:56 IST
+
+**AGENTS RUNNING: 5** (A, B, EV7T, MERGE-PREP, DA-PROBE). Done and closed: builder C, DOC. Disk 2.7 GB free (94%).
+
+**NEW RISK, possibly video-blocking, UNCONFIRMED: "Design A counter unknown".** The DOC agent flagged it and I read the code: in r7t `scripts/run_real_check.py` line 931 `counter_is_known` is True only if a desk HubSpot counter file with a `created` number exists, and line 628 makes the exit code failed when it is not (r7s returned 0). If under Design A (n8n writes the CRM) the desk never creates a contact, the counter file may never exist and EVERY run would exit failed. I have NOT confirmed this. DA-PROBE (a1a6c118, evidence runner, 40 min box) answers it with file:line and a run on r7t and r7s. If it is true, the fix goes into r7u (A owns that file): the counter is "known" when the desk's CRM adapter is not the one that creates, or the desk writes a zero counter at start. Tell me if you already know how the take's desk writes the CRM.
+
+**C DONE (closed; builder's numbers, unverified):** new `src/lead_desk/loopback.py` (stdlib only), re-exports are the same objects; 32 tests in tests/test_r7u_c_findings.py; before on r7t 29 failed 3 pass (3 pins: settle-raises, two concurrent puts, 201 without id, found no bug); mutants 28: 27 killed, 1 equivalent (half-bracket clause); 13 guard files in full 458 passed; ruff clean; suppressions 367, delta 0. r7u-C.diff sha256 f4e94d1d45b38cb43fbbf2f980640c81e34f535141f478fd43bf0fb20f7d563e (verified by me). **Seam to watch:** C deleted one line in tests/test_r7t_findings.py (t6b table) and B may edit the same file for m5: merge may conflict there. C's README-r7u text exists for me to apply.
+**DOC done:** out/R7U-DOC/ON-PATH-LIST-r7t-section.md; it says the take list changes: bad_request, fake_hubspot, fake_imap, fake_smtp_tls and burst ARE in the take's import closure (my old "self-test only" lines were wrong) and trace.py, fake_model_server, fakes_server are not. I apply it after the merge.
+
+| id | what | state |
+|---|---|---|
+| A a07e3822 | M1 cap, m1-m4 | running; mutants M*/I* 22/22 killed (its number), F*/B* running; no diff yet |
+| B a397ac1e | m7, m8, m5 | running; ruff ok; waiting after-run and mutants |
+| EV7T acdc878b | evidence on r7t | running |
+| MERGE-PREP ab1ea948 | merge/guard/package scripts | running |
+| DA-PROBE a1a6c118 | the Design A question above | NEW |
+
+ASK: do you know how the take writes the CRM (n8n only, or the desk too)?
+NOT DONE / NOT CHECKED: A and B results; merge conflicts; EV7T disk-overlap answer; everything after the merge.
+
+
 ## STATUS (core lead) 16:24 UTC / 21:54 IST
 
 **AGENTS RUNNING: 6** (builders A, B, C; EV7T; MERGE-PREP; DOC). Disk: 2.7 GB free (94%). Order R456 applied: two more independent steps started NOW (below). What I edited myself: README n5 done and pushed (deleted APPLY-README-SNIPPET.md and README-r7s-SNIPPET.md, fixed the apply note in fix/README.md line 31).
