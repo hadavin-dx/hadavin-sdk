@@ -1,0 +1,19 @@
+FIRST lint run (before fixes), index of b20-final2:
+I001 [*] Import block is un-sorted or un-formatted
+   --> scripts/run_real_check.py:66:1
+I001 [*] Import block is un-sorted or un-formatted
+  --> src/lead_desk/server.py:9:1
+F401 [*] `re` imported but unused
+  --> tests/test_bad_setting_entry_points.py:15:8
+S603 `subprocess` call: check for execution of untrusted input
+   --> tests/test_exit_code_table.py:181:22
+S607 Starting a process with a partial executable path
+  --> tests/test_start_all_late_refusal.py:56:9
+Found 5 errors.
+unformatted: File would be reformatted
+   --> tests/test_bad_setting_entry_points.py:162:1
+unformatted: File would be reformatted
+   --> tests/test_ps1_pins.py:126:17
+2 files would be reformatted, 164 files already formatted
+mypy linux/win32 and bandit were clean.
+fixed: 2 import order (run_real_check, server), 1 unused import re, S603/S607 in two tests, 2 files reformatted. Re-run logs: raw/b20-lint-*.log (all rc=0).

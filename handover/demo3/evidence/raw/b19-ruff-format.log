@@ -1,0 +1,134 @@
+unformatted: File would be reformatted
+    --> tests/test_docs_claims_lane3.py:148:118
+     |
+147  |     assert "1 the demo servers cannot be reached" in contract_line, _p("contract.md names the demo servers for code 1")
+     -     assert "sender cannot be reached" not in contract_line and "constant that is out of range" not in contract_line, (
+     -         _p("contract.md does not repeat the old words 'sender' and 'a constant that is out of range'")
+148  +     assert "sender cannot be reached" not in contract_line and "constant that is out of range" not in contract_line, _p(
+149  +         "contract.md does not repeat the old words 'sender' and 'a constant that is out of range'"
+150  |     )
+--------------------------------------------------------------------------------
+380  |         flat,
+     -     ), _p(
+     -         "a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref)"
+     -     )
+381  +     ), _p("a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref)")
+382  |     assert "UNIQUE (source, source_ref)" in _read("src/lead_desk/schema.sql"), (
+--------------------------------------------------------------------------------
+388  |         flat,
+     -     ), _p(
+     -         "a duplicate is the same email in another request (other id, or same id on the other door)"
+     -     )
+389  +     ), _p("a duplicate is the same email in another request (other id, or same id on the other door)")
+390  |     assert len(re.findall(r"(?i)request number", flat)) == 1 and 'The portal calls it "Request number"' in flat, _p(
+--------------------------------------------------------------------------------
+396  |         r"\*\*Receipt\*\*: [^*]*one row in the desk's records[^*]*carries the number of that row as `receipt_id`", flat
+     -     ), _p(
+     -         "a receipt is a row; the reply carries its number as receipt_id"
+     -     )
+397  +     ), _p("a receipt is a row; the reply carries its number as receipt_id")
+398  |
+--------------------------------------------------------------------------------
+500  |     ten = rf"With `--n {n}` the numbers are `201=1 200={n - 1}`, `201=1 200={n - 1}` and `200={n}`"
+     -     assert re.search(ten, steps), _p(
+     -         f"the ten-send numbers 201=1 200={n - 1} / 200={n}"
+     -     )
+501  +     assert re.search(ten, steps), _p(f"the ten-send numbers 201=1 200={n - 1} / 200={n}")
+502  |
+--------------------------------------------------------------------------------
+565  |     one_command = re.escape("sets `PYTHONPATH` to `" + "src" + ":" + ".` for this one command only")
+     -     assert re.search(one_command, steps), _p(
+     -         "the one-line command sets PYTHONPATH for that command only"
+     -     )
+566  +     assert re.search(one_command, steps), _p("the one-line command sets PYTHONPATH for that command only")
+567  |     assert re.search(
+568  |         r"If you see a different split, something is wrong or the desk was not fresh: start again at step 1", steps
+     -     ), _p(
+     -         "a different split means something is wrong: first check that the desk was fresh"
+     -     )
+569  +     ), _p("a different split means something is wrong: first check that the desk was fresh")
+570  |     assert re.search(r"`MISMATCH`", steps) and "does not print the lead count" in steps, _p(
+--------------------------------------------------------------------------------
+582  |     where = r'`\.venv` is switched on and `PYTHONPATH=src` is set \(README, "Try it", first lines\)'
+     -     assert re.search(where, steps), _p(
+     -         "the steps say where to run them: .venv on and PYTHONPATH=src set"
+     -     )
+583  +     assert re.search(where, steps), _p("the steps say where to run them: .venv on and PYTHONPATH=src set")
+584  |     assert r'$env:PYTHONPATH = "src;."' in steps and "PYTHONPATH=src:. python -m demo_only.burst" in steps, _p(
+--------------------------------------------------------------------------------
+590  |     assert "fake/outbox" in steps, _p("the outbox address is named")
+     -     assert re.search(
+     -         r"run on a Linux computer with \d+ sends, most recently on 2026-11-13; logs not shipped", steps
+     -     ), _p(
+     -         "the 100-send figure was run on a Linux computer (last on 2026-11-13), logs not shipped"
+591  +     assert re.search(r"run on a Linux computer with \d+ sends, most recently on 2026-11-13; logs not shipped", steps), (
+592  +         _p("the 100-send figure was run on a Linux computer (last on 2026-11-13), logs not shipped")
+593  |     )
+--------------------------------------------------------------------------------
+823  |     usage = 'USAGE = "usage: python scripts/n8n_api.py import FILE | activate NAME | deactivate NAME | list"'
+     -     assert usage in script, (
+     -         "premise: the script has no delete command"
+     -     )
+824  +     assert usage in script, "premise: the script has no delete command"
+825  |     flat = _flat(recipe)
+--------------------------------------------------------------------------------
+1008 |         need,
+     -     ), _p(
+     -         "the 404 claim names its source: read from a real desk and a real demo server, on Linux, not on Windows"
+     -     )
+1009 +     ), _p("the 404 claim names its source: read from a real desk and a real demo server, on Linux, not on Windows")
+1010 |     assert re.search(r"404 means a program already answers", need) and "bash scripts/reset.sh" in need, _p(
+--------------------------------------------------------------------------------
+1037 |
+     - def test_premise_the_desk_and_the_demo_server_answer_404_for_the_root_address(
+     -     env: Env, tmp_path: Path
+     - ) -> None:
+1038 + def test_premise_the_desk_and_the_demo_server_answer_404_for_the_root_address(env: Env, tmp_path: Path) -> None:
+1039 |     """A premise test (it reads no document; test_readme_port_check_explains_000_and_404 pins the README sentence):
+     |
+
+unformatted: File would be reformatted
+    --> tests/test_one_key_file_rule_r7.py:45:1
+     |
+44   |
+45   +
+46   | # ------------------------------------------------------------------------ the readers of files: one ban, one allow-list
+--------------------------------------------------------------------------------
+191  | def _scan_tree(
+     -     root: Path, folders: tuple[str, ...], names: set[str], *, bare_names: bool, readers: bool = False,
+192  +     root: Path,
+193  +     folders: tuple[str, ...],
+194  +     names: set[str],
+195  +     *,
+196  +     bare_names: bool,
+197  +     readers: bool = False,
+198  |     zero_arg: bool = False,
+--------------------------------------------------------------------------------
+729  |         "python3 -c 'from pathlib import Path; Path(\"secret.txt\").read_text()'",
+     -         "run: python -c \"import sys; open(sys.argv[1]).read()\" $TOKEN_FILE",
+730  +         'run: python -c "import sys; open(sys.argv[1]).read()" $TOKEN_FILE',
+731  |     ],
+--------------------------------------------------------------------------------
+1298 |         LiveSettings(
+     -             model="fake-model-1", key_file=key_file, price_in_per_mtok=Decimal("2"), price_out_per_mtok=Decimal("10"),
+     -             price_date="2026-01-01", cap_run_usd=Decimal("1"), cap_total_usd=Decimal("3"),
+     -             ledger_path=tmp_path / "ledger.jsonl", run_id="run-a", base_url=url, timeout_seconds=3.0,
+1299 +             model="fake-model-1",
+1300 +             key_file=key_file,
+1301 +             price_in_per_mtok=Decimal("2"),
+1302 +             price_out_per_mtok=Decimal("10"),
+1303 +             price_date="2026-01-01",
+1304 +             cap_run_usd=Decimal("1"),
+1305 +             cap_total_usd=Decimal("3"),
+1306 +             ledger_path=tmp_path / "ledger.jsonl",
+1307 +             run_id="run-a",
+1308 +             base_url=url,
+1309 +             timeout_seconds=3.0,
+1310 |         )  # fmt: skip
+--------------------------------------------------------------------------------
+1437 |     assert seen and all(fl & nofollow == nofollow for fl in seen)
+     -
+1438 |
+     |
+
+2 files would be reformatted, 163 files already formatted

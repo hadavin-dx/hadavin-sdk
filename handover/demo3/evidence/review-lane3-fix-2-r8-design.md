@@ -1,0 +1,14 @@
+# fix-2 r8 review, egm-design (saved by lane3 from the inline report; 0 blocker, 3 major, 7 minor, 4 nit)
+Not run: raw logs, any code. Cross-checked tree b19-tree 812a97a.
+M1 Row 5 (key-file rule in ONE place) not done: contract.md exit-4 list (diff line ~32) and step (7) (~56) repeat the fault list (drifted: lacks "other users" and "changed while opened"); docs/settings.md:75, :82, :131 (n8n paragraph) repeat it. Pin test test_no_other_page_repeats_the_key_file_rule only looks for fixed phrases; the older "contract and limits list the three refusals" test was re-pointed, not removed. Fix: one sentence + link in those places; the pin must fail on "4096", "printable ASCII" or "byte-order" outside the section.
+M2 Final head has no clean full run (1 failed on eb5e171, 4 test-text lines fixed after); 13 base lines >120 by plain awk.
+M3 Mode refusal has no opt-out; stated reason "owner check would refuse a shared service account" makes no sense (same uid); claim "container secret mounts are 0400" unverified (Docker file secrets often 0444, Kubernetes volumes 0644 and symlinks); as root a planted 0600 file passes. Needs written premise or owner decision.
+m1 Row 17 half tested: run_real_check path_kind(DESK_DB_PATH) refusal only text pins (".exists(" not in text, text.count("path_kind(db)")==1).
+m2 ruff format will fail: r7 test 1of3 lines 49-51 (one blank line, wants two), 3of3 lines 230-232 (three blank lines).
+m3 message "can be read by other users" wrong for write/execute-only bits (modes 0o710 0o601 0o610 tested). Reword "can be reached by other users"; docs "Linux and macOS" narrower than os.name posix; WSL /mnt/c reports 0777 so chmod advice fails there.
+m4 desk.py BOOK_IS_FOLDER_PROBLEM and BOOK_FOLDER_IS_FILE_PROBLEM duplicate file_problem_text with different words; use one.
+m5 guard for mode/link rules greps S_ISLNK|O_NOFOLLOW|0o077|chmod 600 only; S_IRWXO/S_IMODE copy would pass. World-readable wrapper test lacks the live qualifier and fake model server wrapper.
+m6 docs wording: "read once" vs "read again at every call" for HubSpot/SMTP; unexplained labels named pipe/device/symbolic link/chmod 600; contract.md exit-1 sentence is a run-on; limits.md Retry-After decision under the CRM section; settings.md "see below" points up.
+m7 Retry-After grammar and clamp correct; 3 copies pinned by tests; exhaustive pin stops at length 4. Not checked: how LiveRateLimited.retry_after is consumed (a clamp of 3600 s may delay a retry an hour where old code gave None for inf).
+Nits: doubled "* *" bullet in test_env_numbers docstring; three near-identical spy-open-flags tests (r6, r7 vacuous where O_NOFOLLOW absent), mode list entries duplicated; _names_own_file exempts any .resolve() mentioning __file__; free_port() reuse race in test_unreachable_demo_servers_exit_1; "lead-book" hyphen rename reason not stated.
+Rows 1,2,3,6-10,11-16,18-26 done as far as seen. fd handling, races, secrets in messages: no fault found.

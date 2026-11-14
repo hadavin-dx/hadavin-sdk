@@ -11,3 +11,9 @@ Next: finish mutation, ONE full run on final head in own clone (gitleaks on PATH
 Done: mutation run finished (61 mutants, 3 survivors, all 3 now killed by new/tightened tests, verified by hand). raw/b21-mutation.log and raw/b21-fails-before.log written.
 Next: freeze head, patches onto b21-full, ONE full run detached, guard+hygiene alone, cut patch r8, notes.
 Blockers: none.
+
+## Checkpoint 4, 06:51 UTC
+Done: head frozen (tree cb769b22...); patch lane3-fix-5-r8.patch + 3 parts cut and apply-checked (fresh worktrees, same tree id); raw/b21-patch-sha256.txt written; notes draft written. Ruff check/format repo-wide clean.
+Running: ONE full run on the final head in /home/user/work/b21-full (started 06:48 UTC, detached, log /home/user/work/b21-logs/full-final.log).
+Next: when done, copy log, run wall-clock guard + hygiene scan alone, finish notes, hand back. Deadline 07:41 UTC.
+Blockers: none.

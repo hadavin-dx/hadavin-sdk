@@ -1,0 +1,19 @@
+F401 [*] `sys` imported but unused
+  --> tests/test_one_key_file_rule_and_path_walk.py:13:8
+   |
+11 | import os
+12 | import re
+13 | import sys
+   |        ^^^
+14 | import threading
+15 | from pathlib import Path
+   |
+help: Remove unused import: `sys`
+   |
+12 | import re
+   - import sys
+13 | import threading
+   |
+
+Found 1 error.
+[*] 1 fixable with `--fix`.

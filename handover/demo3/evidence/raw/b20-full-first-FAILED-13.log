@@ -1,0 +1,403 @@
+........................................................................ [  1%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  6%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 11%]
+.........s.............................................................. [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 16%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 21%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 26%]
+.................................................................----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 39456)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/work/b20-final/demo_only/fake_hubspot.py", line 327, in do_POST
+    self._send(404, {"status": "error"})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/b20-final/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+    ~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+....... [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 34%]
+.......F................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 44%]
+ss......s........................sssss....s............................. [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 51%]
+s.............sssssssssss............................................... [ 52%]
+........................................................................ [ 54%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 62%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+....................................................ssssssssssssssss.... [ 67%]
+........................................................................ [ 69%]
+.....................................................sssssssssssssssssss [ 70%]
+s..........sssssssssssssssssssssss......sssssss.ssssssssssssssssss...... [ 72%]
+................................................ssssssssssssssssssssssss [ 74%]
+sssssss..........s..sss..ssssss.ss.ssss.....ssssssssssssssssssssssssssss [ 75%]
+sssss..........ss..s...........................ssssss..............FFFF. [ 77%]
+......F....FFFFFF...............F....................................... [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 87%]
+..........................s............................................. [ 88%]
+........................................................................ [ 90%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+........................................................................ [ 97%]
+.ssssssssssssss..................................s...................... [ 98%]
+...................................................                      [100%]
+=================================== FAILURES ===================================
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         tests/test_bad_setting_entry_points.py:262:http://some-user:some-pass@127.0.0.1:1234/
+E       assert not ['tests/test_bad_setting_entry_points.py:262:http://some-user:some-pass@127.0.0.1:1234/']
+
+tests/test_hygiene.py:146: AssertionError
+__ test_a_refusal_never_echoes_the_value_of_a_setting[DESK_HUBSPOT_MAX_CALLS] __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131c23b50>
+name = 'DESK_HUBSPOT_MAX_CALLS'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+    def test_a_refusal_never_echoes_the_value_of_a_setting(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+    ) -> None:
+        secret_value = "sec" + "ret-value-77"
+        cfg = _config_file(tmp_path, **{name: secret_value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th0/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:199: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_HUBSPOT_MAX_CALLS is not a number
+_______ test_a_refusal_never_echoes_the_value_of_a_setting[REAL_PERSONS] _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd130f232d0>
+name = 'REAL_PERSONS'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+    def test_a_refusal_never_echoes_the_value_of_a_setting(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+    ) -> None:
+        secret_value = "sec" + "ret-value-77"
+        cfg = _config_file(tmp_path, **{name: secret_value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th1/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:199: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_PERSONS is not a number
+___ test_a_refusal_never_echoes_the_value_of_a_setting[DESK_SMTPP_MAX_SENDS] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131ba6e50>
+name = 'DESK_SMTPP_MAX_SENDS'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+    def test_a_refusal_never_echoes_the_value_of_a_setting(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+    ) -> None:
+        secret_value = "sec" + "ret-value-77"
+        cfg = _config_file(tmp_path, **{name: secret_value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th2/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:199: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_SMTPP_MAX_SENDS is not a number
+_____ test_a_refusal_never_echoes_the_value_of_a_setting[REAL_IMAP_1_PORT] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131c0f050>
+name = 'REAL_IMAP_1_PORT'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+    def test_a_refusal_never_echoes_the_value_of_a_setting(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str
+    ) -> None:
+        secret_value = "sec" + "ret-value-77"
+        cfg = _config_file(tmp_path, **{name: secret_value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_refusal_never_echoes_th3/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:199: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_IMAP_1_PORT is not a number
+____ test_a_bad_readback_cap_is_refused_before_anything_real_is_called[abc] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_bad_readback_cap_is_ref3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd1319b5c50>
+value = 'abc'
+
+    @pytest.mark.parametrize("value", ["0", "-3", "4", "abc"])
+    def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
+    ) -> None:
+        cfg = _valid_config(tmp_path, REAL_HUBSPOT_READBACK_MAX_CALLS=value)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_bad_readback_cap_is_ref3/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:241: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_HUBSPOT_READBACK_MAX_CALLS is not a number
+_ test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_DRAIN_SECONDS] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd1319b7bd0>
+name = 'REAL_DRAIN_SECONDS', value = 'nan'
+
+    @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+    @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+    def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+    ) -> None:
+        cfg = _valid_config(tmp_path, **{name: value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref4/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:253: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_DRAIN_SECONDS is not a number
+_ test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_MAIL_WAIT_SECONDS] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref5')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131c454d0>
+name = 'REAL_MAIL_WAIT_SECONDS', value = 'nan'
+
+    @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+    @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+    def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+    ) -> None:
+        cfg = _valid_config(tmp_path, **{name: value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref5/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:253: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_MAIL_WAIT_SECONDS is not a number
+_ test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_DRAIN_SECONDS] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref6')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131c206d0>
+name = 'REAL_DRAIN_SECONDS', value = 'inf'
+
+    @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+    @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+    def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+    ) -> None:
+        cfg = _valid_config(tmp_path, **{name: value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref6/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:253: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_DRAIN_SECONDS is not a number
+_ test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_MAIL_WAIT_SECONDS] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref7')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131c23750>
+name = 'REAL_MAIL_WAIT_SECONDS', value = 'inf'
+
+    @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+    @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+    def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+    ) -> None:
+        cfg = _valid_config(tmp_path, **{name: value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref7/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:253: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_MAIL_WAIT_SECONDS is not a number
+_ test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_DRAIN_SECONDS] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref8')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131910a50>
+name = 'REAL_DRAIN_SECONDS', value = 'soon'
+
+    @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+    @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+    def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+    ) -> None:
+        cfg = _valid_config(tmp_path, **{name: value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref8/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:253: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_DRAIN_SECONDS is not a number
+_ test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_MAIL_WAIT_SECONDS] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref9')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131c44cd0>
+name = 'REAL_MAIL_WAIT_SECONDS', value = 'soon'
+
+    @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+    @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+    def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+    ) -> None:
+        cfg = _valid_config(tmp_path, **{name: value})
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_a_bad_time_setting_is_ref9/c.env'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:253: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: REAL_MAIL_WAIT_SECONDS is not a number
+_____ test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-85/test_the_banner_shows_the_live0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd131912fd0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd131bddb00>
+
+    def test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        live = {
+            "DESK_LIVE_MODEL": "model-x",
+            "DESK_LIVE_KEY_FILE": str(tmp_path / "k"),
+            "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
+            "DESK_LIVE_PRICE_OUT_PER_MTOK": "5",
+            "DESK_LIVE_PRICE_DATE": "2026-01-01",
+            "DESK_LIVE_CAP_RUN_USD": "1.25",
+            "DESK_LIVE_CAP_TOTAL_USD": "3",
+            "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger"),
+            "DESK_LIVE_RUN_ID": "r1",
+        }
+        monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+        assert rrc.main(["--config", str(_valid_config(tmp_path, **live)), "--live-model"]) == rrc.EXIT_STOPPED
+        assert "per-run cap US$1.25" in capsys.readouterr().out
+        other = "https://" + "model-host" + ".example.test"
+        cfg = _valid_config(tmp_path, DESK_LIVE_BASE_URL=other, **live)
+>       assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED  # a stranger's host: no key goes there
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 8 == 2
+E        +  where 8 = <function main at 0x7fd133a75440>(['--config', '/tmp/pytest-of-root/pytest-85/test_the_banner_shows_the_live0/c.env', '--live-model'])
+E        +    where <function main at 0x7fd133a75440> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_real_check_dry.py:476: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_LIVE_BASE_URL is not the provider's own address (DESK_LIVE_ALLOW_ANY_BASE_URL=yes allows it)
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+FAILED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[DESK_HUBSPOT_MAX_CALLS]
+FAILED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[REAL_PERSONS]
+FAILED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[DESK_SMTPP_MAX_SENDS]
+FAILED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[REAL_IMAP_1_PORT]
+FAILED tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[abc]
+FAILED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_DRAIN_SECONDS]
+FAILED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_MAIL_WAIT_SECONDS]
+FAILED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_DRAIN_SECONDS]
+FAILED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_MAIL_WAIT_SECONDS]
+FAILED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_DRAIN_SECONDS]
+FAILED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_MAIL_WAIT_SECONDS]
+FAILED tests/test_real_check_dry.py::test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked
+13 failed, 4147 passed, 211 skipped in 904.14s (0:15:04)
