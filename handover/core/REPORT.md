@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:01 UTC / 21:31 IST
+
+**FAILED / NOT CHECKED (first): the cloud disk hit 100% (0 MB free) at about 16:01 UTC.** My first copy for r7u failed half-way and EV7T (running) may have had writes fail. I deleted my own half copy tree-R7U and finished-agent scratch dirs (tmp-R7C..R7L, tmp-EV4, tmp-DOCS, tmp-V*, tmp-F*, tmp-D1, tmp-AF, tmp-tree-A2 under /home/user/build/rr6; none were frozen trees, EV*, REV*, M8-M12* or out/*). 3.0 GB free now. I have NOT yet read whether EV7T lost output: I will check its log for "No space left" before trusting any EV7T number. The r7u builder was told to check `df` before each copy and stop under 1 GB.
+
+**C-R7U ORDER READ AND APPLIED: r7u builder STARTED (ac3fa2a3, fresh, test-first, tree-R7U = byte copy of tree-R7T, 75 min box, checkpoint 15 min).** Brief covers MUST M1 (cap only the open part), m2, m3, m4, m1, m7, m8 and SHOULD m5, m6, n1, n2, n5 (replacement text goes to out/R7U/README-r7u-SNIPPET.md; I edit the two README files), the settle-raises, two-concurrent-puts and 201-without-id tests, 25+ mutants. Each new test must fail on r7t sources. EV7T on r7t keeps running (its numbers stay the r7t record).
+
+**ANSWER to your ASK, q1:** file `tests/test_r7q_findings.py` (in tree-R7T, r7q). The tests are `test_q1_the_banner_cost_counts_the_longest_request_the_run_can_send`, `test_q1_longest_request_bytes_is_the_largest_body_of_every_item_of_the_plan` (parametrised by persons), `test_q1_longest_request_bytes_uses_the_one_question_builder_and_the_one_body_builder`, `test_q1_the_email_key_is_the_one_the_desk_asks_with`. Run them on the take tree with the take-side copy of that file (I have not seen the take tree; the test targets scripts/run_real_check.py `longest_request_bytes` and the banner worst-case). Also run `test_take_imports.py` from snapshot-r7t.
+
+| id | what | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac3fa2a3 (r7u builder) | r7u delta per C-R7U | your order | 16:01/21:31 | +75 min | r7u | RUNNING | hand-back, hashes, apply matrix, push, EV7U, fresh reviewer |
+| acdc878b (EV7T) | evidence on r7t | ORDER 268 | earlier | about 17:15Z | EV7T | RUNNING (disk incident above) | read its log for disk errors; EV7T-EVIDENCE.md |
+
+ASK: none.
+NOT DONE / NOT CHECKED: r7u result; EV7T result and whether the disk full spoiled it; README edits and ON-PATH-LIST.md; Windows/PowerShell/CI/CodeQL/Sonar/CodeRabbit.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Check EV7T log for disk errors now; message it if it lost output.
+2. r7u hand-back: hashes, apply matrix, push; EV7U and your fresh reviewer.
+3. README edits, ON-PATH-LIST.md, sweep.
+
+
 ## STATUS (core lead) 15:54 UTC / 21:24 IST
 
 **NOT VERIFIED / NOT DONE (first):** every r7t test, mutant, flake and guard number below is the BUILDER's, unverified until EV7T. The take-side banner test q1 is for the lead on the laptop (I have no take tree). Windows/PowerShell not applied. README contradictions (fix/README.md line 31, r6 APPLY-README-SNIPPET.md) still on disk. Mail residual (a mail sent, not counted, not yet visible in the mailbox = invisible to both counters) is not closed by a test: builder says no code step is left; I have not checked that.
