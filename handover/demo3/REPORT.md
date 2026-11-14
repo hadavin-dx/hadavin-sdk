@@ -1,3 +1,34 @@
+## HEARTBEAT 86 (04:10Z) - FIX-9 R2 REVIEWED (0 BLOCKER, 0 MAJOR, 4 MINOR); FIX-8 R2 BUILT, REVIEW AND FINAL FULL RUN STARTED; B12, B13 STILL BUILDING
+
+| Agent | Job | State |
+|---|---|---|
+| B11 | fix-9 r2 | CLOSED. Patch lane3-fix-9-r2.patch b1215b5a. I read the full-run tail myself: 3722 passed, 169 skipped, 1 xfailed, rc 0, no data/ afterwards. |
+| R9b | fresh egm review of fix-9 r2 | CLOSED: 0 blocker, 0 major, 4 minor (evidence/review-lane3-fix-9-r2.md): exit code overwritten, two noqa, internal label "core r7f" in public xfail text, ugly line split. Reviewer ran nothing. I sent B11 (resumed) to fix all four, re-make a r3 patch and give it its own full run (stop 04:55Z). |
+| B10 | fix-8 r2 | CLOSED (hand-back). Patch lane3-fix-8-r2.patch 0c976b13; stack variant on fix-4 r4 (docs conflict resolved by hand). Builder's full run: 1 failed, 3781 passed, 170 skipped rc 1 (hygiene scan flagged a 62-letter literal in the builder's new test); fixed, but ONLY 3 files re-run (98 passed), so the final head has no full run. Tests first: 20 failed on old code. Mutants: 20 by hand, 18 killed, 2 equivalent. Builder also ran `git worktree prune` once without a saved list (a rule slip, reported by the builder); I compared: all my worktree folders still have records (175 records). |
+| EV10 | full serial 3.13 run on the final head of fix-8 r2 | RUNNING (agent a4d976f1), end about 04:35Z |
+| R8b | fresh egm review of fix-8 r2 (product path) | RUNNING (agent a27de75e), about 04:25Z |
+| B12 | fix-5 r6 | RUNNING (waiting on its own full run); interim patch lane3-fix-5-r6.patch (72950 bytes) is not final, not read by me. |
+| B13 | fix-2 r5 on fix-1 r6 re-cut | RUNNING; interim patches lane3-fix-2-r5-on-fix-1-r6.patch (173996 bytes) and -recut.patch exist, not final. |
+| M8, M9, M10 | | CLOSED (see HEARTBEAT 85 and MATRIX-1). |
+
+FAILURES AND RETRIES: test failures this block: 1 (builder B10's hygiene scan, cause found and fixed, not re-run in full yet). My slips: register start times written ahead of the real clock again (correction row added); my earlier m9-report.md was overwritten by the agent's own version (same numbers).
+ASK list: none.
+Load (measured 04:08Z): load average 0.8, free RAM about 8 GB, 4 agents running plus 2 builders' runs.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- fix-8 r2: no full run on the final head yet (EV10 running); no fresh review yet (R8b running).
+- fix-9 r3 (the four minors): not built yet.
+- fix-5 r6 and fix-2 r5: builders not finished; no fresh review; WINDOWS-RUN-1.md not written (waits for final fix-5 r6).
+- reset.ps1, start_all.ps1: never run (no PowerShell here).
+- The conftest check in fix-9 untested with several test workers (none configured); helper race and symlink case go to core r7f (not reviewed).
+- Python 3.11, ruff, mypy, bandit, gitleaks on CI: not run.
+- Stack test (lead order 03:54Z): waits for all four patches to be final and reviewed.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish the review and run cycle for fix-8 r2 and fix-9 r3; resolve any Major.
+2. Read B12 and B13 hand-backs, run their full-run checks, start fresh reviewers; write WINDOWS-RUN-1.md from the final fix-5 r6.
+3. Build the stack clone and run the stack test once all four are clean.
+
 ## HEARTBEAT 85 (04:01Z; correction: first written as 04:02Z, which was ahead of the real clock 04:00Z; M9 had ended 04:00:36Z, details in evidence/m9-report.md: 3684 passed, 199 skipped, rc 0; the only data/ creator on the base is tests/test_mode_safety.py::test_reset_sh_refuses_when_ps_is_missing; the 199 skips add up exactly: 166 playwright, 30 gitleaks, 3 others) - M8 DONE (2 runs, 0 failures), M9 AT 94 PERCENT, 4 BUILDERS RUNNING, STACK TEST ORDER READ
 
 | Agent | Job | State |
