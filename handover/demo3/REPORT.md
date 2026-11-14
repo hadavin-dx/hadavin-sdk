@@ -1,3 +1,35 @@
+## HEARTBEAT 85 (04:02Z) - M8 DONE (2 runs, 0 failures), M9 AT 94 PERCENT, 4 BUILDERS RUNNING, STACK TEST ORDER READ
+
+| Agent | Job | State |
+|---|---|---|
+| M8 | portal flake check, 11 files | CLOSED. Run A default order: 533 passed in 431.10s, rc 0. Run B shuffled (seed 20261114): 533 passed in 439.53s, rc 0. 0 failed, 0 errors. Tree clean, no data/ folder after both runs. Runner could not show the order changed; I checked it myself: `--collect-only -q` md5 of test ids is 42291e77... without the seed and 9205c8e2... with it, so the order really differs. Only 2 runs: a flake rate below about 1 in 2 is not excluded. M9 ran at the same time (shared load). Report evidence/m8-report.md, logs raw/m8-runA.log, raw/m8-runB.log |
+| M9 | one full run 3.13 with data/ watcher, -rs, durations | RUNNING, about 94 percent at 04:01Z; first candidate from the watcher: data/ appeared after tests/test_mode_safety.py::test_reset_sh_refuses_when_ps_is_missing (03:52:00, one candidate only; full list when the run ends). end.txt not yet there |
+| M10 | MATRIX-1 numbers vs raw logs | CLOSED earlier (1 label fix: archive hash vs program hash, fixed) |
+| B10 | fix-8 r2 | RUNNING; interim patch evidence/lane3-fix-8-r2-on-fix-4-r4.patch exists; not reviewed |
+| B11 | fix-9 r2 | RUNNING; interim patch evidence/lane3-fix-9-r2.patch exists; not reviewed |
+| B12 | fix-5 r6 (reset.ps1 exit 7 first, two-worker free_port test) | RUNNING; interim patch evidence/lane3-fix-5-r6.patch exists (72950 bytes, 03:59Z); I have NOT read it or run it; WINDOWS-RUN-1.md waits for the final version |
+| B13 | fix-2 r5 on the fix-1 r6 re-cut tree | RUNNING; no patch yet |
+
+LEAD ORDER 03:54Z READ (stack test): after B10-B13 land and their fresh reviews are clean, build ONE stack on a fresh clone of origin/main: (1) frozen claims series, (2) fix-1 r6, fix-2 r5, fix-5 r6, fix-8 r2, fix-9 r2 as rebuilt, (3) demo session doc patches 0001 and 0002 (handover/demo/clean-machine/); record every git am exit code; then full suite 3.13 with gitleaks and DPLD_REQUIRE_SCAN=1 on a clean checkout (no data/), plus the browser tests, plus the clean-tree check; report counts and every conflict. The cloud-core patch is not part of it. I put it in the queue behind the builders and reviews; I will prepare the clone and the apply order (git am --check only, no test run) while the builders work, to save time.
+
+FAILURES AND RETRIES: this block: 0 test failures, 0 retries. Today's earlier 30-failure runs (missing gitleaks program) unchanged. My own slip this block: I tried `git pull` with an uncommitted tree (refused), then committed and pulled; no data lost.
+ASK list: none.
+Load (measured 04:00Z): load average 1.6, free RAM about 8 GB, 2 heavy jobs (M9 full run, builders' runs waiting for a slot).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- reset.ps1 and start_all.ps1 never run (no PowerShell here): next step lead's laptop with WINDOWS-RUN-1.md (not written yet, waits for B12's final patch).
+- None of the 4 rebuilt patches has a fresh review of the new version: next step one fresh egm reviewer each, after the builder reports.
+- fix-2 blocker "demo CRM claim false" not yet re-read against the claims series (B13 and the fresh reviewer do it).
+- M9 results (data/ creators, skip reasons for 199, slowest tests) not in yet.
+- MATRIX-1 not yet updated with M8 and M9.
+- Core r7f not reviewed so not copied; symlink case stays an expected failure.
+- Python 3.11, ruff, mypy, bandit, gitleaks on CI: not run (decisions).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish M9 (report with the creators of data/ and skip reasons), update MATRIX-1 with M8 and M9.
+2. As each builder reports: evidence runner or my own read of the full-run tail, then one fresh egm reviewer on the new version; write WINDOWS-RUN-1.md as soon as B12 is final.
+3. Prepare and `git am --check` the stack order, then run the stack test after the reviews are clean.
+
 ## HEARTBEAT 84 (03:49Z) - 4 REVIEWS AND 3 READERS IN; 2 RESOLVE PLANS DONE; 4 BUILDERS AND 3 EVIDENCE RUNS STARTED
 
 | Agent | Job | State |
