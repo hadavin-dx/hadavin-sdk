@@ -1,1 +1,8 @@
-.....F..
+.....F....................................................ss............ [ 71%]
+...................sssss....s                                            [100%]
+=================================== FAILURES ===================================
+______________ test_a_data_folder_that_is_a_link_is_not_followed _______________
+[XPASS(strict)] the copied core helper follows a data link (core finding, being fixed in core r7f); remove this mark when the helper is re-copied from the fixed core
+=========================== short test summary info ============================
+FAILED tests/test_data_folder_helper.py::test_a_data_folder_that_is_a_link_is_not_followed
+1 failed, 92 passed, 8 skipped in 64.75s (0:01:04)
