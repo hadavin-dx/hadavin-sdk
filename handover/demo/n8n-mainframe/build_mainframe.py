@@ -6,6 +6,7 @@ Settings from n8n's environment: MF_CRM_URL, MF_STAGE_URL. The mail recipient an
   python build_mainframe.py OUT_DIR PG_CRED_ID SMTP_CRED_ID SUB_WORKFLOW_ID [LEASE_SECONDS]      (LEASE_SECONDS: design value 120; the tests use a shorter value and say so)"""
 import json, sys, os
 OUT, PGID, SMTPID, SUBID = sys.argv[1:5]; LEASE = int(sys.argv[5]) if len(sys.argv) > 5 else 120
+TRIES = int(os.environ.get("MF_TRIES", "3")); TMO = int(os.environ.get("MF_TMO_MS", "15000"))   # film variant: MF_TRIES=2 MF_TMO_MS=10000 (defaults = the design flows)
 MAIL_TO, ALERT_TO = "intake@example.test", "alerts@example.test"
 def N(name, typ, ver, params, pos, **x):
     d = {"parameters": params, "name": name, "type": typ, "typeVersion": ver, "position": pos}; d.update(x); return d
@@ -13,8 +14,8 @@ def pg(name, q, repl, pos, always=True, **x):
     o = {"queryReplacement": repl} if repl else {}
     return N(name, "n8n-nodes-base.postgres", 2.5, {"operation": "executeQuery", "query": q, "options": o}, pos, credentials={"postgres": {"id": PGID, "name": "n8n-publish-pg"}}, alwaysOutputData=always, **x)
 def http(name, url, body, pos, retry, errout=False):
-    d = N(name, "n8n-nodes-base.httpRequest", 4.2, {"method": "POST", "url": url, "sendBody": True, "contentType": "json", "specifyBody": "json", "jsonBody": body, "options": {"timeout": "={{ Number($env.MF_STAGE_TIMEOUT_MS || 15000) }}" if "MF_STAGE_URL" in url else 15000}}, pos)
-    if retry: d.update(retryOnFail=True, maxTries=3, waitBetweenTries=1000)
+    d = N(name, "n8n-nodes-base.httpRequest", 4.2, {"method": "POST", "url": url, "sendBody": True, "contentType": "json", "specifyBody": "json", "jsonBody": body, "options": {"timeout": "={{ Number($env.MF_STAGE_TIMEOUT_MS || %d) }}" % TMO if "MF_STAGE_URL" in url else TMO}}, pos)
+    if retry: d.update(retryOnFail=True, maxTries=TRIES, waitBetweenTries=1000)
     if errout: d["onError"] = "continueErrorOutput"
     return d
 def iff(name, left, op_type, op, right, pos):

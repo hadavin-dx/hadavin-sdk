@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 13:55Z - film-lease flow edits pushed (not run)
+
+- build_mainframe.py now reads MF_TRIES (default 3) and MF_TMO_MS (default 15000): stage call and CRM call tries and node timeout. Defaults rebuild the design flows byte for byte except the credential placeholder ids (checked by comparing node by node). mf.py passes MF_TMO_MS to the stage timeout variable.
+- New folder handover/demo/n8n-flows-film/: the four flows built with MF_TRIES=2 MF_TMO_MS=10000 and lease 45 (grep of the output: maxTries 2 twice, timeout 10000 twice, interval 45 seconds in the form flow and recovery), plus FILM-README.md. The commit is stated in the chat message with this block.
+- Honest arithmetic: worst normal run = stage 21 s + CRM 21 s + a few seconds = about 45 s or more, and the SMTP node has no timeout. So 45 s is MARGINAL for the worst case (a safe but unneeded unknown with 1 alert if hit); 60 s has margin. Fine for a filmed happy path (a normal run takes a few seconds). I recommend 60 s for anything claimed safe and 45 s only for the film; the lead decides.
+- NOT RUN (no disk). To measure on the laptop: K1 K2 K3B K3 K4 + T15 + T10 at --lease 45 with the two variables exported, 8 per point; seconds_kill_to_final per point; same at --lease 120 on the design flows for the compare.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Film flows unrun; V4, extended T7b, T14/T15 counts unread; real-node flows, N8N-START.md three-variable part, T4, pattern check, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read V4 + extended T7b. 2. Read the lease table when it exists and put measured numbers into PAGE-STATEMENTS-DRAFT.md. 3. Real-node flows when a machine with space exists.
+
 ## Block 13:50Z - what the demo does while the laptop finishes: page statement drafts (real-node flows, film lease)
 
 - Idle on tests (no disk). Wrote and pushed n8n-flows/PAGE-STATEMENTS-DRAFT.md: (A) real-node flows: HubSpot node Create or Update keyed on e-mail (consequence: two lead ids with one e-mail become one contact), SMTP node with no custom header and no timeout setting (lead id in the subject after [demo]); what my stand-in tests do NOT cover (HubSpot search lag, rate limits, real Gmail); no real account run by me. (B) lease for the film: design value 120 s (longest normal run about 100 s worst case); film candidate 45 s IF the node timeouts and tries are lowered in the flows (stage 10 s x 2, CRM 10 s x 2; not done yet); recovery time DERIVED not measured: start between lease minus used time and lease + 30 s; failed state about 3 x lease + up to 90 s.

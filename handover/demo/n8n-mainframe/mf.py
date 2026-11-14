@@ -12,7 +12,7 @@ ST_URL, CRM_URL = "http://127.0.0.1:%d" % STAGEP, "http://127.0.0.1:%d" % CRMP
 JOURNAL, CRMLOG = os.path.join(S, "stage-journal.jsonl"), os.path.join(S, "crm.log.jsonl")
 REPS = int(os.environ.get("MF_REPS", "20")); LEASE = int(os.environ.get("MF_LEASE", "20")); RESULTS = {}
 MAIL_TO, ALERT_TO = "intake@example.test", "alerts@example.test"
-EXTRA.update(MF_CRM_URL=CRM_URL, MF_STAGE_URL=ST_URL, MF_STAGE_TIMEOUT_MS="15000")
+EXTRA.update(MF_CRM_URL=CRM_URL, MF_STAGE_URL=ST_URL, MF_STAGE_TIMEOUT_MS=os.environ.get("MF_TMO_MS", "15000"))
 def uid(p): return "%s-%s" % (p, uuid.uuid4().hex[:6])
 def result(test, passed, why, **raw):
     RESULTS[test] = {"pass": passed, "why": why, **raw}; print("RESULT %s %s %s" % (test, "PASS" if passed else "FAIL", why), flush=True)
