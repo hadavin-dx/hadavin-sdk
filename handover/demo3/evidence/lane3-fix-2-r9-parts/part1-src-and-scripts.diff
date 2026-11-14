@@ -1,0 +1,76 @@
+diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
+index 7143e2c..6f8e7bc 100644
+--- a/demo_only/portal_demo.py
++++ b/demo_only/portal_demo.py
+@@ -29,7 +29,7 @@ from pathlib import Path
+ from typing import Any, Final
+ from urllib.parse import urlsplit
+ 
+-from demo_only.burst import post_with_retries, retry_after_seconds
++from demo_only.burst import post_with_retries
+ from demo_only.fakes import RecordedQualifier
+ from lead_desk.adapters import HttpCrm, HttpOutbox
+ from lead_desk.constants import (
+@@ -45,6 +45,7 @@ from lead_desk.constants import (
+     SOURCES,
+ )
+ from lead_desk.desk import Desk
++from lead_desk.envnum import retry_after_seconds
+ from lead_desk.hooks import HOOK_POINTS, FlagFileHooks
+ from lead_desk.portal_api import connect_readonly
+ from lead_desk.urls import DESK_SCHEME as DESK_SCHEME  # explicit re-export; names the scheme (loopback only)
+diff --git a/scripts/real-run.env.example b/scripts/real-run.env.example
+index 0e84309..befbba4 100644
+--- a/scripts/real-run.env.example
++++ b/scripts/real-run.env.example
+@@ -1,6 +1,6 @@
+ # Settings for scripts/run_real_check.py. Copy this file OUTSIDE the repository, for example to
+ # <PRIVATE_FOLDER>\real-run.env, and replace every <...> value.
+-# Secrets are never written here: only the PATHS of one-line key files.
++# Secrets are never written here: only the PATHS of one-line key files. Run chmod 600 on each key file.
+ # Run: python scripts/run_real_check.py --config <PRIVATE_FOLDER>\real-run.env
+ # Self-test with no real service: python scripts/run_real_check.py --dry-fakes
+ 
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 8dfc8e9..a210eaf 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -310,12 +310,10 @@ class Reply:
+ MEMORY_BOOK_PROBLEM = "the lead-book must be a file: ':memory:' is empty for every thread but the first"
+ 
+ 
+-BOOK_IS_FOLDER_PROBLEM = "DESK_DB_PATH names a folder: it must name a file (the lead-book file)"
+-BOOK_FOLDER_IS_FILE_PROBLEM = "DESK_DB_PATH sits inside something that is a file, not a folder"
+ BOOK_UNREADABLE_PROBLEM = file_problem_text("DESK_DB_PATH", "unreadable")
+-BOOK_PROBLEMS = {
+-    "folder": BOOK_IS_FOLDER_PROBLEM,
+-    "inside_file": BOOK_FOLDER_IS_FILE_PROBLEM,
++BOOK_PROBLEMS = {  # the same fixed texts as the other settings that name a file (envnum.file_problem_text)
++    "folder": file_problem_text("DESK_DB_PATH", "folder"),
++    "inside_file": file_problem_text("DESK_DB_PATH", "inside_file"),
+     "unreadable": BOOK_UNREADABLE_PROBLEM,
+ }
+ 
+diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
+index e05dd88..03642e2 100644
+--- a/src/lead_desk/envnum.py
++++ b/src/lead_desk/envnum.py
+@@ -114,7 +114,8 @@ def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: boo
+     """The one rule for every secret file (a key or a password), for the desk, its scripts and its fakes. The whole
+     rule, with its reasons, is written once, in the section "Key and password files" of docs/settings.md. In short: a
+     regular file that is not a link (a folder, a named pipe, a device or a symbolic link is refused without being
+-    read) that no other user can read (on a system with permission bits), at most SECRET_FILE_MAX_BYTES, UTF-8 (a
++    read) that no other user can use (read, write or run it; checked on a system with permission bits), at most
++    SECRET_FILE_MAX_BYTES, UTF-8 (a
+     byte-order mark at the start is accepted), at least LIVE_KEY_MIN_CHARS printable ASCII characters and no blank
+     anywhere. Only the line break at the very end of the file is removed. `strip_inner_space=True` (the SMTP password
+     and the mailbox password only) drops every plain space first. `what` names the file in every text ("the {what}
+@@ -145,7 +146,7 @@ def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: boo
+         if opened.st_ino != 0 and (second.st_ino, second.st_dev) != (opened.st_ino, opened.st_dev):
+             raise SettingRefused(f"the {what} file changed while it was being opened: try again")
+         if os.name == "posix" and opened.st_mode & _OTHERS_MASK:
+-            raise SettingRefused(f"the {what} file can be read by other users: run chmod 600 on it")
++            raise SettingRefused(f"the {what} file can be used by other users: run chmod 600 on it")
+         with os.fdopen(fd, "rb", closefd=False) as f:
+             raw = f.read(SECRET_FILE_MAX_BYTES + 1)
+     except OSError:

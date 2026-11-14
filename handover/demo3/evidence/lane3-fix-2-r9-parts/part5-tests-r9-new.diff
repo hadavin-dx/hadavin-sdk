@@ -1,0 +1,314 @@
+diff --git a/tests/test_one_key_file_rule_r9.py b/tests/test_one_key_file_rule_r9.py
+new file mode 100644
+index 0000000..7170f2b
+--- /dev/null
++++ b/tests/test_one_key_file_rule_r9.py
+@@ -0,0 +1,308 @@
++"""Fix-2 round 9: the mode text for write and execute bits, one text for a lead-book path that is a folder, the live
++model key and the demo model server refuse a key file other users can use, a bad key file is reported before any demo
++server is called, the real-run script refuses a book path it cannot look at, and the docs say what is known and what
++was not tried about mounts. Made-up data only; fake keys are built from parts."""
++
++from __future__ import annotations
++
++import importlib
++import os
++import socket
++from decimal import Decimal
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from lead_desk import desk, envnum, loader, server
++from lead_desk.config import Config
++from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings
++from lead_desk.envnum import SettingRefused
++from lead_desk.live_claude import LiveQualifier, LiveSettings
++from lead_desk.trace import TracedCrm, Tracer
++
++REPO = Path(server.__file__).parents[2]
++KEY = "made" + "-up-" + "key-" + "0123456789"
++POSIX = pytest.mark.skipif(os.name != "posix", reason="permission bits are a POSIX notion")
++USED = "can be used by other users: run chmod 600 on it"
++
++
++def _doc(name: str) -> str:
++    return " ".join((REPO / name).read_text(encoding="utf-8").split())
++
++
++def _key_file(tmp_path: Path, mode: int) -> Path:
++    f = tmp_path / "k.txt"
++    f.write_text(KEY + "\n", encoding="utf-8")
++    f.chmod(mode)
++    return f
++
++
++# ------------------------------------------------------------------------------ row 7: the text fits every bit
++@POSIX
++@pytest.mark.parametrize("mode", [0o602, 0o601, 0o620, 0o610, 0o640, 0o604])
++def test_a_write_or_execute_only_bit_is_called_use_not_read(tmp_path: Path, mode: int) -> None:
++    f = _key_file(tmp_path, mode)
++    with pytest.raises(SettingRefused) as e:
++        envnum.read_secret_file(f, "made-up key", "key")
++    assert str(e.value) == f"the made-up key file {USED}"
++    assert "read by" not in str(e.value)
++
++
++def test_the_docs_use_the_same_words_as_the_refusal_and_say_which_systems() -> None:
++    text = _doc("docs/settings.md").split("## Key and password files")[1].split(" ## ")[0]
++    assert f"the file {USED}" in text
++    assert "can be read by other users" not in text
++    assert "Linux, macOS and other POSIX systems" in text and "Linux and macOS" not in text
++
++
++# ------------------------------------------------------------------------------ row 3: wording and facts only
++def test_the_docs_do_not_give_the_wrong_reason_for_skipping_an_owner_check() -> None:
++    text = _doc("docs/settings.md")
++    assert "refuse a key kept in a shared service account" not in text
++    assert "an owner check would refuse" not in text
++    assert "the owner of the file is not checked" in text
++
++
++def test_the_docs_name_the_mounts_that_are_refused_and_what_was_not_tried() -> None:
++    text = _doc("docs/settings.md").split("## Key and password files")[1].split(" ## ")[0]
++    for part in (
++        "Docker file secrets",
++        "Kubernetes secret volumes",
++        "0444",
++        "0644",
++        "WSL",
++        "a Windows drive seen from WSL",
++        "FAT",
++        "bind mounts",
++        "copy the file to a regular file on a normal disk and run chmod 600",
++        "not tried by the author",
++    ):
++        assert part in text, part
++
++
++# ------------------------------------------------------------------------------ row 12: plain wording
++def test_the_settings_section_says_in_one_sentence_when_the_file_is_read_and_explains_its_labels() -> None:
++    text = _doc("docs/settings.md").split("## Key and password files")[1].split(" ## ")[0]
++    assert "is read at start and again before every call" in text
++    assert "read once at the start" not in text and "read again at every call" not in text
++    for explained in (
++        "a named pipe (a file that other programs write into)",
++        "a device (a name for a piece of hardware)",
++        "a symbolic link (a name that points to another file)",
++        "`chmod 600` (the command that makes a file readable and writable by its owner only)",
++    ):
++        assert explained in text, explained
++    assert text.count("a named pipe") == 1 and text.count("a symbolic link") == 1
++
++
++def test_the_settings_page_points_up_with_above_and_down_with_below() -> None:
++    text = _doc("docs/settings.md")
++    before, after = text.split("## Key and password files")
++    assert 'in "Key and password files" below' in before  # the section comes later: "below" is right
++    assert '"Key and password files" below' not in after.split(" ## Live-model limits")[1], "points up: say above"
++    assert 'see "Key and password files" above' in after
++
++
++def test_the_retry_after_decision_has_its_own_heading_in_the_limits_page() -> None:
++    lines = (REPO / "docs" / "limits.md").read_text(encoding="utf-8").splitlines()
++    heads = [i for i, ln in enumerate(lines) if ln.startswith("#") and "Waiting after 429" in ln]
++    assert len(heads) == 1
++    after = " ".join(lines[heads[0] : heads[0] + 12])
++    assert "RETRY_AFTER_MAX_SECONDS" in after and "3600 seconds" in after
++
++
++def test_the_contract_exit_1_sentence_has_no_bracket_inside_a_bracket() -> None:
++    lines = (REPO / "contract.md").read_text(encoding="utf-8").splitlines()
++    line = next(x for x in lines if x.lstrip().startswith("* Exit codes: 1 the demo servers cannot be reached"))
++    first = line.split("; 2 another desk holds the lock file")[0]
++    depth = deepest = 0
++    for ch in first:
++        depth += (ch == "(") - (ch == ")")
++        deepest = max(deepest, depth)
++    assert deepest <= 1, deepest  # the old text was one sentence with a bracket inside a bracket
++    assert first.count(". ") >= 2, first  # the reasons are told in short sentences
++
++
++# ------------------------------------------------------------------------------ row 10: one text for a folder
++def test_the_lead_book_folder_texts_come_from_the_one_helper(tmp_path: Path) -> None:
++    assert not hasattr(desk, "BOOK_IS_FOLDER_PROBLEM") and not hasattr(desk, "BOOK_FOLDER_IS_FILE_PROBLEM")
++    folder = tmp_path / "a-folder"
++    folder.mkdir()
++    assert desk.book_problem(folder) == envnum.file_problem_text("DESK_DB_PATH", "folder")
++    plain = tmp_path / "a-file"
++    plain.write_text("x", encoding="utf-8")
++    assert desk.book_problem(plain / "inner.db") == envnum.file_problem_text("DESK_DB_PATH", "inside_file")
++    assert desk.BOOK_PROBLEMS == {
++        k: envnum.file_problem_text("DESK_DB_PATH", k)  # type: ignore[arg-type]
++        for k in ("folder", "inside_file", "unreadable")
++    }
++
++
++# ------------------------------------------------------------------------------ row 11: every wrapper
++def _live_settings(tmp_path: Path, key_file: Path) -> LiveSettings:
++    return LiveSettings(
++        model="fake-model-1",
++        key_file=key_file,
++        price_in_per_mtok=Decimal("1"),
++        price_out_per_mtok=Decimal("2"),
++        price_date="2026-01-01",
++        cap_run_usd=Decimal("1"),
++        cap_total_usd=Decimal("3"),
++        ledger_path=tmp_path / "ledger.jsonl",
++        run_id="run-a",
++        base_url="http://127.0.0.1:1",
++        timeout_seconds=2.0,
++    )
++
++
++@POSIX
++def test_the_live_model_key_that_other_users_can_use_stops_the_start(tmp_path: Path) -> None:
++    f = _key_file(tmp_path, 0o644)
++    q = LiveQualifier(_live_settings(tmp_path, f))
++    with pytest.raises(SettingRefused) as e:
++        q.check_start()
++    assert str(e.value) == f"DESK_LIVE_KEY_FILE: the live model key file {USED}"
++    assert KEY not in str(e.value) and str(tmp_path) not in str(e.value)
++    f.chmod(0o600)
++    q.check_start()  # a private file is accepted
++
++
++@POSIX
++def test_the_demo_model_server_refuses_a_key_file_other_users_can_use(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    from demo_only import fake_model_server as fm
++
++    f = _key_file(tmp_path, 0o664)
++    with pytest.raises(SystemExit) as e:
++        fm._read_key(f)
++    assert e.value.code == 2
++    err = capsys.readouterr().err
++    assert err == f"refused: --key-file: the model key file {USED}\n", err
++    f.chmod(0o600)
++    assert fm._read_key(f) == KEY
++
++
++# ------------------------------------------------------------------------------ row 15: claims that were not checked
++@POSIX
++def test_a_bad_key_file_with_the_smtp_sender_is_reported_before_any_demo_server_is_called(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """docs/limits.md and contract.md say: with DESK_OUTBOX=smtp no demo server is contacted, so a bad key file is
++    reported at once (exit 4), not after "cannot reach the demo servers" (exit 1)."""
++    f = _key_file(tmp_path, 0o644)
++    monkeypatch.setenv("DESK_HUBSPOT_KEY_FILE", str(f))
++    monkeypatch.setenv("DESK_HUBSPOT_MAX_CALLS", "9")
++    monkeypatch.setenv("DESK_HUBSPOT_BASE_URL", "http://127.0.0.1:1")
++    monkeypatch.setenv("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "yes")
++
++    def no_network(*a: Any, **k: Any) -> Any:
++        raise AssertionError("a server was called before the key file was checked")
++
++    monkeypatch.setattr(socket.socket, "connect", no_network)
++    monkeypatch.setattr(socket, "create_connection", no_network)
++    crm, outbox, qualifier = loader.load_demo_adapters(Config(crm="hubspot", outbox="smtp"))
++    with pytest.raises(SettingRefused, match="other users"):
++        loader.check_secret_files(crm, outbox, qualifier)
++
++
++@POSIX
++def test_a_timing_wrapper_around_a_kind_still_has_its_start_check_run(tmp_path: Path) -> None:
++    f = _key_file(tmp_path, 0o644)
++    crm = HubspotCrm(HubspotSettings(key_file=f, max_calls=5, base_url="http://127.0.0.1:1", allow_any_base_url=True))
++    traced = TracedCrm(crm, Tracer(tmp_path / "trace.jsonl"))
++    with pytest.raises(SettingRefused) as e:
++        loader.check_secret_files(traced, object(), object())
++    assert USED in str(e.value) and str(tmp_path) not in str(e.value)
++
++
++# ------------------------------------------------------------------------------ row 4: a book path it cannot look at
++def _real_check(monkeypatch: pytest.MonkeyPatch) -> Any:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    return importlib.import_module("run_real_check")
++
++
++def _config_with_book(mod: Any, tmp_path: Path, book: Path) -> Path:
++    values = dict.fromkeys(mod.REQUIRED, "x") | {"DESK_DB_PATH": str(book)}
++    cfg = tmp_path / "run.env"
++    cfg.write_text("\n".join(f"{k}={v}" for k, v in values.items()) + "\n", encoding="utf-8")
++    return cfg
++
++
++@pytest.mark.skipif(
++    not hasattr(os, "geteuid") or os.geteuid() == 0, reason="root can look inside a folder with no permission"
++)
++def test_run_real_check_refuses_a_book_path_it_cannot_look_at_in_one_line(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    mod = _real_check(monkeypatch)
++    locked = tmp_path / "locked"
++    locked.mkdir()
++    cfg = _config_with_book(mod, tmp_path, locked / "desk.db")
++    locked.chmod(0)
++    try:
++        monkeypatch.setattr("builtins.input", lambda prompt="": pytest.fail("the question must not be reached"))
++        code = mod.main(["--config", str(cfg)])
++    finally:
++        locked.chmod(0o700)
++    out = capsys.readouterr().out
++    assert code == mod.EXIT_REFUSED, out
++    assert out.strip().splitlines() == [
++        "refused: ValueError: DESK_DB_PATH cannot be looked at: the system will not let this script see it"
++    ], out
++    assert "Traceback" not in out and str(tmp_path) not in out
++
++
++def test_run_real_check_refuses_a_book_path_the_system_will_not_show_in_one_line_also_for_root(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    """The same refusal where the test cannot take away its own permission (root, or a system without modes): the one
++    look at the path (`path_kind`) answers `unreadable`, as it does for a folder with no permission."""
++    mod = _real_check(monkeypatch)
++    cfg = _config_with_book(mod, tmp_path, tmp_path / "x" / "desk.db")
++    seen: list[Path] = []
++
++    def unreadable(path: Path) -> str:
++        seen.append(path)
++        return "unreadable"
++
++    monkeypatch.setattr(mod, "path_kind", unreadable)
++    monkeypatch.setattr("builtins.input", lambda prompt="": pytest.fail("the question must not be reached"))
++    code = mod.main(["--config", str(cfg)])
++    out = capsys.readouterr().out
++    assert code == mod.EXIT_REFUSED and len(seen) == 1, (code, out)
++    assert out.strip().splitlines() == [
++        "refused: ValueError: DESK_DB_PATH cannot be looked at: the system will not let this script see it"
++    ], out
++
++
++def test_run_real_check_refuses_a_book_that_already_exists_in_one_line(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    mod = _real_check(monkeypatch)
++    book = tmp_path / "old.db"
++    book.write_text("x", encoding="utf-8")
++    code = mod.main(["--config", str(_config_with_book(mod, tmp_path, book))])
++    out = capsys.readouterr().out
++    assert code == mod.EXIT_REFUSED and len(out.strip().splitlines()) == 1, out
++    assert "already exists" in out and str(tmp_path) not in out
++
++
++# ------------------------------------------------------------------------------ row 18: a port that stays unused
++def test_the_held_port_refuses_a_connection_and_is_not_given_out_twice() -> None:
++    import sys
++
++    sys.path.insert(0, str(REPO / "tests"))
++    try:
++        from support import free_port, port_nobody_listens_on
++    finally:
++        sys.path.remove(str(REPO / "tests"))
++    with port_nobody_listens_on() as port:
++        with pytest.raises(ConnectionRefusedError):
++            socket.create_connection(("127.0.0.1", port), timeout=2).close()
++        with pytest.raises(OSError):  # nobody else can bind it while it is held
++            with socket.socket() as other:
++                other.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 0)
++                other.bind(("127.0.0.1", port))
++        assert free_port() != port

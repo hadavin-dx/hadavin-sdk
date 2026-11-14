@@ -1,0 +1,347 @@
+diff --git a/tests/test_one_key_file_rule_r7.py b/tests/test_one_key_file_rule_r7.py
+index 2ea70dc..9912a8b 100644
+--- a/tests/test_one_key_file_rule_r7.py
++++ b/tests/test_one_key_file_rule_r7.py
+@@ -42,6 +42,7 @@ def _make_link(link: Path, target: Path) -> None:
+     except (OSError, NotImplementedError) as e:
+         pytest.skip(f"this system will not make a symbolic link here: {type(e).__name__}")
+ 
++
+ # ------------------------------------------------------------------------ the readers of files: one ban, one allow-list
+ # A TRIPWIRE, not a proof: it names every way the standard library has to read a file or to start a program that reads
+ # one, and refuses each outside the named allow-list. What it cannot see (a C extension, a plug-in, text that is run as
+@@ -87,11 +88,39 @@ def _is_namespace(v: ast.expr) -> bool:
+     )
+ 
+ 
++def _is_own_file_name(a: ast.AST) -> bool:
++    """`__file__`, `module.__file__`, or `str(...)` of one of them: the path of code that is running."""
++    if isinstance(a, ast.Name):
++        return a.id == "__file__"
++    if isinstance(a, ast.Attribute):
++        return a.attr == "__file__"
++    return (
++        isinstance(a, ast.Call)
++        and isinstance(a.func, ast.Name)
++        and a.func.id == "str"
++        and len(a.args) == 1
++        and not a.keywords
++        and _is_own_file_name(a.args[0])
++    )
++
++
+ def _names_own_file(v: ast.AST) -> bool:
+-    """True when the expression holds `__file__` (the path of the running code, never a setting)."""
+-    return any(
+-        (isinstance(x, ast.Name) and x.id == "__file__") or (isinstance(x, ast.Attribute) and x.attr == "__file__")
+-        for x in ast.walk(v)
++    """True when the expression is EXACTLY the path of the running code: `Path(__file__)`, `Path(mod.__file__)` or
++    `Path(str(mod.__file__))`, optionally followed by `.parent` or `.parents[n]` (never a setting). Any other
++    expression that merely mentions `__file__` (a default of an environment lookup, a joined name) is not exempt."""
++    while True:
++        if isinstance(v, ast.Subscript) and isinstance(v.value, ast.Attribute) and v.value.attr == "parents":
++            v = v.value.value
++        elif isinstance(v, ast.Attribute) and v.attr in ("parent", "parents"):
++            v = v.value
++        else:
++            break
++    return (
++        isinstance(v, ast.Call)
++        and _call_name(v.func) == "Path"
++        and len(v.args) == 1
++        and not v.keywords
++        and _is_own_file_name(v.args[0])
+     )
+ 
+ 
+@@ -188,7 +217,12 @@ def _reader_extra(n: ast.AST, modules: dict[str, str]) -> int | None:
+ 
+ 
+ def _scan_tree(
+-    root: Path, folders: tuple[str, ...], names: set[str], *, bare_names: bool, readers: bool = False,
++    root: Path,
++    folders: tuple[str, ...],
++    names: set[str],
++    *,
++    bare_names: bool,
++    readers: bool = False,
+     zero_arg: bool = False,
+ ) -> list[tuple[str, int, str, str]]:
+     """(file, line, text, definition) for every hit of `_refs` in every .py file below each folder, at any depth;
+@@ -721,7 +755,7 @@ def _shell_hits(root: Path, folders: tuple[str, ...]) -> list[str]:
+         'source "$SECRET_FILE"',
+         "python -c \"print(open('key.txt').read())\"",
+         "python3 -c 'from pathlib import Path; Path(\"secret.txt\").read_text()'",
+-        "run: python -c \"import sys; open(sys.argv[1]).read()\" $TOKEN_FILE",
++        'run: python -c "import sys; open(sys.argv[1]).read()" $TOKEN_FILE',
+     ],
+ )
+ @pytest.mark.parametrize("name", SHELL_FILES)
+@@ -782,6 +816,11 @@ PLANTED_PROBES = {
+     "a bare disk_usage": "from shutil import disk_usage\nx = disk_usage(p)",
+     "a bare expanduser": "from os.path import expanduser\nx = expanduser(p)",
+     "a bare resolve through an import": "from pathlib import *\nx = resolve(p)",
++    "resolve of a lookup that holds __file__ as its default": 'x = Path(os.environ.get("K", __file__)).resolve()',
++    "resolve of the own path joined to a setting": "x = (Path(__file__) / name).resolve()",
++    "resolve of a Path with a second part": "x = Path(p, __file__).resolve()",
++    "resolve after joinpath": "x = Path(__file__).joinpath(name).resolve()",
++    "resolve of something else beside __file__": "x = Path(f'{__file__}/{p}').resolve()",
+ }
+ 
+ 
+@@ -794,6 +833,7 @@ def test_the_probe_guard_leaves_local_names_and_the_files_own_path_alone() -> No
+     source = (
+         "def walk(x):\n    return walk(x)\nexists = 1\nm.group(1)\nm.group('a')\nm.group()\n"
+         "HERE = Path(__file__).resolve().parent\nR = Path(mod.__file__).resolve()\n"
++        "S = Path(str(mod.__file__)).resolve().parent\nT = Path(__file__).parents[1].resolve()\n"
+     )
+     assert [t for _n, t, _s in _refs(source, PROBES, bare_names=False, zero_arg=True)] == ["m.group()"]  # no argument
+ 
+@@ -1290,9 +1330,17 @@ def _live(tmp_path: Path, url: str) -> Any:
+     key_file.write_text(KEY + "\n", encoding="utf-8")
+     return LiveQualifier(
+         LiveSettings(
+-            model="fake-model-1", key_file=key_file, price_in_per_mtok=Decimal("2"), price_out_per_mtok=Decimal("10"),
+-            price_date="2026-01-01", cap_run_usd=Decimal("1"), cap_total_usd=Decimal("3"),
+-            ledger_path=tmp_path / "ledger.jsonl", run_id="run-a", base_url=url, timeout_seconds=3.0,
++            model="fake-model-1",
++            key_file=key_file,
++            price_in_per_mtok=Decimal("2"),
++            price_out_per_mtok=Decimal("10"),
++            price_date="2026-01-01",
++            cap_run_usd=Decimal("1"),
++            cap_total_usd=Decimal("3"),
++            ledger_path=tmp_path / "ledger.jsonl",
++            run_id="run-a",
++            base_url=url,
++            timeout_seconds=3.0,
+         )  # fmt: skip
+     )
+ 
+@@ -1423,7 +1471,6 @@ def test_the_reader_opens_without_following_a_link(monkeypatch: pytest.MonkeyPat
+     assert seen and all(fl & nofollow == nofollow for fl in seen)
+ 
+ 
+-
+ # ---------------------------------------------------------------------------------- the fake model server's key text
+ def _fms(
+     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, path: Path, capsys: pytest.CaptureFixture[str]
+diff --git a/tests/test_one_key_file_rule_r8.py b/tests/test_one_key_file_rule_r8.py
+index 8555daa..cdc777e 100644
+--- a/tests/test_one_key_file_rule_r8.py
++++ b/tests/test_one_key_file_rule_r8.py
+@@ -61,14 +61,16 @@ def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path
+     f.chmod(mode)
+     with pytest.raises(SettingRefused) as e:
+         envnum.read_secret_file(f, what, noun, strip_inner_space=inner)
+-    assert str(e.value) == f"the {what} file can be read by other users: run chmod 600 on it"
++    assert str(e.value) == f"the {what} file can be used by other users: run chmod 600 on it"
+     assert KEY not in str(e.value) and str(tmp_path) not in str(e.value)
+ 
+ 
+ @POSIX
+-@pytest.mark.parametrize("mode", [0o600, 0o400, 0o200 | 0o400])
++@pytest.mark.parametrize("mode", [0o600, 0o400, 0o700])
+ @pytest.mark.parametrize("kind", sorted(KINDS))
+ def test_a_key_file_only_its_owner_can_read_is_accepted_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
++    """REGRESSION GUARD: passes on the round 7 code too (a private file was always accepted); it stops a refusal that
++    is too wide."""
+     what, noun, inner = KINDS[kind]
+     f = tmp_path / "secret-file.txt"
+     f.write_text(KEY + "\n", encoding="utf-8")
+@@ -77,7 +79,7 @@ def test_a_key_file_only_its_owner_can_read_is_accepted_for_every_kind(tmp_path:
+ 
+ 
+ @POSIX
+-def test_the_mode_refusal_comes_after_the_link_and_kind_checks_and_has_no_way_round(tmp_path: Path) -> None:
++def test_the_mode_refusal_has_no_way_round_in_the_signature(tmp_path: Path) -> None:
+     f = tmp_path / "secret-file.txt"
+     f.write_text(KEY, encoding="utf-8")
+     f.chmod(0o644)
+@@ -91,6 +93,25 @@ def test_the_mode_refusal_comes_after_the_link_and_kind_checks_and_has_no_way_ro
+         envnum.read_secret_file(f, "made-up key", "key")
+ 
+ 
++@POSIX
++def test_the_link_and_kind_refusals_come_before_the_mode_refusal(tmp_path: Path) -> None:
++    """A link to a file with a bad mode, and a folder with a wide mode, each say their own fault, not the mode."""
++    real = tmp_path / "real-key.txt"
++    real.write_text(KEY, encoding="utf-8")
++    real.chmod(0o644)
++    link = tmp_path / "link-key.txt"
++    _make_link(link, real)
++    with pytest.raises(SettingRefused) as e:
++        envnum.read_secret_file(link, "made-up key", "key")
++    assert str(e.value) == LINK_TEXT
++    folder = tmp_path / "a-folder"
++    folder.mkdir()
++    folder.chmod(0o777)
++    with pytest.raises(SettingRefused) as e:
++        envnum.read_secret_file(folder, "made-up key", "key")
++    assert str(e.value) == "the made-up key file cannot be read"
++
++
+ @POSIX
+ def test_a_world_readable_key_stops_every_wrapper_with_the_same_fixed_text(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@@ -207,7 +228,8 @@ def test_a_second_look_that_says_link_refuses_whatever_the_open_did(
+ 
+ 
+ def test_a_zero_inode_number_does_not_stop_a_plain_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+-    """Some systems report 0 for st_ino: then only the link test is used (the numbers cannot be compared)."""
++    """REGRESSION GUARD (passes on the round 7 code too). Some systems report 0 for st_ino: then only the link test is
++    used (the numbers cannot be compared)."""
+     f = tmp_path / "k.txt"
+     f.write_text(KEY, encoding="utf-8")
+     real_fstat, real_lstat = os.fstat, os.lstat
+@@ -225,7 +247,8 @@ def test_a_zero_inode_number_does_not_stop_a_plain_file(tmp_path: Path, monkeypa
+ 
+ @pytest.mark.skipif(not hasattr(os, "O_NOFOLLOW"), reason="this system has no O_NOFOLLOW flag")
+ def test_the_file_is_opened_without_following_a_link(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+-    """The second look (lstat) also refuses a link, so only the flags of the open call show that the flag is kept."""
++    """REGRESSION GUARD (passes on the round 7 code too). The second look (lstat) also refuses a link, so only the flags
++    of the open call show that the flag is kept."""
+     f = tmp_path / "k.txt"
+     f.write_text(KEY, encoding="utf-8")
+     seen: list[int] = []
+@@ -240,17 +263,38 @@ def test_the_file_is_opened_without_following_a_link(tmp_path: Path, monkeypatch
+     assert seen and all(x & os.O_NOFOLLOW for x in seen), seen
+ 
+ 
++MODE_RULE_WORDS = re.compile(
++    r"S_ISLNK|O_NOFOLLOW|0o077|\bchmod 600\b|S_IRWXO|S_IRWXG|S_IMODE|\bst_mode\s*&|\bstat\.S_I|\bS_I[A-Z]+\s*\("
++)  # tripwire (a text search), not proof: a rule built from other words passes it
++
++
+ def test_the_link_and_mode_rules_live_only_in_the_one_reader() -> None:
+-    """No other file in src/scripts/demo_only/load_tools/tools names lstat, S_ISLNK, mode bits or O_NOFOLLOW."""
+-    wanted = re.compile(r"S_ISLNK|O_NOFOLLOW|0o077|\bchmod 600\b")
++    """No other file in src/scripts/demo_only/load_tools/tools names lstat, S_ISLNK, mode bits, a mode mask or
++    O_NOFOLLOW. This is a tripwire, not proof (see MODE_RULE_WORDS)."""
+     where = []
+     for folder in ("src/lead_desk", "scripts", "demo_only", "load_tools", "tools"):
+         for p in sorted((REPO / folder).rglob("*.py")):
+-            if p.name != "envnum.py" and wanted.search(p.read_text(encoding="utf-8")):
++            if p.name != "envnum.py" and MODE_RULE_WORDS.search(p.read_text(encoding="utf-8")):
+                 where.append(p.relative_to(REPO).as_posix())
+     assert where == [], where
+ 
+ 
++@pytest.mark.parametrize(
++    "planted",
++    [
++        "if mode & stat.S_IRWXO: refuse()",
++        "m = stat.S_IMODE(x.st_mode)",
++        "if x.st_mode & 0o004: refuse()",
++        "from stat import S_IRWXG",
++        "os.chmod(p, 0o600)  # chmod 600",
++        "if S_ISREG(x.st_mode): pass",
++        "ok = stat.S_ISDIR(m)",
++    ],
++)
++def test_the_mode_rule_tripwire_sees_a_copy_of_the_rule_in_other_words(planted: str) -> None:
++    assert MODE_RULE_WORDS.search(planted), planted
++
++
+ # ------------------------------------------------------------------------------- the Retry-After text, every short text
+ def _copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+     monkeypatch.syspath_prepend(str(REPO / "scripts"))
+@@ -357,26 +401,88 @@ def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> Non
+         "kept as text",
+         "a named pipe",
+         "a device",
+-        "read once at the start",
+-        "read again at every call",
++        "is read at start and again before every call",
++        "kept in memory",
+         "the owner of the file is not checked",
++        "empty or too short",
++        "a character that is not printable ASCII",
++        "a space inside a key",
+     ):
+         assert part in section, part
+ 
+ 
++KEY_FILE_WORDS = re.compile(r"key file|password file|KEY_FILE|PASSWORD_FILE|read_secret_file|key or password", re.I)
++RULE_WORDS = ("4096", "printable ASCII", "byte-order", "symbolic link", "named pipe", "other users")
++TEXT_SUFFIXES = (".md", ".txt", ".example")
++SKIPPED_FOLDERS = {".git", ".venv", "node_modules", "__pycache__"}
++
++
++def _repeats_of_the_rule(name: str, text: str) -> list[tuple[str, int, str]]:
++    """The lines of a text file that talk about a key or password file AND name one of the rule's words (a size, the
++    character set, the byte-order mark, a link, a pipe, other users). The one section of docs/settings.md that holds
++    the rule, and its table row, are the only place allowed to. A line about something else that happens to hold one
++    of the words (open files, portal files, the lead fields) does not talk about a key file and is left alone."""
++    lines = text.splitlines()
++    skip: set[int] = set()
++    if name == "docs/settings.md":
++        start = next((i for i, ln in enumerate(lines) if ln.strip() == SECTION), None)
++        if start is not None:
++            end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
++            skip |= set(range(start, end))
++        skip |= {i for i, ln in enumerate(lines) if ln.startswith("| `DESK_LIVE_KEY_FILE`")}
++    found = []
++    for i, ln in enumerate(lines):
++        if i in skip or not KEY_FILE_WORDS.search(ln):
++            continue
++        found += [(name, i + 1, w) for w in RULE_WORDS if w in ln]
++    return found
++
++
++def _text_files() -> list[Path]:
++    return sorted(
++        p
++        for p in REPO.rglob("*")
++        if p.suffix in TEXT_SUFFIXES
++        and p.is_file()
++        and not (set(p.relative_to(REPO).parts) & SKIPPED_FOLDERS)
++        and not p.name.startswith("requirements")
++    )
++
++
+ def test_no_other_page_repeats_the_key_file_rule_it_links_to_it() -> None:
+-    for name in (
+-        "contract.md", "docs/limits.md", "docs/n8n-recipe.md", "docs/real-services.md", "README.md", "SECURITY.md",
+-        "docs/tests.md", "load_tools/README.md", "scripts/real-run.env.example",
+-    ):  # fmt: skip
+-        text = _doc(name)
+-        assert RULE not in text, name
+-        assert "a symbolic link is refused" not in text and "who is allowed to read a key" not in text, name
+-        assert "the permission bits are not checked" not in text, name
++    files = _text_files()
++    assert {p.relative_to(REPO).as_posix() for p in files} >= {"contract.md", "docs/limits.md", "docs/settings.md"}
++    repeats = []
++    for p in files:
++        repeats += _repeats_of_the_rule(p.relative_to(REPO).as_posix(), p.read_text(encoding="utf-8"))
++    assert repeats == [], repeats
+     for name in ("contract.md", "docs/limits.md", "docs/n8n-recipe.md"):
+         assert "docs/settings.md#key-and-password-files" in _doc(name), name
+ 
+ 
++@pytest.mark.parametrize(
++    "planted",
++    [
++        "A key file may be at most 4096 bytes.",
++        "The password file holds printable ASCII only.",
++        "`DESK_LIVE_KEY_FILE` may start with a byte-order mark.",
++        "A symbolic link as the key file is refused.",
++        "The key file must not be a named pipe.",
++        "Make the key file private: other users must not read it.",
++        "refused: a key or password file with a symbolic link",
++    ],
++)
++def test_the_repeat_scan_sees_a_planted_copy_of_the_rule_on_any_page(planted: str) -> None:
++    assert _repeats_of_the_rule("docs/other.md", planted), planted
++    assert _repeats_of_the_rule("docs/settings.md", "## Other part\n" + planted), planted  # outside the one section
++
++
++def test_the_repeat_scan_leaves_the_one_section_and_unrelated_lines_alone() -> None:
++    page = f"intro\n{SECTION}\nA key file is at most 4096 bytes; a symbolic link is refused.\n## Next\nNothing."
++    assert _repeats_of_the_rule("docs/settings.md", page) == []
++    assert _repeats_of_the_rule("contract.md", "Files over 4096 open at once; symbolic links are left out.") == []
++
++
+ def test_the_settings_page_agrees_with_itself_about_when_each_file_is_read() -> None:
+     text = _doc("docs/settings.md")
+     assert "permissions of the file are not checked" not in text.lower()

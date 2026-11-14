@@ -1,0 +1,223 @@
+diff --git a/tests/support.py b/tests/support.py
+index 3de4243..7984cc4 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -82,6 +82,18 @@ def free_port() -> int:
+         return int(s.getsockname()[1])
+ 
+ 
++@contextmanager
++def port_nobody_listens_on() -> Iterator[int]:
++    """A loopback port that nothing listens on, for the whole `with` block. The socket stays BOUND but never listens,
++    so a connection to the port is refused (as on a closed port) and no other program can be given the same port in
++    the meantime (a port that was only found free and then closed can be taken by a test that starts later). On a
++    system where a bound port that does not listen is not refused at once (Windows is the one to doubt; not tried here)
++    use `free_port()`."""
++    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
++        s.bind((HOST, 0))
++        yield int(s.getsockname()[1])
++
++
+ def sql_exec(db_path: Path, sql: str, args: tuple[Any, ...] = ()) -> None:
+     """Run one statement on the lead-book through a separate connection and commit (a test's own write)."""
+     con = sqlite3.connect(db_path, timeout=10)
+diff --git a/tests/test_docs_claims_lane3.py b/tests/test_docs_claims_lane3.py
+index f743bd7..c1ae853 100644
+--- a/tests/test_docs_claims_lane3.py
++++ b/tests/test_docs_claims_lane3.py
+@@ -145,8 +145,8 @@ def test_exit_code_1_uses_the_words_the_desk_prints(tmp_path: Path) -> None:
+     assert "constant that is out of range" not in bullet, _p("no unexplained 'constant that is out of range'")
+     contract_line = _line_with(_read("contract.md"), "* Exit codes: 1 ")
+     assert "1 the demo servers cannot be reached" in contract_line, _p("contract.md names the demo servers for code 1")
+-    assert "sender cannot be reached" not in contract_line and "constant that is out of range" not in contract_line, (
+-        _p("contract.md does not repeat the old words 'sender' and 'a constant that is out of range'")
++    assert "sender cannot be reached" not in contract_line and "constant that is out of range" not in contract_line, _p(
++        "contract.md does not repeat the old words 'sender' and 'a constant that is out of range'"
+     )
+ 
+ 
+@@ -378,9 +378,7 @@ def test_the_words_repeat_duplicate_and_request_id_keep_one_meaning() -> None:
+         r"\*\*Repeat\*\* \(the reply says `\"replayed\": true`\): the "
+         r"same request id came again on the same door",
+         flat,
+-    ), _p(
+-        "a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref)"
+-    )
++    ), _p("a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref)")
+     assert "UNIQUE (source, source_ref)" in _read("src/lead_desk/schema.sql"), (
+         "premise: one receipt per door and request id"
+     )
+@@ -388,9 +386,7 @@ def test_the_words_repeat_duplicate_and_request_id_keep_one_meaning() -> None:
+         r"`duplicate` \(this email was seen before in another request: a "
+         r"different request id, or the same id on the other door\)",
+         flat,
+-    ), _p(
+-        "a duplicate is the same email in another request (other id, or same id on the other door)"
+-    )
++    ), _p("a duplicate is the same email in another request (other id, or same id on the other door)")
+     assert len(re.findall(r"(?i)request number", flat)) == 1 and 'The portal calls it "Request number"' in flat, _p(
+         "the words 'request number' appear in the README only where the portal's name is given"
+     )
+@@ -398,9 +394,7 @@ def test_the_words_repeat_duplicate_and_request_id_keep_one_meaning() -> None:
+     assert "source_ref" in _read("src/lead_desk/schema.sql"), "premise: the records have a source_ref column"
+     assert re.search(
+         r"\*\*Receipt\*\*: [^*]*one row in the desk's records[^*]*carries the number of that row as `receipt_id`", flat
+-    ), _p(
+-        "a receipt is a row; the reply carries its number as receipt_id"
+-    )
++    ), _p("a receipt is a row; the reply carries its number as receipt_id")
+ 
+ 
+ def test_prose_says_request_id_and_keeps_request_number_only_as_the_portals_label() -> None:
+@@ -504,9 +498,7 @@ def test_the_burst_numbers_in_limits_are_what_a_real_desk_answers(env: Env, tmp_
+         "a different prefix on a desk that holds the address: every answer is 200"
+     )
+     ten = rf"With `--n {n}` the numbers are `201=1 200={n - 1}`, `201=1 200={n - 1}` and `200={n}`"
+-    assert re.search(ten, steps), _p(
+-        f"the ten-send numbers 201=1 200={n - 1} / 200={n}"
+-    )
++    assert re.search(ten, steps), _p(f"the ten-send numbers 201=1 200={n - 1} / 200={n}")
+ 
+ 
+ def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
+@@ -571,14 +563,10 @@ def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
+         "step 1 names the Linux wait-loop line and the Windows line"
+     )
+     one_command = re.escape("sets `PYTHONPATH` to `" + "src" + ":" + ".` for this one command only")
+-    assert re.search(one_command, steps), _p(
+-        "the one-line command sets PYTHONPATH for that command only"
+-    )
++    assert re.search(one_command, steps), _p("the one-line command sets PYTHONPATH for that command only")
+     assert re.search(
+         r"If you see a different split, something is wrong or the desk was not fresh: start again at step 1", steps
+-    ), _p(
+-        "a different split means something is wrong: first check that the desk was fresh"
+-    )
++    ), _p("a different split means something is wrong: first check that the desk was fresh")
+     assert re.search(r"`MISMATCH`", steps) and "does not print the lead count" in steps, _p(
+         "RESULT/MISMATCH, no lead count"
+     )
+@@ -592,9 +580,7 @@ def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
+         "premise: the Windows scripts exist"
+     )
+     where = r'`\.venv` is switched on and `PYTHONPATH=src` is set \(README, "Try it", first lines\)'
+-    assert re.search(where, steps), _p(
+-        "the steps say where to run them: .venv on and PYTHONPATH=src set"
+-    )
++    assert re.search(where, steps), _p("the steps say where to run them: .venv on and PYTHONPATH=src set")
+     assert r'$env:PYTHONPATH = "src;."' in steps and "PYTHONPATH=src:. python -m demo_only.burst" in steps, _p(
+         "the one-line burst command is given for Linux and Windows"
+     )
+@@ -602,10 +588,8 @@ def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
+     assert "just started" not in steps and "lead count and the follow-up count" not in steps, _p("old wording is gone")
+     assert steps.index("3 seconds") < steps.index('"count": 1'), _p("the 3-second wait comes BEFORE the outbox check")
+     assert "fake/outbox" in steps, _p("the outbox address is named")
+-    assert re.search(
+-        r"run on a Linux computer with \d+ sends, most recently on 2026-11-13; logs not shipped", steps
+-    ), _p(
+-        "the 100-send figure was run on a Linux computer (last on 2026-11-13), logs not shipped"
++    assert re.search(r"run on a Linux computer with \d+ sends, most recently on 2026-11-13; logs not shipped", steps), (
++        _p("the 100-send figure was run on a Linux computer (last on 2026-11-13), logs not shipped")
+     )
+     assert "this was seen on a real run" not in steps, _p("the vague 'seen on a real run' is gone")
+     assert len(re.findall(r"(?:^|\s)\d\. ", steps)) >= 6, _p("the burst is a numbered list of steps")
+@@ -837,9 +821,7 @@ def test_the_recipe_import_steps_match_the_script() -> None:
+         assert re.search(r"(?i)not tried|run once|ran this once", part), _p(f"Step {letter} says whether it was run")
+     assert re.search(r"`\.venv` is switched on", steps), _p("the steps say where to run them")
+     usage = 'USAGE = "usage: python scripts/n8n_api.py import FILE | activate NAME | deactivate NAME | list"'
+-    assert usage in script, (
+-        "premise: the script has no delete command"
+-    )
++    assert usage in script, "premise: the script has no delete command"
+     flat = _flat(recipe)
+     assert re.search(r"no command to delete a workflow[^.]*n8n screen", flat), _p("deleting is done on the n8n screen")
+     assert re.search(r"two workflows with the same name", flat), _p("importing twice makes two workflows")
+@@ -1024,9 +1006,7 @@ def test_readme_port_check_explains_000_and_404() -> None:
+         rf"it answers 404 for `/`, and so do the demo servers on {FAKES_PORT} "
+         r"\(both codes were read on 2026-11-13",
+         need,
+-    ), _p(
+-        "the 404 claim names its source: read from a real desk and a real demo server, on Linux, not on Windows"
+-    )
++    ), _p("the 404 claim names its source: read from a real desk and a real demo server, on Linux, not on Windows")
+     assert re.search(r"404 means a program already answers", need) and "bash scripts/reset.sh" in need, _p(
+         "404 means a program answers; the earlier desk is that program; otherwise stop it or reset"
+     )
+@@ -1055,9 +1035,7 @@ def test_readme_port_check_explains_000_and_404() -> None:
+     assert re.search(r"makes curl print only the three-digit", need), _p("http_code is explained")
+ 
+ 
+-def test_premise_the_desk_and_the_demo_server_answer_404_for_the_root_address(
+-    env: Env, tmp_path: Path
+-) -> None:
++def test_premise_the_desk_and_the_demo_server_answer_404_for_the_root_address(env: Env, tmp_path: Path) -> None:
+     """A premise test (it reads no document; test_readme_port_check_explains_000_and_404 pins the README sentence):
+     the README relies on a real GET of `/` answering 404 on the desk and on the demo server."""
+     base, fakes_url = _start_real_desk(env, tmp_path)
+diff --git a/tests/test_env_numbers.py b/tests/test_env_numbers.py
+index 0b0a82b..17334ab 100644
+--- a/tests/test_env_numbers.py
++++ b/tests/test_env_numbers.py
+@@ -3,7 +3,7 @@ names the SETTING, never Python's own message or the value, and the desk ends wi
+ 
+ Two source checks below back that up. They are SAFETY NETS, NOT PROOF; what they cannot see:
+ 
+-* * The scan (`_bare_casts`: no bare int(), float() or Decimal() on settings text, in src/, scripts/, demo_only/,
++* The scan (`_bare_casts`: no bare int(), float() or Decimal() on settings text, in src/, scripts/, demo_only/,
+   load_tools/, tools/). FALSE NEGATIVES: taint that travels through a function's return value or a container handed
+   between functions; a cast reached through getattr/eval; other number types (Fraction); a settings mapping that is
+   neither named env/environ nor typed Mapping[str, str] / dict[str, str] and is read with a variable key or a
+@@ -30,7 +30,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import free_port
++from support import port_nobody_listens_on
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import run_real_check as rrc  # noqa: E402
+@@ -360,7 +360,8 @@ def test_an_out_of_range_setting_ends_the_desk_with_exit_4_naming_it(
+ 
+ def test_unreachable_demo_servers_exit_1_with_the_documented_words(tmp_path: Path) -> None:
+     # nothing listens on the port: exit 1 and the documented sentence, never a setting refusal
+-    r = _run_desk(tmp_path, {"DESK_FAKES_PORT": str(free_port())})
++    with port_nobody_listens_on() as port:  # held for the whole run: no other test can be given this port
++        r = _run_desk(tmp_path, {"DESK_FAKES_PORT": str(port)})
+     assert r.returncode == 1, (r.stdout + r.stderr)[-600:]
+     assert "cannot reach the demo servers" in r.stdout
+     assert "refuses a setting" not in r.stdout
+diff --git a/tests/test_one_key_file_rule_and_path_walk.py b/tests/test_one_key_file_rule_and_path_walk.py
+index 51122b6..94ecb83 100644
+--- a/tests/test_one_key_file_rule_and_path_walk.py
++++ b/tests/test_one_key_file_rule_and_path_walk.py
+@@ -10,7 +10,6 @@ import errno
+ import inspect
+ import os
+ import re
+-import sys
+ import threading
+ from pathlib import Path
+ from typing import Any
+@@ -508,13 +507,6 @@ def test_three_distinct_refusal_texts_for_short_odd_characters_and_space(tmp_pat
+     assert len({seen["short"], seen["odd"], seen["space"]}) == 3
+ 
+ 
+-def test_the_contract_and_limits_list_the_three_key_file_refusals() -> None:
+-    text = " ".join((REPO / "docs" / "settings.md").read_text(encoding="utf-8").split())  # said once (r8 file)
+-    assert "empty or too short" in text
+-    assert "a character that is not printable ASCII" in text
+-    assert "a space inside a key" in text
+-
+-
+ def test_the_mailbox_counter_reads_its_password_with_the_one_function() -> None:
+     imported = _imports_of(SRC / "imap_count.py")
+     assert "lead_desk.envnum.read_secret_file" in imported
+@@ -577,7 +569,7 @@ def test_the_contract_start_up_list_names_the_descriptor_check_and_the_public_bi
+ def test_the_book_refusal_texts_say_lead_book_with_a_hyphen() -> None:
+     from lead_desk import desk
+ 
+-    for text in (desk.MEMORY_BOOK_PROBLEM, desk.BOOK_IS_FOLDER_PROBLEM):
++    for text in (desk.MEMORY_BOOK_PROBLEM,):  # the folder texts come from envnum.file_problem_text (no book word)
+         assert "lead book" not in text and "lead-book" in text
+ 
+ 

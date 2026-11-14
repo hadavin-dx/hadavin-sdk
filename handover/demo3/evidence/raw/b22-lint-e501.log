@@ -1,0 +1,3 @@
+# /home/user/work/lint-venv/bin/ruff check --no-cache --select E501 .
+All checks passed!
+rc=0
