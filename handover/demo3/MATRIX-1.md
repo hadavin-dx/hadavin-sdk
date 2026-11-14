@@ -191,3 +191,7 @@ Numbers not matched to a log: gitleaks URL, version 8.30.1 and sha256 551f6fc8..
 1. Read the finished raw/b9-full-313.log (counts and rc), then check that no `data/` folder exists in m6-tree, and get an independent review of fix-9.
 2. Install the verified gitleaks 8.30.1 (and the browser requirements) in the standard test setup so the suite runs 0 failed and 0 browser skips, then run the full suite once in that setup with `--durations` to get time per group.
 3. Resolve the two disagreements about `data/` (m7-tree and m2-tree exist although M6 and M2 reported none) by running each test file alone in a fresh copy, so the list of creators is complete before fix-9 is called finished.
+
+## ADDED 04:01Z: M8 and M9 (facts from raw logs)
+- M8 portal flake (11 browser files, 533 tests): run A default order 533 passed in 431.10s rc 0; run B shuffled seed 20261114 533 passed in 439.53s rc 0; 0 failed; tree clean, no data/. Shuffle checked by lane: collect-only md5 differs with the seed. Two runs only. (evidence/m8-report.md, raw/m8-runA.log, raw/m8-runB.log)
+- M9 full run 3.13 base with data/ watcher: 3684 passed, 199 skipped, rc 0, 892.56s. Only data/ creator: tests/test_mode_safety.py::test_reset_sh_refuses_when_ps_is_missing (creates `data/` in the repo, leaves it empty). 199 skips = 166 playwright + 30 gitleaks + 3 others. (evidence/m9-report.md, raw/m9-full.log, raw/m9-datawatch.txt)

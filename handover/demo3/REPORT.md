@@ -1,4 +1,4 @@
-## HEARTBEAT 85 (04:02Z) - M8 DONE (2 runs, 0 failures), M9 AT 94 PERCENT, 4 BUILDERS RUNNING, STACK TEST ORDER READ
+## HEARTBEAT 85 (04:01Z; correction: first written as 04:02Z, which was ahead of the real clock 04:00Z; M9 had ended 04:00:36Z, details in evidence/m9-report.md: 3684 passed, 199 skipped, rc 0; the only data/ creator on the base is tests/test_mode_safety.py::test_reset_sh_refuses_when_ps_is_missing; the 199 skips add up exactly: 166 playwright, 30 gitleaks, 3 others) - M8 DONE (2 runs, 0 failures), M9 AT 94 PERCENT, 4 BUILDERS RUNNING, STACK TEST ORDER READ
 
 | Agent | Job | State |
 |---|---|---|

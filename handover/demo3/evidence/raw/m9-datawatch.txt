@@ -1,0 +1,3 @@
+start present=False
+03:52:00 APPEARED (dir) after tests/test_mode_safety.py::test_reset_sh_refuses_when_ps_is_missing
+end present=True exit=0
