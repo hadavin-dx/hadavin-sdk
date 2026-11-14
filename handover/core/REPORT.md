@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 13:15 UTC / 18:45 IST
+
+**r7s builder (af05acef) at 13:15Z, read from its tsv files, logs and checkpoint (builder claims; I ran nothing):**
+- **Mutants S01-S24 (own, on the changed code), first pass: 19 KILLED, 4 SURVIVED (S13 counter test, S20 and S21 openssl/BaseException skip tests, S24 q9 __wrapped__/context), 1 NOT-APPLIED (S19: pattern count 0, so no mutant was planted).** The builder strengthened the tests (exit_code_of, BaseException in s6, __wrapped__ for q9) and re-ran the survivors: **second pass (mut-results-S2.tsv) so far S13, S19, S20 KILLED; S21 and S24 still running** (mut2.py, pid 19856). A survivor is not closed until killed on the final bytes.
+- **m8 re-runs (mut-results-R.tsv): Q13, Q14, Q19, X1, mutA, mutB KILLED; X1ctx (the q9 `__context__` mutant: an exception raised inside except without `from`) SURVIVED on r7r tests as the reviewer predicted** (it is the m5 item; the strengthened q9 is what S24 re-tests). Not yet seen: test_r7q_findings.py in full on a plain r7p copy (m8 asks for how many fail and which are only AttributeError).
+- **Full guard run (staged git copy): three logs. hy-guard.log: 30 failed, 1082 passed, 1 skipped (the first run, before fixes; I have not read which 30). hy-guard2: 1118 passed, 1 skipped. hy-guard3: 1118 passed, 1 skipped, rc 0 (7 min 44 s; the 1 skip is ntpath.isreserved needing Python 3.13). The builder notes hy-guard3 was before its test strengthening; hy-guard4 (rerun on the final test bytes, pid 19571) is running now, no result yet.** So no green guard result exists for the current bytes; I state none.
+- Builder note typo: its checkpoint stamps "13:3x" at about 13:10Z.
+- **Still to do by the builder:** hy-guard4 and the S2 mutants to finish; take file list md and take-side import test; README text; n10 count line; ruff 0.17.1; suppression counts; patches; snapshot MANIFEST and delta; R7S-RESULTS.md; r7p full-file fail-before for the new r7q tests (m8). No denial reported.
+
+**ETA: hand-back about 13:40Z to 14:00Z (box end 14:00Z).** Then my hash and apply-matrix check, snapshot-r7s push, EV7S (about 60 min). Agents running: 1. ASK: none. Next block about 13:25Z.
+
+
 ## STATUS (core lead) 13:05 UTC / 18:35 IST
 
 **r7s builder (af05acef) at 13:05Z, read from its checkpoint, logs and tsv (builder claims; I ran nothing):**
