@@ -1,5 +1,44 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:12 UTC / 10:42 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a2783837 (r7g builder) | built r7g | r7f review NOT CLEAN | 04:52 / 10:22 | closed | r7g | DONE (claims below; I re-checked only the sha256 and the apply matrix) | none |
+| aaae555f (EV7G runner) | ONE full run of r7g (detached wrapper), staged git copy, odd-file listing, fail-before on r7f, builder's 15 mutants, M1/M2 hostile cases, pinned ruff | independent proof of the final code; never judges | 05:12 / 10:42 | 90 min box | EV7G n1 | RUNNING (machine state in its header: load was 0.13 at 05:11) | EV7G-EVIDENCE.md |
+| a68a37b4 (r7g reviewer, fresh) | whole-patch review, reproduces the r7f review cases, 10 of 15 mutants, sibling sweep | independent read of diff and spec only | 05:12 / 10:42 | 50 min box | review 1 of r7g | RUNNING | core-fix-on-frozen-r7g-review.md |
+| ae345331 (EV7F-PARTIAL) | mutants on r7f, hostile table | delta base | 04:52 | box ends about 05:52 | retry 1 | RUNNING; clean sets only so far, no mutant result | EV7F-PARTIAL.md |
+
+**r7g hand-back (builder claims; I verified: the three patches match sha256-r7g.txt and were copied to handover/core/fix/; the apply matrix a-crlf, b-crlf, c-lf is git apply --check rc 0 in all three; nothing else):**
+- Fixes: netconnect.py (helper thread can no longer end with an exception; any non-OSError look-up failure becomes one fixed text without the host; empty box never indexed; socket closed on any exception; each address except the last gets min(5 s, time left), the last gets all time left inside the total) = M1, m1, n1. imap_count.py: the mailbox host is checked where the settings are made with the SMTP host rule; run_real_check ends exit 2 with one line before the Start question. load_driver.py: one function stopped_count counts gave_up "stopped", summary and exit 3 read only it (M2); desk_listening now goes through connect_bounded (a hung look-up could hang the old direct connect: the line-433 question, answered YES, fixed). scripts/reset_check.py:27 uses the fixed address 127.0.0.1, unchanged, stated in limits.md. Docs updated (limits, settings, load_tools README, CHANGELOG).
+- Numbers (builder): 60 new tests, 60 pass on r7g, 46 fail on r7f (14 controls pass); 15 of 15 mutants killed with restore by sha; ruff 0.17.1 check and format rc 0; suppression counts unchanged (175/126/8/32/7).
+- Loopback M2 case from the review now ends exit 3 with the true line (r7f: exit 0). Odd patterns unchanged: only 202 rc 0, only 429 rc 0, 503 then 202 rc 0, drops then answers rc 3. One count changed: burst:8 with first 202 after 3 s counts 7 stopped, r7f said 6, because the given-up request is now included.
+- ONE TEST CHANGED: tests/test_r7f_findings.py::test_m1_r7e_a_stopped_run_that_the_desk_answers_later_is_not_a_success. Old: counts lines with final_status driver:stopped, text "N of 8 requests were never sent". New: counts gave_up == "stopped" lines, text "N of 8 requests were never sent or were given up". Still requires exit 3, a stopped line and an answered line, summary count equal to the text. Builder says not weaker (the old count was the bug). No test deleted. I read the RESULTS line; the reviewer is told to judge it.
+- Helper-thread sweep (builder): live_claude, crm_hubspot, desk worker and reaper already catch BaseException; burst and portal_demo post path catch ValueError (covers UnicodeError); NOT changed and NOT tested: server _run, run_real_check _mirror thread, demo fakes' loops (no user-supplied host name).
+- Builder NOT run: the full suite; 96 of 147 test files (none mentions the touched modules, per its grep); test_real_check_dry.py had no clean run (disturbed by its own edit; EV7G re-runs it); 4 tests fail in the tree without .git ("not a git repository"), 298 pass in a git copy together with test_file_call_guard; PowerShell, Python 3.13/3.14, Windows, real services.
+- The builder's git run found a real slip in its OWN new tests (hardcoded 127.0.0.2, 127.0.0.3 and http://:9 literals): fixed by building them from parts. Builder slip: typed a null-device redirect inline once (it ran, no harm; against the rule).
+
+**Two points I put to the reviewer:** (1) exit 2 for a bad mailbox host in run_real_check: the contract says exit 2 is bad usage and run_real_check keeps 2 for the live-key refusal only, so a bad setting may need 4; (2) whether the builder's helper-thread sweep is complete (server _run, _mirror).
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7g independent full run, odd file, orphans | EV7G just started | read EV7G-EVIDENCE.md |
+| r7g review result | just started | resolve; r7h only for a real Blocker or Major |
+| exit 2 vs 4 for a bad mailbox host | not decided | reviewer's answer, then fix if needed |
+| untested thread sweep items (server _run, _mirror, fakes) | builder says no user host name | reviewer checks by grep |
+| mail pass 9 on r7g | next step; I held it so heavy suites stay at 3 or fewer (EV7G, EV7F, review) | start when EV7F-PARTIAL ends or EV7G's full run ends |
+| first clean-set CRASH, orphan-worker test | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Mail pass 9 on an exported r7g snapshot (30+ mutants, selector method) as soon as EV7F-PARTIAL frees a slot.
+2. Read EV7G and the review together; resolve; build r7h only for a real Blocker or Major.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes and report counts.
+
+
 ## STATUS (core lead) 05:09 UTC / 10:39 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
