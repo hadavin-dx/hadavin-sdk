@@ -1,0 +1,132 @@
+diff -ru '--exclude=.git' '--exclude=__pycache__' '--exclude=.ruff_cache' rv-fix9r2/tests/conftest.py rv-fix9r3/tests/conftest.py
+--- rv-fix9r2/tests/conftest.py	2026-11-14 04:03:59.723090541 +0000
++++ rv-fix9r3/tests/conftest.py	2026-11-14 04:27:05.821510400 +0000
+@@ -45,7 +45,8 @@
+             "A test made it and did not remove it.",
+             red=True,
+         )
+-        session.exitstatus = pytest.ExitCode.TESTS_FAILED
++        if session.exitstatus in (pytest.ExitCode.OK, pytest.ExitCode.NO_TESTS_COLLECTED):
++            session.exitstatus = pytest.ExitCode.TESTS_FAILED  # keep an interrupt, usage or internal error code
+ 
+ 
+ if DEMO_PRESENT:
+diff -ru '--exclude=.git' '--exclude=__pycache__' '--exclude=.ruff_cache' rv-fix9r2/tests/test_data_folder_helper.py rv-fix9r3/tests/test_data_folder_helper.py
+--- rv-fix9r2/tests/test_data_folder_helper.py	2026-11-14 04:03:59.723128232 +0000
++++ rv-fix9r3/tests/test_data_folder_helper.py	2026-11-14 04:27:05.821618366 +0000
+@@ -64,8 +64,8 @@
+ 
+ @pytest.mark.xfail(
+     strict=True,
+-    reason="the copied core helper follows a data link (core finding, being fixed in core r7f); remove this mark "
+-    "when the helper is re-copied from the fixed core",
++    reason="the shared test helper in the core repository follows a data symlink; remove this mark when the core fix "
++    "is copied",
+ )
+ @pytest.mark.skipif(sys.platform == "win32", reason="links need rights on Windows")
+ def test_a_data_folder_that_is_a_link_is_not_followed(fake_repo: Path) -> None:
+@@ -80,16 +80,21 @@
+     assert (fake_repo / "data").is_symlink() and list(elsewhere.iterdir()) == []
+ 
+ 
++def _run(cmd: list[str], cwd: Path, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
++    """The one place this file starts a process."""
++    return subprocess.run(  # noqa: S603 (our own interpreter or git, our own throw-away folder)
++        cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=300, check=False
++    )
++
++
+ def _copy_repo(dest: Path) -> None:
+     git = shutil.which("git")
+     if git is None:
+         pytest.fail("git is needed to copy the repository for this check, and it was not found on PATH")
+-    listed = subprocess.run(  # noqa: S603 (the git found on PATH, our own repository)
+-        [git, "ls-files", "-z"], cwd=REPO, capture_output=True, check=False, timeout=30
+-    )
++    listed = _run([git, "ls-files", "-z"], REPO)
+     if listed.returncode != 0 or not listed.stdout:
+         pytest.fail(f"git ls-files failed: rc={listed.returncode} {listed.stderr[-300:]!r}")
+-    names = [n for n in listed.stdout.decode("utf-8").split("\0") if n]
++    names = [n for n in listed.stdout.split("\0") if n]
+     for name in names:
+         src = REPO / name
+         if src.is_file() and not src.is_symlink():
+@@ -108,15 +113,8 @@
+     env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "DESK_"))}
+     env["TMPDIR"] = str(tmp_path / "tmp")
+     (tmp_path / "tmp").mkdir()
+-    done = subprocess.run(  # noqa: S603 (this interpreter, our own test files)
+-        [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-q", "--basetemp", str(tmp_path / "bt"), *files],
+-        cwd=copy,
+-        env=env,
+-        capture_output=True,
+-        text=True,
+-        timeout=300,
+-        check=False,
+-    )
++    cmd = [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-q", "--basetemp", str(tmp_path / "bt"), *files]
++    done = _run(cmd, copy, env)
+     assert done.returncode == 0, ("the inner test run failed", done.returncode, done.stdout[-1500:], done.stderr[-500:])
+     assert (copy / "data").exists() is False, ("a data folder is left in the repository", done.stdout[-1500:])
+     assert "passed" in done.stdout, (done.stdout[-1500:], done.stderr[-500:])
+@@ -132,25 +130,8 @@
+     env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "DESK_"))}
+     env["TMPDIR"] = str(tmp_path / "tmp")
+     (tmp_path / "tmp").mkdir()
+-    done = subprocess.run(  # noqa: S603 (this interpreter, a file we just wrote)
+-        [
+-            sys.executable,
+-            "-m",
+-            "pytest",
+-            "-p",
+-            "no:cacheprovider",
+-            "-q",
+-            "--basetemp",
+-            str(tmp_path / "bt"),
+-            "tests/test_throwaway_probe.py",
+-        ],
+-        cwd=copy,
+-        env=env,
+-        capture_output=True,
+-        text=True,
+-        timeout=300,
+-        check=False,
+-    )
++    cmd = [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-q", "--basetemp", str(tmp_path / "bt")]
++    done = _run([*cmd, "tests/test_throwaway_probe.py"], copy, env)
+     return done, copy
+ 
+ 
+@@ -171,3 +152,17 @@
+ def test_the_whole_run_passes_when_no_data_folder_is_left(tmp_path: Path) -> None:
+     done, copy = _run_in_copy(tmp_path, "def test_clean():\n    assert True\n")
+     assert done.returncode == 0 and not (copy / "data").exists(), (done.stdout[-1500:], done.stderr[-500:])
++
++
++def test_the_data_folder_check_keeps_an_exit_code_that_is_not_a_plain_pass(tmp_path: Path) -> None:
++    """A run that already ended with a usage-style code keeps that code; the message about data still shows."""
++    probe = (
++        "from pathlib import Path\n\nimport pytest\n\n"
++        "def test_leaves_data_then_stops():\n"
++        "    (Path(__file__).resolve().parent.parent / 'data').mkdir()\n"
++        "    pytest.exit('stop here', returncode=4)\n"
++    )
++    done, copy = _run_in_copy(tmp_path, probe)
++    assert (copy / "data").is_dir(), "the probe must have made the folder"
++    assert done.returncode == 4, ("the original exit code was replaced", done.returncode, done.stdout[-1500:])
++    assert "left a data folder in the repository" in done.stdout, done.stdout[-1500:]
+diff -ru '--exclude=.git' '--exclude=__pycache__' '--exclude=.ruff_cache' rv-fix9r2/tests/test_mode_safety.py rv-fix9r3/tests/test_mode_safety.py
+--- rv-fix9r2/tests/test_mode_safety.py	2026-11-14 04:03:59.723139745 +0000
++++ rv-fix9r3/tests/test_mode_safety.py	2026-11-14 04:27:05.821659729 +0000
+@@ -330,9 +330,8 @@
+ # -- the reset script never deletes the book when it cannot tell which program a process id belongs to
+ @pytest.mark.skipif(sys.platform == "win32", reason="reset.sh is the non-Windows script")
+ def test_reset_sh_refuses_when_ps_is_missing(tmp_path: Path) -> None:
+-    with book_folder_in_repo(
+-        "reset-no-ps-"
+-    ) as folder:  # a fresh folder: only it (and a data folder it made) is removed
++    # a fresh folder: only it (and a data folder it made) is removed
++    with book_folder_in_repo("reset-no-ps-") as folder:
+         db = folder / "desk.sqlite3"
+         db.write_text("keep me", encoding="utf-8")
+         (folder / "desk.pid").write_text("1", encoding="utf-8")

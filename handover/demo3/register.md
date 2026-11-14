@@ -281,3 +281,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R8c | CLOSED 04:26Z | fix-8 r3 delta review 0/0/0 minors, 2 nits; saved evidence/review-lane3-fix-8-r3-delta.md |
 | EV10 | CLOSED 04:26Z | fix-8 r2 final head full run: 3783 passed, 169 skipped, rc 0 (tail read by me); empty data/ left (base creator, fix-9 not in this patch) |
 | NC1 | RUNNING from 04:26Z (a936e913) | NEEDED-CHECK (lead standing order 04:23Z): read-only duplicate check across fix-1/2/5/8/9 and claims; result goes into patch-status.md; expected 04:40Z |
+| B11 | CLOSED 04:27Z | fix-9 r3 patch 3c68d0bb; apply check on base OK (by me); full run tail read by me: 3723 passed, 169 skipped, 1 xfailed, rc 0, no data/ after |
+| R9c | RUNNING from 04:28Z (ad8179a0) | fresh review of fix-9 r3 delta only (all 3 changed files); expected 04:35Z |
