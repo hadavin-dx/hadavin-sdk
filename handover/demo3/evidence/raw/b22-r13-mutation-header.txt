@@ -1,0 +1,6 @@
+tree: 682a6969e9a6bac62f27a9bc988b80cd21824721
+command: python /home/user/work/b22-mut5.py (baseline x3, 36 mutants: 19 old + 17 new; plant failure is reported as PLANT FAILED, never as killed)
+date: Sat Nov 14 10:39:29 UTC 2026
+uid=0(root) gid=0(root) groups=0(root)
+Python 3.13.18
+note: a first start at 10:15Z died at the first plant (n5_pure text had changed); no result came from it
