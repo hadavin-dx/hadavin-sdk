@@ -1,15 +1,13 @@
-## HEARTBEAT 164 (13:41Z) - SECOND SANDBOX RESTART at 13:40Z killed ferr2 (void); queue restarted as a resumable script; answer to the lead's GREP question
+## HEARTBEAT 165 (13:50Z) - NO ferr2 RESULT: THIRD sandbox restart (13:50Z) killed it again; the sandbox is being recycled between my turns, so I now keep my turn open while the queue runs
 
-| Item | Status at 13:41Z |
+| Item | Status at 13:50Z |
 |---|---|
-| ferr2 and ferr3 | NO RESULT YET. The sandbox restarted again at 13:40Z (uptime 0 min at 13:40:38Z; the first restart was 13:15Z). It killed ferr2 about 7 minutes in (CRM refusals in progress, no result written). Cause named: sandbox restart, 25 minutes after the first; I do not know why it restarts (nothing in my files). ferr2 is rerun from the start (13:41Z, ends about 13:54Z), ferr3 after it. |
-| Queue change | run_g.sh is resumable: it starts Postgres if down and skips labels already saved. Order: ferr2, ferr3, T14, BURST, K3 x3, K6 x3 on the fixed flows (61e3804b), then GREP on the fixed flows (as you ordered, label fjg1; after ERROR/T14/BURST/K3/K6 because all runs share the same ports and cannot run at the same time), then the fault repeats on the 11:05Z flows. If it restarts again I restart the same script; I have no way to stop the sandbox restarting. |
-| Your question: where is my KEY needle? | In the REQUEST BODY of the form webhook, field api_key. The harness POSTs JSON to /webhook/mf-form with these fields: submission_id (the lead id), email = "zq" + ".canary@example.test", name = "Zelda" + " Quasar-Canary", api_key = "CANARY" + "KEY" + "-" + "7f3a9c2e" (all built from parts in harness.py lines 306-308). It is NOT in a node, a credential or a flow file. It reached n8n's file because n8n stores the whole webhook request (headers and body) in its execution data while the run is open. In the 11:05Z jg3 file I read the stored item: headers, then {submission_id, email, name, api_key}, then the URL and "production". I did not plant a fake SMTP password; the SMTP credential holds the stand-in text "stand-in", which I did not search for. So the two needles differ: mine is a webhook BODY field; if T7b's key is in a node field or a credential, an absent hit there is not a contradiction. Please tell me where T7b plants its key; I can then run mine with the same place. |
-| Old-flow GREP n = 3 | unchanged: 3 of 3 hits in database.sqlite-wal for name, e-mail, key. |
-| First fixed-flow result so far | ERROR ferr1 passed (HB163). |
-| Disk | 4.3G free |
+| ferr2 | VOID again (killed by the sandbox restart at 13:50Z, about 10 min in; no result written). Restarted 13:50Z, ends about 14:04Z. |
+| What I know about the restarts (observed, not proven) | Three restarts: 13:15Z, 13:40Z, 13:50Z. After each, uptime reads 0 to 2 min, Postgres, n8n, fakes and the queue script are gone, files stay. Each one came shortly after I ended a turn and before the next lead message arrived. The long runs before 13:15Z survived many turns, so this is not certain. Test: this time I do NOT end my turn while ferr2 runs (bounded sleeps only). If ferr2 finishes, that supports the idle recycling cause; if it dies again with my turn open, the cause is something else and I tell you. An ERROR run needs about 8 min of wall clock (ferr1: 478 s), so restarts every 10 min would stop any ERROR run from finishing. |
+| Results so far on the fixed flows (61e3804b) | ERROR ferr1 PASS (HB163). Nothing else yet. |
+| Queue | run_g.sh (resumable): ferr2, ferr3, T14, BURST, K3 x3, K6 x3, fixed-flow GREP (fjg1), fault repeats. |
 
-ASK for the lead: where T7b plants the key (node, field, file), and whether it sends the key in the request body.
-FAILURES AND RETRIES: ferr2 void (sandbox restart 13:40Z), rerun started 13:41Z. jg3 first attempt void (my stray process, HB162).
-NOT DONE / NOT CHECKED (my list, for the lead to decide): everything after ferr1 on the fixed flows; fixed-flow GREP; fault repeats; RESULTS.md; compare.
-WHAT I WOULD DO NEXT (ranked): 1) finish the queue, restarting it after each sandbox restart; 2) fjg1; 3) RESULTS.md then compare.
+ASK for the lead: if your side can see why my sandbox restarts (idle limit, session resume), tell me; if you can, send a short "go on" message only when needed, since each new message may be what triggers the recycle (not proven).
+FAILURES AND RETRIES: ferr2 void twice (restarts 13:40Z and 13:50Z); jg3 first attempt void (my stray process, HB162).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): everything after ferr1 on the fixed flows; fixed-flow GREP; fault repeats; RESULTS.md; compare with the demo table.
+WHAT I WOULD DO NEXT (ranked): 1) keep the turn open until ferr2 ends; 2) continue the queue; 3) RESULTS.md then compare.
