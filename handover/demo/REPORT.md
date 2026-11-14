@@ -1,5 +1,28 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block SIBLING-CHECK - no other test has the early-reset defect (code reading of mf.py, crm_stub.py, smtp_catcher.py at fb2720e6); not run
+
+SHA: the fix commit is fb2720e6 (full id printed in chat); origin/demo/handover had no newer commit from me when I looked.
+Per test: where the fault is set, where it is reset, held across recovery?
+- T8 (fixed): stage mode set per lead, held until THAT lead is final (final_rows), reset to ok after all three. Held: yes now.
+- T15: crm_ctl(fail_status=500) set once before the leads; fail_status is a persistent mode in crm_stub (no one-shot), never reset in the test; each lead waits for final + 35 s. Held through all retries: yes.
+- K1, K2, K5, T11, T13, T10(crm): CRM delays (upsert_delay_ms, upsert_ack_delay_ms) are ONE-SHOT in crm_stub (set to 0 after first use). By design they hit only the first attempt; recovery retries see a normal CRM. Not a hold test, no early reset possible; the delay does not leak into later leads.
+- K3, K3B: SMTP .delay / .pre file removed in after_kill on purpose (fault only for the first attempt; recovery sees a normal SMTP). By design.
+- T10(smtp): .delay=40 written before the lead, removed once mails>=1 is seen. By design; one-shot per lead.
+- T12: .drop=1 rewritten per lead; the catcher decrements it (one-shot). State unknown is final (no retry), so nothing to hold.
+- K4: stage killed, restarted 5 s later on purpose (recovery sees a healthy stage). By design.
+- T14, T9, M0, M1: no fault mode.
+So T8 was the only test whose text claimed "fault held through the retries" without doing it (T15 does hold it). Doubt: this is reading; the V4 raw files are the check. Cases where the retry-sees-healthy-stage design is intended (K4, K3, K3B) are NOT tests of "fault persists"; the fail-closed tests are T8 and T15 only.
+
+NOT RUN / NOT CHECKED (my list, for the lead to decide)
+- Nothing of mine has been run on this machine since the disk filled; all runs are the laptop's.
+- T8 rerun result, T7b raw (env start line, extended checkpoint), V4 T11/T13/K counts unread by me.
+- Real-node (HubSpot, SMTP node) flows built, never run. Per-lease recovery table not measured. T4 (node timeout vs delays), 2.47.7 redaction note, lead-id pattern check, Design B same faults, comparison table, loopback-literal hygiene pass in older code files: not done.
+- Not tested at all: a stage that is slow but answers just before the 15 s timeout; CRM 4xx other than 500 (fail_status accepts any code but only 500 was set); concurrent stage mode (stand-in has one global mode, so T8 leads are sequential).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the named T8 raw file and fill DECISION-INPUTS. 2. T4 and the slow-but-in-time stage case as a text test spec for the laptop. 3. Hygiene pass on loopback literals.
+
 ## Block ANSWER-T8 - T8 FAIL on 1ced4e1ff: HARNESS defect (mf.py t8), flows fail closed by code reading; fixed in mf.py, rerun T8 first
 
 (1) Harness: YES it switched the mode before each post, but it switched back too early. Old t8(): for each mode set stage mode, post the lead, move on to the next mode; then stage_ctl(mode="ok") BEFORE final_rows(). The form reply returns after the first run; the recovery retries come after the lease (about 20 s on the laptop), by then the stage was "ok" again, so retry 2/3 called the healthy stage, qualified, CRM, mail, done. That matches your numbers (state done, mail 1, CRM 1, model call 1, alerts 0, attempts 3, final 14 s). The old text of the test said "also through the recovery retries" but did not hold the mode: my defect.
