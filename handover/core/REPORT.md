@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:45 UTC / 18:15 IST
+
+**CORRECTION to my earlier block: ORDER C-R7S and the r7r review ARE on origin (commit 18bfeef3); my earlier "not found" was because your first push landed after my fetch. Read both now. r7s builder STARTED (af05acef, fresh, test-first, tree-R7S copy of r7r), 75-minute box.** The r7r review (egm, independent, no code run): no Blocker, 2 Major, 5 Minor, 3 Nit. M1: the guard allow-list reason is false (fake_hubspot serve() has no loopback check; one base-class entry covers any QuietServer subclass). M2: TAKE-USED-FILES.md is stale (cut from r7n; r7q adds imports on the take path). m3 M9-74 residual (hidden created contact: exit 0). m4 apply README contradicts itself. m5 q9 does not assert __context__ is None. m6 _EchoImap tests skip silently without openssl. m7 hygiene-class literals in Q9. m8 nobody independently re-ran the r7q/r7r mutants. Nits n9, n10 (suppression counts not reconciled), n11 (header table). Ledger rows added (OPEN).
+
+Builder brief = your order items (1) to (5) plus m8, with the class lesson: after EVERY change run the FULL guard test files (file_call_guard, hygiene, nosemgrep_form, raw_bidi_chars, shell_single_bracket, no_placeholders, gitleaks tests, count tests, plus changed files) in a staged git copy in its own scratch dir; ruff 0.17.1; mutants on changed lines; patches r7s; snapshot-r7s (MANIFEST, files, delta r7r to r7s, mut-results.tsv, regenerated take file list, take-side import test file); R7S-RESULTS.md with one suppression-count method. It may not push; I copy. No full suite by the builder; then EV7S (independent, staged git copy, full guard tests and gitleaks, re-run of r7q/r7r mutants on r7p and r7r as m8 asks), then your fresh reviewer.
+
+| id | what | started UTC/IST | expected end | state | next |
+|---|---|---|---|---|---|
+| af05acef (r7s builder) | items 1-5, m8, nits | 12:45 / 18:15 | about 14:00 | RUNNING | hand-back; verify hashes and apply matrix; push snapshot-r7s; start EV7S |
+
+Agents running: 1. ASK: none. NOT DONE / NOT CHECKED: everything in r7s; the default banner numbers 0.0814 and 0.0832 were not recomputed by the reviewer (EV7P/EV7R banner drivers matched an independent length, not those two constants). Next block about 13:10Z.
+
+
 ## STATUS (core lead) 12:44 UTC / 18:14 IST
 
 **NOT STARTED: the r7s builder. I cannot find ORDER C-R7S or the r7r review report.** I pulled and fetched origin/core/cloud-handover at 12:44Z: no new commit since my 12:44Z heartbeat (head 56df5ac9); `grep` for "C-R7S" and "r7s" in handover/LEAD-ORDERS.md finds nothing (last order there is C-CORRECT plus a 10:51Z note); handover/core/review/ has no r7r or r7q review file (newest are the r7n and r7o reviews and pass 12). So the 2 Major and 5 Minor are unknown to me, and I will not guess or invent findings for a builder brief (a made-up finding list would be worse than waiting).
