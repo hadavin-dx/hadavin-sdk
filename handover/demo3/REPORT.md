@@ -1,3 +1,18 @@
+## HEARTBEAT 75 (03:07Z / 08:37 IST) - M1 AND M2 RUNS FINISHED; AGENT REPORTS STILL PENDING
+
+CORRECTION first: HEARTBEAT 73 said 0 failures (wrong, my check missed progress lines); HEARTBEAT 74 said M2 had 0 (also wrong by then: M2 had started failing at 70 percent).
+
+| Run | Python | Order | Result | Wall |
+|---|---|---|---|---|
+| M1 | 3.13 | shuffled, seed 20261114 | 30 failed, 3684 passed, 169 skipped, EXIT_CODE=1 | 880 s |
+| M2 | 3.13 | reversed | 30 failed, 3684 passed, 169 skipped, EXIT_CODE=1 | 880 s |
+
+FAILURES AND RETRIES: both runs: 30 failed, the same count. In both logs the 30 failure messages I counted are the same text, "gitleaks binary not found: put it on PATH or set GITLEAKS_BIN" (24 `Failed:` + 6 `AssertionError:`), all from the gitleaks tests (tests/test_gitleaks_exceptions.py at least). I did NOT yet compare the two lists of test names one by one (the log has no short summary lines with -q -rs), and the agents' own reports are not in. My reading, not proven: with DPLD_REQUIRE_SCAN=1 the 30 tests that skip when gitleaks is missing now fail, and no gitleaks program is installed here (owner rule: gitleaks runs only on GitHub CI). That would mean the failures come from this machine, not from Python 3.13 or from test order. The old Python 3.12 base run had 30 gitleaks skips, which fits, but I have not run 3.12 with the same setting. 3 alone re-runs per failing test: not yet done (agents). 169 skipped vs 200 on the 3.12 base: 166 playwright skips are absent from the 3.13 venv skip list as 113+ playwright lines; split not reconciled. Totals: 2 runs finished, 0 flaky tests found, 0 order-dependent failures found so far (identical failures in two different orders).
+Agents running: M1 and M2 are still writing reports and doing the alone re-runs.
+ASK list: Q-M1: may this lane run the 30 gitleaks tests with gitleaks installed (the owner rule says gitleaks only on CI), or stay with DPLD_REQUIRE_SCAN=1 failing here? Other asks unchanged.
+Load: finished runs; idle CPU about 88 percent at 03:01Z.
+Not checked: names compared across the two runs, clean-tree check results, whether any test writes outside the tree (agents), Python 3.11 (unsupported, not run).
+
 ## HEARTBEAT 74 (03:01Z / 08:31 IST) - MATRIX RUNNING, M1 HAS FAILURES
 
 | Agent | Job | State |
