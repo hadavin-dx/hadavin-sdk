@@ -1,5 +1,38 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 09:42 UTC / 15:12 IST
+
+**r7n HANDED BACK (09:33Z), patch set committed (unreviewed): I verified the three sha256 against sha256-r7n.txt (CRLF 2b03ea13..., LF e9b52a37..., delta 586de496...; CRLF patch and delta stored as .gz with the unpack hash checked) and read the builder's apply matrix (rc 0 in all three cells; I did not re-run it, EV7N does).** Builder claims, NOT verified by me: full suite on the final bytes 7 failed, 5892 passed, 37 skipped, 1803 s (the 7 = the git-only ids; in a staged git copy the same 4 hygiene files 283 passed, 4 skipped; hygiene scan now passes there); both EV7K failures fixed (fake pool fixture restores four flags; a both-orders test; IP-like literals built from parts, scan untouched); ruff 0.17.1 clean (226 files); source type-ignore 21 = r7m, test type-ignore -19, noqa 175 = r7m; **49 own mutants: 48 KILLED, 1 SURVIVED (M81-b, "touching values print one marker instead of two", argued equivalent, not pinned)**; fail-before on the r7m base: 33 failed, 64 passed (the 64 incl. PINs).
+**What the builder says it did not do or is uncertain of (first, as it wrote it):** (1) one new test passes on the base inside the full-file run and fails alone: cause not found; (2) it never saw mail-pass11-r7m.md (read the checkpoint and my messages): any extra rows are not in; (3) the nit "exit-3 load run no longer prints the logged-vs-intended warning" not investigated; (4) F3's test not verified to kill the reviewer's O07; (5) whole-script print paths not run end to end for scrubbing (only the exception text is asserted); (6) **no limit check uses the banner numbers, so "printed differs from checked" exists only as printed-line mutants**; (7) for M9-54, 57, 25, 13, 43, 77 it says the source was already correct, those tests are PINs proven by killed mutants (note: pass 11 said M9-43 and M9-54 survived because nothing pinned them, so a pin is the right fix if the source holds; the reviewer must verify on the base). **Fixed (claims): F1 one choke point, new src/lead_desk/scrub.py (scrub_error, secret_boundary) across imap_count, smtp_provider, regfile, live_claude, crm_hubspot and four scripts, with a repo-wide AST guard that resists alias imports and raw opens (29 of 38 first tests failed on r7m); M9-81 scrub merges overlapping values; BODY_OVERHEAD removed, banner numbers and the reserve use the shared request_body; r7l Majors A14, S13R, A17, A19, A22, A9; imap F1; k15/F2; F3.**
+**TWO NEW AGENTS STARTED (09:38, both fresh, Sonnet): EV7N (a9b99545, independent evidence runner: rebuild from patches, ONE full run, staged git copy, both test orders, ruff, suppressions, hostile table incl. a fake mailbox echoing LOGIN) and an r7n whole-delta reviewer (a8c42155: probes the scrub choke point, plants a new bad site against the guard, verifies each "pin" on the r7m base, 25 own mutants, the builder's uncertainties).** Pass 11 mutants on r7n changed code follow when pass 12 ends (machine busy).
+**Pass 12 so far (a5f77882):** REAL GAPS M9-74 (exit 0 although contacts are LEFT) and M9-79 (live worst case not doubled for the crash restart); KILLED M9-78, M9-75; 7 rows still to come. These go into a small r7o (not into r7n, so EV7N stays valid).
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| a9b99545 (EV7N) | independent evidence on r7n | final-bytes run | 09:38 / 15:08 | about 10:50 | EV7N | RUNNING | EV7N-EVIDENCE.md |
+| a8c42155 (r7n reviewer) | whole-delta review | independent | 09:38 / 15:08 | about 10:55 | review 1 of r7n | RUNNING | core-fix-on-frozen-r7n-review.md |
+| a5f77882 (pass 12) | 11 unrun rows on r7m | fix-dont-defer | 09:08 / 14:38 | about 10:10 | pass 12 | RUNNING | mail-pass12-r7m.md |
+
+Agents running: 3. Done: r7n builder.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7N result, r7n review, pass 11 mutants on r7n changed code | running / after pass 12 | resolve |
+| r7o for pass 12 gaps (M9-74, M9-79, more) | pass 12 running | test-first, small |
+| the pass 11 rows after the gaps I sent (read by the builder?) | builder never read mail-pass11-r7m.md | reviewer checks |
+| ledger rows OPEN (8) | need EV7N and review | after r7n |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7N and the r7n review; fix every Blocker/Major (r7o).
+2. Pass 12 rows to r7o; pass 11 mutants on r7n changed code.
+3. Close ledger rows, README, sweep, counts.
+
+
 ## STATUS (core lead) 09:32 UTC / 15:02 IST
 
 **Lines below are agent claims or files I looked at; I have judged none of the code.**
