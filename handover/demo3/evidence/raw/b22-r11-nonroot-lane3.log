@@ -1,0 +1,6 @@
+E       AssertionError: assert ('key file' in 'the n8n API key file cannot be read' and 'PermissionError' in 'the n8n API key file cannot be read')
+
+tests/test_n8n_api_url.py:523: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_a_key_file_without_read_permission_is_a_clean_message_with_the_error_type_only
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!

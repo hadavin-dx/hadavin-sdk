@@ -1,0 +1,4 @@
+r4-1 mailbox order -> command-line code: pytest rc=1 -> KILLED | 1 failed, 604 passed in 25.83s
+      failing: tests/test_real_check_dry.py::test_swapped_mailbox_order_is_a_refused_setting_with_one_line
+r4-2 live settings missing -> command-line code: pytest rc=1 -> KILLED | 1 failed, 604 passed in 27.35s
+      failing: tests/test_real_check_dry.py::test_missing_live_model_settings_are_a_refused_setting
