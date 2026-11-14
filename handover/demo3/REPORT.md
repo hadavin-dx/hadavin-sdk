@@ -1,3 +1,32 @@
+## HEARTBEAT 79 (03:20Z) - ONE SOURCE OF TRUTH ORDER SENT TO B9; MATRIX CONTINUES
+
+| Agent | Job | State |
+|---|---|---|
+| M3 | 3.13 shuffled seed 987654 (third order) | running, 46 percent |
+| M4 | gitleaks 8.30.1 run | 3 gitleaks files: 72 passed in shuffled order and 72 passed in reversed order (M4's note for reversed, raw log not read by me); full suite with the program running since 03:19 |
+| B9 (Sonnet builder) | fix-9: stray data/ folder | running; at 03:15 it had its own edits and fails-before result; lead order 03:19Z now replaces its own helper with core's (message sent and queued, B9 has not confirmed receipt) |
+
+FAILURES AND RETRIES: unchanged: 30 environment failures (missing gitleaks program) in the two closed runs; 0 flaky; 0 order-dependent. B9's own-helper work may be thrown away: that is a retry caused by the lead's order (core's patch has the same fix), not a failure. Totals: 4 agents closed (M1, M2, M5 and earlier), 3 running.
+The core patch (handover/core/fix/core-fix-on-frozen-r7e.patch, branch core/cloud-handover) is 20301 lines; I saved a copy at handover/demo3/evidence/core/ (sha256 89ca3a2ddeba2a1a1c006d32a38520643861aa94848730b8fcdcf1a46457cee8). I confirmed it contains `def book_folder_in_repo` at line 6839; I did not read the helper body yet.
+ASK list: none new. Q for lead (small): the core r7f symlink fix is not in the patch I copied; B9 will add the symlink-case test and report any needed difference.
+Load (measured): idle CPU 76 percent, free RAM 15.4 GB.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- M3 result and M4 full-suite-with-gitleaks result: still running; I will read the raw logs when they end.
+- Reversed-order gitleaks result: I only have M4's note, not the raw log; next: read the raw log.
+- Playwright (166 browser tests) never ran on Python 3.13: not installed, and the order says no new dependency; next: ask the lead if one throwaway install in the cloud container is allowed.
+- Python 3.11: not run; repo says >=3.12; next: nothing unless the lead wants a refusal check only.
+- Time per group: not measurable with -q; next: one run with --durations=0 if wanted (about 15 min).
+- Whether other test files besides the three create data/: M5 did not run the others one by one; next: the full-suite run on B9's fix with no data/ present will show it.
+- fix-8, fix-2 r4, fix-5 r5 still without independent review; no complete stack tested; no ruff/mypy/bandit/Windows (CI only). From the freeze, unchanged.
+- The unexplained items from the freeze (E3b cut runs, PR #12 E marks, old xdist port flake) are still unexplained.
+- MATRIX-1.md (facts only, order asks for it) is not written yet; next: write it when M3, M4 and B9 are closed.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish B9 on core's helper, run the independent evidence and a fresh reviewer, then the clean-checkout full run.
+2. Write MATRIX-1.md from M1 to M5 and the B9 evidence.
+3. One full run with --durations=0 on 3.13 for time per group, and one 3.12 run with the same shuffle seeds to compare with 3.13.
+
 ## HEARTBEAT 78 (03:14Z) - GITLEAKS PROOF PARTLY IN; data/ WRITER FOUND; BUILDER B9 STARTED
 
 | Agent | Job | State |
