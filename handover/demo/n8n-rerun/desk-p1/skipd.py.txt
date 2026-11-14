@@ -1,0 +1,86 @@
+"""SCRATCH (09:10Z order, point 1: n8n killed before the desk has the request). Runs inside a prepared stack folder. Made-up data, loopback.
+Flow P1a: Webhook -> Postgres Insert (Skip on Conflict) -> Wait 4 s -> IF new -> HTTP to the desk ; duplicate -> Code 'duplicate'.
+Flow P1b: Webhook -> Wait 4 s -> HTTP to the desk (no n8n insert: the desk is the first writer).
+5 kills each (n8n killed 1.5 s after the call, inside the Wait), restart, SAME request sent again. Desk + demo servers run from the clean export, keyed mode."""
+import json, os, glob, shutil, sys, time, uuid, threading, urllib.request, urllib.error, subprocess, signal, sqlite3
+import api, lib, mkwf2
+ROOT = "/tmp/rr/t3exp"; DENV = dict(os.environ, PYTHONPATH="src:.", DESK_LEADFLOW_FILE="off")
+D = "LINK F = "LINK procs = []
+def start(args, log):
+    p = subprocess.Popen([sys.executable] + args, cwd=ROOT, env=DENV, stdout=open(log, "ab"), stderr=subprocess.STDOUT, start_new_session=True); procs.append(p); return p
+def stop_all():
+    for p in procs:
+        try: os.killpg(p.pid, signal.SIGTERM)
+        except Exception: pass
+    time.sleep(1.5)
+    for p in procs:
+        try: os.killpg(p.pid, signal.SIGKILL)
+        except Exception: pass
+def get(u):
+    try:
+        with urllib.request.urlopen(u, timeout=3) as r: return r.status, r.read().decode()
+    except Exception as e: return type(e).__name__, ""
+def clean():
+    for f in glob.glob(ROOT + "/data/*"): (shutil.rmtree if os.path.isdir(f) else os.remove)(f)
+def counts():
+    c = json.loads(get(D + "/counts")[1] or "{}"); crm = json.loads(get(F + "/fake/crm")[1] or "{}"); ob = json.loads(get(F + "/fake/outbox")[1] or "{}")
+    return c, crm, ob
+def per(email):
+    c, crm, ob = counts()
+    return {"crm_rows": sum(1 for r in crm.get("rows", []) if r.get("record", {}).get("email") == email), "emails": sum(1 for m in ob.get("messages", []) if m.get("to") == email)}
+def desk_receipts(email):
+    for f in [x for x in glob.glob(ROOT + "/data/*") if os.path.isfile(x) and open(x, "rb").read(15) == b"SQLite format 3"]:
+        c = sqlite3.connect("file:%s?mode=ro" % f, uri=True)
+        try: return c.execute("select count(*) from leads where lower(email)=?", (email,)).fetchone()[0]
+        except Exception as e: return "err:" + str(e)[:60]
+        finally: c.close()
+    return "no-db"
+api.login()
+INST = json.load(open(".run/instance.json")); CRED = (INST["pg_credential_id"], "n8n-publish-pg")
+def psql(sql):
+    p = subprocess.run(["docker", "exec", lib.PG, "psql", "-U", "postgres", "-At", "-c", sql], capture_output=True, text=True); return p.stdout.strip() + p.stderr.strip()
+psql("CREATE TABLE IF NOT EXISTS leads_skip (id serial PRIMARY KEY, lead_id text, note text); CREATE UNIQUE INDEX IF NOT EXISTS leads_skip_lead_id_uq ON leads_skip (lead_id);")
+def desk_http(pos): return {"parameters": {"method": "POST", "url": D + "/leads", "sendBody": True, "specifyBody": "json", "jsonBody": "={{ JSON.stringify($('Webhook').item.json.body) }}", "options": {}},
+                            "name": "ToDesk", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": pos}
+WAIT = lambda: {"parameters": {"resume": "timeInterval", "amount": 4, "unit": "seconds"}, "name": "Wait4s", "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [440, 0], "webhookId": "skd-" + uuid.uuid4().hex[:8]}
+pg = {"parameters": {"operation": "insert", "schema": {"__rl": True, "mode": "list", "value": "public"}, "table": {"__rl": True, "mode": "name", "value": "leads_skip"},
+      "columns": {"mappingMode": "defineBelow", "value": {"lead_id": "={{ $json.body.source_ref }}", "note": "synthetic"}, "matchingColumns": [], "schema": []}, "options": {"skipOnConflict": True}},
+      "name": "PgInsert", "type": "n8n-nodes-base.postgres", "typeVersion": 2.5, "position": [220, 0], "credentials": {"postgres": {"id": CRED[0], "name": CRED[1]}}}
+IF = {"parameters": {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "strict"}, "conditions": [
+      {"id": "c1", "leftValue": "={{ $json.lead_id }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty", "singleValue": True}}], "combinator": "and"}, "options": {}},
+      "name": "IsNew", "type": "n8n-nodes-base.if", "typeVersion": 2.2, "position": [660, 0]}
+DUP = {"parameters": {"mode": "runOnceForAllItems", "jsCode": "return [{json: {branch: 'duplicate'}}];"}, "name": "DupReply", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [880, 100]}
+wa = {"id": "skda", "name": "sk-d-a", "nodes": [mkwf2.hook("sk-d-a", "skda"), pg, WAIT(), IF, desk_http([880, -100]), DUP],
+      "connections": {"Webhook": {"main": [[{"node": "PgInsert", "type": "main", "index": 0}]]}, "PgInsert": {"main": [[{"node": "Wait4s", "type": "main", "index": 0}]]},
+                      "Wait4s": {"main": [[{"node": "IsNew", "type": "main", "index": 0}]]}, "IsNew": {"main": [[{"node": "ToDesk", "type": "main", "index": 0}], [{"node": "DupReply", "type": "main", "index": 0}]]}}, "active": False, "settings": {}}
+wb = {"id": "skdb", "name": "sk-d-b", "nodes": [mkwf2.hook("sk-d-b", "skdb"), WAIT(), desk_http([660, 0])],
+      "connections": {"Webhook": {"main": [[{"node": "Wait4s", "type": "main", "index": 0}]]}, "Wait4s": {"main": [[{"node": "ToDesk", "type": "main", "index": 0}]]}}, "active": False, "settings": {}}
+for w in (wa, wb):
+    json.dump(w, open("skwf_%s.json" % w["name"], "w")); print("deployed", w["name"], api.deploy("skwf_%s.json" % w["name"], w["name"]), flush=True)
+PATHS = ("sk-d-a", "sk-d-b"); print("webhooks live:", lib.webhooks_live(PATHS, 60), flush=True)
+clean(); start(["-m", "demo_only.fakes_server", "--outbox", "keyed", "--port", "8766"], "skd_fakes.log"); start(["scripts/crash_desk.py"], "skd_desk.log")
+for _ in range(40):
+    if get(D + "/counts")[0] == 200 and get(F + "/fake/info")[0] == 200: break
+    time.sleep(0.5)
+def post(path, env, t=25):
+    r = urllib.request.Request(f"LINK json.dumps(env).encode(), {"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(r, timeout=t) as x: return x.status, x.read().decode()[:260]
+    except urllib.error.HTTPError as e: return e.code, e.read().decode()[:260]
+    except Exception as e: return type(e).__name__, str(getattr(e, "reason", ""))[:60]
+out = []
+try:
+    for flavor, path in (("P1a n8n insert first", "sk-d-a"), ("P1b desk first (no n8n insert)", "sk-d-b")):
+        for i in range(1, 6):
+            sid = "%s-%d-%s" % (path, i, uuid.uuid4().hex[:5]); email = "%s@example.test" % sid
+            env = {"source": "form", "source_ref": sid, "payload": {"name": "Test Person", "email": email, "company": "Example Ltd", "message": "made-up"}}
+            res = {}; th = threading.Thread(target=lambda: res.update(first=post(path, env))); th.start(); time.sleep(1.5)
+            pre = {"n8n_table_rows": psql("SELECT count(*) FROM leads_skip WHERE lead_id='%s'" % sid) if path == "sk-d-a" else "n/a", "desk_leads": desk_receipts(email), **per(email)}
+            killed = lib.kill_n8n_confirmed(); th.join(); ok = lib.start_n8n(None, paths=PATHS); time.sleep(2)
+            second = post(path, env); time.sleep(10)
+            rec = {"flavor": flavor, "i": i, "source_ref": sid, "before_kill": pre, "killed_confirmed": killed, "restarted_live": ok, "first_call": res.get("first"), "second_call": second,
+                   "final": {"n8n_table_rows": psql("SELECT count(*) FROM leads_skip WHERE lead_id='%s'" % sid) if path == "sk-d-a" else "n/a", "desk_leads": desk_receipts(email), **per(email)}}
+            out.append(rec); print("KILL", json.dumps(rec), flush=True)
+finally:
+    stop_all(); clean()
+json.dump(out, open("skip_result_deskp1.json", "w"), indent=1); print("skipd done")

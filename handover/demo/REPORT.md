@@ -1,6 +1,26 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:32Z (15:02 IST) - n8n point 1 DONE (n8n-first loses the lead 5 of 5); blind desk rerun running
+
+- n8n point 1 (kill after the n8n insert, before the desk has the request). In my runs: n8n 2.46.6, regular mode, one machine, one fresh stack, desk and stand-ins started by my script, made-up data, kill 1.5 s after the call inside a 4 s Wait, 5 kills per flow, counts per lead id.
+  - Flow P1a (n8n insert first, then Wait, then call the desk): 5 of 5 kills LOST the lead. n8n table 1 row, desk 0 leads, 0 receipts, CRM 0, e-mail 0; first call dropped; the same request again got "duplicate" from n8n and the desk never got it. Work done 0 times, no retry path.
+  - Flow P1b (Wait, then the desk; no n8n insert): 5 of 5 kills: nothing recorded anywhere before the restart; first call dropped; the same request again went to the desk: 1 desk lead, 1 CRM row, 1 e-mail each time. Nothing lost, nothing doubled; but only because the caller sent it again (nothing on the n8n side retried it).
+- Raw files pushed under n8n-rerun/desk-p1/ (log, result json, my scripts as .txt).
+- Page n8n-owns-vs-desk-owns.md: item 9 added (kill-between-steps: lead lost 5 of 5, with the stated condition). Not pushed yet with this block: it goes in the next push.
+- Blind rerun: first try died at start-up (old ports still in closing state; the bind fails during that time). Driver now waits until both ports are free. Rerun running since 09:27Z: D2 blind at kill 3 of 5 (about a minute per kill because of the port wait), then D1b blind. The two earlier "blind" files are renamed NOTBLIND in the pushed folder.
+- Where the lead is lost so far, plainly: n8n alone (kill between insert and work, 5 of 5) and the n8n-first front door (P1a, 5 of 5). Desk points A, C0, D2 (keyed): lost 0 of 15, doubled 0 of 15. Blind D2 / D1b pending.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Blind D2 and D1b results; n8n point 3 (kill after work, before reply) on an n8n-only flow, and point 2 on the n8n side (n8n has no receipt step; covered only by the variant e runs); compare file; reviewer; hygiene.
+- Why stop_all earlier left a keyed server up (likely the port wait, not proven).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish blind reruns, write n8n-vs-desk-kill-compare.md with the one table.
+2. Fold desk result lines into the page, fresh comprehension reviewer, fold, hygiene scan.
+3. n8n-only kill after the work, before the reply (5 kills), if the lead wants the third point on the n8n side too.
+
+
 ## Block 09:23Z (14:53 IST) - desk kill series: my two "blind" series were NOT blind (harness fault, mine); rerun queued
 
 - Desk series done at A (keyed), C0 (keyed), D2 (keyed), D2 and D1b labelled "blind". Raw per-kill table pushed: n8n-rerun/desk-kill/summary-per-kill.txt (plus the five raw result files and my scratch scripts as .txt).
