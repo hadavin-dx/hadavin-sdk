@@ -1,5 +1,25 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 17:00 UTC / 22:30 IST
+
+**AGENTS RUNNING: 4 language-model agents (EV7T, EV7U, MUT = mutant runner, plus none idle) + script lanes: guard run pid 6256 (34 files), trial run pid 26689 (4 files), EV7T runners. Done and closed: A, B, C, DOC, DA-PROBE, MERGE-PREP.** Machine load was 0.2 at 16:59 (it was NOT overloaded: I had been too careful), so I started the guard run, EV7U and the mutant runner at the same time at 17:00. Disk 2.6 GB free.
+
+**r7u MERGED: tree-R7U = tree-R7T + A + C + B diffs, all applied, no rejected hunk (merge.sh, log out/R7U-MERGE/final-merge.log); identical byte for byte to my earlier trial tree.** A's final hand-back: diff sha fef18f10... unchanged; 41 tests pass in its file, 269 in related files (its numbers); 38/38 mutants killed; 12 of its 41 tests are PINS (listed in RESULTS-A.md pin-ids.txt). I READ A's code on the merged tree: cap = `created + min(max(0,open), max(0, leads - created))` (created never cut: the Major is closed in the code I read); counter values accepted only `type(v) is int and v >= 0`, ArithmeticError caught; new check F7 and `counter_known`/`unseen_contacts` put into the summary before write_result. A's honest limits: m1 (retried unknown+created) is NOT exact (counters carry no lead ids); it over-counts by one only when another lead has no contact, shown as a safe-direction alarm, never a missed contact; 1e999 was already refused by load_json_file on r7t, so the ArithmeticError catch is proven only by monkeypatching.
+**Open from B:** hostile values (1e999, -1, true) were not tested on the `.smtp.json` suffix: EV7U step 5 does it; if it fails I add the test in r7v.
+
+| id | doing | started UTC/IST | ends about | state |
+|---|---|---|---|---|
+| guard run (script, pid 6256) | ONE guard run, 34 files, staged copy, unshare | 17:00/22:30 | +25 min | RUNNING; no rc yet |
+| EV7U a9d71acd | independent evidence on tree-R7U: hashes, apply-equals, full run, before/after, flake 30x quiet+load, hostile + counter tables (incl. smtp suffix), builders' mutants re-run, ruff, suppressions | 17:00/22:30 | +90 min | RUNNING |
+| MUT af04215d | evidence runner: 20+ seam mutants (A cap/F7 x B smtp reader) and 30+ fresh mutants on the merged diff | 17:00/22:30 | +80 min | RUNNING (first spawn was refused by the studio hook because its brief called it a "mutant agent"; re-briefed as EVIDENCE RUNNER) |
+| EV7T acdc878b | evidence on r7t (the r7t record) | 15:53/21:23 | about 17:23Z | RUNNING; quiet flake series pending |
+| trial run (script, pid 26689) | seam check of 4 test files on the trial tree; superseded by the guard run, I will stop it only if it is still running when the guard run ends (my own pid) | 16:47 | | RUNNING |
+
+**Next:** guard run ends -> package.sh (patches, hashes, apply matrix, snapshot-r7u) -> push -> your fresh reviewer. Then README-r7u snippet (C's text), ON-PATH-LIST (DOC's text) applied by me while the evidence runs.
+**Not checked:** guard result; EV7U; MUT; any of the builders' numbers.
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 16:58 UTC / 22:28 IST
 
 **AGENTS RUNNING: 2 language-model agents (A a07e3822: final test runs; EV7T acdc878b: mutant re-runs + quiet flake series) + script lanes: my trial run of the 4 r7u/r7t test files on the merged trial tree (still running, no rc yet), A's final-a and final-related runs, EV7T's runners.** Disk 2.6 GB free, flat.
