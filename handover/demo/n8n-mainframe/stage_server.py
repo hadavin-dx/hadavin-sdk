@@ -11,6 +11,7 @@ from lead_desk import config
 from lead_desk.live_claude import LiveQualifier
 import time
 PORT, JOURNAL, MAILF = int(sys.argv[1]), sys.argv[2], sys.argv[3]
+REQN = [0]   # number of POST requests the stage has received (T14 reads it)
 CTL = {"mode": "ok", "sleep": 40}
 Q = LiveQualifier(config._live_from_env(os.environ)); LK = threading.Lock()
 def journal():
@@ -28,6 +29,7 @@ class H(BaseHTTPRequestHandler):
         b = json.dumps(obj).encode(); self.send_response(code); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
     def do_GET(self):
         u = urlsplit(self.path)
+        if u.path == "/stats": return self._j(200, {"posts": REQN[0]})
         if u.path == "/mail_count":
             k = parse_qs(u.query).get("key", [""])[0]
             try: n = sum(1 for l in open(MAILF) if l.strip() and k in json.loads(l).get("subject", ""))
@@ -35,6 +37,7 @@ class H(BaseHTTPRequestHandler):
             return self._j(200, {"count": n})
         self._j(404, {})
     def do_POST(self):
+        REQN[0] += 1
         n = int(self.headers.get("Content-Length") or 0); o = json.loads(self.rfile.read(n) or b"{}")
         if self.path == "/control": CTL.update(o); return self._j(200, CTL)
         if self.path != "/qualify": return self._j(404, {})

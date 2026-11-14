@@ -1,5 +1,20 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 11:56Z - F-REC-EMPTY fixed in the flows (not run), T14 added (not run)
+
+- Confirmed by reading n8n 2.46.6 source in my node_modules: nodes-base Postgres v2 helpers/utils.js line 351 returns [{json:{success:true}}] for a non-SELECT query with no rows. My v2 recovery flow wired ClaimStuck straight to RunSub and MarkFailed straight to AlertFailed, so an idle stack fired the sub-workflow and an alert every 30 s. lane3 is right. The main flows were not affected (Claimed, OwnsClaim1, MailRowBack, UnknownNew, DoneOwned already test lead_key not empty).
+- Why my runs did not show it: I counted per lead id; the phantom run had no lead id, and the stage would get an empty lead. Whether it also sent phantom alerts in my earlier v2 runs I did not look at (the alert recipient file was only counted per id): NOT CHECKED, and I cannot check now (disk full, old run output was removed with each run folder).
+- FIX (flows only): two IF nodes, StuckRow and FailedRow (lead_key not empty), in front of RunSub and AlertFailed in mf-recovery. build_mainframe.py changed, flows rebuilt with lease 120 into n8n-flows/, DESIGN-A-README.md notes it.
+- T14 added to mf.py (idle stack 120 s, recovery running, no lead: expect 0 stage requests, 0 model calls, 0 CRM requests, 0 mails, 0 SMTP connections, 0 table rows); stage_server.py got GET /stats (POST count); RUN-ON-LAPTOP.md names T14.
+- NOT RUN: neither the fix nor T14 has been executed. I have no disk for n8n (about 170 MB free). The fix is checked only by reading the generated JSON (connections: ClaimStuck -> StuckRow -> RunSub, MarkFailed -> FailedRow -> AlertFailed). Please run T14 on the laptop on the new flows; also expect T14 to FAIL on the 11:53Z flows (before-and-after).
+- Open question for the fix: any other query node whose "no row" must not reach a send? SetCrmId, MailClaim, MarkDone are guarded by IFs; MarkUnknownA/B and the alert after them are reached only from a mail-step branch (NOT re-checked in detail).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Phantom alerts in earlier v2 runs; real run of the fix; T4, T7, lead id pattern check, kill-point results, N8N-START.md, real-node flows, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Re-read every Postgres node whose result feeds a send or a sub-workflow for the same empty-success hole. 2. Read laptop T14 and kill results. 3. Lead id pattern check.
+
 ## Block 11:45Z - heartbeat: idle, nothing running, waiting for laptop runner results (about 12:15Z); nothing new pushed, raw-designA-laptop not read.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)

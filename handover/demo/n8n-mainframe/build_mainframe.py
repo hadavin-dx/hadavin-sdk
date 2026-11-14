@@ -86,10 +86,13 @@ def recovery():
          pg("ClaimStuck", "UPDATE mf_leads SET claimed_until=now() + interval '%d seconds', claim_token=gen_random_uuid()::text, attempts=attempts+1, updated_at=now() WHERE lead_key IN ("
             "SELECT lead_key FROM mf_leads WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts < 3 ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5) "
             "RETURNING lead_key, email, claim_token;" % LEASE, None, [220, -100], always=False),
-         call_sub("RunSub", [440, -100]),
+         iff("StuckRow", "={{ $json.lead_key }}", "string", "notEmpty", None, [330, -100]),
+         call_sub("RunSub", [550, -160]),
          pg("MarkFailed", "UPDATE mf_leads SET state='failed', updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;", None, [220, 120], always=False),
-         mail("AlertFailed", ALERT_TO, "={{ '[demo] Lead desk: lead failed ' + $json.lead_key }}", "={{ 'Lead id ' + $json.lead_key + ' could not be finished after 3 tries. A person decides.' }}", [440, 120], onError="continueRegularOutput")]
-    c = {}; link(c, "Every30s", "ClaimStuck"); link(c, "Every30s", "MarkFailed"); link(c, "ClaimStuck", "RunSub"); link(c, "MarkFailed", "AlertFailed")
+         iff("FailedRow", "={{ $json.lead_key }}", "string", "notEmpty", None, [330, 120]),
+         mail("AlertFailed", ALERT_TO, "={{ '[demo] Lead desk: lead failed ' + $json.lead_key }}", "={{ 'Lead id ' + $json.lead_key + ' could not be finished after 3 tries. A person decides.' }}", [550, 80], onError="continueRegularOutput")]
+    # the Postgres node returns ONE item {success: true} when a non-SELECT statement matches no row (n8n source, Postgres v2 helpers/utils.js): only an item that carries a lead id is work
+    c = {}; link(c, "Every30s", "ClaimStuck"); link(c, "Every30s", "MarkFailed"); link(c, "ClaimStuck", "StuckRow"); link(c, "StuckRow", "RunSub", 0); link(c, "MarkFailed", "FailedRow"); link(c, "FailedRow", "AlertFailed", 0)
     return {"name": "Lead desk main frame: recovery (every 30 s)", "nodes": n, "connections": c, "settings": ST}
 os.makedirs(OUT, exist_ok=True)
 for fn, w in (("mf-sub-crm-mail.json", sub()),

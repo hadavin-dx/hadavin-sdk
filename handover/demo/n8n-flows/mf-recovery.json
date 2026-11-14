@@ -43,6 +43,38 @@
   },
   {
    "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.lead_key }}",
+       "rightValue": null,
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "StuckRow",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    330,
+    -100
+   ]
+  },
+  {
+   "parameters": {
     "source": "database",
     "workflowId": {
      "__rl": true,
@@ -58,8 +90,8 @@
    "type": "n8n-nodes-base.executeWorkflow",
    "typeVersion": 1.2,
    "position": [
-    440,
-    -100
+    550,
+    -160
    ]
   },
   {
@@ -85,6 +117,38 @@
   },
   {
    "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.lead_key }}",
+       "rightValue": null,
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "FailedRow",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    330,
+    120
+   ]
+  },
+  {
+   "parameters": {
     "fromEmail": "desk@example.test",
     "toEmail": "alerts@example.test",
     "subject": "={{ '[demo] Lead desk: lead failed ' + $json.lead_key }}",
@@ -98,8 +162,8 @@
    "type": "n8n-nodes-base.emailSend",
    "typeVersion": 2.1,
    "position": [
-    440,
-    120
+    550,
+    80
    ],
    "credentials": {
     "smtp": {
@@ -131,6 +195,17 @@
    "main": [
     [
      {
+      "node": "StuckRow",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "StuckRow": {
+   "main": [
+    [
+     {
       "node": "RunSub",
       "type": "main",
       "index": 0
@@ -139,6 +214,17 @@
    ]
   },
   "MarkFailed": {
+   "main": [
+    [
+     {
+      "node": "FailedRow",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "FailedRow": {
    "main": [
     [
      {
