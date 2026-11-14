@@ -1,6 +1,33 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 07:28Z STATUS (demo cloud): shape table of the 73 hits, tree-2 pytest, v3 doc reviewer
+**73 gitleaks hits in this folder (working-folder scan, rule generic-api-key; values never printed, shape computed locally):**
+
+| lane folder | hits | what the hit is (text around the value, value hidden) | value shape | read |
+|---|---|---|---|---|
+| sonar (3 JSON files) | 66 | JSON field `key` (53 as `"key": "<V>"`, 13 as `"key":"<V>"`) | 65 values of 20 to 29 characters, 1 of 40 to 49; letters and digits mixed, entropy 3.9 to 4.1 | shape of Sonar issue and flow identifiers in saved API answers, not of a credential. Not verified against Sonar. |
+| gitleaks lane (1 text file, 2 hits), merge-ready (3 hits in 3 files), coverage (1), claims-audit (1) | 7 | `sonar.projectKey=<V>` (6) and `key = <V>` (1) in text | 40 to 49 characters, letters and digits mixed | shape of a Sonar project key written in notes. Not verified. |
+None of the 73 is in my files (`n8n-rerun`, REPORT, N8N-RERUN-1, n8n-a-cause-1, n8n-published-numbers). Plain limit: I classify by shape only; the lead or the lane owner decides whether the files stay, are redacted, or are allow-listed. The scan was of a working folder, not of a clean export.
+
+**Tree-2 (origin main 61ded9e) full pytest, 07:08:50 to 07:27Z (1084 s), DPLD_REQUIRE_SCAN=1, gitleaks set:** rc 1, 3428 passed, 171 skipped, 6 failed. All 6 are tests that call `git ls-files` or `git grep` and my run used a git-archive export with no `.git` (exit 128, "not a git repository"): test_hygiene (4), test_raw_bidi_chars (1), test_shell_single_bracket (1). That is my setup, not a code finding. Rerun of those three files in a git clone copy of main (61ded9e): 172 passed, 1 failed: test_hygiene_scan_public, because the clone holds all remote branches and its gitleaks git scan reports 1854 hits (the semgrep-ci branch history, as found earlier; main HEAD history scan rc 0). So a CI-equivalent for main needs a clone of main alone; not run that way yet. Output file `n8n-rerun/T2-pytest-clean-export-out.txt`.
+
+**Fresh reviewer on doc patch v3 (read only): 3 Major, 6 Nit; the earlier 4 Majors are fixed.**
+1. Major `docs/tests.md` step 3: says a missing DESK_NUDGE_TO gives a Python error; the code (config.py 477-487, server.py 1156-1164) refuses cleanly with exit 4. The traceback case is DESK_NUDGE_TO set without the lead-flow file or a bad address (config.py 507-510, crash_desk.py line 18 does not catch it).
+2. Major step 5: `feed.py --source form --index 1` crashes only for a NEW lead; after the README demo that lead exists, so a replay probably never reaches the crash point (not traced in desk.py). No fallback text.
+3. Major steps 1 and 6: the recipe ends with a hand-started desk not tracked by data/desk.pid; reset.sh then refuses with exit 3 while it runs; no way back to clean is given.
+Nits: no pointer to the expected D2 outcome; feed.py shows a traceback (URLError) not a message on refused connection; "that number" in `kill -0` not introduced; curl -s hides the error line; checksums file name not in the tree; no how-to for Python 3.12.
+Not yet applied (patch v4 is the next step, text only).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Patch v4 not written; tree-2 pytest not rerun on a clone of main alone; Sonar values not checked against Sonar; draft 003 not available.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Write doc patch v4 for the 3 Majors and the real Nits (text only), then one more fresh reviewer.
+2. Rerun tree-2 pytest in a single-branch clone of main to get the CI-equivalent rc.
+3. Hand the 73-hit table to the lane owners to decide keep, redact or allow-list.
+
+
 ## 07:09Z STATUS (demo cloud): tree-2 pytest and doc-patch v3 reviewer started
 - Pushed 26c5463: R2d series, reviewer fixes, PUBLISHABLE-NUMBERS table (see the 07:09 block below).
 - Started 07:08:50Z: tree-2 full pytest (origin main 61ded9e, clean export copy, DPLD_REQUIRE_SCAN=1, gitleaks binary set), one heavy job, nothing else heavy running. Output `/tmp/rr/t2pytest.out`, rc file when done. Earlier tree-2 lint steps (H, rc 0 each) stay as reported; gitleaks dir on the clean export rc 0.
