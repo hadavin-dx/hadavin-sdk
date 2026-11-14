@@ -152,7 +152,8 @@ class Run:
                 p.kill()
 
     # ---- lead + waiting
-    def send(self, lead, email="a.kumar@example.test", path="mf-form"):
+    def send(self, lead, email=None, path="mf-form"):
+        email = email or (lead.lower() + "@example.test")  # one e-mail per lead: the CRM upsert also matches on e-mail
         return http("POST", "http://127.0.0.1:%d/webhook/%s" % (PORT["n8n"], path),
                     {"submission_id": lead, "email": email, "name": "Test Person"}, timeout=40)
 
@@ -262,6 +263,10 @@ def main():
             with cf2.ThreadPoolExecutor(2) as ex:
                 futs = [ex.submit(r.send, l) for l in leads]
                 out["sends"] = [f.result() for f in futs]
+        elif point == "control1long":
+            out["send"] = r.send(leads[0])
+            r.wait_terminal(leads)
+            time.sleep(100)  # recovery ticks on a table whose only row is done
         elif point == "idle":
             time.sleep(100)  # no lead at all: recovery ticks every 30 s on an empty table
             leads = []

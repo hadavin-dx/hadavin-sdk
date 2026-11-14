@@ -1,16 +1,14 @@
-## HEARTBEAT 151 (11:40Z) - kill script RUNNING (not stuck): control run 1 passed on the v2 flows; first kill point next
+## HEARTBEAT 152 (11:51Z) - kill script RUNNING: controls done, K1 run a in progress; one finding with proof (F-REC-EMPTY)
 
-| Item | State at 11:40Z |
+| Item | State at 11:51Z |
 |---|---|
-| Flow files tested (v2 top level only, from branch demo/handover at e00f50df) | mf-sub-crm-mail.json, mf-form.json, mf-hook.json, mf-recovery.json, mf_leads.sql (table as pushed, NO label column, NO table patch), DESIGN-A-README.md. Not used: desk-form-door, desk-webhook-door, desk-error-notifier, v1-superseded/. |
-| RETRACTED | my HB150 defects F-DDL and F-DDL2 were my own slip: my local copy of mf-form, mf-hook and mf-recovery was the obsolete 10:45Z version (19, 19, 15 nodes; branch v2 has 12, 12, 5). The pushed DDL is fine. All results from runs c1, c1b, c1c (old files, or not published, or webhook not yet registered) are void and not used. |
-| Control run 1 (c1d, 1 lead, no kill, v2 files, fresh n8n folder) | PASS: table row done, attempts 1, crm_id crm-1, mail_sent true; counts outside n8n: 1 CRM row, 1 mail to intake, 0 alerts, 1 stage call; the form answered 200 verdict new. |
-| Idle test (i1: no lead, 100 s) | running; asks one question: does recovery act on an empty table? In the void run c1c (webhook 404, empty table) the 30-second recovery produced a stage call and a CRM call with lead `None` and an alert mail "lead failed undefined" every 30 s. Not yet reproduced on a clean run, so NOT a finding yet. |
-| First kill point | K1 (kill while the stage call is in flight) is the next run, 3 runs per point. |
-| Disk | 4.1G free, 90% used (allowance view). Fine; I delete my own temp folders under 2 GB free. |
+| Controls (v2 top-level files, fresh n8n folder each run) | 1 lead: done, 1 CRM row, 1 mail to intake, 1 stage call, 0 alerts (PASS). Same lead twice: second answer "repeat, done"; still 1 CRM row, 1 mail, 1 stage call (PASS). Bad e-mail: state review, 0 stage calls, 0 CRM rows, 0 mails (PASS). Two leads at once: both done, 1 mail each (PASS on state and mail); the CRM merged them because my test used one e-mail for both (my test-data slip; driver now uses one e-mail per lead; rerun cp2 is queued after the batch). |
+| K1 run a (kill while stage call in flight) | in progress: kill landed while the stage call was open (fake logged peer_closed_before_answer), n8n restarted, row is processing attempts 1, lease expired, waiting for recovery. No result yet. |
+| FINDING F-REC-EMPTY (proof: runs i1, c1L, k1a) | In n8n 2.46.6 the Postgres node Execute Query returns one item {success:true} when a non-SELECT statement (UPDATE ... RETURNING) matches no row (n8n source: nodes-base Postgres v2 executeQuery.operation.js line 351). So when mf-recovery has nothing to recover, ClaimStuck feeds that item to RunSub, and MarkFailed feeds it to AlertFailed. Every 30 s on an IDLE stack (no lead at all, run i1, 100 s) I see: 1 stage call with lead None, 1 CRM upsert with lead null, 1 alert mail "[demo] Lead desk: lead failed undefined" to alerts@example.test. Per-lead counting hides it because the subject says "undefined"; I report these totals per run as phantom counts. Likely fix for the demo session to judge: an IF "lead_key is not empty" after ClaimStuck and after MarkFailed. |
+| Disk | 3.8G free, 91% used |
 
 ASK for the lead: none.
-FAILURES AND RETRIES (all named): (1) isolated-vm built for Node 22: rebuilt for 24. (2) n8n listen address :: not available: N8N_LISTEN_ADDRESS=127.0.0.1. (3) task broker port clash: my port 5690. (4) wrong copy of 3 flow files (my slip, above). (5) sub-workflow not published ("Workflow is not active"): now published with the other three. (6) lead sent before the webhook was registered (HTTP 404): the driver now waits until the path answers a GET with "not registered for GET". None is a flake; each has a cause.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): K1, K2, K3, K6, F-a, F-b, F-c not run; controls 2 (same lead twice, two at once) and bad e-mail not run; idle result pending; 3 runs per point not done; no comparison with the demo compare table (only after my numbers are saved); WINDOWS-RUN-1 additions not written.
-WHAT I WOULD DO NEXT (ranked): 1) read i1; 2) controls: same lead twice, two at once, bad e-mail; 3) K1, K2, K3, K6, three runs each; 4) F-a, F-b, F-c; 5) save numbers, then compare.
+FAILURES AND RETRIES: as HB151, plus: two leads at once shared one e-mail (my test data): fixed in the driver, cp2 queued. Nothing else new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): K1 (2 more runs), K2, K3, K6 (3 runs each), F-a, F-b, F-c, controls cp2; idle result for the phantom effect on the count rule is reported separately; no comparison with the demo compare table yet (after my numbers are saved); WINDOWS-RUN-1 additions not written.
+WHAT I WOULD DO NEXT (ranked): 1) finish the batch (run_all.sh, about 18 more runs, expected end about 12:50Z); 2) cp2; 3) save numbers, then compare; 4) WINDOWS-RUN-1 additions.
 
