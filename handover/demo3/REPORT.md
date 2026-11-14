@@ -1,3 +1,12 @@
+## HEARTBEAT 99 (answer to the 05:39Z LEAD order; sent 05:56Z, 11:26 IST; the blocks HB99-HB101 below were appended at the END of this file by mistake, newest-first order is restored here)
+
+* B15b (fix-2 r6): agent closed. Its full run 2 was lost by my slip (live log committed, rebase replaced it). Run 4 (tree 3633781d, clone b15b-clone, DPLD_REQUIRE_SCAN=1, gitleaks) started 05:45Z, at about 40% at 05:54Z, ends about 06:03Z. NO green full run on that tree yet. Reviews of the r6 tree are back (0 blocker, 3 major); resolve done (17 fix, 1 decline); B18 (fix-2 r7) building since 05:43Z.
+* B16 (fix-5 r7): still building; interim stop only, full run going (log b16-full-final.log); no hand-back.
+* B17 (fix-10 r2): still building; its full run started; got your 05:29Z answer (two numbers 4 and 8, one table; old-code proof = the 98 subprocess cases). No hand-back.
+FAILURES AND RETRIES: SLIP1 live logs committed and replaced by a rebase (fix: live logs are out of git, excluded); DUP1 I stopped my own run 3 by mistake (checked the pid by guess, not by cwd; run 4 replaced it); wrong place for HB99-101 (end of file). All in register.md.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): green full run of fix-2 r6 tree; B16, B17, B18 results and fresh reviews; the wall-clock and hygiene guard runs on the final head (no final head yet); stack not built; PowerShell scripts never run (lead's Windows run); core r7f not reviewed.
+WHAT I WOULD DO NEXT (ranked): 1. B16 and B17 hand-backs, then fresh reviewers; 2. run 4 result at ~06:03Z; 3. B18 hand-back, review, then the stack builder.
+
 ## HEARTBEAT 98 (05:28Z) - FIX-2 R6 FULL RUN IS RED (2 FAILURES, BOTH IN ITS OWN NEW TEST FILE); FIX-10 RESOLVED -> B17 STARTED; LEAD'S EXIT-CODE DECISION APPLIED
 
 FAILURES AND RETRIES: (1) fix-2 r6 full run on the final head of B15b: `2 failed, 4011 passed, 170 skipped in 889.13s` (I read the tail and the failure sections of raw/b15-full-final.log). Failure 1: `test_wall_clock_is_only_used_for_calendar_stamps`, because the allow-list text in tests/test_one_key_file_rule_r6.py:349 contains the words `st_mtime <` and the repo guard reads test text as code. Failure 2: `test_hygiene_scan_public`, a time-of-day literal `07:28:00` at tests/test_one_key_file_rule_r6.py:245. Both are defects of B15b's own new test file, not of the product code. The class: a test text that contains a pattern a repo guard looks for. I told B15b (05:27Z) to fix at the class level (sweep every file it added), prove each guard passes, re-cut BOTH patches (and re-check the on-fix-1-r6 one with git apply --check), run a second full run (raw/b15-full-final2.log) and write the notes. The two existing patches (d783103e, d103c9d0) are therefore NOT final. (2) Earlier unverified-by-me builder claims remain unverified: the 15-of-15 fix-10 mutants and the 231-failed before-run are B14's logs; the fix-10 code-details reviewer notes that about 150 of those 231 failures are only "function absent" and that the real old-code proof is the 98 subprocess cases (this is now a plan row for B17). (3) No other failures this block.
@@ -1887,6 +1896,7 @@ DONE (with output):
 - Repo: demo/lane3 checked out (HEAD tracks origin/demo/lane3). Read BRIEF-PREAMBLE.md, MODEL-ROUTING.md, ORDERS.md. ORDERS NOT STARTED, waiting for GO.
 - No secrets, no spend, no settings change on GitHub, no merge.
 Register: no agents/shells/jobs running.
+
 
 
 
