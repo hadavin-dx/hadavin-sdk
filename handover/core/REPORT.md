@@ -1,5 +1,40 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 09:51 UTC / 15:21 IST
+
+**No result from EV7N or the r7n reviewer yet: both are still running (checkpoint lines only below; I have judged nothing).**
+
+- **EV7N (a9b99545, started 09:38):** full run launched, at 7 percent at 09:46 (about 30 min for a full run: expect about 10:20); stage.sh (staged git copy) launched 09:46 and ord.sh (both test orders) 09:47. **Its own slip (disclosed): the first hostile run of the echoing-mailbox server used a host name that cannot be looked up in the network-less sandbox, so 0 logins reached the server in all 168 rows: result invalid, re-run with localhost plus a negative control (done 09:46).** **One line I do not yet understand: "probe done: builder server never reaches LOGIN" (09:48): the builder's own server in its leak test never gets as far as the LOGIN line, which could mean that test does not exercise the echo case it names.** I will read the evidence file before accepting any of the builder's F1 tests; the reviewer's own probes (it wrote its own echoing server) are the second check.
+- **r7n reviewer (a8c42155, started 09:42):** 09:43 imap probes, 09:44 smtp/money probes done, 09:48 38 mutants started, 09:51 ruff, bandit, mypy and hygiene done. No findings in its checkpoint yet.
+- **Pass 12 (a5f77882) final-ish rows:** M9-82 KILLED; **M10-J12 SURVIVED the big set (529 s) and is judged EQUIVALENT (3012 cases, 0 differences; _has_non_finite gives the same FileRefused text)**; J13 running on lane B; J09 not yet in. Earlier rows: REAL GAPS M9-74, M9-79, M9-56 (low), M10-J02 (low); KILLED M9-78, M9-75, M10-J06. Expect its report about 10:10.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| a9b99545 (EV7N) | independent evidence on r7n | final bytes | 09:38 / 15:08 | about 10:50 | EV7N | RUNNING (full run at about 30 percent expected) | EV7N-EVIDENCE.md |
+| a8c42155 (r7n reviewer) | whole-delta review | independent | 09:42 / 15:12 | about 10:55 | review 1 | RUNNING (38 mutants) | core-fix-on-frozen-r7n-review.md |
+| a5f77882 (pass 12) | 11 unrun rows on r7m | fix-dont-defer | 09:08 / 14:38 | about 10:10 | pass 12 | RUNNING (J13, J09 left) | mail-pass12-r7m.md |
+
+Agents running: 3. Load 2.1.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7N and r7n review results | running | resolve; Blocker/Major to r7o |
+| whether the builder's F1 server test really reaches LOGIN | EV7N line unclear | read evidence; reviewer probes |
+| r7o for pass 12 gaps (M9-74, M9-79, M9-56, J02, rest) | pass 12 finishing | test-first, small |
+| pass 11 mutants on r7n changed code | machine busy | after pass 12 |
+| ledger rows OPEN (8) | need EV7N and review | after r7n/r7o |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7N and the r7n review; any Blocker/Major plus pass 12 gaps go to ONE r7o builder (test-first).
+2. Pass 11 mutants on r7n/r7o changed code; EV on r7o by delta rules (changed groups + one final full run).
+3. Close ledger rows, README, sweep, counts.
+
+
 ## STATUS (core lead) 09:42 UTC / 15:12 IST
 
 (The 09:39 block above has the r7n hand-back, the two new agents and the agent table; this one adds only the pass 12 rows. Agent claims, not judged by me.)
