@@ -1,0 +1,61 @@
+"""SCRATCH (kill-between-steps test, 09:05Z order). Runs inside a prepared stack folder. Synthetic data only.
+Flow sk-k: Webhook -> Postgres Insert (Skip on Conflict) -> Wait 4 s -> IF lead_id not empty -> new: Outbox (stand-in) -> Code 'new' ; duplicate: Code 'duplicate'.
+Control (no kill), then 5 kills of n8n 1.5 s after the call (inside the Wait, after the insert), restart, same lead id again."""
+import json, sys, time, uuid, threading, urllib.request, urllib.error, subprocess
+import api, lib, mkwf2
+
+api.login()
+INST = json.load(open(".run/instance.json")); CRED = (INST["pg_credential_id"], "n8n-publish-pg")
+def psql(sql):
+    p = subprocess.run(["docker", "exec", lib.PG, "psql", "-U", "postgres", "-At", "-c", sql], capture_output=True, text=True); return p.stdout.strip() + p.stderr.strip()
+def code(name, label, pos):
+    return {"parameters": {"mode": "runOnceForAllItems", "jsCode": "return [{json: {branch: '%s'}}];" % label}, "name": name, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": pos}
+LID = "={{ $json.body.lead_id }}"
+PATH = "sk-k"
+nodes = [mkwf2.hook(PATH, "skk"),
+  {"parameters": {"operation": "insert", "schema": {"__rl": True, "mode": "list", "value": "public"}, "table": {"__rl": True, "mode": "name", "value": "leads_skip"},
+   "columns": {"mappingMode": "defineBelow", "value": {"lead_id": LID, "note": "synthetic"}, "matchingColumns": [], "schema": []}, "options": {"skipOnConflict": True}},
+   "name": "PgInsert", "type": "n8n-nodes-base.postgres", "typeVersion": 2.5, "position": [220, 0], "credentials": {"postgres": {"id": CRED[0], "name": CRED[1]}}},
+  {"parameters": {"resume": "timeInterval", "amount": 4, "unit": "seconds"}, "name": "Wait4s", "type": "n8n-nodes-base.wait", "typeVersion": 1.1, "position": [440, 0], "webhookId": "skk-wait-" + uuid.uuid4().hex[:8]},
+  {"parameters": {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "strict"}, "conditions": [
+      {"id": "c1", "leftValue": "={{ $json.lead_id }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty", "singleValue": True}}], "combinator": "and"}, "options": {}},
+   "name": "IsNew", "type": "n8n-nodes-base.if", "typeVersion": 2.2, "position": [660, 0]},
+  mkwf2.http("Outbox", "outbox", [880, -100]), code("NewReply", "new", [1100, -100]), code("DupReply", "duplicate", [880, 100])]
+conn = {"Webhook": {"main": [[{"node": "PgInsert", "type": "main", "index": 0}]]}, "PgInsert": {"main": [[{"node": "Wait4s", "type": "main", "index": 0}]]},
+        "Wait4s": {"main": [[{"node": "IsNew", "type": "main", "index": 0}]]}, "IsNew": {"main": [[{"node": "Outbox", "type": "main", "index": 0}], [{"node": "DupReply", "type": "main", "index": 0}]]},
+        "Outbox": {"main": [[{"node": "NewReply", "type": "main", "index": 0}]]}}
+w = {"id": "skk", "name": "sk-k", "nodes": nodes, "connections": conn, "active": False, "settings": {}}
+psql("CREATE TABLE IF NOT EXISTS leads_skip (id serial PRIMARY KEY, lead_id text, note text); CREATE UNIQUE INDEX IF NOT EXISTS leads_skip_lead_id_uq ON leads_skip (lead_id);")
+json.dump(w, open("skwf_k.json", "w")); r = api.deploy("skwf_k.json", "sk-k"); WID = r[0]; print("deployed", r, flush=True)
+print("webhooks live:", lib.webhooks_live((PATH,), 60), flush=True)
+
+def post(lid, timeout=25):
+    body = json.dumps({"lead_id": lid, "payload": {"email": lid}}).encode()
+    r = urllib.request.Request(f"<loopback>/webhook/{PATH}", body, {"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(r, timeout=timeout) as x: return x.status, x.read().decode()[:300]
+    except urllib.error.HTTPError as e: return e.code, e.read().decode()[:300]
+    except Exception as e: return type(e).__name__, str(getattr(e, "reason", ""))[:100]
+def rows(lid): return psql("SELECT count(*) FROM leads_skip WHERE lead_id='%s'" % lid)
+def outbox(lid): return lib.per_email(lid)["outbox"]
+def exec_states(): 
+    try: return [(x["id"], x.get("status"), x.get("mode")) for x in sorted(lib.execs(WID, None, 100), key=lambda x: int(x["id"]))]
+    except Exception as e: return "execs-read-failed: %s" % e
+out = {"control": None, "kills": []}
+# control, no kill
+lid = "ctl-" + uuid.uuid4().hex[:6]; t0 = time.time(); a = post(lid); b = post(lid)
+out["control"] = {"lead_id": lid, "call1": a, "call2": b, "rows": rows(lid), "outbox": outbox(lid), "secs": round(time.time() - t0, 1)}
+print("CONTROL", json.dumps(out["control"]), flush=True)
+for i in range(1, 6):
+    lid = "kill%d-%s" % (i, uuid.uuid4().hex[:6]); res = {}
+    th = threading.Thread(target=lambda: res.update(first=post(lid))); th.start(); time.sleep(1.5)
+    pre = {"rows_before_kill": rows(lid), "outbox_before_kill": outbox(lid)}
+    killed = lib.kill_n8n_confirmed(); th.join()
+    ok = lib.start_n8n(None, paths=(PATH,))
+    after_restart = {"rows": rows(lid), "outbox": outbox(lid), "execs": exec_states()}
+    time.sleep(2); second = post(lid); time.sleep(7)
+    rec = {"i": i, "lead_id": lid, **pre, "killed_confirmed": killed, "restarted_live": ok, "first_call_result": res.get("first"), "after_restart": after_restart,
+           "second_call": second, "final_rows": rows(lid), "final_outbox": outbox(lid), "final_execs": exec_states()}
+    out["kills"].append(rec); print("KILL", json.dumps(rec), flush=True)
+out["n8n"] = subprocess.run(["node", "-e", "console.log(require('n8n/package.json').version)"], capture_output=True, text=True, cwd="node_modules").stdout.strip()
+json.dump(out, open("skip_result_kill.json", "w"), indent=1); print("skipk done")

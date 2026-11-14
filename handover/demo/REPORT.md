@@ -1,6 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:09Z - reviewer folded, hygiene rescan clean, kill-between-steps DONE: lead LOST 5 of 5
+
+- Reviewer (fresh egm comprehension): 5 claims Majors, 4 plain-words Majors, Nits; counts all matched my tables. Folded: item 6 rewritten (which 20 is which, "new" does not mean later steps finished, upsert not documented as a guarantee, advice now "let a database unique index decide; do not rely on look-first-then-write in a Data Table"), serial-id row limited to the first fresh stack, HTTP 500 row says it is the webhook's answer and the run counted as success, Postgres row reworded, glossary gets 15 terms, stale "IF node not built" lines in n8n-skip-on-conflict.md fixed.
+- Hygiene rescan after the fold (40+ character runs, links, host names) on the page, the report and n8n-rerun/skip: clean. (Older blocks lower in REPORT.md hold git hashes from earlier work; not touched.)
+- Kill test, in my runs (n8n 2.46.6, regular mode, one fresh stack, 5 kills, killed 1.5 s after the call, inside a 4 s Wait after the insert): rows 1, work done (outbox calls) 0, caller connection dropped, run marked "crashed" after restart and NOT re-run on its own within 9 s, second call with the same id answered "duplicate", final work done 0 in 5 of 5. Control without kill: new then duplicate, work done once. So the first lead is LOST, not done twice and not done once. Report: n8n-kill-between-steps.md, raw files n8n-rerun/skip/kill-*.
+- Queue: empty after this. Ranked next ideas below.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Kill only inside the Wait (before the work); no kill after the work and before the reply with this flow; the fix (status column written after the work + re-send job) not tested in this flow; queue mode, other versions, n8n's crashed-run recovery settings not tested.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Same kill test on a flow that writes status "done" after the work plus a re-send job (variant e shape built on the skip insert): does the lost lead come back (zero lost, how many times processed).
+2. Kill after the work, before the reply (the other half of the lost-message class), 5 kills.
+3. Atlas pass 2 re-check of the n8n variants when ordered.
+
+
 ## Block 09:04Z - IF-branch test DONE (20 of 20 exact); page folded; reviewer running
 
 - In my runs (n8n 2.46.6, one machine, 10 at once, same id): Postgres Insert (Skip on Conflict) -> IF (lead_id not empty): 20 of 20 bursts (10 fresh stacks x 1 burst, 1 reused stack x 10 bursts) gave exactly rows 1, new path 1, duplicate path 9; all 200 executions success; no HTTP error; no other split in any burst. Raw files and the distribution table are in n8n-rerun/skip/ (if-*), section 3 added to n8n-skip-on-conflict.md.

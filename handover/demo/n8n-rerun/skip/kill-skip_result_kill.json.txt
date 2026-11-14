@@ -1,0 +1,524 @@
+{
+ "control": {
+  "lead_id": "ctl-c58acf",
+  "call1": [
+   200,
+   "{\"branch\":\"new\"}"
+  ],
+  "call2": [
+   200,
+   "{\"branch\":\"duplicate\"}"
+  ],
+  "rows": "1",
+  "outbox": 1,
+  "secs": 8.4
+ },
+ "kills": [
+  {
+   "i": 1,
+   "lead_id": "kill1-9b8243",
+   "rows_before_kill": "1",
+   "outbox_before_kill": 0,
+   "killed_confirmed": true,
+   "restarted_live": true,
+   "first_call_result": [
+    "RemoteDisconnected",
+    ""
+   ],
+   "after_restart": {
+    "rows": "1",
+    "outbox": 0,
+    "execs": [
+     [
+      "1",
+      "success",
+      "webhook"
+     ],
+     [
+      "2",
+      "success",
+      "webhook"
+     ],
+     [
+      "3",
+      "crashed",
+      "webhook"
+     ]
+    ]
+   },
+   "second_call": [
+    200,
+    "{\"branch\":\"duplicate\"}"
+   ],
+   "final_rows": "1",
+   "final_outbox": 0,
+   "final_execs": [
+    [
+     "1",
+     "success",
+     "webhook"
+    ],
+    [
+     "2",
+     "success",
+     "webhook"
+    ],
+    [
+     "3",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "4",
+     "success",
+     "webhook"
+    ]
+   ]
+  },
+  {
+   "i": 2,
+   "lead_id": "kill2-2a9faf",
+   "rows_before_kill": "1",
+   "outbox_before_kill": 0,
+   "killed_confirmed": true,
+   "restarted_live": true,
+   "first_call_result": [
+    "RemoteDisconnected",
+    ""
+   ],
+   "after_restart": {
+    "rows": "1",
+    "outbox": 0,
+    "execs": [
+     [
+      "1",
+      "success",
+      "webhook"
+     ],
+     [
+      "2",
+      "success",
+      "webhook"
+     ],
+     [
+      "3",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "4",
+      "success",
+      "webhook"
+     ],
+     [
+      "5",
+      "crashed",
+      "webhook"
+     ]
+    ]
+   },
+   "second_call": [
+    200,
+    "{\"branch\":\"duplicate\"}"
+   ],
+   "final_rows": "1",
+   "final_outbox": 0,
+   "final_execs": [
+    [
+     "1",
+     "success",
+     "webhook"
+    ],
+    [
+     "2",
+     "success",
+     "webhook"
+    ],
+    [
+     "3",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "4",
+     "success",
+     "webhook"
+    ],
+    [
+     "5",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "6",
+     "success",
+     "webhook"
+    ]
+   ]
+  },
+  {
+   "i": 3,
+   "lead_id": "kill3-581e05",
+   "rows_before_kill": "1",
+   "outbox_before_kill": 0,
+   "killed_confirmed": true,
+   "restarted_live": true,
+   "first_call_result": [
+    "RemoteDisconnected",
+    ""
+   ],
+   "after_restart": {
+    "rows": "1",
+    "outbox": 0,
+    "execs": [
+     [
+      "1",
+      "success",
+      "webhook"
+     ],
+     [
+      "2",
+      "success",
+      "webhook"
+     ],
+     [
+      "3",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "4",
+      "success",
+      "webhook"
+     ],
+     [
+      "5",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "6",
+      "success",
+      "webhook"
+     ],
+     [
+      "7",
+      "crashed",
+      "webhook"
+     ]
+    ]
+   },
+   "second_call": [
+    200,
+    "{\"branch\":\"duplicate\"}"
+   ],
+   "final_rows": "1",
+   "final_outbox": 0,
+   "final_execs": [
+    [
+     "1",
+     "success",
+     "webhook"
+    ],
+    [
+     "2",
+     "success",
+     "webhook"
+    ],
+    [
+     "3",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "4",
+     "success",
+     "webhook"
+    ],
+    [
+     "5",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "6",
+     "success",
+     "webhook"
+    ],
+    [
+     "7",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "8",
+     "success",
+     "webhook"
+    ]
+   ]
+  },
+  {
+   "i": 4,
+   "lead_id": "kill4-528787",
+   "rows_before_kill": "1",
+   "outbox_before_kill": 0,
+   "killed_confirmed": true,
+   "restarted_live": true,
+   "first_call_result": [
+    "RemoteDisconnected",
+    ""
+   ],
+   "after_restart": {
+    "rows": "1",
+    "outbox": 0,
+    "execs": [
+     [
+      "1",
+      "success",
+      "webhook"
+     ],
+     [
+      "2",
+      "success",
+      "webhook"
+     ],
+     [
+      "3",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "4",
+      "success",
+      "webhook"
+     ],
+     [
+      "5",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "6",
+      "success",
+      "webhook"
+     ],
+     [
+      "7",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "8",
+      "success",
+      "webhook"
+     ],
+     [
+      "9",
+      "crashed",
+      "webhook"
+     ]
+    ]
+   },
+   "second_call": [
+    200,
+    "{\"branch\":\"duplicate\"}"
+   ],
+   "final_rows": "1",
+   "final_outbox": 0,
+   "final_execs": [
+    [
+     "1",
+     "success",
+     "webhook"
+    ],
+    [
+     "2",
+     "success",
+     "webhook"
+    ],
+    [
+     "3",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "4",
+     "success",
+     "webhook"
+    ],
+    [
+     "5",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "6",
+     "success",
+     "webhook"
+    ],
+    [
+     "7",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "8",
+     "success",
+     "webhook"
+    ],
+    [
+     "9",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "10",
+     "success",
+     "webhook"
+    ]
+   ]
+  },
+  {
+   "i": 5,
+   "lead_id": "kill5-cfdbdc",
+   "rows_before_kill": "1",
+   "outbox_before_kill": 0,
+   "killed_confirmed": true,
+   "restarted_live": true,
+   "first_call_result": [
+    "RemoteDisconnected",
+    ""
+   ],
+   "after_restart": {
+    "rows": "1",
+    "outbox": 0,
+    "execs": [
+     [
+      "1",
+      "success",
+      "webhook"
+     ],
+     [
+      "2",
+      "success",
+      "webhook"
+     ],
+     [
+      "3",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "4",
+      "success",
+      "webhook"
+     ],
+     [
+      "5",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "6",
+      "success",
+      "webhook"
+     ],
+     [
+      "7",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "8",
+      "success",
+      "webhook"
+     ],
+     [
+      "9",
+      "crashed",
+      "webhook"
+     ],
+     [
+      "10",
+      "success",
+      "webhook"
+     ],
+     [
+      "11",
+      "crashed",
+      "webhook"
+     ]
+    ]
+   },
+   "second_call": [
+    200,
+    "{\"branch\":\"duplicate\"}"
+   ],
+   "final_rows": "1",
+   "final_outbox": 0,
+   "final_execs": [
+    [
+     "1",
+     "success",
+     "webhook"
+    ],
+    [
+     "2",
+     "success",
+     "webhook"
+    ],
+    [
+     "3",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "4",
+     "success",
+     "webhook"
+    ],
+    [
+     "5",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "6",
+     "success",
+     "webhook"
+    ],
+    [
+     "7",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "8",
+     "success",
+     "webhook"
+    ],
+    [
+     "9",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "10",
+     "success",
+     "webhook"
+    ],
+    [
+     "11",
+     "crashed",
+     "webhook"
+    ],
+    [
+     "12",
+     "success",
+     "webhook"
+    ]
+   ]
+  }
+ ],
+ "n8n": "2.46.6"
+}
