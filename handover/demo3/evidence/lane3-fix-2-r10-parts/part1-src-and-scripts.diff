@@ -1,0 +1,60 @@
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index 376ad10..a7f0456 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -77,7 +77,7 @@ from lead_desk.constants import (  # noqa: E402
+     REAL_SECONDS_MAX,
+ )
+ from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings  # noqa: E402
+-from lead_desk.envnum import env_number, path_kind  # noqa: E402
++from lead_desk.envnum import env_file_problem, env_number, file_problem_text, path_kind  # noqa: E402
+ from lead_desk.gate import SEND_WORKERS_MAX  # noqa: E402
+ from lead_desk.imap_count import (  # noqa: E402
+     ImapConnectionError,
+@@ -858,10 +858,10 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+             print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
+             return EXIT_REFUSED
+         db = Path(env["DESK_DB_PATH"])
+-        book_kind = path_kind(db)  # one look: not the stdlib probe, which raises on some faults
+-        if book_kind == "unreadable":
+-            raise ValueError("DESK_DB_PATH cannot be looked at: the system will not let this script see it")
+-        if book_kind != "absent":  # an old book would hold old leads: the clean-up could not tell this run's apart
++        book_problem = env_file_problem(db)  # the one parent walk (folder, inside a file, cannot be looked at)
++        if book_problem is not None:
++            raise ValueError(file_problem_text("DESK_DB_PATH", book_problem))
++        if path_kind(db) != "absent":  # an old book would hold old leads: the clean-up could not tell this run's apart
+             raise ValueError("DESK_DB_PATH names something that already exists: give a new database file for each run")
+         run_dir = db.parent
+         env = {**env, "DESK_ADAPTERS": "demo", "DESK_CRM": "hubspot", "DESK_OUTBOX": "smtp_provider"}
+diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
+index 35281ad..87b4647 100644
+--- a/src/lead_desk/envnum.py
++++ b/src/lead_desk/envnum.py
+@@ -115,12 +115,12 @@ def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: boo
+     rule, with its reasons, is written once, in the section "Key and password files" of docs/settings.md. In short: a
+     regular file that is not a link (a folder, a named pipe, a device or a symbolic link is refused without being
+     read) that no other user can use (read, write or run it; checked on a system with permission bits), at most
+-    SECRET_FILE_MAX_BYTES, UTF-8 (a
+-    byte-order mark at the start is accepted), at least LIVE_KEY_MIN_CHARS printable ASCII characters and no blank
+-    anywhere. Only the line break at the very end of the file is removed. `strip_inner_space=True` (the SMTP password
+-    and the mailbox password only) drops every plain space first. `what` names the file in every text ("the {what}
+-    file ...") and `noun` the content ("key" or "password"). A refusal is a SettingRefused whose text is fixed and
+-    holds neither the path nor the content. The kinds wrap it in their own error type; none imports another."""
++    SECRET_FILE_MAX_BYTES, UTF-8 (a byte-order mark at the start is accepted), at least LIVE_KEY_MIN_CHARS printable
++    ASCII characters and no blank anywhere. Only the line break at the very end of the file is removed.
++    `strip_inner_space=True` (the SMTP password and the mailbox password only) drops every plain space first. `what`
++    names the file in every text ("the {what} file ...") and `noun` the content ("key" or "password"). A refusal is a
++    SettingRefused whose text is fixed and holds neither the path nor the content. The kinds wrap it in their own
++    error type; none imports another."""
+     link_text = f"the {what} file is a symbolic link: name the real file"
+     try:
+         # O_NONBLOCK: opening a named pipe for reading would wait for a writer; the check below refuses it instead.
+@@ -148,7 +148,7 @@ def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: boo
+         if os.name == "posix" and opened.st_mode & _OTHERS_MASK:
+             raise SettingRefused(
+                 f"the {what} file can be used by other users: "
+-                "copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
++                "copy it to a normal file, run chmod 600 on it, and name the copy where you named this file"
+             )
+         with os.fdopen(fd, "rb", closefd=False) as f:
+             raw = f.read(SECRET_FILE_MAX_BYTES + 1)

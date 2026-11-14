@@ -5,3 +5,5 @@ Next: changed test files + hygiene + wall-clock guard alone, mutation, patch cut
 Blockers: none. Not run as root-able: the chmod-000 test skips as root (CORRECTION 07:20Z: when this line was written the monkeypatched twin did NOT exist yet; mutant M14 survived and exposed it; the twin test was added afterwards and now kills M14).
 
 07:20Z final: all steps done; see lane3-fix-2-r9-notes.md. Final tree 151f9eff50eb3a4a523cba11fcf1dd811e448719.
+
+r10 (lead's message after the r9 review): done; final tree 1c973634c77ef0ddb214b4f101a1aa405a8cb8b8; see lane3-fix-2-r10-notes.md.

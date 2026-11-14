@@ -1,0 +1,203 @@
+diff --git a/tests/test_one_key_file_rule_r9.py b/tests/test_one_key_file_rule_r9.py
+index 29d1bf3..6eec45d 100644
+--- a/tests/test_one_key_file_rule_r9.py
++++ b/tests/test_one_key_file_rule_r9.py
+@@ -24,7 +24,14 @@ from lead_desk.trace import TracedCrm, Tracer
+ REPO = Path(server.__file__).parents[2]
+ KEY = "made" + "-up-" + "key-" + "0123456789"
+ POSIX = pytest.mark.skipif(os.name != "posix", reason="permission bits are a POSIX notion")
+-USED = "can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
++BOOK_UNREADABLE = (
++    "refused: ValueError: DESK_DB_PATH cannot be looked at "
++    "(the system would not let the desk look at a part of that path)"
++)
++USED = (
++    "can be used by other users: copy it to a normal file, run chmod 600 on it, "
++    "and name the copy where you named this file"
++)
+ 
+ 
+ def _doc(name: str) -> str:
+@@ -61,7 +68,8 @@ def test_the_docs_do_not_give_the_wrong_reason_for_skipping_an_owner_check() ->
+     text = _doc("docs/settings.md")
+     assert "refuse a key kept in a shared service account" not in text
+     assert "an owner check would refuse" not in text
+-    assert "the owner of the file is not checked" in text
++    assert "who owns the file is not checked" in text
++    assert "access lists" in text and "the mode alone says who else can use the file" not in text
+ 
+ 
+ def test_the_docs_name_the_mounts_that_are_refused_and_what_was_not_tried() -> None:
+@@ -207,6 +215,92 @@ def test_a_bad_key_file_with_the_smtp_sender_is_reported_before_any_demo_server_
+         loader.check_secret_files(crm, outbox, qualifier)
+ 
+ 
++def _no_network(monkeypatch: pytest.MonkeyPatch) -> None:
++    from lead_desk import server
++
++    def must_not_serve(*a: Any, **k: Any) -> Any:
++        raise AssertionError("the desk went on to bind a port although the key file is bad")
++
++    monkeypatch.setattr(server, "make_server", must_not_serve)  # a missing check must fail the test, not serve forever
++
++    def no_network(*a: Any, **k: Any) -> Any:
++        raise AssertionError("a server was called before the key file was checked")
++
++    monkeypatch.setattr(socket.socket, "connect", no_network)
++    monkeypatch.setattr(socket, "create_connection", no_network)
++
++
++def _desk_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, bad_key: Path) -> None:
++    for name in [n for n in os.environ if n.startswith("DESK_")]:
++        monkeypatch.delenv(name)
++    env = {
++        "DESK_DB_PATH": str(tmp_path / "book" / "desk.db"),
++        "DESK_PORT": "0",
++        "DESK_OUTBOX": "smtp",
++        "DESK_CRM": "hubspot",
++        "DESK_HUBSPOT_KEY_FILE": str(bad_key),
++        "DESK_HUBSPOT_MAX_CALLS": "9",
++        "DESK_HUBSPOT_BASE_URL": "http://127.0.0.1:1",
++        "DESK_HUBSPOT_ALLOW_ANY_BASE_URL": "yes",
++    }
++    for k, v in env.items():
++        monkeypatch.setenv(k, v)
++
++
++@POSIX
++def test_server_main_with_the_smtp_sender_exits_4_on_a_bad_key_file_before_any_demo_server_is_called(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    """The documented claim run through `server.main` itself: the bad HubSpot key file ends the start with exit code 4
++    and the key-file text, not with exit code 1 and "cannot reach the demo servers"; no connection is made."""
++    from lead_desk import server
++
++    _desk_env(monkeypatch, tmp_path, _key_file(tmp_path, 0o644))
++    _no_network(monkeypatch)
++    with pytest.raises(SystemExit) as e:
++        server.main()
++    out = capsys.readouterr().out
++    assert e.value.code == 4, out
++    assert "cannot reach the demo servers" not in out
++    assert out.strip().startswith("the desk refuses a setting: ") and USED in out, out
++    assert str(tmp_path) not in out
++
++
++@POSIX
++def test_server_main_with_the_smtp_sender_exits_4_on_a_bad_live_model_key_file_before_any_demo_server_is_called(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    """The same for the live model step (the qualifier): its key file is checked at the start, exit code 4."""
++    from lead_desk import server
++
++    bad = _key_file(tmp_path, 0o644)
++    _desk_env(monkeypatch, tmp_path, bad)
++    monkeypatch.setenv("DESK_CRM", "fake")
++    for name, value in {
++        "DESK_QUALIFIER": "live_claude",
++        "DESK_LIVE_MODEL": "made-up-model",
++        "DESK_LIVE_KEY_FILE": str(bad),
++        "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
++        "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
++        "DESK_LIVE_PRICE_DATE": "2026-11-14",
++        "DESK_LIVE_CAP_RUN_USD": "1",
++        "DESK_LIVE_CAP_TOTAL_USD": "2",
++        "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger.json"),
++        "DESK_LIVE_RUN_ID": "made-up-run",
++        "DESK_LIVE_BASE_URL": "http://127.0.0.1:1",
++        "DESK_LIVE_ALLOW_ANY_BASE_URL": "yes",
++    }.items():
++        monkeypatch.setenv(name, value)
++    _no_network(monkeypatch)
++    with pytest.raises(SystemExit) as e:
++        server.main()
++    out = capsys.readouterr().out
++    assert e.value.code == 4, out
++    assert "cannot reach the demo servers" not in out
++    assert out.strip().startswith("the desk refuses a setting: ") and USED in out, out
++    assert str(tmp_path) not in out
++
++
+ @POSIX
+ def test_a_timing_wrapper_around_a_kind_still_has_its_start_check_run(tmp_path: Path) -> None:
+     f = _key_file(tmp_path, 0o644)
+@@ -248,33 +342,66 @@ def test_run_real_check_refuses_a_book_path_it_cannot_look_at_in_one_line(
+         locked.chmod(0o700)
+     out = capsys.readouterr().out
+     assert code == mod.EXIT_REFUSED, out
+-    assert out.strip().splitlines() == [
+-        "refused: ValueError: DESK_DB_PATH cannot be looked at: the system will not let this script see it"
+-    ], out
++    assert out.strip().splitlines() == [BOOK_UNREADABLE], out
+     assert "Traceback" not in out and str(tmp_path) not in out
+ 
+ 
+ def test_run_real_check_refuses_a_book_path_the_system_will_not_show_in_one_line_also_for_root(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+ ) -> None:
+-    """The same refusal where the test cannot take away its own permission (root, or a system without modes): the one
+-    look at the path (`path_kind`) answers `unreadable`, as it does for a folder with no permission."""
++    """The same refusal where the test cannot take away its own permission (root, or a system without modes): the
++    system's own `Path.stat` raises PermissionError for the book path, so the real `path_kind` and the real parent walk
++    run and answer `unreadable`, as they do for a folder with no permission."""
+     mod = _real_check(monkeypatch)
+-    cfg = _config_with_book(mod, tmp_path, tmp_path / "x" / "desk.db")
+-    seen: list[Path] = []
++    book = tmp_path / "x" / "desk.db"
++    cfg = _config_with_book(mod, tmp_path, book)
++    real_stat = Path.stat
+ 
+-    def unreadable(path: Path) -> str:
+-        seen.append(path)
+-        return "unreadable"
++    def stat(self: Path, *args: Any, **kwargs: Any) -> os.stat_result:
++        if self == book:
++            raise PermissionError(13, "no permission")
++        return real_stat(self, *args, **kwargs)
+ 
+-    monkeypatch.setattr(mod, "path_kind", unreadable)
++    monkeypatch.setattr(Path, "stat", stat)
++    monkeypatch.setattr("builtins.input", lambda prompt="": pytest.fail("the question must not be reached"))
++    code = mod.main(["--config", str(cfg)])
++    out = capsys.readouterr().out
++    assert code == mod.EXIT_REFUSED, (code, out)
++    assert out.strip().splitlines() == [BOOK_UNREADABLE], out
++    assert "Traceback" not in out and str(tmp_path) not in out
++
++
++def test_run_real_check_refuses_a_book_path_inside_a_file_in_one_line(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    """`file/inner.db`: the system answers "not a directory", which `path_kind` reads as absent; the parent walk of
++    `env_file_problem` is what finds the file in the way (the old code let this path through)."""
++    mod = _real_check(monkeypatch)
++    blocker = tmp_path / "plain-file"
++    blocker.write_text("x", encoding="utf-8")
++    cfg = _config_with_book(mod, tmp_path, blocker / "inner.db")
+     monkeypatch.setattr("builtins.input", lambda prompt="": pytest.fail("the question must not be reached"))
+     code = mod.main(["--config", str(cfg)])
+     out = capsys.readouterr().out
+-    assert code == mod.EXIT_REFUSED and len(seen) == 1, (code, out)
++    assert code == mod.EXIT_REFUSED, out
+     assert out.strip().splitlines() == [
+-        "refused: ValueError: DESK_DB_PATH cannot be looked at: the system will not let this script see it"
++        "refused: ValueError: DESK_DB_PATH sits inside something that is a file, not a folder"
+     ], out
++    assert str(tmp_path) not in out
++
++
++def test_run_real_check_refuses_a_book_path_that_names_a_folder_in_one_line(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    mod = _real_check(monkeypatch)
++    folder = tmp_path / "a-folder"
++    folder.mkdir()
++    monkeypatch.setattr("builtins.input", lambda prompt="": pytest.fail("the question must not be reached"))
++    code = mod.main(["--config", str(_config_with_book(mod, tmp_path, folder))])
++    out = capsys.readouterr().out
++    assert code == mod.EXIT_REFUSED, out
++    assert out.strip().splitlines() == ["refused: ValueError: DESK_DB_PATH names a folder, not a file"], out
++    assert str(tmp_path) not in out
+ 
+ 
+ def test_run_real_check_refuses_a_book_that_already_exists_in_one_line(

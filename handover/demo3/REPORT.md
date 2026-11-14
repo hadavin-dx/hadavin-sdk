@@ -1,3 +1,17 @@
+## HEARTBEAT 121 (07:48Z) - B22 handed back fix-2 r10 (lint green by me), reviewers running; B21 on round 9; B23 building
+
+| Agent / job | State at 07:48Z |
+|---|---|
+| B22 fix-2 r10 | handed back: tree 1c973634 = my copy; ruff check/format, mypy linux+win32, bandit all rc 0 (raw/b25-lint-b22.log); 846 passed / 1 skipped on 6 changed files; 18 of 18 mutants killed (baseline line added after an INVALID first pass); r9 Major (book path inside a file) fixed at envnum.env_file_problem. UNEXPLAINED: one baseline run showed 1 failed / 809 passed once, not reproduced in 5 reruns: both reviewers were told to hunt for it (the fix-5 flake was a real bug) |
+| fix-2 r10 reviews | egm-design and egm-codebase-details running since 07:48Z |
+| B21 fix-5 r9 | resumed 07:45Z on my 28-row resolve; root cause of its red test was a real locale bug in reset.sh (HB120); expected end ~08:50Z |
+| B23 fix-10 r4 | building; no hand-back |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: fix-2 r10 first mutation pass invalid (baseline failing); B22 caught and fixed it itself.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no full run (stack run covers it); no non-root run of the unreadable-folder test; no ACL or owner check (documented); PowerShell never run.
+WHAT I WOULD DO NEXT (ranked): 1) collect the two fix-2 reviews, resolve, round 11 only if a Major; 2) B21/B23 hand-back: lint, reconcile, fresh reviewers; 3) WINDOWS-RUN-1 update, then the stack builder.
+
 ## HEARTBEAT 120 (07:41Z) - B21 handed back; its flake is a REAL bug in reset.sh (security path), round 9 needed
 
 | Agent / job | State at 07:41Z |

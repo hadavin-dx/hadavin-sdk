@@ -1,0 +1,1301 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.F..FFFFF..F.FFFF                   [100%]
+=================================== FAILURES ===================================
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-1] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon0')
+digits = 1, pad = 'ideographic'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (1, 'ideographic')
+E       assert '1ã\x80\x80ã\...\x80ã\x80\x80' == ''
+E         
+E         + 1ãããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-2] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon1')
+digits = 2, pad = 'ideographic'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (2, 'ideographic')
+E       assert '11ã\x80\x80ã...\x80\x80ã\x80' == ''
+E         
+E         + 11ãããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-3] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon2')
+digits = 3, pad = 'ideographic'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (3, 'ideographic')
+E       assert '111ã\x80\x80...x80ã\x80\x80ã' == ''
+E         
+E         + 111ãããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-4] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon3')
+digits = 4, pad = 'ideographic'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (4, 'ideographic')
+E       assert '1111ã\x80\x8...\x80ã\x80\x80' == ''
+E         
+E         + 1111ããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-5] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon4')
+digits = 5, pad = 'ideographic'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (5, 'ideographic')
+E       assert '11111ã\x80\x...\x80\x80ã\x80' == ''
+E         
+E         + 11111ããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-6] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon5')
+digits = 6, pad = 'ideographic'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (6, 'ideographic')
+E       assert '111111ã\x80\...x80ã\x80\x80ã' == ''
+E         
+E         + 111111ããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-7] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon6')
+digits = 7, pad = 'ideographic'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (7, 'ideographic')
+E       assert '1111111ã\x80...\x80ã\x80\x80' == ''
+E         
+E         + 1111111ãããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-1] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon7')
+digits = 1, pad = 'ideographic-after-spaces'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (1, 'ideographic-after-spaces')
+E       assert '1ã\x80\x80ã\...\x80ã\x80\x80' == ''
+E         
+E         + 1ãããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-2] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon8')
+digits = 2, pad = 'ideographic-after-spaces'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (2, 'ideographic-after-spaces')
+E       assert '11  ã\x80\x8...\x80ã\x80\x80' == ''
+E         
+E         + 11  ããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-3] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon9')
+digits = 3, pad = 'ideographic-after-spaces'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (3, 'ideographic-after-spaces')
+E       assert '111 ã\x80\x8...\x80ã\x80\x80' == ''
+E         
+E         + 111 ããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-4] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon10')
+digits = 4, pad = 'ideographic-after-spaces'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (4, 'ideographic-after-spaces')
+E       assert '1111ã\x80\x8...\x80ã\x80\x80' == ''
+E         
+E         + 1111ããããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-5] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon11')
+digits = 5, pad = 'ideographic-after-spaces'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (5, 'ideographic-after-spaces')
+E       assert '11111  ã\x80...\x80ã\x80\x80' == ''
+E         
+E         + 11111  ãããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-6] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon12')
+digits = 6, pad = 'ideographic-after-spaces'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (6, 'ideographic-after-spaces')
+E       assert '111111 ã\x80...\x80ã\x80\x80' == ''
+E         
+E         + 111111 ãããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-7] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon13')
+digits = 7, pad = 'ideographic-after-spaces'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (7, 'ideographic-after-spaces')
+E       assert '1111111ã\x80...\x80ã\x80\x80' == ''
+E         
+E         + 1111111ãããããããããããããããããããã
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+___ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-1] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon14')
+digits = 1, pad = 'ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (1, 'ascii')
+E       assert '1           ...             ' == ''
+E         
+E         + 1
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+___ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-2] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon15')
+digits = 2, pad = 'ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (2, 'ascii')
+E       assert '11          ...             ' == ''
+E         
+E         + 11
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+___ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-3] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon16')
+digits = 3, pad = 'ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (3, 'ascii')
+E       assert '111         ...             ' == ''
+E         
+E         + 111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+___ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-4] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon17')
+digits = 4, pad = 'ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (4, 'ascii')
+E       assert '1111        ...             ' == ''
+E         
+E         + 1111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+___ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-5] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon18')
+digits = 5, pad = 'ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (5, 'ascii')
+E       assert '11111       ...             ' == ''
+E         
+E         + 11111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+___ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-6] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon19')
+digits = 6, pad = 'ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (6, 'ascii')
+E       assert '111111      ...             ' == ''
+E         
+E         + 111111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+___ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-7] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon20')
+digits = 7, pad = 'ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (7, 'ascii')
+E       assert '1111111     ...             ' == ''
+E         
+E         + 1111111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-1] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon21')
+digits = 1, pad = 'bom-ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (1, 'bom-ascii')
+E       assert '1           ...             ' == ''
+E         
+E         + 1
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-2] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon22')
+digits = 2, pad = 'bom-ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (2, 'bom-ascii')
+E       assert '11          ...             ' == ''
+E         
+E         + 11
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-3] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon23')
+digits = 3, pad = 'bom-ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (3, 'bom-ascii')
+E       assert '111         ...             ' == ''
+E         
+E         + 111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-4] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon24')
+digits = 4, pad = 'bom-ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (4, 'bom-ascii')
+E       assert '1111        ...             ' == ''
+E         
+E         + 1111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-5] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon25')
+digits = 5, pad = 'bom-ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (5, 'bom-ascii')
+E       assert '11111       ...             ' == ''
+E         
+E         + 11111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-6] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon26')
+digits = 6, pad = 'bom-ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (6, 'bom-ascii')
+E       assert '111111      ...             ' == ''
+E         
+E         + 111111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_ test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-7] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_lon27')
+digits = 7, pad = 'bom-ascii'
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    @pytest.mark.parametrize("pad", ["ideographic", "ideographic-after-spaces", "ascii", "bom-ascii"])
+    def test_read_pid_file_calls_a_long_file_stale_at_every_digit_count(tmp_path: Path, digits: int, pad: str) -> None:
+        """64 bytes or more (after a byte order mark) are stale, whatever the bytes are and however many digits the number
+        has. In a UTF-8 setting 30 ideographic spaces are only 30 characters, so a count of characters or a trim of
+        spaces in that setting would hand back the number."""
+        number = b"1" * digits
+        if pad == "ideographic":
+            content = number + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ideographic-after-spaces":
+            content = number + b" " * ((67 - digits) % 3) + _IDEOGRAPHIC_SPACE * 30
+        elif pad == "ascii":
+            content = number + b" " * (64 - digits)
+        else:
+            content = _BOM + number + b" " * (64 - digits)
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == "", (digits, pad)
+E       AssertionError: (7, 'bom-ascii')
+E       assert '1111111     ...             ' == ''
+E         
+E         + 1111111
+
+tests/test_reset_pid_file_reading.py:115: AssertionError
+_____ test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[1] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_num0')
+digits = 1
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    def test_read_pid_file_calls_a_number_and_one_ideographic_space_stale(tmp_path: Path, digits: int) -> None:
+        """Both scripts call any file with a byte outside plain ASCII stale: the number and one U+3000 is not a pid file."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes(b"1" * digits + _IDEOGRAPHIC_SPACE)
+>       assert _read_pid_file(target) == "", digits
+E       AssertionError: 1
+E       assert '1ã\x80\x80' == ''
+E         
+E         + 1ã
+
+tests/test_reset_pid_file_reading.py:124: AssertionError
+_____ test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[2] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_num1')
+digits = 2
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    def test_read_pid_file_calls_a_number_and_one_ideographic_space_stale(tmp_path: Path, digits: int) -> None:
+        """Both scripts call any file with a byte outside plain ASCII stale: the number and one U+3000 is not a pid file."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes(b"1" * digits + _IDEOGRAPHIC_SPACE)
+>       assert _read_pid_file(target) == "", digits
+E       AssertionError: 2
+E       assert '11ã\x80\x80' == ''
+E         
+E         + 11ã
+
+tests/test_reset_pid_file_reading.py:124: AssertionError
+_____ test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[3] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_num2')
+digits = 3
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    def test_read_pid_file_calls_a_number_and_one_ideographic_space_stale(tmp_path: Path, digits: int) -> None:
+        """Both scripts call any file with a byte outside plain ASCII stale: the number and one U+3000 is not a pid file."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes(b"1" * digits + _IDEOGRAPHIC_SPACE)
+>       assert _read_pid_file(target) == "", digits
+E       AssertionError: 3
+E       assert '111ã\x80\x80' == ''
+E         
+E         + 111ã
+
+tests/test_reset_pid_file_reading.py:124: AssertionError
+_____ test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[4] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_num3')
+digits = 4
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    def test_read_pid_file_calls_a_number_and_one_ideographic_space_stale(tmp_path: Path, digits: int) -> None:
+        """Both scripts call any file with a byte outside plain ASCII stale: the number and one U+3000 is not a pid file."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes(b"1" * digits + _IDEOGRAPHIC_SPACE)
+>       assert _read_pid_file(target) == "", digits
+E       AssertionError: 4
+E       assert '1111ã\x80\x80' == ''
+E         
+E         + 1111ã
+
+tests/test_reset_pid_file_reading.py:124: AssertionError
+_____ test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[5] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_num4')
+digits = 5
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    def test_read_pid_file_calls_a_number_and_one_ideographic_space_stale(tmp_path: Path, digits: int) -> None:
+        """Both scripts call any file with a byte outside plain ASCII stale: the number and one U+3000 is not a pid file."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes(b"1" * digits + _IDEOGRAPHIC_SPACE)
+>       assert _read_pid_file(target) == "", digits
+E       AssertionError: 5
+E       assert '11111ã\x80\x80' == ''
+E         
+E         + 11111ã
+
+tests/test_reset_pid_file_reading.py:124: AssertionError
+_____ test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[6] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_num5')
+digits = 6
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    def test_read_pid_file_calls_a_number_and_one_ideographic_space_stale(tmp_path: Path, digits: int) -> None:
+        """Both scripts call any file with a byte outside plain ASCII stale: the number and one U+3000 is not a pid file."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes(b"1" * digits + _IDEOGRAPHIC_SPACE)
+>       assert _read_pid_file(target) == "", digits
+E       AssertionError: 6
+E       assert '111111ã\x80\x80' == ''
+E         
+E         + 111111ã
+
+tests/test_reset_pid_file_reading.py:124: AssertionError
+_____ test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[7] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_num6')
+digits = 7
+
+    @_posix
+    @pytest.mark.parametrize("digits", range(1, 8))
+    def test_read_pid_file_calls_a_number_and_one_ideographic_space_stale(tmp_path: Path, digits: int) -> None:
+        """Both scripts call any file with a byte outside plain ASCII stale: the number and one U+3000 is not a pid file."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes(b"1" * digits + _IDEOGRAPHIC_SPACE)
+>       assert _read_pid_file(target) == "", digits
+E       AssertionError: 7
+E       assert '1111111ã\x80\x80' == ''
+E         
+E         + 1111111ã
+
+tests/test_reset_pid_file_reading.py:124: AssertionError
+_ test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file[4242\n-4242] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_gives_the_t0')
+content = b'4242\n', expected = '4242'
+
+    @_posix
+    @pytest.mark.parametrize(
+        ("content", "expected"),
+        [
+            (b"4242\n", "4242"),
+            (b"  4242  \r\n", "4242"),
+            (_BOM + b"4242", "4242"),
+            (_BOM + b"4242" + b" " * 59, "4242"),  # 63 bytes after the mark
+            (b"", ""),
+            (b"abc", "abc"),  # not a number: the caller's number test says stale
+        ],
+    )
+    def test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file(tmp_path: Path, content: bytes, expected: str) -> None:
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == expected
+E       AssertionError: assert '4242\n' == '4242'
+E         
+E         - 4242
+E         + 4242
+E         ?     +
+
+tests/test_reset_pid_file_reading.py:142: AssertionError
+_ test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file[  4242  \r\n-4242] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_gives_the_t1')
+content = b'  4242  \r\n', expected = '4242'
+
+    @_posix
+    @pytest.mark.parametrize(
+        ("content", "expected"),
+        [
+            (b"4242\n", "4242"),
+            (b"  4242  \r\n", "4242"),
+            (_BOM + b"4242", "4242"),
+            (_BOM + b"4242" + b" " * 59, "4242"),  # 63 bytes after the mark
+            (b"", ""),
+            (b"abc", "abc"),  # not a number: the caller's number test says stale
+        ],
+    )
+    def test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file(tmp_path: Path, content: bytes, expected: str) -> None:
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == expected
+E       AssertionError: assert '  4242  \r\n' == '4242'
+E         
+E         - 4242
+E         +   4242
+
+tests/test_reset_pid_file_reading.py:142: AssertionError
+_ test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file[\xef\xbb\xbf4242                                                           -4242] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_gives_the_t3')
+content = b'\xef\xbb\xbf4242                                                           '
+expected = '4242'
+
+    @_posix
+    @pytest.mark.parametrize(
+        ("content", "expected"),
+        [
+            (b"4242\n", "4242"),
+            (b"  4242  \r\n", "4242"),
+            (_BOM + b"4242", "4242"),
+            (_BOM + b"4242" + b" " * 59, "4242"),  # 63 bytes after the mark
+            (b"", ""),
+            (b"abc", "abc"),  # not a number: the caller's number test says stale
+        ],
+    )
+    def test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file(tmp_path: Path, content: bytes, expected: str) -> None:
+        target = tmp_path / "desk.pid"
+        target.write_bytes(content)
+>       assert _read_pid_file(target) == expected
+E       AssertionError: assert '4242        ...             ' == '4242'
+E         
+E         - 4242
+E         + 4242
+
+tests/test_reset_pid_file_reading.py:142: AssertionError
+_______ test_read_pid_file_calls_a_file_with_nul_bytes_stale[utf-16-le] ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_fil0')
+encoding = 'utf-16-le'
+
+    @_posix
+    @pytest.mark.parametrize("encoding", ["utf-16-le", "utf-16-be", "utf-32-le"])
+    def test_read_pid_file_calls_a_file_with_nul_bytes_stale(tmp_path: Path, encoding: str) -> None:
+        """The shell's read drops NUL bytes, so a UTF-16 file of 1 2 3 4 would read as the number 1234. A file whose
+        length differs from what was read is stale."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes("1234".encode(encoding))
+>       assert _read_pid_file(target) == ""
+E       AssertionError: assert '1234' == ''
+E         
+E         + 1234
+
+tests/test_reset_pid_file_reading.py:152: AssertionError
+_______ test_read_pid_file_calls_a_file_with_nul_bytes_stale[utf-16-be] ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_fil1')
+encoding = 'utf-16-be'
+
+    @_posix
+    @pytest.mark.parametrize("encoding", ["utf-16-le", "utf-16-be", "utf-32-le"])
+    def test_read_pid_file_calls_a_file_with_nul_bytes_stale(tmp_path: Path, encoding: str) -> None:
+        """The shell's read drops NUL bytes, so a UTF-16 file of 1 2 3 4 would read as the number 1234. A file whose
+        length differs from what was read is stale."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes("1234".encode(encoding))
+>       assert _read_pid_file(target) == ""
+E       AssertionError: assert '1234' == ''
+E         
+E         + 1234
+
+tests/test_reset_pid_file_reading.py:152: AssertionError
+_______ test_read_pid_file_calls_a_file_with_nul_bytes_stale[utf-32-le] ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_read_pid_file_calls_a_fil2')
+encoding = 'utf-32-le'
+
+    @_posix
+    @pytest.mark.parametrize("encoding", ["utf-16-le", "utf-16-be", "utf-32-le"])
+    def test_read_pid_file_calls_a_file_with_nul_bytes_stale(tmp_path: Path, encoding: str) -> None:
+        """The shell's read drops NUL bytes, so a UTF-16 file of 1 2 3 4 would read as the number 1234. A file whose
+        length differs from what was read is stale."""
+        target = tmp_path / "desk.pid"
+        target.write_bytes("1234".encode(encoding))
+>       assert _read_pid_file(target) == ""
+E       AssertionError: assert '1234' == ''
+E         
+E         + 1234
+
+tests/test_reset_pid_file_reading.py:152: AssertionError
+_ test_reset_sh_does_not_stop_the_desk_named_in_a_utf16_pid_file_without_a_mark _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-x8x9zj4n/desk.sqlite3')
+
+    @_posix
+    def test_reset_sh_does_not_stop_the_desk_named_in_a_utf16_pid_file_without_a_mark(book: Path) -> None:
+        """UTF-16 (little endian, no mark) of the desk's number: the NULs vanish when the shell reads it, so the old script
+        read the real number and stopped the desk. Now the file is stale: nothing is stopped, the file is deleted."""
+        desk = _live(book, "desk", DESK_MODULE, _SLEEPS)
+        (book.parent / "desk.pid").write_bytes(str(desk.pid).encode("utf-16-le"))
+        try:
+            done = reset_run(SH, book, **reset_ports())
+            still_running = desk.poll() is None
+        finally:
+            _end(desk)
+>       assert done.returncode == 0 and still_running, (done.returncode, still_running, done.stderr)
+E       AssertionError: (0, False, '')
+E       assert (0 == 0 and False)
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_pid_file_reading.py:166: AssertionError
+_ test_reset_sh_does_not_stop_the_desk_named_in_a_file_padded_with_ideographic_spaces[0] _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-w0qzsccv/desk.sqlite3')
+extra_spaces = 0
+
+    @_posix
+    @pytest.mark.parametrize("extra_spaces", [0, 1, 2])
+    def test_reset_sh_does_not_stop_the_desk_named_in_a_file_padded_with_ideographic_spaces(
+        book: Path, extra_spaces: int
+    ) -> None:
+        """The number of the real desk stand-in, then ASCII spaces so that the 67 byte read ends between two characters
+        for any digit count of the number, then ideographic spaces up to 90 bytes: stale at any digit count, so the desk
+        keeps running and the pid file is deleted (extra_spaces shifts the cut by one or two bytes)."""
+        _utf8_bash()
+        desk = _live(book, "desk", DESK_MODULE, _SLEEPS)
+        number = str(desk.pid).encode()
+        content = number + b" " * ((67 - len(number)) % 3 + extra_spaces) + _IDEOGRAPHIC_SPACE * 30
+        (book.parent / "desk.pid").write_bytes(content)
+        try:
+            done = reset_run(SH, book, LC_ALL="C.UTF-8", **reset_ports())
+            still_running = desk.poll() is None
+            code = desk.returncode
+        finally:
+            _end(desk)
+>       assert done.returncode == 0 and still_running, (done.returncode, still_running, code, done.stdout, done.stderr)
+E       AssertionError: (0, False, -15, 'reset done
+E         ', '')
+E       assert (0 == 0 and False)
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_pid_file_reading.py:189: AssertionError
+_________ test_text_only_the_shell_guard_also_needs_bash_version_info __________
+
+    def test_text_only_the_shell_guard_also_needs_bash_version_info() -> None:
+        text = _script_text()
+        first = next(line for line in text.splitlines() if line.startswith("case ") and "bash)" in line)
+>       assert "[[ a == a" in first and "BASH_VERSINFO" in first, "the guard must test [[ ]] and BASH_VERSINFO"
+E       AssertionError: the guard must test [[ ]] and BASH_VERSINFO
+E       assert ('[[ a == a' in 'case "$( (eval \'[[ a == a ]]\') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (...h); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac' and 'BASH_VERSINFO' in 'case "$( (eval \'[[ a == a ]]\') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (...h); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac')
+
+tests/test_reset_pid_file_reading.py:197: AssertionError
+_ test_the_guard_line_refuses_a_shell_that_runs_double_brackets_but_has_no_bash_version_info _
+
+    @_posix
+    def test_the_guard_line_refuses_a_shell_that_runs_double_brackets_but_has_no_bash_version_info() -> None:
+        """zsh and busybox ash run `[[ ]]` but are not bash. They are not installed here, so the guard's own test is run
+        in bash with BASH_VERSINFO made unreadable to it by a plain `unset`-like stand-in: the same test line, evaluated
+        where the variable is empty, must say no."""
+        text = _script_text()
+        line = next(row for row in text.splitlines() if row.startswith("case ") and "bash)" in row)
+        inner = re.search(r"eval '([^']*)'", line)
+        assert inner is not None
+        probe = f"(eval '{inner.group(1).replace('BASH_VERSINFO', 'NO_SUCH_VARIABLE')}') 2>/dev/null && echo bash || echo no"
+        done = subprocess.run(  # noqa: S603 (a fixed bash line)
+            [shutil.which("bash") or "bash", "-c", probe], capture_output=True, text=True, check=False
+        )
+>       assert done.stdout.strip() == "no", done.stdout
+E       AssertionError: bash
+E         
+E       assert 'bash' == 'no'
+E         
+E         - no
+E         + bash
+
+tests/test_reset_pid_file_reading.py:230: AssertionError
+_ test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-ir05swb4/desk.sqlite3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-270/test_reset_sh_says_so_in_one_l0')
+
+    @_posix
+    def test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop(book: Path, tmp_path: Path) -> None:
+        """A `python` that fails for scripts/reset_check.py (exit 1 with a traceback) stands in for a crash. The old script
+        passed exit 1 on without saying that nothing was deleted; now: one line, exit 5, every file kept."""
+        folder = tmp_path / "bin"
+        folder.mkdir()
+        stand_in = folder / "python"
+        stand_in.write_text(
+            f'#!/usr/bin/env bash\nif [[ "${{1:-}}" == scripts/reset_check.py ]]; then echo "Traceback made up" >&2; exit 1; fi\n'
+            f'exec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        stand_in.chmod(0o755)
+        done = reset_run(SH, book, first_on_path=folder, **reset_ports())
+>       assert done.returncode == 5, (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (1, '', 'Traceback made up
+E         ')
+E       assert 1 == 5
+E        +  where 1 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=1, stdout='', stderr='Traceback made up\n').returncode
+
+tests/test_reset_pid_file_reading.py:248: AssertionError
+________ test_text_only_alive_does_not_read_a_refused_signal_as_stopped ________
+
+    def test_text_only_alive_does_not_read_a_refused_signal_as_stopped() -> None:
+>       body = _function("alive")
+               ^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_pid_file_reading.py:255: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'alive'
+
+    def _function(name: str) -> str:
+        """The text of one shell function of reset.sh (from `name() {` to the first line that is a lone `}`)."""
+        found = re.search(rf"^{name}\(\) \{{\n.*?^\}}\n", _script_text(), re.S | re.M)
+>       assert found is not None, f"the function {name} is not in reset.sh"
+E       AssertionError: the function alive is not in reset.sh
+E       assert None is not None
+
+tests/test_reset_pid_file_reading.py:45: AssertionError
+_ test_text_only_pass_2_tests_again_whether_the_process_is_still_there_before_it_refuses _
+
+    def test_text_only_pass_2_tests_again_whether_the_process_is_still_there_before_it_refuses() -> None:
+        text = _script_text()
+        two = text[text.index("# PASS 2") : text.index("# PASS 3")]
+        refuse = two.index("is another program now")
+>       assert two.rfind("alive", 0, refuse) > two.index("is_ours"), "an ended process must not be called another program"
+E       AssertionError: an ended process must not be called another program
+E       assert 541 > 569
+E        +  where 541 = <built-in method rfind of str object at 0xb5b22b0>('alive', 0, 733)
+E        +    where <built-in method rfind of str object at 0xb5b22b0> = '# PASS 2: stop what is ours (desk first), and wait for each. Nothing is deleted yet: a process that does not stop\n# ...er on a port. A refusal here leaves every file in place, the pid files too\npython scripts/reset_check.py || exit $?\n'.rfind
+E        +  and   569 = <built-in method index of str object at 0xb5b22b0>('is_ours')
+E        +    where <built-in method index of str object at 0xb5b22b0> = '# PASS 2: stop what is ours (desk first), and wait for each. Nothing is deleted yet: a process that does not stop\n# ...er on a port. A refusal here leaves every file in place, the pid files too\npython scripts/reset_check.py || exit $?\n'.index
+
+tests/test_reset_pid_file_reading.py:263: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-1]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-2]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-3]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-4]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-5]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-6]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-7]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-1]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-2]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-3]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-4]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-5]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-6]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ideographic-after-spaces-7]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-1]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-2]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-3]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-4]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-5]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-6]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[ascii-7]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-1]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-2]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-3]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-4]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-5]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-6]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_long_file_stale_at_every_digit_count[bom-ascii-7]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[1]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[2]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[3]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[4]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[5]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[6]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_number_and_one_ideographic_space_stale[7]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file[4242\n-4242]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file[  4242  \r\n-4242]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_gives_the_trimmed_text_of_a_short_ascii_file[\xef\xbb\xbf4242                                                           -4242]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_file_with_nul_bytes_stale[utf-16-le]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_file_with_nul_bytes_stale[utf-16-be]
+FAILED tests/test_reset_pid_file_reading.py::test_read_pid_file_calls_a_file_with_nul_bytes_stale[utf-32-le]
+FAILED tests/test_reset_pid_file_reading.py::test_reset_sh_does_not_stop_the_desk_named_in_a_utf16_pid_file_without_a_mark
+FAILED tests/test_reset_pid_file_reading.py::test_reset_sh_does_not_stop_the_desk_named_in_a_file_padded_with_ideographic_spaces[0]
+FAILED tests/test_reset_pid_file_reading.py::test_text_only_the_shell_guard_also_needs_bash_version_info
+FAILED tests/test_reset_pid_file_reading.py::test_the_guard_line_refuses_a_shell_that_runs_double_brackets_but_has_no_bash_version_info
+FAILED tests/test_reset_pid_file_reading.py::test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop
+FAILED tests/test_reset_pid_file_reading.py::test_text_only_alive_does_not_read_a_refused_signal_as_stopped
+FAILED tests/test_reset_pid_file_reading.py::test_text_only_pass_2_tests_again_whether_the_process_is_still_there_before_it_refuses
+48 failed, 6 passed in 5.64s

@@ -1,0 +1,139 @@
+diff --git a/tests/test_one_key_file_rule_r8.py b/tests/test_one_key_file_rule_r8.py
+index 453b06c..8289f02 100644
+--- a/tests/test_one_key_file_rule_r8.py
++++ b/tests/test_one_key_file_rule_r8.py
+@@ -63,7 +63,7 @@ def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path
+         envnum.read_secret_file(f, what, noun, strip_inner_space=inner)
+     assert str(e.value) == (
+         f"the {what} file can be used by other users: "
+-        "copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
++        "copy it to a normal file, run chmod 600 on it, and name the copy where you named this file"
+     )
+     assert KEY not in str(e.value) and str(tmp_path) not in str(e.value)
+ 
+@@ -83,6 +83,8 @@ def test_a_key_file_only_its_owner_can_read_is_accepted_for_every_kind(tmp_path:
+ 
+ @POSIX
+ def test_the_mode_refusal_has_no_way_round_in_the_signature(tmp_path: Path) -> None:
++    """REGRESSION GUARD (it passes on the earlier code too): pins the signature (no switch for the mode rule) and that a
++    wide mode is refused. It does not test the order of the refusals; the next test does."""
+     f = tmp_path / "secret-file.txt"
+     f.write_text(KEY, encoding="utf-8")
+     f.chmod(0o644)
+@@ -97,13 +99,19 @@ def test_the_mode_refusal_has_no_way_round_in_the_signature(tmp_path: Path) -> N
+ 
+ 
+ @POSIX
+-def test_the_link_and_kind_refusals_come_before_the_mode_refusal(tmp_path: Path) -> None:
+-    """A link to a file with a bad mode, and a folder with a wide mode, each say their own fault, not the mode."""
++def test_the_link_and_kind_refusals_come_before_the_mode_refusal(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """REGRESSION GUARD (passes on the earlier code too). A link to a file with a bad mode, and a folder with a wide
++    mode, each say their own fault, not the mode. The link half takes away the open flag that refuses a link (as on a
++    system without it), so the open FOLLOWS the link, the file behind it has the bad mode, and only the second look
++    (the link check) stands before the mode check: moving the mode check above it would change the answer."""
+     real = tmp_path / "real-key.txt"
+     real.write_text(KEY, encoding="utf-8")
+     real.chmod(0o644)
+     link = tmp_path / "link-key.txt"
+     _make_link(link, real)
++    monkeypatch.setattr(os, "O_NOFOLLOW", 0, raising=False)
+     with pytest.raises(SettingRefused) as e:
+         envnum.read_secret_file(link, "made-up key", "key")
+     assert str(e.value) == LINK_TEXT
+@@ -406,7 +414,7 @@ def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> Non
+         "a device",
+         "is read at start and again before every call",
+         "kept in memory",
+-        "the owner of the file is not checked",
++        "who owns the file is not checked",
+         "empty or too short",
+         "a character that is not printable ASCII",
+         "a space inside a key",
+@@ -414,17 +422,44 @@ def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> Non
+         assert part in section, part
+ 
+ 
+-KEY_FILE_WORDS = re.compile(r"key file|password file|KEY_FILE|PASSWORD_FILE|read_secret_file|key or password", re.I)
+-RULE_WORDS = ("4096", "printable ASCII", "byte-order", "symbolic link", "named pipe", "other users")
++KEY_FILE_WORDS = re.compile(
++    r"key[- ]file|password[- ]file|secret[- ]file|credential[- ]file|KEY_FILE|PASSWORD_FILE|read_secret_file"
++    r"|key or password",
++    re.I,
++)
++# the words of the rule; case does not matter, a hyphen or a space (or a line break) may sit between two words
++RULE_WORDS = re.compile(
++    r"4096|printable\s+ASCII|byte[-\s]order|symbolic[-\s]links?|named\s+pipe|other\s+users",
++    re.I,
++)
+ TEXT_SUFFIXES = (".md", ".txt", ".example")
+ SKIPPED_FOLDERS = {".git", ".venv", "node_modules", "__pycache__"}
+ 
+ 
++def _paragraphs(lines: list[str]) -> list[tuple[int, str]]:
++    """(first line number from 0, text) of each paragraph: a run of lines up to a blank line, a heading, a table row
++    or a list item, so a sentence wrapped over several lines is read as one."""
++    out: list[tuple[int, list[str]]] = []
++    current: list[str] | None = None
++    for i, ln in enumerate(lines):
++        starts_new = not ln.strip() or ln.startswith(("#", "|", "* ", "- ")) or re.match(r"\d+\. ", ln) is not None
++        if not ln.strip():
++            current = None
++            continue
++        if current is None or starts_new:
++            current = [ln]
++            out.append((i, current))
++        else:
++            current.append(ln)
++    return [(i, " ".join(parts)) for i, parts in out]
++
++
+ def _repeats_of_the_rule(name: str, text: str) -> list[tuple[str, int, str]]:
+-    """The lines of a text file that talk about a key or password file AND name one of the rule's words (a size, the
+-    character set, the byte-order mark, a link, a pipe, other users). The one section of docs/settings.md that holds
+-    the rule, and its table row, are the only place allowed to. A line about something else that happens to hold one
+-    of the words (open files, portal files, the lead fields) does not talk about a key file and is left alone."""
++    """The paragraphs of a text file that talk about a key or password file AND name one of the rule's words (a size,
++    the character set, the byte-order mark, a link, a pipe, other users), whatever the case, a hyphen or a line break.
++    The one section of docs/settings.md that holds the rule, and its table row, are the only place allowed to. A
++    paragraph about something else that happens to hold one of the words (open files, portal files, the lead
++    fields) does not talk about a key file and is left alone."""
+     lines = text.splitlines()
+     skip: set[int] = set()
+     if name == "docs/settings.md":
+@@ -434,10 +469,10 @@ def _repeats_of_the_rule(name: str, text: str) -> list[tuple[str, int, str]]:
+             skip |= set(range(start, end))
+         skip |= {i for i, ln in enumerate(lines) if ln.startswith("| `DESK_LIVE_KEY_FILE`")}
+     found = []
+-    for i, ln in enumerate(lines):
+-        if i in skip or not KEY_FILE_WORDS.search(ln):
++    for first, para in _paragraphs(lines):
++        if first in skip or not KEY_FILE_WORDS.search(para):
+             continue
+-        found += [(name, i + 1, w) for w in RULE_WORDS if w in ln]
++        found += [(name, first + 1, m.group(0).lower()) for m in RULE_WORDS.finditer(para)]
+     return found
+ 
+ 
+@@ -473,6 +508,12 @@ def test_no_other_page_repeats_the_key_file_rule_it_links_to_it() -> None:
+         "The key file must not be a named pipe.",
+         "Make the key file private: other users must not read it.",
+         "refused: a key or password file with a symbolic link",
++        "A Symbolic Link as the KEY FILE is refused.",
++        "The key-file rule: a symbolic-link is refused.",
++        "The secret file may start with a byte order mark.",
++        "The credential file is read by\nother users only if nobody else can.",
++        "A key file may be at most\n4096 bytes.",
++        "The password file holds\nprintable\nASCII only.",
+     ],
+ )
+ def test_the_repeat_scan_sees_a_planted_copy_of_the_rule_on_any_page(planted: str) -> None:
+@@ -484,6 +525,7 @@ def test_the_repeat_scan_leaves_the_one_section_and_unrelated_lines_alone() -> N
+     page = f"intro\n{SECTION}\nA key file is at most 4096 bytes; a symbolic link is refused.\n## Next\nNothing."
+     assert _repeats_of_the_rule("docs/settings.md", page) == []
+     assert _repeats_of_the_rule("contract.md", "Files over 4096 open at once; symbolic links are left out.") == []
++    assert _repeats_of_the_rule("contract.md", "A key file is named.\n\nFiles over 4096 open at once.") == []  # apart
+ 
+ 
+ def test_the_settings_page_agrees_with_itself_about_when_each_file_is_read() -> None:

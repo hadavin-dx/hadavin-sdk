@@ -1,0 +1,42 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-271/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+        assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+        # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(
+                f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
+            )
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_hygiene.py:153: AssertionError
+1 failed in 31.34s
+hygiene rc=1

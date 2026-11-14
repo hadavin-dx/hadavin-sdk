@@ -16,3 +16,9 @@ N6 docs: the overclaim 'the mode alone says who else can use the file' back: KIL
 N7 message: 'point the setting at the copy' back: KILLED (1 failed, 258 passed in 9.81s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
 N9 run_real_check: an unreadable book path no longer refused: KILLED (1 failed, 396 passed, 1 skipped in 9.75s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_run_real_check_refuses_a_book_path_the_system_will_not_show_in_one_line_also_for_root
 --- N8 re-run after the test got a bound-port trap (the first N8 result in the pass above was a hang that I stopped by hand):
+BASELINE (no mutant): rc=0 810 passed, 1 skipped in 13.63s
+N8 server.main: the key-file start check is not called: KILLED (1 failed, 393 passed in 10.08s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_server_main_with_the_smtp_sender_exits_4_on_a_bad_key_file_befor
+after restore: git diff (working tree vs index) = EMPTY
+tree id: 1c973634c77ef0ddb214b4f101a1aa405a8cb8b8
+survivors or unapplied: 0
+--- note: M14 of the r9 log was replaced by N9 (same rule, new text); M11-M13, M15-M18 (r7 guard, desk constants, timing wrapper, held port, Retry-After, bracket) test code that r10 did not change and were not re-run.
