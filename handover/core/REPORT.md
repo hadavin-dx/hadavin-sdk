@@ -1,5 +1,38 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 04:31 UTC / 10:01 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| add05263 (EV7F) | one full run of r7f + odd-file listing + mutants on r7f + hostile drivers | independent proof | 04:25 / 09:55 | 90 min box | EV7F n1 | RUNNING: step 1 done (patch applies, tree equals tree-R7F, diff count 0), ruff rc 0, suppressions recorded; waiting for a quiet machine (load about 95-110) | full run |
+| a0da50e2 (r7f reviewer) | fresh whole-patch review | independent read | 04:19 / 09:49 | about 05:10 | review 1 | RUNNING (no report file yet) | resolve |
+| aebef140 (lane A) | wave-2 mutants on r7e | stopped by lead order | 03:56 / 09:26 | closed | wave 2 | DONE, incomplete | none on r7e; see below |
+| a7f6b110 (lane B), aaabb673 (lane C) | wave-2 mutants on r7e | stop order sent 04:25, not yet confirmed | 03:56 / 09:26 | after current mutant | wave 2 | RUNNING (B on smtp_outbox; C re-running C01/C05 after a spec id collision it found) | read final reports |
+
+Lane A final (measured, on r7e): of 16 ids, KILLED 5 (F01 F03 G01 G02 T04), SURVIVED selector set only 5 (G03 T01 T02 T03 T05; never re-run on the full set), TIMEOUT 1 (F02; its own clean set takes 313 s, so no result), NOT RUN 5 (P01 E03 E05 E06 P02). src/ and scripts/ diff against tree-R7E is empty; every line restored-ok by sha. The clean sets passed (run_real_check 1657, tls_trust 433, crm_hubspot 689, imap_count 538, live_claude 1509) but three exceed 240 s, so a survivor there cannot be proven by that method. The clean sets ran beside other lanes, so rule (a) "alone" was NOT met and the times are inflated.
+
+SLIP (lane A, against the new no-kill-by-name rule): it used pkill -f by pattern once to stop its own loop. It says only its own pytest was running; it cannot prove nothing else matched. I did not see any other lane die, but this is not proven. Told here; lanes B and C and EV7F carry the rule in their briefs.
+
+Lane C found a spec id collision: ids C01 and C05 exist in both specs7 and specs8 (different files). Its first C01/C05 lines were VOID and are not counted; the runner was fixed and restarted. Other lane-B/C numbers are unchanged from my 04:21 block.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7e survivors G03 T01 T02 T03 T05 never run on the full set | lane stopped by order | covered by EV7F (r7f tree) for G03 T01 T02; T03 T05 add them to mail pass 9 |
+| F02, P01, E03, E05, E06, P02 on r7e | timeout or not run | same: run on r7f in pass 9, with limits above the clean time (about 313 to 440 s) |
+| rule (a) clean set alone | machine always shared | EV7F waits for quiet before its full run |
+| lane A kill by name | slip | none beyond the disclosure |
+| load_driver.py:433 hung look-up, netconnect vs core | not examined | reviewer and EV7F hostile table |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, fix/README.md | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. When lanes B and C confirm stopped, start mail pass 9 on r7f (30+ mutants incl. T02 T03 T05 F02 P01 E03 E05 E06 P02, per-mutant selector, limit above clean time).
+2. Read EV7F and the r7f review together; build r7g only for a real Blocker or Major.
+3. Freeze and rewrite handover/core/fix/README.md; final sweep with counts.
+
+
 ## STATUS (core lead) 04:25 UTC / 09:55 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
