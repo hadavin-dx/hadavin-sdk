@@ -1,5 +1,16 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:31Z): GITLEAKS DIR rc=1 READ IN FULL: NOT a finding in the repo files
+- CI command (from lint.yml: `gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow`) on a CLEAN export of the frozen tree + doc patch v3 (git archive of HEAD, tracked files only, 3.36 MB): rc=0, "no leaks found", 0 findings (my run 06:31Z; report file kept outside the repo).
+- The same command on H's working copy now (after its lint and pytest runs): rc=1, 493 hits, ALL in untracked cache folders: tests/__pycache__ (rules hardcoded-email, hardcoded-absolute-path, hardcoded-url) and .pytest_cache (hardcoded-hostname, hardcoded-url, hardcoded-email, hardcoded-absolute-path, hardcoded-ipv4). H's 78 at 06:00 is the same kind (caches written by its own earlier steps; lint.yml itself says the scan runs first because the lint tools write caches); H's exact command line is asked of H, not yet answered. No file of the repo tracked content is named.
+- So: H's gitleaks rc=1 = cache folders in its copy, not a leak in the tree; the CI-equivalent for gitleaks dir on the tracked tree is rc=0. Tree 2 (origin main) not re-scanned by me yet.
+- Queue state: control row 5 running (started right after row 4). Then e units.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Same clean-export gitleaks on origin main; H's final report; control row 5/3b, e units; tree-2 pytest; doc v3 tests, skip chunk, fresh doc-patch reviewer.
+## WHAT I WOULD DO NEXT (ranked)
+1. Finish the n8n queue (row 5, e units).
+2. Clean-export gitleaks on origin main (1 s); read H's report.
+3. Fold rows into N8N-RERUN-1.md; then tree-2 pytest and doc v3 tests.
 ## REPORT (clock 06:30Z): choice (b) applied; H tree-1 pytest done; control row 4 done; queue running
 - Nothing is stuck. Why the gap: I waited in 10-minute blocks on the queue; the queue was held by H's full pytest (tree 1: 3713 passed, 170 skipped, 18 min 33 s, rc 0). At 06:30:32Z I stopped H's tree-2 pytest (kill of that one pid, after 1 min) per your choice (b) and told H to run nothing heavy more and to report. Tree 2 pytest: NOT run, to be run after the n8n queue.
 - Gitleaks dir rc=1 (tree 1, H's 06:00 run): output file says "leaks found: 78". Detail not yet known: H's exact command line (with or without .gitleaks.toml) is asked of H. My own scan of the tree now (no config, caches present after pytest) gave 2465 hits mostly in requirements lockfiles (hash lines, rule long-hex-token) and cache folders: NOT comparable with the CI step, which uses the repo config on a clean tree; so no verdict on the 78 yet.
