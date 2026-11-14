@@ -1896,3 +1896,12 @@ Register: no agents/shells/jobs running.
 * FAILURES AND RETRIES: B15 first full run failed 2 tests in its own new file (fixed at class level, re-run in progress).
 NOT DONE / NOT CHECKED (my list, for the lead to decide): the second full run result; fix-2 r6 review; fix-5 r7, fix-10 r2 results; any PowerShell script has never run (lead's Windows run); stack not built.
 WHAT I WOULD DO NEXT (ranked): 1. read the full-run tail at 05:42Z; 2. save the two reviews and resolve; 3. take B16/B17 hand-backs to reviewers.
+
+## HEARTBEAT 100 (05:41Z, 11:11 IST) (HB99 was pushed 05:31Z; this one adds states after it)
+* B15b (fix-2 r6): agent done. Its second full run was LOST by my own slip: I committed the live log, a git rebase replaced the file, the run wrote into a deleted file. I killed it and restarted at 05:40Z (about 15 min, ends ~05:55Z). No green full run on that tree exists yet; nothing is claimed.
+* fix-2 r6 reviews (code details + design): 0 blocker, 3 major (guard bypass by attribute/module-level, probe list too narrow, Retry-After at two sites tested by text only), minors. Resolve done: 17 fix, 1 decline. B18 (fix-2 r7) not started yet.
+* B16 (fix-5 r7): still building, full run at its own log, mutation log written 05:30Z. No hand-back.
+* B17 (fix-10 r2): still building (behaviour-before log 05:32Z, mutation log 05:39Z); got the lead's two-numbers answer. No hand-back.
+* FAILURES AND RETRIES: B15 run 1 red (2 own-file guard hits, fixed); run 2 lost to my slip, run 3 started. Rule now: running logs stay out of git.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): green full run of fix-2 r6 tree; B18 build; B16 and B17 results and reviews; the 05:29Z order to run the wall-clock and hygiene guards alone on the final head (not yet, final head does not exist); stack not built; PowerShell scripts never run (lead's Windows run).
+WHAT I WOULD DO NEXT (ranked): 1. start B18 (fix-2 r7) from the resolve now, in parallel with the run; 2. read B16/B17 hand-backs and start fresh reviewers; 3. read run 3 tail at ~05:55Z.
