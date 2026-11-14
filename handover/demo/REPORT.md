@@ -1,6 +1,21 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 08:03Z STATUS (demo cloud): n8n-owns-vs-desk-owns.md written, blind crash scene measured, variant e 3-bursts covered
+- **(1) `n8n-owns-vs-desk-owns.md` written** (one page, about 800 words, labels explained, each number with its condition: fresh or reused stack, n8n 2.46.6 self-hosted only, Make never tested). "Measured" and "stated" are kept apart. Claims check: no "exactly once" (it says keyed, retry-safe, ambiguous sends marked for a person); n8n not understated (b, c, d gave 20 of 20 through n8n alone with a database check; variant a cause NOT established). TWO LABELS I COULD NOT SUPPORT: the spend limit and the personal-data hiding are stated by you, I did not test them; a text search of `src/` found no "redact" word, so check that label before it goes into any post.
+- **(2) Blind-server crash scene, measured (clean export of f3c39cf, loopback, synthetic, one run):** demo server `--outbox blind`, D2 armed, lead 2 sent: feed printed 201; desk printed "simulate crash", exit code 137; outbox count 1; after the restart the follow-up state is `unknown`, counts page unknown_followups 1, outbox still count 1; `reset.sh` done, data empty. Keyed column (earlier run): one e-mail, `sent`. So both columns of the D2 row are measured: keyed one e-mail and `sent`, blind one e-mail and UNKNOWN.
+- **(3) Variant e 3-bursts-per-fresh-stack: NOT RERUN, one line why:** the existing e ten-at-once run in R2c is already 5 fresh stacks x 5 bursts (`g12e.py` has a fixed 5 bursts and no setting for 3), so bursts 1 to 3 of each stack are inside it: all 25 bursts clean, which includes 15 of 15 for bursts 1 to 3. A rerun would repeat the same measurement. Say if you still want it.
+- R2b containers, dockerd, scratch node_modules and run folders kept. No heavy job is running.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Spend limit and data hiding untested; the D2 rows are one run each; no fresh reviewer on `n8n-owns-vs-desk-owns.md`.
+
+WHAT I WOULD DO NEXT (ranked)
+1. A fresh read-only reviewer on `n8n-owns-vs-desk-owns.md` (claims against my rows and the code), fold the findings.
+2. Repeat the two D2 scenes three times each so the rows are not single runs (about 5 minutes, light).
+3. Clean up scratch when you say R2b is finished.
+
+
 ## 07:56Z STATUS (demo cloud): 07:55Z owner direction read and applied; nothing in flight
 - Read: build around n8n and Make; finish what is in flight; start no new rounds on take-harness, run_real_check, key-file, mail-reading or path-check code; delete or replace nothing without evidence and the owner's yes.
 - In flight now: NOTHING running (no n8n stack, no pytest, no agent). Everything I own is finished and pushed: R2, R2b, R2c, R2d, R3-partial, the PUBLISHABLE-NUMBERS table, the reviewer folds, doc patches 0001 to 0006 (v5 accepted), the f3c39cf scan (rc 0 with the repo's config), the live crash scene (exit code 137 measured). I touched none of the code areas named in the note; my scratch patches P1 and P2 live only in my scratch harness copy, not in any repo.
