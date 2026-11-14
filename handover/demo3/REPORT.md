@@ -1,14 +1,18 @@
-## HEARTBEAT 176 (15:26Z) - v3 cases A and B20 pass (n = 1 each); case C (SMTP dead 10 min) running since 15:22Z, ends about 15:42Z
+## HEARTBEAT 177 (15:35Z) - v3 case C (SMTP dead 600 s) looks like a PASS so far (n = 1); final 150 s watch still running
 
-| v3 flows (demo commit 6ebb7f62, folder n8n-flows-v3), my own cases (plan: kill/PLAN-V3-ALERT.md) | Result at 15:26Z |
+| v3 flows 6ebb7f62, case C, n = 1 (read from the run's own event log and the database, not yet the saved result) | Numbers at 15:35Z |
 |---|---|
-| V3A, n = 1: SMTP refuses the first two alert recipients (451), then accepts | PASS. Lead unknown at 0 s, 1 intake mail. Alert tries at 31 s, 121 s (both refused), 242 s (accepted): 1 alert stored at 240 s, alert_sent true, state unknown, 150 s later still 1 alert. 1 CRM row, 1 model call. |
-| V3B20, n = 1: SMTP accepts the connection and the first alert recipient, then holds its answer 20 s, then answers normally | PASS. First alert try at 31 s (alert_attempts 1), the mail was stored at 50 s, alert_sent true at about 51 s, state unknown. EXACTLY 1 alert, 1 intake mail, 150 s later still 1 alert. The hold was shorter than the claim window, so no second try started. |
-| V3C (dead for 600 s from the moment the lead mail is stored, then restored) | running: started 15:22:47Z, the fake SMTP closes every connection without a greeting until about 15:33Z, then answers; the alert should follow within 300 s; ends about 15:42Z (150 s watch after alert_sent). |
-| V3B90 (hold 90 s, longer than the 60 s first claim window) | next after V3C, about 6 minutes. The README expects a possible second alert there; I record the count. |
-| Repeats | A, B20, C, B90 repeats are queued (n = 2 or 3 each) if time allows; every number above is n = 1 until then. |
+| Lead mail | stored at 0 s, then dropped by the fake: state unknown, attempts 1, mail_sent true |
+| Fake SMTP | dead (closes the connection without a greeting) from 0 s to 600 s |
+| Alert tries while dead | 4 tries, at 29 s, 119 s, 239 s, 419 s: each refused, alert_attempts counts up, alert_sent stays false |
+| Alert after restore | 5th try at about 690 s: accepted, 1 alert stored (to the alerts address), alert_sent true, alert_attempts 5 |
+| Spin / extra load | none: 6 SMTP connections in total (1 lead mail, 4 refused, 1 alert), spacing 90 to 180 s |
+| Counts (outside n8n, per lead id) | 1 intake mail, exactly 1 alert, 1 CRM row |
+| Remaining | the 150 s check that no second alert appears (ends about 15:38Z); then V3B90 |
+
+Note: the alert came about 90 s after the SMTP came back (restore at 600 s, next try at 690 s). Not a loss; the delay is the retry spacing.
 
 ASK for the lead: none.
 FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): V3C, V3B90 results; repeats; K3, K6, T12, T11 on v3 (not ordered); RESULTS.md; comparison with the demo table.
-WHAT I WOULD DO NEXT (ranked): 1) V3C then V3B90; 2) repeats; 3) RESULTS.md and compare.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): C final verdict (150 s watch); V3B90; repeats (n = 2 or 3); K3/K6/T12/T11 on v3 (not ordered); RESULTS.md and comparison with the demo table.
+WHAT I WOULD DO NEXT (ranked): 1) finish C and B90; 2) repeats; 3) RESULTS.md, then compare.
