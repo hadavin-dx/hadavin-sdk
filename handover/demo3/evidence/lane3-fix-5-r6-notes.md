@@ -13,3 +13,5 @@ Run 1 on b12-tree: 15 failed, 3818 passed, 176 skipped, rc=1 (raw/b12-full-run1-
 - 1 in test_hygiene_scan_public: (a) my new test used `threading.local` / `.local`, which the repository's pattern scan reports (fixed: dict keyed by thread id); (b) gitleaks `git` scans ALL refs of the shared repo, and remotes/origin/n8n-evidence-rerun (commit ad612e2, not an ancestor of the base) holds hash lines in demo_only/n8n_evidence: not from this patch. `gitleaks git --log-opts=HEAD` finds no leaks. Not fixed in the shared repo (not my branch). The final run therefore uses a clean repo b12-chk-final (history of f3c39cf8 only) with the patch applied; tree id equals b12-tree.
 Patch re-made: lane3-fix-5-r6.patch sha256 0117c654be77c9b9d9b1e9902c8141660a959035be038a897082e8f910c40eba; git apply --check rc=0 on base and on base+claims-stack.
 Final full run started 04:35Z in b12-chk-final.
+
+## Final: full serial run on final head (b12-chk-final, tree d144d6d9): 3833 passed, 176 skipped in 1267.36s, rc=0 (raw/b12-full-final.log)

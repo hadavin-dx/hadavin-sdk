@@ -290,3 +290,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B13 | CLOSED 04:48Z (hand-back read) | fix-2 r5: full run 3.12 on final head 1 failed (hygiene, 39 findings = my n8n-evidence-rerun ref, present in the shared clone 04:21-04:36Z), 3926 passed, 171 skipped, rc 1; I re-ran tests/test_hygiene.py alone after the ref was gone: 24 passed. Patches lane3-fix-2-r5-on-fix-1-r6.patch (49222f14), lane3-fix-2-r5-recut.patch (302d2b31). B13 ran ruff, mypy, bandit on its tree: that breaks the owner rule (CI only); noted, no fix needed to the code |
 | R2a (a6754833) | RUNNING from 04:49Z | fresh egm codebase-details review of fix-2 r5 (tree rv-fix2r5), expected 04:58Z |
 | R2b (a6f8e674) | RUNNING from 04:49Z | fresh egm design review of fix-2 r5, expected 04:58Z |
+| B12 | CLOSED 04:54Z (final hand-back read) | fix-5 r6 final full run: 3833 passed, 176 skipped, rc 0 (tail read by me, raw/b12-final-full.log = builder's raw/b12-full-final.log); no data/ in tree; hygiene test passed there |
+| R5a (a66e5337) | RUNNING from 04:54Z | fresh egm codebase-details review of fix-5 r6 (tree rv-fix5r6), expected 05:03Z |
+| R5b (a51e2cd7) | CLOSED 04:58Z | fix-5 r6 design review: 0 blocker, 2 major, 5 minor, 5 nit, saved evidence/review-lane3-fix-5-r6-design.md |
+| R2a, R2b | CLOSED 04:54Z | fix-2 r5 reviews: 0/0/2 minor/5 nit and 0/2 major/7 minor/3 nit, saved; Skill egm:egm-resolve (Opus) run 04:57Z: 15 items, 14 fix, 1 fix+partial contest, 0 escalate; plan evidence/resolve-lane3-fix-2-r5.md |
+| B15 (a4a90b6e) | RUNNING from 04:59Z | fix-2 r6 builder from the resolve plan; stop about 06:00Z; full run required |

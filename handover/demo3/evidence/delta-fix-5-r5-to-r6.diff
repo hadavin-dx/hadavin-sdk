@@ -1,0 +1,513 @@
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/.git /home/user/work/rv-fix5r6/.git
+--- /home/user/work/rv-fix5r5/.git	2026-11-14 03:40:34.316329132 +0000
++++ /home/user/work/rv-fix5r6/.git	1970-01-01 00:00:00.000000000 +0000
+@@ -1 +0,0 @@
+-gitdir: /home/user/work/src/.git/worktrees/rv-fix5r5
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/README.md /home/user/work/rv-fix5r6/README.md
+--- /home/user/work/rv-fix5r5/README.md	2026-11-14 03:40:34.370394691 +0000
++++ /home/user/work/rv-fix5r6/README.md	2026-11-14 04:54:29.000000000 +0000
+@@ -44,7 +44,7 @@
+ 
+ ## Try it
+ 
+-You need Linux or Windows (macOS was not tried), Python 3.12 or newer and git, and ports 8765 and 8766 on your computer must be free. The desk needs no extra packages.
++You need Linux or Windows (macOS was not tried; `scripts/reset.sh` also needs bash 4.1 or newer and refuses an older bash, such as the 3.2 that macOS ships, with exit 2), Python 3.12 or newer and git, and ports 8765 and 8766 on your computer must be free. The desk needs no extra packages.
+ 
+ 1. On this repository's GitHub page press the green Code button and copy the address it shows.
+ 2. Run `git clone <that address>`, then `cd` into the new folder.
+@@ -87,10 +87,10 @@
+ 
+ You have the demo working when the counts and the outbox match the comments above: 2 requests received, 1 new, 1 duplicate, and exactly one email. If `/counts` does not answer within a few seconds, read `data/desk.log` (on Windows also `data/desk.err.log`), run the reset script and start again. The desk answers 404 for `/` and `/health` on purpose: it has no such pages. On Windows, starting again on the same port right after a stop can fail for about two minutes (the operating system keeps the port closed for a while). The `/fake/...` paths are the demo servers' own addresses and keep that word in the URL.
+ 
+-The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data` (or `RESET_STOP_WAIT_SECONDS`, which both `scripts/reset.sh` and `scripts/reset.ps1` check before they stop or delete anything, is not a whole number from 0 to 999 without a leading zero; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time, 6 a pid file names another program.
++The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data`, or the bash is older than 4.1 (`scripts/reset.sh` only; macOS ships 3.2), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (both `scripts/reset.sh` and `scripts/reset.ps1` check it before they stop or delete anything; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time, 6 a pid file names another program.
+ 
+-Also exit 7: a pid file cannot be removed (for example it is a folder). A pid file that is not one plain process
+-number (for example `abc`, `007`, two numbers, a named pipe or an empty file) is treated as stale: nothing is stopped
++Also exit 7, in both scripts: a pid file cannot be removed (for example it is a folder, even an empty one). A pid file that is not one plain process
++number (for example `abc`, `007`, two numbers, a file of 64 characters or more or an empty file; with reset.sh also a named pipe) is treated as stale: nothing is stopped
+ for it, and the reset deletes it and goes on. The desk and the demo server are recognised by their whole command line:
+ `python -m lead_desk.server` or `python -m demo_only.fakes_server` (a program that only has these words somewhere in
+ its line is another program).
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/scripts/reset.ps1 /home/user/work/rv-fix5r6/scripts/reset.ps1
+--- /home/user/work/rv-fix5r5/scripts/reset.ps1	2026-11-14 03:40:34.375306814 +0000
++++ /home/user/work/rv-fix5r6/scripts/reset.ps1	2026-11-14 04:54:29.000000000 +0000
+@@ -25,16 +25,32 @@
+ # the FIRST word must be the interpreter (a name that starts with python, a path in double quotes may hold spaces),
+ # then -m, then exactly one of the two modules as a word of its own. An editor with lead_desk.server.py in its line,
+ # `cmd /c echo python -m ...`, or python-tools\less.exe -m lead_desk.server is another program; an interpreter
+-# path with a space and no quotes is not recognised, and the reset then refuses (exit 6), the safe side
+-$interpreter = '("([^"]*[\\/])?python[^"\\/]*"|([^\s"]*[\\/])?python[^\s"\\/]*)'
++# path with a space and no quotes is not recognised, and the reset then refuses (exit 6), the safe side. The line is
++# compared with -cmatch (letter case counts), like reset.sh: python and Python are interpreters, PYTHON.EXE -M is not
++$interpreter = '("([^"]*[\\/])?[Pp]ython[^"\\/]*"|([^\s"]*[\\/])?[Pp]ython[^\s"\\/]*)'
+ $ours = '^\s*' + $interpreter + '\s+-m\s+(lead_desk\.server|demo_only\.fakes_server)(\s|$)'
+ foreach ($name in 'desk', 'fakes') {
+     $pidFile = "$dataDir\$name.pid"
+-    if (Test-Path $pidFile) {
+-        # same rule as reset.sh: only one plain process number (no leading zero, not 0, small enough for a 32 bit
++    if (Test-Path -LiteralPath $pidFile) {
++        # a pid file is a plain file. A folder with that name (Remove-Item would delete an empty one without a word)
++        # is refused with exit 7 and the same words as reset.sh; nothing else is deleted
++        if (-not (Test-Path -LiteralPath $pidFile -PathType Leaf)) {
++            Write-Host "refused: $pidFile cannot be removed (is it a folder?); nothing else was deleted"
++            exit 7
++        }
++        # same rule as reset.sh: at most 64 bytes are read (64 or more is far longer than any process number, so the
++        # file is stale), and only one plain process number (no leading zero, not 0, small enough for a 32 bit
+         # number) names a process. Anything else ("abc", "007", two lines, an empty or unreadable file) is a stale
+         # file: nothing is looked up or stopped, and the file is deleted below
+-        try { $raw = Get-Content -Raw -LiteralPath $pidFile } catch { $raw = $null }
++        $raw = $null
++        try {
++            $stream = [System.IO.File]::Open($pidFile, 'Open', 'Read', 'ReadWrite')
++            try {
++                $buffer = New-Object byte[] 64
++                $count = $stream.Read($buffer, 0, 64)
++                if ($count -ge 64) { $raw = $null } else { $raw = [System.Text.Encoding]::ASCII.GetString($buffer, 0, $count) }
++            } finally { $stream.Dispose() }
++        } catch { $raw = $null }
+         $text = if ($null -eq $raw) { '' } else { "$raw".Trim() }
+         $procId = 0
+         $proc = $null
+@@ -45,7 +61,7 @@
+         }
+         if ($null -eq $proc) {
+             # that process id is gone already, or the file is not one process number
+-        } elseif ($proc.CommandLine -match $ours) {
++        } elseif ($proc.CommandLine -cmatch $ours) {
+             Stop-Process -Id $procId -ErrorAction SilentlyContinue
+             try { Wait-Process -Id $procId -Timeout $stopWait -ErrorAction Stop } catch { }
+             if (Get-Process -Id $procId -ErrorAction SilentlyContinue) {
+@@ -56,7 +72,10 @@
+             Write-Host "refused: pid $procId in $pidFile is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)"
+             exit 6
+         }
+-        Remove-Item $pidFile
++        try { Remove-Item -LiteralPath $pidFile -ErrorAction Stop } catch {
++            Write-Host "refused: $pidFile cannot be removed (is it a folder?); nothing else was deleted"
++            exit 7
++        }
+     }
+ }
+ # a desk started by hand (no pid file) or one that is still running: nothing may hold the database or answer on a port
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/scripts/reset.sh /home/user/work/rv-fix5r6/scripts/reset.sh
+--- /home/user/work/rv-fix5r5/scripts/reset.sh	2026-11-14 03:40:34.375340600 +0000
++++ /home/user/work/rv-fix5r6/scripts/reset.sh	2026-11-14 04:54:29.000000000 +0000
+@@ -5,6 +5,8 @@
+ set -eu
+ # a feature test, not the name BASH_VERSION (dash takes any variable from the environment): only a shell that runs [[ ]] passes
+ case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
++# the pid file is read with `read -N`, which needs bash 4.1 or newer (macOS ships 3.2): on an older bash a valid process number would read as empty, count as stale, and its file would be deleted without stopping the desk
++if (( BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 1) )); then echo "refused: this script needs bash 4.1 or newer (this is bash ${BASH_VERSION}); nothing was stopped or deleted" >&2; exit 2; fi
+ # a plain whole number of seconds: 0, or one to three digits with no leading zero (a shell reads 08 as a bad octal)
+ case "${RESET_STOP_WAIT_SECONDS:-10}" in
+   0|[1-9]|[1-9][0-9]|[1-9][0-9][0-9]) ;;
+@@ -28,6 +30,7 @@
+ # the whole command line of a process, never cut at a terminal width: ps cuts it at $COLUMNS (even into a pipe) and
+ # the marker is the last word. Linux: /proc (NUL separators become spaces); else ps -ww (unlimited width), else plain ps
+ proc_args() {
++  local proc_line=""
+   # only a plain number names a process (an empty pid would read /proc/cmdline, the kernel's own line)
+   # a blank answer (a process with no command line, or only NUL bytes that became spaces) is not an answer: ask ps
+   if [[ "$1" =~ ^[0-9]+$ && -r "/proc/$1/cmdline" ]]; then
+@@ -43,7 +46,7 @@
+ # python3.12 ...), argv[1] is -m and argv[2] is exactly one of the two modules, which is how start_all.sh starts them.
+ # Linux: the arguments are read one by one from /proc (NUL separated), so a shell that has the marker in a quoted string
+ # (bash -c "python -m lead_desk.server") or a program that only has "python" in its folder name is another program.
+-# Without /proc (macOS, BSD) or when it cannot be read: the line from ps ($2) is matched as text (the fallback)
++# Without /proc (BSD, or a bash older than 4.4, which has no mapfile -d) or when it cannot be read: the line from ps ($2) is matched as text (the fallback). bash older than 4.1 (macOS 3.2) is refused at the top
+ is_ours() {
+   local -a argv=()
+   if [[ -r "/proc/$1/cmdline" ]] && mapfile -d '' -t argv 2>/dev/null < "/proc/$1/cmdline" &&
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/tests/support.py /home/user/work/rv-fix5r6/tests/support.py
+--- /home/user/work/rv-fix5r5/tests/support.py	2026-11-14 03:40:34.375471212 +0000
++++ /home/user/work/rv-fix5r6/tests/support.py	2026-11-14 04:54:29.000000000 +0000
+@@ -6,6 +6,7 @@
+ import itertools
+ import json
+ import os
++import re
+ import secrets
+ import shutil
+ import socket
+@@ -124,11 +125,45 @@
+     return db.read_text(encoding="utf-8") == "keep me" and (db.parent / "desk.log").exists()
+ 
+ 
++_RANGE_START = 40000  # xdist workers draw their port numbers from 40000 up, one block each (see worker_port_range)
++_RANGE_END = 65535
++_RANGE_WIDTH = 5000  # gw0 40000-44999, gw1 45000-49999, ... (narrower when there are more than five workers)
++
++
++def worker_port_range(worker: str | None, count: str | None) -> tuple[int, int] | None:
++    """The block of port numbers (first, last) that xdist worker `worker` ("gw0", "gw1", ...) draws from, or None when
++    the tests run in one process (then the operating system chooses, as before). The blocks of different workers never
++    overlap, so a number from free_port() in one worker cannot be a number that held_port() holds in another.
++    `count` is PYTEST_XDIST_WORKER_COUNT: with more than five workers the blocks are narrower so all of them fit
++    below 65536; a count smaller than the worker's own number is raised to it."""
++    found = re.fullmatch(r"gw(\d+)", worker or "")
++    if found is None:
++        return None
++    number = int(found.group(1))
++    total = max(int(count) if count and count.isdigit() else 0, number + 1)
++    width = min(_RANGE_WIDTH, (_RANGE_END - _RANGE_START + 1) // total)
++    first = _RANGE_START + number * width
++    return first, first + width - 1
++
++
+ def _bound_socket() -> socket.socket:
+-    """A socket bound to a number the operating system chose (bind to port 0); it does not listen."""
+-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+-    s.bind((HOST, 0))
+-    return s
++    """A socket bound to a number the operating system chose (bind to port 0); it does not listen. Under xdist the
++    number is drawn from this worker's own block instead (worker_port_range); a number that is taken is skipped."""
++    block = worker_port_range(os.environ.get("PYTEST_XDIST_WORKER"), os.environ.get("PYTEST_XDIST_WORKER_COUNT"))
++    if block is None:
++        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++        s.bind((HOST, 0))
++        return s
++    first, last = block
++    for _ in range(_ATTEMPTS * 10):
++        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++        try:
++            s.bind((HOST, first + secrets.randbelow(last - first + 1)))
++        except OSError:
++            s.close()
++            continue
++        return s
++    raise AssertionError(f"no free port number in {first}-{last}")
+ 
+ 
+ _HELD_PORTS: list[socket.socket] = []
+@@ -699,7 +734,6 @@
+     return start_proc(["-m", module, *words, str(ready)], dict(os.environ), program=program, cwd=tree)
+ 
+ 
+-
+ def is_write(fn: Any, name: str) -> bool:
+     """True when `fn` (a function handed to `Desk._locked_retry`) belongs to the method or inner function called
+     `name`. Whole dotted parts are compared, never a substring, and a test that selects a fault this way must also
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/tests/test_port_helpers.py /home/user/work/rv-fix5r6/tests/test_port_helpers.py
+--- /home/user/work/rv-fix5r5/tests/test_port_helpers.py	2026-11-14 03:40:34.375503899 +0000
++++ /home/user/work/rv-fix5r6/tests/test_port_helpers.py	2026-11-14 04:54:29.000000000 +0000
+@@ -4,7 +4,9 @@
+ 
+ from __future__ import annotations
+ 
++import os
+ import socket
++import threading
+ from collections import deque
+ from types import SimpleNamespace
+ from typing import Any
+@@ -61,6 +63,7 @@
+ def _operating_system_hands_out(monkeypatch: pytest.MonkeyPatch, numbers: list[int]) -> None:
+     _MadeUpSocket.numbers = deque(numbers)
+     stand_in = SimpleNamespace(socket=_MadeUpSocket, AF_INET=socket.AF_INET, SOCK_STREAM=socket.SOCK_STREAM)
++    monkeypatch.delenv("PYTEST_XDIST_WORKER", raising=False)  # the made-up numbers are the serial case
+     monkeypatch.setattr(support, "socket", stand_in)
+     monkeypatch.setattr(support, "_HELD_PORTS", [])
+     monkeypatch.setattr(support, "_GIVEN_FREE", deque(maxlen=512), raising=False)
+@@ -85,3 +88,94 @@
+     assert held_port() == 41005
+     with pytest.raises(AssertionError, match="held"):
+         free_port()
++
++
++def _ranges(count: int) -> list[tuple[int, int]]:
++    ranges = []
++    for n in range(count):
++        found = support.worker_port_range(f"gw{n}", str(count))
++        assert found is not None
++        ranges.append(found)
++    return ranges
++
++
++def test_the_port_ranges_of_two_xdist_workers_never_overlap() -> None:
++    assert support.worker_port_range("gw0", "4") == (40000, 44999)
++    assert support.worker_port_range("gw1", "4") == (45000, 49999)
++    assert support.worker_port_range("gw3", "4") == (55000, 59999)
++    for count in (1, 2, 4, 5, 6, 8, 16, 32, 64):
++        ranges = sorted(_ranges(count))
++        for (_, high), (low, _) in zip(ranges, ranges[1:], strict=False):
++            assert high < low, (count, ranges)
++        assert ranges[0][0] >= 40000 and ranges[-1][1] <= 65535, (count, ranges)
++        assert all(low <= high for low, high in ranges)
++
++
++def test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses() -> None:
++    assert support.worker_port_range(None, None) is None
++    assert support.worker_port_range("master", "4") is None
++    for odd in ("gwx", "gw", "gw1x", "xgw1", "GW1", ""):
++        assert support.worker_port_range(odd, "4") is None, odd
++
++
++def test_a_worker_number_beyond_the_worker_count_still_gets_its_own_range() -> None:
++    low, high = support.worker_port_range("gw6", "2") or (0, 0)  # a count that is too small is raised to the number
++    assert (low, high) not in _ranges(2) and 40000 <= low <= high <= 65535
++
++
++def test_free_and_held_ports_of_a_worker_lie_in_its_range(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setenv("PYTEST_XDIST_WORKER", "gw2")
++    monkeypatch.setenv("PYTEST_XDIST_WORKER_COUNT", "4")
++    low, high = support.worker_port_range("gw2", "4") or (0, 0)
++    try:
++        numbers = [free_port() for _ in range(5)] + [held_port() for _ in range(5)]
++    finally:
++        release_held_ports()
++    assert all(low <= n <= high for n in numbers), (low, high, numbers)
++
++
++class _PerThreadEnviron:
++    """os.environ as seen by the code under test, except that PYTEST_XDIST_WORKER and PYTEST_XDIST_WORKER_COUNT
++    answer per thread, so that two threads can play two xdist workers in one process."""
++
++    worker_of_thread: dict[int, str] = {}
++
++    def get(self, key: str, default: str | None = None) -> str | None:
++        if key == "PYTEST_XDIST_WORKER":
++            return self.worker_of_thread.get(threading.get_ident())
++        if key == "PYTEST_XDIST_WORKER_COUNT":
++            return "2"
++        return os.environ.get(key, default)
++
++
++class _OsWithPerThreadEnviron:
++    environ = _PerThreadEnviron()
++
++    def __getattr__(self, name: str) -> Any:
++        return getattr(os, name)
++
++
++def test_two_workers_calling_free_port_at_once_get_distinct_numbers_inside_their_own_ranges(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    monkeypatch.setattr(support, "os", _OsWithPerThreadEnviron())
++    start = threading.Barrier(2)
++    got: dict[str, list[int]] = {}
++
++    def play(worker: str) -> None:
++        _PerThreadEnviron.worker_of_thread[threading.get_ident()] = worker
++        start.wait(timeout=10)  # both threads call free_port() together
++        got[worker] = [free_port() for _ in range(200)]
++
++    threads = [threading.Thread(target=play, args=(name,)) for name in ("gw0", "gw1")]
++    for t in threads:
++        t.start()
++    for t in threads:
++        t.join(timeout=120)
++    assert not any(t.is_alive() for t in threads), "a worker thread did not finish"
++    assert set(got) == {"gw0", "gw1"}
++    for worker, numbers in got.items():
++        low, high = support.worker_port_range(worker, "2") or (0, 0)
++        assert (low, high) == ((40000, 44999) if worker == "gw0" else (45000, 49999))
++        assert all(low <= n <= high for n in numbers), (worker, low, high)
++    assert not set(got["gw0"]) & set(got["gw1"]), "two workers were given the same port number"
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/tests/test_reset_ps1_links.py /home/user/work/rv-fix5r6/tests/test_reset_ps1_links.py
+--- /home/user/work/rv-fix5r5/tests/test_reset_ps1_links.py	2026-11-14 03:40:34.358394690 +0000
++++ /home/user/work/rv-fix5r6/tests/test_reset_ps1_links.py	2026-11-14 04:54:29.000000000 +0000
+@@ -21,9 +21,11 @@
+     return "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))  # whole-line comments
+ 
+ 
+-ACTIONS = ("Get-Content", "Stop-Process", "Remove-Item")  # what reads a pid file, stops a program, deletes a file
++# what reads a pid file (reset.ps1 opens it with .NET and reads at most 64 bytes), stops a program, deletes a file
++ACTIONS = ("[System.IO.File]::Open", "Stop-Process", "Remove-Item")
+ # The short names PowerShell also accepts for the same three cmdlets (built in aliases, case does not matter).
+ ALIASES = {
++    "[System.IO.File]::Open": (),
+     "Get-Content": ("gc", "cat", "type"),
+     "Stop-Process": ("kill", "spps"),
+     "Remove-Item": ("rm", "del", "ri", "rmdir", "erase", "rd"),
+@@ -55,7 +57,7 @@
+         assert after.index(action) > refusal.end(), f"{action} comes before the refusal on a failed check"
+     # the same for the short names, and from the top of the file (not only after the check): none may come earlier
+     before = re.sub(r"'[^']*'|\"[^\"]*\"", '""', code[: found.end() + refusal.end()])  # text in quotes is not a command
+-    for action in ACTIONS:
++    for action in (*ACTIONS, "Get-Content"):  # Get-Content (the old reader) must not come back before the refusal
+         for name in (action, *ALIASES[action]):
+             assert _first_use(before, name) == -1, f"{name} comes before the refusal on a failed check ({action})"
+     return snippet
+@@ -96,7 +98,7 @@
+     assert marker in text
+     for action in ACTIONS:
+         early = text.replace(marker, f"{action} -Path x{chr(10)}{marker}", 1)
+-        with pytest.raises(AssertionError, match=f"{action} comes before the refusal"):
++        with pytest.raises(AssertionError, match=f"{re.escape(action)} comes before the refusal"):
+             _check_code(early)
+ 
+ 
+@@ -114,7 +116,7 @@
+     marker = 'if ("$inside".Trim()'
+     for variant in (name, name.upper()):  # PowerShell does not care about case
+         early = text.replace(marker, f"{variant} x{chr(10)}{marker}", 1)
+-        with pytest.raises(AssertionError, match=f"(?i){variant} comes before the refusal"):
++        with pytest.raises(AssertionError, match=f"(?i){re.escape(variant)} comes before the refusal"):
+             _check_code(early)
+     late = text.replace(marker, f"# {name} x{chr(10)}{marker}", 1)  # only in a comment: not code, not a fault
+     _check_code(late)
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/tests/test_reset_ps1_pid_rules.py /home/user/work/rv-fix5r6/tests/test_reset_ps1_pid_rules.py
+--- /home/user/work/rv-fix5r5/tests/test_reset_ps1_pid_rules.py	2026-11-14 03:40:34.375520051 +0000
++++ /home/user/work/rv-fix5r6/tests/test_reset_ps1_pid_rules.py	2026-11-14 04:54:29.000000000 +0000
+@@ -40,11 +40,11 @@
+     assert not re.search(r"-match\s+'lead_desk\\\.server\|", code), "the bare substring match is back"
+     assert "[int](Get-Content" not in code, "the pid file is converted without a shape check (abc, two lines throw)"
+     assert "[int]::TryParse" in code and "-cmatch '^[1-9][0-9]*$'" in code, "the pid shape rule is missing"
+-    assert re.search(r"\$proc\.CommandLine\s+-match\s+\$ours", code), "the command line is not judged by the pattern"
++    assert re.search(r"\$proc\.CommandLine\s+-cmatch\s+\$ours", code), "the command line is not judged by -cmatch"
++    assert not re.search(r"\$proc\.CommandLine\s+-match\b", code), "the case-insensitive -match is back"
+     # an empty file gives $null: the text is built without calling .Trim() on it
+     assert re.search(r"\$null\s+-eq\s+\$raw", code), "an empty pid file is not guarded"
+-    # a file that cannot be read must not stop the reset (ErrorActionPreference is Stop)
+-    assert re.search(r"try\s*\{\s*\$raw\s*=\s*Get-Content[^}]*\}\s*catch", code), "an unreadable pid file is not caught"
++    assert "Get-Content" not in code, "the whole pid file is read (reset.sh reads at most 64 characters)"
+ 
+ 
+ @pytest.mark.parametrize(
+@@ -56,7 +56,13 @@
+         ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+         ("C:\\venv\\python.exe -m lead_desk.server", True),
+         ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+-        ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
++        ("C:\\Python312\\Python.exe -m lead_desk.server", True),  # the same first letter rule as reset.sh: [Pp]ython
++        ('"C:\\Python312\\Python.exe" -m lead_desk.server', True),  # quoted: the same [Pp]ython rule
++        ('"C:\\Python312\\PYTHON.EXE" -m lead_desk.server', False),
++        ("PYTHON.EXE -m LEAD_DESK.SERVER", False),  # -cmatch: the whole line is compared with its letter case
++        ("python -M lead_desk.server", False),
++        ("python -m Lead_Desk.Server", False),
++        ("python -m DEMO_ONLY.FAKES_SERVER", False),
+         ("notepad lead_desk.server.py", False),
+         ("python -m lead_desk.server.py", False),
+         ("python -m lead_desk.serverx", False),
+@@ -69,7 +75,7 @@
+     ],
+ )
+ def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+-    assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
++    assert bool(re.search(_ours_pattern(), line)) is ours, line  # no IGNORECASE: -cmatch
+ 
+ 
+ @pytest.mark.parametrize(
+@@ -108,3 +114,60 @@
+         stop_proc(child)
+     assert still_running and done.returncode == 6, (done.returncode, done.stdout, done.stderr)
+     assert reset_kept(book) and pidfile.exists()
++
++
++def _reset_sh_code() -> str:
++    text = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8")
++    return "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
++
++
++def test_reset_ps1_reads_at_most_64_characters_of_a_pid_file_and_longer_means_stale() -> None:
++    """Same rule as reset.sh (`read -N 64`, 64 or more characters = stale): a read of at most 64 bytes, then the text
++    is dropped when it filled the buffer. A file that cannot be read stays stale (the try/catch)."""
++    code = _code()
++    assert re.search(r"New-Object byte\[\]\s+64\b", code), "the pid file is not read through a 64 byte buffer"
++    assert re.search(r"\.Read\(\$buffer,\s*0,\s*64\)", code), "the read does not stop at 64 bytes"
++    assert re.search(r"\$count\s+-ge\s+64", code), "a pid file of 64 bytes or more is not treated as stale"
++    assert re.search(r"try\s*\{.*?\}\s*catch\s*\{", code, re.DOTALL), "an unreadable pid file is not caught"
++    assert "64" in _reset_sh_code() and "read -r -N 64" in _reset_sh_code(), "reset.sh no longer has the 64 cap"
++
++
++def test_reset_ps1_removes_only_a_plain_file_and_exits_7_like_reset_sh() -> None:
++    """A pid file that is a folder (an empty one would be removed silently by Remove-Item) or cannot be removed gives
++    exit 7 with the wording of reset.sh. PowerShell itself is not run here (the Windows run is the open item)."""
++    code = _code()
++    assert re.search(r"Test-Path\s+-LiteralPath\s+\$pidFile\s+-PathType\s+Leaf", code), "no leaf-only check"
++    assert code.count("exit 7") >= 2, "both the folder case and the failed removal must exit 7"
++    sh_words = re.search(r'echo "(refused: \$pidfile cannot be removed[^"]*)"', _reset_sh_code())
++    assert sh_words, "reset.sh lost its exit 7 message"
++    ps_words = sh_words.group(1).replace("$pidfile", "$pidFile")
++    assert ps_words in code, "the exit 7 wording of reset.ps1 differs from reset.sh"
++    assert re.search(r"catch\s*\{[^}]*exit 7", code), "the failed removal does not end in exit 7"
++    assert re.search(r"try\s*\{\s*Remove-Item\s+-LiteralPath\s+\$pidFile\s+-ErrorAction\s+Stop\s*\}\s*catch", code), (
++        "a failed removal is not caught and turned into exit 7"
++    )
++    assert not re.search(r"^\s*Remove-Item\s+\$pidFile\s*$", code, re.MULTILINE), "the bare Remove-Item is back"
++
++
++def _modules_in(text: str, pattern: str) -> set[str]:
++    return set(re.findall(pattern, text))
++
++
++def test_start_all_ps1_still_starts_the_two_programs_the_way_reset_ps1_recognises_them() -> None:
++    """Pin (the real Windows run is not possible here): start_all.ps1 starts `python -m <module>` by the bare word
++    python, and the modules it starts are exactly those reset.ps1 and reset.sh accept. If one side changes, a reset
++    would refuse (exit 6) or stop the wrong thing."""
++    start = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
++    calls = re.findall(r"Start-Process python -ArgumentList '-m', '([a-z_.]+)'", start)
++    assert sorted(calls) == ["demo_only.fakes_server", "lead_desk.server"], calls
++    ours = re.search(r"^\$ours = (?P<expr>.*)$", _code(), re.MULTILINE)
++    assert ours
++    in_ps1 = re.search(r"\((?P<alt>[a-z_\\.|]+)\)", ours.group("expr"))
++    assert in_ps1
++    names_ps1 = {w.replace("\\.", ".") for w in in_ps1.group("alt").split("|")}
++    assert names_ps1 == set(calls)
++    sh = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8")
++    in_sh = _modules_in(sh, r'"\$\{argv\[2\]:-\}" == "([a-z_.]+)"')
++    assert in_sh == set(calls)
++    start_sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    assert all(f"-m {m}" in start_sh for m in calls)
+diff -ruN -x __pycache__ /home/user/work/rv-fix5r5/tests/test_reset_scripts.py /home/user/work/rv-fix5r6/tests/test_reset_scripts.py
+--- /home/user/work/rv-fix5r5/tests/test_reset_scripts.py	2026-11-14 03:40:34.375580729 +0000
++++ /home/user/work/rv-fix5r6/tests/test_reset_scripts.py	2026-11-14 04:54:29.000000000 +0000
+@@ -364,3 +364,56 @@
+     assert refused.returncode == 2 and "PAST-THE-GUARD" not in refused.stdout, (refused.stdout, refused.stderr)
+     passed = _run(script, db, code=after)
+     assert passed.returncode == 0 and "PAST-THE-GUARD" in passed.stdout, (passed.stdout, passed.stderr)
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++@pytest.mark.parametrize("name", ["desk.pid", "fakes.pid"])
++def test_reset_sh_refuses_with_exit_7_when_the_pid_file_is_an_empty_folder_and_keeps_the_book(
++    book: Path, name: str
++) -> None:
++    """A pid file that is a folder cannot be removed: exit 7, nothing else deleted (reset.ps1 must do the same)."""
++    folder = book.parent / name
++    folder.mkdir()
++    done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++    assert done.returncode == 7, (done.returncode, done.stdout, done.stderr)
++    assert "cannot be removed" in done.stderr and "nothing else was deleted" in done.stderr
++    assert folder.is_dir() and _kept(book)
++
++
++_VERSION_GUARD_START = "if (( BASH_VERSINFO[0] < 4 ||"
++
++
++def _version_guard_line() -> str:
++    lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
++    found = [line for line in lines if line.startswith(_VERSION_GUARD_START)]
++    assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
++    return found[0]
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++@pytest.mark.parametrize(
++    ("version", "refused"),
++    [("3 2 57", True), ("3 0 0", True), ("4 0 44", True), ("4 1 0", False), ("4 4 20", False), ("5 2 21", False)],
++)
++def test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2(version: str, refused: bool) -> None:
++    """`read -N` needs bash 4.1. On an older bash a valid pid would read as empty and count as stale. The guard line
++    is run alone with a made-up version (BASH_VERSINFO itself is read-only), as a standalone line with set -eu."""
++    line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
++    done = _run(
++        SCRIPT, Path("unused.sqlite3"), code=f"set -eu\nMADE_UP_VERSINFO=({version})\n{line}\necho PAST-THE-GUARD"
++    )
++    if refused:
++        assert done.returncode == 2 and "PAST-THE-GUARD" not in done.stdout, (done.stdout, done.stderr)
++        assert "bash 4.1" in done.stderr and "nothing was stopped or deleted" in done.stderr
++    else:
++        assert done.returncode == 0 and "PAST-THE-GUARD" in done.stdout, (done.stdout, done.stderr)
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++def test_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs() -> None:
++    """dash has no BASH_VERSINFO (under set -u that would be an error instead of the bash message), so the guard
++    comes after the [[ ]] feature test; and it comes before the first python call and before any pid file is read."""
++    lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
++    keys = ('case "$( (eval ', _VERSION_GUARD_START, 'db="$(python -c')
++    at = {key: next(i for i, ln in enumerate(lines) if ln.startswith(key)) for key in keys}
++    assert at['case "$( (eval '] < at[_VERSION_GUARD_START] < at['db="$(python -c']
