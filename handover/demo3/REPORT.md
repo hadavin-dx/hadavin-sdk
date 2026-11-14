@@ -1,3 +1,16 @@
+## HEARTBEAT 114 (07:08Z) - B21 full run ended RED (1 failed); B20 run 2 at 92%; B22 past its tests, doing guards and mutation
+
+| Agent / job | State at 07:08Z |
+|---|---|
+| B21 fix-5 r8 | full run ended `1 failed, 3961 passed, 183 skipped` (953s). Failure: tests/test_reset_order_and_words.py:268, an assertion on the output "reset done" (a reset test of its own new file). B21 has not handed back; I told it nothing new, it reads its own log |
+| B20 fix-10 r3 | full run 2 at [ 92%], no failures visible yet; no hand-back |
+| B22 fix-2 r9 | checkpoint 1 written: tests written/passing, next guards, mutation, patch cut |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B21 full run red (above); B20 run 1 red (HB113).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB113.
+WHAT I WOULD DO NEXT (ranked): 1. B21 fix and re-run (or guards alone if text-only); 2. lint B20/B21 final trees; 3. reviewers.
+
 ## HEARTBEAT 113 (07:02Z) - B20 first full run RED (13 failed), fixed, full run 2 going; B21 on its one full run; B22 building; key-file option (a) applied
 
 | Agent / job | State at 07:02Z |
@@ -53,18 +66,4 @@ ASK for the lead: none.
 FAILURES AND RETRIES: none new.
 NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
 WHAT I WOULD DO NEXT (ranked): 1. read B19/B20 hand-backs; 2. whole-patch reviewers; 3. stack builder.
-
-## HEARTBEAT 109 (06:40Z) - B19 AND B20 FULL RUNS GOING (logs outside git); B21 TESTS-FIRST DONE, FIXING
-
-| Agent / job | State at 06:40Z |
-|---|---|
-| B19 fix-2 r8 full run | running (log /home/user/work/b19-logs/b19-full-final.log); no result yet |
-| B20 fix-10 r3 full run | running (log /home/user/work/b20-logs/b20-full-final.log); no result yet |
-| B21 fix-5 r8 | fails-before logs written (ports, bash minimum on the r6 scripts); fixing scripts |
-| Heavy jobs | 2 full runs (limit 3) |
-
-ASK for the lead: none.
-FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
-WHAT I WOULD DO NEXT (ranked): 1. read B19/B20 hand-backs and the run tails; 2. whole-patch reviewers; 3. stack builder.
 

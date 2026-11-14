@@ -2023,3 +2023,17 @@ FAILURES AND RETRIES: none new.
 NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105; I have not yet read any of the B19/B20 numbers beyond B19's own checkpoint line.
 WHAT I WOULD DO NEXT (ranked): 1. read the hand-backs; 2. whole-patch fresh reviewers (design plus code-details) for each; 3. stack builder.
 
+## HEARTBEAT 109 (06:40Z) - B19 AND B20 FULL RUNS GOING (logs outside git); B21 TESTS-FIRST DONE, FIXING
+
+| Agent / job | State at 06:40Z |
+|---|---|
+| B19 fix-2 r8 full run | running (log /home/user/work/b19-logs/b19-full-final.log); no result yet |
+| B20 fix-10 r3 full run | running (log /home/user/work/b20-logs/b20-full-final.log); no result yet |
+| B21 fix-5 r8 | fails-before logs written (ports, bash minimum on the r6 scripts); fixing scripts |
+| Heavy jobs | 2 full runs (limit 3) |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
+WHAT I WOULD DO NEXT (ranked): 1. read B19/B20 hand-backs and the run tails; 2. whole-patch reviewers; 3. stack builder.
+
