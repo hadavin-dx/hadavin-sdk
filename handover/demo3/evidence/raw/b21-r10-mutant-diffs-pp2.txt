@@ -61,3 +61,52 @@
 +    with __import__('socket').socket() as s:
 +        s.bind(("127.0.0.1", 0))
 
+##### sh removal sentence changed (scripts/reset.sh)
+--- good
++++ mutant
+@@ -175 +175 @@
+-    echo "refused: $pidfile could not be removed (another program may hold it open, or you may not be allowed to delete it); the desk's records and the logs were not deleted (the desk and the demo server, if they were running, have been stopped)" >&2
++    echo "refused: $pidfile could not be removed (another program may hold it open, or you may not be allowed to delete it); the logs were not deleted (the desk and the demo server, if they were running, have been stopped)" >&2
+
+##### check forgets pid files (scripts/reset_check.py)
+--- good
++++ mutant
+@@ -17 +17 @@
+-KEPT = "nothing was deleted, not even the pid files (a program named in a pid file may already have been stopped)"
++KEPT = "nothing was deleted (a program named in a pid file may already have been stopped)"
+
+##### ps1 buffer 67 -> 64 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -64 +64 @@
+-                $buffer = New-Object byte[] 67
++                $buffer = New-Object byte[] 64
+
+##### ps1 removal sentence changed (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -158 +158 @@
+-        [Console]::Error.WriteLine("refused: $pidFile could not be removed (another program may hold it open, or you may not be allowed to delete it); the desk's records and the logs were not deleted (the desk and the demo server, if they were running, have been stopped)")
++        [Console]::Error.WriteLine("refused: $pidFile could not be removed (another program may hold it open, or you may not be allowed to delete it); the logs were not deleted (the desk and the demo server, if they were running, have been stopped)")
+
+##### ports: part leaves the block (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -57 +57 @@
+-    low = first + index * size
++    low = first + index * size + 7
+
+##### r9 M4 NUL size check off (scripts/reset.sh)
+--- good
++++ mutant
+@@ -91 +91 @@
+-  if [[ ! "$size" =~ ^[0-9]+$ ]] || (( ${#pid} != (size < 67 ? size : 67) )); then pid=""; return 0; fi # zero bytes were dropped
++  if false; then pid=""; return 0; fi # zero bytes were dropped
+
+##### r9 M8 alive: not-permitted counts as gone (scripts/reset.sh)
+--- good
++++ mutant
+@@ -37 +37 @@
+-    [[ "$err" == *"not permitted"* ]] || return 1
++    return 1
+

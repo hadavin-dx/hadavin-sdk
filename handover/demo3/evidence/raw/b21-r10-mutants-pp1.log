@@ -6,3 +6,10 @@ ps1 Convert-Path dropped | KILLED | 1 failed, 145 passed, 6 skipped in 33.52s | 
 ps1 pattern not anchored (\s* back) | KILLED | 1 failed, 106 passed, 1 skipped in 33.65s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone
 ps1 exit 5 forgets already stopped | SURVIVED | 362 passed, 15 skipped in 83.66s (0:01:23) | 
 support restart uses first half | KILLED | 1 failed, 245 passed, 15 skipped in 83.63s (0:01:23) | tests/test_port_helpers.py::test_a_single_worker_gets_a_block_of_at_most_5000_numbers_in_each_half
+support range start back to 40000 | KILLED | 1 failed, 244 passed, 15 skipped in 82.82s (0:01:22) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+support missing count not max | KILLED | 1 failed, 312 passed, 15 skipped in 83.31s (0:01:23) | tests/test_port_helpers.py::test_a_missing_or_odd_worker_count_still_gives_disjoint_blocks[None]
+sh reset_check dropped | NOT APPLIED (text not found)
+sh read 64 instead of 67 | KILLED | 1 failed, 9 passed in 13.73s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
+check prints to stdout | KILLED | 1 failed in 0.20s | tests/test_reset_order_and_words.py::test_reset_check_prints_its_exit_4_refusal_on_standard_error_only
+ps1 Get-Item back to Test-Path | KILLED | 1 failed, 140 passed, 6 skipped in 34.00s | tests/test_reset_ps1_pid_rules.py::test_text_only_a_pid_file_that_is_a_dangling_link_is_seen_and_removed_in_pass_3
+ps1 command line trimmed | KILLED | 1 failed, 106 passed, 1 skipped in 33.65s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone

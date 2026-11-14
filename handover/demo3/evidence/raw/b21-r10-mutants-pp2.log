@@ -7,3 +7,11 @@ ps1 Stop-Process in pass 1 | KILLED | 1 failed, 141 passed, 6 skipped in 33.62s 
 ps1 cap -ge 64 -> -gt 64 | KILLED | 1 failed, 138 passed, 6 skipped in 34.02s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
 support restart no modulo | KILLED | 1 failed, 318 passed, 15 skipped in 83.18s (0:01:23) | tests/test_port_helpers.py::test_a_worker_number_beyond_the_worker_count_still_gets_its_own_range
 support last = first+width | KILLED | 1 failed, 244 passed, 15 skipped in 82.78s (0:01:22) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+tests: a direct bind to port 0 added | KILLED | 1 failed, 322 passed, 15 skipped in 83.26s (0:01:23) | tests/test_port_helpers.py::test_no_test_binds_to_port_0_by_itself_except_the_listed_servers_that_keep_their_socket
+sh reset_check failure ignored | NOT APPLIED (text not found)
+sh removal sentence changed | KILLED | 1 failed, 37 passed, 1 skipped in 12.83s | tests/test_reset_order_and_words.py::test_text_only_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts
+check forgets pid files | KILLED | 1 failed, 4 passed in 0.66s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
+ps1 buffer 67 -> 64 | KILLED | 1 failed, 138 passed, 6 skipped in 33.92s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+ps1 removal sentence changed | KILLED | 1 failed, 37 passed, 1 skipped in 12.97s | tests/test_reset_order_and_words.py::test_text_only_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts
+ports: part leaves the block | KILLED | 1 failed, 350 passed, 15 skipped in 83.76s (0:01:23) | tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]
+r9 M4 NUL size check off | KILLED | 1 failed, 21 passed, 1 skipped in 8.93s | tests/test_reset_order_and_words.py::test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-16-le]

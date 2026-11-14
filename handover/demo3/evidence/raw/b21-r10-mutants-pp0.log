@@ -11,3 +11,6 @@ support serial uses range always | KILLED | 1 failed in 0.14s | tests/test_reset
 sh recheck exit 6 -> 1 | KILLED | 1 failed, 7 passed in 1.30s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
 sh 64 -> 65 after the mark | NOT APPLIED (text not found)
 sh old-bash message names a version again | KILLED | 1 failed, 93 passed, 1 skipped in 29.70s | tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1]
+ps1 recheck exit 6 -> 1 | KILLED | 1 failed, 148 passed, 14 skipped in 33.94s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop
+ps1 reset_check dropped | KILLED | 1 failed, 150 passed, 14 skipped in 34.08s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_for_a_desk_nobody_listed_runs_after_the_stop_and_before_any_delete
+ports: session part index 0 | KILLED | 1 failed, 350 passed, 15 skipped in 84.00s (0:01:24) | tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]

@@ -53,3 +53,39 @@
 -        _GIVEN_FREE.clear()  # the numbers free_port() gave away in this test are forgotten with the held ones
 +        pass  # the numbers free_port() gave away in this test are forgotten with the held ones
 
+##### sh dangling link not seen (scripts/reset.sh)
+--- good
++++ mutant
+@@ -101 +101 @@
+-  if [[ -e "$pidfile" || -L "$pidfile" ]]; then # a link to nothing is a pid file too: -e alone says it is not there
++  if [[ -e "$pidfile" ]]; then # a link to nothing is a pid file too: -e alone says it is not there
+
+##### sh folder message changed (scripts/reset.sh)
+--- good
++++ mutant
+@@ -104 +104 @@
+-      echo "refused: $pidfile is a folder, not a pid file, so it cannot be removed; nothing was stopped or deleted (remove or rename that folder yourself)" >&2
++      echo "refused: $pidfile cannot be removed; nothing was stopped or deleted (remove or rename that folder yourself)" >&2
+
+##### ps1 recheck dropped (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -123 +123 @@
+-    if (($null -ne $again) -and -not ($again.CommandLine -cmatch $ours)) {
++    if (($null -ne $again) -and $false) {
+
+##### ports: session part ignored (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -82 +82 @@
+-    for window in (session_window(block, os.getpid()), block):
++    for window in (block,):
+
+##### tests: HOST defined twice (tests/support.py)
+--- good
++++ mutant
+@@ -127 +127,2 @@
+-from port_blocks import _ATTEMPTS, HOST, bound_socket, worker_port_range  # noqa: E402, F401
++HOST = '127.0.0.1'
++from port_blocks import _ATTEMPTS, bound_socket, worker_port_range  # noqa: E402, F401
+

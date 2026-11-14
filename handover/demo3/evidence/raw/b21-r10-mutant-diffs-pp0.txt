@@ -81,3 +81,23 @@
 -        exit 6
 +        exit 1
 
+##### ps1 reset_check dropped (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -144 +144 @@
+-python scripts/reset_check.py
++
+
+##### ports: session part index 0 (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -56 +56 @@
+-    index = pid % parts
++    index = 0
+
+##### tests: a direct server bind added (tests/test_http_guard.py)
+--- good
++++ mutant
+@@ -28,0 +29 @@
++    __import__('http.server').server.ThreadingHTTPServer(("127.0.0.1", 0), None).server_close()
+

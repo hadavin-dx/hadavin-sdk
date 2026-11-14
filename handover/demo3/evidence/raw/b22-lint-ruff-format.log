@@ -1,3 +1,3 @@
 # /home/user/work/lint-venv/bin/ruff format --check --no-cache .
-167 files already formatted
+168 files already formatted
 rc=0

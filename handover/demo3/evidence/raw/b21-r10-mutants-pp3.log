@@ -6,3 +6,10 @@ ps1 folder exit 7 -> 1 | KILLED | 1 failed, 139 passed, 6 skipped in 33.72s | te
 ps1 Remove-Item catch drops exit 7 | KILLED | 1 failed, 139 passed, 6 skipped in 33.58s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
 support width 5000 -> 6000 | KILLED | 1 failed, 245 passed, 15 skipped in 82.95s (0:01:22) | tests/test_port_helpers.py::test_a_single_worker_gets_a_block_of_at_most_5000_numbers_in_each_half
 support worker regex too loose | KILLED | 1 failed, 317 passed, 15 skipped in 83.18s (0:01:23) | tests/test_port_helpers.py::test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses
+support given-free not cleared | KILLED | 1 failed, 321 passed, 15 skipped in 83.03s (0:01:23) | tests/test_port_helpers.py::test_the_numbers_free_port_gave_away_are_forgotten_when_the_held_ports_are_released
+sh pass-2 recheck dropped | NOT APPLIED (text not found)
+sh dangling link not seen | KILLED | 1 failed, 8 passed in 2.50s | tests/test_reset_order_and_words.py::test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file
+sh folder message changed | KILLED | 1 failed, 139 passed, 6 skipped in 33.82s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
+ps1 recheck dropped | KILLED | 1 failed, 148 passed, 14 skipped in 33.47s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop
+ps1 count not after the mark | NOT APPLIED (text not found)
+ports: session part ignored | KILLED | 1 failed, 355 passed, 15 skipped in 84.38s (0:01:24) | tests/test_port_helpers.py::test_free_ports_of_a_session_lie_in_that_sessions_part_of_the_block
