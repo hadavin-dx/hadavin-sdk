@@ -44,4 +44,10 @@ tests/test_reset_scripts.py::test_reset_still_deletes_a_database_inside_the_data
 tests/test_reset_scripts.py::test_reset_refuses_when_something_answers_on_the_desk_port PASSED [ 33%]
 tests/test_reset_scripts.py::test_reset_refuses_when_a_process_holds_the_database PASSED [ 34%]
 tests/test_reset_scripts.py::test_reset_refuses_a_pid_file_of_another_program PASSED [ 35%]
-tests/test_reset_scripts.py::test_reset_sh_refuses_when_the_desk_does_not_stop 
+tests/test_reset_scripts.py::test_reset_sh_refuses_when_the_desk_does_not_stop PASSED [ 35%]
+tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[1-5] PASSED [ 36%]
+tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[139-5] PASSED [ 37%]
+tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[3-3] PASSED [ 38%]
+tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[4-4] PASSED [ 39%]
+tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[8-8] PASSED [ 40%]
+tests/test_reset_scripts.py::test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop 
