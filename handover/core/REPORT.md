@@ -1,5 +1,34 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 04:52 UTC / 10:22 IST
+
+CONTAINER WAS RESTARTED at about 04:50 UTC (uptime 2 min at 04:52). It stopped the r7g builder a89776f7, EV7F add05263 and a poll shell. Disk survived: tree-R7G (with tests/test_r7g_findings.py), tree-EV7F, out/R7G, out/EV7F, venv, browsers, gitleaks are all present. The restart also ended the four orphan workers (pids 24504-24507): ps shows 0 pytest, load average 1.56 at 04:52 (was about 95). So your ASK 1 answer is moot: nothing to stop, I ran no kill. The machine is quiet now.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a2783837 (r7g builder, fresh agent) | resumes r7g from the checkpoint (code + 60 tests written; 46 failed on r7f; claimed 15 mutants killed; next docs, selectors, ruff, counts, patches); first checks what the cut-off left | fixes r7f review M1, M2, m1, m2, n1 | 04:52 / 10:22 | 60 min box | r7g, retry 1 (after restart) | RUNNING | EV7G + fresh reviewer |
+| ae345331 (EV7F-PARTIAL runner, fresh agent) | mutants G03 T01 B02 + 14 rows on r7f, hostile table; NO full suite (trim order); records machine state | delta base only | 04:52 / 10:22 | 60 min box | EV7F retry 1 | RUNNING | EV7F-PARTIAL.md |
+
+Earlier EV7F facts kept: patch applies (rc 0), tree equals tree-R7F (diff 0), ruff rc 0, suppressions recorded. Its partial full run is cut, NOT a result.
+
+ASK: none. (EV7G needs a quiet machine: it is quiet now, load 1.6; I will record uptime, load and pids in EV7G's header before it starts.)
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7g patch and its tests | builder restarted, claims only | EV7G (one full run, recorded wrapper, no data/ folder) and fresh reviewer in parallel |
+| anything the cut-off left half-written in tree-R7G | not yet read | the resumed builder verifies by diff -r against tree-R7F first |
+| which test left the orphan workers | the restart destroyed the evidence | EV7G per-file process listing |
+| mail pass 9 | needs r7g | 30+ mutants on r7g snapshot |
+| first clean-set CRASH cause | no evidence | unexplained in README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. On the r7g hand-back: sha-check and copy patches, then start EV7G and the fresh r7g reviewer together while the machine is quiet.
+2. Mail pass 9 on r7g.
+3. Freeze on a clean pass; rewrite handover/core/fix/README.md; sweep agents and processes.
+
+
 ## STATUS (core lead) 04:47 UTC / 10:17 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
