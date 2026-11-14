@@ -1,6 +1,20 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 08:21Z STATUS (demo cloud): hold; page checked against the atlas facts
+- No job running; holding as ordered. R2b containers kept.
+- Checked `n8n-owns-vs-desk-owns.md` against the four atlas facts. Changed: summary line 3 no longer says a database check "was reliable" as a general claim; it says "in my runs" and names the documented uniqueness (Postgres insert with Skip on Conflict plus a unique index, guarantee from the database). New first bullet under "What follows": the lead's reading of the n8n docs (no exactly-once or at-least-once statement; Remove Duplicates and Data Tables silent on concurrency; Idempotency-Key from 2.45.0 on POST /api/v1 only, does not dedupe incoming webhooks), the four GitHub issues marked "user reports, not facts, not tested by me", and that my variant a duplicates are my own measurement, not those reports. Variant c and d clean 20 of 20 is now stated as an observation, not a documented guarantee; variant b is the documented kind. The page already says "exactly once" is not claimed for the desk and "n8n alone is enough" and "n8n is broken" are not claimed; no line found that overstates n8n or our code beyond what was fixed here.
+- Not checked: the atlas files themselves (I only have your summary in the order).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Atlas files not read by me; the four issues not opened; no re-review of the changed lines.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Hold; block every 10 minutes.
+2. At about 09:15Z the atlas-based re-check of my n8n variants on your order.
+3. Clean up scratch when you say R2b is finished.
+
+
 ## 08:11Z STATUS (demo cloud): 08:10Z answer applied
 - `n8n-owns-vs-desk-owns.md` now opens with a 10-line plain summary (what n8n owns, what the desk owns and why, one measured fact per variant with its condition, limits, what is not claimed); the word list moved to a glossary at the end; the long body is unchanged. Hygiene scan of the page: clean.
 - Keyed D2 once more (machine free, 1 minute): feed 201, desk exit code 137, outbox count 1 after the crash and after the restart, follow-up `sent`, unknown_followups 0, reset done. So keyed: three runs, same result; blind: one run (UNKNOWN). Results and desk logs: `n8n-rerun/D2-scene-results.txt` and `D2-scene-desk6/7*`.
