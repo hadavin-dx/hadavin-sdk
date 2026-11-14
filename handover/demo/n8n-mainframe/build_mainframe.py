@@ -45,6 +45,7 @@ def sub():
          pg("MarkDone", "UPDATE mf_leads SET state='done', updated_at=now() WHERE lead_key=$1 AND claim_token=$2 AND state='processing' RETURNING lead_key;", "={{ [%s, %s] }}" % (KEY, TOK), [1980, -200]),
          pg("MarkUnknownA", "UPDATE mf_leads SET state='unknown', updated_at=now() WHERE lead_key=$1 AND claim_token=$2 AND state='processing' RETURNING lead_key;", "={{ [%s, %s] }}" % (KEY, TOK), [1980, -60]),
          pg("MarkUnknownB", "UPDATE mf_leads SET state='unknown', updated_at=now() WHERE lead_key=$1 AND claim_token=$2 AND state='processing' AND mail_sent RETURNING lead_key;", "={{ [%s, %s] }}" % (KEY, TOK), [1760, 100]),
+         iff("UnknownNewA", "={{ $json.lead_key }}", "string", "notEmpty", None, [2200, -60]),
          iff("UnknownNew", "={{ $json.lead_key }}", "string", "notEmpty", None, [1980, 100]),
          mail("AlertUnknown", ALERT_TO, "={{ '[demo] Lead desk: mail outcome unknown for ' + %s }}" % KEY, "={{ 'Lead id ' + %s + ': the mail may or may not have been sent. A person decides.' }}" % KEY, [2200, 0], onError="continueRegularOutput"),
          iff("DoneOwned", "={{ $json.lead_key }}", "string", "notEmpty", None, [2200, -260]),
@@ -58,7 +59,7 @@ def sub():
     link(c, "OwnsClaim1", "MailClaim", 0); link(c, "OwnsClaim1", "OutLost", 1); link(c, "MailClaim", "MailRowBack")
     link(c, "MailRowBack", "SendMail", 0); link(c, "MailRowBack", "MarkUnknownB", 1)
     link(c, "SendMail", "MarkDone", 0); link(c, "SendMail", "MarkUnknownA", 1); link(c, "MarkDone", "DoneOwned"); link(c, "DoneOwned", "OutDone", 0); link(c, "DoneOwned", "OutLost", 1)
-    link(c, "MarkUnknownA", "AlertUnknown"); link(c, "MarkUnknownB", "UnknownNew"); link(c, "UnknownNew", "AlertUnknown", 0); link(c, "UnknownNew", "OutUnknown", 1); link(c, "AlertUnknown", "OutUnknown")
+    link(c, "MarkUnknownA", "UnknownNewA"); link(c, "UnknownNewA", "AlertUnknown", 0); link(c, "UnknownNewA", "OutUnknown", 1); link(c, "MarkUnknownB", "UnknownNew"); link(c, "UnknownNew", "AlertUnknown", 0); link(c, "UnknownNew", "OutUnknown", 1); link(c, "AlertUnknown", "OutUnknown")
     return {"name": "Lead desk main frame: CRM + mail (sub-workflow)", "nodes": n, "connections": c, "settings": ST}
 def call_sub(name, pos): return N(name, "n8n-nodes-base.executeWorkflow", 1.2, {"source": "database", "workflowId": {"__rl": True, "value": SUBID, "mode": "id"}, "mode": "each", "options": {"waitForSubWorkflow": True}}, pos)
 VERDICT = "{ done: 'new', unknown: 'unknown', stage_failed: 'processing', lost_claim: 'processing' }[$json.outcome] || 'processing'"

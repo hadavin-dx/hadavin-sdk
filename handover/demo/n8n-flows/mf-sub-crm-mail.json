@@ -322,6 +322,38 @@
     },
     "options": {}
    },
+   "name": "UnknownNewA",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2200,
+    -60
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.lead_key }}",
+       "rightValue": null,
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
    "name": "UnknownNew",
    "type": "n8n-nodes-base.if",
    "typeVersion": 2.2,
@@ -669,7 +701,25 @@
    "main": [
     [
      {
+      "node": "UnknownNewA",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "UnknownNewA": {
+   "main": [
+    [
+     {
       "node": "AlertUnknown",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "OutUnknown",
       "type": "main",
       "index": 0
      }
