@@ -339,3 +339,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R16b | a77ee82f6a52ce8d5 | fix-5 r7 code review (egm-codebase-details) | 06:10Z | 06:25Z | - | running | save report |
 | B16 | a9b26c2d3c33dd99a | fix-5 r7 builder | closed 06:03Z | - | - | handed back (3926 passed, 0 failed on final head) | reviews R16a/b |
 | R10c/R10d | a358ab293fa2e6d51 / a35225a5164f382fb | fix-10 r2 reviews | closed 06:04Z | - | - | reports saved (4+5 major) | resolve then B20 |
+| B20 | (starting 06:15Z) | fix-10 r3 builder (plan resolve-lane3-fix-10-r2.md) | 06:15Z | stop by 07:45Z | - | starting | check 06:30Z |
+| R16b | a77ee82f6a52ce8d5 | fix-5 r7 code review | closed 06:13Z | - | - | report saved (0/3/7/4) | wait R16a, resolve |
