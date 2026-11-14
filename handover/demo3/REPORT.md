@@ -1,6 +1,6 @@
 ## HEARTBEAT 194 (17:27Z) - ERROR at lease 45 s 3 of 3 pass; RESULTS.md final and compared with the demo table; all my test runs finished
 
-WORKERS: 0 lanes, 0 agents. All runs have ended; I am about to stop Postgres and report counts.
+WORKERS: 0 lanes, 0 agents. STOPPED at 17:27Z: Postgres stopped, 0 run scripts, 0 fakes, 0 n8n processes left (checked with pgrep: count 0). Disk 2.5 GB free. To run more I restart Postgres (one command) and the lanes.
 
 | film-v4, lease 45 s | n | Result |
 |---|---|---|
