@@ -1,5 +1,40 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 10:00 UTC / 15:30 IST
+
+**No EV7N result and no r7n review yet; both running. Checkpoint lines only; I have judged nothing.**
+
+- **EV7N (a9b99545):** 09:58 "steps 1, 3, 4, 5, 6, 7 done; full run in progress (about 50 percent)": the full run ends about 10:15-10:20. 09:57 order test: tests/test_r7k_findings.py then tests/test_real_check_dry.py in that order: rc 0, 218 passed in 233 s (the EV7K failure order is now green). Its 09:48 line "builder server never reaches LOGIN" is still unexplained in its checkpoint; I will read the evidence file for what it means.
+- **r7n reviewer (a8c42155):** 38 mutants running; 09:57 "R08 survived narrow; waiting rest" (R08 is its own mutant; survival on the narrow set is not yet a finding: it re-runs survivors on the wider set). No finding written.
+- **Pass 12 DONE and committed (mail-pass12-r7m.md, NOT CLEAN):** 11 rows: KILLED M9-75, M9-78, M9-82 (indirect: no test names the 5/4 boundary), M10-J06; EQUIVALENT M10-J12 (3012-case probe, 0 differences; argument, not a test); **REAL GAPS 6: M9-79 (live worst-case cost loses its x2 restart factor), M9-74 (exit 0 with contacts LEFT), M10-J13 (non-UTF-8 bytes decoded with replacement), M10-J09 (a byte-order mark silently stripped by read_regular_text; refuse or accept on purpose, and pin), M9-56 (user@ login part in the HubSpot base URL not refused early; low), M10-J02 (from None lost on the too-deep JSON refusal; low).** Not run: narrow-set re-check skipped (big set used), tls group no clean run, 3 socket tests deselected.
+- **r7o builder (a3cb2621) STARTED 09:53 for all six pass 12 gaps plus the M9-82 boundary test, test-first on a copy of r7n (it also reads the EV7N and r7n review files at minute 30).** 09:57 "tests written, fail-before 4 FAIL / 14 PIN, new 18 pass"; 09:59 "mutants 11/11 killed; final groups A, B running". It is fast; its claim "14 PIN" means 14 of 18 tests already pass on r7n, so several sources may already be right: the reviewer must check each pin against the pass 12 survivor text (a pin is only right if the mutant is killed by it). Not judged.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| a9b99545 (EV7N) | independent evidence on r7n | final bytes | 09:38 / 15:08 | about 10:50 | EV7N | RUNNING (full run about 50 percent) | EV7N-EVIDENCE.md |
+| a8c42155 (r7n reviewer) | whole-delta review | independent | 09:42 / 15:12 | about 10:55 | review 1 | RUNNING | core-fix-on-frozen-r7n-review.md |
+| a3cb2621 (r7o builder) | six pass 12 gaps + boundary test | fix-dont-defer | 09:53 / 15:23 | about 10:55 | r7o | RUNNING (final groups) | hand-back; fresh reviewer; delta evidence |
+
+Agents running: 3. Done: pass 12, r7n builder. Load 1.3.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7N and r7n review results | running | resolve, Blocker/Major to r7o |
+| r7o hand-back, its reviewer, evidence | running | delta evidence rules |
+| pass 11/12 mutants on r7n/r7o changed code | after r7o | one pass on the changed lines |
+| ledger rows OPEN (8) | need EV7N and review | after |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7N and the r7n review; send any Blocker/Major to r7o at once.
+2. At r7o hand-back: verify hashes and matrix; fresh reviewer; ONE final full run on r7o (bytes final) by a runner.
+3. README, ledger close, sweep, counts.
+
+
 ## STATUS (core lead) 09:51 UTC / 15:21 IST
 
 **No result from EV7N or the r7n reviewer yet: both are still running (checkpoint lines only below; I have judged nothing).**
