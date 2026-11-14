@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 05:49Z): R2b e unit 5 FINAL, unit 1b running (K3 4 of 5 rows in), container up ~2h58, nothing killed
+- Unit 5 final (rc 0, 10 rows): second CRM row 0 of 10; 2+ emails 10 of 10; all rows (1 CRM, 2 emails, sent).
+- e units 2-5 together (40 rows): second CRM row 1 of 40 (only unit 4 K3 run 4: 2 CRM, 3 emails); 2+ emails 40 of 40. Per unit: 0/10, 0/10, 1/10, 0/10. Unit 1b adds 10 rows (running since 05:43:28Z, ends about 05:55Z). R2 was 1 of 10, published 4 of 10.
+- Load per unit: median idle 99.5%; dips below 80% only at n8n restart after a kill (lowest 35.2% unit 2, 41.7% unit 3, 39.4% unit 4, 63.3% unit 5); nothing else of mine ran. Variant a bursts: idle 95.3-99.8%.
+- Your 05:04 notes read. P2 (scratch only, digit always added to the owner password, setup.py line 21, diff in n8n-rerun/R2b-patch-P2.diff) written 05:49Z AFTER unit 1b had passed setup, so 1b ran on the UNFIXED draw (passed by chance; chance of a digit-less password is 0.44% per draw). Said plainly.
+- Control order of 04:49Z (2 variant-a bursts on a FRESH stack each): starts after 1b ends (about 05:55Z); one stack per burst, same flags, load per row.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Unit 1b rows (6 of 10 still to come); the variant-a fresh-stack control; N8N-RERUN-1.md R2b + mapping + READ + P2 finding (writing next).
+- R3-partial b K2/K3; doc v3 tests, hygiene, CI-equivalent; fresh doc reviewer; egm reviewer on the updated file (all after the control).
+## WHAT I WOULD DO NEXT (ranked)
+1. 1b ends, then the 2 fresh-stack variant-a bursts (about 6 min).
+2. N8N-RERUN-1.md: R2b table (a five raw rows, e units), mapping, READ, P2; push.
+3. R3-partial b K2/K3 (your order 4), then quiet-machine doc tests.
 ## REPORT (clock 05:38Z): R2b e unit 4 FINAL, unit 5 at K2 (started 05:37:10Z), container up 2h47, nothing killed
 - Unit 4 final (rc 0, 10 rows): second CRM row 1 of 10 (one row (2 CRM, 3 emails, sent)); 2+ emails 10 of 10.
 - Unit 5: K3 5 rows in (all (1,2,sent), 0 second CRM rows), K2 running.

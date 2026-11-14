@@ -1,0 +1,11 @@
+--- /tmp/rr/setup.orig.py	2026-11-14 05:49:28.080360166 +0000
++++ setup.py	2026-11-14 05:49:28.099837535 +0000
+@@ -18,7 +18,7 @@
+ def main():
+     owner_file = os.path.join(RUN, "owner.json")
+     if not os.path.exists(owner_file):
+-        o = {"email": "owner-%s@example.com" % secrets.token_hex(4), "password": secrets.token_urlsafe(24)}
++        o = {"email": "owner-%s@example.com" % secrets.token_hex(4), "password": secrets.token_urlsafe(24) + "7"}  # R2b scratch patch P2: a digit is always included (n8n rejects a password with no digit)
+         with open(owner_file, "x") as f: json.dump(o, f)
+     o = json.load(open(owner_file))
+     r = {"HTTPError": "not answered"}
