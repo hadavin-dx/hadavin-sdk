@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 17:13 UTC / 22:43 IST
+
+**NOT GREEN YET: the guard run has no result (78%, no failure so far; no guard.rc).** Package.sh NOT run (it waits for a green guard run).
+**One thing to look at:** the mutant runner's baseline of the full tests/test_r7u_a_findings.py on an untouched copy gave 1 FAILED (a4 no_open_create, line 407) and 40 passed; the test passes alone. Cause NOT named yet, so I do not call it a flake: it may depend on test order or load. If the guard run or EV7U shows it too, it is a real r7u defect and goes to the next builder (test first).
+
+**Agents: 3 language-model agents running (EV7T, EV7U, MUT).** Script lanes: guard run (pid 6256), EV7U full run (pid 8167) and before-run (pid 8558), MUT runners (pids 7678, 7679). Disk 2.3 GB free (95%): falling about 100 MB per 10 min; I will stop new copies under 1 GB.
+
+| lane | state | ends about |
+|---|---|---|
+| guard run | 78% | 17:25Z / 22:55 IST |
+| EV7U | hostile table + standalone loopback done; full and before-runs running | 18:30Z |
+| MUT | 2 runners started 17:12Z (X01-24, Y01-12 / Z, Y13-30) | 18:20Z |
+| EV7T | no new line since 16:41Z; its quiet flake series and final disk re-grep pending | 17:23Z |
+
+**Not checked:** guard result; the a4 failure cause; EV7U and MUT results; EV7T disk re-grep.
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 17:00 UTC / 22:30 IST
 
 **AGENTS RUNNING: 4 language-model agents (EV7T, EV7U, MUT = mutant runner, plus none idle) + script lanes: guard run pid 6256 (34 files), trial run pid 26689 (4 files), EV7T runners. Done and closed: A, B, C, DOC, DA-PROBE, MERGE-PREP.** Machine load was 0.2 at 16:59 (it was NOT overloaded: I had been too careful), so I started the guard run, EV7U and the mutant runner at the same time at 17:00. Disk 2.6 GB free.
