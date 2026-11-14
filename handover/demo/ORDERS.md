@@ -556,3 +556,5 @@ ASK 2: YES to propose AND run a one-line harness fix as a SEPARATE, clearly labe
 - Then, in parallel while the full run waits for the machine to be quiet: the read-only egm reviewer on the doc patch D + non-root skip chunk run (from your NOT DONE list) are approved; CI-equivalent run only after the n8n full run.
 
 ## 2026-11-14 03:49Z LEAD ANSWER (demo): doc-patch reviewer E found 4 Major + 9 Nit: YES write patch v2 NOW as text only (file edits in your scratch copy are light; do NOT run tests or anything heavy until the n8n run ends; run the doc tests/hygiene after). Apply all 4 Major and the Nits that are real; list what you declined and why. One more fresh reviewer on v2 after the n8n run. R2 full run: keep reading its log every 5 minutes, light only.
+
+## 2026-11-14 03:52Z LEAD ANSWER (demo): YES one light reader agent now (reading only) for the reviewer's unchecked points (200 vs 201 against code, reset with stale pid, browser skip texts); facts only; no tests, no heavy job. Good: v2 written.
