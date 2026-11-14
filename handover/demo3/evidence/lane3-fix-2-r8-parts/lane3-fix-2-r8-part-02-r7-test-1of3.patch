@@ -1,0 +1,600 @@
+diff --git a/tests/test_one_key_file_rule_r7.py b/tests/test_one_key_file_rule_r7.py
+new file mode 100644
+index 0000000..f618bd6
+--- /dev/null
++++ b/tests/test_one_key_file_rule_r7.py
+@@ -0,0 +1,1582 @@
++"""Fix-2 rounds 7 and 8: the guards (a reader guard and a shell-script guard, both banning a read of a file outside a
++named allow-list, and a probe guard for a setting's path; all three are tripwires, not proofs), the Retry-After rule
++tested on real HTTP 429 replies at every reader, key files that are links, and the wording pins.
++Made-up data only; loopback only; fake keys are built from parts."""
++
++from __future__ import annotations
++
++import ast
++import importlib
++import importlib.util
++import math
++import os
++import re
++import socket
++import sys
++import threading
++import time
++import types
++from collections.abc import Iterator
++from decimal import Decimal
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from lead_desk import constants, envnum, server
++from lead_desk.envnum import SettingRefused
++
++SRC = Path(server.__file__).parent
++REPO = SRC.parents[1]
++KEY = "made" + "-up-" + "key-" + "0123456789"
++PLAIN_WORD = "lead" + " " + "book"  # exactly the wrong spelling, for the allow-list keys
++# the wrong spelling (any blank between), built from parts so this file does not hold it
++WORD = "lead" + r"\s+" + "book"
++ARABIC_DIGITS = "\u0661\u0662"  # two Arabic-Indic digits
++
++
++def _make_link(link: Path, target: Path) -> None:
++    """A symbolic link; a system that will not make one here (Windows without the right) skips the test."""
++    try:
++        link.symlink_to(target, target_is_directory=target.is_dir())
++    except (OSError, NotImplementedError) as e:
++        pytest.skip(f"this system will not make a symbolic link here: {type(e).__name__}")
++
++# ------------------------------------------------------------------------ the readers of files: one ban, one allow-list
++# A TRIPWIRE, not a proof: it names every way the standard library has to read a file or to start a program that reads
++# one, and refuses each outside the named allow-list. What it cannot see (a C extension, a plug-in, text that is run as
++# code) needs a person who reads the diff.
++BANNED = {"open", "read_text", "read_bytes", "fdopen", "FileIO", "read_binary", "open_text", "open_binary"}
++BANNED_MODULES = {"linecache", "fileinput", "configparser", "mmap", "subprocess", "tokenize"}  # any use, any form
++BANNED_MODULE_ATTRS = {
++    "shutil": {"copy", "copy2", "copyfile", "copyfileobj", "copytree", "move"},
++    "os": {"system", "popen", "read", "pread", "readv", "sendfile", "startfile", "spawnl", "spawnv", "execv", "execl"},
++}  # fmt: skip
++PROBES = {
++    "is_dir", "is_file", "exists", "is_symlink", "stat", "lstat", "samefile", "iterdir", "glob", "rglob", "getsize",
++    "lexists", "access", "isdir", "isfile", "islink", "ismount", "getmtime", "getctime", "getatime", "realpath",
++    "samestat", "scandir", "listdir", "walk", "readlink", "resolve", "is_mount", "is_socket", "is_fifo",
++    "is_block_device", "is_char_device", "is_junction", "statvfs", "disk_usage", "expanduser",
++}  # fmt: skip
++ZERO_ARG_PROBES = {"owner", "group"}  # Path.owner() and Path.group() take no argument (re.Match.group(1) does)
++NAMESPACE_CALLS = {"globals", "locals", "vars"}
++OS_MODULES = {"os", "os.path", "posixpath", "ntpath", "genericpath", "glob", "pathlib", "io", "shutil"}
++READ_FOLDERS = ("src/lead_desk", "scripts", "demo_only", "load_tools", "tools")
++PROBE_FOLDERS = ("src/lead_desk", "scripts", "demo_only", "load_tools", "tools")
++THE_ONE_READER = "src/lead_desk/envnum.py"  # the one file that may read a key file and look at a setting's path
++
++
++def _walk(node: ast.AST, stack: tuple[str, ...] = ()) -> Iterator[tuple[ast.AST, str]]:
++    """Every node with the name of the definitions around it ("Class.method", or "<module>" outside any)."""
++    named = isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
++    inner = (*stack, node.name) if named else stack  # type: ignore[attr-defined]
++    yield node, ".".join(inner) or "<module>"
++    for child in ast.iter_child_nodes(node):
++        yield from _walk(child, inner)
++
++
++def _call_name(f: ast.expr) -> str:
++    return f.id if isinstance(f, ast.Name) else f.attr if isinstance(f, ast.Attribute) else ""
++
++
++def _is_namespace(v: ast.expr) -> bool:
++    return (
++        (isinstance(v, ast.Attribute) and v.attr == "__dict__")
++        or (isinstance(v, ast.Name) and v.id in {"__builtins__", "builtins"})
++        or (isinstance(v, ast.Call) and _call_name(v.func) in NAMESPACE_CALLS)
++    )
++
++
++def _names_own_file(v: ast.AST) -> bool:
++    """True when the expression holds `__file__` (the path of the running code, never a setting)."""
++    return any(
++        (isinstance(x, ast.Name) and x.id == "__file__") or (isinstance(x, ast.Attribute) and x.attr == "__file__")
++        for x in ast.walk(v)
++    )
++
++
++def _module_of(tree: ast.AST) -> dict[str, str]:
++    """`import shutil as sh` -> {"sh": "shutil"} (and the plain names), for the modules of the two bans."""
++    out: dict[str, str] = {}
++    for n in ast.walk(tree):
++        if isinstance(n, ast.Import):
++            for a in n.names:
++                out[(a.asname or a.name).split(".")[0]] = a.name.split(".")[0]
++    return out
++
++
++def _refs(
++    source: str, names: set[str], *, bare_names: bool, readers: bool = False, zero_arg: bool = False
++) -> list[tuple[int, str, str]]:
++    """Every place the source names one of `names` (a line number, the line, the enclosing definition): an attribute
++    (`x.read_text`), a bare name when `bare_names` (`open`), an import of it (`from os import open`, or a star import
++    of an os-like module), a keyword or argument of that name, a definition of that name, or a `getattr(x, "name")`.
++    Calls and mere references are both found, so `reader = Path.read_text; reader(p)` is caught as well as
++    `Path(p).read_text()`. With `readers` the ban of whole modules (BANNED_MODULES), of attributes of shutil and os
++    (BANNED_MODULE_ATTRS), of a computed name in getattr, of `__import__`/`import_module` with a computed or banned
++    name, of `builtins.__dict__[...]`/`globals()[...]`/`__builtins__` are also reported; with `zero_arg` the
++    zero-argument `owner()` and `group()` probes (ZERO_ARG_PROBES) are. `Path(__file__).resolve()` (the file of the
++    code itself, not a setting) is never a hit."""
++    tree = ast.parse(source)
++    lines = source.splitlines()
++    modules = _module_of(tree)
++    found: dict[int, str] = {}
++    for n, scope in _walk(tree):
++        line = None
++        if isinstance(n, ast.Name) and bare_names and n.id in names:
++            line = n.lineno
++        elif isinstance(n, ast.Attribute) and n.attr in names:
++            if not (n.attr == "resolve" and _names_own_file(n.value)):
++                line = n.end_lineno  # the attribute name sits at the end of the expression
++        elif isinstance(n, ast.ImportFrom) and (
++            any(a.name in names for a in n.names)
++            or any(a.name == "*" for a in n.names)
++            and (n.module or "") in OS_MODULES
++        ):
++            line = n.lineno
++        elif isinstance(n, ast.keyword) and n.arg in names:
++            line = n.value.lineno
++        elif isinstance(n, ast.arg) and bare_names and n.arg in names:
++            line = n.lineno
++        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and bare_names and n.name in names:
++            line = n.lineno
++        elif (
++            isinstance(n, ast.Call)
++            and isinstance(n.func, ast.Name)
++            and n.func.id in ("getattr", "vars", "__import__")
++            and len(n.args) > 1
++            and isinstance(n.args[1], ast.Constant)
++            and n.args[1].value in names
++        ):
++            line = n.lineno
++        elif zero_arg and isinstance(n, ast.Call) and _call_name(n.func) in ZERO_ARG_PROBES:
++            if isinstance(n.func, ast.Attribute) and not n.args and not n.keywords:
++                line = n.lineno
++        elif readers:
++            line = _reader_extra(n, modules)
++        if line:
++            found.setdefault(line, scope)
++    return [(n, lines[n - 1].strip(), found[n]) for n in sorted(found)]
++
++
++def _reader_extra(n: ast.AST, modules: dict[str, str]) -> int | None:
++    """The extra bans of `_refs(readers=True)`: the line of this node, or None."""
++    if isinstance(n, ast.Import) and any(a.name.split(".")[0] in BANNED_MODULES for a in n.names):
++        return n.lineno
++    if isinstance(n, ast.ImportFrom):
++        top = (n.module or "").split(".")[0]
++        if top in BANNED_MODULES or any(a.name in BANNED_MODULE_ATTRS.get(top, set()) for a in n.names):
++            return n.lineno
++        return None
++    if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name):
++        module = modules.get(n.value.id, n.value.id)
++        if module in BANNED_MODULES or n.attr in BANNED_MODULE_ATTRS.get(module, set()):
++            return n.end_lineno
++    if isinstance(n, ast.Call):
++        name = _call_name(n.func)
++        if name == "getattr" and len(n.args) > 1 and not isinstance(n.args[1], ast.Constant):
++            return n.lineno  # a computed name can be any of the banned names
++        if name in {"__import__", "import_module"} and n.args:
++            first = n.args[0]
++            if not isinstance(first, ast.Constant) or str(first.value).split(".")[0] in BANNED_MODULES:
++                return n.lineno
++    if isinstance(n, ast.Subscript) and _is_namespace(n.value):
++        return n.lineno
++    if isinstance(n, ast.Name) and n.id == "__builtins__":
++        return n.lineno
++    return None
++
++
++def _scan_tree(
++    root: Path, folders: tuple[str, ...], names: set[str], *, bare_names: bool, readers: bool = False,
++    zero_arg: bool = False,
++) -> list[tuple[str, int, str, str]]:
++    """(file, line, text, definition) for every hit of `_refs` in every .py file below each folder, at any depth;
++    only the file src/lead_desk/envnum.py (the one reader) is left out, by its exact path."""
++    out: list[tuple[str, int, str, str]] = []
++    for folder in folders:
++        for p in sorted((root / folder).rglob("*.py")):
++            rel = p.relative_to(root).as_posix()
++            if rel == THE_ONE_READER:
++                continue
++            hits = _refs(
++                p.read_text(encoding="utf-8"), names, bare_names=bare_names, readers=readers, zero_arg=zero_arg
++            )
++            out += [(rel, n, t, scope) for n, t, scope in hits]
++    return out
++
++
++def _unallowed(
++    hits: list[tuple[str, int, str, str]], allowed: dict[tuple[str, str, str], tuple[int, str]]
++) -> tuple[list[str], list[tuple[str, str, str]]]:
++    """(hits that no allowance covers, allowances that nothing uses up). The key is the file, the definition around
++    the line and the exact line text without its trailing comment; the number says how many times that line may occur
++    there. A line that moves to another definition is a new hit."""
++    bad: list[str] = []
++    used: dict[tuple[str, str, str], int] = {}
++    for rel, n, text, scope in hits:
++        key = (rel, scope, text.split("  #")[0].rstrip())
++        if key in allowed and used.get(key, 0) < allowed[key][0]:
++            used[key] = used.get(key, 0) + 1
++        else:
++            bad.append(f"{rel}:{n} ({scope}): {text}")
++    stale = [k for k, (count, _why) in allowed.items() if used.get(k, 0) != count]
++    return bad, stale
++
++
++WEB = "a web request through the fixed opener, not a file"
++FLAG = "the control or flag file of a drill; it holds one mode word, no key"
++DATA = "a fixed data file of the repository or the file a person names on the command line (path-checked); no key"
++LEDGER = "the live spending ledger or a log the desk writes; its path is checked by refuse_unusable_file; no key"
++START = "starts one fixed program with fixed arguments (no setting is a program name or an argument); reads no key"
++FIELD = "a field of this class named by a fixed list of names in this file; no path"
++FORWARD = "forwards one method name of the wrapped adapter; no path"
++ALLOWED_READS: dict[tuple[str, str, str], tuple[int, str]] = {
++    (
++        "src/lead_desk/adapters.py",
++        "_exchange",
++        "with _OPENER.open(req, timeout=timeout) as r:",
++    ): (1, WEB),
++    (
++        "src/lead_desk/config.py",
++        "LiveSettings.__post_init__",
++        "if not isinstance(getattr(self, text_name), str):",
++    ): (1, FIELD),
++    (
++        "src/lead_desk/config.py",
++        "LiveSettings.__post_init__",
++        "v = getattr(self, name)",
++    ): (1, FIELD),
++    (
++        "src/lead_desk/config.py",
++        "read_approvers",
++        'with path.open("rb") as f:',
++    ): (1, "the settings file a person names; keys are named by *_FILE lines, never held in it"),
++    (
++        "src/lead_desk/config.py",
++        "Leadflow.__post_init__",
++        "if getattr(self, key) not in listed:",
++    ): (1, FIELD),
++    (
++        "src/lead_desk/config.py",
++        "_read_leadflow",
++        'with path.open("rb") as f:',
++    ): (1, "the settings file a person names; keys are named by *_FILE lines, never held in it"),
++    (
++        "src/lead_desk/crm_hubspot.py",
++        "HubspotCrm._request",
++        "with _OPENER.open(req, timeout=left) as r:",
++    ): (1, WEB),
++    (
++        "src/lead_desk/db.py",
++        "_schema_text",
++        'return importlib.resources.files("lead_desk").joinpath("schema.sql").read_text("utf-8")',
++    ): (1, "the schema file packaged with the desk"),
++    (
++        "src/lead_desk/hooks.py",
++        "FlagFileHooks.crash_point",
++        'wanted = self.flag_path.read_text(encoding="utf-8").strip()',
++    ): (1, FLAG),
++    (
++        "src/lead_desk/live_claude.py",
++        "_FileLock.__enter__",
++        'f = open(self.path, "a+b")',
++    ): (1, LEDGER),
++    (
++        "src/lead_desk/live_claude.py",
++        "SpendLedger._totals",
++        'with open(self.path, "rb") as f:',
++    ): (1, LEDGER),
++    (
++        "src/lead_desk/live_claude.py",
++        "SpendLedger._append",
++        'with open(self.path, "a+b") as f:',
++    ): (1, LEDGER),
++    (
++        "src/lead_desk/live_claude.py",
++        "LiveQualifier._post_once",
++        "with _OPENER.open(req, timeout=timeout) as r:",
++    ): (1, WEB),
++    (
++        "src/lead_desk/loader.py",
++        "_kind_module",
++        "return importlib.import_module(name)",
++    ): (1, (
++            "the kind module names are fixed lists in this file (or come from the settings as a module "
++            "name, never a path); no file"
++        )),
++    (
++        "src/lead_desk/lockfile.py",
++        "acquire",
++        'f = open(path, "a+b")',
++    ): (1, "the lock file, which holds nothing"),
++    (
++        "src/lead_desk/portal_api.py",
++        "build_static",
++        "out[p.relative_to(root).as_posix()] = (p.read_bytes(), kind)",
++    ): (1, "the portal's own asset folder"),
++    (
++        "src/lead_desk/trace.py",
++        "Tracer.event",
++        'with self._lock, open(self.path, "a", encoding="utf-8") as f:',
++    ): (1, LEDGER),
++    (
++        "src/lead_desk/trace.py",
++        "_Traced.__getattr__",
++        "return getattr(self._inner, name)",
++    ): (1, FORWARD),
++    (
++        "src/lead_desk/trace.py",
++        "CrashWindows.hit",
++        'wanted = self.flag_path.read_text(encoding="utf-8").strip()',
++    ): (1, FLAG),
++    (
++        "src/lead_desk/trace.py",
++        "_Window.__getattr__",
++        "return getattr(self._inner, name)",
++    ): (1, FORWARD),
++    (
++        "scripts/check_schema.py",
++        "main",
++        'sql = SCHEMA.read_text(encoding="utf-8")',
++    ): (1, "the schema file of the repository"),
++    (
++        "scripts/feed.py",
++        "main",
++        'leads = json.loads(CANNED.read_text(encoding="utf-8"))',
++    ): (1, "the made-up leads file of the repository"),
++    (
++        "scripts/http_guard.py",
++        "open_http",
++        "return urllib.request.build_opener(*handlers).open(req, timeout=timeout)",
++    ): (1, WEB),
++    (
++        "scripts/hubspot_probe.py",
++        "Probe._once",
++        "with _OPENER.open(req, timeout=TIMEOUT_SECONDS) as r:",
++    ): (1, WEB),
++    (
++        "scripts/n8n_api.py",
++        "main",
++        'wf = json.loads(confine_existing(a[2], what="FILE").read_text(encoding="utf-8"))',
++    ): (1, "the workflow file a person names (path-checked); no key"),
++    (
++        "scripts/run_real_check.py",
++        "<module>",
++        "import subprocess",
++    ): (1, START),
++    (
++        "scripts/run_real_check.py",
++        "load_env",
++        'for n, raw in enumerate(config.read_text(encoding="utf-8").splitlines(), 1):',
++    ): (1, "the settings file a person names; keys are named by *_FILE lines, never held in it"),
++    (
++        "scripts/run_real_check.py",
++        "Desk.__init__",
++        "self.proc: subprocess.Popen[bytes] | None = None",
++    ): (1, START),
++    (
++        "scripts/run_real_check.py",
++        "Desk.start",
++        'with self.log_path.open("wb") as log:',
++    ): (1, LEDGER),
++    (
++        "scripts/run_real_check.py",
++        "Desk.start",
++        "self.proc = subprocess.Popen(",
++    ): (1, START),
++    (
++        "scripts/run_real_check.py",
++        "Desk.start",
++        "stderr=subprocess.STDOUT,",
++    ): (1, START),
++    (
++        "scripts/run_real_check.py",
++        "Desk.stop",
++        "except subprocess.TimeoutExpired:",
++    ): (1, START),
++    (
++        "scripts/run_real_check.py",
++        "Desk.wait_exit",
++        "except subprocess.TimeoutExpired:",
++    ): (1, START),
++    (
++        "scripts/run_real_check.py",
++        "read_counter_files",
++        'total.update({k: int(v) for k, v in json.loads(p.read_text(encoding="utf-8")).items()})',
++    ): (1, "counters files the check itself wrote"),
++    (
++        "demo_only/burst.py",
++        "_post_once",
++        "with opener.open(req, timeout=REQUEST_TIMEOUT_SECONDS) as r:",
++    ): (1, WEB),
++    (
++        "demo_only/fake_model_server.py",
++        "ModelState.current_mode",
++        'text = self.control_file.read_text(encoding="utf-8").strip()',
++    ): (1, FLAG),
++    (
++        "demo_only/fake_model_server.py",
++        "ModelState.log_call",
++        'with self.lock, self.call_log.open("a", encoding="utf-8") as f:',
++    ): (1, LEDGER),
++    (
++        "demo_only/fake_smtp_tls.py",
++        "<module>",
++        "import subprocess",
++    ): (1, START),
++    (
++        "demo_only/fake_smtp_tls.py",
++        "make_cert",
++        "subprocess.run(",
++    ): (1, START),
++    (
++        "demo_only/fakes.py",
++        "RecordedQualifier.__init__",
++        'data = json.loads(Path(replies_path).read_text(encoding="utf-8"))',
++    ): (1, DATA),
++    (
++        "demo_only/portal_demo.py",
++        "_fetch_json",
++        "with _OPENER.open(url, timeout=timeout) as r:",
++    ): (1, WEB),
++    (
++        "demo_only/portal_demo.py",
++        "PortalDemo.__init__",
++        "self.assets[name] = ((HERE / name).read_bytes(), ctype)",
++    ): (1, "a fixed asset of the demo folder; a missing or unreadable one is left out"),
++    (
++        "demo_only/portal_demo.py",
++        "PortalDemo.__init__",
++        'people = json.loads((HERE / CANNED_FILE).read_text(encoding="utf-8"))',
++    ): (1, DATA),
++    (
++        "demo_only/portal_demo.py",
++        "PortalDemo._armed",
++        'with open(hooks.flag_path, "rb") as f:',
++    ): (1, FLAG),
++    (
++        "demo_only/portal_demo.py",
++        "PortalDemo._write_flag",
++        'with os.fdopen(fd, "w", encoding="utf-8") as f:',
++    ): (1, "writes the flag file just made"),
++    (
++        "demo_only/portal_demo.py",
++        "PortalDemo._post_once",
++        "with _OPENER.open(req, timeout=REQUEST_TIMEOUT_SECONDS) as r:",
++    ): (1, WEB),
++    (
++        "load_tools/catcher.py",
++        "read_mode",
++        'words = control.read_text(encoding="utf-8").split()',
++    ): (1, FLAG),
++    (
++        "load_tools/catcher.py",
++        "Catcher._write",
++        'with self.out.open("a", encoding="utf-8") as f:',
++    ): (1, LEDGER),
++    (
++        "load_tools/check_invariants.py",
++        "read_jsonl",
++        'text = path.read_text(encoding="utf-8")',
++    ): (1, DATA),
++    (
++        "load_tools/check_invariants.py",
++        "read_crm",
++        'obj = json.loads(path.read_text(encoding="utf-8"))',
++    ): (1, DATA),
++    (
++        "load_tools/check_invariants.py",
++        "_intended",
++        'return int(json.loads(path.read_text(encoding="utf-8"))["intended_requests"])',
++    ): (1, DATA),
++    (
++        "load_tools/check_invariants.py",
++        "_facts_say_live",
++        'return bool(json.loads(path.read_text(encoding="utf-8")).get("qualifier") == "live_claude")',
++    ): (1, DATA),
++    (
++        "load_tools/check_invariants.py",
++        "_drain_marker",
++        'obj = json.loads(path.read_text(encoding="utf-8"))',
++    ): (1, DATA),
++    (
++        "load_tools/load_driver.py",
++        "_post",
++        "with opener.open(req, timeout=ATTEMPT_TIMEOUT_SECONDS) as r:",
++    ): (1, WEB),
++    (
++        "load_tools/load_driver.py",
++        "_worker",
++        'out = part.open("w", encoding="utf-8")',
++    ): (1, LEDGER),
++    (
++        "load_tools/load_driver.py",
++        "_count_time_wait",
++        'lines = Path(name).read_text(encoding="utf-8").splitlines()[1:]',
++    ): (1, "a system file of numbers"),
++    (
++        "load_tools/load_driver.py",
++        "_read_int",
++        'return int(Path(kernel_file).read_text(encoding="utf-8").strip())',
++    ): (1, "a system file of numbers"),
++    (
++        "load_tools/load_driver.py",
++        "machine_facts",
++        'for ln in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():',
++    ): (1, "a system file of numbers"),
++    (
++        "load_tools/load_driver.py",
++        "run",
++        'lines += [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]',
++    ): (1, DATA),
++    (
++        "tools/hygiene.py",
++        "<module>",
++        "import subprocess",
++    ): (1, START),
++    (
++        "tools/hygiene.py",
++        "read_lines",
++        'return [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]',
++    ): (1, "the repository's own pattern lists"),
++    (
++        "tools/hygiene.py",
++        "git_grep",
++        "p = subprocess.run(",
++    ): (1, START),
++    (
++        "tools/hygiene.py",
++        "load_term_list",
++        (
++            'lines = [t.strip() for t in path.read_text(encoding="utf-8").splitlines() if t.strip() '
++            'and not t.startswith("#")]'
++        ),
++    ): (1, "the repository's own pattern lists"),
++    (
++        "tools/hygiene.py",
++        "_git_text",
++        "p = subprocess.run(",
++    ): (1, START),
++    (
++        "tools/hygiene.py",
++        "scan_repo",
++        'texts = {f: (repo / f).read_text(encoding="utf-8", errors="replace") for f in files}',
++    ): (1, "the files git lists, to scan them"),
++    (
++        "tools/scrub_n8n_export.py",
++        "main",
++        'wf = json.loads(src_path.read_text(encoding="utf-8"))',
++    ): (1, "the workflow export a person names (path-checked); no key"),
++}  # fmt: skip
++
++PLANTED_READS = {
++    "an attribute of a setting (the old shape of crm_hubspot, smtp_provider, live_claude)": (
++        "class Holder(object):\n    def _key(self):\n        return self.s.key_file.read_text()\n"
++    ),
++    "a module-level read": "KEY = open(p).read()\n",
++    "a bare-name import": "from os import open\n",
++    "io.open": "import io\nx = io.open(p)\n",
++    "os.open": "import os\nfd = os.open(p, 0)\n",
++    "os.fdopen": "import os\nf = os.fdopen(fd)\n",
++    "read_bytes": "x = Path(p).read_bytes()\n",
++    "Path.open": "x = Path(p).open()\n",
++    "a reference without a call": "r = Path.read_text\nr(p)\n",
++    "getattr by name": 'import os\nf = getattr(os, "open")\n',
++    "an argument named open": "def f(open=None):\n    pass\n",
++    "a keyword named read_text": "g(read_text=1)\n",
++    "a star import of io": "from io import *\n",
++    "io.FileIO": "import io\nf = io.FileIO(p)\n",
++    "importlib.resources.read_binary": "import importlib.resources as r\nx = r.read_binary('a', 'b')\n",
++    "importlib.resources.open_text": "import importlib.resources as r\nx = r.open_text('a', 'b')\n",
++    "importlib.resources.open_binary": "import importlib.resources as r\nx = r.open_binary('a', 'b')\n",
++    "linecache": "import linecache\nx = linecache.getline(p, 1)\n",
++    "fileinput": "from fileinput import input\n",

@@ -1,0 +1,498 @@
+diff --git a/tests/support.py b/tests/support.py
+index 353043b..61ba311 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -70,7 +70,8 @@ def lead(**over: Any) -> dict[str, Any]:
+ 
+ def child_env(**extra: str) -> dict[str, str]:
+     """Environment for a child process: PYTHONPATH = src and the repo root (pytest's pythonpath is not inherited)."""
+-    env = dict(os.environ)
++    # no ambient setting leaks in
++    env = {k: v for k, v in os.environ.items() if not k.startswith(("DESK_", "LEAD_DESK_"))}
+     env["PYTHONPATH"] = os.pathsep.join([str(REPO / "src"), str(REPO)])
+     env.update(extra)
+     return env
+@@ -336,7 +337,8 @@ def call(base: str, method: str, path: str, body: Any = None, raw: bytes | None
+ 
+ 
+ def post_lead(base: str, source: str, ref: str, payload: Any) -> tuple[int, dict[str, Any]]:
+-    return call(base, "POST", "/leads", {"source": source, "source_ref": ref, "payload": payload})  # type: ignore[no-any-return]
++    body = {"source": source, "source_ref": ref, "payload": payload}
++    return call(base, "POST", "/leads", body)  # type: ignore[no-any-return]
+ 
+ 
+ def addr(base: str) -> tuple[str, int]:
+diff --git a/tests/test_late_refusal_value_echo.py b/tests/test_late_refusal_value_echo.py
+new file mode 100644
+index 0000000..78f1102
+--- /dev/null
++++ b/tests/test_late_refusal_value_echo.py
+@@ -0,0 +1,152 @@
++"""A setting value never reaches the desk's output through ANY of its refusal sites (behaviour at each site).
++
++Bug class: a refusal message that carries what the person typed (a path, an address, a key file name). The desk words
++every refusal through one function (`_refuse` -> `config_exit.refusal_line`). This file runs `server.main` itself, once
++per late refusal site, with the real function behind that site replaced by one that refuses with a message that HOLDS
++the value of the setting it names (the worst case: a message that echoes). The line the person sees must not hold the
++value, must be one line, and the exit code is the desk's own. The sites after the first reading of the settings, in the
++order of `server.main`: the public bind address, the book check, the approvers file, the leadflow file, the adapters,
++building the Desk, and the run-time check of the Desk. Made-up values only; the lock file and the folder are in
++tmp_path.
++"""
++
++from __future__ import annotations
++
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from lead_desk import config as config_module
++from lead_desk import desk as desk_module
++from lead_desk import server
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
++from lead_desk.desk import DeskSettingRefused
++from lead_desk.envnum import SettingRefused
++
++SETTING = "DESK_REPLIES_PATH"  # a valid, unread-at-start path setting: its value is the thing that must not appear
++MARK = "zq-marker-9f3k"  # the made-up value, built into a path below
++
++
++class _StubServer:
++    def server_close(self) -> None:
++        return None
++
++
++class _StubDesk:
++    """A Desk that builds, and refuses (as the real one can) when it is started: the run-time site."""
++
++    def __init__(self, *_: Any, **__: Any) -> None:
++        return None
++
++    def start_background(self) -> None:
++        raise DeskSettingRefused(f"{SETTING} holds {self.value}")
++
++    def stop_background(self) -> None:
++        return None
++
++    def reaper_running(self) -> bool:
++        return False
++
++    def close(self) -> None:
++        return None
++
++    value = ""
++
++
++def _env(tmp: Path, monkeypatch: pytest.MonkeyPatch, **extra: str) -> str:
++    value = str(tmp / f"{MARK}.json")
++    for name, text in {
++        "DESK_DB_PATH": str(tmp / "data" / "desk.sqlite3"),
++        "DESK_PORT": "0",
++        SETTING: value,
++        **extra,
++    }.items():
++        monkeypatch.setenv(name, text)
++    return value
++
++
++def _message(value: str) -> str:
++    return f"{SETTING} is wrong: {value}"
++
++
++def _site_bind(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(config_module.Config, "public_bind_problem", lambda self: _message(value))
++
++
++def _site_book(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(desk_module, "book_problem", lambda path: _message(value))
++
++
++def _site_approvers(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_approvers", refuse)
++
++
++def _site_leadflow(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(path: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "read_leadflow", refuse)
++
++
++def _site_adapters(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", refuse)
++
++
++def _site_desk_build(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(*_: Any, **__: Any) -> Any:
++        raise DeskSettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", refuse)
++
++
++def _site_run_time(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    _StubDesk.value = value
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", _StubDesk)
++    monkeypatch.setattr(server, "make_server", lambda desk, config: _StubServer())
++    monkeypatch.setattr(server.signal, "signal", lambda *a, **k: None)
++
++
++# (site, how the refusal is planted, the extra settings that make the site reachable)
++SITES: list[tuple[str, Any, dict[str, str]]] = [
++    ("bind", _site_bind, {}),
++    ("book", _site_book, {}),
++    ("approvers", _site_approvers, {"DESK_LATER_MODE": "approval", "DESK_APPROVERS_FILE": "approvers.json"}),
++    ("leadflow", _site_leadflow, {"DESK_LEADFLOW_FILE": "flow.json", "DESK_NUDGE_TO": "n@example.test"}),
++    ("adapters", _site_adapters, {}),
++    ("desk_build", _site_desk_build, {}),
++    ("run_time", _site_run_time, {}),
++]
++
++
++@pytest.mark.parametrize(("site", "plant", "extra"), SITES, ids=[s[0] for s in SITES])
++def test_no_setting_value_reaches_the_output_at_a_late_refusal_site(
++    site: str, plant: Any, extra: dict[str, str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    value = _env(tmp_path, monkeypatch, **extra)
++    plant(monkeypatch, value)
++    with pytest.raises(SystemExit) as stop:
++        server.main()
++    assert stop.value.code == EXIT_DESK_SETTING_REFUSED, site
++    out = capsys.readouterr()
++    text = out.out + out.err
++    lines = [ln for ln in text.splitlines() if ln.strip()]
++    assert len(lines) == 1, (site, lines)
++    assert SETTING in lines[0] and "<value>" in lines[0], (site, lines[0])
++    assert MARK not in text and value not in text, site
++
++
++def test_the_seven_sites_are_all_the_late_refusal_sites_of_main() -> None:
++    """If a refusal site is added to `server.main`, this count fails and a case must be added above."""
++    source = (Path(server.__file__)).read_text(encoding="utf-8")
++    main_text = source[source.index("def main(") :]
++    assert main_text.count("_refuse(") == 8  # the first reading of the settings plus the seven sites above
++    assert len(SITES) == 7
+diff --git a/tests/test_ps1_pins.py b/tests/test_ps1_pins.py
+new file mode 100644
+index 0000000..6797c2f
+--- /dev/null
++++ b/tests/test_ps1_pins.py
+@@ -0,0 +1,207 @@
++"""The two Windows scripts that read the DESK_* settings, pinned as far as this machine allows.
++
++NOT RUN HERE: PowerShell (no Windows, no pwsh on this machine). TEXT-ONLY: what runs here is a set of pins on the TEXT
++of scripts/start_all.ps1 and scripts/reset.ps1, each with a mutant (the same text with one line dropped) that the pin
++must reject, so a pin cannot pass on text that lost the line. These pins prove that the lines are there, not that
++PowerShell does the right thing with them; they are not counted as behaviour tests anywhere. The real run is the
++Windows-only tests at the bottom, skipped everywhere except Windows (a bad setting; a late refusal; a taken port); until
++they have run on Windows every claim about these two scripts is "designed for Windows PowerShell 5.1, not run on Windows
++in this build".
++"""
++
++from __future__ import annotations
++
++import re
++import shutil
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++from support import REPO
++
++SCRIPTS = REPO / "scripts"
++NAMES = ("start_all.ps1", "reset.ps1")
++
++
++def _code(text: str) -> str:
++    text = re.sub(r"<#.*?#>", "", text, flags=re.DOTALL)
++    return "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
++
++
++def reader_problems(text: str) -> list[str]:
++    """What is missing from the settings reader (`Read-DeskSetting`) of a script; [] when every pin holds."""
++    code = _code(text)
++    found = re.search(r"function Read-DeskSetting\(\[string\]\$Expression\) \{(.*?)\n\}", code, flags=re.DOTALL)
++    if found is None:
++        return ["no Read-DeskSetting function"]
++    body = found.group(1)
++    pins = {
++        "reads through config_or_exit": r"from lead_desk\.config_exit import config_or_exit",
++        "keeps the exit code": r"\$code = \$LASTEXITCODE",
++        "native errors are not fatal while it runs": r"\$ErrorActionPreference = 'Continue'",
++        "splits the error records from the output": (
++            r"-is \[System\.Management\.Automation\.ErrorRecord\][^\n]*\n"
++            r"[^\n]*-isnot \[System\.Management\.Automation\.ErrorRecord\]"
++        ),
++        "writes the refusal on the error stream": (
++            r"if \(\$code -ne 0\) \{[^\n]*\[Console\]::Error\.WriteLine\(\$errorText\)[^\n]"
++            r"*exit \$code[^\n]*\}"
++        ),
++        "the value comes from the output only": r"\$outText\.Trim\(\)",
++    }
++    return [name for name, pat in pins.items() if re.search(pat, body) is None]
++
++
++def start_problems(text: str) -> list[str]:
++    code = _code(text)
++    pins = {
++        "wait budget from START_ALL_WAIT_SECONDS, default 15": (
++            r"\$waitSeconds = 15\b[\s\S]*\$env:START_ALL_WAIT_SECONDS"
++        ),
++        "one tick counter for both waits": (
++            r"\$maxTicks = \$waitSeconds \* 5[\s\S]*while \(\$ticks -lt \$maxTicks\)[\s\S]"
++            r"*while \(\$ticks -lt \$maxTicks\)"
++        ),
++        "waits for the demo server port": r"TcpClient[\s\S]*\.Connect\(\$fakesHost, \[int\]\$fakesPort\)",
++        "says the demo server did not start": (
++            r"the demo server did not start[^\n]*\n[^\n]*Stop-Process[^\n]*\n[^\n]*Remove-Item[^\n]"
++            r"*\n\s*exit 1\b"
++        ),
++        "looks for the listening line, log reads do not fail on a busy file": (
++            r"Select-String[^\n]*desk listening on[^\n]*-ErrorAction SilentlyContinue"
++        ),
++        "stops waiting when the desk has ended": r"if \(\$desk\.HasExited\) \{ break \}",
++        "timeout says it may still be starting, exits 1": (
++            r"desk not ready after[^\n]*may still be starting[^\n]*\n\s*exit 1\b"
++        ),
++        "keeps the process handle (ExitCode is not null)": r"\$null = \$desk\.Handle",
++        "waits for the process to end before reading its code": (
++            r"\$desk\.WaitForExit\(\)\s*\n\s*\$deskCode = \$desk\.ExitCode"
++        ),
++        "a code that cannot be read is 1": (
++            r"if \(\$null -eq \$deskCode -or \$deskCode -isnot \[int\]\) \{ \$deskCode = 1 \}"
++        ),
++        "passes on only 3, 4 and 5": r"if \(\$deskCode -in 3, 4, 5\) \{ exit \$deskCode \}\s*\n\s*exit 1\b",
++        "last log line through the formatter": r"\$last \| & python -m lead_desk\.config_exit",
++        "last log lines read without failing": r"Get-Content \$f -ErrorAction SilentlyContinue",
++        "stops the demo server it started": r"Stop-Process -Id \$fakes\.Id",
++        "removes its two process-id files": r"Remove-Item -Force \"\$dataDir\\fakes\.pid\", \"\$dataDir\\desk\.pid\"",
++        "the refusal goes to the error stream": r"\[Console\]::Error\.WriteLine\(\"the desk ended at once",
++    }
++    problems = [name for name, pat in pins.items() if re.search(pat, code) is None]
++    started = code.find('Write-Host "started:')
++    wait_end = code.find("\n    exit 1\n}\nWrite-Host")
++    if started < 0 or wait_end < 0 or started < wait_end:
++        problems.append('"started" is printed before the desk was seen to listen')
++    return problems
++
++
++@pytest.mark.parametrize("name", NAMES)
++def test_text_only_the_reader_pins_hold(name: str) -> None:
++    assert reader_problems((SCRIPTS / name).read_text(encoding="utf-8")) == []
++
++
++def test_text_only_the_start_pins_hold() -> None:
++    assert start_problems((SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")) == []
++
++
++MUTANTS = {
++    "drop exit $code": ("exit $code", ""),
++    "drop the stderr write": ("[Console]::Error.WriteLine($errorText);", ""),
++    "no split": ("-isnot [System.Management.Automation.ErrorRecord]", "-is [System.Management.Automation.ErrorRecord]"),
++    "no exit code kept": ("$code = $LASTEXITCODE", "$code = 0"),
++}
++
++
++@pytest.mark.parametrize("name", NAMES)
++@pytest.mark.parametrize("mutant", sorted(MUTANTS))
++def test_text_only_each_reader_pin_rejects_its_mutant(name: str, mutant: str) -> None:
++    old, new = MUTANTS[mutant]
++    text = (SCRIPTS / name).read_text(encoding="utf-8")
++    assert old in text, (name, mutant)
++    assert reader_problems(text.replace(old, new, 1)) != [], (name, mutant)
++
++
++_TIMEOUT_TAIL = "(it may still be starting); see $dataDir\\desk.log; run scripts\\reset.ps1 to stop it\")"
++START_MUTANTS = {
++    "no pass-through limit": ("if ($deskCode -in 3, 4, 5) { exit $deskCode }", "exit $deskCode"),
++    "no null guard": ("if ($null -eq $deskCode -or $deskCode -isnot [int]) { $deskCode = 1 }", ""),
++    "no handle kept": ("$null = $desk.Handle", ""),
++    "no wait for exit": ("$desk.WaitForExit()", ""),
++    "no wait stop": ("if ($desk.HasExited) { break }", ""),
++    "demo server left running": ("Stop-Process -Id $fakes.Id -ErrorAction SilentlyContinue", ""),
++    "pid files left": (
++        'Remove-Item -Force "$dataDir\\fakes.pid", "$dataDir\\desk.pid" -ErrorAction SilentlyContinue',
++        "",
++    ),
++    "timeout exits 0": (_TIMEOUT_TAIL + "\n        exit 1", _TIMEOUT_TAIL + "\n        exit 0"),
++    "formatter dropped": ("$last | & python -m lead_desk.config_exit", "$last"),
++    "log read can fail": ("Get-Content $f -ErrorAction SilentlyContinue", "Get-Content $f"),
++    "no demo server message": ("the demo server did not start", "not ready"),
++}
++
++
++@pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
++def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
++    old, new = START_MUTANTS[mutant]
++    text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
++    assert old in text, mutant
++    assert start_problems(text.replace(old, new, 1)) != [], mutant
++
++
++@pytest.mark.parametrize("name", NAMES)
++def test_text_only_every_claim_in_the_script_says_it_was_not_run(name: str) -> None:
++    assert "NOT run on Windows in this build" in (SCRIPTS / name).read_text(encoding="utf-8")
++    assert "not run on Windows in this build" in (REPO / "contract.md").read_text(encoding="utf-8")
++
++
++def _windows_run(name: str, tmp: Path, **env: str) -> subprocess.CompletedProcess[str]:
++    powershell = shutil.which("powershell")
++    if powershell is None:
++        pytest.skip("Windows PowerShell is not installed")
++    from support import child_env
++
++    return subprocess.run(  # noqa: S603
++        [powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPTS / name)],
++        cwd=REPO,
++        env=child_env(DESK_DB_PATH=str(tmp / "data" / "d.sqlite3"), START_ALL_WAIT_SECONDS="20", **env),
++        capture_output=True,
++        text=True,
++        timeout=180,
++        check=False,
++    )
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++@pytest.mark.parametrize("name", NAMES)
++def test_windows_a_bad_setting_gives_one_line_and_exit_8(name: str, tmp_path: Path) -> None:
++    done = _windows_run(name, tmp_path, DESK_PORT="abc")
++    lines = [ln for ln in (done.stdout + done.stderr).splitlines() if ln.strip()]
++    assert done.returncode == 8 and len(lines) == 1 and "DESK_PORT" in lines[0] and "started" not in lines[0]
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++@pytest.mark.parametrize("name", NAMES)
++def test_windows_a_bad_nudge_address_gives_one_line_and_exit_8(name: str, tmp_path: Path) -> None:
++    done = _windows_run(name, tmp_path, DESK_LEADFLOW_FILE="demo_only/leadflow.json", DESK_NUDGE_TO="no-at-sign")
++    lines = [ln for ln in (done.stdout + done.stderr).splitlines() if ln.strip()]
++    assert done.returncode == 8 and len(lines) == 1 and "DESK_NUDGE_TO" in lines[0] and "no-at-sign" not in lines[0]
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++def test_windows_start_all_a_late_refusal_is_the_desks_4_and_nothing_is_started(tmp_path: Path) -> None:
++    done = _windows_run("start_all.ps1", tmp_path, DESK_LEADFLOW_FILE="no-such-flow.json")
++    assert done.returncode == 4 and "started:" not in done.stdout and "the desk ended at once (exit 4)" in done.stderr
++    assert not (tmp_path / "data" / "desk.pid").exists() and not (tmp_path / "data" / "fakes.pid").exists()
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++def test_windows_start_all_a_taken_port_is_exit_5(tmp_path: Path) -> None:
++    import socket
++
++    with socket.socket() as taken:
++        taken.bind(("127.0.0.1", 0))
++        taken.listen()
++        done = _windows_run("start_all.ps1", tmp_path, DESK_PORT=str(taken.getsockname()[1]))
++    assert done.returncode == 5 and "started:" not in done.stdout
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 22baabc..6614aa2 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -137,7 +137,9 @@ def test_reset_sh_refuses_when_the_desk_does_not_stop(book: Path) -> None:
+         "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+         "open(sys.argv[2], 'w').close(); time.sleep(60)"
+     )
+-    slow = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    slow = subprocess.Popen(  # noqa: S603 (our own interpreter)
++        [sys.executable, "-c", code, "lead_desk.server", str(ready)]
++    )
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+@@ -165,7 +167,9 @@ def test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop(book: Path)
+         "time.sleep(60)\n"
+     )
+     ready = book.parent / "ready"
+-    slow = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    slow = subprocess.Popen(  # noqa: S603 (our own interpreter)
++        [sys.executable, "-c", code, "lead_desk.server", str(ready)]
++    )
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+@@ -220,7 +224,9 @@ def test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number(book: Path,
+     is exit 2 before a process is stopped or a file is deleted."""
+     ready = book.parent / "ready"
+     code = "import sys, time; open(sys.argv[2], 'w').close(); time.sleep(60)"
+-    desk = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    desk = subprocess.Popen(  # noqa: S603 (our own interpreter)
++        [sys.executable, "-c", code, "lead_desk.server", str(ready)]
++    )
+     try:
+         wait_until(ready.exists, what="the child is running")
+         (book.parent / "desk.pid").write_text(str(desk.pid), encoding="utf-8")
+@@ -282,20 +288,29 @@ def test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a
+     assert again.returncode == 4 and not lock.exists(), (again.stdout, again.stderr)
+ 
+ 
+-# A stand-in `python` for scripts/start_all.sh: it answers the three `python -c` helper calls (data folder, demo-server
+-# port, desk port) with fixed values, writes one line per `python -m <module>` launch with the DESK_LEADFLOW_FILE and
+-# DESK_NUDGE_TO it saw, and records every call, so the test sees what the shell [[ ]] tests decided without
+-# starting a server.
++# A stand-in `python` for scripts/start_all.sh: it answers the four `python -c` helper calls (data folder, demo-server
++# host, demo-server port, desk port) with fixed values, writes one line per `python -m <module>` launch with the
++# DESK_LEADFLOW_FILE and DESK_NUDGE_TO it saw, and records every call, so the test sees what the shell [[ ]] tests
++# decided without starting a server. The stand-in desk prints the listening line, as the real desk does, so start_all.sh
++# sees it start.
+ _STUB_PYTHON = """#!/usr/bin/env bash
+ echo "$*" >> "${STUB_DATA}/calls.log"
+ if [[ "$1" == "-c" ]]; then
+   case "$2" in
+     *parent*) echo "${STUB_DATA}";;
+-    *fakes_port*) echo 1234;;
++    *fakes_host*) echo 127.0.0.1;;
++    *fakes_port*) echo "${STUB_FAKES_PORT}";;
+     *.port*) echo 4321;;
+   esac
+ elif [[ "$1" == "-m" ]]; then
+   echo "LEADFLOW=[${DESK_LEADFLOW_FILE-<unset>}] NUDGE=[${DESK_NUDGE_TO-<unset>}]" > "${STUB_DATA}/launch-$2.rec"
++  # start_all.sh waits for the demo server to answer, then for the line a listening desk prints (a desk that ends
++  # without it is reported as failed); the stand-in demo server is a real listening socket that lives a few seconds
++  if [[ "$2" == "demo_only.fakes_server" ]]; then
++    exec "${STUB_REAL_PYTHON}" -c 'import socket, sys, time; s = socket.socket(); s.bind(("127.0.0.1",
++    int(sys.argv[1]))); s.listen(); time.sleep(4)' "${STUB_FAKES_PORT}"
++  fi
++  if [[ "$2" == "lead_desk.server" ]]; then echo "desk listening on http://127.0.0.1:4321"; fi
+ fi
+ """
+ 
+@@ -313,7 +328,16 @@ def _start_all(
+     stub = bin_dir / "python"
+     stub.write_text(_STUB_PYTHON, encoding="utf-8")
+     stub.chmod(0o755)
+-    done = _run("start_all.sh", tmp_path / "unused.sqlite3", *args, first_on_path=bin_dir, STUB_DATA=str(data), **env)
++    done = _run(
++        "start_all.sh",
++        tmp_path / "unused.sqlite3",
++        *args,
++        first_on_path=bin_dir,
++        STUB_DATA=str(data),
++        STUB_FAKES_PORT=str(_free_port()),
++        STUB_REAL_PYTHON=sys.executable,
++        **env,
++    )
+     return done, data
+ 
+ 
+diff --git a/tests/test_stall_eviction.py b/tests/test_stall_eviction.py
+index 640e160..8b84356 100644
+--- a/tests/test_stall_eviction.py
++++ b/tests/test_stall_eviction.py
+@@ -220,7 +220,7 @@ def test_main_exits_3_on_a_too_small_limit(monkeypatch, capsys) -> None:
+     monkeypatch.setattr(server, "resource", _Res(soft=100, hard=100))
+     with pytest.raises(SystemExit) as info:
+         server.main()
+-    assert info.value.code == constants.EXIT_SETTING_REFUSED == 3
++    assert info.value.code == constants.EXIT_OPEN_FILE_LIMIT == 3
+     assert "MAX_HANDLER_THREADS" in capsys.readouterr().out
+ 
+ 

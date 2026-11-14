@@ -1,0 +1,20 @@
+date: 2026-11-14T06:30:39Z  tree: eb5e171ad818b5b1b16ce820232b4b27610e3c92
+== long lines (python scan, ruff exemptions applied) over changed .py files ==
+long lines: 0
+== awk length>120 over changed .py files (UTF-8 chars) ==
+scripts/run_live_check.py:170:137
+src/lead_desk/config.py:369:121
+src/lead_desk/config.py:388:121
+src/lead_desk/live_claude.py:461:124
+src/lead_desk/trace.py:103:131
+tests/support.py:339:129
+tests/test_portal_api.py:1329:122
+tests/test_portal_mode.py:371:141
+tests/test_portal_mode.py:478:125
+tests/test_portal_mode.py:487:132
+tests/test_reset_scripts.py:140:125
+tests/test_reset_scripts.py:168:125
+tests/test_reset_scripts.py:223:125
+awk lines: 13
+== unused imports / f-strings without placeholder ==
+findings 0

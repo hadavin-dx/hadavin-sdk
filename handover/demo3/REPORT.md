@@ -1,3 +1,16 @@
+## HEARTBEAT 108 (06:34Z) - B19 AND B20 PAST TESTS AND MUTATION, GOING TO THEIR ONE FULL RUN; B21 BUILDING
+
+| Agent / job | State at 06:34Z |
+|---|---|
+| B19 fix-2 r8 | tests first: 75 failed / 21 passed on the unchanged tree, all behavioural (raw/b19-fails-before.log); mutation log and line-length log written; next its one full run (gitleaks on PATH required) |
+| B20 fix-10 r3 | fails-before, mutation log and patch sha file exist (so the patch is cut); no hand-back, full run status unknown to me |
+| B21 fix-5 r8 | building, no fails-before log yet |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105; I have not yet read any of the B19/B20 numbers beyond B19's own checkpoint line.
+WHAT I WOULD DO NEXT (ranked): 1. read the hand-backs; 2. whole-patch fresh reviewers (design plus code-details) for each; 3. stack builder.
+
 ## HEARTBEAT 107 (06:27Z) - B18 CLOSED (r7 superseded by r8); B19, B20, B21 each have a checkpoint and a fails-before log
 
 | Agent / job | State at 06:27Z |

@@ -1,0 +1,600 @@
++    "configparser": "import configparser\nc = configparser.ConfigParser()\nc.read(p)\n",
++    "shutil.copy": "import shutil\nshutil.copy(p, q)\n",
++    "shutil.copyfile through an alias": "import shutil as sh\nsh.copyfile(p, q)\n",
++    "from shutil import copy2": "from shutil import copy2\n",
++    "tokenize.open": "import tokenize\nf = tokenize.open(p)\n",
++    "mmap": "import mmap\nm = mmap.mmap(fd, 0)\n",
++    "subprocess": "import subprocess\nsubprocess.run(['cat', p])\n",
++    "os.system": "import os\nos.system('cat key')\n",
++    "os.popen": "import os\nos.popen('cat key')\n",
++    "os.read on a descriptor": "import os\nx = os.read(fd, 9)\n",
++    "a computed name in getattr": "import os\nf = getattr(os, name)\n",
++    "builtins.__dict__ subscript": "import builtins\nf = builtins.__dict__['op' + 'en']\n",
++    "globals() subscript": "f = globals()['op' + 'en']\n",
++    "__builtins__": "f = __builtins__.open\n",
++    "import_module of a banned module": "import importlib\nm = importlib.import_module('subprocess')\n",
++    "a computed module name": "import importlib\nm = importlib.import_module(name)\n",
++    "__import__ of a computed name": "m = __import__(name)\n",
++}
++
++
++@pytest.mark.parametrize("why", sorted(PLANTED_READS))
++def test_the_reader_guard_sees_every_planted_reader(why: str) -> None:
++    assert _refs(PLANTED_READS[why], BANNED, bare_names=True, readers=True), why
++
++
++def test_the_reader_guard_does_not_flag_names_that_only_look_alike() -> None:
++    source = (
++        "open_ = 1\nreopen(p)\nx = {'open': 1}\nisopen = reader.opened\nplatform.system()\nd.copy()\ngetattr(o, 'x')\n"
++    )
++    assert _refs(source, BANNED, bare_names=True, readers=True) == []
++
++
++def test_the_reader_guard_names_the_definition_around_each_hit() -> None:
++    source = "class A:\n    def m(self):\n        return open(p)\n\n\ndef f():\n    return open(q)\n\n\nx = open(r)\n"
++    assert [(n, scope) for n, _text, scope in _refs(source, BANNED, bare_names=True)] == [
++        (3, "A.m"), (7, "f"), (10, "<module>"),
++    ]  # fmt: skip
++
++
++def test_the_reader_guard_walks_every_subfolder_and_exempts_only_the_one_reader_by_exact_path(tmp_path: Path) -> None:
++    deep = tmp_path / "scripts" / "sub" / "deeper"
++    deep.mkdir(parents=True)
++    (deep / "leak.py").write_text("def k(p):\n    return open(p).read()\n", encoding="utf-8")
++    (tmp_path / "scripts" / "sub" / "envnum.py").write_text("x = open(p)\n", encoding="utf-8")  # same name: NOT exempt
++    one = tmp_path / "src" / "lead_desk"
++    one.mkdir(parents=True)
++    (one / "envnum.py").write_text("x = open(p)\n", encoding="utf-8")  # the one reader: skipped
++    hits = _scan_tree(tmp_path, ("scripts", "src/lead_desk"), BANNED, bare_names=True)
++    assert [(h[0], h[1], h[3]) for h in hits] == [
++        ("scripts/sub/deeper/leak.py", 2, "k"), ("scripts/sub/envnum.py", 1, "<module>"),
++    ]  # fmt: skip
++
++
++def test_a_stale_allowance_fails_and_a_moved_line_is_a_new_hit() -> None:
++    hits = [("a.py", 3, "x = open(p)", "f")]
++    key = ("a.py", "f", "x = open(p)")
++    assert _unallowed(hits, {key: (1, "r")}) == ([], [])
++    assert _unallowed(hits, {key: (2, "r")})[1] == [key]
++    assert _unallowed(hits, {})[0] == ["a.py:3 (f): x = open(p)"]
++    assert _unallowed(hits + hits, {key: (1, "r")})[0] == ["a.py:3 (f): x = open(p)"]
++    moved = [("a.py", 3, "x = open(p)", "g")]  # the same line text in another definition does not use the allowance
++    assert _unallowed(moved, {key: (1, "r")}) == (["a.py:3 (g): x = open(p)"], [key])
++
++
++def test_no_code_outside_envnum_reads_a_file_except_the_named_allow_list() -> None:
++    bad, stale = _unallowed(_scan_tree(REPO, READ_FOLDERS, BANNED, bare_names=True, readers=True), ALLOWED_READS)
++    assert bad == [], bad
++    assert stale == [], stale  # an allowance whose line is gone or changed is removed
++    assert all(reason for _count, reason in ALLOWED_READS.values())
++    defs = [p.name for p in SRC.glob("*.py") if re.search(r"^def read_secret_file\b", p.read_text("utf-8"), re.M)]
++    assert defs == ["envnum.py"], defs
++
++
++# a file name is built from parts: a bare name with a web-address ending reads as a web address to the repository scan
++def _n(stem: str, ending: str) -> str:
++    return stem + "." + ending if ending else stem
++
++
++SHELL_FILES = [
++    _n("run", "sh"), _n("run", "ps1"), _n("run", "bat"), _n("run", "cmd"), _n("ci", "yml"), _n("ci", "yaml"),
++    "Makefile", "Dockerfile", _n("docker-compose.override", "yml"),
++]  # fmt: skip
++SHELL_SUFFIXES = {".sh", ".ps1", ".bat", ".cmd", ".yml", ".yaml"}
++SHELL_NAME_STARTS = ("Makefile", "Dockerfile", "docker-compose")
++# and the files at the top of the repository
++SHELL_FOLDERS = ("scripts", "load_tools", "tools", "n8n", "docs", ".github")
++SHELL_READER = re.compile(
++    r"(\bcat\b|\bGet-Content\b|\bgc\b|\btype\b|\bhead\b|\btail\b|\bless\b|\bmore\b|\bsed\b|\bawk\b|\bsource\b"
++    r"|\bmapfile\b|\bread\b|\$\(\s*<|<\s*[\"'$\w]|\bopen\s*\(|\.read_text\b|\.read_bytes\b|\.read\(\))",
++    re.I,
++)
++SHELL_SECRET = re.compile(r"\b(key|password|secret|token)(_?file)?\b", re.I)
++# the key word and a way to read must be on the same line, in either order: a `cat` of a log is not a read of a key
++# (a chosen limit of a tripwire, not a proof)
++
++
++def _reads_a_secret(line: str) -> bool:
++    return bool(SHELL_READER.search(line) and SHELL_SECRET.search(line))
++
++
++def _is_shell_file(p: Path) -> bool:
++    return p.is_file() and (p.suffix in SHELL_SUFFIXES or p.name.startswith(SHELL_NAME_STARTS))
++
++
++def _shell_hits(root: Path, folders: tuple[str, ...]) -> list[str]:
++    files = {p for folder in folders for p in (root / folder).rglob("*") if _is_shell_file(p)}
++    files |= {p for p in root.iterdir() if _is_shell_file(p)}
++    out: list[str] = []
++    for p in sorted(files):
++        for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
++            if not line.lstrip().startswith("#") and _reads_a_secret(line):
++                out.append(f"{p.relative_to(root).as_posix()}:{n}")
++    return out
++
++
++@pytest.mark.parametrize(
++    "line",
++    [
++        'cat "$KEY_FILE"',
++        "K=$(< key.txt)",
++        "Get-Content $PasswordFile",
++        'IFS= read -r k < "$KEY_FILE"',
++        "$t = gc token.txt",
++        'source "$SECRET_FILE"',
++        "python -c \"print(open('key.txt').read())\"",
++        "python3 -c 'from pathlib import Path; Path(\"secret.txt\").read_text()'",
++        "run: python -c \"import sys; open(sys.argv[1]).read()\" $TOKEN_FILE",
++    ],
++)
++@pytest.mark.parametrize("name", SHELL_FILES)
++def test_the_shell_check_sees_planted_readers_in_any_subfolder_and_any_file_kind(
++    tmp_path: Path, line: str, name: str
++) -> None:
++    sub = tmp_path / "tools" / "a" / "b"
++    sub.mkdir(parents=True)
++    (sub / name).write_text("# cat key.txt in a comment\n" + line + "\n", encoding="utf-8")
++    (tmp_path / name).write_text(line + "\n", encoding="utf-8")  # a file at the top of the repository
++    hits = _shell_hits(tmp_path, ("scripts", "load_tools", "tools"))
++    assert sorted(hits) == sorted([f"tools/a/b/{name}:2", f"{name}:1"])
++
++
++def test_the_shell_check_leaves_a_log_read_alone(tmp_path: Path) -> None:
++    (tmp_path / _n("run", "sh")).write_text('cat "$LOG"\ntail -n 5 run.log\n', encoding="utf-8")
++    assert _shell_hits(tmp_path, ("scripts",)) == []
++
++
++def test_no_shell_script_or_workflow_reads_a_key_or_password() -> None:
++    assert _shell_hits(REPO, SHELL_FOLDERS) == []
++
++
++# ------------------------------------------------------------------------------ the probes of a setting's path
++PLANTED_PROBES = {
++    "os.path.isdir": "import os\nx = os.path.isdir(p)",
++    "os.path.isfile": "import os\nx = os.path.isfile(p)",
++    "os.path.islink": "import os\nx = os.path.islink(p)",
++    "os.path.ismount": "import os\nx = os.path.ismount(p)",
++    "file times": "import os\nx = os.path.get" + "mtime(p)\ny = os.path.get" + "ctime(p)\nz = os.path.get" + "atime(p)",
++    "realpath": "import os\nx = os.path.realpath(p)",
++    "samestat": "import os\nx = os.path.samestat(a, b)",
++    "os.scandir": "import os\nx = os.scandir(p)",
++    "os.listdir": "import os\nx = os.listdir(p)",
++    "os.walk": "import os\nx = os.walk(p)",
++    "os.readlink": "import os\nx = os.readlink(p)",
++    "Path.stat": "x = Path(p).stat()",
++    "Path.lstat": "x = Path(p).lstat()",
++    "os.access": "import os\nx = os.access(p, 4)",
++    "iterdir": "for q in d.iterdir():\n    pass",
++    "a bare name from os.path": "from os.path import isdir\nx = isdir(p)",
++    "a star import": "from os.path import *\n",
++    "getattr by name": 'import os\nx = getattr(os, "listdir")(p)',
++    "Path.resolve": "x = Path(p).resolve()",
++    "Path.resolve(strict=True)": "x = Path(p).resolve(strict=True)",
++    "Path.is_mount": "x = Path(p).is_mount()",
++    "Path.is_socket": "x = Path(p).is_socket()",
++    "Path.is_fifo": "x = Path(p).is_fifo()",
++    "Path.is_block_device": "x = Path(p).is_block_device()",
++    "Path.is_char_device": "x = Path(p).is_char_device()",
++    "Path.is_junction": "x = Path(p).is_junction()",
++    "Path.owner": "x = Path(p).owner()",
++    "Path.group": "x = Path(p).group()",
++    "os.statvfs": "import os\nx = os.statvfs(p)",
++    "shutil.disk_usage": "import shutil\nx = shutil.disk_usage(p)",
++    "os.path.expanduser": "import os\nx = os.path.expanduser(p)",
++    "a bare statvfs": "from os import statvfs\nx = statvfs(p)",
++    "a bare disk_usage": "from shutil import disk_usage\nx = disk_usage(p)",
++    "a bare expanduser": "from os.path import expanduser\nx = expanduser(p)",
++    "a bare resolve through an import": "from pathlib import *\nx = resolve(p)",
++}
++
++
++@pytest.mark.parametrize("why", sorted(PLANTED_PROBES))
++def test_the_probe_guard_sees_every_planted_probe(why: str) -> None:
++    assert _refs(PLANTED_PROBES[why], PROBES, bare_names=False, zero_arg=True), why
++
++
++def test_the_probe_guard_leaves_local_names_and_the_files_own_path_alone() -> None:
++    source = (
++        "def walk(x):\n    return walk(x)\nexists = 1\nm.group(1)\nm.group('a')\nm.group()\n"
++        "HERE = Path(__file__).resolve().parent\nR = Path(mod.__file__).resolve()\n"
++    )
++    assert [t for _n, t, _s in _refs(source, PROBES, bare_names=False, zero_arg=True)] == ["m.group()"]  # no argument
++
++
++KEEP = "a directory entry the folder listing just returned, not a path"
++CONFINE = "the one folder-confinement tool: it resolves the paths the tools were given and refuses the bad ones"
++PACKAGED = "a fixed folder or file of the installed package itself; no setting names it"
++RESOLVED = "the lead-book path after the lock step: lockfile.lock_path has already refused a loop or an unreadable name"
++SELF = "the file of the running code (its own location), not a setting"
++ALLOWED_PROBES: dict[tuple[str, str, str], tuple[int, str]] = {
++    (
++        "src/lead_desk/desk.py",
++        "Desk.__init__",
++        "self._db_path: Path | str = Path(db_text).resolve()",
++    ): (1, RESOLVED),
++    (
++        "src/lead_desk/gate.py",
++        "gate_for",
++        "key = str(Path(text).resolve())",
++    ): (1, RESOLVED),
++    (
++        "src/lead_desk/lockfile.py",
++        "lock_path",
++        "resolved = Path(db_path).resolve()",
++    ): (1, "this is the lock step: a loop or a name the system cannot resolve becomes a lock refusal, fixed text"),
++    (
++        "src/lead_desk/lockfile.py",
++        "lock_path",
++        "resolved.stat()",
++    ): (1, "this is the lock step: a loop or a name the system cannot resolve becomes a lock refusal, fixed text"),
++    (
++        "src/lead_desk/lockfile.py",
++        "_same_file",
++        "a, b = os.fstat(f.fileno()), os.stat(path)",
++    ): (1, "the lock file this code just opened; it is not a setting"),
++    (
++        "src/lead_desk/portal_api.py",
++        "build_static",
++        "if not root.is_dir():",
++    ): (1, PACKAGED),
++    (
++        "src/lead_desk/portal_api.py",
++        "build_static",
++        "base = root.resolve()",
++    ): (1, PACKAGED),
++    (
++        "src/lead_desk/portal_api.py",
++        "build_static",
++        'for p in sorted(root.rglob("*")):',
++    ): (1, PACKAGED),
++    (
++        "src/lead_desk/portal_api.py",
++        "build_static",
++        "if kind is None or p.is_symlink() or not p.is_file() or not p.resolve().is_relative_to(base):",
++    ): (1, PACKAGED),
++    (
++        "src/lead_desk/portal_api.py",
++        "build_static",
++        "if p.stat().st_size > STATIC_FILE_MAX_BYTES:",
++    ): (1, PACKAGED),
++    (
++        "src/lead_desk/portal_api.py",
++        "connect_readonly",
++        'uri = Path(db_path).resolve().as_uri() + "?mode=ro"',
++    ): (1, PACKAGED),
++    (
++        "src/lead_desk/server.py",
++        "_Handler._resolve",
++        "self._send_reply(self._desk.resolve(item_id, decision))",
++    ): (1, "Desk.resolve: the approval decision of one item, not a path"),
++    (
++        "scripts/run_real_check.py",
++        "read_counter_files",
++        'for p in sorted(run_dir.glob(f"desk-*{suffix}")):',
++    ): (1, "glob never raises on a fault"),
++    (
++        "demo_only/portal_demo.py",
++        "PortalDemo._sweep_stale_temps",
++        'for f in folder.glob(f"{FLAG_TEMP_PREFIX}*{FLAG_TEMP_SUFFIX}"):',
++    ): (1, "inside try/except OSError"),
++    (
++        "demo_only/portal_demo.py",
++        "PortalDemo._sweep_stale_temps",
++        "if f.is_file() and not f.is_symlink() and f.stat().st_mtime < cutoff:",  # wall-clock: key text only
++    ): (1, "inside try/except OSError"),
++    (
++        "load_tools/catcher.py",
++        "<module>",
++        "if _file is None or not Path(_file).resolve().is_relative_to(_repo):",
++    ): (1, SELF),
++    (
++        "load_tools/check_invariants.py",
++        "<module>",
++        "if _file is None or not Path(_file).resolve().is_relative_to(_repo):",
++    ): (1, SELF),
++    (
++        "load_tools/check_invariants.py",
++        "read_book",
++        "if not path.is_file():",
++    ): (1, "the path was just listed folder by folder by confine_existing"),
++    (
++        "load_tools/load_driver.py",
++        "<module>",
++        "if _file is None or not Path(_file).resolve().is_relative_to(_repo):",
++    ): (1, SELF),
++    (
++        "tools/hygiene.py",
++        "scan_repo",
++        'files = [f for f in _git_text(repo, "ls-files").splitlines() if (repo / f).is_file()]',
++    ): (1, "names from git ls-files, not a setting"),
++    (
++        "tools/pathconfine.py",
++        "allowed_roots",
++        "return tuple(dict.fromkeys(os.path.realpath(c) for c in candidates))",
++    ): (1, CONFINE),
++    (
++        "tools/pathconfine.py",
++        "_entry",
++        "with os.scandir(current) as listing:",
++    ): (1, CONFINE),
++    (
++        "tools/pathconfine.py",
++        "_step",
++        "if entry.is_symlink():",
++    ): (1, KEEP),
++    (
++        "tools/pathconfine.py",
++        "_step",
++        "is_folder = entry.is_dir(follow_symlinks=False)",
++    ): (1, KEEP),
++    (
++        "tools/pathconfine.py",
++        "_resolve",
++        "return os.path.realpath(text)",
++    ): (1, CONFINE),
++    (
++        "tools/pathconfine.py",
++        "_roots",
++        "return tuple(os.path.realpath(r) for r in roots)",
++    ): (1, CONFINE),
++}  # fmt: skip
++
++
++def test_no_code_probes_a_setting_path_except_the_named_allow_list() -> None:
++    hits = _scan_tree(REPO, PROBE_FOLDERS, PROBES, bare_names=False, zero_arg=True)
++    bad, stale = _unallowed(hits, ALLOWED_PROBES)
++    assert bad == [], bad
++    assert stale == [], stale
++    assert all(reason for _count, reason in ALLOWED_PROBES.values())
++    assert "src/lead_desk" in PROBE_FOLDERS  # the desk's own code is scanned too, at any depth
++
++
++# ------------------------------------------------------------------ the Retry-After rule: one grammar, three copies
++GOOD_AFTER = [("0", 0.0), ("7", 7.0), ("007", 7.0), ("1.5", 1.5), (" 3 ", 3.0), ("\t2\t", 2.0), ("10.25", 10.25)]
++REFUSED_AFTER = [
++    "inf", "-inf", "nan", "1e999", "-1", "-0.5", "", " ", "abc", "1_0", ARABIC_DIGITS, "1 2", "0x10", "1,5",
++    "1e2", "1E2", ".5", "+4", "5.", "-5.", "1e-2", ".", "+", "-", "1.2.3", "Wed, 21 Oct 2026", None,
++]  # fmt: skip
++
++
++def _fresh(monkeypatch: pytest.MonkeyPatch, name: str, path: Path) -> types.ModuleType:
++    """Load a file as a module with its own name; monkeypatch puts sys.modules back: nothing leaks to a later test."""
++    spec = importlib.util.spec_from_file_location(name, path)
++    assert spec and spec.loader
++    mod = importlib.util.module_from_spec(spec)
++    monkeypatch.setitem(sys.modules, name, mod)
++    spec.loader.exec_module(mod)
++    return mod
++
++
++@pytest.fixture
++def copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    monkeypatch.syspath_prepend(str(REPO))
++    probe = importlib.import_module("hubspot_probe")
++    driver = importlib.import_module("load_tools.load_driver")
++    return {
++        "envnum": envnum.retry_after_seconds,
++        "load_driver": driver._retry_after_fallback,
++        "hubspot_probe": probe._retry_after,
++    }
++
++
++@pytest.mark.parametrize("which", ["envnum", "load_driver", "hubspot_probe"])
++def test_every_copy_of_the_retry_after_rule_gives_the_same_answers(copies: dict[str, Any], which: str) -> None:
++    fn = copies[which]
++    for text, seconds in GOOD_AFTER:
++        assert fn(text) == seconds, (which, text)
++    for text in REFUSED_AFTER:
++        assert fn(text) is None, (which, text)
++
++
++def test_the_copies_are_pinned_to_the_one_reader_on_a_wide_set_of_texts(copies: dict[str, Any]) -> None:
++    alphabet = "0123456789.eE+-_ \t,x\u0661"
++    texts = ["", *[c * n for c in alphabet for n in (1, 2)]]
++    texts += [a + b + c for a in "0 .+-" for b in "9.e" for c in "1 5_"]
++    texts += ["9" * 400, "1" + "0" * 300, "0." + "0" * 400 + "1"]
++    texts += [t for t, _ in GOOD_AFTER] + [t for t in REFUSED_AFTER if t]
++    for text in texts:
++        want = envnum.retry_after_seconds(text)
++        for name in ("load_driver", "hubspot_probe"):
++            assert copies[name](text) == want, (name, text)
++
++
++def test_a_huge_retry_after_is_clamped_to_one_named_maximum(copies: dict[str, Any]) -> None:
++    top = constants.RETRY_AFTER_MAX_SECONDS
++    assert 0 < top <= 86400
++    for text in ("9999999999", "1" + "0" * 300, str(top + 1), "100000.5"):
++        for name, fn in copies.items():
++            assert fn(text) == top, (name, text)
++    for name, fn in copies.items():
++        assert fn(str(top)) == top and fn("1") == 1.0, name
++    probe = sys.modules["hubspot_probe"]
++    driver = sys.modules["load_tools.load_driver"]
++    assert probe.RETRY_AFTER_MAX_SECONDS == top and driver.RETRY_AFTER_MAX_SECONDS == top  # the copies' constants
++
++
++def test_the_rule_is_documented_where_it_lives() -> None:
++    doc = " ".join((envnum.retry_after_seconds.__doc__ or "").split())
++    assert "digits, optionally followed by a point and more digits" in doc and "no exponent" in doc
++    assert "RETRY_AFTER_MAX_SECONDS" in doc
++    mod = " ".join((envnum.__doc__ or "").split())
++    assert "the one reader of a retry-after header for the desk's hubspot and live-model kinds" in mod.lower()
++    assert "stand-alone copy" in mod and "hubspot_probe" in mod and "load_driver" in mod  # true about the copies
++
++
++# ------------------------------------------- every reader of the Retry-After header is the one reader or a pinned copy
++READER_NAMES = {"retry_after_seconds", "_retry_after", "_retry_after_fallback"}
++EXPECTED_READERS = {
++    ("src/lead_desk/envnum.py", "retry_after_seconds"),
++    ("load_tools/load_driver.py", "_retry_after_fallback"),
++    ("scripts/hubspot_probe.py", "_retry_after"),
++}
++WRITER_CALLS = {"send_header", "add_header", "putheader"}  # they set the header; they do not read it
++TABLE_ATTRS = {"headers", "msg"}  # the whole header table of a reply or an error
++TABLE_CALLS = {"dict", "list", "tuple", "sorted", "set", "iter", "enumerate", "vars"}
++
++
++def _retry_names(source: str) -> set[str]:
++    """Names that stand for the header's name in this source: `H = "Retry-After"` (any case)."""
++    return {
++        t.id
++        for n in ast.walk(ast.parse(source))
++        if isinstance(n, ast.Assign)
++        and isinstance(n.value, ast.Constant)
++        and str(n.value.value).lower() == "retry-after"
++        for t in n.targets
++        if isinstance(t, ast.Name)
++    }
++
++
++def _is_retry(e: ast.AST, names: set[str]) -> bool:
++    if isinstance(e, ast.Constant):
++        return isinstance(e.value, str) and e.value.lower() == "retry-after"
++    return (isinstance(e, ast.Name) and e.id in names) or (isinstance(e, ast.Attribute) and e.attr in names)
++
++
++def _is_table(e: ast.AST) -> bool:
++    return (isinstance(e, ast.Attribute) and e.attr in TABLE_ATTRS) or (
++        isinstance(e, ast.Call) and _name_of(e.func) in {"info", "getheaders"}
++    )
++
++
++def _name_of(f: ast.expr) -> str:
++    return f.id if isinstance(f, ast.Name) else f.attr if isinstance(f, ast.Attribute) else ""
++
++
++def _header_reads(tree: ast.AST, names: set[str]) -> list[ast.AST]:
++    """Every place that reads the Retry-After header or the whole header table: a subscript or a call that is given the
++    header's name (a literal, any case, or a name that holds it), `dict(x.headers)`, `x.headers.items()`, a loop over
++    the table, `getheaders()`. A call to a reader or to a writer is not a read here."""
++    reads: list[ast.AST] = []
++    for n in ast.walk(tree):
++        if isinstance(n, ast.Subscript) and isinstance(n.ctx, ast.Load) and _is_retry(n.slice, names):
++            reads.append(n)
++        elif isinstance(n, ast.Call):
++            name = _name_of(n.func)
++            if name in WRITER_CALLS or name in READER_NAMES:
++                continue
++            args = [*n.args, *(k.value for k in n.keywords)]
++            if any(_is_retry(a, names) for a in args):
++                reads.append(n)
++            elif name in TABLE_CALLS and n.args and _is_table(n.args[0]):
++                reads.append(n)
++            elif name == "getheaders" or (
++                isinstance(n.func, ast.Attribute)
++                and n.func.attr in {"items", "keys", "values"}
++                and _is_table(n.func.value)
++            ):
++                reads.append(n)
++        elif isinstance(n, (ast.For, ast.comprehension)) and _is_table(n.iter):
++            reads.append(n.iter)
++    return reads
++
++
++def _reader_report(source: str, names: set[str] | None = None) -> tuple[list[str], list[int]]:
++    """(functions that turn Retry-After text into a number themselves, header reads that no reader receives)."""
++    tree = ast.parse(source)
++    names = _retry_names(source) | (names or set())
++    own = [
++        f.name
++        for f in ast.walk(tree)
++        if isinstance(f, (ast.FunctionDef, ast.AsyncFunctionDef))
++        and any(isinstance(c, ast.Call) and _name_of(c.func) in {"float", "Decimal", "int"} for c in ast.walk(f))
++        and (
++            "retry_after" in f.name.lower()
++            or any(isinstance(c, ast.Name) and c.id == "RETRY_AFTER_MAX_SECONDS" for c in ast.walk(f))
++        )
++    ]
++    fed: set[int] = set()
++    for c in ast.walk(tree):
++        if isinstance(c, ast.Call) and _name_of(c.func) in READER_NAMES:
++            fed |= {id(a) for a in c.args}
++    return own, [r.lineno for r in _header_reads(tree, names) if id(r) not in fed]
++
++
++@pytest.mark.parametrize(
++    ("source", "loose", "own"),
++    [
++        ("def f(e):\n    return float(e.headers.get('Retry-After', ''))\n", [2], []),
++        ("def f(e):\n    return float(e.headers['Retry-After'])\n", [2], []),
++        ("H = 'Retry-After'\ndef f(e):\n    return e.headers.get(H)\n", [3], []),
++        ("H = 'retry-after'\ndef f(e):\n    return e.headers[H]\n", [3], []),
++        ("def f(e):\n    return dict(e.headers)\n", [2], []),
++        ("def f(e):\n    return list(e.headers.items())\n", [2], []),
++        ("def f(e):\n    return {k: v for k, v in e.headers.items()}\n", [2], []),
++        ("def f(e):\n    for k in e.headers:\n        pass\n", [2], []),
++        ("def f(r):\n    return r.getheaders()\n", [2], []),
++        ("def f(r):\n    return r.getheader('Retry-After')\n", [2], []),
++        ("def f(r):\n    return r.info().get('retry-after')\n", [2], []),
++        ("w = int(e.headers.getheader('retry-after'))\n", [1], []),
++        ("def _retry_after(v):\n    return float(v)\n", [], ["_retry_after"]),
++        ("def renamed(v):\n    return min(float(v), RETRY_AFTER_MAX_SECONDS)\n", [], ["renamed"]),
++        ("x = retry_after_seconds(e.headers.get('Retry-After'))\n", [], []),
++        ("x = _retry_after(e.headers['Retry-After'])\n", [], []),
++        ("self.send_header('Retry-After', '1')\nh = {'Retry-After': '1'}\nheaders['Retry-After'] = '2'\n", [], []),
++    ],
++)
++def test_the_reader_list_scanner_sees_planted_readers_and_leaves_writers_alone(
++    source: str, loose: list[int], own: list[str]
++) -> None:
++    assert _reader_report(source) == (own, loose)
++
++
++def test_a_constant_in_another_file_that_holds_the_header_name_is_followed() -> None:
++    names = _retry_names("RETRY_HEADER = 'Retry-After'\n")
++    assert _reader_report("def f(e):\n    return e.headers.get(constants.RETRY_HEADER)\n", names)[1] == [2]
++
++
++def test_every_retry_after_reader_in_the_repository_is_the_one_reader_or_a_pinned_copy() -> None:
++    files = [
++        (p.relative_to(REPO).as_posix(), p.read_text(encoding="utf-8"))
++        for f in READ_FOLDERS
++        for p in sorted((REPO / f).rglob("*.py"))
++    ]
++    names: set[str] = set()
++    for _rel, text in files:
++        names |= _retry_names(text)
++    readers: set[tuple[str, str]] = set()
++    unfed: list[str] = []
++    for rel, text in files:
++        own, loose = _reader_report(text, names)
++        readers |= {(rel, name) for name in own}
++        unfed += [f"{rel}:{n}" for n in loose]
++    assert unfed == [], unfed
++    assert readers == EXPECTED_READERS, readers
++
++
++# ---------------------------------------------- the real 429 replies, at the HubSpot adapter and at the live model kind
++class RawStub:
++    """A loopback server that answers every request with a 429 and exactly the Retry-After bytes it is given."""
++
++    def __init__(self, header: bytes | None) -> None:
++        self.header = header
++        self.hits = 0
++        self.sock = socket.socket()
++        self.sock.bind(("127.0.0.1", 0))
++        self.sock.listen(8)
++        self.sock.settimeout(0.2)
++        self.port = self.sock.getsockname()[1]
++        self.stop_event = threading.Event()
++        self.thread = threading.Thread(target=self._loop, daemon=True)
++        self.thread.start()
++
++    def _loop(self) -> None:
++        while not self.stop_event.is_set():
++            try:
++                conn, _ = self.sock.accept()
++            except (TimeoutError, OSError):
++                continue
++            with conn:
++                conn.settimeout(2)
++                try:
++                    buf = b""
++                    while b"\r\n\r\n" not in buf:
++                        chunk = conn.recv(4096)
++                        if not chunk:
++                            break
++                        buf += chunk
++                    head = b"HTTP/1.1 429 Too Many Requests\r\n"
++                    if self.header is not None:

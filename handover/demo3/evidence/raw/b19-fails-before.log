@@ -1447,3 +1447,14 @@ FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_on
 FAILED tests/test_one_key_file_rule_r8.py::test_no_other_page_repeats_the_key_file_rule_it_links_to_it
 FAILED tests/test_one_key_file_rule_r8.py::test_the_settings_page_agrees_with_itself_about_when_each_file_is_read
 75 failed, 21 passed in 0.70s
+
+==== B19 summary (written by the builder, not produced by pytest) ====
+Run: tests/test_one_key_file_rule_r8.py on the unchanged tree (base + fix-1 r6 + r7 patch), 96 tests then: 75 failed, 21 passed.
+Behavioural failures (the test ran the code and the answer was wrong): 75. Function-absent failures (AttributeError/ImportError on a name
+that did not exist yet): 0. Split of the 75: 60 mode tests (a file other users can read was accepted), the rest link/lstat text,
+clamp (a huge number gave None), dry-run flag file asked with exists(), demo assets of an unreadable folder, session umask, and the
+docs-in-one-section tests (4).
+Added after this run (so not in the counts above): a zero-inode test that now zeroes only the handle's number, and a test that the
+open call carries O_NOFOLLOW; both were first written as mutation survivors (raw/b19-mutation.log) and are killed there.
+The guard tests of tests/test_one_key_file_rule_r7.py live in the test file and cannot fail on the old tree: they are proved by planting
+violations in the real tree (raw/b19-mutation.log, second block) and by their planted cases.

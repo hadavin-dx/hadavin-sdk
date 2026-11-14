@@ -1,0 +1,903 @@
++        if self.name in portal_demo.ASSET_TYPES:
++            raise PermissionError(13, "denied")  # what Python 3.12 and later raises for a folder it cannot look at
++        return real_read(self, *a, **k)
++
++    def deny_stat(self: Path, *a: Any, **k: Any) -> Any:
++        raise AssertionError("the assets are not asked about with stat or is_file")
++
++    monkeypatch.setattr(Path, "read_bytes", deny)
++    monkeypatch.setattr(Path, "is_file", deny_stat)
++    page = portal_demo.PortalDemo(desk=object(), desk_url="http://127.0.0.1:1")  # type: ignore[arg-type]
++    assert page.assets == {}
++
++
++# ----------------------------------------------------------------- the key-file rule is written in exactly one place
++RULE = "Only the line break at the very end of the file is removed"
++SECTION = "## Key and password files"
++
++
++def _doc(name: str) -> str:
++    return " ".join((REPO / name).read_text(encoding="utf-8").split())
++
++
++def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> None:
++    text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
++    assert text.count(SECTION) == 1
++    section = " ".join(text.split(SECTION)[1].split("\n## ")[0].split())
++    for part in (
++        RULE,
++        "a symbolic link",
++        "chmod 600",
++        "other users",
++        "byte-order mark",
++        "4096 bytes, counting the line break",
++        "kept as text",
++        "a named pipe",
++        "a device",
++        "read once at the start",
++        "read again at every call",
++        "the owner of the file is not checked",
++    ):
++        assert part in section, part
++
++
++def test_no_other_page_repeats_the_key_file_rule_it_links_to_it() -> None:
++    for name in (
++        "contract.md", "docs/limits.md", "docs/n8n-recipe.md", "docs/real-services.md", "README.md", "SECURITY.md",
++        "docs/tests.md", "load_tools/README.md", "scripts/real-run.env.example",
++    ):  # fmt: skip
++        text = _doc(name)
++        assert RULE not in text, name
++        assert "a symbolic link is refused" not in text and "who is allowed to read a key" not in text, name
++        assert "the permission bits are not checked" not in text, name
++    for name in ("contract.md", "docs/limits.md", "docs/n8n-recipe.md"):
++        assert "docs/settings.md#key-and-password-files" in _doc(name), name
++
++
++def test_the_settings_page_agrees_with_itself_about_when_each_file_is_read() -> None:
++    text = _doc("docs/settings.md")
++    assert "permissions of the file are not checked" not in text.lower()
++    assert "; Only the line break" not in text and "; only the line break" not in text
++    lines = (REPO / "docs" / "settings.md").read_text(encoding="utf-8").splitlines()
++    row = next(x for x in lines if x.startswith("| `DESK_LIVE_KEY_FILE`"))
++    assert "read once at start and not kept" not in row  # the one section says when each file is read
+diff --git a/tests/test_portal_api.py b/tests/test_portal_api.py
+index f6e3cda..4978b86 100644
+--- a/tests/test_portal_api.py
++++ b/tests/test_portal_api.py
+@@ -121,7 +121,7 @@ def stale_receipt(rig: Rig, ref: str, outcome: str | None, reason: str | None =
+ 
+ 
+ def seed(rig: Rig) -> dict[str, str]:
+-    """A lead book with every kind of item: sent, duplicates (with and without new details), a replay with other
++    """A lead-book with every kind of item: sent, duplicates (with and without new details), a replay with other
+     data, an incomplete request, a desk fault, a failed follow-up, both kinds of UNKNOWN, and stalled work."""
+     d = rig.desk
+     ids: dict[str, str] = {}
+diff --git a/tests/test_portal_mode.py b/tests/test_portal_mode.py
+index 2089861..07cc591 100644
+--- a/tests/test_portal_mode.py
++++ b/tests/test_portal_mode.py
+@@ -201,7 +201,7 @@ def test_words_and_chips_are_in_the_source() -> None:
+     assert "corrected submission" not in needs.replace("Send a corrected submission with a NEW request number", "")
+     for jargon in ("Reference from the sender", "Pages only read", "Stop on purpose", "Set the stop", "stop setting"):
+         assert jargon not in portal + data + demo + needs, jargon
+-    # one word per meaning: the mail step, the request number, the lead book; a webhook is not an email
++    # one word per meaning: the mail step, the request number, the lead-book; a webhook is not an email
+     for variant in ("mail system", "lead book", "database file", "same reference", "Email message", "request id"):
+         assert variant not in portal + data + needs, variant
+     assert "webhook: 'Webhook'" in portal
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 22baabc..1778a30 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -1,4 +1,4 @@
+-"""The reset scripts delete the lead book, so they refuse a database path that is not inside the repository's data
++"""The reset scripts delete the lead-book, so they refuse a database path that is not inside the repository's data
+ folder. Made-up data only; each test creates only the files it names."""
+ 
+ from __future__ import annotations
+@@ -76,7 +76,7 @@ def test_reset_still_deletes_a_database_inside_the_data_folder() -> None:
+         shutil.rmtree(folder, ignore_errors=True)
+ 
+ 
+-# -- the reset never deletes the lead book while the desk may still be using it
++# -- the reset never deletes the lead-book while the desk may still be using it
+ @pytest.fixture
+ def book() -> Any:
+     (REPO / "data").mkdir(exist_ok=True)
+@@ -256,7 +256,7 @@ def test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at(
+     spec.loader.exec_module(module)
+ 
+     class Unreadable:
+-        def exists(self) -> bool:
++        def stat(self) -> None:  # `reset_check` looks through `envnum.path_kind`, which asks `stat`
+             raise PermissionError("no access")
+ 
+     monkeypatch.setenv("DESK_DB_PATH", str(book))
+@@ -385,7 +385,7 @@ def test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing(
+     feature, not of the variable BASH_VERSION: dash takes that from the environment, so a name test is bypassed
+     (the second case exports it with a made-up value)."""
+     db = tmp_path / "desk.sqlite3"
+-    db.write_text("made-up lead book", encoding="utf-8")
++    db.write_text("made-up lead-book", encoding="utf-8")
+     bin_dir = (
+         tmp_path / "bin"
+     )  # a stand-in python first on PATH, so that without the guard start_all.sh starts nothing real
+@@ -398,7 +398,7 @@ def test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing(
+     assert done.returncode == 2, (done.stdout, done.stderr)
+     assert "run this script with bash" in done.stderr and "not bash" in done.stderr
+     assert "not found" not in done.stderr, "a [[ line ran under dash"
+-    assert db.read_text(encoding="utf-8") == "made-up lead book"
++    assert db.read_text(encoding="utf-8") == "made-up lead-book"
+     assert not (tmp_path / "calls.log").exists(), "the stand-in python was called"
+ 
+ 
+diff --git a/tests/test_settings_lane3.py b/tests/test_settings_lane3.py
+new file mode 100644
+index 0000000..38494da
+--- /dev/null
++++ b/tests/test_settings_lane3.py
+@@ -0,0 +1,736 @@
++"""A bad setting stops the start (docs/settings.md, line 3): exit code 4, the setting named, no traceback, and never a
++path, key or password in the text. Cases found by a cold reader who followed the documents literally: a DESK_BIND
++that is no address, an empty or unmakeable DESK_DB_PATH, a broken or missing DESK_REPLIES_PATH file, and key or
++password files that were not looked at until the first call. Made-up data; key files hold made-up text."""
++
++from __future__ import annotations
++
++import errno
++import importlib
++import os
++import re
++import subprocess
++import sys
++import threading
++from collections.abc import Iterator
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from demo_only.fakes_server import serve_fakes_in_thread, stop_fakes
++from lead_desk import lockfile, server
++from lead_desk.config import Config
++from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings
++from lead_desk.desk import BOOK_UNREADABLE_PROBLEM, MEMORY_BOOK_PROBLEM, book_problem
++from lead_desk.envnum import SettingRefused, env_yes_no, path_kind
++from lead_desk.live_claude import LiveQualifier
++from lead_desk.loader import StartCheck, check_secret_files, load_demo_adapters
++from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
++
++REPO = Path(__file__).resolve().parents[1]
++ALL_ZEROS = ".".join("0000")  # built from parts: the every-interface address
++FAKE_KEY = "made" + "-up-" + "key-" + "0123456789"  # built from parts: never a real key
++
++
++@pytest.fixture(scope="module")
++def fakes_url() -> Iterator[str]:
++    srv, url, th = serve_fakes_in_thread("keyed")
++    yield url
++    stop_fakes(srv, th)
++
++
++def _env(tmp_path: Path, fakes_url: str, extra: dict[str, str]) -> dict[str, str]:
++    env = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
++    env.update(
++        PYTHONPATH=os.pathsep.join([str(REPO / "src"), str(REPO)]),
++        DESK_DB_PATH=str(tmp_path / "d.sqlite3"),
++        DESK_PORT="0",
++        DESK_FAKES_URL=fakes_url,
++    )
++    env.update(extra)
++    return env
++
++
++def _run(tmp_path: Path, fakes_url: str, extra: dict[str, str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(  # noqa: S603  # nosec B603 - our own module, fixed arguments
++        [sys.executable, "-m", "lead_desk.server"],
++        capture_output=True,
++        text=True,
++        timeout=60,
++        cwd=tmp_path,
++        env=_env(tmp_path, fakes_url, extra),
++    )
++
++
++def _refused_any(r: subprocess.CompletedProcess[str], setting: str, *secrets: str) -> None:
++    """Exit 4, the setting named (the text may start `the desk refuses a setting:` or `the desk refuses to start:`)."""
++    out = r.stdout + r.stderr
++    assert r.returncode == 4, out[-600:]
++    assert setting in r.stdout, out[-600:]
++    assert "Traceback" not in out
++    for s in secrets:
++        assert s not in out
++
++
++def _refused(r: subprocess.CompletedProcess[str], setting: str, *secrets: str) -> None:
++    out = r.stdout + r.stderr
++    assert r.returncode == 4, out[-600:]
++    assert f"the desk refuses a setting: {setting}" in r.stdout, out[-600:]
++    assert "Traceback" not in out
++    for s in secrets:
++        assert s not in out
++
++
++# ---------------------------------------------------------------------------------------------- DESK_BIND
++@pytest.mark.parametrize(
++    "bind",
++    [
++        "not an address",
++        "a b",
++        "bad name!",
++        "a,b",
++        "",
++        "\t",
++        "a..b",
++        ".".join(("256", "1", "1", "1")),  # built from parts: the hygiene scan reads a written address as hard-coded
++        "[" + ".".join(("1", "2", "3", "4")) + "]",
++        "h\u00e9llo",
++        "host:80",
++        "a" * 300,
++    ],
++    ids=[
++        "spaces",
++        "space",
++        "bang",
++        "comma",
++        "empty",
++        "tab",
++        "empty-part",
++        "bad-ipv4",
++        "bracketed-ipv4",
++        "non-ascii",
++        "colon",
++        "long",
++    ],
++)
++def test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings(bind: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_BIND"):
++        Config(bind=bind)
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++@pytest.mark.parametrize(
++    "bind",
++    [
++        "127.0.0.1",
++        ".".join(("127", "0", "0", "2")),
++        "127.1",
++        "::1",
++        "[::1]",
++        "[fe80::1%eth0]",
++        "fe80::1%eth0",
++        "::",
++        "[::]",
++        ALL_ZEROS,
++        "0",
++        "localhost",
++        "LocalHost",
++        "localhost.",
++        "desk_web",
++        "my-host." + "lo" + "cal",
++    ],
++)
++def test_every_name_the_system_might_resolve_is_accepted(bind: str) -> None:
++    assert Config.from_env({"DESK_BIND": bind}).bind == bind
++
++
++@pytest.mark.parametrize("bind", ["[::1", "::1]", "[[::1]]", "[::1]]", "-", "_", "a.-.b", "a._"])
++def test_a_bind_that_can_never_bind_is_refused_by_the_setting_but_not_by_a_built_config(bind: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_BIND must be an IP address or a host name"):
++        Config.from_env({"DESK_BIND": bind})
++    if bind in ("[::1", "::1]"):  # `Config` keeps them readable: public_bind_problem still calls them public
++        assert Config(bind=bind).bind == bind
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_the_ip_path_and_the_bracket_path_agree_on_a_zone_id() -> None:
++    assert Config(bind="[fe80::1%eth0]").bind == "[fe80::1%eth0]"
++    assert Config(bind="fe80::1%eth0").bind == "fe80::1%eth0"
++
++
++def test_a_bind_that_is_no_address_ends_the_desk_with_exit_4(tmp_path: Path, fakes_url: str) -> None:
++    _refused(_run(tmp_path, fakes_url, {"DESK_BIND": "not an address"}), "DESK_BIND must be an IP address")
++
++
++# ---------------------------------------------------------------------------------------------- DESK_DB_PATH
++@pytest.mark.parametrize("value", ["", "   "])
++def test_an_empty_db_path_is_refused_by_the_settings(value: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_DB_PATH must not be empty"):
++        Config.from_env({"DESK_DB_PATH": value})
++
++
++def test_an_empty_db_path_ends_the_desk_with_exit_4(tmp_path: Path, fakes_url: str) -> None:
++    _refused(_run(tmp_path, fakes_url, {"DESK_DB_PATH": ""}), "DESK_DB_PATH must not be empty")
++
++
++def _main_refusal(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, db_path: str, capsys: pytest.CaptureFixture[str]
++) -> str:
++    """Run `server.main()` in this process with DESK_DB_PATH set; it must end in SystemExit(4) with no traceback."""
++    monkeypatch.setenv("DESK_DB_PATH", db_path)
++    monkeypatch.setenv("DESK_PORT", "0")
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    out = capsys.readouterr().out
++    assert info.value.code == 4, out
++    return out
++
++
++def test_a_db_path_that_is_an_existing_folder_exits_4_with_no_path_and_no_lock_file(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    folder = tmp_path / "adir"
++    folder.mkdir()
++    out = _main_refusal(monkeypatch, tmp_path, str(folder), capsys)
++    assert out.startswith("the desk refuses to start: DESK_DB_PATH names a folder"), out
++    assert str(folder) not in out
++    assert not Path(f"{folder}.lock").exists()  # refused before the lock step
++
++
++def test_a_db_path_that_ends_in_a_dot_exits_4(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    (tmp_path / "adir").mkdir()
++    out = _main_refusal(monkeypatch, tmp_path, str(tmp_path / "adir" / "."), capsys)
++    assert "DESK_DB_PATH names a folder" in out
++
++
++def test_a_db_path_whose_parent_is_a_file_exits_4(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    in_the_way = tmp_path / "a-file"
++    in_the_way.write_text("x", encoding="utf-8")
++    out = _main_refusal(monkeypatch, tmp_path, str(in_the_way / "d.sqlite3"), capsys)
++    assert "DESK_DB_PATH sits inside something that is a file" in out
++    assert str(in_the_way) not in out
++
++
++def test_a_db_path_deeper_below_a_file_exits_4_and_the_folder_is_not_made(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    in_the_way = tmp_path / "a-file"
++    in_the_way.write_text("x", encoding="utf-8")
++    out = _main_refusal(monkeypatch, tmp_path, str(in_the_way / "sub" / "deeper" / "d.sqlite3"), capsys)
++    assert "DESK_DB_PATH sits inside something that is a file" in out
++    assert str(in_the_way) not in out
++
++
++def test_book_problem_is_the_one_place_for_the_db_path_rules(tmp_path: Path) -> None:
++    f = tmp_path / "a-file"
++    f.write_text("x", encoding="utf-8")
++    assert book_problem(":memory:") == MEMORY_BOOK_PROBLEM
++    assert book_problem(Path("")) is not None and "folder" in str(book_problem(Path("")))
++    assert book_problem(tmp_path) is not None
++    assert book_problem(f / "b.db") is not None
++    assert book_problem(tmp_path / "new" / "deeper" / "b.db") is None  # a folder that can still be made
++    assert book_problem(f) is None  # an existing file is the lead-book itself
++
++
++def test_a_db_folder_that_cannot_be_made_ends_the_desk_with_exit_4_and_no_path(tmp_path: Path, fakes_url: str) -> None:
++    in_the_way = tmp_path / "a-file"
++    in_the_way.write_text("x", encoding="utf-8")
++    target = in_the_way / "sub" / "d.sqlite3"
++    _refused_any(_run(tmp_path, fakes_url, {"DESK_DB_PATH": str(target)}), "DESK_DB_PATH", str(in_the_way))
++
++
++@pytest.mark.skipif(
++    not hasattr(os, "geteuid") or os.geteuid() == 0,
++    reason="a system without user ids, or root, ignores folder permissions: an unwritable folder cannot be tested",
++)
++def test_an_unwritable_db_parent_exits_4(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    ro = tmp_path / "ro"
++    ro.mkdir()
++    ro.chmod(0o500)
++    try:
++        out = _main_refusal(monkeypatch, tmp_path, str(ro / "sub" / "d.sqlite3"), capsys)
++    finally:
++        ro.chmod(0o700)
++    assert "DESK_DB_PATH names a folder that cannot be made" in out
++
++
++def _deny_looking_inside(monkeypatch: pytest.MonkeyPatch, locked: Path) -> None:
++    """Make every stat() of `locked` or anything below it fail with EACCES, as a folder without the search permission
++    does for a normal user. It works as root too (a real chmod does not), so these tests also run in this sandbox."""
++    real_stat = Path.stat
++
++    def stat(self: Path, *args: Any, **kwargs: Any) -> os.stat_result:
++        if self == locked or locked in self.parents:
++            raise PermissionError(errno.EACCES, "Permission denied")
++        return real_stat(self, *args, **kwargs)
++
++    monkeypatch.setattr(Path, "stat", stat)
++
++
++def test_a_db_path_below_a_folder_that_cannot_be_looked_into_exits_4_with_no_path(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    locked = tmp_path / "locked"
++    locked.mkdir()
++    _deny_looking_inside(monkeypatch, locked)
++    out = _main_refusal(monkeypatch, tmp_path, str(locked / "sub" / "d.sqlite3"), capsys)
++    assert out == f"the desk refuses to start: {BOOK_UNREADABLE_PROBLEM}\n", out
++    assert str(locked) not in out and "Traceback" not in out
++    monkeypatch.undo()  # the pretend lock is lifted: now look for a lock file (a refusal must leave none)
++    assert not list(locked.rglob("*.lock"))
++
++
++def test_book_problem_says_unreadable_for_a_path_the_system_will_not_show(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    locked = tmp_path / "locked"
++    locked.mkdir()
++    _deny_looking_inside(monkeypatch, locked)
++    assert book_problem(locked / "d.db") == BOOK_UNREADABLE_PROBLEM
++    assert book_problem(locked) == BOOK_UNREADABLE_PROBLEM
++    assert book_problem(tmp_path / "elsewhere" / "d.db") is None  # the rest is still judged as before
++
++
++def test_a_stats_file_or_ledger_that_cannot_be_looked_at_is_refused_with_no_path(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    locked = tmp_path / "locked"
++    locked.mkdir()
++    _deny_looking_inside(monkeypatch, locked)
++    target = str(locked / "x.json")
++    cases = (
++        (
++            "DESK_HUBSPOT_STATS_FILE",
++            lambda: HubspotSettings.from_env({**_hubspot(f), "DESK_HUBSPOT_STATS_FILE": target}),
++        ),
++        (
++            "DESK_SMTPP_STATS_FILE",
++            lambda: ProviderSettings.from_env({**_provider(f), "DESK_SMTPP_STATS_FILE": target}),
++        ),
++        (
++            "DESK_LIVE_LEDGER_PATH",
++            lambda: Config.from_env(
++                {**_live(f, tmp_path), "DESK_QUALIFIER": "live_claude", "DESK_LIVE_LEDGER_PATH": target}
++            ),
++        ),
++    )
++    for name, build in cases:
++        with pytest.raises(SettingRefused) as info:
++            build()
++        assert str(info.value) == (
++            f"{name} cannot be looked at (the system would not let the desk look at a part of that path)"
++        )
++
++
++@pytest.mark.parametrize(
++    ("code", "expected"),
++    [
++        (errno.ENOENT, "absent"),
++        (errno.ENOTDIR, "absent"),
++        (errno.ELOOP, "absent"),
++        (errno.EACCES, "unreadable"),
++        (errno.EPERM, "unreadable"),
++        (errno.EIO, "unreadable"),
++    ],
++)
++def test_path_kind_sorts_every_stat_error(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, code: int, expected: str
++) -> None:
++    def stat(self: Path, *args: Any, **kwargs: Any) -> os.stat_result:
++        raise OSError(code, "x")
++
++    monkeypatch.setattr(Path, "stat", stat)
++    assert path_kind(tmp_path / "x") == expected
++
++
++def test_path_kind_names_a_folder_a_file_and_nothing(tmp_path: Path) -> None:
++    f = tmp_path / "a-file"
++    f.write_text("x", encoding="utf-8")
++    assert path_kind(tmp_path) == "folder"
++    assert path_kind(f) == "file"
++    assert path_kind(tmp_path / "none") == "absent"
++    assert path_kind(f / "below") == "absent"  # ENOTDIR
++
++
++def test_contract_start_up_order_is_the_order_of_the_calls_in_server_main() -> None:
++    """The doc test for the start-up order: contract.md lists the steps in the order `server.main` runs them."""
++    import inspect
++
++    code = inspect.getsource(server.main)
++    in_code = [
++        code.index(m)
++        for m in (
++            "Config.from_env()",
++            "book_problem(",
++            "mkdir(",
++            "lockfile.acquire(",
++            "load_approvers(",
++            "read_leadflow(",
++            "load_demo_adapters(",
++            "check_secret_files(",
++            "Desk(config",
++            "make_server(",
++        )
++    ]
++    assert in_code == sorted(in_code)
++    text = (Path(server.__file__).parents[2] / "contract.md").read_text(encoding="utf-8")
++    steps = {int(n): body for n, body in re.findall(r"^\* \((\d+)\) (.*)$", text, flags=re.M)}
++    assert sorted(steps) == list(range(1, 14)), sorted(steps)
++    order = [
++        (2, "settings are read and checked"),
++        (3, "desk.book_problem"),
++        (4, "folder of the lead-book file is made"),
++        (5, "lock file"),
++        (6, "approvers file"),
++        (7, "demo adapters are loaded"),
++        (8, "`Desk` is built"),
++        (9, "The bind"),
++    ]
++    for number, words in order:
++        assert words in steps[number], (number, words)
++    assert "check_secret_files" in steps[7] and "exit 2" in steps[5]
++
++
++def test_the_main_docstring_names_the_demo_servers_for_exit_code_1() -> None:
++    doc = " ".join((server.main.__doc__ or "").split())
++    assert "exit code 1 if the demo servers cannot be reached" in doc
++    assert "the sender cannot be reached" not in doc
++
++
++# The class guard for the probes of a setting's path (Path.is_dir()/exists() raise PermissionError on Python 3.12 and
++# later) is the AST scan in tests/test_one_key_file_rule_r7.py, which covers every file of src/lead_desk.
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_a_lock_held_by_another_desk_still_exits_2(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    def held(db_path: object) -> None:
++        raise lockfile.LockHeldError
++
++    monkeypatch.setattr(server.lockfile, "acquire", held)
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "d.sqlite3"))
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    assert info.value.code == 2
++    assert "another desk is using this lead-book" in capsys.readouterr().out
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_a_lock_file_that_cannot_be_opened_exits_2_as_the_exit_code_tables_say(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    def unavailable(db_path: object) -> None:
++        raise lockfile.LockUnavailableError
++
++    monkeypatch.setattr(server.lockfile, "acquire", unavailable)
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "d.sqlite3"))
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    assert info.value.code == 2
++    assert "cannot take the lock file" in capsys.readouterr().out
++
++
++# ---------------------------------------------------------------------------------------------- DESK_REPLIES_PATH
++@pytest.mark.parametrize("content", [None, "{not json", "[1, 2]", ""], ids=["missing", "broken", "not-object", "empty"])
++def test_a_missing_or_broken_replies_file_ends_the_desk_with_exit_4(
++    tmp_path: Path, fakes_url: str, content: str | None
++) -> None:
++    f = tmp_path / "replies-file.json"
++    if content is not None:
++        f.write_text(content, encoding="utf-8")
++    _refused(
++        _run(tmp_path, fakes_url, {"DESK_REPLIES_PATH": str(f)}),
++        "DESK_REPLIES_PATH is not a readable file holding one JSON object",
++        str(f),
++    )
++
++
++def test_a_damaged_default_replies_file_does_not_blame_a_setting_the_user_did_not_set(
++    monkeypatch: pytest.MonkeyPatch, fakes_url: str
++) -> None:
++    fakes = importlib.import_module("demo_only.fakes")
++
++    def damaged(path: object) -> None:
++        raise fakes.RepliesFileError("x")
++
++    monkeypatch.setattr(fakes, "RecordedQualifier", damaged)
++    with pytest.raises(SettingRefused) as info:
++        load_demo_adapters(Config.from_env({"DESK_FAKES_URL": fakes_url}))
++    assert "DESK_REPLIES_PATH" not in str(info.value)
++    assert "demo replies file" in str(info.value)
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_a_damaged_replies_file_that_was_set_names_the_setting(tmp_path: Path, fakes_url: str) -> None:
++    bad = tmp_path / "replies-file.json"
++    bad.write_text("{not json", encoding="utf-8")
++    with pytest.raises(SettingRefused, match="DESK_REPLIES_PATH") as info:
++        load_demo_adapters(Config.from_env({"DESK_FAKES_URL": fakes_url, "DESK_REPLIES_PATH": str(bad)}))
++    assert str(bad) not in str(info.value)
++
++
++def test_a_plain_value_error_inside_the_replies_qualifier_is_a_bug_and_is_not_a_setting(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, fakes_url: str
++) -> None:
++    fakes = importlib.import_module("demo_only.fakes")
++
++    def buggy(path: object) -> None:
++        raise ValueError("a bug somewhere else")
++
++    monkeypatch.setattr(fakes, "RecordedQualifier", buggy)
++    with pytest.raises(ValueError, match="a bug somewhere else") as info:
++        load_demo_adapters(
++            Config.from_env({"DESK_FAKES_URL": fakes_url, "DESK_REPLIES_PATH": str(tmp_path / "x.json")})
++        )
++    assert not isinstance(info.value, SettingRefused)
++
++
++# ---------------------------------------------------------------------------------------------- key and password files
++def _write(tmp_path: Path, name: str, text: str) -> Path:
++    p = tmp_path / name
++    p.write_text(text, encoding="utf-8")
++    return p
++
++
++def _hubspot(key: Path) -> dict[str, str]:
++    return {"DESK_CRM": "hubspot", "DESK_HUBSPOT_KEY_FILE": str(key), "DESK_HUBSPOT_MAX_CALLS": "5"}
++
++
++def _live(key: Path, tmp_path: Path) -> dict[str, str]:
++    return {
++        "DESK_QUALIFIER": "live_claude",
++        "DESK_LIVE_MODEL": "made-up-model",
++        "DESK_LIVE_KEY_FILE": str(key),
++        "DESK_LIVE_PRICE_DATE": "2026-01-01",
++        "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger.jsonl"),
++        "DESK_LIVE_RUN_ID": "run1",
++        "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
++        "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
++        "DESK_LIVE_CAP_RUN_USD": "1",
++        "DESK_LIVE_CAP_TOTAL_USD": "3",
++    }
++
++
++def _provider(pw: Path) -> dict[str, str]:
++    return {
++        "DESK_OUTBOX": "smtp_provider",
++        "DESK_SMTPP_HOST": "mail.example.test",
++        "DESK_SMTPP_USER": "u",
++        "DESK_SMTPP_PASSWORD_FILE": str(pw),
++        "DESK_SMTPP_FROM": "a@example.test",
++        "DESK_SMTPP_RECIPIENTS": "b@example.test",
++        "DESK_SMTPP_MAX_SENDS": "5",
++    }
++
++
++@pytest.mark.parametrize("kind", ["hubspot", "live", "provider"])
++@pytest.mark.parametrize("state", ["missing", "short", "directory"])
++def test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting(
++    tmp_path: Path, fakes_url: str, kind: str, state: str
++) -> None:
++    f = tmp_path / "secret-file"
++    if state == "short":
++        f.write_text("abc\n", encoding="utf-8")
++    elif state == "directory":
++        f.mkdir()
++    extra = {"hubspot": _hubspot(f), "live": _live(f, tmp_path), "provider": _provider(f)}[kind]
++    setting = {
++        "hubspot": "DESK_HUBSPOT_KEY_FILE",
++        "live": "DESK_LIVE_KEY_FILE",
++        "provider": "DESK_SMTPP_PASSWORD_FILE",
++    }[kind]
++    _refused(_run(tmp_path, fakes_url, extra), setting + ": ", str(f), "abc")
++
++
++# ---------------------------------------------------------------------------------------------- start check hook
++class _NoHook:
++    """A kind with no secret: it has no check_start method and is simply not checked."""
++
++
++class _Refusing:
++    def check_start(self) -> None:
++        raise SettingRefused("DESK_MADE_UP_FILE: fixed text")
++
++
++class _Counting:
++    def __init__(self) -> None:
++        self.calls = 0
++
++    def check_start(self) -> None:
++        self.calls += 1
++
++
++def test_a_kind_without_check_start_starts_and_every_kind_with_it_is_asked_once() -> None:
++    a, b = _Counting(), _Counting()
++    check_secret_files(_NoHook(), a, b)
++    assert (a.calls, b.calls) == (1, 1)
++
++
++def test_a_check_start_that_refuses_is_a_setting_refusal_with_its_own_text() -> None:
++    with pytest.raises(SettingRefused, match="DESK_MADE_UP_FILE: fixed text"):
++        check_secret_files(_NoHook(), _Refusing(), _NoHook())
++
++
++@pytest.mark.usefixtures("main_lock_handles_closed")
++def test_main_turns_a_refusing_check_start_into_exit_4_without_a_traceback(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    monkeypatch.setattr(server, "load_demo_adapters", lambda cfg: (_NoHook(), _Refusing(), _NoHook()))
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "d.sqlite3"))
++    monkeypatch.setenv("DESK_PORT", "0")
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    out = capsys.readouterr().out
++    assert info.value.code == 4
++    assert "the desk refuses a setting: DESK_MADE_UP_FILE: fixed text" in out
++
++
++def _kinds(f: Path, tmp_path: Path) -> dict[str, Any]:
++    hs = HubspotSettings.from_env({k: v for k, v in _hubspot(f).items() if k != "DESK_CRM"})
++    pv = ProviderSettings.from_env({k: v for k, v in _provider(f).items() if k != "DESK_OUTBOX"})
++    lv = Config.from_env({**_live(f, tmp_path), "DESK_QUALIFIER": "live_claude"}).live
++    assert lv is not None
++    return {"hubspot": HubspotCrm(hs), "provider": SmtpProviderOutbox(pv), "live": LiveQualifier(lv)}
++
++
++@pytest.mark.parametrize("kind", ["hubspot", "provider", "live"])
++def test_the_three_kinds_that_hold_a_secret_file_have_the_hook(tmp_path: Path, kind: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    assert isinstance(_kinds(f, tmp_path)[kind], StartCheck)
++
++
++@pytest.mark.parametrize("state", ["missing", "directory", "short", "utf16", "several-lines", "oversize", "not-utf8"])
++@pytest.mark.parametrize("kind", ["hubspot", "provider", "live"])
++def test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message(
++    tmp_path: Path, kind: str, state: str
++) -> None:
++    f = tmp_path / "very-private-file-name.txt"
++    secret_text = "SECRET" + "-text-" + "1234"
++    if state == "directory":
++        f.mkdir()
++    elif state == "short":
++        f.write_text("abc\n", encoding="utf-8")
++    elif state == "utf16":
++        f.write_bytes(b"\xff\xfe" + secret_text.encode("utf-16-le"))
++    elif state == "several-lines":
++        f.write_text(secret_text + "\n" + secret_text + "\n", encoding="utf-8")
++    elif state == "oversize":
++        f.write_text(secret_text * 5000, encoding="utf-8")
++    elif state == "not-utf8":
++        f.write_bytes(b"\xc3\x28" + secret_text.encode())
++    obj = _kinds(f, tmp_path)[kind]
++    with pytest.raises(SettingRefused) as info:  # the three kinds read a key file by one rule: every state is refused
++        obj.check_start()
++    msg = str(info.value)
++    assert msg.startswith("DESK_"), msg
++    assert os.sep not in msg and f.name not in msg and "SECRET" not in msg and "abc" not in msg, msg
++
++
++def test_after_check_start_the_live_qualifier_holds_no_key(tmp_path: Path) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    q = _kinds(f, tmp_path)["live"]
++    q.check_start()
++    assert q._key == ""
++
++
++def test_a_key_file_replaced_between_the_start_and_the_first_call_is_the_one_used(tmp_path: Path) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "-A\n")
++    q = _kinds(f, tmp_path)["live"]
++    q.check_start()
++    f.write_text(FAKE_KEY + "-B\n", encoding="utf-8")
++    assert q._read_key() == FAKE_KEY + "-B"
++    f.write_text(FAKE_KEY + "-C\n", encoding="utf-8")
++    assert q._read_key() == FAKE_KEY + "-B"  # kept in memory after the first call, as the settings page says
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++@pytest.mark.parametrize("kind", ["hubspot", "live", "provider"])
++def test_a_good_key_file_starts_the_desk_and_the_key_is_not_printed(tmp_path: Path, fakes_url: str, kind: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    extra = {"hubspot": _hubspot(f), "live": _live(f, tmp_path), "provider": _provider(f)}[kind]
++    p = subprocess.Popen(  # noqa: S603  # nosec B603 - our own module, fixed arguments
++        [sys.executable, "-m", "lead_desk.server"],
++        stdout=subprocess.PIPE,
++        stderr=subprocess.STDOUT,
++        text=True,
++        cwd=tmp_path,
++        env=_env(tmp_path, fakes_url, extra),
++    )
++    assert p.stdout is not None
++    out = p.stdout
++    first: list[str] = []
++    reader = threading.Thread(target=lambda: first.append(out.readline()), daemon=True)
++    reader.start()
++    reader.join(timeout=40)  # a desk that stays silent fails here instead of hanging the test
++    try:
++        assert first, "the desk printed nothing within 40 seconds"
++        assert first[0].startswith("desk listening on "), first[0]
++    finally:
++        p.terminate()
++        try:
++            rest, _ = p.communicate(timeout=20)
++        except subprocess.TimeoutExpired:  # our own child: stop it for good
++            p.kill()
++            rest, _ = p.communicate(timeout=20)
++    assert FAKE_KEY not in first[0] + (rest or "")  # the whole output, not only the first line
++
++
++# ------------------------------------------------------------ other settings found silent
++def _hubspot_bad_word(f: Path, t: Path) -> object:
++    return HubspotSettings.from_env({**_hubspot(f), "DESK_HUBSPOT_ALLOW_ANY_BASE_URL": "ys"})
++
++
++def _live_bad_word(f: Path, t: Path) -> object:
++    return Config.from_env({**_live(f, t), "DESK_QUALIFIER": "live_claude", "DESK_LIVE_ALLOW_ANY_BASE_URL": "ys"})
++
++
++@pytest.mark.parametrize(
++    ("make", "name"),
++    [(_hubspot_bad_word, "DESK_HUBSPOT_ALLOW_ANY_BASE_URL"), (_live_bad_word, "DESK_LIVE_ALLOW_ANY_BASE_URL")],
++    ids=["hubspot", "live"],
++)
++def test_a_yes_no_setting_with_another_word_is_refused_not_read_as_no(tmp_path: Path, make: Any, name: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    with pytest.raises(SettingRefused) as info:
++        make(f, tmp_path)
++    assert str(info.value) == f"{name} must be yes or no"  # the word typed is not echoed
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++@pytest.mark.parametrize("word", ["yes", "YES", " yes ", "no", "No", ""])
++def test_yes_no_words_that_are_accepted(word: str) -> None:
++    assert env_yes_no({"X": word}, "X") is (word.strip().lower() == "yes")
++    assert env_yes_no({}, "X") is False
++
++
++def test_a_stats_file_or_ledger_that_is_a_folder_is_refused(tmp_path: Path) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    d = tmp_path / "adir"
++    d.mkdir()
++    with pytest.raises(SettingRefused, match="DESK_HUBSPOT_STATS_FILE names a folder"):
++        HubspotSettings.from_env({**_hubspot(f), "DESK_HUBSPOT_STATS_FILE": str(d)})
++    with pytest.raises(SettingRefused, match="DESK_SMTPP_STATS_FILE names a folder"):
++        ProviderSettings.from_env({**_provider(f), "DESK_SMTPP_STATS_FILE": str(d)})
++    with pytest.raises(SettingRefused, match="DESK_LIVE_LEDGER_PATH names a folder"):
++        Config.from_env({**_live(f, tmp_path), "DESK_QUALIFIER": "live_claude", "DESK_LIVE_LEDGER_PATH": str(d)})
++
++
++@pytest.mark.parametrize("state", ["missing", "not-a-certificate"])
++def test_a_ca_file_that_cannot_be_read_is_refused_with_no_traceback_and_no_path(tmp_path: Path, state: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    ca = tmp_path / "ca-file.pem"
++    if state != "missing":
++        ca.write_text("this is no certificate\n", encoding="utf-8")
++    env = {**_provider(f), "DESK_SMTPP_CA_FILE": str(ca)}
++    with pytest.raises(SettingRefused) as info:
++        SmtpProviderOutbox(ProviderSettings.from_env(env))
++    assert str(info.value) == "DESK_SMTPP_CA_FILE is not a readable certificate file"
+diff --git a/tests/test_smtp_provider.py b/tests/test_smtp_provider.py
+index 5cded3d..2ef698f 100644
+--- a/tests/test_smtp_provider.py
++++ b/tests/test_smtp_provider.py
+@@ -18,7 +18,7 @@ from lead_desk.constants import MAIL_SPAM_FOLDER
+ from lead_desk.contract import SendAmbiguous, SendRefused, SendUnreachable
+ from lead_desk.imap_count import ImapCountError, ImapSettings, counts_by_inbox, counts_by_key, counts_for_keys
+ from lead_desk.loader import load_demo_adapters
+-from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox, make_outbox, read_secret_file
++from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox, make_outbox, read_smtp_password
+ 
+ HOST = "localhost"  # the certificate names it; verification stays ON
+ PW = FAKE_PASSWORD  # made up, built from parts in demo_only/fake_smtp_tls.py
+@@ -405,10 +405,10 @@ def test_password_file_formats_give_a_helpful_fixed_text(tmp_path: Path, raw: by
+     p = tmp_path / "x.txt"
+     p.write_bytes(raw)
+     if words is None:
+-        assert read_secret_file(p) == PW
++        assert read_smtp_password(p) == PW
+         return
+     with pytest.raises(SendRefused) as e:
+-        read_secret_file(p, "mailbox password")
++        read_smtp_password(p, "mailbox password")
+     assert words in str(e.value) and "mailbox password" in str(e.value) and p.name not in str(e.value)
+ 
+ 

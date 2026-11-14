@@ -1,0 +1,388 @@
++                        head += b"Retry-After: " + self.header + b"\r\n"
++                    head += b"Content-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
++                    conn.sendall(head)
++                    self.hits += 1
++                except OSError:
++                    pass
++
++    @property
++    def url(self) -> str:
++        return f"http://127.0.0.1:{self.port}"
++
++    def close(self) -> None:
++        self.stop_event.set()
++        self.thread.join(3)
++        self.sock.close()
++
++
++@pytest.fixture
++def stub_for() -> Iterator[Any]:
++    made: list[RawStub] = []
++
++    def make(header: bytes | None) -> RawStub:
++        s = RawStub(header)
++        made.append(s)
++        return s
++
++    yield make
++    for s in made:
++        s.close()
++
++
++REFUSED_BYTES = [
++    b"inf", b"nan", b"1e999", b"-1", b"1_0", ARABIC_DIGITS.encode(), b"1e2", b".5", b"+4", b"5.", b"abc",
++    b"Wed, 21 Oct 2026",
++]  # fmt: skip
++
++
++def _hubspot(tmp_path: Path, url: str, **kw: Any) -> Any:
++    from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings
++
++    key_file = tmp_path / "hubspot-key.txt"
++    key_file.write_text(KEY + "\n", encoding="utf-8")
++    base: dict[str, Any] = {
++        "key_file": key_file, "max_calls": 50, "base_url": url, "timeout_seconds": 3.0, "allow_any_base_url": True,
++    }  # fmt: skip
++    return HubspotCrm(HubspotSettings(**(base | kw)))
++
++
++REC = {
++    "name": "Ada Example",
++    "email": "ada@example.test",
++    "company": "Example Ltd",
++    "source": "form",
++    "ai_label": "hot",
++}
++
++
++@pytest.mark.parametrize("raw", REFUSED_BYTES)
++def test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff(
++    tmp_path: Path, stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes
++) -> None:
++    from lead_desk import crm_hubspot
++    from lead_desk.crm_hubspot import CrmBusy
++
++    slept: list[float] = []
++    clock = types.SimpleNamespace(monotonic=time.monotonic, sleep=slept.append)
++    monkeypatch.setattr(crm_hubspot, "time", clock)
++    stub = stub_for(raw)
++    with pytest.raises(CrmBusy) as e:
++        _hubspot(tmp_path, stub.url, max_429_retries=1).put("L-1", REC)
++    assert e.value.retry_after is None, raw
++    assert slept == [crm_hubspot.BACKOFF_FIRST_SECONDS] and math.isfinite(slept[0]), (raw, slept)
++    assert stub.hits == 2
++
++
++def test_hubspot_adapter_honours_a_plain_retry_after_and_clamps_a_huge_one(
++    tmp_path: Path, stub_for: Any, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from lead_desk import crm_hubspot
++    from lead_desk.crm_hubspot import CrmBusy
++
++    monkeypatch.setattr(crm_hubspot, "time", types.SimpleNamespace(monotonic=time.monotonic, sleep=lambda _d: None))
++    for raw, want in ((b"0.25", 0.25), (b"9999999999", constants.RETRY_AFTER_MAX_SECONDS)):
++        with pytest.raises(CrmBusy) as e:
++            _hubspot(tmp_path, stub_for(raw).url, max_429_retries=0).put("L-1", REC)
++        assert e.value.retry_after == want, raw
++
++
++def _live(tmp_path: Path, url: str) -> Any:
++    from lead_desk.live_claude import LiveQualifier, LiveSettings
++
++    key_file = tmp_path / "model-key.txt"
++    key_file.write_text(KEY + "\n", encoding="utf-8")
++    return LiveQualifier(
++        LiveSettings(
++            model="fake-model-1", key_file=key_file, price_in_per_mtok=Decimal("2"), price_out_per_mtok=Decimal("10"),
++            price_date="2026-01-01", cap_run_usd=Decimal("1"), cap_total_usd=Decimal("3"),
++            ledger_path=tmp_path / "ledger.jsonl", run_id="run-a", base_url=url, timeout_seconds=3.0,
++        )  # fmt: skip
++    )
++
++
++@pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
++def test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses(
++    tmp_path: Path, stub_for: Any, raw: bytes | None
++) -> None:
++    from lead_desk.live_claude import LiveRateLimited
++
++    with pytest.raises(LiveRateLimited) as e:
++        _live(tmp_path, stub_for(raw).url).qualify("L1", "a@example.test")
++    assert e.value.retry_after is None, raw
++
++
++def test_live_model_kind_reports_a_plain_retry_after_and_clamps_a_huge_one(tmp_path: Path, stub_for: Any) -> None:
++    from lead_desk.live_claude import LiveRateLimited
++
++    for raw, want in ((b"3", 3.0), (b"9999999999", constants.RETRY_AFTER_MAX_SECONDS)):
++        with pytest.raises(LiveRateLimited) as e:
++            _live(tmp_path, stub_for(raw).url).qualify("L1", "a@example.test")
++        assert e.value.retry_after == want, raw
++
++
++@pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
++def test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses(
++    stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes | None
++) -> None:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    hp = importlib.import_module("hubspot_probe")
++    stub = stub_for(raw)
++    probe = hp.Probe(stub.url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
++    status, _body, wait = probe._once("GET", "/crm/v3/owners", None)
++    assert status == 429 and wait is None, raw
++
++
++def test_the_hubspot_probe_clamps_a_huge_wait(stub_for: Any, monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    hp = importlib.import_module("hubspot_probe")
++    probe = hp.Probe(stub_for(b"9999999999").url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
++    assert probe._once("GET", "/x", None)[2] == hp.RETRY_AFTER_MAX_SECONDS == constants.RETRY_AFTER_MAX_SECONDS
++
++
++# --------------------------------------------- the load driver falls back to its copy only when the desk code is absent
++def _driver_source() -> Path:
++    return REPO / "load_tools" / "load_driver.py"
++
++
++def _clean_modules(monkeypatch: pytest.MonkeyPatch) -> None:
++    for name in [n for n in sys.modules if n == "lead_desk" or n.startswith("lead_desk.")]:
++        monkeypatch.delitem(sys.modules, name)
++
++
++def test_the_load_driver_uses_its_copy_when_the_desk_code_is_not_importable(monkeypatch: pytest.MonkeyPatch) -> None:
++    _clean_modules(monkeypatch)
++    monkeypatch.setattr(sys, "path", [p for p in sys.path if not (Path(p or ".") / "lead_desk").is_dir()])
++    importlib.invalidate_caches()
++    monkeypatch.syspath_prepend(str(REPO))
++    mod = _fresh(monkeypatch, "load_driver_without_src", _driver_source())
++    assert mod._retry_after is mod._retry_after_fallback
++    assert mod._retry_after("2") == 2.0 and mod._retry_after("inf") is None
++
++
++def _fake_desk(tmp_path: Path, envnum_text: str) -> Path:
++    pkg = tmp_path / "fake_src" / "lead_desk"
++    pkg.mkdir(parents=True)
++    (pkg / "__init__.py").write_text("", encoding="utf-8")
++    consts = {
++        "BURST_BACKOFF_SECONDS": 0.1, "BURST_BACKOFF_MAX_SECONDS": 1.0, "BURST_RETRY_DEADLINE_SECONDS": 30.0,
++        "RETRY_AFTER_MAX_SECONDS": float(constants.RETRY_AFTER_MAX_SECONDS),
++    }  # fmt: skip
++    (pkg / "constants.py").write_text("\n".join(f"{k} = {v!r}" for k, v in consts.items()) + "\n", encoding="utf-8")
++    (pkg / "envnum.py").write_text(envnum_text, encoding="utf-8")
++    return tmp_path / "fake_src"
++
++
++@pytest.mark.parametrize(
++    ("envnum_text", "why"),
++    [
++        ("x = 1\n", "the desk is there but its envnum lacks the reader: a bug in the desk"),
++        ("import a_module_that_is_not_installed_anywhere\n", "a missing dependency in the desk, not a missing desk"),
++    ],
++)
++def test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, envnum_text: str, why: str
++) -> None:
++    _clean_modules(monkeypatch)
++    monkeypatch.syspath_prepend(str(_fake_desk(tmp_path, envnum_text)))
++    monkeypatch.syspath_prepend(str(REPO))
++    with pytest.raises(ImportError):
++        _fresh(monkeypatch, "load_driver_with_broken_desk", _driver_source())
++
++
++# -------------------------------------------------------------------------------- key files that are links, and modes
++def test_a_key_file_that_is_a_symbolic_link_is_refused_without_a_path_or_the_key(tmp_path: Path) -> None:
++    real = tmp_path / "real-key.txt"
++    real.write_text(KEY + "\n", encoding="utf-8")
++    link = tmp_path / "link-key.txt"
++    _make_link(link, real)
++    with pytest.raises(SettingRefused) as e:
++        envnum.read_secret_file(link, "made-up key", "key")
++    assert str(e.value) == "the made-up key file is a symbolic link: name the real file"
++    assert KEY not in str(e.value) and str(tmp_path) not in str(e.value)
++    assert envnum.read_secret_file(real, "made-up key", "key") == KEY
++
++
++def test_a_key_file_in_a_folder_reached_through_a_link_is_still_read(tmp_path: Path) -> None:
++    real = tmp_path / "real-folder"
++    real.mkdir()
++    (real / "k.txt").write_text(KEY, encoding="utf-8")
++    _make_link(tmp_path / "folder-link", real)
++    assert envnum.read_secret_file(tmp_path / "folder-link" / "k.txt", "made-up key", "key") == KEY
++
++
++def test_the_reader_opens_without_following_a_link(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    seen: list[int] = []
++    real = os.open
++
++    def spy(path: object, flags: int, *a: object, **k: object) -> int:
++        seen.append(flags)
++        return real(path, flags, *a, **k)  # type: ignore[arg-type]
++
++    monkeypatch.setattr(os, "open", spy)
++    f = tmp_path / "k.txt"
++    f.write_text(KEY, encoding="utf-8")
++    envnum.read_secret_file(f, "made-up key", "key")
++    nofollow = getattr(os, "O_NOFOLLOW", 0)
++    assert seen and all(fl & nofollow == nofollow for fl in seen)
++
++
++
++# ---------------------------------------------------------------------------------- the fake model server's key text
++def _fms(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, path: Path, capsys: pytest.CaptureFixture[str]
++) -> tuple[int, str]:
++    monkeypatch.syspath_prepend(str(REPO))
++    from demo_only import fake_model_server as fms
++
++    monkeypatch.setattr(fms, "confine_existing", lambda p, what="": Path(p))
++    monkeypatch.setattr(fms, "make_model_server", lambda **kw: (_ for _ in ()).throw(RuntimeError("reached")))
++    monkeypatch.setattr(sys, "argv", ["fake_model_server", "--port", "0", "--key-file", str(path)])
++    with pytest.raises(SystemExit) as e:
++        fms.main()
++    return int(e.value.code), capsys.readouterr().err  # type: ignore[arg-type]
++
++
++def test_the_fake_model_server_prints_one_exact_line_for_a_bad_key_file(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    short = tmp_path / "short.txt"
++    short.write_bytes(b"abc")
++    code, err = _fms(monkeypatch, tmp_path, short, capsys)
++    assert code == 2
++    assert err == (
++        "refused: --key-file: the model key file is empty or shorter than 8 characters: it must hold the key\n"
++    )
++    code, err = _fms(monkeypatch, tmp_path, tmp_path / "missing.txt", capsys)
++    assert code == 2 and err == "refused: --key-file: the model key file cannot be read\n"
++    assert "file file" not in err
++
++
++def test_the_fake_model_server_is_started_with_the_source_folder_on_the_path() -> None:
++    doc = (REPO / "demo_only" / "fake_model_server.py").read_text(encoding="utf-8").split('"""')[1]
++    assert "PYTHONPATH=src python -m demo_only.fake_model_server" in " ".join(doc.split()[:60]).replace("\n", " ")
++    readme = " ".join((REPO / "load_tools" / "README.md").read_text(encoding="utf-8").split())
++    assert "PYTHONPATH=src python -m demo_only.fake_model_server" in readme
++    assert re.search(r"(?<!PYTHONPATH=src )python -m demo_only\.fake_model_server", readme) is None
++
++
++# ----------------------------------------------------------------------------- the n8n script accepts a byte-order mark
++def test_the_n8n_script_accepts_a_key_file_with_a_byte_order_mark_and_the_docs_say_so(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    f = tmp_path / "n8n-key.txt"
++    f.write_bytes(b"\xef\xbb\xbf" + KEY.encode() + b"\r\n")
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(f))
++    monkeypatch.delenv("N8N_URL", raising=False)
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    assert importlib.import_module("n8n_api").KEY == KEY
++    text = " ".join((REPO / "docs" / "settings.md").read_text(encoding="utf-8").split())
++    assert "byte-order mark) is accepted" in text  # said once, in the one section of the settings page
++
++
++# ------------------------------------------------------------------------------------------------ docs and comments
++def test_the_mailbox_password_is_documented_as_read_when_the_mailbox_is_counted() -> None:
++    text = " ".join((REPO / "contract.md").read_text(encoding="utf-8").split())
++    assert "every kind that holds a key or password file, except the mailbox, is asked to read it once" in text
++    assert "every kind that holds a key or password file is asked to read it once" not in text
++    assert (
++        "The mailbox password file is not read at start: it is read each time the mailbox is counted "
++        "(`imap_count`, used by `scripts/run_real_check.py`)."
++    ) in text
++    other = " ".join((REPO / "docs" / "settings.md").read_text(encoding="utf-8").split())
++    assert "The mailbox password file follows the SMTP password rule: spaces inside are dropped" in other
++
++
++def test_the_mailbox_password_is_read_at_every_count_not_at_start() -> None:
++    src = (SRC / "imap_count.py").read_text(encoding="utf-8")
++    assert "read from a file at every call" in src
++    loader = (SRC / "loader.py").read_text(encoding="utf-8")
++    assert "imap_count" not in loader.split("def check_secret_files")[1].split("\ndef ")[0]
++
++
++def test_the_lock_comment_describes_behaviour_not_a_version() -> None:
++    text = (SRC / "lockfile.py").read_text(encoding="utf-8")
++    body = text.split("def lock_path", 1)[1].split("def acquire", 1)[0]
++    assert "3.13" not in body and "Python 3" not in body, body
++    assert "resolving a loop of links may not raise" in body
++
++
++def test_a_looped_lock_name_is_a_lock_refusal_on_this_python(tmp_path: Path) -> None:
++    from lead_desk import lockfile
++
++    loop = tmp_path / "loop"
++    _make_link(loop, loop)
++    with pytest.raises(lockfile.LockUnavailableError):
++        lockfile.lock_path(loop)
++    with pytest.raises(lockfile.LockUnavailableError):
++        lockfile.lock_path(loop / "d.sqlite3")
++
++
++# ---------------------------------------------------------------------------- one word, "lead-book": an allow-list
++ON_PURPOSE = "names the wrong word on purpose"
++SAYS = "this line holds the exact wrong spelling"
++ALLOWED_WRONG_WORD: dict[tuple[str, str, str], tuple[int, str]] = {
++    (
++        "tests/test_portal_wording_and_masking.py",
++        "-",
++        'assert "' + PLAIN_WORD + '" not in screens.lower().replace("lead-book", "")',
++    ): (1, ON_PURPOSE),
++    (
++        "tests/test_one_key_file_rule_and_path_walk.py",
++        "-",
++        'assert "' + PLAIN_WORD + '" not in text and "lead-book" in text',
++    ): (1, ON_PURPOSE),
++    (
++        "tests/test_portal_mode.py",
++        "-",
++        'for variant in ("mail system", "' + PLAIN_WORD + '", "database file", "same reference", "Email message", '
++        '"request id"):',
++    ): (1, ON_PURPOSE),
++}  # fmt: skip
++
++
++def test_a_person_never_reads_the_wrong_spelling_of_lead_book() -> None:
++    hits: list[tuple[str, int, str, str]] = []
++    for p in sorted(REPO.rglob("*")):
++        if not p.is_file() or p.suffix not in {".py", ".md", ".sh", ".ps1", ".sql", ".txt", ".json", ".yml"}:
++            continue
++        rel = p.relative_to(REPO)
++        if rel.parts[0] in {".git", ".venv", "data", "node_modules"} or "__pycache__" in rel.parts:
++            continue
++        for n, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
++            if re.search(WORD, line, re.I):
++                hits.append((rel.as_posix(), n, line.strip(), "-"))
++    bad, stale = _unallowed(hits, ALLOWED_WRONG_WORD)
++    assert bad == [], bad
++    assert stale == [], stale
++
++
++# ------------------------------------------------------------------ the spending caps: the real refusal text is reached
++@pytest.mark.parametrize("arg", ["NaN", "Infinity", "-Infinity", "0", "-1"])
++@pytest.mark.parametrize("flag", ["--cap-run", "--cap-total"])
++def test_the_live_check_refuses_a_cap_with_its_own_text(
++    flag: str, arg: str, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    mod = importlib.import_module("run_live_check")
++    keyf = tmp_path / "k.txt"
++    keyf.write_text(KEY, encoding="utf-8")
++    other = "--cap-total" if flag == "--cap-run" else "--cap-run"
++    argv = ["--key-file", str(keyf), "--ledger", str(tmp_path / "l.jsonl"), "--price-date", "2026-01-01"]
++    argv += ["--model", "m=1,2", f"{flag}={arg}", f"{other}=3"]  # one token: argparse takes "-Infinity" as the value
++    with pytest.raises(SystemExit) as e:
++        mod.main(argv)
++    assert e.value.code == 2
++    err = capsys.readouterr().err
++    assert "a spending cap must be a finite amount above zero" in err and "Traceback" not in err, err
++
++
++def test_the_live_check_refuses_a_cap_that_is_not_a_number(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    mod = importlib.import_module("run_live_check")
++    argv = ["--key-file", str(tmp_path / "k.txt"), "--ledger", str(tmp_path / "l.jsonl"), "--price-date", "2026-01-01"]
++    with pytest.raises(SystemExit):
++        mod.main([*argv, "--model", "m=1,2", "--cap-run=abc", "--cap-total=3"])
++    assert "not a number" in capsys.readouterr().err

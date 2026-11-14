@@ -1,0 +1,1025 @@
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 9812f8e..2728f35 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -53,7 +53,7 @@ from lead_desk.constants import (
+     STALL_SECONDS_MAX,
+     WILDCARD_BINDS,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import SettingRefused, env_number, env_yes_no, refuse_unusable_file, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
+ from lead_desk.urls import desk_origin
+ 
+@@ -61,6 +61,56 @@ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+ _HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
+ 
+ 
++_BIND_CHARS = re.compile(r"[A-Za-z0-9._:%\[\]-]+")  # ASCII letters, digits and . _ - : % [ ] only
++_ALL_DIGITS_AND_DOTS = re.compile(r"[0-9.]+")
++
++
++def _is_bind_name(name: str) -> bool:
++    """False only for what can never be the address the desk listens on; True for everything the operating system
++    might resolve (whether a name resolves on this computer is for the system to say: the desk then stops later with
++    exit code 5). Refused: empty, anything outside ASCII letters, digits and . - _ : % [ ] (so no space and no control
++    character), more than HOST_NAME_MAX characters, an empty part in a dotted name (`a..b`; one dot at the end is
++    fine), a number-and-dots name the system cannot read as IPv4 (a part above 255), brackets around anything but an
++    IPv6 address (an IPv4 address in brackets), and a name with a colon or % that is not an IPv6 address (a zone id is
++    fine: `[fe80::1%eth0]`). Allowed: an underscore (container and machine names), a trailing dot, the
++    all-interfaces spellings."""
++    if not name or len(name) > HOST_NAME_MAX or not _BIND_CHARS.fullmatch(name):
++        return False
++    if "[" in name or "]" in name:  # brackets go with an IPv6 address (zone allowed); IPv4 in brackets is refused
++        inner = name.strip("[]")  # an unpaired bracket (`[::1`) stays readable: public_bind_problem calls it public
++        return ":" in inner and "[" not in inner and "]" not in inner and _is_ipv6(inner)
++    if ":" in name or "%" in name:
++        return _is_ipv6(name)
++    if _ALL_DIGITS_AND_DOTS.fullmatch(name):  # the system reads short forms and 0 as IPv4; a part above 255 it cannot
++        try:
++            socket.inet_aton(name)
++        except OSError:
++            return False
++        return True
++    return all(name.rstrip(".").split("."))  # no empty part (`a..b`, `.a`)
++
++
++def _is_settable_bind_name(name: str) -> bool:
++    """The stricter check for a bind that came from the DESK_BIND setting (`Config.from_env`): everything
++    `_is_bind_name` accepts, and also exactly one pair of brackets around the whole IPv6 address (`[::1` and `::1]` can
++    never bind), and a letter or digit in every part of a name (`-`, `_` and `a.-.b` can never be a name). `Config`
++    itself keeps the looser check, so that `public_bind_problem` still calls a half-bracketed text public."""
++    if not _is_bind_name(name):
++        return False
++    if name.startswith("[") or name.endswith("]") or "[" in name or "]" in name:
++        return name.startswith("[") and name.endswith("]") and name.count("[") == 1 and name.count("]") == 1
++    if ":" in name or "%" in name or _ALL_DIGITS_AND_DOTS.fullmatch(name):
++        return True  # an IPv6 or IPv4 address that `_is_bind_name` already read
++    return all(any(c.isalnum() for c in part) for part in name.rstrip(".").split("."))
++
++
++def _is_ipv6(text: str) -> bool:
++    try:
++        return isinstance(ipaddress.ip_address(text), ipaddress.IPv6Address)
++    except ValueError:
++        return False
++
++
+ def is_loopback_host(name: str) -> bool:
+     """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+     reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+@@ -212,8 +262,9 @@ def _live_from_env(e: Mapping[str, str]) -> LiveSettings:
+         kw["effort"] = e["DESK_LIVE_EFFORT"]
+     if "DESK_LIVE_MAX_TOKENS" in e:
+         kw["max_tokens"] = env_number(e, "DESK_LIVE_MAX_TOKENS", int, low=1, high=LIVE_MAX_TOKENS_MAX)
+-    if e.get("DESK_LIVE_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
++    if env_yes_no(e, "DESK_LIVE_ALLOW_ANY_BASE_URL"):
+         kw["allow_any_base_url"] = True
++    refuse_unusable_file("DESK_LIVE_LEDGER_PATH", Path(e["DESK_LIVE_LEDGER_PATH"]))  # a folder is never the ledger
+     return LiveSettings(
+         model=e["DESK_LIVE_MODEL"],
+         key_file=Path(e["DESK_LIVE_KEY_FILE"]),
+@@ -251,15 +302,16 @@ def _check_approvers(approvers: tuple[tuple[str, str], ...], label: str) -> None
+         names.add(entry[1])
+ 
+ 
+-def read_approvers(path: Path) -> tuple[tuple[tuple[str, str], ...], str]:
++def read_approvers(path: Path, setting: str | None = "DESK_APPROVERS_FILE") -> tuple[tuple[tuple[str, str], ...], str]:
+     """Read an approvers file: JSON `{"label": "...", "approvers": [{"id": "...", "name": "..."}, ...]}` (label is
+     optional). Returns ((id, name), ...) and the label. Only the file shape is checked here; Config checks the
+-    values. Raises SettingRefused (naming DESK_APPROVERS_FILE and the entry number, never the text)."""
++    values. Raises SettingRefused (naming DESK_APPROVERS_FILE and the entry number, never the text). `setting=None`
++    is for the shipped default file, which no setting names: its refusal does not blame a setting."""
+     try:
+         with path.open("rb") as f:
+             raw = f.read(APPROVERS_FILE_MAX_BYTES + 1)
+     except OSError:
+-        raise SettingRefused("the approvers file cannot be read") from None
++        raise SettingRefused(f"{setting} cannot be read" if setting else "the approvers file cannot be read") from None
+     if len(raw) > APPROVERS_FILE_MAX_BYTES:
+         raise SettingRefused("the approvers file is too big")
+     try:
+@@ -514,6 +566,8 @@ class Config:
+             raise SettingRefused("qualifier live_claude needs the live model settings (DESK_LIVE_*)")
+         if not self.bind or not self.fakes_host:
+             raise SettingRefused("DESK_BIND and DESK_FAKES_HOST must not be empty")
++        if not _is_bind_name(self.bind):
++            raise SettingRefused("DESK_BIND must be an IP address or a host name")
+         if not is_loopback_host(self.fakes_host):  # the stand-ins are local by construction: the banner relies on it
+             raise SettingRefused(
+                 "DESK_FAKES_HOST (or DESK_FAKES_URL) must be this computer: localhost or a loopback address"
+@@ -547,8 +601,12 @@ class Config:
+         e = os.environ if env is None else env
+         kw: dict[str, Any] = {}
+         if "DESK_DB_PATH" in e:
++            if not e["DESK_DB_PATH"].strip():  # Path("") is "." (a folder), never a lead-book
++                raise SettingRefused("DESK_DB_PATH must not be empty")
+             kw["db_path"] = Path(e["DESK_DB_PATH"])
+         if "DESK_BIND" in e:
++            if e["DESK_BIND"] and not _is_settable_bind_name(e["DESK_BIND"]):  # empty: Config gives its own text
++                raise SettingRefused("DESK_BIND must be an IP address or a host name")
+             kw["bind"] = e["DESK_BIND"]
+         if "DESK_PORT" in e:
+             kw["port"] = env_number(e, "DESK_PORT", int, low=0, high=PORT_MAX)
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index ad79be1..85de473 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -23,7 +23,7 @@ HTTP_BUSY: Final = 503
+ 
+ # Process exit codes
+ EXIT_OK: Final = 0
+-EXIT_ANOTHER_DESK: Final = 2  # another desk holds the lock file (the lead book is in use)
++EXIT_ANOTHER_DESK: Final = 2  # another desk holds the lock file (the lead-book is in use)
+ EXIT_SETTING_REFUSED: Final = (
+     3  # a limit in constants.py does not fit this computer (too many handler threads for the open-file limit)
+ )
+@@ -180,6 +180,11 @@ LIVE_PER_MILLION: Final = 1_000_000
+ LIVE_LEDGER_LOCK_TRIES: Final = 50  # blocking ledger lock: tries x LIVE_LEDGER_LOCK_WAIT seconds
+ LIVE_LEDGER_LOCK_WAIT: Final = 0.1
+ LIVE_KEY_MIN_CHARS: Final = 8
++SECRET_FILE_MAX_BYTES: Final = 4096  # the most bytes read from a key or password file (one line)
++# The most seconds a Retry-After header may ask for: a larger number is read as this one. The desk's reader
++# (lead_desk.envnum.retry_after_seconds) and the two stand-alone copies (scripts/hubspot_probe.py, load_tools/
++# load_driver.py) hold the same value; a test pins them together.
++RETRY_AFTER_MAX_SECONDS: Final = 3600.0
+ LIVE_LEDGER_FILE_MAX_BYTES: Final = 8_000_000  # a bigger ledger file is refused (it is read whole on every reserve)
+ LIVE_PRICE_MIN: Final = "0.000001"  # US$ per million tokens: below this the worst-case cost could round to zero
+ LIVE_PRICE_MAX: Final = "1000000"
+@@ -253,7 +258,7 @@ DRAIN_TOTAL_SECONDS: Final = 1.0  # wall-clock limit of all draining on one conn
+ DRAIN_MAX_BYTES: Final = (
+     1_048_576  # unread request bytes read and dropped after an early reply, so the reply is not lost to a reset
+ )
+-EXIT_ADAPTERS_UNREACHABLE: Final = 1  # start-up cannot reach the sender (/fake/info)
++EXIT_ADAPTERS_UNREACHABLE: Final = 1  # start-up cannot reach the demo servers
+ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a number; longer is over every limit
+ REPLY_MAX_BYTES: Final = (
+     1_048_576  # an adapter reply longer than this is refused unread (the fakes answer a few hundred bytes)
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 89e6f8a..54ef78e 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -78,11 +78,18 @@ from lead_desk.constants import (
+     HTTP_TOO_MANY_REQUESTS,
+     HUBSPOT_BASE_URL,
+     HUBSPOT_HOST_SUFFIXES,
+-    LIVE_KEY_MIN_CHARS,
+     MIRROR_CALL_SHARE,
+     REPLY_MAX_BYTES,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import (
++    SettingRefused,
++    env_number,
++    env_yes_no,
++    read_secret_file,
++    refuse_unusable_file,
++    retry_after_seconds,
++    split_url,
++)
+ from lead_desk.run_stats import write_stats
+ 
+ LEAD_ID_PROPERTY: Final = "hadavin_lead_id"  # created by hand in the CRM account; this module never creates one
+@@ -94,7 +101,6 @@ BACKOFF_FIRST_SECONDS: Final = 0.5  # used when a 429 names no Retry-After
+ LIST_PAGE: Final = 100
+ LIST_PAGES_MAX: Final = 50
+ LIST_TOTAL_SECONDS: Final = 120.0  # the whole read-back listing, however many pages
+-SECRET_FILE_MAX_BYTES: Final = 4096
+ SEARCH_SPACING_SECONDS: Final = (
+     0.25  # HubSpot's documentation (read 2026-11-10) gives the search API 5 requests a second
+ )
+@@ -189,10 +195,11 @@ class HubspotSettings:
+             kw["max_429_retries"] = env_number(
+                 env, "DESK_HUBSPOT_MAX_429_RETRIES", int, low=0, high=DEFAULT_429_RETRIES + 3
+             )
+-        if env.get("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
++        if env_yes_no(env, "DESK_HUBSPOT_ALLOW_ANY_BASE_URL"):
+             kw["allow_any_base_url"] = True
+         if env.get("DESK_HUBSPOT_STATS_FILE"):
+             kw["stats_file"] = Path(env["DESK_HUBSPOT_STATS_FILE"])
++            refuse_unusable_file("DESK_HUBSPOT_STATS_FILE", kw["stats_file"])  # a folder is never a stats file
+         return cls(
+             Path(env["DESK_HUBSPOT_KEY_FILE"]),
+             env_number(env, "DESK_HUBSPOT_MAX_CALLS", int, low=1, high=CAP_COUNT_MAX),
+@@ -207,14 +214,6 @@ class _Reply:
+         self.status, self.body, self.retry_after = status, body, retry_after
+ 
+ 
+-def _retry_after(raw: str | None) -> float | None:
+-    try:
+-        v = float(raw) if raw is not None else None
+-    except ValueError:
+-        return None
+-    return v if v is not None and 0 <= v < float("inf") else None
+-
+-
+ def _split_name(name: str) -> tuple[str, str]:
+     first, _, last = name.strip().partition(" ")
+     return first.strip(), last.strip()
+@@ -249,25 +248,21 @@ class HubspotCrm:
+ 
+     # -- the wire -----------------------------------------------------------------------------------------------
+ 
+-    def _key(self) -> str:
++    def check_start(self) -> None:
++        """Start-up check (the optional `check_start` hook of a kind that holds a secret): read the key file once, as
++        the first call would, so a missing or empty key file stops the start (SettingRefused, exit code 4) instead of
++        failing every later call. The message names the setting and holds neither the path nor the key. The key is
++        not kept; each call still reads the file (a new key works)."""
+         try:
+-            with self.s.key_file.open("rb") as f:
+-                raw = f.read(SECRET_FILE_MAX_BYTES + 1)
+-        except OSError:
+-            raise CrmConfigError("the hubspot key file cannot be read") from None  # the OS error holds the path
+-        if len(raw) > SECRET_FILE_MAX_BYTES:
+-            raise CrmConfigError("the hubspot key file is too large: it must hold only the key")
+-        if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+-            raise CrmConfigError("the hubspot key file is UTF-16 text: save it as plain UTF-8 text")
++            self._key()
++        except CrmConfigError as e:
++            raise SettingRefused(f"DESK_HUBSPOT_KEY_FILE: {e}") from None
++
++    def _key(self) -> str:
+         try:
+-            key = raw.decode("utf-8-sig").strip()
+-        except UnicodeError:
+-            raise CrmConfigError("the hubspot key file is not UTF-8 text: save it as plain UTF-8 text") from None
+-        if "\n" in key or "\r" in key:
+-            raise CrmConfigError("the hubspot key file has more than one line: it must hold only the key")
+-        if len(key) < LIVE_KEY_MIN_CHARS or any(c.isspace() or not c.isprintable() for c in key):
+-            raise CrmConfigError("the hubspot key file holds no key")
+-        return key
++            return read_secret_file(self.s.key_file, "hubspot key", "key")
++        except SettingRefused as e:
++            raise CrmConfigError(str(e)) from None  # a fixed text: no path, no content
+ 
+     def _count(self, *names: str) -> None:
+         with self._lock:
+@@ -311,7 +306,7 @@ class HubspotCrm:
+             with _OPENER.open(req, timeout=left) as r:  # noqa: S310  # nosec B310
+                 return _Reply(r.status, self._read(r, deadline), None)
+         except urllib.error.HTTPError as e:
+-            ra = _retry_after(e.headers.get("Retry-After"))
++            ra = retry_after_seconds(e.headers.get("Retry-After"))
+             try:
+                 body = self._read(e, deadline)
+             except (CrmError, OSError, http.client.HTTPException):
+diff --git a/src/lead_desk/db.py b/src/lead_desk/db.py
+index 7b0962b..14f3951 100644
+--- a/src/lead_desk/db.py
++++ b/src/lead_desk/db.py
+@@ -10,7 +10,7 @@ from lead_desk.constants import BUSY_WAIT_SECONDS, SCHEMA_VERSION, SQLITE_BUSY,
+ 
+ LOW_BYTE = 0xFF  # sqlite_errorcode & 0xFF is the primary result code (extended codes such as 261 or 517 count)
+ 
+-# A lead book kept from a previous run is brought up to this schema at start-up: it gets any of these columns it lacks.
++# A lead-book kept from a previous run is brought up to this schema at start-up: it gets any of these columns it lacks.
+ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
+     ("receipts", "payload_conflict", "ALTER TABLE receipts ADD COLUMN payload_conflict INTEGER NOT NULL DEFAULT 0"),
+     ("followups", "crm_done", "ALTER TABLE followups ADD COLUMN crm_done INTEGER NOT NULL DEFAULT 0"),
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 4045b96..8dfc8e9 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -75,6 +75,7 @@ from lead_desk.contract import (
+     SendUnreachable,
+     is_fd_exhaustion,
+ )
++from lead_desk.envnum import env_file_problem, file_problem_text
+ from lead_desk.gate import (
+     BUSY_ERRORS,
+     CRM_WORKERS_MAX,
+@@ -306,19 +307,33 @@ class Reply:
+     drive_lead_id: str | None = None  # set when the caller must now run the follow-up
+ 
+ 
+-MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
++MEMORY_BOOK_PROBLEM = "the lead-book must be a file: ':memory:' is empty for every thread but the first"
++
++
++BOOK_IS_FOLDER_PROBLEM = "DESK_DB_PATH names a folder: it must name a file (the lead-book file)"
++BOOK_FOLDER_IS_FILE_PROBLEM = "DESK_DB_PATH sits inside something that is a file, not a folder"
++BOOK_UNREADABLE_PROBLEM = file_problem_text("DESK_DB_PATH", "unreadable")
++BOOK_PROBLEMS = {
++    "folder": BOOK_IS_FOLDER_PROBLEM,
++    "inside_file": BOOK_FOLDER_IS_FILE_PROBLEM,
++    "unreadable": BOOK_UNREADABLE_PROBLEM,
++}
+ 
+ 
+ def book_problem(db_path: Path | str) -> str | None:
+     """Why this lead-book path is refused (None: it is fine). A module-level function (not a `Desk` member) so that
+     `main` can call it by its own name: a test or caller that replaces `server.Desk` cannot take the check away.
+     `main` runs it BEFORE the lock step (the lock file is named after the book, so a refusal after it would leave
+-    `<name>.lock` behind) and the desk repeats it when it is built. `Path("")` is "." so only this spelling can name
+-    a private memory book. (A `file:` name is NOT refused: the desk resolves every other name to an absolute path
+-    before SQLite sees it, so `file::memory:` is a plain file called that, never a memory book.)"""
++    `<name>.lock` behind) and the desk repeats it when it is built. It is the one place for the lead-book path rules:
++    a private memory book, a folder instead of a file, and a part of the path that is a file where a folder must be
++    (the text names DESK_DB_PATH and never holds the path). A folder that cannot be made (no permission) is
++    refused by `main`'s `mkdir` step. `Path("")` is "." (a folder), so it is refused here too.
++    (A `file:` name is NOT refused: the desk resolves every other name to an absolute path before SQLite sees it, so
++    `file::memory:` is a plain file called that, never a memory book.)"""
+     if str(db_path) == ":memory:":
+         return MEMORY_BOOK_PROBLEM
+-    return None
++    problem = env_file_problem(Path(db_path))  # the one parent walk (the stdlib probes raise PermissionError)
++    return None if problem is None else BOOK_PROBLEMS[problem]
+ 
+ 
+ class Desk:
+@@ -376,12 +391,12 @@ class Desk:
+         self._rejected_lock = threading.Lock()
+         self._inflight = FairSemaphore(INFLIGHT_MAX)
+         self._drives = FairSemaphore(DRIVE_MAX)
+-        db_text = str(config.db_path)  # (str(Path("")) is ".", so only ":memory:" can name a private book)
++        db_text = str(config.db_path)  # (the path rules, `Path("")` included, are in book_problem)
+         if (problem := book_problem(db_text)) is not None:  # a private memory book is empty per thread
+             raise DeskSettingRefused(problem)
+         # resolved ONCE here: a later chdir cannot send a new thread's connection to another file
+         self._db_path: Path | str = Path(db_text).resolve()
+-        self._gate = gate_for(self._db_path)  # one write line per lead book (not re-entrant, see gate.py)
++        self._gate = gate_for(self._db_path)  # one write line per lead-book (not re-entrant, see gate.py)
+         self._decide_failures: dict[int, int] = {}  # receipt id -> consecutive non-busy decide failures (in memory)
+         self._decide_lock = threading.Lock()
+         self._integrity_errors = 0  # IntegrityErrors met while deciding (a constraint bug, not a bad payload); /counts
+@@ -590,7 +605,7 @@ class Desk:
+             known = {(s[0], i) for i, s in enumerate(flow.steps)}
+             stored = {(str(a), int(b)) for a, b in conn.execute("SELECT DISTINCT step, step_rank FROM lead_state")}
+             if not stored <= known:
+-                raise DeskSettingRefused("the steps file does not match the steps stored in the lead book")
++                raise DeskSettingRefused("the steps file does not match the steps stored in the lead-book")
+         refreshed = self._refresh_outbox()
+         # (1) finish every OPEN receipt from its stored payload
+         open_ids = conn.execute("SELECT receipt_id FROM receipts WHERE outcome IS NULL ORDER BY receipt_id").fetchall()
+diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
+index 087304a..e05dd88 100644
+--- a/src/lead_desk/envnum.py
++++ b/src/lead_desk/envnum.py
+@@ -1,21 +1,39 @@
+-"""The one helper for every number read from setting text (DESK_* environment names, config-file lines).
++"""The one helper for settings text (DESK_* environment names, config-file lines): numbers, yes-or-no words, web
++addresses, the paths of files, the key or password files (a secret file), and the Retry-After text of a web reply.
+ 
+ A bad value is a plain SettingRefused (a ValueError) that names the SETTING and never echoes the value or Python's own
+-message. Every numeric parse of settings text in src/, scripts/, load_tools/, tools/ and the demo folder goes through
+-`env_number`, never a bare int(), float() or Decimal() on text that came from the environment."""
++message. Every numeric parse of a setting that comes from an environment name or a config-file line, in src/, scripts/,
++load_tools/, tools/ and the demo folder, goes through `env_number`, never a bare int(), float() or Decimal() (a grep for
++those three calls over these folders finds only other text: database and reply values, command-line options, headers);
++every key or password file the desk reads goes through `read_secret_file`; every look at a setting's path goes through
++`path_kind`.
++`retry_after_seconds` is the one reader of a Retry-After header for the desk's HubSpot and live-model kinds, the burst
++script and the portal demo's burst. Two scripts that must run without the desk's code keep a stand-alone copy of the
++same rule, each pinned to it by a test: `scripts/hubspot_probe.py` (it imports nothing from the desk, by design) and
++`load_tools/load_driver.py` (it uses this reader when `lead_desk` can be imported, and its copy when `lead_desk` is not
++there; a desk that is there but broken is an error, not a reason to fall back). A test lists every reader of the header
++in the repository and allows only these three."""
+ 
+ from __future__ import annotations
+ 
++import errno
+ import math
++import os
+ import re
++import stat
+ from collections.abc import Callable, Mapping
+ from decimal import Decimal
+-from typing import Any
++from pathlib import Path
++from typing import Any, Literal
+ from urllib.parse import SplitResult, urlsplit
+ 
++from lead_desk.constants import LIVE_KEY_MIN_CHARS, RETRY_AFTER_MAX_SECONDS, SECRET_FILE_MAX_BYTES
++
+ _MISSING: Any = object()
+ _WHOLE = re.compile(r"[+-]?[0-9]+")  # ASCII digits only: no other-script digits, underscores, spaces or exponent
+ _DECIMAL = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
++_RETRY_AFTER = re.compile(r"[0-9]+(?:\.[0-9]+)?")  # digits; a decimal part is also accepted (see docs/limits.md)
++_OTHERS_MASK = stat.S_IRWXG | stat.S_IRWXO  # the permission bits of the group and of everyone else (0o077)
+ 
+ 
+ class SettingRefused(ValueError):
+@@ -23,6 +41,184 @@ class SettingRefused(ValueError):
+     the value. `server.main` turns exactly this error into the clean exit 4; any other ValueError is a real bug."""
+ 
+ 
++PathKind = Literal["folder", "file", "absent", "unreadable"]
++# Nothing is there, or the text can never be a path that exists: not a failure. ENAMETOOLONG and EINVAL (a name the
++# system cannot hold) and the Windows codes 123 (invalid name), 21 (device not ready) and 1921 (a link that cannot be
++# resolved) say the same as ENOENT.
++_ABSENT_ERRNOS = (errno.ENOENT, errno.ENOTDIR, errno.ELOOP, errno.ENAMETOOLONG, errno.EINVAL)
++_ABSENT_WINERRORS = (123, 21, 1921)
++
++
++def path_kind(path: Path) -> PathKind:
++    """What a setting's path is right now: `folder`, `file` (anything else that exists), `absent`, or `unreadable`
++    (the system will not tell us, for example no permission to look inside a parent folder). The one place that
++    looks at a setting's path before the desk uses it: `Path.is_dir()` and `Path.exists()` raise PermissionError on
++    Python 3.12 and later, which ended in a traceback (exit code 1) where a refusal (exit code 4) is documented.
++    Every caller treats `unreadable` as a refusal with a fixed text (no path in it)."""
++    try:
++        mode = path.stat().st_mode
++    except ValueError:  # an embedded NUL: not a path that exists (what is_dir() reported too)
++        return "absent"
++    except OSError as e:
++        if e.errno in _ABSENT_ERRNOS or getattr(e, "winerror", None) in _ABSENT_WINERRORS:
++            return "absent"
++        return "unreadable"
++    return "folder" if stat.S_ISDIR(mode) else "file"
++
++
++FileProblem = Literal["folder", "inside_file", "unreadable"]
++
++
++def env_file_problem(path: Path) -> FileProblem | None:
++    """Why a path cannot be the place of a FILE the desk writes or reads (None: it can). `folder`: the path is a
++    folder. `inside_file`: the first part of the path that exists is a file, where a folder must be. `unreadable`: the
++    system will not let the desk look at the path or at a part of it. The one parent walk for the lead-book path, the
++    live ledger and both counters files; every probe goes through `path_kind`."""
++    kind = path_kind(path)
++    if kind == "folder":
++        return "folder"
++    if kind == "unreadable":
++        return "unreadable"
++    if kind == "file":
++        return None
++    for folder in path.parents:  # the path is absent: the first part that exists must be a folder
++        parent_kind = path_kind(folder)
++        if parent_kind == "folder":
++            return None
++        if parent_kind == "file":
++            return "inside_file"
++        if parent_kind == "unreadable":
++            return "unreadable"
++    return None
++
++
++def file_problem_text(name: str, problem: FileProblem) -> str:
++    """The fixed refusal text for an `env_file_problem` answer: the setting named, never the path."""
++    if problem == "folder":
++        return f"{name} names a folder, not a file"
++    if problem == "inside_file":
++        return f"{name} sits inside something that is a file, not a folder"
++    return f"{name} cannot be looked at (the system would not let the desk look at a part of that path)"
++
++
++def refuse_unusable_file(name: str, path: Path) -> None:
++    """For a setting that must name a FILE (a counters file, a ledger): a folder, a path inside a file, or a path the
++    system will not let us look at is a SettingRefused naming the setting (never the path). A path that is absent
++    below a folder, or a file, passes."""
++    problem = env_file_problem(path)
++    if problem is not None:
++        raise SettingRefused(file_problem_text(name, problem))
++
++
++def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: bool = False) -> str:
++    """The one rule for every secret file (a key or a password), for the desk, its scripts and its fakes. The whole
++    rule, with its reasons, is written once, in the section "Key and password files" of docs/settings.md. In short: a
++    regular file that is not a link (a folder, a named pipe, a device or a symbolic link is refused without being
++    read) that no other user can read (on a system with permission bits), at most SECRET_FILE_MAX_BYTES, UTF-8 (a
++    byte-order mark at the start is accepted), at least LIVE_KEY_MIN_CHARS printable ASCII characters and no blank
++    anywhere. Only the line break at the very end of the file is removed. `strip_inner_space=True` (the SMTP password
++    and the mailbox password only) drops every plain space first. `what` names the file in every text ("the {what}
++    file ...") and `noun` the content ("key" or "password"). A refusal is a SettingRefused whose text is fixed and
++    holds neither the path nor the content. The kinds wrap it in their own error type; none imports another."""
++    link_text = f"the {what} file is a symbolic link: name the real file"
++    try:
++        # O_NONBLOCK: opening a named pipe for reading would wait for a writer; the check below refuses it instead.
++        # O_NOCTTY: a terminal device named here must never become this process's terminal.
++        # O_NOFOLLOW: a link as the last part of the path is not followed where the system has the flag (it is 0
++        # where it has none, and the second look below refuses the link there too).
++        flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_NOCTTY", 0) | getattr(os, "O_NOFOLLOW", 0)
++        fd = os.open(path, flags | getattr(os, "O_BINARY", 0))
++    except (OSError, ValueError):  # ValueError: an embedded NUL in the path
++        if _is_link(path):  # the open refused a link (ELOOP): say so, instead of "cannot be read"
++            raise SettingRefused(link_text) from None
++        raise SettingRefused(f"the {what} file cannot be read") from None  # the OS error holds the path
++    try:
++        opened = os.fstat(fd)  # on the open handle: nothing can be swapped in after the checks below
++        if not stat.S_ISREG(opened.st_mode):
++            raise SettingRefused(f"the {what} file cannot be read")
++        try:
++            second = os.lstat(path)  # the second look: what the name is now (a link, or another file than the open one)
++        except (OSError, ValueError):
++            raise SettingRefused(f"the {what} file cannot be read") from None
++        if stat.S_ISLNK(second.st_mode):
++            raise SettingRefused(link_text)
++        if opened.st_ino != 0 and (second.st_ino, second.st_dev) != (opened.st_ino, opened.st_dev):
++            raise SettingRefused(f"the {what} file changed while it was being opened: try again")
++        if os.name == "posix" and opened.st_mode & _OTHERS_MASK:
++            raise SettingRefused(f"the {what} file can be read by other users: run chmod 600 on it")
++        with os.fdopen(fd, "rb", closefd=False) as f:
++            raw = f.read(SECRET_FILE_MAX_BYTES + 1)
++    except OSError:
++        raise SettingRefused(f"the {what} file cannot be read") from None
++    finally:
++        os.close(fd)
++    if len(raw) > SECRET_FILE_MAX_BYTES:
++        raise SettingRefused(f"the {what} file is too large: it must hold only the {noun}")
++    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
++        raise SettingRefused(f"the {what} file is UTF-16 text: save it as plain UTF-8 text")
++    try:
++        text = raw.decode("utf-8-sig")
++    except UnicodeError:
++        raise SettingRefused(f"the {what} file is not UTF-8 text: save it as plain UTF-8 text") from None
++    if text.endswith("\r\n"):  # the one line break a text editor adds at the end
++        text = text[:-2]
++    elif text.endswith("\n"):
++        text = text[:-1]
++    if "\n" in text or "\r" in text:
++        raise SettingRefused(f"the {what} file has more than one line: it must hold only the {noun}")
++    secret = text.replace(" ", "") if strip_inner_space else text
++    if len(secret) < LIVE_KEY_MIN_CHARS:
++        raise SettingRefused(
++            f"the {what} file is empty or shorter than {LIVE_KEY_MIN_CHARS} characters: it must hold the {noun}"
++        )
++    if not secret.isascii() or not secret.isprintable():  # a tab, a no-break space, an accent, a control character
++        raise SettingRefused(
++            f"the {what} file must hold only plain printable ASCII characters (letters, digits, signs)"
++        )
++    if " " in secret:
++        raise SettingRefused(f"the {what} file's {noun} must not hold a space")
++    return secret
++
++
++def _is_link(path: Path) -> bool:
++    """True when the last part of `path` is a symbolic link (also a broken one or one that loops). Never raises."""
++    try:
++        return stat.S_ISLNK(os.lstat(path).st_mode)
++    except (OSError, ValueError):
++        return False
++
++
++def retry_after_seconds(raw: str | None) -> float | None:
++    """The seconds a Retry-After header names: digits, optionally followed by a point and more digits, with no sign, no
++    exponent and no point at either end (spaces and tabs around it are ignored; ASCII digits only). A number larger than
++    RETRY_AFTER_MAX_SECONDS (also one with so many digits that a float cannot hold it) is read as
++    RETRY_AFTER_MAX_SECONDS. None for a missing header, an HTTP date, junk, a negative number, `inf`, `nan` or `1e999`
++    (none of them is digits with an optional decimal part): the caller then uses its own back-off. The one
++    reader for the desk's HubSpot and live-model kinds, the burst script and the portal demo; `scripts/hubspot_probe.py`
++    and `load_tools/load_driver.py` hold stand-alone copies of this rule (see the module text)."""
++    if raw is None:
++        return None
++    text = raw.strip(" \t")
++    if not (text.isascii() and _RETRY_AFTER.fullmatch(text)):
++        return None
++    try:
++        seconds = float(text)
++    except ValueError:
++        return None
++    return min(seconds, RETRY_AFTER_MAX_SECONDS)  # a text too long for a float is infinity: also the maximum
++
++
++def env_yes_no(env: Mapping[str, str], name: str) -> bool:
++    """A yes-or-no setting: `yes` is True; `no` and an unset or empty name are False. Any other word is a
++    SettingRefused naming the setting (a typo such as `ys` must not silently mean no). The value is not echoed."""
++    word = env.get(name, "").strip().lower()
++    if word in ("", "no"):
++        return False
++    if word == "yes":
++        return True
++    raise SettingRefused(f"{name} must be yes or no")
++
++
+ def env_number(
+     env: Mapping[str, str],
+     name: str,
+diff --git a/src/lead_desk/gate.py b/src/lead_desk/gate.py
+index a1259a1..4bdabf9 100644
+--- a/src/lead_desk/gate.py
++++ b/src/lead_desk/gate.py
+@@ -183,7 +183,7 @@ _GATES_LOCK = threading.Lock()
+ 
+ 
+ def gate_for(db_path: Path | str) -> FairGate:
+-    """The write gate of one lead book: every Desk on the same resolved path shares one line, desks on different
++    """The write gate of one lead-book: every Desk on the same resolved path shares one line, desks on different
+     books do not wait for each other. A private in-memory book (empty path or ':memory:') gets its own gate each time.
+     The gate is NOT re-entrant: code holding it must never ask for it again (Desk._write is never nested)."""
+     text = str(db_path)
+diff --git a/src/lead_desk/imap_count.py b/src/lead_desk/imap_count.py
+index fef8ae9..2d08bdf 100644
+--- a/src/lead_desk/imap_count.py
++++ b/src/lead_desk/imap_count.py
+@@ -30,8 +30,7 @@ from dataclasses import dataclass, field
+ from pathlib import Path
+ 
+ from lead_desk.constants import MAIL_SPAM_FOLDER
+-from lead_desk.contract import SendRefused
+-from lead_desk.smtp_provider import read_secret_file
++from lead_desk.envnum import SettingRefused, read_secret_file
+ 
+ _PREFIX = re.compile(r"[A-Za-z0-9._:-]{1,64}")
+ _HEADER = re.compile(rb"X-Send-Key:[\s]*([^\s]+)", re.IGNORECASE)
+@@ -76,8 +75,8 @@ def bad_folder_name(folder: str) -> bool:
+ 
+ def _password(s: ImapSettings) -> str:
+     try:
+-        return read_secret_file(s.password_file, "mailbox password")
+-    except SendRefused as e:
++        return read_secret_file(s.password_file, "mailbox password", "password", strip_inner_space=True)
++    except SettingRefused as e:
+         raise ImapCountError(str(e)) from None  # a fixed text that names no path
+ 
+ 
+diff --git a/src/lead_desk/live_claude.py b/src/lead_desk/live_claude.py
+index 177c552..24cc2ca 100644
+--- a/src/lead_desk/live_claude.py
++++ b/src/lead_desk/live_claude.py
+@@ -46,7 +46,6 @@ from lead_desk.constants import (
+     HTTP_TOO_MANY_REQUESTS,
+     LIVE_ERROR_BODY_MAX,
+     LIVE_ERROR_TYPE_MAX,
+-    LIVE_KEY_MIN_CHARS,
+     LIVE_LEDGER_FILE_MAX_BYTES,
+     LIVE_LEDGER_LOCK_TRIES,
+     LIVE_LEDGER_LOCK_WAIT,
+@@ -56,6 +55,7 @@ from lead_desk.constants import (
+     LIVE_REPLY_MAX_BYTES,
+     LIVE_REPORTED_TOKENS_MAX,
+ )
++from lead_desk.envnum import SettingRefused, read_secret_file, retry_after_seconds
+ 
+ SYSTEM_TEXT = (
+     "You sort sales leads. Answer with exactly one word: hot, warm or cold. No other text, no punctuation. "
+@@ -377,15 +377,6 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
+ _OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
+ 
+ 
+-def _retry_after(raw: str | None) -> float | None:
+-    """Seconds from a retry-after header; None for a missing, negative, non-number (a date) or non-finite value."""
+-    try:
+-        v = float(raw) if raw is not None else None
+-    except ValueError:
+-        return None
+-    return v if v is not None and 0 <= v < float("inf") else None
+-
+-
+ _TYPE_NAME = re.compile(rf"[a-z_]{{1,{LIVE_ERROR_TYPE_MAX}}}")
+ 
+ 
+@@ -418,15 +409,29 @@ class LiveQualifier:
+         built (a limit above MODEL_CALL_BUDGET_SECONDS is refused: the desk would cut the call first)."""
+         return self.s.timeout_seconds
+ 
++    def check_start(self) -> None:
++        """Start-up check (the optional `check_start` hook of a kind that holds a secret): read the key file once, as
++        the first call would, so a missing or too short key stops the start (SettingRefused, exit code 4) instead of
++        failing every call. The message names the setting and holds neither the path nor the key. The key is NOT kept
++        from this read: it is dropped at once, and the first call reads the file again (a key replaced between the
++        start and the first call is the one used)."""
++        try:
++            self._load_key()
++        except LiveTransport as e:
++            raise SettingRefused(f"DESK_LIVE_KEY_FILE: {e}") from None
++
++    def _load_key(self) -> str:
++        """Read the key file with the one rule for every secret file (`envnum.read_secret_file`: one line, at most
++        4096 bytes, UTF-8, at least LIVE_KEY_MIN_CHARS printable characters, no space inside); stores
++        nothing. The text of a refusal names the file kind and never the path or the content."""
++        try:
++            return read_secret_file(self.s.key_file, "live model key", "key")
++        except SettingRefused as e:
++            raise LiveTransport(str(e)) from None  # the message is fixed text; no chained error that holds the path
++
+     def _read_key(self) -> str:
+         if not self._key:
+-            try:
+-                key = self.s.key_file.read_text(encoding="utf-8").strip()
+-            except (OSError, UnicodeError):
+-                raise LiveTransport("the key file cannot be read") from None  # the error holds the path
+-            if len(key) < LIVE_KEY_MIN_CHARS:
+-                raise LiveTransport("the key file holds no key")
+-            self._key = key
++            self._key = self._load_key()
+         return self._key
+ 
+     def _post(self, body: bytes, key: str, timeout: float | None = None) -> dict[str, Any]:
+@@ -472,7 +477,7 @@ class LiveQualifier:
+                     raw += chunk
+         except urllib.error.HTTPError as e:
+             if e.code == HTTP_TOO_MANY_REQUESTS:
+-                raise LiveRateLimited(_retry_after(e.headers.get("Retry-After"))) from None
++                raise LiveRateLimited(retry_after_seconds(e.headers.get("Retry-After"))) from None
+             try:
+                 kind = error_type(e.read(LIVE_ERROR_BODY_MAX))
+             except (OSError, http.client.HTTPException):
+diff --git a/src/lead_desk/loader.py b/src/lead_desk/loader.py
+index 72af087..2e37ab6 100644
+--- a/src/lead_desk/loader.py
++++ b/src/lead_desk/loader.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import importlib
++import json
+ from collections.abc import Mapping
+ from pathlib import Path
+ from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
+@@ -97,10 +98,37 @@ def load_demo_adapters(config: Config) -> tuple[Crm, Outbox, Qualifier]:
+                 "missing. Put the demo_only folder back, or set DESK_QUALIFIER=live_claude."
+             ) from e
+         replies = config.replies_path or Path(str(fakes.__file__)).resolve().parent / "replies.json"
+-        qualifier = fakes.RecordedQualifier(replies)
++        try:
++            qualifier = fakes.RecordedQualifier(replies)
++        except (OSError, UnicodeError, json.JSONDecodeError, fakes.RepliesFileError):
++            # a missing, unreadable or not-JSON replies file, or JSON that is not one object. Any other ValueError is
++            # a bug and propagates (it is never reported as a setting). No path, no content in the text.
++            if config.replies_path is None:
++                raise SettingRefused("the demo replies file cannot be read or does not hold one JSON object") from None
++            raise SettingRefused("DESK_REPLIES_PATH is not a readable file holding one JSON object") from None
+     return crm, outbox, qualifier
+ 
+ 
++@runtime_checkable
++class StartCheck(Protocol):
++    """The OPTIONAL start-up hook of a kind (crm, outbox, qualifier): a kind that holds a secret file implements it
++    and raises SettingRefused (the setting named, never the path or the secret) when the file is unusable. A kind
++    without the method is simply not checked."""
++
++    def check_start(self) -> None: ...
++
++
++def check_secret_files(crm: object, outbox: object, qualifier: object) -> None:
++    """Start-up check of the kinds in use: every kind that has `check_start` is asked once, so a missing or short key
++    or password file is a SettingRefused (exit code 4) at the start, not a failure of every later call. The kind
++    decides whether it holds a secret; the loader does not name any kind. server.main calls it right after
++    load_demo_adapters."""
++    for kind in (crm, outbox, qualifier):
++        check = getattr(kind, "check_start", None)  # by the name, not isinstance: a plain attribute that is no method
++        if callable(check):  # (None, say) is "no hook", not a crash
++            check()
++
++
+ def load_approvers(config: Config) -> tuple[tuple[tuple[str, str], ...], str]:
+     """The approvers for approval mode: the file in config.approvers_path (DESK_APPROVERS_FILE) when set, else the
+     approvers.json next to the demo_only package (the replies.json pattern). Returns ((id, name), ...) and the label.
+@@ -113,4 +141,4 @@ def load_approvers(config: Config) -> tuple[tuple[tuple[str, str], ...], str]:
+         if e.name not in (*_DEMO_MODULES, "demo_only.fakes"):
+             raise
+         raise SettingRefused("approval mode needs the approvers file (DESK_APPROVERS_FILE)") from e
+-    return read_approvers(Path(str(fakes.__file__)).resolve().parent / "approvers.json")
++    return read_approvers(Path(str(fakes.__file__)).resolve().parent / "approvers.json", None)  # no setting names it
+diff --git a/src/lead_desk/lockfile.py b/src/lead_desk/lockfile.py
+index 424a102..bfbd116 100644
+--- a/src/lead_desk/lockfile.py
++++ b/src/lead_desk/lockfile.py
+@@ -1,4 +1,4 @@
+-"""One desk per lead book."""
++"""One desk per lead-book."""
+ 
+ from __future__ import annotations
+ 
+@@ -10,7 +10,7 @@ from typing import IO
+ 
+ 
+ class LockHeldError(BlockingIOError):
+-    """Another desk holds the lock for this lead book."""
++    """Another desk holds the lock for this lead-book."""
+ 
+ 
+ class LockUnavailableError(OSError):
+@@ -25,9 +25,18 @@ _LOCK_TRIES = 3  # a lock file replaced between open and lock is opened again th
+ 
+ 
+ def lock_path(db_path: Path | str) -> Path:
+-    """`<resolved db path>.lock`. The path is resolved first (symlinks, `..`), so two names for the same lead book
++    """`<resolved db path>.lock`. The path is resolved first (symlinks, `..`), so two names for the same lead-book
+     give the same lock file."""
+-    return Path(f"{Path(db_path).resolve()}.lock")
++    try:
++        resolved = Path(db_path).resolve()
++        try:
++            resolved.stat()  # resolving a loop of links may not raise (it depends on the Python version): stat does
++        except OSError as e:
++            if e.errno == errno.ELOOP:
++                raise
++    except (RuntimeError, OSError):  # a loop of links (RuntimeError on some Pythons), or no way to resolve it
++        raise LockUnavailableError("cannot resolve the lock file name") from None
++    return Path(f"{resolved}.lock")
+ 
+ 
+ def acquire(db_path: Path | str) -> IO[bytes]:
+diff --git a/src/lead_desk/schema.sql b/src/lead_desk/schema.sql
+index a5ccd9e..e17cefe 100644
+--- a/src/lead_desk/schema.sql
++++ b/src/lead_desk/schema.sql
+@@ -1,6 +1,6 @@
+ -- Applied by db.init_schema: WAL is set first outside any transaction; this text runs inside
+ -- "BEGIN IMMEDIATE; ... PRAGMA user_version=1; COMMIT;".
+--- A lead book kept from a previous run is brought up to this schema by db._migrate: it adds missing columns, the view,
++-- A lead-book kept from a previous run is brought up to this schema by db._migrate: it adds missing columns, the view,
+ -- indexes and triggers, never new CHECKs, so a kept book keeps the CHECKs it was created with.
+ -- Per-connection pragmas (foreign_keys, recursive_triggers, synchronous) are set by db.connect, not here.
+ CREATE TABLE IF NOT EXISTS receipts (
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index a822f3a..3b98370 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -89,7 +89,14 @@ from lead_desk.contract import is_fd_exhaustion
+ from lead_desk.desk import Desk, DeskSettingRefused, Reply
+ from lead_desk.envnum import SettingRefused
+ from lead_desk.hooks import Hooks
+-from lead_desk.loader import DemoPortal, KnowsBoundAddress, load_approvers, load_demo_adapters, load_demo_portal
++from lead_desk.loader import (
++    DemoPortal,
++    KnowsBoundAddress,
++    check_secret_files,
++    load_approvers,
++    load_demo_adapters,
++    load_demo_portal,
++)
+ from lead_desk.urls import desk_origin
+ 
+ try:
+@@ -1106,15 +1113,20 @@ def _make_stop_handler() -> Callable[[int, FrameType | None], None]:
+ 
+ 
+ def main(hooks: Hooks | None = None) -> None:
+-    """python -m lead_desk.server: open-file check, lock file, adapters, desk, bind, reaper, startup (schema and
+-    sweep), serve. Exit code 2 if another desk holds the lock; exit code 5 if the port cannot be bound within
++    """python -m lead_desk.server, in this order: open-file check, settings, lead-book path, its folder, lock file,
++    approvers and lead-flow files, adapters and their key files, desk, bind, stop handler, reaper, startup (schema
++    and sweep), a warning on stderr for a public bind, the `desk listening on` line, serve.
++    Exit code 2 if another desk holds the lock; exit code 5 if the port cannot be bound within
+     BIND_RETRY_SECONDS (a restart on Windows can meet the old port in TIME_WAIT, so any OSError is retried first);
+-    exit code 1 if the sender cannot be reached; exit code 3 if MAX_HANDLER_THREADS does not fit the open-file limit;
++    exit code 1 if the demo servers cannot be reached; exit code 3 if MAX_HANDLER_THREADS does not fit the open-file
++    limit;
+     exit code 4 if the desk refuses a setting: a bad value in any DESK_* name (a `SettingRefused` from `Config.from_env`
+     or from the adapter settings, printed with the setting's name; any other ValueError is a bug and is not
+     turned into 4), or an AI adapter that declares a `timeout_seconds` that
+     is not a number above 0 or is above MODEL_CALL_BUDGET_SECONDS (`DeskSettingRefused`): the message is printed,
+-    nothing is served. A `db_path` of `:memory:` is refused the same way (exit code 4): the check runs after
++    nothing is served. A bad `DESK_BIND`, an empty `DESK_DB_PATH` or a folder that cannot be made, a replies file that
++    cannot be read, and a key or password file of a real service (read once by `check_secret_files`) end the same way.
++    A `db_path` of `:memory:` is refused the same way (exit code 4): the check runs after
+     `ensure_descriptor_budget`, `Config.from_env` and the public-bind check, and before the folder and the lock step.
+     The checks of the constants themselves run when the modules are imported,
+     so an edited constant that does not fit ends with a Python traceback (exit code 1) before `main` runs.
+@@ -1137,11 +1149,15 @@ def main(hooks: Hooks | None = None) -> None:
+     if (problem := desk_module.book_problem(config.db_path)) is not None:
+         print(f"the desk refuses to start: {problem}", flush=True)
+         sys.exit(EXIT_DESK_SETTING_REFUSED)
+-    config.db_path.parent.mkdir(parents=True, exist_ok=True)
++    try:
++        config.db_path.parent.mkdir(parents=True, exist_ok=True)
++    except OSError:  # a folder that cannot be made (no permission, a file in the way): named, no path, no traceback
++        print("the desk refuses a setting: DESK_DB_PATH names a folder that cannot be made", flush=True)
++        sys.exit(EXIT_DESK_SETTING_REFUSED)
+     try:
+         lock = lockfile.acquire(config.db_path)
+     except lockfile.LockHeldError:
+-        print("another desk is using this database", flush=True)
++        print("another desk is using this lead-book", flush=True)
+         sys.exit(EXIT_ANOTHER_DESK)
+     except OSError as e:  # the lock file cannot be used for another reason (a folder, no permission)
+         print(f"cannot take the lock file: {type(e).__name__}", flush=True)
+@@ -1164,6 +1180,7 @@ def main(hooks: Hooks | None = None) -> None:
+             sys.exit(EXIT_DESK_SETTING_REFUSED)
+     try:
+         crm, outbox, qualifier = load_demo_adapters(config)
++        check_secret_files(crm, outbox, qualifier)
+     except FakesUnreachable:
+         print("cannot reach the demo servers (are they running? see scripts/start_all)", flush=True)
+         sys.exit(EXIT_ADAPTERS_UNREACHABLE)
+@@ -1208,7 +1225,7 @@ def main(hooks: Hooks | None = None) -> None:
+         server.serve_forever()
+     except KeyboardInterrupt:
+         pass
+-    except DeskSettingRefused as e:  # the steps file does not fit the kept lead book; the finally below still cleans up
++    except DeskSettingRefused as e:  # the steps file does not fit the kept lead-book; the finally below still cleans up
+         print(f"the desk refuses to start: {e}", flush=True)
+         sys.exit(EXIT_DESK_SETTING_REFUSED)
+     finally:
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index a60f7f5..0bfdc0a 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -40,8 +40,9 @@ from email.utils import formatdate
+ from pathlib import Path
+ from typing import Any, Final, Literal
+ 
++from lead_desk import envnum
+ from lead_desk.config import Config
+-from lead_desk.constants import CALL_DEADLINE_MAX_SECONDS, CAP_COUNT_MAX, LIVE_KEY_MIN_CHARS, PORT_MAX
++from lead_desk.constants import CALL_DEADLINE_MAX_SECONDS, CAP_COUNT_MAX, PORT_MAX
+ from lead_desk.contract import (
+     Outbox,
+     SendAmbiguous,
+@@ -50,7 +51,7 @@ from lead_desk.contract import (
+     SendUnreachable,
+     is_fd_exhaustion,
+ )
+-from lead_desk.envnum import SettingRefused, env_number
++from lead_desk.envnum import SettingRefused, env_number, refuse_unusable_file
+ from lead_desk.run_stats import write_stats
+ from lead_desk.smtp_outbox import (
+     _ADDRESS,
+@@ -69,7 +70,6 @@ from lead_desk.smtp_outbox import (
+ _AUTH_OK: Final = 235
+ _STARTTLS_READY: Final = 220
+ _SEND_KEY = r"[A-Za-z0-9._:-]{1,64}"
+-SECRET_FILE_MAX_BYTES: Final = 4096
+ DEMO_SUBJECT_PREFIX: Final = "[Hadavin demo] "
+ DEMO_BODY_NOTE: Final = "This is a demo message about a made-up lead. Nobody real is being contacted.\n\n"
+ 
+@@ -132,6 +132,8 @@ class ProviderSettings:
+         for name, setting in (("DESK_SMTPP_STATS_FILE", "stats_file"), ("DESK_SMTPP_CA_FILE", "ca_file")):
+             if env.get(name):
+                 kw[setting] = Path(env[name])
++                if setting == "stats_file":  # a folder is never a stats file (the counters could never be written)
++                    refuse_unusable_file(name, kw[setting])
+         default_port = 465 if kw.get("security") == "ssl" else 587
+         return cls(
+             host=env["DESK_SMTPP_HOST"].strip().lower(),
+@@ -147,29 +149,13 @@ class ProviderSettings:
+         )
+ 
+ 
+-def read_secret_file(path: Path, what: str = "smtp password") -> str:
+-    """The one line of a secret file (spaces inside an app password are dropped: providers show them in groups).
+-    At most SECRET_FILE_MAX_BYTES are read; a UTF-8 byte-order mark is accepted; a file of several lines or in another
+-    text format is refused with a fixed, helpful text. Raises SendRefused (never the path, never the content)."""
++def read_smtp_password(path: Path, what: str = "smtp password") -> str:
++    """The one line of an SMTP password file: `envnum.read_secret_file` with the spaces inside dropped (providers show
++    an app password in groups). Raises SendRefused with the same fixed text (never the path, never the content)."""
+     try:
+-        with path.open("rb") as f:
+-            raw = f.read(SECRET_FILE_MAX_BYTES + 1)
+-    except OSError:
+-        raise SendRefused(f"the {what} file cannot be read") from None
+-    if len(raw) > SECRET_FILE_MAX_BYTES:
+-        raise SendRefused(f"the {what} file is too large: it must hold only the password")
+-    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+-        raise SendRefused(f"the {what} file is UTF-16 text: save it as plain UTF-8 text")
+-    try:
+-        text = raw.decode("utf-8-sig").strip()
+-    except UnicodeError:
+-        raise SendRefused(f"the {what} file is not UTF-8 text: save it as plain UTF-8 text") from None
+-    if "\n" in text or "\r" in text:
+-        raise SendRefused(f"the {what} file has more than one line: it must hold only the password")
+-    secret = "".join(text.split())
+-    if len(secret) < LIVE_KEY_MIN_CHARS or not secret.isascii() or not secret.isprintable():
+-        raise SendRefused(f"the {what} file holds no password")
+-    return secret
++        return envnum.read_secret_file(path, what, "password", strip_inner_space=True)
++    except SettingRefused as e:
++        raise SendRefused(str(e)) from None
+ 
+ 
+ def _expect(code: int, step: str, intermediate: bool = False) -> None:
+@@ -184,13 +170,26 @@ class SmtpProviderOutbox:
+         """`ssl_context` is for a server with its own certificate; None = the system's trusted
+         authorities, host name and chain checked."""
+         self._s = settings
+-        self._ctx = ssl_context or (
+-            ssl.create_default_context(cafile=str(settings.ca_file)) if settings.ca_file else None
+-        )
++        self._ctx = ssl_context
++        if ssl_context is None and settings.ca_file:
++            try:
++                self._ctx = ssl.create_default_context(cafile=str(settings.ca_file))
++            except (OSError, ssl.SSLError):  # missing, unreadable or not a certificate file: no path in the text
++                raise SettingRefused("DESK_SMTPP_CA_FILE is not a readable certificate file") from None
+         self._lock = threading.Lock()
+         self.attempts = 0
+         self.sent = 0
+ 
++    def check_start(self) -> None:
++        """Start-up check (the optional `check_start` hook of a kind that holds a secret): read the password file
++        once, as the first send would, so a missing or empty file stops the start (SettingRefused, exit code 4)
++        instead of failing every send. The message names the setting and holds neither the path nor the password; the
++        password is not kept."""
++        try:
++            read_smtp_password(self._s.password_file)
++        except SendRefused as e:
++            raise SettingRefused(f"DESK_SMTPP_PASSWORD_FILE: {e}") from None
++
+     @property
+     def sender_address(self) -> str:
+         """The configured From address (read by the portal's data map; never stored or logged)."""
+@@ -228,7 +227,7 @@ class SmtpProviderOutbox:
+             raise SendRefused("send key has characters outside the allowed set")
+         if not _ADDRESS.fullmatch(to) or not to.isascii():
+             raise SendRefused("recipient is not a plain address")
+-        password = read_secret_file(self._s.password_file)  # before any network use
++        password = read_smtp_password(self._s.password_file)  # before any network use
+         try:
+             wire = _dot_stuff(self._build(send_key, subject, body))
+         except (ValueError, MessageError) as e:
+diff --git a/src/lead_desk/trace.py b/src/lead_desk/trace.py
+index 48eb438..64e9dee 100644
+--- a/src/lead_desk/trace.py
++++ b/src/lead_desk/trace.py
+@@ -1,7 +1,7 @@
+ """Trace and extra crash windows, as wrappers around the adapters.
+ 
+ `Tracer` writes one JSON line per event to a file: {"ev", "id", "stage", "t_start_ms", "t_end_ms", "outcome", "pid",
+-"thread"}. Times are wall-clock milliseconds since the epoch (the lead book itself keeps whole seconds only).
++"thread"}. Times are wall-clock milliseconds since the epoch (the lead-book itself keeps whole seconds only).
+ * TracedQualifier / TracedCrm / TracedOutbox wrap an adapter and time each call (stage "ai", "crm", "send"); the lead
+   id (the send key for the outbox) is the id. Other attributes (`capability`, `mode`, `calls`) are passed through.
+ * TraceHooks is a Hooks subclass: each crash_point name becomes a zero-length event (stage "hook:<name>").

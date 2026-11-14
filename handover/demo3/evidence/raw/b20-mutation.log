@@ -1,0 +1,22 @@
+B20 mutation check on a copy of the final tree (b20-mut), one planted change at a time, tests run with -x; rc=1 means the mutant was KILLED (a test failed). Original restored after each.
+
+m01-named-values-not-scrubbed | file=src/lead_desk/config_exit.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 244 passed in 7.41s
+m02-secret-like-not-scrubbed | file=src/lead_desk/config_exit.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 238 passed in 7.10s
+m03-control-chars-kept | file=src/lead_desk/config_exit.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 251 passed in 7.58s
+m04-no-line-cut | file=src/lead_desk/config_exit.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 230 passed in 6.35s
+m05-long-value-ends-not-blanked | file=src/lead_desk/config_exit.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 250 passed in 7.36s
+m06-surrogate-not-refused | file=src/lead_desk/envnum.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 255 passed in 7.33s
+m07-nul-not-refused | file=src/lead_desk/envnum.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 256 passed in 7.27s
+m08-start-all-passes-every-code | file=scripts/start_all.sh | tests=tests/test_start_all_late_refusal.py | pytest rc=1 | 1 failed, 9 passed in 14.15s
+m09-no-demo-server-wait | file=scripts/start_all.sh | tests=tests/test_start_all_late_refusal.py tests/test_reset_scripts.py | pytest rc=1 | 1 failed, 7 passed in 13.31s
+m10-bad-wait-accepted | file=scripts/start_all.sh | tests=tests/test_start_all_late_refusal.py | pytest rc=1 | 1 failed, 6 passed in 24.16s
+m11-run-real-check-own-code | file=scripts/run_real_check.py | tests=tests/test_bad_setting_entry_points.py tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed, 401 passed in 7.57s
+m12-bare-path-in-source | file=src/lead_desk/crm_hubspot.py | tests=tests/test_setting_reader_guard.py | pytest rc=1 | 1 failed, 2 passed in 0.12s
+m15-script-code-literal-8 | file=scripts/reset_check.py | tests=tests/test_exit_code_table.py | pytest rc=1 | 1 failed, 9 passed in 0.04s
+m16-last-log-line-unformatted | file=scripts/start_all.sh | tests=tests/test_start_all_late_refusal.py | pytest rc=1 | 1 failed, 17 passed in 17.23s
+m13-overlap-list-edited | file=src/lead_desk/constants.py | tests=tests/test_exit_code_table.py | pytest rc=1 | 1 failed, 2 passed in 0.03s
+m14-open-file-limit-renumbered | file=src/lead_desk/constants.py | tests=tests/test_exit_code_table.py tests/test_stall_eviction.py tests/test_bad_setting_entry_points.py | pytest rc=1 | 1 failed, 2 passed in 0.10s
+m17-late-refusal-echoes-value | file=src/lead_desk/server.py | tests=tests/test_late_refusal_value_echo.py | pytest rc=1 | 1 failed in 0.09s
+
+m13/m14 first attempt: mutant text not found (wrong source text); re-run with the right text: lines m13, m14 above.
+Not mutated: ps1 pins (their own mutant tests in tests/test_ps1_pins.py, TEXT-ONLY).

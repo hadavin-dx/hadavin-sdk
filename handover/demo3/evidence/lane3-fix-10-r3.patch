@@ -1,0 +1,2813 @@
+diff --git a/contract.md b/contract.md
+index d24f76c..c64b84e 100644
+--- a/contract.md
++++ b/contract.md
+@@ -74,7 +74,7 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
+ `Config.fakes_url` is a read-only property built from `fakes_host` and `fakes_port`.
+ * Env names: `DESK_DB_PATH, DESK_BIND, DESK_PORT, DESK_ADAPTERS, DESK_FAKES_URL, DESK_FAKES_HOST, DESK_FAKES_PORT, DESK_REPLIES_PATH, DESK_SEND_TIMEOUT_SECONDS, DESK_SIZE_CAP_BYTES, DESK_STALL_SECONDS, DESK_ALLOWED_HOSTS, DESK_QUALIFIER` (`recorded` or `live_claude`), `DESK_OUTBOX` (`http`, `smtp` or `smtp_provider`), `DESK_CRM` (`fake` or `hubspot`).
+ * With `DESK_QUALIFIER=live_claude` the `DESK_LIVE_*` names are read (model, key file, prices and their date, run and total caps, ledger path, run id, base URL, API version, effort, timeout, max tokens; `docs/settings.md` lists them); with `DESK_OUTBOX=smtp` the `DESK_SMTP_*` names are read (host, port, from, message-id domain, timeout seconds); with `DESK_OUTBOX=smtp_provider` the `DESK_SMTPP_*` names are read (`HOST`, `PORT`, `SECURITY` = `starttls` or `ssl`, `USER`, `PASSWORD_FILE`, `FROM`, `RECIPIENTS` as a comma list, `MESSAGE_ID_DOMAIN`, `TIMEOUT_SECONDS`, `MAX_SENDS` (required hard cap), `STATS_FILE`, `CA_FILE`); with `DESK_CRM=hubspot` the `DESK_HUBSPOT_*` names are read (`KEY_FILE` and `MAX_CALLS` required, `BASE_URL`, `TIMEOUT_SECONDS`, `MAX_429_RETRIES`, `STATS_FILE`, `ALLOW_ANY_BASE_URL` = the word yes).
+-* A secret is never a value in these names: only the path of a one-line key file. `DESK_FAKES_URL` wins over `DESK_FAKES_HOST` / `DESK_FAKES_PORT`; its scheme must be `http` (anything else raises `ValueError`), a path other than empty or `/` raises `ValueError`, a query, fragment and userinfo are ignored (only host and port are taken); an IPv6 host keeps its brackets. `DESK_LATER_MODE` (`off` default, or `approval`) and `DESK_LEADFLOW_FILE` (a path to the lead flow file: the lead owner list, the lead stages and the reminder wait; unset, empty or the word `off` means the feature is off; exit 4 when the file is refused) and `DESK_NUDGE_TO` (the one address that gets reminders; refused unless the lead flow file is on) and `DESK_APPROVERS_FILE` (a path; refused unless the mode is `approval`; `config.approvers`, `config.approvers_label` are filled from the file by `server.main` through `loader.load_approvers`, exit 4 when refused; `Desk` refuses approval mode with no approver).
++* A secret is never a value in these names: only the path of a one-line key file. `DESK_FAKES_URL` wins over `DESK_FAKES_HOST` / `DESK_FAKES_PORT`; its scheme must be `http` (anything else raises `ValueError`), a path other than empty or `/` raises `ValueError`, a query, fragment and userinfo are ignored (only host and port are taken); an IPv6 host keeps its brackets. `DESK_LATER_MODE` (`off` default, or `approval`) and `DESK_LEADFLOW_FILE` (a path to the lead flow file: the lead owner list, the lead stages and the reminder wait; unset, empty or the word `off` means the feature is off; exit 4 when the file is refused) and `DESK_NUDGE_TO` (the one address that gets reminders; refused unless the lead flow file is on, and refused unless it is one plain ASCII address by the one plain-address rule of `src/lead_desk/identity.py`, which the sender and recipient addresses use too) and `DESK_APPROVERS_FILE` (a path; refused unless the mode is `approval`; `config.approvers`, `config.approvers_label` are filled from the file by `server.main` through `loader.load_approvers`, exit 4 when refused; `Desk` refuses approval mode with no approver).
+ 
+ ## Demo files
+ `demo_only/replies.json`: one JSON object, key = the normalised email key of a canned lead, value = `"hot"`, `"warm"` or `"cold"`.
+@@ -129,6 +129,10 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
+ * Fakes server flag `--crm keyed|blind` (default `keyed`) selects the CRM's mode; `--outbox` is unchanged.
+ * `python -m lead_desk.server` prints one line `desk listening on http://<host>:<port>` when it accepts requests. The port in it is the real one, so `DESK_PORT=0` (ephemeral) works; the subprocess tests still pick a free port themselves.
+   * Exit codes: 1 the sender cannot be reached, or a Python traceback (a constant that is out of range); 2 another desk holds the lock file; 3 the open-file limit is too low; 4 the desk refuses a setting, in any of three places: `Config.from_env` (a number that is not plain digits or is outside its range, any other bad `DESK_*` value), an adapter's `from_env` (a bad `DESK_SMTP*`, `DESK_HUBSPOT*` or `DESK_LIVE*` value), or when the `Desk` is built (an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s); the message names the setting; an error that is not a refused setting never gets code 4; 5 the port could not be bound within `BIND_RETRY_SECONDS` (any `OSError` is retried first, because on Windows a restart can meet the old port in TIME_WAIT). `EXIT_SIMULATED_KILL` 137 is only the crash scripts.
++  * Every other program has its own exit codes, listed by program in ONE table, `lead_desk.constants.EXIT_CODE_TABLE` (explained in `docs/settings.md`, section "Exit codes"). A number can mean different things in different programs; those numbers are the pinned list `SAME_NUMBER_DIFFERENT_MEANING`. A refused `DESK_*` setting is exit 8 (`EXIT_SCRIPT_SETTING_REFUSED`) in every script that reads the settings itself, and exit 4 in the desk.
++  * Why the desk reads the settings by itself (and not through `config_or_exit`): its refusal is exit 4 on the output stream, a script's is exit 8 on the error stream; both words come from `config_exit.refusal_line`.
++  * `scripts/start_all.sh|ps1` waits for the demo server and then for the desk inside one budget (15 seconds; `START_ALL_WAIT_SECONDS` changes it). Not started in time: "the demo server did not start" or "desk not ready after N seconds (it may still be starting)", exit 1, nothing "started" is printed.
++  * The two PowerShell scripts (`start_all.ps1`, `reset.ps1`) are designed for Windows PowerShell 5.1 and were not run on Windows in this build; only text pins (`tests/test_ps1_pins.py`, these cover the text only) cover them here.
+   * Refused connections (503 busy without a handler thread): after the reply the socket goes to one lingerer thread (`_Lingerer`, at most `LINGER_MAX_SOCKETS` = 16 at once, at most `DRAIN_TOTAL_SECONDS` each, ends at once when the client closes) which reads and drops request bytes still on their way, so the close does not send a reset (on Windows a reset destroys a reply the client has not read yet). A silent client costs the accept loop nothing. When the lingerer is full, bytes already there are read and the socket is closed. The 16 are counted in `FD_RESERVE_ITEMS`.
+   * Start-up order:
+ * (1) the open-file check: exit 3 if `MAX_HANDLER_THREADS` needs more open files than this computer allows.
+diff --git a/docs/settings.md b/docs/settings.md
+index 7388fb3..2854cb0 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -14,7 +14,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ | `later_mode` | `DESK_LATER_MODE` | `off` | `off`: a repeat that brings new details is only listed, and the desk refuses a decision on it. `approval`: a person approves or denies it (one decision per repeat, the first one wins; it is stored in the desk only and changes nothing else). Switching needs a restart; stored decisions stay |
+ | `approvers_path` | `DESK_APPROVERS_FILE` | none (in approval mode the loader uses the `approvers.json` inside `demo_only/`) | a JSON file `{"label": "...", "approvers": [{"id": "appr-01", "name": "..."}]}` (the label is optional): who may decide. Ids are lower-case letters, digits and `-`, at most 32 characters; names are unique, one line, at most 64 characters; the label is one line of at most 64 characters; the file is at most 16384 bytes; an empty list is refused in approval mode. Refused when approval mode is off |
+ | `leadflow_path` | `DESK_LEADFLOW_FILE` | none (off) | a JSON file with the lead owner list (`rota`), the lead stages (`steps`, `closed`, `first`, `after_followup`, `reminder_until`) and the optional reminder wait `nudge_after_seconds` (see `demo_only/leadflow.json`). Unset, empty or the exact lower-case word `off` turns the feature off and the desk behaves as before; a file really named `off` cannot be used. The file is read once at start; a refused file stops the start (exit 4). The demo start scripts (`scripts/start_all.ps1`, `scripts/start_all.sh`) name `demo_only/leadflow.json` unless you set `DESK_LEADFLOW_FILE` yourself; set `DESK_LEADFLOW_FILE=off` to turn the feature off there. WARNING: it writes the CRM lead status field, so automations in the CRM you connect that watch that field react (`docs/limits.md`) |
+-| `nudge_to` | `DESK_NUDGE_TO` | none | the one address that gets reminder emails; never logged. Refused unless `DESK_LEADFLOW_FILE` names a file, and refused when the file turns reminders on but this is not set. The demo start scripts set `reminder@example.test` unless you set it yourself (only when the feature is on) |
++| `nudge_to` | `DESK_NUDGE_TO` | none | the one address that gets reminder emails; never logged. It must be one plain address (the one rule for a plain address lives in `src/lead_desk/identity.py` and is shared with the sender and recipient addresses; it is not copied anywhere else). Refused unless `DESK_LEADFLOW_FILE` names a file, and refused when the file turns reminders on but this is not set. The demo start scripts set `reminder@example.test` unless you set it yourself (only when the feature is on) |
+ | `fakes_host`, `fakes_port` | `DESK_FAKES_HOST`, `DESK_FAKES_PORT` | `127.0.0.1`, `8766` | where the demo CRM and outbox listen; this computer only: `localhost` or a loopback address, anything else is refused |
+ | (both above) | `DESK_FAKES_URL` | built from the two above | one `http` address with host and port; wins over the two above |
+ | `replies_path` | `DESK_REPLIES_PATH` | none (the loader uses the `replies.json` inside `demo_only/`) | the pre-written AI replies |
+@@ -43,7 +43,7 @@ A number setting is plain ASCII text: digits with an optional sign (whole number
+ 
+ ### The leadflow file: every bound the desk enforces
+ 
+-The file named by `DESK_LEADFLOW_FILE` is read once at start; anything outside these bounds stops the start with exit 4 and a message that names the entry and never prints a value (constants in `constants.py`, checks in `config.py`).
++The file named by `DESK_LEADFLOW_FILE` is read once at start; anything outside these bounds stops the start (exit 4 in the desk, 8 in a script) with a message that names the entry and never prints a value (constants in `constants.py`, checks in `config.py`).
+ 
+ | Part | Bound |
+ |---|---|
+@@ -84,7 +84,7 @@ The default addresses below end in `example.test`, a name reserved for examples.
+ * `DESK_HUBSPOT_BASE_URL` (default: the vendor's own address, `HUBSPOT_BASE_URL` in `constants.py`), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2), `DESK_HUBSPOT_STATS_FILE`.
+ * `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`: the word `yes` lifts the check that the key goes only to the vendor's own host names.
+ 
+-Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4).
++Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4 for the desk, exit code 8 for a script that reads the settings; see "Exit codes" below).
+ 
+ ### Live model step (`DESK_QUALIFIER=live_claude`)
+ 
+@@ -124,3 +124,12 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+ * `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
+ * `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
++
++### Exit codes
++
++One table, in one place: `EXIT_CODE_TABLE` in `src/lead_desk/constants.py`, one row per program, code and meaning. The programs: `server` (`python -m lead_desk.server`), `crash_desk`, `feed`, `reset_check`, `run_real_check` (the Python scripts), `reset.sh`, `reset.ps1`, `start_all.sh`, `start_all.ps1`. Inside one program a code has one meaning. A number can mean different things in different programs: 1, 2, 3, 4 and 5 (the pinned list `SAME_NUMBER_DIFFERENT_MEANING`), so read a number together with the program that returned it.
++
++* A refused `DESK_*` setting: 4 from the desk itself; 8 from every script that reads the settings itself (one plain line on the error stream, never the value). `crash_desk` gives 8 when its own reading refuses and the desk's 4 when the desk it runs refuses a late setting (a leadflow file, an approvers file, a sender address, a public bind address). `run_real_check` gives 8 for a refused setting, 2 for its own refusals (no config, a missing line, a database file that already exists), 1 when you do not answer yes, 3 when the check ran and failed.
++* `start_all.sh` and `start_all.ps1`: 1 the start did not complete (bad mode, pid files exist, `START_ALL_WAIT_SECONDS` not a number, the demo server did not answer, the desk was not ready in time, the desk ended with another code or with 0); 2 (only `start_all.sh`) it was run by a shell that is not bash; 3, 4 and 5 are the desk's own codes, passed on when the desk it started ended at once; 8 a setting was refused while the script read it.
++* `reset.sh` and `reset.ps1` (and `reset_check.py`, which they call): 2 refused before anything was stopped or deleted, 3 a process holds the database, 4 something still answers on a port, 5 a process did not stop in time, 6 a pid file names another program, 8 a setting was refused.
++* The desk: 1 the demo server (the sender) cannot be reached, or a Python traceback; 2 another desk holds the lock file; 3 the open-file limit is too low; 4 a setting was refused; 5 the port could not be bound. 137 is only the crash script, on purpose.
+diff --git a/docs/tests.md b/docs/tests.md
+index 16bac04..716f939 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -81,6 +81,10 @@ Measured on Linux with Python 3.12, one run, 2026-11-12: a new `.venv` with both
+ * **No full run without Node was done on this commit.** The only complete runs are the ones named above, all with Node on the path. Nothing in this document is a measured full-suite count for a computer without Node. To measure it, run on a computer with the lock installed (Linux bash; give that one command a `PATH` that does not hold the folder with Node, for example `PATH=$(dirname "$(command -v python)") python -m pytest -q -rs`, then check that `command -v node` prints nothing under that `PATH`). The number of "node is not installed" and "no node" lines in its output, 22 for the eight files, shows how many tests were skipped for that reason.
+ * **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known, and no figure here confirms it. The nearest fit, as an inference only, is a run without Node on the path (Node missing skips 22 tests in the eight files above), but the totals do not match a full run of this commit (2516 tests; 2329 + 135 = 2464), so the two numbers are not reconciled. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
+ 
++## Tests of bad settings, the start scripts and the exit codes
++
++A bad `DESK_*` value must end every program with one plain line and an exit code, never a Python traceback, and never print the value. The files: `tests/test_bad_setting_entry_points.py` (every program run with bad values; the value-echo checks at every refusal site of the desk; paths that are not valid text), `tests/test_exit_code_table.py` (the one table of exit codes, by program; programs are run and their codes looked up), `tests/test_setting_reader_guard.py` (a walk over the source: no program reads a setting or a path outside the one reader and the one path helper), `tests/test_start_all_late_refusal.py` (`start_all.sh` when the demo server or the desk does not come up), `tests/test_reset_scripts.py` (the reset and start scripts with a stand-in `python`), and `tests/test_ps1_pins.py`. The last one reads the text of the two PowerShell scripts only; it does not run them. Nothing here has run the PowerShell scripts: that needs Windows (the Windows-only cases in that file are skipped everywhere else).
++
+ ## Quality checks and what to do when a check fails
+ 
+ The commands for ruff, mypy, bandit and the schema check are listed under "Quality commands" in `contract.md`, and the same commands, in order, are in `.github/workflows/lint.yml` (that file also has the secret scan and the scan for hardcoded literals). Run them from the repository folder with the `.venv` folder switched on.
+diff --git a/scripts/crash_desk.py b/scripts/crash_desk.py
+index c74595d..ec890a7 100644
+--- a/scripts/crash_desk.py
++++ b/scripts/crash_desk.py
+@@ -9,11 +9,11 @@ The flag file sits next to the database file (git-ignored folder). No hook code
+ 
+ from __future__ import annotations
+ 
+-from lead_desk.config import Config
++from lead_desk.config_exit import config_or_exit
+ from lead_desk.hooks import FlagFileHooks
+ from lead_desk.server import main
+ 
+ if __name__ == "__main__":
+-    flag = Config.from_env().db_path.parent / "crash.flag"
++    flag = config_or_exit().db_path.parent / "crash.flag"
+     print(f"crash flag file: {flag}  (write a point name such as D2 into it to arm the crash)")
+     main(hooks=FlagFileHooks(flag))
+diff --git a/scripts/feed.py b/scripts/feed.py
+index d3df787..f0555c1 100644
+--- a/scripts/feed.py
++++ b/scripts/feed.py
+@@ -20,7 +20,7 @@ from pathlib import Path
+ 
+ from http_guard import open_http
+ 
+-from lead_desk.config import Config
++from lead_desk.config_exit import config_or_exit
+ from lead_desk.constants import SOURCES
+ from lead_desk.urls import desk_origin
+ 
+@@ -59,7 +59,6 @@ def post(url: str, envelope: dict[str, object], timeout: float) -> tuple[int, st
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+-    cfg = Config.from_env()
+     ap = argparse.ArgumentParser(description="Send canned made-up leads to the desk.")
+     ap.add_argument("--source", choices=SOURCES, required=True)
+     ap.add_argument("--index", type=int, help="position in canned_leads.json, starting at 1")
+@@ -67,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
+     args = ap.parse_args(argv)
+     if args.all == (args.index is not None):
+         ap.error("give exactly one of --index or --all")
++    cfg = config_or_exit()  # after the arguments: --help and a wrong option never depend on the settings
+     url = f"{desk_origin(target_host(cfg.bind), cfg.port)}/leads"  # from the configuration only
+     leads = json.loads(CANNED.read_text(encoding="utf-8"))
+     indexes = range(1, len(leads) + 1) if args.all else [args.index]
+diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
+index 42bdfc0..69555e9 100644
+--- a/scripts/reset.ps1
++++ b/scripts/reset.ps1
+@@ -12,7 +12,23 @@ if ($env:RESET_STOP_WAIT_SECONDS) {
+     }
+     $stopWait = [int]$env:RESET_STOP_WAIT_SECONDS
+ }
+-$db = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path)").Trim()
++# the settings are read by lead_desk.config_exit: a refused setting prints one plain line on the error stream and ends
++# the helper with exit code 8 (lead_desk.constants.EXIT_CODE_TABLE), which this script passes on (no traceback, and nothing is started or deleted)
++# Designed for Windows PowerShell 5.1; NOT run on Windows in this build (no PowerShell here).
++# (Windows PowerShell 5.1 turns the error text of a native program into an error, unless the preference is Continue)
++function Read-DeskSetting([string]$Expression) {
++    $previous = $ErrorActionPreference
++    $ErrorActionPreference = 'Continue'
++    $merged = & python -c "from lead_desk.config_exit import config_or_exit; print($Expression)" 2>&1
++    $code = $LASTEXITCODE
++    $ErrorActionPreference = $previous
++    # the merged output is split: error records are the helper's error stream, everything else is its output (the value)
++    $errorText = ($merged | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" }) -join ' '
++    $outText = ($merged | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" }) -join "`n"
++    if ($code -ne 0) { [Console]::Error.WriteLine($errorText); exit $code }
++    $outText.Trim()
++}
++$db = Read-DeskSetting 'config_or_exit().db_path'
+ $dataDir = Split-Path -Parent $db
+ # real paths: a junction or symlink inside data\ that points elsewhere is followed (same check as reset.sh)
+ $inside = python -c "import os, sys; d = os.path.normcase(os.path.realpath(sys.argv[1])); r = os.path.normcase(os.path.realpath('data')); print(d == r or d.startswith(r + os.sep))" $dataDir
+diff --git a/scripts/reset.sh b/scripts/reset.sh
+index c8e07bd..558f4e9 100644
+--- a/scripts/reset.sh
++++ b/scripts/reset.sh
+@@ -2,6 +2,8 @@
+ # Stop what start_all.sh started (only those process ids) and delete the lead book, so the next run starts empty.
+ # Run from the repository root with bash (it uses [[ ]]): `sh scripts/reset.sh` fails where sh is dash. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+ # and refuses to run when the database path is not inside the repository's data/ folder.
++# Exit codes (the table is lead_desk.constants.EXIT_CODE_TABLE): 2 refused before anything was stopped or deleted, 3 something still holds
++# the database, 4 something still answers on a port, 5 a process did not stop, 6 not the desk, 8 a DESK_* setting was refused (one line).
+ set -eu
+ # a feature test, not the name BASH_VERSION (dash takes any variable from the environment): only a shell that runs [[ ]] passes
+ case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
+@@ -11,7 +13,7 @@ case "${RESET_STOP_WAIT_SECONDS:-10}" in
+   *) echo "refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted" >&2; exit 2 ;;
+ esac
+ export PYTHONPATH="src:."
+-db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)')"
++db="$(python -c 'from lead_desk.config_exit import config_or_exit; print(config_or_exit().db_path)')"
+ data_dir="$(dirname "$db")"
+ inside="$(python -c 'import os, sys; d = os.path.realpath(sys.argv[1]); r = os.path.realpath("data"); print(d == r or d.startswith(r + os.sep))' "$data_dir")"
+ if [[ "$inside" != "True" ]]; then
+diff --git a/scripts/reset_check.py b/scripts/reset_check.py
+index ebc1b45..1a0f319 100644
+--- a/scripts/reset_check.py
++++ b/scripts/reset_check.py
+@@ -1,6 +1,7 @@
+ """Run by reset.sh and reset.ps1 AFTER they stopped the desk and BEFORE they delete anything. Exit 0 = nothing uses the
+ lead book: no process holds its lock file and nothing answers on the desk's or the demo server's port. Exit 3 = a
+-process still holds the database or the lock file cannot be tested, 4 = something still answers on a port.
++process still holds the database or the lock file cannot be tested, 4 = something still answers on a port, 8 = a DESK_*
++setting is refused (one plain line). The table of every code is lead_desk.constants.EXIT_CODE_TABLE.
+ Prints one line, no values."""
+ 
+ from __future__ import annotations
+@@ -9,7 +10,8 @@ import socket
+ import sys
+ 
+ from lead_desk import lockfile
+-from lead_desk.config import Config
++from lead_desk.config_exit import config_or_exit
++from lead_desk.constants import EXIT_RESET_ANSWERING, EXIT_RESET_HELD
+ 
+ LOOPBACK = "127.0.0.1"
+ CONNECT_SECONDS = 1.0
+@@ -24,7 +26,7 @@ def answers(port: int) -> bool:
+ 
+ 
+ def main() -> int:
+-    config = Config.from_env()
++    config = config_or_exit()
+     # only "there is no lock file" means that nothing holds the book; a lock file that cannot be tested is a refusal,
+     # and a refused run must not create the file (acquire would)
+     try:
+@@ -33,23 +35,23 @@ def main() -> int:
+         has_lock_file = None
+     if has_lock_file is None:
+         print("refused: the data folder cannot be looked at, so it is not known whether the desk runs; nothing deleted")
+-        return 3
++        return EXIT_RESET_HELD
+     if has_lock_file:
+         try:
+             lockfile.acquire(config.db_path).close()
+         except lockfile.LockHeldError:
+             print("refused: a process still holds the database (the desk is running); nothing was deleted")
+-            return 3
++            return EXIT_RESET_HELD
+         except lockfile.LockUnavailableError:
+             print(
+                 "refused: the lock file of the database cannot be tested, so it is not known whether the desk runs; "
+                 "nothing was deleted"
+             )
+-            return 3
++            return EXIT_RESET_HELD
+     for port in (config.port, config.fakes_port):
+         if port and answers(port):
+             print(f"refused: something still answers on port {port}; nothing was deleted")
+-            return 4
++            return EXIT_RESET_ANSWERING
+     return 0
+ 
+ 
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index 9d754c3..4de4be8 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -69,6 +69,10 @@ from lead_desk.adapters import CrmError  # noqa: E402
+ from lead_desk.config import Config  # noqa: E402
+ from lead_desk.constants import (  # noqa: E402
+     CAP_COUNT_MAX,
++    EXIT_CHECK_FAILED,
++    EXIT_CHECK_REFUSED,
++    EXIT_CHECK_STOPPED,
++    EXIT_SCRIPT_SETTING_REFUSED,
+     EXIT_SIMULATED_KILL,
+     MAIL_IMAP_DEFAULT_HOST,
+     MAIL_SPAM_FOLDER,
+@@ -77,7 +81,8 @@ from lead_desk.constants import (  # noqa: E402
+     REAL_SECONDS_MAX,
+ )
+ from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings  # noqa: E402
+-from lead_desk.envnum import env_number  # noqa: E402
++from lead_desk.config_exit import refusal_line  # noqa: E402
++from lead_desk.envnum import SettingRefused, env_number, env_path  # noqa: E402
+ from lead_desk.gate import SEND_WORKERS_MAX  # noqa: E402
+ from lead_desk.imap_count import (  # noqa: E402
+     ImapConnectionError,
+@@ -93,7 +98,7 @@ from load_tools.check_invariants import InputError, read_book, render_table, run
+ from load_tools.load_driver import send_with_retries  # noqa: E402
+ from tools.pathconfine import confine_anywhere  # noqa: E402
+ 
+-EXIT_REFUSED, EXIT_STOPPED, EXIT_FAILED = 2, 1, 3
++EXIT_REFUSED, EXIT_STOPPED, EXIT_FAILED = EXIT_CHECK_REFUSED, EXIT_CHECK_STOPPED, EXIT_CHECK_FAILED
+ # Made-up lead addresses on the reserved example domain (not `.test`: a real CRM may refuse that as an invalid
+ # address: an assumption). Nothing is ever
+ # mailed to it: follow-ups go only to the configured inboxes
+@@ -283,14 +288,6 @@ def mask_result(result: dict[str, Any]) -> dict[str, Any]:
+     return out
+ 
+ 
+-def scrub(text: str, env: dict[str, str]) -> str:
+-    """`text` without any setting value (4 characters or more) it happens to contain: an error line may name a
+-    setting, never print what the setting holds."""
+-    for v in sorted({v for v in env.values() if len(v) >= 4}, key=len, reverse=True):  # noqa: PLR2004
+-        text = text.replace(v, "<value>")
+-    return text
+-
+-
+ def floor_checks(
+     book: dict[str, Any],
+     expected_leads: int,
+@@ -558,7 +555,7 @@ def _readback_failed(
+         + "their lead ids start with L and are listed in the desk's book. Archive them by hand."
+     )
+     print(note)
+-    out = Path(env.get("REAL_RESULT_FILE", run_dir / "result.json"))
++    out = env_path(env, "REAL_RESULT_FILE", run_dir / "result.json")
+     out.write_text(
+         json.dumps(
+             {"ok": False, "note": note, "leads_in_book": leads, "hubspot_calls_by_the_desk": hub_stats}, indent=2
+@@ -622,7 +619,7 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+     n = 1
+     while env.get(f"REAL_IMAP_{n}_USER"):
+         p = f"REAL_IMAP_{n}_"
+-        ca = env.get(p + "CA_FILE")
++        ca = str(env_path(env, p + "CA_FILE")) if env.get(p + "CA_FILE") else None
+         if not env.get(p + "PASSWORD_FILE", "").strip():
+             raise ValueError(f"{p}PASSWORD_FILE is required when {p}USER is set")
+         folders = tuple(x.strip() for x in env.get(p + "FOLDERS", f"INBOX,{MAIL_SPAM_FOLDER}").split(",") if x.strip())
+@@ -632,7 +629,7 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+             ImapSettings(
+                 env.get(p + "HOST", MAIL_IMAP_DEFAULT_HOST),
+                 env[p + "USER"],
+-                Path(env[p + "PASSWORD_FILE"]),
++                env_path(env, p + "PASSWORD_FILE"),
+                 port=number(p + "PORT", env, int, 993, low=1, high=PORT_MAX),
+                 folders=folders,
+                 ssl_context=ssl.create_default_context(cafile=ca) if ca else None,
+@@ -855,10 +852,11 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         if persons < MIN_PERSONS:
+             print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
+             return EXIT_REFUSED
+-        db = Path(env["DESK_DB_PATH"])
++        db = env_path(env, "DESK_DB_PATH")
+         if db.exists():  # an old book would hold old leads: the clean-up could not tell this run's contacts apart
+             raise ValueError("DESK_DB_PATH names a file that already exists: give a new database file for each run")
+         run_dir = db.parent
++        env_path(env, "REAL_RESULT_FILE", run_dir / "result.json")  # refused here, before anything real is called
+         env = {**env, "DESK_ADAPTERS": "demo", "DESK_CRM": "hubspot", "DESK_OUTBOX": "smtp_provider"}
+         env.setdefault("DESK_SEND_TIMEOUT_SECONDS", "8")
+         env.setdefault("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "no")  # only the config file can switch the host check off
+@@ -881,7 +879,13 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         live_worst = Decimal(0)
+         if a.live_model:
+             env["DESK_QUALIFIER"] = "live_claude"
+-            live = Config.from_env({**env, "DESK_PORT": "0"}).live
++        # the desk's own settings check, in every run (not only with the live model): a bad DESK_* value is refused
++        # here, before the Start question and before anything is called; the refusal is worded by the except block below
++        # (refusal_line and EXIT_SCRIPT_SETTING_REFUSED), so this is the bare reader on purpose
++        # (tests/test_bad_setting_entry_points.py)
++        desk_config = Config.from_env({**env, "DESK_PORT": "0"})
++        if a.live_model:
++            live = desk_config.live
+             if live is None:
+                 raise ValueError("the live model settings are missing")
+             live_cap = live.cap_run_usd
+@@ -891,10 +895,12 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+             live_worst = worst_case_usd(live, q_bytes) * MODEL_CALLS_PER_LEAD * (persons + 3) * 2
+         port = number("DESK_PORT", env, int, 0, low=0, high=PORT_MAX) or 8765
+     except (ValueError, OSError, ArithmeticError) as e:
+-        # these messages name a setting, never its value (scrub is the backstop); other errors show their type only
+-        msg = scrub(str(e), env)[:200] if isinstance(e, ValueError) else ""
+-        print("refused: " + type(e).__name__ + (": " + msg if msg else ""))
+-        return EXIT_REFUSED
++        # one wording for every refusal (lead_desk.config_exit.refusal_line: no class name, one line, the value of a
++        # named or secret-like setting never shown). A refused setting is EXIT_SCRIPT_SETTING_REFUSED; this script's own
++        # refusals (a missing config line, a book that exists) and OSError / ArithmeticError stay EXIT_REFUSED.
++        reason = e if isinstance(e, ValueError) else "a file or a number named in the config cannot be used"
++        print(refusal_line("refused:", reason, env))
++        return EXIT_SCRIPT_SETTING_REFUSED if isinstance(e, SettingRefused) else EXIT_REFUSED
+ 
+     desks = 2  # the crash starts a second desk process, each with its own caps
+     print(f"people: {persons} + a twin (same person, second address); desk processes: {desks} (one crash)")
+@@ -1091,7 +1097,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot",
+     }
+     print("\n" + json.dumps(summary, indent=2, sort_keys=True))
+-    out = Path(env.get("REAL_RESULT_FILE", run_dir / "result.json"))
++    out = env_path(env, "REAL_RESULT_FILE", run_dir / "result.json")
+     out.write_text(
+         json.dumps({"checks": result, "summary": summary, "per_lead": per_lead}, indent=2, default=str),
+         encoding="utf-8",
+diff --git a/scripts/start_all.ps1 b/scripts/start_all.ps1
+index b3e1fec..e4084b8 100644
+--- a/scripts/start_all.ps1
++++ b/scripts/start_all.ps1
+@@ -7,19 +7,98 @@ $ErrorActionPreference = 'Stop'
+ $env:PYTHONPATH = 'src;.'
+ if ($null -eq $env:DESK_LEADFLOW_FILE) { $env:DESK_LEADFLOW_FILE = 'demo_only/leadflow.json' }
+ if ($env:DESK_LEADFLOW_FILE -cne 'off' -and $null -eq $env:DESK_NUDGE_TO) { $env:DESK_NUDGE_TO = 'reminder@example.test' }
+-$dataDir = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path.parent)").Trim()
+-$fakesPort = (python -c "from lead_desk.config import Config; print(Config.from_env().fakes_port)").Trim()
++# the settings are read by lead_desk.config_exit: a refused setting prints one plain line on the error stream and ends
++# the helper with exit code 8 (lead_desk.constants.EXIT_CODE_TABLE), which this script passes on (no traceback, and nothing is started or deleted)
++# Designed for Windows PowerShell 5.1; NOT run on Windows in this build (no PowerShell here).
++# (Windows PowerShell 5.1 turns the error text of a native program into an error, unless the preference is Continue)
++function Read-DeskSetting([string]$Expression) {
++    $previous = $ErrorActionPreference
++    $ErrorActionPreference = 'Continue'
++    $merged = & python -c "from lead_desk.config_exit import config_or_exit; print($Expression)" 2>&1
++    $code = $LASTEXITCODE
++    $ErrorActionPreference = $previous
++    # the merged output is split: error records are the helper's error stream, everything else is its output (the value)
++    $errorText = ($merged | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" }) -join ' '
++    $outText = ($merged | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" }) -join "`n"
++    if ($code -ne 0) { [Console]::Error.WriteLine($errorText); exit $code }
++    $outText.Trim()
++}
++$dataDir = Read-DeskSetting 'config_or_exit().db_path.parent'
++$fakesHost = Read-DeskSetting 'config_or_exit().fakes_host'
++$fakesPort = Read-DeskSetting 'config_or_exit().fakes_port'
++# ONE waiting budget for the whole start (the demo server answering, then the desk listening): START_ALL_WAIT_SECONDS, a whole
++# number from 1 to 999, default 15. It is not a DESK_* setting (it only decides how long this script waits).
++$waitSeconds = 15
++if ($null -ne $env:START_ALL_WAIT_SECONDS) {
++    if ($env:START_ALL_WAIT_SECONDS -notmatch '^[1-9][0-9]{0,2}$') {
++        [Console]::Error.WriteLine('refused: START_ALL_WAIT_SECONDS must be a whole number of seconds from 1 to 999 with no leading zero; nothing was started')
++        exit 1
++    }
++    $waitSeconds = [int]$env:START_ALL_WAIT_SECONDS
++}
+ New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
+ if ((Test-Path "$dataDir\fakes.pid") -or (Test-Path "$dataDir\desk.pid")) {
+-    throw 'pid files exist: run scripts\reset.ps1 first'
++    [Console]::Error.WriteLine('pid files exist: run scripts\reset.ps1 first')
++    exit 1
+ }
+ $fakes = Start-Process python -ArgumentList '-m', 'demo_only.fakes_server', '--outbox', $Mode, '--port', $fakesPort `
+     -PassThru -WindowStyle Hidden -RedirectStandardOutput "$dataDir\fakes.log" -RedirectStandardError "$dataDir\fakes.err.log"
++$null = $fakes.Handle  # keeps the process handle, so that ExitCode can be read after the process ended (Windows PowerShell 5.1)
+ $fakes.Id | Set-Content "$dataDir\fakes.pid"
++$ticks = 0
++$maxTicks = $waitSeconds * 5
++# first the demo server: the desk asks it once at start-up and ends if nobody answers
++$fakesUp = $false
++while ($ticks -lt $maxTicks) {
++    $client = New-Object System.Net.Sockets.TcpClient
++    try { $client.Connect($fakesHost, [int]$fakesPort); $fakesUp = $client.Connected } catch { $fakesUp = $false } finally { $client.Close() }
++    if ($fakesUp) { break }
++    if ($fakes.HasExited) { break }
++    Start-Sleep -Milliseconds 200
++    $ticks++
++}
++if (-not $fakesUp) {
++    [Console]::Error.WriteLine("the demo server did not start: nothing answers on port $fakesPort (see $dataDir\fakes.log); the desk was not started")
++    Stop-Process -Id $fakes.Id -ErrorAction SilentlyContinue
++    Remove-Item -Force "$dataDir\fakes.pid", "$dataDir\desk.pid" -ErrorAction SilentlyContinue
++    exit 1
++}
+ $desk = Start-Process python -ArgumentList '-m', 'lead_desk.server' `
+     -PassThru -WindowStyle Hidden -RedirectStandardOutput "$dataDir\desk.log" -RedirectStandardError "$dataDir\desk.err.log"
++$null = $desk.Handle  # keeps the process handle, so that ExitCode can be read after the process ended (Windows PowerShell 5.1)
+ $desk.Id | Set-Content "$dataDir\desk.pid"
++# Then wait (inside the same budget) until the desk says it is listening. A desk that ends first is reported as it is (its
++# last log line and its own exit code), what this script started is stopped again, and "started" is never printed for it.
++$ready = $false
++while ($ticks -lt $maxTicks) {
++    if ((Test-Path "$dataDir\desk.log") -and (Select-String -Path "$dataDir\desk.log" -Pattern '^desk listening on ' -Quiet -ErrorAction SilentlyContinue)) { $ready = $true; break }
++    if ($desk.HasExited) { break }
++    Start-Sleep -Milliseconds 200
++    $ticks++
++}
++if (-not $ready) {
++    if (-not $desk.HasExited) {
++        [Console]::Error.WriteLine("desk not ready after $waitSeconds seconds (it may still be starting); see $dataDir\desk.log; run scripts\reset.ps1 to stop it")
++        exit 1
++    }
++    $desk.WaitForExit()
++    $deskCode = $desk.ExitCode
++    if ($null -eq $deskCode -or $deskCode -isnot [int]) { $deskCode = 1 }  # an exit code that cannot be read is never a success
++    $last = ''
++    foreach ($f in "$dataDir\desk.log", "$dataDir\desk.err.log") {
++        if (Test-Path $f) { $l = Get-Content $f -ErrorAction SilentlyContinue | Where-Object { $_.Trim() } | Select-Object -Last 1; if ($l) { $last = $l; break } }
++    }
++    # the last line goes through the one formatter: one plain line, no control characters, no setting value
++    $plain = ($last | & python -m lead_desk.config_exit 2>$null)
++    if ($LASTEXITCODE -ne 0 -or -not $plain) { $plain = '(the log line could not be read)' }
++    [Console]::Error.WriteLine("the desk ended at once (exit $deskCode): $plain")
++    Stop-Process -Id $fakes.Id -ErrorAction SilentlyContinue
++    Remove-Item -Force "$dataDir\fakes.pid", "$dataDir\desk.pid" -ErrorAction SilentlyContinue
++    # the desk's own 3, 4 and 5 are passed on; every other end (including a desk that stopped with 0) is this script's 1
++    if ($deskCode -in 3, 4, 5) { exit $deskCode }
++    exit 1
++}
+ Write-Host "started: demo servers ($Mode outbox) pid $($fakes.Id), desk pid $($desk.Id)"
+-$deskPort = (python -c "from lead_desk.config import Config; print(Config.from_env().port)").Trim()
++$deskPort = Read-DeskSetting 'config_or_exit().port'
+ Write-Host "ports: desk $deskPort, demo CRM and outbox $fakesPort (check with: Invoke-WebRequest http://127.0.0.1:$deskPort/counts)"
+ Write-Host "logs: $dataDir\fakes.log and $dataDir\desk.log (and .err.log)"
+diff --git a/scripts/start_all.sh b/scripts/start_all.sh
+index ced682a..bc00362 100644
+--- a/scripts/start_all.sh
++++ b/scripts/start_all.sh
+@@ -15,18 +15,71 @@ case "$mode" in keyed|blind) ;; *) echo "mode must be keyed or blind" >&2; exit
+ export PYTHONPATH="src:."
+ export DESK_LEADFLOW_FILE="${DESK_LEADFLOW_FILE-demo_only/leadflow.json}"
+ if [[ "$DESK_LEADFLOW_FILE" != off ]] && [[ -n "$DESK_LEADFLOW_FILE" ]]; then export DESK_NUDGE_TO="${DESK_NUDGE_TO-reminder@example.test}"; fi
+-data_dir="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path.parent)')"
+-fakes_port="$(python -c 'from lead_desk.config import Config; print(Config.from_env().fakes_port)')"
++data_dir="$(python -c 'from lead_desk.config_exit import config_or_exit; print(config_or_exit().db_path.parent)')"
++fakes_host="$(python -c 'from lead_desk.config_exit import config_or_exit; print(config_or_exit().fakes_host)')"
++fakes_port="$(python -c 'from lead_desk.config_exit import config_or_exit; print(config_or_exit().fakes_port)')"
++# ONE waiting budget for the whole start (the demo server answering, then the desk listening): START_ALL_WAIT_SECONDS, a whole
++# number from 1 to 999, default 15. It is not a DESK_* setting (it only decides how long this script waits).
++WAIT_SECONDS="${START_ALL_WAIT_SECONDS:-15}"
++case "$WAIT_SECONDS" in
++  [1-9]|[1-9][0-9]|[1-9][0-9][0-9]) ;;
++  *) echo "refused: START_ALL_WAIT_SECONDS must be a whole number of seconds from 1 to 999 with no leading zero; nothing was started" >&2; exit 1 ;;
++esac
+ mkdir -p "$data_dir"
+ if [[ -e "$data_dir/fakes.pid" ]] || [[ -e "$data_dir/desk.pid" ]]; then
+   echo "pid files exist: run scripts/reset.sh first" >&2
+   exit 1
+ fi
+ python -m demo_only.fakes_server --outbox "$mode" --port "$fakes_port" >"$data_dir/fakes.log" 2>&1 &
+-echo $! >"$data_dir/fakes.pid"
++fakes_pid=$!
++echo "$fakes_pid" >"$data_dir/fakes.pid"
++ticks=0
++max_ticks=$((WAIT_SECONDS * 5))
++# first the demo server: the desk asks it once at start-up and ends if nobody answers (a start race, not a bad setting)
++fakes_up=0
++while (( ticks < max_ticks )); do
++  if (exec 3<>"/dev/tcp/$fakes_host/$fakes_port") 2>/dev/null; then fakes_up=1; break; fi
++  kill -0 "$fakes_pid" 2>/dev/null || break
++  sleep 0.2
++  ticks=$((ticks + 1))
++done
++if [[ "$fakes_up" != 1 ]]; then
++  echo "the demo server did not start: nothing answers on port $fakes_port (see $data_dir/fakes.log); the desk was not started" >&2
++  kill "$fakes_pid" 2>/dev/null || true
++  wait "$fakes_pid" 2>/dev/null || true
++  rm -f "$data_dir/fakes.pid" "$data_dir/desk.pid"
++  exit 1
++fi
+ python -m lead_desk.server >"$data_dir/desk.log" 2>&1 &
+-echo $! >"$data_dir/desk.pid"
+-echo "started: demo servers ($mode outbox) pid $(cat "$data_dir/fakes.pid"), desk pid $(cat "$data_dir/desk.pid")"
+-desk_port="$(python -c 'from lead_desk.config import Config; print(Config.from_env().port)')"
++desk_pid=$!
++echo "$desk_pid" >"$data_dir/desk.pid"
++# Then wait (inside the same budget) until the desk says it is listening. A desk that ends first (a refused setting, a taken
++# port, another desk on the same database) is reported as it is: its last log line, its own exit code, and what this script
++# started is stopped again. It never prints "started" for a desk that is already gone.
++ready=0
++while (( ticks < max_ticks )); do
++  if grep -q "^desk listening on " "$data_dir/desk.log" 2>/dev/null; then ready=1; break; fi
++  kill -0 "$desk_pid" 2>/dev/null || break
++  sleep 0.2
++  ticks=$((ticks + 1))
++done
++if [[ "$ready" != 1 ]]; then
++  if kill -0 "$desk_pid" 2>/dev/null; then
++    echo "desk not ready after $WAIT_SECONDS seconds (it may still be starting); see $data_dir/desk.log; run scripts/reset.sh to stop it" >&2
++    exit 1
++  fi
++  desk_code=0
++  wait "$desk_pid" || desk_code=$?
++  # the last line of the log goes through the one formatter: one plain line, no control characters, no setting value
++  last="$(grep -v '^[[:space:]]*$' "$data_dir/desk.log" | tail -n 1 | python -m lead_desk.config_exit 2>/dev/null || echo '(the log line could not be read)')"
++  echo "the desk ended at once (exit $desk_code): $last" >&2
++  kill "$fakes_pid" 2>/dev/null || true
++  wait "$fakes_pid" 2>/dev/null || true
++  rm -f "$data_dir/fakes.pid" "$data_dir/desk.pid"
++  # the desk's own 3, 4 and 5 are passed on; every other end (including a desk that stopped with 0) is this script's 1
++  case "$desk_code" in 3|4|5) exit "$desk_code" ;; *) exit 1 ;; esac
++fi
++echo "started: demo servers ($mode outbox) pid $fakes_pid, desk pid $desk_pid"
++desk_port="$(python -c 'from lead_desk.config_exit import config_or_exit; print(config_or_exit().port)')"
+ echo "ports: desk $desk_port, demo CRM and outbox $fakes_port (check with: curl http://127.0.0.1:$desk_port/counts)"
+ echo "logs: $data_dir/fakes.log and $data_dir/desk.log"
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 9812f8e..a10a5cd 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -53,7 +53,7 @@ from lead_desk.constants import (
+     STALL_SECONDS_MAX,
+     WILDCARD_BINDS,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import SettingRefused, env_number, env_path, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
+ from lead_desk.urls import desk_origin
+ 
+@@ -216,13 +216,13 @@ def _live_from_env(e: Mapping[str, str]) -> LiveSettings:
+         kw["allow_any_base_url"] = True
+     return LiveSettings(
+         model=e["DESK_LIVE_MODEL"],
+-        key_file=Path(e["DESK_LIVE_KEY_FILE"]),
++        key_file=env_path(e, "DESK_LIVE_KEY_FILE"),
+         price_in_per_mtok=_dec(e, "DESK_LIVE_PRICE_IN_PER_MTOK"),
+         price_out_per_mtok=_dec(e, "DESK_LIVE_PRICE_OUT_PER_MTOK"),
+         price_date=e["DESK_LIVE_PRICE_DATE"],
+         cap_run_usd=_dec(e, "DESK_LIVE_CAP_RUN_USD"),
+         cap_total_usd=_dec(e, "DESK_LIVE_CAP_TOTAL_USD"),
+-        ledger_path=Path(e["DESK_LIVE_LEDGER_PATH"]),
++        ledger_path=env_path(e, "DESK_LIVE_LEDGER_PATH"),
+         run_id=e["DESK_LIVE_RUN_ID"],
+         **kw,
+     )
+@@ -314,7 +314,11 @@ class Leadflow:
+         ids: set[str] = set()
+         names: set[str] = set()
+         for n, entry in enumerate(self.rota, 1):
+-            ok = isinstance(entry, tuple) and len(entry) == 3 and all(isinstance(x, str) for x in entry)  # noqa: PLR2004
++            ok = (
++                isinstance(entry, tuple)
++                and len(entry) == 3  # noqa: PLR2004
++                and all(isinstance(x, str) for x in entry)
++            )
+             if not ok or not _LEADFLOW_ID.fullmatch(entry[0]):
+                 raise SettingRefused(f"rota entry {n}: the id is not a short lower-case id")
+             if not _one_line(entry[1], LEADFLOW_NAME_MAX):
+@@ -333,7 +337,11 @@ class Leadflow:
+         seen: set[str] = set()
+         for n, entry in enumerate(self.steps, 1):
+             name = "closed" if n == len(self.steps) else f"steps entry {n}"
+-            ok = isinstance(entry, tuple) and len(entry) == 3 and all(isinstance(x, str) for x in entry)  # noqa: PLR2004
++            ok = (
++                isinstance(entry, tuple)
++                and len(entry) == 3  # noqa: PLR2004
++                and all(isinstance(x, str) for x in entry)
++            )
+             if not ok or not _LEADFLOW_ID.fullmatch(entry[0]):
+                 raise SettingRefused(f"{name}: the id is not a short lower-case id")
+             if not _one_line(entry[1], LEADFLOW_LABEL_MAX):
+@@ -539,7 +547,9 @@ class Config:
+         DESK_FAKES_HOST, DESK_FAKES_PORT, DESK_REPLIES_PATH, DESK_SEND_TIMEOUT_SECONDS, DESK_SIZE_CAP_BYTES,
+         DESK_STALL_SECONDS, DESK_ALLOWED_HOSTS (comma list of extra Host names), DESK_QUALIFIER, DESK_OUTBOX and, when
+         DESK_QUALIFIER is live_claude, the DESK_LIVE_* names (see _live_from_env). Missing names keep the defaults
+-        above. Bad values raise ValueError.
++        above. A bad value raises SettingRefused (a ValueError that names the setting, never its value); a program
++        that is not the desk reads the settings with `lead_desk.config_exit.config_or_exit`, which turns the refusal
++        into one plain line and an exit code.
+         Precedence: DESK_FAKES_URL wins over DESK_FAKES_HOST / DESK_FAKES_PORT when both are set. The URL scheme
+         must be http (anything else raises ValueError). A non-empty URL path other than "/" raises ValueError (it
+         would be silently dropped otherwise). A query, a fragment and userinfo (`user:pw@`) are ignored: only the
+@@ -547,7 +557,7 @@ class Config:
+         e = os.environ if env is None else env
+         kw: dict[str, Any] = {}
+         if "DESK_DB_PATH" in e:
+-            kw["db_path"] = Path(e["DESK_DB_PATH"])
++            kw["db_path"] = env_path(e, "DESK_DB_PATH")
+         if "DESK_BIND" in e:
+             kw["bind"] = e["DESK_BIND"]
+         if "DESK_PORT" in e:
+@@ -573,7 +583,7 @@ class Config:
+             kw["fakes_host"] = f"[{parts.hostname}]" if ":" in parts.hostname else parts.hostname
+             kw["fakes_port"] = url_port
+         if "DESK_REPLIES_PATH" in e:
+-            kw["replies_path"] = Path(e["DESK_REPLIES_PATH"])
++            kw["replies_path"] = env_path(e, "DESK_REPLIES_PATH")
+         if "DESK_SEND_TIMEOUT_SECONDS" in e:
+             kw["send_timeout_seconds"] = env_number(
+                 e, "DESK_SEND_TIMEOUT_SECONDS", float, high=SEND_TIMEOUT_SECONDS_MAX
+@@ -595,10 +605,10 @@ class Config:
+         if "DESK_LATER_MODE" in e:
+             kw["later_mode"] = e["DESK_LATER_MODE"]
+         if "DESK_APPROVERS_FILE" in e:
+-            kw["approvers_path"] = Path(e["DESK_APPROVERS_FILE"])
++            kw["approvers_path"] = env_path(e, "DESK_APPROVERS_FILE")
+         flow = e.get("DESK_LEADFLOW_FILE", "").strip()
+         if flow and flow != LEADFLOW_OFF:  # unset, empty and the word off all mean: the feature is off
+-            kw["leadflow_path"] = Path(flow)
++            kw["leadflow_path"] = env_path({"DESK_LEADFLOW_FILE": flow}, "DESK_LEADFLOW_FILE")
+         if e.get("DESK_NUDGE_TO", ""):
+             kw["nudge_to"] = e["DESK_NUDGE_TO"]
+         if kw.get("qualifier") == "live_claude":
+diff --git a/src/lead_desk/config_exit.py b/src/lead_desk/config_exit.py
+new file mode 100644
+index 0000000..d556058
+--- /dev/null
++++ b/src/lead_desk/config_exit.py
+@@ -0,0 +1,127 @@
++"""The one place that words a refused setting, and the one way for a script to read the settings.
++
++`Config.from_env` raises `SettingRefused` for a bad value. A program that lets that error out shows the person a Python
++traceback. Every program that reads the settings turns the refusal into ONE plain line and an exit code:
++`server.main` (the desk itself), `config_or_exit` (scripts/*.py and the `python -c` helper calls in scripts/*.sh and
++scripts/*.ps1) and scripts/run_real_check.py. All of them build the line with `refusal_line`, so the same bad value
++gives the same words everywhere: one line, control characters removed, cut to LINE_MAX characters, and no value (see
++`scrub_values` for exactly which values are blanked).
++
++Two streams, on purpose, each for one reason. The desk prints its refusal on the OUTPUT stream (stdout), like every
++other start-up message it prints; scripts/start_all.sh keeps all of them in desk.log and the desk tests read stdout.
++The helper (`config_or_exit`) prints on the ERROR stream (stderr), because a shell reads a setting with
++`$(python -c ...)` and a command substitution swallows stdout, so the person would see nothing.
++
++Why `server.main` does not call `config_or_exit`: the desk's refusal is exit 4 on stdout (two things the desk's own
++callers and tests rely on), a script's is exit 8 on stderr. `server.main` reads `Config.from_env` itself and words the
++refusal with the same `refusal_line`; the structure test (tests/test_setting_reader_guard.py) allows exactly that line.
++
++Exit codes: the one table is `constants.EXIT_CODE_TABLE`, keyed by program. The desk's own refusal is 4; a program that
++reads a setting and finds it refused exits with 8 (`EXIT_SCRIPT_SETTING_REFUSED`)."""
++
++from __future__ import annotations
++
++import os
++import re
++import sys
++import unicodedata
++from collections.abc import Mapping
++from urllib.parse import urlsplit
++
++from lead_desk.config import Config
++from lead_desk.constants import EXIT_SCRIPT_SETTING_REFUSED
++from lead_desk.envnum import SettingRefused
++
++LINE_MAX = 200
++SCRUB_MIN_CHARS = 3  # a value of one or two characters ("0", "no") is also ordinary text in a message
++LONG_VALUE_MIN = 24  # a value this long also has its first and last PART blanked (a message cut short shows a part)
++LONG_VALUE_PART = 12
++VALUE_MARK = "<value>"
++SETTING_PREFIXES = ("DESK_", "LEAD_DESK_", "REAL_")
++_SETTING_NAME = re.compile(r"\b((?:LEAD_)?DESK_[A-Z0-9_]+|REAL_[A-Z0-9_]+)")  # a setting name is kept as it is
++# a setting that holds a secret, an address, a person or a place: its value is blanked wherever the message shows it,
++# even when the message does not name the setting
++_SECRET_LIKE = re.compile(r"KEY|PASSWORD|SECRET|TOKEN|USER|FROM|RECIPIENT|ADDRESS|URL|HOST|(?:^|_)TO$")
++
++
++def _forms(value: str) -> set[str]:
++    """The ways a value can appear in an error message: as typed, as Python shows it (repr), and escaped."""
++    forms = {value, repr(value)[1:-1], ascii(value)[1:-1], value.encode("unicode_escape", "backslashreplace").decode()}
++    return {f for f in forms if len(f) >= SCRUB_MIN_CHARS}
++
++
++def _parts_of(value: str) -> set[str]:
++    """The value and the pieces of it a message could show on its own: each list item, the user name and password of
++    a URL, and (for a long value) its first and last LONG_VALUE_PART characters."""
++    parts = {value}
++    parts |= {item.strip() for item in value.split(",")}
++    try:
++        url = urlsplit(value)
++        parts |= {url.username or "", url.password or ""}
++    except ValueError:  # not a URL (a bad bracket, a bad port): nothing more to take from it
++        pass
++    if len(value) >= LONG_VALUE_MIN:
++        parts |= {value[:LONG_VALUE_PART], value[-LONG_VALUE_PART:]}
++    return {p for p in parts if len(p) >= SCRUB_MIN_CHARS}
++
++
++def _pattern(form: str) -> re.Pattern[str]:
++    """The form as a whole token: not a part of a longer word ("low" is a value, "allows" is a word of the message)."""
++    before = r"(?<![A-Za-z0-9])" if form[0].isalnum() else ""
++    after = r"(?![A-Za-z0-9])" if form[-1].isalnum() else ""
++    return re.compile(before + re.escape(form) + after)
++
++
++def scrub_values(text: str, env: Mapping[str, str]) -> str:
++    """`text` without the values of exactly these settings of `env`: the ones the text NAMES (a message about
++    DESK_PORT hides the value of DESK_PORT) and the ones whose name says secret, address, user or place (a key file, a
++    password, a sender, a URL, a host). Each is hidden in the forms above, and so are its list items, URL user name and
++    password, and the first and last 12 characters of a value of 24 or more. Every other setting keeps its value
++    readable: a limit, an allowed word and a plain number in a message are not hidden by a setting that happens to hold
++    the same text. A setting name inside the text is left alone."""
++    named = set(_SETTING_NAME.findall(text))
++    forms: set[str] = set()
++    for name, value in env.items():
++        if not name.startswith(SETTING_PREFIXES) or not isinstance(value, str):
++            continue
++        if name in named or _SECRET_LIKE.search(name):
++            for part in _parts_of(value):
++                forms |= _forms(part)
++    ordered = sorted(forms, key=len, reverse=True)
++    pieces = _SETTING_NAME.split(text)  # odd items are the setting names
++    for i in range(0, len(pieces), 2):
++        for form in ordered:
++            pieces[i] = _pattern(form).sub(VALUE_MARK, pieces[i])
++    return "".join(pieces)
++
++
++def plain_line(text: object, values: Mapping[str, str] | None = None) -> str:
++    """`text` as ONE plain line of at most LINE_MAX characters: values scrubbed, every control, format, surrogate and
++    private-use character removed (a terminal could act on them), line ends and runs of spaces collapsed."""
++    scrubbed = scrub_values(str(text), values or {})
++    kept = "".join(" " if ch.isspace() else ch for ch in scrubbed if ch.isspace() or unicodedata.category(ch)[0] != "C")
++    return " ".join(kept.split())[:LINE_MAX]
++
++
++def refusal_line(prefix: str, reason: object, values: Mapping[str, str] | None = None) -> str:
++    """`<prefix> <reason>` as ONE line (see `plain_line`).
++
++    `prefix` is "the desk refuses a setting:", "the desk refuses to start:" or "refused:".
++    """
++    return f"{prefix} {plain_line(reason, values)}"
++
++
++def config_or_exit(env: Mapping[str, str] | None = None) -> Config:
++    """`Config.from_env(env)`, or the plain refusal on the error stream and the script exit code."""
++    try:
++        return Config.from_env(env)
++    except SettingRefused as e:
++        line = refusal_line("the desk refuses a setting:", e, os.environ if env is None else env)
++        print(line, file=sys.stderr, flush=True)
++        raise SystemExit(EXIT_SCRIPT_SETTING_REFUSED) from None
++
++
++if __name__ == "__main__":
++    # `python -m lead_desk.config_exit`: reads text on standard input and prints it as one plain line (a shell script
++    # uses it for the last line of a log file it shows a person); the settings come from the environment
++    print(plain_line(sys.stdin.buffer.read().decode("utf-8", "replace"), os.environ))
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index ad79be1..561192c 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -23,13 +23,128 @@ HTTP_BUSY: Final = 503
+ 
+ # Process exit codes
+ EXIT_OK: Final = 0
+-EXIT_ANOTHER_DESK: Final = 2  # another desk holds the lock file (the lead book is in use)
+-EXIT_SETTING_REFUSED: Final = (
+-    3  # a limit in constants.py does not fit this computer (too many handler threads for the open-file limit)
+-)
++EXIT_ADAPTERS_UNREACHABLE: Final = 1  # start-up cannot reach the sender (/fake/info)
++EXIT_ANOTHER_DESK: Final = 2  # another desk holds the lock file (the database is in use)
++# a limit in constants.py does not fit this computer (too many handler threads for the open-file limit)
++EXIT_OPEN_FILE_LIMIT: Final = 3
+ EXIT_DESK_SETTING_REFUSED: Final = 4  # a setting was refused (Config, an adapter, or the Desk)
+ EXIT_PORT_UNAVAILABLE: Final = 5  # the port could not be bound within BIND_RETRY_SECONDS
+ EXIT_SIMULATED_KILL: Final = 137  # scripts/crash_desk.py: os._exit(137) at the chosen crash point
++EXIT_SCRIPT_SETTING_REFUSED: Final = 8  # a script (not the desk) read a DESK_* setting and it was refused
++# scripts/run_real_check.py (its own three, besides the 8 above)
++EXIT_CHECK_STOPPED: Final = 1
++EXIT_CHECK_REFUSED: Final = 2
++EXIT_CHECK_FAILED: Final = 3
++# scripts/start_all.sh and start_all.ps1 (their own two; they pass on 3, 4 and 5 of the desk)
++EXIT_START_NOT_DONE: Final = 1
++EXIT_NOT_BASH: Final = 2
++# scripts/reset.sh, reset.ps1 and reset_check.py
++EXIT_RESET_REFUSED: Final = 2
++EXIT_RESET_HELD: Final = 3
++EXIT_RESET_ANSWERING: Final = 4
++EXIT_RESET_NOT_STOPPED: Final = 5
++EXIT_RESET_WRONG_PROGRAM: Final = 6
++
++# The meaning of each code, written once. A program's row below uses one of these texts; the same text in two programs
++# is one meaning (start_all passes the desk's own codes on), different texts behind one number are the overlap named in
++# SAME_NUMBER_DIFFERENT_MEANING.
++MEANING_ADAPTERS_UNREACHABLE: Final = "the demo server (the sender) cannot be reached, or a Python traceback"
++MEANING_ANOTHER_DESK: Final = "another desk holds the lock file"
++MEANING_OPEN_FILE_LIMIT: Final = "the open-file limit is too low"
++MEANING_DESK_SETTING_REFUSED: Final = "the desk refused a setting"
++MEANING_PORT_UNAVAILABLE: Final = "the port could not be bound"
++MEANING_SIMULATED_KILL: Final = "the crash script ended the desk on purpose"
++MEANING_SCRIPT_SETTING_REFUSED: Final = "a setting was refused while a script read it"
++MEANING_START_NOT_DONE: Final = (
++    "the start did not complete: a bad mode, pid files exist, the demo server or the desk was not ready in time, "
++    "or the desk ended with a code this table does not pass on"
++)
++MEANING_NOT_BASH: Final = "refused: the script was run by a shell that is not bash"
++MEANING_RESET_REFUSED: Final = "refused before anything was stopped or deleted"
++MEANING_RESET_HELD: Final = "a process still holds the database, or the lock file cannot be tested"
++MEANING_RESET_ANSWERING: Final = "something still answers on a port"
++MEANING_RESET_NOT_STOPPED: Final = "a process did not stop in time"
++MEANING_RESET_WRONG_PROGRAM: Final = "a pid file names another program"
++MEANING_CHECK_STOPPED: Final = (
++    "the check was stopped before anything was called (the Start question was not answered yes)"
++)
++MEANING_CHECK_REFUSED: Final = "the check refused its config or its question before anything real was called"
++MEANING_CHECK_FAILED: Final = "the check ran and found a failure, or its read-back stopped"
++
++# THE table of process exit codes: (program, code, meaning). The program is the one thing that has a code; inside a
++# program a code has ONE meaning. tests/test_exit_code_table.py checks that, that every code a program really returns is
++# one of its rows, that every EXIT_ constant is listed, and that SAME_NUMBER_DIFFERENT_MEANING equals the overlap
++# computed from this table. Programs: "server" is `python -m lead_desk.server`; "crash_desk", "feed", "reset_check" and
++# "run_real_check" are scripts/*.py; "reset.sh", "reset.ps1", "start_all.sh", "start_all.ps1" are the shell scripts.
++# crash_desk calls the desk's own main, so it also returns the desk's codes. start_all passes on 3, 4 and 5 of the
++# desk it started and gives every other desk code (and 0, a desk that ended at once) as its own 1.
++_DESK_ROWS: Final[tuple[tuple[int, str], ...]] = (
++    (EXIT_ADAPTERS_UNREACHABLE, MEANING_ADAPTERS_UNREACHABLE),
++    (EXIT_ANOTHER_DESK, MEANING_ANOTHER_DESK),
++    (EXIT_OPEN_FILE_LIMIT, MEANING_OPEN_FILE_LIMIT),
++    (EXIT_DESK_SETTING_REFUSED, MEANING_DESK_SETTING_REFUSED),
++    (EXIT_PORT_UNAVAILABLE, MEANING_PORT_UNAVAILABLE),
++)
++_PASSED_ON: Final[tuple[tuple[int, str], ...]] = (
++    (EXIT_OPEN_FILE_LIMIT, MEANING_OPEN_FILE_LIMIT),
++    (EXIT_DESK_SETTING_REFUSED, MEANING_DESK_SETTING_REFUSED),
++    (EXIT_PORT_UNAVAILABLE, MEANING_PORT_UNAVAILABLE),
++)
++_RESET_ROWS: Final[tuple[tuple[int, str], ...]] = (
++    (EXIT_RESET_REFUSED, MEANING_RESET_REFUSED),
++    (EXIT_RESET_HELD, MEANING_RESET_HELD),
++    (EXIT_RESET_ANSWERING, MEANING_RESET_ANSWERING),
++    (EXIT_RESET_NOT_STOPPED, MEANING_RESET_NOT_STOPPED),
++    (EXIT_RESET_WRONG_PROGRAM, MEANING_RESET_WRONG_PROGRAM),
++    (EXIT_SCRIPT_SETTING_REFUSED, MEANING_SCRIPT_SETTING_REFUSED),
++)
++_SETTING_ROW: Final = (EXIT_SCRIPT_SETTING_REFUSED, MEANING_SCRIPT_SETTING_REFUSED)
++EXIT_CODE_TABLE: Final[tuple[tuple[str, int, str], ...]] = (
++    *(("server", code, meaning) for code, meaning in _DESK_ROWS),
++    *(("crash_desk", code, meaning) for code, meaning in (*_DESK_ROWS, _SETTING_ROW)),
++    ("crash_desk", EXIT_SIMULATED_KILL, MEANING_SIMULATED_KILL),
++    ("feed", *_SETTING_ROW),
++    *(("reset.sh", code, meaning) for code, meaning in _RESET_ROWS),
++    *(("reset.ps1", code, meaning) for code, meaning in _RESET_ROWS),
++    ("reset_check", EXIT_RESET_HELD, MEANING_RESET_HELD),
++    ("reset_check", EXIT_RESET_ANSWERING, MEANING_RESET_ANSWERING),
++    ("reset_check", *_SETTING_ROW),
++    ("start_all.sh", EXIT_START_NOT_DONE, MEANING_START_NOT_DONE),
++    ("start_all.sh", EXIT_NOT_BASH, MEANING_NOT_BASH),
++    *(("start_all.sh", code, meaning) for code, meaning in (*_PASSED_ON, _SETTING_ROW)),
++    ("start_all.ps1", EXIT_START_NOT_DONE, MEANING_START_NOT_DONE),
++    *(("start_all.ps1", code, meaning) for code, meaning in (*_PASSED_ON, _SETTING_ROW)),
++    ("run_real_check", EXIT_CHECK_STOPPED, MEANING_CHECK_STOPPED),
++    ("run_real_check", EXIT_CHECK_REFUSED, MEANING_CHECK_REFUSED),
++    ("run_real_check", EXIT_CHECK_FAILED, MEANING_CHECK_FAILED),
++    ("run_real_check", *_SETTING_ROW),
++)
++
++# The numbers that mean different things in different programs, pinned by name (tests/test_exit_code_table.py computes
++# the overlap from the table and compares). A person reads a number together with the program that returned it.
++SAME_NUMBER_DIFFERENT_MEANING: Final[tuple[int, ...]] = (1, 2, 3, 4, 5)
++
++# The same cause, a refused DESK_* setting, and the number each program returns for it. A program that reads the
++# settings by itself returns 8 (the reader, lead_desk.config_exit); the desk keeps its own 4 because 2 to 6 already mean
++# other things in the reset scripts. The late table is what a program returns when a setting is refused AFTER its own
++# reading passed: the desk it runs (crash_desk) or starts (start_all) refuses a leadflow file, an approvers file, a
++# sender address or a public bind address, and the desk's own 4 is the answer.
++SETTING_REFUSED_EXIT_BY_PROGRAM: Final[dict[str, int]] = {
++    "server": EXIT_DESK_SETTING_REFUSED,
++    "crash_desk": EXIT_SCRIPT_SETTING_REFUSED,
++    "feed": EXIT_SCRIPT_SETTING_REFUSED,
++    "reset.sh": EXIT_SCRIPT_SETTING_REFUSED,
++    "reset.ps1": EXIT_SCRIPT_SETTING_REFUSED,
++    "reset_check": EXIT_SCRIPT_SETTING_REFUSED,
++    "start_all.sh": EXIT_SCRIPT_SETTING_REFUSED,
++    "start_all.ps1": EXIT_SCRIPT_SETTING_REFUSED,
++    "run_real_check": EXIT_SCRIPT_SETTING_REFUSED,
++}
++LATE_SETTING_REFUSED_EXIT_BY_PROGRAM: Final[dict[str, int]] = {
++    "crash_desk": EXIT_DESK_SETTING_REFUSED,
++    "start_all.sh": EXIT_DESK_SETTING_REFUSED,
++    "start_all.ps1": EXIT_DESK_SETTING_REFUSED,
++}
+ 
+ # Field limits
+ SOURCE_REF_MIN: Final = 1
+@@ -253,7 +368,6 @@ DRAIN_TOTAL_SECONDS: Final = 1.0  # wall-clock limit of all draining on one conn
+ DRAIN_MAX_BYTES: Final = (
+     1_048_576  # unread request bytes read and dropped after an early reply, so the reply is not lost to a reset
+ )
+-EXIT_ADAPTERS_UNREACHABLE: Final = 1  # start-up cannot reach the sender (/fake/info)
+ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a number; longer is over every limit
+ REPLY_MAX_BYTES: Final = (
+     1_048_576  # an adapter reply longer than this is refused unread (the fakes answer a few hundred bytes)
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 89e6f8a..a4ff9db 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -82,7 +82,7 @@ from lead_desk.constants import (
+     MIRROR_CALL_SHARE,
+     REPLY_MAX_BYTES,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import SettingRefused, env_number, env_path, split_url
+ from lead_desk.run_stats import write_stats
+ 
+ LEAD_ID_PROPERTY: Final = "hadavin_lead_id"  # created by hand in the CRM account; this module never creates one
+@@ -192,9 +192,9 @@ class HubspotSettings:
+         if env.get("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
+             kw["allow_any_base_url"] = True
+         if env.get("DESK_HUBSPOT_STATS_FILE"):
+-            kw["stats_file"] = Path(env["DESK_HUBSPOT_STATS_FILE"])
++            kw["stats_file"] = env_path(env, "DESK_HUBSPOT_STATS_FILE")
+         return cls(
+-            Path(env["DESK_HUBSPOT_KEY_FILE"]),
++            env_path(env, "DESK_HUBSPOT_KEY_FILE"),
+             env_number(env, "DESK_HUBSPOT_MAX_CALLS", int, low=1, high=CAP_COUNT_MAX),
+             **kw,
+         )
+diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
+index 087304a..4f39db3 100644
+--- a/src/lead_desk/envnum.py
++++ b/src/lead_desk/envnum.py
+@@ -10,6 +10,7 @@ import math
+ import re
+ from collections.abc import Callable, Mapping
+ from decimal import Decimal
++from pathlib import Path
+ from typing import Any
+ from urllib.parse import SplitResult, urlsplit
+ 
+@@ -62,6 +63,26 @@ def env_number(
+     return value
+ 
+ 
++def env_path(env: Mapping[str, str], name: str, default: Any = _MISSING) -> Path:
++    """A path read from setting text: THE one way (every `Path(env[...])` in src/ and scripts/ goes through here; a test
++    walks the syntax tree and fails on a bare one). Text that cannot be written as UTF-8 (a lone surrogate: what the
++    operating system's own decoding makes of a byte that is not UTF-8) or that holds a NUL character is a plain
++    SettingRefused naming the setting. A log line, a stored row or a printed path could not hold it. `default` is
++    returned as it is when the name is absent (a Path, or None)."""
++    if name not in env:
++        if default is _MISSING:
++            raise SettingRefused(f"{name} is required")
++        return default  # type: ignore[no-any-return]
++    value = env[name]
++    try:
++        value.encode("utf-8")
++    except UnicodeEncodeError:
++        raise SettingRefused(f"{name} is not a valid path") from None
++    if "\0" in value:
++        raise SettingRefused(f"{name} is not a valid path")
++    return Path(value)
++
++
+ def split_url(name: str, text: str) -> SplitResult:
+     """`urlsplit(text)` for the value of setting `name`: text that cannot be split (an unclosed bracket such as
+     `http://[/`) is a SettingRefused naming the setting, never a bare ValueError."""
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index a822f3a..d378ab0 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -35,6 +35,7 @@ from lead_desk import db, lockfile, portal_api
+ from lead_desk import desk as desk_module
+ from lead_desk.adapters import FakesUnreachable
+ from lead_desk.config import Config, is_loopback_host, is_unspecified, read_leadflow
++from lead_desk.config_exit import refusal_line
+ from lead_desk.constants import (
+     ACCEPT_PAUSE_SECONDS,
+     BIND_RETRY_SECONDS,
+@@ -51,7 +52,7 @@ from lead_desk.constants import (
+     EXIT_ANOTHER_DESK,
+     EXIT_DESK_SETTING_REFUSED,
+     EXIT_PORT_UNAVAILABLE,
+-    EXIT_SETTING_REFUSED,
++    EXIT_OPEN_FILE_LIMIT,
+     FD_RESERVE,
+     FD_RESERVE_ITEMS,
+     FDS_PER_HANDLER_THREAD,
+@@ -1105,6 +1106,13 @@ def _make_stop_handler() -> Callable[[int, FrameType | None], None]:
+     return handler
+ 
+ 
++def _refuse(prefix: str, reason: object) -> NoReturn:
++    """A refused setting ends the desk with one plain line on the output stream and exit code 4. The line is built by
++    `config_exit.refusal_line`, the one wording shared with every script (see that module for the two streams)."""
++    print(refusal_line(prefix, reason, os.environ), flush=True)
++    sys.exit(EXIT_DESK_SETTING_REFUSED)
++
++
+ def main(hooks: Hooks | None = None) -> None:
+     """python -m lead_desk.server: open-file check, lock file, adapters, desk, bind, reaper, startup (schema and
+     sweep), serve. Exit code 2 if another desk holds the lock; exit code 5 if the port cannot be bound within
+@@ -1124,19 +1132,16 @@ def main(hooks: Hooks | None = None) -> None:
+         ensure_descriptor_budget()
+     except DescriptorBudgetError as e:
+         print(str(e), flush=True)
+-        sys.exit(EXIT_SETTING_REFUSED)
++        sys.exit(EXIT_OPEN_FILE_LIMIT)
+     try:
+         config = Config.from_env()
+     except SettingRefused as e:  # a bad setting value: a plain refusal, not a traceback (any other error is a bug)
+-        print(f"the desk refuses a setting: {e}", flush=True)
+-        sys.exit(EXIT_DESK_SETTING_REFUSED)
++        _refuse("the desk refuses a setting:", e)
+     if (bind_problem := config.public_bind_problem()) is not None:  # no sign-in: a real service stays on this computer
+-        print(f"the desk refuses a setting: {bind_problem}", flush=True)
+-        sys.exit(EXIT_DESK_SETTING_REFUSED)
++        _refuse("the desk refuses a setting:", bind_problem)
+     # by the module, not by `Desk` (the name `Desk` may be replaced); BEFORE the lock step: no ".lock" file
+     if (problem := desk_module.book_problem(config.db_path)) is not None:
+-        print(f"the desk refuses to start: {problem}", flush=True)
+-        sys.exit(EXIT_DESK_SETTING_REFUSED)
++        _refuse("the desk refuses to start:", problem)
+     config.db_path.parent.mkdir(parents=True, exist_ok=True)
+     try:
+         lock = lockfile.acquire(config.db_path)
+@@ -1151,8 +1156,7 @@ def main(hooks: Hooks | None = None) -> None:
+             approvers, label = load_approvers(config)
+             config = dataclasses.replace(config, approvers=approvers, approvers_label=label)
+         except SettingRefused as e:  # a bad approvers file: named, no traceback; the lock is released at exit
+-            print(f"the desk refuses a setting: {e}", flush=True)
+-            sys.exit(EXIT_DESK_SETTING_REFUSED)
++            _refuse("the desk refuses a setting:", e)
+     if config.leadflow_path is not None:  # lead owner, lead stage and reminder: the file is read here, once
+         try:
+             lf = read_leadflow(config.leadflow_path)
+@@ -1160,21 +1164,18 @@ def main(hooks: Hooks | None = None) -> None:
+             if (problem := config.reminder_setting_problem()) is not None:  # the one rule lives in Config
+                 raise SettingRefused(problem)
+         except SettingRefused as e:  # a bad leadflow file or setting: named, no value, no traceback
+-            print(f"the desk refuses a setting: {e}", flush=True)
+-            sys.exit(EXIT_DESK_SETTING_REFUSED)
++            _refuse("the desk refuses a setting:", e)
+     try:
+         crm, outbox, qualifier = load_demo_adapters(config)
+     except FakesUnreachable:
+         print("cannot reach the demo servers (are they running? see scripts/start_all)", flush=True)
+         sys.exit(EXIT_ADAPTERS_UNREACHABLE)
+     except SettingRefused as e:  # a bad adapter setting (DESK_SMTP*, DESK_HUBSPOT*, DESK_LIVE*): named, no traceback
+-        print(f"the desk refuses a setting: {e}", flush=True)
+-        sys.exit(EXIT_DESK_SETTING_REFUSED)
++        _refuse("the desk refuses a setting:", e)
+     try:
+         desk = Desk(config, crm, outbox, qualifier, hooks=hooks)
+     except DeskSettingRefused as e:  # an AI adapter whose time limit does not fit the stuck grace (no other error)
+-        print(f"the desk refuses to start: {e}", flush=True)
+-        sys.exit(EXIT_DESK_SETTING_REFUSED)
++        _refuse("the desk refuses to start:", e)
+     bind_deadline = time.monotonic() + BIND_RETRY_SECONDS
+     while True:
+         try:
+@@ -1209,8 +1210,7 @@ def main(hooks: Hooks | None = None) -> None:
+     except KeyboardInterrupt:
+         pass
+     except DeskSettingRefused as e:  # the steps file does not fit the kept lead book; the finally below still cleans up
+-        print(f"the desk refuses to start: {e}", flush=True)
+-        sys.exit(EXIT_DESK_SETTING_REFUSED)
++        _refuse("the desk refuses to start:", e)
+     finally:
+         # every step runs even if an earlier one raises: the socket, the database and the lock are always released
+         try:
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index a60f7f5..800ae01 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -50,7 +50,7 @@ from lead_desk.contract import (
+     SendUnreachable,
+     is_fd_exhaustion,
+ )
+-from lead_desk.envnum import SettingRefused, env_number
++from lead_desk.envnum import SettingRefused, env_number, env_path
+ from lead_desk.run_stats import write_stats
+ from lead_desk.smtp_outbox import (
+     _ADDRESS,
+@@ -131,7 +131,7 @@ class ProviderSettings:
+             kw["timeout_seconds"] = env_number(env, "DESK_SMTPP_TIMEOUT_SECONDS", float, high=CALL_DEADLINE_MAX_SECONDS)
+         for name, setting in (("DESK_SMTPP_STATS_FILE", "stats_file"), ("DESK_SMTPP_CA_FILE", "ca_file")):
+             if env.get(name):
+-                kw[setting] = Path(env[name])
++                kw[setting] = env_path(env, name)
+         default_port = 465 if kw.get("security") == "ssl" else 587
+         return cls(
+             host=env["DESK_SMTPP_HOST"].strip().lower(),
+@@ -139,7 +139,7 @@ class ProviderSettings:
+             if "DESK_SMTPP_PORT" in env
+             else default_port,
+             user=env["DESK_SMTPP_USER"],
+-            password_file=Path(env["DESK_SMTPP_PASSWORD_FILE"]),
++            password_file=env_path(env, "DESK_SMTPP_PASSWORD_FILE"),
+             mail_from=env["DESK_SMTPP_FROM"],
+             recipients=tuple(x.strip() for x in env["DESK_SMTPP_RECIPIENTS"].split(",") if x.strip()),
+             max_sends=env_number(env, "DESK_SMTPP_MAX_SENDS", int, low=1, high=CAP_COUNT_MAX),
+diff --git a/tests/support.py b/tests/support.py
+index 353043b..61ba311 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -70,7 +70,8 @@ def lead(**over: Any) -> dict[str, Any]:
+ 
+ def child_env(**extra: str) -> dict[str, str]:
+     """Environment for a child process: PYTHONPATH = src and the repo root (pytest's pythonpath is not inherited)."""
+-    env = dict(os.environ)
++    # no ambient setting leaks in
++    env = {k: v for k, v in os.environ.items() if not k.startswith(("DESK_", "LEAD_DESK_"))}
+     env["PYTHONPATH"] = os.pathsep.join([str(REPO / "src"), str(REPO)])
+     env.update(extra)
+     return env
+@@ -336,7 +337,8 @@ def call(base: str, method: str, path: str, body: Any = None, raw: bytes | None
+ 
+ 
+ def post_lead(base: str, source: str, ref: str, payload: Any) -> tuple[int, dict[str, Any]]:
+-    return call(base, "POST", "/leads", {"source": source, "source_ref": ref, "payload": payload})  # type: ignore[no-any-return]
++    body = {"source": source, "source_ref": ref, "payload": payload}
++    return call(base, "POST", "/leads", body)  # type: ignore[no-any-return]
+ 
+ 
+ def addr(base: str) -> tuple[str, int]:
+diff --git a/tests/test_bad_setting_entry_points.py b/tests/test_bad_setting_entry_points.py
+new file mode 100644
+index 0000000..2d123cf
+--- /dev/null
++++ b/tests/test_bad_setting_entry_points.py
+@@ -0,0 +1,535 @@
++"""A bad DESK_* value must end every start-up script cleanly, never with a Python traceback.
++
++Bug class: a bad setting value (a person's typing mistake) reaches the person as a raw Python error, because the
++script read the settings by itself, outside the one place that turns a refused setting into a plain message.
++The rule for every entry point that reads the DESK_* settings: ONE line that names the setting, no traceback, and the
++value is never repeated (it may be an e-mail address). The code is the desk's own 4 for `python -m lead_desk.server`
++(and the launcher that calls it) and the script reader's 8 (`EXIT_SCRIPT_SETTING_REFUSED`) for every script; the table
++is `constants.EXIT_CODE_TABLE`. Made-up values only; loopback only; no network is reached because every run stops at the
++check.
++"""
++
++from __future__ import annotations
++
++import os
++import re
++import subprocess
++import sys
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import REPO, child_env
++
++from lead_desk.config import Config
++from lead_desk.config_exit import config_or_exit
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED, EXIT_SCRIPT_SETTING_REFUSED
++from lead_desk.envnum import SettingRefused
++
++SCRIPTS = REPO / "scripts"
++WINDOWS = sys.platform == "win32"
++FLOW = "demo_only/leadflow.json"  # reminders on, so DESK_NUDGE_TO is read as an address
++
++PY_ENTRY_POINTS: list[tuple[str, list[str]]] = [
++    ("crash_desk", [str(SCRIPTS / "crash_desk.py")]),
++    ("feed", [str(SCRIPTS / "feed.py"), "--source", "form", "--all"]),
++    ("reset_check", [str(SCRIPTS / "reset_check.py")]),
++    ("server", ["-m", "lead_desk.server"]),
++    ("crash_launcher", [str(REPO / "tests" / "crash_launcher.py"), "unused.flag"]),
++]
++DESK_OWN = {"server", "crash_launcher"}  # the desk's own refusal (exit 4); every script exits 8
++SH_ENTRY_POINTS = ["start_all.sh", "reset.sh"]
++
++# (setting name, value that no desk may accept). A NUL character cannot be put in an environment by the operating
++# system; it is tried in-process below.
++BAD_VALUES: list[tuple[str, str]] = [
++    # only values the base tree already refuses: the address rule itself (a second @, a length cap, a control
++    # character) is the one shared rule of identity.py and is tested where that rule lives, not copied here
++    ("DESK_NUDGE_TO", " "),  # whitespace only
++    ("DESK_NUDGE_TO", "café@b.test"),  # not ASCII
++    ("DESK_NUDGE_TO", "no-at-sign"),
++    ("DESK_PORT", ""),  # empty
++    ("DESK_PORT", "   "),
++    ("DESK_PORT", "9" * 5000),
++    ("DESK_PORT", "8\x077"),
++    ("DESK_PORT", "٣٤"),  # digits of another script
++    ("DESK_PORT", "abc@b@c.test"),  # address-like text in a number setting
++    ("DESK_FAKES_URL", "ftp://a@b@c.test:1"),
++    ("DESK_SEND_TIMEOUT_SECONDS", "nan"),
++]
++
++
++def _run(
++    argv: list[str], tmp: Path, setting: str, value: str, *, with_bash: bool = False
++) -> subprocess.CompletedProcess[str]:
++    env = child_env(DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), DESK_LEADFLOW_FILE=FLOW)
++    env.pop("DESK_NUDGE_TO", None)
++    env[setting] = value
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    cmd = ["bash", str(SCRIPTS / argv[0])] if with_bash else [sys.executable, *argv]
++    return subprocess.run(  # noqa: S603 - fixed argv built above, made-up values
++        cmd,
++        cwd=REPO,
++        env=env,
++        capture_output=True,
++        text=True,
++        encoding="utf-8",
++        errors="replace",
++        timeout=60,
++        stdin=subprocess.DEVNULL,
++    )
++
++
++def _assert_clean_refusal(
++    done: subprocess.CompletedProcess[str], setting: str, value: str, tmp: Path, code: int = EXIT_SCRIPT_SETTING_REFUSED
++) -> None:
++    out = done.stdout + done.stderr
++    lines = [ln for ln in out.splitlines() if ln.strip()]
++    assert done.returncode == code, (done.returncode, out[-400:])
++    assert "Traceback" not in out and 'File "' not in out, out[-400:]
++    assert len(lines) == 1, lines[-5:]  # ONE line
++    assert setting in lines[0], lines[0]  # names the setting
++    assert len(lines[0]) < 300, len(lines[0])
++    probe = value.strip()
++    for piece in (probe[:12], probe[-12:]):  # the value (or a part of it) is never echoed
++        if len(piece) >= 3:
++            assert piece not in out
++    assert "@" not in out  # nothing that looks like an address
++    assert not (tmp / "data").exists()  # a refused start created nothing
++
++
++@pytest.mark.parametrize(("setting", "value"), BAD_VALUES, ids=lambda v: repr(v)[:24])
++@pytest.mark.parametrize(("name", "argv"), PY_ENTRY_POINTS, ids=[n for n, _ in PY_ENTRY_POINTS])
++def test_bad_setting_is_a_clean_refusal_in_every_python_entry_point(
++    name: str, argv: list[str], setting: str, value: str, tmp_path: Path
++) -> None:
++    code = EXIT_DESK_SETTING_REFUSED if name in DESK_OWN else EXIT_SCRIPT_SETTING_REFUSED
++    _assert_clean_refusal(_run(argv, tmp_path, setting, value), setting, value, tmp_path, code)
++
++
++@pytest.mark.skipif(WINDOWS, reason="the shell scripts are the non-Windows ones")
++@pytest.mark.parametrize(("setting", "value"), BAD_VALUES, ids=lambda v: repr(v)[:24])
++@pytest.mark.parametrize("script", SH_ENTRY_POINTS)
++def test_bad_setting_is_a_clean_refusal_in_every_shell_script(
++    script: str, setting: str, value: str, tmp_path: Path
++) -> None:
++    _assert_clean_refusal(_run([script], tmp_path, setting, value, with_bash=True), setting, value, tmp_path)
++
++
++HOSTILE: dict[str, str] = {
++    "empty": "",
++    "whitespace": "  \t ",
++    "long": "x" * 100_000,
++    "nul": "a\0b",
++    "control": "a\x07b\nc",
++    "non_ascii": "café\u202e",
++    "lone_surrogate": "a\udc80b",
++    "two_at": "a@b@c.test",
++}
++SETTING_NAMES = (
++    "DB_PATH BIND PORT ADAPTERS FAKES_HOST FAKES_PORT FAKES_URL REPLIES_PATH SEND_TIMEOUT_SECONDS SIZE_CAP_BYTES "
++    "STALL_SECONDS ALLOWED_HOSTS QUALIFIER OUTBOX CRM LATER_MODE APPROVERS_FILE LEADFLOW_FILE NUDGE_TO"
++).split()
++
++
++@pytest.mark.parametrize("kind", sorted(HOSTILE))
++@pytest.mark.parametrize("name", SETTING_NAMES)
++def test_config_or_exit_never_lets_another_error_out(name: str, kind: str, capsys: Any) -> None:
++    """Class check at the shared reader: any DESK_* name with any hostile value gives a Config or a plain refusal."""
++    env = {"DESK_LEADFLOW_FILE": FLOW, f"DESK_{name}": HOSTILE[kind]}
++    try:
++        accepted = config_or_exit(env)
++    except SystemExit as stop:
++        assert stop.code == EXIT_SCRIPT_SETTING_REFUSED
++        out = capsys.readouterr()
++        lines = [ln for ln in (out.out + out.err).splitlines() if ln.strip()]
++        assert len(lines) == 1 and f"DESK_{name}" in lines[0] and "Traceback" not in lines[0]
++        assert "@" not in lines[0] and len(lines[0]) < 300
++    else:  # a value the desk accepts must be a real Config: the same one the bare reader gives, and nothing printed
++        assert accepted == Config.from_env(env)
++        assert capsys.readouterr() == ("", "")
++
++
++def test_config_or_exit_returns_the_same_config_for_good_settings() -> None:
++    env = {"DESK_PORT": "8123", "DESK_LEADFLOW_FILE": FLOW}
++    assert config_or_exit(env) == Config.from_env(env)
++
++
++def test_the_refusal_is_cut_to_one_short_line_even_for_a_long_or_multi_line_message(
++    monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    """The shared reader keeps the one-line rule itself, whatever a refusal message holds."""
++    def refuse(cls: Any, env: Any = None) -> Any:
++        raise SettingRefused("DESK_PORT is bad\nsecond line\r\n" + "y" * 5000)
++
++    monkeypatch.setattr(Config, "from_env", classmethod(refuse))
++    with pytest.raises(SystemExit) as stop:
++        config_or_exit({})
++    assert stop.value.code == EXIT_SCRIPT_SETTING_REFUSED
++    out = capsys.readouterr()
++    assert out.out == ""  # the error stream, not the output a shell would capture
++    assert len(out.err.splitlines()) == 1 and len(out.err) < 300 and "DESK_PORT" in out.err
++
++
++# -- one wording on both streams (the desk prints on stdout, a script reader on stderr) ------------------------------
++SAME_WORDS: list[tuple[str, str]] = [
++    ("DESK_PORT", "abc"),
++    ("DESK_PORT", "99999"),
++    ("DESK_FAKES_URL", "ftp://x.test:1"),
++    ("DESK_SEND_TIMEOUT_SECONDS", "nan"),
++    ("DESK_NUDGE_TO", "no-at-sign"),
++    ("DESK_QUALIFIER", "something-else"),
++]
++
++
++@pytest.mark.parametrize(("setting", "value"), SAME_WORDS, ids=lambda v: repr(v)[:24])
++def test_the_desk_and_the_script_reader_say_the_same_words(setting: str, value: str, tmp_path: Path) -> None:
++    """One formatter (`config_exit.refusal_line`): the same bad value gives the same line whichever program reads it."""
++    desk = _run(["-m", "lead_desk.server"], tmp_path, setting, value)
++    helper_code = "from lead_desk.config_exit import config_or_exit; config_or_exit()"
++    helper = _run(["-c", helper_code], tmp_path, setting, value)
++    assert desk.returncode == EXIT_DESK_SETTING_REFUSED and helper.returncode == EXIT_SCRIPT_SETTING_REFUSED
++    assert desk.stderr == "" and helper.stdout == ""  # the two streams, by reason (see config_exit.py)
++    assert desk.stdout.strip() == helper.stderr.strip() != ""
++
++
++def test_every_refusal_site_of_the_desk_goes_through_the_one_formatter() -> None:
++    """No `print(f"the desk refuses ...` is built by hand in server.py: `_refuse` is the only place that prints one."""
++    text = (REPO / "src" / "lead_desk" / "server.py").read_text(encoding="utf-8")
++    assert "print(f\"the desk refuses" not in text
++    assert text.count("print(refusal_line(") == 1
++    assert text.count("_refuse(") >= 8  # the eight sites plus the definition
++
++
++# -- the value is never echoed (row: scrub) --------------------------------------------------------------------------
++@pytest.mark.parametrize("value", ["secretvalue", "a b\tc@d.test", "café-\u202e", "line1\nline2xyz", "q'uote\"s\\x"])
++def test_refusal_line_never_holds_a_setting_value_in_any_form(value: str) -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_NUDGE_TO": value, "OTHER": "unrelated-value"}
++    escaped = value.encode("unicode_escape").decode()
++    for reason in (f"bad {value}", f"bad {value!r}", f"bad {ascii(value)}", f"bad {escaped}"):
++        line = refusal_line("the desk refuses a setting:", reason, env)
++        assert "<value>" in line, (reason, line)
++        assert value not in line and repr(value)[1:-1] not in line and ascii(value)[1:-1] not in line, (reason, line)
++        assert "\n" not in line and line.startswith("the desk refuses a setting: ")
++
++
++def test_refusal_line_keeps_short_values_setting_names_and_other_variables() -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_PORT": "80", "DESK_QUALIFIER": "DESK", "NOT_A_SETTING": "visible-text"}
++    line = refusal_line("the desk refuses a setting:", "DESK_PORT 80 is bad; DESK_QUALIFIER visible-text", env)
++    assert "80" in line  # a value of two characters is also ordinary text
++    assert "DESK_PORT" in line and "DESK_QUALIFIER" in line  # a setting name is never blanked
++    assert "visible-text" in line  # only DESK_* values are scrubbed
++
++
++def test_refusal_line_blanks_a_value_only_as_a_whole_token_not_inside_a_word() -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_LIVE_EFFORT": "low"}
++    line = refusal_line("the desk refuses a setting:", "DESK_LIVE_EFFORT below allows lowest and (low)", env)
++    assert "below" in line and "allows" in line and "lowest" in line and line.count("<value>") == 1, line
++
++
++def test_a_setting_the_message_does_not_name_keeps_its_value_readable() -> None:
++    """Only the named setting and the secret-like ones are blanked: a limit or an allowed word that another setting
++    happens to hold stays readable (the refusal is still one plain line that names the setting)."""
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_LATER_MODE": "off", "DESK_STALL_SECONDS": "65535", "DESK_PORT": "70000", "DESK_ADAPTERS": "demo"}
++    reason = "DESK_PORT must be at most 65535 and DESK_QUALIFIER be a or off"
++    line = refusal_line("the desk refuses a setting:", reason, env)
++    assert "65535" in line and " off" in line and "<value>" not in line, line
++
++
++@pytest.mark.parametrize("name", ["DESK_NUDGE_TO", "DESK_LIVE_KEY_FILE", "DESK_SMTPP_PASSWORD_FILE", "DESK_FAKES_URL"])
++def test_a_secret_or_address_like_setting_is_blanked_even_when_the_message_does_not_name_it(name: str) -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {name: "token-value-xyz"}
++    line = refusal_line("the desk refuses a setting:", "DESK_PORT is bad (token-value-xyz)", env)
++    assert "token-value-xyz" not in line and "<value>" in line, line
++
++
++def test_list_items_url_user_and_the_ends_of_a_long_value_are_blanked_too() -> None:
++    from lead_desk.config_exit import refusal_line
++
++    items = {"DESK_ALLOWED_HOSTS": "alpha-host.test,beta-host.test"}
++    line = refusal_line("x:", "DESK_ALLOWED_HOSTS has beta-host.test", items)
++    assert "beta-host" not in line and "<value>" in line
++    url = {"DESK_FAKES_URL": "http://some-user:some-pass@127.0.0.1:1234/"}
++    line = refusal_line("x:", "DESK_FAKES_URL cannot use some-user or some-pass", url)
++    assert "some-user" not in line and "some-pass" not in line
++    long_value = "firstpart-12" + "m" * 20 + "lastpart-123"
++    line = refusal_line("x:", "DESK_REPLIES_PATH broke at firstpart-12", {"DESK_REPLIES_PATH": long_value})
++    assert "firstpart-12" not in line and "<value>" in line
++    line = refusal_line("x:", "DESK_REPLIES_PATH broke at lastpart-123", {"DESK_REPLIES_PATH": long_value})
++    assert "lastpart-123" not in line and "<value>" in line
++
++
++def test_a_line_is_stripped_of_control_characters() -> None:
++    from lead_desk.config_exit import plain_line
++
++    line = plain_line("a\x07b\x1b[31mc\u202ed\udc80e\r\nf\tg", {})
++    assert line == "ab[31mcde f g", line
++    assert all(ch.isprintable() for ch in line)
++
++
++def test_the_module_prints_standard_input_as_one_plain_line_through_the_formatter(tmp_path: Path) -> None:
++    """`python -m lead_desk.config_exit`: what start_all uses for the last line of desk.log."""
++    env = child_env(DESK_NUDGE_TO="secret-address-qq")
++    done = subprocess.run(  # noqa: S603
++        [sys.executable, "-m", "lead_desk.config_exit"],
++        input="the desk refuses a setting: DESK_PORT x\x1b[2J secret-address-qq\n",
++        cwd=REPO,
++        env=env,
++        capture_output=True,
++        text=True,
++        timeout=60,
++        check=False,
++    )
++    assert done.returncode == 0 and done.stderr == ""
++    assert done.stdout == "the desk refuses a setting: DESK_PORT x[2J <value>\n", done.stdout
++
++
++def test_refusal_line_is_cut_and_one_line() -> None:
++    from lead_desk.config_exit import LINE_MAX, refusal_line
++
++    line = refusal_line("the desk refuses to start:", "a\r\nb  c\n" + "y" * 5000)
++    assert len(line) == len("the desk refuses to start: ") + LINE_MAX and "\n" not in line and "\r" not in line
++
++
++def test_a_value_inside_a_real_refusal_never_reaches_the_desk_output(tmp_path: Path) -> None:
++    done = _run(["-m", "lead_desk.server"], tmp_path, "DESK_NUDGE_TO", "no-at-sign-secret")
++    assert done.returncode == EXIT_DESK_SETTING_REFUSED and "no-at-sign-secret" not in done.stdout + done.stderr
++
++
++# -- a path that is not valid text (lone surrogate: a byte that is not UTF-8 in the environment) ---------------------
++SURROGATE = "a\udc80b"
++
++
++CONFIG_PATH_NAMES = ["DESK_DB_PATH", "DESK_REPLIES_PATH", "DESK_APPROVERS_FILE", "DESK_LEADFLOW_FILE"]
++ADAPTER_PATH_NAMES = [
++    ("DESK_HUBSPOT_KEY_FILE", "HubspotSettings"),
++    ("DESK_HUBSPOT_STATS_FILE", "HubspotSettings"),
++    ("DESK_SMTPP_PASSWORD_FILE", "ProviderSettings"),
++    ("DESK_SMTPP_STATS_FILE", "ProviderSettings"),
++    ("DESK_SMTPP_CA_FILE", "ProviderSettings"),
++]
++
++
++@pytest.mark.parametrize("bad", [SURROGATE, "a\0b"])
++@pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
++def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
++    env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
++    with pytest.raises(SettingRefused, match=f"{name} is not a valid path"):
++        Config.from_env(env)
++
++
++@pytest.mark.parametrize("bad", [SURROGATE, "a\0b"])
++@pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
++def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
++    """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
++    from lead_desk.crm_hubspot import HubspotSettings
++    from lead_desk.smtp_provider import ProviderSettings
++
++    good = {
++        "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
++        "ProviderSettings": {
++            "DESK_SMTPP_HOST": "127.0.0.1",
++            "DESK_SMTPP_USER": "user",
++            "DESK_SMTPP_PASSWORD_FILE": "p.txt",
++            "DESK_SMTPP_FROM": "a@example.test",
++            "DESK_SMTPP_RECIPIENTS": "b@example.test",
++            "DESK_SMTPP_MAX_SENDS": "5",
++        },
++    }[cls]
++    reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
++    reader.from_env(good)  # the baseline is accepted
++    with pytest.raises(SettingRefused, match=f"{name} is not a valid path"):
++        reader.from_env({**good, name: bad})
++
++
++@pytest.mark.skipif(WINDOWS, reason="a lone surrogate in the environment is a POSIX case")
++def test_a_path_that_is_not_valid_text_gives_one_line_through_the_helpers(tmp_path: Path) -> None:
++    cases = [([str(SCRIPTS / "reset_check.py")], False), (["start_all.sh"], True), (["reset.sh"], True)]
++    for argv, with_bash in cases:
++        done = _run(argv, tmp_path, "DESK_DB_PATH", SURROGATE, with_bash=with_bash)
++        _assert_clean_refusal(done, "DESK_DB_PATH", SURROGATE, tmp_path)
++
++
++# -- the live-model names (class check, second branch of Config.from_env) --------------------------------------------
++LIVE_GOOD = {
++    "DESK_QUALIFIER": "live_claude",
++    "DESK_LIVE_MODEL": "fake-model-1",
++    "DESK_LIVE_KEY_FILE": "key.txt",
++    "DESK_LIVE_PRICE_DATE": "2026-01-01",
++    "DESK_LIVE_LEDGER_PATH": "ledger.txt",
++    "DESK_LIVE_RUN_ID": "r1",
++    "DESK_LIVE_PRICE_IN_PER_MTOK": "2",
++    "DESK_LIVE_PRICE_OUT_PER_MTOK": "10",
++    "DESK_LIVE_CAP_RUN_USD": "1",
++    "DESK_LIVE_CAP_TOTAL_USD": "3",
++    "DESK_LIVE_BASE_URL": "https://" + "api" + ".example.test",
++    "DESK_LIVE_API_VERSION": "2023-06-01",
++    "DESK_LIVE_TIMEOUT_SECONDS": "5",
++    "DESK_LIVE_EFFORT": "low",
++    "DESK_LIVE_MAX_TOKENS": "100",
++    "DESK_LIVE_ALLOW_ANY_BASE_URL": "yes",
++}
++
++
++def test_the_live_baseline_is_a_good_config() -> None:
++    assert config_or_exit(dict(LIVE_GOOD)).live is not None
++
++
++@pytest.mark.parametrize("kind", sorted(HOSTILE))
++@pytest.mark.parametrize("name", sorted(n for n in LIVE_GOOD if n != "DESK_QUALIFIER"))
++def test_the_live_names_with_hostile_values_give_a_config_or_one_plain_line(name: str, kind: str, capsys: Any) -> None:
++    env = {**LIVE_GOOD, name: HOSTILE[kind]}
++    try:
++        accepted = config_or_exit(env)
++    except SystemExit as stop:
++        assert stop.code == EXIT_SCRIPT_SETTING_REFUSED
++        out = capsys.readouterr()
++        lines = [ln for ln in (out.out + out.err).splitlines() if ln.strip()]
++        assert len(lines) == 1 and name in lines[0] and "Traceback" not in lines[0]
++        assert "@" not in lines[0] and len(lines[0]) < 300
++    else:
++        assert accepted == Config.from_env(env)
++        assert capsys.readouterr() == ("", "")
++
++
++# -- feed.py: --help and a wrong option never depend on the settings -------------------------------------------------
++def test_feed_help_works_with_a_bad_setting(tmp_path: Path) -> None:
++    done = _run([str(SCRIPTS / "feed.py"), "--help"], tmp_path, "DESK_PORT", "abc")
++    assert done.returncode == 0 and "--source" in done.stdout and "refuses" not in done.stdout + done.stderr
++
++
++# -- child_env leaves no ambient setting in (row: ambient DESK_*) ----------------------------------------------------
++def test_child_env_drops_every_ambient_desk_setting(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setenv("DESK_PORT", "1234")
++    monkeypatch.setenv("LEAD_DESK_SOMETHING", "x")
++    env = child_env(DESK_BIND="127.0.0.1")
++    assert "DESK_PORT" not in env and "LEAD_DESK_SOMETHING" not in env and env["DESK_BIND"] == "127.0.0.1"
++
++
++# -- scripts/run_real_check.py: the desk's own settings check runs without --live-model too --------------------------
++def _real_config(tmp: Path, **extra: str) -> Path:
++    key = tmp / "key.txt"
++    key.write_text("made-up", encoding="utf-8")
++    values = {
++        "DESK_DB_PATH": str(tmp / "run" / "desk.db"),
++        "DESK_HUBSPOT_KEY_FILE": str(key),
++        "DESK_HUBSPOT_MAX_CALLS": "400",
++        "REAL_HUBSPOT_READBACK_MAX_CALLS": "200",
++        "DESK_SMTPP_HOST": "127.0.0.1",
++        "DESK_SMTPP_USER": "a@example.com",
++        "DESK_SMTPP_PASSWORD_FILE": str(key),
++        "DESK_SMTPP_FROM": "a@example.com",
++        "DESK_SMTPP_RECIPIENTS": "a@example.com,b@example.com",
++        "DESK_SMTPP_MAX_SENDS": "60",
++        "REAL_IMAP_1_USER": "a@example.com",
++        "REAL_IMAP_1_PASSWORD_FILE": str(key),
++        "REAL_IMAP_2_USER": "b@example.com",
++        "REAL_IMAP_2_PASSWORD_FILE": str(key),
++        **extra,
++    }
++    path = tmp / "real.env"
++    path.write_text("\n".join(f"{k}={v}" for k, v in values.items()), encoding="utf-8")
++    return path
++
++
++def _rrc() -> Any:
++    sys.path.insert(0, str(SCRIPTS))
++    try:
++        import run_real_check as rrc
++    finally:
++        sys.path.remove(str(SCRIPTS))
++    return rrc
++
++
++def test_run_real_check_refuses_a_bad_desk_setting_before_the_question(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    rrc = _rrc()
++    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("the Start question must not be reached"))
++    code = rrc.main(["--config", str(_real_config(tmp_path, DESK_NUDGE_TO="no-at-sign"))])
++    out = capsys.readouterr().out
++    assert code == EXIT_SCRIPT_SETTING_REFUSED and out.startswith("refused: DESK_NUDGE_TO"), out
++    assert "no-at-sign" not in out and "Start?" not in out
++    assert "SettingRefused" not in out and "ValueError" not in out  # no class name in a refused line
++    assert len([ln for ln in out.splitlines() if ln.strip()]) == 1
++
++
++def test_run_real_check_has_no_scrubber_of_its_own() -> None:
++    """One formatter: the script words its refusal with `config_exit.refusal_line` and keeps no second scrub()."""
++    text = (SCRIPTS / "run_real_check.py").read_text(encoding="utf-8")
++    assert "def scrub(" not in text and "refusal_line(" in text
++    assert not hasattr(_rrc(), "scrub")
++
++
++def test_run_real_check_keeps_its_own_code_for_its_own_refusals(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    rrc = _rrc()
++    assert rrc.main([]) == rrc.EXIT_REFUSED and capsys.readouterr().out.startswith("refused: give --config")
++    config = _real_config(tmp_path)
++    (tmp_path / "run").mkdir()
++    (tmp_path / "run" / "desk.db").write_text("x", encoding="utf-8")  # an old book: this script's own refusal
++    assert rrc.main(["--config", str(config)]) == rrc.EXIT_REFUSED
++    assert "refused: DESK_DB_PATH names a file that already exists" in capsys.readouterr().out
++
++
++@pytest.mark.skipif(WINDOWS, reason="a lone surrogate in a file read as text is a POSIX case in this test")
++@pytest.mark.parametrize(
++    "name", ["REAL_RESULT_FILE", "DESK_HUBSPOT_STATS_FILE", "DESK_SMTPP_STATS_FILE", "DESK_SMTPP_CA_FILE"]
++)
++def test_run_real_check_refuses_a_path_that_is_not_valid_text_before_anything_is_called(
++    name: str, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    rrc = _rrc()
++    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("the Start question must not be reached"))
++    config = _real_config(tmp_path)
++    monkeypatch.setattr(rrc, "load_env", lambda path: {**_values_of(config), name: SURROGATE})
++    assert rrc.main(["--config", str(config)]) == EXIT_SCRIPT_SETTING_REFUSED
++    out = capsys.readouterr().out
++    assert out.startswith(f"refused: {name} is not a valid path") and "\udc80" not in out
++
++
++def _values_of(config: Path) -> dict[str, str]:
++    return dict(line.split("=", 1) for line in config.read_text(encoding="utf-8").splitlines())
++
++
++def test_the_by_program_table_matches_what_every_program_returns(tmp_path: Path) -> None:
++    """`constants.SETTING_REFUSED_EXIT_BY_PROGRAM` pinned against real runs of the programs that can run here."""
++    from lead_desk.constants import SETTING_REFUSED_EXIT_BY_PROGRAM as table
++
++    (tmp_path / "real").mkdir()
++    real = _real_config(tmp_path / "real", DESK_NUDGE_TO="no-at-sign")
++    runs = {
++        "server": _run(["-m", "lead_desk.server"], tmp_path, "DESK_PORT", "abc"),
++        "crash_desk": _run([str(SCRIPTS / "crash_desk.py")], tmp_path, "DESK_PORT", "abc"),
++        "feed": _run([str(SCRIPTS / "feed.py"), "--source", "form", "--all"], tmp_path, "DESK_PORT", "abc"),
++        "reset_check": _run([str(SCRIPTS / "reset_check.py")], tmp_path, "DESK_PORT", "abc"),
++        "run_real_check": _run([str(SCRIPTS / "run_real_check.py"), "--config", str(real)], tmp_path, "DESK_PORT", "0"),
++    }
++    if not WINDOWS:
++        for sh in ("reset.sh", "start_all.sh"):
++            runs[sh] = _run([sh], tmp_path, "DESK_PORT", "abc", with_bash=True)
++    for program, done in runs.items():
++        assert done.returncode == table[program], (program, done.returncode, table[program])
++    assert set(table) - set(runs) == {"reset.ps1", "start_all.ps1"}  # never run here: tests/test_ps1_pins.py
++
++
++def test_crash_desk_gives_the_desks_own_code_for_a_late_refusal(tmp_path: Path) -> None:
++    """crash_desk reads the settings itself (8), then runs the desk's own main: a late refusal there is the desk's 4."""
++    from lead_desk.constants import LATE_SETTING_REFUSED_EXIT_BY_PROGRAM as late
++
++    done = _run([str(SCRIPTS / "crash_desk.py")], tmp_path, "DESK_LEADFLOW_FILE", "no-such-flow.json")
++    assert done.returncode == late["crash_desk"] == EXIT_DESK_SETTING_REFUSED, (done.stdout, done.stderr)
++    lines = [ln for ln in (done.stdout + done.stderr).splitlines() if ln.strip()]
++    assert lines[-1].startswith("the desk refuses a setting: ") and "Traceback" not in done.stdout + done.stderr
++    assert "no-such-flow" not in done.stdout + done.stderr
+diff --git a/tests/test_exit_code_table.py b/tests/test_exit_code_table.py
+new file mode 100644
+index 0000000..2a084b1
+--- /dev/null
++++ b/tests/test_exit_code_table.py
+@@ -0,0 +1,189 @@
++"""The one table of exit codes (`constants.EXIT_CODE_TABLE`, keyed by PROGRAM) must say what the programs do.
++
++Checked here: inside one program a code has one meaning; the numbers that mean different things in different programs
++are exactly the pinned list `SAME_NUMBER_DIFFERENT_MEANING` (computed from the table and compared); every `EXIT_*`
++constant is in the table; the code a program really returns is one of its rows (programs are run, not read); the codes
++the shell and PowerShell scripts write as plain numbers are rows of that script; 8 (a setting refused while a script
++read it) is never written as a bare number. Codes are compared by constant NAME, never by a bare integer. contract.md
++names the table. The test that runs each program with a bad setting and compares with the by-program table is in
++tests/test_bad_setting_entry_points.py.
++"""
++
++from __future__ import annotations
++
++import os
++import re
++import shutil
++import subprocess
++import sys
++from collections import defaultdict
++from pathlib import Path
++
++import pytest
++from support import REPO, child_env
++
++from lead_desk import constants as c
++
++TABLE = c.EXIT_CODE_TABLE
++PROGRAMS = {program for program, _, _ in TABLE}
++SHELL_SCRIPTS = ("reset.sh", "reset.ps1", "start_all.sh", "start_all.ps1")
++
++
++def _rows(program: str) -> dict[int, str]:
++    return {code: meaning for p, code, meaning in TABLE if p == program}
++
++
++def _overlap(table: tuple[tuple[str, int, str], ...] = TABLE) -> set[int]:
++    meanings: dict[int, set[str]] = defaultdict(set)
++    for _, code, meaning in table:
++        meanings[code].add(meaning)
++    return {code for code, texts in meanings.items() if len(texts) > 1}
++
++
++def test_no_program_has_a_code_with_two_meanings() -> None:
++    seen: dict[tuple[str, int], str] = {}
++    for program, code, meaning in TABLE:
++        assert (program, code) not in seen, (program, code, meaning, seen[(program, code)])
++        seen[(program, code)] = meaning
++    assert all(meaning.strip() for _, _, meaning in TABLE)
++
++
++def test_every_program_of_the_table_exists() -> None:
++    for program in PROGRAMS - {"server"}:
++        name = program if "." in program else f"{program}.py"
++        assert (REPO / "scripts" / name).exists(), program
++    assert set(SHELL_SCRIPTS) <= PROGRAMS
++
++
++def test_the_pinned_overlap_list_is_the_computed_overlap() -> None:
++    assert set(c.SAME_NUMBER_DIFFERENT_MEANING) == _overlap()
++    assert list(c.SAME_NUMBER_DIFFERENT_MEANING) == sorted(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_a_second_meaning_behind_a_free_number_is_seen_by_the_computation() -> None:
++    """The check itself: it is not vacuous (it finds an overlap that is not pinned)."""
++    extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, "something else entirely"))
++    assert c.EXIT_SIMULATED_KILL in _overlap(extra) - set(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_the_script_setting_code_has_one_meaning_everywhere() -> None:
++    assert c.EXIT_SCRIPT_SETTING_REFUSED not in _overlap()
++    others = {
++        c.EXIT_ADAPTERS_UNREACHABLE,
++        c.EXIT_ANOTHER_DESK,
++        c.EXIT_OPEN_FILE_LIMIT,
++        c.EXIT_DESK_SETTING_REFUSED,
++        c.EXIT_PORT_UNAVAILABLE,
++        c.EXIT_RESET_REFUSED,
++        c.EXIT_RESET_HELD,
++        c.EXIT_RESET_ANSWERING,
++        c.EXIT_RESET_NOT_STOPPED,
++        c.EXIT_RESET_WRONG_PROGRAM,
++        c.EXIT_CHECK_STOPPED,
++        c.EXIT_CHECK_REFUSED,
++        c.EXIT_CHECK_FAILED,
++    }
++    assert c.EXIT_SCRIPT_SETTING_REFUSED not in others
++
++
++def test_every_exit_constant_is_in_the_table() -> None:
++    codes = {code for _, code, _ in TABLE}
++    named = {v for k, v in vars(c).items() if k.startswith("EXIT_") and isinstance(v, int) and k != "EXIT_OK"}
++    assert named <= codes, named - codes
++
++
++def test_the_by_program_tables_name_only_programs_and_codes_of_the_table() -> None:
++    for by_program in (c.SETTING_REFUSED_EXIT_BY_PROGRAM, c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM):
++        for program, code in by_program.items():
++            assert program in PROGRAMS and code in _rows(program), (program, code)
++    assert set(c.SETTING_REFUSED_EXIT_BY_PROGRAM.values()) == {
++        c.EXIT_DESK_SETTING_REFUSED,
++        c.EXIT_SCRIPT_SETTING_REFUSED,
++    }
++    assert c.SETTING_REFUSED_EXIT_BY_PROGRAM["run_real_check"] == c.EXIT_SCRIPT_SETTING_REFUSED
++    assert c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM["crash_desk"] == c.EXIT_DESK_SETTING_REFUSED
++
++
++def test_start_all_passes_on_exactly_the_three_desk_codes_it_can_explain() -> None:
++    desk = _rows("server")
++    for program in ("start_all.sh", "start_all.ps1"):
++        rows = _rows(program)
++        for code in (c.EXIT_OPEN_FILE_LIMIT, c.EXIT_DESK_SETTING_REFUSED, c.EXIT_PORT_UNAVAILABLE):
++            assert rows[code] == desk[code], (program, code)  # the same meaning, not a new one
++        assert rows[c.EXIT_START_NOT_DONE] == c.MEANING_START_NOT_DONE
++        assert c.EXIT_ANOTHER_DESK not in rows or program == "start_all.sh"  # 2 is only "not bash", only in the .sh
++
++
++def test_the_numbers_each_shell_script_writes_are_rows_of_that_script() -> None:
++    for name in SHELL_SCRIPTS:
++        text = (REPO / "scripts" / name).read_text(encoding="utf-8")
++        code_lines = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
++        used = {int(n) for n in re.findall(r"\bexit ([0-9]+)\b", code_lines)} - {0}
++        assert used <= set(_rows(name)), (name, used - set(_rows(name)))
++        assert c.EXIT_SCRIPT_SETTING_REFUSED not in used, name  # 8 comes only from the reader, passed on
++
++
++def test_the_numbers_reset_check_returns_are_rows_of_reset_check() -> None:
++    text = (REPO / "scripts" / "reset_check.py").read_text(encoding="utf-8")
++    names = set(re.findall(r"return (EXIT_[A-Z_]+)", text))
++    assert names and not re.search(r"return [1-9]", text)  # by name, never a bare number
++    assert {getattr(c, n) for n in names} <= set(_rows("reset_check"))
++
++
++def test_the_two_reset_scripts_have_one_list_of_codes() -> None:
++    assert _rows("reset.sh") == _rows("reset.ps1")
++
++
++def test_no_script_uses_the_script_setting_code_as_a_bare_number() -> None:
++    for path in (REPO / "scripts").iterdir():
++        if path.suffix in {".sh", ".ps1", ".py"}:
++            pattern = rf"\b(?:exit|return|SystemExit\()\s*{c.EXIT_SCRIPT_SETTING_REFUSED}\b"
++            assert not re.search(pattern, path.read_text("utf-8")), path.name
++
++
++def _run(argv: list[str], tmp: Path, **extra: str) -> subprocess.CompletedProcess[str]:
++    env = child_env(DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), **extra)
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    return subprocess.run(  # noqa: S603 - fixed argv, made-up values
++        argv, cwd=REPO, env=env, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL, check=False
++    )
++
++
++def test_every_code_a_program_really_returns_is_one_of_its_rows(tmp_path: Path) -> None:
++    """The programs are RUN (each with a refusal it can really make); the code is looked up in that program's rows."""
++    py = sys.executable
++    scripts = REPO / "scripts"
++    runs: list[tuple[str, subprocess.CompletedProcess[str]]] = [
++        ("server", _run([py, "-m", "lead_desk.server"], tmp_path, DESK_PORT="abc")),
++        ("crash_desk", _run([py, str(scripts / "crash_desk.py")], tmp_path, DESK_PORT="abc")),
++        ("feed", _run([py, str(scripts / "feed.py"), "--source", "form", "--all"], tmp_path, DESK_PORT="abc")),
++        ("reset_check", _run([py, str(scripts / "reset_check.py")], tmp_path, DESK_PORT="abc")),
++        ("run_real_check", _run([py, str(scripts / "run_real_check.py")], tmp_path)),  # no --config: its own refusal
++    ]
++    if sys.platform != "win32":
++        bash = ["bash"]
++        runs += [
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, DESK_PORT="abc")),
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, RESET_STOP_WAIT_SECONDS="x")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, DESK_PORT="abc")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh"), "sideways"], tmp_path)),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, START_ALL_WAIT_SECONDS="0")),
++        ]
++    for program, done in runs:
++        assert done.returncode in _rows(program), (program, done.returncode, (done.stdout + done.stderr)[-300:])
++    assert runs[0][1].returncode == c.EXIT_DESK_SETTING_REFUSED
++    assert runs[4][1].returncode == c.EXIT_CHECK_REFUSED
++
++
++@pytest.mark.skipif(sys.platform == "win32", reason="the shell scripts are the non-Windows ones")
++def test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code(tmp_path: Path) -> None:
++    sh = shutil.which("sh")
++    if sh is None or subprocess.run([sh, "-c", "[[ a == a ]]"], capture_output=True, check=False).returncode == 0:
++        pytest.skip("sh on this machine runs [[ ]] (it is bash): the refusal cannot be reached")
++    done = _run([sh, str(REPO / "scripts" / "start_all.sh")], tmp_path)
++    assert done.returncode == c.EXIT_NOT_BASH
++
++
++def test_contract_md_names_the_table_and_the_overlap_list() -> None:
++    text = (REPO / "contract.md").read_text(encoding="utf-8")
++    assert "EXIT_CODE_TABLE" in text and "SAME_NUMBER_DIFFERENT_MEANING" in text and "exit 8" in text
+diff --git a/tests/test_late_refusal_value_echo.py b/tests/test_late_refusal_value_echo.py
+new file mode 100644
+index 0000000..78f1102
+--- /dev/null
++++ b/tests/test_late_refusal_value_echo.py
+@@ -0,0 +1,152 @@
++"""A setting value never reaches the desk's output through ANY of its refusal sites (behaviour at each site).
++
++Bug class: a refusal message that carries what the person typed (a path, an address, a key file name). The desk words
++every refusal through one function (`_refuse` -> `config_exit.refusal_line`). This file runs `server.main` itself, once
++per late refusal site, with the real function behind that site replaced by one that refuses with a message that HOLDS
++the value of the setting it names (the worst case: a message that echoes). The line the person sees must not hold the
++value, must be one line, and the exit code is the desk's own. The sites after the first reading of the settings, in the
++order of `server.main`: the public bind address, the book check, the approvers file, the leadflow file, the adapters,
++building the Desk, and the run-time check of the Desk. Made-up values only; the lock file and the folder are in
++tmp_path.
++"""
++
++from __future__ import annotations
++
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from lead_desk import config as config_module
++from lead_desk import desk as desk_module
++from lead_desk import server
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
++from lead_desk.desk import DeskSettingRefused
++from lead_desk.envnum import SettingRefused
++
++SETTING = "DESK_REPLIES_PATH"  # a valid, unread-at-start path setting: its value is the thing that must not appear
++MARK = "zq-marker-9f3k"  # the made-up value, built into a path below
++
++
++class _StubServer:
++    def server_close(self) -> None:
++        return None
++
++
++class _StubDesk:
++    """A Desk that builds, and refuses (as the real one can) when it is started: the run-time site."""
++
++    def __init__(self, *_: Any, **__: Any) -> None:
++        return None
++
++    def start_background(self) -> None:
++        raise DeskSettingRefused(f"{SETTING} holds {self.value}")
++
++    def stop_background(self) -> None:
++        return None
++
++    def reaper_running(self) -> bool:
++        return False
++
++    def close(self) -> None:
++        return None
++
++    value = ""
++
++
++def _env(tmp: Path, monkeypatch: pytest.MonkeyPatch, **extra: str) -> str:
++    value = str(tmp / f"{MARK}.json")
++    for name, text in {
++        "DESK_DB_PATH": str(tmp / "data" / "desk.sqlite3"),
++        "DESK_PORT": "0",
++        SETTING: value,
++        **extra,
++    }.items():
++        monkeypatch.setenv(name, text)
++    return value
++
++
++def _message(value: str) -> str:
++    return f"{SETTING} is wrong: {value}"
++
++
++def _site_bind(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(config_module.Config, "public_bind_problem", lambda self: _message(value))
++
++
++def _site_book(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(desk_module, "book_problem", lambda path: _message(value))
++
++
++def _site_approvers(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_approvers", refuse)
++
++
++def _site_leadflow(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(path: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "read_leadflow", refuse)
++
++
++def _site_adapters(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", refuse)
++
++
++def _site_desk_build(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(*_: Any, **__: Any) -> Any:
++        raise DeskSettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", refuse)
++
++
++def _site_run_time(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    _StubDesk.value = value
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", _StubDesk)
++    monkeypatch.setattr(server, "make_server", lambda desk, config: _StubServer())
++    monkeypatch.setattr(server.signal, "signal", lambda *a, **k: None)
++
++
++# (site, how the refusal is planted, the extra settings that make the site reachable)
++SITES: list[tuple[str, Any, dict[str, str]]] = [
++    ("bind", _site_bind, {}),
++    ("book", _site_book, {}),
++    ("approvers", _site_approvers, {"DESK_LATER_MODE": "approval", "DESK_APPROVERS_FILE": "approvers.json"}),
++    ("leadflow", _site_leadflow, {"DESK_LEADFLOW_FILE": "flow.json", "DESK_NUDGE_TO": "n@example.test"}),
++    ("adapters", _site_adapters, {}),
++    ("desk_build", _site_desk_build, {}),
++    ("run_time", _site_run_time, {}),
++]
++
++
++@pytest.mark.parametrize(("site", "plant", "extra"), SITES, ids=[s[0] for s in SITES])
++def test_no_setting_value_reaches_the_output_at_a_late_refusal_site(
++    site: str, plant: Any, extra: dict[str, str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    value = _env(tmp_path, monkeypatch, **extra)
++    plant(monkeypatch, value)
++    with pytest.raises(SystemExit) as stop:
++        server.main()
++    assert stop.value.code == EXIT_DESK_SETTING_REFUSED, site
++    out = capsys.readouterr()
++    text = out.out + out.err
++    lines = [ln for ln in text.splitlines() if ln.strip()]
++    assert len(lines) == 1, (site, lines)
++    assert SETTING in lines[0] and "<value>" in lines[0], (site, lines[0])
++    assert MARK not in text and value not in text, site
++
++
++def test_the_seven_sites_are_all_the_late_refusal_sites_of_main() -> None:
++    """If a refusal site is added to `server.main`, this count fails and a case must be added above."""
++    source = (Path(server.__file__)).read_text(encoding="utf-8")
++    main_text = source[source.index("def main(") :]
++    assert main_text.count("_refuse(") == 8  # the first reading of the settings plus the seven sites above
++    assert len(SITES) == 7
+diff --git a/tests/test_ps1_pins.py b/tests/test_ps1_pins.py
+new file mode 100644
+index 0000000..6797c2f
+--- /dev/null
++++ b/tests/test_ps1_pins.py
+@@ -0,0 +1,207 @@
++"""The two Windows scripts that read the DESK_* settings, pinned as far as this machine allows.
++
++NOT RUN HERE: PowerShell (no Windows, no pwsh on this machine). TEXT-ONLY: what runs here is a set of pins on the TEXT
++of scripts/start_all.ps1 and scripts/reset.ps1, each with a mutant (the same text with one line dropped) that the pin
++must reject, so a pin cannot pass on text that lost the line. These pins prove that the lines are there, not that
++PowerShell does the right thing with them; they are not counted as behaviour tests anywhere. The real run is the
++Windows-only tests at the bottom, skipped everywhere except Windows (a bad setting; a late refusal; a taken port); until
++they have run on Windows every claim about these two scripts is "designed for Windows PowerShell 5.1, not run on Windows
++in this build".
++"""
++
++from __future__ import annotations
++
++import re
++import shutil
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++from support import REPO
++
++SCRIPTS = REPO / "scripts"
++NAMES = ("start_all.ps1", "reset.ps1")
++
++
++def _code(text: str) -> str:
++    text = re.sub(r"<#.*?#>", "", text, flags=re.DOTALL)
++    return "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
++
++
++def reader_problems(text: str) -> list[str]:
++    """What is missing from the settings reader (`Read-DeskSetting`) of a script; [] when every pin holds."""
++    code = _code(text)
++    found = re.search(r"function Read-DeskSetting\(\[string\]\$Expression\) \{(.*?)\n\}", code, flags=re.DOTALL)
++    if found is None:
++        return ["no Read-DeskSetting function"]
++    body = found.group(1)
++    pins = {
++        "reads through config_or_exit": r"from lead_desk\.config_exit import config_or_exit",
++        "keeps the exit code": r"\$code = \$LASTEXITCODE",
++        "native errors are not fatal while it runs": r"\$ErrorActionPreference = 'Continue'",
++        "splits the error records from the output": (
++            r"-is \[System\.Management\.Automation\.ErrorRecord\][^\n]*\n"
++            r"[^\n]*-isnot \[System\.Management\.Automation\.ErrorRecord\]"
++        ),
++        "writes the refusal on the error stream": (
++            r"if \(\$code -ne 0\) \{[^\n]*\[Console\]::Error\.WriteLine\(\$errorText\)[^\n]"
++            r"*exit \$code[^\n]*\}"
++        ),
++        "the value comes from the output only": r"\$outText\.Trim\(\)",
++    }
++    return [name for name, pat in pins.items() if re.search(pat, body) is None]
++
++
++def start_problems(text: str) -> list[str]:
++    code = _code(text)
++    pins = {
++        "wait budget from START_ALL_WAIT_SECONDS, default 15": (
++            r"\$waitSeconds = 15\b[\s\S]*\$env:START_ALL_WAIT_SECONDS"
++        ),
++        "one tick counter for both waits": (
++            r"\$maxTicks = \$waitSeconds \* 5[\s\S]*while \(\$ticks -lt \$maxTicks\)[\s\S]"
++            r"*while \(\$ticks -lt \$maxTicks\)"
++        ),
++        "waits for the demo server port": r"TcpClient[\s\S]*\.Connect\(\$fakesHost, \[int\]\$fakesPort\)",
++        "says the demo server did not start": (
++            r"the demo server did not start[^\n]*\n[^\n]*Stop-Process[^\n]*\n[^\n]*Remove-Item[^\n]"
++            r"*\n\s*exit 1\b"
++        ),
++        "looks for the listening line, log reads do not fail on a busy file": (
++            r"Select-String[^\n]*desk listening on[^\n]*-ErrorAction SilentlyContinue"
++        ),
++        "stops waiting when the desk has ended": r"if \(\$desk\.HasExited\) \{ break \}",
++        "timeout says it may still be starting, exits 1": (
++            r"desk not ready after[^\n]*may still be starting[^\n]*\n\s*exit 1\b"
++        ),
++        "keeps the process handle (ExitCode is not null)": r"\$null = \$desk\.Handle",
++        "waits for the process to end before reading its code": (
++            r"\$desk\.WaitForExit\(\)\s*\n\s*\$deskCode = \$desk\.ExitCode"
++        ),
++        "a code that cannot be read is 1": (
++            r"if \(\$null -eq \$deskCode -or \$deskCode -isnot \[int\]\) \{ \$deskCode = 1 \}"
++        ),
++        "passes on only 3, 4 and 5": r"if \(\$deskCode -in 3, 4, 5\) \{ exit \$deskCode \}\s*\n\s*exit 1\b",
++        "last log line through the formatter": r"\$last \| & python -m lead_desk\.config_exit",
++        "last log lines read without failing": r"Get-Content \$f -ErrorAction SilentlyContinue",
++        "stops the demo server it started": r"Stop-Process -Id \$fakes\.Id",
++        "removes its two process-id files": r"Remove-Item -Force \"\$dataDir\\fakes\.pid\", \"\$dataDir\\desk\.pid\"",
++        "the refusal goes to the error stream": r"\[Console\]::Error\.WriteLine\(\"the desk ended at once",
++    }
++    problems = [name for name, pat in pins.items() if re.search(pat, code) is None]
++    started = code.find('Write-Host "started:')
++    wait_end = code.find("\n    exit 1\n}\nWrite-Host")
++    if started < 0 or wait_end < 0 or started < wait_end:
++        problems.append('"started" is printed before the desk was seen to listen')
++    return problems
++
++
++@pytest.mark.parametrize("name", NAMES)
++def test_text_only_the_reader_pins_hold(name: str) -> None:
++    assert reader_problems((SCRIPTS / name).read_text(encoding="utf-8")) == []
++
++
++def test_text_only_the_start_pins_hold() -> None:
++    assert start_problems((SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")) == []
++
++
++MUTANTS = {
++    "drop exit $code": ("exit $code", ""),
++    "drop the stderr write": ("[Console]::Error.WriteLine($errorText);", ""),
++    "no split": ("-isnot [System.Management.Automation.ErrorRecord]", "-is [System.Management.Automation.ErrorRecord]"),
++    "no exit code kept": ("$code = $LASTEXITCODE", "$code = 0"),
++}
++
++
++@pytest.mark.parametrize("name", NAMES)
++@pytest.mark.parametrize("mutant", sorted(MUTANTS))
++def test_text_only_each_reader_pin_rejects_its_mutant(name: str, mutant: str) -> None:
++    old, new = MUTANTS[mutant]
++    text = (SCRIPTS / name).read_text(encoding="utf-8")
++    assert old in text, (name, mutant)
++    assert reader_problems(text.replace(old, new, 1)) != [], (name, mutant)
++
++
++_TIMEOUT_TAIL = "(it may still be starting); see $dataDir\\desk.log; run scripts\\reset.ps1 to stop it\")"
++START_MUTANTS = {
++    "no pass-through limit": ("if ($deskCode -in 3, 4, 5) { exit $deskCode }", "exit $deskCode"),
++    "no null guard": ("if ($null -eq $deskCode -or $deskCode -isnot [int]) { $deskCode = 1 }", ""),
++    "no handle kept": ("$null = $desk.Handle", ""),
++    "no wait for exit": ("$desk.WaitForExit()", ""),
++    "no wait stop": ("if ($desk.HasExited) { break }", ""),
++    "demo server left running": ("Stop-Process -Id $fakes.Id -ErrorAction SilentlyContinue", ""),
++    "pid files left": (
++        'Remove-Item -Force "$dataDir\\fakes.pid", "$dataDir\\desk.pid" -ErrorAction SilentlyContinue',
++        "",
++    ),
++    "timeout exits 0": (_TIMEOUT_TAIL + "\n        exit 1", _TIMEOUT_TAIL + "\n        exit 0"),
++    "formatter dropped": ("$last | & python -m lead_desk.config_exit", "$last"),
++    "log read can fail": ("Get-Content $f -ErrorAction SilentlyContinue", "Get-Content $f"),
++    "no demo server message": ("the demo server did not start", "not ready"),
++}
++
++
++@pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
++def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
++    old, new = START_MUTANTS[mutant]
++    text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
++    assert old in text, mutant
++    assert start_problems(text.replace(old, new, 1)) != [], mutant
++
++
++@pytest.mark.parametrize("name", NAMES)
++def test_text_only_every_claim_in_the_script_says_it_was_not_run(name: str) -> None:
++    assert "NOT run on Windows in this build" in (SCRIPTS / name).read_text(encoding="utf-8")
++    assert "not run on Windows in this build" in (REPO / "contract.md").read_text(encoding="utf-8")
++
++
++def _windows_run(name: str, tmp: Path, **env: str) -> subprocess.CompletedProcess[str]:
++    powershell = shutil.which("powershell")
++    if powershell is None:
++        pytest.skip("Windows PowerShell is not installed")
++    from support import child_env
++
++    return subprocess.run(  # noqa: S603
++        [powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SCRIPTS / name)],
++        cwd=REPO,
++        env=child_env(DESK_DB_PATH=str(tmp / "data" / "d.sqlite3"), START_ALL_WAIT_SECONDS="20", **env),
++        capture_output=True,
++        text=True,
++        timeout=180,
++        check=False,
++    )
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++@pytest.mark.parametrize("name", NAMES)
++def test_windows_a_bad_setting_gives_one_line_and_exit_8(name: str, tmp_path: Path) -> None:
++    done = _windows_run(name, tmp_path, DESK_PORT="abc")
++    lines = [ln for ln in (done.stdout + done.stderr).splitlines() if ln.strip()]
++    assert done.returncode == 8 and len(lines) == 1 and "DESK_PORT" in lines[0] and "started" not in lines[0]
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++@pytest.mark.parametrize("name", NAMES)
++def test_windows_a_bad_nudge_address_gives_one_line_and_exit_8(name: str, tmp_path: Path) -> None:
++    done = _windows_run(name, tmp_path, DESK_LEADFLOW_FILE="demo_only/leadflow.json", DESK_NUDGE_TO="no-at-sign")
++    lines = [ln for ln in (done.stdout + done.stderr).splitlines() if ln.strip()]
++    assert done.returncode == 8 and len(lines) == 1 and "DESK_NUDGE_TO" in lines[0] and "no-at-sign" not in lines[0]
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++def test_windows_start_all_a_late_refusal_is_the_desks_4_and_nothing_is_started(tmp_path: Path) -> None:
++    done = _windows_run("start_all.ps1", tmp_path, DESK_LEADFLOW_FILE="no-such-flow.json")
++    assert done.returncode == 4 and "started:" not in done.stdout and "the desk ended at once (exit 4)" in done.stderr
++    assert not (tmp_path / "data" / "desk.pid").exists() and not (tmp_path / "data" / "fakes.pid").exists()
++
++
++@pytest.mark.skipif(sys.platform != "win32", reason="Windows PowerShell only; not run in this build")
++def test_windows_start_all_a_taken_port_is_exit_5(tmp_path: Path) -> None:
++    import socket
++
++    with socket.socket() as taken:
++        taken.bind(("127.0.0.1", 0))
++        taken.listen()
++        done = _windows_run("start_all.ps1", tmp_path, DESK_PORT=str(taken.getsockname()[1]))
++    assert done.returncode == 5 and "started:" not in done.stdout
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 22baabc..6614aa2 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -137,7 +137,9 @@ def test_reset_sh_refuses_when_the_desk_does_not_stop(book: Path) -> None:
+         "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+         "open(sys.argv[2], 'w').close(); time.sleep(60)"
+     )
+-    slow = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    slow = subprocess.Popen(  # noqa: S603 (our own interpreter)
++        [sys.executable, "-c", code, "lead_desk.server", str(ready)]
++    )
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+@@ -165,7 +167,9 @@ def test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop(book: Path)
+         "time.sleep(60)\n"
+     )
+     ready = book.parent / "ready"
+-    slow = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    slow = subprocess.Popen(  # noqa: S603 (our own interpreter)
++        [sys.executable, "-c", code, "lead_desk.server", str(ready)]
++    )
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+@@ -220,7 +224,9 @@ def test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number(book: Path,
+     is exit 2 before a process is stopped or a file is deleted."""
+     ready = book.parent / "ready"
+     code = "import sys, time; open(sys.argv[2], 'w').close(); time.sleep(60)"
+-    desk = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    desk = subprocess.Popen(  # noqa: S603 (our own interpreter)
++        [sys.executable, "-c", code, "lead_desk.server", str(ready)]
++    )
+     try:
+         wait_until(ready.exists, what="the child is running")
+         (book.parent / "desk.pid").write_text(str(desk.pid), encoding="utf-8")
+@@ -282,20 +288,29 @@ def test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a
+     assert again.returncode == 4 and not lock.exists(), (again.stdout, again.stderr)
+ 
+ 
+-# A stand-in `python` for scripts/start_all.sh: it answers the three `python -c` helper calls (data folder, demo-server
+-# port, desk port) with fixed values, writes one line per `python -m <module>` launch with the DESK_LEADFLOW_FILE and
+-# DESK_NUDGE_TO it saw, and records every call, so the test sees what the shell [[ ]] tests decided without
+-# starting a server.
++# A stand-in `python` for scripts/start_all.sh: it answers the four `python -c` helper calls (data folder, demo-server
++# host, demo-server port, desk port) with fixed values, writes one line per `python -m <module>` launch with the
++# DESK_LEADFLOW_FILE and DESK_NUDGE_TO it saw, and records every call, so the test sees what the shell [[ ]] tests
++# decided without starting a server. The stand-in desk prints the listening line, as the real desk does, so start_all.sh
++# sees it start.
+ _STUB_PYTHON = """#!/usr/bin/env bash
+ echo "$*" >> "${STUB_DATA}/calls.log"
+ if [[ "$1" == "-c" ]]; then
+   case "$2" in
+     *parent*) echo "${STUB_DATA}";;
+-    *fakes_port*) echo 1234;;
++    *fakes_host*) echo 127.0.0.1;;
++    *fakes_port*) echo "${STUB_FAKES_PORT}";;
+     *.port*) echo 4321;;
+   esac
+ elif [[ "$1" == "-m" ]]; then
+   echo "LEADFLOW=[${DESK_LEADFLOW_FILE-<unset>}] NUDGE=[${DESK_NUDGE_TO-<unset>}]" > "${STUB_DATA}/launch-$2.rec"
++  # start_all.sh waits for the demo server to answer, then for the line a listening desk prints (a desk that ends
++  # without it is reported as failed); the stand-in demo server is a real listening socket that lives a few seconds
++  if [[ "$2" == "demo_only.fakes_server" ]]; then
++    exec "${STUB_REAL_PYTHON}" -c 'import socket, sys, time; s = socket.socket(); s.bind(("127.0.0.1",
++    int(sys.argv[1]))); s.listen(); time.sleep(4)' "${STUB_FAKES_PORT}"
++  fi
++  if [[ "$2" == "lead_desk.server" ]]; then echo "desk listening on http://127.0.0.1:4321"; fi
+ fi
+ """
+ 
+@@ -313,7 +328,16 @@ def _start_all(
+     stub = bin_dir / "python"
+     stub.write_text(_STUB_PYTHON, encoding="utf-8")
+     stub.chmod(0o755)
+-    done = _run("start_all.sh", tmp_path / "unused.sqlite3", *args, first_on_path=bin_dir, STUB_DATA=str(data), **env)
++    done = _run(
++        "start_all.sh",
++        tmp_path / "unused.sqlite3",
++        *args,
++        first_on_path=bin_dir,
++        STUB_DATA=str(data),
++        STUB_FAKES_PORT=str(_free_port()),
++        STUB_REAL_PYTHON=sys.executable,
++        **env,
++    )
+     return done, data
+ 
+ 
+diff --git a/tests/test_setting_reader_guard.py b/tests/test_setting_reader_guard.py
+new file mode 100644
+index 0000000..dc17f48
+--- /dev/null
++++ b/tests/test_setting_reader_guard.py
+@@ -0,0 +1,210 @@
++"""Class guard: nothing reads a setting outside the readers that turn a refusal into a plain line.
++
++The bug class (a bad setting reaching a person as a traceback) comes back whenever a new program reads the settings with
++the bare reader. This test walks the syntax tree of every Python file under src/, scripts/, load_tools/, demo_only/,
++tools/ and the launchers in tests/, and finds: a call of `Config.from_env` (also through an alias of `Config`), a bare
++`from_env` call, and a read of a name that starts with DESK_ or LEAD_DESK_ from `os.environ` or `os.getenv`. The three
++modules that ARE the readers (config.py, envnum.py, config_exit.py) are skipped as files; every other hit must be on the
++allow-list below by file AND exact source line, with its reason. There is no whole-file exemption, and an allowance that
++no longer matches a hit fails the test (so it cannot go stale). The shell and PowerShell scripts are checked by text for
++`Config.from_env`.
++
++Two more bug classes of the same family are guarded here. (1) The other settings readers (`HubspotSettings`,
++`ProviderSettings`, `SmtpSettings`, `LiveSettings` `.from_env`, and `_live_from_env`) are tripwires too: a new caller
++must be allowed by file and line with the reason its refusal becomes a plain line. (2) A path read from setting text
++must go through `envnum.env_path`: a `Path(...)` of an environment subscript or of a `.get` on an environment mapping,
++anywhere in src/ or scripts/, fails (a lone surrogate or a NUL in such text crashes whatever prints it later).
++"""
++
++from __future__ import annotations
++
++import ast
++import re
++from pathlib import Path
++
++from support import REPO
++
++READER_FILES = {"src/lead_desk/config.py", "src/lead_desk/envnum.py", "src/lead_desk/config_exit.py"}
++SETTINGS_CLASSES = {"HubspotSettings", "ProviderSettings", "SmtpSettings", "LiveSettings"}
++ENV_NAMES = {"env", "e", "environ"}  # the names an environment mapping goes by in src/ and scripts/
++ROOTS = ("src", "scripts", "load_tools", "demo_only", "tools")
++PREFIXES = ("DESK_", "LEAD_DESK_")
++
++# (file, exact stripped source line) -> reason
++ALLOWED: dict[tuple[str, str], str] = {
++    (
++        "src/lead_desk/server.py",
++        "config = Config.from_env()",
++    ): "server.main: the refusal is caught on the next line and worded by _refuse (the shared formatter), exit 4",
++    (
++        "scripts/run_real_check.py",
++        'desk_config = Config.from_env({**env, "DESK_PORT": "0"})',
++    ): "reads a config FILE inside its refusal block: the except words it with refusal_line, exit 8",
++    (
++        "scripts/run_real_check.py",
++        "hs = HubspotSettings.from_env(env)",
++    ): "inside the same refusal block (refusal_line, exit 8)",
++    (
++        "scripts/run_real_check.py",
++        "pr = ProviderSettings.from_env(env)",
++    ): "inside the same refusal block (refusal_line, exit 8)",
++    (
++        "src/lead_desk/smtp_provider.py",
++        "s = ProviderSettings.from_env(os.environ)",
++    ): "the adapter loader: server.main catches its SettingRefused (load_demo_adapters) and words it with _refuse",
++    (
++        "src/lead_desk/smtp_outbox.py",
++        "return SmtpOutbox(SmtpSettings.from_env(env))",
++    ): "the adapter loader: server.main catches its SettingRefused (load_demo_adapters) and words it with _refuse",
++    (
++        "src/lead_desk/crm_hubspot.py",
++        "s = HubspotSettings.from_env(os.environ)",
++    ): "the adapter loader: server.main catches its SettingRefused (load_demo_adapters) and words it with _refuse",
++    (
++        "load_tools/check_invariants.py",
++        'a.model_required = os.environ.get("DESK_QUALIFIER") == "live_claude" or _facts_say_live(facts_path)',
++    ): "compares DESK_QUALIFIER with one word as plain text; no parse, cannot fail",
++    (
++        "load_tools/load_driver.py",
++        'qualifier=os.environ.get("DESK_QUALIFIER", ""),  # lets the checker know the AI step was live',
++    ): "copies DESK_QUALIFIER as plain text into a report; no parse, cannot fail",
++}
++
++
++def _python_files() -> list[Path]:
++    files: list[Path] = []
++    for root in ROOTS:
++        files += sorted((REPO / root).rglob("*.py"))
++    files += sorted((REPO / "tests").glob("*launcher*.py"))
++    return [f for f in files if f.relative_to(REPO).as_posix() not in READER_FILES and "__pycache__" not in f.parts]
++
++
++def _is_environ(node: ast.AST) -> bool:
++    if isinstance(node, ast.Attribute):
++        return node.attr == "environ"
++    return isinstance(node, ast.Name) and node.id == "environ"
++
++
++def _desk_name(node: ast.AST | None) -> bool:
++    return isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value.startswith(PREFIXES)
++
++
++def hits_in(source: str) -> list[tuple[int, str]]:
++    """(line number, what) of every bare read of the settings in one Python source text."""
++    tree = ast.parse(source)
++    config_names = {"Config"}
++    for node in ast.walk(tree):
++        if isinstance(node, ast.ImportFrom) and node.module and node.module.endswith("config"):
++            config_names |= {a.asname for a in node.names if a.name == "Config" and a.asname}
++        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name) and node.value.id in config_names:
++            config_names |= {t.id for t in node.targets if isinstance(t, ast.Name)}
++    found: list[tuple[int, str]] = []
++    for node in ast.walk(tree):
++        if isinstance(node, ast.Call):
++            fn = node.func
++            if (
++                isinstance(fn, ast.Attribute)
++                and fn.attr == "from_env"
++                and isinstance(fn.value, ast.Name)
++                and fn.value.id in config_names
++            ):
++                found.append((node.lineno, "Config.from_env"))
++            if (
++                isinstance(fn, ast.Attribute)
++                and fn.attr == "from_env"
++                and isinstance(fn.value, ast.Name)
++                and fn.value.id in SETTINGS_CLASSES
++            ):
++                found.append((node.lineno, f"{fn.value.id}.from_env"))
++            if isinstance(fn, ast.Name) and fn.id == "_live_from_env":
++                found.append((node.lineno, "_live_from_env"))
++            if isinstance(fn, ast.Name) and fn.id == "from_env":
++                found.append((node.lineno, "bare from_env"))
++            first = node.args[0] if node.args else None
++            if isinstance(fn, ast.Attribute) and fn.attr == "get" and _is_environ(fn.value) and _desk_name(first):
++                found.append((node.lineno, "environ.get"))
++            if isinstance(fn, ast.Attribute) and fn.attr == "getenv" and _desk_name(first):
++                found.append((node.lineno, "getenv"))
++            if isinstance(fn, ast.Name) and fn.id == "getenv" and _desk_name(first):
++                found.append((node.lineno, "getenv"))
++        if isinstance(node, ast.Subscript) and _is_environ(node.value) and _desk_name(node.slice):
++            found.append((node.lineno, "environ[...]"))
++    return found
++
++
++def test_the_detector_finds_each_kind_of_bare_read() -> None:
++    src = (
++        "import os\nfrom os import environ, getenv\nfrom lead_desk.config import Config as C\nX = C\n"
++        "a = C.from_env()\nb = X.from_env({})\nc = from_env()\nd = os.environ['DESK_PORT']\n"
++        "e = os.environ.get('DESK_BIND')\nf = getenv('LEAD_DESK_X')\ng = environ['DESK_Y']\nh = os.environ['HOME']\n"
++        "i = HubspotSettings.from_env(env)\nj = LiveSettings.from_env(env)\n"
++        "k = _live_from_env(env)\nl = Other.from_env(env)\n"
++    )
++    assert sorted(line for line, _ in hits_in(src)) == [5, 6, 7, 8, 9, 10, 11, 13, 14, 15]
++
++
++def bare_paths_in(source: str) -> list[int]:
++    """Line numbers of `Path(<environment subscript>)` and `Path(<environment>.get(...))` in one Python source text."""
++    found: list[int] = []
++    for node in ast.walk(ast.parse(source)):
++        is_path_call = isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "Path"
++        if not (is_path_call and node.args):
++            continue
++        arg = node.args[0]
++        if isinstance(arg, ast.Subscript) and _env_like(arg.value):
++            found.append(node.lineno)
++        if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Attribute) and arg.func.attr in {"get", "getenv"}:
++            if _env_like(arg.func.value) or arg.func.attr == "getenv":
++                found.append(node.lineno)
++    return found
++
++
++def _env_like(node: ast.AST) -> bool:
++    return _is_environ(node) or (isinstance(node, ast.Name) and node.id in ENV_NAMES)
++
++
++def test_the_path_detector_finds_each_kind_of_bare_path() -> None:
++    src = (
++        "from pathlib import Path\nimport os\n"
++        "a = Path(env['X'])\nb = Path(e['X'])\nc = Path(env.get('X', 'y'))\nd = Path(os.environ['X'])\n"
++        "f = Path(os.getenv('X'))\ng = Path(env[p + 'F'])\nh = Path('literal')\ni = Path(argv[1])\n"
++        "j = Path(env_path(env, 'X'))\n"
++    )
++    assert sorted(bare_paths_in(src)) == [3, 4, 5, 6, 7, 8]
++
++
++def test_no_path_is_read_from_setting_text_except_through_the_one_helper() -> None:
++    offenders: list[str] = []
++    for root in ("src", "scripts"):
++        for path in sorted((REPO / root).rglob("*.py")):
++            rel = path.relative_to(REPO).as_posix()
++            if "__pycache__" in path.parts or rel == "src/lead_desk/envnum.py":
++                continue
++            offenders += [f"{rel}:{n}" for n in bare_paths_in(path.read_text(encoding="utf-8"))]
++    assert offenders == [], offenders
++
++
++def test_no_program_reads_the_settings_outside_the_readers() -> None:
++    offenders: list[str] = []
++    used: set[tuple[str, str]] = set()
++    for path in _python_files():
++        rel = path.relative_to(REPO).as_posix()
++        text = path.read_text(encoding="utf-8")
++        lines = text.splitlines()
++        for number, what in hits_in(text):
++            key = (rel, lines[number - 1].strip())
++            if key in ALLOWED:
++                used.add(key)
++            else:
++                offenders.append(f"{rel}:{number} {what}")
++    assert offenders == [], offenders
++    assert set(ALLOWED) == used, f"an allowance matches nothing now: {sorted(set(ALLOWED) - used)}"
++
++
++def test_the_shell_and_powershell_scripts_never_call_the_bare_reader() -> None:
++    bare = re.compile(r"Config\.from_env\(")
++    for path in sorted((REPO / "scripts").iterdir()):
++        if path.suffix in {".sh", ".ps1"}:
++            assert not bare.search(path.read_text(encoding="utf-8")), path.name
++            named = {"start_all.sh", "start_all.ps1", "reset.sh", "reset.ps1"}
++            assert "config_or_exit" in path.read_text(encoding="utf-8") or path.name not in named
+diff --git a/tests/test_stall_eviction.py b/tests/test_stall_eviction.py
+index 640e160..8b84356 100644
+--- a/tests/test_stall_eviction.py
++++ b/tests/test_stall_eviction.py
+@@ -220,7 +220,7 @@ def test_main_exits_3_on_a_too_small_limit(monkeypatch, capsys) -> None:
+     monkeypatch.setattr(server, "resource", _Res(soft=100, hard=100))
+     with pytest.raises(SystemExit) as info:
+         server.main()
+-    assert info.value.code == constants.EXIT_SETTING_REFUSED == 3
++    assert info.value.code == constants.EXIT_OPEN_FILE_LIMIT == 3
+     assert "MAX_HANDLER_THREADS" in capsys.readouterr().out
+ 
+ 
+diff --git a/tests/test_start_all_late_refusal.py b/tests/test_start_all_late_refusal.py
+new file mode 100644
+index 0000000..49d66a0
+--- /dev/null
++++ b/tests/test_start_all_late_refusal.py
+@@ -0,0 +1,223 @@
++"""scripts/start_all.sh must tell the truth when the desk it just started ends at once.
++
++Bug class: a script starts a background program, prints "started" and exits 0 without looking at it again, so a desk
++that refuses a late setting (a leadflow file, an approvers file, a public bind address, a sender address) or cannot take
++its port is reported as running. The rule: wait (bounded) until the desk says it is listening; if it ends first, print
++ONE line with its last log line and its own exit code, stop what the script started, delete the two process-id files the
++script wrote, and exit with the desk's code when it is one of the three the table passes on (3, 4, 5: the program rows
++of `start_all.sh` in `constants.EXIT_CODE_TABLE`), else with the script's own 1. The demo server is waited for first,
++inside the same budget; if it does not answer, the desk is not started. The wait is injected (START_ALL_WAIT_SECONDS),
++so no test asserts a wall time: the PATH taken (a message that says "the desk ended at once" instead of "not ready after
++N seconds") shows that the script saw the desk end and did not sit out the wait. Made-up data, loopback only, throwaway
++folders under tmp_path; every process a test starts is stopped by that test.
++"""
++
++from __future__ import annotations
++
++import contextlib
++import os
++import signal
++import socket
++import subprocess
++import sys
++from collections.abc import Iterator
++from pathlib import Path
++
++import pytest
++from support import REPO, child_env, free_port
++
++from lead_desk.constants import (
++    EXIT_DESK_SETTING_REFUSED,
++    EXIT_OPEN_FILE_LIMIT,
++    EXIT_PORT_UNAVAILABLE,
++    EXIT_START_NOT_DONE,
++)
++
++pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="start_all.sh is the non-Windows script")
++LOOPBACK = "127.0.0.1"
++
++
++WAIT = "3"  # the injected waiting budget (seconds) of the failure tests: short, and never the thing that is measured
++
++
++def _run(
++    tmp: Path, *, first_on_path: Path | None = None, wait: str = WAIT, **settings: str
++) -> subprocess.CompletedProcess[str]:
++    env = child_env(
++        DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), DESK_PORT=str(free_port()), DESK_FAKES_PORT=str(free_port())
++    )
++    env.pop("DESK_NUDGE_TO", None)
++    env["START_ALL_WAIT_SECONDS"] = wait
++    env.update(settings)
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    if first_on_path is not None:
++        env["PATH"] = str(first_on_path) + os.pathsep + env["PATH"]
++    return subprocess.run(  # noqa: S603, S607 - our own script, made-up values, throwaway folder
++        ["bash", str(REPO / "scripts" / "start_all.sh")],
++        cwd=REPO,
++        env=env,
++        capture_output=True,
++        text=True,
++        timeout=120,
++        stdin=subprocess.DEVNULL,
++        check=False,
++    )
++
++
++def _answers(port: int) -> bool:
++    with contextlib.suppress(OSError), socket.create_connection((LOOPBACK, port), timeout=0.5):
++        return True
++    return False
++
++
++def _stop_started(tmp: Path) -> None:
++    """Whatever a test left running: only the process ids the script itself wrote."""
++    for name in ("desk", "fakes"):
++        pid_file = tmp / "data" / f"{name}.pid"
++        if pid_file.exists():
++            with contextlib.suppress(ValueError, OSError):
++                os.kill(int(pid_file.read_text(encoding="utf-8").strip()), signal.SIGKILL)
++
++
++@pytest.fixture
++def cleanup(tmp_path: Path) -> Iterator[None]:
++    yield
++    _stop_started(tmp_path)
++
++
++def _assert_failed_start(done: subprocess.CompletedProcess[str], tmp: Path, code: int, fakes_port: int) -> None:
++    out = done.stdout + done.stderr
++    assert done.returncode == code, (done.returncode, out[-600:])
++    assert "started:" not in out and "Traceback" not in out, out[-600:]
++    lines = [ln for ln in done.stderr.splitlines() if ln.strip()]
++    assert len(lines) == 1 and lines[0].startswith("the desk ended at once (exit "), lines
++    assert f"(exit {code})" in lines[0] and len(lines[0]) < 400
++    assert not (tmp / "data" / "desk.pid").exists() and not (tmp / "data" / "fakes.pid").exists()  # its own, removed
++    assert not _answers(fakes_port), "the demo server the script started is still running"
++
++
++LATE_REFUSALS: list[tuple[str, dict[str, str]]] = [
++    ("leadflow_file_missing", {"DESK_LEADFLOW_FILE": "no-such-file.json"}),
++    ("approvers_file_missing", {"DESK_LATER_MODE": "approval", "DESK_APPROVERS_FILE": "no-such-approvers.json"}),
++    # the all-zeros address: its refusal is what is tested
++    ("public_bind", {"DESK_BIND": ".".join(["0"] * 4), "DESK_CRM": "hubspot"}),
++    ("sender_address", {"DESK_OUTBOX": "smtp", "DESK_SMTP_HOST": "127.0.0.1", "DESK_SMTP_FROM": "no-at-sign"}),
++]
++
++
++@pytest.mark.parametrize(("label", "settings"), LATE_REFUSALS, ids=[n for n, _ in LATE_REFUSALS])
++def test_a_desk_that_refuses_a_late_setting_is_reported_not_started(
++    label: str, settings: dict[str, str], tmp_path: Path, cleanup: None
++) -> None:
++    fakes_port = free_port()
++    done = _run(tmp_path, DESK_FAKES_PORT=str(fakes_port), **settings)
++    _assert_failed_start(done, tmp_path, EXIT_DESK_SETTING_REFUSED, fakes_port)
++    assert "refuses" in done.stderr, label  # the desk's own last line, so the reason is visible
++
++
++def test_a_desk_that_cannot_take_its_port_is_reported_with_its_own_code(tmp_path: Path, cleanup: None) -> None:
++    fakes_port = free_port()
++    with socket.socket() as taken:
++        taken.bind((LOOPBACK, 0))
++        taken.listen()
++        done = _run(tmp_path, wait="60", DESK_PORT=str(taken.getsockname()[1]), DESK_FAKES_PORT=str(fakes_port))
++    _assert_failed_start(done, tmp_path, EXIT_PORT_UNAVAILABLE, fakes_port)
++    assert "cannot bind" in done.stderr
++
++
++def test_a_desk_that_listens_is_started(tmp_path: Path, cleanup: None) -> None:
++    done = _run(tmp_path)
++    assert done.returncode == 0 and "started:" in done.stdout, (done.stdout, done.stderr)
++    assert (tmp_path / "data" / "desk.pid").exists() and (tmp_path / "data" / "fakes.pid").exists()
++
++
++def _stub_python(tmp: Path, desk_body: str, fakes_body: str = "") -> Path:
++    """A stand-in `python` first on PATH: `-m lead_desk.server` runs `desk_body`, `-m demo_only.fakes_server` runs
++    `fakes_body` when it is not empty; everything else is the real interpreter."""
++    stub_dir = tmp / "stub"
++    stub_dir.mkdir(exist_ok=True)
++    stub = stub_dir / "python"
++    fakes = f'if [[ "$*" == *demo_only.fakes_server* ]]; then {fakes_body}; fi\n' if fakes_body else ""
++    stub.write_text(
++        f'#!/bin/bash\n{fakes}if [[ "$*" == *lead_desk.server* ]]; then {desk_body}; fi\nexec {sys.executable} "$@"\n',
++        encoding="utf-8",
++    )
++    stub.chmod(0o755)
++    return stub_dir
++
++
++def test_a_desk_that_never_listens_is_reported_after_the_wait_and_left_for_reset(tmp_path: Path, cleanup: None) -> None:
++    """The honest timeout path: a stand-in `python` makes the desk sleep without a word. After the injected wait the
++    script says so (and that the desk may still be starting), exits 1 and leaves the processes alone for reset.sh
++    (they are stopped by this test)."""
++    done = _run(tmp_path, first_on_path=_stub_python(tmp_path, "exec sleep 120"), wait="2")
++    assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
++    assert "desk not ready after 2 seconds" in done.stderr, (done.stdout, done.stderr)
++    assert "may still be starting" in done.stderr and "started:" not in done.stdout
++    assert (tmp_path / "data" / "desk.pid").exists()  # left for reset.sh
++
++
++@pytest.mark.parametrize("fakes_body", ["exec sleep 120", "exit 3"], ids=["silent", "ends_at_once"])
++def test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk(
++    fakes_body: str, tmp_path: Path, cleanup: None
++) -> None:
++    """The desk asks the demo server once and ends if nobody answers: a slow demo server is a different failure from a
++    bad setting, so the script waits for it first, says so, and never starts the desk."""
++    marker = tmp_path / "desk-was-started"
++    stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 120", fakes_body)
++    done = _run(tmp_path, first_on_path=stub, wait="2")
++    assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
++    assert "the demo server did not start" in done.stderr
++    assert "desk" not in done.stderr.replace("the desk was not started", "")
++    assert "started:" not in done.stdout and not marker.exists()
++    assert not (tmp_path / "data" / "desk.pid").exists() and not (tmp_path / "data" / "fakes.pid").exists()
++
++
++@pytest.mark.parametrize(
++    ("desk_code", "expected"),
++    [
++        (0, EXIT_START_NOT_DONE),  # a desk that stopped with 0 is not a start
++        (1, EXIT_START_NOT_DONE),
++        (2, EXIT_START_NOT_DONE),  # the desk's "another desk" is the script's own 1, so 2 means only "not bash"
++        (6, EXIT_START_NOT_DONE),
++        (137, EXIT_START_NOT_DONE),
++        (EXIT_OPEN_FILE_LIMIT, EXIT_OPEN_FILE_LIMIT),
++        (EXIT_DESK_SETTING_REFUSED, EXIT_DESK_SETTING_REFUSED),
++        (EXIT_PORT_UNAVAILABLE, EXIT_PORT_UNAVAILABLE),
++    ],
++)
++def test_only_the_three_desk_codes_of_the_table_are_passed_on(
++    desk_code: int, expected: int, tmp_path: Path, cleanup: None
++) -> None:
++    stub = _stub_python(tmp_path, f"echo 'a line'; exit {desk_code}")
++    done = _run(tmp_path, first_on_path=stub)
++    assert done.returncode == expected, (desk_code, done.stdout, done.stderr)
++    assert f"(exit {desk_code})" in done.stderr and "started:" not in done.stdout
++
++
++def test_the_last_log_line_goes_through_the_one_formatter(tmp_path: Path, cleanup: None) -> None:
++    """Control characters are removed and the value of a setting the line names is not shown."""
++    secret = str(tmp_path / "secret-replies-qq9.json")
++    body = (
++        "printf 'the desk refuses a setting: DESK_REPLIES_PATH holds %s \\033[2J\\007bell\\n' "
++        '"$DESK_REPLIES_PATH"; exit 4'
++    )
++    done = _run(tmp_path, first_on_path=_stub_python(tmp_path, body), DESK_REPLIES_PATH=secret)
++    assert done.returncode == EXIT_DESK_SETTING_REFUSED, (done.stdout, done.stderr)
++    assert "secret-replies-qq9" not in done.stderr and "<value>" in done.stderr and "DESK_REPLIES_PATH" in done.stderr
++    assert "\x1b" not in done.stderr and "\x07" not in done.stderr and "bell" in done.stderr
++    assert len([ln for ln in done.stderr.splitlines() if ln.strip()]) == 1
++
++
++def test_a_bad_wait_setting_is_refused_before_anything_is_started(tmp_path: Path, cleanup: None) -> None:
++    for bad in ("0", "abc", "-1", "015", "1000", "1.5", " 5"):
++        done = _run(tmp_path, wait=bad)
++        assert done.returncode == EXIT_START_NOT_DONE and "START_ALL_WAIT_SECONDS" in done.stderr, bad
++        assert not (tmp_path / "data" / "fakes.pid").exists(), bad
++
++
++def test_the_start_script_waits_for_the_listening_line_inside_one_budget() -> None:
++    text = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    assert 'WAIT_SECONDS="${START_ALL_WAIT_SECONDS:-15}"' in text and "desk listening on" in text
++    assert 'wait "$desk_pid"' in text and text.count("max_ticks") >= 3  # one counter for both waits
++    assert text.count("seq 1 ") == 0 and "the demo server did not start" in text
