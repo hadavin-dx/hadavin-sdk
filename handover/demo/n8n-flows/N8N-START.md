@@ -26,6 +26,9 @@ What each does (names read from the n8n 2.46.6 source, @n8n/config; effect as I 
 - SAVE_MANUAL_EXECUTIONS=false: runs started by hand from the editor are not saved either.
 Without them n8n keeps run data. The lane3 grep (as relayed by the lead, n=1, flows without the four settings): lead name, e-mail AND the key were in the write-ahead file. With the four settings queued (lane3, n=3) and in the laptop T7b: see the T7b section; name and e-mail were still found in the write-ahead file there. The settings reduce what is stored; they do not make it zero. Every flow also carries the same values in its own workflow settings (saveDataSuccessExecution none, saveDataErrorExecution none, saveManualExecutions false).
 
+## Alerts (v3): what to tell the operator
+Alert e-mails (mail outcome unknown, lead failed) are sent by the recovery flow from the table state, not once inside a run. Needs: the recovery flow ACTIVE, the Postgres table with the four alert columns (alert_sent, alert_token, alert_until, alert_attempts), DESK_ALERT_TO set. Honest limit: the alert goes through the same SMTP server as the lead mail; if that server is down, nobody is notified until it is back, there is no second channel and no cap on alert_attempts. A person who suspects this looks at the table: rows in state unknown or failed with alert_sent=false are leads whose alert has not gone out. Tested: not yet (v3 flows are built; laptop run V7 pending; hung-SMTP test AF2 written, not run).
+
 ## Webhook
 The lead entries are two webhooks (paths mf-form and mf-hook, Respond to Webhook). Bind n8n to loopback only (N8N_LISTEN_ADDRESS=LOOPBACK-ADDR, N8N_HOST=LOOPBACK, port 5678 by default; the demo harness used 5679), so the webhook is reachable from the machine itself only. The recovery flow runs from its own 30 s timer; it must be ACTIVE (n8n logs "not active and cannot be executed" otherwise) and so must the two entry flows.
 

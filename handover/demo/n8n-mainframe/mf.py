@@ -32,7 +32,7 @@ def stage_ctl(**kw): ctl(ST_URL, **kw)
 def mf_stack(model_slow=None):
     for n in ("stage", "crm", "model", "catcher"): stop(n)
     wait_free([MODELP, STAGEP, CRMP, MAILP]); clean_state()
-    for f in (JOURNAL, CRMLOG) + tuple(MAIL + s for s in (".delay", ".pre", ".drop", ".conn", ".rcptfail")):
+    for f in (JOURNAL, CRMLOG) + tuple(MAIL + s for s in (".delay", ".pre", ".drop", ".conn", ".rcptfail", ".rcpthold")):
         if os.path.exists(f): os.remove(f)
     e = denv()
     spawn("model", [sys.executable, "-m", "demo_only.fake_model_server", "--mode", "ok", "--port", str(MODELP), "--key-file", KEY, "--call-log", CALLS], e, "model.log")
@@ -234,6 +234,22 @@ def af1():
     rec("AF1", lead=k, reply=[st, rep.get("verdict") if isinstance(rep, dict) else rep], seconds_to_unknown=tf, alerts_20s_after_unknown=early, seconds_to_first_alert=t_alert, row=o["row"], alerts=o["alerts"], mails_to_intake=o["mails"], alert_sent_and_attempts=sent, fault_left=left)
     ok = tf is not None and early == 0 and got and o["alerts"] == 1 and o["row"]["state"] == "unknown" and o["mails"] == 1 and sent.startswith("t") and o["crm_rows"] == 1
     result("AF1", ok, "alert held back by a dead SMTP (451 for the first two alert sends): state unknown unchanged, no alert at 20 s, exactly 1 alert after the fault (first alert at %s s), alert_sent=%s, mails to intake %d, alerts 130 s later %d" % (t_alert, sent, o["mails"], o["alerts"]), per_lead=[o])
+def af2():
+    """AF2 (hung SMTP for the alert; measures what is unmeasured): lead A: mail stored, acknowledgement dropped (unknown). The SMTP stand-in HOLDS the first alert recipient for 300 s before answering (connection accepted, no reply; one-shot, file .rcpthold "300|alert address"). Over the next minutes the test records, every 30 s: SMTP connections, alerts stored for A, alert_sent/attempts. The transport timeout of n8n's Send Email node is thereby MEASURED as: the time from the first alert connection to the next alert connection, if the node gives up before 300 s (else the held send completes at about 300 s). Lead B (CRM answer held 40 s, T10 style) is sent while the hold is on: it must reach done with 1 mail, 1 CRM row, proving recovery still works while an alert send hangs. Pass: A unknown unchanged, alert_sent true at the end, alerts for A >= 1 (1 expected; 2 = the documented duplicate case, recorded, not a failure), B done not doubled, total SMTP connections within the window <= 12. Takes about 12 minutes."""
+    mf_stack(); n8n_prepare_mf(); restart_n8n(); ka = uid("af2a"); kb = uid("af2b")
+    open(MAIL + ".drop", "w").write("1"); open(MAIL + ".rcpthold", "w").write("300|" + ALERT_TO)
+    t0 = time.time(); st, rep = req("mf-form", fbody(ka)); wait_final(ka, t0, 150, need_alert=False); tu = round(time.time() - t0, 1)
+    time.sleep(40); crm_ctl(upsert_ack_delay_ms=40000); conn_a = smtp_conns(); tb0 = time.time(); stb, repb = req("mf-form", fbody(kb), t=120); tb = wait_final(kb, tb0, 3 * LEASE + 150, need_alert=False)
+    timeline = []
+    while time.time() - t0 < 660:
+        timeline.append({"t": round(time.time() - t0), "conns": smtp_conns(), "alerts_a": alerts(ka), "alert_row": psql("SELECT alert_sent, alert_attempts FROM mf_leads WHERE lead_key='%s';" % ka)})
+        if timeline[-1]["alerts_a"] >= 1 and timeline[-1]["t"] > 330: break
+        time.sleep(30)
+    time.sleep(90); oa = outcome(ka); ob = outcome(kb); conn_end = smtp_conns(); sent = psql("SELECT alert_sent, alert_attempts FROM mf_leads WHERE lead_key='%s';" % ka)
+    conn_ts = [round(c["t"] - t0, 1) for c in jl(MAIL + ".conn")]
+    rec("AF2", lead_a=ka, lead_b=kb, seconds_to_unknown=tu, b_reply=[stb, repb.get("verdict") if isinstance(repb, dict) else repb], b_seconds_to_final=tb, timeline=timeline, smtp_connection_times_s=conn_ts, a=oa, b=ob, alert_row_end=sent)
+    ok = oa["row"]["state"] == "unknown" and sent.startswith("t") and oa["alerts"] >= 1 and ob["row"]["state"] == "done" and ob["mails"] == 1 and ob["crm_rows"] == 1 and not ob["doubled"] and conn_end <= 12
+    result("AF2", ok, "alert send held 300 s (hung SMTP): A unknown unchanged, alert_sent=%s, alerts for A %d (2 = duplicate case), B done %s with mails %d / CRM %d, SMTP connections total %d, connection times (s from start) %s" % (sent, oa["alerts"], ob["row"]["state"], ob["mails"], ob["crm_rows"], conn_end, conn_ts), per_lead=[oa, ob])
 def t15():
     """ERROR case (lane3 finding, lost lead without alert): the CRM refuses EVERY call (HTTP 500) from the start. Expected: 3 tries (main run + 2 recovery claims), then state failed, exactly 1 alert naming the lead, 0 mails to the intake recipient, 0 CRM rows, nothing lost, within 3 x lease + 150 s."""
     mf_stack(); n8n_prepare_mf(); restart_n8n(); crm_ctl(fail_status=500); rows = []; ids = []
@@ -309,7 +325,7 @@ def t13():
     time.sleep(3); subprocess.run(["docker", "kill", lib.PG], capture_output=True); time.sleep(3); subprocess.run(["docker", "start", lib.PG], capture_output=True); pg_ready()
     time.sleep(5); kill_n8n_now(); restart_n8n(); rows = final_rows(ids); [rec("T13", **o) for o in rows]
     summarize("T13", "duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n killed and restarted with half-done runs", rows, ids)
-TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "AF1": af1, "T7b": t7b}
+TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "AF1": af1, "AF2": af2, "T7b": t7b}
 if __name__ == "__main__":
     for t in sys.argv[1:]:
         try: TESTS[t]()

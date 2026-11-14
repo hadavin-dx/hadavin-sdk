@@ -26,6 +26,9 @@ class H(socketserver.StreamRequestHandler):
                 try: nf, sub = open(FILE + ".rcptfail").read().strip().split("|", 1); nf = int(nf)                # fault mode (AF1): "N|text": answer 451 (try later) to the next N recipients whose address contains text, nothing stored
                 except (OSError, ValueError): nf, sub = 0, None
                 if nf > 0 and sub in r: open(FILE + ".rcptfail", "w").write("%d|%s" % (nf - 1, sub)); self.w("451 try later"); continue
+                try: hs, hsub = open(FILE + ".rcpthold").read().strip().split("|", 1); hs = float(hs)             # fault mode (AF2): "S|text": the next recipient containing text is held S seconds BEFORE the answer (connection accepted, no reply: a hung SMTP); one-shot
+                except (OSError, ValueError): hs, hsub = 0, None
+                if hs > 0 and hsub in r: open(FILE + ".rcpthold", "w").write("0|" + hsub); time.sleep(hs)
                 rcpt.append(r); self.w("250 ok")
             elif u == "DATA":
                 self.w("354 go"); buf = []
