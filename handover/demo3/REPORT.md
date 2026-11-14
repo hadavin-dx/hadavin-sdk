@@ -5,7 +5,7 @@
 | M1 (Sonnet, evidence runner) | Python 3.13, shuffled order seed 20261114 | running, 42 percent of tests done (progress marks in the log) |
 | M2 (Sonnet, evidence runner) | Python 3.13, reversed order | running, 33 percent done |
 
-FAILURES AND RETRIES: 0 failure marks (F or E) in either log so far; 0 retries. Totals: 2 runs started, 0 finished. This is a count of marks in a log still being written, not a result.
+FAILURES AND RETRIES (CORRECTED 02:58Z - my first line here said 0 for both logs; that was wrong, my check pattern did not match progress lines): M1 shows 24 F marks at 42 percent (shuffled order, seed 20261114, Python 3.13); M2 shows 0 F and 0 E marks at 33 percent. Names of the failing tests are NOT known yet: the quiet log only prints them at the end. Cause unknown. 0 retries yet. Totals: 2 runs started, 0 finished. These are counts of marks in logs still being written, not a result.
 ASK list: unchanged.
 Load (measured, /proc/stat sample): idle CPU 86 percent; free RAM 15.6 GB. 2 of 3 heavy slots used.
 Not checked: no final counts, no flake follow-up, no clean-tree check result yet; Python 3.11 not run (unsupported).
