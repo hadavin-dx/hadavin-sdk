@@ -238,3 +238,13 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | M4 (a7888955f4dcb3097) | CLOSED 03:31Z | gitleaks 8.30.1 (sha256 551f6fc8...470eb, matches the checksums file downloaded with it); full suite with the binary on 3.13, shuffled seed 20261114: 3714 passed, 169 skipped, 0 failed, rc=0, 924 s (I read the log tail); 3 files both orders 72 passed; no-binary 30 failed/42 passed with ids identical to M2; skip reasons of the 169 not printed in that run |
 | M6 (ac2fdc2f8615301e1) | CLOSED 03:36Z | Playwright 1.63.0 from the repo pinned requirements in scratch venv, container chromium 1243: 646 browser/portal tests passed, 0 skipped, 0 failed (I read both logs); its report was written inside its own worktree, copied to evidence/ |
 | M7 (a488c3852a6fa4628) | STARTED 03:37Z | evidence runner writes MATRIX-1.md from the reports and raw logs (reads only); expected end ~04:00Z |
+| M7 (a488c3852a6fa4628) | CLOSED 03:41Z | MATRIX-1.md written (facts); I corrected its fix-9 full-run lines; its unmatched numbers still to verify |
+| B9 full run | CLOSED 03:40Z | 3690 passed, 199 skipped, 1 xfailed in 945.14s, rc=0 (I read the tail); no data/ in m6-tree |
+| R9 reviewer fix-9 (ab2f3bbe9af93a56a) | STARTED 03:42Z | read-only egm codebase-details on /home/user/work/rv-fix9; expected end ~04:00Z |
+| R8 reviewer fix-8 (aa592667b2b4e127f) | STARTED 03:42Z | read-only, tree /home/user/work/rv-fix8; expected ~04:00Z |
+| R5 reviewer fix-5 r5 (ad813cc2138e2594c) | STARTED 03:42Z | read-only, tree /home/user/work/rv-fix5r5; expected ~04:00Z |
+| R2 reviewer fix-2 r4 (a4dcbef6e08e5a45a) | STARTED 03:42Z | read-only, tree /home/user/work/rv-fix2r4 (fix-1 r6 + fix-2 r4); expected ~04:00Z |
+| M8 (a6f9ea36e4b1a23fb) | STARTED 03:42Z | EVIDENCE RUNNER: 11 portal files twice (default, shuffled), worktree m8-tree; expected ~04:00Z |
+| RD1 (a65de15183e3460b5) | STARTED 03:42Z | reader E3b cut runs; expected ~03:57Z |
+| RD2 (ae758410fb75bc52f) | STARTED 03:42Z | reader PR #12 E marks; expected ~03:57Z |
+| RD3 (ac317eb4ce63dcca5) | STARTED 03:42Z | reader xdist port flake; expected ~03:57Z |

@@ -1,3 +1,33 @@
+## HEARTBEAT 83 (03:43Z) - B9 FULL RUN CLOSED (rc 0, no data/); 4 REVIEWERS, 3 READERS AND THE PORTAL FLAKE RUN STARTED; MATRIX-1.md WRITTEN
+
+| Agent | Job | State |
+|---|---|---|
+| B9 | fix-9 full serial run 3.13 | CLOSED: `3690 passed, 199 skipped, 1 xfailed in 945.14s`, `rc=0` (I read the tail); no data/ in m6-tree afterwards; git status shows only the 4 staged changes |
+| M7 | MATRIX-1.md | CLOSED: file written (facts); I corrected its fix-9 lines; its numbers not matched to a log are still unchecked (see NOT DONE) |
+| R9, R8, R5, R2 | read-only egm reviewers: fix-9, fix-8, fix-5 r5, fix-2 r4 (on fix-1 r6) | STARTED 03:42Z, each on its own patched snapshot tree (rv-fix9, rv-fix8, rv-fix5r5, rv-fix2r4); I save their reports |
+| RD1, RD2, RD3 | readers: E3b cut runs, PR #12 E marks, old xdist port flake | STARTED 03:42Z, read-only, facts only |
+| M8 | portal flake check: the 11 portal files, run A default order, run B shuffled seed 20261114 | STARTED 03:42Z, evidence runner, fresh tree m8-tree, 1 heavy job |
+
+CORRECTION OF TWO EARLIER STATEMENTS (the numbers changed): the M2 report and the M6 report said no data/ folder appeared in their trees. The disk says otherwise (my `stat`): an empty git-ignored `data/` exists in m1-tree (02:57:14Z), m2-tree (03:00:31Z), m3-tree (03:26:32Z), m4-tree (03:20:49Z) and m7-tree (03:28:38Z, the tree M6 ran browser tests in); none in m5-tree, m6-tree, m6-chk. M1's statement was right. So the folder appears in plain full runs, which fits the three writer sites in fix-9; other creators are not ruled out until a one-file-at-a-time run is done (lead skipped the whole-disk check; this is the in-tree one).
+FAILURES AND RETRIES: unchanged: 30 environment failures (missing gitleaks program) in M1, M2, M3, identical ids; proven gone with the program (M4: 3714 passed, 0 failed). 0 flaky, 0 order-dependent in 3 orders. Browser: 646 passed once each. No new failure. Old claim corrected: "no data/ folder in M2 and M6 trees" (wrong, see above).
+/helper.txt: file /helper.txt, 865 bytes, root, created by B9 (mistaken command), outside the repo tree, in no patch, repo tree clean.
+ASK list: none.
+Load (measured): load average 0.13, free RAM 9 GB free of 15 GB; 1 heavy job plus 4 light reviewers and 3 light readers.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Independent review of fix-9, fix-8, fix-2 r4, fix-5 r5: running; the reports are not in yet; unreviewed until then.
+- The 199 skips in B9's run: my explanation (169 + 30 gitleaks tests skipped without the program) is not proven; I would print skip reasons (-rs) in the durations run.
+- MATRIX-1.md numbers M7 could not match to a log (gitleaks version/checksum from M4's report only; M4 full-run seed; playwright details from M6's report; rc of M1/M2 re-runs; the 24/2/4 split): I would check each against raw logs.
+- Other creators of data/: only 3 sites known; I would run each test file alone in a fresh copy if told (about 1-2 hours serial, lead skipped the whole-disk check).
+- Core r7f not reviewed so not copied; symlink case stays an expected failure.
+- Python 3.11, ruff, mypy, bandit, gitleaks on CI, Windows: not run (by decision).
+- Durations run: after the portal flake run (one heavy job at a time for timing).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Save the 4 reviewer reports and 3 reader reports, then `egm:egm-resolve` (Skill) on every blocker/major and start fixes.
+2. Read the M8 portal flake logs; then the durations run with -rs (explains the 199 skips and gives time per file).
+3. Verify M7's unmatched numbers in MATRIX-1.md against raw logs.
+
 ## HEARTBEAT 82 (03:36Z) - PLAYWRIGHT RESULT IN: 646 BROWSER AND PORTAL TESTS PASSED; M4 AND M6 CLOSED
 
 | Agent | Job | State |

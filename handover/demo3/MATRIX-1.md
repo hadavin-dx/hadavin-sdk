@@ -7,7 +7,7 @@ Written by evidence runner M7 on 2026-11-14 about 03:40 UTC (09:10 IST). Code un
 - 30 tests fail in every full run without the program "gitleaks" (a secret scanner), because the runs set DPLD_REQUIRE_SCAN=1, which turns "program missing" from a skip into a failure. The same 30 tests passed once a checksum-verified gitleaks 8.30.1 was present (M4: 72 passed on the three files, and 3714 passed / 0 failed on the full suite).
 - Three full runs without gitleaks (three different test orders, Python 3.13) gave identical counts: 30 failed, 3684 passed, 169 skipped, 0 errors (logs m1-run.log, m2-run.log, m3-run.log last lines).
 - 166 of the 169 skips were a missing Python module "playwright" (browser tests). With the repo's pinned playwright 1.63.0 and an already-installed chromium, those browser test files ran: 646 passed, 0 skipped (M6).
-- Tests that write into the repo tree: three places create an empty git-ignored `data/` folder. Fix-9 (a patch, not committed) removes it; its three-file proofs pass on 3.13 and 3.12. Its own full run was NOT finished when I read the log (see section 5).
+- Tests that write into the repo tree: three places create an empty git-ignored `data/` folder. Fix-9 (a patch, not committed) removes it; its three-file proofs pass on 3.13 and 3.12. Its own full run finished later: 3690 passed, 199 skipped, 1 xfailed, rc 0, no data/ afterwards (section 5).
 - Flakiness: no flaky test was found, but only file-level re-runs were done (see section 4).
 - Not run at all: Python 3.11, ruff, mypy, bandit, Windows.
 - Differences between report and disk, flagged: (a) M6 report says no data folders appeared, but `/home/user/work/m7-tree/data` (the tree M6 used) exists, empty, created 03:28:38 UTC; (b) m3-run.log and m4-full.log contain no "SKIPPED" detail lines although the final line says 169 skipped (m1-run.log and m2-run.log have 9 such lines each).
@@ -34,7 +34,7 @@ Written by evidence runner M7 on 2026-11-14 about 03:40 UTC (09:10 IST). Code un
 | B9 three files | 3.13 | default | test_reset_scripts, test_mode_safety, test_data_folder_helper (fix-9 patch applied) | 92 / 0 / 8 skipped / 1 xfailed | 0 | 64.98 (pytest) | raw/b9-three-313.log |
 | B9 three files | 3.12 | default | same | 92 / 0 / 8 skipped / 1 xfailed | 0 | 64.36 (pytest) | raw/b9-three-312.log |
 | B9 fails-before | 3.13 | default | new test file on unpatched tree | 0 passed / 1 failed ("data exists") | not in log | 32.87 (pytest) | raw/b9-fails-before2.log (b9-fails-before.log: 32.41 s, same failure, first helper version) |
-| B9 full | 3.13 | default (serial) | all tests/ | NOT FINISHED (see section 5) | none | none | raw/b9-full-313.log |
+| B9 full | 3.13 | default (serial) | all tests/ | 3690 passed / 0 failed / 199 skipped / 1 xfailed / 0 errors | 0 (rc= line in log) | 945.14 | raw/b9-full-313.log |
 
 Notes on the table:
 - M4 full: the M4 report gives seed 20261114 for the full run; the log tail does not show the seed. Not matched to a log line.
@@ -141,7 +141,7 @@ Fix-9 patch (builder B9, worktree /home/user/work/m6-tree, not committed, no pus
 - Call sites changed: tests/test_reset_scripts.py (the test at line 67 and the `book` fixture), tests/test_mode_safety.py (test_reset_sh_refuses_when_ps_is_missing); unused `tempfile` import removed from both.
 - New file tests/test_data_folder_helper.py: helper tests, a repo-wide guard (runs the two files in a copy of the repo and asserts no `data/` exists afterwards), and `test_a_data_folder_that_is_a_link_is_not_followed` marked xfail(strict=True) because the copied core helper follows a pre-existing `data` symlink (core finding; core r7f is fixing it).
 - Proof runs: three-file 3.13 = 92 passed, 8 skipped, 1 xfailed, rc=0 (b9-three-313.log); three-file 3.12 = same counts, rc=0 (b9-three-312.log); fails-before = 1 failed "data exists" (b9-fails-before2.log). Note: B9 notes say "93 passed" for the first helper version (b9-new-313.log, b9-new-312.log) and 92 passed + 1 failed for the core helper before a test fix (b9-new2-313.log); I read all of those tails and they match the notes.
-- Full run (3.13, serial) of the patched tree: raw/b9-full-313.log was still being written when I read it at 03:37:28 UTC (its last line is a progress line at 90%, no "passed/failed" summary, no rc line). A pytest process `... --basetemp /home/user/work/priv/m6-tmp/bt8 tests` was running (elapsed 14:48 at 03:37 UTC, listed by `ps`). So there are no full-suite counts for fix-9 and no after-full-run `data/` check. At 03:24Z B9 saw no `data/` in m6-chk and m6-tree; I found no `data/` in either at 03:37.
+- Full run (3.13, serial) of the patched tree, finished (updated 03:41Z, lead read the tail): `3690 passed, 199 skipped, 1 xfailed in 945.14s (0:15:45)`, then `rc=0`. Afterwards `/home/user/work/m6-tree` has no `data/` (`ls data`: no such file) and `git status --porcelain --ignored` shows only the 4 staged fix-9 changes (tests/support.py, tests/test_data_folder_helper.py, tests/test_mode_safety.py, tests/test_reset_scripts.py). The 199 skips are NOT explained by a skip-reason listing: the lead's reading (not proven) is 169 baseline + the 30 gitleaks tests skipped because this run had no GITLEAKS_BIN and DPLD_REQUIRE_SCAN unset.
 - Not run for fix-9: ruff, mypy, bandit, gitleaks, Windows, comparing the test_mode_safety long line to base.
 
 Outside the repo tree:
@@ -159,7 +159,7 @@ Not measurable: the runs used `-q` without `--durations`, so logs show only dots
 ## 8. Still unreviewed or unproven
 
 - fix-8, fix-2 round 4, fix-5 round 5: no independent review yet (from the lead's brief; not checked by me against the register).
-- fix-9: no independent review yet; full run not finished (section 5).
+- fix-9: independent review started 03:41Z (read-only egm reviewer); report not yet in.
 - No ruff, mypy or bandit run; no Windows run (fix-9 notes, M-reports).
 - Core r7f (the fix for the symlink case): not reviewed and not copied into this repo's tests/support.py. The symlink test is an expected failure (xfail strict): it will fail the run by itself once the helper is fixed.
 - The 30 gitleaks tests were only proved to pass with gitleaks 8.30.1 on Linux. Not run: with a different gitleaks version.
@@ -171,7 +171,7 @@ Not measurable: the runs used `-q` without `--durations`, so logs show only dots
 
 | Item | Why | Next step |
 |---|---|---|
-| fix-9 full-suite result and `data/` check after it | log not finished at 03:37 UTC (about 09:07 IST) | read the last lines of raw/b9-full-313.log (it ends with an rc= line) and check `ls /home/user/work/m6-tree/data` |
+| (closed 03:41Z) fix-9 full-suite result | log finished | 3690 passed, 199 skipped, 1 xfailed, rc=0; no data/ in m6-tree afterwards |
 | rc values of the re-run logs (M1 and M2 re-runs) | log tails end with the pytest line only | re-read the log head or re-run with rc written |
 | gitleaks version, URL and sha256 | stated in M4 report only; not in the raw m4 logs | re-run `gitleaks version` and `sha256sum` on /home/user/work/priv/gitleaks-bin/x/gitleaks and the archive |
 | Seed of M4 full run | log tail has no seed | read raw/m4-full.log head or the m4 run script /home/user/work/priv/m4-run.sh |
