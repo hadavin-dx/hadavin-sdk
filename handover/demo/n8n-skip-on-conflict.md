@@ -4,7 +4,7 @@ Written 08:56Z; section 3 added after the 08:55Z order. All statements are "in m
 
 ## The one plain sentence
 
-Yes. In my runs a flow can branch on "was this new?": a new insert output one item holding the inserted row (it has the fields id, lead_id, note), and a skipped duplicate also output one item, but that item held only success true and no row fields, so an IF node that tests "lead_id is not empty" separates the two. I did not build that IF node in this test; I read the two shapes in the reply bodies (all 20 Postgres bursts: exactly 1 reply of 10 had the row fields, 9 had success true).
+Yes. In my runs a flow can branch on "was this new?": a new insert output one item holding the inserted row (it has the fields id, lead_id, note), and a skipped duplicate also output one item, but that item held only success true and no row fields, so an IF node that tests "lead_id is not empty" separates the two. I first read the two shapes in the reply bodies (all 20 Postgres bursts: exactly 1 reply of 10 had the row fields, 9 had success true), then built the IF node and ran it (section 3: 20 of 20 bursts exactly 1 new, 9 duplicate).
 
 ## Setup (what I built)
 
@@ -63,7 +63,7 @@ Not tested: an IF on the id column instead of lead_id; other n8n versions; more 
 - In my runs, a unique index in Postgres plus Skip on Conflict kept exactly 1 row in 20 of 20 bursts, with the single-run shapes above. This is the database enforcing the rule; the node's option only turns the error into a no-error answer.
 - In my runs the Data Table Upsert also kept 1 row in 10 of 10 bursts. I did not check how it does that (no claim about locking or a unique rule).
 - The two-step "If Row Does Not Exist" then Insert made extra rows in 9 of 10 bursts for one id (1 row in one fresh burst; 2 to 10 rows in the other nine). I did not repeat this beyond the 10 bursts, so I give the spread, not a rate.
-- Not tested: another n8n version, a different unique key type, more than 10 parallel calls, conflicts on two columns, a queue-mode n8n, a failure that is not a conflict, an actual IF node on the branch.
+- Not tested: another n8n version, a different unique key type, more than 10 parallel calls, conflicts on two columns, a queue-mode n8n, a failure that is not a conflict.
 - Side finding to keep in mind: the dt-ne-ins HTTP 500 comes from the webhook "last node" reply with 0 items, not from a failed execution.
 
 ## Process notes
