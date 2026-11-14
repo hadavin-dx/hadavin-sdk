@@ -1,5 +1,35 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 04:47 UTC / 10:17 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a89776f7 (r7g builder) | fixes the r7f review findings (M1 look-up exception, M2 stop count, m1 per-address time, m2 docs, n1 socket close) | review NOT CLEAN | 04:33 / 10:03 | box ends about 05:33 | r7g | RUNNING. Its checkpoint 04:41: code and 60 new tests written, 46 of them FAIL on r7f (good), 15 mutants killed; next docs, selector runs, ruff, suppression counts, patches. 04:46: it killed its own too-slow run (own pids) and moved to a per-file loop. All builder claims, unverified | EV7G + fresh reviewer |
+| add05263 (EV7F) | evidence on r7f | independent proof | 04:25 / 09:55 | trimmed | EV7F n1 | RUNNING. Full run started 04:37, was about 37% done at 04:46 (output only, no result). TRIM ORDER (your 04:39 decision) SENT to it at 04:47: stop its own full run, record it as cut by order and NOT a result, keep only apply check, ruff, mutants on r7f, hostile table; write EV7F-PARTIAL.md | read EV7F-PARTIAL.md |
+| lanes A, B, C | wave-2 mutants on r7e | closed | | | | DONE | none |
+
+Applied: your 04:39 decisions. (1) EV7F trimmed as above. (2) EV7G (the one full run) starts when r7g lands, in parallel with the r7g reviewer. (3) Added your class-and-sweep order to the r7g builder: class 1 an exception type that escapes a helper thread, sweep every other helper thread; class 2 a stop flag read in two places, one function decides; netconnect catches Exception with one fixed text, no host in it; NEEDED / DUPLICATE verdict per item in its RESULTS.
+
+Still open from my 04:40 block: ASK 1 (stop the four orphan worker pids 24504-24507, harness refused my kill; default NO). Their load still applies: EV7F's full run was sharing the machine with them, so any timing in it is inflated anyway.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7g tests, mutants, patches | builder not finished; its numbers are claims | EV7G (short evidence plus ONE full run, no data/ folder, recorded wrapper) |
+| r7f full result | cut by your order; no result | none (superseded) |
+| r7g fresh whole-patch review | needs the r7g patch | start when it lands, in parallel with EV7G |
+| mail pass 9 | waits for r7g | 30+ mutants on r7g, limits above clean times |
+| 4 orphan workers (ASK 1) | harness refused my kill | your answer |
+| which test leaves orphan workers | not examined | per-file process listing in EV7G |
+| first clean-set CRASH cause | no evidence | unexplained in README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. When r7g lands: copy and sha-check the patches, start EV7G and the fresh r7g reviewer in parallel (always with fresh agents, no author verdict handed over).
+2. Start mail pass 9 on an exported r7g snapshot once EV7G has its quiet run (or in parallel under your 3-heavy-suite limit).
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes and report counts.
+
+
 ## STATUS (core lead) 04:39 UTC / 10:09 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
