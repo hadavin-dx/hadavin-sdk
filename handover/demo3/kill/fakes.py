@@ -126,7 +126,12 @@ def crm(port, workdir):
 
 
 def stage(port, workdir):
-    calls, lock, ctl_path = {}, threading.Lock(), os.path.join(workdir, "stage.ctl")
+    """Stage stand-in following the README rule: a per-lead journal. First request = one model call (journal
+    'started', then 'answered' when the simulated call ends, even if the caller has died). A repeat after the answer
+    returns the same label with NO new model call; a repeat while the call is still open returns label 'unknown'
+    with NO new model call. requests counts HTTP requests; model_calls counts simulated paid calls."""
+    requests, model_calls, journal, lock = {}, {}, {}, threading.Lock()
+    ctl_path = os.path.join(workdir, "stage.ctl")
 
     def handle(method, path, body):
         if path == "/control":
@@ -134,16 +139,31 @@ def stage(port, workdir):
             return 200, {"ok": True}
         if method == "GET" and path == "/calls":
             with lock:
-                return 200, {"calls": dict(calls)}
+                return 200, {"calls": dict(model_calls), "requests": dict(requests)}
         if path == "/qualify":
             lead = str(body.get("lead_key"))
             with lock:
-                calls[lead] = calls.get(lead, 0) + 1
-            event(workdir, "stage", "qualify_start", lead=lead, n=calls[lead])
+                requests[lead] = requests.get(lead, 0) + 1
+                j = journal.get(lead)
+                if j is None:
+                    journal[lead] = {"state": "started"}
+                    model_calls[lead] = model_calls.get(lead, 0) + 1
+                    first = True
+                else:
+                    first = False
+            if not first:
+                with lock:
+                    j = journal[lead]
+                    label = j.get("label", "unknown") if j["state"] == "answered" else "unknown"
+                event(workdir, "stage", "qualify_repeat", lead=lead, answered=j["state"] == "answered", label=label)
+                return 200, {"label": label, "lead_key": lead}
+            event(workdir, "stage", "qualify_start", lead=lead, n=requests[lead])
             d = read_ctl(ctl_path).get("delay_ms", 0)
             if d:
                 time.sleep(d / 1000)
             label = ("hot", "warm", "cold")[sum(map(ord, lead)) % 3]
+            with lock:
+                journal[lead] = {"state": "answered", "label": label}
             return 200, {"label": label, "lead_key": lead}
         return 404, {"error": "no such path"}
 

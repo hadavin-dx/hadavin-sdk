@@ -24,3 +24,10 @@ Pass or fail is per row; each kill point is run 3 times on fresh stacks; any run
 
 ## Not covered (stated now)
 queue mode, other n8n versions, Postgres kill, real CRM/SMTP/model, two n8n processes, Windows.
+
+## Changes made after the plan was pushed (11:54Z, written before the j-runs; honest list)
+1. Flow files: the first copy of mf-form, mf-hook and mf-recovery was the obsolete 10:45Z set (my slip); runs c1, c1b, c1c are void. Tested set: v2 top level only (mf-sub-crm-mail, mf-form, mf-hook, mf-recovery, mf_leads.sql as pushed, no table patch).
+2. Harness gaps fixed (each with a named cause): sub-workflow must be published; wait until the webhook is registered; one e-mail per lead (the CRM upsert also matches on e-mail).
+3. Stage stand-in: my first stage fake answered a repeat request with a fresh call (run k1a, "naive stage": final done, 1 CRM row, 1 mail, 2 stage requests). The README says the real stage keeps a journal (no second model call). The fake now follows the README: requests and model_calls are counted separately; the counting rule uses model_calls. Runs with the journal stage are labelled j*. k1a stays in results.jsonl as a recorded variant and is not part of the final table.
+4. New finding found by the idle test (i1): F-REC-EMPTY (see REPORT). It adds phantom totals per run (stage call with lead None, CRM upsert with lead null, alert "lead failed undefined"); they are reported next to the per-lead counts.
+5. Predictions in this plan were written from the README; they are compared only after my numbers are saved.

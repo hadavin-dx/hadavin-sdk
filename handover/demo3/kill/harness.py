@@ -196,6 +196,7 @@ class Run:
         for l in leads:
             lm = [m for m in mails if l in m.get("subject", "")]
             res[l] = {
+                "stage_requests": _calls_for({"calls": stage_calls.get("requests", {})}, l) if isinstance(stage_calls, dict) else -1,
                 "mail_to_intake": sum(1 for m in lm if "intake@example.test" in str(m.get("rcpt"))),
                 "alert": sum(1 for m in lm if "alerts@example.test" in str(m.get("rcpt"))),
                 "crm_rows": _rows_for(crm_rows, l),
