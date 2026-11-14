@@ -1,0 +1,8 @@
+?? handover/
+!! demo_only/__pycache__/
+!! handover/demo3/evidence/raw/m6-pip-install.log
+!! handover/demo3/evidence/raw/m6-run1.log
+!! handover/demo3/evidence/raw/m6-run2.log
+!! scripts/__pycache__/
+!! src/lead_desk/__pycache__/
+!! tests/__pycache__/

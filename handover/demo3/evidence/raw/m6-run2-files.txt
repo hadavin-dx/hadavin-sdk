@@ -1,0 +1,11 @@
+tests/test_portal_api.py
+tests/test_portal_demo.py
+tests/test_portal_drawer_long_name.py
+tests/test_portal_layout.py
+tests/test_portal_log.py
+tests/test_portal_log_poll.py
+tests/test_portal_long_values.py
+tests/test_portal_look.py
+tests/test_portal_mode.py
+tests/test_portal_phone_layout.py
+tests/test_stage_confirm_browser.py

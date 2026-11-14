@@ -1,3 +1,33 @@
+## HEARTBEAT 82 (03:36Z) - PLAYWRIGHT RESULT IN: 646 BROWSER AND PORTAL TESTS PASSED; M4 AND M6 CLOSED
+
+| Agent | Job | State |
+|---|---|---|
+| M4 | gitleaks 8.30.1 full suite on 3.13 | CLOSED: 3714 passed, 169 skipped, 0 failed, rc 0, 924 s (I read the log tail) |
+| M6 | Playwright throwaway install and browser/portal tests on 3.13 | CLOSED: run 1 (4 files) 113 passed, 0 skipped, rc 0, 98 s; run 2 (11 other portal/browser files) 533 passed, 0 skipped, rc 0, 422 s (I read both log tails and both rc files). Total 646 passed, 0 skipped, 0 failed. |
+| B9 | fix-9 full serial run (background process) | [ 85%] done at 03:36Z; ends with an rc= line |
+
+FAILURES AND RETRIES: none new. Environment failures (30, missing gitleaks program) explained and proven gone with the program present (M4). Browser tests: 0 failed. 0 retries, 0 flaky seen (each browser run was ONE run in default order, so flakiness there is untested). Totals: closed M1, M2, M3, M4, M5, M6; B9 interim.
+M6 facts (its report, I read the two logs): scratch venv /home/user/work/priv/browser-venv from the repo's hash-locked requirements-dev.txt and requirements-browser.txt (pip install finished rc 0), playwright 1.63.0, the container's pre-installed chromium revision 1243 was used (no download). The 166 earlier skips were only the missing browser package. One correction of M6's file path: it wrote its report inside its own worktree; I copied m6-report.md and raw/m6-* into this lane's evidence folder.
+ASK list: none.
+Load (measured): see the next block; 1 heavy job (B9 full run) plus idle machine.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- B9 full run counts and data/ check after it: running; next: read tail, then start the one fresh egm reviewer on the fix-9 patch.
+- Flakiness of the browser tests: single default-order run only; next: run the 11 portal files once more alone (about 7 minutes) if the lead wants it.
+- Mapping of the earlier 28 + 22 + 3 skip groups to files: not done; low value, 646 now pass.
+- The 169 skips in the full run: M4's -rs printed no reasons; the earlier M1 log has them (166 playwright, 1 Windows-only, 1 load measurement, 1 root-readable file); next: none needed.
+- Durations run (time per group): after B9 closes (decision); the full browser suite would add time per file.
+- Read-only egm reviewers for fix-8, fix-2 r4, fix-5 r5, and the readers for E3b, PR #12 E marks, old xdist flake: after B9 lands (decision).
+- Core r7f not reviewed so not copied; symlink case expected failure.
+- Python 3.11 skipped; ruff, mypy, bandit, gitleaks (CI), Windows not run.
+- MATRIX-1.md not written yet.
+- Whole-disk write check outside TMPDIR not done (runners listed attributable paths only).
+
+WHAT I WOULD DO NEXT (ranked)
+1. When B9's run ends: counts, data/ check, one fresh egm reviewer on the fix-9 patch.
+2. Write MATRIX-1.md now (M1..M6 facts are in) and keep it updated; then the durations run.
+3. Start the read-only reviewers for fix-8, fix-2 r4, fix-5 r5 one each, then the three readers for the unexplained items.
+
 ## HEARTBEAT 81 (03:30Z) - LEAD ANSWERS TO HB 80 APPLIED; B9 FULL RUN PAST 40 PERCENT; M3 CLOSED
 
 | Agent | Job | State |
