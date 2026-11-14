@@ -1,5 +1,38 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 07:21 UTC / 12:51 IST
+
+**M1 id check (answer): the "1 failed" on the clean runs of pass 10 (reg group on tree-M10, a copy of r7j) is EXACTLY the id the r7j reviewer named: tests/test_r7f_findings.py::test_f1_a_connect_that_never_completes_ends_at_the_total_not_at_the_step.** The r7k builder's own clean live group (1 failed, 472 passed) I have not seen by id yet, but is most likely the same one. So on r7j this one test is red; r7k fixes the code (no invented ::1). Pass 10's mutant results run on a tree with one known-red test: a mutant counts as KILLED only by a test that is not that one (I told no one yet: I will message pass 10 now).
+
+**r7i REVIEW DONE (fresh, committed core-fix-on-frozen-r7i-review.md): NOT CLEAN, 0 Blocker, 4 Major, 7 minor, 4 nit.** 33 own mutants planted; the 9 claimed pass 9 mutants and 3 siblings are really killed by the new file alone. Majors (all test gaps, mail path): F1 smtp_outbox.py:292 a final 3xx reply after the text counts as SENT, no test notices (survived the wide set; provider sibling at smtp_provider.py:351 not planted); F2 smtp_provider.py:268-269 stats-file write after attempts += 1 can be removed (crash mid-send loses the cap count); F3 steps get the full own limit instead of the time left (Y1 survived wide; Y2, X14 mail set); F4 server.py recv/sendall sweep: 4 of 5 mutants survive (V01 busy-reply write on the accept loop without a timeout matters most). The reviewer agrees with NOT-NEEDED on one choke point for the secret-read order (four adapters share read_secret_line, each pinned by an order test), but nothing forces a fifth adapter to add one: a guard test is proposed. Fix-dont-defer: all go to a NEW test-only builder r7l (a762c1d8, started 07:17, tests/test_r7l_findings.py; a small source fix at smtp_outbox/provider/imap_count/server if a real defect appears), so r7k (netconnect, load_driver, live_claude, regfile) and r7l touch different files and merge cleanly. Not concluded by the reviewer: X28-X34, X01, Y4, provider empty-key mutant, F1's provider sibling: given to r7l.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6bc3c56 (r7k builder) | pass 9 gaps (M9-32, 40, 33, 34, 64, 65, 67, 61), N05/N06 pin, r7j review M1-M3, m1-m4 | fix-dont-defer | 06:52 / 12:22 | box 60 min, ends about 07:51 | r7k | RUNNING. 07:12 started source edits in netconnect (M1, m1, m3) and load_driver (M3, m4, n2); 07:14 source and tests written; 07:16 "k tests and r7f pass; running r7g/r7h; next mutants" | hand-back; EV7K + fresh r7k reviewer |
+| a762c1d8 (r7l builder, new) | tests for the r7i review F1-F4, minors, unconcluded mutants; guard test for a fifth secret-reading adapter | fix-dont-defer | 07:17 / 12:47 | box 60 min (about 08:17) | r7l | RUNNING (07:19 reading sources) | hand-back; merge with r7k; EV7K on the merged tree |
+| a1b1e5cd (EV7J) | full run on r7j | comparison base | 06:51 / 12:21 | about 07:30 | EV7J | RUNNING about 92% at 07:20 | EV7J-EVIDENCE.md |
+| a01f7117 (pass 10) | run_real_check M9-68..82 first, then the rest, then jsonread | your 06:55 order | 06:57 / 12:27 | box 60 min (about 07:57) | pass 10 | RUNNING. First rows: **M9-69 (run_real_check.py:1075: Start question: anything but n counts as yes) SURVIVED the selector set at 448 s: this is the exact mailbox-safety mutant you named; it goes to the big set next; if it survives there it is a REAL GAP and goes to r7k at once** (the agent has the SendMessage order). M9-16 (smtp_provider default port for ssl 587 and starttls 465 swapped) SURVIVED 164 s, also pending big set; M9-15 KILLED | mail-pass10-r7j.md |
+
+Agents running: 4 (r7k, r7l, EV7J, pass 10). Done: EV7I, EV7H, r7i and r7j reviewers.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7k and r7l hand-backs; merge of r7k + r7l into one final tree; EV7K on the merged bytes; fresh reviewer(s) | running | verify hashes; merge by file (disjoint); apply check; EV7K |
+| M9-69 and M9-16 big-set verdicts; rest of pass 10 | running | forward real gaps |
+| EV7J result and ids vs EV7I | at 92% | expect the M1 id only |
+| N08 flake cause, EV7H's 15 builder mutants (superseded) | not run | EV7K sample |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell scripts never run, Windows, Python 3.14, real IPv6-less host, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Forward M9-69 to r7k the moment the big set says REAL GAP (it is mailbox safety); read EV7J's ids.
+2. At the r7k and r7l hand-backs: verify sha256, copy (CRLF as .gz), merge disjoint files into one r7m tree, apply matrix, then EV7K full run plus fresh reviewers.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep, report counts.
+
+
 ## STATUS (core lead) 07:11 UTC / 12:41 IST
 
 **r7j REVIEW DONE (fresh; handover/core/review/core-fix-on-frozen-r7j-review.md, committed): NOT CLEAN, 0 Blocker, 3 Major, 4 minor, 4 nit.** All go into r7k (sent to a6bc3c56; its box is extended to 60 min, end about 07:51):
