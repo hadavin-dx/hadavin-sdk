@@ -1,0 +1,1116 @@
+FFFFFFFF........FFFFFFFFFFFFFFFF........FFFFFFFFF.F....FFFF.FFFFFF.FFFFF [ 84%]
+FFF.FF.F..FFF                                                            [100%]
+=================================== FAILURES ===================================
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-file-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en0')
+name = 'file-separator', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-form-feed] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en1')
+name = 'form-feed', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-ideographic-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en2')
+name = 'ideographic-space', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-next-line] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en3')
+name = 'next-line', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-no-break-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en4')
+name = 'no-break-space', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en5')
+name = 'tab', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-unit-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en6')
+name = 'unit-separator', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-vertical-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en7')
+name = 'vertical-tab', where = 'start', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-file-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en16')
+name = 'file-separator', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-form-feed] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en17')
+name = 'form-feed', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-ideographic-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en18')
+name = 'ideographic-space', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-next-line] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en19')
+name = 'next-line', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-no-break-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en20')
+name = 'no-break-space', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en21')
+name = 'tab', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-unit-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en22')
+name = 'unit-separator', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-vertical-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en23')
+name = 'vertical-tab', where = 'end', inner = False
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-file-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en24')
+name = 'file-separator', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-form-feed] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en25')
+name = 'form-feed', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-ideographic-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en26')
+name = 'ideographic-space', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-next-line] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en27')
+name = 'next-line', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-no-break-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en28')
+name = 'no-break-space', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en29')
+name = 'tab', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-unit-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en30')
+name = 'unit-separator', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-vertical-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en31')
+name = 'vertical-tab', where = 'start', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-file-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en40')
+name = 'file-separator', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-form-feed] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en41')
+name = 'form-feed', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-ideographic-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en42')
+name = 'ideographic-space', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-next-line] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en43')
+name = 'next-line', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-no-break-space] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en44')
+name = 'no-break-space', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en45')
+name = 'tab', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-unit-separator] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en46')
+name = 'unit-separator', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-vertical-tab] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_any_blank_but_the_line_en47')
+name = 'vertical-tab', where = 'end', inner = True
+
+    @pytest.mark.parametrize("name", sorted(ODD))
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    @pytest.mark.parametrize("inner", [False, True])
+    def test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused(
+        tmp_path: Path, name: str, where: str, inner: bool
+    ) -> None:
+        ch = ODD[name]
+        text = {"start": ch + KEY, "middle": KEY[:6] + ch + KEY[6:], "end": KEY + ch}[where]
+>       with pytest.raises(SettingRefused) as info:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:50: Failed
+_ test_a_plain_space_is_refused_for_a_key_and_dropped_for_the_password[start] __
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_a_plain_space_is_refused_0')
+where = 'start'
+
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    def test_a_plain_space_is_refused_for_a_key_and_dropped_for_the_password(tmp_path: Path, where: str) -> None:
+        text = {"start": " " + KEY, "middle": KEY[:6] + " " + KEY[6:], "end": KEY + " "}[where]
+        f = _put(tmp_path, text.encode())
+>       with pytest.raises(SettingRefused, match="must not hold a space"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:59: Failed
+__ test_a_plain_space_is_refused_for_a_key_and_dropped_for_the_password[end] ___
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_a_plain_space_is_refused_2')
+where = 'end'
+
+    @pytest.mark.parametrize("where", ["start", "middle", "end"])
+    def test_a_plain_space_is_refused_for_a_key_and_dropped_for_the_password(tmp_path: Path, where: str) -> None:
+        text = {"start": " " + KEY, "middle": KEY[:6] + " " + KEY[6:], "end": KEY + " "}[where]
+        f = _put(tmp_path, text.encode())
+>       with pytest.raises(SettingRefused, match="must not hold a space"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:59: Failed
+_ test_only_one_line_end_at_the_very_end_is_removed[made-up-key-0123456789\n\n-False] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_only_one_line_end_at_the_4')
+body = b'made-up-key-0123456789\n\n', ok = False
+
+    @pytest.mark.parametrize(
+        ("body", "ok"),
+        [
+            (KEY.encode(), True),
+            (KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\r\n", True),
+            (b"\xef\xbb\xbf" + KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\n\n", False),  # an empty second line
+            (KEY.encode() + b"\r", False),
+            (b"\n" + KEY.encode(), False),
+            (KEY.encode() + b"\n ", False),
+            (KEY.encode()[:5] + b"\n" + KEY.encode()[5:], False),
+        ],
+    )
+    def test_only_one_line_end_at_the_very_end_is_removed(tmp_path: Path, body: bytes, ok: bool) -> None:
+        f = _put(tmp_path, body)
+        if ok:
+            assert envnum.read_secret_file(f, "made-up key", "key") == KEY
+        else:
+>           with pytest.raises(SettingRefused):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:83: Failed
+_ test_only_one_line_end_at_the_very_end_is_removed[made-up-key-0123456789\r-False] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_only_one_line_end_at_the_5')
+body = b'made-up-key-0123456789\r', ok = False
+
+    @pytest.mark.parametrize(
+        ("body", "ok"),
+        [
+            (KEY.encode(), True),
+            (KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\r\n", True),
+            (b"\xef\xbb\xbf" + KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\n\n", False),  # an empty second line
+            (KEY.encode() + b"\r", False),
+            (b"\n" + KEY.encode(), False),
+            (KEY.encode() + b"\n ", False),
+            (KEY.encode()[:5] + b"\n" + KEY.encode()[5:], False),
+        ],
+    )
+    def test_only_one_line_end_at_the_very_end_is_removed(tmp_path: Path, body: bytes, ok: bool) -> None:
+        f = _put(tmp_path, body)
+        if ok:
+            assert envnum.read_secret_file(f, "made-up key", "key") == KEY
+        else:
+>           with pytest.raises(SettingRefused):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:83: Failed
+_ test_only_one_line_end_at_the_very_end_is_removed[\nmade-up-key-0123456789-False] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_only_one_line_end_at_the_6')
+body = b'\nmade-up-key-0123456789', ok = False
+
+    @pytest.mark.parametrize(
+        ("body", "ok"),
+        [
+            (KEY.encode(), True),
+            (KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\r\n", True),
+            (b"\xef\xbb\xbf" + KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\n\n", False),  # an empty second line
+            (KEY.encode() + b"\r", False),
+            (b"\n" + KEY.encode(), False),
+            (KEY.encode() + b"\n ", False),
+            (KEY.encode()[:5] + b"\n" + KEY.encode()[5:], False),
+        ],
+    )
+    def test_only_one_line_end_at_the_very_end_is_removed(tmp_path: Path, body: bytes, ok: bool) -> None:
+        f = _put(tmp_path, body)
+        if ok:
+            assert envnum.read_secret_file(f, "made-up key", "key") == KEY
+        else:
+>           with pytest.raises(SettingRefused):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:83: Failed
+_ test_only_one_line_end_at_the_very_end_is_removed[made-up-key-0123456789\n -False] _
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_only_one_line_end_at_the_7')
+body = b'made-up-key-0123456789\n ', ok = False
+
+    @pytest.mark.parametrize(
+        ("body", "ok"),
+        [
+            (KEY.encode(), True),
+            (KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\r\n", True),
+            (b"\xef\xbb\xbf" + KEY.encode() + b"\n", True),
+            (KEY.encode() + b"\n\n", False),  # an empty second line
+            (KEY.encode() + b"\r", False),
+            (b"\n" + KEY.encode(), False),
+            (KEY.encode() + b"\n ", False),
+            (KEY.encode()[:5] + b"\n" + KEY.encode()[5:], False),
+        ],
+    )
+    def test_only_one_line_end_at_the_very_end_is_removed(tmp_path: Path, body: bytes, ok: bool) -> None:
+        f = _put(tmp_path, body)
+        if ok:
+            assert envnum.read_secret_file(f, "made-up key", "key") == KEY
+        else:
+>           with pytest.raises(SettingRefused):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r6.py:83: Failed
+___________ test_the_reader_opens_the_file_without_taking_a_terminal ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f35778c0>
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_reader_opens_the_file0')
+
+    def test_the_reader_opens_the_file_without_taking_a_terminal(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        seen: list[int] = []
+        real = os.open
+    
+        def spy(path: object, flags: int, *a: object, **k: object) -> int:
+            seen.append(flags)
+            return real(path, flags, *a, **k)  # type: ignore[arg-type]
+    
+        monkeypatch.setattr(os, "open", spy)
+        envnum.read_secret_file(_put(tmp_path, KEY.encode()), "made-up key", "key")
+>       assert seen and all(f & getattr(os, "O_NOCTTY", 0) == getattr(os, "O_NOCTTY", 0) for f in seen)
+E       assert ([2048] and False)
+E        +  where False = all(<generator object test_the_reader_opens_the_file_without_taking_a_terminal.<locals>.<genexpr> at 0x7f74f3534e50>)
+
+tests/test_one_key_file_rule_r6.py:97: AssertionError
+____________________ test_the_docs_state_the_line_end_rule _____________________
+
+    def test_the_docs_state_the_line_end_rule() -> None:
+        for name in ("docs/settings.md", "contract.md", "docs/limits.md"):
+            text = " ".join((REPO / name).read_text(encoding="utf-8").split())
+>           assert "Only the line break at the very end of the file is removed" in text, name
+E           AssertionError: docs/settings.md
+E           assert 'Only the line break at the very end of the file is removed' in '# Settings Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad val... the run look green). Without it a missing folder skips each such test file as one item and the other files still run.'
+
+tests/test_one_key_file_rule_r6.py:103: AssertionError
+_____________ test_the_n8n_script_reads_its_key_with_the_one_rule ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f35758d0>
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_n8n_script_reads_its_0')
+
+    def test_the_n8n_script_reads_its_key_with_the_one_rule(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        mod = _n8n(monkeypatch, _put(tmp_path, KEY.encode() + b"\n"))
+        assert mod.KEY == KEY  # type: ignore[attr-defined]
+>       assert not hasattr(mod, "MAX_KEY")
+E       AssertionError: assert not True
+E        +  where True = hasattr(<module 'n8n_api' from '/home/user/work/b15b-fix1/scripts/n8n_api.py'>, 'MAX_KEY')
+
+tests/test_one_key_file_rule_r6.py:120: AssertionError
+______________ test_the_n8n_script_does_not_block_on_a_named_pipe ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f3577230>
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_n8n_script_does_not_b0')
+
+    @pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="no named pipes on this system")
+    def test_the_n8n_script_does_not_block_on_a_named_pipe(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        fifo = tmp_path / "pipe.txt"
+        os.mkfifo(fifo)
+        out: list[str] = []
+    
+        def run() -> None:
+            try:
+                _n8n(monkeypatch, fifo)
+            except SystemExit as e:
+                out.append(str(e))
+    
+        t = threading.Thread(target=run, daemon=True)
+        t.start()
+        t.join(3)
+        blocked = t.is_alive()
+        if blocked:
+            os.close(os.open(fifo, os.O_WRONLY | os.O_NONBLOCK))
+            t.join(3)
+>       assert not blocked and out and "cannot be read" in out[0]
+E       assert (not True)
+
+tests/test_one_key_file_rule_r6.py:146: AssertionError
+______ test_the_fake_model_server_key_file_uses_the_one_rule_and_exits_2 _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f35777e0>
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_fake_model_server_key0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f74f3743230>
+
+    def test_the_fake_model_server_key_file_uses_the_one_rule_and_exits_2(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        assert _fms_main(monkeypatch, tmp_path, b"k" * 4096, capsys) == 0  # 4096 bytes accepted
+        assert _fms_main(monkeypatch, tmp_path, b"k" * 4097, capsys) == 2  # 4097 refused
+>       assert _fms_main(monkeypatch, tmp_path, b"abc", capsys) == 2  # shorter than the minimum
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 0 == 2
+E        +  where 0 = _fms_main(<_pytest.monkeypatch.MonkeyPatch object at 0x7f74f35777e0>, PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_fake_model_server_key0'), b'abc', <_pytest.capture.CaptureFixture object at 0x7f74f3743230>)
+
+tests/test_one_key_file_rule_r6.py:172: AssertionError
+_______________ test_no_code_outside_envnum_opens_a_secret_file ________________
+
+    def test_no_code_outside_envnum_opens_a_secret_file() -> None:
+        bad: list[str] = []
+        for folder in ("src/lead_desk", "scripts", "demo_only", "load_tools", "tools"):
+            for p in sorted((REPO / folder).glob("*.py")):
+                if p.name == "envnum.py":
+                    continue
+                for line in _reader_calls(ast.parse(p.read_text(encoding="utf-8"))):
+                    bad.append(f"{folder}/{p.name}:{line}")
+>       assert bad == [], bad
+E       AssertionError: ['scripts/n8n_api.py:101', 'demo_only/fake_model_server.py:256']
+E       assert ['scripts/n8n...erver.py:256'] == []
+E         
+E         Left contains 2 more items, first extra item: 'scripts/n8n_api.py:101'
+E         Use -v to get more diff
+
+tests/test_one_key_file_rule_r6.py:206: AssertionError
+_______________ test_the_smtp_wrapper_is_named_for_the_password ________________
+
+    def test_the_smtp_wrapper_is_named_for_the_password() -> None:
+        from lead_desk import smtp_provider
+    
+>       assert hasattr(smtp_provider, "read_smtp_password") and not hasattr(smtp_provider, "read_secret_file")
+E       AssertionError: assert (False)
+E        +  where False = hasattr(<module 'lead_desk.smtp_provider' from '/home/user/work/b15b-fix1/src/lead_desk/smtp_provider.py'>, 'read_smtp_password')
+
+tests/test_one_key_file_rule_r6.py:224: AssertionError
+______________ test_the_mailbox_password_sentence_is_in_the_docs _______________
+
+    def test_the_mailbox_password_sentence_is_in_the_docs() -> None:
+        for name in ("contract.md", "docs/limits.md", "docs/settings.md"):
+            text = " ".join((REPO / name).read_text(encoding="utf-8").split())
+>           assert "The mailbox password file follows the SMTP password rule: spaces inside are dropped" in text, name
+E           AssertionError: contract.md
+E           assert 'The mailbox password file follows the SMTP password rule: spaces inside are dropped' in '# contract.md In this file "fake" and "recorded" are internal names for the demo stand-ins (`FakeCrm`, the `/fake/...... its own (`Desk._bounded`, see `docs/limits.md`). - A duplicate reply returns the id of the other lead: kept as it is.'
+
+tests/test_one_key_file_rule_r6.py:230: AssertionError
+_________________ test_the_lock_sentence_and_exit_4_at_step_12 _________________
+
+    def test_the_lock_sentence_and_exit_4_at_step_12() -> None:
+        text = " ".join((REPO / "contract.md").read_text(encoding="utf-8").split())
+>       assert (
+            "is never deleted by the desk: a refusal in any later step (6) to (12), and a normal stop, leave it behind "
+            "(the reset scripts delete it on purpose)" in text
+        )
+E       assert 'is never deleted by the desk: a refusal in any later step (6) to (12), and a normal stop, leave it behind (the reset scripts delete it on purpose)' in '# contract.md In this file "fake" and "recorded" are internal names for the demo stand-ins (`FakeCrm`, the `/fake/...... its own (`Desk._bounded`, see `docs/limits.md`). - A duplicate reply returns the id of the other lead: kept as it is.'
+
+tests/test_one_key_file_rule_r6.py:236: AssertionError
+_____________ test_retry_after_seconds_is_finite_and_not_negative ______________
+
+    def test_retry_after_seconds_is_finite_and_not_negative() -> None:
+>       assert envnum.retry_after_seconds("7") == 7.0 and envnum.retry_after_seconds("0") == 0.0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.envnum' has no attribute 'retry_after_seconds'
+
+tests/test_one_key_file_rule_r6.py:249: AttributeError
+________ test_the_four_sites_use_the_one_reader_and_refuse_inf_and_nan _________
+
+    def test_the_four_sites_use_the_one_reader_and_refuse_inf_and_nan() -> None:
+        from demo_only import burst
+        from lead_desk import crm_hubspot, live_claude
+    
+        sys.path.insert(0, str(REPO))
+        try:
+            from load_tools import load_driver
+        finally:
+            sys.path.remove(str(REPO))
+        for mod, name in ((crm_hubspot, "_retry_after"), (live_claude, "_retry_after")):
+>           assert not hasattr(mod, name), (mod.__name__, name)
+E           AssertionError: ('lead_desk.crm_hubspot', '_retry_after')
+E           assert not True
+E            +  where True = hasattr(<module 'lead_desk.crm_hubspot' from '/home/user/work/b15b-fix1/src/lead_desk/crm_hubspot.py'>, '_retry_after')
+
+tests/test_one_key_file_rule_r6.py:265: AssertionError
+________ test_the_load_drivers_stand_alone_copy_gives_the_same_answers _________
+
+    def test_the_load_drivers_stand_alone_copy_gives_the_same_answers() -> None:
+        sys.path.insert(0, str(REPO))
+        try:
+            from load_tools import load_driver
+        finally:
+            sys.path.remove(str(REPO))
+        for text in [*BAD_AFTER, "0", "7", "1.5", " 3 ", "1e2", ".5", "+4", "5."]:
+>           assert load_driver._retry_after_fallback(text) == envnum.retry_after_seconds(text), text
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'load_tools.load_driver' has no attribute '_retry_after_fallback'
+
+tests/test_one_key_file_rule_r6.py:283: AttributeError
+____ test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[NaN] ____
+
+arg = 'NaN'
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_live_check_refuses_a_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f74f3582710>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f3633380>
+
+    @pytest.mark.parametrize("arg", ["NaN", "Infinity", "-Infinity", "0", "-1", "abc"])
+    def test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive(
+        arg: str, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        mod = importlib.import_module("run_live_check")
+        base = ["--key-file", str(_put(tmp_path, KEY.encode())), "--ledger", str(tmp_path / "l.jsonl")]
+        base += ["--price-date", "2026-01-01", "--model", "m=1,2"]
+        for flag, other in (("--cap-run", "--cap-total"), ("--cap-total", "--cap-run")):
+>           with pytest.raises(SystemExit) as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SystemExit
+
+tests/test_one_key_file_rule_r6.py:296: Failed
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_LIVE_CAP_RUN_USD must be a positive number
+_ test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[Infinity] __
+
+arg = 'Infinity'
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_live_check_refuses_a_1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f74f3582e90>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f3632dd0>
+
+    @pytest.mark.parametrize("arg", ["NaN", "Infinity", "-Infinity", "0", "-1", "abc"])
+    def test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive(
+        arg: str, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        mod = importlib.import_module("run_live_check")
+        base = ["--key-file", str(_put(tmp_path, KEY.encode())), "--ledger", str(tmp_path / "l.jsonl")]
+        base += ["--price-date", "2026-01-01", "--model", "m=1,2"]
+        for flag, other in (("--cap-run", "--cap-total"), ("--cap-total", "--cap-run")):
+>           with pytest.raises(SystemExit) as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SystemExit
+
+tests/test_one_key_file_rule_r6.py:296: Failed
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_LIVE_CAP_RUN_USD must be a positive number
+_____ test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[0] _____
+
+arg = '0'
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_live_check_refuses_a_3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f74f360ed70>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f34e9d30>
+
+    @pytest.mark.parametrize("arg", ["NaN", "Infinity", "-Infinity", "0", "-1", "abc"])
+    def test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive(
+        arg: str, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        mod = importlib.import_module("run_live_check")
+        base = ["--key-file", str(_put(tmp_path, KEY.encode())), "--ledger", str(tmp_path / "l.jsonl")]
+        base += ["--price-date", "2026-01-01", "--model", "m=1,2"]
+        for flag, other in (("--cap-run", "--cap-total"), ("--cap-total", "--cap-run")):
+>           with pytest.raises(SystemExit) as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SystemExit
+
+tests/test_one_key_file_rule_r6.py:296: Failed
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_LIVE_CAP_RUN_USD must be a positive number
+____ test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[-1] _____
+
+arg = '-1'
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-20/test_the_live_check_refuses_a_4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f74f3400b90>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f74f34eb150>
+
+    @pytest.mark.parametrize("arg", ["NaN", "Infinity", "-Infinity", "0", "-1", "abc"])
+    def test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive(
+        arg: str, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        mod = importlib.import_module("run_live_check")
+        base = ["--key-file", str(_put(tmp_path, KEY.encode())), "--ledger", str(tmp_path / "l.jsonl")]
+        base += ["--price-date", "2026-01-01", "--model", "m=1,2"]
+        for flag, other in (("--cap-run", "--cap-total"), ("--cap-total", "--cap-run")):
+>           with pytest.raises(SystemExit) as e:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE SystemExit
+
+tests/test_one_key_file_rule_r6.py:296: Failed
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_LIVE_CAP_RUN_USD must be a positive number
+____________ test_a_person_never_reads_lead_book_without_the_hyphen ____________
+
+    def test_a_person_never_reads_lead_book_without_the_hyphen() -> None:
+        hits: list[str] = []
+        for p in sorted(REPO.rglob("*")):
+            if not p.is_file() or p.suffix not in {".py", ".md", ".sh", ".ps1", ".sql", ".txt", ".json", ".yml"}:
+                continue
+            rel = p.relative_to(REPO)
+            if rel.parts[0] in {".git", ".venv", "data", "node_modules"} or "__pycache__" in rel.parts:
+                continue
+            if p.name == "test_one_key_file_rule_r6.py":
+                continue
+            for n, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                if rel.parts[0] == "tests" and '"lead book"' in line:  # a test that names the wrong word on purpose
+                    continue
+                if re.search(r"lead book", line, re.I):
+                    hits.append(f"{rel}:{n}")
+>       assert hits == [], hits
+E       AssertionError: ['SECURITY.md:4', 'demo_only/portal_demo.py:11', 'demo_only/portal_demo.py:79', 'scripts/reset.ps1:1', 'scripts/reset.sh:2', 'scripts/reset_check.py:2', ...]
+E       assert ['SECURITY.md...ck.py:2', ...] == []
+E         
+E         Left contains 40 more items, first extra item: 'SECURITY.md:4'
+E         Use -v to get more diff
+
+tests/test_one_key_file_rule_r6.py:319: AssertionError
+_______________ test_run_real_check_looks_at_the_book_path_once ________________
+
+    def test_run_real_check_looks_at_the_book_path_once() -> None:
+        text = (REPO / "scripts" / "run_real_check.py").read_text(encoding="utf-8")
+>       assert text.count("path_kind(db)") == 1
+E       assert 2 == 1
+E        +  where 2 = <built-in method count of str object at 0x40715030>('path_kind(db)')
+E        +    where <built-in method count of str object at 0x40715030> = '"""Real services run: the desk with a REAL CRM (HubSpot free plan) and REAL e-mail (Gmail over SMTP), then a read-bac...e)\n    return 0 if result["ok"] and not left else EXIT_FAILED\n\n\nif __name__ == "__main__":\n    sys.exit(main())\n'.count
+
+tests/test_one_key_file_rule_r6.py:375: AssertionError
+_ test_the_docs_name_the_outbox_values_where_they_say_which_outbox_reports_a_bad_key_file _
+
+    def test_the_docs_name_the_outbox_values_where_they_say_which_outbox_reports_a_bad_key_file() -> None:
+        from lead_desk import loader
+    
+        assert loader.SMTP_PROVIDER_MODULE and loader.SMTP_MODULE  # premise: both values are loaded by the loader
+        for name in ("contract.md", "docs/limits.md"):
+            text = " ".join((REPO / name).read_text(encoding="utf-8").split())
+>           assert "the SMTP provider (`DESK_OUTBOX=smtp_provider`) or the SMTP sender (`DESK_OUTBOX=smtp`) as outbox" in text
+E           assert 'the SMTP provider (`DESK_OUTBOX=smtp_provider`) or the SMTP sender (`DESK_OUTBOX=smtp`) as outbox' in '# contract.md In this file "fake" and "recorded" are internal names for the demo stand-ins (`FakeCrm`, the `/fake/...... its own (`Desk._bounded`, see `docs/limits.md`). - A duplicate reply returns the id of the other lead: kept as it is.'
+
+tests/test_one_key_file_rule_r6.py:384: AssertionError
+_______________ test_the_old_weak_fake_server_size_test_is_gone ________________
+
+    def test_the_old_weak_fake_server_size_test_is_gone() -> None:
+        text = (REPO / "tests" / "test_one_key_file_rule_and_path_walk.py").read_text(encoding="utf-8")
+>       assert "test_the_fake_model_server_reads_a_key_file_with_a_size_cap" not in text
+E       assert 'test_the_fa...h_a_size_cap' not in '"""One rule...pace=True)\n'
+E         
+E         'test_the_fake_mode...ile_with_a_size_cap' is contained here:
+E           bad
+E           
+E           
+E           def test_the_fake_model_server_reads_a_key_file_with_a_size_cap(
+E               tmp_path: Path, monkeypatch: pytest.MonkeyPatch...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_one_key_file_rule_r6.py:390: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-file-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-form-feed]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-ideographic-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-next-line]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-no-break-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-unit-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-start-vertical-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-file-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-form-feed]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-ideographic-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-next-line]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-no-break-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-unit-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[False-end-vertical-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-file-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-form-feed]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-ideographic-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-next-line]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-no-break-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-unit-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-start-vertical-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-file-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-form-feed]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-ideographic-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-next-line]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-no-break-space]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-unit-separator]
+FAILED tests/test_one_key_file_rule_r6.py::test_any_blank_but_the_line_end_at_the_end_of_the_file_is_refused[True-end-vertical-tab]
+FAILED tests/test_one_key_file_rule_r6.py::test_a_plain_space_is_refused_for_a_key_and_dropped_for_the_password[start]
+FAILED tests/test_one_key_file_rule_r6.py::test_a_plain_space_is_refused_for_a_key_and_dropped_for_the_password[end]
+FAILED tests/test_one_key_file_rule_r6.py::test_only_one_line_end_at_the_very_end_is_removed[made-up-key-0123456789\n\n-False]
+FAILED tests/test_one_key_file_rule_r6.py::test_only_one_line_end_at_the_very_end_is_removed[made-up-key-0123456789\r-False]
+FAILED tests/test_one_key_file_rule_r6.py::test_only_one_line_end_at_the_very_end_is_removed[\nmade-up-key-0123456789-False]
+FAILED tests/test_one_key_file_rule_r6.py::test_only_one_line_end_at_the_very_end_is_removed[made-up-key-0123456789\n -False]
+FAILED tests/test_one_key_file_rule_r6.py::test_the_reader_opens_the_file_without_taking_a_terminal
+FAILED tests/test_one_key_file_rule_r6.py::test_the_docs_state_the_line_end_rule
+FAILED tests/test_one_key_file_rule_r6.py::test_the_n8n_script_reads_its_key_with_the_one_rule
+FAILED tests/test_one_key_file_rule_r6.py::test_the_n8n_script_does_not_block_on_a_named_pipe
+FAILED tests/test_one_key_file_rule_r6.py::test_the_fake_model_server_key_file_uses_the_one_rule_and_exits_2
+FAILED tests/test_one_key_file_rule_r6.py::test_no_code_outside_envnum_opens_a_secret_file
+FAILED tests/test_one_key_file_rule_r6.py::test_the_smtp_wrapper_is_named_for_the_password
+FAILED tests/test_one_key_file_rule_r6.py::test_the_mailbox_password_sentence_is_in_the_docs
+FAILED tests/test_one_key_file_rule_r6.py::test_the_lock_sentence_and_exit_4_at_step_12
+FAILED tests/test_one_key_file_rule_r6.py::test_retry_after_seconds_is_finite_and_not_negative
+FAILED tests/test_one_key_file_rule_r6.py::test_the_four_sites_use_the_one_reader_and_refuse_inf_and_nan
+FAILED tests/test_one_key_file_rule_r6.py::test_the_load_drivers_stand_alone_copy_gives_the_same_answers
+FAILED tests/test_one_key_file_rule_r6.py::test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[NaN]
+FAILED tests/test_one_key_file_rule_r6.py::test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[Infinity]
+FAILED tests/test_one_key_file_rule_r6.py::test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[0]
+FAILED tests/test_one_key_file_rule_r6.py::test_the_live_check_refuses_a_cap_that_is_not_finite_and_positive[-1]
+FAILED tests/test_one_key_file_rule_r6.py::test_a_person_never_reads_lead_book_without_the_hyphen
+FAILED tests/test_one_key_file_rule_r6.py::test_run_real_check_looks_at_the_book_path_once
+FAILED tests/test_one_key_file_rule_r6.py::test_the_docs_name_the_outbox_values_where_they_say_which_outbox_reports_a_bad_key_file
+FAILED tests/test_one_key_file_rule_r6.py::test_the_old_weak_fake_server_size_test_is_gone
+58 failed, 27 passed in 4.09s

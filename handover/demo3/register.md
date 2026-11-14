@@ -301,3 +301,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B15b (a63a553c) | RUNNING from 05:02Z | resumes fix-2 r6 in b15-tree; stop ~06:00Z |
 | B14b (a15d4725) | RUNNING from 05:02Z | resumes fix-10 in b14-tree; stop ~06:00Z |
 | B16 (a9b26c2d) | RUNNING from 05:06Z | fix-5 r7 from the resolve plan; stop ~06:05Z; full run required |
+| LEAD ANSWER to HB95 | applied 05:13Z | bash 4.4 kept, number stated once (README) + reason in refusal text; pwsh only from distro package manager; hand-backs must say share of plan covered by resumed work and what was re-checked by diff. Sent to B16, B15b, B14b by SendMessage. |
