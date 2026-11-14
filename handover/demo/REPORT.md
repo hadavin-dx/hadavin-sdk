@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 03:17Z: TWO LANES RUNNING
+- LOAD: 3 agents/jobs: B (clean-machine suite, chunks 06+ running), D (doc patch for gitleaks note and gaps G2 G3 G5 G6 G8 on the frozen tree), and the n8n RERUN prep (my own shell, not an agent): npm ci of the harness lock under Node 24.22.2 running since 03:12Z (about 6 to 20 min).
+- N8N RERUN so far (branch n8n-evidence-rerun, one commit ad612e2, sums.py check: ok): Node 24.22.2 downloaded per its README with the SHA-256 check, v24.22.2; ports 5679 5780 8790 55432 free before start; dockerd up (default socket, 1 s); the harness pins postgres by digest f9a7b9eb... (NOT the digest from my probe): pulled on try 1 (642 MB). Free disk 8.5G after I deleted old review scratch of mine in /tmp/work (about 10G, rv* and sn-v4-drv from 13 Nov morning).
+- Smoke run: skipped for now (own npm ci = 3 more GB, 6+ min); full run goes straight after npm ci and the quiet check. Quiet needs B finished: B is still running, so the full run starts when B ends.
+- C2 (end-to-end on python 3.13) DONE: 3 distinct people -> 3 CRM contacts, 3 mails, received 5 / new 3 / duplicate 2, crash at D2 then restart then re-send: 0 pending, no second mail. Same two doc gaps as C (stop the desk first; lead-flow settings missing in crash script and hand start).
+
 ## REPORT 03:08Z: CLEAN-MACHINE: B running (chunk 06 of 12), C2 running (end-to-end on python 3.13), reviewer R done
 - LOAD: 2 agents running (B suite, C2 e2e 3.13).
 - B so far: chunks 00,01,04,05 pass. Chunks 02 and 03 FAILED (30 tests) only because the gitleaks program is not installed on a clean machine (message "gitleaks binary not found: put it on PATH or set GITLEAKS_BIN") with DPLD_REQUIRE_SCAN=1. Re-run with the 8.30.1 binary: both rc 0. FINDING: a stranger running the suite as the order says hits this; need to check whether any doc tells them to install gitleaks.
