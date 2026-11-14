@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 07:41 UTC / 13:11 IST
+
+**FAILING ID ANSWER for the r7k "mail group": it did NOT fail on an id.** From the builder's own checkpoint file (I read every CLEAN line, all on its tree-R7K): 07:06 mail 1 failed / 556 passed; 07:08 live 1 failed / 472 passed (these two were the known r7f test on the not-yet-fixed tree); then after the M1 fix: 07:29 mail 593 passed **rc 1**, 07:31 live 509 passed rc 0, 07:34 crm 465 passed **rc 1**, 07:36 reg 587 passed rc 0, 07:40 tls 760 passed **rc 1**. So three groups print only passes but the wrapper returns 1: UNEXPLAINED. I did not see this in EV7I or EV7J (their rc matched their failure counts). Suspects: the lo_up driver exit code on a leftover socket or child, a leaked thread or process from a new r7k test, or a runner artefact in its cleans.py. I told the builder to find the cause, state it in R7K-RESULTS.md and fix a leaking test; it may not hand back with this open. EV7K (full run on the merged bytes) is the real check.
+
+**PASS 10: M9-16 (smtp_provider.py:154, default ports ssl and starttls swapped) SURVIVED the big set (493 s) = REAL GAP; M9-69 (Start question) REAL GAP; both sent to r7k** (it holds the tests for M9-69 in the test table I gave; M9-16 added). M9-68 argued EQUIVALENT by pass 10 (I have not read the argument). Lane A (run_real_check M9-70..82) and lane B (other rows plus jsonread) continue.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6bc3c56 (r7k builder) | pass 9 gaps, N05/N06, r7j review M1-M3 m1-m4, M9-69, M9-16 | fix-dont-defer | 06:52 / 12:22 | box about 07:51; will run over (two new items + the rc question): I allow until 08:10 | r7k | RUNNING: clean group runs on its final-bytes tree in progress (above); fail-before 42 FAILED on r7j (its claim); all its mutants KILLED (its claim) | hand-back; EV7K + fresh r7k reviewer |
+| a762c1d8 (r7l builder) | r7i review F1-F4 and minors, test-only (+ small source fix if a real defect) | fix-dont-defer | 07:17 / 12:47 | about 08:17 | r7l | RUNNING (07:30: reader/lingerer pins added; S2, S3 survivors re-running) | hand-back |
+| a01f7117 (pass 10) | run_real_check M9-70..82, other unrun rows, jsonread | your order | 06:57 / 12:27 | about 07:57 | pass 10 | RUNNING | mail-pass10-r7j.md |
+
+Agents running: 3. Done: EV7J, EV7I, EV7H, r7i and r7j reviewers, pass 9.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| rc 1 with all-passed clean groups on r7k | unexplained | builder to explain; EV7K |
+| r7k and r7l hand-backs; merge into one tree (r7m); EV7K full run; fresh r7k and r7l reviewers | running | files disjoint (r7l touches smtp_outbox, smtp_provider, imap_count, server only if a defect: then I check overlap with r7k's M9-16 test/fix in smtp_provider.py) |
+| rest of pass 10, M9-68 equivalence argument | running / not read | read the report |
+| older packages' hashes, first clean-set CRASH, orphan-worker test | no evidence | README |
+| PowerShell scripts never run, Windows, Python 3.14, real IPv6-less host, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7k and r7l hand-backs: verify sha256, copy (CRLF as .gz), merge, apply matrix, EV7K full run on the merged bytes with fresh reviewers for r7k and r7l.
+2. Read pass 10's final report; any further real gap goes to a short r7m test-only delta.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep, report counts.
+
+
 ## STATUS (core lead) 07:31 UTC / 13:01 IST
 
 **EV7J (the full run on r7j) DONE: 8 failed, 5594 passed, 8 skipped, 1842 s, rc 1. 7 failures = the same ids as EV7G and EV7I; the 8th is the NEW one on r7j: tests/test_r7f_findings.py::test_f1_a_connect_that_never_completes_ends_at_the_total_not_at_the_step** (ImapConnectionError instead of ImapTotalTimeout; it fails again alone on r7j, passes alone on r7i, 79 passed). The runner's cause matches the reviewer's M1: this host has no IPv6 (errno 97), r7j's localhost shortcut returns 127.0.0.1 then ::1; 127.0.0.1 hangs in the test, ::1 fails at once and that error wins. So **r7j is NOT deliverable as is**; r7k fixes it. EV7J as the base for r7k: ids (7 + 1) are all explained. Other EV7J numbers (runner's): staged git files each alone all pass (24, 114, 3, 146, 11, 2, 44, 4); ruff 0.17.1 clean (222 files); marker counts equal r7g (noqa 176, nosemgrep 40, type: ignore 126); hostile table: 20 hosts no traceback and 0 stderr bytes, **burst:4 now exits 3 after 61.8 s with one 248-byte stderr line (EV7G gave 0)**, first address silent with a 3 s total now connects after 1.5 s, 8 silent + 1 good at 1.2 s connected in 1.07 s. Runner slips (disclosed): ruff cache folder (43 files) sat in the tree during the full run (git-ignored; run not repeated); six git files ran twice. Not run: Windows, real IPv6, mutation.
