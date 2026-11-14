@@ -1,5 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 12:10Z - heartbeat: idle, nothing running, waiting for laptop T14 old/fixed and F8B (results from about 12:40Z); nothing new pushed.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Fix and T14 untested by me; no kill-point result; T4, T7, pattern check, N8N-START.md, real-node flows, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read laptop results from 12:40Z. 2. Lead id pattern check (flows text edit). 3. N8N-START.md text.
+
 ## Block 12:00Z - T14 and T10 on the fixed flows NOT run here: no space; the laptop runner does them
 
 - Space check: root volume shows about 175 MB free. A run here needs a fresh Postgres data folder (initdb, tens of MB), n8n's SQLite file with its migrations (tens of MB), logs and the work folder; that is more than the few MB you allowed, and a full disk mid-run would also break my pushes. So I did not start T14 or T10. I did not delete anything.
