@@ -1,0 +1,7 @@
+{"t": 1794676229.021, "src": "crm", "ev": "up", "port": 18201}
+{"t": 1794676229.029, "src": "stage", "ev": "up", "port": 18202}
+{"t": 1794676229.036, "src": "smtp", "ev": "up", "port": 2625}
+{"t": 1794676236.956, "src": "stage", "ev": "qualify_start", "lead": "L-fl45k3b", "n": 1}
+{"t": 1794676236.994, "src": "crm", "ev": "upsert_start", "lead": "L-fl45k3b"}
+{"t": 1794676236.994, "src": "crm", "ev": "upsert_stored", "lead": "L-fl45k3b", "created": true}
+{"t": 1794676237.043, "src": "smtp", "ev": "connect"}

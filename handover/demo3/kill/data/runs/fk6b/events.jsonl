@@ -1,0 +1,13 @@
+{"t": 1794665997.47, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794665997.473, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794665997.478, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794666004.428, "src": "stage", "ev": "qualify_start", "lead": "L-fk6b", "n": 1}
+{"t": 1794666004.458, "src": "crm", "ev": "upsert_start", "lead": "L-fk6b"}
+{"t": 1794666004.459, "src": "crm", "ev": "upsert_stored", "lead": "L-fk6b", "created": true}
+{"t": 1794666004.507, "src": "smtp", "ev": "connect"}
+{"t": 1794666004.559, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-fk6b", "rcpt": ["intake@example.test"]}
+{"t": 1794666154.138, "src": "stage", "ev": "qualify_repeat", "lead": "L-fk6b", "answered": true, "label": "cold"}
+{"t": 1794666154.193, "src": "crm", "ev": "upsert_start", "lead": "L-fk6b"}
+{"t": 1794666154.194, "src": "crm", "ev": "upsert_stored", "lead": "L-fk6b", "created": false}
+{"t": 1794666154.35, "src": "smtp", "ev": "connect"}
+{"t": 1794666154.402, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: mail outcome unknown for L-fk6b", "rcpt": ["alerts@example.test"]}

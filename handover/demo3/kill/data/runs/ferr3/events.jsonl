@@ -1,0 +1,26 @@
+{"t": 1794664722.865, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794664722.866, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794664722.874, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794664730.284, "src": "stage", "ev": "qualify_start", "lead": "L-ferr3", "n": 1}
+{"t": 1794664730.312, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794664730.314, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794664731.324, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794664731.325, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794664732.333, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794664732.334, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794664879.69, "src": "stage", "ev": "qualify_repeat", "lead": "L-ferr3", "answered": true, "label": "hot"}
+{"t": 1794664879.698, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794664879.699, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794664880.706, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794664880.707, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794664881.717, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794664881.718, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794664999.711, "src": "stage", "ev": "qualify_repeat", "lead": "L-ferr3", "answered": true, "label": "hot"}
+{"t": 1794664999.723, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794664999.723, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794665000.732, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794665000.733, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794665001.742, "src": "crm", "ev": "upsert_start", "lead": "L-ferr3"}
+{"t": 1794665001.743, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr3", "status": 500}
+{"t": 1794665119.65, "src": "smtp", "ev": "connect"}
+{"t": 1794665119.703, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed L-ferr3", "rcpt": ["alerts@example.test"]}

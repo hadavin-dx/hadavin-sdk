@@ -1,0 +1,8 @@
+{"t": 1794660179.707, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794660179.714, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794660179.725, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794660188.031, "src": "stage", "ev": "qualify_start", "lead": "L-jb2", "n": 1}
+{"t": 1794660188.063, "src": "crm", "ev": "upsert_start", "lead": "L-jb2"}
+{"t": 1794660188.063, "src": "crm", "ev": "upsert_stored", "lead": "L-jb2", "created": true}
+{"t": 1794660188.104, "src": "smtp", "ev": "connect"}
+{"t": 1794660188.155, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-jb2", "rcpt": ["intake@example.test"]}

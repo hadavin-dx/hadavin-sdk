@@ -1,0 +1,10 @@
+{"t": 1794674285.278, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794674285.283, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794674285.284, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794674293.83, "src": "stage", "ev": "qualify_start", "lead": "L-v4k1a", "n": 1}
+{"t": 1794674299.832, "src": "stage", "ev": "peer_closed_before_answer", "path": "/qualify"}
+{"t": 1794674443.542, "src": "stage", "ev": "qualify_repeat", "lead": "L-v4k1a", "answered": true, "label": "warm"}
+{"t": 1794674443.585, "src": "crm", "ev": "upsert_start", "lead": "L-v4k1a"}
+{"t": 1794674443.585, "src": "crm", "ev": "upsert_stored", "lead": "L-v4k1a", "created": true}
+{"t": 1794674443.705, "src": "smtp", "ev": "connect"}
+{"t": 1794674443.754, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-v4k1a", "rcpt": ["intake@example.test"]}

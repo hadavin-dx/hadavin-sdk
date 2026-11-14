@@ -1,0 +1,9 @@
+{"t": 1794668597.98, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794668597.984, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794668597.986, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794668605.874, "src": "stage", "ev": "qualify_start", "lead": "L-fc1a", "n": 1}
+{"t": 1794668605.905, "src": "crm", "ev": "upsert_start", "lead": "L-fc1a"}
+{"t": 1794668605.906, "src": "crm", "ev": "upsert_stored", "lead": "L-fc1a", "created": true}
+{"t": 1794668605.961, "src": "smtp", "ev": "connect"}
+{"t": 1794668635.989, "src": "smtp", "ev": "connect"}
+{"t": 1794668636.039, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: mail outcome unknown for L-fc1a", "rcpt": ["alerts@example.test"]}

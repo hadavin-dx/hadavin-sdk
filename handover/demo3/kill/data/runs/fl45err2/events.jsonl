@@ -1,0 +1,20 @@
+{"t": 1794676956.124, "src": "smtp", "ev": "up", "port": 2625}
+{"t": 1794676956.137, "src": "crm", "ev": "up", "port": 18201}
+{"t": 1794676956.139, "src": "stage", "ev": "up", "port": 18202}
+{"t": 1794676965.374, "src": "stage", "ev": "qualify_start", "lead": "L-fl45err2", "n": 1}
+{"t": 1794676965.405, "src": "crm", "ev": "upsert_start", "lead": "L-fl45err2"}
+{"t": 1794676965.406, "src": "crm", "ev": "upsert_refused", "lead": "L-fl45err2", "status": 500}
+{"t": 1794676966.416, "src": "crm", "ev": "upsert_start", "lead": "L-fl45err2"}
+{"t": 1794676966.418, "src": "crm", "ev": "upsert_refused", "lead": "L-fl45err2", "status": 500}
+{"t": 1794677024.831, "src": "stage", "ev": "qualify_repeat", "lead": "L-fl45err2", "answered": true, "label": "cold"}
+{"t": 1794677024.84, "src": "crm", "ev": "upsert_start", "lead": "L-fl45err2"}
+{"t": 1794677024.841, "src": "crm", "ev": "upsert_refused", "lead": "L-fl45err2", "status": 500}
+{"t": 1794677025.849, "src": "crm", "ev": "upsert_start", "lead": "L-fl45err2"}
+{"t": 1794677025.85, "src": "crm", "ev": "upsert_refused", "lead": "L-fl45err2", "status": 500}
+{"t": 1794677084.827, "src": "stage", "ev": "qualify_repeat", "lead": "L-fl45err2", "answered": true, "label": "cold"}
+{"t": 1794677084.837, "src": "crm", "ev": "upsert_start", "lead": "L-fl45err2"}
+{"t": 1794677084.838, "src": "crm", "ev": "upsert_refused", "lead": "L-fl45err2", "status": 500}
+{"t": 1794677085.848, "src": "crm", "ev": "upsert_start", "lead": "L-fl45err2"}
+{"t": 1794677085.849, "src": "crm", "ev": "upsert_refused", "lead": "L-fl45err2", "status": 500}
+{"t": 1794677144.78, "src": "smtp", "ev": "connect"}
+{"t": 1794677144.831, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed L-fl45err2", "rcpt": ["alerts@example.test"]}

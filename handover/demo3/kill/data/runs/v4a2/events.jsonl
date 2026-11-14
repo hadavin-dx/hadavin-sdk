@@ -1,0 +1,15 @@
+{"t": 1794672774.31, "src": "stage", "ev": "up", "port": 18302}
+{"t": 1794672774.314, "src": "crm", "ev": "up", "port": 18301}
+{"t": 1794672774.321, "src": "smtp", "ev": "up", "port": 2725}
+{"t": 1794672782.005, "src": "stage", "ev": "qualify_start", "lead": "L-v4a2", "n": 1}
+{"t": 1794672782.03, "src": "crm", "ev": "upsert_start", "lead": "L-v4a2"}
+{"t": 1794672782.031, "src": "crm", "ev": "upsert_stored", "lead": "L-v4a2", "created": true}
+{"t": 1794672782.073, "src": "smtp", "ev": "connect"}
+{"t": 1794672782.123, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-v4a2", "rcpt": ["intake@example.test"]}
+{"t": 1794672782.123, "src": "smtp", "ev": "dropped_after_store"}
+{"t": 1794672811.442, "src": "smtp", "ev": "connect"}
+{"t": 1794672811.446, "src": "smtp", "ev": "alert_rcpt_refused", "n": 1}
+{"t": 1794672901.396, "src": "smtp", "ev": "connect"}
+{"t": 1794672901.398, "src": "smtp", "ev": "alert_rcpt_refused", "n": 2}
+{"t": 1794673051.398, "src": "smtp", "ev": "connect"}
+{"t": 1794673051.442, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: mail outcome unknown for L-v4a2", "rcpt": ["alerts@example.test"]}

@@ -1,0 +1,16 @@
+{"t": 1794659943.095, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794659943.1, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794659943.104, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794659950.981, "src": "stage", "ev": "qualify_start", "lead": "L-jfc", "n": 1}
+{"t": 1794659951.009, "src": "crm", "ev": "upsert_start", "lead": "L-jfc"}
+{"t": 1794659951.01, "src": "crm", "ev": "upsert_stored", "lead": "L-jfc", "created": true}
+{"t": 1794659951.056, "src": "smtp", "ev": "connect"}
+{"t": 1794659980.449, "src": "stage", "ev": "qualify_start", "lead": "None", "n": 1}
+{"t": 1794659980.461, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794659980.462, "src": "crm", "ev": "upsert_stored", "lead": null, "created": true}
+{"t": 1794659980.505, "src": "smtp", "ev": "connect"}
+{"t": 1794659981.084, "src": "smtp", "ev": "connect"}
+{"t": 1794660010.41, "src": "stage", "ev": "qualify_repeat", "lead": "None", "answered": true, "label": "warm"}
+{"t": 1794660010.42, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794660010.421, "src": "crm", "ev": "upsert_stored", "lead": null, "created": false}
+{"t": 1794660010.446, "src": "smtp", "ev": "connect"}

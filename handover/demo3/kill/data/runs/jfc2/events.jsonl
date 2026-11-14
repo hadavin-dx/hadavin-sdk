@@ -1,0 +1,16 @@
+{"t": 1794666819.284, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794666819.292, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794666819.299, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794666826.95, "src": "stage", "ev": "qualify_start", "lead": "L-jfc2", "n": 1}
+{"t": 1794666826.98, "src": "crm", "ev": "upsert_start", "lead": "L-jfc2"}
+{"t": 1794666826.981, "src": "crm", "ev": "upsert_stored", "lead": "L-jfc2", "created": true}
+{"t": 1794666827.024, "src": "smtp", "ev": "connect"}
+{"t": 1794666856.426, "src": "stage", "ev": "qualify_start", "lead": "None", "n": 1}
+{"t": 1794666856.438, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794666856.438, "src": "crm", "ev": "upsert_stored", "lead": null, "created": true}
+{"t": 1794666856.485, "src": "smtp", "ev": "connect"}
+{"t": 1794666857.05, "src": "smtp", "ev": "connect"}
+{"t": 1794666886.43, "src": "stage", "ev": "qualify_repeat", "lead": "None", "answered": true, "label": "warm"}
+{"t": 1794666886.44, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794666886.44, "src": "crm", "ev": "upsert_stored", "lead": null, "created": false}
+{"t": 1794666886.465, "src": "smtp", "ev": "connect"}

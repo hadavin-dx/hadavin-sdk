@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/demo3/kill/fakes.py", line 301, in <module>
+    srv = {"crm": crm, "stage": stage, "smtp": smtp}[kind](port, workdir)
+  File "/home/user/hadavin-sdk/handover/demo3/kill/fakes.py", line 174, in stage
+    return ThreadingHTTPServer(("127.0.0.1", port), make_http("stage", workdir, handle))
+  File "/usr/local/lib/python3.13/socketserver.py", line 457, in __init__
+    self.server_bind()
+    ~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 140, in server_bind
+    socketserver.TCPServer.server_bind(self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 98] Address already in use

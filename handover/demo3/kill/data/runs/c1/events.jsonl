@@ -1,0 +1,8 @@
+{"t": 1794655463.351, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794655463.353, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794655463.357, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794655471.239, "src": "stage", "ev": "qualify_start", "lead": "L-c1", "n": 1}
+{"t": 1794655471.272, "src": "crm", "ev": "search", "lead": "L-c1"}
+{"t": 1794655471.292, "src": "crm", "ev": "create", "lead": "L-c1"}
+{"t": 1794655471.342, "src": "smtp", "ev": "connect"}
+{"t": 1794655471.395, "src": "smtp", "ev": "stored", "subject": "Thanks, ref L-c1", "rcpt": ["a.kumar@example.test"]}

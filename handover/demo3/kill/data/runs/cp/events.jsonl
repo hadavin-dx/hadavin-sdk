@@ -1,0 +1,13 @@
+{"t": 1794656790.724, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794656790.724, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794656790.736, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794656798.849, "src": "stage", "ev": "qualify_start", "lead": "L-cp-a", "n": 1}
+{"t": 1794656798.884, "src": "crm", "ev": "upsert_start", "lead": "L-cp-a"}
+{"t": 1794656798.885, "src": "crm", "ev": "upsert_stored", "lead": "L-cp-a", "created": true}
+{"t": 1794656798.933, "src": "smtp", "ev": "connect"}
+{"t": 1794656798.965, "src": "stage", "ev": "qualify_start", "lead": "L-cp-b", "n": 1}
+{"t": 1794656798.976, "src": "crm", "ev": "upsert_start", "lead": "L-cp-b"}
+{"t": 1794656798.977, "src": "crm", "ev": "upsert_stored", "lead": "L-cp-b", "created": false}
+{"t": 1794656798.991, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-cp-a", "rcpt": ["intake@example.test"]}
+{"t": 1794656799.016, "src": "smtp", "ev": "connect"}
+{"t": 1794656799.079, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-cp-b", "rcpt": ["intake@example.test"]}

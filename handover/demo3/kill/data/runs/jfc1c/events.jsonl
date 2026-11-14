@@ -1,0 +1,14 @@
+{"t": 1794669038.029, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794669038.039, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794669038.045, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794669046.903, "src": "stage", "ev": "qualify_start", "lead": "L-jfc1c", "n": 1}
+{"t": 1794669046.933, "src": "crm", "ev": "upsert_start", "lead": "L-jfc1c"}
+{"t": 1794669046.933, "src": "crm", "ev": "upsert_stored", "lead": "L-jfc1c", "created": true}
+{"t": 1794669046.978, "src": "smtp", "ev": "connect"}
+{"t": 1794669076.341, "src": "stage", "ev": "qualify_start", "lead": "None", "n": 1}
+{"t": 1794669076.351, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794669076.352, "src": "crm", "ev": "upsert_stored", "lead": null, "created": true}
+{"t": 1794669076.399, "src": "smtp", "ev": "connect"}
+{"t": 1794669076.451, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed undefined", "rcpt": ["alerts@example.test"]}
+{"t": 1794669077.005, "src": "smtp", "ev": "connect"}
+{"t": 1794669077.051, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: mail outcome unknown for L-jfc1c", "rcpt": ["alerts@example.test"]}

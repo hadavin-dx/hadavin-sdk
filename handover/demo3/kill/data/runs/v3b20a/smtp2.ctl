@@ -1,0 +1,1 @@
+{"alert_hold_s": 20}

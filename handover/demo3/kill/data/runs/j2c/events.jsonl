@@ -1,0 +1,34 @@
+{"t": 1794658364.84, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794658364.842, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794658364.842, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794658373.015, "src": "stage", "ev": "qualify_start", "lead": "L-j2c", "n": 1}
+{"t": 1794658373.048, "src": "crm", "ev": "upsert_start", "lead": "L-j2c"}
+{"t": 1794658373.049, "src": "crm", "ev": "upsert_stored", "lead": "L-j2c", "created": true}
+{"t": 1794658379.05, "src": "crm", "ev": "peer_closed_before_answer", "path": "/upsert"}
+{"t": 1794658402.818, "src": "stage", "ev": "qualify_start", "lead": "None", "n": 1}
+{"t": 1794658402.894, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794658402.895, "src": "crm", "ev": "upsert_stored", "lead": null, "created": true}
+{"t": 1794658402.951, "src": "smtp", "ev": "connect"}
+{"t": 1794658403.003, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed undefined", "rcpt": ["alerts@example.test"]}
+{"t": 1794658432.413, "src": "stage", "ev": "qualify_repeat", "lead": "None", "answered": true, "label": "warm"}
+{"t": 1794658432.425, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794658432.426, "src": "crm", "ev": "upsert_stored", "lead": null, "created": false}
+{"t": 1794658432.464, "src": "smtp", "ev": "connect"}
+{"t": 1794658432.515, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed undefined", "rcpt": ["alerts@example.test"]}
+{"t": 1794658462.403, "src": "stage", "ev": "qualify_repeat", "lead": "None", "answered": true, "label": "warm"}
+{"t": 1794658462.411, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794658462.411, "src": "crm", "ev": "upsert_stored", "lead": null, "created": false}
+{"t": 1794658462.436, "src": "smtp", "ev": "connect"}
+{"t": 1794658462.483, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed undefined", "rcpt": ["alerts@example.test"]}
+{"t": 1794658492.405, "src": "stage", "ev": "qualify_repeat", "lead": "None", "answered": true, "label": "warm"}
+{"t": 1794658492.413, "src": "crm", "ev": "upsert_start", "lead": null}
+{"t": 1794658492.414, "src": "crm", "ev": "upsert_stored", "lead": null, "created": false}
+{"t": 1794658492.439, "src": "smtp", "ev": "connect"}
+{"t": 1794658492.483, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed undefined", "rcpt": ["alerts@example.test"]}
+{"t": 1794658522.432, "src": "stage", "ev": "qualify_repeat", "lead": "L-j2c", "answered": true, "label": "warm"}
+{"t": 1794658522.446, "src": "crm", "ev": "upsert_start", "lead": "L-j2c"}
+{"t": 1794658522.447, "src": "crm", "ev": "upsert_stored", "lead": "L-j2c", "created": false}
+{"t": 1794658522.495, "src": "smtp", "ev": "connect"}
+{"t": 1794658522.543, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-j2c", "rcpt": ["intake@example.test"]}
+{"t": 1794658522.577, "src": "smtp", "ev": "connect"}
+{"t": 1794658522.623, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed undefined", "rcpt": ["alerts@example.test"]}

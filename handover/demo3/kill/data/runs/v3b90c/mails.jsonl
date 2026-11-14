@@ -1,0 +1,3 @@
+{"t": 1794671772.634, "rcpt": ["intake@example.test"], "subject": "[demo] lead L-v3b90c"}
+{"t": 1794671861.942, "rcpt": ["alerts@example.test"], "subject": "[demo] Lead desk: mail outcome unknown for L-v3b90c"}
+{"t": 1794671891.954, "rcpt": ["alerts@example.test"], "subject": "[demo] Lead desk: mail outcome unknown for L-v3b90c"}

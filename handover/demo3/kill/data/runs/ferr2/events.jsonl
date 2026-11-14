@@ -1,0 +1,26 @@
+{"t": 1794664277.82, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794664277.823, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794664277.823, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794664286.755, "src": "stage", "ev": "qualify_start", "lead": "L-ferr2", "n": 1}
+{"t": 1794664286.79, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664286.791, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664287.804, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664287.805, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664288.816, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664288.819, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664436.211, "src": "stage", "ev": "qualify_repeat", "lead": "L-ferr2", "answered": true, "label": "cold"}
+{"t": 1794664436.224, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664436.225, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664437.235, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664437.236, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664438.249, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664438.25, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664556.221, "src": "stage", "ev": "qualify_repeat", "lead": "L-ferr2", "answered": true, "label": "cold"}
+{"t": 1794664556.232, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664556.233, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664557.241, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664557.242, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664558.25, "src": "crm", "ev": "upsert_start", "lead": "L-ferr2"}
+{"t": 1794664558.251, "src": "crm", "ev": "upsert_refused", "lead": "L-ferr2", "status": 500}
+{"t": 1794664676.166, "src": "smtp", "ev": "connect"}
+{"t": 1794664676.219, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: lead failed L-ferr2", "rcpt": ["alerts@example.test"]}

@@ -1,0 +1,6 @@
+{"t": 1794656949.579, "rcpt": ["alerts@example.test"], "subject": "[demo] Lead desk: lead failed undefined"}
+{"t": 1794656978.994, "rcpt": ["alerts@example.test"], "subject": "[demo] Lead desk: lead failed undefined"}
+{"t": 1794657008.986, "rcpt": ["alerts@example.test"], "subject": "[demo] Lead desk: lead failed undefined"}
+{"t": 1794657038.974, "rcpt": ["alerts@example.test"], "subject": "[demo] Lead desk: lead failed undefined"}
+{"t": 1794657068.974, "rcpt": ["intake@example.test"], "subject": "[demo] lead L-k1a"}
+{"t": 1794657069.054, "rcpt": ["alerts@example.test"], "subject": "[demo] Lead desk: lead failed undefined"}

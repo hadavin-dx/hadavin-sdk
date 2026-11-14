@@ -1,0 +1,133 @@
+11:54:47Z control1:j0 rc=0
+11:58:15Z K1:j1a rc=0
+12:01:43Z K1:j1b rc=0
+12:05:13Z K1:j1c rc=0
+12:08:44Z K2:j2a rc=0
+12:12:14Z K2:j2b rc=0
+12:15:44Z K2:j2c rc=0
+12:19:14Z K3:j3a rc=0
+12:22:45Z K3:j3b rc=0
+12:26:13Z K3:j3c rc=0
+12:29:41Z K6:j6a rc=0
+12:33:10Z K6:j6b rc=0
+12:36:37Z K6:j6c rc=0
+12:37:34Z Fa:jfa rc=0
+12:38:32Z Fb:jfb rc=0
+12:40:30Z Fc:jfc rc=0
+12:41:27Z control2par:jcp2 rc=0
+12:41:27Z ALL DONE
+12:42:30Z burst:jb1 rc=0
+12:43:28Z burst:jb2 rc=0
+12:44:26Z burst:jb3 rc=0
+12:57:07Z error:je1 rc=0
+13:09:50Z error:je2 rc=0
+13:11:28Z grep:jg1 rc=0
+13:13:05Z grep:jg2 rc=0
+13:24:39Z grep:jg3 (rerun after container restart) rc=0
+13:24:40Z BATCH D uses fixed flows commit 61e3804b
+13:32:38Z error:ferr1 (fixed flows 61e3804b) rc=0
+13:58:16Z error:ferr2 (fixed flows) rc=0
+14:05:40Z error:ferr3 (fixed flows) rc=0
+14:08:14Z t14:ft14n (fixed flows) rc=0
+14:09:11Z burst:fb1 (fixed flows) rc=0
+14:12:38Z K3:fk3a (fixed flows) rc=0
+14:16:04Z K6:fk6a (fixed flows) rc=0
+14:19:30Z K3:fk3b (fixed flows) rc=0
+14:22:55Z K6:fk6b (fixed flows) rc=0
+14:26:22Z K3:fk3c (fixed flows) rc=0
+14:29:47Z K6:fk6c (fixed flows) rc=0
+14:31:20Z grep:fjg1 (fixed flows) rc=0
+14:32:15Z Fa:jfa2 (old flows) rc=0
+14:33:11Z Fb:jfb2 (old flows) rc=0
+14:35:06Z Fc:jfc2 (old flows) rc=0
+14:36:02Z Fa:jfa3 (old flows) rc=0
+14:36:56Z Fb:jfb3 (old flows) rc=0
+14:38:50Z Fc:jfc3 (old flows) rc=0
+14:38:50Z QUEUE G DONE
+14:40:29Z grep:fjg2 (fixed flows 61e3804b + 4 env settings) rc=0
+14:42:03Z grep:fjg3 (fixed flows 61e3804b + 4 env settings) rc=0
+14:43:36Z grep:fjg4 (fixed flows 61e3804b + 4 env settings) rc=0
+14:43:36Z QUEUE H DONE
+14:47:15Z grep:fjg5 (fixed flows 61e3804b + 4 env settings + PRUNE=false) rc=0
+14:48:49Z grep:fjg6 (fixed flows 61e3804b + 4 env settings + PRUNE=false) rc=0
+14:50:21Z grep:fjg7 (fixed flows 61e3804b + 4 env settings + PRUNE=false) rc=0
+14:50:21Z QUEUE I DONE
+14:52:08Z Fa:ffa1 (fixed flows 61e3804b) rc=0
+14:53:04Z Fb:ffb1 (fixed flows 61e3804b) rc=0
+14:54:58Z Fc:ffc1 (fixed flows 61e3804b) rc=0
+14:55:54Z Fa:ffa2 (fixed flows 61e3804b) rc=0
+14:56:52Z Fb:ffb2 (fixed flows 61e3804b) rc=0
+14:58:47Z Fc:ffc2 (fixed flows 61e3804b) rc=0
+14:59:46Z Fa:ffa3 (fixed flows 61e3804b) rc=0
+15:00:43Z Fb:ffb3 (fixed flows 61e3804b) rc=0
+15:02:44Z Fc:ffc3 (fixed flows 61e3804b) rc=0
+15:02:44Z QUEUE J DONE
+15:04:16Z Fc1:fc1a (fixed flows 61e3804b) rc=0
+15:05:44Z Fc1:fc1b (fixed flows 61e3804b) rc=0
+15:07:15Z Fc1:fc1c (fixed flows 61e3804b) rc=0
+15:08:42Z Fc1:jfc1a (old flows) rc=0
+15:10:09Z Fc1:jfc1b (old flows) rc=0
+15:11:37Z Fc1:jfc1c (old flows) rc=0
+15:11:37Z QUEUE K DONE
+15:18:48Z v3 A:v3a1 (v3 flows 6ebb7f62) rc=0
+15:22:47Z v3 B20:v3b20a (v3 flows 6ebb7f62) rc=0
+15:37:27Z v3 C:v3c1 (v3 flows 6ebb7f62) rc=0
+15:42:33Z v3 B90:v3b90a (v3 flows 6ebb7f62) rc=0
+16:00:14Z v3 B90:v3b90c (6ebb7f62-v3) rc=0
+16:05:26Z v4 B90:v4b90a (7709d058-v4) rc=0
+16:12:23Z lane2 v4 B90:v4b90b (7709d058-v4) rc=0
+16:20:04Z lane2 v4 A:v4a2 (7709d058-v4) rc=0
+16:20:04Z QUEUE P lane2 DONE
+16:22:51Z lane1 v4 C:v4c1 (7709d058-v4) rc=0
+16:26:22Z lane2 v4 B90:v4b90c (7709d058-v4) rc=0
+16:26:22Z QUEUE P lane2 DONE
+16:34:10Z lane0 v4 K3:v4k3a (7709d058-v4) rc=0
+16:37:36Z lane0 v4 K6:v4k6a (7709d058-v4) rc=0
+16:38:30Z lane1 v4 C:v4c2 (7709d058-v4) rc=0
+16:38:30Z QUEUE P lane1 DONE
+16:41:05Z lane0 v4 K1:v4k1a (7709d058-v4) rc=0
+16:41:33Z lane2 v4 B780:v4b780a (7709d058-v4) rc=0
+16:41:33Z QUEUE P lane2 DONE
+16:44:34Z lane0 v4 K2:v4k2a (7709d058-v4) rc=0
+16:44:34Z QUEUE Q lane0 DONE
+16:47:00Z lane2 v4 K3:v4k3b (7709d058-v4) rc=0
+16:50:29Z lane2 v4 K6:v4k6b (7709d058-v4) rc=0
+16:53:58Z lane2 v4 K1:v4k1b (7709d058-v4) rc=0
+16:53:58Z QUEUE Q lane2 DONE
+16:54:40Z lane1 v4 KS:v4ks1 (7709d058-v4) rc=0
+16:54:40Z QUEUE P lane1 DONE
+17:01:46Z lane0 v4 KS:v4ks2 (7709d058-v4) rc=0
+17:01:46Z QUEUE P lane0 DONE
+17:04:03Z lane3 film-v4 K2:fl45k2a (7709d058-v4) rc=0
+17:04:04Z lane1 film-v4 K1:fl45k1a (7709d058-v4) rc=0
+17:04:45Z lane0 film-v4 K1:fl45k1e (7709d058-v4) rc=0
+17:06:02Z lane3 film-v4 K2:fl45k2b (7709d058-v4) rc=0
+17:06:02Z lane1 film-v4 K1:fl45k1b (7709d058-v4) rc=0
+17:06:43Z lane0 film-v4 K1:fl45k1d (7709d058-v4) rc=0
+17:08:01Z lane1 film-v4 K1:fl45k1c (7709d058-v4) rc=0
+17:08:02Z lane3 film-v4 K2:fl45k2c (7709d058-v4) rc=0
+17:08:43Z lane0 film-v4 K3:fl45k3e (7709d058-v4) rc=0
+17:08:43Z QUEUE Q lane0 DONE
+17:09:59Z lane1 film-v4 K3:fl45k3a (7709d058-v4) rc=0
+17:10:00Z lane3 film-v4 K2:fl45k2d (7709d058-v4) rc=0
+17:11:35Z lane1 film-v4 K6:fl45k6c (7709d058-v4) rc=0
+17:11:35Z QUEUE Q lane1 DONE
+17:11:59Z lane3 film-v4 K2:fl45k2e (7709d058-v4) rc=0
+17:12:42Z lane0 film-v4 K6:fl45k6a (7709d058-v4) rc=0
+17:13:57Z lane3 film-v4 K3:fl45k3d (7709d058-v4) rc=0
+17:13:57Z QUEUE Q lane3 DONE
+17:14:40Z lane0 film-v4 K6:fl45k6b (7709d058-v4) rc=0
+17:14:40Z QUEUE Q lane0 DONE
+17:16:35Z lane1 film-v4 K3:fl45k3b (7709d058-v4) rc=0
+17:18:33Z lane1 film-v4 K3:fl45k3c (7709d058-v4) rc=0
+17:18:33Z QUEUE Q lane1 DONE
+17:21:28Z lane1 film-v4 K3:fl45k3f (7709d058-v4) rc=0
+17:21:28Z QUEUE Q lane1 DONE
+17:21:28Z lane0 film-v4 K6:fl45k6d (7709d058-v4) rc=0
+17:21:28Z QUEUE Q lane0 DONE
+17:26:05Z lane1 film-v4 error:fl45err2 (7709d058-v4) rc=0
+17:26:05Z QUEUE Q lane1 DONE
+17:26:05Z lane3 film-v4 error:fl45err3 (7709d058-v4) rc=0
+17:26:05Z QUEUE Q lane3 DONE
+17:26:05Z lane0 film-v4 error:fl45err1 (7709d058-v4) rc=0
+17:26:05Z QUEUE Q lane0 DONE

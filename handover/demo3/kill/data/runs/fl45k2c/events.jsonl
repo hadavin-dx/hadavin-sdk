@@ -1,0 +1,12 @@
+{"t": 1794675992.639, "src": "stage", "ev": "up", "port": 18402}
+{"t": 1794675992.639, "src": "smtp", "ev": "up", "port": 2825}
+{"t": 1794675992.641, "src": "crm", "ev": "up", "port": 18401}
+{"t": 1794676000.733, "src": "stage", "ev": "qualify_start", "lead": "L-fl45k2c", "n": 1}
+{"t": 1794676000.765, "src": "crm", "ev": "upsert_start", "lead": "L-fl45k2c"}
+{"t": 1794676000.765, "src": "crm", "ev": "upsert_stored", "lead": "L-fl45k2c", "created": true}
+{"t": 1794676006.77, "src": "crm", "ev": "peer_closed_before_answer", "path": "/upsert"}
+{"t": 1794676060.607, "src": "stage", "ev": "qualify_repeat", "lead": "L-fl45k2c", "answered": true, "label": "cold"}
+{"t": 1794676060.64, "src": "crm", "ev": "upsert_start", "lead": "L-fl45k2c"}
+{"t": 1794676060.64, "src": "crm", "ev": "upsert_stored", "lead": "L-fl45k2c", "created": false}
+{"t": 1794676060.694, "src": "smtp", "ev": "connect"}
+{"t": 1794676060.747, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-fl45k2c", "rcpt": ["intake@example.test"]}

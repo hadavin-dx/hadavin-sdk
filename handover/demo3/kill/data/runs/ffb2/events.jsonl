@@ -1,0 +1,11 @@
+{"t": 1794668184.271, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794668184.278, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794668184.284, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794668191.761, "src": "stage", "ev": "qualify_start", "lead": "L-ffb2", "n": 1}
+{"t": 1794668191.792, "src": "crm", "ev": "upsert_start", "lead": "L-ffb2"}
+{"t": 1794668191.793, "src": "crm", "ev": "upsert_stored", "lead": "L-ffb2", "created": true}
+{"t": 1794668191.852, "src": "smtp", "ev": "connect"}
+{"t": 1794668191.903, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-ffb2", "rcpt": ["intake@example.test"]}
+{"t": 1794668191.903, "src": "smtp", "ev": "dropped_after_store"}
+{"t": 1794668191.927, "src": "smtp", "ev": "connect"}
+{"t": 1794668191.974, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: mail outcome unknown for L-ffb2", "rcpt": ["alerts@example.test"]}

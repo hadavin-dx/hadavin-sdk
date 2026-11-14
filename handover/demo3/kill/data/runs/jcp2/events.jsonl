@@ -1,0 +1,13 @@
+{"t": 1794660059.371, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794660059.375, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794660059.377, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794660067.054, "src": "stage", "ev": "qualify_start", "lead": "L-jcp2-a", "n": 1}
+{"t": 1794660067.082, "src": "crm", "ev": "upsert_start", "lead": "L-jcp2-a"}
+{"t": 1794660067.083, "src": "crm", "ev": "upsert_stored", "lead": "L-jcp2-a", "created": true}
+{"t": 1794660067.131, "src": "smtp", "ev": "connect"}
+{"t": 1794660067.151, "src": "stage", "ev": "qualify_start", "lead": "L-jcp2-b", "n": 1}
+{"t": 1794660067.16, "src": "crm", "ev": "upsert_start", "lead": "L-jcp2-b"}
+{"t": 1794660067.161, "src": "crm", "ev": "upsert_stored", "lead": "L-jcp2-b", "created": true}
+{"t": 1794660067.182, "src": "smtp", "ev": "connect"}
+{"t": 1794660067.182, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-jcp2-a", "rcpt": ["intake@example.test"]}
+{"t": 1794660067.234, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-jcp2-b", "rcpt": ["intake@example.test"]}

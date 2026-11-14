@@ -1,0 +1,19 @@
+{"t": 1794669798.111, "src": "smtp", "ev": "up", "port": 2525}
+{"t": 1794669798.113, "src": "crm", "ev": "up", "port": 18101}
+{"t": 1794669798.113, "src": "stage", "ev": "up", "port": 18102}
+{"t": 1794669806.781, "src": "stage", "ev": "qualify_start", "lead": "L-v3c1", "n": 1}
+{"t": 1794669806.809, "src": "crm", "ev": "upsert_start", "lead": "L-v3c1"}
+{"t": 1794669806.81, "src": "crm", "ev": "upsert_stored", "lead": "L-v3c1", "created": true}
+{"t": 1794669806.864, "src": "smtp", "ev": "connect"}
+{"t": 1794669806.915, "src": "smtp", "ev": "stored", "subject": "[demo] lead L-v3c1", "rcpt": ["intake@example.test"]}
+{"t": 1794669806.915, "src": "smtp", "ev": "dropped_after_store"}
+{"t": 1794669836.187, "src": "smtp", "ev": "connect"}
+{"t": 1794669836.187, "src": "smtp", "ev": "refused_dead"}
+{"t": 1794669926.14, "src": "smtp", "ev": "connect"}
+{"t": 1794669926.141, "src": "smtp", "ev": "refused_dead"}
+{"t": 1794670046.143, "src": "smtp", "ev": "connect"}
+{"t": 1794670046.144, "src": "smtp", "ev": "refused_dead"}
+{"t": 1794670226.15, "src": "smtp", "ev": "connect"}
+{"t": 1794670226.151, "src": "smtp", "ev": "refused_dead"}
+{"t": 1794670496.146, "src": "smtp", "ev": "connect"}
+{"t": 1794670496.195, "src": "smtp", "ev": "stored", "subject": "[demo] Lead desk: mail outcome unknown for L-v3c1", "rcpt": ["alerts@example.test"]}
