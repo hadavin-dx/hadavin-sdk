@@ -1,5 +1,10 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 17:05Z - lead answers applied; agents running 0
+- Shipped lease 45 s written into DESIGN-A-README (120 s kept only as the older design value; 45 s flows use 2 tries of 10 s). 'Lease plus 25 to 30' caption dropped in VIDEO-RUNSHEET: no recovery number until lane3 lease-45 runs land. Scene 5 caption approved wording added. Owner crop list (7 points) added to the run sheet.
+- Table screen v2 pushed earlier (0fdfaa1b): badges, dark mode, plain words, UTC time, title; browser preview checked by me; NOT run in n8n. Flaw: an unexpected state shows no badge.
+NOT DONE / NOT CHECKED: the lease-45 recovery numbers (waiting on lane3); T17/T18 on the laptop; the DESIGN-A-README body still has v2 flow numbers for the 120 s design.
+WHAT I WOULD DO NEXT: 1. when lane3 lease-45 numbers land: caption = measured median and max, n, setting on screen. 2. read T17/T18 result. 3. WP6 real-node id/vid check list.
 ## Block 16:59Z - WP4 and WP5 done and pushed, NOT RUN; agents running 0
 - WP4 (3f6ab2b4): SetCrmId id/vid, CrmIdOk, T17, T18, real-v5 and film-v5, V5-NODE-DIFF shows only SetCrmId, CrmIdOk + connections, credential id. NOT RUN (no stack here). Laptop command in my last message: export MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000; run_chain.py --tests "T17 T18 M1 K1" --reps 5 --lease 45. 'T1' does not exist; I used M1.
 - WP5: VIDEO-RUNSHEET and DOUBTFUL-SCENE rewritten for the real take (lease 45 s, execution list filmed, same-id claim only, stand-in caption for the doubtful scene, no measured number in scenes 1 to 10). Core EST 355 s, 380 s with scene 11, minus 10 s if scene 8 is cut.

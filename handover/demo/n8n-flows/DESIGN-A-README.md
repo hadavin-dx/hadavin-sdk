@@ -7,7 +7,7 @@ Status: current version v2 (order D-N2a). Built from scratch for n8n 2.46.6. Cre
 - mf-form.json, mf-hook.json : main flows (form entry, e-mail-style webhook entry). Webhook paths mf-form and mf-hook, Respond to Webhook.
 - mf-recovery.json : recovery every 30 s (lease claim) plus the failed-lead alert.
 - mf_leads.sql : the lead table.
-- Build script: ../n8n-mainframe/build_mainframe.py (args: out dir, postgres credential id, smtp credential id, sub-workflow id, lease seconds). This copy was built with lease 120.
+- Build script: ../n8n-mainframe/build_mainframe.py (args: out dir, postgres credential id, smtp credential id, sub-workflow id, lease seconds). This copy was built with lease 120 (older copy; the shipped real and film flows use lease 45, see below).
 
 ## Flow, step by step
 Main: Webhook -> Edit Fields (lead_key, email, name) -> Valid (e-mail pattern) -> Postgres Claim: INSERT ... ON CONFLICT (lead_key) DO NOTHING RETURNING (state processing, claimed_until = now + lease, claim_token = new random id, attempts 1; an invalid e-mail is stored as state review with attempts 0) -> IF row came back: IF processing: Execute Workflow (sub) then Respond with verdict; IF review: Respond review. No row (a repeat): Postgres SELECT state, Respond with the stored state mapped to a verdict.
@@ -17,7 +17,7 @@ Recovery (fixed 2026 11 14, finding F-REC-EMPTY from lane3: the Postgres node re
 Constants in the nodes (no expression): mail recipient intake at example.test, alert recipient alerts at example.test. Mail subject: [demo] lead <lead id>. The Send Email node cannot set a custom header, so the lead id token in the subject is the count key.
 
 ## Lease
-Design value: 120 seconds. Reason: it must be longer than the longest normal run (cap stage up to 3 tries of 15 s, CRM up to 3 tries of 15 s, mail up to a few seconds), so recovery never takes a lead that a live run still holds. In the tests a shorter lease (20 s) is used so recovery fits inside a test run; a lease SHORTER than a slow mail step gives a safe but unneeded state unknown (found in test T10: recovery took the lead while the first run still waited for the SMTP answer, saw mail_sent already set and marked it unknown, 1 mail, 1 alert, nothing doubled).
+Shipped lease for the real and film flows (lead decision 17:05Z): 45 seconds, built with 2 tries of 10 s per stage (v4 and v5 folders). The 120 s below is the earlier design value of this folder (the v2 flows, built with 3 tries of 15 s); it is NOT the shipped value. Recovery times at 45 s are UNMEASURED until lane3's lease-45 runs land. Original reason for the design value: it must be longer than the longest normal run (cap stage up to 3 tries of 15 s, CRM up to 3 tries of 15 s, mail up to a few seconds), so recovery never takes a lead that a live run still holds. In the tests a shorter lease (20 s) is used so recovery fits inside a test run; a lease SHORTER than a slow mail step gives a safe but unneeded state unknown (found in test T10: recovery took the lead while the first run still waited for the SMTP answer, saw mail_sent already set and marked it unknown, 1 mail, 1 alert, nothing doubled).
 
 ## n8n environment the flows read
 MF_CRM_URL (base address of the CRM), MF_STAGE_URL (base address of the cap + model stage), MF_STAGE_TIMEOUT_MS (optional, default 15000); environment access in nodes must be allowed (N8N_BLOCK_ENV_ACCESS_IN_NODE=false in 2.46.6). Credentials by name: n8n-publish-pg (Postgres), mf-mail-smtp (SMTP). Execution saving off for success and error runs in the workflow settings.
