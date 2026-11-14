@@ -1,0 +1,10 @@
+{"ts": "2026-11-14T04:47:50.684Z", "setup": "a default", "when": "before", "cpu_idle_pct": 99.8, "free_ram_mb": 14317.1}
+{"ts": "2026-11-14T04:48:21.685Z", "setup": "a default", "when": "during", "cpu_idle_pct": 97.3, "free_ram_mb": 14154.9}
+{"ts": "2026-11-14T04:48:36.877Z", "setup": "a default", "when": "after", "cpu_idle_pct": 99.3, "free_ram_mb": 14160.5}
+{"ts": "2026-11-14T04:48:39.445Z", "setup": "e ten at once", "when": "before", "cpu_idle_pct": 95.3, "free_ram_mb": 14175.3}
+{"ts": "2026-11-14T04:49:10.447Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 97.8, "free_ram_mb": 14613.8}
+{"ts": "2026-11-14T04:49:41.448Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.3, "free_ram_mb": 14623.1}
+{"ts": "2026-11-14T04:50:12.449Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.8, "free_ram_mb": 14617.2}
+{"ts": "2026-11-14T04:50:43.450Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.8, "free_ram_mb": 14628.7}
+{"ts": "2026-11-14T04:51:14.451Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.5, "free_ram_mb": 14610.3}
+{"ts": "2026-11-14T04:51:39.087Z", "setup": "e ten at once", "when": "after", "cpu_idle_pct": 99.5, "free_ram_mb": 14627.0}

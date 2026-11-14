@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 05:56Z): R2b e DONE (5 valid units), N8N-RERUN-1.md R2b + MAPPING + READ + P2 PUSHED; fresh-stack variant-a control running
+- Variant e kill runs, 5 valid units x 10 rows (units 2,3,4,5,1b): second CRM row 1 of 50 (per unit 0,0,1,0,0 of 10); 2+ emails 50 of 50; all `sent`. R2 1 of 10, published 4 of 10. Unit 1 never started (setup password, see file).
+- Variant a, 5 bursts one stack, five raw rows in the file: (1,1) (2,2) (10,10) (1,1) (2,2) = duplicates 0, 1, 9, 0, 1 extra pairs; 3 of 5 bursts with duplicates.
+- Mapping: both published lines = NO MATCHING ROW (reasons in the file). READ: stale `running` row is n8n's own record (n8n's restart log left that one execution out; marked crashed one restart later); harness only reads it; cause not established.
+- Running: control, 2 variant-a bursts on a FRESH stack each (P2 in use; a1 started after 1b, about 05:57Z), ends about 06:05Z. Quiet machine kept.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Control rows not in yet. Not tried: a fresh stack per burst for all 5 a bursts; the e ten-at-once on a fresh stack.
+- R3-partial b K2/K3; doc v3 tests, hygiene, CI-equivalent; fresh doc reviewer; egm reviewer on the updated N8N-RERUN-1.md (needed before any n8n number is published).
+## WHAT I WOULD DO NEXT (ranked)
+1. Control rows into the file, push.
+2. R3-partial b K2/K3 only (quiet machine, scratch P1+P2), then the egm reviewer on the updated file.
+3. Then, quiet: doc v3 tests, hygiene, CI-equivalent on two trees, one fresh doc reviewer.
 ## REPORT (clock 05:49Z): R2b e unit 5 FINAL, unit 1b running (K3 4 of 5 rows in), container up ~2h58, nothing killed
 - Unit 5 final (rc 0, 10 rows): second CRM row 0 of 10; 2+ emails 10 of 10; all rows (1 CRM, 2 emails, sent).
 - e units 2-5 together (40 rows): second CRM row 1 of 40 (only unit 4 K3 run 4: 2 CRM, 3 emails); 2+ emails 40 of 40. Per unit: 0/10, 0/10, 1/10, 0/10. Unit 1b adds 10 rows (running since 05:43:28Z, ends about 05:55Z). R2 was 1 of 10, published 4 of 10.

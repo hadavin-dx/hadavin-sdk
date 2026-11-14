@@ -1,0 +1,1 @@
+owner setup answered 400 {"code":"custom","message":"Password must contain at least 1 number.","path":["password"]}
