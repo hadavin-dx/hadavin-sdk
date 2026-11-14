@@ -32,7 +32,7 @@ def stage_ctl(**kw): ctl(ST_URL, **kw)
 def mf_stack(model_slow=None):
     for n in ("stage", "crm", "model", "catcher"): stop(n)
     wait_free([MODELP, STAGEP, CRMP, MAILP]); clean_state()
-    for f in (JOURNAL, CRMLOG) + tuple(MAIL + s for s in (".delay", ".pre", ".drop", ".conn")):
+    for f in (JOURNAL, CRMLOG) + tuple(MAIL + s for s in (".delay", ".pre", ".drop", ".conn", ".rcptfail")):
         if os.path.exists(f): os.remove(f)
     e = denv()
     spawn("model", [sys.executable, "-m", "demo_only.fake_model_server", "--mode", "ok", "--port", str(MODELP), "--key-file", KEY, "--call-log", CALLS], e, "model.log")
@@ -43,7 +43,8 @@ def mf_stack(model_slow=None):
     start_stage(); time.sleep(1)
     psql("DROP TABLE IF EXISTS mf_leads;")
     psql("CREATE TABLE mf_leads(lead_key text PRIMARY KEY, email text, name text, state text NOT NULL DEFAULT 'new' CHECK (state IN ('new','processing','done','review','unknown','failed')), claimed_until timestamptz, claim_token text, "
-         "attempts int NOT NULL DEFAULT 0, crm_id text, mail_sent boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());")
+         "attempts int NOT NULL DEFAULT 0, crm_id text, mail_sent boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), "
+         "alert_sent boolean NOT NULL DEFAULT false, alert_token text, alert_until timestamptz, alert_attempts int NOT NULL DEFAULT 0);")
 def n8n_prepare_mf(recovery_copies=1):
     api.login(); inst = json.load(open(os.path.join(WORK, ".run", "instance.json")))
     c = api.call("POST", "/credentials", {"name": "mf-mail-smtp", "type": "smtp", "projectId": inst["project_id"],
@@ -81,10 +82,12 @@ def outcome(k):
     o["unknown"] = r["state"] == "unknown"
     o["lost"] = r["state"] not in ("done", "unknown", "failed") or (r["state"] == "done" and (o["crm_rows"] != 1 or o["mails"] != 1))
     return o
-def wait_final(k, t0, timeout=200):
+def wait_final(k, t0, timeout=200, need_alert=True):
+    """final = terminal state; for unknown/failed ALSO the alert mail seen (v3: the recovery sweep sends it, up to about 30 s after the state is set). need_alert=False: state only."""
     while time.time() - t0 < timeout:
         try:
-            if row(k).get("state") in ("done", "unknown", "failed", "review"): return round(time.time() - t0, 1)
+            stt = row(k).get("state")
+            if stt in ("done", "review") or (stt in ("unknown", "failed") and (not need_alert or alerts(k) >= 1)): return round(time.time() - t0, 1)
         except Exception: pass
         time.sleep(1)
     return None
@@ -221,6 +224,16 @@ def t12():
         open(MAIL + ".drop", "w").write("1"); k = uid("t12-%d" % (i + 1)); ids.append(k); st, rep = req("mf-form", fbody(k)); t0 = time.time(); tf = wait_final(k, t0, 120); time.sleep(5); o = outcome(k); o.update(lead=k, reply=[st, rep.get("verdict") if isinstance(rep, dict) else rep], seconds_kill_to_final=tf); rows.append(o); rec("T12", **o)
     ok = all(o["mails"] == 1 and o["row"]["state"] == "unknown" and o["alerts"] == 1 and o["crm_rows"] == 1 for o in rows)
     summarize("T12", "SMTP stand-in accepts the mail then drops the connection (fault mode): expected 1 mail, state unknown, 1 alert, no resend", rows, ids, extra_ok=ok)
+def af1():
+    """AF1 (alert lost to a dead SMTP): the mail to the intake recipient is stored but its acknowledgement is dropped (state unknown, as T12); the SMTP stand-in then answers 451 to the FIRST TWO alert recipients (alert only: matched on the alert address), so the first two alert sends fail. Expected (v3): state unknown stays, NO alert in the first 20 s, then the recovery sweep retries with backoff and exactly 1 alert arrives after the fault is spent, alert_sent true, 0 extra mails to the intake recipient (1 stored, from the dropped acknowledgement), still exactly 1 alert 130 s later."""
+    mf_stack(); n8n_prepare_mf(); restart_n8n(); k = uid("af1")
+    open(MAIL + ".drop", "w").write("1"); open(MAIL + ".rcptfail", "w").write("2|" + ALERT_TO)
+    t0 = time.time(); st, rep = req("mf-form", fbody(k)); tf = wait_final(k, t0, 150, need_alert=False); time.sleep(20); early = alerts(k)
+    got = watch(lambda: alerts(k) >= 1, 420); t_alert = round(time.time() - t0, 1) if got else None; time.sleep(130)
+    o = outcome(k); sent = psql("SELECT alert_sent, alert_attempts FROM mf_leads WHERE lead_key='%s';" % k); left = open(MAIL + ".rcptfail").read().strip()
+    rec("AF1", lead=k, reply=[st, rep.get("verdict") if isinstance(rep, dict) else rep], seconds_to_unknown=tf, alerts_20s_after_unknown=early, seconds_to_first_alert=t_alert, row=o["row"], alerts=o["alerts"], mails_to_intake=o["mails"], alert_sent_and_attempts=sent, fault_left=left)
+    ok = tf is not None and early == 0 and got and o["alerts"] == 1 and o["row"]["state"] == "unknown" and o["mails"] == 1 and sent.startswith("t") and o["crm_rows"] == 1
+    result("AF1", ok, "alert held back by a dead SMTP (451 for the first two alert sends): state unknown unchanged, no alert at 20 s, exactly 1 alert after the fault (first alert at %s s), alert_sent=%s, mails to intake %d, alerts 130 s later %d" % (t_alert, sent, o["mails"], o["alerts"]), per_lead=[o])
 def t15():
     """ERROR case (lane3 finding, lost lead without alert): the CRM refuses EVERY call (HTTP 500) from the start. Expected: 3 tries (main run + 2 recovery claims), then state failed, exactly 1 alert naming the lead, 0 mails to the intake recipient, 0 CRM rows, nothing lost, within 3 x lease + 150 s."""
     mf_stack(); n8n_prepare_mf(); restart_n8n(); crm_ctl(fail_status=500); rows = []; ids = []
@@ -296,7 +309,7 @@ def t13():
     time.sleep(3); subprocess.run(["docker", "kill", lib.PG], capture_output=True); time.sleep(3); subprocess.run(["docker", "start", lib.PG], capture_output=True); pg_ready()
     time.sleep(5); kill_n8n_now(); restart_n8n(); rows = final_rows(ids); [rec("T13", **o) for o in rows]
     summarize("T13", "duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n killed and restarted with half-done runs", rows, ids)
-TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "T7b": t7b}
+TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "AF1": af1, "T7b": t7b}
 if __name__ == "__main__":
     for t in sys.argv[1:]:
         try: TESTS[t]()

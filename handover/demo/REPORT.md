@@ -1,5 +1,19 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block V3-ALERT - alert-as-state flows built (n8n-flows-v3, film-v3, real-v3) + test AF1; BUILT, NOT RUN
+
+Defect confirmed as design (alert was fire-and-forget after a terminal state). Fix as state, details and node list in n8n-flows-v3/V3-README.md.
+Changed nodes vs v2 (script diff): sub-workflow: AlertUnknown removed (unknown paths go to OutUnknown). Recovery: FailedRow and AlertFailed removed; MarkFailed now sets unknown when mail_sent is true (wording point), else failed; added AlertClaim, AlertRow, AlertSend, AlertMark. Form/hook flows identical. Table: four new columns alert_sent, alert_token, alert_until, alert_attempts (mf_leads.sql in n8n-flows-v3; mf.py creates it too).
+Sweep: every 30 s, last branch, claims up to 5 rows in unknown/failed with alert_sent=false (SKIP LOCKED, token, backoff 60 s x (1+min(attempts,4))), sends, sets alert_sent=true only after a successful send. Dead SMTP: row stays unsent and is retried, no spin, no hard cap. At most 1 alert, except two duplicate cases listed in the README (mark fails after send; send outlasts the claim window).
+THREE POINTS FOR YOU TO DECIDE/CHECK: (1) I made the sweep the ONLY alert path (no immediate in-run alert): alerts come up to ~30 s later; tests changed to wait for the alert (mf.py wait_final). Say if you want an immediate path too (costs a second claim chain, same duplicate rules). (2) I used backoff with no attempt cap, not a cap: a cap would recreate the lost alert after N dead-SMTP tries; the counter is kept for visibility. (3) AlertMark pairs the lead through $('AlertRow').item: untested; AF1 reads alert_sent from the table.
+Tests: T8, T15, T12, K3, K3B, T14, T11 on v3, plus NEW AF1 (catcher .rcptfail: 451 for the first two alert recipients; expect unknown unchanged, no alert at 20 s, exactly 1 alert later, alert_sent true, 1 mail to intake, still 1 after 130 s). All py_compile OK; builds: v3 build reproduces v2 for form/hook (script diff empty). Nothing run (disk 161 MB).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Nothing of v3 run; hung-connection (not refused) alert case untested; real variant never run; T8 rerun result, V5 T7b and lane3 raw files unread; T16-style hold of the in-run SendMail not needed now; N8N-START/DESIGN-A-README still describe v2 alerts (to update after your decision on the three points).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Update DESIGN-A-README, N8N-START and DECISION-INPUTS to v3 after your answer on the three points. 2. Read AF1/T8 raw files when named. 3. Spec for a hung-connection alert test.
+
 ## Block FC-ALERT - page text updated (webhook body stays in n8n data); F-c lost-alert: reading of the unknown path, one hole found; not run
 
 N8N-START.md updated: credentials and stage key file never in n8n data (as relayed); lead fields do reach n8n data via the webhook body even with the four settings, until pruning; prune setting names/defaults from source, NO age claimed until lane3's EXECUTIONS_DATA_PRUNE=false test names it; do not put a key in a form field.

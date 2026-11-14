@@ -77,3 +77,6 @@ After each lead the driver reads, from OUTSIDE n8n: the mail stand-in file (subj
 - Stand-ins stand in for the CRM and the mail server; the model is a stand-in; the cap + model stage is my wrapper around the desk's own code (the desk has no endpoint for it yet).
 - n8n's own HTTP node timeout (15 s) fires before a 40 s CRM hold, so the CRM-hold variant of T10 does not exercise the lease; the SMTP-hold variant does.
 - Not yet done: T4 (node timeout 2 s against 1/3/8 s delays), T7 (planted secret grep), the lead-id safe-pattern check, Design B on the same fault modes.
+
+## v3 additions (alert as state)
+- Flows: n8n-flows-v3 (or film-v3 / real-v3), table n8n-flows-v3/mf_leads.sql; mf.py creates the table itself with the four alert columns. New test AF1 (`--tests AF1`, about 10 minutes at lease 20). smtp_catcher.py has a new fault file `.rcptfail` (cleaned by mf_stack). wait_final now waits for the alert mail when state is unknown or failed. See n8n-flows-v3/V3-README.md for the test list.

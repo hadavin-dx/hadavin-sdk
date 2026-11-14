@@ -21,7 +21,12 @@ class H(socketserver.StreamRequestHandler):
             elif u.startswith("AUTH LOGIN"):
                 self.w("334 VXNlcm5hbWU6"); self.rfile.readline(); self.w("334 UGFzc3dvcmQ6"); self.rfile.readline(); self.w("235 ok")
             elif u.startswith("MAIL FROM"): frm = cmd[10:].strip(); self.w("250 ok")
-            elif u.startswith("RCPT TO"): rcpt.append(cmd[8:].strip().strip("<>")); self.w("250 ok")
+            elif u.startswith("RCPT TO"):
+                r = cmd[8:].strip().strip("<>")
+                try: nf, sub = open(FILE + ".rcptfail").read().strip().split("|", 1); nf = int(nf)                # fault mode (AF1): "N|text": answer 451 (try later) to the next N recipients whose address contains text, nothing stored
+                except (OSError, ValueError): nf, sub = 0, None
+                if nf > 0 and sub in r: open(FILE + ".rcptfail", "w").write("%d|%s" % (nf - 1, sub)); self.w("451 try later"); continue
+                rcpt.append(r); self.w("250 ok")
             elif u == "DATA":
                 self.w("354 go"); buf = []
                 while True:

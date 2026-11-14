@@ -56,7 +56,6 @@ def sub():
          pg("MarkUnknownB", "UPDATE mf_leads SET state='unknown', updated_at=now() WHERE lead_key=$1 AND claim_token=$2 AND state='processing' AND mail_sent RETURNING lead_key;", "={{ [%s, %s] }}" % (KEY, TOK), [1760, 100]),
          iff("UnknownNewA", "={{ $json.lead_key }}", "string", "notEmpty", None, [2200, -60]),
          iff("UnknownNew", "={{ $json.lead_key }}", "string", "notEmpty", None, [1980, 100]),
-         mail("AlertUnknown", ALERT_TO, "={{ '[demo] Lead desk: mail outcome unknown for ' + %s }}" % KEY, "={{ 'Lead id ' + %s + ': the mail may or may not have been sent. A person decides.' }}" % KEY, [2200, 0], onError="continueRegularOutput"),
          iff("DoneOwned", "={{ $json.lead_key }}", "string", "notEmpty", None, [2200, -260]),
          setf("OutDone", {"outcome": ("done", "string"), "lead_key": ("={{ %s }}" % KEY, "string")}, [2200, -200]),
          setf("OutUnknown", {"outcome": ("unknown", "string"), "lead_key": ("={{ %s }}" % KEY, "string")}, [2420, 0]),
@@ -68,7 +67,7 @@ def sub():
     link(c, "OwnsClaim1", "MailClaim", 0); link(c, "OwnsClaim1", "OutLost", 1); link(c, "MailClaim", "MailRowBack")
     link(c, "MailRowBack", "SendMail", 0); link(c, "MailRowBack", "MarkUnknownB", 1)
     link(c, "SendMail", "MarkDone", 0); link(c, "SendMail", "MarkUnknownA", 1); link(c, "MarkDone", "DoneOwned"); link(c, "DoneOwned", "OutDone", 0); link(c, "DoneOwned", "OutLost", 1)
-    link(c, "MarkUnknownA", "UnknownNewA"); link(c, "UnknownNewA", "AlertUnknown", 0); link(c, "UnknownNewA", "OutUnknown", 1); link(c, "MarkUnknownB", "UnknownNew"); link(c, "UnknownNew", "AlertUnknown", 0); link(c, "UnknownNew", "OutUnknown", 1); link(c, "AlertUnknown", "OutUnknown")
+    link(c, "MarkUnknownA", "UnknownNewA"); link(c, "UnknownNewA", "OutUnknown", 0); link(c, "UnknownNewA", "OutUnknown", 1); link(c, "MarkUnknownB", "UnknownNew"); link(c, "UnknownNew", "OutUnknown", 0); link(c, "UnknownNew", "OutUnknown", 1)
     return {"name": "Lead desk main frame: CRM + mail (sub-workflow)", "nodes": n, "connections": c, "settings": ST}
 def call_sub(name, pos, **x): return N(name, "n8n-nodes-base.executeWorkflow", 1.2, {"source": "database", "workflowId": {"__rl": True, "value": SUBID, "mode": "id"}, "mode": "each", "options": {"waitForSubWorkflow": True}}, pos, **x)
 VERDICT = "{ done: 'new', unknown: 'unknown', stage_failed: 'processing', lost_claim: 'processing' }[$json.outcome] || 'processing'"
@@ -98,11 +97,17 @@ def recovery():
             "RETURNING lead_key, email, claim_token;" % LEASE, None, [220, -100], always=False, onError="continueRegularOutput"),
          iff("StuckRow", "={{ $json.lead_key }}", "string", "notEmpty", None, [330, -100]),
          call_sub("RunSub", [550, -160], onError="continueRegularOutput"),
-         pg("MarkFailed", "UPDATE mf_leads SET state='failed', updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;", None, [220, 120], always=False, onError="continueRegularOutput"),
-         iff("FailedRow", "={{ $json.lead_key }}", "string", "notEmpty", None, [330, 120]),
-         mail("AlertFailed", ALERT_TO, "={{ '[demo] Lead desk: lead failed ' + $json.lead_key }}", "={{ 'Lead id ' + $json.lead_key + ' could not be finished after 3 tries. A person decides.' }}", [550, 80], onError="continueRegularOutput")]
+         pg("MarkFailed", "UPDATE mf_leads SET state=CASE WHEN mail_sent THEN 'unknown' ELSE 'failed' END, updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;", None, [220, 120], always=False, onError="continueRegularOutput"),
+         pg("AlertClaim", "UPDATE mf_leads SET alert_until=now() + interval '60 seconds' * (1 + LEAST(alert_attempts, 4)), alert_token=gen_random_uuid()::text, alert_attempts=alert_attempts+1 WHERE lead_key IN ("
+            "SELECT lead_key FROM mf_leads WHERE state IN ('unknown','failed') AND alert_sent=false AND (alert_until IS NULL OR alert_until < now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5) "
+            "RETURNING lead_key, state, alert_token;", None, [220, 300], always=False, onError="continueRegularOutput"),
+         iff("AlertRow", "={{ $json.lead_key }}", "string", "notEmpty", None, [330, 300]),
+         mail("AlertSend", ALERT_TO, "={{ $json.state === 'unknown' ? '[demo] Lead desk: mail outcome unknown for ' + $json.lead_key : '[demo] Lead desk: lead failed ' + $json.lead_key }}",
+              "={{ $json.state === 'unknown' ? 'Lead id ' + $json.lead_key + ': the mail may or may not have been sent. A person decides.' : 'Lead id ' + $json.lead_key + ' could not be finished after 3 tries. A person decides.' }}", [550, 300], onError="continueErrorOutput"),
+         pg("AlertMark", "UPDATE mf_leads SET alert_sent=true, updated_at=now() WHERE lead_key=$1 AND alert_token=$2 AND alert_sent=false RETURNING lead_key;",
+            "={{ [$('AlertRow').item.json.lead_key, $('AlertRow').item.json.alert_token] }}", [770, 300], always=False, onError="continueRegularOutput")]
     # the Postgres node returns ONE item {success: true} when a non-SELECT statement matches no row (n8n source, Postgres v2 helpers/utils.js): only an item that carries a lead id is work
-    c = {}; link(c, "Every30s", "MarkFailed"); link(c, "Every30s", "ClaimStuck"); link(c, "ClaimStuck", "StuckRow"); link(c, "StuckRow", "RunSub", 0); link(c, "MarkFailed", "FailedRow"); link(c, "FailedRow", "AlertFailed", 0)
+    c = {}; link(c, "Every30s", "MarkFailed"); link(c, "Every30s", "ClaimStuck"); link(c, "ClaimStuck", "StuckRow"); link(c, "StuckRow", "RunSub", 0); link(c, "Every30s", "AlertClaim"); link(c, "AlertClaim", "AlertRow"); link(c, "AlertRow", "AlertSend", 0); link(c, "AlertSend", "AlertMark", 0)
     return {"name": "Lead desk main frame: recovery (every 30 s)", "nodes": n, "connections": c, "settings": ST}
 os.makedirs(OUT, exist_ok=True)
 for fn, w in (("mf-sub-crm-mail.json", sub()),
