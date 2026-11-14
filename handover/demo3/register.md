@@ -355,3 +355,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R18a/R18b | closed 07:17Z | resolve done |
 | B22 | fix-2 r9 builder | closed 07:22Z, handed back | reviews R19a/R19b |
 | R19a/R19b | egm-design, egm-codebase-details on fix-2 r9 | started 07:22Z | check 07:37Z |
+| B22 | resumed for r10 (1 major) | 07:24Z | check +25 min |

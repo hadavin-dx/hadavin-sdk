@@ -1,3 +1,17 @@
+## HEARTBEAT 118 (07:24Z) - fix-2 r9 reviewed: 1 major (confirmed by me), sent back to B22 as round 10; B21 and B23 still working
+
+| Agent / job | State at 07:24Z |
+|---|---|
+| fix-2 r9 reviews | egm-design 0 blocker / 1 major / 4 minor / 3 nit; egm-codebase-details 0 / 0 / 4 / 5. MAJOR (I confirmed it in the tree): run_real_check.py:860-865 does not refuse a book path INSIDE a file (ENOTDIR counts as absent) although the notes said it does. Real fault, not text. Saved: evidence/review-lane3-fix-2-r9.md |
+| B22 fix-2 r10 | resumed on the 1 major + 4 minors (repeat scan case/wrap, unlabelled old-code passes, smtp claim test or delete claim, honest counts text vs behaviour, "mode alone says who else" overclaim, ACLs as residual case); same lint gate, no full run |
+| B23 fix-10 r4 | building (since 07:19Z) |
+| B21 fix-5 r8 | fixing its one red test; deadline 07:41Z; no hand-back |
+
+ASK for the lead: none. Note for the stack: docs/settings.md:106 (fix-2) says run_real_check "2 refused at the start"; fix-10 makes it 8: stack docs must follow.
+FAILURES AND RETRIES: round 9 had a real Major, so round 10 is needed (security path: uncapped).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): as HB117; no real non-root run of the unreadable-folder test (container is root, twin test runs).
+WHAT I WOULD DO NEXT (ranked): 1. B22 r10 hand-back, lint, fresh pass; 2. B21 hand-back; 3. B23 hand-back, review.
+
 ## HEARTBEAT 117 (07:22Z) - B22 (fix-2 r9) HANDED BACK, my lint GREEN; fresh reviewers on r9 started; start_all 4/8 answer applied
 
 | Agent / job | State at 07:22Z |
@@ -27,19 +41,4 @@ ASK for the lead: confirm start_all keeps 4 for a late refusal (the desk's own n
 FAILURES AND RETRIES: my own lint on B20 missed an untracked file (above); rule now: git add -A before the lint copy (told B22, B23).
 NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB115.
 WHAT I WOULD DO NEXT (ranked): 1. B21 hand-back, lint it, reviewers; 2. B22 and B23 hand-backs, fresh reviews; 3. stack builder.
-
-## HEARTBEAT 115 (07:14Z) - B20 (fix-10 r3) HANDED BACK, full run GREEN, my own lint GREEN; two fresh reviewers started
-
-| Agent / job | State at 07:14Z |
-|---|---|
-| B20 fix-10 r3 | HANDED BACK. Final-head full run `4160 passed, 211 skipped, 0 failed` (925s; Python 3.13, gitleaks, DPLD_REQUIRE_SCAN=1, no data/, no extra ref). Run 1 had been red (13 failed, builder slip: it ran only its own test files; plus 1 hygiene literal); fixed at the class: every refused run_real_check setting is exit 8, exit 2 only for command line or missing tool. Hygiene and clock tests alone rc 0. Mutation 19 of 19 killed. Old-code proof: 27 real-behaviour, 8 function-absent, 6 text/AST, 9 text-only ps1 pins counted apart; 25 more real-behaviour in test_real_check_dry/test_path_confinement. Windows scripts never run (text pins, 4 Windows-only tests skipped) |
-| LINT by me (independent, on a clean copy of the index of b20-tree) | ruff check 0, ruff format --check 0, mypy linux 0, mypy win32 0, bandit -ll 0, ruff E501 0. Logs raw/b20-*.log. Note: git write-tree of that tree is 3e4cfad3; the builder quotes patch tree 7d32f6fc (different base for the tree): not yet reconciled, reviewers read the patch |
-| fix-10 r3 reviewers | egm-design and egm-codebase-details started 07:13Z |
-| B21 fix-5 r8 | full run red (1 failed, HB114); no hand-back yet |
-| B22 fix-2 r9 | building |
-
-ASK for the lead: none.
-FAILURES AND RETRIES: B20 run 1 red; B21 run red. The stack must still add exit-7 rows to fix-10's table (builder notes list exact steps).
-NOT DONE / NOT CHECKED (my list, for the lead to decide): Windows scripts; Python 3.12; CodeQL, Sonar, CodeRabbit (CI only); 211 skips not listed one by one.
-WHAT I WOULD DO NEXT (ranked): 1. read fix-10 reviews and resolve; 2. B21 and B22 hand-backs, same chain; 3. stack builder.
 

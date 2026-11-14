@@ -2106,3 +2106,18 @@ FAILURES AND RETRIES: B21 full run red (above); B20 run 1 red (HB113).
 NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB113.
 WHAT I WOULD DO NEXT (ranked): 1. B21 fix and re-run (or guards alone if text-only); 2. lint B20/B21 final trees; 3. reviewers.
 
+## HEARTBEAT 115 (07:14Z) - B20 (fix-10 r3) HANDED BACK, full run GREEN, my own lint GREEN; two fresh reviewers started
+
+| Agent / job | State at 07:14Z |
+|---|---|
+| B20 fix-10 r3 | HANDED BACK. Final-head full run `4160 passed, 211 skipped, 0 failed` (925s; Python 3.13, gitleaks, DPLD_REQUIRE_SCAN=1, no data/, no extra ref). Run 1 had been red (13 failed, builder slip: it ran only its own test files; plus 1 hygiene literal); fixed at the class: every refused run_real_check setting is exit 8, exit 2 only for command line or missing tool. Hygiene and clock tests alone rc 0. Mutation 19 of 19 killed. Old-code proof: 27 real-behaviour, 8 function-absent, 6 text/AST, 9 text-only ps1 pins counted apart; 25 more real-behaviour in test_real_check_dry/test_path_confinement. Windows scripts never run (text pins, 4 Windows-only tests skipped) |
+| LINT by me (independent, on a clean copy of the index of b20-tree) | ruff check 0, ruff format --check 0, mypy linux 0, mypy win32 0, bandit -ll 0, ruff E501 0. Logs raw/b20-*.log. Note: git write-tree of that tree is 3e4cfad3; the builder quotes patch tree 7d32f6fc (different base for the tree): not yet reconciled, reviewers read the patch |
+| fix-10 r3 reviewers | egm-design and egm-codebase-details started 07:13Z |
+| B21 fix-5 r8 | full run red (1 failed, HB114); no hand-back yet |
+| B22 fix-2 r9 | building |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B20 run 1 red; B21 run red. The stack must still add exit-7 rows to fix-10's table (builder notes list exact steps).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): Windows scripts; Python 3.12; CodeQL, Sonar, CodeRabbit (CI only); 211 skips not listed one by one.
+WHAT I WOULD DO NEXT (ranked): 1. read fix-10 reviews and resolve; 2. B21 and B22 hand-backs, same chain; 3. stack builder.
+
