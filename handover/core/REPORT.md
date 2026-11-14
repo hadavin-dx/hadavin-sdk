@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 11:45 UTC / 17:15 IST
+
+**FAILED: the EV7P full run on r7q found a NEW failing test the builder never ran, so r7q is NOT deliverable as it stands.** Raw log line (EV7P wrapper, 11:13Z to 11:44Z, 30 min 30 s): **8 failed, 6012 passed, 8 skipped, 60 warnings, rc 1.** Seven of the eight are the expected git-only ids on a plain copy (test_hygiene x4, test_nosemgrep_form, test_raw_bidi_chars, test_shell_single_bracket: their errors are git ls-files failing outside a repo). **The eighth is NEW: tests/test_file_call_guard.py::test_every_import_and_file_call_in_the_code_is_listed_with_a_reason_or_goes_through_the_one_reader: "demo_only/bad_request.py:30 ThreadingHTTPServer ... is not listed in ALLOW..." and "demo_only/fakes_server.py: the allowed call ThreadingHTTPServer is not in the file".** My reading (from the log, not yet proven by a fix): r7q's QuietServer moved the ThreadingHTTPServer subclass into bad_request.py and the guard's allow-list was not updated. The r7q builder ran its changed-file tests, not this guard test (it ran 9 files). Class: a repo-wide guard test that lists files by name was not run after a change to the files it lists.
+
+**Action taken (fix-dont-defer, on-path demo_only helper): r7r builder STARTED 11:46Z (a17df18e, fresh, tree-R7R copy of r7q, test-first):** reproduce, update the allow-list with exact file and reason (no weakening), sweep every other guard list that names the 7 changed files, ruff 0.17.1, suppression counts, r7r patches, R7R-RESULTS.md; 45 min box; no full suite. Your reviewer on the r7q snapshot will therefore see a known failing guard test: the fix lands as r7r.
+
+**EV7P still to finish (runner, still running):** hostile drivers, hygiene in a staged git copy, ruff 0.17.1 and the evidence file. ETA about 12:13Z (box). No denial. I do not yet have its hygiene or hostile results and state none. A full-run pass count of 6012 is the runner's raw log, not yet in an evidence file.
+
+| id | what | started UTC/IST | expected end | state | next |
+|---|---|---|---|---|---|
+| ae0c8973 (EV7P) | hostile, hygiene, ruff, evidence file | 11:13 / 16:43 | about 12:13 | RUNNING (full run done) | push EV7P-EVIDENCE.md |
+| a17df18e (r7r builder) | guard allow-list fix and class sweep | 11:46 / 17:16 | about 12:31 | RUNNING | hand-back, verify hashes, push, then EV7R on r7r |
+
+Agents running: 2.
+
+ASK: your reviewer: start it on r7q or wait for r7r (about 12:35Z)? Default: wait for r7r so you review the bytes that will go to the take; r7q review would find the same code except this guard list.
+
+NOT DONE / NOT CHECKED: r7r result; EV7P hygiene, hostile table, ruff; independent review; M9-74 test, M9-79 measure; off-path items.
+
+WHAT I WOULD DO NEXT (ranked): 1. push EV7P evidence (with this finding); 2. verify and push r7r; 3. EV7R on r7r (full run again, one) and your reviewer on r7r. Next block about 11:55Z.
+
+
 ## STATUS (core lead) 11:35 UTC / 17:05 IST
 
 **EV7P (ae0c8973) still RUNNING, no result file yet.** Runner checkpoint 11:32Z: full pytest run at 60% (started 11:20, runs 22 min so far; box ends about 12:13). A load driver (load_tools.load_driver) is running inside it as expected. Done earlier: patch hashes OK, tree equals tree-R7Q, suppressions noqa 188 to 193 (+5 in tests, src unchanged). **Still to run after the full run: hostile drivers (banner bytes, MemoryError, quiet server), hygiene scan in a staged git copy, ruff 0.17.1, git-only test ids.** I have not seen any pass or fail count yet; I will not state one. No denial. I will push EV7P-EVIDENCE.md to handover/core/fix/ the moment it lands and tell you; snapshot-r7q is already pushed.
