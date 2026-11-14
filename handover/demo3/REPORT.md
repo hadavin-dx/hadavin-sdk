@@ -1,3 +1,21 @@
+## HEARTBEAT 77 (03:12Z) - M1 AND M2 BOTH CLOSED; M3, M4, M5 RUNNING
+
+| Agent | Job | State |
+|---|---|---|
+| M1 | 3.13 shuffled seed 20261114 | CLOSED: 30 failed, 3684 passed, 169 skipped, rc 1, 881 s; 6 re-runs of the 3 files identical |
+| M2 | 3.13 reversed | CLOSED: same numbers, rc 1, 882 s |
+| M3 | 3.13 shuffled seed 987654 (third order) | running |
+| M4 | installs gitleaks 8.30.1 (lead answer Q-M1), runs the 3 gitleaks files in 2 orders and 1 full suite | running |
+| M5 | finds which test creates the empty data/ folder in the repo tree | running |
+
+FAILURES AND RETRIES: 30 failures in each of the two closed runs, all with the same text 'gitleaks binary not found', from tests/test_gitleaks_exceptions.py (24), tests/test_gitleaks_semgrep_lock.py (2), tests/test_hygiene.py (4). M1's report lists the same file split and test names as M2's. 3 alone re-runs: done at file level (3 default + 3 shuffled per file set), not per single test; identical failing set every time, so always-fails here, not flaky, not order-dependent. Totals: 2 runs closed, 0 flaky, 0 order-dependent found, 30 environment failures (missing program, cause shown in the log text). Not proven until M4 runs them with gitleaks present.
+FINDING (new): a full run leaves an EMPTY git-ignored folder data/ in the repo tree root (M1: created 02:57:14Z during the run; M2 tree also has data/). Which test creates it is a guess (a test starting the desk with a relative default data path); M5 is finding it. Tree stays clean for git (status empty before and after, 248 tracked files).
+M1 disclosure: its 6 re-runs ran without unsetting cloud variables (the main run had them unset).
+Python 3.11: not run (repo says >=3.12). Playwright is not installed in the 3.13 venv, so 166 browser tests skipped and did NOT run on 3.13.
+ASK list: Q-M1 answered by lead (install gitleaks; M4 doing it). Open asks unchanged.
+Load: idle CPU measured above; 3 agents running (M3 and M4 heavy, M5 light).
+Not checked: time per group (not measurable with -q), 30 gitleaks tests with the program present, playwright tests on 3.13, the data/ writer.
+
 ## HEARTBEAT 76 (03:12Z / 08:42 IST) - M2 REPORT IN; M1 REPORT PENDING; M3 STARTED
 
 | Agent | Job | State |
