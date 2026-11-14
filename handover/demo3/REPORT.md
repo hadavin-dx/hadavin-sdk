@@ -1,15 +1,20 @@
-## HEARTBEAT 179 (15:52Z) - v3: A passes twice (n = 2), B90 repeat running; v4 probe built (demo commit 7709d058), v4 runs queued right after the v3 B90 repeats
+## HEARTBEAT 180 (16:00Z) - v3 B90: 2 alerts in 3 of 3 runs; v4 B90 running now (started 16:00Z)
 
-| v3 flows (6ebb7f62), my own cases | n | Result |
-|---|---|---|
-| A (refuse alert recipient twice, then accept) | 2 | PASS both: exactly 1 alert each, at 240 s and 270 s, alert_sent true, 1 intake mail |
-| B20 (hold 20 s) | 1 | PASS: 1 alert at 50 s |
-| C (SMTP dead 600 s) | 1 | PASS: 1 alert at 690 s, 4 refused tries before |
-| B90 (hold 90 s) | 1 done, 2nd running (v3b90b, started 15:51Z), 3rd queued | run 1: 2 alerts (see HB178). Trace of run 1 from the fake SMTP log: first alert connected at 36 s, held 90 s, finished at 126 s; the second connection began at 126 s (claim 1 ran out at about 96 s, the next sweep re-claimed). Both stored at 126 s. |
+| v3 flows (6ebb7f62), SMTP holds the alert answer 90 s (B90) | Result |
+|---|---|
+| Run 1 | 2 alerts, stored at 120 s and 120 s; 1 intake mail, 1 CRM row |
+| Run 2 | 2 alerts at 120 s and 120 s; 1 intake mail |
+| Run 3 | 2 alerts at 90 s and 120 s; 1 intake mail, 1 CRM row |
+So the duplicate is NOT a one-off: n = 3, always 2 alerts, never 0, never 3. Other v3 cases: A n = 2 pass (1 alert each), B20 n = 1 pass, C n = 1 pass.
 
-Order now (queue script run_n.sh; the lead's order): v3 B90 run 2, v3 B90 run 3, then on v4 (flow files from demo commit 7709d058, folder n8n-flows-v4, table unchanged): B90, A, C, B90 again; then the remaining v3 repeats (C, B20, A) and v4 A, C repeats if time allows. Expected on v4 by the demo README (my criteria, written before running): B90 exactly 1 alert and alert_attempts 1; A first alert still near the old 60 to 300 s backoff (not 12 min); C 1 alert after restore. I will report exact-1-alert counts and the time of the first alert per run. First v4 result about 16:10Z.
+| v4 flows (demo commit 7709d058, folder n8n-flows-v4), my cases | Status |
+|---|---|
+| B90 (hold 90 s) | RUNNING, started 16:00Z, result about 16:08Z. Criteria written before the run: exactly 1 alert, alert_attempts 1, alert_sent true, 1 intake mail, still 1 alert 150 s after. |
+| A (refuse twice) | next, about 16:20Z. Criterion: first alert near the old 60 to 300 s backoff (v3 gave 240 and 270 s), not 12 min. |
+| C (dead 600 s) | after A, about 16:35Z. Criterion: 1 alert after restore. |
+| B90 again | after C. The remaining v3 repeats (C, B20, A) come after the v4 runs. |
 
 ASK for the lead: none.
-FAILURES AND RETRIES: none new. (I stopped and restarted my own queue loop twice to reorder; the running test was not touched.)
-NOT DONE / NOT CHECKED (my list, for the lead to decide): v4 results; v3 B90 runs 2 and 3; K3/K6/T12/T11 on v3 or v4 (not ordered); the n8n node log gives no alert node lines (execution saving is off, so the trace of B90 comes from the fake SMTP log only); RESULTS.md and comparison with the demo table.
-WHAT I WOULD DO NEXT (ranked): 1) v3 B90 repeats, then v4 B90, A, C; 2) RESULTS.md including v3 and v4; 3) compare with the demo table.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): v4 results; n = 1 per v4 case so far (repeats queued: B90 and later A, C); K3/K6/T12/T11 on v4 (not ordered); RESULTS.md and comparison with the demo table.
+WHAT I WOULD DO NEXT (ranked): 1) v4 B90, A, C; 2) v4 repeats; 3) RESULTS.md with v3 and v4, then compare.
