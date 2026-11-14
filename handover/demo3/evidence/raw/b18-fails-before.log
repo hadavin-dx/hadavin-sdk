@@ -1,0 +1,693 @@
+...........................................EEEEEF.F......FFFF..F......FF [ 37%]
+FF...F....F.FFFF...F.FFF.FFFF.F.F....................................... [ 75%]
+................................................                         [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_every_copy_of_the_retry_after_rule_gives_the_same_answers[envnum] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e501a20>
+
+    @pytest.fixture
+    def copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        monkeypatch.syspath_prepend(str(REPO))
+        probe = importlib.import_module("hubspot_probe")
+        driver = importlib.import_module("load_tools.load_driver")
+        return {
+            "envnum": envnum.retry_after_seconds,
+            "load_driver": driver._retry_after_fallback,
+>           "hubspot_probe": probe._retry_after,
+                             ^^^^^^^^^^^^^^^^^^
+        }
+E       AttributeError: module 'hubspot_probe' has no attribute '_retry_after'
+
+tests/test_one_key_file_rule_r7.py:351: AttributeError
+_ ERROR at setup of test_every_copy_of_the_retry_after_rule_gives_the_same_answers[load_driver] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e3aef20>
+
+    @pytest.fixture
+    def copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        monkeypatch.syspath_prepend(str(REPO))
+        probe = importlib.import_module("hubspot_probe")
+        driver = importlib.import_module("load_tools.load_driver")
+        return {
+            "envnum": envnum.retry_after_seconds,
+            "load_driver": driver._retry_after_fallback,
+>           "hubspot_probe": probe._retry_after,
+                             ^^^^^^^^^^^^^^^^^^
+        }
+E       AttributeError: module 'hubspot_probe' has no attribute '_retry_after'
+
+tests/test_one_key_file_rule_r7.py:351: AttributeError
+_ ERROR at setup of test_every_copy_of_the_retry_after_rule_gives_the_same_answers[hubspot_probe] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e3af380>
+
+    @pytest.fixture
+    def copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        monkeypatch.syspath_prepend(str(REPO))
+        probe = importlib.import_module("hubspot_probe")
+        driver = importlib.import_module("load_tools.load_driver")
+        return {
+            "envnum": envnum.retry_after_seconds,
+            "load_driver": driver._retry_after_fallback,
+>           "hubspot_probe": probe._retry_after,
+                             ^^^^^^^^^^^^^^^^^^
+        }
+E       AttributeError: module 'hubspot_probe' has no attribute '_retry_after'
+
+tests/test_one_key_file_rule_r7.py:351: AttributeError
+_ ERROR at setup of test_the_copies_are_pinned_to_the_one_reader_on_a_wide_set_of_texts _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e3af7e0>
+
+    @pytest.fixture
+    def copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        monkeypatch.syspath_prepend(str(REPO))
+        probe = importlib.import_module("hubspot_probe")
+        driver = importlib.import_module("load_tools.load_driver")
+        return {
+            "envnum": envnum.retry_after_seconds,
+            "load_driver": driver._retry_after_fallback,
+>           "hubspot_probe": probe._retry_after,
+                             ^^^^^^^^^^^^^^^^^^
+        }
+E       AttributeError: module 'hubspot_probe' has no attribute '_retry_after'
+
+tests/test_one_key_file_rule_r7.py:351: AttributeError
+__ ERROR at setup of test_a_huge_retry_after_is_clamped_to_one_named_maximum ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e3afd20>
+
+    @pytest.fixture
+    def copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        monkeypatch.syspath_prepend(str(REPO))
+        probe = importlib.import_module("hubspot_probe")
+        driver = importlib.import_module("load_tools.load_driver")
+        return {
+            "envnum": envnum.retry_after_seconds,
+            "load_driver": driver._retry_after_fallback,
+>           "hubspot_probe": probe._retry_after,
+                             ^^^^^^^^^^^^^^^^^^
+        }
+E       AttributeError: module 'hubspot_probe' has no attribute '_retry_after'
+
+tests/test_one_key_file_rule_r7.py:351: AttributeError
+=================================== FAILURES ===================================
+__________________ test_the_rule_is_documented_where_it_lives __________________
+
+    def test_the_rule_is_documented_where_it_lives() -> None:
+        doc = " ".join((envnum.retry_after_seconds.__doc__ or "").split())
+>       assert "digits, optionally followed by a point and more digits" in doc and "no exponent" in doc
+E       assert ('digits, optionally followed by a point and more digits' in "The seconds a Retry-After header names: a plain non-negative number (ASCII digits, a point, an exponent; spaces and t...es its own back-off. The one reader for the desk's HubSpot and live-model kinds, the burst script and the load driver.")
+
+tests/test_one_key_file_rule_r7.py:389: AssertionError
+_ test_every_retry_after_reader_in_the_repository_is_the_one_reader_or_a_pinned_copy _
+
+    def test_every_retry_after_reader_in_the_repository_is_the_one_reader_or_a_pinned_copy() -> None:
+        readers: set[tuple[str, str]] = set()
+        unfed: list[str] = []
+        for folder in READ_FOLDERS:
+            for p in sorted((REPO / folder).rglob("*.py")):
+                rel = p.relative_to(REPO).as_posix()
+                own, loose = _reader_report(p.read_text(encoding="utf-8"))
+                readers |= {(rel, name) for name in own}
+                unfed += [f"{rel}:{n}" for n in loose]
+>       assert unfed == [], unfed
+E       AssertionError: ['scripts/hubspot_probe.py:141']
+E       assert ['scripts/hub...probe.py:141'] == []
+E         
+E         Left contains one more item: 'scripts/hubspot_probe.py:141'
+E         Use -v to get more diff
+
+tests/test_one_key_file_rule_r7.py:455: AssertionError
+_ test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[1e2] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_hubspot_adapter_ignores_a6')
+stub_for = <function stub_for.<locals>.make at 0x7f847da42de0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daa9ef0>
+raw = b'1e2'
+
+    @pytest.mark.parametrize("raw", REFUSED_BYTES)
+    def test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff(
+        tmp_path: Path, stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes
+    ) -> None:
+        from lead_desk import crm_hubspot
+        from lead_desk.crm_hubspot import CrmBusy
+    
+        slept: list[float] = []
+        clock = types.SimpleNamespace(monotonic=time.monotonic, sleep=slept.append)
+        monkeypatch.setattr(crm_hubspot, "time", clock)
+        stub = stub_for(raw)
+        with pytest.raises(CrmBusy) as e:
+            _hubspot(tmp_path, stub.url, max_429_retries=1).put("L-1", REC)
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'1e2'
+E       assert 100.0 is None
+E        +  where 100.0 = CrmBusy('hubspot said: too many requests').retry_after
+E        +    where CrmBusy('hubspot said: too many requests') = <ExceptionInfo CrmBusy('hubspot said: too many requests') tblen=3>.value
+
+tests/test_one_key_file_rule_r7.py:554: AssertionError
+_ test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[.5] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_hubspot_adapter_ignores_a7')
+stub_for = <function stub_for.<locals>.make at 0x7f847da43240>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daa87c0>
+raw = b'.5'
+
+    @pytest.mark.parametrize("raw", REFUSED_BYTES)
+    def test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff(
+        tmp_path: Path, stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes
+    ) -> None:
+        from lead_desk import crm_hubspot
+        from lead_desk.crm_hubspot import CrmBusy
+    
+        slept: list[float] = []
+        clock = types.SimpleNamespace(monotonic=time.monotonic, sleep=slept.append)
+        monkeypatch.setattr(crm_hubspot, "time", clock)
+        stub = stub_for(raw)
+        with pytest.raises(CrmBusy) as e:
+            _hubspot(tmp_path, stub.url, max_429_retries=1).put("L-1", REC)
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'.5'
+E       assert 0.5 is None
+E        +  where 0.5 = CrmBusy('hubspot said: too many requests').retry_after
+E        +    where CrmBusy('hubspot said: too many requests') = <ExceptionInfo CrmBusy('hubspot said: too many requests') tblen=3>.value
+
+tests/test_one_key_file_rule_r7.py:554: AssertionError
+_ test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[+4] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_hubspot_adapter_ignores_a8')
+stub_for = <function stub_for.<locals>.make at 0x7f847da42b60>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daa9cc0>
+raw = b'+4'
+
+    @pytest.mark.parametrize("raw", REFUSED_BYTES)
+    def test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff(
+        tmp_path: Path, stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes
+    ) -> None:
+        from lead_desk import crm_hubspot
+        from lead_desk.crm_hubspot import CrmBusy
+    
+        slept: list[float] = []
+        clock = types.SimpleNamespace(monotonic=time.monotonic, sleep=slept.append)
+        monkeypatch.setattr(crm_hubspot, "time", clock)
+        stub = stub_for(raw)
+        with pytest.raises(CrmBusy) as e:
+            _hubspot(tmp_path, stub.url, max_429_retries=1).put("L-1", REC)
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'+4'
+E       assert 4.0 is None
+E        +  where 4.0 = CrmBusy('hubspot said: too many requests').retry_after
+E        +    where CrmBusy('hubspot said: too many requests') = <ExceptionInfo CrmBusy('hubspot said: too many requests') tblen=3>.value
+
+tests/test_one_key_file_rule_r7.py:554: AssertionError
+_ test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[5.] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_hubspot_adapter_ignores_a9')
+stub_for = <function stub_for.<locals>.make at 0x7f847da43380>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daaa430>
+raw = b'5.'
+
+    @pytest.mark.parametrize("raw", REFUSED_BYTES)
+    def test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff(
+        tmp_path: Path, stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes
+    ) -> None:
+        from lead_desk import crm_hubspot
+        from lead_desk.crm_hubspot import CrmBusy
+    
+        slept: list[float] = []
+        clock = types.SimpleNamespace(monotonic=time.monotonic, sleep=slept.append)
+        monkeypatch.setattr(crm_hubspot, "time", clock)
+        stub = stub_for(raw)
+        with pytest.raises(CrmBusy) as e:
+            _hubspot(tmp_path, stub.url, max_429_retries=1).put("L-1", REC)
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'5.'
+E       assert 5.0 is None
+E        +  where 5.0 = CrmBusy('hubspot said: too many requests').retry_after
+E        +    where CrmBusy('hubspot said: too many requests') = <ExceptionInfo CrmBusy('hubspot said: too many requests') tblen=3>.value
+
+tests/test_one_key_file_rule_r7.py:554: AssertionError
+____ test_hubspot_adapter_honours_a_plain_retry_after_and_clamps_a_huge_one ____
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_hubspot_adapter_honours_a0')
+stub_for = <function stub_for.<locals>.make at 0x7f847da42980>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daaacf0>
+
+    def test_hubspot_adapter_honours_a_plain_retry_after_and_clamps_a_huge_one(
+        tmp_path: Path, stub_for: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from lead_desk import crm_hubspot
+        from lead_desk.crm_hubspot import CrmBusy
+    
+        monkeypatch.setattr(crm_hubspot, "time", types.SimpleNamespace(monotonic=time.monotonic, sleep=lambda _d: None))
+>       for raw, want in ((b"0.25", 0.25), (b"9999999999", constants.RETRY_AFTER_MAX_SECONDS)):
+                                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'RETRY_AFTER_MAX_SECONDS'. Did you mean: 'NUDGE_AFTER_MAX_SECONDS'?
+
+tests/test_one_key_file_rule_r7.py:566: AttributeError
+_ test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[1e2] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_live_model_kind_reports_n6')
+stub_for = <function stub_for.<locals>.make at 0x7f847db2d4e0>, raw = b'1e2'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses(
+        tmp_path: Path, stub_for: Any, raw: bytes | None
+    ) -> None:
+        from lead_desk.live_claude import LiveRateLimited
+    
+        with pytest.raises(LiveRateLimited) as e:
+            _live(tmp_path, stub_for(raw).url).qualify("L1", "a@example.test")
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'1e2'
+E       assert 100.0 is None
+E        +  where 100.0 = LiveRateLimited('the model service said: too many requests').retry_after
+E        +    where LiveRateLimited('the model service said: too many requests') = <ExceptionInfo LiveRateLimited('the model service said: too many requests') tblen=5>.value
+
+tests/test_one_key_file_rule_r7.py:594: AssertionError
+_ test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[.5] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_live_model_kind_reports_n7')
+stub_for = <function stub_for.<locals>.make at 0x7f847db2d940>, raw = b'.5'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses(
+        tmp_path: Path, stub_for: Any, raw: bytes | None
+    ) -> None:
+        from lead_desk.live_claude import LiveRateLimited
+    
+        with pytest.raises(LiveRateLimited) as e:
+            _live(tmp_path, stub_for(raw).url).qualify("L1", "a@example.test")
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'.5'
+E       assert 0.5 is None
+E        +  where 0.5 = LiveRateLimited('the model service said: too many requests').retry_after
+E        +    where LiveRateLimited('the model service said: too many requests') = <ExceptionInfo LiveRateLimited('the model service said: too many requests') tblen=5>.value
+
+tests/test_one_key_file_rule_r7.py:594: AssertionError
+_ test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[+4] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_live_model_kind_reports_n8')
+stub_for = <function stub_for.<locals>.make at 0x7f847db2df80>, raw = b'+4'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses(
+        tmp_path: Path, stub_for: Any, raw: bytes | None
+    ) -> None:
+        from lead_desk.live_claude import LiveRateLimited
+    
+        with pytest.raises(LiveRateLimited) as e:
+            _live(tmp_path, stub_for(raw).url).qualify("L1", "a@example.test")
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'+4'
+E       assert 4.0 is None
+E        +  where 4.0 = LiveRateLimited('the model service said: too many requests').retry_after
+E        +    where LiveRateLimited('the model service said: too many requests') = <ExceptionInfo LiveRateLimited('the model service said: too many requests') tblen=5>.value
+
+tests/test_one_key_file_rule_r7.py:594: AssertionError
+_ test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[5.] _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_live_model_kind_reports_n9')
+stub_for = <function stub_for.<locals>.make at 0x7f847db2e520>, raw = b'5.'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses(
+        tmp_path: Path, stub_for: Any, raw: bytes | None
+    ) -> None:
+        from lead_desk.live_claude import LiveRateLimited
+    
+        with pytest.raises(LiveRateLimited) as e:
+            _live(tmp_path, stub_for(raw).url).qualify("L1", "a@example.test")
+>       assert e.value.retry_after is None, raw
+E       AssertionError: b'5.'
+E       assert 5.0 is None
+E        +  where 5.0 = LiveRateLimited('the model service said: too many requests').retry_after
+E        +    where LiveRateLimited('the model service said: too many requests') = <ExceptionInfo LiveRateLimited('the model service said: too many requests') tblen=5>.value
+
+tests/test_one_key_file_rule_r7.py:594: AssertionError
+____ test_live_model_kind_reports_a_plain_retry_after_and_clamps_a_huge_one ____
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_live_model_kind_reports_a0')
+stub_for = <function stub_for.<locals>.make at 0x7f847db2fc40>
+
+    def test_live_model_kind_reports_a_plain_retry_after_and_clamps_a_huge_one(tmp_path: Path, stub_for: Any) -> None:
+        from lead_desk.live_claude import LiveRateLimited
+    
+>       for raw, want in ((b"3", 3.0), (b"9999999999", constants.RETRY_AFTER_MAX_SECONDS)):
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'RETRY_AFTER_MAX_SECONDS'. Did you mean: 'NUDGE_AFTER_MAX_SECONDS'?
+
+tests/test_one_key_file_rule_r7.py:600: AttributeError
+____ test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[1_0] ____
+
+stub_for = <function stub_for.<locals>.make at 0x7f847db2f920>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e525fd0>
+raw = b'1_0'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses(
+        stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes | None
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        hp = importlib.import_module("hubspot_probe")
+        stub = stub_for(raw)
+        probe = hp.Probe(stub.url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
+        status, _body, wait = probe._once("GET", "/crm/v3/owners", None)
+>       assert status == 429 and wait is None, raw
+E       AssertionError: b'1_0'
+E       assert (429 == 429 and 10.0 is None)
+
+tests/test_one_key_file_rule_r7.py:615: AssertionError
+____ test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[1e2] ____
+
+stub_for = <function stub_for.<locals>.make at 0x7f847db2d080>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e525ef0>
+raw = b'1e2'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses(
+        stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes | None
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        hp = importlib.import_module("hubspot_probe")
+        stub = stub_for(raw)
+        probe = hp.Probe(stub.url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
+        status, _body, wait = probe._once("GET", "/crm/v3/owners", None)
+>       assert status == 429 and wait is None, raw
+E       AssertionError: b'1e2'
+E       assert (429 == 429 and 100.0 is None)
+
+tests/test_one_key_file_rule_r7.py:615: AssertionError
+____ test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[.5] _____
+
+stub_for = <function stub_for.<locals>.make at 0x7f847db2cfe0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daa8050>
+raw = b'.5'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses(
+        stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes | None
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        hp = importlib.import_module("hubspot_probe")
+        stub = stub_for(raw)
+        probe = hp.Probe(stub.url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
+        status, _body, wait = probe._once("GET", "/crm/v3/owners", None)
+>       assert status == 429 and wait is None, raw
+E       AssertionError: b'.5'
+E       assert (429 == 429 and 0.5 is None)
+
+tests/test_one_key_file_rule_r7.py:615: AssertionError
+____ test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[+4] _____
+
+stub_for = <function stub_for.<locals>.make at 0x7f847db2f7e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daaa900>
+raw = b'+4'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses(
+        stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes | None
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        hp = importlib.import_module("hubspot_probe")
+        stub = stub_for(raw)
+        probe = hp.Probe(stub.url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
+        status, _body, wait = probe._once("GET", "/crm/v3/owners", None)
+>       assert status == 429 and wait is None, raw
+E       AssertionError: b'+4'
+E       assert (429 == 429 and 4.0 is None)
+
+tests/test_one_key_file_rule_r7.py:615: AssertionError
+____ test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[5.] _____
+
+stub_for = <function stub_for.<locals>.make at 0x7f847db2c040>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daa9d30>
+raw = b'5.'
+
+    @pytest.mark.parametrize("raw", [*REFUSED_BYTES, None])
+    def test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses(
+        stub_for: Any, monkeypatch: pytest.MonkeyPatch, raw: bytes | None
+    ) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        hp = importlib.import_module("hubspot_probe")
+        stub = stub_for(raw)
+        probe = hp.Probe(stub.url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
+        status, _body, wait = probe._once("GET", "/crm/v3/owners", None)
+>       assert status == 429 and wait is None, raw
+E       AssertionError: b'5.'
+E       assert (429 == 429 and 5.0 is None)
+
+tests/test_one_key_file_rule_r7.py:615: AssertionError
+__________________ test_the_hubspot_probe_clamps_a_huge_wait ___________________
+
+stub_for = <function stub_for.<locals>.make at 0x7f847db2fce0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847e526ac0>
+
+    def test_the_hubspot_probe_clamps_a_huge_wait(stub_for: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.syspath_prepend(str(REPO / "scripts"))
+        hp = importlib.import_module("hubspot_probe")
+        probe = hp.Probe(stub_for(b"9999999999").url, "tok" + "en-made-up", lambda _s: None, lambda _t: None)
+>       assert probe._once("GET", "/x", None)[2] == hp.RETRY_AFTER_MAX_SECONDS == constants.RETRY_AFTER_MAX_SECONDS
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hubspot_probe' has no attribute 'RETRY_AFTER_MAX_SECONDS'
+
+tests/test_one_key_file_rule_r7.py:622: AttributeError
+_ test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy[x = 1\n-the desk is there but its envnum lacks the reader: a bug in the desk] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daaa900>
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_the_load_driver_does_not_0')
+envnum_text = 'x = 1\n'
+why = 'the desk is there but its envnum lacks the reader: a bug in the desk'
+
+    @pytest.mark.parametrize(
+        ("envnum_text", "why"),
+        [
+            ("x = 1\n", "the desk is there but its envnum lacks the reader: a bug in the desk"),
+            ("import a_module_that_is_not_installed_anywhere\n", "a missing dependency inside the desk, not a missing desk"),
+        ],
+    )
+    def test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path, envnum_text: str, why: str
+    ) -> None:
+        _clean_modules(monkeypatch)
+>       monkeypatch.syspath_prepend(str(_fake_desk(tmp_path, envnum_text)))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_one_key_file_rule_r7.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_the_load_driver_does_not_0')
+envnum_text = 'x = 1\n'
+
+    def _fake_desk(tmp_path: Path, envnum_text: str) -> Path:
+        pkg = tmp_path / "fake_src" / "lead_desk"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text("", encoding="utf-8")
+        consts = {
+            "BURST_BACKOFF_SECONDS": 0.1, "BURST_BACKOFF_MAX_SECONDS": 1.0, "BURST_RETRY_DEADLINE_SECONDS": 30.0,
+>           "RETRY_AFTER_MAX_SECONDS": float(constants.RETRY_AFTER_MAX_SECONDS),
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        }  # fmt: skip
+E       AttributeError: module 'lead_desk.constants' has no attribute 'RETRY_AFTER_MAX_SECONDS'. Did you mean: 'NUDGE_AFTER_MAX_SECONDS'?
+
+tests/test_one_key_file_rule_r7.py:650: AttributeError
+_ test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy[import a_module_that_is_not_installed_anywhere\n-a missing dependency inside the desk, not a missing desk] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daaaeb0>
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_the_load_driver_does_not_1')
+envnum_text = 'import a_module_that_is_not_installed_anywhere\n'
+why = 'a missing dependency inside the desk, not a missing desk'
+
+    @pytest.mark.parametrize(
+        ("envnum_text", "why"),
+        [
+            ("x = 1\n", "the desk is there but its envnum lacks the reader: a bug in the desk"),
+            ("import a_module_that_is_not_installed_anywhere\n", "a missing dependency inside the desk, not a missing desk"),
+        ],
+    )
+    def test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path, envnum_text: str, why: str
+    ) -> None:
+        _clean_modules(monkeypatch)
+>       monkeypatch.syspath_prepend(str(_fake_desk(tmp_path, envnum_text)))
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_one_key_file_rule_r7.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_the_load_driver_does_not_1')
+envnum_text = 'import a_module_that_is_not_installed_anywhere\n'
+
+    def _fake_desk(tmp_path: Path, envnum_text: str) -> Path:
+        pkg = tmp_path / "fake_src" / "lead_desk"
+        pkg.mkdir(parents=True)
+        (pkg / "__init__.py").write_text("", encoding="utf-8")
+        consts = {
+            "BURST_BACKOFF_SECONDS": 0.1, "BURST_BACKOFF_MAX_SECONDS": 1.0, "BURST_RETRY_DEADLINE_SECONDS": 30.0,
+>           "RETRY_AFTER_MAX_SECONDS": float(constants.RETRY_AFTER_MAX_SECONDS),
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        }  # fmt: skip
+E       AttributeError: module 'lead_desk.constants' has no attribute 'RETRY_AFTER_MAX_SECONDS'. Did you mean: 'NUDGE_AFTER_MAX_SECONDS'?
+
+tests/test_one_key_file_rule_r7.py:650: AttributeError
+_ test_a_key_file_that_is_a_symbolic_link_is_refused_without_a_path_or_the_key _
+
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_a_key_file_that_is_a_symb0')
+
+    def test_a_key_file_that_is_a_symbolic_link_is_refused_without_a_path_or_the_key(tmp_path: Path) -> None:
+        real = tmp_path / "real-key.txt"
+        real.write_text(KEY + "\n", encoding="utf-8")
+        link = tmp_path / "link-key.txt"
+        link.symlink_to(real)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r7.py:680: Failed
+________________ test_the_reader_opens_without_following_a_link ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daab000>
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_the_reader_opens_without_0')
+
+    def test_the_reader_opens_without_following_a_link(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        seen: list[int] = []
+        real = os.open
+    
+        def spy(path: object, flags: int, *a: object, **k: object) -> int:
+            seen.append(flags)
+            return real(path, flags, *a, **k)  # type: ignore[arg-type]
+    
+        monkeypatch.setattr(os, "open", spy)
+        f = tmp_path / "k.txt"
+        f.write_text(KEY, encoding="utf-8")
+        envnum.read_secret_file(f, "made-up key", "key")
+        nofollow = getattr(os, "O_NOFOLLOW", 0)
+>       assert seen and all(fl & nofollow == nofollow for fl in seen)
+E       assert ([2304] and False)
+E        +  where False = all(<generator object test_the_reader_opens_without_following_a_link.<locals>.<genexpr> at 0x7f847daae5a0>)
+
+tests/test_one_key_file_rule_r7.py:708: AssertionError
+_____________ test_the_docs_state_the_link_and_permission_decision _____________
+
+    def test_the_docs_state_the_link_and_permission_decision() -> None:
+        text = " ".join((REPO / "docs" / "limits.md").read_text(encoding="utf-8").split())
+>       assert "The desk refuses a key or password file that is a symbolic link" in text
+E       assert 'The desk refuses a key or password file that is a symbolic link' in '# Limits and details This page holds the detail behind the short "What is not claimed" list in the README. Skip this ...d one write (`OPEN`) accepted; the full list of default options and the write against our own portal are not verified.'
+
+tests/test_one_key_file_rule_r7.py:713: AssertionError
+_____ test_the_fake_model_server_prints_one_exact_line_for_a_bad_key_file ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f847daaaac0>
+tmp_path = PosixPath('/home/user/work/b18-logs/bt1/test_the_fake_model_server_pri0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f847e39fe00>
+
+    def test_the_fake_model_server_prints_one_exact_line_for_a_bad_key_file(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        short = tmp_path / "short.txt"
+        short.write_bytes(b"abc")
+        code, err = _fms(monkeypatch, tmp_path, short, capsys)
+        assert code == 2
+>       assert err == "refused: --key-file: the model key file is empty or shorter than 8 characters: it must hold the key\n"
+E       AssertionError: assert 'refused: --k...old the key\n' == 'refused: --k...old the key\n'
+E         
+E         - refused: --key-file: the model key file is empty or shorter than 8 characters: it must hold the key
+E         ?                          ^^^^^^   ^
+E         + refused: --key-file: the --key-file file is empty or shorter than 8 characters: it must hold the key
+E         ?                          ^^   ^     +++++
+
+tests/test_one_key_file_rule_r7.py:737: AssertionError
+___ test_the_fake_model_server_is_started_with_the_source_folder_on_the_path ___
+
+    def test_the_fake_model_server_is_started_with_the_source_folder_on_the_path() -> None:
+        doc = (REPO / "demo_only" / "fake_model_server.py").read_text(encoding="utf-8").split('"""')[1]
+>       assert "PYTHONPATH=src python -m demo_only.fake_model_server" in " ".join(doc.split()[:60]).replace("\n", " ")
+E       AssertionError: assert 'PYTHONPATH=src python -m demo_only.fake_model_server' in 'Fake model server for drills: a local stand-in for the live model service (same request and reply shape as lead_desk....r --mode ok --port 48767 [--key-file PATH] [--call-log FILE] Tests start it in a thread with make_model_server(port=0,'
+E        +  where 'Fake model server for drills: a local stand-in for the live model service (same request and reply shape as lead_desk....r --mode ok --port 48767 [--key-file PATH] [--call-log FILE] Tests start it in a thread with make_model_server(port=0,' = <built-in method replace of str object at 0x7f847e5ce970>('\n', ' ')
+E        +    where <built-in method replace of str object at 0x7f847e5ce970> = 'Fake model server for drills: a local stand-in for the live model service (same request and reply shape as lead_desk....r --mode ok --port 48767 [--key-file PATH] [--call-log FILE] Tests start it in a thread with make_model_server(port=0,'.replace
+E        +      where 'Fake model server for drills: a local stand-in for the live model service (same request and reply shape as lead_desk....r --mode ok --port 48767 [--key-file PATH] [--call-log FILE] Tests start it in a thread with make_model_server(port=0,' = <built-in method join of str object at 0x133a648>(['Fake', 'model', 'server', 'for', 'drills:', 'a', ...])
+E        +        where <built-in method join of str object at 0x133a648> = ' '.join
+
+tests/test_one_key_file_rule_r7.py:745: AssertionError
+_ test_the_mailbox_password_is_documented_as_read_when_the_mailbox_is_counted __
+
+    def test_the_mailbox_password_is_documented_as_read_when_the_mailbox_is_counted() -> None:
+        text = " ".join((REPO / "contract.md").read_text(encoding="utf-8").split())
+>       assert "every kind that holds a key or password file, except the mailbox, is asked to read it once" in text
+E       assert 'every kind that holds a key or password file, except the mailbox, is asked to read it once' in '# contract.md In this file "fake" and "recorded" are internal names for the demo stand-ins (`FakeCrm`, the `/fake/...... its own (`Desk._bounded`, see `docs/limits.md`). - A duplicate reply returns the id of the other lead: kept as it is.'
+
+tests/test_one_key_file_rule_r7.py:769: AssertionError
+___________ test_the_lock_comment_describes_behaviour_not_a_version ____________
+
+    def test_the_lock_comment_describes_behaviour_not_a_version() -> None:
+        text = (SRC / "lockfile.py").read_text(encoding="utf-8")
+        body = text.split("def lock_path", 1)[1].split("def acquire", 1)[0]
+>       assert "3.13" not in body and "Python 3" not in body, body
+E       AssertionError: (db_path: Path | str) -> Path:
+E             """`<resolved db path>.lock`. The path is resolved first (symlinks, `..`), so two names for the same lead-book
+E             give the same lock file."""
+E             try:
+E                 resolved = Path(db_path).resolve()
+E                 try:
+E                     resolved.stat()  # Python 3.13 and later do not raise on a loop of links when resolving; stat does
+E                 except OSError as e:
+E                     if e.errno == errno.ELOOP:
+E                         raise
+E             except (RuntimeError, OSError):  # a loop of links (a RuntimeError before Python 3.13), or no way to resolve it
+E                 raise LockUnavailableError("cannot resolve the lock file name") from None
+E             return Path(f"{resolved}.lock")
+E         
+E         
+E         
+E       assert ('3.13' not in '(db_path: P...lock")\n\n\n'
+E         
+E         '3.13' is contained here:
+E            # Python 3.13 and later do not raise on a loop of links when resolving; stat does
+E         ?           ++++
+E                   except OSError as e:
+E                       if e.errno == errno.ELOOP:
+E                           raise...
+E         
+E         ...Full output truncated, use '-vv' to show)
+
+tests/test_one_key_file_rule_r7.py:789: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_one_key_file_rule_r7.py::test_the_rule_is_documented_where_it_lives
+FAILED tests/test_one_key_file_rule_r7.py::test_every_retry_after_reader_in_the_repository_is_the_one_reader_or_a_pinned_copy
+FAILED tests/test_one_key_file_rule_r7.py::test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[1e2]
+FAILED tests/test_one_key_file_rule_r7.py::test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[.5]
+FAILED tests/test_one_key_file_rule_r7.py::test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[+4]
+FAILED tests/test_one_key_file_rule_r7.py::test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[5.]
+FAILED tests/test_one_key_file_rule_r7.py::test_hubspot_adapter_honours_a_plain_retry_after_and_clamps_a_huge_one
+FAILED tests/test_one_key_file_rule_r7.py::test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[1e2]
+FAILED tests/test_one_key_file_rule_r7.py::test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[.5]
+FAILED tests/test_one_key_file_rule_r7.py::test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[+4]
+FAILED tests/test_one_key_file_rule_r7.py::test_live_model_kind_reports_no_retry_after_for_a_value_the_rule_refuses[5.]
+FAILED tests/test_one_key_file_rule_r7.py::test_live_model_kind_reports_a_plain_retry_after_and_clamps_a_huge_one
+FAILED tests/test_one_key_file_rule_r7.py::test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[1_0]
+FAILED tests/test_one_key_file_rule_r7.py::test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[1e2]
+FAILED tests/test_one_key_file_rule_r7.py::test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[.5]
+FAILED tests/test_one_key_file_rule_r7.py::test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[+4]
+FAILED tests/test_one_key_file_rule_r7.py::test_the_hubspot_probe_gets_no_wait_from_a_value_the_rule_refuses[5.]
+FAILED tests/test_one_key_file_rule_r7.py::test_the_hubspot_probe_clamps_a_huge_wait
+FAILED tests/test_one_key_file_rule_r7.py::test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy[x = 1\n-the desk is there but its envnum lacks the reader: a bug in the desk]
+FAILED tests/test_one_key_file_rule_r7.py::test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy[import a_module_that_is_not_installed_anywhere\n-a missing dependency inside the desk, not a missing desk]
+FAILED tests/test_one_key_file_rule_r7.py::test_a_key_file_that_is_a_symbolic_link_is_refused_without_a_path_or_the_key
+FAILED tests/test_one_key_file_rule_r7.py::test_the_reader_opens_without_following_a_link
+FAILED tests/test_one_key_file_rule_r7.py::test_the_docs_state_the_link_and_permission_decision
+FAILED tests/test_one_key_file_rule_r7.py::test_the_fake_model_server_prints_one_exact_line_for_a_bad_key_file
+FAILED tests/test_one_key_file_rule_r7.py::test_the_fake_model_server_is_started_with_the_source_folder_on_the_path
+FAILED tests/test_one_key_file_rule_r7.py::test_the_mailbox_password_is_documented_as_read_when_the_mailbox_is_counted
+FAILED tests/test_one_key_file_rule_r7.py::test_the_lock_comment_describes_behaviour_not_a_version
+ERROR tests/test_one_key_file_rule_r7.py::test_every_copy_of_the_retry_after_rule_gives_the_same_answers[envnum]
+ERROR tests/test_one_key_file_rule_r7.py::test_every_copy_of_the_retry_after_rule_gives_the_same_answers[load_driver]
+ERROR tests/test_one_key_file_rule_r7.py::test_every_copy_of_the_retry_after_rule_gives_the_same_answers[hubspot_probe]
+ERROR tests/test_one_key_file_rule_r7.py::test_the_copies_are_pinned_to_the_one_reader_on_a_wide_set_of_texts
+ERROR tests/test_one_key_file_rule_r7.py::test_a_huge_retry_after_is_clamped_to_one_named_maximum
+27 failed, 160 passed, 5 errors in 8.16s

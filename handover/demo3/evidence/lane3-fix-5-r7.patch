@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index 130ffe3..151f4fd 100644
+index 130ffe3..fbe792d 100644
 --- a/README.md
 +++ b/README.md
 @@ -46,3 +46,3 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
@@ -15,7 +15,7 @@ index 130ffe3..151f4fd 100644
 -Also exit 7, in both scripts: a pid file cannot be removed (for example it is a folder, even an empty one). A pid file that is not one plain process
 -number (for example `abc`, `007`, two numbers, a file of 64 characters or more or an empty file; with reset.sh also a named pipe) is treated as stale: nothing is stopped
 -for it, and the reset deletes it and goes on. The desk and the demo server are recognised by their whole command line:
-+Also exit 7, in both scripts: a pid file is a folder (or a link to one), even an empty one, or cannot be removed after the stop (the line then says that the lead book and the logs were not deleted). A pid file that is not one plain process
++Also exit 7, in both scripts: a pid file is a folder (or a link to one), even an empty one, or cannot be removed after the stop (the line then says that the desk's records and the logs were not deleted). A pid file that is not one plain process
 +number (for example `abc`, `007`, two numbers, a file saved as UTF-16, a file of 64 bytes or more or an empty file; with reset.sh also a named pipe) is treated as stale: nothing is stopped
 +for it, and the reset deletes it and goes on (a desk that is really running is still caught by the port and database checks, exit 3 or 4). A UTF-8 byte order mark in front of the number is skipped. The desk and the demo server are recognised by their whole command line, from its first character:
  `python -m lead_desk.server` or `python -m demo_only.fakes_server` (a program that only has these words somewhere in

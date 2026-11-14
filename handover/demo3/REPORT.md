@@ -1905,3 +1905,10 @@ WHAT I WOULD DO NEXT (ranked): 1. read the full-run tail at 05:42Z; 2. save the 
 * FAILURES AND RETRIES: B15 run 1 red (2 own-file guard hits, fixed); run 2 lost to my slip, run 3 started. Rule now: running logs stay out of git.
 NOT DONE / NOT CHECKED (my list, for the lead to decide): green full run of fix-2 r6 tree; B18 build; B16 and B17 results and reviews; the 05:29Z order to run the wall-clock and hygiene guards alone on the final head (not yet, final head does not exist); stack not built; PowerShell scripts never run (lead's Windows run).
 WHAT I WOULD DO NEXT (ranked): 1. (B18 fix-2 r7 started 05:43Z, agent ab52e2b8db4a3f12a, so rank 1 is now) read B16/B17 hand-backs; 2. read B16/B17 hand-backs and start fresh reviewers; 3. read run 3 tail at ~05:55Z.
+
+## HEARTBEAT 101 (05:51Z, 11:21 IST)
+* fix-2 r6 full run 4 (clone b15b-clone, tree 3633781d, DPLD_REQUIRE_SCAN=1, gitleaks): 32% at 05:50Z, ends about 06:02Z. No result yet.
+* B18 (fix-2 r7, from the resolve) building since 05:43Z. B16 (fix-5 r7) and B17 (fix-10 r2): no hand-back yet (B16 interim only; its full run still going).
+* FAILURES AND RETRIES: two slips of mine this round, both recorded in register.md (SLIP1: live log committed and replaced by a rebase; DUP1: I stopped what I believed was a duplicate run and it was my own run 3). Run 4 replaced both.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): green full run of the fix-2 r6 tree; B16, B17, B18 results and reviews; stack not built; PowerShell scripts never run (lead's Windows run); core r7f not reviewed.
+WHAT I WOULD DO NEXT (ranked): 1. read B16 and B17 hand-backs and start fresh reviewers; 2. read run 4 at ~06:02Z; 3. B18 hand-back, fresh review, then the stack builder.

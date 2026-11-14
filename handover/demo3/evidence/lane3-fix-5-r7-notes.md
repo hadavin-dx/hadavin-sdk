@@ -40,3 +40,6 @@ reset.ps1 execution; a real old bash; Windows ephemeral behaviour of the new por
 
 ## Files
 Patch: lane3-fix-5-r7.patch (delta on claims series + r6; applies on a fresh tree and gives the same tree id as my tree). Tree /home/user/work/b16-tree (staged, not committed).
+
+## Full runs (honest)
+Run 1 (05:30Z, raw/b16-full-run1-1failed.log): 1 failed, 3925 passed, 179 skipped in 937s. The failure: test_screen_and_doc_words (tests/test_portal_wording_and_masking.py) found the words "lead book" in my new README text (the README says "the desk's records"). Fixed in README only; the wording test, reset tests and hygiene tests were re-run green (97 passed, 7 skipped). Run 2 on the final head: raw/b16-full-final.log (result in the hand-back). Final patch sha256 starts da5877bc.

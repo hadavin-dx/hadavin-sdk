@@ -1,0 +1,6 @@
+OLD reader guard on self.s.key_file.read_text() -> [] (empty = missed)
+OLD reader guard on module-level KEY=open(p).read() -> [] (empty = missed)
+OLD reader guard on from os import open -> [] (empty = missed)
+OLD probe guard on os.path.isdir -> [] (empty = missed)
+OLD probe guard on os.listdir -> [] (empty = missed)
+OLD probe guard on from os.path import isdir -> [] (empty = missed)

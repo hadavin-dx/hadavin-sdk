@@ -1,0 +1,15 @@
+KILLED   M1 crm_hubspot reads Retry-After with bare float() | 1 failed, 104 deselected in 0.40s
+KILLED   M2 live_claude reads Retry-After with bare float() | 1 failed, 103 deselected in 0.29s
+KILLED   M3 hubspot_probe reads Retry-After with bare float() | 1 failed, 3 passed, 103 deselected in 0.44s
+KILLED   M4 envnum accepts exponent/sign again | 1 failed, 60 deselected in 0.07s
+KILLED   M5 envnum has no clamp | 1 failed, 114 deselected in 0.09s
+KILLED   M6 secret reader follows links again | 1 failed, 116 deselected in 0.05s
+KILLED   M7 load_driver falls back on any ImportError subtype | 1 failed, 1 passed, 116 deselected in 0.06s
+KILLED   M8 live check cap accepts non-finite | 1 failed, 108 deselected in 0.08s
+KILLED   M9 fake model server doubles the word file | 1 failed, 117 deselected in 0.05s
+KILLED   M10 a script reads a key file with open() (guard) | 1 failed, 15 passed, 101 deselected in 0.25s
+KILLED   M11 a tool lists a folder with os.listdir (probe guard) | 1 failed, 117 deselected in 0.13s
+KILLED   M12 mailbox sentence put back to the old reading | 1 failed, 117 deselected in 0.04s
+KILLED   M13 lock comment names a version again | 1 failed, 117 deselected in 0.04s
+KILLED   M1 crm_hubspot reads Retry-After with bare float() | 1 failed, 105 deselected in 0.23s
+KILLED   M2 live_claude reads Retry-After with bare float() | 1 failed, 104 deselected in 0.23s
