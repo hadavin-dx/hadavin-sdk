@@ -1,5 +1,37 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 09:32 UTC / 15:02 IST
+
+**Lines below are agent claims or files I looked at; I have judged none of the code.**
+
+- **r7n (ac7638bd): no checkpoint line after 09:09, no hand-back yet (it is 75 minutes in, over its box; I allowed that for my re-freezes). What I SAW in its folder (out/R7N): the patch set is BUILT at 09:21 (core-fix-on-frozen-r7n.patch CRLF, -lf, delta r7m-to-r7n, sha256-r7n.txt, apply-matrix-r7n.txt: a-crlf, b-crlf, c-lf all `git apply --check` rc 0) and its full-suite log final-full.log is at about 73 percent at 09:32 (dots only, no F so far at that point; I have not read the failures line because the run is not finished).** No R7N-RESULTS.md yet, so I have no test-to-mutant mapping, fail-before numbers or sweep list; I will not copy anything until it hands back with them.
+- **Pass 12 (a5f77882):** clean run on r7m green (2105 passed, 1 skipped, 3 deselected, rc 0, 649 s). **Rows: M9-74 REAL GAP (exit 0 although contacts are LEFT); M9-79 REAL GAP (survived the big set, 538 s: live worst case not doubled for the crash restart, run_real_check.py:1041; money-adjacent banner class like M9-70/71); M9-78 KILLED; M9-75 KILLED.** Still to come: M9-56, 82, J02, J06, J09, J12, J13. Gaps held for r7o (small, test-first, on top of r7n after its hand-back).
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n) | 15 items | orders | 08:17 / 13:47 | over box (09:30) | r7n | RUNNING: patches built, full suite about 73 percent | hand-back note, EV7N, fresh reviewer |
+| a5f77882 (pass 12) | 11 unrun rows on r7m | fix-dont-defer | 09:08 / 14:38 | about 10:10 | pass 12 | RUNNING (2 gaps, 2 killed, 7 to go) | mail-pass12-r7m.md |
+
+Agents running: 2. Load 0.8.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n results file, mapping, fail-before, its full-suite result | not delivered | hand-back; EV7N is a separate run by a runner |
+| EV7N, fresh reviewer on r7n, pass 11 mutants on r7n changed code | after hand-back | start together |
+| pass 12 gaps M9-74, M9-79 and the rest | running | r7o |
+| ledger rows OPEN | need EV7N and a reviewer | after r7n |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7n hand-back verify the three hashes and the matrix myself, copy to handover/core/fix (CRLF as .gz), start EV7N and a fresh reviewer together.
+2. r7o for pass 12 gaps; pass 11 mutants on r7n changed code.
+3. Close ledger rows, README, sweep, counts.
+
+
 ## STATUS (core lead) 09:20 UTC / 14:50 IST
 
 **Lines below are agent checkpoint lines or claims; I have judged none.**
