@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 11:52 UTC / 17:22 IST
+
+**EV7P DONE and pushed (handover/core/fix/EV7P-EVIDENCE.md): r7q is NOT clean. TWO real failures, both missed by the r7q builder (it never ran the guard test or the hygiene scan).**
+1. tests/test_file_call_guard.py::test_every_import_and_file_call_... FAILS (plain full run and staged git copy; passed on r7n): demo_only/bad_request.py:30 QuietServer(ThreadingHTTPServer) not in ALLOWED_CALLS; fake_hubspot.py and fakes_server.py list ThreadingHTTPServer that is no longer in the file. Table at about lines 537 and 549 of that test.
+2. **NEW: test_hygiene_scan_public FAILS in the staged git copy (1 failed, 23 passed): 7 hardcoded literals in tests/test_r7q_findings.py (lines 95, 168, 170, 356, 362, 374, 375).** CI gate not green on r7q. Ledger rows DPLD-R7Q-M1 and M2 added (OPEN). I sent failure 2 to the running r7r builder (a17df18e) with an extended 55-min box.
+Measured by EV7P (runner, raw files in out/EV7P): full run 8 failed, 6012 passed, 8 skipped in 1830 s (the 8 = 7 expected git-only + failure 1); in a staged git copy the 8 git files each alone: all pass except test_hygiene (1 failed) and test_file_call_guard (1 failed); ruff 0.17.1 check clean, format 229 files; suppressions noqa 188 to 193 (+5 tests only), type-ignore 126, nosemgrep 31 (delta 0), nosec 8, S603 7 unchanged. Hostile: banner bytes 420 direct cases 0 mismatches, 6 end-to-end banner runs match to 4 decimals (8 people US$7.7708; 1000 people US$709.7629); MemoryError through secret_boundary 24 cases 0 leaks except text a raiser puts in its own args; QuietServer silent for BrokenPipe/ConnectionReset class, still prints for ValueError, ConnectionRefusedError, SSLEOFError, ExceptionGroup. **One QuietServer caveat to judge: a real handler bug that itself surfaces as BrokenPipe would be silent too (reviewer).** Not checked: Windows/PowerShell, real IPv6, mutation runs, bandit/mypy/gitleaks standalone, quiet machine (another lane's pytest started 11:46 during the staged and hostile runs). Own slip of the runner: first MemoryError run counted its driver frame (kept as INVALID file, re-run). Note: the LF patch applies only on an LF checkout (.ps1 are CRLF in a plain frozen copy): README must say so.
+
+| id | what | started UTC/IST | expected end | state | next |
+|---|---|---|---|---|---|
+| a17df18e (r7r builder) | fix failures 1 and 2, class sweep, r7r patches | 11:46 / 17:16 | about 12:40 | RUNNING | hand-back; verify; push snapshot-r7r; start EV7R |
+
+Agents running: 1 (EV7P stopped, closed). ASK: none.
+
+NOT DONE / NOT CHECKED: r7r result; EV7R (full run plus staged-copy hygiene); independent review (yours, on r7r); M9-74 test, M9-79 measure; the runner's list above. Next block about 12:05Z.
+
+WHAT I WOULD DO NEXT (ranked): 1. verify and push r7r with snapshot-r7r; 2. start EV7R at once (staged git copy for all git tests); 3. tell you when snapshot-r7r and EV7R are pushed.
+
+
 ## STATUS (core lead) 11:45 UTC / 17:15 IST
 
 **FAILED: the EV7P full run on r7q found a NEW failing test the builder never ran, so r7q is NOT deliverable as it stands.** Raw log line (EV7P wrapper, 11:13Z to 11:44Z, 30 min 30 s): **8 failed, 6012 passed, 8 skipped, 60 warnings, rc 1.** Seven of the eight are the expected git-only ids on a plain copy (test_hygiene x4, test_nosemgrep_form, test_raw_bidi_chars, test_shell_single_bracket: their errors are git ls-files failing outside a repo). **The eighth is NEW: tests/test_file_call_guard.py::test_every_import_and_file_call_in_the_code_is_listed_with_a_reason_or_goes_through_the_one_reader: "demo_only/bad_request.py:30 ThreadingHTTPServer ... is not listed in ALLOW..." and "demo_only/fakes_server.py: the allowed call ThreadingHTTPServer is not in the file".** My reading (from the log, not yet proven by a fix): r7q's QuietServer moved the ThreadingHTTPServer subclass into bad_request.py and the guard's allow-list was not updated. The r7q builder ran its changed-file tests, not this guard test (it ran 9 files). Class: a repo-wide guard test that lists files by name was not run after a change to the files it lists.
