@@ -1,5 +1,25 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 15:54 UTC / 21:24 IST
+
+**NOT VERIFIED / NOT DONE (first):** every r7t test, mutant, flake and guard number below is the BUILDER's, unverified until EV7T. The take-side banner test q1 is for the lead on the laptop (I have no take tree). Windows/PowerShell not applied. README contradictions (fix/README.md line 31, r6 APPLY-README-SNIPPET.md) still on disk. Mail residual (a mail sent, not counted, not yet visible in the mailbox = invisible to both counters) is not closed by a test: builder says no code step is left; I have not checked that.
+
+**r7t RECEIVED, checked by me and pushed (commit 8fb631c0).** Verified by me: the three patch hashes equal sha256-r7t.txt; R7T-RESULTS.md matches; snapshot MANIFEST 0 bad; `git apply --check` rc 0 on a-crlf and c-lf; CRLF patch on a frozen copy equals tree-R7T (diff empty); delta dry-run on a copy of tree-R7S rc 0.
+Builder claims (unverified): race cause = crm_hubspot.put counted `created` after the 201 reply; fixed fail-closed (`create_open` written BEFORE the request via write_stats_strict; unwritable counter -> create not sent; timeout/5xx/408/unclear 2xx = create_unknown; None counter raises). Loopback refusal now one choke point for ALL fakes (FakeImap/FakeSmtp bound any host on r7s: new finding, fixed). 138 tests in test_r7t_findings.py: 78 fail on r7s, 60 pass (pins listed); the 16 window tests t15/t17/t18 all fail on r7s (hook-forced, no sleeps). Mutants 43: 42 KILLED, 1 equivalent (U6). Flake series on r7t 0 of 30 (r7s 1 of 30, under load only). Guard run 1526 passed 1 skipped. Ruff 0.17.1 clean; suppressions 367, delta 0.
+
+| id | what | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| acdc878b2b34d17fc (EV7T) | independent evidence runner on r7t: hashes, full staged run, ruff, suppressions, before/after, flake 30x with and without load, hostile table, builder + 40 own + 20 settle mutants | ORDER 268, uncapped | 15:54/21:24 | about +90 min | EV7T | RUNNING | EV7T-EVIDENCE.md, then push, ledger |
+
+ASK: none. Lead: please run the fresh egm reviewer on snapshot-r7t and the q1 take-side banner test on the laptop.
+Ledger: R7S-RV-*, R7S-EV*, R7T-FLAKE stay OPEN until EV7T. ON-PATH-LIST.md update for r7s/r7t pending.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7T; fold any real Blocker/Major plus the lead's reviewer findings into r7u (test-first), EV and fresh reviewer again.
+2. Edit the two README files from R7T-RESULTS.md section 9; update ON-PATH-LIST.md.
+3. Sweep, counts, "QUEUE DONE, idle by order" only when EV7T is closed.
+
+
 ## STATUS (core lead) 15:45 UTC / 21:15 IST
 
 **I READ the bodies of t17 (3 of 4 tests) and t18 in tree-R7T/tests/test_r7t_findings.py (lines 972-1060), and the mutant files in out/R7T. I ran nothing. Builder claims otherwise.**
