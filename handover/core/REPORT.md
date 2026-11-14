@@ -1,5 +1,41 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:15 UTC / 11:45 IST
+
+**FULL-RUN DECISION (due 06:30Z, made early): the ONE full run goes on r7i, not on r7h.** Reason: the first two big-set results are REAL GAPS (below), so r7h is not final. EV7H non-full steps still run on r7h as ordered.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a2740d00 (r7i builder, fresh) | fixes or pins every pass 9 real gap, starting M9-22, M9-02, then M9-12, M9-03, M9-18, M9-08, M9-19, M9-30 (the rest are sent to it as they are classified) | mail-safety path, uncapped, no deferral | 06:15 / 11:45 | 50 min box (about 07:05) | r7i | RUNNING (just started; no checkpoint yet) | hand-back, then EV7I full run + r7i delta reviewer in parallel |
+| aa54df08 (mail pass 9) | big-set re-runs in two lanes | classify survivors | 05:35 | box ends about 06:50 | pass 9 | RUNNING: 2 of 8 big-set results in (below); lane WA now on M9-12, lane WB on M9-03, then M9-08, M9-18, M9-19, M9-30 | read as they land |
+| aae6f456 (r7h delta reviewer, fresh) | review of the r7h delta | independent read | 06:08 / 11:38 | box ends about 06:58 | review 1 of r7h | RUNNING: 06:1x checkpoints "read delta and sibling grep done, no missed lower() sibling found yet"; "tests r7h/r7g/fcg pass (60/60); starting mutants harness". No findings yet; I do not know the verdict | core-fix-on-frozen-r7h-review.md |
+| adb9596a (EV7H non-full runner) | patch hash and apply, odd-file loop, fail-before, 20 mutants, hostile cases, ruff on r7h | delta base | 06:10 / 11:40 | box 60 min (about 07:10) | EV7H part 1 | RUNNING: step 2 (test files in a staged git copy) lanes launched 06:11; writing the mutant runner at 06:14. No result yet | EV7H-NONFULL-EVIDENCE.md |
+
+**First big-set results (22-file set plus r7d/e/f/g finding files, 900 s limit; from pass 9's checkpoint, raw files in out/M9/):**
+- **M9-02 (smtp_provider.send ~251: password file read moved after the send counter): SURVIVED at 336 s = REAL TEST GAP on r7g.** The agent's killing test: max_sends=1 with a missing / two-line / not-UTF-8 password file; the send must be refused and the counter unchanged. The r7h builder says r7g code is already correct (password read at line 259 before attempts += 1 at 268) and that its new test_order_* pins kill the M9-02 mutant (4 failed on the mutated copy). So: code right, tests missing, pins in r7h. NOT yet verified by me or by a second agent; the r7h reviewer and r7i builder are told to plant the mutant on r7h/r7i.
+- **M9-22 (smtp_outbox.py ~225: empty send key allowed): SURVIVED at 311 s = REAL GAP (mail-safety path).** Killing test in words: SmtpOutbox.send("", "a@b.test", subject, body, 5) must raise SendRefused("empty send key") and the fake server must see no connection. Not worked on by the r7h builder. r7i starts with it; if the code already refuses, the missing piece is the test, else a fix at the choke point.
+- Still queued: M9-12, 03, 18, 08, 19, 30. Pass 9 also had KILLED rows M9-20, 21, 27, 28, 29 (selector); others not read.
+
+NEEDED-CHECK for r7i: each item gets its verdict from the builder (one place per job; order guarantee at ONE choke point if the code allows).
+
+ASK: none (my 06:15 question on r7i start is moot: r7i started now).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| big-set results for M9-12, 03, 18, 08, 19, 30 | lanes running | forward each real gap to a2740d00 |
+| r7h review verdict, EV7H non-full evidence | running | resolve; fold Blocker/Major into r7i |
+| r7i patch, EV7I full run (staged git copy, no data/, machine state in header), fresh r7i delta reviewer | builder running | start at hand-back, in parallel; compare failures with EV7G by id |
+| the r7h claim that M9-02 is correct on r7g | builder claim only | reviewer and r7i verify by planting the mutant |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell, Windows (select.poll does not exist on Windows: reviewer judges), Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Forward each new big-set REAL GAP to a2740d00 the moment it lands; read the r7h review and EV7H part 1.
+2. At the r7i hand-back: verify sha256, copy (CRLF as .gz), start the one full run (EV7I) and the fresh r7i delta reviewer together; compare with EV7G by test id.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 06:08 UTC / 11:38 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
