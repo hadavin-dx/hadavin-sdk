@@ -1,5 +1,33 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Container clock 04:08 UTC = 09:38 IST. Applied the lead's 04:04Z answer.
+
+STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
+- a712ad32 | r7f builder | candidate for EV7F | 03:03 / 08:33 | to 04:20 | r7f, no cap | running. Note 04:01: its full-suite halves were 'Terminated by something else' at about 04:00; it restarted per-file loops on the rest. I asked it for a fresh note, for the cause of the kill, and told it the lead's rules (no kill by name, own temp dir) and to run at most 2 test processes | collect note
+- aebef140 | wave 2 lane A (E03 E05 E06 + F01-P02) | | 03:46 / 09:16 | to 04:31 | evidence | running: done at 04:03: F01 KILLED, G01 KILLED (test_crm_hubspot key-file test, 13 s), G02 KILLED (hubspot-hosts test, 30 s); no survivor yet | collect
+- a7f6b110 | wave 2 lane B (A07 A08 ... then A01 A02 A04 A06) | | 03:55 / 09:25 | to 04:40 | evidence | running: A08 TIMEOUT with selector (243 s); its clean smtp_outbox set crashed at 1 s; told to re-run clean sets alone and not count a module until its clean set passes | collect
+- aaabb673 | wave 2 lane C (C01 C05, new B04 mutant, then T03 T04 P01 P04 L03) | | 03:55 / 09:25 | to 04:40 | evidence | running: its clean smtp_provider set (19 files) PASSED: 1166 passed in 412 s (so selector sets are not small; limit 618 s for that module); clean smtp_outbox set stopped at 69% after 84 s (cause unknown) and is being re-run | collect
+- closed: a1942238, ab9f9527, a5676b32, a954ceb0, a86b10ca, a4355ac3, a3b90516, a9760115
+
+Heavy count: builder + lanes A, B, C = 4 processes at times; the lead's cap is 3. Lane A should end by about 04:20 (13 of 16 ids are quick kills), so the overlap is short; I did not stop anything now because stopping would only lose runs. Say if you want lane B or C paused.
+
+Mutant totals on r7e (of 54): KILLED 22 (lane 1: A03 A05; lane 2: C02-C04 C06-C10 D01-D05 E01 E02; lane 3: E04 E07; wave 2: F01 G01 G02), TIMEOUT-unknown 11 (A01 A02 A04 A06 A07 A08 C01 C05 E03 E05 E06), BADMUT 1 (B04, new mutant spec written), SURVIVED confirmed 0, not run about 20. Not yet usable as proof: results of modules whose clean set has not passed in full.
+
+ASK: none (the lead's 04:04Z answers are applied: all four agents told: no kill by name, own temp dir, a clean run that stops midway is a harness event to explain, no counting before the clean set passes).
+
+NOT DONE / NOT CHECKED (item | why | next)
+- About 20 mutants not run; 11 unknown; B04 new mutant not run | wave 2 in progress | collect at 04:40
+- Cause of the early stop of two clean runs and of the builder's 'Terminated by something else' at 04:00: unknown | agents asked to find it | read their answers; if a process of mine caused it, say so
+- r7f not built; r7e Major open | builder | EV7F
+- r7f new code (netconnect.py, cipher string) unreviewed | not built | reviewer and mail pass 9
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI | end, clean patch | later
+- Newline-named stray file writer not found yet | builder hunting | EV7F per-file listing as a second check
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect wave 2; every survivor killed or proved equivalent; no module counts before its clean set passes.
+2. EV7F on r7f alone on a quiet machine, checkout without data/, plus a fresh reviewer (look at netconnect.py and the cipher change) and mail pass 9.
+3. Final README and sweep.
+## STATUS (core lead)
 Container clock 04:02 UTC = 09:32 IST.
 
 STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
