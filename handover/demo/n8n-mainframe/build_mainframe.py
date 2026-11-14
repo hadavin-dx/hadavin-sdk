@@ -7,6 +7,7 @@ Settings from n8n's environment: MF_CRM_URL, MF_STAGE_URL. The mail recipient an
 import json, sys, os
 OUT, PGID, SMTPID, SUBID = sys.argv[1:5]; LEASE = int(sys.argv[5]) if len(sys.argv) > 5 else 120
 TRIES = int(os.environ.get("MF_TRIES", "3")); TMO = int(os.environ.get("MF_TMO_MS", "15000"))   # film variant: MF_TRIES=2 MF_TMO_MS=10000 (defaults = the design flows)
+V4 = os.environ.get("MF_V4") == "1"   # v4: alert claim window 720 s (longer than the longest single wait of the Send Email transport, read from the library: connect 2 min, greeting 30 s, socket inactivity 10 min) + AlertBackoff on a failed send; default (unset) = v3 exactly
 REAL = os.environ.get("MF_REAL") == "1"   # real-node variant (D-N3): HubSpot node instead of the CRM HTTP call, placeholders for every address, three environment variables DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO
 STAGE_ENV, TMO_ENV, FROM = ("DESK_URL", "DESK_TIMEOUT_MS", "FROM_ADDRESS_PLACEHOLDER") if REAL else ("MF_STAGE_URL", "MF_STAGE_TIMEOUT_MS", "desk@example.test")
 MAIL_TO, ALERT_TO = ("INTAKE_ADDRESS_PLACEHOLDER", "={{ $env.DESK_ALERT_TO }}") if REAL else ("intake@example.test", "alerts@example.test")
@@ -98,16 +99,19 @@ def recovery():
          iff("StuckRow", "={{ $json.lead_key }}", "string", "notEmpty", None, [330, -100]),
          call_sub("RunSub", [550, -160], onError="continueRegularOutput"),
          pg("MarkFailed", "UPDATE mf_leads SET state=CASE WHEN mail_sent THEN 'unknown' ELSE 'failed' END, updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;", None, [220, 120], always=False, onError="continueRegularOutput"),
-         pg("AlertClaim", "UPDATE mf_leads SET alert_until=now() + interval '60 seconds' * (1 + LEAST(alert_attempts, 4)), alert_token=gen_random_uuid()::text, alert_attempts=alert_attempts+1 WHERE lead_key IN ("
+         pg("AlertClaim", "UPDATE mf_leads SET alert_until=now() + %s, alert_token=gen_random_uuid()::text, alert_attempts=alert_attempts+1 WHERE lead_key IN ("
             "SELECT lead_key FROM mf_leads WHERE state IN ('unknown','failed') AND alert_sent=false AND (alert_until IS NULL OR alert_until < now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5) "
-            "RETURNING lead_key, state, alert_token;", None, [220, 300], always=False, onError="continueRegularOutput"),
+            "RETURNING lead_key, state, alert_token;" % ("interval '720 seconds'" if V4 else "interval '60 seconds' * (1 + LEAST(alert_attempts, 4))"), None, [220, 300], always=False, onError="continueRegularOutput"),
          iff("AlertRow", "={{ $json.lead_key }}", "string", "notEmpty", None, [330, 300]),
          mail("AlertSend", ALERT_TO, "={{ $json.state === 'unknown' ? '[demo] Lead desk: mail outcome unknown for ' + $json.lead_key : '[demo] Lead desk: lead failed ' + $json.lead_key }}",
               "={{ $json.state === 'unknown' ? 'Lead id ' + $json.lead_key + ': the mail may or may not have been sent. A person decides.' : 'Lead id ' + $json.lead_key + ' could not be finished after 3 tries. A person decides.' }}", [550, 300], onError="continueErrorOutput"),
+         *([pg("AlertBackoff", "UPDATE mf_leads SET alert_until=now() + interval '60 seconds' * LEAST(alert_attempts, 5) WHERE lead_key=$1 AND alert_token=$2 AND alert_sent=false RETURNING lead_key;",
+               "={{ [$('AlertRow').item.json.lead_key, $('AlertRow').item.json.alert_token] }}", [770, 380], always=False, onError="continueRegularOutput")] if V4 else []),
          pg("AlertMark", "UPDATE mf_leads SET alert_sent=true, updated_at=now() WHERE lead_key=$1 AND alert_token=$2 AND alert_sent=false RETURNING lead_key;",
             "={{ [$('AlertRow').item.json.lead_key, $('AlertRow').item.json.alert_token] }}", [770, 300], always=False, onError="continueRegularOutput")]
     # the Postgres node returns ONE item {success: true} when a non-SELECT statement matches no row (n8n source, Postgres v2 helpers/utils.js): only an item that carries a lead id is work
     c = {}; link(c, "Every30s", "MarkFailed"); link(c, "Every30s", "ClaimStuck"); link(c, "ClaimStuck", "StuckRow"); link(c, "StuckRow", "RunSub", 0); link(c, "Every30s", "AlertClaim"); link(c, "AlertClaim", "AlertRow"); link(c, "AlertRow", "AlertSend", 0); link(c, "AlertSend", "AlertMark", 0)
+    if V4: link(c, "AlertSend", "AlertBackoff", 1)
     return {"name": "Lead desk main frame: recovery (every 30 s)", "nodes": n, "connections": c, "settings": ST}
 os.makedirs(OUT, exist_ok=True)
 for fn, w in (("mf-sub-crm-mail.json", sub()),

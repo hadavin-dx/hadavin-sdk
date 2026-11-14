@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 15:46Z - B90 ORDER: choice + v4 built (n8n-flows-v4, film-v4, real-v4), test B90 added as NEW name; V7 commit 6ebb7f62e untouched
+
+CHOICE: neither pure (a) option. The node timeout cannot be set below the claim window (Send Email node has NO timeout setting), and I have NO measured node timeout (AF2 not run). So: claim window 720 s (12 min), longer than the longest single wait I READ in the nodemailer code inside n8n 2.46.6 (connect 2 min, greeting 30 s, socket inactivity 10 min), PLUS a new node AlertBackoff on AlertSend's error output that resets the retry time to the old 60..300 s backoff, so a quick failure is not delayed to 12 min (AF1 behaviour kept). Why not only a longer claim: it would delay the retry after every quick failure. Cost: a hung SMTP can make the alert 12 to 13 min late; a send over 12 min or a failed mark can still duplicate.
+Builder: MF_V4=1 (unset = v3, checked byte for byte against the pushed v3 JSON by script); diff v4 vs v3 = AlertClaim query changed + AlertBackoff added (recovery flow only). Docs: PAGE-STATEMENTS sentence 7 now says v3 CAN send two alerts (lane3 n=1, relayed) and must not say "exactly one"; sentence 6 gives the library timeouts as READ-ONLY; DESIGN-A-README correction section added; V4-README in n8n-flows-v4.
+Test B90 (mf.py, new name; MF_B90_V3=1 reproduces on the v3 build): hold alert answer 90 s; v4 expects 0 alerts at +20 s, 1 alert after the hold, still 1 at +200 s, alert_sent true, attempts 1, 1 intake mail, state unknown. py_compile OK, not run. Rerun on v4 if you adopt it: B90, AF1, T8, T15, T14, T12, K3, K3B, AF2 (the V7 series covers v3 only).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- v4 and B90 unrun; node timeout unmeasured (AF2 unrun); AlertBackoff pairing untested; lane3 B90 numbers are n=1 relayed, raw not read.
+
+WHAT I WOULD DO NEXT (ranked)
+1. On your go: laptop B90 (v3 then v4) and AF2. 2. Retag PAGE-STATEMENTS after the numbers file. 3. Spec the step-2 fault for the real take.
+
 ## Block 15:40Z - PAGE-STATEMENTS-DRAFT.md at v3 (section C, 11 sentences each tagged RELAYED-PASS / NOT RUN / READ-ONLY); section A stale line fixed; nothing run
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)

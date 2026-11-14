@@ -250,6 +250,17 @@ def af2():
     rec("AF2", lead_a=ka, lead_b=kb, seconds_to_unknown=tu, b_reply=[stb, repb.get("verdict") if isinstance(repb, dict) else repb], b_seconds_to_final=tb, timeline=timeline, smtp_connection_times_s=conn_ts, a=oa, b=ob, alert_row_end=sent)
     ok = oa["row"]["state"] == "unknown" and sent.startswith("t") and oa["alerts"] >= 1 and ob["row"]["state"] == "done" and ob["mails"] == 1 and ob["crm_rows"] == 1 and not ob["doubled"] and conn_end <= 12
     result("AF2", ok, "alert send held 300 s (hung SMTP): A unknown unchanged, alert_sent=%s, alerts for A %d (2 = duplicate case), B done %s with mails %d / CRM %d, SMTP connections total %d, connection times (s from start) %s" % (sent, oa["alerts"], ob["row"]["state"], ob["mails"], ob["crm_rows"], conn_end, conn_ts), per_lead=[oa, ob])
+def b90():
+    """B90 (lane3 finding on v3: alert answer held 90 s, longer than the 60 s first claim window -> 2 alerts). Runs the v4 build (MF_V4=1: alert claim window 720 s, AlertBackoff on a failed send) unless MF_B90_V3=1 (then the v3 build: reproduces the duplicate). Lead A unknown (mail stored, ack dropped); the stand-in holds the first alert recipient 90 s (.rcpthold "90|alert address", one-shot). Pass (v4): 0 alerts in the 20 s after the state is unknown, the alert arrives after the hold, still exactly 1 alert 200 s after it, alert_sent true, alert_attempts = 1 (one claim only), 1 mail to intake, state unknown. Under v3 the expected record is 2 alerts (that is the reproduction, reported as FAIL)."""
+    os.environ.pop("MF_V4", None) if os.environ.get("MF_B90_V3") == "1" else os.environ.__setitem__("MF_V4", "1")
+    mf_stack(); n8n_prepare_mf(); restart_n8n(); k = uid("b90")
+    open(MAIL + ".drop", "w").write("1"); open(MAIL + ".rcpthold", "w").write("90|" + ALERT_TO)
+    t0 = time.time(); st, rep = req("mf-form", fbody(k)); tu = wait_final(k, t0, 150, need_alert=False); time.sleep(20); early = alerts(k)
+    got = watch(lambda: alerts(k) >= 1, 240); t_alert = round(time.time() - t0, 1) if got else None; time.sleep(200)
+    o = outcome(k); sent = psql("SELECT alert_sent, alert_attempts FROM mf_leads WHERE lead_key='%s';" % k); times = [round(c["t"] - t0, 1) for c in jl(MAIL + ".conn")]
+    rec("B90", build="v3" if os.environ.get("MF_B90_V3") == "1" else "v4", lead=k, seconds_to_unknown=tu, alerts_20s_after_unknown=early, seconds_to_first_alert=t_alert, alerts_end=o["alerts"], row=o["row"], mails_to_intake=o["mails"], alert_sent_attempts=sent, smtp_connection_times_s=times)
+    ok = tu is not None and early == 0 and got and o["alerts"] == 1 and o["row"]["state"] == "unknown" and o["mails"] == 1 and sent == "t|1"
+    result("B90", ok, "alert answer held 90 s: alerts %d (1 expected), first alert at %s s, alert_sent|attempts %s, mails to intake %d, SMTP connection times %s" % (o["alerts"], t_alert, sent, o["mails"], times), per_lead=[o])
 def t15():
     """ERROR case (lane3 finding, lost lead without alert): the CRM refuses EVERY call (HTTP 500) from the start. Expected: 3 tries (main run + 2 recovery claims), then state failed, exactly 1 alert naming the lead, 0 mails to the intake recipient, 0 CRM rows, nothing lost, within 3 x lease + 150 s."""
     mf_stack(); n8n_prepare_mf(); restart_n8n(); crm_ctl(fail_status=500); rows = []; ids = []
@@ -325,7 +336,7 @@ def t13():
     time.sleep(3); subprocess.run(["docker", "kill", lib.PG], capture_output=True); time.sleep(3); subprocess.run(["docker", "start", lib.PG], capture_output=True); pg_ready()
     time.sleep(5); kill_n8n_now(); restart_n8n(); rows = final_rows(ids); [rec("T13", **o) for o in rows]
     summarize("T13", "duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n killed and restarted with half-done runs", rows, ids)
-TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "AF1": af1, "AF2": af2, "T7b": t7b}
+TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "AF1": af1, "AF2": af2, "B90": b90, "T7b": t7b}
 if __name__ == "__main__":
     for t in sys.argv[1:]:
         try: TESTS[t]()
