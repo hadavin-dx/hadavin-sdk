@@ -3,9 +3,10 @@ Parts: ONE sub-workflow "CRM + mail" (called by the main flow AND by recovery), 
 Lead table (Postgres): lead_key unique, state (new, processing, done, review, unknown, failed), claimed_until, claim_token, attempts, crm_id, mail_sent, created_at, updated_at. The insert IS the claim.
 Every write is a conditional update on the claim token; the SMTP node runs only when its conditional update returned a row; retry is OFF on the SMTP node; if the desk stage (cap + model) errors, times out or refuses, NO CRM write and NO mail runs (fail closed).
 Settings from n8n's environment: MF_CRM_URL, MF_STAGE_URL. The mail recipient and the alert recipient are CONSTANTS in the nodes (no expression).
-  python build_mainframe.py OUT_DIR PG_CRED_ID SMTP_CRED_ID SUB_WORKFLOW_ID [LEASE_SECONDS]      (LEASE_SECONDS: design value 120; the tests use a shorter value and say so)"""
+  python build_mainframe.py OUT_DIR PG_CRED_ID SMTP_CRED_ID SUB_WORKFLOW_ID [LEASE_SECONDS] [HUBSPOT_CREDENTIAL_ID]      (LEASE_SECONDS: design value 120; the tests use a shorter value and say so)"""
 import json, sys, os
 OUT, PGID, SMTPID, SUBID = sys.argv[1:5]; LEASE = int(sys.argv[5]) if len(sys.argv) > 5 else 120
+HSID = sys.argv[6] if len(sys.argv) > 6 else "HUBSPOT_CREDENTIAL_ID"   # v5: optional HubSpot credential id (real build only); absent = the old placeholder text
 TRIES = int(os.environ.get("MF_TRIES", "3")); TMO = int(os.environ.get("MF_TMO_MS", "15000"))   # film variant: MF_TRIES=2 MF_TMO_MS=10000 (defaults = the design flows)
 V4 = os.environ.get("MF_V4") == "1"   # v4: alert claim window 720 s (longer than the longest single wait of the Send Email transport, read from the library: connect 2 min, greeting 30 s, socket inactivity 10 min) + AlertBackoff on a failed send; default (unset) = v3 exactly
 REAL = os.environ.get("MF_REAL") == "1"   # real-node variant (D-N3): HubSpot node instead of the CRM HTTP call, placeholders for every address, three environment variables DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO
@@ -26,7 +27,7 @@ def hubspot(name, pos):
     # answer {vid, isNew} (Simplify Output off) -> the contact id is $json.vid. The node has NO timeout option; retry and error output are the generic node settings below.
     return N(name, "n8n-nodes-base.hubspot", 2.2, {"authentication": "appToken", "resource": "contact", "operation": "upsert", "email": "={{ $('SubIn').first().json.email }}",
              "additionalFields": {"customPropertiesUi": {"customPropertiesValues": [{"property": "hadavin_lead_id", "value": "={{ %s }}" % KEY}, {"property": "hadavin_label", "value": "={{ $('Qualify').first().json.label }}"}]}},
-             "options": {}}, pos, credentials={"hubspotAppToken": {"id": "HUBSPOT_CREDENTIAL_ID", "name": "hubspot-app-token"}}, retryOnFail=True, maxTries=TRIES, waitBetweenTries=1000, onError="continueErrorOutput")
+             "options": {}}, pos, credentials={"hubspotAppToken": {"id": HSID, "name": "hubspot-app-token"}}, retryOnFail=True, maxTries=TRIES, waitBetweenTries=1000, onError="continueErrorOutput")
 def iff(name, left, op_type, op, right, pos):
     return N(name, "n8n-nodes-base.if", 2.2, {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "loose"}, "conditions": [
         {"id": "c1", "leftValue": left, "rightValue": right, "operator": {"type": op_type, "operation": op, **({"singleValue": True} if right is None else {})}}], "combinator": "and"}, "options": {}}, pos)
@@ -47,7 +48,8 @@ def sub():
          http("Qualify", "={{ $env.%s }}/qualify" % STAGE_ENV, "={{ { lead_key: %s, email: $('SubIn').first().json.email } }}" % KEY, [220, 0], True, errout=True),
          iff("LabelOk", "={{ ['hot','warm','cold'].includes($json.label) && !$json.unknown_model }}", "boolean", "true", None, [440, -60]),
          (hubspot("CrmUpsert", [660, -60]) if REAL else None) or http("CrmUpsert", "={{ $env.MF_CRM_URL }}/upsert", "={{ { hadavin_lead_id: %s, email: $('SubIn').first().json.email, label: $('Qualify').first().json.label } }}" % KEY, [660, -60], True, errout=True),
-         pg("SetCrmId", "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "={{ [%s, String($json.%s), %s] }}" % (KEY, "vid" if REAL else "id", TOK), [880, -60]),
+         pg("SetCrmId", "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "={{ [%s, String($json.id ?? $json.vid ?? ''), %s] }}" % (KEY, TOK), [880, -60]),
+         iff("CrmIdOk", "={{ String($('CrmUpsert').first().json.id ?? $('CrmUpsert').first().json.vid ?? '') }}", "string", "notEmpty", None, [990, 60]),   # v5: no id AND no vid in the CRM answer = same failure path as a CRM refusal (OutStage)
          iff("OwnsClaim1", "={{ $json.lead_key }}", "string", "notEmpty", None, [1100, -60]),
          pg("MailClaim", "UPDATE mf_leads SET mail_sent=true, updated_at=now() WHERE lead_key=$1 AND claim_token=$2 AND mail_sent=false AND state='processing' RETURNING lead_key;", "={{ [%s, %s] }}" % (KEY, TOK), [1320, -60]),
          iff("MailRowBack", "={{ $json.lead_key }}", "string", "notEmpty", None, [1540, -60]),
@@ -64,7 +66,7 @@ def sub():
          setf("OutLost", {"outcome": ("lost_claim", "string"), "lead_key": ("={{ %s }}" % KEY, "string")}, [1320, 160])]
     c = {}
     link(c, "SubIn", "Qualify"); link(c, "Qualify", "LabelOk", 0); link(c, "Qualify", "OutStage", 1)
-    link(c, "LabelOk", "CrmUpsert", 0); link(c, "LabelOk", "OutStage", 1); link(c, "CrmUpsert", "SetCrmId", 0); link(c, "CrmUpsert", "OutStage", 1); link(c, "SetCrmId", "OwnsClaim1")
+    link(c, "LabelOk", "CrmUpsert", 0); link(c, "LabelOk", "OutStage", 1); link(c, "CrmUpsert", "SetCrmId", 0); link(c, "CrmUpsert", "OutStage", 1); link(c, "SetCrmId", "CrmIdOk"); link(c, "CrmIdOk", "OwnsClaim1", 0); link(c, "CrmIdOk", "OutStage", 1)
     link(c, "OwnsClaim1", "MailClaim", 0); link(c, "OwnsClaim1", "OutLost", 1); link(c, "MailClaim", "MailRowBack")
     link(c, "MailRowBack", "SendMail", 0); link(c, "MailRowBack", "MarkUnknownB", 1)
     link(c, "SendMail", "MarkDone", 0); link(c, "SendMail", "MarkUnknownA", 1); link(c, "MarkDone", "DoneOwned"); link(c, "DoneOwned", "OutDone", 0); link(c, "DoneOwned", "OutLost", 1)

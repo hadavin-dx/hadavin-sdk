@@ -336,7 +336,26 @@ def t13():
     time.sleep(3); subprocess.run(["docker", "kill", lib.PG], capture_output=True); time.sleep(3); subprocess.run(["docker", "start", lib.PG], capture_output=True); pg_ready()
     time.sleep(5); kill_n8n_now(); restart_n8n(); rows = final_rows(ids); [rec("T13", **o) for o in rows]
     summarize("T13", "duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n killed and restarted with half-done runs", rows, ids)
-TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "AF1": af1, "AF2": af2, "B90": b90, "T7b": t7b}
+def t17():
+    """v5 CRM id: the CRM answers the create-or-update call with ONLY id (no vid). Expected: lead done, crm_id stored and numeric, exactly 1 mail to the intake recipient, 1 CRM row, 0 alerts."""
+    import re
+    mf_stack(); n8n_prepare_mf(); restart_n8n(); crm_ctl(upsert_answer="id"); rows = []; ids = []
+    for i in range(2):
+        k = uid("t17-%d" % (i + 1)); ids.append(k); t0 = time.time(); st, rep = req("mf-form", fbody(k)); tf = wait_final(k, t0, 3 * LEASE + 100, need_alert=False)
+        time.sleep(5); o = outcome(k); cid = psql("SELECT coalesce(crm_id,'') FROM mf_leads WHERE lead_key='%s';" % k).strip(); o.update(lead=k, reply=[st, rep], seconds_to_final=tf, crm_id_numeric=bool(re.fullmatch(r"[0-9]+", cid)), crm_id_text=cid); rows.append(o); rec("T17", **o)
+    ok = all(o["row"]["state"] == "done" and o["crm_id_numeric"] and o["mails"] == 1 and o["crm_rows"] == 1 and o["alerts"] == 0 and o["seconds_to_final"] is not None for o in rows)
+    result("T17", ok, "CRM answers with only id: sample %d: state done %d, crm_id numeric %d (%s), mails to intake %s, alerts %s" % (len(rows), sum(o["row"]["state"] == "done" for o in rows), sum(o["crm_id_numeric"] for o in rows), [o["crm_id_text"] for o in rows], [o["mails"] for o in rows], [o["alerts"] for o in rows]), per_lead=rows)
+def t18():
+    """v5 CRM id: the CRM answers with NEITHER id nor vid. Expected (same rules as T15): 3 tries, then state failed, exactly 1 alert naming the lead, 0 mails to the intake recipient, crm_id never numeric, within 3 x lease + 150 s."""
+    import re
+    mf_stack(); n8n_prepare_mf(); restart_n8n(); crm_ctl(upsert_answer="none"); rows = []; ids = []
+    for i in range(2):
+        k = uid("t18-%d" % (i + 1)); ids.append(k); t0 = time.time(); st, rep = req("mf-form", fbody(k)); tf = wait_final(k, t0, 3 * LEASE + 150)
+        time.sleep(35); o = outcome(k); cid = psql("SELECT coalesce(crm_id,'') FROM mf_leads WHERE lead_key='%s';" % k).strip(); o.update(lead=k, reply=[st, rep], seconds_to_final=tf, seconds_limit=3 * LEASE + 150, crm_id_numeric=bool(re.fullmatch(r"[0-9]+", cid)), crm_id_text=cid); rows.append(o); rec("T18", **o)
+    ok = all(o["row"]["state"] == "failed" and o["alerts"] == 1 and o["mails"] == 0 and not o["crm_id_numeric"] and o["seconds_to_final"] is not None for o in rows)
+    result("T18", ok, "CRM answers with neither id nor vid: sample %d: state failed %d, alerts per lead %s, mails to intake %s, crm_id numeric %s, seconds to final %s (limit %d)" % (
+        len(rows), sum(o["row"]["state"] == "failed" for o in rows), [o["alerts"] for o in rows], [o["mails"] for o in rows], [o["crm_id_numeric"] for o in rows], [o["seconds_to_final"] for o in rows], 3 * LEASE + 150), per_lead=rows)
+TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "AF1": af1, "AF2": af2, "B90": b90, "T7b": t7b, "T17": t17, "T18": t18}
 if __name__ == "__main__":
     for t in sys.argv[1:]:
         try: TESTS[t]()

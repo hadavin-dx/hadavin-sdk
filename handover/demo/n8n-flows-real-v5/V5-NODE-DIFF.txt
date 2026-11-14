@@ -1,0 +1,14 @@
+== mf-form.json
+== mf-hook.json
+== mf-recovery.json
+== mf-sub-crm-mail.json
+  ADDED node: CrmIdOk
+  CHANGED node: CrmUpsert (fields: credentials)
+    credentials: {"hubspotAppToken": {"id": "HUBSPOT_CREDENTIAL_ID", "name": "hubspot-app-token"}} -> {"hubspotAppToken": {"id": "HS_CRED_PLACEHOLDER", "name": "hubspot-app-token"}}
+  CHANGED node: SetCrmId (fields: parameters)
+    replacement: ={{ [$('SubIn').first().json.lead_key, String($json.vid), $('SubIn').first().json.claim_token] }} -> ={{ [$('SubIn').first().json.lead_key, String($json.id ?? $json.vid ?? ''), $('SubIn').first().json.claim_token] }}
+  ADDED connection: CrmIdOk [out 0] -> OwnsClaim1
+  ADDED connection: CrmIdOk [out 1] -> OutStage
+  ADDED connection: SetCrmId [out 0] -> CrmIdOk
+  REMOVED connection: SetCrmId [out 0] -> OwnsClaim1
+RESULT: ONLY SetCrmId, CrmIdOk (new IF) with its connections (SetCrmId->OwnsClaim1 replaced), and the HubSpot credential id differ

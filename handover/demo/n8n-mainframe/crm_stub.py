@@ -1,12 +1,12 @@
 """Made-up CRM stand-in for the D-N2 tests (loopback only). Like HubSpot, it has NO unique constraint on the lead id property: search-then-create can double if two runs race.
-  POST /search {lead_key} -> {results:[...]}      POST /create {lead_key,...} -> 201      GET /rows      POST /control {search_delay_ms, create_ack_delay_ms, upsert_delay_ms, upsert_ack_delay_ms, search_blind_s, fail_status (HTTP status for EVERY call until set back to 0; persistent)}
+  POST /search {lead_key} -> {results:[...]}      POST /create {lead_key,...} -> 201      GET /rows      POST /control {search_delay_ms, create_ack_delay_ms, upsert_delay_ms, upsert_ack_delay_ms, search_blind_s, fail_status (HTTP status for EVERY call until set back to 0; persistent), upsert_answer ("id" = default, the answer carries only id; "vid" = only vid; "none" = neither; persistent, v5)}
   POST /upsert {hadavin_lead_id, email, label} -> 200 {id, created}: create-or-update keyed on the lead id property AND on the e-mail (Design A, v2). Fault modes (D-N2a): search_blind_s = search answers EMPTY for N s after a row was written (like a slow index);
   upsert_delay_ms = hold the request BEFORE it is stored (one-shot); upsert_ack_delay_ms = store FIRST, answer late (one-shot).
 A search delay holds the answer back; a create ack delay stores the row FIRST and answers late (a test kills n8n inside that gap). Every request is logged to FILE."""
 import json, sys, time, threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 PORT, FILE = int(sys.argv[1]), sys.argv[2]
-ROWS, CTL, LK = [], {"search_delay_ms": 0, "create_ack_delay_ms": 0, "upsert_delay_ms": 0, "upsert_ack_delay_ms": 0, "search_blind_s": 0, "fail_status": 0}, threading.Lock()
+ROWS, CTL, LK = [], {"search_delay_ms": 0, "create_ack_delay_ms": 0, "upsert_delay_ms": 0, "upsert_ack_delay_ms": 0, "search_blind_s": 0, "fail_status": 0, "upsert_answer": "id"}, threading.Lock()
 def log(**k):
     with LK, open(FILE, "a") as f: f.write(json.dumps(dict(t=time.time(), **k)) + "\n")
 class H(BaseHTTPRequestHandler):
@@ -39,7 +39,8 @@ class H(BaseHTTPRequestHandler):
                 else: ROWS.append({"lead_key": k, "email": o.get("email"), "label": o.get("label"), "t": time.time()}); rid, created = len(ROWS), True
             log(op="upsert", lead_key=k, created=created); d = CTL["upsert_ack_delay_ms"] / 1000
             if d: CTL["upsert_ack_delay_ms"] = 0; time.sleep(d)
-            return self._j(200, {"id": rid, "created": created})
+            am = CTL["upsert_answer"]   # v5: control field, default "id" = the old answer
+            return self._j(200, {"id": rid, "created": created} if am == "id" else {"vid": rid, "created": created} if am == "vid" else {"created": created})
         self._j(404, {})
 ThreadingHTTPServer.allow_reuse_address = True
 ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
