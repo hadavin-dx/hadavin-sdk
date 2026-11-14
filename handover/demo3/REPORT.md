@@ -1,18 +1,16 @@
-## HEARTBEAT 189 (16:55Z) - v4 KS (n8n killed while the alert send waits): exactly 1 alert, but 13 minutes late; K3, K6 repeats pass
+## HEARTBEAT 190 (17:02Z) - lease 45 s runs started on 3 lanes (K1, K2, K3 on film-v4, n = 5, 5, 5 planned); v4 KS 2 of 2: alert at 780 s both
 
-WORKERS: 2 lanes (my script processes), 0 language-model agents. Lane 0: KS run 2 (ends about 17:05Z). Lane 2: K1 repeat. Lane 1 free: nothing left on my video path to start; the final RESULTS.md waits for the last runs.
+WORKERS: 3 lanes (my script processes), 0 language-model agents. Flow files: demo folder n8n-flows-film-v4 (demo commit 873a908a): I checked the difference to n8n-flows-v4 myself: only the lease (45 s instead of 120 s in the claim SQL of form, hook, recovery), 2 tries instead of 3, and a 10 s instead of 15 s timeout. Lane 1: K1 then K3. Lane 3: K2 then K3. Lane 0: K1 (from the end of the list) then K3. Each result now records recovery seconds (n8n up again to final state) AND kill-to-final seconds. First numbers about 17:10Z, all 15 runs about 17:45Z.
 
-| v4 flows (7709d058) | n | Result |
+| v4 flows (lease 120 s), results so far | n | Result |
 |---|---|---|
-| KS: hold 90 s, n8n killed 10 s after the alert send began (killed at 40 s, up again at 46 s) | 1 (2nd running) | EXACTLY 1 alert, NOT lost, but it came at 780 s (13 min) after the unknown. State unknown, 1 intake mail, 1 CRM row, alert_attempts 2, alert_sent true. Reason (timeline): the killed send left a 12 min claim on the row; nothing releases it, so the next claim was after 12 min plus a sweep. This is the README's "up to 12 to 13 min late". The owner waits 13 min for the alert in this case. |
-| K3 repeat | 2 total | unknown, 0 intake mails, 1 alert, 1 CRM row; recovery 144.3 s |
-| K6 repeat | 2 total | unknown, 1 intake mail, 1 alert, 1 CRM row; recovery 144.4 s |
-| K1 repeat | running | |
-Earlier v4 numbers unchanged: B780 1 alert (720 s), B90 3 of 3 one alert, A 2 of 2, C 2 of 2, K1, K2 pass.
+| KS (n8n killed while the alert send waits) | 2 | exactly 1 alert each, at 780 s and 780 s (13 min late; not lost) |
+| K1 | 2 | done, 1 intake mail, 0 alerts, recovery 144.3 s and 144.3 s |
+| K3 | 2 | unknown, 0 intake mails, 1 alert, recovery 144.3 s (first run had no timer) |
+| K6 | 2 | unknown, 1 intake mail, 1 alert, recovery 144.2 and 144.4 s |
+| K2 | 1 | done, recovery 144.2 s |
 
-Suggestion for the demo (not tested by me): when n8n starts, clear the alert claims of rows with alert_sent false, so a kill during a send does not cost 12 minutes. n8n node: one extra SQL at start; no code. The lead decides.
-
-ASK for the lead: is a 13 min late alert after an n8n kill acceptable for the video claim? If not, tell the demo session about the start-up clear.
+ASK for the lead: none.
 FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list): KS run 2; K1 repeat; failed mark after a sent alert; comparison with the demo table; lease for the video (open question); n is 1 to 3 per case.
-WHAT I WOULD DO NEXT (ranked): 1) finish KS 2 and K1; 2) final RESULTS.md and compare with the demo table; 3) one video line.
+NOT DONE / NOT CHECKED (my list): lease 45 s numbers (running); failed mark after a sent alert; comparison with the demo table; the demo's 60 s V7 limit at lease 45 s: expect about 70 s from n8n up (my guess from 144 s at 120 s, not measured).
+WHAT I WOULD DO NEXT (ranked): 1) lease 45 s runs; 2) final RESULTS.md and compare; 3) one video line.
