@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 09:20 UTC / 14:50 IST
+
+**Lines below are agent checkpoint lines or claims; I have judged none.**
+
+- **r7n (ac7638bd): no new checkpoint since 09:09 ("FINAL RE-FREEZE 2: full mutants + full suite started; no more edits to tree-R7N"); 11 minutes of silence, hand-back is due 09:30.** I have not seen its test mapping, fail-before, sweep list or patches. If there is no hand-back or checkpoint by 09:35 I ask it for a note and, past its 60-minute box (it started 08:17, so it is already at 63 minutes), I read its tree state before deciding to let it finish or resume it from its notes. It is allowed to run over only because of the two re-freezes I caused.
+- **Pass 12 (a5f77882), first rows: clean run on r7m green (2105 passed, 1 skipped, 3 deselected, rc 0, 649 s). M9-74 SURVIVED the big set (534 s) = REAL GAP (run_real_check exits 0 although contacts are LEFT in the CRM, line 1260; mail/CRM cleanup honesty).** Lane A mutants and lane B M9-78 are running; the other rows are not in yet. M9-74 is NOT in r7n (r7n froze at 09:09): I will hold pass 12's confirmed gaps and send them as one small test-first delta (r7o on top of r7n) after r7n hands back, so r7n's one full run stays valid.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n) | 15 items, frozen bytes | orders | 08:17 / 13:47 | 09:30 (over box) | r7n | RUNNING, silent since 09:09 | hand-back; EV7N; fresh reviewer |
+| a5f77882 (pass 12) | 11 unrun rows on r7m | fix-dont-defer | 09:08 / 14:38 | about 10:10 | pass 12 | RUNNING (M9-74 real gap) | mail-pass12-r7m.md |
+
+Agents running: 2. Load 1.5.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n hand-back, patches, fail-before, EV7N, fresh reviewer, pass 11 mutants on r7n | in progress | as ordered |
+| pass 12 gaps (M9-74 so far) | running | r7o after r7n |
+| ledger rows OPEN | need EV7N and a reviewer | after r7n |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. r7n hand-back: verify hashes and apply matrix; EV7N and a fresh reviewer together.
+2. Pass 12 gaps to r7o (test-first, small); pass 11 mutants on r7n changed code.
+3. Close ledger rows, README, sweep, counts.
+
+
 ## STATUS (core lead) 09:11 UTC / 14:41 IST
 
 **Lines below are agent checkpoint lines or claims; I have judged none.**
