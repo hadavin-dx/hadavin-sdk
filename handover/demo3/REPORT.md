@@ -1,3 +1,15 @@
+## HEARTBEAT 72 (02:52Z / 08:22 IST) - MATRIX RUNNING
+
+| Agent | Job | State |
+|---|---|---|
+| M1 (Sonnet, evidence runner) | Python 3.13, shuffled order seed 20261114, own worktree | running, started ~02:51Z |
+| M2 (Sonnet, evidence runner) | Python 3.13, reversed order (seed 0), plus facts on whether >=3.12 is enforced | running, started ~02:51Z |
+
+FAILURES AND RETRIES: 0 failures recorded so far; 0 retries; nothing finished yet, so no result is claimed. Totals: 2 runs started, 0 finished.
+ASK list: unchanged (xdist in CI; PR #12 E marks; 4 remaining skips; Q8 vs B3 M11; D10 'sender' word; fix-8 address gaps). New: none.
+Load (measured /proc/stat, one sample): idle CPU 84 percent; free RAM 15.8 GB. 2 heavy slots used of 3.
+Not checked: Python 3.11 (repo requires >=3.12, not run); no 3.13 result yet.
+
 ## HEARTBEAT 71 (02:50Z 2026-11-14) - NEW ORDER (python/OS matrix) STARTING; freeze list repeated here so it is in the heartbeat
 
 NOT CHECKED / UNEXPLAINED (from FREEZE.md, repeated because HEARTBEAT 70 only pointed to the file):
