@@ -19,8 +19,10 @@ K = "/home/user/work/kill"
 N8N_DIR = "/home/user/work/kill-n8n"
 NODE_BIN = "/home/user/work/node24/node_modules/node/bin"
 PROBE = os.environ.get("FLOW_PROBE", os.path.join(K, "probe"))
-PSQL = ["psql", "-h", "127.0.0.1", "-p", "55432", "-U", "postgres", "-d", "kill_t", "-At", "-F", "|"]
-PORT = {"crm": 18101, "stage": 18102, "smtp": 2525, "n8n": 5690}
+LANE = int(os.environ.get("LANE", "0"))  # parallel lane: own ports, own database, own n8n folder (0 = the original single-lane setup)
+DB = "kill_t" if LANE == 0 else "kill_t%d" % LANE
+PSQL = ["psql", "-h", "127.0.0.1", "-p", "55432", "-U", "postgres", "-d", DB, "-At", "-F", "|"]
+PORT = {"crm": 18101 + 100 * LANE, "stage": 18102 + 100 * LANE, "smtp": 2525 + 100 * LANE, "n8n": 5690 + 10 * LANE}
 FLOWS = ["mf-sub-crm-mail", "mf-form", "mf-hook", "mf-recovery"]
 PUBLISH_IDS = ["subflow0000000001", "form000000000001", "hook000000000001", "recov00000000001"]
 TERMINAL = ("done", "unknown", "failed", "review")
@@ -29,7 +31,7 @@ TERMINAL = ("done", "unknown", "failed", "review")
 def env_n8n(home):
     e = dict(os.environ)
     e["PATH"] = NODE_BIN + ":" + e["PATH"]
-    e.update(N8N_USER_FOLDER=home, N8N_DIAGNOSTICS_ENABLED="false", N8N_PORT=str(PORT["n8n"]),
+    e.update(N8N_USER_FOLDER=home, N8N_DIAGNOSTICS_ENABLED="false", N8N_PORT=str(PORT["n8n"]), N8N_RUNNERS_BROKER_PORT=str(5679 + 10 * LANE),
              N8N_BLOCK_ENV_ACCESS_IN_NODE="false", N8N_HOST="127.0.0.1", N8N_LISTEN_ADDRESS="127.0.0.1",
              MF_CRM_URL="http://127.0.0.1:%d" % PORT["crm"], MF_STAGE_URL="http://127.0.0.1:%d" % PORT["stage"],
              N8N_VERSION_NOTIFICATIONS_ENABLED="false", N8N_TEMPLATES_ENABLED="false")
@@ -104,7 +106,10 @@ class Run:
 
     def prepare_n8n(self):
         os.makedirs(self.home)
-        rc, out = self.cli("import:credentials", "--input=" + os.path.join(PROBE, "creds.json"))
+        ctext = open(os.path.join(PROBE, "creds.json")).read().replace('"port": 2525', '"port": %d' % PORT["smtp"]).replace('"kill_t"', '"%s"' % DB)
+        cpath = os.path.join(self.wd, "creds-lane.json")
+        open(cpath, "w").write(ctext)
+        rc, out = self.cli("import:credentials", "--input=" + cpath)
         assert rc == 0, "import creds: " + out[-300:]
         for w in FLOWS:
             rc, out = self.cli("import:workflow", "--input=" + os.path.join(PROBE, w + ".json"))
