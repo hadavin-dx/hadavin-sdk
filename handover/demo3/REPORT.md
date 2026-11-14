@@ -1,3 +1,17 @@
+## HEARTBEAT 103 (06:08Z, 11:38 IST) - B16 HANDED BACK, B17 REVIEWED (4 major), B18 REVIEWED (3+3 major, resolved), NO GREEN fix-2 RUN YET
+
+| Agent / job | State at 06:08Z |
+|---|---|
+| fix-2 r6 run 4 (b15b-clone) | INTERRUPTED at 3379 passed (KeyboardInterrupt at server.py:1093), NOT a result. Run 3 (same tree 3633781d, DPLD_REQUIRE_SCAN=1) is at 70%, ends about 06:15Z |
+| B16 fix-5 r7 | HANDED BACK 06:03Z. Full run on final head: 3926 passed, 179 skipped, 0 failed (raw/b16-full-final.log; run 1 had 1 failed, "lead book" in README, fixed). Mutants 35/36 first time, survivor killed. reset.ps1 NEVER RUN (no pwsh): your Windows run is still needed. Patch lane3-fix-5-r7.patch (sha da5877bc), fresh reviewers next |
+| B17 fix-10 r2 | two fresh reviews saved: 0 blocker, 4+5 major (exit table keyed by family so its test cannot fail; crash_desk and run_real_check give other numbers for the same cause; start_all.ps1 may exit 0 for a dead desk ($desk.ExitCode null in PS 5.1); 6 of ~11 path settings lack the surrogate check; start_all race with the demo server). Resolve next, then builder r3 |
+| B18 fix-2 r7 | two fresh reviews saved: 0 blocker, 3 major each (probe guard skips src/lead_desk; key-file mode bits unchecked; symlink rule not portable on Windows; 62 lines over 120 columns; key-file rule not in one docs place). Resolve saved (evidence/resolve-lane3-fix-2-r7.md): 25 fix, 1 declined, 0 escalated. Builder B19 (r8) starting. B18's own full run (tree 8db4b0ba) is at 70% |
+
+ASK for the lead: for stack order, fix-5 r7 adds exit 7 and fix-10's table test must follow it; the core patch core-fix-on-frozen-r7e has a test that rejects a class name in run_real_check refusal lines, which fix-10 r2's expected text contains. Is that core patch part of the stack? (I will assume NO and drop the class name in fix-10 r3 either way.)
+FAILURES AND RETRIES: run 4 interrupted (cause unproven, probably B15b touching the same clone); nothing else new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no green full run of fix-2 (r6 or r7); fix-5 r7 and fix-10 r2 fresh reviews and drift reports; wall-clock and hygiene guard rc on any final head; all ps1 behaviour (never run; Windows run needed); stack builder, stack docs, stack run.
+WHAT I WOULD DO NEXT (ranked): 1. start B19 (fix-2 r8) and two fresh reviewers on fix-5 r7; 2. egm-resolve on fix-10 r2 then builder r3; 3. read run 3 at 06:15Z and B18's run; then the stack builder once fix-1, fix-2, fix-5, fix-8, fix-9, fix-10 are all clean.
+
 ## HEARTBEAT 102 (05:57Z, 11:27 IST) - LAYOUT ORDER APPLIED (newest first, old blocks archived); B16 FULL RUN 59%, B17 FULL RUN 91%, B18 BUILT + FULL RUN STARTED, FIX-2 R6 RUN 4 RUNNING
 
 | Agent / job | State at 05:55Z |
