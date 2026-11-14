@@ -1,0 +1,34 @@
+restore check (file compared byte for byte with the pristine tree after each mutant):
+R.tsv:Q13	restored-byte-equal=True
+R.tsv:Q14	restored-byte-equal=True
+R.tsv:Q19	restored-byte-equal=True
+R.tsv:mutA	restored-byte-equal=True
+R.tsv:mutB	restored-byte-equal=True
+R.tsv:X1	restored-byte-equal=True
+R.tsv:X1ctx	restored-byte-equal=True
+S3.tsv:S01	restored-byte-equal=True
+S3.tsv:S02	restored-byte-equal=True
+S3.tsv:S03	restored-byte-equal=True
+S3.tsv:S04	restored-byte-equal=True
+S3.tsv:S05	restored-byte-equal=True
+S3.tsv:S06	restored-byte-equal=True
+S3.tsv:S07	restored-byte-equal=True
+S3.tsv:S08	restored-byte-equal=True
+S3.tsv:S09	restored-byte-equal=True
+S3.tsv:S10	restored-byte-equal=True
+S3.tsv:S11	restored-byte-equal=True
+S3.tsv:S12	restored-byte-equal=True
+S3.tsv:S13	restored-byte-equal=True
+S3.tsv:S14	restored-byte-equal=True
+S3.tsv:S15	restored-byte-equal=True
+S3.tsv:S16	restored-byte-equal=True
+S3.tsv:S17	restored-byte-equal=True
+S3.tsv:S18	restored-byte-equal=True
+S3.tsv:S19	restored-byte-equal=True
+S3.tsv:S20	restored-byte-equal=True
+S3.tsv:S21	restored-byte-equal=True
+S3.tsv:S22	restored-byte-equal=True
+S3.tsv:S23	restored-byte-equal=True
+S3.tsv:S24	restored-byte-equal=True
+first (weaker-test) S run, kept for the record: S13 S20 S21 S24 SURVIVED, see mut-results-S.tsv; rerun after strengthening: mut-results-S2.tsv; full rerun on the final tests: mut-results-S3.tsv
+r7q test file in full on plain r7p: see pcopy-summary.txt

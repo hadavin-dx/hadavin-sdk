@@ -1,0 +1,51 @@
+# R7S results (order C-R7S). Builder notes. Nothing committed or pushed. r7r and every other tree were not edited.
+
+## Read this first: what failed, what is uncertain, what was not checked
+- **My first tests were too weak in four places; found by my own mutants, fixed, rerun.** On the first mutant run these survived: S13 (drop `and not unseen` from the exit rule: the hidden-contact tests already failed on another check, "CRM rows match the leads"), S20 and S21 (the s6 tests used `pytest.raises(pytest.fail.Exception)`, so a helper that skipped instead of failing ended the test as a skip, not a failure), S24 (the q9 test cannot see a missing `from None`, because `secret_boundary` around `_session` cuts every error chain). Fixes: new function `exit_code_of` plus a truth table test (s3e); s6 tests use `pytest.raises(BaseException)` and check the type; q9 also calls `inspect.unwrap(imap_count._session)` and asserts `__cause__ is None and __suppress_context__ is True`. All 24 mutants are KILLED on the final tests (full rerun, `mut-results-S3.tsv`).
+- **r7r's q9 test never killed the "raise without from" mutant (X1ctx: SURVIVED on r7r tests, row kept).** On the r7s tests it is KILLED (row `X1ctx r7s-copy (final tests)` in `snapshot-r7s/mut-results.tsv`).
+- **Not run: the full suite** (an independent EVIDENCE RUNNER does it). **Not available: the take tree**, so `test_take_imports.py` was run on r7s (390 passed) and r7p (2 failed), not on the take base. **Not tried: Windows** (PowerShell, a Windows git). The `--dry-fakes` runs in the new tests prove logic with fakes only; no real service was touched. The ordinary skip for a missing openssl was not exercised on this machine (openssl is installed here; the helper is tested by calling it with the flag set and unset).
+- No classifier refusal happened.
+- The first full-guard run was cut off (no process left, no result); it was started again. Only complete runs are quoted below.
+
+## Items
+| item | change (choke point) | fail first (on a plain r7r copy `out/R7S/old/tree`) |
+|---|---|---|
+| 1 M1 | `QuietServer.__init__` in `demo_only/bad_request.py` refuses a non-loopback host with the existing `is_loopback_host` and the existing refusal text, before any socket exists; fails closed on an address that is not (str, port). Guard: reason text now "QuietServer refuses a non-loopback bind"; `demo_only.bad_request.QuietServer` added to the guard's HIT_QUALIFIED, and the three fakes that use it get their own listed entries with a reason. Planting a use in any other demo_only file is flagged (test s1b, 3 shapes). | test_r7s_findings.py: **37 failed, 14 passed** (log `before-final.log`). The 14 passes are PIN rows by design (the other two fakes already refused; loopback still works; a flaky-archive case; and the like). |
+| 2 M2 | `snapshot-r7s/TAKE-USED-FILES-r7r.md` made by `take_closure.py` + `gen_take.py` (python `ast`, nothing run): 42 files, 388 (module, name) pairs in r7r (389 with r7s). UNVERIFIED rows resolved: fakes_server.py, trace.py and fake_model_server.py are NOT in the closure; burst.py IS; bad_request.py (QuietServer) IS and was missing from the old list. `test_take_imports.py`: 390 passed on r7s; **2 failed on r7p** (`demo_only.bad_request:QuietServer`, and the r7s counter scope). Exact missing names in r7n and r7p: only `QuietServer`. | on r7p: 2 failed, 388 passed |
+| 3 m3 | `scripts/run_real_check.py`: counters scoped by run tag (`desk-<tag>-*`; `Desk(..., tag)`, `read_counter_files(..., tag)`); `contacts_not_accounted_for(created, accounted)`; `exit_code_of(...)`; a mismatch prints "N contacts may be left in HubSpot ..." and ends with EXIT_FAILED. Fake CRM that hides one created contact; stale counter files. Run only through pytest-level fakes, no `--assume-yes` on a real script (the tests call `main([... "--assume-yes"])` in process with the dry fakes). | s3 and s3c, s3b stale files: failed on r7r; the stale-file test showed the real false failure F4 "mail counter says 206 sent" |
+| 4 m4 | `README-r7s-SNIPPET.md` and `snapshot-r7s/APPLY-README-r7s.md` (same text): CRLF patch for CRLF scripts, LF patch only after `sed` to LF, names and sha256, post-apply line check, and the statement that line 31 of `fix/README.md` and the whole r6 `APPLY-README-SNIPPET.md` are superseded. Numbers in it (166 files, 67 passed) were measured: `git diff` count of the patch, and `tests/test_reset_scripts.py` on the patched folder. | text only |
+| 5 m5 | q9 test: `__context__ is None` plus the `__wrapped__` check above; mutant X1ctx killed. | X1ctx survived on r7r tests |
+| 5 m6 | `tests/support.skip_or_fail_without_openssl()`: with `DPLD_REQUIRE_SCAN` set a missing openssl is `pytest.fail`, otherwise `pytest.skip`; 14 skip sites in 9 test files go through it; an AST test (s6) fails if any test file again skips with an openssl text. The library-capability skips ("this OpenSSL does not allow ...") are left as they are on purpose (a different reason). | s6: failed on r7r |
+| 5 m7 | the Q9 literals in `test_r7q_findings.py` use `HOST` or `PLAIN`; no new literal secret. | n/a |
+| 5 n10 | suppression count, ONE method (below). | n/a |
+| 5 n11 | header tables: q9 row added to `test_r7q_findings.py`; `test_r7s_findings.py` has its own (s1, s1b, s1c, s1d, s3, s3b, s3c, s3d, s3e, s6). | n/a |
+| 6 m8 | see Mutants. | |
+
+Suppressions (n10), one command, run in the tree root: `grep -rEo 'noqa|type: ignore|nosemgrep|nosec' --exclude-dir=.git --exclude-dir=__pycache__ --exclude-dir=data --exclude-dir=.ruff_cache --exclude-dir=.pytest_cache . | wc -l` gives **367 on r7r and 367 on r7s** (noqa 193/193, type: ignore 126/126, nosemgrep 40/40, nosec 8/8; the earlier 193/192 and 31/32/40 came from different greps). No suppression was added.
+
+## Existing tests I changed (old -> new, why not weaker)
+- `tests/test_file_call_guard.py`: reason text for `demo_only/bad_request.py ThreadingHTTPServer`: old "each fake's factory refuses a non-loopback host" (a claim about three other places) -> "QuietServer refuses a non-loopback bind" (the real place). Added HIT_QUALIFIED `demo_only.bad_request.QuietServer` and 3 ALLOWED_CALLS entries: the guard flags more, never less (mutant S08 and r7r mutants A and B are killed).
+- `tests/test_r7q_findings.py` q9: old assertions on type, text and `repr(args)`; new: the same, plus `__cause__ is None and __context__ is None` on the public error, plus a walk over the whole chain by text, plus the unwrapped call with `__suppress_context__ is True`. Strictly more. Literals replaced by `HOST` and `PLAIN`.
+- 9 test files: `pytest.skip("... openssl ...")` -> `skip_or_fail_without_openssl()`. Same skip without the flag; a failure with it. Stricter on CI only.
+- `tests/support.py`: new helper only. `scripts/run_real_check.py`: `read_counter_files` and `Desk` take a tag (all callers pass it).
+- No test deleted, none loosened.
+
+## Runs (recipe: TMPDIR outside the tree, PYTHONPATH, no bytecode, `unshare -n` + lo_up driver, GITLEAKS_BIN, DPLD_REQUIRE_SCAN=1, DPLD_REQUIRE_DEMO=1; staged git copy `hy`, `git add -A`, no commit)
+| run | result |
+|---|---|
+| guard files in full on `hy` (file_call_guard, hygiene, nosemgrep_form, raw_bidi_chars, shell_single_bracket, no_placeholders, gitleaks_exceptions, gitleaks_semgrep_lock, mutation_guards, no_terminal_questions, vendor_hosts, except_clause_hierarchy, server_stop_guard, path_confinement, migration_triggers, mirror_gate, regfile_limits_in_constants, script_number_limits, r7_class_names, demo_folder_guard, r7s_findings, r7q_findings), final head: `hy-guard4.log` | **1123 passed, 1 skipped (ntpath.isreserved needs Python 3.13), rc=0** |
+| every changed existing test file plus test_load_tools (first) and test_r7k_findings, test_reset_scripts, on `hy`: `hy-changed.log` | **744 passed, rc=0** |
+| r7s + r7q files on the tree: `new-r7s2.log` | 116 passed |
+| fail-before, final r7s file on r7r copy: `before-final.log` | 37 failed, 14 passed |
+| take test: `take-on-r7s-final.log`, `take-on-r7p-final.log` | 390 passed; r7p 2 failed, 388 passed |
+| ruff 0.17.1 `check .` and `format --check .` on a copy of the final tree | All checks passed; 230 files already formatted |
+| patches applied to 3 folders: `apply-matrix-r7s.txt` | rc=0 each; CRLF folders equal r7s byte for byte; LF folder equal except CR on the two scripts (checked separately) |
+
+## Mutants (item 6; runner `mut2.py`, adapted from R7Q's; one runner per tree copy; each file restored and compared byte for byte; `mut-results.tsv`, `mut-restore-check.txt`)
+- r7q test file IN FULL on a plain r7p copy (`pcopy-summary.txt`): **44 failed, 21 passed**; 11 fail only with AttributeError (`longest_request_bytes` 7, `new_tag` 2, `guarded_sites` 2), 9 only with ImportError (QuietServer), 1 a raised fixed-text error, 23 real AssertionErrors (q7 guard plants 17, banner cost text 5, one set difference).
+- On the r7r copy: Q13, Q14, Q19 KILLED; guard mutants A (remove the bad_request.py allow entry) and B (unlisted os.listdir in bad_request.py) KILLED by the full test_file_call_guard.py; X1 (repeat the error text) KILLED; X1ctx (drop `from None`) **SURVIVED** with the r7r tests.
+- On the r7s copy with the final tests, 24 new mutants all KILLED (S01-S24: loopback check removed, inverted, moved after `super().__init__`, fail-open on a non-str host, wrong text, QuietServer dropped from the guard list, counting rule flipped or zeroed, `and not unseen` dropped, `if unseen` disabled, counters read without the tag, Desk ignoring the tag, `accounted = done`, helper skipping instead of failing, helper always failing, r7n certificate fixture skipping again, `from None` dropped) plus X1ctx KILLED.
+- A weaker first run (S13, S20, S21, S24 survived) is kept as `mut-results-S.tsv`; the rerun after strengthening is `mut-results-S2.tsv`; the full rerun on the final tests is `mut-results-S3.tsv` and `-S4.tsv`.
+
+## Files in out/R7S
+`core-fix-on-frozen-r7s-crlf.patch`, `core-fix-on-frozen-r7s-lf.patch`, `core-fix-r7r-to-r7s-delta.patch` (hashes in `sha256-r7s.txt`; the delta applies to tree-R7R and gives r7s, checked: `DELTA-ON-R7R-GIVES-R7R` in `build_patches.sh` output), `apply-matrix-r7s.txt`, `README-r7s-SNIPPET.md`, `snapshot-r7s/` (MANIFEST.txt, files/ with the 15 changed files, delta-r7r-to-r7s.diff, mut-results.tsv, take files, mut2.py).
