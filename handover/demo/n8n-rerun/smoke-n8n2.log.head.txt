@@ -1,0 +1,40 @@
+No encryption key found - Auto-generating and saving to: <repo>/data/n8n_evidence_run/smoke/n8nhome/.n8n/config
+Initializing n8n process
+n8n ready on 127.0.0.1, port 5679
+[MoveSshKeysToDatabase1711390882123] No SSH keys in filesystem, skipping
+Added workflow:publish scope to project roles with workflow:update
+[<long id>] No external secrets settings found, skipping
+[<long id>] Backfilled credential dependencies for 0 credentials. Inserted 0 dependencies.
+[<long id>] No stored redaction enforcement setting found, nothing to migrate
+[SetChatHubEnabledFromUsage1784000000038] Persisted Chat Hub enabled=false based on existing usage
+[<long id>] Rewrote 0 pre-scoping grants in oauth_refresh_tokens
+[<long id>] Rewrote 0 pre-scoping grants in oauth_authorization_codes
+[<long id>] Backfilled 0 checkpoint thread IDs; skipped 0 checkpoints.
+[<long id>] Processed 0 agents rows; migrated 0; skipped 0 malformed rows.
+[<long id>] Processed 0 agent_history rows; migrated 0; skipped 0 malformed rows.
+[MigrateAgentSkillsToHub1792764566513] Copied inline agent skills into the skills hub
+n8n Task Broker ready on 127.0.0.1, port 5780
+Failed to start Python task runner in internal mode. because its virtual environment is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: <link>
+There are deprecations related to your n8n setup. Please take the recommended actions to update your configuration:
+ - N8N_RUNNERS_ENABLED -> Remove this environment variable; it is no longer needed.
+ - N8N_UNVERIFIED_PACKAGES_ENABLED -> The default for this variable will change to `false` in a future version. Set it to `true` explicitly to keep installing unverified community packages.
+ - N8N_RUNNERS_MODE -> Internal task runner mode is deprecated and will be removed in a future version. For isolation and scaling, run the task runner launcher as a separate process, set this variable to `external` and share `N8N_RUNNERS_AUTH_TOKEN` with the launcher. See <link>
+ - N8N_RUNNERS_TASK_TIMEOUT -> The default for this variable will be reduced from 300 (5 minutes) to 60 (1 minute) in a future version. Set it explicitly to keep your current task timeout.
+ - <long id> -> The default for this variable will be reduced from 2 GiB to 256 MiB in a future version. Set it explicitly to keep your current limit.
+ - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES -> The default for this variable will be reduced from 5000 to 1000 in a future version. Set it explicitly to keep your current limit.
+[license SDK] Skipping renewal on init: license cert is not initialized
+Registered runner "JS Task Runner" (ApgiQntgjg17ziuP2zPPW) 
+Seeded the system trusted source
+Generated new OAuth access-token signing key
+Instance registered
+Cluster aligned on version 2.46.6
+Discovered 4 cluster checks
+Recorded version change: (none) -> 2.46.6
+Generated new instance OAuth JWE key pair
+Sandbox: enabled=false provider=n8n-sandbox (from env)
+Version: 2.46.6
+Building workflow dependency index...
+Scheduler started
+Finished building workflow dependency index. Processed 0 draft workflows, 0 published workflows.
+Editor is now accessible via:
+<link>

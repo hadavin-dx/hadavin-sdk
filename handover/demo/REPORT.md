@@ -1,5 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 03:35Z): N8N FULL RUN STOPPED EARLY, NOT A NUMBER: details in N8N-RERUN-1.md
+- LOAD: no job running (the full run ended itself at 03:24:06Z, exit 1; smoke run ended exit 1). No agent running. Ports free, 0 containers.
+- RESULT: variant b webhook g2-b2 never registers on this Linux machine with n8n 2.46.6 (workflow active=1 in n8n's database, no webhook_entity row; the other three webhooks answer). Harness stops at its first restart with "n8n did not come up (default)". Same in the README smoke run (234 probes, all 404). No counts at all.
+- DONE: harness tests 173 passed; quiet check idle 92.2 percent; Node and npm ci as the README says.
+- ASK 1 (default: do it, 20 min): run a bounded diagnostic with no harness change to find the activation error for g2-b2. ASK 2: am I allowed to propose, and run as a separate labelled run, a one-line fix if the cause is in the harness (default: propose as text only)?
+- Honesty note: the smoke run shares node_modules by hard links with the full-run folder (disk); everything else is the README as written. Earlier block times of mine were guesses; this one is read from the clock.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Cause of the unregistered g2-b2 webhook: not found; next: one bounded diagnostic with no harness change (start n8n by hand in the smoke folder with the harness's settings, read webhook_entity right after boot and after a manual activation through n8n's own interface, print the activation error text); default if told: do it, 20 minutes.
+- Whether variant b works in the first n8n process (before the restart): not checked; same diagnostic.
+- The variants a, c, d, e, ten-at-once, K1 to K3, replay: never ran; they follow only after the restart step that failed.
+- Full run needing a different n8n version (for example a newer 2.4x) or a changed harness: not tried (would be tuning; the lead decides).
+- The harness's own smoke list of unverified Linux texts (the "live text" wording): the default text matched the three working webhooks, not b2.
+- Reviewer (read-only egm) on this file and the branch README: not started; next: start it after the lead reads this.
+## WHAT I WOULD DO NEXT (ranked)
+1. Run the bounded diagnostic above and write the exact n8n activation error for g2-b2 (facts only, no change to the harness).
+2. If the cause is in the harness or the Postgres credential setup (not in n8n): write the one-line change as a proposed patch text for the lead, run it ONLY if told, as a separate labelled run.
+3. Then the egm reviewer on N8N-RERUN-1.md plus the README of the branch, and delete the 2.8 GB node_modules after the lead says the result folders are saved.
+
 ## REPORT 03:26Z: N8N FULL RUN IS RUNNING (started 03:22:38Z); clean-machine verification evidence DONE
 - LOAD: 1 job: the n8n full run (run_all, my shell, nohup; n8n and fake server up). NO other heavy job: B and D ended. Quiet check before launch: vmstat 120 s, mean idle 92.2 percent (129 rows), load 0.05. Plan: only file edits and git pushes meanwhile.
 - N8N: harness tests 173 passed (rc 0); Node 24.22.2 checksum ok; npm ci 2 min, 2219 packages, rebuild isolated-vm rc 0; smoke skipped; postgres pinned digest pulled. Expected end about 04:50 to 05:15Z (README: 70 to 90 min). I check every 5 min and write the rows as they appear; no result is stated before it exists.

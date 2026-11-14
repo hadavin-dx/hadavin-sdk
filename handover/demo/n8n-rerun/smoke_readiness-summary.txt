@@ -1,0 +1,3 @@
+{'readiness_answered': True, 'webhook_path': 'g2-b2', 'webhook_registered': False}
+probes 234 first 404 last 404 statuses [404]
+{"code":404,"message":"The requested webhook \"GET g2-b2\" is not registered.","hint":"The workflow must be active for a production URL to run successfully. You can activate the workflow using the tog
