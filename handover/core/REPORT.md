@@ -1,5 +1,14 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 17:34 UTC / 23:04 IST
+
+**Guard run still has no result (about 95%, no failure so far; slower than the r7t run because EV7U and MUT load the machine). package.sh NOT run.**
+**a4:** my first two whole-file repro runs were cut by my own 400 s timeout (no summary, nothing learned). A loop of 6 single-test runs is running now (pid 20329); no failing note captured yet. Hypothesis unchanged (create_unknown/open above 0 in the dry run under load makes "were still open" appear); OPEN, not a flake. If a failing note shows it, the fix order goes to a builder: the test sets the counters itself.
+**Agents: 2 language-model (EV7U, MUT).** MUT: wide phase 1 (survivors, 300 s cap each) on tree2 since 17:33Z, narrow results 15 of 69 done at 17:27Z. EV7U: probe running since 17:23Z; its box ends about 18:30Z / 00:00 IST. Disk 2.2 GB.
+**Not checked:** guard result; a4 cause; EV7U; MUT.
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 17:25 UTC / 22:55 IST
 
 **a4 `no_open_create` failure: cause NOT proven yet; reading the code gives one hypothesis.** The test makes a real dry run with the read-back stopped and asserts "were still open" is NOT in the note. In `scripts/run_real_check.py` lines 587-601 that phrase is printed whenever `create_open + create_unknown` is above 0 (so also when only `create_unknown` is 1). So the test fails exactly when the dry run's HubSpot creates ended unknown or open, which can happen if a create request times out on a loaded machine. That would be a test that assumes a quiet machine, not a desk bug (the counter does its job). Order/shared state is the other candidate. To decide, I am re-running the file on a copy (scratchpad a4t, 1st run still going, it is slow) and I will capture the failing note itself. If the note shows create_unknown>0 under load, the fix order is: the test sets the counters itself (like `_more_created`) so it does not depend on the dry run's timing; test-first, small, goes to the next builder with whatever EV7U/MUT/guard add. Until then this is OPEN, not "flake".
