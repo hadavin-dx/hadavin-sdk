@@ -1,5 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 15:20Z - DOUBTFUL-SCENE.md pushed: 5 steps, marks MEASURED 0 / READ-ONLY 4 / NOT BUILT 3 parts; V7 raw still unread; nothing run
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No step has a raw file; real-take fault for step 2 not built; Slack and table screen not built; PAGE-STATEMENTS-DRAFT v3 update pending.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Fill the marks from V7 raw (AF1, T12 if added) when named. 2. PAGE-STATEMENTS-DRAFT v3. 3. Spec how the take causes step 2 without the stand-in (your decision).
+
 ## Block 15:10Z-UNKNOWN-SCENE - what a viewer sees for an UNKNOWN lead, and what v3 produces (by design/reading; v3 NOT RUN, V7 pending)
 
 | What the viewer would see | v3 flows produce it today? | Basis |
