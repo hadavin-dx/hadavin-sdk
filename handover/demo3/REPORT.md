@@ -1,3 +1,18 @@
+## HEARTBEAT 117 (07:25Z) - B22 (fix-2 r9) HANDED BACK, my lint GREEN; fresh reviewers on r9 started; start_all 4/8 answer applied
+
+| Agent / job | State at 07:25Z |
+|---|---|
+| B22 fix-2 r9 | HANDED BACK, tree 047715c5 (patch lane3-fix-2-r9-on-fix-1-r6.patch, applies on base+fix-1 r6 to the same tree). NO full run (your order). Changed 6 test files: 836 passed, 1 skipped; hygiene test alone rc 0 (its first run was red: the text "/mnt/c" in docs and a test; reworded); wall-clock guard alone rc 0. Old-code proof: 79 real-behaviour failures, 0 function-absent (taken before the last wording edits). Mutation 19 of 19 killed. Key-file option (a) built: mode refusal text now "the {what} file can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy"; docs carry the copy step; option (b) NOT added: residual case = a root process reading a 0600 file planted by another user is accepted (recorded in the notes; a few lines + test if you want it) |
+| LINT by me (clean copy of ls-files, tree 047715c5) | ruff check 0, format 0, mypy linux 0, mypy win32 0, bandit 0 |
+| fix-2 r9 reviewers | egm-design and egm-codebase-details started 07:25Z on the whole fix |
+| B23 fix-10 r4 | building (started 07:19Z) |
+| B21 fix-5 r8 | fixing its one red test; no hand-back |
+
+ASK for the lead: none (start_all 4/8 answer applied: B23 keeps 4 and 8, one table, name-pinned tests). Optional: do you want option (b) (owner must equal the running user) after all? Not built.
+FAILURES AND RETRIES: B22 hygiene run red once (path-like text), fixed. The chmod-000 behaviour test skips as root (this container); a monkeypatched twin runs; a real non-root run was not done (user creation refused here).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): Windows; Docker/Kubernetes mounts (docs say not tried); full suite on r9 (stack run).
+WHAT I WOULD DO NEXT (ranked): 1. read r9 reviews, resolve; 2. B21 hand-back; 3. B23 hand-back; then stack builder.
+
 ## HEARTBEAT 116 (07:19Z) - fix-10 r3 reviewed (5 major) and resolved; builder B23 (fix-10 r4) started; tree ids reconciled; B21 and B22 still working
 
 | Agent / job | State at 07:19Z |
@@ -27,17 +42,4 @@ ASK for the lead: none.
 FAILURES AND RETRIES: B20 run 1 red; B21 run red. The stack must still add exit-7 rows to fix-10's table (builder notes list exact steps).
 NOT DONE / NOT CHECKED (my list, for the lead to decide): Windows scripts; Python 3.12; CodeQL, Sonar, CodeRabbit (CI only); 211 skips not listed one by one.
 WHAT I WOULD DO NEXT (ranked): 1. read fix-10 reviews and resolve; 2. B21 and B22 hand-backs, same chain; 3. stack builder.
-
-## HEARTBEAT 114 (07:08Z) - B21 full run ended RED (1 failed); B20 run 2 at 92%; B22 past its tests, doing guards and mutation
-
-| Agent / job | State at 07:08Z |
-|---|---|
-| B21 fix-5 r8 | full run ended `1 failed, 3961 passed, 183 skipped` (953s). Failure: tests/test_reset_order_and_words.py:268, an assertion on the output "reset done" (a reset test of its own new file). B21 has not handed back; I told it nothing new, it reads its own log |
-| B20 fix-10 r3 | full run 2 at [ 92%], no failures visible yet; no hand-back |
-| B22 fix-2 r9 | checkpoint 1 written: tests written/passing, next guards, mutation, patch cut |
-
-ASK for the lead: none.
-FAILURES AND RETRIES: B21 full run red (above); B20 run 1 red (HB113).
-NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB113.
-WHAT I WOULD DO NEXT (ranked): 1. B21 fix and re-run (or guards alone if text-only); 2. lint B20/B21 final trees; 3. reviewers.
 

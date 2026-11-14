@@ -1,22 +1,22 @@
-M1 plant a repeat of the rule in contract.md (a size): KILLED (1 failed, 360 passed in 9.93s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_no_other_page_repeats_the_key_file_rule_it_links_to_it
-M2 plant a repeat in docs/settings.md outside the section (line of DESK_HUBSPOT_KEY_FILE): KILLED (1 failed, 360 passed in 8.93s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_no_other_page_repeats_the_key_file_rule_it_links_to_it
-M3 plant a mode mask copy (S_IRWXO) outside envnum: KILLED (1 failed, 346 passed in 9.71s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_link_and_mode_rules_live_only_in_the_one_reader
-M4 plant S_IMODE outside envnum: KILLED (1 failed, 346 passed in 9.91s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_link_and_mode_rules_live_only_in_the_one_reader
-M5 plant 'st_mode &' outside envnum: KILLED (1 failed, 165 passed in 1.02s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_no_code_probes_a_setting_path_except_the_named_allow_list
-M6 mode text back to 'read by': KILLED (1 failed, 258 passed in 9.83s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
-M7 docs: 'Linux and macOS' back: KILLED (1 failed, 376 passed in 9.85s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_docs_use_the_same_words_as_the_refusal_and_say_which_systems
-M8 docs: wrong owner-check reason back: KILLED (1 failed, 377 passed in 9.75s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_docs_do_not_give_the_wrong_reason_for_skipping_an_owner_check
-M9 docs: mounts sentence removed: NOT APPLIED (pattern not found)
-M10 key-file rule text pin: 'read once' wording back: KILLED (1 failed, 359 passed in 9.92s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
-M11 _names_own_file old rule: any mention of __file__ is exempt (test file r7): KILLED (1 failed, 157 passed in 0.86s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_the_probe_guard_sees_every_planted_probe[resolve after joinpath]
-M12 plant Path(os.environ.get('K', __file__)).resolve() in the real tree: KILLED (1 failed, 165 passed in 1.12s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_no_code_probes_a_setting_path_except_the_named_allow_list
-M13 desk.py: the two BOOK_ constants back: KILLED (1 failed, 383 passed in 9.67s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_lead_book_folder_texts_come_from_the_one_helper
-M14 run_real_check: an unreadable book path is no longer refused: KILLED (1 failed, 388 passed, 1 skipped in 9.66s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_run_real_check_refuses_a_book_path_the_system_will_not_show_in_one_line_also_for_root
-M15 timing wrapper stops passing check_start through: KILLED (1 failed, 387 passed in 10.14s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_a_timing_wrapper_around_a_kind_still_has_its_start_check_run
-M16 support: the held port is closed before it is used: KILLED (1 failed, 390 passed, 1 skipped in 10.03s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_held_port_refuses_a_connection_and_is_not_given_out_twice
-M17 docs: Retry-After heading removed: KILLED (1 failed, 381 passed in 9.65s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_retry_after_decision_has_its_own_heading_in_the_limits_page
-M18 contract: bracket inside a bracket again: KILLED (1 failed, 382 passed in 9.67s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_contract_exit_1_sentence_has_no_bracket_inside_a_bracket
-M19 live key check: the live wrapper loses the mode refusal (read_secret_file mask removed): KILLED (1 failed, 258 passed in 9.29s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
+M1 plant a repeat of the rule in contract.md (a size): KILLED (1 failed, 360 passed in 10.05s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_no_other_page_repeats_the_key_file_rule_it_links_to_it
+M2 plant a repeat in docs/settings.md outside the section (line of DESK_HUBSPOT_KEY_FILE): KILLED (1 failed, 360 passed in 7.55s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_no_other_page_repeats_the_key_file_rule_it_links_to_it
+M3 plant a mode mask copy (S_IRWXO) outside envnum: KILLED (1 failed, 346 passed in 9.26s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_link_and_mode_rules_live_only_in_the_one_reader
+M4 plant S_IMODE outside envnum: KILLED (1 failed, 346 passed in 9.93s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_link_and_mode_rules_live_only_in_the_one_reader
+M5 plant 'st_mode &' outside envnum: KILLED (1 failed, 165 passed in 0.95s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_no_code_probes_a_setting_path_except_the_named_allow_list
+M6 mode text back to 'read by': KILLED (1 failed, 258 passed in 9.68s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
+M7 docs: 'Linux and macOS' back: KILLED (1 failed, 376 passed in 10.14s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_docs_use_the_same_words_as_the_refusal_and_say_which_systems
+M8 docs: wrong owner-check reason back: KILLED (1 failed, 377 passed in 10.42s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_docs_do_not_give_the_wrong_reason_for_skipping_an_owner_check
+M9 docs: mounts sentence removed: KILLED (1 failed, 378 passed in 9.93s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_docs_name_the_mounts_that_are_refused_and_what_was_not_tried
+M10 key-file rule text pin: 'read once' wording back: KILLED (1 failed, 359 passed in 10.21s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+M11 _names_own_file old rule: any mention of __file__ is exempt (test file r7): KILLED (1 failed, 157 passed in 0.88s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_the_probe_guard_sees_every_planted_probe[resolve after joinpath]
+M12 plant Path(os.environ.get('K', __file__)).resolve() in the real tree: KILLED (1 failed, 165 passed in 1.18s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_no_code_probes_a_setting_path_except_the_named_allow_list
+M13 desk.py: the two BOOK_ constants back: KILLED (1 failed, 383 passed in 10.27s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_lead_book_folder_texts_come_from_the_one_helper
+M14 run_real_check: an unreadable book path is no longer refused: KILLED (1 failed, 388 passed, 1 skipped in 10.34s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_run_real_check_refuses_a_book_path_the_system_will_not_show_in_one_line_also_for_root
+M15 timing wrapper stops passing check_start through: KILLED (1 failed, 194 passed in 2.48s) first fail: FAILED tests/test_one_key_file_rule_r7.py::test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_finite_backoff[-1]
+M16 support: the held port is closed before it is used: KILLED (1 failed, 390 passed, 1 skipped in 12.09s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_held_port_refuses_a_connection_and_is_not_given_out_twice
+M17 docs: Retry-After heading removed: KILLED (1 failed, 381 passed in 10.24s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_retry_after_decision_has_its_own_heading_in_the_limits_page
+M18 contract: bracket inside a bracket again: KILLED (1 failed, 382 passed in 9.01s) first fail: FAILED tests/test_one_key_file_rule_r9.py::test_the_contract_exit_1_sentence_has_no_bracket_inside_a_bracket
+M19 live key check: the live wrapper loses the mode refusal (read_secret_file mask removed): KILLED (1 failed, 258 passed in 9.77s) first fail: FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
 after restore: git diff (working tree vs index) = EMPTY
-tree id: 151f9eff50eb3a4a523cba11fcf1dd811e448719
-survivors or unapplied: 1
+tree id: 047715c5d33babc5e8a7dbefd39de74ab9524373
+survivors or unapplied: 0

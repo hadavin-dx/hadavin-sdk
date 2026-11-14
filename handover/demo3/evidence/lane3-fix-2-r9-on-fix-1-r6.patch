@@ -340,7 +340,7 @@ index f324dfe..bd6b72e 100644
  2. In HubSpot create the contact property `hadavin_lead_id` (single-line text) by hand; the program never creates properties.
  3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model, its own dollar cap in the `DESK_LIVE_*` names), `--cleanup` (archives only the contacts this run made, found by their lead ids).
 diff --git a/docs/settings.md b/docs/settings.md
-index 7388fb3..b06093c 100644
+index 7388fb3..621ddb4 100644
 --- a/docs/settings.md
 +++ b/docs/settings.md
 @@ -1,11 +1,11 @@
@@ -416,7 +416,7 @@ index 7388fb3..b06093c 100644
 +
 +* What the file holds: one line of at least 8 printable ASCII characters. The file may be at most 4096 bytes, counting the line break, and is kept as text (UTF-8). Only the line break at the very end of the file is removed; a blank at the start, in the middle or at the end (a plain space, a tab, a no-break space) is refused. The one exception is the SMTP password, whose plain spaces the desk drops wherever they stand (a tab, a no-break space or any other blank is still refused). The mailbox password file follows the SMTP password rule: spaces inside are dropped. A hidden first character that some editors add (a byte-order mark) is accepted and removed. Three faults are told apart, each with its own fixed text: empty or too short, a character that is not printable ASCII, and a space inside a key. A file of several lines, or one that is not UTF-8 text, is refused too.
 +* What kind of file: a regular file. A folder, a named pipe (a file that other programs write into), a device (a name for a piece of hardware) or a symbolic link (a name that points to another file) is refused without being read. A link in a folder above the file is followed; the file itself must be the real file, because a link can be pointed at another file after you checked it. The desk opens the file without following a link and then looks again at the name: a link, or a name that now points at another file, is refused ("the file changed while it was being opened: try again").
-+* Who may use it (Linux, macOS and other POSIX systems, which keep permission bits): a file that other users can read, write or run is refused with "the file can be used by other users: run chmod 600 on it". `chmod 600` (the command that makes a file readable and writable by its owner only) makes the file private; so does starting the shell with `umask 077` (a setting that makes every new file private) before you create the file. There is no way to switch the refusal off, and the owner of the file is not checked: the mode alone says who else can use the file. Windows has no matching mode bits, so nothing is checked there; keep the file in a folder only you can open (not tried by the author). Mounts this rule refuses, as far as is known: Docker file secrets and Kubernetes secret volumes often show the mode 0444 or 0644, and Kubernetes secret volumes also give each key as a link, so such a file is refused. Filesystems that report the mode 0777 for every file (a Windows drive seen from WSL, FAT, some bind mounts) are refused too. For all of these, copy the file to a regular file on a normal disk and run chmod 600 on it. Docker and Kubernetes were not tried by the author: this is what is reported about them, not something tested here.
++* Who may use it (Linux, macOS and other POSIX systems, which keep permission bits): a file that other users can read, write or run is refused with "the file can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy". The message never prints the key or the path. `chmod 600` (the command that makes a file readable and writable by its owner only) makes the file private; so does starting the shell with `umask 077` (a setting that makes every new file private) before you create the file. There is no way to switch the refusal off, and the owner of the file is not checked: the mode alone says who else can use the file. Windows has no matching mode bits, so nothing is checked there; keep the file in a folder only you can open (not tried by the author). Mounts this rule refuses, as far as is known: Docker file secrets and Kubernetes secret volumes often show the mode 0444 or 0644, and Kubernetes secret volumes also give each key as a link, so such a file is refused. Filesystems that report the mode 0777 for every file (a Windows drive seen from WSL, FAT, some bind mounts) are refused too. For all of these, copy the file to a regular file on a normal disk and run chmod 600 on it. Docker and Kubernetes were not tried by the author: this is what is reported about them, not something tested here.
 +* When the file is read: the HubSpot key file and the SMTP password file: each is read at start and again before every call (a bad file at start stops the start, exit code 4). The live-model key file is read at start and again at its first call, and the key is kept in memory after that (a file replaced before the first call is the one used). The mailbox password file is not read at start; it is read each time the mailbox is counted. Nothing is kept from the start-up read of the HubSpot and SMTP files, so each of these files must stay in place and readable for as long as the desk runs.
 +* Whether the key is valid at the vendor cannot be checked without a network call.
  
@@ -1132,7 +1132,7 @@ index 4045b96..a210eaf 100644
          # (1) finish every OPEN receipt from its stored payload
          open_ids = conn.execute("SELECT receipt_id FROM receipts WHERE outcome IS NULL ORDER BY receipt_id").fetchall()
 diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
-index 087304a..03642e2 100644
+index 087304a..35281ad 100644
 --- a/src/lead_desk/envnum.py
 +++ b/src/lead_desk/envnum.py
 @@ -1,21 +1,39 @@
@@ -1179,7 +1179,7 @@ index 087304a..03642e2 100644
  
  
  class SettingRefused(ValueError):
-@@ -23,6 +41,185 @@ class SettingRefused(ValueError):
+@@ -23,6 +41,188 @@ class SettingRefused(ValueError):
      the value. `server.main` turns exactly this error into the clean exit 4; any other ValueError is a real bug."""
  
  
@@ -1288,7 +1288,10 @@ index 087304a..03642e2 100644
 +        if opened.st_ino != 0 and (second.st_ino, second.st_dev) != (opened.st_ino, opened.st_dev):
 +            raise SettingRefused(f"the {what} file changed while it was being opened: try again")
 +        if os.name == "posix" and opened.st_mode & _OTHERS_MASK:
-+            raise SettingRefused(f"the {what} file can be used by other users: run chmod 600 on it")
++            raise SettingRefused(
++                f"the {what} file can be used by other users: "
++                "copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
++            )
 +        with os.fdopen(fd, "rb", closefd=False) as f:
 +            raw = f.read(SECRET_FILE_MAX_BYTES + 1)
 +    except OSError:
@@ -4974,10 +4977,10 @@ index 0000000..9912a8b
 +    assert "not a number" in capsys.readouterr().err
 diff --git a/tests/test_one_key_file_rule_r8.py b/tests/test_one_key_file_rule_r8.py
 new file mode 100644
-index 0000000..cdc777e
+index 0000000..453b06c
 --- /dev/null
 +++ b/tests/test_one_key_file_rule_r8.py
-@@ -0,0 +1,492 @@
+@@ -0,0 +1,495 @@
 +"""Fix-2 round 8: key files that other users can read, links refused on every system (not only where O_NOFOLLOW
 +exists), the Retry-After rule over every short text and a huge number, the sibling path probes, and the key-file rule
 +written in one place. Made-up data only; fake keys are built from parts."""
@@ -5041,7 +5044,10 @@ index 0000000..cdc777e
 +    f.chmod(mode)
 +    with pytest.raises(SettingRefused) as e:
 +        envnum.read_secret_file(f, what, noun, strip_inner_space=inner)
-+    assert str(e.value) == f"the {what} file can be used by other users: run chmod 600 on it"
++    assert str(e.value) == (
++        f"the {what} file can be used by other users: "
++        "copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
++    )
 +    assert KEY not in str(e.value) and str(tmp_path) not in str(e.value)
 +
 +
@@ -5472,7 +5478,7 @@ index 0000000..cdc777e
 +    assert "read once at start and not kept" not in row  # the one section says when each file is read
 diff --git a/tests/test_one_key_file_rule_r9.py b/tests/test_one_key_file_rule_r9.py
 new file mode 100644
-index 0000000..7170f2b
+index 0000000..29d1bf3
 --- /dev/null
 +++ b/tests/test_one_key_file_rule_r9.py
 @@ -0,0 +1,308 @@
@@ -5502,7 +5508,7 @@ index 0000000..7170f2b
 +REPO = Path(server.__file__).parents[2]
 +KEY = "made" + "-up-" + "key-" + "0123456789"
 +POSIX = pytest.mark.skipif(os.name != "posix", reason="permission bits are a POSIX notion")
-+USED = "can be used by other users: run chmod 600 on it"
++USED = "can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
 +
 +
 +def _doc(name: str) -> str:

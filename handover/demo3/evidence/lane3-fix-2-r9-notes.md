@@ -1,10 +1,10 @@
 # Lane 3 fix-2 round 9: builder notes (B22)
 
 Plan: `resolve-lane3-fix-2-r8.md`, rows 1-19. Inputs: the r8 design review, the r8 code-details review and `lint-lane3-fix-2-r8.md`.
-Tree before: `812a97afc9b6af5e869871c13076404bc6ac62f4` (checked). Tree after: `151f9eff50eb3a4a523cba11fcf1dd811e448719`. Nothing was committed or pushed.
+Tree before: `812a97afc9b6af5e869871c13076404bc6ac62f4` (checked). Tree after: `047715c5d33babc5e8a7dbefd39de74ab9524373` (lint was run from `git ls-files` after `git add -A`, so new files are linted). Nothing was committed or pushed.
 
 ## What failed or is weak (read first)
-1. Row 3 is NOT decided here. The mode refusal stays exactly as it was (any group or other bit is refused, no switch). Only wording and docs changed. The lead must take the owner-level choice: (a) keep the refusal (the builder recommends this), (b) add an owner check, (c) add an explicit setting that allows looser modes.
+1. Row 3: the lead decided option (a) at 06:55Z (strict rule, no looser setting). Done: the refusal text is now "the {what} file can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy" (no path, no key; tested). Docs carry the copy step. Option (b) (owner must equal the running user) was NOT added. RESIDUAL ROOT CASE: a root process that reads a 0600 file planted by another user is not refused, because the owner is not checked. Next step if wanted: a few lines in `envnum.read_secret_file` plus a test.
 2. The plan said "exit 8" for a refused book path. The real exit code is `EXIT_REFUSED` = 2 (one line `refused: ...`). The tests use `mod.EXIT_REFUSED`.
 3. The chmod-000 test (row 4) is SKIPPED here because the session runs as root. Its code path is covered by a twin test that monkeypatches `path_kind` to "unreadable" (it runs as root), and by mutant M14. A real non-root run was not done: `useradd` was refused by the session's permission check and I did not retry it.
 4. The line in `checkpoint-b22.md` that said "a monkeypatched twin runs" was wrong when written (the twin did not exist yet). Mutant M14 exposed it; the twin was added afterwards. The checkpoint now carries the correction.
@@ -20,11 +20,11 @@ No full test run (brief rule). Windows. Docker and Kubernetes behaviour (the doc
 |---|---|---|
 | 1 | Docs: the rule is written once (section "Key and password files" of `docs/settings.md`); contract.md, settings.md lines 75/82/131, limits.md, n8n-recipe.md, real-services.md point to it. Pin rewritten around `_repeats_of_the_rule` with planted and leave-alone tests (r8). | r8 docs pin tests; mutation M5-M7 |
 | 2 | No code. The 13 base lines over 120 are fine: `ruff check --select E501` rc 0. | `raw/b22-lint-e501.log` |
-| 3 | Escalated, behaviour unchanged. Docs now give the true reason (mode alone says who else can use the file; owner not checked) and the mounts that fail. The wrong "shared service account" reason is deleted. | `test_the_docs_do_not_give_the_wrong_reason...` (r9); M8 |
+| 3 | Decided (a) by the lead; behaviour unchanged. Docs now give the true reason (mode alone says who else can use the file; owner not checked) and the mounts that fail. The wrong "shared service account" reason is deleted. | `test_the_docs_do_not_give_the_wrong_reason...` (r9); M8 |
 | 4 | Behaviour tests in r9: `run_real_check` with a book path inside a file (exit `EXIT_REFUSED`, one line), the chmod-000 variant (skips as root), and the root-safe twin. | M14 killed |
 | 5 | `ruff format` applied to r7 and docs_claims_lane3 (format-only change for the second). | `raw/b22-lint-ruff-format.log` rc 0 |
 | 6 | `import sys` removed. | `raw/b22-lint-ruff-check.log` rc 0 |
-| 7 | Message is "the {what} file can be used by other users: run chmod 600 on it"; docs say "Linux, macOS and other POSIX systems"; write and execute bit tests added (r9). | 66 refusal-text tests fail on the old code |
+| 7 | Message is "the {what} file can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy"; docs say "Linux, macOS and other POSIX systems"; write and execute bit tests added (r9). | 66 refusal-text tests fail on the old code |
 | 8 | One docs sentence on mounts (Docker file secrets, Kubernetes secret volumes, filesystems that report 0777): copy to a regular file on a normal disk and run chmod 600. | r9 docs test |
 | 9 | The 22 old-code passes are listed below; three tests carry a "REGRESSION GUARD" docstring; the order test is renamed `test_the_mode_refusal_has_no_way_round_in_the_signature`; new `test_the_link_and_kind_refusals_come_before_the_mode_refusal`. | below |
 | 10 | `BOOK_IS_FOLDER_PROBLEM` and `BOOK_FOLDER_IS_FILE_PROBLEM` deleted; `desk.py` builds its texts from `file_problem_text`. | r9 lead-book test |
@@ -49,4 +49,6 @@ Changed test files (6): 836 passed, 1 skipped, rc 0 (`raw/b22-changed-run.log`).
 ## Mutation
 `raw/b22-mutation.log` (a re-run on the final tree). The first pass had M3 and M4 "killed" only by a NameError, M8 killed by an unrelated test, and M14 surviving; all four were fixed and re-run and are killed by the intended test (M3, M4: `test_the_link_and_mode_rules_live_only_in_the_one_reader`; M8: the r9 owner-check-reason test; M14: the r9 twin test). The tree was restored after each mutant.
 ## Patch and parts
-`lane3-fix-2-r9-on-fix-1-r6.patch` applied to a fresh clone of base + fix-1 r6 (tree `ad6060d...`) gives tree `151f9eff50eb3a4a523cba11fcf1dd811e448719`, same as the worktree (`raw/b22-patch-sha256.txt`). Review parts (r8 to r9 delta, each under 35 KB): `lane3-fix-2-r9-parts/`.
+`lane3-fix-2-r9-on-fix-1-r6.patch` applied to a fresh clone of base + fix-1 r6 (tree `ad6060d...`) gives tree `047715c5d33babc5e8a7dbefd39de74ab9524373`, same as the worktree (`raw/b22-patch-sha256.txt`). Review parts (r8 to r9 delta, each under 35 KB; the patch sha256 is in raw/b22-patch-sha256.txt): `lane3-fix-2-r9-parts/`.
+
+Mutant M9 was first 'NOT APPLIED' (its search text used the old '/mnt/c' wording); fixed and re-run in the last mutation pass. Final mutation pass: 19 of 19 killed, 0 survivors or unapplied; tree restored (id 047715c...).

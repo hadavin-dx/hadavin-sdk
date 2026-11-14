@@ -1,6 +1,6 @@
 diff --git a/tests/test_one_key_file_rule_r9.py b/tests/test_one_key_file_rule_r9.py
 new file mode 100644
-index 0000000..7170f2b
+index 0000000..29d1bf3
 --- /dev/null
 +++ b/tests/test_one_key_file_rule_r9.py
 @@ -0,0 +1,308 @@
@@ -30,7 +30,7 @@ index 0000000..7170f2b
 +REPO = Path(server.__file__).parents[2]
 +KEY = "made" + "-up-" + "key-" + "0123456789"
 +POSIX = pytest.mark.skipif(os.name != "posix", reason="permission bits are a POSIX notion")
-+USED = "can be used by other users: run chmod 600 on it"
++USED = "can be used by other users: copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
 +
 +
 +def _doc(name: str) -> str:

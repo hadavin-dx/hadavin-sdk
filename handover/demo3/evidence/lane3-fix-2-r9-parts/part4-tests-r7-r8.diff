@@ -127,15 +127,18 @@ index 2ea70dc..9912a8b 100644
  def _fms(
      monkeypatch: pytest.MonkeyPatch, tmp_path: Path, path: Path, capsys: pytest.CaptureFixture[str]
 diff --git a/tests/test_one_key_file_rule_r8.py b/tests/test_one_key_file_rule_r8.py
-index 8555daa..cdc777e 100644
+index 8555daa..453b06c 100644
 --- a/tests/test_one_key_file_rule_r8.py
 +++ b/tests/test_one_key_file_rule_r8.py
-@@ -61,14 +61,16 @@ def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path
+@@ -61,14 +61,19 @@ def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path
      f.chmod(mode)
      with pytest.raises(SettingRefused) as e:
          envnum.read_secret_file(f, what, noun, strip_inner_space=inner)
 -    assert str(e.value) == f"the {what} file can be read by other users: run chmod 600 on it"
-+    assert str(e.value) == f"the {what} file can be used by other users: run chmod 600 on it"
++    assert str(e.value) == (
++        f"the {what} file can be used by other users: "
++        "copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
++    )
      assert KEY not in str(e.value) and str(tmp_path) not in str(e.value)
  
  
@@ -149,7 +152,7 @@ index 8555daa..cdc777e 100644
      what, noun, inner = KINDS[kind]
      f = tmp_path / "secret-file.txt"
      f.write_text(KEY + "\n", encoding="utf-8")
-@@ -77,7 +79,7 @@ def test_a_key_file_only_its_owner_can_read_is_accepted_for_every_kind(tmp_path:
+@@ -77,7 +82,7 @@ def test_a_key_file_only_its_owner_can_read_is_accepted_for_every_kind(tmp_path:
  
  
  @POSIX
@@ -158,7 +161,7 @@ index 8555daa..cdc777e 100644
      f = tmp_path / "secret-file.txt"
      f.write_text(KEY, encoding="utf-8")
      f.chmod(0o644)
-@@ -91,6 +93,25 @@ def test_the_mode_refusal_comes_after_the_link_and_kind_checks_and_has_no_way_ro
+@@ -91,6 +96,25 @@ def test_the_mode_refusal_comes_after_the_link_and_kind_checks_and_has_no_way_ro
          envnum.read_secret_file(f, "made-up key", "key")
  
  
@@ -184,7 +187,7 @@ index 8555daa..cdc777e 100644
  @POSIX
  def test_a_world_readable_key_stops_every_wrapper_with_the_same_fixed_text(
      tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-@@ -207,7 +228,8 @@ def test_a_second_look_that_says_link_refuses_whatever_the_open_did(
+@@ -207,7 +231,8 @@ def test_a_second_look_that_says_link_refuses_whatever_the_open_did(
  
  
  def test_a_zero_inode_number_does_not_stop_a_plain_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -194,7 +197,7 @@ index 8555daa..cdc777e 100644
      f = tmp_path / "k.txt"
      f.write_text(KEY, encoding="utf-8")
      real_fstat, real_lstat = os.fstat, os.lstat
-@@ -225,7 +247,8 @@ def test_a_zero_inode_number_does_not_stop_a_plain_file(tmp_path: Path, monkeypa
+@@ -225,7 +250,8 @@ def test_a_zero_inode_number_does_not_stop_a_plain_file(tmp_path: Path, monkeypa
  
  @pytest.mark.skipif(not hasattr(os, "O_NOFOLLOW"), reason="this system has no O_NOFOLLOW flag")
  def test_the_file_is_opened_without_following_a_link(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -204,7 +207,7 @@ index 8555daa..cdc777e 100644
      f = tmp_path / "k.txt"
      f.write_text(KEY, encoding="utf-8")
      seen: list[int] = []
-@@ -240,17 +263,38 @@ def test_the_file_is_opened_without_following_a_link(tmp_path: Path, monkeypatch
+@@ -240,17 +266,38 @@ def test_the_file_is_opened_without_following_a_link(tmp_path: Path, monkeypatch
      assert seen and all(x & os.O_NOFOLLOW for x in seen), seen
  
  
@@ -246,7 +249,7 @@ index 8555daa..cdc777e 100644
  # ------------------------------------------------------------------------------- the Retry-After text, every short text
  def _copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
      monkeypatch.syspath_prepend(str(REPO / "scripts"))
-@@ -357,26 +401,88 @@ def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> Non
+@@ -357,26 +404,88 @@ def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> Non
          "kept as text",
          "a named pipe",
          "a device",

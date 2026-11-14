@@ -52,7 +52,7 @@ index 8dfc8e9..a210eaf 100644
  }
  
 diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
-index e05dd88..03642e2 100644
+index e05dd88..35281ad 100644
 --- a/src/lead_desk/envnum.py
 +++ b/src/lead_desk/envnum.py
 @@ -114,7 +114,8 @@ def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: boo
@@ -65,12 +65,15 @@ index e05dd88..03642e2 100644
      byte-order mark at the start is accepted), at least LIVE_KEY_MIN_CHARS printable ASCII characters and no blank
      anywhere. Only the line break at the very end of the file is removed. `strip_inner_space=True` (the SMTP password
      and the mailbox password only) drops every plain space first. `what` names the file in every text ("the {what}
-@@ -145,7 +146,7 @@ def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: boo
+@@ -145,7 +146,10 @@ def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: boo
          if opened.st_ino != 0 and (second.st_ino, second.st_dev) != (opened.st_ino, opened.st_dev):
              raise SettingRefused(f"the {what} file changed while it was being opened: try again")
          if os.name == "posix" and opened.st_mode & _OTHERS_MASK:
 -            raise SettingRefused(f"the {what} file can be read by other users: run chmod 600 on it")
-+            raise SettingRefused(f"the {what} file can be used by other users: run chmod 600 on it")
++            raise SettingRefused(
++                f"the {what} file can be used by other users: "
++                "copy it to a normal file, run chmod 600 on it, and point the setting at the copy"
++            )
          with os.fdopen(fd, "rb", closefd=False) as f:
              raw = f.read(SECRET_FILE_MAX_BYTES + 1)
      except OSError:
