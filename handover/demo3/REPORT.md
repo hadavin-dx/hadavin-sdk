@@ -9,7 +9,7 @@ Flow files: demo folder n8n-flows-film-v4 (demo commit 873a908a), lease 45 s, 2 
 | K1 (killed at CRM write) | 5 | done, attempts 2 | 1 | 0 | 1 | 52.8 to 54.9 (median 52.9) | 60.1 to 61.9 |
 | K2 (killed after the mail step) | 4 (5th running) | done, attempts 2 | 1 | 0 | 1 | 52.9 each | 60.4 to 61.2 |
 | K3 (killed after CRM write) | 2 (3 more running) | unknown, attempts 2 | 0 | 1 | 1 | 52.8, 52.9 | 60.1, 60.4 |
-Reading for the caption: it takes about 53 s from n8n back up (lease 45 s + one 30 s sweep tick, minus where the clock was), and about 61 s from the moment of the kill when my restart takes 7 to 9 s. A 60 s limit counted from the kill is missed by 0.1 to 1.9 s in 9 of 11 runs; counted from n8n up it passes with 7 s to spare. Say which start point the caption uses. Lease 120 s gave 144 s.
+Reading for the caption: it takes about 53 s from n8n back up (lease 45 s + one 30 s sweep tick, minus where the clock was), and about 61 s from the moment of the kill when my restart takes 7 to 9 s. A 60 s limit counted from the kill is missed by 0.1 to 1.9 s in 11 of 11 runs (I first wrote 9 of 11: my miscount, corrected); counted from n8n up it passes with 7 s to spare. Say which start point the caption uses. Lease 120 s gave 144 s.
 Nothing lost, nothing doubled in any run: 1 CRM row each, intake mails 1 (K1, K2) or 0 (K3, with 1 alert).
 
 ASK for the lead: which start point does the caption use (kill or n8n up)? If kill, 60 s is not met on these flow files; a lease of 30 s would meet it (my estimate, not measured).
