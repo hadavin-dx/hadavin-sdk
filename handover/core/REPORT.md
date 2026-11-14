@@ -1,5 +1,29 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 14:50 UTC / 20:20 IST
+
+**r7t builder (aab061ec) at 14:50Z: checkpoint tail and the test names in tree-R7T/tests/test_r7t_findings.py (builder claims; I ran nothing, did not open the test bodies).**
+
+Checkpoint tail (builder stamps): 14:30 t1-t8 before/after on old tree: 24 fail / 49 pass; 14:32 t9-t13 + fail-closed code added; 14:41 after3: 165 pass, 3 fail (a t13 TEST bug, fixed), before-final run on the old tree started; 14:44 header fixed; 14:45 ruff 0.17.1 check and format clean on a copy, mutants started (pid 578, mut-results.tsv growing); hy-guard.log (the guard files) exists, no result read by me. t14 (skipif/importorskip guard) exists in the file but is not in the checkpoint.
+
+**Which r7s-review findings have a test (by test names; "done" = tested AND fixed is NOT claimed, no before/after split read):**
+| review item | test name(s) in r7t file | my reading |
+|---|---|---|
+| M1 counter fail-open | t1 counting rule and unknown counter; t2 checked reader counts files and unreadable files; t2 bad content; t2 folder with the counter name; t2 counter without created; t9 missing counter + hidden contact -> failed; t9 desk could not write -> failed; t9 missing alone -> failed; t9 readable counter still 0 | tests exist |
+| M1 atomic write / kill | t10 counter file never half-written; t10 target name only changed by a replace | test exists: the builder has NOT reported whether run_stats.py/crm_hubspot.py needed a change (the diff shows neither changed: so either already atomic or the test is a pin; to be read in R7T-RESULTS.md) |
+| m2 Desk tag required | t7 empty or missing tag refused; t7 no default tag | exists |
+| m3 R27, R19/R20, R39, R07 | t3 result not written -> failed (R27); t2 same-tag other file kinds not read (R19/R20); t4 any non-empty value fails, empty = unset (R39); t11 no test compares the flag to a value; t5 quiet server (R07) | exist |
+| m4+m5 empty host and spellings, factories | t6 (all entry points, blank host, None default, mail fakes still listen), t6b (every def with a host parameter in the table; every bind in demo_only; subclasses), t6c (non-text host), t12 hostile spellings and loopback spellings; fake_imap.py, fake_smtp_tls.py, fake_model_server.py, fakes_server.py, bad_request.py changed | exist |
+| siblings of "empty replaced by default" | t8 port 0 refused/absent=default; t8b dry smtp default chosen by None | exist (the sibling search list is in the results file, not yet written) |
+| banner 0.0814/0.0832 | t13 banner figure is worst_case_usd of the longest request | exists (a test bug was fixed after the first run; I do not know whether the figures matched) |
+| m6 take-import test / ROOT / title | NO test seen; tests/test_take_imports side not in the diff | NOT started (as far as the diff shows) |
+| m7 s6 guard | t14 | exists |
+| n8 README text, n9 EV3 | results file | not written yet |
+Files changed vs r7s (diff -rq, 10 lines): bad_request, fake_imap, fake_model_server, fake_smtp_tls, fakes_server, run_real_check, test_r7c_one_json_loader, test_r7s_findings, test_real_check_dry, new test_r7t_findings.
+
+**Still to come from the builder:** mutant rows, guard files in full, final before/after table with named pins, take-import fix (m6), sibling list, patches, snapshot, R7T-RESULTS.md. **ETA hand-back: builder is ahead of pace (about 25 min of its 75 used for the bulk); I expect it between about 15:15Z and 15:40Z, box ends 15:40Z.** Then my hash/apply check, EV7T (about 60 min), the lead's fresh reviewer. Agents running: 1. ASK: none. Next block about 15:00Z.
+
+
 ## STATUS (core lead) 14:40 UTC / 20:10 IST
 
 **r7t builder (aab061ec) at 14:40Z, read from out/R7T/checkpoint.md and a diff of tree-R7S against tree-R7T. Builder claims only; I ran nothing.**
