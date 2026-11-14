@@ -15787,7 +15787,7 @@ index 0000000..16e2b8d
 +    assert ctx.minimum_version == ssl.TLSVersion.TLSv1_2
 +    assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname
 diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
-index 893fcac..733f349 100644
+index 893fcac..4d4fce5 100644
 --- a/tests/test_real_check_dry.py
 +++ b/tests/test_real_check_dry.py
 @@ -3,6 +3,7 @@
@@ -15870,7 +15870,7 @@ index 893fcac..733f349 100644
 +        self.sock = type(
 +            "S", (), {"version": staticmethod(lambda: "TLSv1.3")}
 +        )()  # the handshake check reads the negotiated version
-+        self.deadline = 0.0
++        self.deadline = float("inf")  # no total time limit passes in these tests
  
      def login(self, *_a: Any) -> None:
          if self._login:

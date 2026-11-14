@@ -3133,7 +3133,7 @@ index 0000000..fa0be04
 +        for m in re.finditer(rf"{cmd}\b[^\r\n]*", PS):  # also the lines of the head comment: none names a command
 +            assert "-LiteralPath" in m.group(0), m.group(0)
 diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
-index 9c4f169..733f349 100644
+index 9c4f169..4d4fce5 100644
 --- a/tests/test_real_check_dry.py
 +++ b/tests/test_real_check_dry.py
 @@ -171,16 +171,41 @@ def _valid_config(tmp_path: Path, **over: str) -> Path:
@@ -3187,6 +3187,15 @@ index 9c4f169..733f349 100644
      cfg = tmp_path / "c.env"
      cfg.write_text("\n".join(f"{k}={v}" for k, v in (values | over).items()), encoding="utf-8")
      return cfg
+@@ -720,7 +745,7 @@ class _StubImap:
+         self.sock = type(
+             "S", (), {"version": staticmethod(lambda: "TLSv1.3")}
+         )()  # the handshake check reads the negotiated version
+-        self.deadline = 0.0
++        self.deadline = float("inf")  # no total time limit passes in these tests
+ 
+     def login(self, *_a: Any) -> None:
+         if self._login:
 diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
 index 79f3b6b..0caeb6f 100644
 --- a/tests/test_reset_scripts.py

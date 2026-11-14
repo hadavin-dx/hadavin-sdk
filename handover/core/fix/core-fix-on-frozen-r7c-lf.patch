@@ -3144,69 +3144,6 @@ index 0000000..f6bf62a
 +from tools.refusing_args import EXIT_REFUSED, EXIT_UNREACHABLE, refusal
 +
 +__all__ = ["EXIT_REFUSED", "EXIT_UNREACHABLE", "refusal"]
-diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
-index 42bdfc0..8f9b18a 100644
---- a/scripts/reset.ps1
-+++ b/scripts/reset.ps1
-@@ -12,7 +12,14 @@ if ($env:RESET_STOP_WAIT_SECONDS) {
-     }
-     $stopWait = [int]$env:RESET_STOP_WAIT_SECONDS
- }
--$db = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path)").Trim()
-+# a bad DESK_* value ends with the desk's one refusal line and exit code 4, not a Python traceback
-+# (scripts\desk_setting.py)
-+function Get-DeskSetting([string]$Name) {
-+    $text = python scripts\desk_setting.py $Name
-+    if ($LASTEXITCODE -ne 0) { Write-Host $text; exit $LASTEXITCODE }
-+    return "$text".Trim()
-+}
-+$db = Get-DeskSetting 'db-path'
- $dataDir = Split-Path -Parent $db
- # real paths: a junction or symlink inside data\ that points elsewhere is followed (same check as reset.sh)
- $inside = python -c "import os, sys; d = os.path.normcase(os.path.realpath(sys.argv[1])); r = os.path.normcase(os.path.realpath('data')); print(d == r or d.startswith(r + os.sep))" $dataDir
-@@ -20,15 +27,39 @@ if ("$inside".Trim() -ne 'True') {
-     Write-Host "refused: the database path is not inside this repository's data folder, so nothing was stopped or deleted"
-     exit 2
- }
-+# The command line must be exactly `<a program named python*> -m lead_desk.server` or `... -m demo_only.fakes_server
-+# --outbox keyed|blind --port <digits>` (a text search would also stop `notepad lead_desk.server.log`). The program is
-+# judged by its file name only: no `python` on PATH is needed. Written to match start_all.ps1; not run on Windows.
-+$ourCommandLine = '^"?([^"]*[\\/])?python[0-9.]*(\.exe)?"? -m (lead_desk\.server|demo_only\.fakes_server --outbox (keyed|blind) --port [0-9]+) *$'
- foreach ($name in 'desk', 'fakes') {
-     $pidFile = "$dataDir\$name.pid"
--    if (Test-Path $pidFile) {
--        $procId = [int](Get-Content $pidFile)
-+    if (Test-Path -LiteralPath $pidFile) {
-+        # read ONLY a plain file (not a folder or a link), and only its first line, cut to 16 characters: text that is
-+        # not a process number ends the script with one line (nothing stopped, nothing deleted); an empty file is stale
-+        $item = Get-Item -LiteralPath $pidFile -Force -ErrorAction SilentlyContinue
-+        if ($null -eq $item -or $item.PSIsContainer -or $item.LinkType) {
-+            Write-Host ("refused: $name.pid is not a plain file; nothing was stopped or deleted " +
-+                "(delete the pid file yourself if it is stale)")
-+            exit 6
-+        }
-+        $first = Get-Content -LiteralPath $pidFile -TotalCount 1 -ErrorAction SilentlyContinue
-+        $word = if ($null -eq $first) { '' } else { "$first".Trim() }
-+        if ($word.Length -gt 16) { $word = $word.Substring(0, 16) }
-+        if ($word -ne '' -and ($word -cnotmatch '^[1-9][0-9]{0,9}$' -or [int64]$word -gt 2147483647)) {
-+            Write-Host ("refused: $name.pid does not hold a process number; nothing was stopped or deleted " +
-+                "(delete the pid file yourself if it is stale)")
-+            exit 6
-+        }
-+        if ($word -eq '') {
-+            Remove-Item -LiteralPath $pidFile
-+            continue
-+        }
-+        $procId = [int64]$word
-         # only stop a process that still is the desk or the demo server (a process id can be reused by another program)
-         $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction SilentlyContinue
-         if ($null -eq $proc) {
-             # that process id is gone already
--        } elseif ($proc.CommandLine -match 'lead_desk\.server|demo_only\.fakes_server') {
-+        } elseif ($proc.CommandLine -imatch $ourCommandLine) {
-             Stop-Process -Id $procId -ErrorAction SilentlyContinue
-             try { Wait-Process -Id $procId -Timeout $stopWait -ErrorAction Stop } catch { }
-             if (Get-Process -Id $procId -ErrorAction SilentlyContinue) {
 diff --git a/scripts/reset.sh b/scripts/reset.sh
 index c8e07bd..6aed627 100644
 --- a/scripts/reset.sh
@@ -4085,98 +4022,6 @@ index 9d754c3..abd5f0b 100644
  
  
  if __name__ == "__main__":
-diff --git a/scripts/start_all.ps1 b/scripts/start_all.ps1
-index d15a8ea..977c211 100644
---- a/scripts/start_all.ps1
-+++ b/scripts/start_all.ps1
-@@ -7,19 +7,79 @@ $ErrorActionPreference = 'Stop'
- $env:PYTHONPATH = 'src;.'
- if ($null -eq $env:DESK_LEADFLOW_FILE) { $env:DESK_LEADFLOW_FILE = 'demo_only/leadflow.json' }
- if ($env:DESK_LEADFLOW_FILE -cne 'off' -and -not [string]::IsNullOrEmpty($env:DESK_LEADFLOW_FILE) -and $null -eq $env:DESK_NUDGE_TO) { $env:DESK_NUDGE_TO = 'reminder@example.test' }
--$dataDir = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path.parent)").Trim()
--$fakesPort = (python -c "from lead_desk.config import Config; print(Config.from_env().fakes_port)").Trim()
--New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
--if ((Test-Path "$dataDir\fakes.pid") -or (Test-Path "$dataDir\desk.pid")) {
--    throw 'pid files exist: run scripts\reset.ps1 first'
-+# a bad DESK_* value ends with the desk's one refusal line and exit code 4, not a Python traceback
-+# (scripts\desk_setting.py)
-+function Get-DeskSetting([string]$Name) {
-+    $text = python scripts\desk_setting.py $Name
-+    if ($LASTEXITCODE -ne 0) { Write-Host $text; exit $LASTEXITCODE }
-+    return "$text".Trim()
- }
-+$dataDir = Get-DeskSetting 'data-dir'
-+$fakesPort = Get-DeskSetting 'fakes-port'
-+try { New-Item -ItemType Directory -Force -Path $dataDir | Out-Null }
-+catch {
-+    Write-Host 'the desk refuses to start: the lead book folder cannot be made here (no such place, or no write access)'
-+    exit 4
-+}
-+if ((Test-Path -LiteralPath "$dataDir\fakes.pid") -or (Test-Path -LiteralPath "$dataDir\desk.pid")) {
-+    Write-Host 'pid files exist: run scripts\reset.ps1 first'
-+    exit 2
-+}
-+# a log or process-number file that is a link, a folder or a device would block the start or write where nobody reads:
-+# only a missing path or a regular file is used (the same test as start_all.sh); one fixed line, exit code 4
-+$notRegular = [IO.FileAttributes]::ReparsePoint -bor [IO.FileAttributes]::Device
-+foreach ($name in 'fakes.log', 'fakes.err.log', 'desk.log', 'desk.err.log', 'fakes.pid', 'desk.pid') {
-+    $item = Get-Item -LiteralPath "$dataDir\$name" -Force -ErrorAction SilentlyContinue
-+    if ($null -ne $item -and ($item.PSIsContainer -or $item.LinkType -or ($item.Attributes -band $notRegular))) {
-+        Write-Host "the desk refuses to start: a log or process-number file in the data folder is not a regular file ($name)"
-+        exit 4
-+    }
-+}
-+$tries = [int](Get-DeskSetting 'start-tries')
-+$pause = [double](Get-DeskSetting 'start-pause')
- $fakes = Start-Process python -ArgumentList '-m', 'demo_only.fakes_server', '--outbox', $Mode, '--port', $fakesPort `
-     -PassThru -WindowStyle Hidden -RedirectStandardOutput "$dataDir\fakes.log" -RedirectStandardError "$dataDir\fakes.err.log"
--$fakes.Id | Set-Content "$dataDir\fakes.pid"
-+$fakes.Id | Set-Content -LiteralPath "$dataDir\fakes.pid"
-+$desk = $null
-+# one place that ends a start that did not work: the programs THIS script started are stopped, their pid files go, and
-+# the exit code is 3 (the thing started cannot be reached) with ONE fixed line (never the text of a log)
-+function Stop-Start([string]$Why) {
-+    foreach ($proc in @($desk, $fakes)) {
-+        if ($null -ne $proc) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
-+    }
-+    Remove-Item -LiteralPath "$dataDir\fakes.pid", "$dataDir\desk.pid" -Force -ErrorAction SilentlyContinue
-+    Write-Host "${Why}: the programs started here were stopped; read the log files in the data folder"
-+    exit 3
-+}
-+# a program started here owns its port when it is still running, its own log holds the line it prints once it accepts
-+# requests and, for the desk, the port answers /counts over HTTP (the same three looks as start_all.sh)
-+$i = 0
-+while ($i -lt $tries) {
-+    if ($fakes.HasExited) { Stop-Start 'the demo servers stopped right after they were started' }
-+    if (Select-String -LiteralPath "$dataDir\fakes.log" -Pattern '^fakes server ' -Quiet -ErrorAction SilentlyContinue) { break }
-+    Start-Sleep -Seconds $pause
-+    $i++
-+}
-+if ($i -ge $tries) { Stop-Start 'the demo servers did not report that they accept requests' }
- $desk = Start-Process python -ArgumentList '-m', 'lead_desk.server' `
-     -PassThru -WindowStyle Hidden -RedirectStandardOutput "$dataDir\desk.log" -RedirectStandardError "$dataDir\desk.err.log"
--$desk.Id | Set-Content "$dataDir\desk.pid"
-+$desk.Id | Set-Content -LiteralPath "$dataDir\desk.pid"
-+$deskPort = Get-DeskSetting 'port'
-+$i = 0
-+while ($i -lt $tries) {
-+    if ($desk.HasExited) { Stop-Start 'the desk stopped right after it was started' }
-+    $listening = Select-String -LiteralPath "$dataDir\desk.log" -Pattern '^desk listening on ' -Quiet -ErrorAction SilentlyContinue
-+    if ($listening) {
-+        try {
-+            $answer = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 "http://127.0.0.1:$deskPort/counts"
-+            if ($answer.StatusCode -eq 200 -and -not $desk.HasExited) { break }
-+        }
-+        catch { $null = $_ }
-+    }
-+    Start-Sleep -Seconds $pause
-+    $i++
-+}
-+if ($i -ge $tries) { Stop-Start 'the desk did not answer on its port in time' }
- Write-Host "started: demo servers ($Mode outbox) pid $($fakes.Id), desk pid $($desk.Id)"
--$deskPort = (python -c "from lead_desk.config import Config; print(Config.from_env().port)").Trim()
- Write-Host "ports: desk $deskPort, demo CRM and outbox $fakesPort (check with: Invoke-WebRequest http://127.0.0.1:$deskPort/counts)"
- Write-Host "logs: $dataDir\fakes.log and $dataDir\desk.log (and .err.log)"
 diff --git a/scripts/start_all.sh b/scripts/start_all.sh
 index ced682a..424734b 100644
 --- a/scripts/start_all.sh
@@ -15787,7 +15632,7 @@ index 0000000..16e2b8d
 +    assert ctx.minimum_version == ssl.TLSVersion.TLSv1_2
 +    assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname
 diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
-index 893fcac..733f349 100644
+index 893fcac..4d4fce5 100644
 --- a/tests/test_real_check_dry.py
 +++ b/tests/test_real_check_dry.py
 @@ -3,6 +3,7 @@
@@ -15870,7 +15715,7 @@ index 893fcac..733f349 100644
 +        self.sock = type(
 +            "S", (), {"version": staticmethod(lambda: "TLSv1.3")}
 +        )()  # the handshake check reads the negotiated version
-+        self.deadline = 0.0
++        self.deadline = float("inf")  # no total time limit passes in these tests
  
      def login(self, *_a: Any) -> None:
          if self._login:
