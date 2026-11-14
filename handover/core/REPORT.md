@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 17:25 UTC / 22:55 IST
+
+**a4 `no_open_create` failure: cause NOT proven yet; reading the code gives one hypothesis.** The test makes a real dry run with the read-back stopped and asserts "were still open" is NOT in the note. In `scripts/run_real_check.py` lines 587-601 that phrase is printed whenever `create_open + create_unknown` is above 0 (so also when only `create_unknown` is 1). So the test fails exactly when the dry run's HubSpot creates ended unknown or open, which can happen if a create request times out on a loaded machine. That would be a test that assumes a quiet machine, not a desk bug (the counter does its job). Order/shared state is the other candidate. To decide, I am re-running the file on a copy (scratchpad a4t, 1st run still going, it is slow) and I will capture the failing note itself. If the note shows create_unknown>0 under load, the fix order is: the test sets the counters itself (like `_more_created`) so it does not depend on the dry run's timing; test-first, small, goes to the next builder with whatever EV7U/MUT/guard add. Until then this is OPEN, not "flake".
+
+**EV7T DONE (a "r7t record"): full run 6211 passed, 7 skipped, 0 failed (15:53-16:39Z); ruff clean; 78 failed/60 passed on r7s sources (before/after ok); hashes/apply 0 differences; disk-full grep 0 matches at 16:06Z and 17:16Z. Not clean: its "quiet" flake series was not quiet; 7 of its 40 new mutants survived (N02, N24 still after broad re-run), T01 (201 without id counts as created) and T13 survived the broad re-run; hostile table: "LOCALHOST" and "::ffff:127.0.0.1" accepted by all 8 entry points (127.0.0.1 loopback, harmless but the lead's m8 asked for fail-closed).** I will treat T01/N02/N24/T13 and the two hosts as r7u/r7v inputs after I check them against r7u (A/C added a 201-without-id test, so T01 may be killed on r7u; unchecked).
+
+**Agents: 2 language-model agents running (EV7U, MUT); EV7T closed.** Guard run 94%, no result yet (about 17:32Z). EV7U: before-run done 17:23Z, probe running. Disk 2.2 GB (95%).
+**Not checked:** guard result; a4 cause; EV7U; MUT; whether r7u kills EV7T's survivors.
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 17:13 UTC / 22:43 IST
 
 **NOT GREEN YET: the guard run has no result (78%, no failure so far; no guard.rc).** Package.sh NOT run (it waits for a green guard run).
