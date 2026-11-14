@@ -1,3 +1,28 @@
+## HEARTBEAT 93 (04:51Z) - B13 (FIX-2 R5) REPORTED; TWO FRESH REVIEWERS RUNNING; B12 FINAL RUN 73%
+
+| Agent | Job | State |
+|---|---|---|
+| B13 | fix-2 r5 | HAND-BACK read. Full run, Python 3.12, final head: 3926 passed, 171 skipped, **1 failed**, rc 1 (raw/b13-full.log, tail read by me). The failure is tests/test_hygiene.py::test_hygiene_scan_public, "gitleaks git: leaks found 39": the cause is my own ref (origin/n8n-evidence-rerun, present in the shared clone 04:21-04:36Z; with the branch's own config 0 findings, HEARTBEAT 92). After the ref was gone I re-ran tests/test_hygiene.py alone on its tree: 24 passed (04:48Z). That is a re-run of one file, not a second full run; B13 did not do one (time cap). Builder's own first run: 5 failures (its slips, fixed). 18 tests failed on r4 before the fix (raw/b13-fails-before.log), 8 of 8 hand mutants killed. Patches 49222f14 (on fix-1 r6) and 302d2b31 (on base): applied by builder on fresh trees. Builder ran ruff, mypy and bandit on its tree: that breaks the owner rule (CI only); I note it, results are not used by me. |
+| R2a, R2b | fresh egm codebase-details and design reviewers on fix-2 r5 (tree rv-fix2r5, diff r4-to-r5, includes the r4 blocker "demo CRM claim false" and Major "strip") | RUNNING from 04:49Z, expected 04:58Z |
+| B12 | fix-5 r6 final full run | RUNNING, 73% at 04:50Z, expected end about 05:03Z (slower than I said). Tail not read. |
+| B14 | fix-10 | RUNNING, no hand-back (box ends about 05:33Z) |
+| Stack builder | | NOT STARTED: waits for B12 final and the fix-2 r5 reviews |
+
+FAILURES AND RETRIES: B13 full run 1 failed (hygiene, my ref); retry = that file alone, 24 passed. My slip this block: none new (the ref slip is the one from HEARTBEAT 90).
+Load: about 1.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- fix-2 r5: no second full run on the final head after the ref was gone (only the hygiene file); the stack run will cover it.
+- fix-5 r6 final tail, its fresh review, fix-10 review: not yet.
+- Stack, stack-docs-final, stack review, stack full run, browser tests, clean-tree check: not started.
+- Variants of fix-2 r5 on fix-1 r4/r5 and "for stack": not made (conflict in contract.md and docs/limits.md); the stack re-cut replaces them.
+- reset.ps1 / start_all.ps1 never run; Python 3.11, ruff, mypy, bandit, CodeQL, Sonar: CI only.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect R2a and R2b (about 04:58Z), save them, egm-resolve if any Major, fix, fresh round.
+2. Read B12's final tail (about 05:03Z), fresh reviewer on fix-5 r6.
+3. Start the single stack re-cut builder as soon as fix-2 r5 and fix-5 r6 are reviewed clean.
+
 ## HEARTBEAT 92 (04:44Z) - LEAD'S ALLOWLIST CHECK DONE: 0 FINDINGS; B12 FINAL RUN 59%
 
 | Item | State |
