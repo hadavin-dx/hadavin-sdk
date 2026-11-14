@@ -1,5 +1,34 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Container clock 03:42 UTC = 09:12 IST.
+
+STATUS TABLE (one line per agent; fields: id | does | why | started UTC/IST | left | round/cap | state | next)
+- a712ad32 | r7f builder: stopped-run-exits-0 Major, mail-8 survivors (37), mail-7 survivors/timeouts (21), D21, _mask, labels, docs, symlink helper | unblocks EV7F and the candidate | 03:03 / 08:33 | about 20 min to 04:03 (box 60 min; I allow to 04:20) | r7f, mail path, no cap | running. Checkpoints: 03:17 D21 EQUIVALENT (claim); 03:28 killers written for A01 A04 A07 A12 A14 B02 (A10 as control); 03:36 and 03:37 SLIPS 2 and 3: it typed a device path again (a grep argument, then an output redirect); both denied, nothing run; redone with a file | collect report, then EV7F
+- a1942238 | mutant lane 1 (A01-B03, 18) on r7e copy | which r7e mutants survive | 03:36 / 09:06 | to 04:06 | evidence, 1 run | running; clean baseline 1172 passed, 1 skipped, 3 deselected, 392 s; done 1 of 18: A01 TIMEOUT (243 s, unknown) | collect REPORT.md
+- ab9f9527 | mutant lane 2 (B04-E02, 18) | same | 03:36 / 09:06 | to 04:06 | evidence | running; baseline 1172 passed in 337 s; done 4 of 18: KILLED 2 (C02, C03), TIMEOUT 1 (C01 STARTTLS buffer, unknown), BADMUT 1 (B04: its old text no longer exists in r7e, so it tested nothing) | collect
+- a5676b32 | mutant lane 3 (E03-P02, 18) | same | 03:36 / 09:06 | to 04:06 | evidence | running; done 3 of 18: KILLED 1 (E04), TIMEOUT 2 (E03, E05; unknown) | collect
+- closed and reported: a954ceb0 (r7e reviewer), a86b10ca (EV7D), a4355ac3 (mail 8), a3b90516 (old mutant runner), a9760115 (r7e builder)
+
+Mutant totals on r7e so far (8 of 54 done, 5 min in): KILLED 3, TIMEOUT 4, BADMUT 1, SURVIVED 0 confirmed. Plain reading: a mutant that survives needs the whole test set, which takes more than 240 s on this loaded machine, so the TIMEOUT rows are the ones not killed fast; each is re-run alone at 480 s if time remains. At this speed each lane finishes about 7-9 of its 18 in the 30-minute box; I expect about 25 of 54 and will say so, not claim 54.
+
+ASK:
+1. Lead: the lanes will not finish 54 mutants in 30 min. Default I take in 10 min: let them run to 04:06, then start a second wave for the unfinished ids (one lane at a time, limit 480 s) while the builder reports.
+2. Lead: B04 and likely other mutants no longer match r7e text. Default: the lane reports BADMUT ids and I ask the builder to re-map them to the new code.
+
+NOT DONE / NOT CHECKED (item | why | next if told)
+- r7f not built; the r7e Major (stopped run exits 0) is open | builder still working | EV7F after it reports
+- 46 of 54 mutants on r7e not run yet | lanes mid-run | collect at 04:06, second wave for the rest
+- TIMEOUT rows (A01 C01 E03 E05 so far) unresolved | 240 s limit on a loaded machine | re-run alone at 480 s
+- BADMUT rows (B04) test nothing | code moved in r7d/r7e | re-map to new text
+- 36-line patch-size gap unexplained | low value | numstat both states
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI not run | tools absent or end-of-work | on the clean patch at the end
+- DNS lookup outside the IMAP deadline; stray a<newline>b writer not found | owner items | owner names a date
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect the builder and the lanes; kill or prove equivalent every survivor, re-map BADMUT rows.
+2. EV7F once, alone, on a checkout without data/, with a fresh reviewer and mail pass 9 in parallel.
+3. Final README (patch table, apply commands per checkout type, open list), sweep agents and processes, QUEUE DONE.
+## STATUS (core lead)
 Container clock 03:36 UTC = 09:06 IST. (My earlier blocks gave a 'lead clock' that ran ahead of the container; read the container UTC time, I will use it from now.)
 
 | id | what it does | why | started UTC / IST | expected end / left | round / cap | state | next action |
