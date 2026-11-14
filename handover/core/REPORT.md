@@ -1,5 +1,35 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:00 UTC / 10:30 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a2783837 (r7g builder, fresh after restart) | finishes r7g | r7f review NOT CLEAN | 04:52 / 10:22 | box ends about 05:52 | r7g retry 1 | RUNNING, near the end. Checkpoints: 04:53 code and docs verified present after the cut-off; 04:54 ruff rc 0 (check and format), suppression counts equal to r7f, new tests 60 pass on r7g, 46 fail on r7f; 04:54 patches built (CRLF, LF, delta r7f-to-r7g) and apply matrix 3 of 3 rc 0; a per-file selector loop over the rest of the tests is running (24 files done). All builder claims, unverified. sha256 of the CRLF patch 59051621..., LF a5700c67..., delta 26c81d2f... (recorded by the builder, I have not re-checked them yet) | hand-back, then I copy, sha-check and start EV7G |
+| ae345331 (EV7F-PARTIAL runner, fresh) | mutants on r7f (G03 T01 B02 + 14 rows), hostile table; no full suite | delta base only | 04:52 / 10:22 | box ends about 05:52 | EV7F retry 1 | RUNNING: cleans crm_hubspot, tls_trust, smtp_outbox rc 0 at 04:57; mutants next; no mutant result yet | EV7F-PARTIAL.md |
+
+One thing to explain, not yet explained: in the builder's per-file loop tests/test_raw_bidi_chars.py FAILED (1 failed, 2 passed, 0.12 s). That test looks at tracked files, so it probably needs the staged git copy that the builder's loop does not use; I have NOT confirmed that. EV7G runs it in the staged copy and I will read the failure text.
+
+Machine: quiet since the restart (load about 1 at 04:55). Container restart also removed the four orphan workers; I ran no kill. Your 04:49 answer to ASK 1 is therefore moot.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7g patch not independently run | builder claims only | EV7G (one full run; header: uptime, load, pids; staged copy for git tests; no data/ folder) in parallel with a fresh r7g reviewer |
+| raw_bidi test failure in the builder loop | not read | see above |
+| patch sha256 | recorded by builder, not re-checked | I verify when I copy to handover/core/fix/ |
+| mail pass 9 | needs the r7g snapshot | 30+ mutants, limits above clean times (smtp_provider 630 s, load_driver 510 s, imap 390 s, run_real_check 520 s) |
+| which test left orphan workers | evidence gone with the restart | per-file process listing in EV7G |
+| first clean-set CRASH cause | no evidence | unexplained in the README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. On the builder's hand-back: verify sha256, copy to handover/core/fix/, start EV7G and the fresh whole-patch r7g reviewer together (quiet machine now).
+2. Start mail pass 9 on an exported r7g snapshot after EV7G's full run finishes (heavy suites 3 or fewer).
+3. Resolve findings; freeze only on a clean pass; rewrite handover/core/fix/README.md; sweep agents and processes.
+
+
 ## STATUS (core lead) 04:52 UTC / 10:22 IST
 
 CONTAINER WAS RESTARTED at about 04:50 UTC (uptime 2 min at 04:52). It stopped the r7g builder a89776f7, EV7F add05263 and a poll shell. Disk survived: tree-R7G (with tests/test_r7g_findings.py), tree-EV7F, out/R7G, out/EV7F, venv, browsers, gitleaks are all present. The restart also ended the four orphan workers (pids 24504-24507): ps shows 0 pytest, load average 1.56 at 04:52 (was about 95). So your ASK 1 answer is moot: nothing to stop, I ran no kill. The machine is quiet now.
