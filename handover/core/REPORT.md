@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:33 UTC / 22:03 IST
+
+**AGENTS RUNNING: 3** (A, B, EV7T). Closed: C, DOC, DA-PROBE, MERGE-PREP. Disk 2.7 GB free (94%), flat. Numbers are the agents' own unless I say I checked.
+
+| id | what | state | next |
+|---|---|---|---|
+| A a07e3822 | M1 cap, m1-m4 | mutants M*/I* 22/22 killed (its number); F*/B* mutants still running (about 29 rows so far); 3 line-length errors + 1 format to fix after mutants; NO diff yet | RESULTS-A, r7u-A.diff; box ends about 17:07Z |
+| B a397ac1e | m7 smtp checked reader, m8, m5 | 15/15 mutants killed; after1 231 passed; final-bytes run (after2) started 16:31; r7u-B.diff and RESULTS-B.md exist on disk (I have not read them; hand-back not yet received) | hand-back |
+| EV7T acdc878b | evidence on r7t | ALIVE and progressing: full run at 78% at 16:33, own mutants 3 runners; its checkpoint note was last written 16:02 (stale for 30 min: I will message it if no note by 16:45) | EV7T-EVIDENCE.md |
+| (closed) MERGE-PREP | merge.sh, guard_run.sh, package.sh rehearsed on dummy diffs; reproduced r7t patches byte for byte | done | I run them at hand-back |
+
+**EV7T disk check result: not answered yet.** My own grep found no "No space left" / Errno 28 in its raw logs; the full run and flake logs read normally. It has not yet written its statement of which runs overlapped the disk-full window. No EV7T number is used until it does.
+V7 final noted. The "external sender" question from block 96 is still open (waiting for your choice 1/2/3); nothing built for it.
+Merge starts when A hands back (B's diff is ready).
+
+NOT DONE / NOT CHECKED: A diff; reading B's diff and the 10 pin-like passes; the merge; EV7T statement.
+
+
 ## STATUS (core lead) 16:28 UTC / 21:58 IST
 
 **AGENTS RUNNING: 4** (A, B, EV7T, MERGE-PREP). DA-PROBE done and closed. Disk 2.7 GB free.
