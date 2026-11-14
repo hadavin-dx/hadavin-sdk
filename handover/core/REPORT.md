@@ -1,5 +1,37 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 10:16 UTC / 15:46 IST
+
+**NOT DONE: no EVIDENCE RUNNER for r7o has been started, and no r7n or r7o reviewer report has landed yet.** Both reviewers are still running (no written report file in handover/core/review/ for r7n or r7o). I held the r7o evidence run on purpose: the two reviews are likely to produce an r7p, and EV7N already covers r7n; a run on r7o bytes would be thrown away. Cost of that choice: if no r7p is needed, the final full run starts about 1 h later than it could have. Say so if you want an r7o run now.
+
+**EV7N (committed, fix/EV7N-EVIDENCE.md; runner figures, not re-run by me):** r7n patches rebuild exactly (hashes, apply matrix rc 0 in all 3 cells, result equals tree-R7N). Full run 7 failed (the 7 expected git-only ids), 5921 passed, 8 skipped. The 3 EV7K test_real_check_dry failures now pass. Staged git copy: all 8 git files pass. Both test orders 218 passed. Ruff clean, no new suppressions. Hostile mailbox table: 168/168 reached LOGIN, 0 leaks on r7n, 105 leaks on r7m.
+**FAILED / uncertain in EV7N:** the builder's `_EchoImap` test server never lets imaplib send LOGIN (CAPABILITY answered BAD), so the "server echoes the login line" case is not exercised by the repo tests; rewrite owed in r7p (sent to the r7n reviewer too). Unexplained: 8 skipped vs the builder's 37, test_hygiene 24 passed vs 20 + 4 skipped, one "Exception occurred during processing of request" line in the full log.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| a8c42155 (r7n reviewer, fresh) | whole r7n delta, 38 own mutants, echo-server question | independent | 09:42 / 15:12 | about 10:55 | review 1 of r7n | RUNNING (last seen 10:15: reading mutant logs) | core-fix-on-frozen-r7n-review.md |
+| a1d9e112 (r7o reviewer, fresh) | BOM decision, 14 pins, "source already right" claims | independent | 10:10 / 15:40 | about 11:10 | review 1 of r7o | RUNNING (10:16: reading REV7O results) | core-fix-on-frozen-r7o-review.md |
+
+Agents running: 2. Load 1.2. Done: EV7N, r7o builder, pass 12, r7n builder, pass 11, EV7K, r7k and r7l reviewers.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7o EVIDENCE RUNNER and final full run | held for r7p (above) | start on the final bytes |
+| r7n and r7o review verdicts | running | commit; send every Blocker/Major to ONE r7p builder |
+| echo-server test rewrite | EV7N finding | r7p |
+| EV7N skip-count and hygiene-count differences, stray log line | unexplained | r7p builder or runner to explain |
+| ledger rows (8 OPEN) | need runner plus reviewer | close with artifacts only |
+| Windows, PowerShell scripts, Python 3.14, CodeQL, Sonar, CodeRabbit, CI, semgrep | not run | README open list |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Commit both review reports when they land; start ONE r7p builder, test-first, with every Blocker/Major plus the echo-server rewrite.
+2. Evidence runner on the final bytes (one full run plus a short mutant pass on changed lines), then a fresh reviewer on r7p.
+3. README, ledger closure, sweep, counts.
+
+
 ## STATUS (core lead) 10:06 UTC / 15:36 IST
 
 **r7o HANDED BACK (about 10:08Z), patch set committed (unreviewed): I verified the three sha256 against sha256-r7o.txt (CRLF 43e47b79..., LF 33a22d77..., delta b606cab5...); CRLF patch and delta stored as .gz with the unpack hash checked; apply matrix read (rc 0 in a-crlf, b-crlf, c-lf), not re-run.** Builder claims, NOT verified by me: ONE source change, src/lead_desk/regfile.py: read_regular_text decodes utf-8-sig instead of utf-8, i.e. **a leading byte-order mark (BOM) is now ACCEPTED and dropped on purpose (its NEEDED-CHECK call for M10-J09)**; reason: key/password, CA and invariant readers already accept it and Windows editors add it; before, a BOM flag file was silently never honoured and a BOM config or BOM JSON was refused. **This is a judgement I have flagged to the fresh reviewer: could accepting a BOM turn a refusal into an allow (a flag or allow file where U+FEFF used to make a token NOT match)? The safer default under the least-privilege rule is refuse; I asked the reviewer to recommend and to call it a Major if accepting can fail open.** For M9-79 (banner x2), M9-74, M10-J13, M9-56, M10-J02 the builder says the r7n source was already right and its tests are PINs (18 new tests: 4 fail on r7n = the BOM ones, 14 pass = pins; 11 of 11 own mutants killed; ruff 0.17.1 clean 227 files; groups A 502 passed, B 562 passed 1 skipped; no new suppressions; no existing test changed). **Builder-disclosed gaps: item 8 (fold in the EV7N and r7n-review findings) NOT done because those files did not exist yet; its mutant runs were narrow (-k on the matching tests, -x): a mutant only the rest of the file would catch is not measured; bandit not run; no full suite; the brief's "M9-82 5 accepted / 4 refused boundary" is really REAL_HUBSPOT_READBACK_MAX_CALLS (MIN_READBACK_CALLS = 5), not REAL_DRAIN_SECONDS (no minimum above 0): it pinned the right one and said so; pass 12 killed M9-82 only indirectly.** Fresh r7o reviewer STARTED (a1d9e112, Sonnet): judges the BOM decision, re-runs the ACTUAL pass 12 survivors M9-79, 74, J13, 56, J02 against the new tests, verifies each "source already right" claim on r7n with its own probe, ruff/bandit/hygiene, 12 own mutants.
