@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 14:06Z - D-N3: real-node flows BUILT (not run) and final N8N-START.md pushed
+
+- n8n-flows-real/: four flows built with MF_REAL=1 MF_TRIES=2 MF_TMO_MS=10000 lease 45 from the same builder (build_mainframe.py, new switch). Node-by-node diff against n8n-flows-film in NODE-DIFF-vs-film.txt and README.md: same node counts (20/12/12/7), same connections, same settings; differences only: CrmUpsert = HubSpot node 2.2 (authentication appToken, contact, Create or Update, keyed on e-mail, custom properties hadavin_lead_id and hadavin_label, credential placeholder, retry 2 and error output kept); SetCrmId stores $json.vid; DESK_URL / DESK_TIMEOUT_MS names for the stage; address constants are placeholders; alert recipient reads DESK_ALERT_TO from the environment (an expression, no input field reaches it; the intake recipient stays a constant - lead to confirm this is what the order meant by the third variable). grep of the files: no stand-in names, no loopback literal, no example.test, no 40-character run.
+- Facts from the node source (read, not run): HubSpot Create or Update calls the contacts v1 createOrUpdate-by-e-mail endpoint; the node has NO timeout option, so the 10 s bound is gone there (bounded by the lease only); two lead ids with one e-mail become one contact. The SMTP node was already the real node in the stand-in flows; only its credential differs.
+- n8n-flows/N8N-START.md final: versions (n8n 2.46.6 pinned), the three variables (+ N8N_BLOCK_ENV_ACCESS_IN_NODE=false), four execution-saving values, loopback webhook, secrets only in n8n credentials, T7b result AS RELAYED BY THE LEAD (raw file name PENDING: written as not measured by me until a file is named), what the real-node flows were not tested against. The flow commit is the commit of this push (T7b ran on 1ced4e1f).
+- NOT RUN: nothing was run for D-N3 (disk full). 2.47.7 redaction change: not checked. V4 numbers and the extended T7b: unread, no raw file in my repo yet.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Any run of the real-node files; HubSpot custom-property creation; V4 and extended T7b numbers; T4, pattern check, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. When raw files land: replace the pending T7b statement with the named file and the numbers I read in it. 2. Check the n8n 2.47.7 release notes for the redaction change (a web read, no disk). 3. Lead id pattern check.
+
 ## Block 13:55Z - film-lease flow edits pushed (not run)
 
 - build_mainframe.py now reads MF_TRIES (default 3) and MF_TMO_MS (default 15000): stage call and CRM call tries and node timeout. Defaults rebuild the design flows byte for byte except the credential placeholder ids (checked by comparing node by node). mf.py passes MF_TMO_MS to the stage timeout variable.

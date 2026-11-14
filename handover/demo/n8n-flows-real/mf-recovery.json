@@ -1,0 +1,248 @@
+{
+ "name": "Lead desk main frame: recovery (every 30 s)",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "seconds",
+       "secondsInterval": 30
+      }
+     ]
+    }
+   },
+   "name": "Every30s",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "UPDATE mf_leads SET claimed_until=now() + interval '45 seconds', claim_token=gen_random_uuid()::text, attempts=attempts+1, updated_at=now() WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts < 3 ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5) RETURNING lead_key, email, claim_token;",
+    "options": {}
+   },
+   "name": "ClaimStuck",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    220,
+    -100
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": false,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.lead_key }}",
+       "rightValue": null,
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "StuckRow",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    330,
+    -100
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "value": "SUB_WORKFLOW_ID",
+     "mode": "id"
+    },
+    "mode": "each",
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   },
+   "name": "RunSub",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.2,
+   "position": [
+    550,
+    -160
+   ],
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "UPDATE mf_leads SET state='failed', updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;",
+    "options": {}
+   },
+   "name": "MarkFailed",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    220,
+    120
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": false,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.lead_key }}",
+       "rightValue": null,
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "FailedRow",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    330,
+    120
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "FROM_ADDRESS_PLACEHOLDER",
+    "toEmail": "={{ $env.DESK_ALERT_TO }}",
+    "subject": "={{ '[demo] Lead desk: lead failed ' + $json.lead_key }}",
+    "emailFormat": "text",
+    "text": "={{ 'Lead id ' + $json.lead_key + ' could not be finished after 3 tries. A person decides.' }}",
+    "options": {
+     "appendAttribution": false
+    }
+   },
+   "name": "AlertFailed",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    550,
+    80
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "SMTP_CREDENTIAL_ID",
+     "name": "mf-mail-smtp"
+    }
+   },
+   "onError": "continueRegularOutput"
+  }
+ ],
+ "connections": {
+  "Every30s": {
+   "main": [
+    [
+     {
+      "node": "MarkFailed",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "ClaimStuck",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "ClaimStuck": {
+   "main": [
+    [
+     {
+      "node": "StuckRow",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "StuckRow": {
+   "main": [
+    [
+     {
+      "node": "RunSub",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "MarkFailed": {
+   "main": [
+    [
+     {
+      "node": "FailedRow",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "FailedRow": {
+   "main": [
+    [
+     {
+      "node": "AlertFailed",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "saveDataSuccessExecution": "none",
+  "saveDataErrorExecution": "none",
+  "saveManualExecutions": false
+ }
+}

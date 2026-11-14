@@ -1,0 +1,17 @@
+# Real-node variant of Design A (D-N3). BUILT, NOT RUN: no machine with space for n8n here, no HubSpot account, no mailbox. Nothing here is a result.
+Built from ../n8n-flows-film (lease 45 s, stage 10 s x 2 tries, error outputs as in 1ced4e1f plus the film edits) by `MF_REAL=1 MF_TRIES=2 MF_TMO_MS=10000 python n8n-mainframe/build_mainframe.py OUT PG_CRED_ID SMTP_CRED_ID SUB_WORKFLOW_ID 45`. Every id and address in the files is a placeholder: PG_CREDENTIAL_ID, SMTP_CREDENTIAL_ID, HUBSPOT_CREDENTIAL_ID, SUB_WORKFLOW_ID, FROM_ADDRESS_PLACEHOLDER, INTAKE_ADDRESS_PLACEHOLDER. No key, address or password is in any file (grep for the stand-in names MF_, loopback and example.test in these files: 0).
+Replace before use: the three credential ids (n8n credentials by name: n8n-publish-pg, mf-mail-smtp, hubspot-app-token), the sub-workflow id (after importing mf-sub-crm-mail), and the two address placeholders IN THE NODES (they are constants, not environment variables, so an input field cannot change a recipient).
+
+## Node-by-node diff against ../n8n-flows-film (same 20 / 12 / 12 / 7 nodes, same connections, same workflow settings in all four files; this is everything that differs)
+1. CrmUpsert (sub-workflow): HTTP Request to the CRM stand-in -> n8n HubSpot node 2.2, authentication appToken, resource contact, operation Create or Update (upsert), email = the lead's e-mail, custom properties hadavin_lead_id and hadavin_label; credential placeholder HUBSPOT_CREDENTIAL_ID. Retry on fail (2 tries, 1 s between) and the error output to OutStage are kept. The HubSpot node has no timeout option: the 10 s bound of the stand-in call does NOT exist here; a slow HubSpot answer is bounded only by the lease.
+2. SetCrmId: stores `$json.vid` (the node's answer is {vid, isNew}) instead of `$json.id`.
+3. Qualify: environment variable names DESK_URL and DESK_TIMEOUT_MS instead of MF_STAGE_URL and MF_STAGE_TIMEOUT_MS (same default 10000 ms).
+4. SendMail: only the two address constants (placeholders). It is the same n8n Send Email (SMTP) node as before: stand-in flows already used the real node against a stand-in SMTP server; only the credential's host/user/password differ, and those live in the n8n credential.
+5. AlertUnknown and AlertFailed: recipient is `={{ $env.DESK_ALERT_TO }}` (environment variable, the third of the three) instead of a constant; sender placeholder. NOTE for the lead: the alert recipient is therefore an expression read from n8n's environment (no input field can reach it); the intake recipient stays a constant.
+Nothing else differs (all Postgres nodes, IF nodes, recovery timer, claim logic, lease, SMTP retry off).
+
+## What the node source says (read in n8n 2.46.6, not run)
+The HubSpot node's Create or Update calls `/contacts/v1/contact/createOrUpdate/email/<email>`, keyed on the e-mail only: two lead ids with one e-mail become ONE HubSpot contact (the last lead id and label win in the properties); the lead table keeps one row per lead id. The custom properties hadavin_lead_id and hadavin_label must exist in the HubSpot account (created by hand there); the node cannot create them.
+
+## NOT tested against
+HubSpot's real behaviour (search or write lag after a create, rate limits, the legacy contacts v1 endpoint's status for new accounts, property creation), a real Gmail SMTP server (no timeout setting in the node, TLS and app-password handling), and a real n8n run of these four files at all. The stand-in versions of the same flows were tested on one machine; these were not.

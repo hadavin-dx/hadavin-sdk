@@ -1,0 +1,34 @@
+## mf-sub-crm-mail nodes film 20 real 20 only-film [] only-real [] connections equal True settings equal True
+  - AlertUnknown differs in: ['parameters']
+      param fromEmail : "desk@example.test" -> "FROM_ADDRESS_PLACEHOLDER"
+      param toEmail : "alerts@example.test" -> "={{ $env.DESK_ALERT_TO }}"
+  - CrmUpsert differs in: ['credentials', 'parameters', 'type', 'typeVersion']
+       credentials : null -> {"hubspotAppToken": {"id": "HUBSPOT_CREDENTIAL_ID", "name": "hubspot-app-token"}}
+      param additionalFields : null -> {"customPropertiesUi": {"customPropertiesValues": [{"property": "hadavin_lead_id", "value": "={{ $('SubIn').first().json.lead_key }}"}, {"property": "
+      param authentication : null -> "appToken"
+      param contentType : "json" -> null
+      param email : null -> "={{ $('SubIn').first().json.email }}"
+      param jsonBody : "={{ { hadavin_lead_id: $('SubIn').first().json.lead_key, email: $('SubIn').first().json.email, label: $('Qual -> null
+      param method : "POST" -> null
+      param operation : null -> "upsert"
+      param options : {"timeout": 10000} -> {}
+      param resource : null -> "contact"
+      param sendBody : true -> null
+      param specifyBody : "json" -> null
+      param url : "={{ $env.MF_CRM_URL }}/upsert" -> null
+       type : "n8n-nodes-base.httpRequest" -> "n8n-nodes-base.hubspot"
+       typeVersion : 4.2 -> 2.2
+  - Qualify differs in: ['parameters']
+      param options : {"timeout": "={{ Number($env.MF_STAGE_TIMEOUT_MS || 10000) }}"} -> {"timeout": "={{ Number($env.DESK_TIMEOUT_MS || 10000) }}"}
+      param url : "={{ $env.MF_STAGE_URL }}/qualify" -> "={{ $env.DESK_URL }}/qualify"
+  - SendMail differs in: ['parameters']
+      param fromEmail : "desk@example.test" -> "FROM_ADDRESS_PLACEHOLDER"
+      param toEmail : "intake@example.test" -> "INTAKE_ADDRESS_PLACEHOLDER"
+  - SetCrmId differs in: ['parameters']
+      param options : {"queryReplacement": "={{ [$('SubIn').first().json.lead_key, String($json.id), $('SubIn').first().json.claim_t -> {"queryReplacement": "={{ [$('SubIn').first().json.lead_key, String($json.vid), $('SubIn').first().json.claim_token] }}"}
+## mf-form nodes film 12 real 12 only-film [] only-real [] connections equal True settings equal True
+## mf-hook nodes film 12 real 12 only-film [] only-real [] connections equal True settings equal True
+## mf-recovery nodes film 7 real 7 only-film [] only-real [] connections equal True settings equal True
+  - AlertFailed differs in: ['parameters']
+      param fromEmail : "desk@example.test" -> "FROM_ADDRESS_PLACEHOLDER"
+      param toEmail : "alerts@example.test" -> "={{ $env.DESK_ALERT_TO }}"

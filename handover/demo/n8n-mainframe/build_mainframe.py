@@ -7,17 +7,25 @@ Settings from n8n's environment: MF_CRM_URL, MF_STAGE_URL. The mail recipient an
 import json, sys, os
 OUT, PGID, SMTPID, SUBID = sys.argv[1:5]; LEASE = int(sys.argv[5]) if len(sys.argv) > 5 else 120
 TRIES = int(os.environ.get("MF_TRIES", "3")); TMO = int(os.environ.get("MF_TMO_MS", "15000"))   # film variant: MF_TRIES=2 MF_TMO_MS=10000 (defaults = the design flows)
-MAIL_TO, ALERT_TO = "intake@example.test", "alerts@example.test"
+REAL = os.environ.get("MF_REAL") == "1"   # real-node variant (D-N3): HubSpot node instead of the CRM HTTP call, placeholders for every address, three environment variables DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO
+STAGE_ENV, TMO_ENV, FROM = ("DESK_URL", "DESK_TIMEOUT_MS", "FROM_ADDRESS_PLACEHOLDER") if REAL else ("MF_STAGE_URL", "MF_STAGE_TIMEOUT_MS", "desk@example.test")
+MAIL_TO, ALERT_TO = ("INTAKE_ADDRESS_PLACEHOLDER", "={{ $env.DESK_ALERT_TO }}") if REAL else ("intake@example.test", "alerts@example.test")
 def N(name, typ, ver, params, pos, **x):
     d = {"parameters": params, "name": name, "type": typ, "typeVersion": ver, "position": pos}; d.update(x); return d
 def pg(name, q, repl, pos, always=True, **x):
     o = {"queryReplacement": repl} if repl else {}
     return N(name, "n8n-nodes-base.postgres", 2.5, {"operation": "executeQuery", "query": q, "options": o}, pos, credentials={"postgres": {"id": PGID, "name": "n8n-publish-pg"}}, alwaysOutputData=always, **x)
 def http(name, url, body, pos, retry, errout=False):
-    d = N(name, "n8n-nodes-base.httpRequest", 4.2, {"method": "POST", "url": url, "sendBody": True, "contentType": "json", "specifyBody": "json", "jsonBody": body, "options": {"timeout": "={{ Number($env.MF_STAGE_TIMEOUT_MS || %d) }}" % TMO if "MF_STAGE_URL" in url else TMO}}, pos)
+    d = N(name, "n8n-nodes-base.httpRequest", 4.2, {"method": "POST", "url": url, "sendBody": True, "contentType": "json", "specifyBody": "json", "jsonBody": body, "options": {"timeout": "={{ Number($env.%s || %d) }}" % (TMO_ENV, TMO) if "MF_STAGE_URL" in url or "DESK_URL" in url else TMO}}, pos)
     if retry: d.update(retryOnFail=True, maxTries=TRIES, waitBetweenTries=1000)
     if errout: d["onError"] = "continueErrorOutput"
     return d
+def hubspot(name, pos):
+    # n8n HubSpot node (n8n-nodes-base.hubspot 2.2, read from the 2.46.6 source): contact / Create or Update ('upsert'), keyed on the E-MAIL (the node calls /contacts/v1/contact/createOrUpdate/email/<email>);
+    # answer {vid, isNew} (Simplify Output off) -> the contact id is $json.vid. The node has NO timeout option; retry and error output are the generic node settings below.
+    return N(name, "n8n-nodes-base.hubspot", 2.2, {"authentication": "appToken", "resource": "contact", "operation": "upsert", "email": "={{ $('SubIn').first().json.email }}",
+             "additionalFields": {"customPropertiesUi": {"customPropertiesValues": [{"property": "hadavin_lead_id", "value": "={{ %s }}" % KEY}, {"property": "hadavin_label", "value": "={{ $('Qualify').first().json.label }}"}]}},
+             "options": {}}, pos, credentials={"hubspotAppToken": {"id": "HUBSPOT_CREDENTIAL_ID", "name": "hubspot-app-token"}}, retryOnFail=True, maxTries=TRIES, waitBetweenTries=1000, onError="continueErrorOutput")
 def iff(name, left, op_type, op, right, pos):
     return N(name, "n8n-nodes-base.if", 2.2, {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "loose"}, "conditions": [
         {"id": "c1", "leftValue": left, "rightValue": right, "operator": {"type": op_type, "operation": op, **({"singleValue": True} if right is None else {})}}], "combinator": "and"}, "options": {}}, pos)
@@ -25,7 +33,7 @@ def respond(name, body, pos): return N(name, "n8n-nodes-base.respondToWebhook", 
 def setf(name, fields, pos):
     return N(name, "n8n-nodes-base.set", 3.4, {"assignments": {"assignments": [{"id": k, "name": k, "value": v, "type": t} for k, (v, t) in fields.items()]}, "options": {}}, pos)
 def mail(name, to, subj, text, pos, **x):
-    return N(name, "n8n-nodes-base.emailSend", 2.1, {"fromEmail": "desk@example.test", "toEmail": to, "subject": subj, "emailFormat": "text", "text": text, "options": {"appendAttribution": False}}, pos,
+    return N(name, "n8n-nodes-base.emailSend", 2.1, {"fromEmail": FROM, "toEmail": to, "subject": subj, "emailFormat": "text", "text": text, "options": {"appendAttribution": False}}, pos,
              credentials={"smtp": {"id": SMTPID, "name": "mf-mail-smtp"}}, **x)
 def link(con, a, b, out=0):
     con.setdefault(a, {"main": []}); m = con[a]["main"]
@@ -35,10 +43,10 @@ ST = {"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataError
 KEY = "$('SubIn').first().json.lead_key"; TOK = "$('SubIn').first().json.claim_token"
 def sub():
     n = [N("SubIn", "n8n-nodes-base.executeWorkflowTrigger", 1.1, {"inputSource": "passthrough"}, [0, 0]),
-         http("Qualify", "={{ $env.MF_STAGE_URL }}/qualify", "={{ { lead_key: %s, email: $('SubIn').first().json.email } }}" % KEY, [220, 0], True, errout=True),
+         http("Qualify", "={{ $env.%s }}/qualify" % STAGE_ENV, "={{ { lead_key: %s, email: $('SubIn').first().json.email } }}" % KEY, [220, 0], True, errout=True),
          iff("LabelOk", "={{ ['hot','warm','cold'].includes($json.label) && !$json.unknown_model }}", "boolean", "true", None, [440, -60]),
-         http("CrmUpsert", "={{ $env.MF_CRM_URL }}/upsert", "={{ { hadavin_lead_id: %s, email: $('SubIn').first().json.email, label: $('Qualify').first().json.label } }}" % KEY, [660, -60], True, errout=True),
-         pg("SetCrmId", "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "={{ [%s, String($json.id), %s] }}" % (KEY, TOK), [880, -60]),
+         (hubspot("CrmUpsert", [660, -60]) if REAL else None) or http("CrmUpsert", "={{ $env.MF_CRM_URL }}/upsert", "={{ { hadavin_lead_id: %s, email: $('SubIn').first().json.email, label: $('Qualify').first().json.label } }}" % KEY, [660, -60], True, errout=True),
+         pg("SetCrmId", "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "={{ [%s, String($json.%s), %s] }}" % (KEY, "vid" if REAL else "id", TOK), [880, -60]),
          iff("OwnsClaim1", "={{ $json.lead_key }}", "string", "notEmpty", None, [1100, -60]),
          pg("MailClaim", "UPDATE mf_leads SET mail_sent=true, updated_at=now() WHERE lead_key=$1 AND claim_token=$2 AND mail_sent=false AND state='processing' RETURNING lead_key;", "={{ [%s, %s] }}" % (KEY, TOK), [1320, -60]),
          iff("MailRowBack", "={{ $json.lead_key }}", "string", "notEmpty", None, [1540, -60]),
