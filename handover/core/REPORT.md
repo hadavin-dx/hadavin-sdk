@@ -1,5 +1,37 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 08:17 UTC / 13:47 IST
+
+**LEAD ORDER 08:15 APPLIED: r7n builder STARTED (ac7638bd, fresh, test-first, tree-R7N copy of r7m, one builder).** Scope: imap_count password-in-error leak plus a sweep of every other site that keeps an exception context with an echoed login/auth line (choke-point helper if two or more sites share it, plus a guard test), M9-70 and M9-71 (banner worst-case mail and HubSpot counts times desk processes), further pass 11 real gaps, and the r7k reviewer's Blocker/Major items when its report lands. Tests must fail on r7m. EV7K on r7m keeps running (8 git ids and the r7f id); ONE full run on r7n afterwards.
+
+**r7l reviewer (a376c5cc) DONE: NOT CLEAN, 0 Blocker, 2 Major, 3 minor, 1 nit (committed core-fix-on-frozen-r7l-review.md).** Holds: all 41 killable builder mutants killed by the new file alone (91 tests), stable in 5 runs and under load, src identical to r7j. Majors (both sent to r7n): (1) smtp_provider.py:332 the EHLO reply after STARTTLS is not pinned: a server refusing EHLO after TLS would still get AUTH PLAIN with the password (mail/secret path); (2) the builder's "S13 equivalent" claim is WRONG: server.py _drain and _send_bytes past-deadline guards, and two byte caps, are unpinned (negative settimeout raises ValueError that except OSError misses). Also A9 (sent stats write, smtp_provider.py:280) unpinned; G4 guard bypassed by an aliased import or raw open(); 19 new type-ignore in the r7l test file. Not run by the reviewer: full suite, secret scan, ruff, mypy; wide set only for one mutant; it also noted the old r7f f1 test fails on r7j (known, fixed in r7k).
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n builder) | items above | your 08:15 order | 08:18 / 13:48 | about 09:20 | r7n | RUNNING | hand-back; EV7N full run |
+| a6dafd10 (EV7K) | full run on r7m | final-bytes run | 08:02 / 13:32 | about 09:15 | EV7K | RUNNING | EV7K-EVIDENCE.md |
+| a092c900 (r7k reviewer) | review of r7k | independent | 08:03 / 13:33 | about 09:05 | review 1 | RUNNING | written report; fold Blocker/Major into r7n |
+| a6bba99e (pass 11) | 14 survivors then M9-73..82, J12, J13 | your 08:01 order | 08:02 / 13:32 | about 09:02 | pass 11 | RUNNING | mail-pass11-r7m.md |
+
+Agents running: 4. Done: r7l reviewer, r7k and r7l builders, pass 10, pass 9, EV7J, EV7I, EV7H, r7i and r7j reviewers.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n result | just started | EV7N, fresh reviewer, pass 11 mutants on r7n changed code |
+| EV7K result, r7k verdict, pass 11 rows | running | resolve |
+| r7l reviewer's wide-set run was partial | it used an 18-file mail set and a 10-file server set | the r7n tests are judged on the big set by the mutant pass |
+| README (R7J count 41), older package hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the r7k review and pass 11 as they land; fold Blocker/Major into r7n.
+2. At the r7n hand-back: verify hashes, apply matrix, EV7N (one run), fresh reviewer, pass 11 on changed code.
+3. README, sweep, report counts.
+
+
 ## STATUS (core lead) 08:12 UTC / 13:42 IST
 
 **LEAD ORDER 08:01 APPLIED: EV7K and the r7k reviewer continue; pass 11 RESTARTED at 08:02 on the r7m bytes (a6bba99e, trees tree-M11c lane A and tree-M11d lane B; one runner per tree; real gaps are listed for a NEW test-first r7n builder, not sent to r7k).**
