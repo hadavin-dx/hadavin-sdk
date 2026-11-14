@@ -1,5 +1,11 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 10:33 UTC / 16:03 IST
+
+**ORDER C-PLAN read; applied as written.** Review rules unchanged. (1) r7n reviewer (a8c42155) and r7o reviewer (a1d9e112) keep running; no report has landed. r7p will be one test-first builder with every real gap, the `_EchoImap` rewrite and the lows; then mutants on changed code, one full suite, a fresh uncapped reviewer. No new pass family, no new module. (2) ON-PATH-LIST: my early version (handover/core/ON-PATH-LIST.md) is now marked PROVISIONAL: it came from my own reading of run_real_check.py, not from the take's used-file list. The real one waits for the lead's used-file list (Sun 15), due Sun 15 18:00Z; it will give the minimal patch subset for take head 27a1ed8. I will not try to make the 162-file patch apply there. (3) Deadline Mon 16 12:00Z, then idle with a heartbeat line.
+
+Not done: r7n/r7o verdicts, r7p, final full run, the C-PLAN on-path list. Agents running: 2. ASK: none.
+
 ## STATUS (core lead) 10:27 UTC / 15:57 IST
 
 **ON-PATH LIST written early (due 11:45Z): handover/core/ON-PATH-LIST.md.** It is a reading of imports and call sites, not a traced run: I did not execute anything to confirm a file is reached. A runner that records loaded modules under a dry run would confirm it; not started.
