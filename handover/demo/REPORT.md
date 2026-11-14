@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 13:50Z - what the demo does while the laptop finishes: page statement drafts (real-node flows, film lease)
+
+- Idle on tests (no disk). Wrote and pushed n8n-flows/PAGE-STATEMENTS-DRAFT.md: (A) real-node flows: HubSpot node Create or Update keyed on e-mail (consequence: two lead ids with one e-mail become one contact), SMTP node with no custom header and no timeout setting (lead id in the subject after [demo]); what my stand-in tests do NOT cover (HubSpot search lag, rate limits, real Gmail); no real account run by me. (B) lease for the film: design value 120 s (longest normal run about 100 s worst case); film candidate 45 s IF the node timeouts and tries are lowered in the flows (stage 10 s x 2, CRM 10 s x 2; not done yet); recovery time DERIVED not measured: start between lease minus used time and lease + 30 s; failed state about 3 x lease + up to 90 s.
+- MEASURED recovery per lease: none yet (only one T10 run at test lease 20 s). To get the table: laptop runs K1, K2, K3B, K3, K4 at --lease 20, 45, 120, 8 per point, read seconds_kill_to_final (min/median/max) with count_table.py. I ask the lead to queue this after V4; I will not put a recovery time on any page without it.
+- Real-node flows themselves: not built (they need a HubSpot node and an SMTP node in n8n; both are available in 2.46.6, but the build needs a run to check, which needs disk).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Extended T7b, T14, T15, T10, K3, K3B counts unread; real-node flows, N8N-START.md three-variable part, T4, pattern check, Design B same faults, compare table, 2.47.7 redaction check; lowered node timeouts for a short lease.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read V4 results and the extended T7b the moment they exist. 2. Lower the timeouts/tries in the flows behind a parameter so a 45 s lease is safe, then queue the lease table. 3. Build the real-node flows (on a machine with space).
+
 ## Block 13:40Z - heartbeat; T7b first result read from the lead's message; why the key differs; page statement draft
 
 - Why the key is "gone": NOT because a flow change moved it out. I compared the flow JSON at 59202078 (11:05Z) and 1ced4e1f: neither version has any key, authorization, header, bearer or api-key text in any of the four flows (grep count 0 in both), and the diff between them is only the recovery IFs, continue-on-error, the CRM error output and the new guards. In my design the model key lives only in the stage server's key file; n8n never gets it as a parameter, header or output. So the same flows could not have carried it into n8n's files in either version. The likely difference is lane3's needle or where lane3 planted it (a field in the lead payload, or a header on a request through n8n) - I do not know; their 3 of 3 hits on the 11:05Z flows and the runner's 0 hits are both consistent with "the key reaches n8n only if the test sends it through n8n". NOT proven by me; lane3 should say how the key got to n8n on their run.
