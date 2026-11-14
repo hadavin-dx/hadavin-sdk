@@ -1,6 +1,6 @@
 # lane3-fix-10 round 6 notes (builder B23)
 
-Base f3c39cf89ec989f032ea48a23cfd824b88da9c68. Result tree 44219b37f8c1cfab2c6003b443f0a2913a372018 (full patch lane3-fix-10-r6.patch, 357410 bytes, and the 6 parts in lane3-fix-10-r6-parts/, each under 85 KB, applied on fresh base copies: both give tree 44219b37 as the full patch). Hashes: raw/b23-r6-patch-sha256.txt. Nothing committed; everything is staged (`git add -A`).
+Base f3c39cf89ec989f032ea48a23cfd824b88da9c68. Result tree 8a5c446e3b59a87b7568497b5ace90631d9b303a (full patch lane3-fix-10-r6.patch, 357796 bytes, and the 6 parts in lane3-fix-10-r6-parts/, each under 85 KB; the full patch and the 6 parts applied on fresh base copies both give tree 8a5c446e). Hashes: raw/b23-r6-patch-sha256.txt. Nothing committed; everything is staged (`git add -A`).
 
 ## Not proven or uncertain (first)
 1. Windows: every `.ps1` check (start_all.ps1, reset.ps1) is a TEXT PIN. PowerShell was never run here. The printed table now says "not produced on Linux; needs a run on Windows (WINDOWS-RUN-1)" on those rows.
@@ -26,6 +26,13 @@ Also hardened (the old tests were a risk even if not the cause): pid-file tests 
 
 ## Evidence (raw/)
 - Red first on a pristine copy of the r5 tree (c494f120) with the 7 changed r6 test files copied in: 15 failed, 1 collection error (tests/test_exit_code_table.py: `constants.EXIT_TOOL_REFUSED` does not exist, so all 35 of its tests cannot run on r5), 659 passed, 10 skipped (raw/b23-r6-red-first.log, names in raw/b23-r6-red-failed-names.txt). Split of the 15: text pins 3 (2 in test_ps1_pins, 1 start_all script pin); function-absent 6 (5 in test_refusal_lines_utf8, 1 reuse-address); real behaviour 6 (crashed-check 2, desk printed line and died, missing timeout, slow probe, one-formatter site guard). The ready-loop race itself is not counted: its tests are placed between the two checks, so they do not depend on timing.
-- Mutants on the final tree (raw/b23-r6-mutation.log): r4-3, r4-10, r4-13, r5-5, r6-1, r6-2, r6-3, r6-4 all KILLED, each by named tests; tree clean afterwards (git status shows only the staged changes). Baseline: the 20 clean reruns above (the files the mutants use).
+- Mutants on the final tree (raw/b23-r6-mutation.log; run on the tree 44219b37, one step before the final tree: the only later changes are `TOOL_PROGRAMS` in constants.py and tests/test_exit_code_table.py, tests/test_start_all_late_refusal.py, none touched by these mutants; not rerun): r4-3, r4-10, r4-13, r5-5, r6-1, r6-2, r6-3, r6-4 all KILLED, each by named tests; tree clean afterwards (git status shows only the staged changes). Baseline: the 20 clean reruns above (the files the mutants use).
 - Lint on a clean copy of the tree: ruff check rc 0, ruff format --check rc 0, bandit -ll rc 0, mypy linux rc 0 (30 files), mypy win32 rc 0 (raw/b23-r6-lint-*.log).
 - Full run: see the last section.
+
+## Full run (final)
+First full run (copy of the tree WITHOUT a .git folder, on tree 44219b37; raw/b23-r6-full-run1-nogit.log): 9 failed, 4398 passed, 180 skipped, rc 1, 14 min 57 s. Cause: my setup slip. All 9 failures are tests that call git (`git ls-files` exits 128 in a folder with no repository): test_hygiene x5, test_nosemgrep_form, test_portal_demo, test_raw_bidi_chars, test_shell_single_bracket. Not a flake. It was not used as the final run.
+Rerunning those files in a one-commit scratch repo (raw/b23-r6-git-files-run.log) showed 3 REAL failures of my own code that the no-git run could not see:
+1. `src/lead_desk/constants.py` named `demo_only/...` paths (the tool-program file list), which only the loader may do (test_no_demo_only_outside_loader, test_only_loader_names_demo_only). Fixed: the constant now holds the program names only (`TOOL_PROGRAMS`); the file of each program is in tests/test_exit_code_table.py, with a test that the two lists name the same programs.
+2. test_hygiene_scan_public: hard-coded literals in my tests (`/usr/bin/grep` twice, a `b.sh` sample name). Fixed: `shutil.which("grep")`, and the sample file name is built from parts.
+The final run: ONE full run on a one-commit scratch repo of tree 8a5c446e (git init, add -A, commit; `git write-tree` there prints 8a5c446e), python 3.13, DPLD_REQUIRE_SCAN=1, gitleaks on PATH, no data/ folder, no xdist, `-p no:randomly`, started detached with the log outside the tree (raw/b23-r6-full-final.log, .xml, .time). Result: see the last line of this file.

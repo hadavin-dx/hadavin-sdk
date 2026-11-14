@@ -1515,7 +1515,7 @@ index 0000000..cb89414
 +    # UTF-8 bytes on purpose: print() would use the console's code page on Windows and could fail on a non-ASCII letter
 +    write_line(plain_line(sys.stdin.buffer.read().decode("utf-8", "replace"), os.environ))
 diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
-index ad79be1..fe2a8fd 100644
+index ad79be1..ff2c9e0 100644
 --- a/src/lead_desk/constants.py
 +++ b/src/lead_desk/constants.py
 @@ -23,13 +23,228 @@ HTTP_BUSY: Final = 503
@@ -1686,17 +1686,17 @@ index ad79be1..fe2a8fd 100644
 +)
 +# The programs above the setting rows do not have: they have their own files and never read the desk settings through
 +# the one reader, so they have no row for EXIT_SCRIPT_SETTING_REFUSED (tests/test_exit_code_table.py checks both lists).
-+TOOL_PROGRAM_FILES: Final[dict[str, str]] = {
-+    "check_schema": "scripts/check_schema.py",
-+    "hubspot_probe": "scripts/hubspot_probe.py",
-+    "run_live_check": "scripts/run_live_check.py",
-+    "n8n_api": "scripts/n8n_api.py",
-+    "check_invariants": "load_tools/check_invariants.py",
-+    "load_driver": "load_tools/load_driver.py",
-+    "catcher": "load_tools/catcher.py",
-+    "burst": "demo_only/burst.py",
-+    "fake_model_server": "demo_only/fake_model_server.py",
-+}
++TOOL_PROGRAMS: Final[tuple[str, ...]] = (
++    "check_schema",
++    "hubspot_probe",
++    "run_live_check",
++    "n8n_api",
++    "check_invariants",
++    "load_driver",
++    "catcher",
++    "burst",
++    "fake_model_server",
++)
 +
 +# The rows of the table that no test running on this build produces by running the program (the PowerShell rows are
 +# produced only by tests that run on Windows, skipped here; the others have no test yet). The printed table marks them.
@@ -1735,7 +1735,7 @@ index ad79be1..fe2a8fd 100644
 +    if any(p == program and code == EXIT_SCRIPT_SETTING_REFUSED for p, code, _ in EXIT_CODE_TABLE)
 +    else EXIT_DESK_SETTING_REFUSED
 +    for program in dict.fromkeys(p for p, _, _ in EXIT_CODE_TABLE)
-+    if program not in TOOL_PROGRAM_FILES  # the small tools do not read the desk settings
++    if program not in TOOL_PROGRAMS  # the small tools do not read the desk settings
 +}
 +LATE_SETTING_REFUSED_EXIT_BY_PROGRAM: Final[dict[str, int]] = {
 +    program: EXIT_DESK_SETTING_REFUSED
@@ -2700,10 +2700,10 @@ index 0000000..91b5490
 +    assert _PUBLIC_ADDRESS not in shown.replace(constants.PUBLIC_BIND_ADVICE, "")
 diff --git a/tests/test_exit_code_table.py b/tests/test_exit_code_table.py
 new file mode 100644
-index 0000000..d2d5a40
+index 0000000..c6e2aa2
 --- /dev/null
 +++ b/tests/test_exit_code_table.py
-@@ -0,0 +1,663 @@
+@@ -0,0 +1,681 @@
 +"""The one table of exit codes (`constants.EXIT_CODE_TABLE`, keyed by PROGRAM) must say what the programs do.
 +
 +Checked here: inside one program a code has one meaning; the numbers that mean different things in different programs
@@ -2760,11 +2760,25 @@ index 0000000..d2d5a40
 +    assert all(meaning.strip() for _, _, meaning in TABLE)
 +
 +
++# The file of each small tool program (the table names the programs only).
++TOOL_PROGRAM_FILES: dict[str, str] = {
++    "check_schema": "scripts/check_schema.py",
++    "hubspot_probe": "scripts/hubspot_probe.py",
++    "run_live_check": "scripts/run_live_check.py",
++    "n8n_api": "scripts/n8n_api.py",
++    "check_invariants": "load_tools/check_invariants.py",
++    "load_driver": "load_tools/load_driver.py",
++    "catcher": "load_tools/catcher.py",
++    "burst": "demo_only/burst.py",
++    "fake_model_server": "demo_only/fake_model_server.py",
++}
++
++
 +def test_every_program_of_the_table_exists() -> None:
-+    for program in PROGRAMS - {"server"} - set(c.TOOL_PROGRAM_FILES):
++    for program in PROGRAMS - {"server"} - set(c.TOOL_PROGRAMS):
 +        name = program if "." in program else f"{program}.py"
 +        assert (REPO / "scripts" / name).exists(), program
-+    for program, relative in c.TOOL_PROGRAM_FILES.items():
++    for program, relative in TOOL_PROGRAM_FILES.items():
 +        assert program in PROGRAMS and (REPO / relative).exists(), program
 +    assert set(SHELL_SCRIPTS) <= PROGRAMS
 +
@@ -2984,7 +2998,7 @@ index 0000000..d2d5a40
 +def test_every_program_that_reads_the_settings_has_the_script_setting_code_exactly_once() -> None:
 +    """The one script code is a row of every program except the desk, and has one meaning wherever it appears."""
 +    with_it = {p for p, code, _ in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED}
-+    assert with_it == PROGRAMS - {"server"} - set(c.TOOL_PROGRAM_FILES)
++    assert with_it == PROGRAMS - {"server"} - set(c.TOOL_PROGRAMS)
 +    assert {m for _, code, m in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED} == {c.MEANING_SCRIPT_SETTING_REFUSED}
 +
 +
@@ -3317,17 +3331,17 @@ index 0000000..d2d5a40
 +def test_the_code_prose_check_finds_a_number_in_a_docstring_and_a_comment(tmp_path: Path) -> None:
 +    sample = [
 +        (tmp_path / "a.py", 3, "the desk ends with exit code 4"),
-+        (tmp_path / "b.sh", 1, "# exits 3 when too few files"),
++        (tmp_path / ("b" + ".sh"), 1, "# exits 3 when too few files"),
 +        (tmp_path / "c.py", 2, "the portal gives 503 and exit 0 is fine"),
 +    ]
-+    assert _code_prose_numbers(sample) == [f"{tmp_path / 'a.py'}:3", f"{tmp_path / 'b.sh'}:1"]
++    assert _code_prose_numbers(sample) == [f"{tmp_path / 'a.py'}:3", f"{tmp_path / ('b' + '.sh')}:1"]
 +
 +
 +def test_every_program_that_ends_with_a_code_has_rows_in_the_table() -> None:
 +    """Reverse check: every file of scripts/, load_tools/ and demo_only/ that runs as a program and ends with a number
 +    (`sys.exit(`, `raise SystemExit(`, `return EXIT_`) is a program of the table. `http_guard.py` is a module that
 +    other programs import: it has no end of its own."""
-+    known = {f"scripts/{p}" if "." in p else f"scripts/{p}.py" for p in PROGRAMS} | set(c.TOOL_PROGRAM_FILES.values())
++    known = {f"scripts/{p}" if "." in p else f"scripts/{p}.py" for p in PROGRAMS} | set(TOOL_PROGRAM_FILES.values())
 +    known |= {"scripts/http_guard.py"}
 +    unlisted: list[str] = []
 +    for folder in ("scripts", "load_tools", "demo_only"):
@@ -3367,6 +3381,10 @@ index 0000000..d2d5a40
 +    assert _numbers_not_in_the_table("a page that says exit 9 somewhere")
 +    assert _numbers_not_in_the_table("the program ends with its own `77`")
 +    assert not _numbers_not_in_the_table("exit code 4 is a code of the table")
++
++
++def test_the_tool_program_files_are_exactly_the_programs_of_the_constant() -> None:
++    assert set(TOOL_PROGRAM_FILES) == set(c.TOOL_PROGRAMS)
 diff --git a/tests/test_late_refusal_value_echo.py b/tests/test_late_refusal_value_echo.py
 new file mode 100644
 index 0000000..b00646b
@@ -5124,10 +5142,10 @@ index 640e160..8b84356 100644
  
 diff --git a/tests/test_start_all_late_refusal.py b/tests/test_start_all_late_refusal.py
 new file mode 100644
-index 0000000..a3398fe
+index 0000000..1532309
 --- /dev/null
 +++ b/tests/test_start_all_late_refusal.py
-@@ -0,0 +1,570 @@
+@@ -0,0 +1,571 @@
 +"""scripts/start_all.sh must tell the truth when the desk it just started ends at once.
 +
 +Bug class: a script starts a background program, prints "started" and exits 0 without looking at it again, so a desk
@@ -5460,7 +5478,8 @@ index 0000000..a3398fe
 +    shim_dir = tmp_path / "shim"
 +    shim_dir.mkdir()
 +    shim = shim_dir / "grep"
-+    real_grep = "/usr/bin/grep" if Path("/usr/bin/grep").exists() else "/bin/grep"
++    real_grep = shutil.which("grep")
++    assert real_grep
 +    data = tmp_path / "data"
 +    shim.write_text(
 +        "#!/bin/bash\n"
@@ -5547,7 +5566,7 @@ index 0000000..a3398fe
 +    assert "^fakes server .* on port" in sh and "^fakes server .* on port" in ps1
 +
 +
-+REAL_GREP = "/usr/bin/grep" if Path("/usr/bin/grep").exists() else "/bin/grep"
++REAL_GREP = shutil.which("grep") or "grep"
 +
 +
 +def _grep_after_match(stub_dir: Path, pattern: str, then: str) -> None:

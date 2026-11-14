@@ -1,3 +1,17 @@
+## HEARTBEAT 140 (10:15Z) - B23 rerun of the full suite in progress (not handed back); B21 in mutants; B22 r13 narrow set green
+
+| Agent / job | State at 10:15Z (builder logs and checkpoints, not yet verified by me) |
+|---|---|
+| B23 fix-10 round 6 | NO hand-back yet. Its first full run (09:50-10:05Z) had 9 failures, all git-using tests, cause named: `git ls-files` exit 128, the run folder had no usable git repo (setup slip; I told it at ~10:08Z not to hand back on that run). Rerun started 10:09:46Z on a one-commit scratch repo, tree 8a5c446e, no xdist; log full2.log is at ~36% at 10:15Z; builder lint (2nd pass) clean. Result not known yet |
+| B21 fix-5 round 11 | checkpoint 10:05Z: all rows written, tree ad9c1a26; 121 mutants in 4 parts running (mut-p3.log exists); then ONE full run on a scratch repo, patch, notes. No survivor list yet |
+| B22 fix-2 round 13 | checkpoint 10:14Z: code done for rows 1-3, 5, 9-12, 15; row 4: SQLite 3.53.1 does not follow a link at -wal/-shm/-journal (dangling: no file made; existing: not written through, per its note; I have not re-run it); narrow set green on py3.13 (585) and py3.12 (705); lint, mypy linux and win32 clean on its clean copy. Next: mutants, full runs |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B23 first full run red (9 failures, one cause: no git repo in the run folder, 128 from git ls-files); rerun on a scratch repo under way. Not a pass until its log ends green.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no bash 4.4; IPv6 end-to-end skipped here (B23 notes); none of B21, B22, B23 final trees has a full run that I have read; WINDOWS-RUN-1 additions not yet written; B23 notes list crash_desk rows 2, 3, 5, 137 as "not produced by a test on this build".
+WHAT I WOULD DO NEXT (ranked): 1) B23 hand-back: git add -A, tree id (expect 8a5c446e), my own lint, two fresh reviewers; 2) write the WINDOWS-RUN-1 additions while waiting; 3) stack builder once B21 and B22 are clean.
+
 ## HEARTBEAT 139 (10:05Z) - B21 r11 at mutants; B23 r6 patch and notes on disk, hand-back not yet received; B22 r13 working
 
 | Agent / job | State at 10:05Z |

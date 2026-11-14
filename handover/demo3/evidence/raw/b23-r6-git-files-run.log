@@ -1,0 +1,79 @@
+F..F.................................................................... [ 17%]
+........................................................................ [ 34%]
+..F..................................................................... [ 51%]
+........................................................................ [ 69%]
+........................................................................ [ 86%]
+........................................................                 [100%]
+=================================== FAILURES ===================================
+_______________________ test_no_demo_only_outside_loader _______________________
+
+    def test_no_demo_only_outside_loader() -> None:
+        """src/ may name demo_only only in loader.py; tests/, scripts/, conftest.py, README and docs may."""
+        offenders = [
+            str(p.relative_to(REPO))
+            for p in sorted(SRC.rglob("*"))
+            if p.is_file()
+            and p.suffix in (".py", ".sql", ".md", ".txt", ".toml")
+            and p.name != "loader.py"
+            and "demo_only" in p.read_text(encoding="utf-8", errors="replace")
+        ]
+>       assert not offenders, f"src/ files that name demo_only (only loader.py may): {offenders}"
+E       AssertionError: src/ files that name demo_only (only loader.py may): ['src/lead_desk/constants.py']
+E       assert not ['src/lead_desk/constants.py']
+
+tests/test_hygiene.py:73: AssertionError
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-579/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         tests/test_exit_code_table.py:614:b.sh"
+E         tests/test_exit_code_table.py:617:b.sh'
+E         tests/test_start_all_late_refusal.py:333:"/usr/bin
+E         tests/test_start_all_late_refusal.py:333:"/usr/bin
+E         tests/test_start_all_late_refusal.py:420:"/usr/bin
+E         tests/test_start_all_late_refusal.py:420:"/usr/bin
+E       assert not ['tests/test_exit_code_table.py:614:b.sh"', "tests/test_exit_code_table.py:617:b.sh'", 'tests/test_start_all_late_refu..."/usr/bin', 'tests/test_start_all_late_refusal.py:420:"/usr/bin', 'tests/test_start_all_late_refusal.py:420:"/usr/bin']
+
+tests/test_hygiene.py:146: AssertionError
+_______________________ test_only_loader_names_demo_only _______________________
+
+    def test_only_loader_names_demo_only() -> None:
+        offenders = [
+            str(p.relative_to(REPO))
+            for p in sorted((REPO / "src").rglob("*.py"))
+            if "demo_only" in p.read_text(encoding="utf-8") and p.name != "loader.py"
+        ]
+>       assert not offenders, offenders
+E       AssertionError: ['src/lead_desk/constants.py']
+E       assert not ['src/lead_desk/constants.py']
+
+tests/test_portal_demo.py:304: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_no_demo_only_outside_loader - AssertionErr...
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+FAILED tests/test_portal_demo.py::test_only_loader_names_demo_only - Assertio...
+3 failed, 413 passed in 121.61s (0:02:01)

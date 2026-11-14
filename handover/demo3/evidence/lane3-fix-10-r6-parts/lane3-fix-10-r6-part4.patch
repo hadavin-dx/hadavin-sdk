@@ -1,5 +1,5 @@
 diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
-index ad79be1..fe2a8fd 100644
+index ad79be1..ff2c9e0 100644
 --- a/src/lead_desk/constants.py
 +++ b/src/lead_desk/constants.py
 @@ -23,13 +23,228 @@ HTTP_BUSY: Final = 503
@@ -170,17 +170,17 @@ index ad79be1..fe2a8fd 100644
 +)
 +# The programs above the setting rows do not have: they have their own files and never read the desk settings through
 +# the one reader, so they have no row for EXIT_SCRIPT_SETTING_REFUSED (tests/test_exit_code_table.py checks both lists).
-+TOOL_PROGRAM_FILES: Final[dict[str, str]] = {
-+    "check_schema": "scripts/check_schema.py",
-+    "hubspot_probe": "scripts/hubspot_probe.py",
-+    "run_live_check": "scripts/run_live_check.py",
-+    "n8n_api": "scripts/n8n_api.py",
-+    "check_invariants": "load_tools/check_invariants.py",
-+    "load_driver": "load_tools/load_driver.py",
-+    "catcher": "load_tools/catcher.py",
-+    "burst": "demo_only/burst.py",
-+    "fake_model_server": "demo_only/fake_model_server.py",
-+}
++TOOL_PROGRAMS: Final[tuple[str, ...]] = (
++    "check_schema",
++    "hubspot_probe",
++    "run_live_check",
++    "n8n_api",
++    "check_invariants",
++    "load_driver",
++    "catcher",
++    "burst",
++    "fake_model_server",
++)
 +
 +# The rows of the table that no test running on this build produces by running the program (the PowerShell rows are
 +# produced only by tests that run on Windows, skipped here; the others have no test yet). The printed table marks them.
@@ -219,7 +219,7 @@ index ad79be1..fe2a8fd 100644
 +    if any(p == program and code == EXIT_SCRIPT_SETTING_REFUSED for p, code, _ in EXIT_CODE_TABLE)
 +    else EXIT_DESK_SETTING_REFUSED
 +    for program in dict.fromkeys(p for p, _, _ in EXIT_CODE_TABLE)
-+    if program not in TOOL_PROGRAM_FILES  # the small tools do not read the desk settings
++    if program not in TOOL_PROGRAMS  # the small tools do not read the desk settings
 +}
 +LATE_SETTING_REFUSED_EXIT_BY_PROGRAM: Final[dict[str, int]] = {
 +    program: EXIT_DESK_SETTING_REFUSED

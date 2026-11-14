@@ -633,10 +633,10 @@ index 0000000..91b5490
 +    assert _PUBLIC_ADDRESS not in shown.replace(constants.PUBLIC_BIND_ADVICE, "")
 diff --git a/tests/test_start_all_late_refusal.py b/tests/test_start_all_late_refusal.py
 new file mode 100644
-index 0000000..a3398fe
+index 0000000..1532309
 --- /dev/null
 +++ b/tests/test_start_all_late_refusal.py
-@@ -0,0 +1,570 @@
+@@ -0,0 +1,571 @@
 +"""scripts/start_all.sh must tell the truth when the desk it just started ends at once.
 +
 +Bug class: a script starts a background program, prints "started" and exits 0 without looking at it again, so a desk
@@ -969,7 +969,8 @@ index 0000000..a3398fe
 +    shim_dir = tmp_path / "shim"
 +    shim_dir.mkdir()
 +    shim = shim_dir / "grep"
-+    real_grep = "/usr/bin/grep" if Path("/usr/bin/grep").exists() else "/bin/grep"
++    real_grep = shutil.which("grep")
++    assert real_grep
 +    data = tmp_path / "data"
 +    shim.write_text(
 +        "#!/bin/bash\n"
@@ -1056,7 +1057,7 @@ index 0000000..a3398fe
 +    assert "^fakes server .* on port" in sh and "^fakes server .* on port" in ps1
 +
 +
-+REAL_GREP = "/usr/bin/grep" if Path("/usr/bin/grep").exists() else "/bin/grep"
++REAL_GREP = shutil.which("grep") or "grep"
 +
 +
 +def _grep_after_match(stub_dir: Path, pattern: str, then: str) -> None:
