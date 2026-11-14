@@ -47,7 +47,11 @@ awk >120: only pre-existing long lines (support.py base had 1; test_mode_safety 
 No ruff/mypy/bandit run (CI only).
 
 ## RESULTS
-NOT FINISHED at hand-back time (03:24Z): the full serial run (raw/b9-full-313.log, ends with an rc= line) and the three-file reruns (raw/b9-three-313.log, raw/b9-three-312.log) were still running. No full-suite counts and no after-full-run data/ check exist yet. Read those logs for the result.
+Three files (test_reset_scripts, test_mode_safety, test_data_folder_helper) with the core helper, clean copy with the patch applied:
+- 3.13: 92 passed, 8 skipped, 1 xfailed, rc=0 (raw/b9-three-313.log).
+- 3.12: 92 passed, 8 skipped, 1 xfailed, rc=0 (raw/b9-three-312.log).
+- data/ absent in /home/user/work/m6-chk and /home/user/work/m6-tree at 03:24Z (before the full run finished).
+Full serial suite on 3.13: NOT FINISHED at hand-back time; read raw/b9-full-313.log (ends with an rc= line). No full-suite counts and no after-full-run data/ check yet.
 
 ## NOT DONE / NOT CHECKED
 - GITLEAKS_BIN run: not attempted (optional); the 30 gitleaks-binary failures are expected without it.
