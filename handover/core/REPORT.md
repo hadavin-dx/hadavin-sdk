@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:06 UTC / 21:36 IST
+
+**AGENTS RUNNING: 4** (3 builders + EV7T). Order applied: r7u split into 3 parallel builders on separate tree copies. The single r7u builder (ac3fa2a3) was STOPPED by me after 4 min (it had only written a test file, kept at out/R7U/builder0-test_r7u_findings.py.txt for reuse). Disk is 2.8 GB free: no mutant copies in parallel; the mutant agent starts after the merge.
+
+| id | what | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| a07e3822 (A) | tree-R7U-A: M1 cap fix, m1, m2, m3, m4 in scripts/run_real_check.py; tests/test_r7u_a_findings.py; 20+ mutants | C-R7U MUST | 16:06/21:36 | 17:06/22:36 | r7u | RUNNING | r7u-A.diff, RESULTS-A.md |
+| a397ac1e (B) | tree-R7U-B: m7 smtp counter checked reader (+ honest lag answer), m8, m5; tests/test_r7u_b_findings.py; 12+ mutants | C-R7U | 16:06/21:36 | 17:06/22:36 | r7u | RUNNING | r7u-B.diff, RESULTS-B.md |
+| a489ebfb (C) | tree-R7U-C: m6 light loopback module, n1 n2 docstrings, n5 README text, tests (settle raises, two concurrent puts, 201 without id); 12+ mutants | C-R7U | 16:06/21:36 | 17:06/22:36 | r7u | RUNNING | r7u-C.diff, RESULTS-C.md |
+| acdc878b (EV7T) | evidence on r7t | ORDER 268 | 15:53/21:23 | about 17:15/22:45 | EV7T | RUNNING; no disk error found in its logs | EV7T-EVIDENCE.md |
+
+Overlap control: A owns run_real_check.py except the smtp-counter read lines (B); C may not touch run_real_check.py; each has its own test file, tree and output dir; B and C both may touch run_stats.py (C docstrings only, B code only if needed). The merge is mine (apply the three diffs to tree-R7T copy, resolve any conflict, then ONE guard run, hashes, apply matrix), then a mutant agent on the merged tree, then EV7U and your fresh reviewer.
+
+ASK: none.
+NOT DONE / NOT CHECKED: all of r7u; EV7T result; whether the three diffs merge without conflict (checked only after hand-back); README edits and ON-PATH-LIST.md; Windows/PowerShell/CI/CodeQL/Sonar/CodeRabbit.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Check checkpoints at 15 min; supervise; stop any builder past its box after a note.
+2. Merge A+B+C into tree-R7U, one guard run, patches, hashes, apply matrix; start the mutant agent.
+3. EV7U and the fresh reviewer; README and ON-PATH-LIST.
+
+
 ## STATUS (core lead) 16:01 UTC / 21:31 IST
 
 **FAILED / NOT CHECKED (first): the cloud disk hit 100% (0 MB free) at about 16:01 UTC.** My first copy for r7u failed half-way and EV7T (running) may have had writes fail. I deleted my own half copy tree-R7U and finished-agent scratch dirs (tmp-R7C..R7L, tmp-EV4, tmp-DOCS, tmp-V*, tmp-F*, tmp-D1, tmp-AF, tmp-tree-A2 under /home/user/build/rr6; none were frozen trees, EV*, REV*, M8-M12* or out/*). 3.0 GB free now. I have NOT yet read whether EV7T lost output: I will check its log for "No space left" before trusting any EV7T number. The r7u builder was told to check `df` before each copy and stop under 1 GB.
