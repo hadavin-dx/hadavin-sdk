@@ -1,5 +1,16 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 13:30Z - T7b extended with the WAL checkpoint question (pushed, not run); idle otherwise
+
+- T7b now also: stops n8n, copies the data folder, opens the COPY with sqlite3, runs PRAGMA wal_checkpoint(TRUNCATE), counts needles in the main database file, and lists which tables hold a LIVE row with the needle (a needle in the main file but in no live row = freed pages; in a table = still stored). Written into the REC line `T7b after_stop_and_checkpoint`. The V4 chain on the laptop started T7b before this change (it has the first version: grep only), so for this answer the laptop needs one more T7b run on the pushed mf.py (about 2 minutes). I did not run it (no disk).
+- Heartbeat: idle, nothing running, laptop results unread.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- WAL/main-file answer; T15 and T14 results unread; T4, pattern check, real-node flows, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read laptop T7b, T14, T10, K3, K3B and T15. 2. Write the page statement of where lead data sits once the checkpoint answer exists. 3. Lead id pattern check.
+
 ## Block 13:21Z - GREP finding 2 (plaintext in n8n's -wal): test T7b and N8N-START.md pushed, cause NOT yet found, NOT RUN
 
 - Env names read from the n8n 2.46.6 source (node_modules, @n8n/config): EXECUTIONS_DATA_SAVE_ON_SUCCESS, _ON_ERROR, _ON_PROGRESS, EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS. My harness did NOT set them at env level (grep of the harness env: none). My flows DO set saveDataSuccessExecution=none, saveDataErrorExecution=none, saveManualExecutions=false in every workflow's settings (build_mainframe.py line 33). So lane3's hits were with workflow-level none already on.

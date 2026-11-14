@@ -253,8 +253,30 @@ def t7b():
         for n, v in needles.items():
             if v.encode() in b: hits[n]["flows/" + fn] = b.count(v.encode())
     rec("T7b", files_scanned=len(files), hits=hits, wal_present=any(f.endswith("-wal") for f in files))
+    # WAL question: stop n8n (SIGTERM first, as lib.kill_n8n does), copy the data folder, open the COPY with sqlite3, PRAGMA wal_checkpoint(TRUNCATE), grep again; then ask which tables still hold a needle (live rows) -> "in main file only / freed pages" if no live row holds it
+    import sqlite3, shutil, tempfile
+    after = {"wal_hits_before_checkpoint": {n: dict(h) for n, h in hits.items() if any("wal" in f for f in h)}}
+    try:
+        lib.kill_n8n(); time.sleep(2); tmp = tempfile.mkdtemp(prefix="t7b-copy-", dir=WORK); cp = os.path.join(tmp, "n8nhome"); shutil.copytree(os.path.join(WORK, "n8nhome"), cp)
+        dbs = [os.path.join(r, f) for r, _, fs in os.walk(cp) for f in fs if f == "database.sqlite"]; live = {}; main_hits = {}; ck = {}
+        for db in dbs:
+            con = sqlite3.connect(db); ck["checkpoint"] = con.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall(); con.commit()
+            for n, v in needles.items():
+                c = open(db, "rb").read().count(v.encode())
+                if c: main_hits[n] = c
+            for (tb,) in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall():
+                cols = [r[1] for r in con.execute('PRAGMA table_info("%s")' % tb)]
+                for n, v in needles.items():
+                    q = " OR ".join('CAST("%s" AS TEXT) LIKE ?' % c for c in cols)
+                    try: cnt = con.execute('SELECT count(*) FROM "%s" WHERE %s' % (tb, q), ["%" + v + "%"] * len(cols)).fetchone()[0]
+                    except sqlite3.Error: cnt = None
+                    if cnt: live.setdefault(n, {})[tb] = cnt
+            con.close()
+        after.update(checkpoint=ck, hits_in_main_file_after_checkpoint=main_hits, tables_with_live_rows_holding_needle=live)
+    except Exception as e: after["error"] = "%s: %s" % (type(e).__name__, str(e)[:200])
+    rec("T7b", after_stop_and_checkpoint=after)
     ok = not hits["fake_model_key"] and not hits["fake_smtp_password"] and not hits["planted_name"] and not hits["planted_email"]
-    result("T7b", ok, "files scanned %d (n8n data folder incl. -wal/-shm, n8n log, deployed flow JSON), execution saving off at env and workflow level: hits per needle: %s" % (len(files), json.dumps(hits)), hits=hits)
+    result("T7b", ok, "(after-stop checkpoint answer is in the REC line T7b after_stop_and_checkpoint) files scanned %d (n8n data folder incl. -wal/-shm, n8n log, deployed flow JSON), execution saving off at env and workflow level: hits per needle: %s" % (len(files), json.dumps(hits)), hits=hits)
 def t14():
     """IDLE stack (F-REC-EMPTY): no lead sent; the recovery flow runs every 30 s for IDLE_S seconds (default 120). Expected: 0 stage requests, 0 model calls, 0 CRM requests, 0 mails (no alert), 0 SMTP connections, 0 table rows."""
     mf_stack(); n8n_prepare_mf(); restart_n8n(); secs = int(os.environ.get("MF_IDLE_S", "120"))
