@@ -1,3 +1,18 @@
+## HEARTBEAT 125 (08:05Z) - fix-10 r4 reviewed: 7 Majors, resolved, B23 round 5 started; B21 and B22 building
+
+| Agent / job | State at 08:05Z |
+|---|---|
+| fix-10 r4 reviews | saved: design 2 Major (desk number lists in docs still outside the one table; IPv6 host can never work because the demo server always binds IPv4) and codedetails 5 Major (two time-dependent tests; foreign listener on the demo-server port; Python helper prints in the Windows code page; ps1 encoding setters). I confirmed the IPv6 and print() findings in the code |
+| egm-resolve fix-10 r4 | done: 24 rows, 22 accepted, 1 escalated (scrub narrowing: row 10, for you: I recommend KEEP, the current behaviour is safe). B23 resumed for round 5, expected end about 09:05Z |
+| B21 fix-5 round 9 | building; no checkpoint line since 07:45Z; next check at 08:15Z |
+| B22 fix-2 round 11 | building; no hand-back yet |
+| Stack builder | waits for B21 and B22 (your order) |
+
+ASK for the lead: row 10 scrub narrowing (12-character rule for host-like, non-secret values): keep as is (my recommendation, safe) or narrow later after the owner decides? No change until you say so.
+FAILURES AND RETRIES: the r4 survivors (2 mutants) were not accepted as "backing each other up": one is a real test gap, one an equivalent mutant; both handled in round 5.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; WINDOWS-RUN-1 needs 3 new lines (OutputEncoding, demo-server ownership line, B16 quoting) which I add when the stack is cut; no full run until the stack.
+WHAT I WOULD DO NEXT (ranked): 1) B21/B22/B23 hand-backs: lint, reconcile, fresh review of each delta; 2) WINDOWS-RUN-1 update; 3) the one stack builder, then the stack reviewer and the stack full run.
+
 ## HEARTBEAT 124 (08:02Z) - hold lifted by the lead; B21 and B22 widened to behaviour rows; fix-10 design review in (2 Major), code review still running
 
 | Agent / job | State at 08:02Z |
