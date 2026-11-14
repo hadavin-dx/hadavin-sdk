@@ -10,3 +10,48 @@ M2 [trim moved to the caller (caller locale)]: rc=1 KILLED :: 7 failed, 31 passe
 <   pid="${pid#$'\xef\xbb\xbf'}"
 <     if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi # 64 bytes (after the mark) or more is far longer than any process number
 >     if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi; pid="${pid#$'\xef\xbb\xbf'}" # 64 bytes (after the mark) or more is far longer than any process
+M3 [BOM strip moved to the caller (caller locale)]: rc=1 KILLED :: 2 failed, 36 passed, 59 deselected in 40.22s
+< alive() { kill -0 "$1" 2>/dev/null && [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]; }
+> # kill -0 also fails for a process we may not signal (EPERM): ps then still shows it, and it counts as alive
+> alive() {
+>   kill -0 "$1" 2>/dev/null || ps -p "$1" >/dev/null 2>&1 || return 1
+>   [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]
+> }
+<   if [[ ! "$size" =~ ^[0-9]+$ ]] || (( ${#pid} != (size < 67 ? size : 67) )); then pid=""; return 0; fi # zero bytes were dropped
+>   if false; then pid=""; return 0; fi # zero bytes were dropped
+<     if ! is_ours "$pid" "$(proc_args "$pid" || true)"; then
+>     if is_ours "$pid" "$(proc_args "$pid" || true)"; then
+>       kill "$pid" 2>/dev/null || true
+>     elif alive "$pid"; then # still there, and not the desk: (an empty line from a process that ended during the look is no reason to refuse)
+<     kill "$pid" 2>/dev/null || true
+< python scripts/reset_check.py || exit $?
+> check_exit=0
+> python scripts/reset_check.py || check_exit=$?
+> case "$check_exit" in
+>   0) ;;
+>   3|4) exit "$check_exit" ;; # the check says why on standard error
+>   *) echo "refused: the check program failed (exit $check_exit); nothing was deleted, not even the pid files${stopped:+ (already stopped: $stopped)}" >&2; exi
+> esac
+M4 [NUL/size comparison removed]: rc=1 KILLED :: 4 failed, 34 passed, 59 deselected in 20.37s
+< alive() { kill -0 "$1" 2>/dev/null && [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]; }
+> # kill -0 also fails for a process we may not signal (EPERM): ps then still shows it, and it counts as alive
+> alive() {
+>   kill -0 "$1" 2>/dev/null || ps -p "$1" >/dev/null 2>&1 || return 1
+>   [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]
+> }
+<   if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
+>   if (( ${#pid} >= 64 )); then pid=""; return 0; fi
+<     if ! is_ours "$pid" "$(proc_args "$pid" || true)"; then
+>     if is_ours "$pid" "$(proc_args "$pid" || true)"; then
+>       kill "$pid" 2>/dev/null || true
+>     elif alive "$pid"; then # still there, and not the desk: (an empty line from a process that ended during the look is no reason to refuse)
+<     kill "$pid" 2>/dev/null || true
+< python scripts/reset_check.py || exit $?
+> check_exit=0
+> python scripts/reset_check.py || check_exit=$?
+> case "$check_exit" in
+>   0) ;;
+>   3|4) exit "$check_exit" ;; # the check says why on standard error
+>   *) echo "refused: the check program failed (exit $check_exit); nothing was deleted, not even the pid files${stopped:+ (already stopped: $stopped)}" >&2; exi
+> esac
+M5 [non-ASCII/non-printable check removed]: rc=1 KILLED :: 7 failed, 31 passed, 59 deselected in 20.80s
