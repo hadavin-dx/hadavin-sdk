@@ -22,7 +22,7 @@ PROBE = os.path.join(K, "probe")
 PSQL = ["psql", "-h", "127.0.0.1", "-p", "55432", "-U", "postgres", "-d", "kill_t", "-At", "-F", "|"]
 PORT = {"crm": 18101, "stage": 18102, "smtp": 2525, "n8n": 5690}
 FLOWS = ["mf-sub-crm-mail", "mf-form", "mf-hook", "mf-recovery"]
-PUBLISH_IDS = ["form000000000001", "hook000000000001", "recov00000000001"]
+PUBLISH_IDS = ["subflow0000000001", "form000000000001", "hook000000000001", "recov00000000001"]
 TERMINAL = ("done", "unknown", "failed", "review")
 
 
@@ -122,8 +122,12 @@ class Run:
             if self.n8n.poll() is not None:
                 raise RuntimeError("n8n_exited rc=%s" % self.n8n.returncode)
             if http("GET", "http://127.0.0.1:%d/healthz" % PORT["n8n"], timeout=3)[0] == 200:
-                time.sleep(3)  # let the webhook and schedule registration settle
-                return time.time()
+                while time.time() < end:  # a GET tells a registered POST-only webhook from an unregistered one
+                    code, body = http("GET", "http://127.0.0.1:%d/webhook/mf-form" % PORT["n8n"], timeout=3)
+                    if "not registered for GET" in body or "Did you mean" in body:
+                        return time.time()
+                    time.sleep(0.5)
+                raise RuntimeError("webhook_not_registered")
             time.sleep(0.5)
         raise RuntimeError("n8n_not_healthy")
 
@@ -230,7 +234,6 @@ def main():
     leads = ["L-" + label]
     try:
         r.prepare_n8n()
-        sql("ALTER TABLE mf_leads ADD COLUMN IF NOT EXISTS label text")  # F-DDL: pushed mf_leads.sql lacks it
         sql("TRUNCATE mf_leads")
         r.start_fakes()
         r.start_n8n()
@@ -259,6 +262,9 @@ def main():
             with cf2.ThreadPoolExecutor(2) as ex:
                 futs = [ex.submit(r.send, l) for l in leads]
                 out["sends"] = [f.result() for f in futs]
+        elif point == "idle":
+            time.sleep(100)  # no lead at all: recovery ticks every 30 s on an empty table
+            leads = []
         elif point == "controlbad":
             out["send"] = r.send(leads[0], email="not-an-email")
         elif point == "Fa":
@@ -270,11 +276,14 @@ def main():
         elif point == "Fc":
             r.ctl("smtp.ctl", {"pre_s": 40})
             out["send"] = r.send(leads[0])
-        out["reached_terminal"] = r.wait_terminal(leads)
-        time.sleep(20)  # settle: a late double would show here
+        out["reached_terminal"] = r.wait_terminal(leads) if leads else True
+        time.sleep(20 if leads else 0)  # settle: a late double would show here
         out["states"] = r.states()
         out["counts"] = r.count(leads)
         out["events"] = len(r.lines("events.jsonl"))
+        out["all_mails"] = [json.loads(x).get("subject") for x in r.lines("mails.jsonl")]
+        out["stage_qualify_events"] = sum(1 for x in r.lines("events.jsonl") if "qualify_start" in x)
+        out["crm_upsert_events"] = sum(1 for x in r.lines("events.jsonl") if "upsert_start" in x)
     except Exception as e:  # noqa: BLE001
         out["error"] = "%s: %s" % (type(e).__name__, e)
     finally:
