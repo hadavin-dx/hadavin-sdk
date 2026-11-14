@@ -1,5 +1,28 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 11:25 UTC / 16:55 IST
+
+**Snapshot PUSHED (before this block): handover/core/snapshot-r7q/** with MANIFEST.txt (path and sha256 of 8 files, base and patch hash), files/ (the 7 changed files as in tree-R7Q plus the new tests/test_r7q_findings.py) and delta-r7p-to-r7q.diff (945 lines, plain unified diff). I built it from the two trees myself; I did not re-compare it against the patch hashes. No pass 12 findings file exists in handover/core/review/ (only the r7n and r7o reviews); spec for your reviewer = those two plus handover/core/fix/R7Q-RESULTS.md (builder claims, unverified).
+
+**EV7P (ae0c8973, started 11:13) progress from its checkpoints, runner claims not yet an evidence file:** patches' sha OK; its tree from the CRLF patch equals tree-R7Q (pycache aside). **It reports the LF patch FAILS on a plain copy whose .ps1 files have CRLF; it applies only after a sed to LF on those two ps1 files (copy c is the LF checkout case, so this matches the apply matrix, but the builder's matrix wording "c-lf" depends on LF checkout: README must say so).** Suppressions: noqa 188 to 193, all 5 new in tests, src unchanged (matches builder). Full pytest run in progress (running about 12 min). Hostile drivers written, run after the full run. Hygiene in a staged git copy not yet run. No denial so far.
+
+| id | what | started UTC/IST | expected end | state | next |
+|---|---|---|---|---|---|
+| ae0c8973 (EV7P) | full run on r7q, hygiene, ruff 0.17.1, hostile table | 11:13 / 16:43 | about 12:13 | RUNNING (full run) | push EV7P-EVIDENCE.md the moment it lands, tell you |
+| independent r7q reviewer | review | you start it (your answer) | | LEAD-RUN | I send you nothing more until you ask |
+
+Agents running: 1.
+
+ASK: none new (M9-74 probe question stands, default pytest fake in your reviewer's run).
+
+NOT DONE / NOT CHECKED: EV7P result (full run, hygiene, ruff, hostile table); the independent review; M9-74 test, M9-79 measure; off-path items (paused).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7P when it lands, compare with builder numbers (378 passed 1 disturbed, 224, ruff clean), push it.
+2. Fold any real Blocker/Major from your reviewer test-first; fresh EV on the final head.
+3. ON-PATH-LIST.md update. Next block about 11:35Z.
+
+
 ## STATUS (core lead) 11:13 UTC / 16:43 IST
 
 **FAILED: the fresh r7q reviewer is NOT running.** The studio gate hook refused my general-purpose reviewer brief ("reviews must be run by the egm:* reviewer agents ... a general-purpose agent may only be an EVIDENCE RUNNER"), and the agent type egm:egm-codebase-details is not registered here ("not found"). I did not reword the brief to pass the hook and did not label a reviewer as an evidence runner. This is the same fallback that was accepted earlier in this session, so the hook rule or its matching has changed: I do not know which.
