@@ -1,0 +1,137 @@
+.............FF.FF.F.FFF.                                                [100%]
+=================================== FAILURES ===================================
+_____ test_each_program_has_exactly_the_rows_listed_here_by_constant_name ______
+
+    def test_each_program_has_exactly_the_rows_listed_here_by_constant_name() -> None:
+        assert len(TABLE) == len(set(TABLE))
+>       assert set(TABLE) == _expected_rows(), (set(TABLE) ^ _expected_rows())
+                             ^^^^^^^^^^^^^^^^
+
+tests/test_exit_code_table.py:226: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _expected_rows() -> set[tuple[str, int, str]]:
+        """EXPECTED_ROWS resolved by constant NAME to (program, code, meaning). A name that does not exist raises here."""
+        return {
+>           (program, getattr(c, code_name), getattr(c, meaning_name))
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^
+            for program, names in EXPECTED_ROWS.items()
+            for code_name, meaning_name in names.items()
+        }
+E       AttributeError: module 'lead_desk.constants' has no attribute 'MEANING_START_DESK_SETTING_REFUSED'. Did you mean: 'MEANING_DESK_SETTING_REFUSED'?
+
+tests/test_exit_code_table.py:218: AttributeError
+_________ test_a_deleted_or_a_wrong_row_is_seen_by_the_name_comparison _________
+
+    def test_a_deleted_or_a_wrong_row_is_seen_by_the_name_comparison() -> None:
+        """The check itself: it is not vacuous. A deleted row, an added row and a swapped meaning each make it fail."""
+        deleted = tuple(r for r in TABLE if not (r[0] == "run_real_check" and r[1] == c.EXIT_CHECK_STOPPED))
+>       assert set(deleted) != _expected_rows()
+                               ^^^^^^^^^^^^^^^^
+
+tests/test_exit_code_table.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _expected_rows() -> set[tuple[str, int, str]]:
+        """EXPECTED_ROWS resolved by constant NAME to (program, code, meaning). A name that does not exist raises here."""
+        return {
+>           (program, getattr(c, code_name), getattr(c, meaning_name))
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^
+            for program, names in EXPECTED_ROWS.items()
+            for code_name, meaning_name in names.items()
+        }
+E       AttributeError: module 'lead_desk.constants' has no attribute 'MEANING_START_DESK_SETTING_REFUSED'. Did you mean: 'MEANING_DESK_SETTING_REFUSED'?
+
+tests/test_exit_code_table.py:218: AttributeError
+___ test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts ___
+
+    def test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts() -> None:
+        sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+        ps = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
+        sh_codes = re.search(r"case \"\$desk_code\" in ([0-9|]+)\)", sh)
+        ps_codes = re.search(r"\$deskCode -in ([0-9, ]+)\)", ps)
+        assert sh_codes and ps_codes
+>       assert tuple(int(n) for n in sh_codes.group(1).split("|")) == c.PASSED_ON_DESK_CODES
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'PASSED_ON_DESK_CODES'
+
+tests/test_exit_code_table.py:256: AttributeError
+_______ test_every_row_has_a_producing_test_or_is_listed_as_not_produced _______
+
+    def test_every_row_has_a_producing_test_or_is_listed_as_not_produced() -> None:
+        rows = {(p, code) for p, code, _ in TABLE}
+>       not_produced = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'EXIT_ROWS_NOT_PRODUCED_BY_A_TEST'
+
+tests/test_exit_code_table.py:300: AttributeError
+__________________ test_a_new_row_that_no_test_names_is_seen ___________________
+
+    def test_a_new_row_that_no_test_names_is_seen() -> None:
+        """The check itself: a row added to the table and to neither list is reported."""
+        extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, c.MEANING_SIMULATED_KILL))
+        rows = {(p, code) for p, code, _ in extra}
+>       assert rows - set(PRODUCED_BY) - set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST) == {("feed", c.EXIT_SIMULATED_KILL)}
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'EXIT_ROWS_NOT_PRODUCED_BY_A_TEST'
+
+tests/test_exit_code_table.py:316: AttributeError
+_______ test_the_table_printed_in_docs_settings_md_is_the_generated_one ________
+
+    def test_the_table_printed_in_docs_settings_md_is_the_generated_one() -> None:
+        text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
+>       assert render.current_block(text) == render.block()
+                                             ^^^^^^^^^^^^^^
+
+tests/test_exit_code_table.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/render_exit_table.py:36: in block
+    return f"{START}\n{render()}\n{END}"
+                       ^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def render() -> str:
+        """The table as Markdown text: one row per (program, code), in the order of the constant."""
+>       skipped = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'EXIT_ROWS_NOT_PRODUCED_BY_A_TEST'
+
+tools/render_exit_table.py:27: AttributeError
+_ test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces _
+
+    def test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces() -> None:
+>       lines = render.render().splitlines()
+                ^^^^^^^^^^^^^^^
+
+tests/test_exit_code_table.py:340: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def render() -> str:
+        """The table as Markdown text: one row per (program, code), in the order of the constant."""
+>       skipped = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'EXIT_ROWS_NOT_PRODUCED_BY_A_TEST'
+
+tools/render_exit_table.py:27: AttributeError
+_______ test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table ________
+
+    def test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table() -> None:
+        for page in _PAGES:
+>           assert not _prose_numbers(page.read_text(encoding="utf-8")), page.name
+E           AssertionError: settings.md
+E           assert not [(16, '| `leadflow_path` | `DESK_LEADFLOW_FILE` | none (off) | a JSON file with the lead owner li'), (116, '* `scripts...sed (with `--cl'), (132, '* A refused `DESK_*` setting: 4 from the desk itself; 8 from every script that reads the s')]
+E            +  where [(16, '| `leadflow_path` | `DESK_LEADFLOW_FILE` | none (off) | a JSON file with the lead owner li'), (116, '* `scripts...sed (with `--cl'), (132, '* A refused `DESK_*` setting: 4 from the desk itself; 8 from every script that reads the s')] = _prose_numbers('# Settings\n\nEvery setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad ... limit is too low; 4 a setting was refused; 5 the port could not be bound. 137 is only the crash script, on purpose.\n')
+E            +    where '# Settings\n\nEvery setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad ... limit is too low; 4 a setting was refused; 5 the port could not be bound. 137 is only the crash script, on purpose.\n' = read_text(encoding='utf-8')
+E            +      where read_text = PosixPath('/home/user/work/b23-old/docs/settings.md').read_text
+
+tests/test_exit_code_table.py:373: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_exit_code_table.py::test_each_program_has_exactly_the_rows_listed_here_by_constant_name
+FAILED tests/test_exit_code_table.py::test_a_deleted_or_a_wrong_row_is_seen_by_the_name_comparison
+FAILED tests/test_exit_code_table.py::test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts
+FAILED tests/test_exit_code_table.py::test_every_row_has_a_producing_test_or_is_listed_as_not_produced
+FAILED tests/test_exit_code_table.py::test_a_new_row_that_no_test_names_is_seen
+FAILED tests/test_exit_code_table.py::test_the_table_printed_in_docs_settings_md_is_the_generated_one
+FAILED tests/test_exit_code_table.py::test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces
+FAILED tests/test_exit_code_table.py::test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table
+8 failed, 17 passed in 1.16s

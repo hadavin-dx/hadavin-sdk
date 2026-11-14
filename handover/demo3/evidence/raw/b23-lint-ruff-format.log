@@ -1,0 +1,135 @@
+unformatted: File would be reformatted
+   --> scripts/run_real_check.py:106:1
+    |
+105 |
+106 +
+107 | # Made-up lead addresses on the reserved example domain (not `.test`: a real CRM may refuse that as an invalid
+--------------------------------------------------------------------------------
+629 |             context = ssl.create_default_context(cafile=ca) if ca else None
+    -         except (OSError, ssl.SSLError):  # a missing, unreadable or not-a-certificate file: names the setting, not the path
+630 +         except (
+631 +             OSError,
+632 +             ssl.SSLError,
+633 +         ):  # a missing, unreadable or not-a-certificate file: names the setting, not the path
+634 |             raise SettingRefused(f"{p}CA_FILE cannot be used (a missing file or not a certificate file)") from None
+--------------------------------------------------------------------------------
+858 |             except OSError:  # a folder or a port of the self-test: a failure of this machine, not a refused setting
+    -                 print("refused: the self-test could not start its local test servers (a folder or a port was not usable)")
+859 +                 print(
+860 +                     "refused: the self-test could not start its local test servers (a folder or a port was not usable)"
+861 +                 )
+862 |                 return EXIT_CHECK_STOPPED
+--------------------------------------------------------------------------------
+870 |                 env = load_env(a.config)
+    -             except PathRefused as e:  # the text given with --config is not a usable file name: the command line is wrong
+871 +             except (
+872 +                 PathRefused
+873 +             ) as e:  # the text given with --config is not a usable file name: the command line is wrong
+874 |                 print(refusal_line("refused:", e))
+    |
+
+unformatted: File would be reformatted
+   --> src/lead_desk/constants.py:114:54
+    |
+113 | )
+    - PASSED_ON_DESK_CODES: Final[tuple[int, ...]] = tuple(code for code, _ in _PASSED_ON)  # start_all passes on exactly these
+114 + PASSED_ON_DESK_CODES: Final[tuple[int, ...]] = tuple(
+115 +     code for code, _ in _PASSED_ON
+116 + )  # start_all passes on exactly these
+117 | _RESET_ROWS: Final[tuple[tuple[int, str], ...]] = (
+--------------------------------------------------------------------------------
+178 |     for program in dict.fromkeys(p for p, _, _ in EXIT_CODE_TABLE)
+    -     if any(p == program and meaning in _DESK_REFUSAL_TEXTS for p, _, meaning in EXIT_CODE_TABLE)
+    -     and program != "server"
+179 +     if any(p == program and meaning in _DESK_REFUSAL_TEXTS for p, _, meaning in EXIT_CODE_TABLE) and program != "server"
+180 | }
+    |
+
+unformatted: File would be reformatted
+   --> tests/test_exit_code_table.py:226:44
+    |
+225 |     assert len(TABLE) == len(set(TABLE))
+    -     assert set(TABLE) == _expected_rows(), (set(TABLE) ^ _expected_rows())
+226 +     assert set(TABLE) == _expected_rows(), set(TABLE) ^ _expected_rows()
+227 |
+--------------------------------------------------------------------------------
+268 | PRODUCED_BY: dict[tuple[str, int], str] = {
+    -     ("server", c.EXIT_ADAPTERS_UNREACHABLE): "test_exit_code_table.py::test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down",
+269 +     (
+270 +         "server",
+271 +         c.EXIT_ADAPTERS_UNREACHABLE,
+272 +     ): "test_exit_code_table.py::test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down",
+273 |     ("server", c.EXIT_ANOTHER_DESK): "test_http.py::test_second_desk_refuses_to_start",
+274 |     ("server", c.EXIT_OPEN_FILE_LIMIT): "test_stall_eviction.py::test_main_exits_3_on_a_too_small_limit",
+275 |     ("server", c.EXIT_DESK_SETTING_REFUSED): "test_model_stamp_and_reaper.py::test_main_exits_4_when_the_desk_refuses",
+276 |     ("server", c.EXIT_PORT_UNAVAILABLE): "test_http.py::test_second_desk_refuses_to_start",
+    -     ("crash_desk", c.EXIT_DESK_SETTING_REFUSED): "test_bad_setting_entry_points.py::test_crash_desk_gives_the_desks_own_code_for_a_late_refusal",
+277 +     (
+278 +         "crash_desk",
+279 +         c.EXIT_DESK_SETTING_REFUSED,
+280 +     ): "test_bad_setting_entry_points.py::test_crash_desk_gives_the_desks_own_code_for_a_late_refusal",
+281 |     ("crash_desk", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
+--------------------------------------------------------------------------------
+288 |     ("reset.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
+    -     ("reset_check", c.EXIT_RESET_HELD): _RESET_T + "test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at",
+289 +     ("reset_check", c.EXIT_RESET_HELD): _RESET_T
+290 +     + "test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at",
+291 |     ("reset_check", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
+292 |     ("start_all.sh", c.EXIT_START_NOT_DONE): _START_T + "test_a_bad_wait_setting_is_refused_before_anything_is_started",
+    -     ("start_all.sh", c.EXIT_NOT_BASH): "test_exit_code_table.py::test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code",
+293 +     (
+294 +         "start_all.sh",
+295 +         c.EXIT_NOT_BASH,
+296 +     ): "test_exit_code_table.py::test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code",
+297 |     ("start_all.sh", c.EXIT_OPEN_FILE_LIMIT): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
+    -     ("start_all.sh", c.EXIT_DESK_SETTING_REFUSED): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
+298 +     ("start_all.sh", c.EXIT_DESK_SETTING_REFUSED): _START_T
+299 +     + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
+300 |     ("start_all.sh", c.EXIT_PORT_UNAVAILABLE): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
+--------------------------------------------------------------------------------
+304 |     ("run_real_check", c.EXIT_CHECK_FAILED): _CHECK_T + "test_a_dry_run_where_every_send_ends_in_doubt_fails",
+    -     ("run_real_check", c.EXIT_SCRIPT_SETTING_REFUSED): _CHECK_T + "test_swapped_mailbox_order_is_a_refused_setting_with_one_line",
+305 +     ("run_real_check", c.EXIT_SCRIPT_SETTING_REFUSED): _CHECK_T
+306 +     + "test_swapped_mailbox_order_is_a_refused_setting_with_one_line",
+307 | }
+--------------------------------------------------------------------------------
+313 |     assert not (set(PRODUCED_BY) & not_produced), set(PRODUCED_BY) & not_produced
+    -     assert set(PRODUCED_BY) | not_produced == rows, (rows - set(PRODUCED_BY) - not_produced, (set(PRODUCED_BY) | not_produced) - rows)
+314 +     assert set(PRODUCED_BY) | not_produced == rows, (
+315 +         rows - set(PRODUCED_BY) - not_produced,
+316 +         (set(PRODUCED_BY) | not_produced) - rows,
+317 +     )
+318 |
+--------------------------------------------------------------------------------
+367 | _PROGRAM_WORDS = ("crash_desk", "reset_check", "run_real_check", "reset.sh", "reset.ps1", "start_all", "feed.py")
+    - _EXIT_NUMBER = re.compile(r"(?:\bexit(?:s| code| codes)?\s*[(:]?\s*|\bcode\s+|\b(?:returns|gives|ends with)\s+(?:code\s+)?)(\d+)\b")
+368 + _EXIT_NUMBER = re.compile(
+369 +     r"(?:\bexit(?:s| code| codes)?\s*[(:]?\s*|\bcode\s+|\b(?:returns|gives|ends with)\s+(?:code\s+)?)(\d+)\b"
+370 + )
+371 |
+    |
+
+unformatted: File would be reformatted
+   --> tests/test_ps1_pins.py:163:46
+    |
+162 |     "alive check dropped": ("if ($fakesUp -and -not $fakes.HasExited) { break }", "if ($fakesUp) { break }"),
+    -     "desk wait ignores a dead demo server": ("    if ($fakes.HasExited) { break }\n    if ((Test-Path", "    if ((Test-Path"),
+163 +     "desk wait ignores a dead demo server": (
+164 +         "    if ($fakes.HasExited) { break }\n    if ((Test-Path",
+165 +         "    if ((Test-Path",
+166 +     ),
+167 |     "ready without the demo server check": ("if ($ready -and $fakes.HasExited) { $ready = $false }", ""),
+    |
+
+unformatted: File would be reformatted
+   --> tests/test_setting_reader_guard.py:206:70
+    |
+205 |         fn = node.func
+    -         is_path = (isinstance(fn, ast.Name) and fn.id == "Path") or (isinstance(fn, ast.Attribute) and fn.attr == "Path")
+206 +         is_path = (isinstance(fn, ast.Name) and fn.id == "Path") or (
+207 +             isinstance(fn, ast.Attribute) and fn.attr == "Path"
+208 +         )
+209 |         if is_path and _env_source(node.args[0], tainted):
+    |
+
+5 files would be reformatted, 162 files already formatted

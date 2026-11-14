@@ -1,0 +1,470 @@
+E501 Line too long (122 > 120)
+   --> scripts/run_real_check.py:104:121
+    |
+102 | class ToolMissing(ValueError):
+103 |     """A program this script needs is not installed (openssl, for the self-test). It is NOT a refused setting: the exit
+104 |     code is EXIT_CHECK_REFUSED (the check was started in a place that lacks a tool), never EXIT_SCRIPT_SETTING_REFUSED."""
+    |                                                                                                                         ^^
+105 |
+106 | # Made-up lead addresses on the reserved example domain (not `.test`: a real CRM may refuse that as an invalid
+    |
+
+E501 Line too long (122 > 120)
+   --> scripts/run_real_check.py:548:121
+    |
+546 | ) -> int:
+547 |     """The CRM read-back stopped (an error or the read-back call cap): print counts only, write a result file with the
+548 |     same note and end with EXIT_CHECK_FAILED, so the person running the check knows how many contacts may still have to be
+    |                                                                                                                         ^^
+549 |     archived by hand."""
+550 |     created = hub_stats.get("created")
+    |
+
+E501 Line too long (123 > 120)
+   --> scripts/run_real_check.py:629:121
+    |
+627 |         try:
+628 |             context = ssl.create_default_context(cafile=ca) if ca else None
+629 |         except (OSError, ssl.SSLError):  # a missing, unreadable or not-a-certificate file: names the setting, not the path
+    |                                                                                                                         ^^^
+630 |             raise SettingRefused(f"{p}CA_FILE cannot be used (a missing file or not a certificate file)") from None
+631 |         if not env.get(p + "PASSWORD_FILE", "").strip():
+    |
+
+E501 Line too long (122 > 120)
+   --> scripts/run_real_check.py:855:121
+    |
+853 |                 fakes = DryFakes(Path(tempfile.mkdtemp(prefix="real-dry-")), a.dry_port_base, a.dry_smtp_script)
+854 |             except OSError:  # a folder or a port of the self-test: a failure of this machine, not a refused setting
+855 |                 print("refused: the self-test could not start its local test servers (a folder or a port was not usable)")
+    |                                                                                                                         ^^
+856 |                 return EXIT_CHECK_STOPPED
+857 |             stack.callback(fakes.close)
+    |
+
+E501 Line too long (121 > 120)
+   --> scripts/run_real_check.py:865:121
+    |
+863 |             try:
+864 |                 env = load_env(a.config)
+865 |             except PathRefused as e:  # the text given with --config is not a usable file name: the command line is wrong
+    |                                                                                                                         ^
+866 |                 print(refusal_line("refused:", e))
+867 |                 return EXIT_CHECK_REFUSED
+    |
+
+E501 Line too long (126 > 120)
+   --> scripts/run_real_check.py:923:121
+    |
+921 |         # named or secret-like setting never shown). One rule for the code: anything raised while the settings are read
+922 |         # or checked is EXIT_SCRIPT_SETTING_REFUSED (a missing or bad value, the order of the mailboxes, a file the
+923 |         # config names, a bad config line); EXIT_CHECK_REFUSED is only for the command line (no --config, --assume-yes without
+    |                                                                                                                         ^^^^^^
+924 |         # --dry-fakes, checked before this block) and a missing tool (ToolMissing above). The text is the setting
+925 |         # refusal's own; any other error (it should not happen: every reader above raises SettingRefused) gets a fixed
+    |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> src/lead_desk/config.py:3:1
+   |
+ 1 |   """The one validated home for ports and defaults."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import ipaddress
+ 6 | | import json
+ 7 | | import math
+ 8 | | import os
+ 9 | | import re
+10 | | import socket
+11 | | from dataclasses import dataclass, field
+12 | | from decimal import Decimal
+13 | | from pathlib import Path
+14 | | from typing import Any, Mapping
+15 | | from urllib.parse import urlsplit
+16 | |
+17 | | from lead_desk.constants import (
+18 | |     ADAPTER_CHOICES,
+19 | |     APPROVER_ID_PATTERN,
+20 | |     APPROVER_NAME_MAX,
+21 | |     PUBLIC_BIND_ADVICE,
+22 | |     APPROVERS_FILE_MAX_BYTES,
+23 | |     CRM_CHOICES,
+24 | |     CRM_STAND_IN,
+25 | |     HOST_NAME_MAX,
+26 | |     LATER_MODES,
+27 | |     LEADFLOW_CRM_VALUE_PATTERN,
+28 | |     LEADFLOW_FILE_MAX_BYTES,
+29 | |     LEADFLOW_ID_PATTERN,
+30 | |     LEADFLOW_LABEL_MAX,
+31 | |     LEADFLOW_NAME_MAX,
+32 | |     LEADFLOW_OFF,
+33 | |     LEADFLOW_ROTA_MAX,
+34 | |     LEADFLOW_STEPS_MAX,
+35 | |     LIVE_API_VERSION,
+36 | |     LIVE_DEFAULT_BASE_URL,
+37 | |     LIVE_DEFAULT_EFFORT,
+38 | |     LIVE_DEFAULT_MAX_TOKENS,
+39 | |     LIVE_DEFAULT_TIMEOUT_SECONDS,
+40 | |     LIVE_LEDGER_USD_MAX,
+41 | |     LIVE_MAX_TOKENS_MAX,
+42 | |     LIVE_PRICE_MAX,
+43 | |     LIVE_PRICE_MIN,
+44 | |     LOOPBACK_HOSTS,
+45 | |     MODEL_CALL_BUDGET_SECONDS,
+46 | |     NUDGE_AFTER_MAX_SECONDS,
+47 | |     OUTBOX_CHOICES,
+48 | |     OUTBOX_STAND_INS,
+49 | |     PORT_MAX,
+50 | |     QUALIFIER_CHOICES,
+51 | |     QUALIFIER_STAND_IN,
+52 | |     SEND_TIMEOUT_SECONDS_MAX,
+53 | |     SIZE_CAP_BYTES_MAX,
+54 | |     STALL_SECONDS_MAX,
+55 | |     WILDCARD_BINDS,
+56 | | )
+57 | | from lead_desk.envnum import SettingRefused, env_number, env_path, split_url
+58 | | from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
+59 | | from lead_desk.urls import desk_origin
+   | |______________________________________^
+60 |
+61 |   _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+   |
+help: Organize imports
+   |
+20 |     APPROVER_NAME_MAX,
+   -     PUBLIC_BIND_ADVICE,
+21 |     APPROVERS_FILE_MAX_BYTES,
+--------------------------------------------------------------------------------
+48 |     PORT_MAX,
+49 +     PUBLIC_BIND_ADVICE,
+50 |     QUALIFIER_CHOICES,
+   |
+
+E501 Line too long (182 > 120)
+  --> src/lead_desk/config_exit.py:42:121
+   |
+40 | …
+41 | …ting name is kept as it is
+42 | …it is hidden only when the message names it): its value is blanked wherever the message shows it,
+   |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 | …
+44 | …|HOST|(?:^|_)TO$")
+   |
+
+E501 Line too long (121 > 120)
+  --> src/lead_desk/constants.py:54:121
+   |
+52 | START_WAIT_MAX: Final = 999
+53 |
+54 | # The meaning of each code, written once, in plain words (what the program is, not our own label for it). A program's row
+   |                                                                                                                         ^
+55 | # below uses one of these texts; the same text in two programs is one meaning (start_all passes the desk's own codes
+56 | # on), different texts behind one number are the overlap named in SAME_NUMBER_DIFFERENT_MEANING.
+   |
+
+E501 Line too long (123 > 120)
+  --> src/lead_desk/constants.py:68:121
+   |
+66 | MEANING_SCRIPT_SETTING_REFUSED: Final = "a setting was refused while this program read it (one plain line says which)"
+67 | # start_all passes the desk's own code 4 on: the desk it started refused a setting AFTER start_all's own reading passed
+68 | # (a leadflow file, an approvers file, a sender address, a public bind address). A refusal in start_all's own reading is 8.
+   |                                                                                                                         ^^^
+69 | MEANING_START_DESK_SETTING_REFUSED: Final = (
+70 |     MEANING_DESK_SETTING_REFUSED + "; 4 here is the desk's own refusal passed on (start_all's own reading refused: 8)"
+   |
+
+E501 Line too long (123 > 120)
+  --> src/lead_desk/constants.py:96:121
+   |
+94 | # THE table of process exit codes: (program, code, meaning). The program is the one thing that has a code; inside a
+95 | # program a code has ONE meaning. tests/test_exit_code_table.py checks that, that every code a program really returns is
+96 | # one of its rows, that every EXIT_ constant has a row in each program that uses it, and that SAME_NUMBER_DIFFERENT_MEANING
+   |                                                                                                                         ^^^
+97 | # equals the overlap computed from this table. The table is printed into docs/settings.md by tools/render_exit_table.py
+98 | # (a test fails when the printed table differs). Programs: "server" is `python -m lead_desk.server`; "crash_desk", "feed",
+   |
+
+E501 Line too long (122 > 120)
+   --> src/lead_desk/constants.py:98:121
+    |
+ 96 | # one of its rows, that every EXIT_ constant has a row in each program that uses it, and that SAME_NUMBER_DIFFERENT_MEANING
+ 97 | # equals the overlap computed from this table. The table is printed into docs/settings.md by tools/render_exit_table.py
+ 98 | # (a test fails when the printed table differs). Programs: "server" is `python -m lead_desk.server`; "crash_desk", "feed",
+    |                                                                                                                         ^^
+ 99 | # "reset_check" and "run_real_check" are scripts/*.py; "reset.sh", "reset.ps1", "start_all.sh", "start_all.ps1" are the
+100 | # shell scripts. crash_desk calls the desk's own main, so it also returns the desk's codes. start_all passes on 3, 4 and 5
+    |
+
+E501 Line too long (122 > 120)
+   --> src/lead_desk/constants.py:100:121
+    |
+ 98 | # (a test fails when the printed table differs). Programs: "server" is `python -m lead_desk.server`; "crash_desk", "feed",
+ 99 | # "reset_check" and "run_real_check" are scripts/*.py; "reset.sh", "reset.ps1", "start_all.sh", "start_all.ps1" are the
+100 | # shell scripts. crash_desk calls the desk's own main, so it also returns the desk's codes. start_all passes on 3, 4 and 5
+    |                                                                                                                         ^^
+101 | # of the desk it started and gives every other desk code (and 0, a desk that ended at once) as its own 1.
+102 | _DESK_ROWS: Final[tuple[tuple[int, str], ...]] = (
+    |
+
+E501 Line too long (121 > 120)
+   --> src/lead_desk/constants.py:114:121
+    |
+112 |     (EXIT_PORT_UNAVAILABLE, MEANING_PORT_UNAVAILABLE),
+113 | )
+114 | PASSED_ON_DESK_CODES: Final[tuple[int, ...]] = tuple(code for code, _ in _PASSED_ON)  # start_all passes on exactly these
+    |                                                                                                                         ^
+115 | _RESET_ROWS: Final[tuple[tuple[int, str], ...]] = (
+116 |     (EXIT_RESET_REFUSED, MEANING_RESET_REFUSED),
+    |
+
+E501 Line too long (121 > 120)
+   --> src/lead_desk/constants.py:147:121
+    |
+145 | # The rows of the table that no test running on this build produces by running the program (the PowerShell rows are
+146 | # produced only by tests that run on Windows, skipped here; the others have no test yet). The printed table marks them.
+147 | # tests/test_exit_code_table.py lists the test that produces every OTHER row, so a new row that is in neither list fails.
+    |                                                                                                                         ^
+148 | EXIT_ROWS_NOT_PRODUCED_BY_A_TEST: Final[tuple[tuple[str, int], ...]] = (
+149 |     *(("crash_desk", code) for code in (EXIT_ADAPTERS_UNREACHABLE, EXIT_ANOTHER_DESK, EXIT_OPEN_FILE_LIMIT)),
+    |
+
+E501 Line too long (124 > 120)
+   --> src/lead_desk/constants.py:181:121
+    |
+179 | }
+180 | # What a message may say about a setting without the value being hidden: advice that is a fixed text of ours (it names
+181 | # the setting and the rule, never a value). config_exit.scrub_values leaves these texts as they are; tests/test_bad_setting_
+    |                                                                                                                         ^^^^
+182 | # entry_points.py checks that none of them holds a value.
+183 | PUBLIC_BIND_ADVICE: Final = "set DESK_BIND to a loopback address (127.0.0.1 or ::1)"
+    |
+
+E501 Line too long (126 > 120)
+  --> src/lead_desk/envnum.py:69:121
+   |
+67 |     """A path read from setting text: THE one way (every `Path(env[...])` in src/ and scripts/ goes through here; a test
+68 |     walks the syntax tree and fails on a bare one). Text that cannot be written as UTF-8 (a lone surrogate: what the
+69 |     operating system's own decoding makes of a byte that is not UTF-8), that holds a NUL character or that is empty is a plain
+   |                                                                                                                         ^^^^^^
+70 |     SettingRefused naming the setting. A log line, a stored row or a printed path could not hold it. `default` is
+71 |     returned as it is when the name is absent (a Path, or None)."""
+   |
+
+S104 Possible binding to all interfaces
+   --> tests/test_bad_setting_entry_points.py:606:24
+    |
+604 |     for advice in constants.FIXED_ADVICE_TEXTS:
+605 |         assert "DESK_" in advice and not re.search(r"\d+\.\d+\.\d+\.\d+\s*$", advice)
+606 |     line = Config(bind="0.0.0.0", crm="hubspot").public_bind_problem()
+    |                        ^^^^^^^^^
+607 |     assert line is not None
+608 |     shown = scrub_values(line, {"DESK_BIND": "0.0.0.0", "DESK_FAKES_HOST": "127.0.0.1"})
+    |
+
+S104 Possible binding to all interfaces
+   --> tests/test_bad_setting_entry_points.py:608:46
+    |
+606 |     line = Config(bind="0.0.0.0", crm="hubspot").public_bind_problem()
+607 |     assert line is not None
+608 |     shown = scrub_values(line, {"DESK_BIND": "0.0.0.0", "DESK_FAKES_HOST": "127.0.0.1"})
+    |                                              ^^^^^^^^^
+609 |     assert constants.PUBLIC_BIND_ADVICE in shown
+610 |     assert "0.0.0.0" not in shown.replace(constants.PUBLIC_BIND_ADVICE, "")
+    |
+
+S104 Possible binding to all interfaces
+   --> tests/test_bad_setting_entry_points.py:610:12
+    |
+608 |     shown = scrub_values(line, {"DESK_BIND": "0.0.0.0", "DESK_FAKES_HOST": "127.0.0.1"})
+609 |     assert constants.PUBLIC_BIND_ADVICE in shown
+610 |     assert "0.0.0.0" not in shown.replace(constants.PUBLIC_BIND_ADVICE, "")
+    |            ^^^^^^^^^
+
+E501 Line too long (121 > 120)
+  --> tests/test_exit_code_table.py:11:121
+   |
+ 9 | produced (a row in neither list fails); no page repeats a program's exit numbers (they live in the table, printed into
+10 | docs/settings.md by tools/render_exit_table.py, and a test compares the printed table with the generator). The text-only
+11 | checks are labelled "text pin" in their names: they read a file and prove the text, not the behaviour. The test that runs
+   |                                                                                                                         ^
+12 | each program with a bad setting and compares with the by-program table is in tests/test_bad_setting_entry_points.py.
+13 | """
+   |
+
+E501 Line too long (144 > 120)
+   --> tests/test_exit_code_table.py:269:121
+    |
+267 | …
+268 | …
+269 | ….py::test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down",
+    |                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+270 | …sk_refuses_to_start",
+271 | …est_main_exits_3_on_a_too_small_limit",
+    |
+
+E501 Line too long (145 > 120)
+   --> tests/test_exit_code_table.py:274:121
+    |
+272 | …reaper.py::test_main_exits_4_when_the_desk_refuses",
+273 | …_desk_refuses_to_start",
+274 | …entry_points.py::test_crash_desk_gives_the_desks_own_code_for_a_late_refusal",
+    |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+275 | …TEST,
+276 | …
+    |
+
+E501 Line too long (126 > 120)
+   --> tests/test_exit_code_table.py:283:121
+    |
+281 |     ("reset.sh", c.EXIT_RESET_WRONG_PROGRAM): _RESET_T + "test_reset_refuses_a_pid_file_of_another_program",
+282 |     ("reset.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
+283 |     ("reset_check", c.EXIT_RESET_HELD): _RESET_T + "test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at",
+    |                                                                                                                         ^^^^^^
+284 |     ("reset_check", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
+285 |     ("start_all.sh", c.EXIT_START_NOT_DONE): _START_T + "test_a_bad_wait_setting_is_refused_before_anything_is_started",
+    |
+
+E501 Line too long (142 > 120)
+   --> tests/test_exit_code_table.py:286:121
+    |
+284 | …LE_TEST,
+285 | …ad_wait_setting_is_refused_before_anything_is_started",
+286 | …test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code",
+    |                                                         ^^^^^^^^^^^^^^^^^^^^^^
+287 | …ly_the_three_desk_codes_of_the_table_are_passed_on",
+288 | …st_only_the_three_desk_codes_of_the_table_are_passed_on",
+    |
+
+E501 Line too long (122 > 120)
+   --> tests/test_exit_code_table.py:288:121
+    |
+286 |     ("start_all.sh", c.EXIT_NOT_BASH): "test_exit_code_table.py::test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_ba…
+287 |     ("start_all.sh", c.EXIT_OPEN_FILE_LIMIT): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
+288 |     ("start_all.sh", c.EXIT_DESK_SETTING_REFUSED): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
+    |                                                                                                                         ^^
+289 |     ("start_all.sh", c.EXIT_PORT_UNAVAILABLE): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
+290 |     ("start_all.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
+    |
+
+E501 Line too long (130 > 120)
+   --> tests/test_exit_code_table.py:294:121
+    |
+292 |     ("run_real_check", c.EXIT_CHECK_REFUSED): _CHECK_T + "test_refuses_without_config_and_without_required_names",
+293 |     ("run_real_check", c.EXIT_CHECK_FAILED): _CHECK_T + "test_a_dry_run_where_every_send_ends_in_doubt_fails",
+294 |     ("run_real_check", c.EXIT_SCRIPT_SETTING_REFUSED): _CHECK_T + "test_swapped_mailbox_order_is_a_refused_setting_with_one_line",
+    |                                                                                                                         ^^^^^^^^^^
+295 | }
+    |
+
+E501 Line too long (134 > 120)
+   --> tests/test_exit_code_table.py:302:121
+    |
+300 |     not_produced = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
+301 |     assert not (set(PRODUCED_BY) & not_produced), set(PRODUCED_BY) & not_produced
+302 |     assert set(PRODUCED_BY) | not_produced == rows, (rows - set(PRODUCED_BY) - not_produced, (set(PRODUCED_BY) | not_produced) - rows)
+    |                                                                                                                         ^^^^^^^^^^^^^^
+
+E501 Line too long (122 > 120)
+   --> tests/test_exit_code_table.py:332:121
+    |
+332 | # --- the printed table and the pages that must not repeat it ------------------------------------------------------------
+    |                                                                                                                         ^^
+333 | def test_the_table_printed_in_docs_settings_md_is_the_generated_one() -> None:
+334 |     text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
+    |
+
+E501 Line too long (132 > 120)
+   --> tests/test_exit_code_table.py:353:121
+    |
+351 | )
+352 | _PROGRAM_WORDS = ("crash_desk", "reset_check", "run_real_check", "reset.sh", "reset.ps1", "start_all", "feed.py")
+353 | _EXIT_NUMBER = re.compile(r"(?:\bexit(?:s| code| codes)?\s*[(:]?\s*|\bcode\s+|\b(?:returns|gives|ends with)\s+(?:code\s+)?)(\d+)\b")
+    |                                                                                                                         ^^^^^^^^^^^^
+
+E501 Line too long (123 > 120)
+   --> tests/test_exit_code_table.py:357:121
+    |
+356 | def _prose_numbers(text: str) -> list[tuple[int, str]]:
+357 |     """Lines (outside the generated table) that name a program of the table and give an exit number other than 0 or 137."""
+    |                                                                                                                         ^^^
+358 |     hits: list[tuple[int, str]] = []
+359 |     inside = False
+    |
+
+E501 Line too long (125 > 120)
+ --> tests/test_late_refusal_value_echo.py:1:121
+  |
+1 | """Pin, not proof: a setting value never reaches the desk's output through ANY of its refusal sites (behaviour at each site).
+  |                                                                                                                         ^^^^^
+2 |
+3 | Bug class: a refusal message that carries what the person typed (a path, an address, a key file name). The desk words
+  |
+
+E501 Line too long (123 > 120)
+   --> tests/test_late_refusal_value_echo.py:166:121
+    |
+164 |     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
+165 | ) -> None:
+166 |     """The stand-in message names no setting, yet holds the value of DESK_HUBSPOT_KEY_FILE (a secret-like name): hidden."""
+    |                                                                                                                         ^^^
+167 |     _env(tmp_path, monkeypatch)
+168 |     value = str(tmp_path / f"{MARK}-key.txt")
+    |
+
+E501 Line too long (124 > 120)
+  --> tests/test_ps1_pins.py:71:121
+   |
+69 |             r"Remove-Item[^\n]*\n\s*exit 1\b"
+70 |         ),
+71 |         "says the demo server stopped at once (a taken port)": r"the demo server stopped at once; the desk was not started",
+   |                                                                                                                         ^^^^
+72 |         "the demo server is up only if alive AND the port answers": (
+73 |             r"if \(\$fakesUp -and -not \$fakes\.HasExited\) \{ break \}"
+   |
+
+E501 Line too long (126 > 120)
+  --> tests/test_ps1_pins.py:87:121
+   |
+85 |         ),
+86 |         "the native call cannot raise on its error stream": (
+87 |             r"\$ErrorActionPreference = 'Continue'\s*\n\s*\$plain = \(\$last \| & python -m lead_desk\.config_exit 2>\$null\)"
+   |                                                                                                                         ^^^^^^
+88 |             r"\s*\n\s*\$plainCode = \$LASTEXITCODE"
+89 |         ),
+   |
+
+E501 Line too long (126 > 120)
+   --> tests/test_ps1_pins.py:163:121
+    |
+161 |     "no taken-port message": ("the demo server stopped at once; the desk was not started", "not ready"),
+162 |     "alive check dropped": ("if ($fakesUp -and -not $fakes.HasExited) { break }", "if ($fakesUp) { break }"),
+163 |     "desk wait ignores a dead demo server": ("    if ($fakes.HasExited) { break }\n    if ((Test-Path", "    if ((Test-Path"),
+    |                                                                                                                         ^^^^^^
+164 |     "ready without the demo server check": ("if ($ready -and $fakes.HasExited) { $ready = $false }", ""),
+165 |     "brackets kept": ("$fakesHost = $fakesHost.Trim('[', ']')", ""),
+    |
+
+E501 Line too long (123 > 120)
+   --> tests/test_ps1_pins.py:237:121
+    |
+236 | def test_text_pin_the_wait_default_and_limit_are_the_constants() -> None:
+237 |     """TEXT PIN: the one number of the waiting budget lives in constants.py; the two scripts and contract.md repeat it, and
+    |                                                                                                                         ^^^
+238 |     this pin fails when one of them says another number."""
+239 |     from lead_desk import constants as c
+    |
+
+E501 Line too long (121 > 120)
+   --> tests/test_setting_reader_guard.py:206:121
+    |
+204 |             continue
+205 |         fn = node.func
+206 |         is_path = (isinstance(fn, ast.Name) and fn.id == "Path") or (isinstance(fn, ast.Attribute) and fn.attr == "Path")
+    |                                                                                                                         ^
+207 |         if is_path and _env_source(node.args[0], tainted):
+208 |             found.append(node.lineno)
+    |
+
+Found 38 errors.
+[*] 1 fixable with `--fix`.

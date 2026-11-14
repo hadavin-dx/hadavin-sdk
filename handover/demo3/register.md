@@ -356,3 +356,6 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B22 | fix-2 r9 builder | closed 07:22Z, handed back | reviews R19a/R19b |
 | R19a/R19b | egm-design, egm-codebase-details on fix-2 r9 | started 07:22Z | check 07:37Z |
 | B22 | resumed for r10 (1 major) | 07:24Z | check +25 min |
+| R20a | egm-design reviewer fix-5 r8 (tree cb769b22) | started 07:39Z | in progress |
+| R20b | egm-codebase-details reviewer fix-5 r8 | started 07:39Z | in progress |
+| B21 | closed 07:39Z: handed back r8, lint green by me (rc 0 x5, tree cb769b22 matches) | | closed |

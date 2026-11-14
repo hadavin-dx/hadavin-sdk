@@ -11,4 +11,569 @@
 ........................................................................ [ 82%]
 ...........................F........FF.FF..FF...F...FF..ssssssF......... [ 89%]
 .........................................F....................FFF.FF...F [ 97%]
-.........FF..........FF
+.........FF..........FFFFFsF                                             [100%]
+==================================== ERRORS ====================================
+________________ ERROR collecting tests/test_exit_code_table.py ________________
+ImportError while importing test module '/home/user/work/b23-old/tests/test_exit_code_table.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_exit_code_table.py:30: in <module>
+    from tools import render_exit_table as render
+E   ImportError: cannot import name 'render_exit_table' from 'tools' (/home/user/work/b23-old/tools/__init__.py)
+=================================== FAILURES ===================================
+_ test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_DB_PATH] _
+
+name = 'DESK_DB_PATH'
+
+    @pytest.mark.parametrize("name", ["DESK_DB_PATH", "DESK_REPLIES_PATH", "DESK_APPROVERS_FILE", "DESK_LIVE_KEY_FILE"])
+    def test_an_empty_path_text_is_a_refused_setting_with_the_standard_text(name: str) -> None:
+        from lead_desk.envnum import env_path
+    
+>       with pytest.raises(SettingRefused) as seen:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:594: Failed
+_ test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_REPLIES_PATH] _
+
+name = 'DESK_REPLIES_PATH'
+
+    @pytest.mark.parametrize("name", ["DESK_DB_PATH", "DESK_REPLIES_PATH", "DESK_APPROVERS_FILE", "DESK_LIVE_KEY_FILE"])
+    def test_an_empty_path_text_is_a_refused_setting_with_the_standard_text(name: str) -> None:
+        from lead_desk.envnum import env_path
+    
+>       with pytest.raises(SettingRefused) as seen:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:594: Failed
+_ test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_APPROVERS_FILE] _
+
+name = 'DESK_APPROVERS_FILE'
+
+    @pytest.mark.parametrize("name", ["DESK_DB_PATH", "DESK_REPLIES_PATH", "DESK_APPROVERS_FILE", "DESK_LIVE_KEY_FILE"])
+    def test_an_empty_path_text_is_a_refused_setting_with_the_standard_text(name: str) -> None:
+        from lead_desk.envnum import env_path
+    
+>       with pytest.raises(SettingRefused) as seen:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:594: Failed
+_ test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_LIVE_KEY_FILE] _
+
+name = 'DESK_LIVE_KEY_FILE'
+
+    @pytest.mark.parametrize("name", ["DESK_DB_PATH", "DESK_REPLIES_PATH", "DESK_APPROVERS_FILE", "DESK_LIVE_KEY_FILE"])
+    def test_an_empty_path_text_is_a_refused_setting_with_the_standard_text(name: str) -> None:
+        from lead_desk.envnum import env_path
+    
+>       with pytest.raises(SettingRefused) as seen:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:594: Failed
+_ test_the_public_bind_advice_reads_sensibly_after_the_scrub_and_holds_no_value _
+
+    def test_the_public_bind_advice_reads_sensibly_after_the_scrub_and_holds_no_value() -> None:
+        """R11: the scrub leaves our own advice texts as they are; a fixed text never contains a setting's value."""
+        from lead_desk import constants
+        from lead_desk.config_exit import scrub_values
+    
+>       for advice in constants.FIXED_ADVICE_TEXTS:
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'FIXED_ADVICE_TEXTS'
+
+tests/test_bad_setting_entry_points.py:604: AttributeError
+______________________ test_text_only_the_start_pins_hold ______________________
+
+    def test_text_only_the_start_pins_hold() -> None:
+>       assert start_problems((SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")) == []
+E       AssertionError: assert ['says the de...removed', ...] == []
+E         
+E         Left contains 8 more items, first extra item: 'says the demo server did not answer, stops it, exits 1'
+E         Use -v to get more diff
+
+tests/test_ps1_pins.py:125: AssertionError
+____ test_text_only_each_start_pin_rejects_its_mutant[alive check dropped] _____
+
+mutant = 'alive check dropped'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: alive check dropped
+E       assert 'if ($fakesUp -and -not $fakes.HasExited) { break }' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+_______ test_text_only_each_start_pin_rejects_its_mutant[brackets kept] ________
+
+mutant = 'brackets kept'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: brackets kept
+E       assert "$fakesHost = $fakesHost.Trim('[', ']')" in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+_ test_text_only_each_start_pin_rejects_its_mutant[desk wait ignores a dead demo server] _
+
+mutant = 'desk wait ignores a dead demo server'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: desk wait ignores a dead demo server
+E       assert '    if ($fakes.HasExited) { break }\n    if ((Test-Path' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+______ test_text_only_each_start_pin_rejects_its_mutant[encoding dropped] ______
+
+mutant = 'encoding dropped'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: encoding dropped
+E       assert '[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+____ test_text_only_each_start_pin_rejects_its_mutant[native errors fatal] _____
+
+mutant = 'native errors fatal'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: native errors fatal
+E       assert "$ErrorActionPreference = 'Continue'\n    $plain = (" in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+___ test_text_only_each_start_pin_rejects_its_mutant[no demo server message] ___
+
+mutant = 'no demo server message'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: no demo server message
+E       assert 'the demo server did not answer in' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+___ test_text_only_each_start_pin_rejects_its_mutant[no taken-port message] ____
+
+mutant = 'no taken-port message'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: no taken-port message
+E       assert 'the demo server stopped at once; the desk was not started' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+_ test_text_only_each_start_pin_rejects_its_mutant[ready without the demo server check] _
+
+mutant = 'ready without the demo server check'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: ready without the demo server check
+E       assert 'if ($ready -and $fakes.HasExited) { $ready = $false }' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+______ test_text_only_each_start_pin_rejects_its_mutant[timeout exits 0] _______
+
+mutant = 'timeout exits 0'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, mutant
+E       AssertionError: timeout exits 0
+E       assert '(it may still be starting); see desk.log in the data folder; run scripts\\reset.ps1 to stop it")\n        exit 1' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:175: AssertionError
+__________ test_text_pin_the_wait_default_and_limit_are_the_constants __________
+
+    def test_text_pin_the_wait_default_and_limit_are_the_constants() -> None:
+        """TEXT PIN: the one number of the waiting budget lives in constants.py; the two scripts and contract.md repeat it, and
+        this pin fails when one of them says another number."""
+        from lead_desk import constants as c
+    
+        ps1 = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+        sh = (SCRIPTS / "start_all.sh").read_text(encoding="utf-8")
+        contract = (REPO / "contract.md").read_text(encoding="utf-8")
+>       digits = len(str(c.START_WAIT_MAX))
+                         ^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.constants' has no attribute 'START_WAIT_MAX'
+
+tests/test_ps1_pins.py:244: AttributeError
+___________ test_dry_fakes_with_a_config_says_the_config_is_ignored ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_dry_fakes_with_a_config_s0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f17a9522ad0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f17a9e959b0>
+
+    def test_dry_fakes_with_a_config_says_the_config_is_ignored(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def no_fakes(*_a: Any, **_k: Any) -> Any:
+            raise rrc.ToolMissing("stop here")
+    
+        monkeypatch.setattr(rrc, "DryFakes", no_fakes)
+>       assert rrc.main(["--dry-fakes", "--assume-yes", "--config", str(tmp_path / "c.env")]) == rrc.EXIT_CHECK_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_real_check_dry.py:513: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:827: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:840: in _run
+    fakes = DryFakes(Path(tempfile.mkdtemp(prefix="real-dry-")), a.dry_port_base, a.dry_smtp_script)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (PosixPath('/tmp/real-dry-c1126hdc'), None, 'ok'), _k = {}
+
+    def no_fakes(*_a: Any, **_k: Any) -> Any:
+>       raise rrc.ToolMissing("stop here")
+              ^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'ToolMissing'
+
+tests/test_real_check_dry.py:510: AttributeError
+----------------------------- Captured stdout call -----------------------------
+note: --config is ignored with --dry-fakes (the self-test uses its own local fakes)
+________ test_swapped_mailbox_order_is_a_refused_setting_with_one_line _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_swapped_mailbox_order_is_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f17aa1ccb50>
+
+    def test_swapped_mailbox_order_is_a_refused_setting_with_one_line(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Real behaviour: main() with the mailbox users in the wrong order ends with the setting-refusal code (8), not the
+        command-line code (2), and prints one plain line without an address."""
+        cfg = _valid_config(tmp_path, REAL_IMAP_1_USER="b@example.test", REAL_IMAP_2_USER="a@example.test")
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+E       AssertionError: assert 2 == 8
+E        +  where 2 = <function main at 0x7f17a9d8bf60>(['--config', '/tmp/pytest-of-root/pytest-237/test_swapped_mailbox_order_is_0/c.env'])
+E        +    where <function main at 0x7f17a9d8bf60> = rrc.main
+E        +  and   8 = rrc.EXIT_SCRIPT_SETTING_REFUSED
+
+tests/test_real_check_dry.py:858: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: the mailbox users REAL_IMAP_n_USER must be the addresses of DESK_SMTPP_RECIPIENTS, in the same order
+___ test_a_config_that_is_not_utf8_is_a_refused_setting_without_a_traceback ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_a_config_that_is_not_utf80')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f17aa1cd550>
+
+    def test_a_config_that_is_not_utf8_is_a_refused_setting_without_a_traceback(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        cfg = tmp_path / "bad.env"
+        cfg.write_bytes(b"DESK_DB_PATH=\xff\xfe\n")
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+E       AssertionError: assert 2 == 8
+E        +  where 2 = <function main at 0x7f17a9d8bf60>(['--config', '/tmp/pytest-of-root/pytest-237/test_a_config_that_is_not_utf80/bad.env'])
+E        +    where <function main at 0x7f17a9d8bf60> = rrc.main
+E        +  and   8 = rrc.EXIT_SCRIPT_SETTING_REFUSED
+
+tests/test_real_check_dry.py:869: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: 'utf-8' codec can't decode byte 0xff in position 13: invalid start byte
+____________ test_missing_live_model_settings_are_a_refused_setting ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_missing_live_model_settin0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f17aa35c1d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f17a9e97690>
+
+    def test_missing_live_model_settings_are_a_refused_setting(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The check after Config.from_env (a plain ValueError before this round, so exit 2) is a setting refusal."""
+        from types import SimpleNamespace
+    
+        monkeypatch.setattr(rrc.Config, "from_env", classmethod(lambda cls, env=None: SimpleNamespace(live=None)))
+>       assert rrc.main(["--config", str(_valid_config(tmp_path)), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+E       AssertionError: assert 2 == 8
+E        +  where 2 = <function main at 0x7f17a9d8bf60>(['--config', '/tmp/pytest-of-root/pytest-237/test_missing_live_model_settin0/c.env', '--live-model'])
+E        +    where <function main at 0x7f17a9d8bf60> = rrc.main
+E        +  and   8 = rrc.EXIT_SCRIPT_SETTING_REFUSED
+
+tests/test_real_check_dry.py:881: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: the live model settings are missing
+_ test_a_file_error_of_the_self_test_servers_is_a_failure_with_a_fixed_text_not_a_setting _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f17a9519150>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f17aa19e740>
+
+    def test_a_file_error_of_the_self_test_servers_is_a_failure_with_a_fixed_text_not_a_setting(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def broken(*_a: Any, **_k: Any) -> Any:
+            raise OSError("/very/private/folder/cannot-write")
+    
+        monkeypatch.setattr(rrc, "DryFakes", broken)
+>       assert rrc.main(["--dry-fakes", "--assume-yes"]) == rrc.EXIT_CHECK_STOPPED
+E       AssertionError: assert 8 == 1
+E        +  where 8 = <function main at 0x7f17a9d8bf60>(['--dry-fakes', '--assume-yes'])
+E        +    where <function main at 0x7f17a9d8bf60> = rrc.main
+E        +  and   1 = rrc.EXIT_CHECK_STOPPED
+
+tests/test_real_check_dry.py:901: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: a file or a number named in the config cannot be used
+____________ test_a_bad_ca_file_names_the_setting_and_shows_no_path ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_a_bad_ca_file_names_the_s0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f17a9522bd0>
+
+    def test_a_bad_ca_file_names_the_setting_and_shows_no_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        cfg = _valid_config(tmp_path, REAL_IMAP_1_CA_FILE=str(tmp_path / "no-such-folder" / "ca-name.pem"))
+        assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+        out = capsys.readouterr().out
+>       assert "REAL_IMAP_1_CA_FILE" in out and "no-such-folder" not in out and "ca-name" not in out
+E       AssertionError: assert ('REAL_IMAP_1_CA_FILE' in 'refused: a file or a number named in the config cannot be used\n')
+
+tests/test_real_check_dry.py:910: AssertionError
+_____ test_no_path_is_read_from_setting_text_except_through_the_one_helper _____
+
+    def test_no_path_is_read_from_setting_text_except_through_the_one_helper() -> None:
+        offenders: list[str] = []
+        for root in ROOTS:
+            for path in sorted((REPO / root).rglob("*.py")):
+                rel = path.relative_to(REPO).as_posix()
+                if "__pycache__" in path.parts or rel == "src/lead_desk/envnum.py":
+                    continue
+                offenders += [f"{rel}:{n}" for n in bare_paths_in(path.read_text(encoding="utf-8"))]
+>       assert offenders == [], offenders
+E       AssertionError: ['scripts/n8n_api.py:101']
+E       assert ['scripts/n8n_api.py:101'] == []
+E         
+E         Left contains one more item: 'scripts/n8n_api.py:101'
+E         Use -v to get more diff
+
+tests/test_setting_reader_guard.py:259: AssertionError
+_ test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk[silent] _
+
+fakes_body = 'exec sleep 120'
+said = 'the demo server did not answer in 2 seconds'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n0')
+cleanup = None
+
+    @pytest.mark.parametrize(
+        ("fakes_body", "said"),
+        [("exec sleep 120", "the demo server did not answer in 2 seconds"), ("exit 3", "the demo server stopped at once")],
+        ids=["silent", "ends_at_once"],
+    )
+    def test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk(
+        fakes_body: str, said: str, tmp_path: Path, cleanup: None
+    ) -> None:
+        """The desk asks the demo server once and ends if nobody answers: a slow demo server is a different failure from a
+        bad setting, so the script waits for it first, says so, and never starts the desk."""
+        marker = tmp_path / "desk-was-started"
+        stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 120", fakes_body)
+        done = _run(tmp_path, first_on_path=stub, wait="2")
+        assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
+>       assert said in done.stderr and "the desk was not started" in done.stderr
+E       AssertionError: assert ('the demo server did not answer in 2 seconds' in 'the demo server did not start: nothing answers on port 34333 (see /tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n0/data/fakes.log); the desk was not started\n')
+E        +  where 'the demo server did not start: nothing answers on port 34333 (see /tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n0/data/fakes.log); the desk was not started\n' = CompletedProcess(args=['bash', '/home/user/work/b23-old/scripts/start_all.sh'], returncode=1, stdout='', stderr='the d...34333 (see /tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n0/data/fakes.log); the desk was not started\n').stderr
+
+tests/test_start_all_late_refusal.py:174: AssertionError
+_ test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk[ends_at_once] _
+
+fakes_body = 'exit 3', said = 'the demo server stopped at once'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n1')
+cleanup = None
+
+    @pytest.mark.parametrize(
+        ("fakes_body", "said"),
+        [("exec sleep 120", "the demo server did not answer in 2 seconds"), ("exit 3", "the demo server stopped at once")],
+        ids=["silent", "ends_at_once"],
+    )
+    def test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk(
+        fakes_body: str, said: str, tmp_path: Path, cleanup: None
+    ) -> None:
+        """The desk asks the demo server once and ends if nobody answers: a slow demo server is a different failure from a
+        bad setting, so the script waits for it first, says so, and never starts the desk."""
+        marker = tmp_path / "desk-was-started"
+        stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 120", fakes_body)
+        done = _run(tmp_path, first_on_path=stub, wait="2")
+        assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
+>       assert said in done.stderr and "the desk was not started" in done.stderr
+E       AssertionError: assert ('the demo server stopped at once' in 'the demo server did not start: nothing answers on port 50087 (see /tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n1/data/fakes.log); the desk was not started\n')
+E        +  where 'the demo server did not start: nothing answers on port 50087 (see /tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n1/data/fakes.log); the desk was not started\n' = CompletedProcess(args=['bash', '/home/user/work/b23-old/scripts/start_all.sh'], returncode=1, stdout='', stderr='the d...50087 (see /tmp/pytest-of-root/pytest-237/test_a_demo_server_that_does_n1/data/fakes.log); the desk was not started\n').stderr
+
+tests/test_start_all_late_refusal.py:174: AssertionError
+_ test_text_pin_the_start_script_waits_for_the_listening_line_inside_one_budget _
+
+    def test_text_pin_the_start_script_waits_for_the_listening_line_inside_one_budget() -> None:
+        """TEXT PIN, not a proof of behaviour: it only shows the lines are in the file. The behaviour tests above (a desk
+        that never listens, a demo server that does not come up, a desk that ends at once) are the proof."""
+        text = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+        assert 'WAIT_SECONDS="${START_ALL_WAIT_SECONDS:-15}"' in text and "desk listening on" in text
+        assert 'wait "$desk_pid"' in text and text.count("max_ticks") >= 3  # one counter for both waits
+>       assert text.count("seq 1 ") == 0 and "the demo server did not answer in" in text
+E       assert (0 == 0 and 'the demo server did not answer in' in '#!/usr/bin/env bash\n# Start the demo mail/CRM server and the desk in the background (Linux).\n# Usage: bash scripts/...port (check with: curl http://127.0.0.1:$desk_port/counts)"\necho "logs: $data_dir/fakes.log and $data_dir/desk.log"\n')
+E        +  where 0 = <built-in method count of str object at 0x167c53f0>('seq 1 ')
+E        +    where <built-in method count of str object at 0x167c53f0> = '#!/usr/bin/env bash\n# Start the demo mail/CRM server and the desk in the background (Linux).\n# Usage: bash scripts/...port (check with: curl http://127.0.0.1:$desk_port/counts)"\necho "logs: $data_dir/fakes.log and $data_dir/desk.log"\n'.count
+
+tests/test_start_all_late_refusal.py:229: AssertionError
+______________ test_an_empty_desk_log_still_gives_a_readable_line ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_an_empty_desk_log_still_g0')
+cleanup = None
+
+    def test_an_empty_desk_log_still_gives_a_readable_line(tmp_path: Path, cleanup: None) -> None:
+        """A desk that ends without a word: the line must not end in an empty tail ("(exit 1): ")."""
+        done = _run(tmp_path, first_on_path=_stub_python(tmp_path, "exit 1"))
+        assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
+        line = [ln for ln in done.stderr.splitlines() if ln.strip()][-1]
+>       assert line.startswith("the desk ended at once (exit 1): ") and line.endswith("(the log line could not be read)")
+E       AssertionError: assert (True and False)
+E        +  where True = <built-in method startswith of str object at 0x7f17a8cb7dc0>('the desk ended at once (exit 1): ')
+E        +    where <built-in method startswith of str object at 0x7f17a8cb7dc0> = 'the desk ended at once (exit 1): '.startswith
+E        +  and   False = <built-in method endswith of str object at 0x7f17a8cb7dc0>('(the log line could not be read)')
+E        +    where <built-in method endswith of str object at 0x7f17a8cb7dc0> = 'the desk ended at once (exit 1): '.endswith
+
+tests/test_start_all_late_refusal.py:237: AssertionError
+_ test_a_foreign_listener_on_the_demo_server_port_is_not_a_started_demo_server _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_a_foreign_listener_on_the0')
+cleanup = None
+
+    def test_a_foreign_listener_on_the_demo_server_port_is_not_a_started_demo_server(tmp_path: Path, cleanup: None) -> None:
+        """Bug class: "something answers on the port" taken as "our demo server is up". The demo server dies on the taken
+        port; the script must say so, print no "started", leave no pid file and stop the desk it may have started."""
+        with socket.socket() as taken:
+            taken.bind((LOOPBACK, 0))
+            taken.listen()
+            fakes_port = taken.getsockname()[1]
+            done = _run(tmp_path, wait="6", DESK_FAKES_PORT=str(fakes_port))
+        out = done.stdout + done.stderr
+        assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, out[-500:])
+>       assert "started:" not in out and "the demo server stopped" in done.stderr, out[-500:]
+E       AssertionError: the desk ended at once (exit 1): cannot reach the demo servers (are they running? see scripts/start_all)
+E         
+E       assert ('started:' not in 'the desk en...start_all)\n'
+E         
+E         'started:' is contained here:
+E           start_all) and 'the demo server stopped' in 'the desk ended at once (exit 1): cannot reach the demo servers (are they running? see scripts/start_all)\n')
+E        +  where 'the desk ended at once (exit 1): cannot reach the demo servers (are they running? see scripts/start_all)\n' = CompletedProcess(args=['bash', '/home/user/work/b23-old/scripts/start_all.sh'], returncode=1, stdout='', stderr='the desk ended at once (exit 1): cannot reach the demo servers (are they running? see scripts/start_all)\n').stderr
+
+tests/test_start_all_late_refusal.py:250: AssertionError
+___________ test_a_failure_line_shows_no_folder_and_no_port[silent] ____________
+
+fakes_body = 'exec sleep 120'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_a_failure_line_shows_no_f0')
+cleanup = None
+
+    @pytest.mark.parametrize("fakes_body", ["exec sleep 120", "exit 3"], ids=["silent", "ends_at_once"])
+    def test_a_failure_line_shows_no_folder_and_no_port(fakes_body: str, tmp_path: Path, cleanup: None) -> None:
+        """The failure lines name the log file (fakes.log, desk.log) but never the data folder or the port: both come
+        from settings (DESK_DB_PATH, DESK_FAKES_PORT)."""
+        fakes_port = free_port()
+        stub = _stub_python(tmp_path, "exec sleep 120", fakes_body)
+        done = _run(tmp_path, first_on_path=stub, wait="2", DESK_FAKES_PORT=str(fakes_port))
+        assert done.returncode == EXIT_START_NOT_DONE and "fakes.log" in done.stderr, (done.stdout, done.stderr)
+>       assert str(tmp_path) not in done.stderr and str(fakes_port) not in done.stderr, done.stderr
+E       AssertionError: the demo server did not start: nothing answers on port 33581 (see /tmp/pytest-of-root/pytest-237/test_a_failure_line_shows_no_f0/data/fakes.log); the desk was not started
+E         
+E       assert ('/tmp/pytest..._shows_no_f0' not in 'the demo se...ot started\n'
+E         
+E         '/tmp/pytest-of-roo...re_line_shows_no_f0' is contained here:
+E           581 (see /tmp/pytest-of-root/pytest-237/test_a_failure_line_shows_no_f0/data/fakes.log); the desk was not started)
+
+tests/test_start_all_late_refusal.py:262: AssertionError
+________ test_a_failure_line_shows_no_folder_and_no_port[ends_at_once] _________
+
+fakes_body = 'exit 3'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-237/test_a_failure_line_shows_no_f1')
+cleanup = None
+
+    @pytest.mark.parametrize("fakes_body", ["exec sleep 120", "exit 3"], ids=["silent", "ends_at_once"])
+    def test_a_failure_line_shows_no_folder_and_no_port(fakes_body: str, tmp_path: Path, cleanup: None) -> None:
+        """The failure lines name the log file (fakes.log, desk.log) but never the data folder or the port: both come
+        from settings (DESK_DB_PATH, DESK_FAKES_PORT)."""
+        fakes_port = free_port()
+        stub = _stub_python(tmp_path, "exec sleep 120", fakes_body)
+        done = _run(tmp_path, first_on_path=stub, wait="2", DESK_FAKES_PORT=str(fakes_port))
+        assert done.returncode == EXIT_START_NOT_DONE and "fakes.log" in done.stderr, (done.stdout, done.stderr)
+>       assert str(tmp_path) not in done.stderr and str(fakes_port) not in done.stderr, done.stderr
+E       AssertionError: the demo server did not start: nothing answers on port 56175 (see /tmp/pytest-of-root/pytest-237/test_a_failure_line_shows_no_f1/data/fakes.log); the desk was not started
+E         
+E       assert ('/tmp/pytest..._shows_no_f1' not in 'the demo se...ot started\n'
+E         
+E         '/tmp/pytest-of-roo...re_line_shows_no_f1' is contained here:
+E           175 (see /tmp/pytest-of-root/pytest-237/test_a_failure_line_shows_no_f1/data/fakes.log); the desk was not started)
+
+tests/test_start_all_late_refusal.py:262: AssertionError
+_____ test_text_pin_both_start_scripts_strip_the_brackets_of_an_ipv6_host ______
+
+    def test_text_pin_both_start_scripts_strip_the_brackets_of_an_ipv6_host() -> None:
+        """TEXT PIN (the .ps1 cannot run here): the line that removes the brackets is present in both scripts."""
+        sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+        ps1 = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
+>       assert 'fakes_host="${fakes_host#[}"' in sh and "Trim('[', ']')" in ps1
+E       assert ('fakes_host="${fakes_host#[}"' in '#!/usr/bin/env bash\n# Start the demo mail/CRM server and the desk in the background (Linux).\n# Usage: bash scripts/...port (check with: curl http://127.0.0.1:$desk_port/counts)"\necho "logs: $data_dir/fakes.log and $data_dir/desk.log"\n')
+
+tests/test_start_all_late_refusal.py:293: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_bad_setting_entry_points.py::test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_DB_PATH]
+FAILED tests/test_bad_setting_entry_points.py::test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_REPLIES_PATH]
+FAILED tests/test_bad_setting_entry_points.py::test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_APPROVERS_FILE]
+FAILED tests/test_bad_setting_entry_points.py::test_an_empty_path_text_is_a_refused_setting_with_the_standard_text[DESK_LIVE_KEY_FILE]
+FAILED tests/test_bad_setting_entry_points.py::test_the_public_bind_advice_reads_sensibly_after_the_scrub_and_holds_no_value
+FAILED tests/test_ps1_pins.py::test_text_only_the_start_pins_hold - Assertion...
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[alive check dropped]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[brackets kept]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[desk wait ignores a dead demo server]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[encoding dropped]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[native errors fatal]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[no demo server message]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[no taken-port message]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[ready without the demo server check]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[timeout exits 0]
+FAILED tests/test_ps1_pins.py::test_text_pin_the_wait_default_and_limit_are_the_constants
+FAILED tests/test_real_check_dry.py::test_dry_fakes_with_a_config_says_the_config_is_ignored
+FAILED tests/test_real_check_dry.py::test_swapped_mailbox_order_is_a_refused_setting_with_one_line
+FAILED tests/test_real_check_dry.py::test_a_config_that_is_not_utf8_is_a_refused_setting_without_a_traceback
+FAILED tests/test_real_check_dry.py::test_missing_live_model_settings_are_a_refused_setting
+FAILED tests/test_real_check_dry.py::test_a_file_error_of_the_self_test_servers_is_a_failure_with_a_fixed_text_not_a_setting
+FAILED tests/test_real_check_dry.py::test_a_bad_ca_file_names_the_setting_and_shows_no_path
+FAILED tests/test_setting_reader_guard.py::test_no_path_is_read_from_setting_text_except_through_the_one_helper
+FAILED tests/test_start_all_late_refusal.py::test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk[silent]
+FAILED tests/test_start_all_late_refusal.py::test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk[ends_at_once]
+FAILED tests/test_start_all_late_refusal.py::test_text_pin_the_start_script_waits_for_the_listening_line_inside_one_budget
+FAILED tests/test_start_all_late_refusal.py::test_an_empty_desk_log_still_gives_a_readable_line
+FAILED tests/test_start_all_late_refusal.py::test_a_foreign_listener_on_the_demo_server_port_is_not_a_started_demo_server
+FAILED tests/test_start_all_late_refusal.py::test_a_failure_line_shows_no_folder_and_no_port[silent]
+FAILED tests/test_start_all_late_refusal.py::test_a_failure_line_shows_no_folder_and_no_port[ends_at_once]
+FAILED tests/test_start_all_late_refusal.py::test_text_pin_both_start_scripts_strip_the_brackets_of_an_ipv6_host
+ERROR tests/test_exit_code_table.py
+31 failed, 926 passed, 7 skipped, 1 error in 60.57s (0:01:00)

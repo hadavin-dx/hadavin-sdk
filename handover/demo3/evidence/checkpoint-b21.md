@@ -17,3 +17,6 @@ Done: head frozen (tree cb769b22...); patch lane3-fix-5-r8.patch + 3 parts cut a
 Running: ONE full run on the final head in /home/user/work/b21-full (started 06:48 UTC, detached, log /home/user/work/b21-logs/full-final.log).
 Next: when done, copy log, run wall-clock guard + hygiene scan alone, finish notes, hand back. Deadline 07:41 UTC.
 Blockers: none.
+
+## Checkpoint 5, 07:38 UTC (final)
+Full run 1: 1 failed (own new test, flake, cause not found); run 2 same tree: 3962 passed. Guards alone rc 0, lint all rc 0, patch cut and apply-checked. Notes written. Handing back.
