@@ -23,4 +23,4 @@ Reading (lead): on v3 the kill series shows 0 lost and 0 doubled in K1, K2, K3, 
 | K3B | 20 | 0 | 0 | 20 | 28.4 / 29.45 / 31.0 | |
 | T8 | 3 | 0 | 0 | 0 (3 failed) | 88.4 / 116.9 / 42.5 (refuse/error/timeout) | 1 alert each, SMTP connections = alerts |
 | T15 | 3 | 0 | 0 | 0 (3 failed) | 91.2 / 88.3 / 110.1 (limit 210) | 1 alert each, 27 CRM calls refused |
-Caveats stated by the runner: result JSON of K1,K2,K3,K3B,T10,T11,T13 has no per-lead alert count (pass logic folds it under "doubled", not separately verified); no process of the runner left running.
+LEAD CORRECTION 16:50Z: the runner's caveat 'no per-lead alert count' is WRONG for K1,K2,K3,K3B: their mf_result per_lead rows DO carry an alerts field (lead read: K3 = 1 each, K3B = 1 each, K1 = 0, K2 = 0). T10, T11, T13 per-lead alerts not read by the lead. Runner caveat (kept for the record): result JSON of K1,K2,K3,K3B,T10,T11,T13 has no per-lead alert count; no process of the runner left running.
