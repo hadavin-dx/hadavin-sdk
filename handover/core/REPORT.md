@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 09:01 UTC / 14:31 IST
+
+**Lines below are agent checkpoint lines or claims; I have judged none.**
+
+- **r7k reviewer (a092c900) DONE, committed core-fix-on-frozen-r7k-review.md: NOT CLEAN, 0 Blocker, 2 Major, 2 minor, 3 nit.** Major F1 (secret path): imap_count._session (lines 298-306): the mailbox password stays reachable through __context__ (a fake mailbox whose NO reply echoes the LOGIN line gives error(b'login LOGIN "reader-user" "<password>"')); a fourth site of the M9-32 class that the r7k sweep missed; the reviewer swept smtp_provider, smtp_outbox, server.py, desk.py, hubspot_probe, n8n_api, run_real_check and found no other. Major F2: the k15 tests leave four load_driver globals set (this is the cause of EV7K's 3 failures). Minor: m1 test only half pins (O07 survives), localhost IPv4-only (documented). Holds: M1, M3, m2 correct, M9-32/33/34/40/64/65/67, N05/N06, M9-69, M9-16 killed by the new file; changed existing tests not weaker; M9-61 equivalence correct. Not run by it: full suite, rrc group, Windows, IPv6-less host, frame-locals check; O02/O04/O12 not on the wide set. Its own slips (shared temp dir; load-order taint) disclosed and re-run. All items sent to r7n.
+- **r7n builder (ac7638bd) checkpoints: 08:53 "pollution + hygiene + M9-81/13/17/55/54 + F3 added; ruff clean; hygiene scan passes in staged copy; full mutants + regression started"; 08:57 "FINAL bytes frozen, full mutants + full suite started".** So it froze BEFORE two new pass 11 gaps and before it confirmed the r7l Majors and the imap_count fix in a checkpoint I can see; I sent it a message now: M9-77 and M9-25 are in, it must confirm the r7l Majors and imap_count are in the bytes, re-freeze once, hand back by 09:30. This costs one more full-suite run: your uncapped rule for the mail/secret path, stated openly.
+- **Pass 11 (a6bba99e): two more REAL GAPS: M9-77 (mailbox poll loop allows one login more than the banner promises) and M9-25 (smtp_outbox: a bare non-digit 3-character reply line raises a raw ValueError out of the reader).** Total confirmed: M9-43, 54, 70, 71, 81, 13, 77, 25 (plus 17 and 55 in r7n's checkpoint, I have not seen their pass 11 rows). It stopped its lane drivers at 08:57 (no new mutants); report mail-pass11-r7m.md not yet written.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n) | all items above | orders | 08:17 / 13:47 | 09:30 | r7n | RUNNING (full suite on frozen bytes) | re-freeze, hand-back |
+| a6bba99e (pass 11) | 14 survivors, M9-73..82 | 08:01 order | 08:02 / 13:32 | about 09:10 | pass 11 | RUNNING (writing) | mail-pass11-r7m.md |
+
+Agents running: 2 (the two-agent minimum is met). Load 1.9.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n hand-back, patches, fail-before, EV7N, fresh reviewer, pass 11 on r7n changed code | in progress | as ordered |
+| pass 11 report and the rows not yet judged | being written | read |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. r7n hand-back: verify hashes and apply matrix, start EV7N (one run, plus staged git copy for hygiene) and a fresh reviewer together.
+2. Pass 11 on r7n's changed code only.
+3. README, sweep, counts.
+
+
 ## STATUS (core lead) 08:50 UTC / 14:20 IST
 
 **Lines below are agent checkpoint lines or claims; I have judged none.**
