@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 13:35 UTC / 19:05 IST
+
+**r7s builder (af05acef) at 13:35Z. All numbers are the builder's, read from its files; I ran nothing.**
+- **Third mutant pass (mut-results-S3.tsv, on the final tests): S01-S24 all 24 KILLED**, each restored byte-equal. (The builder's checkpoint lines carry clock stamps 13:5x and 14:0x that are ahead of the real time 13:35Z; I take the files, not the stamps.)
+- **X1ctx on the strengthened q9: NOT re-run. The only X1ctx row in any results file is the old SURVIVED (r7r tests, 3 passed). S24 (the q9 `__wrapped__` mutant) is killed, but X1ctx is a different mutant (`__context__`); I do not claim it killed.** Open until a row exists. I will ask the builder (message) to run it before hand-back.
+- **Full guard run, strengthened bytes (hy-guard4): 1123 passed, 1 skipped, rc 0, 6 min 53 s, staged git copy** (builder run). A further run of the changed existing test files in full (hy-changed.log) and take-import runs on r7p and r7s (take-on-r7p-final, take-on-r7s-final) are in the logs; I have not read their results.
+- **Fail-before (builder, final tests): 37 failed, 14 passed** for the r7s file on r7r. **r7p full-file m8 (read): r7q file on plain r7p = 44 failed, 21 passed; by first error: AttributeError 11, ImportError 9 (so 20 fail only because a name is missing), 1 fixed-text _Refusal, 23 AssertionError (real behaviour difference).**
+- **Patches built (13:23Z): core-fix-on-frozen-r7s-crlf.patch 1.41 MB, -lf 1.41 MB, delta r7r-to-r7s 42 KB; builder says apply matrix verified, ruff ok, suppressions 367 = 367 (its method, n10 line not read).** Hashes and matrix NOT yet checked by me.
+- **Not yet in out/R7S: R7S-RESULTS.md, sha256-r7s.txt, apply-matrix-r7s.txt, snapshot MANIFEST.txt.**
+
+**ETA of snapshot-r7s: builder hand-back about 13:50Z to 14:00Z; then my hash and apply-matrix check and the push (about 10 min), so snapshot-r7s on origin about 14:05Z to 14:15Z.** Then EV7S (about 60 min). Agents running: 1. ASK: none. Next block about 13:45Z.
+
+
 ## STATUS (core lead) 13:25 UTC / 18:55 IST
 
 **r7s builder (af05acef) at 13:25Z, from its tsv/log files (builder numbers; I ran nothing):**
