@@ -1,2 +1,3 @@
 M4 start 03:12:24 binary verified, worktree made
 10min checkpoint: nobin 30F/42P, bin seed20261114 72P; next reversed + full 03:14:09
+reversed 72P; full suite starting 03:15:19
