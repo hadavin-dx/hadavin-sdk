@@ -23,7 +23,7 @@ index d24f76c..c64b84e 100644
    * Start-up order:
  * (1) the open-file check: exit 3 if `MAX_HANDLER_THREADS` needs more open files than this computer allows.
 diff --git a/docs/settings.md b/docs/settings.md
-index 7388fb3..2854cb0 100644
+index 7388fb3..fb6101c 100644
 --- a/docs/settings.md
 +++ b/docs/settings.md
 @@ -14,7 +14,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
@@ -53,7 +53,20 @@ index 7388fb3..2854cb0 100644
  
  ### Live model step (`DESK_QUALIFIER=live_claude`)
  
-@@ -124,3 +124,12 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+@@ -113,14 +113,23 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ 
+ ## Settings of the helper scripts (not read by the desk)
+ 
+-* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start (exit code 2) when a required name is missing: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run), `DESK_HUBSPOT_KEY_FILE`, `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
++* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start when a required name is missing or a value cannot be used: exit code 8 when a setting is refused (a missing name, a number out of range, a bad mailbox folder, a book file that already exists, a config line that is not NAME=VALUE, a file the config names that cannot be used); exit code 2 only when the command line is wrong (no `--config`, or `--assume-yes` without `--dry-fakes`) or a needed tool is missing. The required names are: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run), `DESK_HUBSPOT_KEY_FILE`, `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
+ * Optional names of that script: `REAL_PERSONS` (default 12, at least 8, at most 1000), `REAL_DRAIN_SECONDS` (seconds to wait for the desk, default 150), `REAL_MAIL_WAIT_SECONDS` (default 90), `REAL_MAIL_SETTLE_SECONDS` (default 10, the mail poll time: after every mail is seen once, wait this long and count once more), each of these three above 0 and at most 86,400; `REAL_RESULT_FILE` (where the JSON result goes; default `result.json` next to the database).
+ * The script forces `DESK_ADAPTERS=demo`, `DESK_CRM=hubspot`, `DESK_OUTBOX=smtp_provider` and, unless you pass `--live-model`, `DESK_QUALIFIER=recorded`, whatever the file says; it also reads the other `DESK_*` names (for example `DESK_PORT`, the `DESK_HUBSPOT_*`, `DESK_SMTPP_*` and `DESK_LIVE_*` names) from the same file and gives them to the desk processes. Defaults it sets when absent: `DESK_SEND_TIMEOUT_SECONDS=8`, `DESK_HUBSPOT_ALLOW_ANY_BASE_URL=no`, `DESK_LIVE_ALLOW_ANY_BASE_URL=no`.
+ * Mailboxes: blocks `REAL_IMAP_1_*`, `REAL_IMAP_2_*` and so on are read in order and stop at the first n that has no `REAL_IMAP_n_USER`; the user of block n must be the n-th address of `DESK_SMTPP_RECIPIENTS`. Per block: `USER` and `PASSWORD_FILE` (required), `HOST` (default: the mail provider's address, `MAIL_IMAP_DEFAULT_HOST` in `constants.py`), `PORT` (default 993), `CA_FILE`, `FOLDERS` (comma list; default `INBOX` and the provider's English spam folder, `MAIL_SPAM_FOLDER` in `constants.py`).
+-* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
++* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start because the command line is wrong (no `--config`, or `--assume-yes` without `--dry-fakes`) or a needed tool (openssl) is missing; 8 a setting was refused (a missing or bad value, an old book file, a bad config line); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
+ * `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
+ * `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Any other blank right after a `localhost` host (a space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it in the user name) does the same, but only when the next run of non-blank characters holds an at-sign before any `/`, `?` or `#` (`http://localhost @host`); `http://localhost:5678/x y` and `http://localhost y` (words after a space) are not touched. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
  * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
  * `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
  * `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
@@ -240,11 +253,14 @@ index ebc1b45..1a0f319 100644
  
  
 diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
-index 9d754c3..4de4be8 100644
+index 9d754c3..b09bc95 100644
 --- a/scripts/run_real_check.py
 +++ b/scripts/run_real_check.py
-@@ -69,6 +69,10 @@ from lead_desk.adapters import CrmError  # noqa: E402
+@@ -67,8 +67,13 @@ from http_guard import open_http  # noqa: E402
+ 
+ from lead_desk.adapters import CrmError  # noqa: E402
  from lead_desk.config import Config  # noqa: E402
++from lead_desk.config_exit import refusal_line  # noqa: E402
  from lead_desk.constants import (  # noqa: E402
      CAP_COUNT_MAX,
 +    EXIT_CHECK_FAILED,
@@ -254,12 +270,11 @@ index 9d754c3..4de4be8 100644
      EXIT_SIMULATED_KILL,
      MAIL_IMAP_DEFAULT_HOST,
      MAIL_SPAM_FOLDER,
-@@ -77,7 +81,8 @@ from lead_desk.constants import (  # noqa: E402
+@@ -77,7 +82,7 @@ from lead_desk.constants import (  # noqa: E402
      REAL_SECONDS_MAX,
  )
  from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings  # noqa: E402
 -from lead_desk.envnum import env_number  # noqa: E402
-+from lead_desk.config_exit import refusal_line  # noqa: E402
 +from lead_desk.envnum import SettingRefused, env_number, env_path  # noqa: E402
  from lead_desk.gate import SEND_WORKERS_MAX  # noqa: E402
  from lead_desk.imap_count import (  # noqa: E402
@@ -297,16 +312,35 @@ index 9d754c3..4de4be8 100644
      out.write_text(
          json.dumps(
              {"ok": False, "note": note, "leads_in_book": leads, "hubspot_calls_by_the_desk": hub_stats}, indent=2
-@@ -622,7 +619,7 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+@@ -607,11 +604,11 @@ def number(name: str, env: dict[str, str], cast: Any, default: Any, *, low: Any
+ 
+ 
+ def positive_seconds(name: str, env: dict[str, str], default: float) -> float:
+-    """A time setting in seconds: a finite number above 0, else ValueError naming the setting only (checked BEFORE any
+-    real call is made, so a typo cannot surface after real mails were sent)."""
++    """A time setting in seconds: a finite number above 0, else SettingRefused naming the setting only (checked
++    BEFORE any real call is made, so a typo cannot surface after real mails were sent)."""
+     value: float = number(name, env, float, default, high=REAL_SECONDS_MAX)
+     if not (math.isfinite(value) and value > 0):
+-        raise ValueError(f"{name} must be a number of seconds above 0")
++        raise SettingRefused(f"{name} must be a number of seconds above 0")
+     return value
+ 
+ 
+@@ -622,17 +619,17 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
      n = 1
      while env.get(f"REAL_IMAP_{n}_USER"):
          p = f"REAL_IMAP_{n}_"
 -        ca = env.get(p + "CA_FILE")
 +        ca = str(env_path(env, p + "CA_FILE")) if env.get(p + "CA_FILE") else None
          if not env.get(p + "PASSWORD_FILE", "").strip():
-             raise ValueError(f"{p}PASSWORD_FILE is required when {p}USER is set")
+-            raise ValueError(f"{p}PASSWORD_FILE is required when {p}USER is set")
++            raise SettingRefused(f"{p}PASSWORD_FILE is required when {p}USER is set")
          folders = tuple(x.strip() for x in env.get(p + "FOLDERS", f"INBOX,{MAIL_SPAM_FOLDER}").split(",") if x.strip())
-@@ -632,7 +629,7 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+         if any(bad_folder_name(f) for f in folders):
+-            raise ValueError(f"{p}FOLDERS: a folder name must be plain ASCII without quotes or backslashes")
++            raise SettingRefused(f"{p}FOLDERS: a folder name must be plain ASCII without quotes or backslashes")
+         out.append(
              ImapSettings(
                  env.get(p + "HOST", MAIL_IMAP_DEFAULT_HOST),
                  env[p + "USER"],
@@ -315,20 +349,48 @@ index 9d754c3..4de4be8 100644
                  port=number(p + "PORT", env, int, 993, low=1, high=PORT_MAX),
                  folders=folders,
                  ssl_context=ssl.create_default_context(cafile=ca) if ca else None,
-@@ -855,10 +852,11 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -657,7 +654,8 @@ def load_env(path: Path) -> dict[str, str]:
+             continue
+         name, sep, value = line.partition("=")
+         if not sep or not CONFIG_NAME.fullmatch(name.strip()):
+-            raise ValueError(f"config line {n} is not NAME=VALUE with an upper-case name")  # the line, never its text
++            # the line number, never the line's text
++            raise SettingRefused(f"config line {n} is not NAME=VALUE with an upper-case name")
+         value = value.strip()
+         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":  # noqa: PLR2004
+             value = value[1:-1]
+@@ -849,16 +847,15 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+             env = load_env(a.config)
+         missing = [n for n in REQUIRED if not env.get(n, "").strip()]
+         if missing:
+-            print("refused: the config lacks: " + ", ".join(missing))
+-            return EXIT_REFUSED
++            raise SettingRefused("the config lacks: " + ", ".join(missing))
+         persons = number("REAL_PERSONS", env, int, DEFAULT_PERSONS, high=REAL_PERSONS_MAX)
          if persons < MIN_PERSONS:
-             print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
-             return EXIT_REFUSED
+-            print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
+-            return EXIT_REFUSED
 -        db = Path(env["DESK_DB_PATH"])
++            raise SettingRefused(f"REAL_PERSONS must be at least {MIN_PERSONS}")
 +        db = env_path(env, "DESK_DB_PATH")
          if db.exists():  # an old book would hold old leads: the clean-up could not tell this run's contacts apart
-             raise ValueError("DESK_DB_PATH names a file that already exists: give a new database file for each run")
+-            raise ValueError("DESK_DB_PATH names a file that already exists: give a new database file for each run")
++            raise SettingRefused("DESK_DB_PATH names a file that already exists: give a new database file for each run")
          run_dir = db.parent
 +        env_path(env, "REAL_RESULT_FILE", run_dir / "result.json")  # refused here, before anything real is called
          env = {**env, "DESK_ADAPTERS": "demo", "DESK_CRM": "hubspot", "DESK_OUTBOX": "smtp_provider"}
          env.setdefault("DESK_SEND_TIMEOUT_SECONDS", "8")
          env.setdefault("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "no")  # only the config file can switch the host check off
-@@ -881,7 +879,13 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -869,7 +866,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         pr = ProviderSettings.from_env(env)
+         read_cap = number("REAL_HUBSPOT_READBACK_MAX_CALLS", env, int, 0, high=CAP_COUNT_MAX)
+         if read_cap < MIN_READBACK_CALLS:  # inside the refusal block: nothing real has been called yet
+-            raise ValueError(f"REAL_HUBSPOT_READBACK_MAX_CALLS must be at least {MIN_READBACK_CALLS}")
++            raise SettingRefused(f"REAL_HUBSPOT_READBACK_MAX_CALLS must be at least {MIN_READBACK_CALLS}")
+         drain_seconds = positive_seconds("REAL_DRAIN_SECONDS", env, 150.0)
+         mail_wait_seconds = positive_seconds("REAL_MAIL_WAIT_SECONDS", env, 90.0)
+         settle_seconds = positive_seconds("REAL_MAIL_SETTLE_SECONDS", env, MAIL_POLL_SECONDS)
+@@ -881,7 +878,13 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
          live_worst = Decimal(0)
          if a.live_model:
              env["DESK_QUALIFIER"] = "live_claude"
@@ -343,7 +405,7 @@ index 9d754c3..4de4be8 100644
              if live is None:
                  raise ValueError("the live model settings are missing")
              live_cap = live.cap_run_usd
-@@ -891,10 +895,12 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -891,10 +894,14 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
              live_worst = worst_case_usd(live, q_bytes) * MODEL_CALLS_PER_LEAD * (persons + 3) * 2
          port = number("DESK_PORT", env, int, 0, low=0, high=PORT_MAX) or 8765
      except (ValueError, OSError, ArithmeticError) as e:
@@ -352,15 +414,17 @@ index 9d754c3..4de4be8 100644
 -        print("refused: " + type(e).__name__ + (": " + msg if msg else ""))
 -        return EXIT_REFUSED
 +        # one wording for every refusal (lead_desk.config_exit.refusal_line: no class name, one line, the value of a
-+        # named or secret-like setting never shown). A refused setting is EXIT_SCRIPT_SETTING_REFUSED; this script's own
-+        # refusals (a missing config line, a book that exists) and OSError / ArithmeticError stay EXIT_REFUSED.
++        # named or secret-like setting never shown). One rule for the code: a refused setting (a missing or bad value,
++        # a file the config names that cannot be used, a bad config line) is EXIT_SCRIPT_SETTING_REFUSED; EXIT_REFUSED
++        # is for the command line (no --config, --assume-yes without --dry-fakes) and a missing tool.
++        refused_setting = isinstance(e, SettingRefused | OSError | ArithmeticError)
 +        reason = e if isinstance(e, ValueError) else "a file or a number named in the config cannot be used"
 +        print(refusal_line("refused:", reason, env))
-+        return EXIT_SCRIPT_SETTING_REFUSED if isinstance(e, SettingRefused) else EXIT_REFUSED
++        return EXIT_SCRIPT_SETTING_REFUSED if refused_setting else EXIT_REFUSED
  
      desks = 2  # the crash starts a second desk process, each with its own caps
      print(f"people: {persons} + a twin (same person, second address); desk processes: {desks} (one crash)")
-@@ -1091,7 +1097,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -1091,7 +1098,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
          "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot",
      }
      print("\n" + json.dumps(summary, indent=2, sort_keys=True))
@@ -789,7 +853,7 @@ index 0000000..d556058
 +    # uses it for the last line of a log file it shows a person); the settings come from the environment
 +    print(plain_line(sys.stdin.buffer.read().decode("utf-8", "replace"), os.environ))
 diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
-index ad79be1..561192c 100644
+index ad79be1..86d1816 100644
 --- a/src/lead_desk/constants.py
 +++ b/src/lead_desk/constants.py
 @@ -23,13 +23,128 @@ HTTP_BUSY: Final = 503
@@ -845,7 +909,7 @@ index ad79be1..561192c 100644
 +MEANING_CHECK_STOPPED: Final = (
 +    "the check was stopped before anything was called (the Start question was not answered yes)"
 +)
-+MEANING_CHECK_REFUSED: Final = "the check refused its config or its question before anything real was called"
++MEANING_CHECK_REFUSED: Final = "the check was started wrongly (command line) or lacks a tool; nothing real was called"
 +MEANING_CHECK_FAILED: Final = "the check ran and found a failure, or its read-back stopped"
 +
 +# THE table of process exit codes: (program, code, meaning). The program is the one thing that has a code; inside a
@@ -998,7 +1062,7 @@ index 087304a..4f39db3 100644
      """`urlsplit(text)` for the value of setting `name`: text that cannot be split (an unclosed bracket such as
      `http://[/`) is a SettingRefused naming the setting, never a bare ValueError."""
 diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
-index a822f3a..d378ab0 100644
+index a822f3a..0b5086d 100644
 --- a/src/lead_desk/server.py
 +++ b/src/lead_desk/server.py
 @@ -35,6 +35,7 @@ from lead_desk import db, lockfile, portal_api
@@ -1009,12 +1073,13 @@ index a822f3a..d378ab0 100644
  from lead_desk.constants import (
      ACCEPT_PAUSE_SECONDS,
      BIND_RETRY_SECONDS,
-@@ -51,7 +52,7 @@ from lead_desk.constants import (
+@@ -50,8 +51,8 @@ from lead_desk.constants import (
+     EXIT_ADAPTERS_UNREACHABLE,
      EXIT_ANOTHER_DESK,
      EXIT_DESK_SETTING_REFUSED,
++    EXIT_OPEN_FILE_LIMIT,
      EXIT_PORT_UNAVAILABLE,
 -    EXIT_SETTING_REFUSED,
-+    EXIT_OPEN_FILE_LIMIT,
      FD_RESERVE,
      FD_RESERVE_ITEMS,
      FDS_PER_HANDLER_THREAD,
@@ -1158,10 +1223,10 @@ index 353043b..61ba311 100644
  def addr(base: str) -> tuple[str, int]:
 diff --git a/tests/test_bad_setting_entry_points.py b/tests/test_bad_setting_entry_points.py
 new file mode 100644
-index 0000000..2d123cf
+index 0000000..10b8c92
 --- /dev/null
 +++ b/tests/test_bad_setting_entry_points.py
-@@ -0,0 +1,535 @@
+@@ -0,0 +1,536 @@
 +"""A bad DESK_* value must end every start-up script cleanly, never with a Python traceback.
 +
 +Bug class: a bad setting value (a person's typing mistake) reaches the person as a raw Python error, because the
@@ -1176,7 +1241,6 @@ index 0000000..2d123cf
 +from __future__ import annotations
 +
 +import os
-+import re
 +import subprocess
 +import sys
 +from pathlib import Path
@@ -1323,6 +1387,7 @@ index 0000000..2d123cf
 +    monkeypatch: pytest.MonkeyPatch, capsys: Any
 +) -> None:
 +    """The shared reader keeps the one-line rule itself, whatever a refusal message holds."""
++
 +    def refuse(cls: Any, env: Any = None) -> Any:
 +        raise SettingRefused("DESK_PORT is bad\nsecond line\r\n" + "y" * 5000)
 +
@@ -1360,7 +1425,7 @@ index 0000000..2d123cf
 +def test_every_refusal_site_of_the_desk_goes_through_the_one_formatter() -> None:
 +    """No `print(f"the desk refuses ...` is built by hand in server.py: `_refuse` is the only place that prints one."""
 +    text = (REPO / "src" / "lead_desk" / "server.py").read_text(encoding="utf-8")
-+    assert "print(f\"the desk refuses" not in text
++    assert 'print(f"the desk refuses' not in text
 +    assert text.count("print(refusal_line(") == 1
 +    assert text.count("_refuse(") >= 8  # the eight sites plus the definition
 +
@@ -1423,9 +1488,10 @@ index 0000000..2d123cf
 +    items = {"DESK_ALLOWED_HOSTS": "alpha-host.test,beta-host.test"}
 +    line = refusal_line("x:", "DESK_ALLOWED_HOSTS has beta-host.test", items)
 +    assert "beta-host" not in line and "<value>" in line
-+    url = {"DESK_FAKES_URL": "http://some-user:some-pass@127.0.0.1:1234/"}
-+    line = refusal_line("x:", "DESK_FAKES_URL cannot use some-user or some-pass", url)
-+    assert "some-user" not in line and "some-pass" not in line
++    user, secret = "some-" + "user", "some-" + "pass"
++    url = {"DESK_FAKES_URL": f"http://{user}:{secret}@127.0.0.1:1234/"}
++    line = refusal_line("x:", f"DESK_FAKES_URL cannot use {user} or {secret}", url)
++    assert user not in line and secret not in line
 +    long_value = "firstpart-12" + "m" * 20 + "lastpart-123"
 +    line = refusal_line("x:", "DESK_REPLIES_PATH broke at firstpart-12", {"DESK_REPLIES_PATH": long_value})
 +    assert "firstpart-12" not in line and "<value>" in line
@@ -1635,15 +1701,15 @@ index 0000000..2d123cf
 +    assert not hasattr(_rrc(), "scrub")
 +
 +
-+def test_run_real_check_keeps_its_own_code_for_its_own_refusals(
++def test_run_real_check_keeps_code_2_for_the_command_line_and_uses_8_for_every_setting(
 +    tmp_path: Path, capsys: pytest.CaptureFixture[str]
 +) -> None:
 +    rrc = _rrc()
 +    assert rrc.main([]) == rrc.EXIT_REFUSED and capsys.readouterr().out.startswith("refused: give --config")
 +    config = _real_config(tmp_path)
 +    (tmp_path / "run").mkdir()
-+    (tmp_path / "run" / "desk.db").write_text("x", encoding="utf-8")  # an old book: this script's own refusal
-+    assert rrc.main(["--config", str(config)]) == rrc.EXIT_REFUSED
++    (tmp_path / "run" / "desk.db").write_text("x", encoding="utf-8")  # an old book: DESK_DB_PATH is refused
++    assert rrc.main(["--config", str(config)]) == EXIT_SCRIPT_SETTING_REFUSED
 +    assert "refused: DESK_DB_PATH names a file that already exists" in capsys.readouterr().out
 +
 +
@@ -1699,10 +1765,10 @@ index 0000000..2d123cf
 +    assert "no-such-flow" not in done.stdout + done.stderr
 diff --git a/tests/test_exit_code_table.py b/tests/test_exit_code_table.py
 new file mode 100644
-index 0000000..2a084b1
+index 0000000..7106498
 --- /dev/null
 +++ b/tests/test_exit_code_table.py
-@@ -0,0 +1,189 @@
+@@ -0,0 +1,190 @@
 +"""The one table of exit codes (`constants.EXIT_CODE_TABLE`, keyed by PROGRAM) must say what the programs do.
 +
 +Checked here: inside one program a code has one meaning; the numbers that mean different things in different programs
@@ -1883,7 +1949,8 @@ index 0000000..2a084b1
 +@pytest.mark.skipif(sys.platform == "win32", reason="the shell scripts are the non-Windows ones")
 +def test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code(tmp_path: Path) -> None:
 +    sh = shutil.which("sh")
-+    if sh is None or subprocess.run([sh, "-c", "[[ a == a ]]"], capture_output=True, check=False).returncode == 0:
++    probe = [sh, "-c", "[[ a == a ]]"] if sh else None
++    if probe is None or subprocess.run(probe, capture_output=True, check=False).returncode == 0:  # noqa: S603
 +        pytest.skip("sh on this machine runs [[ ]] (it is bash): the refusal cannot be reached")
 +    done = _run([sh, str(REPO / "scripts" / "start_all.sh")], tmp_path)
 +    assert done.returncode == c.EXIT_NOT_BASH
@@ -2050,9 +2117,22 @@ index 0000000..78f1102
 +    main_text = source[source.index("def main(") :]
 +    assert main_text.count("_refuse(") == 8  # the first reading of the settings plus the seven sites above
 +    assert len(SITES) == 7
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index b414024..ba6c1fc 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -563,7 +563,7 @@ def test_run_real_check_reads_a_config_outside_the_allowed_folders(
+     (outside / "run.env").write_text("REAL_PERSONS=3\n", encoding="utf-8")
+     mod = _rrc(monkeypatch)
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_REFUSED
++    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "the config lacks" in out and "outside the allowed" not in out  # read, then judged on its content
+     assert mod.main(["--config", "run\x1b.env"]) == mod.EXIT_REFUSED  # the operator's file is a checked text too
 diff --git a/tests/test_ps1_pins.py b/tests/test_ps1_pins.py
 new file mode 100644
-index 0000000..6797c2f
+index 0000000..de3ebda
 --- /dev/null
 +++ b/tests/test_ps1_pins.py
 @@ -0,0 +1,207 @@
@@ -2181,7 +2261,7 @@ index 0000000..6797c2f
 +    assert reader_problems(text.replace(old, new, 1)) != [], (name, mutant)
 +
 +
-+_TIMEOUT_TAIL = "(it may still be starting); see $dataDir\\desk.log; run scripts\\reset.ps1 to stop it\")"
++_TIMEOUT_TAIL = '(it may still be starting); see $dataDir\\desk.log; run scripts\\reset.ps1 to stop it")'
 +START_MUTANTS = {
 +    "no pass-through limit": ("if ($deskCode -in 3, 4, 5) { exit $deskCode }", "exit $deskCode"),
 +    "no null guard": ("if ($null -eq $deskCode -or $deskCode -isnot [int]) { $deskCode = 1 }", ""),
@@ -2263,6 +2343,104 @@ index 0000000..6797c2f
 +        taken.listen()
 +        done = _windows_run("start_all.ps1", tmp_path, DESK_PORT=str(taken.getsockname()[1]))
 +    assert done.returncode == 5 and "started:" not in done.stdout
+diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
+index 66461fc..ca2e7da 100644
+--- a/tests/test_real_check_dry.py
++++ b/tests/test_real_check_dry.py
+@@ -23,7 +23,7 @@ def test_refuses_without_config_and_without_required_names(tmp_path: Path, capsy
+     assert rrc.main([]) == rrc.EXIT_REFUSED
+     cfg = tmp_path / "c.env"
+     cfg.write_text("DESK_DB_PATH=x\n", encoding="utf-8")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "lacks" in capsys.readouterr().out
+ 
+ 
+@@ -196,14 +196,14 @@ def test_a_refusal_never_echoes_the_value_of_a_setting(
+ ) -> None:
+     secret_value = "sec" + "ret-value-77"
+     cfg = _config_file(tmp_path, **{name: secret_value})
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and secret_value not in out
+ 
+ 
+ def test_a_refusal_for_a_missing_file_shows_no_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+     cfg = _config_file(tmp_path, REAL_IMAP_1_CA_FILE=str(tmp_path / "no-such-folder" / "ca-name.pem"))
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "no-such-folder" not in capsys.readouterr().out
+ 
+ 
+@@ -238,7 +238,7 @@ def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
+ ) -> None:
+     cfg = _valid_config(tmp_path, REAL_HUBSPOT_READBACK_MAX_CALLS=value)
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and "READBACK_MAX_CALLS" in out and "Start?" not in out
+     assert not (tmp_path / "run").exists()
+@@ -250,7 +250,7 @@ def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+ ) -> None:
+     cfg = _valid_config(tmp_path, **{name: value})
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and name in out and "soon" not in out
+ 
+@@ -430,7 +430,7 @@ def test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call(
+     started: list[str] = []
+     monkeypatch.setattr(rrc.Desk, "start", lambda self: started.append("desk"))
+     monkeypatch.setattr("builtins.input", lambda prompt="": started.append("asked") or "y")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "upper-case" in capsys.readouterr().out and started == []
+     # the second line of defence: even a dict that holds the name never passes it on
+     child = rrc.child_environment({"desk_qualifier": "live_claude", "DESK_PORT": "1"})
+@@ -440,7 +440,8 @@ def test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call(
+ def test_an_existing_database_file_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+     old = tmp_path / "old.db"
+     old.write_bytes(b"x")
+-    assert rrc.main(["--config", str(_valid_config(tmp_path, DESK_DB_PATH=str(old)))]) == rrc.EXIT_REFUSED
++    cfg = _valid_config(tmp_path, DESK_DB_PATH=str(old))
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "already exists" in out and "Start?" not in out
+ 
+@@ -473,12 +474,13 @@ def test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked(
+     assert "per-run cap US$1.25" in capsys.readouterr().out
+     other = "https://" + "model-host" + ".example.test"
+     cfg = _valid_config(tmp_path, DESK_LIVE_BASE_URL=other, **live)
+-    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED  # a stranger's host: no key goes there
++    # a stranger's host: no key goes there
++    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "not the provider's own address" in capsys.readouterr().out
+     # the host check lives in the settings themselves (tests/test_live_claude.py); here only that the script
+     # cannot be talked past it: a process variable cannot switch it off, only the config file can
+     monkeypatch.setenv("DESK_LIVE_ALLOW_ANY_BASE_URL", "yes")
+-    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "not the provider's own address" in capsys.readouterr().out
+ 
+ 
+@@ -492,9 +494,13 @@ def test_a_mailbox_user_without_a_password_file_and_a_bad_folder_are_clear_refus
+         with pytest.raises(ValueError, match="REAL_IMAP_1_FOLDERS"):
+             rrc.imap_settings({**base, "REAL_IMAP_1_FOLDERS": folder})
+     cfg = _valid_config(tmp_path, REAL_IMAP_1_FOLDERS="Spamfölder")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "REAL_IMAP_1_FOLDERS" in out and "Spamf" not in out and "Traceback" not in out
++    # the same class, another setting of the script: a required name that is blank is also exit 8
++    cfg = _valid_config(tmp_path, REAL_IMAP_1_PASSWORD_FILE=" ")
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
++    assert "the config lacks: REAL_IMAP_1_PASSWORD_FILE" in capsys.readouterr().out
+ 
+ 
+ def test_dry_fakes_with_a_config_says_the_config_is_ignored(
 diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
 index 22baabc..6614aa2 100644
 --- a/tests/test_reset_scripts.py
@@ -2584,7 +2762,7 @@ index 640e160..8b84356 100644
  
 diff --git a/tests/test_start_all_late_refusal.py b/tests/test_start_all_late_refusal.py
 new file mode 100644
-index 0000000..49d66a0
+index 0000000..d3f5c37
 --- /dev/null
 +++ b/tests/test_start_all_late_refusal.py
 @@ -0,0 +1,223 @@
@@ -2643,7 +2821,7 @@ index 0000000..49d66a0
 +    if first_on_path is not None:
 +        env["PATH"] = str(first_on_path) + os.pathsep + env["PATH"]
 +    return subprocess.run(  # noqa: S603, S607 - our own script, made-up values, throwaway folder
-+        ["bash", str(REPO / "scripts" / "start_all.sh")],
++        ["bash", str(REPO / "scripts" / "start_all.sh")],  # noqa: S607
 +        cwd=REPO,
 +        env=env,
 +        capture_output=True,

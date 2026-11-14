@@ -1,10 +1,11 @@
 base f3c39cf89ec989f032ea48a23cfd824b88da9c68
-tree hash after apply (whole patch, parts, final tree): bc57039838e44de46c9e04884b5c770b3e22f323 (all three equal; checked on fresh worktrees b20-apply-a, b20-apply-b)
-b912220ee70ef236526a58cce5e5104e77fb47f62011abe521056e450b406896  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3.patch
-b912220ee70ef236526a58cce5e5104e77fb47f62011abe521056e450b406896  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-recut.patch
-569f9bbd5356eefdd1fd468d9b1751e3af1edfe5022e6598da73ed143c2d8a28  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-01-src.patch
-ff638be417400bd5528cda0c3663a96ffc5fd7ebdbaaf438ef94b53ca257aa64  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-02-scripts.patch
-e247bc32a182d69ab4abff0d20d169be506d9d100af5b0e0f696d9137a5ab428  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-03-tests-1of2.patch
-17377a49a5f0807952194af325be26d807a7277d3ce94ebfb4776620c376d678  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-04-tests-2of2.patch
-9a02f6f19dcf9e4ceafb87bf2e90213d180292d7da8e53c834d794732118d8f8  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-05-docs.patch
-recut = diff cut again from the fresh worktree A after applying: sha256 b912220e... identical
+tree hash after apply (whole patch, five parts, and the final tree of the full-run clone b20-final3): 7d32f6fc1585bebd65ffd426f5376e6357ac0e7f (all three equal; two fresh worktrees)
+8aa58321094820663d29e6eca782d24c2a4c5346984f2d3a10add2319f6919a0  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3.patch
+8aa58321094820663d29e6eca782d24c2a4c5346984f2d3a10add2319f6919a0  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-recut.patch
+9398dd9e5d1e1408176879b66e2df15045ba25a5d4fdfcf3964fde2c5c01fb12  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-01-src.patch
+44d5cc965115cabd5186873e2de35457b8cd9199092307fe018a75d00f7b2903  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-02-scripts.patch
+f6b8becf0850cd11224fdd5f4897178fb838f907bf647635d2d7ba15eb3a4a2a  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-03-tests-1of2.patch
+b66e895d7253879e72a9f4e564558e5d6e4c29347a55f3fae212c49c998bcbfc  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-04-tests-2of2.patch
+1f0a1816f6283142e6025eac6a922c1d67898df814f047da302ede8267975fb6  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-05-docs.patch
+recut = diff cut again from fresh worktree A after applying: sha256 8aa58321... identical
+(the earlier cut, sha b912220e..., was before the run_real_check exit-8 fix and the lint fixes; replaced)

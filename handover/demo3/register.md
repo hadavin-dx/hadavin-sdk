@@ -349,3 +349,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B19 | fix-2 r8 builder | closed 06:46Z, handed back (full run red on hygiene, fixed in text) | next: reviews |
 | R17a/R17b | egm-design, egm-codebase-details on fix-2 r8 | started 06:48Z, expect ~15 min | check 07:03Z |
 | B22 | fix-2 r9 builder | started 06:55Z, expect 60 min | check 07:10Z |
+| B20 | fix-10 r3 builder | closed 07:11Z, handed back green | reviews R18a/R18b |
+| R18a/R18b | egm-design, egm-codebase-details on fix-10 r3 | started 07:13Z | check 07:28Z |

@@ -229,7 +229,7 @@ index 0000000..d556058
 +    # uses it for the last line of a log file it shows a person); the settings come from the environment
 +    print(plain_line(sys.stdin.buffer.read().decode("utf-8", "replace"), os.environ))
 diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
-index ad79be1..561192c 100644
+index ad79be1..86d1816 100644
 --- a/src/lead_desk/constants.py
 +++ b/src/lead_desk/constants.py
 @@ -23,13 +23,128 @@ HTTP_BUSY: Final = 503
@@ -285,7 +285,7 @@ index ad79be1..561192c 100644
 +MEANING_CHECK_STOPPED: Final = (
 +    "the check was stopped before anything was called (the Start question was not answered yes)"
 +)
-+MEANING_CHECK_REFUSED: Final = "the check refused its config or its question before anything real was called"
++MEANING_CHECK_REFUSED: Final = "the check was started wrongly (command line) or lacks a tool; nothing real was called"
 +MEANING_CHECK_FAILED: Final = "the check ran and found a failure, or its read-back stopped"
 +
 +# THE table of process exit codes: (program, code, meaning). The program is the one thing that has a code; inside a
@@ -438,7 +438,7 @@ index 087304a..4f39db3 100644
      """`urlsplit(text)` for the value of setting `name`: text that cannot be split (an unclosed bracket such as
      `http://[/`) is a SettingRefused naming the setting, never a bare ValueError."""
 diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
-index a822f3a..d378ab0 100644
+index a822f3a..0b5086d 100644
 --- a/src/lead_desk/server.py
 +++ b/src/lead_desk/server.py
 @@ -35,6 +35,7 @@ from lead_desk import db, lockfile, portal_api
@@ -449,12 +449,13 @@ index a822f3a..d378ab0 100644
  from lead_desk.constants import (
      ACCEPT_PAUSE_SECONDS,
      BIND_RETRY_SECONDS,
-@@ -51,7 +52,7 @@ from lead_desk.constants import (
+@@ -50,8 +51,8 @@ from lead_desk.constants import (
+     EXIT_ADAPTERS_UNREACHABLE,
      EXIT_ANOTHER_DESK,
      EXIT_DESK_SETTING_REFUSED,
++    EXIT_OPEN_FILE_LIMIT,
      EXIT_PORT_UNAVAILABLE,
 -    EXIT_SETTING_REFUSED,
-+    EXIT_OPEN_FILE_LIMIT,
      FD_RESERVE,
      FD_RESERVE_ITEMS,
      FDS_PER_HANDLER_THREAD,

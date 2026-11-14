@@ -180,9 +180,22 @@ index 0000000..78f1102
 +    main_text = source[source.index("def main(") :]
 +    assert main_text.count("_refuse(") == 8  # the first reading of the settings plus the seven sites above
 +    assert len(SITES) == 7
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index b414024..ba6c1fc 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -563,7 +563,7 @@ def test_run_real_check_reads_a_config_outside_the_allowed_folders(
+     (outside / "run.env").write_text("REAL_PERSONS=3\n", encoding="utf-8")
+     mod = _rrc(monkeypatch)
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_REFUSED
++    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "the config lacks" in out and "outside the allowed" not in out  # read, then judged on its content
+     assert mod.main(["--config", "run\x1b.env"]) == mod.EXIT_REFUSED  # the operator's file is a checked text too
 diff --git a/tests/test_ps1_pins.py b/tests/test_ps1_pins.py
 new file mode 100644
-index 0000000..6797c2f
+index 0000000..de3ebda
 --- /dev/null
 +++ b/tests/test_ps1_pins.py
 @@ -0,0 +1,207 @@
@@ -311,7 +324,7 @@ index 0000000..6797c2f
 +    assert reader_problems(text.replace(old, new, 1)) != [], (name, mutant)
 +
 +
-+_TIMEOUT_TAIL = "(it may still be starting); see $dataDir\\desk.log; run scripts\\reset.ps1 to stop it\")"
++_TIMEOUT_TAIL = '(it may still be starting); see $dataDir\\desk.log; run scripts\\reset.ps1 to stop it")'
 +START_MUTANTS = {
 +    "no pass-through limit": ("if ($deskCode -in 3, 4, 5) { exit $deskCode }", "exit $deskCode"),
 +    "no null guard": ("if ($null -eq $deskCode -or $deskCode -isnot [int]) { $deskCode = 1 }", ""),
@@ -393,6 +406,104 @@ index 0000000..6797c2f
 +        taken.listen()
 +        done = _windows_run("start_all.ps1", tmp_path, DESK_PORT=str(taken.getsockname()[1]))
 +    assert done.returncode == 5 and "started:" not in done.stdout
+diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
+index 66461fc..ca2e7da 100644
+--- a/tests/test_real_check_dry.py
++++ b/tests/test_real_check_dry.py
+@@ -23,7 +23,7 @@ def test_refuses_without_config_and_without_required_names(tmp_path: Path, capsy
+     assert rrc.main([]) == rrc.EXIT_REFUSED
+     cfg = tmp_path / "c.env"
+     cfg.write_text("DESK_DB_PATH=x\n", encoding="utf-8")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "lacks" in capsys.readouterr().out
+ 
+ 
+@@ -196,14 +196,14 @@ def test_a_refusal_never_echoes_the_value_of_a_setting(
+ ) -> None:
+     secret_value = "sec" + "ret-value-77"
+     cfg = _config_file(tmp_path, **{name: secret_value})
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and secret_value not in out
+ 
+ 
+ def test_a_refusal_for_a_missing_file_shows_no_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+     cfg = _config_file(tmp_path, REAL_IMAP_1_CA_FILE=str(tmp_path / "no-such-folder" / "ca-name.pem"))
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "no-such-folder" not in capsys.readouterr().out
+ 
+ 
+@@ -238,7 +238,7 @@ def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
+ ) -> None:
+     cfg = _valid_config(tmp_path, REAL_HUBSPOT_READBACK_MAX_CALLS=value)
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and "READBACK_MAX_CALLS" in out and "Start?" not in out
+     assert not (tmp_path / "run").exists()
+@@ -250,7 +250,7 @@ def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+ ) -> None:
+     cfg = _valid_config(tmp_path, **{name: value})
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and name in out and "soon" not in out
+ 
+@@ -430,7 +430,7 @@ def test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call(
+     started: list[str] = []
+     monkeypatch.setattr(rrc.Desk, "start", lambda self: started.append("desk"))
+     monkeypatch.setattr("builtins.input", lambda prompt="": started.append("asked") or "y")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "upper-case" in capsys.readouterr().out and started == []
+     # the second line of defence: even a dict that holds the name never passes it on
+     child = rrc.child_environment({"desk_qualifier": "live_claude", "DESK_PORT": "1"})
+@@ -440,7 +440,8 @@ def test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call(
+ def test_an_existing_database_file_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+     old = tmp_path / "old.db"
+     old.write_bytes(b"x")
+-    assert rrc.main(["--config", str(_valid_config(tmp_path, DESK_DB_PATH=str(old)))]) == rrc.EXIT_REFUSED
++    cfg = _valid_config(tmp_path, DESK_DB_PATH=str(old))
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "already exists" in out and "Start?" not in out
+ 
+@@ -473,12 +474,13 @@ def test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked(
+     assert "per-run cap US$1.25" in capsys.readouterr().out
+     other = "https://" + "model-host" + ".example.test"
+     cfg = _valid_config(tmp_path, DESK_LIVE_BASE_URL=other, **live)
+-    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED  # a stranger's host: no key goes there
++    # a stranger's host: no key goes there
++    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "not the provider's own address" in capsys.readouterr().out
+     # the host check lives in the settings themselves (tests/test_live_claude.py); here only that the script
+     # cannot be talked past it: a process variable cannot switch it off, only the config file can
+     monkeypatch.setenv("DESK_LIVE_ALLOW_ANY_BASE_URL", "yes")
+-    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "not the provider's own address" in capsys.readouterr().out
+ 
+ 
+@@ -492,9 +494,13 @@ def test_a_mailbox_user_without_a_password_file_and_a_bad_folder_are_clear_refus
+         with pytest.raises(ValueError, match="REAL_IMAP_1_FOLDERS"):
+             rrc.imap_settings({**base, "REAL_IMAP_1_FOLDERS": folder})
+     cfg = _valid_config(tmp_path, REAL_IMAP_1_FOLDERS="Spamfölder")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "REAL_IMAP_1_FOLDERS" in out and "Spamf" not in out and "Traceback" not in out
++    # the same class, another setting of the script: a required name that is blank is also exit 8
++    cfg = _valid_config(tmp_path, REAL_IMAP_1_PASSWORD_FILE=" ")
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
++    assert "the config lacks: REAL_IMAP_1_PASSWORD_FILE" in capsys.readouterr().out
+ 
+ 
+ def test_dry_fakes_with_a_config_says_the_config_is_ignored(
 diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
 index 22baabc..6614aa2 100644
 --- a/tests/test_reset_scripts.py

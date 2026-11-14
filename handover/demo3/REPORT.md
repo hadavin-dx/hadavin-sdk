@@ -1,3 +1,18 @@
+## HEARTBEAT 115 (07:14Z) - B20 (fix-10 r3) HANDED BACK, full run GREEN, my own lint GREEN; two fresh reviewers started
+
+| Agent / job | State at 07:14Z |
+|---|---|
+| B20 fix-10 r3 | HANDED BACK. Final-head full run `4160 passed, 211 skipped, 0 failed` (925s; Python 3.13, gitleaks, DPLD_REQUIRE_SCAN=1, no data/, no extra ref). Run 1 had been red (13 failed, builder slip: it ran only its own test files; plus 1 hygiene literal); fixed at the class: every refused run_real_check setting is exit 8, exit 2 only for command line or missing tool. Hygiene and clock tests alone rc 0. Mutation 19 of 19 killed. Old-code proof: 27 real-behaviour, 8 function-absent, 6 text/AST, 9 text-only ps1 pins counted apart; 25 more real-behaviour in test_real_check_dry/test_path_confinement. Windows scripts never run (text pins, 4 Windows-only tests skipped) |
+| LINT by me (independent, on a clean copy of the index of b20-tree) | ruff check 0, ruff format --check 0, mypy linux 0, mypy win32 0, bandit -ll 0, ruff E501 0. Logs raw/b20-*.log. Note: git write-tree of that tree is 3e4cfad3; the builder quotes patch tree 7d32f6fc (different base for the tree): not yet reconciled, reviewers read the patch |
+| fix-10 r3 reviewers | egm-design and egm-codebase-details started 07:13Z |
+| B21 fix-5 r8 | full run red (1 failed, HB114); no hand-back yet |
+| B22 fix-2 r9 | building |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B20 run 1 red; B21 run red. The stack must still add exit-7 rows to fix-10's table (builder notes list exact steps).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): Windows scripts; Python 3.12; CodeQL, Sonar, CodeRabbit (CI only); 211 skips not listed one by one.
+WHAT I WOULD DO NEXT (ranked): 1. read fix-10 reviews and resolve; 2. B21 and B22 hand-backs, same chain; 3. stack builder.
+
 ## HEARTBEAT 114 (07:08Z) - B21 full run ended RED (1 failed); B20 run 2 at 92%; B22 past its tests, doing guards and mutation
 
 | Agent / job | State at 07:08Z |
@@ -38,32 +53,4 @@ ASK for the lead (needs your decision, row 3): the key file is refused if group 
 FAILURES AND RETRIES: my earlier hand scans (builder's and a reviewer's) missed the unused `sys` import that ruff found: ruff is the check, not hand scans.
 NOT DONE / NOT CHECKED (my list, for the lead to decide): fix-5 r7 and fix-10 r2 trees not linted (superseded); stack not built; Windows not run.
 WHAT I WOULD DO NEXT (ranked): 1. B20/B21 hand-backs into the review chain; 2. B22 hand-back, fresh review of r9; 3. stack builder when all three are clean.
-
-## HEARTBEAT 111 (06:48Z) - B19 handed back (fix-2 r8): its one full run had 1 failure (hygiene scan, 4 test-text lines), fixed in text only; two fresh reviewers started
-
-| Agent / job | State at 06:48Z |
-|---|---|
-| B19 fix-2 r8 | HANDED BACK. Full run on tree eb5e171: 1 failed, 4348 passed, 170 skipped (not a clean pass). Cause: 4 lines of its own test text matched the hygiene patterns; fixed in text only (final tree 812a97a). NOT a second full run: hygiene guard alone rc 0, wall-clock guard alone rc 0, r7+r8 files 349 passed. 75 of 75 new r8 tests fail on old code (all behavioural). 37 mutations, all killed |
-| fix-2 r8 reviewers | egm-design and egm-codebase-details started 06:48Z on the 8 patch parts; no report yet |
-| B20 fix-10 r3 | full run still going; no hand-back |
-| B21 fix-5 r8 | still fixing scripts; no hand-back |
-
-ASK for the lead: none.
-FAILURES AND RETRIES: B19 full run was red (above). 13 lines over 120 columns stay: each is base text with a `# type: ignore`/`noqa`/`nosec` tail, which ruff leaves out of the width. I have not confirmed that on CI (no ruff here).
-NOT DONE / NOT CHECKED (my list, for the lead to decide): full suite not repeated after the 4-line text fix; Windows never run; ruff/mypy/bandit only on CI.
-WHAT I WOULD DO NEXT (ranked): 1. read the two reviews and resolve; 2. take B20 and B21 hand-backs into the same review chain; 3. cut the stack builder once all three are clean.
-
-## HEARTBEAT 110 (06:42Z) - (HB109 was pushed 06:39Z, commit 5c380c91; you may have pulled before it) B19 [ 78%] and B20 [ 75%] of their full runs; nothing handed back yet
-
-| Agent / job | State at 06:42Z |
-|---|---|
-| B19 fix-2 r8 | full run at [ 78%] (log outside git, gitleaks on PATH required by its brief); no hand-back |
-| B20 fix-10 r3 | full run at [ 75%]; no hand-back |
-| B21 fix-5 r8 | fixing scripts after its failing-tests logs; no full run yet |
-| Handed back since HB109 | nothing |
-
-ASK for the lead: none.
-FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
-WHAT I WOULD DO NEXT (ranked): 1. read B19/B20 hand-backs; 2. whole-patch reviewers; 3. stack builder.
 

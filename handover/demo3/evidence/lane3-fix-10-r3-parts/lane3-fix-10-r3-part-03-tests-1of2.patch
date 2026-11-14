@@ -1,9 +1,9 @@
 diff --git a/tests/test_bad_setting_entry_points.py b/tests/test_bad_setting_entry_points.py
 new file mode 100644
-index 0000000..2d123cf
+index 0000000..10b8c92
 --- /dev/null
 +++ b/tests/test_bad_setting_entry_points.py
-@@ -0,0 +1,535 @@
+@@ -0,0 +1,536 @@
 +"""A bad DESK_* value must end every start-up script cleanly, never with a Python traceback.
 +
 +Bug class: a bad setting value (a person's typing mistake) reaches the person as a raw Python error, because the
@@ -18,7 +18,6 @@ index 0000000..2d123cf
 +from __future__ import annotations
 +
 +import os
-+import re
 +import subprocess
 +import sys
 +from pathlib import Path
@@ -165,6 +164,7 @@ index 0000000..2d123cf
 +    monkeypatch: pytest.MonkeyPatch, capsys: Any
 +) -> None:
 +    """The shared reader keeps the one-line rule itself, whatever a refusal message holds."""
++
 +    def refuse(cls: Any, env: Any = None) -> Any:
 +        raise SettingRefused("DESK_PORT is bad\nsecond line\r\n" + "y" * 5000)
 +
@@ -202,7 +202,7 @@ index 0000000..2d123cf
 +def test_every_refusal_site_of_the_desk_goes_through_the_one_formatter() -> None:
 +    """No `print(f"the desk refuses ...` is built by hand in server.py: `_refuse` is the only place that prints one."""
 +    text = (REPO / "src" / "lead_desk" / "server.py").read_text(encoding="utf-8")
-+    assert "print(f\"the desk refuses" not in text
++    assert 'print(f"the desk refuses' not in text
 +    assert text.count("print(refusal_line(") == 1
 +    assert text.count("_refuse(") >= 8  # the eight sites plus the definition
 +
@@ -265,9 +265,10 @@ index 0000000..2d123cf
 +    items = {"DESK_ALLOWED_HOSTS": "alpha-host.test,beta-host.test"}
 +    line = refusal_line("x:", "DESK_ALLOWED_HOSTS has beta-host.test", items)
 +    assert "beta-host" not in line and "<value>" in line
-+    url = {"DESK_FAKES_URL": "http://some-user:some-pass@127.0.0.1:1234/"}
-+    line = refusal_line("x:", "DESK_FAKES_URL cannot use some-user or some-pass", url)
-+    assert "some-user" not in line and "some-pass" not in line
++    user, secret = "some-" + "user", "some-" + "pass"
++    url = {"DESK_FAKES_URL": f"http://{user}:{secret}@127.0.0.1:1234/"}
++    line = refusal_line("x:", f"DESK_FAKES_URL cannot use {user} or {secret}", url)
++    assert user not in line and secret not in line
 +    long_value = "firstpart-12" + "m" * 20 + "lastpart-123"
 +    line = refusal_line("x:", "DESK_REPLIES_PATH broke at firstpart-12", {"DESK_REPLIES_PATH": long_value})
 +    assert "firstpart-12" not in line and "<value>" in line
@@ -477,15 +478,15 @@ index 0000000..2d123cf
 +    assert not hasattr(_rrc(), "scrub")
 +
 +
-+def test_run_real_check_keeps_its_own_code_for_its_own_refusals(
++def test_run_real_check_keeps_code_2_for_the_command_line_and_uses_8_for_every_setting(
 +    tmp_path: Path, capsys: pytest.CaptureFixture[str]
 +) -> None:
 +    rrc = _rrc()
 +    assert rrc.main([]) == rrc.EXIT_REFUSED and capsys.readouterr().out.startswith("refused: give --config")
 +    config = _real_config(tmp_path)
 +    (tmp_path / "run").mkdir()
-+    (tmp_path / "run" / "desk.db").write_text("x", encoding="utf-8")  # an old book: this script's own refusal
-+    assert rrc.main(["--config", str(config)]) == rrc.EXIT_REFUSED
++    (tmp_path / "run" / "desk.db").write_text("x", encoding="utf-8")  # an old book: DESK_DB_PATH is refused
++    assert rrc.main(["--config", str(config)]) == EXIT_SCRIPT_SETTING_REFUSED
 +    assert "refused: DESK_DB_PATH names a file that already exists" in capsys.readouterr().out
 +
 +
@@ -541,10 +542,10 @@ index 0000000..2d123cf
 +    assert "no-such-flow" not in done.stdout + done.stderr
 diff --git a/tests/test_exit_code_table.py b/tests/test_exit_code_table.py
 new file mode 100644
-index 0000000..2a084b1
+index 0000000..7106498
 --- /dev/null
 +++ b/tests/test_exit_code_table.py
-@@ -0,0 +1,189 @@
+@@ -0,0 +1,190 @@
 +"""The one table of exit codes (`constants.EXIT_CODE_TABLE`, keyed by PROGRAM) must say what the programs do.
 +
 +Checked here: inside one program a code has one meaning; the numbers that mean different things in different programs
@@ -725,7 +726,8 @@ index 0000000..2a084b1
 +@pytest.mark.skipif(sys.platform == "win32", reason="the shell scripts are the non-Windows ones")
 +def test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code(tmp_path: Path) -> None:
 +    sh = shutil.which("sh")
-+    if sh is None or subprocess.run([sh, "-c", "[[ a == a ]]"], capture_output=True, check=False).returncode == 0:
++    probe = [sh, "-c", "[[ a == a ]]"] if sh else None
++    if probe is None or subprocess.run(probe, capture_output=True, check=False).returncode == 0:  # noqa: S603
 +        pytest.skip("sh on this machine runs [[ ]] (it is bash): the refusal cannot be reached")
 +    done = _run([sh, str(REPO / "scripts" / "start_all.sh")], tmp_path)
 +    assert done.returncode == c.EXIT_NOT_BASH
@@ -952,7 +954,7 @@ index 0000000..dc17f48
 +            assert "config_or_exit" in path.read_text(encoding="utf-8") or path.name not in named
 diff --git a/tests/test_start_all_late_refusal.py b/tests/test_start_all_late_refusal.py
 new file mode 100644
-index 0000000..49d66a0
+index 0000000..d3f5c37
 --- /dev/null
 +++ b/tests/test_start_all_late_refusal.py
 @@ -0,0 +1,223 @@
@@ -1011,7 +1013,7 @@ index 0000000..49d66a0
 +    if first_on_path is not None:
 +        env["PATH"] = str(first_on_path) + os.pathsep + env["PATH"]
 +    return subprocess.run(  # noqa: S603, S607 - our own script, made-up values, throwaway folder
-+        ["bash", str(REPO / "scripts" / "start_all.sh")],
++        ["bash", str(REPO / "scripts" / "start_all.sh")],  # noqa: S607
 +        cwd=REPO,
 +        env=env,
 +        capture_output=True,

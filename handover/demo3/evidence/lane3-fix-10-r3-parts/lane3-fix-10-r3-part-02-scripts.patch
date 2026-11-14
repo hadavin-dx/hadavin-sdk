@@ -157,11 +157,14 @@ index ebc1b45..1a0f319 100644
  
  
 diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
-index 9d754c3..4de4be8 100644
+index 9d754c3..b09bc95 100644
 --- a/scripts/run_real_check.py
 +++ b/scripts/run_real_check.py
-@@ -69,6 +69,10 @@ from lead_desk.adapters import CrmError  # noqa: E402
+@@ -67,8 +67,13 @@ from http_guard import open_http  # noqa: E402
+ 
+ from lead_desk.adapters import CrmError  # noqa: E402
  from lead_desk.config import Config  # noqa: E402
++from lead_desk.config_exit import refusal_line  # noqa: E402
  from lead_desk.constants import (  # noqa: E402
      CAP_COUNT_MAX,
 +    EXIT_CHECK_FAILED,
@@ -171,12 +174,11 @@ index 9d754c3..4de4be8 100644
      EXIT_SIMULATED_KILL,
      MAIL_IMAP_DEFAULT_HOST,
      MAIL_SPAM_FOLDER,
-@@ -77,7 +81,8 @@ from lead_desk.constants import (  # noqa: E402
+@@ -77,7 +82,7 @@ from lead_desk.constants import (  # noqa: E402
      REAL_SECONDS_MAX,
  )
  from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings  # noqa: E402
 -from lead_desk.envnum import env_number  # noqa: E402
-+from lead_desk.config_exit import refusal_line  # noqa: E402
 +from lead_desk.envnum import SettingRefused, env_number, env_path  # noqa: E402
  from lead_desk.gate import SEND_WORKERS_MAX  # noqa: E402
  from lead_desk.imap_count import (  # noqa: E402
@@ -214,16 +216,35 @@ index 9d754c3..4de4be8 100644
      out.write_text(
          json.dumps(
              {"ok": False, "note": note, "leads_in_book": leads, "hubspot_calls_by_the_desk": hub_stats}, indent=2
-@@ -622,7 +619,7 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+@@ -607,11 +604,11 @@ def number(name: str, env: dict[str, str], cast: Any, default: Any, *, low: Any
+ 
+ 
+ def positive_seconds(name: str, env: dict[str, str], default: float) -> float:
+-    """A time setting in seconds: a finite number above 0, else ValueError naming the setting only (checked BEFORE any
+-    real call is made, so a typo cannot surface after real mails were sent)."""
++    """A time setting in seconds: a finite number above 0, else SettingRefused naming the setting only (checked
++    BEFORE any real call is made, so a typo cannot surface after real mails were sent)."""
+     value: float = number(name, env, float, default, high=REAL_SECONDS_MAX)
+     if not (math.isfinite(value) and value > 0):
+-        raise ValueError(f"{name} must be a number of seconds above 0")
++        raise SettingRefused(f"{name} must be a number of seconds above 0")
+     return value
+ 
+ 
+@@ -622,17 +619,17 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
      n = 1
      while env.get(f"REAL_IMAP_{n}_USER"):
          p = f"REAL_IMAP_{n}_"
 -        ca = env.get(p + "CA_FILE")
 +        ca = str(env_path(env, p + "CA_FILE")) if env.get(p + "CA_FILE") else None
          if not env.get(p + "PASSWORD_FILE", "").strip():
-             raise ValueError(f"{p}PASSWORD_FILE is required when {p}USER is set")
+-            raise ValueError(f"{p}PASSWORD_FILE is required when {p}USER is set")
++            raise SettingRefused(f"{p}PASSWORD_FILE is required when {p}USER is set")
          folders = tuple(x.strip() for x in env.get(p + "FOLDERS", f"INBOX,{MAIL_SPAM_FOLDER}").split(",") if x.strip())
-@@ -632,7 +629,7 @@ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+         if any(bad_folder_name(f) for f in folders):
+-            raise ValueError(f"{p}FOLDERS: a folder name must be plain ASCII without quotes or backslashes")
++            raise SettingRefused(f"{p}FOLDERS: a folder name must be plain ASCII without quotes or backslashes")
+         out.append(
              ImapSettings(
                  env.get(p + "HOST", MAIL_IMAP_DEFAULT_HOST),
                  env[p + "USER"],
@@ -232,20 +253,48 @@ index 9d754c3..4de4be8 100644
                  port=number(p + "PORT", env, int, 993, low=1, high=PORT_MAX),
                  folders=folders,
                  ssl_context=ssl.create_default_context(cafile=ca) if ca else None,
-@@ -855,10 +852,11 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -657,7 +654,8 @@ def load_env(path: Path) -> dict[str, str]:
+             continue
+         name, sep, value = line.partition("=")
+         if not sep or not CONFIG_NAME.fullmatch(name.strip()):
+-            raise ValueError(f"config line {n} is not NAME=VALUE with an upper-case name")  # the line, never its text
++            # the line number, never the line's text
++            raise SettingRefused(f"config line {n} is not NAME=VALUE with an upper-case name")
+         value = value.strip()
+         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":  # noqa: PLR2004
+             value = value[1:-1]
+@@ -849,16 +847,15 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+             env = load_env(a.config)
+         missing = [n for n in REQUIRED if not env.get(n, "").strip()]
+         if missing:
+-            print("refused: the config lacks: " + ", ".join(missing))
+-            return EXIT_REFUSED
++            raise SettingRefused("the config lacks: " + ", ".join(missing))
+         persons = number("REAL_PERSONS", env, int, DEFAULT_PERSONS, high=REAL_PERSONS_MAX)
          if persons < MIN_PERSONS:
-             print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
-             return EXIT_REFUSED
+-            print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
+-            return EXIT_REFUSED
 -        db = Path(env["DESK_DB_PATH"])
++            raise SettingRefused(f"REAL_PERSONS must be at least {MIN_PERSONS}")
 +        db = env_path(env, "DESK_DB_PATH")
          if db.exists():  # an old book would hold old leads: the clean-up could not tell this run's contacts apart
-             raise ValueError("DESK_DB_PATH names a file that already exists: give a new database file for each run")
+-            raise ValueError("DESK_DB_PATH names a file that already exists: give a new database file for each run")
++            raise SettingRefused("DESK_DB_PATH names a file that already exists: give a new database file for each run")
          run_dir = db.parent
 +        env_path(env, "REAL_RESULT_FILE", run_dir / "result.json")  # refused here, before anything real is called
          env = {**env, "DESK_ADAPTERS": "demo", "DESK_CRM": "hubspot", "DESK_OUTBOX": "smtp_provider"}
          env.setdefault("DESK_SEND_TIMEOUT_SECONDS", "8")
          env.setdefault("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "no")  # only the config file can switch the host check off
-@@ -881,7 +879,13 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -869,7 +866,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         pr = ProviderSettings.from_env(env)
+         read_cap = number("REAL_HUBSPOT_READBACK_MAX_CALLS", env, int, 0, high=CAP_COUNT_MAX)
+         if read_cap < MIN_READBACK_CALLS:  # inside the refusal block: nothing real has been called yet
+-            raise ValueError(f"REAL_HUBSPOT_READBACK_MAX_CALLS must be at least {MIN_READBACK_CALLS}")
++            raise SettingRefused(f"REAL_HUBSPOT_READBACK_MAX_CALLS must be at least {MIN_READBACK_CALLS}")
+         drain_seconds = positive_seconds("REAL_DRAIN_SECONDS", env, 150.0)
+         mail_wait_seconds = positive_seconds("REAL_MAIL_WAIT_SECONDS", env, 90.0)
+         settle_seconds = positive_seconds("REAL_MAIL_SETTLE_SECONDS", env, MAIL_POLL_SECONDS)
+@@ -881,7 +878,13 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
          live_worst = Decimal(0)
          if a.live_model:
              env["DESK_QUALIFIER"] = "live_claude"
@@ -260,7 +309,7 @@ index 9d754c3..4de4be8 100644
              if live is None:
                  raise ValueError("the live model settings are missing")
              live_cap = live.cap_run_usd
-@@ -891,10 +895,12 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -891,10 +894,14 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
              live_worst = worst_case_usd(live, q_bytes) * MODEL_CALLS_PER_LEAD * (persons + 3) * 2
          port = number("DESK_PORT", env, int, 0, low=0, high=PORT_MAX) or 8765
      except (ValueError, OSError, ArithmeticError) as e:
@@ -269,15 +318,17 @@ index 9d754c3..4de4be8 100644
 -        print("refused: " + type(e).__name__ + (": " + msg if msg else ""))
 -        return EXIT_REFUSED
 +        # one wording for every refusal (lead_desk.config_exit.refusal_line: no class name, one line, the value of a
-+        # named or secret-like setting never shown). A refused setting is EXIT_SCRIPT_SETTING_REFUSED; this script's own
-+        # refusals (a missing config line, a book that exists) and OSError / ArithmeticError stay EXIT_REFUSED.
++        # named or secret-like setting never shown). One rule for the code: a refused setting (a missing or bad value,
++        # a file the config names that cannot be used, a bad config line) is EXIT_SCRIPT_SETTING_REFUSED; EXIT_REFUSED
++        # is for the command line (no --config, --assume-yes without --dry-fakes) and a missing tool.
++        refused_setting = isinstance(e, SettingRefused | OSError | ArithmeticError)
 +        reason = e if isinstance(e, ValueError) else "a file or a number named in the config cannot be used"
 +        print(refusal_line("refused:", reason, env))
-+        return EXIT_SCRIPT_SETTING_REFUSED if isinstance(e, SettingRefused) else EXIT_REFUSED
++        return EXIT_SCRIPT_SETTING_REFUSED if refused_setting else EXIT_REFUSED
  
      desks = 2  # the crash starts a second desk process, each with its own caps
      print(f"people: {persons} + a twin (same person, second address); desk processes: {desks} (one crash)")
-@@ -1091,7 +1097,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+@@ -1091,7 +1098,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
          "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot",
      }
      print("\n" + json.dumps(summary, indent=2, sort_keys=True))
