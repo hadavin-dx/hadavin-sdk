@@ -17,7 +17,7 @@ def s1b():
     stop("desk"); lead2 = uid("b2"); st2, rep2 = post("desk-form", form(lead2)); rec("S1B", case="desk down", http=st2, reply=rep2)
     shows = isinstance(rep, dict) and "desk_status" in rep
     err = isinstance(rep2, dict) and rep2.get("n8n_error") is True
-    result("S1B", not (shows and err), "FAIL expected before the change: reply carries desk_status=%s, n8n_error on desk down=%s (the original flows pass the desk body only and a bare error)" % (shows, err), http_up=st, http_down=st2)
+    result("S1B", not (shows and err), "FAIL-BEFORE CONFIRMED (the new reply checks fail on the original flows; PASS here means that): reply carries desk_status=%s, n8n_error on desk down=%s (the original flows pass the desk body only and a bare error)" % (shows, err), http_up=st, http_down=st2)
 # ------------------------------------------------------------------ S1: step 1 proof
 def s1():
     stack(); print("prepare", n8n_prepare(), flush=True); n8n_restart()

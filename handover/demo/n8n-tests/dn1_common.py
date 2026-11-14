@@ -98,6 +98,8 @@ def n8n_prepare(deploy_doors=True):
     n = json.load(open(os.path.join(out, "desk-error-notifier.json"))); n["nodes"][1]["credentials"]["smtp"]["id"] = CRED_ID
     json.dump(n, open(os.path.join(out, "desk-error-notifier.json"), "w"))
     w = api.call("POST", "/workflows", n); wd = w.get("data", w); assert "id" in wd, w; err_id = wd["id"]
+    act = api.call("POST", "/workflows/%s/activate" % err_id, {"versionId": wd["versionId"]})   # n8n 2.46.6: an error workflow must be active ("is not active and cannot be executed" otherwise)
+    assert "HTTPError" not in act, act
     subprocess.run([sys.executable, os.path.join(HERE, "build_flows.py"), out, err_id], check=True, capture_output=True)
     json.dump(n, open(os.path.join(out, "desk-error-notifier.json"), "w"))
     res = {"error_workflow": err_id}

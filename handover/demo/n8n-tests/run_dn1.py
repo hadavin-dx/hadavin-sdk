@@ -10,8 +10,8 @@ Machine load (with a time stamp) before, during and after every test configurati
 Windows x64 and Linux are supported; docker-installed n8n is not (the harness needs node_modules/n8n and a process it can kill)."""
 import argparse, json, os, platform, secrets, signal, socket, subprocess, sys, time
 
-HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)))  # the evidence harness folder (api.py, lib.py, setup.py live here)
-DN1 = os.environ.get("DN1_DIR", os.path.dirname(os.path.abspath(__file__)))  # this folder (dn1.py)
+HERE = os.environ.get("N8N_HARNESS_DIR", "/tmp/rr/r2/demo_only/n8n_evidence/harness")  # the evidence harness folder (api.py, lib.py, setup.py live here)
+DN1 = os.path.dirname(os.path.abspath(__file__))  # this folder (dn1.py)
 PG_IMAGE = "postgres@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657"  # postgres:16 on 2026-11-09, RepoDigest read from the local image of a Windows x64 Docker Desktop; expected to be the multi-arch index (so also arm64), UNVERIFIED
 HOPELESS_PULL_TEXT = (b"cannot connect to the docker daemon", b"is the docker daemon running", b"permission denied while trying to connect")  # the docker client cannot reach its daemon (not running, or this user may not use its socket): waiting cannot help
 PG_NAME, LABEL = "n8n-publish-pg", "n8n-evidence.run=1"
@@ -182,7 +182,9 @@ def main():
     if old: sys.exit("a container with the label %s already exists (%d): not starting, so that cleanup removes only what this run started" % (LABEL, len(old)))
     busy = [p for p in PORTS if not port_free(p)]
     if busy: sys.exit("ports in use, not starting: %s" % busy)
-    env = script_env(work, os.path.abspath(a.node_dir))
+    env = script_env(work, os.path.abspath(a.node_dir)); env["PYTHONPATH"] = HERE + os.pathsep + DN1  # api.py, lib.py (harness) and dn1.py (this folder)
+    for k in ("DN1_DESK_REPO",):
+        if os.environ.get(k): env[k] = os.environ[k]
     os.environ.update(env)  # this process imports lib, which reads the three names
     sys.path.insert(0, HERE)
     os.makedirs(os.path.join(work, ".run"))

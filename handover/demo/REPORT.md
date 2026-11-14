@@ -1,5 +1,28 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 10:26Z (15:56 IST) - D-N1 T1/T2/T5 pass; D-N2 main-frame flows built, smoke M0 passed, kill series running
+
+- D-N1 (door design, desk does CRM and mail), real n8n 2.46.6, one machine, made-up data, in my runs:
+  - T5 (notifier, now active): forced desk failure sent exactly 1 notification, fixed recipient only, body has lead id and no address or name, no attribution text; an OK run sent none. PASS.
+  - T1: 3 bursts of 10 same lead id on the production path: each ended with 1 desk lead, 1 receipt, 1 CRM row, 1 e-mail; model calls 1 per lead id, ledger rows 1 per lead. PASS.
+  - T2: n8n killed 1.5 s after the desk call (desk still working), restarted, caller resent the same request: 5 of 5 gave 1 lead, 1 CRM row, 1 e-mail and a verdict; money 1 per lead. PASS.
+  - Not run yet: T3, T4, T6, T7. Not pushed yet (flows, tests, N8N-START.md, README, raw output).
+- D-N2 (n8n main frame) picked up. BUILT: main flow with two entries (form, e-mail-style webhook): Edit Fields -> Postgres INSERT ... ON CONFLICT DO NOTHING (table mf_leads: lead_key unique, state, mail_sent, label, created_at, updated_at) -> IF inserted -> desk stage call (cap + model) -> CRM search then create (HTTP Request nodes to a made-up CRM stand-in without a unique constraint, like HubSpot) -> mail_sent marked BEFORE the Send Email node -> state done -> Respond to Webhook. A repeat returns the stored state. Recovery flow every 30 s claims rows not done and idle over 20 s (UPDATE ... FOR UPDATE SKIP LOCKED so two runs never take the same row) and runs the same steps; mail_sent but not done = state unknown (no resend).
+- Desk used: only the existing LiveQualifier and SpendLedger code (reserve before the call, settle after). The desk has NO stage endpoint for it, so I added ONE small wrapper in my own folder (stage_server.py, about 45 lines, desk source untouched): POST /qualify with a per-lead journal (a lead with a started call and no answer is NOT called again: label unknown), GET /mail_count (second count from the mail stand-in). Line for the lead: the real take needs the same small stage endpoint in the desk, or a call to the desk's step endpoint.
+- Mail header: n8n's Send Email node has no setting for a custom header (X-Send-Key); the count uses the lead key in the subject instead.
+- M0 smoke on the real n8n: both entries gave verdict new, state done; repeat returned the stored state; 1 CRM row, 1 e-mail (both counts), 1 model call per lead; ledger 1 per lead. PASS.
+- RUNNING now (started 10:25Z, one after the other): M1 burst of 10, K1 kill n8n after insert before CRM, K2 after CRM write before mail, K3 after mail delivered before table update, K4 desk stage killed mid-call, K5 Postgres killed once; 5 per point.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- All kill and burst numbers for the main frame (running). The comparison table (E) and the one-line choice.
+- D-N1: T3, T4, T6, T7, README, N8N-START.md, step-4 line, pushing flows and tests; no review rounds yet (as ordered for D-N2).
+- Recovery timing under a slower desk stage; the recovery flow can pick a lead whose first run is merely slow (claim by idle time); not tested.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the kill series as it lands; report per point lost / doubled / unknown and recovery seconds.
+2. Run the D-N1 kill points T3 (reuse) for the comparison table; push both flow families and tests.
+3. N8N-START.md, README, step-4 line.
+
 ## Block 10:15Z (15:45 IST) - D-N1 step 1: first runs done (fail-before shown, S1 13 of 13); notifier fix being re-run
 
 - S1B (fail-before): the repo's original flows, imported unmodified, FAIL the new reply checks. FAIL-BEFORE CONFIRMED (in my run, real n8n 2.46.6).

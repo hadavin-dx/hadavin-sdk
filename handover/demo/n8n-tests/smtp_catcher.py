@@ -26,6 +26,9 @@ class H(socketserver.StreamRequestHandler):
                     buf.append(l)
                 m = email.message_from_bytes(b"".join(buf)); body = m.get_payload(decode=True) if not m.is_multipart() else b""
                 with open(FILE, "a") as f: f.write(json.dumps({"t": time.time(), "to": rcpt, "subject": str(m.get("Subject")), "body": (body or b"").decode(errors="replace"), "headers": [k for k in m.keys()]}) + "\n")
+                try: d = float(open(FILE + ".delay").read().strip() or 0)   # optional: seconds to wait AFTER storing, BEFORE the acknowledgement (D-N2 kill tests)
+                except (OSError, ValueError): d = 0
+                if d > 0: time.sleep(d)
                 self.w("250 queued"); rcpt = []
             elif u == "QUIT": self.w("221 bye"); return
             elif u == "RSET": rcpt = []; self.w("250 ok")
