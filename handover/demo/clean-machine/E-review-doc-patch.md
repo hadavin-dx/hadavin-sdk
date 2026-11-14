@@ -1,0 +1,7 @@
+# E: read-only reviewer on the doc patch (README + docs/tests.md), summary of its 13 findings (reviewer ran nothing; not applied by me, lead decides)
+Major 1 tests.md gitleaks step 1: no concrete place or file names; suggests the two release file names and one word for the machine type (x86_64 vs x64; ARM needs another archive).
+Major 2 README python line says 3.12 "or higher" but the test setup is only for 3.12.x (pip hash mismatch otherwise): split demo vs tests wording.
+Major 3 crash scene: exports named but no example command or value.
+Major 4 crash scene: "leave the demo server running" next to a command that starts a second one (port clash if start_all.sh was used): say run it only if not running.
+Nits 5-13: undefined/mixed words (lead-flow file, crash scene/script, reminder address); stop step is Linux-only and a kill leaves the pid file that start_all.sh refuses (reset needed); crash recipe is one long paragraph; README "without it they are skipped" true only if the program is absent; skip reason quote differs from code wording; missing unpack command and a version check; checksum file not explained and protects only against damaged downloads; scan of git history needs a full clone, and a GITLEAKS_BIN path that does not exist raises an error even without DPLD_REQUIRE_SCAN; "Playwright" undefined in README.
+Reviewer could not check: 200 vs 201 against code; 8.30.1 vs CI file; crash_desk needs desk stopped; reset.sh with stale pid; browser skip texts.

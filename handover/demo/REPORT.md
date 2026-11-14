@@ -1,5 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 03:47:52): R2-PATCHED FULL RUN RUNNING since 03:47Z (expected end about 05:00 to 05:20Z)
+- R2-patched SMOKE (smoke4): rc 0, "RUN ALL DONE 03:45:17Z"; g2-b2 registered at once in the first process; K1 to K3 ran; client reply names seen: RemoteDisconnected 90 (smoke counts are not results).
+- Quiet check before the full run: vmstat 5 s x 22, mean idle 91 percent, load 0.11 (harness gate default 80 stays).
+- RUNNING: full run on the scratch copy with P1 (folder r2-full, hard-linked node_modules: disclosed), log in scratch; started deploy at 03:47:25Z. No other heavy job; agents: none running now (reviewer E finished: summary pushed as clean-machine/E-review-doc-patch.md: 4 Major, 9 Nit on the doc patch, none applied).
+- Not touching the machine until the run ends.
+
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Doc-patch reviewer findings (4 Major): not applied; next: a patch v2 after the n8n run (text only, no load), if told.
+- N8N-RERUN-1.md update with R2 counts: waits for the run end.
+- Whether P1 covers every later restart in the full run (variant e): unknown until the run reaches it.
+- CI-equivalent run, non-root skip chunk, exit codes 2-6, crash points: after the run (quiet rule).
+- Node/n8n install shares files with other scratch folders by hard links: disclosed.
+## WHAT I WOULD DO NEXT (ranked)
+1. Read the run log every 5 minutes (light), push a status block, write N8N-RERUN-1.md when the run ends.
+2. After the run: egm reviewer on N8N-RERUN-1.md + branch README.
+3. Then doc patch v2 from the reviewer's 4 Majors, CI-equivalent run, non-root skip chunk.
+
 ## REPORT (clock 03:42:21): R2-patched SMOKE RUNNING; AGENT E (read-only doc-patch reviewer) RUNNING
 - CORRECTION: my previous block was labelled 03:46Z; the real clock then was about 03:39Z. Wrong label, mine.
 - RUNNING: (1) R2-patched smoke "smoke4" (scratch copy of the harness with P1, text diff in n8n-rerun/R2-patch-P1.diff, started 03:41:57Z, ETA about 5 min). A first patched smoke ("smoke3", cut by my own 110 s timeout at the K2 step) already showed the webhook g2-b2 registered at once (webhook_registered true), and then ran g12 b default and K1. I report that as a partial, not a result. (2) egm comprehension reviewer on the doc patch (read-only, started 03:42Z).
