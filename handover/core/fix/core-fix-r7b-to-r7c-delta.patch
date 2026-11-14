@@ -973,7 +973,7 @@ index b85c567..3dc9704 100644
  
  
  def _select(m: imaplib.IMAP4_SSL, folder: str) -> bool:
-diff --git a/b/src/lead_desk/jsonread.py b/src/lead_desk/jsonread.py
+diff --git a/src/lead_desk/jsonread.py b/src/lead_desk/jsonread.py
 new file mode 100644
 index 0000000..64a3abf
 --- /dev/null
@@ -1707,7 +1707,7 @@ index 60c904a..af8c780 100644
          ["python3", "x.py"],
          ["git", "-c", "core.sshCommand=id", "status"],
          ["git", "-c", "alias.x=!id", "x"],
-diff --git a/b/tests/test_r7c_bad_request_layers.py b/tests/test_r7c_bad_request_layers.py
+diff --git a/tests/test_r7c_bad_request_layers.py b/tests/test_r7c_bad_request_layers.py
 new file mode 100644
 index 0000000..a915f50
 --- /dev/null
@@ -1772,7 +1772,7 @@ index 0000000..a915f50
 +def test_the_loader_alone_never_lets_a_recursion_error_out() -> None:
 +    with pytest.raises(JsonTooDeep):  # a RecursionError coming out would fail this test
 +        loads_bounded("[" * 100_000)
-diff --git a/b/tests/test_r7c_burst_probe_and_names.py b/tests/test_r7c_burst_probe_and_names.py
+diff --git a/tests/test_r7c_burst_probe_and_names.py b/tests/test_r7c_burst_probe_and_names.py
 new file mode 100644
 index 0000000..8f9cabd
 --- /dev/null
@@ -1840,7 +1840,7 @@ index 0000000..8f9cabd
 +        burst.main(["--url", bad, *argv])
 +    assert info.value.code == 2
 +    assert "nothing answers" not in capsys.readouterr().err
-diff --git a/b/tests/test_r7c_clean_tree_guard.py b/tests/test_r7c_clean_tree_guard.py
+diff --git a/tests/test_r7c_clean_tree_guard.py b/tests/test_r7c_clean_tree_guard.py
 new file mode 100644
 index 0000000..aab9ef2
 --- /dev/null
@@ -1979,7 +1979,7 @@ index 0000000..aab9ef2
 +    session = _finish(root, monkeypatch, lambda: None)
 +    conftest.pytest_sessionfinish(session, 0)
 +    assert session.exitstatus == 0 and capsys.readouterr().out == ""
-diff --git a/b/tests/test_r7c_head_deadline_errors.py b/tests/test_r7c_head_deadline_errors.py
+diff --git a/tests/test_r7c_head_deadline_errors.py b/tests/test_r7c_head_deadline_errors.py
 new file mode 100644
 index 0000000..16635b6
 --- /dev/null
@@ -2064,7 +2064,7 @@ index 0000000..16635b6
 +    time.sleep(0.5)  # the server thread prints (if it prints) after the connection closed
 +    err = capfd.readouterr().err
 +    assert "Traceback" not in err and "BrokenPipeError" not in err, err[-300:]
-diff --git a/b/tests/test_r7c_invariants_output_size.py b/tests/test_r7c_invariants_output_size.py
+diff --git a/tests/test_r7c_invariants_output_size.py b/tests/test_r7c_invariants_output_size.py
 new file mode 100644
 index 0000000..8f7e46c
 --- /dev/null
@@ -2126,7 +2126,7 @@ index 0000000..8f7e46c
 +    failing = sum(1 for c in result["checks"] if c["offender_count"])
 +    assert len(table) == clean_table + failing  # one `first N of M` line for each failing check, nothing else
 +    assert (len(table), len(json.dumps(result, indent=2, sort_keys=True).split("\n"))) == (18, 150)  # measured
-diff --git a/b/tests/test_r7c_mail6_killers.py b/tests/test_r7c_mail6_killers.py
+diff --git a/tests/test_r7c_mail6_killers.py b/tests/test_r7c_mail6_killers.py
 new file mode 100644
 index 0000000..a74ade2
 --- /dev/null
@@ -2236,7 +2236,7 @@ index 0000000..a74ade2
 +        assert "LOGOUT" not in srv.commands and "LOGIN" not in srv.commands, srv.commands
 +    finally:
 +        srv.close()
-diff --git a/b/tests/test_r7c_mail_killers.py b/tests/test_r7c_mail_killers.py
+diff --git a/tests/test_r7c_mail_killers.py b/tests/test_r7c_mail_killers.py
 new file mode 100644
 index 0000000..7066f9d
 --- /dev/null
@@ -2389,7 +2389,7 @@ index 0000000..7066f9d
 +        assert not asked, f"{which}: the Start? question was reached with a bad secret file"
 +        assert rc == rrc.EXIT_REFUSED
 +        assert "\xa0" not in out.getvalue() and "xx12" not in out.getvalue()
-diff --git a/b/tests/test_r7c_model_fake_cli.py b/tests/test_r7c_model_fake_cli.py
+diff --git a/tests/test_r7c_model_fake_cli.py b/tests/test_r7c_model_fake_cli.py
 new file mode 100644
 index 0000000..9ad5d70
 --- /dev/null
@@ -2505,7 +2505,7 @@ index 0000000..9ad5d70
 +    r = c.getresponse()
 +    r.read()
 +    assert r.status == 400
-diff --git a/b/tests/test_r7c_one_json_loader.py b/tests/test_r7c_one_json_loader.py
+diff --git a/tests/test_r7c_one_json_loader.py b/tests/test_r7c_one_json_loader.py
 new file mode 100644
 index 0000000..a39229d
 --- /dev/null
@@ -2712,7 +2712,7 @@ index 0000000..a39229d
 +    for text in ("import json\njson.loads('1')", "import json\njson.load(f)", "r.json()", "from json import loads"):
 +        assert _parses_json_itself(ast.parse(text)), text
 +    assert not _parses_json_itself(ast.parse("import json\njson.dumps({})"))
-diff --git a/b/tests/test_r7c_portal_view_size.py b/tests/test_r7c_portal_view_size.py
+diff --git a/tests/test_r7c_portal_view_size.py b/tests/test_r7c_portal_view_size.py
 new file mode 100644
 index 0000000..7f250a3
 --- /dev/null
@@ -2804,7 +2804,7 @@ index 0000000..7f250a3
 +    for bad in ("limit=-1", "limit=x", "limit=%C2%B2", "limit=999999999999"):
 +        assert len(json.loads(_get(url + "/fake/outbox?" + bad))["messages"]) == 7  # not a valid number: the whole list
 +    assert json.loads(_get(url + "/fake/outbox?limit=0"))["messages"] == []
-diff --git a/b/tests/test_r7c_program_helper_rejects.py b/tests/test_r7c_program_helper_rejects.py
+diff --git a/tests/test_r7c_program_helper_rejects.py b/tests/test_r7c_program_helper_rejects.py
 new file mode 100644
 index 0000000..29b6514
 --- /dev/null
@@ -2928,7 +2928,7 @@ index 0000000..29b6514
 +            continue
 +        found += [f"{path.name}:{n}" for n in _starts_a_program(ast.parse(path.read_text(encoding="utf-8")))]
 +    assert found == [], found
-diff --git a/b/tests/test_r7c_reset_exact_command.py b/tests/test_r7c_reset_exact_command.py
+diff --git a/tests/test_r7c_reset_exact_command.py b/tests/test_r7c_reset_exact_command.py
 new file mode 100644
 index 0000000..4a11907
 --- /dev/null
@@ -3024,7 +3024,7 @@ index 0000000..4a11907
 +    assert not re.search(r"-match 'lead_desk", PS)
 +    assert "$ourCommandLine" in PS and "-imatch $ourCommandLine" in PS
 +    assert "python[0-9.]*" in PS and "--outbox (keyed|blind) --port [0-9]+" in PS
-diff --git a/b/tests/test_r7c_smtp_reply_total_cap.py b/tests/test_r7c_smtp_reply_total_cap.py
+diff --git a/tests/test_r7c_smtp_reply_total_cap.py b/tests/test_r7c_smtp_reply_total_cap.py
 new file mode 100644
 index 0000000..ab19fad
 --- /dev/null
@@ -3071,7 +3071,7 @@ index 0000000..ab19fad
 +
 +def test_a_multi_line_reply_under_the_cap_is_read() -> None:
 +    assert _read_from(b"250-a\r\n250-b\r\n250 done\r\n") == 250
-diff --git a/b/tests/test_r7c_start_all_parity.py b/tests/test_r7c_start_all_parity.py
+diff --git a/tests/test_r7c_start_all_parity.py b/tests/test_r7c_start_all_parity.py
 new file mode 100644
 index 0000000..fa0be04
 --- /dev/null
@@ -3270,7 +3270,7 @@ index f537cf9..eae319f 100644
  
  
  # -- the model stand-in: starts without PYTHONPATH, reads a key file with a cap --------------------------------------
-diff --git a/b/tests/tree_guard.py b/tests/tree_guard.py
+diff --git a/tests/tree_guard.py b/tests/tree_guard.py
 new file mode 100644
 index 0000000..42689e2
 --- /dev/null

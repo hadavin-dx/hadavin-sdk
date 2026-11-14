@@ -1,3 +1,3 @@
-88378a802e949f50bb87c5a0b36b9cc16461e17a98ced841434a234d57fd476a  core-fix-on-frozen-r7c.patch
-3738821cb9daa44afad2cbfc68517ba20a6d004e492788087cd94b6abdd43adc  core-fix-on-frozen-r7c-lf.patch
-6b6d40e478f9f5ab779bca0d6fb5f62a5caa52db6564c45d67287a9ba6c4675d  core-fix-r7b-to-r7c-delta.patch
+6c58079b415cb2f673241ce15c1ad0f01a83d495927d0477781138f6ed29d4af  core-fix-on-frozen-r7c.patch
+7b46e0b8e51cc3a9bbf2ae9ab04034ae8d645efb7cd74f013ecf6f8fd7094fa0  core-fix-on-frozen-r7c-lf.patch
+1a7b8822400274383640f885d23afb733d1621fa2f5a5a67421c4c30103e9ed8  core-fix-r7b-to-r7c-delta.patch

@@ -1,49 +1,49 @@
 frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/R7C/core-fix-on-frozen-r7c.patch  patch-lf=/home/user/build/rr6/out/R7C/core-fix-on-frozen-r7c-lf.patch
-files touched: crlf patch 148, lf patch 146; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+files touched: crlf patch 148, lf patch 148; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
 checkout a: .ps1 line endings before patching: CRLF CRLF
 checkout b: .ps1 line endings before patching: CRLF CRLF
 checkout c: .ps1 line endings before patching: LF LF
 TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
 --- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
-a   crlf  plain  0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-a   crlf  iws    0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-a   crlf  iwsfix 0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-a   crlf  pbin   0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-a   lf    plain  0     0    OK     146/146   SAME    -       PASS   
-a   lf    iws    0     0    OK     146/146   SAME    -       PASS   
-a   lf    iwsfix 0     0    OK     146/146   SAME    -       PASS   
-a   lf    pbin   0     0    OK     146/146   SAME    -       PASS   
-b   crlf  plain  0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-b   crlf  iws    0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-b   crlf  iwsfix 0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-b   crlf  pbin   0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
-b   lf    plain  0     0    OK     146/146   SAME    -       PASS   
-b   lf    iws    0     0    OK     146/146   SAME    -       PASS   
-b   lf    iwsfix 0     0    OK     146/146   SAME    -       PASS   
-b   lf    pbin   0     0    OK     146/146   SAME    -       PASS   
+a   crlf  plain  0     0    OK     148/148   SAME    -       PASS   
+a   crlf  iws    0     0    OK     148/148   SAME    -       PASS   
+a   crlf  iwsfix 0     0    OK     148/148   SAME    -       PASS   
+a   crlf  pbin   0     0    OK     148/148   SAME    -       PASS   
+a   lf    plain  1     1    OK     0/148!    n/a     -       FAIL   
+a   lf    iws    0     0    BAD    148/148   SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   lf    iwsfix 0     0    OK     148/148   SAME    -       PASS   
+a   lf    pbin   1     1    OK     148/148   n/a     -       FAIL   
+b   crlf  plain  0     0    OK     148/148   SAME    -       PASS   
+b   crlf  iws    0     0    OK     148/148   SAME    -       PASS   
+b   crlf  iwsfix 0     0    OK     148/148   SAME    -       PASS   
+b   crlf  pbin   0     0    OK     148/148   SAME    -       PASS   
+b   lf    plain  0     0    OK     148/148   SAME    -       PASS   
+b   lf    iws    0     0    OK     148/148   SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     148/148   SAME    -       PASS   
+b   lf    pbin   1     1    OK     148/148   n/a     -       FAIL   
 c   crlf  plain  1     1    OK     0/148!    n/a     -       FAIL   
-c   crlf  iws    0     0    BAD    148/148   DIFF    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF); content-differs(2 files);
-c   crlf  iwsfix 0     0    OK     148/148   DIFF    -       FAIL    content-differs(2 files);
+c   crlf  iws    0     0    BAD    148/148   SAME    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   crlf  iwsfix 0     0    OK     148/148   SAME    -       PASS   
 c   crlf  pbin   1     1    OK     148/148   n/a     -       FAIL   
-c   lf    plain  0     0    OK     146/146   SAME    -       PASS   
-c   lf    iws    0     0    OK     146/146   SAME    -       PASS   
-c   lf    iwsfix 0     0    OK     146/146   SAME    -       PASS   
-c   lf    pbin   0     0    OK     146/146   SAME    -       PASS   
+c   lf    plain  0     0    OK     148/148   SAME    -       PASS   
+c   lf    iws    0     0    OK     148/148   SAME    -       PASS   
+c   lf    iwsfix 0     0    OK     148/148   SAME    -       PASS   
+c   lf    pbin   0     0    OK     148/148   SAME    -       PASS   
 
 RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
-type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:plain
-type b: cell b-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:plain
+type a: cell a-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
+type b: cell b-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
 type c: cell c-lf-plain PASS   pytest: not run   (best cell by the matrix: lf:plain)
 
 COMMANDS (derived from the matrix; run from the top folder of the checkout):
-  [a] plain archive / zip download (no .git folder):  git apply --check core-fix-on-frozen-r7c-lf.patch && git apply core-fix-on-frozen-r7c-lf.patch
-  [b] git clone on Windows (core.autocrlf=true):  git apply --check core-fix-on-frozen-r7c-lf.patch && git apply core-fix-on-frozen-r7c-lf.patch
+  [a] plain archive / zip download (no .git folder):  git apply --check core-fix-on-frozen-r7c.patch && git apply core-fix-on-frozen-r7c.patch
+  [b] git clone on Windows (core.autocrlf=true):  git apply --check core-fix-on-frozen-r7c.patch && git apply core-fix-on-frozen-r7c.patch
   [c] archive with every text file converted to LF:  git apply --check core-fix-on-frozen-r7c-lf.patch && git apply core-fix-on-frozen-r7c-lf.patch
 
 FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
-  a: crlf-patch=FAIL lf-patch=PASS
-  b: crlf-patch=FAIL lf-patch=PASS
-  c: crlf-patch=FAIL lf-patch=PASS
+  a: crlf-patch=PASS lf-patch=PASS
+  b: crlf-patch=PASS lf-patch=PASS
+  c: crlf-patch=PASS lf-patch=PASS
 
-APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
-rc=1
+APPLY MATRIX: OK (every recommended cell passes)
+rc=0

@@ -1,4 +1,4 @@
-diff --git a/b/CHANGELOG.md b/CHANGELOG.md
+diff --git a/CHANGELOG.md b/CHANGELOG.md
 new file mode 100644
 index 0000000..066bb1e
 --- /dev/null
@@ -116,7 +116,7 @@ index ee25ba7..bf76467 100644
    * Refused connections (503 busy without a handler thread): after the reply the socket goes to one lingerer thread (`_Lingerer`, at most `LINGER_MAX_SOCKETS` = 16 at once, at most `DRAIN_TOTAL_SECONDS` each, ends at once when the client closes) which reads and drops request bytes still on their way, so the close does not send a reset (on Windows a reset destroys a reply the client has not read yet). A silent client costs the accept loop nothing. When the lingerer is full, bytes already there are read and the socket is closed. The 16 are counted in `FD_RESERVE_ITEMS`.
    * Start-up order:
  * (1) the open-file check: exit 3 if `MAX_HANDLER_THREADS` needs more open files than this computer allows.
-diff --git a/b/demo_only/bad_request.py b/demo_only/bad_request.py
+diff --git a/demo_only/bad_request.py b/demo_only/bad_request.py
 new file mode 100644
 index 0000000..9ae9bab
 --- /dev/null
@@ -2247,7 +2247,7 @@ index 3b04223..5413029 100644
 +        "(write a point name such as D2 into it to arm the crash)"
 +    )
      main(hooks=FlagFileHooks(flag))
-diff --git a/b/scripts/desk_setting.py b/scripts/desk_setting.py
+diff --git a/scripts/desk_setting.py b/scripts/desk_setting.py
 new file mode 100644
 index 0000000..3e55086
 --- /dev/null
@@ -3121,7 +3121,7 @@ index 349fa55..9ec67d1 100644
      return 0
  
  
-diff --git a/b/scripts/refusals.py b/scripts/refusals.py
+diff --git a/scripts/refusals.py b/scripts/refusals.py
 new file mode 100644
 index 0000000..f6bf62a
 --- /dev/null
@@ -4953,7 +4953,7 @@ index 087304a..dc6fb1a 100644
      try:
          return urlsplit(text)
      except ValueError:
-diff --git a/b/src/lead_desk/errcode.py b/src/lead_desk/errcode.py
+diff --git a/src/lead_desk/errcode.py b/src/lead_desk/errcode.py
 new file mode 100644
 index 0000000..9df87c2
 --- /dev/null
@@ -5206,7 +5206,7 @@ index dec72d9..3dc9704 100644
  
  
  def _select(m: imaplib.IMAP4_SSL, folder: str) -> bool:
-diff --git a/b/src/lead_desk/jsonread.py b/src/lead_desk/jsonread.py
+diff --git a/src/lead_desk/jsonread.py b/src/lead_desk/jsonread.py
 new file mode 100644
 index 0000000..64a3abf
 --- /dev/null
@@ -5422,7 +5422,7 @@ index 9cf7bac..00024ed 100644
      except ValueError:
          return []
      return [x for x in obj if isinstance(x, str)] if isinstance(obj, list) else []
-diff --git a/b/src/lead_desk/regfile.py b/src/lead_desk/regfile.py
+diff --git a/src/lead_desk/regfile.py b/src/lead_desk/regfile.py
 new file mode 100644
 index 0000000..41b3571
 --- /dev/null
@@ -5989,7 +5989,7 @@ index a60f7f5..e0a7ab5 100644
  
      def _dialogue(self, sock: socket.socket, budget: _Budget, password: str, rcpt: str, wire: bytes) -> None:
          s = self._s
-diff --git a/b/src/lead_desk/tls_trust.py b/src/lead_desk/tls_trust.py
+diff --git a/src/lead_desk/tls_trust.py b/src/lead_desk/tls_trust.py
 new file mode 100644
 index 0000000..140abba
 --- /dev/null
@@ -6461,7 +6461,7 @@ index a2491fa..fa034c1 100644
      rig.clock.advance(20)
      rig.desk.reap_once()
      assert q.calls == SEND_MAX_ATTEMPTS  # a failed row is not driven again
-diff --git a/b/tests/test_book_folder_refusals.py b/tests/test_book_folder_refusals.py
+diff --git a/tests/test_book_folder_refusals.py b/tests/test_book_folder_refusals.py
 new file mode 100644
 index 0000000..6e0f19b
 --- /dev/null
@@ -6731,7 +6731,7 @@ index d68887d..358e8a7 100644
  
  
  def test_a_tiny_wait_still_moves_the_fake_clock(clock: FakeClock) -> None:
-diff --git a/b/tests/test_ca_file_reads.py b/tests/test_ca_file_reads.py
+diff --git a/tests/test_ca_file_reads.py b/tests/test_ca_file_reads.py
 new file mode 100644
 index 0000000..bb076fd
 --- /dev/null
@@ -7065,7 +7065,7 @@ index 0000000..bb076fd
 +    with pytest.raises(ValueError) as seen:
 +        run_real_check.imap_settings({**base, "REAL_IMAP_1_CA_FILE": blank})
 +    assert str(seen.value) == "REAL_IMAP_1_CA_FILE is empty: remove the line or name a file"
-diff --git a/b/tests/test_cli_refusals.py b/tests/test_cli_refusals.py
+diff --git a/tests/test_cli_refusals.py b/tests/test_cli_refusals.py
 new file mode 100644
 index 0000000..45c2f27
 --- /dev/null
@@ -7553,7 +7553,7 @@ index e7d8be4..10da67d 100644
          [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(probe)],
          env=shell,
          capture_output=True,
-diff --git a/b/tests/test_crash_flag_reads.py b/tests/test_crash_flag_reads.py
+diff --git a/tests/test_crash_flag_reads.py b/tests/test_crash_flag_reads.py
 new file mode 100644
 index 0000000..938a412
 --- /dev/null
@@ -7774,7 +7774,7 @@ index d7d9a26..35801c1 100644
      ],
  }
  
-diff --git a/b/tests/test_file_call_guard.py b/tests/test_file_call_guard.py
+diff --git a/tests/test_file_call_guard.py b/tests/test_file_call_guard.py
 new file mode 100644
 index 0000000..00717ec
 --- /dev/null
@@ -8889,7 +8889,7 @@ index 0000000..00717ec
 +            assert not repeated, f"{node.targets[0].id} names a key twice (the later one hides the first): {repeated}"
 +            found.add(node.targets[0].id)
 +    assert found == {"ALLOWED_IMPORTS", "ALLOWED_CALLS"}, "the two tables were not found as plain dict literals"
-diff --git a/b/tests/test_file_reader_refusals.py b/tests/test_file_reader_refusals.py
+diff --git a/tests/test_file_reader_refusals.py b/tests/test_file_reader_refusals.py
 new file mode 100644
 index 0000000..338fd46
 --- /dev/null
@@ -9590,7 +9590,7 @@ index 7b9d857..0f6a824 100644
 +    key.write_bytes(b"\xef\xbb\xbf" + FAKE_KEY.encode() + b"\r\n")
 +    q = LiveQualifier(settings(tmp_path, model, key_file=key))
 +    assert q.qualify("L1", "a@example.test") in {"hot", "warm", "cold"}
-diff --git a/b/tests/test_load_driver_facts.py b/tests/test_load_driver_facts.py
+diff --git a/tests/test_load_driver_facts.py b/tests/test_load_driver_facts.py
 new file mode 100644
 index 0000000..dff3e65
 --- /dev/null
@@ -10019,7 +10019,7 @@ index 459c521..cd6e6ca 100644
              cwd=REPO,
              capture_output=True,
              check=True,
-diff --git a/b/tests/test_no_terminal_questions.py b/tests/test_no_terminal_questions.py
+diff --git a/tests/test_no_terminal_questions.py b/tests/test_no_terminal_questions.py
 new file mode 100644
 index 0000000..0fe36eb
 --- /dev/null
@@ -10516,7 +10516,7 @@ index 2089861..6a6a618 100644
          capture_output=True,
          text=True,
          encoding="utf-8",
-diff --git a/b/tests/test_r4_refusals.py b/tests/test_r4_refusals.py
+diff --git a/tests/test_r4_refusals.py b/tests/test_r4_refusals.py
 new file mode 100644
 index 0000000..1b27b94
 --- /dev/null
@@ -10931,7 +10931,7 @@ index 0000000..1b27b94
 +    assert rrc.folder_cannot_be_made(tmp_path / name) is True
 +    env_ok = {"REAL_RESULT_FILE": str(tmp_path / "ok.json")}
 +    rrc.check_result_file(env_ok, tmp_path / "book.db")
-diff --git a/b/tests/test_r5_refusals.py b/tests/test_r5_refusals.py
+diff --git a/tests/test_r5_refusals.py b/tests/test_r5_refusals.py
 new file mode 100644
 index 0000000..ac76b11
 --- /dev/null
@@ -11607,7 +11607,7 @@ index 0000000..ac76b11
 +    text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
 +    assert "extra trusted certificate authorities" not in text
 +    assert "are the ONLY ones trusted" in text and "is NOT used" in text
-diff --git a/b/tests/test_r6_refusals.py b/tests/test_r6_refusals.py
+diff --git a/tests/test_r6_refusals.py b/tests/test_r6_refusals.py
 new file mode 100644
 index 0000000..119aed8
 --- /dev/null
@@ -11820,7 +11820,7 @@ index 0000000..119aed8
 +
 +def test_start_poll_constants_are_positive() -> None:
 +    assert constants.START_CHECK_TRIES > 0 and constants.START_CHECK_PAUSE_SECONDS > 0
-diff --git a/b/tests/test_r7_class_names.py b/tests/test_r7_class_names.py
+diff --git a/tests/test_r7_class_names.py b/tests/test_r7_class_names.py
 new file mode 100644
 index 0000000..3fdcada
 --- /dev/null
@@ -11967,7 +11967,7 @@ index 0000000..3fdcada
 +
 +    for exc in (urllib.error.URLError("secret-host.test"), http.client.IncompleteRead(b""), ConnectionResetError("p")):
 +        assert error_code(exc) == "error"
-diff --git a/b/tests/test_r7_exit_codes.py b/tests/test_r7_exit_codes.py
+diff --git a/tests/test_r7_exit_codes.py b/tests/test_r7_exit_codes.py
 new file mode 100644
 index 0000000..7fe1609
 --- /dev/null
@@ -12229,7 +12229,7 @@ index 0000000..7fe1609
 +        burst.main(args)
 +    assert stop.value.code == 2 and calls == []
 +    assert len(capsys.readouterr().err.strip().splitlines()) <= 1
-diff --git a/b/tests/test_r7_fake_bad_requests.py b/tests/test_r7_fake_bad_requests.py
+diff --git a/tests/test_r7_fake_bad_requests.py b/tests/test_r7_fake_bad_requests.py
 new file mode 100644
 index 0000000..d360e7e
 --- /dev/null
@@ -12428,7 +12428,7 @@ index 0000000..d360e7e
 +        srv.server_close()
 +        th.join(5)
 +    assert (status, text) == (200, b"ok")
-diff --git a/b/tests/test_r7_fake_slow_senders.py b/tests/test_r7_fake_slow_senders.py
+diff --git a/tests/test_r7_fake_slow_senders.py b/tests/test_r7_fake_slow_senders.py
 new file mode 100644
 index 0000000..68c2dc1
 --- /dev/null
@@ -12558,7 +12558,7 @@ index 0000000..68c2dc1
 +    h.rfile, h.connection = R(), C()
 +    read: Callable[..., tuple[bytes, int]] = http_guard.read_request_body
 +    assert read(h) == (b"abcdef", 0)
-diff --git a/b/tests/test_r7_inputs_and_replies.py b/tests/test_r7_inputs_and_replies.py
+diff --git a/tests/test_r7_inputs_and_replies.py b/tests/test_r7_inputs_and_replies.py
 new file mode 100644
 index 0000000..79d02db
 --- /dev/null
@@ -12919,7 +12919,7 @@ index 0000000..79d02db
 +    assert len(text.strip().splitlines()) == 1 and text.startswith("refused: ")
 +    assert "ImapSettingRefused" not in text and "ImapCountError" not in text and "Traceback" not in text
 +    assert canary not in text
-diff --git a/b/tests/test_r7_mail_context.py b/tests/test_r7_mail_context.py
+diff --git a/tests/test_r7_mail_context.py b/tests/test_r7_mail_context.py
 new file mode 100644
 index 0000000..b53eee5
 --- /dev/null
@@ -13390,7 +13390,7 @@ index 0000000..b53eee5
 +    assert calls, name
 +    for c in calls:
 +        assert len(c.args) == 1 and ast.unparse(c.args[0]) == "FAKE_LINE_MAX", ast.unparse(c)
-diff --git a/b/tests/test_r7_no_replace_of_special.py b/tests/test_r7_no_replace_of_special.py
+diff --git a/tests/test_r7_no_replace_of_special.py b/tests/test_r7_no_replace_of_special.py
 new file mode 100644
 index 0000000..97a2c6d
 --- /dev/null
@@ -13499,7 +13499,7 @@ index 0000000..97a2c6d
 +def test_a_nul_in_the_name_is_refused(tmp_path: Path) -> None:
 +    with pytest.raises(NotRegularFile):
 +        refuse_replacing_special("a\0b")
-diff --git a/b/tests/test_r7b_burst_closed_port.py b/tests/test_r7b_burst_closed_port.py
+diff --git a/tests/test_r7b_burst_closed_port.py b/tests/test_r7b_burst_closed_port.py
 new file mode 100644
 index 0000000..ffccf1c
 --- /dev/null
@@ -13569,7 +13569,7 @@ index 0000000..ffccf1c
 +
 +def test_the_look_gives_up_when_nothing_ever_listens() -> None:
 +    assert burst.listener_answers(f"http://{HOST}:{free_port()}/", 0.5) is False
-diff --git a/b/tests/test_r7b_fake_deep_and_head.py b/tests/test_r7b_fake_deep_and_head.py
+diff --git a/tests/test_r7b_fake_deep_and_head.py b/tests/test_r7b_fake_deep_and_head.py
 new file mode 100644
 index 0000000..bc03180
 --- /dev/null
@@ -13694,7 +13694,7 @@ index 0000000..bc03180
 +        while chunk := s.recv(4096):
 +            out += chunk
 +    assert 200 <= _status(out) < 500, out[:80]
-diff --git a/b/tests/test_r7b_guard_replant.py b/tests/test_r7b_guard_replant.py
+diff --git a/tests/test_r7b_guard_replant.py b/tests/test_r7b_guard_replant.py
 new file mode 100644
 index 0000000..9ad8d83
 --- /dev/null
@@ -13829,7 +13829,7 @@ index 0000000..9ad8d83
 +    ):
 +        root = _plant(tmp_path_factory.mktemp("r7bn"), source)
 +        assert [p for p in _problems(root, {}, {}) if p.startswith("scripts/planted.py")] == [], source
-diff --git a/b/tests/test_r7b_portal_view_cap.py b/tests/test_r7b_portal_view_cap.py
+diff --git a/tests/test_r7b_portal_view_cap.py b/tests/test_r7b_portal_view_cap.py
 new file mode 100644
 index 0000000..7597f5f
 --- /dev/null
@@ -13904,7 +13904,7 @@ index 0000000..7597f5f
 +    finally:
 +        srv.shutdown()
 +        srv.server_close()
-diff --git a/b/tests/test_r7b_program_helper.py b/tests/test_r7b_program_helper.py
+diff --git a/tests/test_r7b_program_helper.py b/tests/test_r7b_program_helper.py
 new file mode 100644
 index 0000000..af8c780
 --- /dev/null
@@ -14123,7 +14123,7 @@ index 0000000..af8c780
 +
 +def test_this_repository_paths_exist_for_the_accepted_shapes() -> None:
 +    assert (REPO / "src" / "lead_desk").is_dir() and (REPO / "demo_only").is_dir()
-diff --git a/b/tests/test_r7c_bad_request_layers.py b/tests/test_r7c_bad_request_layers.py
+diff --git a/tests/test_r7c_bad_request_layers.py b/tests/test_r7c_bad_request_layers.py
 new file mode 100644
 index 0000000..a915f50
 --- /dev/null
@@ -14188,7 +14188,7 @@ index 0000000..a915f50
 +def test_the_loader_alone_never_lets_a_recursion_error_out() -> None:
 +    with pytest.raises(JsonTooDeep):  # a RecursionError coming out would fail this test
 +        loads_bounded("[" * 100_000)
-diff --git a/b/tests/test_r7c_burst_probe_and_names.py b/tests/test_r7c_burst_probe_and_names.py
+diff --git a/tests/test_r7c_burst_probe_and_names.py b/tests/test_r7c_burst_probe_and_names.py
 new file mode 100644
 index 0000000..8f9cabd
 --- /dev/null
@@ -14256,7 +14256,7 @@ index 0000000..8f9cabd
 +        burst.main(["--url", bad, *argv])
 +    assert info.value.code == 2
 +    assert "nothing answers" not in capsys.readouterr().err
-diff --git a/b/tests/test_r7c_clean_tree_guard.py b/tests/test_r7c_clean_tree_guard.py
+diff --git a/tests/test_r7c_clean_tree_guard.py b/tests/test_r7c_clean_tree_guard.py
 new file mode 100644
 index 0000000..aab9ef2
 --- /dev/null
@@ -14395,7 +14395,7 @@ index 0000000..aab9ef2
 +    session = _finish(root, monkeypatch, lambda: None)
 +    conftest.pytest_sessionfinish(session, 0)
 +    assert session.exitstatus == 0 and capsys.readouterr().out == ""
-diff --git a/b/tests/test_r7c_head_deadline_errors.py b/tests/test_r7c_head_deadline_errors.py
+diff --git a/tests/test_r7c_head_deadline_errors.py b/tests/test_r7c_head_deadline_errors.py
 new file mode 100644
 index 0000000..16635b6
 --- /dev/null
@@ -14480,7 +14480,7 @@ index 0000000..16635b6
 +    time.sleep(0.5)  # the server thread prints (if it prints) after the connection closed
 +    err = capfd.readouterr().err
 +    assert "Traceback" not in err and "BrokenPipeError" not in err, err[-300:]
-diff --git a/b/tests/test_r7c_invariants_output_size.py b/tests/test_r7c_invariants_output_size.py
+diff --git a/tests/test_r7c_invariants_output_size.py b/tests/test_r7c_invariants_output_size.py
 new file mode 100644
 index 0000000..8f7e46c
 --- /dev/null
@@ -14542,7 +14542,7 @@ index 0000000..8f7e46c
 +    failing = sum(1 for c in result["checks"] if c["offender_count"])
 +    assert len(table) == clean_table + failing  # one `first N of M` line for each failing check, nothing else
 +    assert (len(table), len(json.dumps(result, indent=2, sort_keys=True).split("\n"))) == (18, 150)  # measured
-diff --git a/b/tests/test_r7c_mail6_killers.py b/tests/test_r7c_mail6_killers.py
+diff --git a/tests/test_r7c_mail6_killers.py b/tests/test_r7c_mail6_killers.py
 new file mode 100644
 index 0000000..a74ade2
 --- /dev/null
@@ -14652,7 +14652,7 @@ index 0000000..a74ade2
 +        assert "LOGOUT" not in srv.commands and "LOGIN" not in srv.commands, srv.commands
 +    finally:
 +        srv.close()
-diff --git a/b/tests/test_r7c_mail_killers.py b/tests/test_r7c_mail_killers.py
+diff --git a/tests/test_r7c_mail_killers.py b/tests/test_r7c_mail_killers.py
 new file mode 100644
 index 0000000..7066f9d
 --- /dev/null
@@ -14805,7 +14805,7 @@ index 0000000..7066f9d
 +        assert not asked, f"{which}: the Start? question was reached with a bad secret file"
 +        assert rc == rrc.EXIT_REFUSED
 +        assert "\xa0" not in out.getvalue() and "xx12" not in out.getvalue()
-diff --git a/b/tests/test_r7c_model_fake_cli.py b/tests/test_r7c_model_fake_cli.py
+diff --git a/tests/test_r7c_model_fake_cli.py b/tests/test_r7c_model_fake_cli.py
 new file mode 100644
 index 0000000..9ad5d70
 --- /dev/null
@@ -14921,7 +14921,7 @@ index 0000000..9ad5d70
 +    r = c.getresponse()
 +    r.read()
 +    assert r.status == 400
-diff --git a/b/tests/test_r7c_one_json_loader.py b/tests/test_r7c_one_json_loader.py
+diff --git a/tests/test_r7c_one_json_loader.py b/tests/test_r7c_one_json_loader.py
 new file mode 100644
 index 0000000..a39229d
 --- /dev/null
@@ -15128,7 +15128,7 @@ index 0000000..a39229d
 +    for text in ("import json\njson.loads('1')", "import json\njson.load(f)", "r.json()", "from json import loads"):
 +        assert _parses_json_itself(ast.parse(text)), text
 +    assert not _parses_json_itself(ast.parse("import json\njson.dumps({})"))
-diff --git a/b/tests/test_r7c_portal_view_size.py b/tests/test_r7c_portal_view_size.py
+diff --git a/tests/test_r7c_portal_view_size.py b/tests/test_r7c_portal_view_size.py
 new file mode 100644
 index 0000000..7f250a3
 --- /dev/null
@@ -15220,7 +15220,7 @@ index 0000000..7f250a3
 +    for bad in ("limit=-1", "limit=x", "limit=%C2%B2", "limit=999999999999"):
 +        assert len(json.loads(_get(url + "/fake/outbox?" + bad))["messages"]) == 7  # not a valid number: the whole list
 +    assert json.loads(_get(url + "/fake/outbox?limit=0"))["messages"] == []
-diff --git a/b/tests/test_r7c_program_helper_rejects.py b/tests/test_r7c_program_helper_rejects.py
+diff --git a/tests/test_r7c_program_helper_rejects.py b/tests/test_r7c_program_helper_rejects.py
 new file mode 100644
 index 0000000..29b6514
 --- /dev/null
@@ -15344,7 +15344,7 @@ index 0000000..29b6514
 +            continue
 +        found += [f"{path.name}:{n}" for n in _starts_a_program(ast.parse(path.read_text(encoding="utf-8")))]
 +    assert found == [], found
-diff --git a/b/tests/test_r7c_reset_exact_command.py b/tests/test_r7c_reset_exact_command.py
+diff --git a/tests/test_r7c_reset_exact_command.py b/tests/test_r7c_reset_exact_command.py
 new file mode 100644
 index 0000000..4a11907
 --- /dev/null
@@ -15440,7 +15440,7 @@ index 0000000..4a11907
 +    assert not re.search(r"-match 'lead_desk", PS)
 +    assert "$ourCommandLine" in PS and "-imatch $ourCommandLine" in PS
 +    assert "python[0-9.]*" in PS and "--outbox (keyed|blind) --port [0-9]+" in PS
-diff --git a/b/tests/test_r7c_smtp_reply_total_cap.py b/tests/test_r7c_smtp_reply_total_cap.py
+diff --git a/tests/test_r7c_smtp_reply_total_cap.py b/tests/test_r7c_smtp_reply_total_cap.py
 new file mode 100644
 index 0000000..ab19fad
 --- /dev/null
@@ -15487,7 +15487,7 @@ index 0000000..ab19fad
 +
 +def test_a_multi_line_reply_under_the_cap_is_read() -> None:
 +    assert _read_from(b"250-a\r\n250-b\r\n250 done\r\n") == 250
-diff --git a/b/tests/test_r7c_start_all_parity.py b/tests/test_r7c_start_all_parity.py
+diff --git a/tests/test_r7c_start_all_parity.py b/tests/test_r7c_start_all_parity.py
 new file mode 100644
 index 0000000..fa0be04
 --- /dev/null
@@ -15548,7 +15548,7 @@ index 0000000..fa0be04
 +    for cmd in ("Test-Path", "Get-Item", "Select-String", "Set-Content", "Remove-Item"):
 +        for m in re.finditer(rf"{cmd}\b[^\r\n]*", PS):  # also the lines of the head comment: none names a command
 +            assert "-LiteralPath" in m.group(0), m.group(0)
-diff --git a/b/tests/test_r7m_new.py b/tests/test_r7m_new.py
+diff --git a/tests/test_r7m_new.py b/tests/test_r7m_new.py
 new file mode 100644
 index 0000000..16e2b8d
 --- /dev/null
@@ -16001,7 +16001,7 @@ index 893fcac..4d4fce5 100644
 +    out = capsys.readouterr().out
 +    assert code == rrc.EXIT_FAILED and "Traceback" not in out and "Errno" not in out and "No space" not in out
 +    assert "it could NOT be written" in out and '"ok": false' in out and "may still be in HubSpot" in out
-diff --git a/b/tests/test_regfile_limits_in_constants.py b/tests/test_regfile_limits_in_constants.py
+diff --git a/tests/test_regfile_limits_in_constants.py b/tests/test_regfile_limits_in_constants.py
 new file mode 100644
 index 0000000..fbc9553
 --- /dev/null
@@ -16665,7 +16665,7 @@ index 5814705..19a8736 100644
          ("pending", "refused", "hot", 1),
          ("unknown", "crash_while_sending", "hot", 1),
          ("unknown", "ambiguous", None, 1),
-diff --git a/b/tests/test_script_number_limits.py b/tests/test_script_number_limits.py
+diff --git a/tests/test_script_number_limits.py b/tests/test_script_number_limits.py
 new file mode 100644
 index 0000000..eae319f
 --- /dev/null
@@ -16959,7 +16959,7 @@ index 0000000..eae319f
 +        assert _live_from_env(env).effort == "low"
 +    except KeyError as e:  # a name this made-up set lacks: the test needs the real list
 +        raise AssertionError(f"test setup lacks {e}") from None
-diff --git a/b/tests/test_script_refusals_feed.py b/tests/test_script_refusals_feed.py
+diff --git a/tests/test_script_refusals_feed.py b/tests/test_script_refusals_feed.py
 new file mode 100644
 index 0000000..27ea486
 --- /dev/null
@@ -17307,7 +17307,7 @@ index 374f14c..0555cb4 100644
  
  
  def test_feed_main_takes_no_address_from_its_arguments() -> None:
-diff --git a/b/tests/test_special_files_and_plain_text.py b/tests/test_special_files_and_plain_text.py
+diff --git a/tests/test_special_files_and_plain_text.py b/tests/test_special_files_and_plain_text.py
 new file mode 100644
 index 0000000..17c7676
 --- /dev/null
@@ -17542,7 +17542,7 @@ index 0000000..17c7676
 +        Config.from_env({"DESK_PORT": "1\n2"})
 +    with pytest.raises(SettingRefused, match="DESK_PORT is not a number"):
 +        Config.from_env({"DESK_PORT": "１２"})
-diff --git a/b/tests/test_special_output_files.py b/tests/test_special_output_files.py
+diff --git a/tests/test_special_output_files.py b/tests/test_special_output_files.py
 new file mode 100644
 index 0000000..d4cf02c
 --- /dev/null
@@ -17977,7 +17977,7 @@ index fa5b33a..e16fdd3 100644
      set_follow(rig, lid, state="sending", attempts=3, auto_attempts=SEND_MAX_ATTEMPTS, last_error=None)
      rig.desk._abort_unsent(lid, 3, ValueError("x"))
      assert follow(rig, lid, "state, auto_attempts") == ("failed", SEND_MAX_ATTEMPTS)
-diff --git a/b/tests/test_tools_and_fakes_pipes.py b/tests/test_tools_and_fakes_pipes.py
+diff --git a/tests/test_tools_and_fakes_pipes.py b/tests/test_tools_and_fakes_pipes.py
 new file mode 100644
 index 0000000..07e4ef6
 --- /dev/null
@@ -18216,7 +18216,7 @@ index eed683e..49634ef 100644
      assert root_files(tmp_path) == ("README.md", "scratch-notes.md")
  
  
-diff --git a/b/tests/test_wrapper_setting_refusals.py b/tests/test_wrapper_setting_refusals.py
+diff --git a/tests/test_wrapper_setting_refusals.py b/tests/test_wrapper_setting_refusals.py
 new file mode 100644
 index 0000000..888a7b3
 --- /dev/null
@@ -18335,7 +18335,7 @@ index 0000000..888a7b3
 +    assert _helper().main(["desk_setting.py", *argv]) == 2
 +    out = capsys.readouterr().out
 +    assert out.startswith("usage: ") and FAKE_SECRET not in out
-diff --git a/b/tests/tree_guard.py b/tests/tree_guard.py
+diff --git a/tests/tree_guard.py b/tests/tree_guard.py
 new file mode 100644
 index 0000000..42689e2
 --- /dev/null
@@ -18470,7 +18470,7 @@ index 754fe61..cf2d78a 100644
      return entry.path
  
  
-diff --git a/b/tools/refusing_args.py b/tools/refusing_args.py
+diff --git a/tools/refusing_args.py b/tools/refusing_args.py
 new file mode 100644
 index 0000000..21efd15
 --- /dev/null
