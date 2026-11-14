@@ -1,3 +1,26 @@
+## HEARTBEAT 92 (04:44Z) - LEAD'S ALLOWLIST CHECK DONE: 0 FINDINGS; B12 FINAL RUN 59%
+
+| Item | State |
+|---|---|
+| Lead check 04:39Z (1): gitleaks over all refs with the config OF ad612e2 | DONE, read-only. In /home/user/work/src (all remote refs plus n8n-evidence-rerun added for the scan only): `gitleaks git --redact --ignore-gitleaks-allow --config <.gitleaks.toml from ad612e2> --exit-code 1 .` = rc 0, "no leaks found". With origin/main's config the same refs gave 39 (HEARTBEAT 90): so the branch's own allowlist covers all 39. Also a scratch clone at ad612e2 (priv/gl-verify): `gitleaks git` rc 0 and `gitleaks dir` rc 0 with its own config. The ref was removed again (15 remote refs). The scratch clone priv/gl-verify is still there (my safety check refused the delete from inside it; harmless, outside every repo). |
+| B12 final run | about 59% at 04:42Z. Tail not read yet. |
+| B13, B14 | RUNNING, no hand-back. |
+| Lead (2): WINDOWS-RUN-1 | kept ready; the lead runs it only on the final stack tree. I will update step 1 to the stack patch then. |
+
+FAILURES AND RETRIES: none this block. One tool refusal: my `rm -rf` of the scratch clone was blocked (the shell was inside it); not retried.
+Load: low.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Stack, stack-docs-final, stack review, full run, browser tests, clean-tree check: not started (wait for B12 final and B13).
+- Fresh reviews of fix-5 r6, fix-2 r5, fix-10: not started.
+- Re-run of B12's one hygiene test after the ref is gone: after its final run ends.
+- reset.ps1 / start_all.ps1 never run; Python 3.11, ruff, mypy, bandit, CodeQL, Sonar: CI only.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read B12's final tail (~04:50Z); re-run the hygiene test alone if it failed; fresh reviewer on fix-5 r6.
+2. B13 hand-back: tail check, fresh reviewer, then the single stack re-cut builder (fix-9's `book` fixture wins).
+3. B14 hand-back: fresh reviewer on fix-10.
+
 ## HEARTBEAT 91 (04:41Z) - BROWSER SKIP REASONS READ; WAITING FOR B12 FINAL RUN (34%), B13, B14
 
 | Item | State |
