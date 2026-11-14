@@ -1,0 +1,61 @@
+diff -ru rv-fix8r2/docs/limits.md rv-fix8r3/docs/limits.md
+--- rv-fix8r2/docs/limits.md	2026-11-14 04:08:53.648514257 +0000
++++ rv-fix8r3/docs/limits.md	2026-11-14 04:21:05.012427922 +0000
+@@ -23,7 +23,7 @@
+   The licence text has not been reviewed by a lawyer.
+ * The same person with two email addresses is two leads: `ada+sales@example.com` and `a.da@example.com` are different leads.
+   Two people sharing one address are one lead.
+-* An email address whose domain (the part after the @) starts or ends with a dot, has two dots in a row, or has a part between dots that starts or ends with a hyphen is not accepted as an address: the request goes to "Request to check" and makes no lead and no email. The desk does not check that the domain exists, how long each part is, or the part before the @ for dots in odd places. A domain needs a real dot (the ordinary full stop): a domain whose only dots are the three other full stops (U+3002, U+FF0E, U+FF61) is refused. Look-alikes of the hyphen at the edge of a part (U+FF0D, U+2010, U+2011, U+2212) and of the dot anywhere (U+2024, U+FE52) are refused; no other look-alike or Unicode folding is checked, and a part longer than 63 characters is not refused. A sender, recipient or reminder address with a second @ is refused.
++* An email address whose domain (the part after the @) starts or ends with a dot, has two dots in a row, or has a part between dots that starts or ends with a hyphen is not accepted as an address: the request goes to "Request to check" and makes no lead and no email. The desk does not check that the domain exists, how long each part is, or the part before the @ for dots in odd places. A domain needs a real dot (the ordinary full stop): a domain whose only dots are the three other full stops (U+3002, U+FF0E, U+FF61) is refused. Look-alikes of the hyphen at the edge of a part (U+FF0D, U+2010, U+2011, U+2212) and of the dot anywhere (U+2024, U+FE52) are refused; no other look-alike or Unicode folding is checked, and a part longer than 63 characters is not refused. A sender, recipient or reminder address with a second @ is refused. The need for a real dot is for the lead email only: a one-label host such as `localhost` is accepted for the sender, recipient and reminder addresses.
+ * A real mail system or CRM was not tested (except by the one probe in `docs/hubspot-probe.md`). The keyed mail system is a simulation; a real provider may remember a send key for a
+   shorter or longer time. The AI step is a set of pre-written replies; nothing is said about real AI behaviour.
+ * **Live model step.** The desk can ask a real AI model for a label, but only when you set `DESK_QUALIFIER=live_claude`, name a key file
+--- rv-fix8r2/tests/test_domain_labels.py	2026-11-14 04:08:53.648608465 +0000
++++ rv-fix8r3/tests/test_domain_labels.py	2026-11-14 04:21:05.012519378 +0000
+@@ -84,12 +84,14 @@
+ _ANY_DOT = {".", *DOTS}
+ 
+ 
+-def _oracle_labels_ok(domain: str, forbidden: set[str], need_ascii_dot: bool) -> bool:
++def _oracle_labels_ok(domain: str, forbidden: set[str], need_ascii_dot: bool, refuse_cf: bool = False) -> bool:
+     """The rule written out a second way: walk the characters once (no split, no regular expression)."""
+     if not domain:
+         return False
+     if any(c in forbidden or c.isspace() or ord(c) < 32 for c in domain):
+         return False
++    if refuse_cf and "\u200b" in domain:  # the lead check also refuses format characters (zero-width space)
++        return False
+     if (need_ascii_dot or any(c in DOTS for c in domain)) and "." not in domain:
+         return False
+     first = last = None  # first and last character of the label being read
+@@ -109,7 +111,7 @@
+ 
+ FUZZ_PIECES = [
+     "a", "b", "x1", "A", "-", ".", ".", "..", "-.", ".-", "a-b", "。", "．", "｡", "xn--k", "test", "bücher",
+-    "\u00a0", "\x00", "\uff0d", "\u2010", "\u2011", "\u2212", "\u2024", "\ufe52", "@", "a" * 64, " ", "\t",
++    "\u00a0", "\x00", "\uff0d", "\u2010", "\u2011", "\u2212", "\u2024", "\ufe52", "@", "a" * 64, " ", "\t", "\u200b",
+ ]  # fmt: skip
+ FUZZ_PIECES += ["a", "b", ".", "test", "x1", "a-b", "xn--k", "bücher", ".", "A", "。"] * 4  # more well-formed pieces
+ 
+@@ -121,7 +123,7 @@
+     for _ in range(30000):
+         domain = "".join(rng.choice(FUZZ_PIECES) for _ in range(rng.randint(1, 6)))
+         email = f"loc@{domain}"
+-        want = _oracle_labels_ok(domain, _FORBIDDEN_IN_LEAD_DOMAIN, True)
++        want = _oracle_labels_ok(domain, _FORBIDDEN_IN_LEAD_DOMAIN, True, refuse_cf=True)
+         assert identity._valid_email(email) is want, repr(domain)
+         accepted += want
+         rejected += not want
+@@ -134,12 +136,10 @@
+     for _ in range(30000):
+         rest = "".join(rng.choice(FUZZ_PIECES) for _ in range(rng.randint(1, 6)))
+         s = "desk" + AT + rest
+-        domain = rest.rpartition(AT)[2]
+         want = rest.count(AT) == 0 and _oracle_labels_ok(rest, _FORBIDDEN_IN_PLAIN_DOMAIN, False)
+         assert identity.plain_address_ok(s) is want, repr(s)
+         accepted += want
+         rejected += not want
+-        assert domain is not None
+     assert accepted > 200 and rejected > 5000, (accepted, rejected)
+ 
+ 
