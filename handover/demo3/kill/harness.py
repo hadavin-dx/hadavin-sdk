@@ -275,6 +275,7 @@ def main():
             time.sleep(1)
             t_up = r.start_n8n()
             out["restart_s"] = round(t_up - tk, 1)
+            tup = t_up
         elif point == "control1":
             out["send"] = r.send(leads[0])
         elif point == "control2same":
@@ -333,6 +334,8 @@ def main():
             r.ctl("smtp.ctl", {"pre_once_s": 40})
             out["send"] = r.send(leads[0])
         out["reached_terminal"] = r.wait_terminal(leads, 700 if point == "error" else 330) if leads else True
+        if "restart_s" in out and leads:
+            out["recovery_s"] = round(time.time() - tup, 1)  # seconds from "n8n is up again" to the lead being terminal (poll step 2 s)
         time.sleep(20 if leads else 0)  # settle: a late double would show here
         out["states"] = r.states()
         out["counts"] = r.count(leads)
