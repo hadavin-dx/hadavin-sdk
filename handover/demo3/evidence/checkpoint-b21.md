@@ -42,3 +42,8 @@ Tree b7841d401deeb3d19060bed139cd589d99ba018b (git add -A, not committed). Notes
 ## Round 11 checkpoint 09:54Z
 Done: reset.sh (rows 2, 6, 7, 8, 9, 16, 17 code), reset.ps1 python block (row 2, text only, never run), README wording; row 5 per lead ruling (Windows path texts in tests/test_path_confinement.py built from parts, equality test, no exception added; hygiene scan 24 passed with gitleaks on PATH). Narrow run 1 showed 16 failures from my own script changes (old expectations): fixed tests (EPERM wording and no-wait check, fake-ps now counts stat calls and reaches pass 2, ps text fallback is now a named function-level test because a live process is read from /proc, exit 8 line, ps1 exit 8 count 4).
 Next: failing-before tests on b7841d40 (rows 1, 2, 6, 7, 8, 11, 14, 15, 16, 17), mutants, lint, one full run. Logs outside the tree: /home/user/work/b21-logs/r11/.
+
+## Round 11 checkpoint 10:05Z
+Done: all code and test rows written (1, 2, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17); row 3 reports saved (RuleID/File/Commit); lint on a clean git ls-files copy (ruff check, ruff format --check, mypy linux and win32, bandit -ll) all clean; failing-before run on b7841d40 done (12 fail, see log). Tree id now: ad9c1a26abfa3d15e99c1668104852e8a4b5447d.
+Running: 3 baseline runs of the mutation file set, then 121 distinct mutants in 4 parts (logs in /home/user/work/b21-logs/r11/).
+Next: survivors -> pins/tests, then ONE full run on a one-commit scratch repo of the final tree, patch, notes, hand back.

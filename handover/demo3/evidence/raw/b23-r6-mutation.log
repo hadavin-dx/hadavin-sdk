@@ -1,0 +1,60 @@
+r4-3 non-UTF-8 config accepted: pytest rc=1 -> KILLED | 1 failed, 605 passed in 24.27s
+      failing: tests/test_real_check_dry.py::test_a_valid_config_with_one_non_utf8_byte_is_refused_not_read_with_replacement
+r4-10 sh: port answers but process not checked (race guard, declared equivalent): pytest rc=1 -> KILLED | 1 failed, 82 passed, 2 skipped in 51.85s
+      failing: tests/test_start_all_late_refusal.py::test_a_demo_server_that_dies_between_its_line_and_the_port_answer_is_not_up
+r4-13 n8n_api back to a bare Path: pytest rc=1 -> KILLED | 1 failed, 5 passed in 0.52s
+      failing: tests/test_setting_reader_guard.py::test_no_path_is_read_from_setting_text_except_through_the_one_helper
+r5-5 formatter failure text same as unreadable: pytest rc=1 -> KILLED | 1 failed, 32 passed, 2 skipped in 36.38s
+      failing: tests/test_start_all_late_refusal.py::test_a_formatter_that_fails_gives_its_own_line_not_the_empty_log_line
+r6-1 ready: desk alive after the line not checked: pytest rc=1 -> KILLED | 1 failed, 32 passed, 2 skipped in 36.06s
+      failing: tests/test_start_all_late_refusal.py::test_a_desk_that_printed_its_line_and_died_is_not_a_start
+r6-2 reset: crashed check passed on as its own code: pytest rc=1 -> KILLED | 2 failed, 48 passed in 15.72s
+      failing: tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[1-5]
+      failing: tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[139-5]
+r6-3 reset: 8 not passed on: pytest rc=1 -> KILLED | 1 failed, 49 passed in 15.57s
+      failing: tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[8-8]
+r6-4 write_line uses print: pytest rc=1 -> KILLED | 3 failed, 2 passed in 0.38s
+      failing: tests/test_refusal_lines_utf8.py::test_a_script_reading_a_bad_setting_prints_utf8_on_a_cp1252_console
+      failing: tests/test_refusal_lines_utf8.py::test_the_desks_own_refusal_is_utf8_on_a_cp1252_console
+      failing: tests/test_refusal_lines_utf8.py::test_the_open_file_limit_line_is_utf8_on_a_cp1252_console
+M  README.md
+M  contract.md
+M  demo_only/fake_model_server.py
+M  demo_only/fakes_server.py
+M  docs/limits.md
+M  docs/settings.md
+M  docs/tests.md
+M  scripts/check_schema.py
+M  scripts/crash_desk.py
+M  scripts/feed.py
+M  scripts/n8n_api.py
+M  scripts/reset.ps1
+M  scripts/reset.sh
+M  scripts/reset_check.py
+M  scripts/run_real_check.py
+M  scripts/start_all.ps1
+M  scripts/start_all.sh
+M  src/lead_desk/config.py
+A  src/lead_desk/config_exit.py
+M  src/lead_desk/constants.py
+M  src/lead_desk/crm_hubspot.py
+M  src/lead_desk/desk.py
+M  src/lead_desk/envnum.py
+M  src/lead_desk/server.py
+M  src/lead_desk/smtp_provider.py
+M  tests/support.py
+A  tests/test_bad_setting_entry_points.py
+A  tests/test_exit_code_table.py
+A  tests/test_late_refusal_value_echo.py
+M  tests/test_path_confinement.py
+A  tests/test_ps1_pins.py
+M  tests/test_real_check_dry.py
+A  tests/test_refusal_lines_utf8.py
+M  tests/test_reset_scripts.py
+A  tests/test_round5_rows.py
+A  tests/test_scrub_boundaries.py
+A  tests/test_setting_reader_guard.py
+M  tests/test_stall_eviction.py
+A  tests/test_start_all_late_refusal.py
+A  tools/render_exit_table.py
+

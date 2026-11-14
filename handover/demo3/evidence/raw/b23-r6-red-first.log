@@ -1,0 +1,322 @@
+........................................................................ [ 10%]
+........................................................................ [ 21%]
+........................................................................ [ 31%]
+.....................F.................................................. [ 42%]
+........................................................................ [ 52%]
+........................................................................ [ 63%]
+........................................................................ [ 73%]
+..........................F........F............................ssssss.F [ 84%]
+FFFF......FF...........................................ss............... [ 94%]
+F....................F.......ss.F.FF                                     [100%]
+==================================== ERRORS ====================================
+________________ ERROR collecting tests/test_exit_code_table.py ________________
+tests/test_exit_code_table.py:346: in <module>
+    c.EXIT_TOOL_REFUSED,
+    ^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'lead_desk.constants' has no attribute 'EXIT_TOOL_REFUSED'. Did you mean: 'EXIT_CHECK_REFUSED'?
+=================================== FAILURES ===================================
+______ test_every_refusal_site_of_the_desk_goes_through_the_one_formatter ______
+
+    def test_every_refusal_site_of_the_desk_goes_through_the_one_formatter() -> None:
+        """No `print(f"the desk refuses ...` is built by hand in server.py: `_refuse` is the only place that writes one,
+        through `write_line`."""
+        text = (REPO / "src" / "lead_desk" / "server.py").read_text(encoding="utf-8")
+        assert 'print(f"the desk refuses' not in text
+>       assert text.count("write_line(refusal_line(") == 1 and "print(refusal_line(" not in text
+E       assert (0 == 1)
+E        +  where 0 = <built-in method count of str object at 0x1bb43210>('write_line(refusal_line(')
+E        +    where <built-in method count of str object at 0x1bb43210> = '"""HTTP layer. Standard library only.\n\n`python -m lead_desk.server` reads its settings from the environment (config...desk.close()\n                finally:\n                    lock.close()\n\n\nif __name__ == "__main__":\n    main()\n'.count
+
+tests/test_bad_setting_entry_points.py:202: AssertionError
+______________________ test_text_only_the_start_pins_hold ______________________
+
+    def test_text_only_the_start_pins_hold() -> None:
+>       assert start_problems((SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")) == [], (
+            "TEXT PIN, not run on Windows:"
+        )
+E       AssertionError: TEXT PIN, not run on Windows:
+E       assert ['one clock d...er has ended'] == []
+E         
+E         Left contains 4 more items, first extra item: 'one clock deadline for both waits'
+E         Use -v to get more diff
+
+tests/test_ps1_pins.py:150: AssertionError
+_ test_text_only_each_start_pin_rejects_its_mutant[a desk that printed its line and ended counts as started] _
+
+mutant = 'a desk that printed its line and ended counts as started'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: a desk that printed its line and ended counts as started
+E       assert 'if (-not $desk.HasExited) { $ready = $true }' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:232: AssertionError
+____________ test_the_desks_own_refusal_is_utf8_on_a_cp1252_console ____________
+
+    def test_the_desks_own_refusal_is_utf8_on_a_cp1252_console() -> None:
+        done = _run(f"from lead_desk.server import _refuse; _refuse('the desk refuses a setting:', 'name {LETTER} here')")
+>       assert done.returncode == EXIT_DESK_SETTING_REFUSED, (done.returncode, done.stderr[-300:])
+E       AssertionError: (1, b'hon3.13/encodings/cp1252.py", line 19, in encode
+E             return codecs.charmap_encode(input,self.errors,encoding_ta...odeEncodeError: \'charmap\' codec can\'t encode character \'\\u0905\' in position 33: character maps to <undefined>
+E         ')
+E       assert 1 == 4
+E        +  where 1 = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '-c', "from lead_desk.server import _refuse; _refuse('...odeEncodeError: \'charmap\' codec can\'t encode character \'\\u0905\' in position 33: character maps to <undefined>\n').returncode
+
+tests/test_refusal_lines_utf8.py:31: AssertionError
+__________ test_the_open_file_limit_line_is_utf8_on_a_cp1252_console ___________
+
+    def test_the_open_file_limit_line_is_utf8_on_a_cp1252_console() -> None:
+        code = (
+            "from lead_desk import server\n"
+            f"def boom(): raise server.DescriptorBudgetError('limit {LETTER}')\n"
+            "server.ensure_descriptor_budget = boom\n"
+            "server.main()"
+        )
+        done = _run(code)
+>       assert done.stdout == f"limit {LETTER}\n".encode() and b"Traceback" not in done.stderr, done.stderr[-300:]
+E       AssertionError: b'thon3.13/encodings/cp1252.py", line 19, in encode
+E             return codecs.charmap_encode(input,self.errors,encoding_table...icodeEncodeError: \'charmap\' codec can\'t encode character \'\\u0905\' in position 6: character maps to <undefined>
+E         '
+E       assert (b'' == b'limit \xe0\xa4\x85\n'
+E         
+E         Use -v to get more diff)
+
+tests/test_refusal_lines_utf8.py:45: AssertionError
+_____ test_a_script_reading_a_bad_setting_prints_utf8_on_a_cp1252_console ______
+
+    def test_a_script_reading_a_bad_setting_prints_utf8_on_a_cp1252_console() -> None:
+        code = (
+            "from lead_desk import config_exit as ce\n"
+            "from lead_desk.config import SettingRefused\n"
+            f"def boom(env=None): raise SettingRefused('name {LETTER} here')\n"
+            "ce.Config.from_env = staticmethod(boom)\n"
+            "ce.config_or_exit({})"
+        )
+        done = _run(code)
+        assert done.returncode == EXIT_SCRIPT_SETTING_REFUSED, (done.returncode, done.stderr[-300:])
+>       assert f"name {LETTER} here\n".encode() in done.stderr and b"Traceback" not in done.stderr
+E       assert (b'name \xe0\xa4\x85 here\n' in b'the desk refuses a setting: name \\u0905 here\n')
+E        +  where b'name \xe0\xa4\x85 here\n' = <built-in method encode of str object at 0x7f4455cbb6f0>()
+E        +    where <built-in method encode of str object at 0x7f4455cbb6f0> = 'name अ here\n'.encode
+E        +  and   b'the desk refuses a setting: name \\u0905 here\n' = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '-c', "from lead_desk import config_exit as ce\nfrom l...od(boom)\nce.config_or_exit({})"], returncode=8, stdout=b'', stderr=b'the desk refuses a setting: name \\u0905 here\n').stderr
+
+tests/test_refusal_lines_utf8.py:58: AssertionError
+____________ test_no_refusal_line_is_printed_with_print_in_the_tree ____________
+
+    def test_no_refusal_line_is_printed_with_print_in_the_tree() -> None:
+        """Sibling search: `print(refusal_line(` or `print(plain_line(` anywhere in src/ or scripts/ is the bug."""
+        bad: list[str] = []
+        for folder in ("src", "scripts"):
+            for path in (REPO / folder).rglob("*.py"):
+                tree = ast.parse(path.read_text(encoding="utf-8"))
+                for node in ast.walk(tree):
+                    if (
+                        isinstance(node, ast.Call)
+                        and isinstance(node.func, ast.Name)
+                        and node.func.id == "print"
+                        and node.args
+                        and isinstance(node.args[0], ast.Call)
+                        and isinstance(node.args[0].func, ast.Name)
+                        and node.args[0].func.id in {"refusal_line", "plain_line"}
+                    ):
+                        bad.append(f"{path.relative_to(REPO)}:{node.lineno}")
+>       assert not bad, bad
+E       AssertionError: ['src/lead_desk/server.py:1112', 'scripts/run_real_check.py:937', 'scripts/run_real_check.py:949', 'scripts/run_real_check.py:886']
+E       assert not ['src/lead_desk/server.py:1112', 'scripts/run_real_check.py:937', 'scripts/run_real_check.py:949', 'scripts/run_real_check.py:886']
+
+tests/test_refusal_lines_utf8.py:78: AssertionError
+________________ test_the_one_function_exists_and_writes_bytes _________________
+
+    def test_the_one_function_exists_and_writes_bytes() -> None:
+>       assert Path(REPO / "src" / "lead_desk" / "config_exit.py").read_text(encoding="utf-8").count("def write_line(") == 1
+E       assert 0 == 1
+E        +  where 0 = <built-in method count of str object at 0x1bb81c50>('def write_line(')
+E        +    where <built-in method count of str object at 0x1bb81c50> = '"""The one place that words a refused setting, and the one way for a script to read the settings.\n\n`Config.from_env...buffer.read().decode("utf-8", "replace"), os.environ).encode("utf-8") + b"\\n"\n    )\n    sys.stdout.buffer.flush()\n'.count
+E        +      where '"""The one place that words a refused setting, and the one way for a script to read the settings.\n\n`Config.from_env...buffer.read().decode("utf-8", "replace"), os.environ).encode("utf-8") + b"\\n"\n    )\n    sys.stdout.buffer.flush()\n' = read_text(encoding='utf-8')
+E        +        where read_text = PosixPath('/home/user/work/b23-r5-pristine/src/lead_desk/config_exit.py').read_text
+E        +          where PosixPath('/home/user/work/b23-r5-pristine/src/lead_desk/config_exit.py') = Path((((PosixPath('/home/user/work/b23-r5-pristine') / 'src') / 'lead_desk') / 'config_exit.py'))
+
+tests/test_refusal_lines_utf8.py:82: AssertionError
+_ test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[1-5] _
+
+book = PosixPath('/home/user/work/b23-r5-pristine/data/reset-guard-akk11iwk/desk.sqlite3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-555/test_reset_sh_gives_a_crashed_0')
+check_code = 1, expected = 5
+
+    @pytest.mark.skipif(WINDOWS, reason="the stand-in python is a shell script")
+    @pytest.mark.parametrize(("check_code", "expected"), [(1, 5), (139, 5), (3, 3), (4, 4), (8, 8)])
+    def test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers(
+        book: Path, tmp_path: Path, check_code: int, expected: int
+    ) -> None:
+        """Row of the table: reset 5 is "a process did not stop in time, or the check program crashed (nothing was
+        deleted)".
+        A stand-in python ends `reset_check.py` with `check_code`; the check's own answers 3, 4 and 8 pass through, anything
+        else is a crash of the check (Python's own 1 for an error report, a signal code) and is 5. The book is kept."""
+        stub = tmp_path / "stubpy"
+        stub.mkdir()
+        (stub / "python").write_text(
+            f'#!/bin/bash\nif [[ "$*" == *reset_check.py* ]]; then exit {check_code}; fi\nexec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        (stub / "python").chmod(0o755)
+        done = _run(SCRIPT, book, first_on_path=stub, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+>       assert done.returncode == expected, (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (1, '', '')
+E       assert 1 == 5
+E        +  where 1 = CompletedProcess(args=['bash', '/home/user/work/b23-r5-pristine/scripts/reset.sh'], returncode=1, stdout='', stderr='').returncode
+
+tests/test_reset_scripts.py:204: AssertionError
+_ test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[139-5] _
+
+book = PosixPath('/home/user/work/b23-r5-pristine/data/reset-guard-_mqzmtjz/desk.sqlite3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-555/test_reset_sh_gives_a_crashed_1')
+check_code = 139, expected = 5
+
+    @pytest.mark.skipif(WINDOWS, reason="the stand-in python is a shell script")
+    @pytest.mark.parametrize(("check_code", "expected"), [(1, 5), (139, 5), (3, 3), (4, 4), (8, 8)])
+    def test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers(
+        book: Path, tmp_path: Path, check_code: int, expected: int
+    ) -> None:
+        """Row of the table: reset 5 is "a process did not stop in time, or the check program crashed (nothing was
+        deleted)".
+        A stand-in python ends `reset_check.py` with `check_code`; the check's own answers 3, 4 and 8 pass through, anything
+        else is a crash of the check (Python's own 1 for an error report, a signal code) and is 5. The book is kept."""
+        stub = tmp_path / "stubpy"
+        stub.mkdir()
+        (stub / "python").write_text(
+            f'#!/bin/bash\nif [[ "$*" == *reset_check.py* ]]; then exit {check_code}; fi\nexec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        (stub / "python").chmod(0o755)
+        done = _run(SCRIPT, book, first_on_path=stub, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+>       assert done.returncode == expected, (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (139, '', '')
+E       assert 139 == 5
+E        +  where 139 = CompletedProcess(args=['bash', '/home/user/work/b23-r5-pristine/scripts/reset.sh'], returncode=139, stdout='', stderr='').returncode
+
+tests/test_reset_scripts.py:204: AssertionError
+_______ test_the_demo_server_allows_address_reuse_everywhere_but_windows _______
+
+    def test_the_demo_server_allows_address_reuse_everywhere_but_windows() -> None:
+        """Row 5: on Windows SO_REUSEADDR allows a second bind of a used port, so the ownership line would not prove that
+        the
+        port is ours. The decision is a function of the platform name (tested with both names)."""
+        import demo_only.fakes_server as fs
+    
+>       assert fs.reuse_address_allowed("win32") is False
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'demo_only.fakes_server' has no attribute 'reuse_address_allowed'
+
+tests/test_round5_rows.py:204: AttributeError
+_ test_text_pin_the_start_script_waits_for_the_listening_line_inside_one_budget _
+
+    def test_text_pin_the_start_script_waits_for_the_listening_line_inside_one_budget() -> None:
+        """TEXT PIN, not a proof of behaviour: it only shows the lines are in the file. The behaviour tests above (a desk
+        that never listens, a demo server that does not come up, a desk that ends at once) are the proof."""
+        text = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+        assert 'WAIT_SECONDS="${START_ALL_WAIT_SECONDS:-15}"' in text and "desk listening on" in text
+>       assert 'wait "$desk_pid"' in text and text.count("deadline_ms") >= 3  # one deadline for both waits
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert ('wait "$desk_pid"' in '#!/usr/bin/env bash\n# Start the demo mail/CRM server and the desk in the background (Linux).\n# Usage: bash scripts/...port (check with: curl http://127.0.0.1:$desk_port/counts)"\necho "logs: $data_dir/fakes.log and $data_dir/desk.log"\n' and 0 >= 3)
+E        +  where 0 = <built-in method count of str object at 0x1bcdeb60>('deadline_ms')
+E        +    where <built-in method count of str object at 0x1bcdeb60> = '#!/usr/bin/env bash\n# Start the demo mail/CRM server and the desk in the background (Linux).\n# Usage: bash scripts/...port (check with: curl http://127.0.0.1:$desk_port/counts)"\necho "logs: $data_dir/fakes.log and $data_dir/desk.log"\n'.count
+
+tests/test_start_all_late_refusal.py:238: AssertionError
+__________ test_a_desk_that_printed_its_line_and_died_is_not_a_start ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-555/test_a_desk_that_printed_its_l0')
+cleanup = None
+
+    def test_a_desk_that_printed_its_line_and_died_is_not_a_start(tmp_path: Path, cleanup: None) -> None:
+        """Bug class: "the line was seen" taken as "the desk is up". The desk prints its listening line and ends; the grep
+        stand-in holds the script until the desk is really gone. Exit with the table's code for a desk that ended (0 is the
+        script's own 1), the "ended at once" line, no "started:", no pid file."""
+        stub = _stub_python(tmp_path, "echo 'desk listening on x'; exit 0")
+        data = tmp_path / "data"
+        _grep_after_match(stub, "desk listening", f'pid="$(cat "$DESK_PID_FILE")"; {_WAIT_GONE}')
+        done = _run(
+            tmp_path, first_on_path=stub, SHIM_FLAG=str(tmp_path / "shim-flag"), DESK_PID_FILE=str(data / "desk.pid")
+        )
+        out = done.stdout + done.stderr
+        assert (tmp_path / "shim-flag").exists(), "the stand-in was never reached"
+>       assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, out[-500:])
+E       AssertionError: (0, 'started: demo servers (keyed outbox) pid 16887, desk pid 16915
+E         ports: desk 33361, demo CRM and outbox 50345 (che...that_printed_its_l0/data/fakes.log and /tmp/pytest-of-root/pytest-555/test_a_desk_that_printed_its_l0/data/desk.log
+E         ')
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b23-r5-pristine/scripts/start_all.sh'], returncode=0, stdout='started:...d_its_l0/data/fakes.log and /tmp/pytest-of-root/pytest-555/test_a_desk_that_printed_its_l0/data/desk.log\n', stderr='').returncode
+
+tests/test_start_all_late_refusal.py:456: AssertionError
+_____ test_a_missing_timeout_program_is_refused_before_anything_is_started _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-555/test_a_missing_timeout_program0')
+cleanup = None
+
+    def test_a_missing_timeout_program_is_refused_before_anything_is_started(tmp_path: Path, cleanup: None) -> None:
+        """The port probe needs `timeout` (a connect to a dropped address must not hang the script). Without it: the table's
+        code 1, one fixed line, nothing started. No silent fall back to a probe that can hang."""
+        bin_dir = tmp_path / "onlybin"
+        bin_dir.mkdir()
+        for name in ("bash", "grep", "tail", "sleep", "rm", "mkdir", "cat", "touch", "kill", "seq"):
+            found = shutil.which(name)
+            if found:
+                (bin_dir / name).symlink_to(found)
+        (bin_dir / "python").symlink_to(sys.executable)
+        done = _run_with_path(tmp_path, str(bin_dir))
+>       assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (0, 'started: demo servers (keyed outbox) pid 16971, desk pid 16977
+E         ports: desk 43763, demo CRM and outbox 37165 (che...imeout_program0/data/fakes.log and /tmp/pytest-of-root/pytest-555/test_a_missing_timeout_program0/data/desk.log
+E         ', '')
+E       assert 0 == 1
+E        +  where 0 = CompletedProcess(args=['/usr/bin/bash', '/home/user/work/b23-r5-pristine/scripts/start_all.sh'], returncode=0, stdout=...program0/data/fakes.log and /tmp/pytest-of-root/pytest-555/test_a_missing_timeout_program0/data/desk.log\n', stderr='').returncode
+
+tests/test_start_all_late_refusal.py:529: AssertionError
+_______________ test_a_slow_port_probe_does_not_stretch_the_wait _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-555/test_a_slow_port_probe_does_no0')
+cleanup = None
+
+    def test_a_slow_port_probe_does_not_stretch_the_wait(tmp_path: Path, cleanup: None) -> None:
+        """The wait is a clock deadline, not a count of short sleeps: every probe here takes about one second (a `timeout`
+        stand-in), the demo server never answers, the budget is 2 seconds. The old count (5 sleeps per second of budget,
+        each
+        followed by a probe) took more than 10 seconds. The line states the seconds really waited."""
+        stub = _stub_python(
+            tmp_path, "exec sleep 120", 'echo "fakes server keyed on port $DESK_FAKES_PORT"; exec sleep 120'
+        )
+        slow = stub / "timeout"
+        real = shutil.which("timeout")
+        assert real
+        slow.write_text(f'#!/bin/bash\nsleep 1\nexec {shlex.quote(real)} "$@"\n', encoding="utf-8")
+        slow.chmod(0o755)
+        start = time.monotonic()
+        done = _run(tmp_path, first_on_path=stub, wait="2")
+        elapsed = time.monotonic() - start
+        assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
+        assert "the demo server did not answer in " in done.stderr, done.stderr
+        waited = int(done.stderr.split("did not answer in ")[1].split(" ")[0])
+>       assert 2 <= waited <= 5 and elapsed < 9, (waited, elapsed)
+E       AssertionError: (2, 12.316742998998961)
+E       assert (2 <= 5 and 12.316742998998961 < 9)
+
+tests/test_start_all_late_refusal.py:570: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_bad_setting_entry_points.py::test_every_refusal_site_of_the_desk_goes_through_the_one_formatter
+FAILED tests/test_ps1_pins.py::test_text_only_the_start_pins_hold - Assertion...
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[a desk that printed its line and ended counts as started]
+FAILED tests/test_refusal_lines_utf8.py::test_the_desks_own_refusal_is_utf8_on_a_cp1252_console
+FAILED tests/test_refusal_lines_utf8.py::test_the_open_file_limit_line_is_utf8_on_a_cp1252_console
+FAILED tests/test_refusal_lines_utf8.py::test_a_script_reading_a_bad_setting_prints_utf8_on_a_cp1252_console
+FAILED tests/test_refusal_lines_utf8.py::test_no_refusal_line_is_printed_with_print_in_the_tree
+FAILED tests/test_refusal_lines_utf8.py::test_the_one_function_exists_and_writes_bytes
+FAILED tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[1-5]
+FAILED tests/test_reset_scripts.py::test_reset_sh_gives_a_crashed_check_program_the_code_5_and_keeps_the_known_answers[139-5]
+FAILED tests/test_round5_rows.py::test_the_demo_server_allows_address_reuse_everywhere_but_windows
+FAILED tests/test_start_all_late_refusal.py::test_text_pin_the_start_script_waits_for_the_listening_line_inside_one_budget
+FAILED tests/test_start_all_late_refusal.py::test_a_desk_that_printed_its_line_and_died_is_not_a_start
+FAILED tests/test_start_all_late_refusal.py::test_a_missing_timeout_program_is_refused_before_anything_is_started
+FAILED tests/test_start_all_late_refusal.py::test_a_slow_port_probe_does_not_stretch_the_wait
+15 failed, 659 passed, 10 skipped, 1 error in 72.47s (0:01:12)
