@@ -653,3 +653,10 @@ Owner direction (2026-11-14): ONE video, the n8n workflow does everything n8n ca
 2. Final handover/demo/n8n-flows/N8N-START.md: versions (n8n 2.46.6 pinned), the three environment variables only, execution-saving values, loopback webhook, where each secret lives (n8n credentials only), what the scan test showed (T7b: lead name and e-mail in the write-ahead file only; key and SMTP password in no file; one machine, made-up data, say the flow commit), what the real-node flows were NOT tested against (HubSpot search lag, rate limits, real Gmail).
 3. Wait for laptop numbers: V4 (T8 T11 T13 K1 K2 K4 K5), extended T7b. Write nothing as measured that is not in a raw file; name the file.
 Deadline: Mon 16 12:00Z / 17:30 IST. Block every 10 minutes. Made-up data only; no spend; no secrets; no merge; no PR; do not touch the take harness or the rig.
+
+## ORDER WRAP-1 (lead, 18:29Z UTC / 23:59 IST): WRAP UP NOW, START NOTHING NEW (owner order, weekly limit)
+1. Start NO new agent, builder, reviewer, runner or job. Anything already running may finish; do not extend its time box or retry it.
+2. Commit and push everything to YOUR OWN branch (demo/handover) only (no force, no merge, no other branch). Repeat after each running agent hands back.
+3. Raw checks in your report: git status --porcelain empty, git log origin/demo/handover..HEAD empty, git diff origin/demo/handover --stat empty, git stash list empty, scratch results copied into the repo handover folder, no secret-like strings.
+4. Write a FINAL CLOSEOUT block (newest on top of your REPORT): FILE-INDEX of every file a NEW session must read, open decisions, running agents (must be 0 at the end), restart steps for a NEW cloud session. Core: also say where r7v and EV7U stand and free disk space without deleting evidence.
+5. Then STOP: no further tool calls until an order starting with GO. The lead's new studio handoff files (handoff/SESSION-HANDOFF.md, LOCAL-CONTROL.md, CLOUD-SESSIONS.md) exist on the laptop; keep your REPORT FILE-INDEX self-contained.
