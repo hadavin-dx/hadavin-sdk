@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## UPDATE after the r7v hand-back (core lead, after the FINAL CLOSEOUT block; agents running now: 0)
+**r7v builder ad52347a handed back: built, NOT verified.** r7v.diff sha256 778dcc52e7cfb7c104a4114d33d80828c2c015998c8088743372b3d619dd6ada (5 edits in 3 files, docstring or string literals only: loopback.py docstring wording; test_r7u_b line 269 docstring; test_r7u_c lines 127/129 split into adjacent literals). Builder's numbers (unverified until an evidence runner and a fresh reviewer): tests/test_hygiene.py 24 passed twice; 21 other scanner files 1062 passed 2 skipped; other groups 117, 273, 802, 135, 14, 32 passed; ruff 0.17.1 clean; suppressions 367. NOT done: no complete guard run (guard_run.sh about 37 min, run in chunks), tests/test_r7t_findings.py never as one run (third group cut at 47 dots by WRAP-1, no summary), no whole-repo pytest. **UNEXPLAINED: in one run of tests/test_r7u_a_findings.py (5 runs in parallel) the 37th test failed; the cap killed the run before the summary, so the test name is unknown (probably the a4 test again, unproven); re-runs passed all 41.** Files: handover/core/evidence/r7u-chain/R7V/ (RESULTS-V.md, r7v.diff, before.log, guardA.log, B/C/D/E logs, hygiene logs). The ledger row DPLD-R7U-HYG stays OPEN until EV on r7v. Running agents: 0 (r7v, EV7U, mutant runner, EV7T all handed back).
+
 ## FINAL CLOSEOUT (core lead) 18:32 UTC / 00:02 IST (ORDER WRAP-1 applied)
 
 **FIRST: what is NOT finished or NOT verified.**
