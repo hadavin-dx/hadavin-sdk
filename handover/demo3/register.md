@@ -221,3 +221,6 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B5e | closed 15:45Z: fix-5 r5 done; own mistake found (basetemp outside TMPDIR, run 1 invalid); valid serial 3780 passed 206 skipped rc 0; xdist 20/20; 42 tests fail on r4; 8 old-script cases all fail; patch 67f7d04c; reset.ps1 not run on Windows | | | closed |
 | SWEEP | 15:45Z: 0 agents running, 0 monitors of mine active; freeze report in FREEZE.md | | | done |
 | MATRIX START | 02:51Z 2026-11-14: new lead order (python matrix). Repo requires-python >=3.12 (3.11 unsupported, recorded only). Shuffle plugin /home/user/work/priv/shuffle/shuffleorder.py (outside repo). Launching M1 (3.13, seed 20261114) and M2 (3.13, seed 31415) evidence runners; M3 flake/clean-tree follow-up after. | | | launching |
+
+| M2 (a1483e65d4dc84a94) | CLOSED 03:1xZ | reported: 30 failed / 3684 passed / 169 skipped, all 30 'gitleaks binary not found' (missing tool, DPLD_REQUIRE_SCAN=1), 3+3 re-runs of the three files identical; report evidence/m2-report.md; unverified by me until I read it |
+| M3 (new) | STARTED | 3.13, shuffle seed 987654, own worktree; expected end ~03:45Z; purpose: wider order coverage while M1 finishes |

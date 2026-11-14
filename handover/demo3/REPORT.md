@@ -1,3 +1,19 @@
+## HEARTBEAT 76 (03:12Z / 08:42 IST) - M2 REPORT IN; M1 REPORT PENDING; M3 STARTED
+
+| Agent | Job | State |
+|---|---|---|
+| M1 | 3.13 shuffled seed 20261114 | run finished; report and alone re-runs pending |
+| M2 | 3.13 reversed | CLOSED. Report: 30 failed, 3684 passed, 169 skipped, 0 errors, EXIT_CODE=1, 882 s |
+| M3 (new, 03:11Z) | 3.13 shuffled seed 987654, wider order coverage | running |
+
+FAILURES AND RETRIES (M2 report, not yet verified by me beyond the log texts I read): all 30 failures say "gitleaks binary not found" (4 in test_hygiene.py, 2 in test_gitleaks_semgrep_lock.py, 24 in test_gitleaks_exceptions.py). M2 ran those three files 3 times in default order and 3 times reversed: same 30 failing ids every time, 42 passed, so always-failing here, not flaky, not order-dependent. The unit re-run was the file, not one test per process. Cause: gitleaks (and semgrep) are not installed here and DPLD_REQUIRE_SCAN=1 makes a missing scanner a failure instead of a skip. Whether those 30 pass with gitleaks present: NOT checked.
+Skips 169: 166 playwright not installed (113+28+22+3), 1 Windows-only, 1 root-can-read-file, 1 load measurement. So the 166 browser tests did NOT run on 3.13.
+Clean tree: git status empty before and after; only git-ignored .pyc files new in the repo. Files under /root/.cache and /root/.pki changed during the window; writer unknown (shared machine). M2 added a worktree record in /home/user/work/src/.git.
+Python 3.11: /usr/bin/python3.11 exists, has no pytest, suite not run; repo says >=3.12; nothing in src/ or scripts/ enforces it (tests/ and CI files not grepped).
+ASK list: Q-M1 (gitleaks and playwright on this lane?) still open; others unchanged.
+Load: M1 report pending plus M3 running = 2 heavy slots at most.
+Not checked: M1's names and re-runs; whether the 3 tests dirs' alone re-runs would differ per single test.
+
 ## HEARTBEAT 75 (03:07Z / 08:37 IST) - M1 AND M2 RUNS FINISHED; AGENT REPORTS STILL PENDING
 
 CORRECTION first: HEARTBEAT 73 said 0 failures (wrong, my check missed progress lines); HEARTBEAT 74 said M2 had 0 (also wrong by then: M2 had started failing at 70 percent).

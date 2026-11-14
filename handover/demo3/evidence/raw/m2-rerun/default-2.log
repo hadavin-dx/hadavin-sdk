@@ -1,0 +1,805 @@
+...F.......F.......FF...FF...................FFFFFFFFFFFFFFFFFFFFFF..FF. [100%]
+=================================== FAILURES ===================================
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+        assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+        # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(
+                f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
+            )
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_hygiene.py:153: AssertionError
+_ test_gitleaks_reports_a_carriage_return_in_the_key_file_but_not_the_lf_copy __
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_gitleaks_reports_a_carria0')
+
+    def test_gitleaks_reports_a_carriage_return_in_the_key_file_but_not_the_lf_copy(tmp_path: Path) -> None:
+        """Why the guard exists, with the real program (about 1 s; skipped without it)."""
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(
+                f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
+            )
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_hygiene.py:347: AssertionError
+______________ test_lock_file_hashes_are_allowed_only_at_the_root ______________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_lock_file_hashes_are_allo0')
+
+    def test_lock_file_hashes_are_allowed_only_at_the_root(tmp_path: Path) -> None:
+        """A 64-hex value is allowed in the real root lock files (and 40-hex ids in the workflow files) and nowhere else:
+        the same line in docs/requirements-dev.txt, in a nested workflow folder or in a look-alike name must be reported."""
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(
+                f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
+            )
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_hygiene.py:536: AssertionError
+____ test_a_relative_gitleaks_path_still_works_when_the_scan_changes_folder ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fdebc59d010>
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_relative_gitleaks_path_0')
+
+    def test_a_relative_gitleaks_path_still_works_when_the_scan_changes_folder(
+        monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """GITLEAKS_BIN may be relative (for example ./gl/gitleaks): the scans run with cwd=<other folder>, so the path must
+        be made absolute first. Runs the planting test above with a relative path, started from the repository folder."""
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(f"no gitleaks program on PATH (set {GITLEAKS_ENV})")
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_hygiene.py:581: AssertionError
+________________________ test_the_exact_line_is_allowed ________________________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_the_exact_line_is_allowed0')
+
+    def test_the_exact_line_is_allowed(tmp_path: Path) -> None:
+        root = _plant(tmp_path / "t", {FILE: _doc(NAME + _real_key())})
+        assert _literal_hits(root) == set()  # without this control, "reported" below would prove nothing
+>       assert _gitleaks_hits(root) == set()
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:164: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+______ test_a_blank_in_front_of_the_exact_line_is_allowed[leading blank] _______
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_blank_in_front_of_the_e0')
+name = 'leading blank'
+
+    @pytest.mark.parametrize("name", sorted(ALLOWED_VARIANTS))
+    def test_a_blank_in_front_of_the_exact_line_is_allowed(tmp_path: Path, name: str) -> None:
+        rel, data = ALLOWED_VARIANTS[name]
+        root = _plant(tmp_path / "t", {rel: data})
+        assert _literal_hits(root) == set()
+>       assert _gitleaks_hits(root) == set()
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_ test_a_near_miss_is_reported_by_gitleaks[other project, letters and digits] __
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b19')
+name = 'other project, letters and digits'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_______ test_a_near_miss_is_reported_by_gitleaks[last character changed] _______
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b20')
+name = 'last character changed'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+____________ test_a_near_miss_is_reported_by_gitleaks[dash suffix] _____________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b21')
+name = 'dash suffix'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+___________ test_a_near_miss_is_reported_by_gitleaks[equals suffix] ____________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b22')
+name = 'equals suffix'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_______ test_a_near_miss_is_reported_by_gitleaks[space and text suffix] ________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b23')
+name = 'space and text suffix'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+___________ test_a_near_miss_is_reported_by_gitleaks[trailing blank] ___________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b24')
+name = 'trailing blank'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_____________ test_a_near_miss_is_reported_by_gitleaks[dot suffix] _____________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b25')
+name = 'dot suffix'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+__________ test_a_near_miss_is_reported_by_gitleaks[upper-case value] __________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b26')
+name = 'upper-case value'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+________ test_a_near_miss_is_reported_by_gitleaks[capital first letter] ________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b27')
+name = 'capital first letter'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+__________ test_a_near_miss_is_reported_by_gitleaks[lower-case name] ___________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b28')
+name = 'lower-case name'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+__________ test_a_near_miss_is_reported_by_gitleaks[upper-case name] ___________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b29')
+name = 'upper-case name'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_____ test_a_near_miss_is_reported_by_gitleaks[other character at the dot] _____
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b30')
+name = 'other character at the dot'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+___ test_a_near_miss_is_reported_by_gitleaks[spaces around the equals sign] ____
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b31')
+name = 'spaces around the equals sign'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+________ test_a_near_miss_is_reported_by_gitleaks[text before the name] ________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b32')
+name = 'text before the name'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+______ test_a_near_miss_is_reported_by_gitleaks[key twice, space between] ______
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b33')
+name = 'key twice, space between'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+__________ test_a_near_miss_is_reported_by_gitleaks[CRLF line ending] __________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b34')
+name = 'CRLF line ending'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+________ test_a_near_miss_is_reported_by_gitleaks[look-alike file name] ________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b35')
+name = 'look-alike file name'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_ test_a_near_miss_is_reported_by_gitleaks[other character at the dot of the file name] _
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b36')
+name = 'other character at the dot of the file name'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+______ test_a_near_miss_is_reported_by_gitleaks[text after the file name] ______
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b37')
+name = 'text after the file name'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_______ test_a_near_miss_is_reported_by_gitleaks[other folder and name] ________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b38')
+name = 'other folder and name'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+__________ test_a_near_miss_is_reported_by_gitleaks[other toml file] ___________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b39')
+name = 'other toml file'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+_______________ test_a_near_miss_is_reported_by_gitleaks[readme] _______________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_a_near_miss_is_reported_b40')
+name = 'readme'
+
+    @pytest.mark.parametrize("name", [n for n in VARIANTS if n not in ONLY_LITERAL_SCAN])
+    def test_a_near_miss_is_reported_by_gitleaks(tmp_path: Path, name: str) -> None:
+        rel, data = VARIANTS[name]
+>       assert _gitleaks_hits(_plant(tmp_path / "t", {rel: data})) == {rel}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_exceptions.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_exceptions.py:151: in _gitleaks_hits
+    cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+           ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _gitleaks_program() -> str:
+        exe = _gitleaks_exe()  # the helper of tests/test_hygiene.py: bare name looked up on PATH, absolute path
+        if not exe:
+            if os.environ.get(REQUIRE_SCAN_ENV):
+>               pytest.fail(f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}")
+E               Failed: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+
+tests/test_gitleaks_exceptions.py:144: Failed
+___________________ test_semgrep_lock_allowances_are_narrow ____________________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_semgrep_lock_allowances_a0')
+
+    def test_semgrep_lock_allowances_are_narrow(tmp_path: Path) -> None:
+        toml = REPO / ".gitleaks.toml"
+>       assert _scan(tmp_path, "ok", OK, toml) == set(), "the real hash lines or the file name were reported"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_semgrep_lock.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_semgrep_lock.py:69: in _scan
+    cmd = [_exe(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow", "--config", str(toml)]
+           ^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _exe() -> str:
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(
+                f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
+            )
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_gitleaks_semgrep_lock.py:41: AssertionError
+___________ test_widening_an_allowance_makes_the_negative_cases_pass ___________
+
+tmp_path = PosixPath('/home/user/work/priv/m2-tmp/bt-r2/test_widening_an_allowance_mak0')
+
+    def test_widening_an_allowance_makes_the_negative_cases_pass(tmp_path: Path) -> None:
+        """Mutants: if the left anchor, the file-name rule or the hostname rule is loosened, a negative case above must
+        stop being reported. This proves the test above would fail on such a change."""
+        anchor, path_rule = "'''^\\n?[ \\t]*--hash=sha256:", "paths = ['''^requirements-semgrep\\.txt$''']"
+        no_anchor = _widened(tmp_path, "no-anchor", anchor, "'''--hash=sha256:")
+>       still = _scan(tmp_path, "m1", {LOCK: BAD_LOCK_CONTENT["hex-before-the-hash"]}, no_anchor)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gitleaks_semgrep_lock.py:127: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_gitleaks_semgrep_lock.py:69: in _scan
+    cmd = [_exe(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow", "--config", str(toml)]
+           ^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _exe() -> str:
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(
+                f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
+            )
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_gitleaks_semgrep_lock.py:41: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+FAILED tests/test_hygiene.py::test_gitleaks_reports_a_carriage_return_in_the_key_file_but_not_the_lf_copy
+FAILED tests/test_hygiene.py::test_lock_file_hashes_are_allowed_only_at_the_root
+FAILED tests/test_hygiene.py::test_a_relative_gitleaks_path_still_works_when_the_scan_changes_folder
+FAILED tests/test_gitleaks_exceptions.py::test_the_exact_line_is_allowed - Fa...
+FAILED tests/test_gitleaks_exceptions.py::test_a_blank_in_front_of_the_exact_line_is_allowed[leading blank]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other project, letters and digits]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[last character changed]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[equals suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[space and text suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[trailing blank]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dot suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case value]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[capital first letter]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[lower-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other character at the dot]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[spaces around the equals sign]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text before the name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[key twice, space between]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[CRLF line ending]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[look-alike file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other character at the dot of the file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text after the file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other folder and name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other toml file]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[readme]
+FAILED tests/test_gitleaks_semgrep_lock.py::test_semgrep_lock_allowances_are_narrow
+FAILED tests/test_gitleaks_semgrep_lock.py::test_widening_an_allowance_makes_the_negative_cases_pass
+30 failed, 42 passed in 34.53s
