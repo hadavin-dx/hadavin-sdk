@@ -295,3 +295,9 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R5b (a51e2cd7) | CLOSED 04:58Z | fix-5 r6 design review: 0 blocker, 2 major, 5 minor, 5 nit, saved evidence/review-lane3-fix-5-r6-design.md |
 | R2a, R2b | CLOSED 04:54Z | fix-2 r5 reviews: 0/0/2 minor/5 nit and 0/2 major/7 minor/3 nit, saved; Skill egm:egm-resolve (Opus) run 04:57Z: 15 items, 14 fix, 1 fix+partial contest, 0 escalate; plan evidence/resolve-lane3-fix-2-r5.md |
 | B15 (a4a90b6e) | RUNNING from 04:57Z | fix-2 r6 builder from the resolve plan; stop about 06:00Z; full run required |
+| R5a (a66e5337) | CLOSED 04:58Z | fix-5 r6 codebase-details review: 0 blocker, 1 major, 5 minor, 5 nit, saved evidence/review-lane3-fix-5-r6-codedetails.md |
+| Resolve fix-5 r6 | DONE ~05:05Z | Skill egm:egm-resolve (Opus): 24 rows, 21 fix, 1 contest, 2 escalate (Windows run; book duplicate -> stack), 0 decline; evidence/resolve-lane3-fix-5-r6.md |
+| CONTAINER RESTART | ~05:00Z | killed B14 (ae26a5dd) and B15 (a4a90b6e) without hand-back; trees b14-tree and b15-tree kept their uncommitted work |
+| B15b (a63a553c) | RUNNING from 05:02Z | resumes fix-2 r6 in b15-tree; stop ~06:00Z |
+| B14b (a15d4725) | RUNNING from 05:02Z | resumes fix-10 in b14-tree; stop ~06:00Z |
+| B16 (a9b26c2d) | RUNNING from 05:06Z | fix-5 r7 from the resolve plan; stop ~06:05Z; full run required |

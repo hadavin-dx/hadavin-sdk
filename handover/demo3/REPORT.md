@@ -1,3 +1,32 @@
+## HEARTBEAT 95 (05:06Z) - FIX-5 R6 REVIEWED + RESOLVED -> B16 (R7) STARTED; CONTAINER RESTART KILLED B14 AND B15, BOTH RESUMED
+
+FAILURES AND RETRIES: (1) The container restarted at about 05:00Z and stopped B14 (fix-10) and B15 (fix-2 r6) with no hand-back. Their trees kept the uncommitted work (b14-tree 9 files changed, b15-tree 34 files staged). I started resumed builders B14b and B15b at about 05:02Z with briefs that say "do not start over, find what is done, finish the rest". I have not yet checked what share of the plan they cover; that comes from their hand-backs. (2) Nothing else failed in this block. Earlier on record: B13's full run had 1 hygiene failure caused by my n8n ref (re-run passed); B13 also ran ruff/mypy/bandit against the CI-only rule (results not used).
+
+| Agent | Job | State |
+|---|---|---|
+| R5a | codebase-details review of fix-5 r6 | CLOSED 04:58Z: 0 blocker, **1 major**, 5 minor, 5 nit, saved evidence/review-lane3-fix-5-r6-codedetails.md. Its major is the same as design M2: the README states Windows behaviour as fact though reset.ps1 / start_all.ps1 were never run. |
+| Resolve fix-5 r6 | egm:egm-resolve (Opus, Skill tool) | DONE ~05:05Z: 24 rows: 21 fix, 1 contest (the `$` before a final newline claim: the text is trimmed first, reset.ps1:55), 2 escalate (the real Windows run: impossible-now, exception 2(c); the duplicate `book` fixture: goes to the stack step by lead decision A1), 0 decline. Plan: evidence/resolve-lane3-fix-5-r6.md. Main fix: two passes in BOTH reset scripts (look at both pid files first, then stop), so "nothing was stopped" is true. |
+| B16 | fix-5 r7 builder | RUNNING from 05:06Z (agent a9b26c2d). One full run on the final head in a clone WITHOUT the n8n ref is required. Stop about 06:05Z. |
+| B15b | fix-2 r6 builder (resumed) | RUNNING from 05:02Z; stop about 06:00Z; full run required. |
+| B14b | fix-10 builder (resumed) | RUNNING from 05:02Z; stop about 06:00Z. |
+
+Checked by me this block: the resolve claims were checked by the resolve itself by reading the tree (e.g. the port-block overlap by arithmetic: with 8 workers gw7 has 62344-65535 and a restarted gw8 62696-65532). `which pwsh powershell` printed nothing (no PowerShell here). Nothing was run by me this block.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| Item | Why | Next |
+|---|---|---|
+| reset.ps1 and start_all.ps1 never run | no PowerShell in the container (exception 2(c)) | B16 tries once to install pwsh for a syntax check; the real run is yours via WINDOWS-RUN-1.md on the FINAL stack tree |
+| Bash minimum 4.4 (resolve row 15) | behaviour change (macOS 3.2 already refused; 4.1-4.3 now refused too) | tell me if you veto it |
+| No complete stack tested | fix-2 r6 and fix-5 r7 are not built or reviewed yet | stack builder after both are reviewed clean |
+| Python 3.11; ruff/mypy/bandit/CodeQL/Sonar | not available or CI-only | unchanged |
+| Core r7f not reviewed | symlink xfail and helper race stay with core | unchanged |
+| What B14b/B15b already had done | I did not read their trees | read their hand-backs and tails before accepting anything |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the B14b and B15b hand-backs and the tails of their full-run logs; fresh egm reviewers on fix-2 r6 and fix-10.
+2. When B16 hands back: read the tail of its full run, fresh egm reviewers on fix-5 r7 (a new round, no cap on this product path).
+3. As soon as fix-2 r6 and fix-5 r7 are reviewed clean: start the ONE stack builder (fix-9's `book` fixture wins), then the stack reviewer, then the stack full run.
+
 ## HEARTBEAT 94 (04:58Z) - FIX-5 R6 FINAL RUN GREEN; FIX-2 R5 REVIEWED + RESOLVED -> B15 (R6) STARTED; FIX-5 R6 REVIEW HALF IN
 
 | Agent | Job | State |
