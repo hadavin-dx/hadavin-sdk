@@ -19,3 +19,10 @@
 -    if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }
 +    if (Test-Path -LiteralPath $f) { Remove-Item $f -Force -ErrorAction Stop }
 
+##### ps1 Convert-Path dropped (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -61 +61 @@
+-            $full = Convert-Path -LiteralPath $pidFile
++            $full = $pidFile
+
