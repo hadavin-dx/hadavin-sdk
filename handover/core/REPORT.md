@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:20 UTC / 17:50 IST
+
+**EV7R (a7707d5f) at 12:20Z: full run in the STAGED GIT COPY at about 59 percent (started 12:00:51; the r7q run took 30 min 30 s, so it should end about 12:33Z). 0 F or E in the progress dots so far (my grep; this says nothing about the last 41 percent). Load average 2.4 (the builder's run is still going too).** Done by the runner earlier: patch hashes OK, tree equals tree-R7R, ruff 0.17.1 check and format clean (229 files), suppressions and string-equality "done" (numbers not yet read by me). Hostile drivers: after the full run. No denial.
+
+**The r7r builder's own 104-file broad run (log out/R7R/after-grep2.log) is at about 96 percent, no F or E in the dots (same caveat); it ends by itself by about 12:30Z; I will read its final line raw.** The builder agent itself is finished and closed (a17df18e).
+
+**ETA of EV7R-EVIDENCE.md: about 12:45Z (full run end about 12:33, hostile drivers about 10 min).** I push it at once and tell you. snapshot-r7r is already pushed; the egm reviewer can start on it now, but ledger rows DPLD-R7Q-M1 and M2 stay OPEN until EV7R shows the two fixes in a staged git copy.
+
+Agents running: 1 (EV7R). Done and closed: r7r builder, EV7P, r7q builder. ASK: none.
+NOT DONE / NOT CHECKED: EV7R counts and hostile table; the independent review; M9-74, M9-79; QuietServer BrokenPipe caveat; README. Next block about 12:30Z.
+
+
 ## STATUS (core lead) 12:10 UTC / 17:40 IST
 
 **EV7R (a7707d5f, started 11:59) progress, read from its files at 12:10Z (raw, runner has not written its evidence file):**
