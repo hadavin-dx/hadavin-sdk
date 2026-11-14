@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 14:24 UTC / 19:54 IST
+
+**EV7S DONE (runner a42ce038, closed; raw evidence pushed: handover/core/fix/EV7S-EVIDENCE.md and handover/core/fix/ev7s/). Its numbers, not verdicts. I have read the runner's report, not every raw log.**
+
+**FAILED / DIFFERENT FIRST**
+1. **6 of the runner's 40 own mutants SURVIVED the r7s test file: R10 (`created or 0` -> `or 1`), R19 (tag glob loosened), R20 (glob suffix dropped), R27 (`written` -> True in the exit-code call), R39 (support.py env value `== "1"`: any other truthy value such as "true" would skip instead of fail), R07 (handle_error negated; killed only by test_r7q q8, not by the r7s file).** Five of them are in the new m3 counter/exit logic or the openssl helper: mail/money path.
+2. **Hostile table: 29 of 30 cells refuse before any socket; `make_fakes_server(host="")` makes a socket and binds 127.0.0.1** (an empty host turns into the configured default). The r7s test s1 has no "" case. This is a hole in the M1 loopback fix.
+3. Frozen tree head is **58aa4031**, not 49d3c85 (the sha in my notes and the patch header text). The patch applies cleanly on 58aa4031 and equals tree-R7S byte for byte; I cannot tell where 49d3c85 came from (my notes could be wrong): recorded, not resolved.
+4. NOT run: `run_real_check.py --dry-fakes` as a script (it prompts `Start? [y/N]` without --assume-yes: stopped by rule); its behaviours were tested through test_r7s_findings.py (51 passed). The script's own "contacts may be left" line was not seen. mutA NOT-APPLIED on r7s (text gone), mutA2 KILLED. Bandit, CodeQL, Sonar, Windows not run.
+
+**RAW RESULTS (runner)**
+- Hashes: all three unpacked patches and all 28 MANIFEST entries match; CRLF apply equals tree-R7S (0 differences).
+- **Full run once, staged git copy, final head: 6072 passed, 7 skipped, 0 failed, rc 0, 39 min 10 s** (13:41:52Z to 14:21:04Z). "REPOSITORY FOLDER CHANGED" 0 times. Skips: root (2), ntpath.isreserved needs Python 3.13 (1), model fake only has /v1/messages (2), LEAD_DESK_LOAD_N unset (1), Windows-only reset (1).
+- Ruff 0.17.1: check rc 0; format --check rc 0 (230 files).
+- Suppressions (one method): frozen 424, r7s 367 (noqa 193, type: ignore 126, nosemgrep 40, nosec 8): matches the builder.
+- Mutants: S01-S24, X1ctx, Q13, Q14, Q19, X1, mutB KILLED; random 40: 34 KILLED, 6 SURVIVED (above).
+
+**DECISION (mine, per fix-dont-defer and order 268; tell me if you want it stopped):** r7s is NOT clean. I started the **r7t builder (aab061ec, test-first, tree-R7T from tree-R7S, started 14:24Z, box 75 min, ends about 15:39Z)** for: kill R10/R19/R20/R27/R39/R07 with new tests, refuse an explicit empty host at make_fakes_server plus a sweep of every demo_only factory with a host argument, a sibling search for "empty value silently replaced by a default", patches/snapshot/R7T-RESULTS.md. Ledger rows DPLD-R7S-EV1, EV2, EV3 added (OPEN). The lead's independent review of r7s can start now on snapshot-r7s plus EV7S, with these three rows given as already known; a reviewer's report on r7s will be folded into r7t if r7t is still in build, otherwise into r7u.
+
+Agents running: 1 (aab061ec). Done and closed: r7s builder af05acef, EV7S a42ce038. ASK: do you want r7t as above, or do you prefer the lead's reviewer report first? (default: r7t runs). Next block about 14:40Z.
+
+
 ## STATUS (core lead) 14:20 UTC / 19:50 IST
 
 **EV7S at 14:20Z (read from out/EV7S files; nothing judged; no EV7S-EVIDENCE.md yet):**
