@@ -1,5 +1,24 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 03:26Z: N8N FULL RUN IS RUNNING (started 03:22:38Z); clean-machine verification evidence DONE
+- LOAD: 1 job: the n8n full run (run_all, my shell, nohup; n8n and fake server up). NO other heavy job: B and D ended. Quiet check before launch: vmstat 120 s, mean idle 92.2 percent (129 rows), load 0.05. Plan: only file edits and git pushes meanwhile.
+- N8N: harness tests 173 passed (rc 0); Node 24.22.2 checksum ok; npm ci 2 min, 2219 packages, rebuild isolated-vm rc 0; smoke skipped; postgres pinned digest pulled. Expected end about 04:50 to 05:15Z (README: 70 to 90 min). I check every 5 min and write the rows as they appear; no result is stated before it exists.
+- CLEAN-MACHINE: CLEAN-MACHINE-1.md pushed with A, B, C, C2, reviewer gaps R and the doc patch (README + docs/tests.md only; applies cleanly with git am on the frozen tree; hygiene test 24 passed with gitleaks set, docs tests 866 and 488 passed). Suite with gitleaks: 3879 passed, 4 skipped, 0 failed; without gitleaks 30 fail (finding F2). Crash command on origin main fails; fixed already in the frozen series.
+- Correction: my 03:17Z block carried a wrong time label (real clock about 03:13Z); no content changed.
+
+### NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- n8n smoke run (README step 5): skipped; it needs its own 3 GB npm ci and 6+ min; next: run it only if the full run exits 3 or 2 with a Linux problem.
+- Windows commands, browser portal, blind mode, reset exit codes 2 to 6, the nine other crash points: nobody ran them; next: one agent each if the lead wants; portal needs a browser.
+- ruff, mypy, bandit, coverage on the clean clone: not run (not asked; they ran earlier on the frozen tree); next: one CI-equivalent run on origin main.
+- Cause of the two tracebacks printed by test_hygiene_scan_public in chunk 03, and of the crash desk pid answering kill -0 after the crash: not examined; next: one reader each.
+- Doc patch D: no EGM review and the exact git am exit code was not captured; next: one read-only egm reviewer of the patch (not a third wording sweep).
+- 3 skips vs "3 skipped" in docs/tests.md: the 4th is the root-user skip; not verified as the cause; next: one non-root run of that chunk.
+- Smoke/idle: with D and B ended there is no other job; if any appears the harness idle check may stop the run (exit 3); I will not use --min-idle 0 unless told.
+### WHAT I WOULD DO NEXT (ranked)
+1. Watch the n8n run to its end, write N8N-RERUN-1.md with counts next to the published numbers (kills that did not take effect reported as such), cleanup, then the read-only egm reviewer.
+2. One read-only reviewer on the doc patch (README + docs/tests.md) and one non-root run of the suite skip chunk.
+3. One CI-equivalent run (ruff, mypy, bandit, gitleaks, schema) on origin main and on frozen tree + patch.
+
 ## REPORT 03:17Z: TWO LANES RUNNING
 - LOAD: 3 agents/jobs: B (clean-machine suite, chunks 06+ running), D (doc patch for gitleaks note and gaps G2 G3 G5 G6 G8 on the frozen tree), and the n8n RERUN prep (my own shell, not an agent): npm ci of the harness lock under Node 24.22.2 running since 03:12Z (about 6 to 20 min).
 - N8N RERUN so far (branch n8n-evidence-rerun, one commit ad612e2, sums.py check: ok): Node 24.22.2 downloaded per its README with the SHA-256 check, v24.22.2; ports 5679 5780 8790 55432 free before start; dockerd up (default socket, 1 s); the harness pins postgres by digest f9a7b9eb... (NOT the digest from my probe): pulled on try 1 (642 MB). Free disk 8.5G after I deleted old review scratch of mine in /tmp/work (about 10G, rv* and sn-v4-drv from 13 Nov morning).

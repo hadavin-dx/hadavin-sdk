@@ -1,0 +1,92 @@
+From 7f3afb7c264c2378eb6f4ba480993016c8c3e459 Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 03:13:26 +0000
+Subject: [PATCH] Docs: gitleaks setup, crash scene settings, feed output, curl
+ flags, browser tests, Python check
+
+README and docs/tests.md text only; no code changed.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8
+---
+ README.md     | 13 +++++++------
+ docs/tests.md | 15 ++++++++++++++-
+ 2 files changed, 21 insertions(+), 7 deletions(-)
+
+diff --git a/README.md b/README.md
+index 5b995e1..19feff9 100644
+--- a/README.md
++++ b/README.md
+@@ -55,15 +55,16 @@ You need Linux or Windows (macOS was not tried), Python 3.12 or newer (`pyprojec
+ 
+ **Linux**
+ 
++    python3 -V                                 # must print 3.12 or higher; if not, use python3.12 in place of python3 in the next line
+     python3 -m venv .venv && . .venv/bin/activate
+     export PYTHONPATH=src                      # tells Python where the code is
+     bash scripts/start_all.sh keyed            # starts the demo server and the desk in the background
+-    for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -i http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
++    for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -si http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
+     python scripts/feed.py --source form --index 1       # sends one lead; prints 201 ... "verdict": "new"
+     python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+-    python scripts/feed.py --source webhook --index 1    # same person through the other door: "verdict": "duplicate"
+-    curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt, and it can start a due follow-up)
+-    curl http://127.0.0.1:8766/fake/outbox         # "count": 1  (one email, not two, if you look within 90 seconds; the reminder email comes later)
++    python scripts/feed.py --source webhook --index 1    # same person through the other door: prints 200 (not 201) ... "verdict": "duplicate"
++    curl -s http://127.0.0.1:8765/counts           # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt, and it can start a due follow-up)
++    curl -s http://127.0.0.1:8766/fake/outbox      # "count": 1  (one email, not two, if you look within 90 seconds; the reminder email comes later)
+     bash scripts/reset.sh                          # stops what start_all started and DELETES the desk's records and the logs (only inside ./data)
+ 
+ Run both scripts with `bash`, as above. They need features that only bash is sure to have. If you start them with `sh` on Debian or Ubuntu, they stop with "run this script with bash" (exit code 2).
+@@ -78,7 +79,7 @@ Run both scripts with `bash`, as above. They need features that only bash is sur
+     Start-Sleep 3; Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # should answer with numbers (all 0)
+     python scripts\feed.py --source form --index 1       # prints 201 ... "verdict": "new"
+     python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+-    python scripts\feed.py --source webhook --index 1    # same person, other door: "verdict": "duplicate"
++    python scripts\feed.py --source webhook --index 1    # same person, other door: prints 200 (not 201) ... "verdict": "duplicate"
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt, and it can start a due follow-up)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content    # "count": 1 (within 90 seconds; the reminder email comes later)
+     .\scripts\reset.ps1        # stops what start_all started and DELETES the desk's records and the logs
+@@ -140,7 +141,7 @@ The first question of the project was whether n8n on its own handles duplicates
+ 
+ ## Tests and more commands
+ 
+-The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`. Any other combination is not supported for running the tests. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. The tests need a git clone (some tests read the list of tracked files with git).
++The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`. Any other combination is not supported for running the tests. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. The tests need a git clone (some tests read the list of tracked files with git). Some tests also need Node (a program that runs JavaScript) and a Playwright browser (Chromium); without them those tests are skipped, not failed. The install steps are in `docs/tests.md`, section "Browser tests". A few tests need the gitleaks program (a secret scanner) only when the variable `DPLD_REQUIRE_SCAN` is set; without it they are skipped. Version, download and setup are in `docs/tests.md`, section "The gitleaks program".
+ 
+ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats. On Windows, set `PYTHONPATH` with `;` between entries when two are needed (`src;.`).
+ 
+diff --git a/docs/tests.md b/docs/tests.md
+index 9cbdd44..bd88893 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -23,12 +23,25 @@ SonarQube is a code-quality service. One automatic check (`.github/workflows/son
+ 
+ The settings are in `pyproject.toml` (`[tool.coverage.run]`); the report `coverage.xml` is read by the SonarQube scan through `sonar.python.coverage.reportPaths`. The browser tests skip without Playwright, so lines that only the browser tests run are counted as not covered.
+ 
+-The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene: `PYTHONPATH=src:. python scripts/crash_desk.py` (the `.` lets Python find the `demo_only` folder; with `PYTHONPATH=src` alone the desk stops with "the folder demo_only is missing"; the demo server must be running first: `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed`) prints the path of a flag file. Write a crash point name (for example `D2`, one of the points in the table under "What each promise rests on") into that file, and the next time the desk reaches that point it ends at once. On Windows set `PYTHONPATH` with `;` between entries when two are needed (`src;.`); the Linux form was run, the Windows form was not run. The tests set the path for their own processes. In the command that starts the demo mail system, writing `blind` instead of `keyed` starts a mail system that cannot recognise a repeated send.
++The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Before the crash scene, stop the desk that is running: on Linux run `kill "$(cat data/desk.pid)"` from the repository root (`data` is the folder that holds the database file; do not run `scripts/reset.sh`, it deletes the records). Leave the demo server running. The crash script and a desk started by hand do not set the lead-flow file and the reminder address that `scripts/start_all.sh` sets, so export `DESK_LEADFLOW_FILE` (the path of the lead-flow file; the demo uses `demo_only/leadflow.json`) and `DESK_NUDGE_TO` (the address that gets reminder emails; the demo script sets an example address) first, or the desk starts without the lead owner, lead stage and reminder. After a crash, restart the desk by hand with the same two names exported and `PYTHONPATH=src:. python -m lead_desk.server`. The crash scene: `PYTHONPATH=src:. python scripts/crash_desk.py` (the `.` lets Python find the `demo_only` folder; with `PYTHONPATH=src` alone the desk stops with "the folder demo_only is missing"; the demo server must be running first: `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed`) prints the path of a flag file. Write a crash point name (for example `D2`, one of the points in the table under "What each promise rests on") into that file, and the next time the desk reaches that point it ends at once. On Windows set `PYTHONPATH` with `;` between entries when two are needed (`src;.`); the Linux form was run, the Windows form was not run. The tests set the path for their own processes. In the command that starts the demo mail system, writing `blind` instead of `keyed` starts a mail system that cannot recognise a repeated send.
+ 
+ The desk's settings (the `DESK_*` names, plus the extra names of the real-services script and `N8N_URL`, `N8N_API_KEY_FILE` and the `DPLD_*` names; n8n's own `N8N_PORT` and similar are in `docs/n8n-recipe.md`) are in `docs/settings.md`; the exit codes of the desk are in `docs/limits.md`.
+ 
+ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (types), bandit (known insecure patterns), a schema check, gitleaks (secrets and other leaked values, on the files and the history), a scan for hardcoded addresses, links, absolute paths, e-mail addresses and long tokens, and the test suite (without the browser tests, which skip there; see "Browser tests"). Three more workflows exist. `.github/workflows/codeql.yml` runs GitHub's CodeQL scan (Python, the portal's JavaScript and the workflow files themselves). `.github/workflows/semgrep.yml` runs the open-source Semgrep scanner (see "Semgrep" below). `.github/workflows/sonar.yml` is described with the review services below. `.github/dependabot.yml` asks for version updates of the GitHub Actions. A test (`test_workflows_are_pinned_and_limited`) fails if a workflow uses an Action (a ready-made step taken from another repository) that is not pinned by its full commit SHA (the id of one exact version), has no read-only top-level `permissions:` block, or uses a trigger that passes secrets to pull-request code. Two review services read the pull requests once the author has switched them on in their own settings: CodeRabbit (configured by `.coderabbit.yaml`) and SonarQube Cloud (a scan run by `.github/workflows/sonar.yml`, configured by `sonar-project.properties`; it uses the repository secret `SONAR_TOKEN`, and SonarQube Cloud's automatic analysis must stay off for this project). These files only configure the services; whether a service is switched on, and what it found, is not stated in this repository. No run result is stored in this repository: none of CodeRabbit, SonarQube Cloud, CodeQL, Semgrep or the lint workflow. `tools/hygiene.py` also has an optional scan for a list of terms that the person running it supplies; it does nothing without that list. The demo needs no secrets and no `.env` file; the real-service scripts read their secrets from files you name.
+ 
++## The gitleaks program
++
++Gitleaks is a program that scans files and history for leaked secrets. A few tests (`tests/test_hygiene.py`, `tests/test_gitleaks_exceptions.py`, `tests/test_gitleaks_semgrep_lock.py`) run it. When the variable `DPLD_REQUIRE_SCAN` is not set, a test that cannot find the program is skipped, and the skip reason says that no gitleaks program was found (`python -m pytest -q -rs` prints it). When `DPLD_REQUIRE_SCAN` is set to any non-empty value, a missing program makes those tests fail with "gitleaks binary not found: put it on PATH or set GITLEAKS_BIN". So you need the program only if you set `DPLD_REQUIRE_SCAN`.
++
++The version this repository was checked with is 8.30.1 (the version in `.github/workflows/lint.yml`). To set it up on Linux:
++
++1. Open the gitleaks releases page of its GitHub project and download two files for version 8.30.1: the Linux x64 archive and the checksums file of that release.
++2. In the folder that holds both files, run `sha256sum -c` on the checksums file (for example `sha256sum -c --ignore-missing <the checksums file>`). It must print OK for the archive. If it does not, delete the archive and download it again.
++3. Unpack the archive into a folder of your own.
++4. Tell the tests where the program is: set `GITLEAKS_BIN` to the path of the program (`export GITLEAKS_BIN=<folder>/gitleaks`), or put the folder on `PATH`.
++
++Then run `DPLD_REQUIRE_SCAN=1 python -m pytest -q`.
++
+ ## Semgrep
+ 
+ `.github/workflows/semgrep.yml` runs the open-source Semgrep scanner (its own pinned, hash-checked install in `requirements-semgrep.txt`; no account and no token; usage reporting is switched off, see the network paragraph below) on every pull request and every push to main. It reads the rule packs `p/python` and `p/javascript` from the public Semgrep registry over `src`, `scripts`, `load_tools`, `tools` and `n8n`, and fails the job on a finding of severity ERROR. After the install the job runs `pip check` and `semgrep --version`, so that a package missing from the lock file is reported as an install problem and not as a finding. The findings are printed in the job log only (no code-scanning upload). It belongs with the checks of `lint.yml` and the tests, and it needs the five folders above (a missing folder makes Semgrep exit 2, which the job tries up to three times in all before it fails with a message naming the possible causes). **Network use of the job:** pip downloads the packages of the lock file from the Python Package Index file hosts (every file is checked against its hash); `actions/setup-python` may download a CPython 3.12 build (GitHub-hosted releases of Python builds) when the runner does not already have it; Semgrep downloads the two rule packs from the Semgrep rule download service (a host name that ends in `.dev`) at every run; checkout reads this repository from GitHub. The workflow file names no other host (read from the file; no network capture was made, so this is not measured), and it sets `--metrics=off` and `--disable-version-check` to switch off Semgrep's usage report and version check. Tests in `tests/test_nosemgrep_form.py` run the real scan step against a fake `semgrep` script (only exit 2 is retried) and compare the parsed workflow with an exact whitelist: the triggers, the permissions, the concurrency block, one job on `ubuntu-24.04` with a time limit of at most 20 minutes, exactly five steps with exactly the expected keys (no `if`, `shell`, `working-directory`, `continue-on-error`, extra `env` or extra action), the two Actions pinned to the same commit ids as `lint.yml`, the install command word for word, and the scan command word for word (so a new flag, a `--config=...` or `--exclude=...` form, another pack or a missing folder fails). They also refuse an expression such as `github.event.`, `github.head_ref` or `github.ref_name` inside a `run:` step and any secret or token reference. These tests do not prove the workflow is safe or that it scans correctly on GitHub; they pin its shape and the retry logic (against a fake `semgrep` script).
+-- 
+2.43.0
+
