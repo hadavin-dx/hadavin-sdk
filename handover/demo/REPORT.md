@@ -1,6 +1,29 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 07:37Z STATUS (demo cloud): f3c39cf scan rc 0, live crash scene run, doc v5, n8n and reviewer status
+**(1) Newest public main f3c39cf, single-branch clone (`--single-branch --branch main`, one branch, 6 commits), repo's own config, exactly as lint.yml:** `gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow` on a clean git-archive export: rc 0, no leaks. `gitleaks git . (same flags)` on the clone: rc 0, no leaks. So the 927 hits at c30c373 appear only WITHOUT the repo's config; with it, CI-equivalent is clean. (Earlier hit counts came from scans without `--config`.)
+**(2) Live crash scene, clean export of f3c39cf, loopback, synthetic data, no mail, no key, Python 3.12, one desk and one demo server, ports were free:**
+- step 1 (stop old desk): n/a, none running. ok
+- step 2 (demo server `--outbox keyed`): outbox answered count 0. ok
+- step 3 (export the two settings: demo leadflow file and the example address): ok
+- step 4 (`crash_desk.py`): printed the flag path `data/crash.flag` and "desk listening". ok
+- step 5 (`echo D2 > data/crash.flag`, then `feed.py --source form --index 2`): feed printed 201, verdict new (NOT a connection error as the v4 text said); the desk then printed "simulate crash" and ended; outbox count 1 (Grace sample address). The exit code 137 was not observed (desk was in the background). PARTLY ok: v4 text was wrong here.
+- step 6 (restart by hand): listening; counts received 1, new 1; outbox still count 1; follow-up state `sent` (not UNKNOWN). That matches the KEYED column of the D2 row in the table (UNKNOWN is the blind column). v4 step 5 said UNKNOWN: wrong for the keyed demo server. Not ok as written.
+- step 7 (way back to clean: stop desk, stop demo server, `reset.sh`): reset done, rc 0, data folder empty, ports free. ok
+- FIX: doc patch v5 (`clean-machine/0006-...`): step 5 now states what the live run showed (201 first because the follow-up is sent after the reply; keyed D2 ends with one email and `sent`; blind would be UNKNOWN). Doc hygiene tests on v5: 46 passed. I did not use a fresh reviewer on v5 (only the step 5 sentence changed, from a measured run); say if you want one.
+**(3) n8n 3-burst fresh-stack series (R2d, 07:00 to 07:06Z):** burst 1 clean 5 of 5, burst 2 clean 4 of 5 (a5: 7 CRM rows), burst 3 clean 4 of 5 (a3: 5 rows); first burst after a fresh start clean 12 of 12 slots; later bursts clean 20 of 33; duplicates do not grow with burst number; no cause, no significance claimed. PUBLISHABLE-NUMBERS table is in `n8n-published-numbers.md`: REPRODUCED reused stack: b, c, d ten at once 20 of 20, replay 0 of 20, kill rows with no effect 0 of 15 (a, b, c, d), c and d kill runs, e ten at once, e two or more emails, e status; REPRODUCED pattern: duplicates = number of 200 replies. NOT REPRODUCED: variant a 18 of 20 (reused stack 12 of 20 and 2 of 5; fresh first burst 12 of 12), a K in flight 1 of 5 vs 5 of 5, a email points 3 of 10 vs 9 of 10, e second CRM row 1 of 10 and 1 of 50 vs 4 of 10. NO MATCHING ROW: "K1 crashed entry visible 1 of 5" and "kill runs with no effect 1 of 15".
+**(4) egm reviewer on the R2c results: it ran (07:0x), 6 Major + 4 Nit, all raw counts verified; the 6 Majors are fixed in `N8N-RERUN-1.md` and `n8n-a-cause-1.md` (see the 07:1x block).**
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No fresh reviewer on v5. The live run used the keyed demo server only; blind not run. Exit code 137 not observed.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Rerun the crash scene once with the desk in the foreground to observe exit code 137, and once with the blind demo server for the UNKNOWN column (light jobs).
+2. Fresh reviewer on v5 if you want it.
+3. Clean up dockerd, scratch node_modules and run folders when you say R2b is finished.
+
+
 ## 07:34Z STATUS (demo cloud): doc v4 reviewer in, v4b nits applied
 - Fresh reviewer on v4: NO Major; every claim checked against the code matches (exit 4 text, traceback cases, replay does not reach D2, index 2 is a lead the README demo does not send, feed.py handles HTTP errors only, reset.sh refusal order, README edits, only the archive name is in lint.yml). 3 Nits, all applied as patch 0005 (v4b): "only while a request" is too strong (the reaper also sends due follow-ups); "index 1 already exists" depends on the README demo having been run on this data; step 7 order (stopping the desk first, because reset.sh stops the demo server before it refuses). Doc hygiene tests on v4b: 46 passed. Patches 0001 to 0005 are in `clean-machine/`.
 - Still not run: the live crash scene on the v4 recipe; the history scan on single-branch f3c39cf (newer public main).
