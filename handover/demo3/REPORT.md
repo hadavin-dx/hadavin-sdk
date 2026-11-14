@@ -1,19 +1,14 @@
-## HEARTBEAT 169 (14:30Z) - fixed flows (demo commit 61e3804b = 1ced4e1f flow files): ERROR 3/3, T14 1/1, BURST 1/1, K3 3/3, K6 3/3 all done; fixed-flow GREP running
+## HEARTBEAT 170 (14:32Z) - GREP on the fixed flows WITHOUT n8n's environment settings: still in the WAL (name, e-mail, key); the same GREP WITH the four settings queued (n = 3); fault repeats running
 
-| Test on the fixed flows | n | Result |
-|---|---|---|
-| ERROR (CRM refuses everything from the start) | 3 | 3 of 3 PASS: state failed after 478, 452, 444 s (limit 510 s); each 1 alert naming the lead, 0 mails to intake, 0 CRM rows, 1 model call, 0 lost. |
-| T14 (idle 120 s) | 1 | PASS: 0 stage calls, 0 mails (so 0 alerts, 0 intake mails), 0 CRM calls. |
-| BURST (10 same-lead requests at once) | 1 | PASS: 1 CRM row, 1 mail, 1 model call, 1 done row; answers 1 new + 9 "processing, repeat". |
-| K3 (killed after mail marked sent, before the mail was stored) | 3 | 3 of 3: lead unknown, attempts 2, 1 alert naming the lead, 0 mails to intake, 1 CRM row, 1 model call, 2 stage requests (the repeat got the stored answer). Restart 6.8 to 6.9 s. |
-| K6 (killed after the mail was stored, before state done) | 3 | 3 of 3: lead unknown, attempts 2, 1 alert, 1 mail to intake, 1 CRM row, 1 model call, 2 stage requests. Restart 6.4 to 6.8 s. |
-| Phantom noise | all | 0 stage, 0 CRM, 0 alert phantoms in every fixed-flow run; no count changed. |
+| Item | Result at 14:32Z |
+|---|---|
+| GREP fjg1, fixed flows 61e3804b (same four flow files as 1ced4e1f), n = 1, n8n started with MY harness environment (none of the four settings from the demo's N8N-START.md) | Hits for fake name, e-mail AND key in n8n's database.sqlite-wal; n8n log 0; exported flow JSON 0; Postgres row: name 1, e-mail 1, key 0. So the flow files alone (saveData settings inside each workflow) do not keep the webhook body out of n8n's file; same as the 11:05Z flows (3 of 3). |
+| Why this differs from the laptop result (name 3, e-mail 2, no key) | I cannot tell from here. Differences I know: (a) my harness does not set the four environment settings (EXECUTIONS_DATA_SAVE_ON_SUCCESS/ERROR=none, SAVE_ON_PROGRESS=false, SAVE_MANUAL=false) that N8N-START.md lists; the laptop run may have set them; (b) my key sits in the request body field api_key (HB164), theirs may sit elsewhere; (c) different n8n start (my runs read the WAL file right after the run, no checkpoint, no restart). To compare one thing at a time I now run the SAME needles with the four settings on (fjg2, fjg3, fjg4; runs about 100 s each; after the fault repeats, about 15:00Z). |
+| Fault repeats on the 11:05Z flows | running (6 runs, F-a, F-b, F-c twice more), ends about 14:55Z. |
+| Sandbox | no restart since 13:50Z with my turn open. |
+| make_results.py | extended to all labels and to the flow set per row; ready to write RESULTS.md when the fault repeats and fjg2-4 are done. |
 
-Compared with the 11:05Z flows (my own runs): K3 3/3 and K6 3/3 give the same counts; BURST same; ERROR changes from 0 of 2 to 3 of 3 (the fix works in my harness). Neither K3 nor K6 end in done: the flows choose "unknown, a person checks" over a possible second mail. That matches the design's stated rule (one mail at most); a K3 lead gets no mail at all until a person acts.
-Sandbox: no restart since 13:50Z with my turn open.
-Queue now: fixed-flow GREP (fjg1, about 14:32Z), then the fault repeats on the 11:05Z flows (6 runs, about 14:35 to 14:55Z), then RESULTS.md.
-
-ASK for the lead: none.
+ASK for the lead: send me the exact place and size of the T7b key needle and the environment settings the laptop ran with, if you want the two runs compared line by line.
 FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): fixed-flow GREP result; fault repeats (F-a, F-b, F-c n = 1 each so far); K1, K2 and the faults on the fixed flows (not ordered); RESULTS.md; comparison with the demo table; BURST and T14 are n = 1 as ordered.
-WHAT I WOULD DO NEXT (ranked): 1) fjg1; 2) fault repeats; 3) RESULTS.md then compare; 4) optional K1, K2 and faults on the fixed flows.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): fjg2-4 (settings on); fault repeats; RESULTS.md; comparison with the demo table; K1, K2 and faults on the fixed flows (not ordered); whether a restart or checkpoint removes the WAL hits (not tested).
+WHAT I WOULD DO NEXT (ranked): 1) fault repeats; 2) fjg2-4; 3) RESULTS.md then compare; 4) optional K1, K2, faults on the fixed flows.
