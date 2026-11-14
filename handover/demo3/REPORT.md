@@ -1,3 +1,31 @@
+## HEARTBEAT 87 (04:17Z) - FIX-8 R2 REVIEWED (0 BLOCKER, 0 MAJOR), R3 BUILT FOR THE 4 POINTS; EV10 AT ABOUT 60 PERCENT; B11, B12, B13 RUNNING
+
+| Agent | Job | State |
+|---|---|---|
+| R8b | fresh review fix-8 r2 | CLOSED 04:13Z: 0 blocker, 0 major, 2 minor, 2 nit; saved evidence/review-lane3-fix-8-r2.md. All code checks passed by reading; the 2 minors are one doc sentence (a one-label host such as localhost is accepted for sender, recipient, reminder) and an unexplained mutant survivor in the log. |
+| B10 | fix-8 r3 | CLOSED 04:17Z: lane3-fix-8-r3.patch 3e07f8ab (variant on fix-4 r4 7542136d, apply check only). Doc sentence added, survivors explained (one malformed mutant, one equivalent: 452 accepted strings all had exactly one '@'), vacuous lines deleted, U+200B added to fuzz. Subset run (domain labels, hygiene with real gitleaks, input edge cases): 98 passed; I read the tail. No full run on r3 (told so: the stack full run covers r3). |
+| EV10 | full serial 3.13 run on the final head of fix-8 r2 | RUNNING, about 60 percent at 04:17Z (log raw/b10-full-final.log) |
+| B11 | fix-9 r3 (4 minors) | RUNNING (resumed 04:08Z, stop 04:55Z) |
+| B12 | fix-5 r6 | RUNNING; interim patch only (03:59Z, not final, not read by me). Its report is overdue against my own note (stop about 05:03Z): not yet overdue. |
+| B13 | fix-2 r5 | RUNNING; interim patches only (03:59Z). Stop about 05:03Z. |
+
+FAILURES AND RETRIES: no test failure this block. My slip: none new.
+ASK list: none.
+Load (measured 04:17Z): load average 1.1, 3 builders + EV10.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- fix-8 r3: no fresh review of the r3 delta (docs, mutant log, 2 deleted lines, 1 fuzz character; I judge the delta small, so a reviewer pass only on the r3 diff, not a new round of everything); no full run on r3 itself (stack run covers it).
+- fix-9 r3, fix-5 r6, fix-2 r5: not final; no fresh reviews; WINDOWS-RUN-1.md not written (waits for final fix-5 r6).
+- reset.ps1, start_all.ps1: never run (no PowerShell here).
+- Core r7f not reviewed: symlink case and helper race stay with core.
+- Python 3.11, ruff, mypy, bandit, gitleaks on CI: not run.
+- Stack test: waits for all four final and reviewed.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV10's result, then a short reviewer pass on the fix-8 r3 delta.
+2. Handle B11, B12, B13 hand-backs: tail check, fresh reviewer on the new version, resolve any Major.
+3. Write WINDOWS-RUN-1.md from the final fix-5 r6, then build the stack clone and run the stack test.
+
 ## HEARTBEAT 86 (04:10Z) - FIX-9 R2 REVIEWED (0 BLOCKER, 0 MAJOR, 4 MINOR); FIX-8 R2 BUILT, REVIEW AND FINAL FULL RUN STARTED; B12, B13 STILL BUILDING
 
 | Agent | Job | State |

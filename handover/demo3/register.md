@@ -275,3 +275,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | CORRECTION | 04:10Z | the 'from 04:10Z/04:11Z' start times in the 4 rows above were written ahead of the clock; real start of B11 resume, EV10, R8b was about 04:08-04:09Z |
 | R8b | CLOSED 04:13Z | fix-8 r2 review: 0 blocker 0 major 2 minor 2 nit, saved evidence/review-lane3-fix-8-r2.md |
 | B10 (resumed) | RUNNING from 04:13Z | fix-8 r3 (4 review points); stop 04:45Z; no full run by B10 (EV10 runs r2 full; stack run covers r3) |
+| B10 | CLOSED 04:17Z | fix-8 r3 patch 3e07f8ab (+ on-fix-4-r4 variant, apply check only); subset 98 passed (I read the tail) |

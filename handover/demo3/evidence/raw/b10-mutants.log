@@ -18,3 +18,6 @@ non-ascii dot set loses FF0E KILLED
 dot lookalike set loses FE52 KILLED
 empty label allowed KILLED
 empty-label check on first only KILLED
+survivor 14 equivalent: 452 accepted strings, all with one @, partition == rpartition
+survivor 8 malformed mutant: empty label gives False (False = still refused) -> same behaviour as the original
+Key to the log above (r3 note): first run, 18 mutants in order 1-18. Survivor "empty label allowed" (line 8, mutant 8) and "rpartition->partition lead" (mutant 14) are equivalent, shown by the two lines just above. The second run (two mutants, same name "empty label allowed" = a proper variant `not label or (...)`, and "empty-label check on first only") were both KILLED; those are the later lines 19-20 of the log, not mutant 8.
