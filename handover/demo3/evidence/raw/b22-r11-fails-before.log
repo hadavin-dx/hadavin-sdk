@@ -1,0 +1,42 @@
+# r11 fails-before: r10 tree 1c973634 + r11 test file + new support.py with the OLD stub order (scratch copy)
+Sat Nov 14 07:57:21 UTC 2026
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-300/test_the_desk_refuses_to_start0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa7f8735220>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fa7f8702ea0>
+
+    @POSIX
+    @pytest.mark.usefixtures("main_lock_handles_closed")
+    def test_the_desk_refuses_to_start_on_a_link_that_leads_nowhere_and_makes_nothing(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        dangling = tmp_path / "book.db"
+        _link(dangling, tmp_path / "target-folder" / "target.db")
+        monkeypatch.setenv("DESK_DB_PATH", str(dangling))
+        monkeypatch.setenv("DESK_PORT", "0")
+    
+        def must_not_serve(*a: Any, **k: Any) -> Any:
+            raise AssertionError("the desk went on although the lead-book path is a link that leads nowhere")
+    
+        monkeypatch.setattr(server, "make_server", must_not_serve)
+        with pytest.raises(SystemExit) as e:
+            server.main()
+        out = capsys.readouterr().out
+>       assert e.value.code == 4, out
+E       AssertionError: cannot take the lock file: LockUnavailableError
+E         
+E       assert 2 == 4
+E        +  where 2 = SystemExit(2).code
+E        +    where SystemExit(2) = <ExceptionInfo SystemExit(2) tblen=2>.value
+
+tests/test_one_key_file_rule_r11.py:157: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_one_key_file_rule_r11.py::test_the_stub_has_counted_a_request_by_the_time_the_client_has_its_answer
+FAILED tests/test_one_key_file_rule_r11.py::test_a_dangling_link_a_loop_and_a_link_in_a_parent_are_one_problem_called_link
+FAILED tests/test_one_key_file_rule_r11.py::test_the_one_text_for_a_link_names_the_setting_and_never_the_path
+FAILED tests/test_one_key_file_rule_r11.py::test_run_real_check_refuses_a_link_that_leads_nowhere_in_one_line_and_creates_nothing[dangling]
+FAILED tests/test_one_key_file_rule_r11.py::test_run_real_check_refuses_a_link_that_leads_nowhere_in_one_line_and_creates_nothing[loop]
+FAILED tests/test_one_key_file_rule_r11.py::test_run_real_check_refuses_a_link_that_leads_nowhere_in_one_line_and_creates_nothing[loop_in_parent]
+FAILED tests/test_one_key_file_rule_r11.py::test_run_real_check_refuses_a_link_that_leads_nowhere_in_one_line_and_creates_nothing[dangling_parent]
+FAILED tests/test_one_key_file_rule_r11.py::test_the_desk_refuses_to_start_on_a_link_that_leads_nowhere_and_makes_nothing
+8 failed, 1 passed in 0.74s

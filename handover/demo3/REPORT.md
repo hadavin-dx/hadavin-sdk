@@ -1,3 +1,18 @@
+## HEARTBEAT 123 (07:58Z) - LEAD note 07:55Z applied: in-flight work narrowed to confirmed Majors; no new rounds on key-file / path-check / take-harness code
+
+| Agent / job | State at 07:58Z |
+|---|---|
+| ORDERS 07:55Z (owner: NEEDED-CHECK of the take harness; demo built AROUND n8n/Make) | read and applied. Nothing deleted or replaced. All other deferred rows are kept as OPEN-DEFERRED in the notes, not dropped |
+| B21 fix-5 round 9 | NARROWED by me at 07:58Z to the confirmed security Major only: reset.sh length check, BOM strip and trim inside read_pid_file under the C locale, the deterministic test (red on cb769b22 first), the 3 locale mutants, honest notes. Rows 4, 6-24, 26-28 of my resolve (README guard for zsh/busybox, helper dedupe, port helper, wording...) deferred. Row 5 (UTF-16 without BOM read as a number) only if it is a few lines in the same function |
+| B22 fix-2 round 11 | NARROWED to the confirmed Major: the 429 stub race (hits counted after the reply is sent; real cause of the one unexplained baseline failure), the mutation log listing all failures per targeted test, the 2-line lock fixture. DEFERRED (OPEN-DEFERRED, I list them in the final report): dangling symlink or loop as database path, umask toggle, sys.modules, port reuse, docs wording, word list, helper dedupe |
+| fix-10 r4 reviews | egm-design and egm-codebase-details running (in-flight; I will save them; resolve only if a security Major is confirmed) |
+| Stack builder | not started; waiting for the final trees; your verdict at about 08:55Z may change what goes in |
+
+ASK for the lead: (1) the dangling-symlink-as-database-path case (a path-check gap, fix-2 reviewers both rated it Minor): shall it wait for the NEEDED-CHECK verdict, or is it a security Major you want fixed now? I will not touch it unless you say so. (2) With the demo moving around n8n/Make, do the stack and the Windows run still include the reset and start scripts as they are?
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): OPEN-DEFERRED rows above; no PowerShell run; no full run until the stack.
+WHAT I WOULD DO NEXT (ranked): 1) collect fix-10 reviews and the two narrowed hand-backs, lint, reconcile, fresh review of each narrowed delta; 2) keep blocks every 10 minutes; 3) wait for your answer before the stack builder.
+
 ## HEARTBEAT 122 (07:55Z) - B23 handed back fix-10 r4 (lint green by me); three reviews/rounds in flight
 
 | Agent / job | State at 07:55Z |
