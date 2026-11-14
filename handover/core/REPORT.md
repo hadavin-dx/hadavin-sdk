@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 15:40 UTC / 21:10 IST
+
+**FLAKE RATE (raw files in out/R7T; builder runs of the one test `s3 a created contact ... with-cleanup-f3-silent`, each 35-65 s, under load):**
+- **r7s sources, 30 runs (flake-r7s-load.sum): 29 passed, 1 FAILED (run 7, 15:11:42Z) = 1 in 30 (3.3%).** The failure log (flake-r7s-load-7.log) shows the assertion `"1 contacts may be left" in out` failing, with desk counters `created: 0` and `created: 8` for 9 leads: i.e. the undercount the cause analysis predicts (one created contact in no counter). I read the log lines, not the whole log. So the race REPRODUCES on r7s at about 3% per run under load; it is real and not only the test's timing.
+- **r7t before the fix (old bytes): 8 runs, 8 passed** (earlier 1 failure in 6 under guard load, see my 15:11Z block). **r7t on FINAL bytes (started 15:26Z): 21 runs so far, 21 passed, 0 failed (flake-r7t-load.sum, still running to 30).** At 3% per run, 21 of 21 passes is not proof (chance of 21 passes if the race were still there: about 50%); the deterministic hook tests are the proof, the series is only a sanity check. No "without load" series in my files yet (the order asked for both).
+
+**GAP 1 / GAP 2 progress (builder checkpoint 15:21 and 15:25, builder claims):** implemented `create_unknown` (indeterminate outcomes counted as possibly created), `CrmCounterUnwritable` and `write_stats_strict` (pre-request write must succeed or the create is not sent). Tests by name in tests/test_r7t_findings.py: t17 (a create that may have made the contact is counted as unknown; a 429 after the waits proves nothing was stored; unknown with nothing hidden = no false alarm; unknown plus a contact the list does not show ends as failed), t18 (an unwritable counters file stops the create BEFORE it is sent), t16 (mail: a mail the desk did not count is still counted by the mailbox and fails the floor: the mail class question answered by the existing independent count, per the test name). **I have not read these bodies yet (next block: t17 and t18) and I have no before/after table for them.** "FINAL bytes frozen" at 15:25Z; mutants A/B and the final guard run were started then.
+- **Guard run:** the only finished guard log (hy-guard.log, written 15:13Z) shows 1337 passed, 1 skipped, 13 min 08 s, rc not read: **it is from BEFORE the final bytes (15:25Z), so it does not count.** The final guard run result is NOT in my files yet.
+
+**ETA snapshot-r7t: hand-back about 16:00Z to 16:20Z (the flake series and guard run end first; box to 16:10Z+); my hash/apply check 10 min after; EV7T about 60 min.** Agents running: 1. ASK: none. Next block about 15:50Z.
+
+
 ## STATUS (core lead) 15:30 UTC / 21:00 IST
 
 **Lead answer applied: r7t builder box EXTENDED to about 16:10Z (more if the two gaps need it); GAP 1 and GAP 2 confirmed by the lead; the builder was told (message queued) that every t15 test must force the window by a hook, must each fail on the r7s sources, and must be listed with before/after ids in R7T-RESULTS.md.**
