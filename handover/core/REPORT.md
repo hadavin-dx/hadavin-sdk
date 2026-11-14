@@ -1,5 +1,33 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Container clock 03:36 UTC = 09:06 IST. (My earlier blocks gave a 'lead clock' that ran ahead of the container; read the container UTC time, I will use it from now.)
+
+| id | what it does | why | started UTC / IST | expected end / left | round / cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| a712ad32 r7f builder | builds r7f: stopped-run-exits-0 Major, 37 mail-8 survivors, 21 mail-7 survivors/timeouts, D21, _mask, labels, docs, symlink helper | unblocks EV7F and the final candidate | 03:03 / 08:33 | 04:03 / 27 min | r7f; mail path, no cap | running: checkpoint 03:28 'f4 killers (A01 A04 A07 A12 A14 B02, A10 control) written, lane7b/7c started'; D21 judged EQUIVALENT by it (claim) | collect report; EV7F |
+| a1942238 mutant lane 1 (A01-B03) | 18 mail-7 mutants on r7e copy | tells which r7e survivors remain | 03:36 / 09:06 | 04:06 / 30 min | evidence, 1 run | running: baseline done: 1172 passed, 1 skipped, 3 deselected, 392 s; mutants: 0 of 18 done | collect REPORT.md |
+| ab9f9527 mutant lane 2 (B04-E02) | 18 mutants | same | 03:36 / 09:06 | 04:06 / 30 min | evidence | running: baseline 1172 passed, 1 skipped, 337 s; 0 of 18 done | collect |
+| a5676b32 mutant lane 3 (E03-P02) | 18 mutants | same | 03:36 / 09:06 | 04:06 / 30 min | evidence | running: baseline log written, result line not yet; 0 of 18 done | collect |
+| a954ceb0, a86b10ca, a4355ac3, a3b90516, a9760115 | reviewer r7e, EV7D, mail 8, old mutant runner, r7e builder | | | | | reported and closed | none |
+
+Per-mutant progress so far: none (the three lanes are still in their clean baselines; each baseline takes 5.5-6.5 min under load). 4 agents running.
+
+ASK:
+1. Lead: should the three mutant lanes and the r7f builder be paused when EV7F needs a quiet machine? Default I take: yes, EV7F waits until the lanes and the builder have reported, then runs alone.
+2. Lead: the r7f builder still has the 37 + 21 survivor re-runs on its plate and may run past 04:03. Default: I let it run to 04:20 and then take its partial table with the open ids listed first.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- r7f not built; r7e Major (stopped run exits 0) open; why: builder still working; next: EV7F after it reports.
+- Mutants on r7e: 0 results yet; why: baselines running; next: collect at about 04:10.
+- 36-line patch size gap (14560 vs builder 14524): not explained; why: low value; next: numstat both states if wanted.
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI: not run; end, clean patch.
+- DNS lookup not in the IMAP deadline; stray a<newline>b writer not found; owner items.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect builder and the 3 lanes; every survivor killed or proved equivalent.
+2. EV7F alone on a quiet machine, checkout without data/, plus fresh reviewer and mail pass 9.
+3. Final README (patch table, per-checkout apply commands, open list), then sweep and QUEUE DONE.
+## STATUS (core lead)
 08:25Z (lead clock; container 03:37). Applied the lead decision on the mutant runner: a3b90516 had already finished (it handed back before I read the order); final numbers on the r7c tree: all 54 run, KILLED 32, SURVIVED 12 (A01 A02 A04 A06 A07 A08 A10 A12 A14 B02 B04 C01), CRASH/TIMEOUT 10 at 300 s (B03 C05 E05 E06 F02 G03 T01 T02 T03 T05; result unknown, not survived); runner closed. As ordered I started 3 fresh EVIDENCE RUNNERS x 18 mutants on a copy of the r7e tree: lane 1 a1942238 (A01-B03), lane 2 ab9f9527 (B04-E02), lane 3 a5676b32 (E03-P02); each 30-minute box, one checkpoint line per mutant in /home/user/build/rr6/out/M7E/<lane>/progress.txt and a results file written after each mutant, limit 240 s, survivors re-run once at 480 s. They are in addition to the r7f builder a712ad32, who re-runs the r7c survivors on r7f in his own lane. Patch size gap measured by me (cheap check): the r7d CRLF patch has 12300 added non-blank lines plus 2260 added blank lines = 14560 added lines (150 files), same as EV7D; the builder's 14524 is 36 lower and I have NOT found why (builder probably counted a different state or tool); the patch itself, not the claim, is the number. My slip: while checking this I typed a /dev path (null device) inside a throw-away `git diff --no-index` in one command; the harness refused it, nothing was read or written; I re-ran without it. 4 agents running (r7f builder + 3 lanes).
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)
