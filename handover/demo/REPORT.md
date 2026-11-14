@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 04:08Z): R2 FULL RUN RUNNING, no rc yet
+- Run log: g3 a K3 04:04:36Z; g3 c K1 04:05:57Z; g3 c K2 04:07:20Z. Remaining: c K3, b kill runs, restart, variant e (deploy, kill runs, burst), ten-at-once, replay. Disk 4.9 GB free.
+- No kill result read yet (harness summary at the end).
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No counts, no kill results: run not finished; N8N-RERUN-1.md R2 section waits for rc.
+- Variant e restart after its deploy (e's path not in the P1 check list): not reached yet.
+- v3 doc tests, fresh reviewer, CI-equivalent run, non-root skip chunk: after the run.
+## WHAT I WOULD DO NEXT (ranked)
+1. Next light log read in 5 min; push block.
+2. At run end: N8N-RERUN-1.md R2 with counts next to published numbers, then egm reviewer.
+3. Then v3 doc tests, fresh reviewer, CI-equivalent run.
+
 ## REPORT (clock 04:04Z): R2 FULL RUN RUNNING, no rc yet
 - Run log: g3 d K3 04:00:30Z; "n8n default up: True" (third restart passed the P1 wait); g3 a K1 04:01:55Z, g3 a K2 04:03:16Z. Each kill step takes about 1.3 min. Remaining: a K3, b and c kill runs, restart, variant e deploy, e kill runs and burst, ten-at-once, replay. Disk 4.9 GB free.
 - No kill result read yet (the harness prints them in its summary at the end).
