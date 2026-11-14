@@ -1,5 +1,37 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 10:06 UTC / 15:36 IST
+
+**r7o HANDED BACK (about 10:08Z), patch set committed (unreviewed): I verified the three sha256 against sha256-r7o.txt (CRLF 43e47b79..., LF 33a22d77..., delta b606cab5...); CRLF patch and delta stored as .gz with the unpack hash checked; apply matrix read (rc 0 in a-crlf, b-crlf, c-lf), not re-run.** Builder claims, NOT verified by me: ONE source change, src/lead_desk/regfile.py: read_regular_text decodes utf-8-sig instead of utf-8, i.e. **a leading byte-order mark (BOM) is now ACCEPTED and dropped on purpose (its NEEDED-CHECK call for M10-J09)**; reason: key/password, CA and invariant readers already accept it and Windows editors add it; before, a BOM flag file was silently never honoured and a BOM config or BOM JSON was refused. **This is a judgement I have flagged to the fresh reviewer: could accepting a BOM turn a refusal into an allow (a flag or allow file where U+FEFF used to make a token NOT match)? The safer default under the least-privilege rule is refuse; I asked the reviewer to recommend and to call it a Major if accepting can fail open.** For M9-79 (banner x2), M9-74, M10-J13, M9-56, M10-J02 the builder says the r7n source was already right and its tests are PINs (18 new tests: 4 fail on r7n = the BOM ones, 14 pass = pins; 11 of 11 own mutants killed; ruff 0.17.1 clean 227 files; groups A 502 passed, B 562 passed 1 skipped; no new suppressions; no existing test changed). **Builder-disclosed gaps: item 8 (fold in the EV7N and r7n-review findings) NOT done because those files did not exist yet; its mutant runs were narrow (-k on the matching tests, -x): a mutant only the rest of the file would catch is not measured; bandit not run; no full suite; the brief's "M9-82 5 accepted / 4 refused boundary" is really REAL_HUBSPOT_READBACK_MAX_CALLS (MIN_READBACK_CALLS = 5), not REAL_DRAIN_SECONDS (no minimum above 0): it pinned the right one and said so; pass 12 killed M9-82 only indirectly.** Fresh r7o reviewer STARTED (a1d9e112, Sonnet): judges the BOM decision, re-runs the ACTUAL pass 12 survivors M9-79, 74, J13, 56, J02 against the new tests, verifies each "source already right" claim on r7n with its own probe, ruff/bandit/hygiene, 12 own mutants.
+
+**EV7N and r7n reviewer: still running** (no result; last checkpoints 09:58 for EV7N "full run about 50 percent", REV7N mutants running).
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| a9b99545 (EV7N) | independent evidence on r7n | final bytes | 09:38 / 15:08 | about 10:50 | EV7N | RUNNING | EV7N-EVIDENCE.md |
+| a8c42155 (r7n reviewer) | whole-delta review | independent | 09:42 / 15:12 | about 10:55 | review 1 of r7n | RUNNING | core-fix-on-frozen-r7n-review.md |
+| a1d9e112 (r7o reviewer) | review of the r7n-to-r7o delta | independent | 10:10 / 15:40 | about 11:10 | review 1 of r7o | RUNNING | core-fix-on-frozen-r7o-review.md |
+
+Agents running: 3. Done: r7o builder, pass 12, r7n builder.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7N, r7n review, r7o review | running | Blocker/Major to an r7p if any |
+| ONE final full run on the final bytes (r7o or r7p) by a runner | after the reviews | start once the reviews end (EV7N ran on r7n: it checks r7n only) |
+| pass 11/12 mutants on changed code | pass 12 covered r7m; r7n changed code not yet | after the reviews |
+| ledger rows OPEN (8) | need evidence and reviews | after |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7N and both reviews; send Blocker/Major to one r7p builder at once.
+2. ONE final full run on the final bytes plus a short mutant pass on r7n/r7o changed lines.
+3. README, ledger close, sweep, counts.
+
+
 ## STATUS (core lead) 10:00 UTC / 15:30 IST
 
 **No EV7N result and no r7n review yet; both running. Checkpoint lines only; I have judged nothing.**
