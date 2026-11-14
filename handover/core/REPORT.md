@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 15:45 UTC / 21:15 IST
+
+**I READ the bodies of t17 (3 of 4 tests) and t18 in tree-R7T/tests/test_r7t_findings.py (lines 972-1060), and the mutant files in out/R7T. I ran nothing. Builder claims otherwise.**
+
+**GAP 1 (indeterminate create counted as possibly created) tests, read:**
+- `t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown` (parametrised by `how`, via `_create_then(monkeypatch, how)`: the fake CRM creates the contact, then the reply is lost in the ways listed in `how`; I did not read that helper): the put raises CrmError; the fake CRM holds 1 contact; the stats file says created 0, create_open 0, **create_unknown 1**; and `contacts_not_accounted_for(created, 0, open+unknown, 1) == 1`. Deterministic hooks, no sleep.
+- `t17_a_429_after_the_waits_proves_nothing_was_stored`: `time.sleep` replaced by a no-op, the fake answers 429 99 times; CrmBusy raised; create_open 0, create_unknown 0, 0 contacts. (A 429 is a clear "not stored", so it settles as none: matches my GAP 1 rule.)
+- `t17_..._no_false_alarm` (two cases) and `t17_..._the_list_does_not_show_ends_as_failed`: through `rrc.main(["--dry-fakes","--assume-yes","--cleanup"])` IN PROCESS with a patched hiding CRM (the dry fakes, not a real service; the --assume-yes is in-process on the dry fakes as the builder rules allow; I do not run it): unknown + nothing hidden -> exit 0 and no "may be left"; unknown + 1 hidden -> EXIT_FAILED and "1 contacts may be left".
+**GAP 2 test, read:** `t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent`: the stats path is a FOLDER with the file name; `put` raises `CrmCounterUnwritable` ("create was not sent"); the fake CRM holds 0 contacts (nothing left the desk); calls counter 0 and create_open 0; the other counters stay best-effort (a read still works). Deterministic.
+**What I did NOT see:** the before/after table on r7s (they use new names such as `create_unknown`, `CrmCounterUnwritable`, so on r7s they fail for a missing name; the "r7s behaviour" row I asked for is not confirmed). The last checkpoint is 15:25Z (stale 20 min); the builder is writing README-r7t-SNIPPET.md and snapshot-r7t now.
+
+**MUTANTS (out/R7T/mut-results-final.tsv, final bytes): 43 rows = 42 KILLED, 1 SURVIVED: U6 (crm_hubspot.py, test t18). My reading of the mutant text (mut_final.py line 49): U6 only turns `raise CrmCounterUnwritable(` into `pass; raise CrmCounterUnwritable(`: a no-op statement before the raise = EQUIVALENT by construction. Not yet argued by the builder; it should say so in R7T-RESULTS.md.** Earlier sets: first pass N01, N05 survived and were killed after new tests; M2 survived and was killed after f(8,4,-3,9)==4 (older rows, superseded). The six EV7S survivors (R07, R10, R19, R20, R27, R39) KILLED earlier; I have not seen them re-run on the FINAL bytes in this file set (the "final" file has 43 rows; not matched id by id by me).
+
+**Flake series on final r7t bytes: 28 runs, 28 passed (to 30).** **Final guard run result: NOT in my files (hy-guard.log is still the 15:13Z run on pre-final bytes).**
+
+**ETA of snapshot-r7t: builder hand-back about 16:00Z to 16:15Z (snapshot dir and README already started); my hash/apply check 10 min after; EV7T about 60 min.** Agents running: 1. ASK: none. Next block about 16:00Z.
+
+
 ## STATUS (core lead) 15:40 UTC / 21:10 IST
 
 **FLAKE RATE (raw files in out/R7T; builder runs of the one test `s3 a created contact ... with-cleanup-f3-silent`, each 35-65 s, under load):**
