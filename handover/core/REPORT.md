@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 15:00 UTC / 20:30 IST
+
+**r7t builder (aab061ec) at 15:00Z, from out/R7T files (builder numbers; I ran nothing; nothing judged).**
+
+**FAILED / UNCERTAIN FIRST**
+1. **Guard run 1 (hy-guard-run1.log, the guard files in a staged copy): 2 failed, 1334 passed, 1 skipped, 13 min 35 s.** Builder's note (15:00): (a) one failure = hygiene literals in its own new test (fixed); (b) **one failure = an r7s test, `s3 ... f3-silent`, which the builder calls a FLAKE with a "crash window undercount" and is "measuring" (flake.log, flake.sh exist). I have not seen the measurement. A flaky test in the counter/exit logic (mail/money path) is not closed until its cause is shown; it may also point at the very counter window the Major was about.** Run 2 on the final head started 15:00 (hy-guard.log, in progress, no result).
+2. **Mutants N01 and N05 SURVIVED the first run; the builder added tests (t2 "known rules", t9 "narrow hide") and both are KILLED in the second row set.** No survivor left in the rows I see.
+
+**Mutant rows so far (mut-results.tsv, 25 result rows, each with a restore row):** the six EV7S survivors **R07, R10 (two variants R10n, R10b), R19, R20, R27, R39: all KILLED**; new mutants N02-N04, N06-N16 KILLED; N01 and N05 SURVIVED then KILLED after the added tests. Restored-byte-equal: not read by me per row.
+
+**Other:** ruff 0.17.1 check and format clean on a copy (14:45, builder). Take-import work has started: snapshot-r7t/ already holds TAKE-USED-FILES-r7t.md, gen_take.py, take_closure.py, test_take_imports.py (not read by me). Not yet there: patches, sha256-r7t.txt, apply-matrix-r7t.txt, MANIFEST, R7T-RESULTS.md, final before/after table, suppression count, hy-guard final result.
+
+**ETA of snapshot-r7t: builder hand-back about 15:25Z to 15:40Z (box end 15:40Z; the flake measurement and guard run 2 (about 14 min) decide it); my hash/apply check and push about 10 min later, so snapshot-r7t on origin about 15:40Z to 15:55Z.** Agents running: 1. ASK: none. Next block about 15:10Z.
+
+
 ## STATUS (core lead) 14:50 UTC / 20:20 IST
 
 **r7t builder (aab061ec) at 14:50Z: checkpoint tail and the test names in tree-R7T/tests/test_r7t_findings.py (builder claims; I ran nothing, did not open the test bodies).**
