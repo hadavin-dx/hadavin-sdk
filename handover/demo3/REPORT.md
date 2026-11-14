@@ -1,18 +1,17 @@
-## HEARTBEAT 193 (17:22Z) - lease 45 s kill points done: 15 valid runs, all correct; caption numbers below; ERROR (CRM refuses every call) at lease 45 s x3 now running
+## HEARTBEAT 194 (17:27Z) - ERROR at lease 45 s 3 of 3 pass; RESULTS.md final and compared with the demo table; all my test runs finished
 
-WORKERS: 3 lanes (my script processes), 0 language-model agents. Each lane runs ONE script: the ERROR case at lease 45 s (CRM answers 500 to every call from the start), n = 3 in parallel; ends about 17:35Z. Criteria as before: state failed, exactly 1 alert naming the lead, 0 mails to intake, 0 CRM rows, within 3 x lease + 150 s.
+WORKERS: 0 lanes, 0 agents. All runs have ended; I am about to stop Postgres and report counts.
 
-CAPTION NUMBERS (film-v4, lease 45 s, demo 873a908a, start point = the KILL):
-| Point | n | Final state | Intake / alerts / CRM rows | Kill to final s, median / max | n8n up to final s, median / max |
-|---|---|---|---|---|---|
-| K1 (killed at CRM write) | 5 | done | 1 / 0 / 1 | 60.8 / 61.9 | 52.9 / 54.9 |
-| K2 (killed after the mail step) | 5 | done | 1 / 0 / 1 | 60.9 / 61.2 | 52.9 / 52.9 |
-| K3 (killed after CRM write) | 5 | unknown | 0 / 1 / 1 | see Part 3 of kill/RESULTS.md | 52.8 to 54.9 |
-| K6 (killed after mail stored) | 3 | unknown | 1 / 1 / 1 | see Part 3 | 52.8 to 54.8 |
-So the caption can say: "about a minute after the crash" (61 to 62 s at the worst in 18 valid runs; my restart takes 7 to 9 s of it; measured every 2 s). Nothing lost, nothing doubled: 1 CRM row in every run.
-Not run: K3B (my harness has no such point; I do not know the case and may not read the demo results; one line from you and I run it).
+| film-v4, lease 45 s | n | Result |
+|---|---|---|
+| ERROR (CRM answers 500 to every call) | 3 | state failed, attempts 3, exactly 1 alert naming the lead, 0 mails to intake, 0 CRM rows, in each of 3 (run time about 4 min incl. start-up; 3 x lease + 150 s = 285 s) |
+| K1, K2, K3, K6 | 5, 5, 5, 3 | all correct (HB193) |
+
+COMPARISON with the demo table (kill/COMPARE-demo.md, written after my numbers were saved): same end states in K1, K2, K3 (their K3B), K6 (their K3) and ERROR (their T15). Different: the timing. Their lease was 20 s (kill to final median 29.7 s, max 59.6 s); mine at lease 45 s is 60.1 to 61.9 s with almost no spread. I do not know why mine has no spread (guess: my restart always starts the recovery timer at the same moment; not verified). New from me and not in their list: v3 B90 gives 2 alerts (3 of 3), v4 gives 1 (3 of 3); v4 kill during the alert send gives 1 alert 13 min late (2 of 2); v4 hold 780 s and SMTP dead 600 s give 1 alert each.
+
+VIDEO LINE (plain): "About a minute after the crash the lead desk has finished every lead: nothing lost, nothing mailed twice. If the mail server is down or slow, the owner still gets exactly one alert; after a crash during that alert it can take 13 minutes." (n = 18 kill runs, 3 error runs, 2 to 3 per alert case.)
 
 ASK for the lead: none.
-FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list): ERROR at lease 45 s (running); K3B; failed mark after a sent alert; comparison with the demo table (I have saved all numbers; will compare after ERROR).
-WHAT I WOULD DO NEXT (ranked): 1) ERROR x3 result; 2) compare with the demo table, state differences plainly; 3) one video line; then stop all processes and report counts.
+FAILURES AND RETRIES: none new since HB192.
+NOT DONE / NOT CHECKED (my list): T8, T10, T11, T13, T14 on v4; K3B named case (mapped to my K3); a failed alert mark after a sent alert; the spread difference to the demo timing; GREP on Postgres-backed n8n; a credential needle; paused rounds B21 to B23 (by order).
+WHAT I WOULD DO NEXT (ranked): 1) stop processes and report counts; 2) any case you name (T14, T11 on v4 are 5 to 8 min each); 3) idle by order.

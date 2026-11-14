@@ -1,7 +1,7 @@
 # lane3 kill and fault results (own harness; counts taken outside n8n per lead id)
-Generated 2026-11-14 17:26Z. n = number of runs behind each row. Flow sets: 11:05Z (59202078), 61e3804b (fixed), 6ebb7f62-v3, 7709d058-v4.
+Generated 2026-11-14 17:27Z. n = number of runs behind each row. Flow sets: 11:05Z (59202078), 61e3804b (fixed), 6ebb7f62-v3, 7709d058-v4, 873a908a-film-v4-lease45. Voided runs (my slips) are labelled VOID- in results.jsonl.
 
-## Part 1: kill points, faults, ERROR, burst, GREP (flows 11:05Z and 61e3804b)
+## Part 1: kill points, faults, ERROR, burst, GREP
 
 | point | outcome (per lead, counted outside n8n) | n | runs |
 |---|---|---|---|
@@ -48,7 +48,7 @@ GREP (hits per place; n8n_folder = files under the n8n user folder, postgres_row
 - jg2 [flows 11:05Z]: export_json:email=0; export_json:key=0; export_json:name=0; n8n_folder:email=n8nhome/.n8n/database.sqlite-wal; n8n_folder:key=n8nhome/.n8n/database.sqlite-wal; n8n_folder:name=n8nhome/.n8n/database.sqlite-wal; n8n_log:email=0; n8n_log:key=0; n8n_log:name=0; postgres_row:email=1; postgres_row:key=0; postgres_row:name=1
 - jg3 [flows 11:05Z]: export_json:email=0; export_json:key=0; export_json:name=0; n8n_folder:email=n8nhome/.n8n/database.sqlite-wal; n8n_folder:key=n8nhome/.n8n/database.sqlite-wal; n8n_folder:name=n8nhome/.n8n/database.sqlite-wal; n8n_log:email=0; n8n_log:key=0; n8n_log:name=0; postgres_row:email=1; postgres_row:key=0; postgres_row:name=1
 
-## Part 2: alert cases on the v3 and v4 flows (case column: v3A means case A, whichever flows column)
+## Part 2: alert cases on the v3 and v4 flows (case column: v3A means case A, whichever flows column; )
 
 | flows | case | run | reached | intake mails | alerts | CRM rows | alert times (s) | alert_attempts |
 |---|---|---|---|---|---|---|---|---|
@@ -78,7 +78,7 @@ GREP (hits per place; n8n_folder = files under the n8n user folder, postgres_row
 | 7709d058-v4 | v3KS | v4ks1 | alert_sent true | 1 | 1 | 1 | [780] | 2 |
 | 7709d058-v4 | v3KS | v4ks2 | alert_sent true | 1 | 1 | 1 | [780] | 2 |
 
-## Part 3: recovery seconds (K1, K2, K3, K6) on v4 (lease 120 s, folder n8n-flows-v4) and film-v4 (lease 45 s). Voided runs are labelled VOID- in results.jsonl and left out.
+## Part 3: recovery seconds on v4 (lease 120 s) and film-v4 (lease 45 s)
 
 | flows | point | n | final state(s) | intake mails | alerts | CRM rows | recovery s median / max | kill to final s median / max |
 |---|---|---|---|---|---|---|---|---|
@@ -90,3 +90,18 @@ GREP (hits per place; n8n_folder = files under the n8n user folder, postgres_row
 | 873a908a-film-v4-lease45 | K2 | 5 | done | 1 | 0 | 1 | 52.9 / 52.9 | 60.9 / 61.2 |
 | 873a908a-film-v4-lease45 | K3 | 5 | unknown | 0 | 1 | 1 | 52.9 / 54.9 | 60.4 / 61.6 |
 | 873a908a-film-v4-lease45 | K6 | 3 | unknown | 1 | 1 | 1 | 52.8 / 54.8 | 60.1 / 61.5 |
+
+## Part 4: comparison with the demo table
+
+# Comparison with the demo session's numbers (written AFTER my numbers were saved; their files: K-SERIES-V4.md, V7-NUMBERS-lead-read.md)
+Names differ: my K3 (killed when the mail connection opens, mail not delivered) = their K3B. My K6 (killed after the mail was stored) = their K3. Same results: K3B/my K3 1 CRM row, 0 intake mails, 1 alert, unknown; K3/my K6 1 / 1 / 1, unknown. My ERROR (CRM answers 500 to every call) = their T15: failed, 0 CRM rows, 0 mails, 1 alert. My A (alert refused twice) = their AF1: first alert 272 s there, 240 to 270 s here.
+| Item | Demo (laptop, v3, lease 20 s) | Mine (cloud, my own harness) | Same? |
+|---|---|---|---|
+| K1, K2 end state | done, 0 lost, 0 doubled, n = 20 | done, 1 CRM row, 1 intake mail, n = 5 each at lease 45 s (and 1 to 2 at lease 120 s) | yes |
+| K3 / K3B and my K6 | unknown, 1 alert, n = 20 each | unknown, 1 alert, n = 5 and 5 (lease 45 s) | yes |
+| Kill to final seconds, K1 | 18.0 / 29.65 / 59.6 (min / median / max) | lease 45 s: 60.1 to 61.9, median 60.8; lease 120 s: not recorded (144 s from n8n up plus 7 s restart = about 151, computed) | different leases, so no direct match. Spread differs: mine has almost none (60.1 to 61.9). I did not find the reason; my guess: my restart always makes the recovery timer start at the same moment, theirs varies. NOT verified. |
+| ERROR / T15 | failed, 1 alert, 3 of 3 | failed, 1 alert, 3 of 3 (lease 45 s) | yes |
+| Duplicate alert | B90 never run before; README predicted it | v3: 2 alerts in 3 of 3; v4: 1 alert in 3 of 3 | new from me |
+| Kill while the alert send waits (KS) | not in their list | v4: 1 alert, 13 min late, 2 of 2 | new from me |
+| Hold 780 s / SMTP dead 600 s | not in their list | v4: 1 alert each (720 s / 750 s) | new from me |
+Not compared: T8, T10, T11, T13, T14 on v4 (I did not run them on v4; T14 and burst ran on my fixed flows earlier, see RESULTS.md Part 1).
