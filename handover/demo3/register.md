@@ -334,3 +334,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B17 | 06:03Z | B17 hand-back read: fix-10 r2 rows 1-14 built, row 15 (ps1 never run) escalated to lead's Windows run; patch lane3-fix-10-r2.patch (sha 0d762d13, tree 3e4cfad3 apply-checked by me); its full run `2 failed, 4125 passed, 171 skipped` (2 own-file guard hits, fixed; NOT repeated on final head: only a 456-test targeted re-run); old-code proof 67 behaviour-level failures (359 failed incl 292 function-absent); 31 mutants, 2 survived then killed | closed | stack full run covers |
 | R10c | 06:03Z | egm-codebase-details reviewer on fix-10 r2 snapshot rv-fix10r2 | agent a358ab293fa2e6d51 | expected 06:20Z | running |
 | R10d | 06:03Z | egm-design reviewer on fix-10 r2 snapshot rv-fix10r2 | agent a35225a5164f382fb | expected 06:20Z | running |
+| B19 | a7931e335857343bf | fix-2 r8 builder (plan resolve-lane3-fix-2-r7.md) | 06:10Z | stop by 07:40Z | not yet checked | running | check 06:25Z |
+| R16a | a2fad12140511aa9f | fix-5 r7 design review (egm-design) | 06:10Z | 06:25Z | - | running | save report |
+| R16b | a77ee82f6a52ce8d5 | fix-5 r7 code review (egm-codebase-details) | 06:10Z | 06:25Z | - | running | save report |
+| B16 | a9b26c2d3c33dd99a | fix-5 r7 builder | closed 06:03Z | - | - | handed back (3926 passed, 0 failed on final head) | reviews R16a/b |
+| R10c/R10d | a358ab293fa2e6d51 / a35225a5164f382fb | fix-10 r2 reviews | closed 06:04Z | - | - | reports saved (4+5 major) | resolve then B20 |
