@@ -1,3 +1,4 @@
+# FIRST PASS (b21-r10-mutants-pp0..3.log): 61 round-8 + 10 round-9 + 20 round-10 mutants
 sh pass 1 also stops (kill added in pass 1) | KILLED | 1 failed, 7 passed in 31.24s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
 sh read loop reads nothing | KILLED | 1 failed, 4 passed in 10.64s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
 sh ours judged stale | KILLED | 1 failed, 4 passed in 10.65s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
@@ -89,6 +90,8 @@ r10 ps1 Continue not restored (P5 kind) | KILLED | 1 failed, 151 passed, 14 skip
 r10 ps1 config refusal exit 8 -> 1 | KILLED | 1 failed, 44 passed, 1 skipped in 12.96s | tests/test_reset_order_and_words.py::test_text_only_reset_ps1_gives_a_refused_setting_exit_8
 r10 sh exit 5 for crash -> raw code | KILLED | 1 failed, 25 passed, 1 skipped in 9.97s | tests/test_reset_order_and_words.py::test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop
 r10 sh config refusal exit 8 -> 1 | KILLED | 1 failed, 43 passed, 1 skipped in 12.86s | tests/test_reset_order_and_words.py::test_reset_sh_gives_a_refused_desk_setting_exit_8_with_one_line_and_keeps_every_file
+
+# RERUNS (re-pointed at the current text, or the mutant was a no-op, or the pin was strengthened)
 sh pass-2 recheck dropped (re-pointed: if is_ours -> if true) | KILLED | 1 failed, 7 passed in 2.47s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
 sh reset_check dropped (re-pointed) | KILLED | 1 failed, 3 passed in 1.36s | tests/test_reset_order_and_words.py::test_the_reset_script_keeps_standard_output_empty_when_the_check_refuses_for_a_port_that_answers
 sh reset_check failure ignored (re-pointed) | KILLED | 1 failed, 3 passed in 1.39s | tests/test_reset_order_and_words.py::test_the_reset_script_keeps_standard_output_empty_when_the_check_refuses_for_a_port_that_answers
@@ -98,3 +101,11 @@ r10 sh config refusal handler removed (exit 1 silently, from set -e) | KILLED | 
 r9 M1 length rule moved out of the C locale | KILLED | 1 failed, 10 passed in 4.69s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
 r9 M2 trim moved out of the C locale | KILLED | 1 failed, 14 passed, 1 skipped in 8.34s | tests/test_reset_order_and_words.py::test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[1]
 r9 M3 BOM strip moved out of the C locale | KILLED | 1 failed, 9 passed in 13.55s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
+ps1 count not after the mark (re-pointed) | KILLED | 1 failed, 138 passed, 6 skipped in 34.14s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+sh 64 after the mark -> 65 (re-pointed to the current rule) | KILLED | 1 failed, 10 passed in 5.00s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
+r10b README exit 5 loses the crash meaning | KILLED | 1 failed, 39 passed, 1 skipped in 13.05s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+r10b README exit 8 loses the same-meaning clause | KILLED | 1 failed, 38 passed, 1 skipped in 12.89s | tests/test_reset_order_and_words.py::test_text_only_the_readme_lists_one_line_per_exit_code_from_2_to_8
+r10b sh header loses the crash meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.97s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+r10b sh header loses the exit 8 same-meaning clause | KILLED | 1 failed, 38 passed, 1 skipped in 12.98s | tests/test_reset_order_and_words.py::test_text_only_the_readme_lists_one_line_per_exit_code_from_2_to_8
+r10b ps1 header loses the crash meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.95s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+r10b ps1 header loses the exit 8 same-meaning clause | KILLED | 1 failed, 38 passed, 1 skipped in 12.96s | tests/test_reset_order_and_words.py::test_text_only_the_readme_lists_one_line_per_exit_code_from_2_to_8
