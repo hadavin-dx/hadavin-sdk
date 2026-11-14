@@ -1,3 +1,17 @@
+## HEARTBEAT 112 (06:55Z) - fix-2 r8 reviewed (4 major incl. lint), lint now runs here; builder B22 (fix-2 r9) started; B20, B21 told to lint before hand-back
+
+| Agent / job | State at 06:55Z |
+|---|---|
+| fix-2 r8 reviews | DONE: egm-design 0 blocker / 3 major / 7 minor / 4 nit; egm-codebase-details 0 / 1 / 5 / 4. Resolved: 15 fix, 2 contest, 1 ESCALATE (lead), 1 decline |
+| LINT (your order 06:50Z) | venv /home/user/work/lint-venv, hash-locked: ruff 0.17.4, mypy 2.4.1, bandit 1.9.4. On fix-2 r8 (tree 812a97a): ruff check rc 1 (F401 unused `sys`, tests/test_one_key_file_rule_and_path_walk.py:13); ruff format --check rc 1 (2 files: test_docs_claims_lane3.py, test_one_key_file_rule_r7.py); mypy linux rc 0, mypy win32 rc 0; bandit -ll rc 0; `ruff check --select E501 .` rc 0, so the 13 over-120 lines are CONFIRMED fine by ruff itself |
+| B22 fix-2 r9 | started 06:55Z, fixes all rows incl. lint; no full run (your 06:50Z order) |
+| B20 fix-10 r3, B21 fix-5 r8 | still building; told to run the 5 lint commands before hand-back. fix-5 and fix-10 lint not run yet (their trees are not final) |
+
+ASK for the lead (needs your decision, row 3): the key file is refused if group or others have ANY access, with no switch. Docker file secrets and Kubernetes volumes are often 0444/0644 and Kubernetes keys are links, so a first container run is refused until the file is copied to a normal file with chmod 600; as root, a planted 0600 file is accepted. Options: (a) keep as is, document the copy step (my recommendation); (b) also require the file owner to be the running user (closes the root case; root-owned mounts refused); (c) a setting that allows a looser mode (weakens the rule). B22 builds (a) unless you say otherwise.
+FAILURES AND RETRIES: my earlier hand scans (builder's and a reviewer's) missed the unused `sys` import that ruff found: ruff is the check, not hand scans.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): fix-5 r7 and fix-10 r2 trees not linted (superseded); stack not built; Windows not run.
+WHAT I WOULD DO NEXT (ranked): 1. B20/B21 hand-backs into the review chain; 2. B22 hand-back, fresh review of r9; 3. stack builder when all three are clean.
+
 ## HEARTBEAT 111 (06:48Z) - B19 handed back (fix-2 r8): its one full run had 1 failure (hygiene scan, 4 test-text lines), fixed in text only; two fresh reviewers started
 
 | Agent / job | State at 06:48Z |

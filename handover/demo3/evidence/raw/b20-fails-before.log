@@ -67,3 +67,8 @@ SPLIT (never one combined number):
   test_ps1_pins::test_text_only_the_start_pins_hold
 == COLLECTION ERROR (1)
   ::tests.test_start_all_late_refusal
+
+== SUPPLEMENT (added after the first full run found 13 failures in tests I had not run: test_real_check_dry.py, test_hygiene.py)
+Same base+r2 worktree, with the updated tests/test_real_check_dry.py and tests/test_path_confinement.py copied in:
+  pytest tests/test_real_check_dry.py tests/test_path_confinement.py -k '<run_real_check refusal tests>'
+  result: 25 failed, 210 passed, 215 deselected (all 25 are real behaviour: the old script exits 2 for a refused setting, the new rule is 8)

@@ -348,3 +348,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B18 | ab52e2b8db4a3f12a | fix-2 r7 builder | closed 06:27Z | - | - | handed back: full run NOT green (30 failed = gitleaks not on PATH, my brief omitted it); gitleaks files re-run alone 72 passed rc 0; wall-clock and hygiene guards alone rc 0 each; fails-before 27 failed + 5 errors (19 behavioural); mutation 13/13; row 8 chosen "no mode check" (superseded by r7 review M2: r8 adds it); RETRY_AFTER_MAX_SECONDS 3600 s is B18's own choice (r8 writes a decision record); sha in raw/b18-patch-sha256.txt | superseded by B19 (r8) |
 | B19 | fix-2 r8 builder | closed 06:46Z, handed back (full run red on hygiene, fixed in text) | next: reviews |
 | R17a/R17b | egm-design, egm-codebase-details on fix-2 r8 | started 06:48Z, expect ~15 min | check 07:03Z |
+| B22 | fix-2 r9 builder | started 06:55Z, expect 60 min | check 07:10Z |
