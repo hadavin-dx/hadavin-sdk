@@ -1,5 +1,35 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:40 UTC / 12:10 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| af6c47e8 (r7j builder) | all r7h review findings + m7 exit 3 + O1, O4, O5, O6, O8, O9, O20 | fix-dont-defer | 06:33 / 12:03 | 50 min box (about 07:25) | r7j | RUNNING. It got your m7 YES (exit 3) and the O20 order (its checkpoint "lead order: m7 exit 3 for given_up or stopped; kill O20 too"). Checkpoints: "tests written, 41 pass; running real-run + related"; "fail-before done (22 fail on r7i); writing mutant runner"; "mutant run started in background on tree-R7J (no source edits until done)". NOTE: its checkpoint clock labels read 06:50, 06:55, 07:00 while the container clock is 06:40: its time stamps are wrong (it may be writing planned times), so I cannot trust its pace; I read only the line texts | hand-back; then EV7J + r7j delta reviewer |
+| a5b69f39 (EV7I runner) | ONE full run on r7i, the BASE run | compare with EV7J by id | 06:27 / 11:57 | wrapper limit about 07:12 | EV7I | RUNNING: ruff check rc 0 and format rc 0 (06:35); full run about 28% at 06:35, about 49% in the log now (06:40). No failure ids yet (they print at the end). Load 2.4 | EV7I-EVIDENCE.md |
+| ae9c3a10 (r7i delta reviewer) | the 37 tests: vacuity, own mutants, server.py | independent | 06:27 | about 07:17 | review of r7i | RUNNING. Checkpoints: lane A done: the 9 claimed mutants and 3 siblings all KILLED by the new file alone, EXCEPT sibling S-PROV-CONN survives the new file alone (it is killed by the old test_f6 per the builder; the reviewer re-runs it on the wide set); lane B 34 own mutants (X01-X34) on the wide set; lane C S-PROV-CONN wide + V01-V05 (server.py); lane D own X/Y mutants on the narrow mail set; 1 planted mutation was restored. No finding written yet; verdict unknown | core-fix-on-frozen-r7i-review.md |
+| adb9596a (EV7H part 1) | non-full evidence on r7h | delta base | 06:10 / 11:40 | box ends about 07:10 | part 1 | RUNNING. Steps 2, 3, 5 done (06:28). Mutants: N07 timed out at 240 s in alphabetical order and was re-run; lanes relaunched at 06:35 with FIND-first ordering; wide re-run (900 s) of survivors N05 and N06 started 06:40. **Slip: it used pkill once (the harness denied it, nothing ran); it then killed its own runners by recorded pid, restored mut-M and mut-P from the tree and verified with diff -rq.** I have not read its numbers | EV7H-NONFULL-EVIDENCE.md |
+| aa54df08 (mail pass 9) | new mutants on the mail/secret modules, now also regfile and others | fresh pass | 05:35 / 11:05 | box ends about 06:50 | pass 9 | RUNNING. Rows now run to M9-65 (regfile.py): KILLED example M9-62 (refuse_replacing_special never refuses; killed by the fifo test); selector-set SURVIVORS new since my last block: M9-64 (regfile readline limit without +1) and M9-65 (UTF-8 BOM not removed); both need the wide re-run before they count. Earlier: M9-18 and M9-08 REAL GAPS (low for M9-08), M9-30 EQUIVALENT in practice; M9-19 not read. Report file mail-pass9-r7g.md does not exist yet | report |
+
+The r7h review (NOT CLEAN, 0 B, 0 M, 8 minor, 3 nit) is committed (38ee2cf3). r7j covers all of it. Pass 9 survivors M9-64 and M9-65 on regfile.py are NOT in r7j: if the wide set confirms them they go in r7k as a TEST-ONLY delta (your 06:28 rule), unless a source change is needed.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7j hand-back and its numbers | running; its time stamps are off | verify sha256, RESULTS, the exit-3 tests |
+| EV7I failing ids vs EV7G | at about 49% | read at the end |
+| r7i review verdict, EV7H numbers, pass 9 report | running | resolve |
+| M9-64, M9-65 wide re-run; M9-19 | pending | r7k only if real |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7j hand-back: verify sha256 and the RESULTS lines (exit-3 contract, changed tests, O-mutants), copy (CRLF as .gz), start EV7J (one full run, staged git copy, machine state) and the fresh r7j reviewer together; compare ids with EV7I and EV7G.
+2. Read the r7i review, EV7I (failing ids) and EV7H part 1; any source Blocker/Major goes to r7k.
+3. On a clean pass: freeze (final tree r7j or later), rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 06:32 UTC / 12:02 IST
 
 **r7h REVIEW DONE (fresh, handover/core/review/core-fix-on-frozen-r7h-review.md): NOT CLEAN, 0 Blocker, 0 Major, 8 minor, 3 nit.** Closed: m1 Kelvin sign (ASCII check at all four validators; the reviewer's own sweep of lower/upper/casefold/normalize/re.I/\d found no missed sibling), m2 even share and n1 cap in the main case. It re-planted 12 of the builder's 15 mutants in clean copies: all killed; M9-02 and its 3 siblings killed by r7h's order pins; its own 15 mutants: 8 killed, 7 survived (O1, O4, O5, O6, O8, O9, O20). The old r7g gaierror test was replaced by the opposite property by decision (stricter for the new behaviour). Order of secret reading: enforced at FIVE separate sites by source order, no shared choke point (smtp send, live_claude, crm _call, imap, n8n at import); each pinned by its own test.
