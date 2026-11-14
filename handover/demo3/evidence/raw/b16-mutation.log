@@ -1,7 +1,38 @@
-KILLED: rstrip->strip at the end of the file :: 1 failed in 0.04s
-KILLED: O_NOCTTY removed :: 1 failed, 60 passed in 0.19s
-KILLED: S_ISREG check removed :: 1 failed, 63 passed in 0.15s
-KILLED: inf check removed :: 1 failed, 70 passed in 0.43s
-KILLED: replace flag flipped :: 1 failed, 48 passed in 0.10s
-KILLED: n8n reader back to its own open :: 1 failed, 62 passed in 0.14s
-KILLED: usd cap finite check removed :: 1 failed, 73 passed in 0.36s
+# B16 mutation log (fix-5 r7). First run: every mutant applied alone to a copy of the final tree; target files: test_reset_scripts, test_reset_ps1_pid_rules, test_reset_ps1_links, test_port_helpers, test_http_guard (-x)
+sh pass 1 also stops (kill added in pass 1) | KILLED | 1 failed, 53 passed in 16.90s
+sh exit 5 message forgets what was stopped | KILLED | 1 failed, 55 passed in 18.10s
+sh byte order mark not skipped | KILLED | 1 failed, 57 passed in 29.26s
+sh folder check dropped | KILLED | 1 failed, 45 passed in 16.33s
+sh read loop reads nothing | KILLED | 1 failed, 4 passed in 2.66s
+sh read not in C locale | KILLED | 1 failed, 94 passed, 5 skipped in 24.88s
+sh version guard minor < 4 -> < 3 | KILLED | 1 failed, 48 passed in 16.34s
+sh pid files not deleted (pass 3) | KILLED | 1 failed, 6 passed in 7.03s
+sh stale pid file stopped in pass 1 skipped: ours judged stale | KILLED | 1 failed, 5 passed in 2.75s
+ps1 final delete without -LiteralPath | KILLED | 1 failed, 98 passed, 5 skipped in 24.87s
+ps1 final Test-Path without -LiteralPath | KILLED | 1 failed, 98 passed, 5 skipped in 24.79s
+ps1 process lookup errors silenced | KILLED | 1 failed, 99 passed, 5 skipped in 24.99s
+ps1 lookup failure no exit 6 | KILLED | 1 failed, 99 passed, 5 skipped in 25.03s
+ps1 Convert-Path dropped | KILLED | 1 failed, 100 passed, 5 skipped in 25.12s
+ps1 byte order mark byte changed | KILLED | 1 failed, 100 passed, 5 skipped in 24.89s
+ps1 folder exit 7 -> 1 | KILLED | 1 failed, 95 passed, 5 skipped in 24.95s
+ps1 refusal back to Write-Host | KILLED | 1 failed, 101 passed, 5 skipped in 25.00s
+ps1 pattern not anchored at first character (\s* back) | KILLED | 1 failed, 63 passed in 24.81s
+ps1 Stop-Process in pass 1 | KILLED | 1 failed, 96 passed, 5 skipped in 24.93s
+ps1 Remove-Item catch drops exit 7 | KILLED | 1 failed, 95 passed, 5 skipped in 24.95s
+ps1 [Pp]ython -> python (interp 1) | KILLED | 1 failed, 71 passed in 24.71s
+ps1 exit 5 forgets already stopped | KILLED | 1 failed, 97 passed, 5 skipped in 24.90s
+ps1 cap -ge 64 -> -gt 64 | KILLED | 1 failed, 94 passed, 5 skipped in 24.88s
+support width 5000 -> 6000 | SURVIVED | 210 passed, 8 skipped in 25.04s
+support width ignores count | KILLED | 1 failed, 125 passed, 8 skipped in 25.21s
+support restart uses first half | KILLED | 1 failed, 127 passed, 8 skipped in 25.15s
+support restart no modulo | KILLED | 1 failed, 198 passed, 8 skipped in 25.17s
+support worker regex too loose | KILLED | 1 failed, 197 passed, 8 skipped in 25.92s
+support every worker gets range 0 | KILLED | 1 failed, 125 passed, 8 skipped in 25.60s
+support range start back to 40000 | KILLED | 1 failed, 125 passed, 8 skipped in 25.30s
+support last = first+width | KILLED | 1 failed, 125 passed, 8 skipped in 25.04s
+support given-free not cleared | KILLED | 1 failed, 201 passed, 8 skipped in 24.77s
+support serial uses range always | KILLED | 1 failed, 1 passed in 0.16s
+support missing count not max | KILLED | 1 failed, 192 passed, 8 skipped in 24.91s
+tests: a direct bind to port 0 added | KILLED | 1 failed, 202 passed, 8 skipped in 25.09s
+# fix-up: test_a_single_worker_gets_a_block_of_at_most_5000... added for the one survivor; rerun of that mutant only:
+support width 5000 -> 6000 | KILLED | 1 failed, 126 passed, 8 skipped in 24.84s

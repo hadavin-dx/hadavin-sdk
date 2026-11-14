@@ -1889,3 +1889,10 @@ DONE (with output):
 Register: no agents/shells/jobs running.
 
 
+
+## HEARTBEAT 99 (05:31Z, 11:01 IST)
+* fix-2 r6: B15b handed back; its second full run is at ~6-8%, ends about 05:42Z. Two fresh egm reviewers (code details, design) started on snapshot tree 3633781d. New patch shas 9ee2600a and 20afec29.
+* B16 (fix-5 r7) and B17 (fix-10 r2) still building; nothing read from them yet.
+* FAILURES AND RETRIES: B15 first full run failed 2 tests in its own new file (fixed at class level, re-run in progress).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): the second full run result; fix-2 r6 review; fix-5 r7, fix-10 r2 results; any PowerShell script has never run (lead's Windows run); stack not built.
+WHAT I WOULD DO NEXT (ranked): 1. read the full-run tail at 05:42Z; 2. save the two reviews and resolve; 3. take B16/B17 hand-backs to reviewers.

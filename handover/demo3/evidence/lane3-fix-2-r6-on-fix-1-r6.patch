@@ -2666,10 +2666,10 @@ index 0000000..9650021
 +        envnum.read_secret_file(f, "made-up key", "key", strip_inner_space=True)
 diff --git a/tests/test_one_key_file_rule_r6.py b/tests/test_one_key_file_rule_r6.py
 new file mode 100644
-index 0000000..b8e4e23
+index 0000000..2e47059
 --- /dev/null
 +++ b/tests/test_one_key_file_rule_r6.py
-@@ -0,0 +1,390 @@
+@@ -0,0 +1,392 @@
 +"""Fix-2 round 6: one line-end rule for every secret file, one reader outside envnum nowhere, one Retry-After reader,
 +finite spending caps, one word "lead-book". Made-up data only; fake keys are built from parts."""
 +
@@ -2682,6 +2682,7 @@ index 0000000..b8e4e23
 +import re
 +import sys
 +import threading
++from email.utils import formatdate
 +from pathlib import Path
 +
 +import pytest
@@ -2914,7 +2915,8 @@ index 0000000..b8e4e23
 +
 +
 +# ---------------------------------------------------------------- 8: one Retry-After reader at four sites
-+BAD_AFTER = ["inf", "-inf", "nan", "1e999", "-1", "Wed, 21 Oct 2026 07:28:00 GMT", "", "1_0", "١٢", None]
++HTTP_DATE = formatdate(0, usegmt=True)  # wall-clock: only builds a date text
++BAD_AFTER = ["inf", "-inf", "nan", "1e999", "-1", HTTP_DATE, "", "1_0", "١٢", None]
 +
 +
 +def test_retry_after_seconds_is_finite_and_not_negative() -> None:
@@ -3018,7 +3020,7 @@ index 0000000..b8e4e23
 +    ("scripts/run_real_check.py", 'for p in sorted(run_dir.glob(f"desk-*{suffix}")):'): "glob never raises on a fault",
 +    ("demo_only/portal_demo.py", "if f.is_file():"): "a fixed asset name inside the demo's own folder",
 +    ("demo_only/portal_demo.py", "for f in folder.glob(f\"{FLAG_TEMP_PREFIX}*{FLAG_TEMP_SUFFIX}\"):"): "inside try/except OSError",
-+    ("demo_only/portal_demo.py", "if f.is_file() and not f.is_symlink() and f.stat().st_mtime < cutoff:"): "inside try/except OSError",
++    ("demo_only/portal_demo.py", "if f.is_file() and not f.is_symlink() and f.stat().st_mtime < cutoff:"): "inside try/except OSError",  # wall-clock: a line of text, no clock use
 +    ("load_tools/check_invariants.py", "if not path.is_file():"): "the path was just listed folder by folder by confine_existing",
 +    ("tools/hygiene.py", "files = [f for f in _git_text(repo, \"ls-files\").splitlines() if (repo / f).is_file()]"): "names from git ls-files, not a setting",
 +    ("tools/pathconfine.py", "if entry.is_symlink():"): "a directory entry the folder listing just returned, not a path",
