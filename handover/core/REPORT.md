@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 14:10 UTC / 19:40 IST
+
+**EV7S at 14:10Z (read from out/EV7S files; no verdict, nothing judged; no EV7S-EVIDENCE.md yet):**
+- **pytest-full.log: progress marker 78%; 0 `F` characters; no FAILED/ERROR line.** Started 13:42Z, so about 28 min for 78%.
+- **Random 40 mutants: 26 rows so far = 22 KILLED, 4 SURVIVED: R07 (demo_only/bad_request.py, test "quiet or gone or hang"), R10, R19, R20 (all scripts/run_real_check.py, test selector s3: the new counter/exit logic).** Whether any is equivalent: NOT judged. Three of four sit in the m3 counter path (mail/money, uncapped), so they go to the fresh reviewer and, if real, to a test-first fix.
+- S mutants S01-S24 and X1ctx all KILLED; m8 Q13/Q14/Q19/mutB/X1/X1ctx KILLED; mutA NOT-APPLIED (pattern count 0), the runner's variant mutA2 KILLED (mutA itself not verified).
+- Not done yet: remaining 14 random mutants, hostile table, ruff, suppressions, final report.
+
+Agents running: 1. ASK: none. Next block about 14:20Z.
+
+
 ## STATUS (core lead) 14:00 UTC / 19:30 IST
 
 **EV7S state at 14:00Z (read from out/EV7S files; the runner has not reported; I judge nothing):**
