@@ -1,5 +1,34 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:53 UTC / 11:23 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| ae16bd9e (r7h builder) | m1, m2, n1, three thread sites, plus my 05:48 note (raw gaierror text; burst:4 first answered then all dropped ends exit 0 with 3 errors) | fix-dont-defer | 05:20 / 10:50 | box ends about 06:10 | r7h | RUNNING, NO HAND-BACK YET. Patch files exist in out/R7H (written 05:46; apply matrix a-crlf, b-crlf, c-lf git apply --check rc 0; its own run: r7g tests 60 pass, r7h tests 25 pass); 05:52 checkpoint "runsel at 63/81" (its mutant or selector loop). I have NOT verified its sha256 or read its RESULTS: the 05:46 patch may be rebuilt after my 05:48 note | hand-back, then EV7H + fresh delta reviewer in parallel |
+| aa54df08 (mail pass 9) | 30+ new mutants on the mail/secret modules | fresh pass | 05:35 / 11:05 | box ends about 06:50 | pass 9 | RUNNING: 7 clean selector sets rc 0 (mail 411, tls 551, live 406, crm 283, reg 378, rrc 889, live 327). Mutant rows so far 4: M9-01, M9-04, M9-07 KILLED; M9-02 (smtp_provider send: password file read moved AFTER the send counter is taken) SURVIVED the selector set. It must be re-run once on the 22-file set at 900 s before I call it a gap; if it survives that, it is a candidate REAL GAP (a bad secret would cost a send before refusal: the money/mail rule says refuse BEFORE any reserve) | mail-pass9-r7g.md |
+| aaae555f (EV7G runner) | all steps | proof of r7g | 05:12 | DONE (hand-back read; file committed 0bda209f) | EV7G n1 | CLOSED. Full run 7 failed (all need-a-git-copy tests), 5468 passed, 8 skipped; staged copy 300 passed rc 0; fail-before 46 fail / 14 pass; 15 of 15 mutants KILLED; ruff rc 0; no stray a<newline>b file anywhere; no orphans | EV7H plan |
+
+EV7G remaining steps: none; all done. Its two facts (raw gaierror text for an empty host and for "example.test."; burst:4 first answered then all dropped: exit 0 after 61.8 s, 3 errors) went to the r7h builder at 05:48 to fix or justify with a test and a mutant.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7h hand-back, sha256 check, RESULTS read | builder not finished | at hand-back |
+| EV7H (one full run) and the fresh r7h delta reviewer | wait for the final r7h patch | start together |
+| M9-02 re-run on the 22-file set; the other pass 9 rows | pass in progress | pass 9 does it itself; I read its report |
+| the two EV7G facts | with the builder | its RESULTS |
+| older packages' hashes (r2 to r6, v1, v2, F*, docs, f8) | no recorded hash | compare to build originals |
+| first clean-set CRASH, orphan-worker test, stray a<newline>b writer (not found in EV7G either) | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7h hand-back: verify sha256, read RESULTS (including the two EV7G facts), copy patches (CRLF as .gz, hash-check), start EV7H and the fresh delta reviewer together.
+2. Read pass 9 when it ends; a real gap (M9-02 if it survives the big set) goes to an r7i batch together with any r7h review Blocker or Major.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 05:44 UTC / 11:14 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
