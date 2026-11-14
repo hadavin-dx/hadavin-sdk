@@ -20,22 +20,4 @@
 ........................................................................ [ 69%]
 ........................................................................ [ 72%]
 ...............ssssss................................................... [ 75%]
-........................................................................ [ 79%]
-........................................................................ [ 82%]
-........................................................................ [ 86%]
-........................................................................ [ 89%]
-...............................................s........................ [ 93%]
-..s..........................................................s.......... [ 96%]
-......................................................................   [100%]
-=========================== short test summary info ============================
-SKIPPED [8] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
-SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
-SKIPPED [2] tests/test_ps1_pins.py:202: Windows PowerShell only; not run in this build
-SKIPPED [2] tests/test_ps1_pins.py:210: Windows PowerShell only; not run in this build
-SKIPPED [1] tests/test_ps1_pins.py:218: Windows PowerShell only; not run in this build
-SKIPPED [1] tests/test_ps1_pins.py:225: Windows PowerShell only; not run in this build
-SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
-SKIPPED [1] tests/test_start_all_late_refusal.py:276: this computer has no IPv6 loopback address
-SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
-2068 passed, 18 skipped in 211.17s (0:03:31)
-rc=0
+................................................
