@@ -1,5 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 12:40Z - heartbeat: idle, nothing running, waiting for laptop kill-point results; nothing new pushed, nothing read.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No laptop counts read; T4, T7, pattern check, N8N-START.md, real-node flows, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read laptop results when pushed. 2. Lead id pattern check (flows text edit). 3. N8N-START.md text.
+
 ## Block 12:30Z - heartbeat: idle, nothing running; laptop runner has T10 T8 T11 T13 T14 rc 0 on the fixed flows, K1 running; I read nothing yet; nothing new pushed.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)
