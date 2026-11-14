@@ -1,28 +1,54 @@
-ture[str], monkeypatch: pytest.MonkeyPatch, open_: int, unknown: int
-    ) -> None:
-        """The number in the note follows the counting rule: created + the open part, the open part capped by the leads
-        that have no created contact (so the note never claims more contacts than leads)."""
-        seen = _capture_results(monkeypatch)
-        _readback_stops(monkeypatch)
-        real = rrc.read_counter_files_checked
-    
-        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
-            read = real(run_dir, suffix, tag)
-            if suffix != ".hubspot.json":
-                return read
-            return rrc.CounterRead({"created": 2, "create_open": open_, "create_unknown": unknown}, read.files, 0)
-    
-        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
-        rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
-        capsys.readouterr()
-        leads = seen[-1]["leads_in_book"]
-        note = seen[-1]["note"]
->       assert f"up to {leads} contacts may still be in HubSpot" in note, (leads, note)
-E       AssertionError: (9, "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts...ontacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.")
-E       assert 'up to 9 contacts may still be in HubSpot' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts in ...contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand."
+       "gets": 1,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "hubspot_calls_by_the_desk": {
+E             "archives": 0,
+E             "calls": 9,
+E             "conflicts": 0,
+E             "create_open": 0,
+E             "create_unknown": 0,
+E             "created": 9,
+E             "creates": 9,
+E             "gets": 0,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "imap_logins": 2,
+E           "leads_in_book": 9,
+E           "leads_with_more_than_one_mail": 0,
+E           "mail_last_poll_failed": false,
+E           "mail_poll_repeats": 0,
+E           "mailbox_folders_could_not_check": 0,
+E           "mails_allowed_by_the_desk_max": 12,
+E           "mails_in_mailbox": 8,
+E           "mails_in_spam_folder": 0,
+E           "mails_per_mailbox_in_config_order": [
+E             3,
+E             5
+E           ],
+E           "mails_sent_by_the_desk_total": 7,
+E           "people_sent": 8,
+E           "requests_intended": 13,
+E           "seconds_total": 34.3,
+E           "smtp_by_the_desk": {
+E             "attempts": 9,
+E             "sent": 7
+E           },
+E           "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot",
+E           "unseen_contacts": 0
+E         }
+E         
+E         result file: /home/user/build/rr6/out/EV7U/tmp-mut/real-dry-oli417on/run/result.json
+E         clean-up: 9 contacts archived (only those carrying this run's lead ids)
+E         
+E       assert 0 == 1
+E        +  where 1 = rrc.EXIT_FAILED
 
-tests/test_r7u_a_findings.py:454: AssertionError
+tests/test_r7u_b_findings.py:109: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[0-100]
+FAILED tests/test_r7u_b_findings.py::test_b7_one_unreadable_mail_counter_file_is_not_a_smaller_number_it_fails_closed
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-1 failed, 4 passed, 35 deselected in 227.33s (0:03:47)
+1 failed, 9 deselected in 35.27s

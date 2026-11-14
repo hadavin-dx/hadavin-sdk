@@ -600,7 +600,7 @@ def _readback_failed(
                 f"{hub_stats.get('create_unknown', 0)} ended with an unknown outcome "
                 "(each may have made one more contact)"
             )
-        most = contacts_not_accounted_for(created, 0, unknown_outcome, None)
+        most = contacts_not_accounted_for(created, 0, unknown_outcome, leads)
         note += f"; up to {most} contacts may still be in HubSpot, "
     else:
         note += "; an unknown number of contacts may still be in HubSpot, "

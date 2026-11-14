@@ -10,3 +10,5 @@ probe table done Sat Nov 14 17:35:12 UTC 2026
 chain 25935
 watchdog pid 10145 kills 8173 at ~18:40; replaced 3600s timeout (killed timeout pid 8172, my own) because the run needs more than 60 min Sat Nov 14 17:49:26 UTC 2026
 NOTE wrapper.log rc=137 is from my kill -9 of the timeout wrapper at 17:49:25Z, NOT pytest's rc
+mutants done (A 38 killed; B 15 killed + B13/B15 re-pointed to loopback.py killed; C 26 killed 1 survived L11) Sat Nov 14 18:06:53 UTC 2026; flake quiet starting
+flakeQ 2780

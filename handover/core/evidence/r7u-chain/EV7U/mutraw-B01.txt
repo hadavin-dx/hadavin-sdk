@@ -1,28 +1,21 @@
-ptureFixture[str], monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """One counter file cannot be read: r7t used the swallowing reader and named the partial sum as the number of
-        contacts; r7u uses the checked reader and says the number is not known."""
-        seen = _capture_results(monkeypatch)
-        _readback_stops(monkeypatch)
-        real = rrc.read_counter_files_checked
-    
-        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
-            read = real(run_dir, suffix, tag)
-            if suffix != ".hubspot.json":
-                return read
-            return rrc.CounterRead({**read.totals, "created": 5}, read.files, read.unreadable + 1)
-    
-        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
-        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
-        capsys.readouterr()
-        assert code == rrc.EXIT_FAILED
-        note = seen[-1]["note"]
->       assert "an unknown number of" in note and " 5 contacts" not in note and "create requests" not in note, note
-E       AssertionError: the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 5 contacts in total (its own counter); up to 5 contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
-E       assert ('an unknown number of' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 5 contacts in ...contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.")
+.F
+=================================== FAILURES ===================================
+_ test_b7_the_mail_counter_rule_needs_a_file_no_unreadable_file_and_the_sent_number _
 
-tests/test_r7u_a_findings.py:430: AssertionError
+    def test_b7_the_mail_counter_rule_needs_a_file_no_unreadable_file_and_the_sent_number() -> None:
+        known = rrc.smtp_counter_is_known
+        assert known(rrc.CounterRead({"sent": 0, "attempts": 0}, 1, 0)) is True
+        assert known(rrc.CounterRead({"sent": 7}, 2, 0)) is True
+        assert known(rrc.CounterRead({"attempts": 3}, 1, 0)) is False  # no number of sent mails
+>       assert known(rrc.CounterRead({"sent": 3}, 0, 0)) is False  # no file found
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert True is False
+E        +  where True = <function smtp_counter_is_known at 0x7f1cdd7cc220>(CounterRead(totals={'sent': 3}, files=0, unreadable=0))
+E        +    where CounterRead(totals={'sent': 3}, files=0, unreadable=0) = <class 'run_real_check.CounterRead'>({'sent': 3}, 0, 0)
+E        +      where <class 'run_real_check.CounterRead'> = rrc.CounterRead
+
+tests/test_r7u_b_findings.py:167: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_does_not_name_a_number_when_the_counter_is_not_known
+FAILED tests/test_r7u_b_findings.py::test_b7_the_mail_counter_rule_needs_a_file_no_unreadable_file_and_the_sent_number
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
-1 failed, 2 passed, 35 deselected in 69.43s (0:01:09)
+1 failed, 1 passed, 11 deselected in 6.44s
