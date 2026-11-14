@@ -1,6 +1,24 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 08:43Z - Skip-on-Conflict: probe result in, burst series running
+
+- In my runs (n8n 2.46.6, one fresh stack, one probe each; synthetic ids): Postgres Insert with Skip on Conflict, NEW id: 1 output item holding the inserted row (id, lead_id, note). DUPLICATE id: also 1 output item, but it holds only {"success": true} and no row fields; the HTTP reply was 200. So the node does not return 0 items on a skip; a flow can tell new from skipped by checking whether the item has the lead_id field. Not yet burst-tested. One side effect seen: a skipped insert still used up a number of the serial id column (ids 1, 3, 5 for the three new rows).
+- Data Table Upsert: NEW and existing both return 1 item; created and updated time stamps are equal for new and differ for existing (same as my variant c). "If Row Does Not Exist" only checks (passes the input item on, or 0 items); with a following Insert node, a DUPLICATE gave 0 items after the check and the webhook answered HTTP 500 "No item to return was found" in my probe (a single call, no race).
+- Disk: the machine disk went to 0 MB free. Cause I measured: each fresh work folder's link copy of node_modules costs about 280 MB of disk metadata. I deleted only my own failed sk-* folders (after saving their outputs), and the launcher now saves results and deletes each stack folder after its run. Nothing of R2b was deleted. Also: dockerd had died (log ends 07:06Z); the R2b containers are gone; restarted on the same data folder.
+- Attribution error in my own first script (execution lists took a time window and showed the previous call's execution); fixed to an id baseline before the call. The probe rows above for the executions use the earlier method only for the counts of items; the node output facts are from the reply bodies, which do not depend on it.
+- Running: 5 fresh stacks x 1 burst, then 1 reused stack x 5 bursts, on 4 workflows.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No burst numbers yet; the report file n8n-skip-on-conflict.md is not written.
+- Probe ran once only; the "success true" shape on a skip is one observation per workflow (3 workflows showed it), not a repeated one.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish the fresh and reused burst series and count rows (must be 1 per id).
+2. Write n8n-skip-on-conflict.md with exact outputs and the one-sentence answer.
+3. Push and write the checkpoint block (due about 08:55Z).
+
+
 ## Block 08:35Z - Skip-on-Conflict test started (08:30Z order)
 
 - Found at start of this job: dockerd had died (its log ends 07:06Z), so the R2b containers are gone. I restarted dockerd on the same data folder (same flags, pid file kept). Docker answers, the pinned postgres image is still there. The R2b run folders and scratch node_modules are untouched.
