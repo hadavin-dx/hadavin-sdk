@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 05:28Z): R2b e unit 3 FINAL, unit 4 at K2 (2 of 5 rows in K2), container up 2h37, nothing killed
+- Unit 3 final (rc 0, 10 rows): second CRM row 0 of 10; 2+ emails 10 of 10; every row (1 CRM, 2 emails, sent).
+- Unit 4 (started about 05:17Z): K3 5 rows in, K2 running since 05:24:25Z; 7 rows so far: 1 row ended with 2 CRM posts / 3 emails / sent, 6 rows (1,2,sent); 2+ emails 7 of 7.
+- e totals so far: second CRM row 1 of 27 rows in (unit 2: 0/10, unit 3: 0/10, unit 4: 1/7). R2 1 of 10, published 4 of 10. Idle 99-100% in samples.
+- Next: unit 4 ends about 05:28Z, unit 5 about 05:39Z, then 1b about 05:50Z.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Units 4 (3 rows), 5, 1b; combined e count; variant a re-run on fresh stacks (not run).
+- N8N-RERUN-1.md R2b rows + mapping + READ (summary is in the 05:04 block, not yet in the file).
+- R3-partial, doc tests, CI-equivalent, fresh doc reviewer, egm reviewer on the updated file.
+## WHAT I WOULD DO NEXT (ranked)
+1. Finish e units; no new heavy job until they end.
+2. Write N8N-RERUN-1.md R2b + mapping + READ; push; then R3-partial b K2/K3.
+3. Ask you whether variant a is to be repeated as 5 fresh stacks.
 ## REPORT (clock 05:15Z): R2b e unit 3 half done (K3 5 rows in, K2 running), container up 2h25, nothing killed
 - Unit 3 (fresh stack, started 05:05:38Z): K3 5 rows: every row 1 CRM / 2 emails / sent (0 second CRM rows). K2 rows 1-2 in: same (1/2/sent); rows 3-5 running (K2 started 05:11:43Z). Machine idle 100% in the last load sample.
 - Unit 2 (complete): second CRM row 0 of 10. So far e: 0 second-CRM rows in 17 rows (unit 2 x10, unit 3 x7), R2 1 of 10, published 4 of 10.
