@@ -149,8 +149,10 @@ NOT RUN statements: 3, 14 (demo harness on v4). Part NOT RUN: 6 (normal-path ale
 20. "At the film lease of 45 s, a lead interrupted by an n8n crash was finished about a minute after the crash." Numbers, seconds from the kill to a final state (lane3, independent harness, n8n 2.46.6, one machine, made-up data, film-v4 flows; tag RELAYED-INDEPENDENT; raw file: lane3 kill/RESULTS.md Part 3, not in my checkout):
 - K1 (killed after the claim, before the CRM write): n=5, median 60.8, max 61.9, all done.
 - K2 (killed after the CRM write, before the mail step): n=5, median 60.9, max 61.2, all done.
-- K3 (lane3 meaning, see statement 12 naming; read as killed after mail send in this table, ask lead): n=4, median 61.0, max 61.6, unknown with 1 alert. n is SMALL.
-- K6: n=2, median 60.8, max 61.5, unknown with 1 intake mail and 1 alert. n is SMALL.
+- K3 (lane3 meaning, lead-confirmed 17:3xZ: n8n killed after the intake mail was SENT but before the table update): n=4, median 61.0, max 61.6. Plain wording allowed: "killed after the mail left: the lead ends unknown with one alert to the owner". n is SMALL; no timing in a caption.
+- K6 (lead: same kind of kill, film K6 variant; exact variant text not given to me, ask lane3 via the numbers file when final): n=2, median 60.8, max 61.5, unknown + 1 intake + 1 alert. n is SMALL.
 - From n8n coming back up: 52.9 to 54.9 s (the restart of about 8 s is inside the kill-to-final numbers).
 - For contrast, lease 120 s (lane3): 144.2 to 144.4 s.
+Caption rule (lead): only K1 and K2 (done) in the caption; K3 only as the plain sentence above.
+
 Caption wording: "about a minute after the crash (measured at lease 45 s, K1 n=5 median 60.8 s max 61.9 s; K2 n=5 median 60.9 s max 61.2 s)". The caption clock starts at the kill. NEVER "within 60 s": the medians and maxima are above 60 s. Do not pool K1 and K2 into one median (I have only per-test medians). K3 and K6 are small samples: do not put them in a caption. Final n, median and max replace these when the last 2 runs are relayed.

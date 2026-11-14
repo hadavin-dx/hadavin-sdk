@@ -1,5 +1,10 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 17:26Z - K3/K6 wording set from lead answer; agents running 0
+- Statement 20 and scene 4 caption: caption carries only K1 (n5 60.8/61.9) and K2 (n5 60.9/61.2). K3 (lane3: killed after the intake mail was sent, before the table update; n4) allowed only as "killed after the mail left: the lead ends unknown with one alert to the owner", no timing. K6 (n2) off screen; its exact variant text is not known to me, to ask lane3 via the numbers file when final.
+- Still PROVISIONAL until the last 2 lane3 runs. Raw file not in my checkout. Ran nothing myself.
+- NOT DONE / NOT CHECKED: final lease-45 numbers; T17/T18 laptop results; real HubSpot id vs vid; whether "K3" will be confused with the demo K3 (statement 12 naming kept).
+- WHAT I WOULD DO NEXT: (1) swap in final lane3 numbers when relayed; (2) fold T17/T18 results when relayed; (3) WP6 real-node id/vid check list.
 ## Block 17:20Z - lease-45 numbers filled (provisional); agents running 0
 - Statement 20 and scene 4 caption filled from the lead relay (lane3, as of 17:19Z): K1 n5 60.8/61.9 s done; K2 n5 60.9/61.2 s done; K3 n4 61.0/61.6 unknown + 1 alert; K6 n2 60.8/61.5 unknown + 1 intake + 1 alert; from n8n up 52.9 to 54.9 s; lease 120 144.2 to 144.4 s. Caption: 'about a minute after the crash (measured at lease 45 s, K1 n=5 median 60.8 max 61.9; K2 n=5 median 60.9 max 61.2)'. No pooled median (I have none). K3 and K6 small, off screen. Never 'within 60 s'.
 - PROVISIONAL: final numbers from lane3 kill/RESULTS.md Part 3 when the last 2 runs are relayed. Raw file not in my checkout.
