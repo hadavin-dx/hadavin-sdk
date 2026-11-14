@@ -1,0 +1,1082 @@
+diff --git a/tests/test_reset_ps1_links.py b/tests/test_reset_ps1_links.py
+index 452e0a5..3957146 100644
+--- a/tests/test_reset_ps1_links.py
++++ b/tests/test_reset_ps1_links.py
+@@ -22,13 +22,15 @@ def _strip_comments(text: str) -> str:
+ 
+ 
+ # what reads a pid file (reset.ps1 opens it with .NET and reads at most 64 bytes), stops a program, deletes a file
+-ACTIONS = ("[System.IO.File]::Open", "Stop-Process", "Remove-Item")
++ACTIONS = ("[System.IO.File]::Open", "Stop-Process", "Remove-Item", "Convert-Path", "Get-CimInstance")
+ # The short names PowerShell also accepts for the same three cmdlets (built in aliases, case does not matter).
+ ALIASES = {
+     "[System.IO.File]::Open": (),
+     "Get-Content": ("gc", "cat", "type"),
+     "Stop-Process": ("kill", "spps"),
+     "Remove-Item": ("rm", "del", "ri", "rmdir", "erase", "rd"),
++    "Convert-Path": ("cvpa",),
++    "Get-CimInstance": ("gcim",),
+ }
+ 
+ 
+@@ -48,9 +50,9 @@ def _check_code(text: str | None = None) -> str:
+     snippet = found.group("code")
+     assert re.search(r"os\.path\.realpath\(\s*sys\.argv\[1\]\s*\)", snippet), "the folder is not resolved with realpath"
+     assert "startswith" in snippet, "the check does not compare against the data folder"
+-    # the result of that check must decide: anything but True is refused with exit code 2 before anything is stopped
++    # the result of that check must decide: anything but True is refused with exit code 8 before anything is stopped
+     after = code[found.end() :]
+-    refusal = re.search(r"if\s*\(.*\$inside.*\)\s*\{[^}]*exit\s+2", after, flags=re.DOTALL)
++    refusal = re.search(r"if\s*\(.*\$inside.*\)\s*\{[^}]*exit\s+8", after, flags=re.DOTALL)
+     assert refusal, "no refusal on a failed check"
+     for action in ACTIONS:  # the refusal comes before the first read of a pid file, the first stop and the first delete
+         assert action in after, f"{action} is not in reset.ps1: the order check would prove nothing"
+@@ -84,13 +86,13 @@ def test_the_real_path_check_accepts_a_folder_inside_data_and_refuses_a_link_out
+     assert _inside(outside, tmp_path) == "False"
+ 
+ 
+-def test_a_comment_that_names_the_old_call_does_not_fail_the_text_check() -> None:
++def test_text_only_a_comment_that_names_the_old_call_does_not_fail_the_text_check() -> None:
+     sample = "# GetFullPath is not used any more\n<# GetFullPath\n IsPathRooted #>\nx = 1\n"
+     assert not re.search(r"GetFullPath|IsPathRooted", _strip_comments(sample))
+     assert re.search(r"GetFullPath", _strip_comments("x = [IO.Path]::GetFullPath($p)  \n"))  # real code is still seen
+ 
+ 
+-def test_the_refusal_must_come_before_every_read_stop_and_delete() -> None:
++def test_text_only_the_refusal_must_come_before_every_read_stop_and_delete() -> None:
+     """The order check sees each of the three actions placed before the refusal (a change that moves one of them up)."""
+     text = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
+     _check_code(text)  # the real file is in order
+@@ -103,7 +105,7 @@ def test_the_refusal_must_come_before_every_read_stop_and_delete() -> None:
+ 
+ 
+ @pytest.mark.parametrize("name", [a for names in ALIASES.values() for a in names])
+-def test_a_short_name_of_a_read_stop_or_delete_before_the_refusal_is_seen_too(name: str) -> None:
++def test_text_only_a_short_name_of_a_read_stop_or_delete_before_the_refusal_is_seen_too(name: str) -> None:
+     """kill, rm, del, cat, gc, spps, ri ... do the same as the full cmdlet names: the order check must see them.
+ 
+     This is a LINT-STYLE ORDER GUARD, not a security boundary: it reads text and cannot run PowerShell. Known bypasses
+@@ -122,7 +124,7 @@ def test_a_short_name_of_a_read_stop_or_delete_before_the_refusal_is_seen_too(na
+     _check_code(late)
+ 
+ 
+-def test_the_short_name_check_does_not_mistake_parts_of_other_words_for_a_command() -> None:
++def test_text_only_the_short_name_check_does_not_mistake_parts_of_other_words_for_a_command() -> None:
+     text = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
+     marker = 'if ("$inside".Trim()'
+     harmless = "$rm = 1; $kill = 2; Write-Host 'a cat and a del and a gc'; -rm; x.del; $env:cat"
+diff --git a/tests/test_reset_ps1_pid_rules.py b/tests/test_reset_ps1_pid_rules.py
+index 006a087..93ee092 100644
+--- a/tests/test_reset_ps1_pid_rules.py
++++ b/tests/test_reset_ps1_pid_rules.py
+@@ -3,24 +3,52 @@ process is the desk only when its command line is `python -m lead_desk.server ..
+ marker text is just somewhere in it. NOT run here: PowerShell and Windows (no Windows runner was available when this
+ was written, so reset.ps1 itself is unverified by a run). What runs on every machine: the script text is read, the
+ old bare `-match` and bare `[int](Get-Content ...)` must be gone, and the pattern the script holds is applied to a
+-table of command lines with Python's `re` (close to, but not the same engine as, PowerShell's). The one test that
+-really runs reset.ps1 needs Windows."""
++table of command lines with Python's `re` (close to, but not the same engine as, PowerShell's). The tests that
++really run reset.ps1 need Windows. A test whose name starts with test_text_only_ reads the script text and nothing
++else: it shows that a line is there, not that it works (count them with `pytest --collect-only -q -k text_only`)."""
+ 
+ from __future__ import annotations
+ 
+ import os
+ import re
++import shutil
+ import subprocess
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO, WINDOWS, reset_kept, reset_run, start_proc, stop_proc, wait_until
++from support import REPO, WINDOWS, reset_kept, reset_ports, reset_run, start_proc, stop_proc, wait_until
+ 
+ SCRIPT_TEXT = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
+ 
+ 
++def _without_comment(line: str) -> str:
++    """The line up to a `#` that starts a comment: a `#` outside single and double quotes. (reset.ps1 holds no `#`
++    inside a string; a test below shows that a trailing comment is dropped.)"""
++    quote = ""
++    for i, ch in enumerate(line):
++        if quote:
++            if ch == quote:
++                quote = ""
++        elif ch in "'\"":
++            quote = ch
++        elif ch == "#":
++            return line[:i].rstrip()
++    return line
++
++
++def _strip(text: str) -> str:
++    return "\n".join(c for c in (_without_comment(ln) for ln in text.splitlines()) if c.strip())
++
++
+ def _code() -> str:
+-    return "\n".join(ln for ln in SCRIPT_TEXT.splitlines() if not ln.lstrip().startswith("#"))
++    return _strip(SCRIPT_TEXT)
++
++
++def test_a_comment_after_code_is_not_code_and_a_hash_inside_a_string_is_kept() -> None:
++    assert _without_comment("Stop-Process -Id 1 # a note about Remove-Item") == "Stop-Process -Id 1"
++    assert _without_comment("# whole line") == ""
++    assert _without_comment("x = 'a # b' # c") == "x = 'a # b'"
++    assert _without_comment('Write-Host "a # b"') == 'Write-Host "a # b"'
+ 
+ 
+ def _ours_pattern() -> str:
+@@ -35,31 +63,39 @@ def _ours_pattern() -> str:
+     return "".join(parts)
+ 
+ 
+-def test_the_old_bare_substring_match_and_the_unchecked_number_are_gone() -> None:
++def test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone() -> None:
+     code = _code()
+     assert not re.search(r"-match\s+'lead_desk\\\.server\|", code), "the bare substring match is back"
+     assert "[int](Get-Content" not in code, "the pid file is converted without a shape check (abc, two lines throw)"
+-    assert "[int]::TryParse" in code and "-cmatch '^[1-9][0-9]*$'" in code, "the pid shape rule is missing"
++    assert "[int]::TryParse" in code and "-cmatch '\\A[1-9][0-9]*\\z'" in code, "the pid shape rule is missing"
+     assert re.search(r"\$proc\.CommandLine\s+-cmatch\s+\$ours", code), "the command line is not judged by -cmatch"
+     assert not re.search(r"\$proc\.CommandLine\s+-match\b", code), "the case-insensitive -match is back"
+     # an empty file gives $null: the text is built without calling .Trim() on it
+     assert re.search(r"\$null\s+-eq\s+\$raw", code), "an empty pid file is not guarded"
+-    assert "Get-Content" not in code, "the whole pid file is read (reset.sh reads at most 64 characters)"
++    assert re.search(r"(?m)^\$ours = '\^' \+ ", code), "the pattern is not anchored at the first character"
++    assert "Get-Content" not in code, "the whole pid file is read (reset.sh reads at most 67 bytes)"
+ 
+ 
+ @pytest.mark.parametrize(
+     ("line", "ours"),
+     [
+         ("python -m lead_desk.server", True),
+-        ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+-        ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+-        ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+-        ("C:\\venv\\python.exe -m lead_desk.server", True),
+-        ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+-        ("C:\\Python312\\Python.exe -m lead_desk.server", True),  # the same first letter rule as reset.sh: [Pp]ython
+-        ('"C:\\Python312\\Python.exe" -m lead_desk.server', True),  # quoted: the same [Pp]ython rule
+-        ('"C:\\Python312\\PYTHON.EXE" -m lead_desk.server', False),
++        ('"\\tools\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
++        ('"\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
++        (
++            "\\Program Files\\Python312\\python.exe -m lead_desk.server",
++            False,
++        ),  # no quotes, a space: the safe side
++        ("\\venv\\python.exe -m lead_desk.server", True),
++        ("\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
++        (
++            "\\Python312\\Python.exe -m lead_desk.server",
++            True,
++        ),  # the same first letter rule as reset.sh: [Pp]ython
++        ('"\\Python312\\Python.exe" -m lead_desk.server', True),  # quoted: the same [Pp]ython rule
++        ('"\\Python312\\PYTHON.EXE" -m lead_desk.server', False),
+         ("PYTHON.EXE -m LEAD_DESK.SERVER", False),  # -cmatch: the whole line is compared with its letter case
++        (" python -m lead_desk.server", False),  # reset.sh matches from the first character: so does reset.ps1
+         ("python -M lead_desk.server", False),
+         ("python -m Lead_Desk.Server", False),
+         ("python -m DEMO_ONLY.FAKES_SERVER", False),
+@@ -69,23 +105,33 @@ def test_the_old_bare_substring_match_and_the_unchecked_number_are_gone() -> Non
+         ("python -m xlead_desk.server", False),
+         ("python -mlead_desk.server", False),
+         ("python lead_desk.server", False),
+-        ("C:\\python-tools\\less.exe -m lead_desk.server", False),
++        ("\\python-tools\\less.exe -m lead_desk.server", False),
+         ("cmd /c echo python -m lead_desk.server", False),
+         ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+     ],
+ )
+-def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
++def test_text_only_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+     assert bool(re.search(_ours_pattern(), line)) is ours, line  # no IGNORECASE: -cmatch
+ 
+ 
+ @pytest.mark.parametrize(
+     ("text", "plain"),
+-    [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
++    [
++        ("123", True),
++        ("1", True),
++        ("007", False),
++        ("0", False),
++        ("abc", False),
++        ("12 34", False),
++        ("12\n34", False),
++        ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
++    ],
+ )
+-def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+-    found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
++def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
++    """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
++    found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+     assert found, "the pid shape rule is not in reset.ps1"
+-    assert bool(re.search(found.group("rule"), text)) is plain, text
++    assert bool(re.search(found.group("rule").replace("\\z", "\\Z"), text)) is plain, text
+ 
+ 
+ @pytest.mark.skipif(not WINDOWS, reason="runs reset.ps1 in Windows PowerShell")
+@@ -100,7 +146,7 @@ def test_reset_ps1_treats_a_pid_file_that_is_not_one_number_as_stale(book: Path,
+ @pytest.mark.skipif(not WINDOWS, reason="runs reset.ps1 in Windows PowerShell")
+ def test_reset_ps1_does_not_stop_a_program_that_only_has_the_marker_in_its_line(book: Path) -> None:
+     ready = book.parent / "ready"
+-    code = "import sys, time; open(sys.argv[-1], 'w').close(); time.sleep(60)"
++    code = "import sys, time; open(sys.argv[-1], 'w').close(); time.sleep(300)"
+     child: subprocess.Popen[bytes] = start_proc(["-c", code, "-m", "lead_desk.server.py", str(ready)], dict(os.environ))
+     try:
+         wait_until(ready.exists, what="the child is running")
+@@ -121,42 +167,151 @@ def _reset_sh_code() -> str:
+     return "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
+ 
+ 
+-def test_reset_ps1_reads_at_most_64_characters_of_a_pid_file_and_longer_means_stale() -> None:
+-    """Same rule as reset.sh (`read -N 64`, 64 or more characters = stale): a read of at most 64 bytes, then the text
+-    is dropped when it filled the buffer. A file that cannot be read stays stale (the try/catch)."""
++def test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh() -> None:
++    """The rule of reset.sh (tested there with real files): an optional UTF-8 byte order mark, then 64 bytes or more
++    is stale. reset.ps1 reads up to 67 bytes, skips the mark, and judges the bytes after it. Anchored to whole
++    lines of the script."""
+     code = _code()
+-    assert re.search(r"New-Object byte\[\]\s+64\b", code), "the pid file is not read through a 64 byte buffer"
+-    assert re.search(r"\.Read\(\$buffer,\s*0,\s*64\)", code), "the read does not stop at 64 bytes"
+-    assert re.search(r"\$count\s+-ge\s+64", code), "a pid file of 64 bytes or more is not treated as stale"
++    assert re.search(r"New-Object byte\[\]\s+67\b", code), "the pid file is not read through a 67 byte buffer"
++    assert re.search(r"while \(\$count -lt 67\)", code), "the read does not go on until 67 bytes or the end"
++    assert re.search(r"\.Read\(\$buffer,\s*\$count,\s*67 - \$count\)", code), "the read does not ask for what is left"
++    assert re.search(
++        r"if \(\$count -ge 3 -and \$buffer\[0\] -eq 0xEF -and \$buffer\[1\] -eq 0xBB -and \$buffer\[2\] -eq 0xBF\) "
++        r"\{ \$from = 3 \}",
++        code,
++    ), "the byte order mark rule is not the whole condition"
++    assert re.search(r"\$bad = \(\(\$count - \$from\) -ge 64\)", code), "64 bytes are not stale"
++    assert re.search(r"\$b -gt 126 -or \(\$b -lt 32 -and \(\$b -lt 9 -or \$b -gt 13\)\)", code), (
++        "no byte rule (NUL, above 126)"
++    )
++    assert re.search(r"if \(\$bad\) \{ \$raw = \$null \}", code), "a bad byte is not stale"
+     assert re.search(r"try\s*\{.*?\}\s*catch\s*\{", code, re.DOTALL), "an unreadable pid file is not caught"
+-    assert "64" in _reset_sh_code() and "read -r -N 64" in _reset_sh_code(), "reset.sh no longer has the 64 cap"
++    sh = _reset_sh_code()
++    body = sh[sh.index("read_pid_file() {") :]
++    body = body[: body.index("\n}\n")]  # the function alone: the whole rule sits inside it, under its own LC_ALL=C
++    assert "local LC_ALL=C" in body and "67" in body and "xef" in body.lower(), (
++        "reset.sh: not 67 bytes, mark in the function"
++    )
++    assert re.search(r"\(\( \$\{#pid\} >= 64 \)\)", body), "reset.sh: the 64 byte check is not inside read_pid_file"
++    assert '[:space:]]*}"}"' in body, "reset.sh: the trim is not inside read_pid_file"
++    assert "[![:print:][:space:]]" in body and "wc -c" in body, "reset.sh: no byte rule or size check in the function"
++
++
++def test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed() -> None:
++    """The folder line (exit 7, pass 1) and the removal line (exit 7, pass 3) are the same words in both scripts,
++    and the README holds the removal sentence once."""
++    ps1, sh = _code(), _reset_sh_code()
++    for words in (
++        "is a folder, not a pid file, so it cannot be removed; nothing was stopped or deleted",
++        "the desk's records and the logs were not deleted",
++    ):
++        assert words in ps1 and words in sh, words
++    readme = (REPO / "README.md").read_text(encoding="utf-8")
++    assert readme.count("the desk's records and the logs were not deleted") == 1
++    assert ps1.count("exit 7") >= 2 and re.search(
++        r"Test-Path\s+-LiteralPath\s+\$pidFile\s+-PathType\s+Container|\.PSIsContainer", ps1
++    ), "no folder check"
++    assert re.search(r"-LiteralPath\s+\$pidFile\s+-Force\s+-ErrorAction\s+Stop", ps1), "no checked removal"
++    assert not re.search(r"^\s*Remove-Item\s+\$pidFile\s*$", ps1, re.MULTILINE), "the bare Remove-Item is back"
++
++
++def test_text_only_a_pid_file_that_is_a_dangling_link_is_seen_and_removed_in_pass_3() -> None:
++    """Test-Path may call a link whose target is gone missing, so the file would be neither read nor deleted: Get-Item
++    -Force sees the link itself. (Not run on Windows: see the notes for the lead.)"""
++    one, three = _pass(1), _pass(3)
++    assert re.search(r"Get-Item\s+-LiteralPath\s+\$pidFile\s+-Force\s+-ErrorAction\s+SilentlyContinue", one)
++    assert "Remove-Item -LiteralPath $pidFile -Force -ErrorAction Stop" in three
++
++
++def _pass(number: int) -> str:
++    """The code of `# PASS <number>` up to the next marker (the markers are comments, so the raw text is used)."""
++    parts = re.split(r"^# PASS (\d)\b.*$", SCRIPT_TEXT, flags=re.MULTILINE)
++    assert parts[1::2] == ["1", "2", "3"], "reset.ps1 must have the three markers # PASS 1, # PASS 2, # PASS 3"
++    return _strip(parts[2 * number])
++
++
++_CHANGES = ("Stop-Process", "Wait-Process", "Remove-Item", "kill", "spps", "rm", "del", "ri", "rmdir", "erase", "rd")
++
+ 
++def test_text_only_pass_1_looks_at_both_pid_files_and_changes_nothing() -> None:
++    """Every refusal that says 'nothing was stopped or deleted' (exit 6 and the folder case of exit 7) comes from pass
++    1, which holds no stop, no wait and no delete. A pid file that is read and judged first for BOTH names."""
++    one, two, three = _pass(1), _pass(2), _pass(3)
++    for name in _CHANGES:
++        assert not re.search(rf"(?<![\w$.:\-]){re.escape(name)}(?![\w\-])", one, flags=re.IGNORECASE), (
++            f"pass 1 contains {name}: a refusal in it would be untrue"
++        )
++    assert re.search(r"foreach\s*\(\$name\s+in\s+'desk',\s*'fakes'\)", one), "pass 1 does not look at both names"
++    assert "exit 6" in one and "exit 7" in one and "exit 5" not in one
++    assert "Stop-Process" in two and "Wait-Process" in two and "exit 5" in two and "Remove-Item" not in two
++    assert "Remove-Item" in three and "exit 7" in three and "Stop-Process" not in three
+ 
+-def test_reset_ps1_removes_only_a_plain_file_and_exits_7_like_reset_sh() -> None:
+-    """A pid file that is a folder (an empty one would be removed silently by Remove-Item) or cannot be removed gives
+-    exit 7 with the wording of reset.sh. PowerShell itself is not run here (the Windows run is the open item)."""
++
++def test_text_only_the_refusal_in_pass_2_names_what_was_already_stopped() -> None:
++    two = _pass(2)
++    assert re.search(r"already stopped: ", two), "exit 5 does not say what was already stopped"
++    note = re.search(r"\$note = if \(\$stopped\) \{ \" \(already stopped: \$stopped\)\" \} else \{ '' \}", two)
++    assert note, "the pass 2 note is no longer built from what was already stopped"
++    stop_line = next(line for line in two.splitlines() if "did not stop in time" in line)
++    assert "$note" in stop_line, "the 'did not stop in time' refusal no longer carries the note"
++    sh = _reset_sh_code()
++    assert "already stopped: " in sh
++
++
++def test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked() -> None:
++    """Test-Path and Remove-Item read a '[' in a folder name as a pattern unless -LiteralPath is used."""
+     code = _code()
+-    assert re.search(r"Test-Path\s+-LiteralPath\s+\$pidFile\s+-PathType\s+Leaf", code), "no leaf-only check"
+-    assert code.count("exit 7") >= 2, "both the folder case and the failed removal must exit 7"
+-    sh_words = re.search(r'echo "(refused: \$pidfile cannot be removed[^"]*)"', _reset_sh_code())
+-    assert sh_words, "reset.sh lost its exit 7 message"
+-    ps_words = sh_words.group(1).replace("$pidfile", "$pidFile")
+-    assert ps_words in code, "the exit 7 wording of reset.ps1 differs from reset.sh"
+-    assert re.search(r"catch\s*\{[^}]*exit 7", code), "the failed removal does not end in exit 7"
+-    assert re.search(r"try\s*\{\s*Remove-Item\s+-LiteralPath\s+\$pidFile\s+-ErrorAction\s+Stop\s*\}\s*catch", code), (
+-        "a failed removal is not caught and turned into exit 7"
++    uses = re.findall(r"(?<![\w$.:\-])(Test-Path|Remove-Item|Get-Item)\b([^\n]*)", code)
++    assert {command for command, _ in uses} == {"Get-Item", "Remove-Item", "Test-Path"}, uses
++    for command, rest in uses:
++        assert "-LiteralPath" in rest, f"{command} without -LiteralPath: {rest}"
++    assert not re.search(r"Remove-Item[^\n]*-ErrorAction\s+SilentlyContinue", code)
++    final = r"Remove-Item\s+-LiteralPath\s+\$f\s+-Force\s+-ErrorAction\s+Stop"
++    assert re.search(final, code), "final delete not checked"
++    assert not re.search(r"Test-Path\s+\$", code), "a Test-Path with a bare path is back"
++
++
++def test_text_only_a_failed_process_lookup_refuses_with_exit_6_before_anything_is_stopped() -> None:
++    """A WMI failure (Get-CimInstance throwing) must not read as 'the process is gone' and so as a stale file."""
++    one = _pass(1)
++    found = re.search(
++        r"try\s*\{[^{}]*Get-CimInstance\s+Win32_Process[^{}]*-ErrorAction\s+Stop[^{}]*\}\s*"
++        r"catch\s*\{[^{}]*could not be looked up; nothing was stopped or deleted[^{}]*exit 6",
++        one,
++        flags=re.DOTALL,
+     )
+-    assert not re.search(r"^\s*Remove-Item\s+\$pidFile\s*$", code, re.MULTILINE), "the bare Remove-Item is back"
++    assert found, "the process lookup is not checked: a failing lookup would read as 'gone'"
++    assert not re.search(r"Get-CimInstance[^\n]*SilentlyContinue", _code())
++
++
++def test_text_only_the_pid_file_is_opened_by_its_full_path_and_a_utf8_byte_order_mark_is_skipped() -> None:
++    """.NET resolves a relative path against the process folder, not PowerShell's current folder; and an editor may
++    put EF BB BF in front of the number."""
++    code = _code()
++    convert = code.index("Convert-Path -LiteralPath $pidFile")
++    assert convert < code.index("[System.IO.File]::Open("), "the path is made absolute after the open"
++    assert re.search(r"0xEF.*0xBB.*0xBF", code, flags=re.DOTALL | re.IGNORECASE), "no byte order mark rule"
++    assert re.search(r"\$raw\s*=\s*\$null", code)
++
++
++def test_text_only_every_refusal_goes_to_standard_error_like_reset_sh() -> None:
++    code = _code()
++    assert not re.search(r"Write-Host\s+[\"']refused", code), "a refusal is printed with Write-Host (not on stderr)"
++    exits = re.findall(r"(?m)^(.*)\n\s*exit\s+([2-7])\b", code)
++    assert len(exits) >= 7, exits
++    for before, number in exits:
++        assert "[Console]::Error.WriteLine(" in before, f"exit {number} without a message on stderr before it: {before}"
+ 
+ 
+ def _modules_in(text: str, pattern: str) -> set[str]:
+     return set(re.findall(pattern, text))
+ 
+ 
+-def test_start_all_ps1_still_starts_the_two_programs_the_way_reset_ps1_recognises_them() -> None:
+-    """Pin (the real Windows run is not possible here): start_all.ps1 starts `python -m <module>` by the bare word
+-    python, and the modules it starts are exactly those reset.ps1 and reset.sh accept. If one side changes, a reset
+-    would refuse (exit 6) or stop the wrong thing."""
++def test_text_only_start_all_ps1_still_starts_the_two_programs_the_way_reset_ps1_recognises_them() -> None:
++    """Text pin only (no Windows run was possible here): start_all.ps1 starts `python -m <module>` with the bare word
++    python, and the module names it starts are exactly those reset.ps1 and reset.sh accept. This does NOT show how
++    Start-Process quotes the arguments or what Windows then reports as the command line: that is a step of the
++    Windows run (WINDOWS-RUN-1). If one side changes its module names, a reset would refuse (exit 6)."""
+     start = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
+     calls = re.findall(r"Start-Process python -ArgumentList '-m', '([a-z_.]+)'", start)
+     assert sorted(calls) == ["demo_only.fakes_server", "lead_desk.server"], calls
+@@ -171,3 +326,142 @@ def test_start_all_ps1_still_starts_the_two_programs_the_way_reset_ps1_recognise
+     assert in_sh == set(calls)
+     start_sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+     assert all(f"-m {m}" in start_sh for m in calls)
++
++
++# -- Windows only: the same decisions, run for real (this build had no PowerShell: see WINDOWS-RUN-1)
++@pytest.mark.skipif(not WINDOWS, reason="runs reset.ps1 in Windows PowerShell")
++def test_reset_ps1_stops_nothing_when_the_second_pid_file_names_another_program(book: Path) -> None:
++    from support import DESK_MODULE, start_module_proc
++
++    ready = book.parent / "ready"
++    stays = "import sys, time; open(sys.argv[-1], 'w').close(); time.sleep(300)"
++    desk = start_module_proc(ready, stays, module=DESK_MODULE)
++    try:
++        wait_until(ready.exists, what="the desk stand-in is running")
++        (book.parent / "desk.pid").write_text(str(desk.pid), encoding="utf-8")
++        (book.parent / "fakes.pid").write_text(str(os.getpid()), encoding="utf-8")
++        done = reset_run("reset.ps1", book, **reset_ports())
++        still_running = desk.poll() is None
++    finally:
++        desk.kill()
++        desk.wait()
++        stop_proc(desk)
++    assert done.returncode == 6 and still_running, (done.returncode, done.stdout, done.stderr)
++    assert "nothing was stopped or deleted" in done.stderr and reset_kept(book)
++
++
++@pytest.mark.skipif(not WINDOWS, reason="runs reset.ps1 in Windows PowerShell")
++def test_reset_ps1_refuses_a_pid_file_that_is_a_folder_with_exit_7(book: Path) -> None:
++    (book.parent / "fakes.pid").mkdir()
++    done = reset_run("reset.ps1", book, **reset_ports())
++    assert done.returncode == 7 and "cannot be removed" in done.stderr, (done.returncode, done.stdout, done.stderr)
++    assert reset_kept(book)
++
++
++@pytest.mark.skipif(not WINDOWS, reason="runs reset.ps1 in Windows PowerShell")
++def test_reset_ps1_calls_a_long_pid_file_stale(book: Path) -> None:
++    pidfile = book.parent / "desk.pid"
++    pidfile.write_text("1" * 200, encoding="utf-8")
++    done = reset_run("reset.ps1", book, **reset_ports())
++    assert done.returncode == 0 and not pidfile.exists(), (done.returncode, done.stdout, done.stderr)
++
++
++@pytest.mark.skipif(not WINDOWS, reason="runs the pattern of reset.ps1 in Windows PowerShell")
++@pytest.mark.parametrize(
++    ("line", "ours"),
++    [
++        ("python -m lead_desk.server", True),
++        ("python -M lead_desk.server", False),
++        ("PYTHON.EXE -m lead_desk.server", False),
++        ('"\\Program Files\\Python312\\python.exe" -m demo_only.fakes_server', True),
++        ("python -m Lead_Desk.Server", False),
++    ],
++)
++def test_the_pattern_of_reset_ps1_in_powershell_keeps_letter_case_for_the_option_and_the_program(
++    line: str, ours: bool
++) -> None:
++    """-cmatch in PowerShell itself (not Python's re): `python -M ...` and `PYTHON.EXE -m ...` are another program."""
++    code = _code()
++    definitions = "\n".join(re.findall(r"(?m)^\$(?:interpreter|ours) = .*$", code))
++    read_line = '$line = [Console]::In.ReadToEnd().TrimEnd("`r", "`n")'
++    script = f"{definitions}\n{read_line}\n[Console]::Out.Write($line -cmatch $ours)"
++    shell = shutil.which("powershell")
++    assert shell is not None, "Windows PowerShell is not installed"
++    done = subprocess.run(  # noqa: S603 (our own script text and a made-up line)
++        [shell, "-NoProfile", "-Command", script], input=line, capture_output=True, text=True, timeout=60, check=False
++    )
++    assert done.stdout.strip() == ("True" if ours else "False"), (line, done.stdout, done.stderr)
++
++
++def test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop() -> None:
++    """A process number is judged in pass 1, but a stop of an earlier program can take up to 999 seconds, and the
++    number can then belong to another program: the command line is read again and compared with -cmatch right before
++    Stop-Process; a program that changed is not stopped (exit 6, naming what was already stopped)."""
++    two = _pass(2)
++    stop = two.index("Stop-Process")
++    again = two.index("Get-CimInstance Win32_Process")
++    assert again < stop, "the program is not looked at again before the stop"
++    assert re.search(r"-cmatch\s+\$ours", two[again:stop]), "the second look does not compare the command line"
++    assert "was the desk or the demo server when checked, but is another program now; it was not stopped" in two
++    assert "exit 6" in two[again:stop]
++    assert "could not be looked up" in two[again:stop], "a failing second lookup must refuse too"
++    refusal = two.index("is another program now", again)
++    assert re.search(r"exit 6\b", two[refusal:stop]), "the refusal for a changed program must exit 6"
++
++
++def test_text_only_the_command_line_is_not_trimmed_and_the_pid_text_is() -> None:
++    """The pid text is trimmed (a line end after the number is fine); the command line is matched from its first
++    character, as reset.sh does, so it is never trimmed."""
++    code = _code()
++    assert re.search(r'"\$raw"\.Trim\(\)', code)
++    assert not re.search(r"CommandLine\s*\.\s*Trim", code, re.IGNORECASE)
++
++
++def test_text_only_the_check_for_a_desk_nobody_listed_runs_after_the_stop_and_before_any_delete() -> None:
++    """reset_check.py (a desk with no pid file, a port that answers) runs between pass 2 and pass 3, so a refusal
++    leaves the pid files in place, and the exit 3 and 4 lines can say that nothing was deleted."""
++    for text in (SCRIPT_TEXT, (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8")):
++        at = text.index("scripts/reset_check.py")
++        assert text.index("# PASS 2") < at < text.index("# PASS 3"), "reset_check.py is not between pass 2 and pass 3"
++
++
++def test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back() -> None:
++    """With 'Stop' in force, Windows PowerShell 5.1 turns what a program writes to standard error (when the caller joins
++    the streams with 2>&1) into an error record and ends the script before the exit code is read."""
++    code = _code()
++    at = code.index("python scripts/reset_check.py")
++    before, after = code[:at], code[at:]
++    assert re.search(
++        r"\$previousPreference = \$ErrorActionPreference\s+\$ErrorActionPreference = 'Continue'\s+"
++        r"\$LASTEXITCODE = \$null\s*$",
++        before.rstrip() + "\n",
++    ), before[-300:]
++    assert re.search(
++        r"^python scripts/reset_check\.py\s+\$checkExit = \$LASTEXITCODE\s+"
++        r"\$ErrorActionPreference = \$previousPreference\s",
++        after,
++    ), after[:300]
++
++
++def test_text_only_the_check_exit_is_mapped_like_reset_sh_and_a_missing_exit_code_is_a_failure() -> None:
++    """reset.sh: exit 0 goes on, 3 and 4 are passed on, anything else prints "the check program failed (exit N)" and
++    exits 5. reset.ps1 does the same, and $LASTEXITCODE is emptied before the call so that a python that cannot start
++    (no new exit code) is a failure, not the stale 0 of an earlier call."""
++    code = _code()
++    at = code.index("python scripts/reset_check.py")
++    after = code[at : code.index("# PASS 3") if "# PASS 3" in code else None]
++    assert re.search(r"\$null -eq \$checkExit -or \$checkExit -notin 0, 3, 4", after), after
++    assert "the check program failed (exit $checkExit)" in after and "nothing was deleted" in after, after
++    assert re.search(r"failed \(exit \$checkExit\).*?exit 5", after, flags=re.DOTALL), after
++    assert re.search(r"if \(\$checkExit -ne 0\) \{ exit \$checkExit \}", after), after  # 3 and 4 pass through
++    sh = _reset_sh_code()
++    assert "3|4) exit" in sh and "the check program failed (exit $check_exit)" in sh
++
++
++def test_text_only_reset_ps1_and_reset_sh_call_the_same_bytes_stale() -> None:
++    """One rule for both: 64 bytes or more after the mark, a NUL, a byte above 126 and a control character other than
++    white space are stale. reset.sh is tested with real files; here the same rule is read off the text of both."""
++    code = _code()
++    sh = _reset_sh_code()
++    assert "[![:print:][:space:]]" in sh  # print = 32..126, space = 9..13 and 32
++    assert "$b -gt 126" in code and "$b -lt 32" in code and "$b -lt 9" in code and "$b -gt 13" in code
+diff --git a/tests/test_reset_ps_width.py b/tests/test_reset_ps_width.py
+index 39bb8e9..c2ca6b9 100644
+--- a/tests/test_reset_ps_width.py
++++ b/tests/test_reset_ps_width.py
+@@ -56,7 +56,7 @@ def _end(child: subprocess.Popen[bytes]) -> None:
+ def test_a_slow_stop_is_refused_with_exit_5_when_the_terminal_width_is_80(book: Path) -> None:
+     code = (
+         "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+-        "open(sys.argv[-1], 'w').close(); time.sleep(60)"
++        "open(sys.argv[-1], 'w').close(); time.sleep(300)"
+     )
+     ready = book.parent / "ready"
+     slow = start_module_proc(ready, code)
+@@ -73,7 +73,7 @@ def test_a_slow_stop_is_refused_with_exit_5_when_the_terminal_width_is_80(book:
+         )
+     finally:
+         _end(slow)
+-    said = done.stdout + done.stderr
++    said = done.stderr
+     assert done.returncode == 5 and "did not stop" in said, (done.stdout, done.stderr)
+     assert _kept(book)
+ 
+@@ -86,7 +86,7 @@ def test_a_desk_that_stops_in_a_few_seconds_is_waited_for_when_the_terminal_widt
+         "    sys.exit(0)\n"
+         "signal.signal(signal.SIGTERM, stop)\n"
+         "open(sys.argv[-1], 'w').close()\n"
+-        "time.sleep(60)\n"
++        "time.sleep(300)\n"
+     )
+     ready = book.parent / "ready"
+     slow = start_module_proc(ready, code)
+@@ -103,7 +103,7 @@ def test_a_desk_that_stops_in_a_few_seconds_is_waited_for_when_the_terminal_widt
+ def test_a_command_line_over_200_characters_is_still_the_desk(book: Path) -> None:
+     code = (
+         "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+-        "open(sys.argv[-1], 'w').close(); time.sleep(60)"
++        "open(sys.argv[-1], 'w').close(); time.sleep(300)"
+     )
+     ready = book.parent / "ready"
+     padding = [f"padding-word-{i:02d}" for i in range(20)]  # about 300 characters after the marker
+@@ -123,7 +123,7 @@ def test_a_command_line_over_200_characters_is_still_the_desk(book: Path) -> Non
+     finally:
+         _end(slow)
+     # the desk was recognised (so it was asked to stop, and refused to): 5, never 6 "not the desk"
+-    said = done.stdout + done.stderr
++    said = done.stderr
+     assert done.returncode == 5 and "did not stop" in said, (done.stdout, done.stderr)
+     assert _kept(book)
+ 
+@@ -245,7 +245,7 @@ def _run_against(book: Path, pid_file: str, child: subprocess.Popen[bytes], read
+         still_running = child.poll() is None
+     finally:
+         _end(child)
+-    return done.returncode, done.stdout + done.stderr, still_running
++    return done.returncode, done.stderr, still_running
+ 
+ 
+ @pytest.mark.parametrize(
+@@ -339,7 +339,7 @@ def test_a_desk_that_ignores_the_stop_signal_in_the_real_shape_is_refused_with_e
+         )
+     finally:
+         _end(child)
+-    assert done.returncode == 5 and "did not stop" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert done.returncode == 5 and "did not stop" in done.stderr, (done.stdout, done.stderr)
+ 
+ 
+ # -- where /proc cannot be read (macOS, BSD) the line from `ps` is matched as text: a dead process number (no /proc
+@@ -411,7 +411,7 @@ def test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_re
+ def test_a_pid_file_that_is_a_folder_is_refused_with_exit_7_and_nothing_is_deleted(book: Path) -> None:
+     (book.parent / "desk.pid").mkdir()
+     done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
+-    assert done.returncode == 7 and "cannot be removed" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert done.returncode == 7 and "cannot be removed" in done.stderr, (done.stdout, done.stderr)
+     assert _kept(book)
+ 
+ 
+@@ -431,7 +431,7 @@ def test_a_pid_file_with_a_very_long_first_line_is_stale(book: Path) -> None:
+     assert done.returncode == 0 and not pidfile.exists(), (done.returncode, done.stdout, done.stderr)
+ 
+ 
+-def test_start_all_sh_launches_the_programs_with_the_words_reset_sh_looks_for() -> None:
++def test_text_only_start_all_sh_launches_the_programs_with_the_words_reset_sh_looks_for() -> None:
+     text = (Path(__file__).resolve().parents[1] / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+     assert re.search(r"^python -m lead_desk\.server[ >]", text, re.MULTILINE), "the desk is no longer `python -m ...`"
+     assert re.search(r"^python -m demo_only\.fakes_server[ >]", text, re.MULTILINE), "the demo server line changed"
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 3da819e..a0f0c34 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -1,20 +1,30 @@
+-"""The reset scripts delete the lead book, so they refuse a database path that is not inside the repository's data
++"""The reset scripts delete the desk's records, so they refuse a database path that is not inside the repository's data
+ folder. Made-up data only; each test creates only the files it names."""
+ 
+ from __future__ import annotations
+ 
+ import os
++import re
+ import shutil
+-import socket
+ import subprocess
+ import sys
+ import tempfile
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO, WINDOWS, start_module_proc, stop_proc, wait_until
++from support import (
++    DESK_MODULE,
++    FAKES_MODULE,
++    REPO,
++    WINDOWS,
++    bound_socket,
++    held_port,
++    reset_ports,
++    start_module_proc,
++    stop_proc,
++    wait_until,
++)
+ from support import RESET_SCRIPT as SCRIPT
+-from support import held_port as _free_port
+ from support import reset_kept as _kept
+ from support import reset_run as _run
+ 
+@@ -25,8 +35,8 @@ def test_reset_refuses_a_database_outside_the_data_folder(tmp_path: Path) -> Non
+     for f in (db, log):
+         f.write_text("keep me", encoding="utf-8")
+     done = _run(SCRIPT, db)
+-    assert done.returncode == 2, (done.stdout, done.stderr)
+-    assert "refused" in done.stdout + done.stderr
++    assert done.returncode == 8, (done.stdout, done.stderr)
++    assert "refused" in done.stderr
+     assert db.read_text(encoding="utf-8") == "keep me" and log.read_text(encoding="utf-8") == "keep me"
+ 
+ 
+@@ -36,21 +46,20 @@ def test_reset_still_deletes_a_database_inside_the_data_folder() -> None:
+     db = folder / "desk.sqlite3"
+     db.write_text("x", encoding="utf-8")
+     try:
+-        done = _run(SCRIPT, db, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++        done = _run(SCRIPT, db, **reset_ports())
+         assert done.returncode == 0, (done.stdout, done.stderr)
+         assert not db.exists()
+     finally:
+         shutil.rmtree(folder, ignore_errors=True)
+ 
+ 
+-# -- the reset never deletes the lead book while the desk may still be using it
++# -- the reset never deletes the desk's records while the desk may still be using it
+ def test_reset_refuses_when_something_answers_on_the_desk_port(book: Path) -> None:
+     """A desk started by hand has no pid file: the port that still answers stops the reset."""
+-    with socket.socket() as listener:
+-        listener.bind(("127.0.0.1", 0))
++    with bound_socket() as listener:
+         listener.listen(1)
+-        done = _run(SCRIPT, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(_free_port()))
+-    assert done.returncode == 4 and "answers on port" in done.stdout + done.stderr, (done.stdout, done.stderr)
++        done = _run(SCRIPT, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
++    assert done.returncode == 4 and "answers on port" in done.stderr, (done.stdout, done.stderr)
+     assert _kept(book)
+ 
+ 
+@@ -59,18 +68,18 @@ def test_reset_refuses_when_a_process_holds_the_database(book: Path) -> None:
+ 
+     handle = lockfile.acquire(book)
+     try:
+-        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++        done = _run(SCRIPT, book, **reset_ports())
+     finally:
+         handle.close()
+-    assert done.returncode == 3 and "holds the database" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert done.returncode == 3 and "holds the database" in done.stderr, (done.stdout, done.stderr)
+     assert _kept(book)
+ 
+ 
+ def test_reset_refuses_a_pid_file_of_another_program(book: Path) -> None:
+     pidfile = book.parent / "desk.pid"
+     pidfile.write_text(str(os.getpid()), encoding="utf-8")  # this test process: not the desk
+-    done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+-    assert done.returncode == 6 and "not the desk" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    done = _run(SCRIPT, book, **reset_ports())
++    assert done.returncode == 6 and "not the desk" in done.stderr, (done.stdout, done.stderr)
+     assert _kept(book) and pidfile.exists()
+ 
+ 
+@@ -79,20 +88,18 @@ def test_reset_sh_refuses_when_the_desk_does_not_stop(book: Path) -> None:
+     ready = book.parent / "ready"
+     code = (
+         "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+-        "open(sys.argv[-1], 'w').close(); time.sleep(60)"
++        "open(sys.argv[-1], 'w').close(); time.sleep(300)"
+     )
+     slow = start_module_proc(ready, code)  # python -m lead_desk.server <ready>, as start_all.sh runs the desk
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+-        done = _run(
+-            SCRIPT, book, RESET_STOP_WAIT_SECONDS="1", DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port())
+-        )
++        done = _run(SCRIPT, book, RESET_STOP_WAIT_SECONDS="1", **reset_ports())
+     finally:
+         slow.kill()
+         slow.wait()
+         stop_proc(slow)
+-    assert done.returncode == 5 and "did not stop" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert done.returncode == 5 and "did not stop" in done.stderr, (done.stdout, done.stderr)
+     assert _kept(book)
+ 
+ 
+@@ -107,14 +114,14 @@ def test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop(book: Path)
+         "    sys.exit(0)\n"
+         "signal.signal(signal.SIGTERM, stop)\n"
+         "open(sys.argv[-1], 'w').close()\n"
+-        "time.sleep(60)\n"
++        "time.sleep(300)\n"
+     )
+     ready = book.parent / "ready"
+     slow = start_module_proc(ready, code)  # python -m lead_desk.server <ready>, as start_all.sh runs the desk
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+-        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++        done = _run(SCRIPT, book, **reset_ports())
+         alive_after = slow.poll() is None
+     finally:
+         slow.kill()
+@@ -130,7 +137,7 @@ def test_reset_sh_deletes_an_empty_pid_file(book: Path, name: str) -> None:
+     """An empty pid file names no process: it is removed and the reset goes on (the check is -e, not -s)."""
+     pidfile = book.parent / name
+     pidfile.write_text("", encoding="utf-8")
+-    done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++    done = _run(SCRIPT, book, **reset_ports())
+     assert done.returncode == 0, (done.stdout, done.stderr)
+     assert not pidfile.exists() and not book.exists()
+ 
+@@ -151,7 +158,7 @@ def test_reset_sh_treats_a_pid_file_of_an_ended_but_uncollected_process_as_gone(
+     try:
+         wait_until(uncollected, what="the child ended and was not collected")
+         (book.parent / "desk.pid").write_text(str(ended.pid), encoding="utf-8")
+-        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++        done = _run(SCRIPT, book, **reset_ports())
+     finally:
+         ended.wait()
+     assert done.returncode == 0, (done.stdout, done.stderr)
+@@ -163,30 +170,28 @@ def test_reset_sh_treats_a_pid_file_of_an_ended_but_uncollected_process_as_gone(
+ )
+ def test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number(book: Path, value: str) -> None:
+     """Both scripts: digits only, no leading zero (a shell reads 08 as a bad octal), at most three digits; the answer
+-    is exit 2 before a process is stopped or a file is deleted."""
++    is exit 8 (a refused setting) before a process is stopped or a file is deleted."""
+     ready = book.parent / "ready"
+-    code = "import sys, time; open(sys.argv[-1], 'w').close(); time.sleep(60)"
++    code = "import sys, time; open(sys.argv[-1], 'w').close(); time.sleep(300)"
+     desk = start_module_proc(ready, code)
+     try:
+         wait_until(ready.exists, what="the child is running")
+         (book.parent / "desk.pid").write_text(str(desk.pid), encoding="utf-8")
+-        ports = {"DESK_PORT": str(_free_port()), "DESK_FAKES_PORT": str(_free_port())}
++        ports = reset_ports()
+         done = _run(SCRIPT, book, RESET_STOP_WAIT_SECONDS=value, **ports)
+         still_running = desk.poll() is None
+     finally:
+         desk.kill()
+         desk.wait()
+         stop_proc(desk)
+-    assert done.returncode == 2 and "RESET_STOP_WAIT_SECONDS" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert done.returncode == 8 and "RESET_STOP_WAIT_SECONDS" in done.stderr, (done.stdout, done.stderr)
+     assert still_running and (book.parent / "desk.pid").exists()  # nothing was stopped
+     assert _kept(book) and not (REPO / "pwned").exists()
+ 
+ 
+ @pytest.mark.parametrize("value", ["0", "1", "10", "999"])
+ def test_reset_accepts_a_plain_whole_number_of_seconds(book: Path, value: str) -> None:
+-    done = _run(
+-        SCRIPT, book, RESET_STOP_WAIT_SECONDS=value, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port())
+-    )
++    done = _run(SCRIPT, book, RESET_STOP_WAIT_SECONDS=value, **reset_ports())
+     assert done.returncode == 0 and not book.exists(), (done.stdout, done.stderr)
+ 
+ 
+@@ -209,7 +214,9 @@ def test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at(
+     monkeypatch.setenv("DESK_DB_PATH", str(book))
+     monkeypatch.setattr(lockfile, "lock_path", lambda _db: Unreadable())
+     assert module.main() == 3
+-    out = capsys.readouterr().out.strip()
++    seen = capsys.readouterr()
++    out = seen.err.strip()
++    assert seen.out == "", "a refusal must go to standard error, not to standard output"
+     assert out.startswith("refused:") and len(out.splitlines()) == 1 and "no access" not in out and _kept(book)
+ 
+ 
+@@ -217,15 +224,14 @@ def test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a
+     lock = Path(f"{book.resolve()}.lock")
+     lock.mkdir()  # a lock file that cannot be opened: nothing says that no desk holds the book
+     try:
+-        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++        done = _run(SCRIPT, book, **reset_ports())
+     finally:
+         lock.rmdir()
+-    assert done.returncode == 3 and "cannot be tested" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert done.returncode == 3 and "cannot be tested" in done.stderr, (done.stdout, done.stderr)
+     assert _kept(book)
+-    with socket.socket() as listener:  # a refusal for another reason leaves no lock file behind either
+-        listener.bind(("127.0.0.1", 0))
++    with bound_socket() as listener:  # a refusal for another reason leaves no lock file behind either
+         listener.listen(1)
+-        again = _run(SCRIPT, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(_free_port()))
++        again = _run(SCRIPT, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
+     assert again.returncode == 4 and not lock.exists(), (again.stdout, again.stderr)
+ 
+ 
+@@ -332,7 +338,7 @@ def test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing(
+     feature, not of the variable BASH_VERSION: dash takes that from the environment, so a name test is bypassed
+     (the second case exports it with a made-up value)."""
+     db = tmp_path / "desk.sqlite3"
+-    db.write_text("made-up lead book", encoding="utf-8")
++    db.write_text("made-up desk's records", encoding="utf-8")
+     bin_dir = (
+         tmp_path / "bin"
+     )  # a stand-in python first on PATH, so that without the guard start_all.sh starts nothing real
+@@ -345,7 +351,7 @@ def test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing(
+     assert done.returncode == 2, (done.stdout, done.stderr)
+     assert "run this script with bash" in done.stderr and "not bash" in done.stderr
+     assert "not found" not in done.stderr, "a [[ line ran under dash"
+-    assert db.read_text(encoding="utf-8") == "made-up lead book"
++    assert db.read_text(encoding="utf-8") == "made-up desk's records"
+     assert not (tmp_path / "calls.log").exists(), "the stand-in python was called"
+ 
+ 
+@@ -374,13 +380,14 @@ def test_reset_sh_refuses_with_exit_7_when_the_pid_file_is_an_empty_folder_and_k
+     """A pid file that is a folder cannot be removed: exit 7, nothing else deleted (reset.ps1 must do the same)."""
+     folder = book.parent / name
+     folder.mkdir()
+-    done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++    done = _run(SCRIPT, book, **reset_ports())
+     assert done.returncode == 7, (done.returncode, done.stdout, done.stderr)
+-    assert "cannot be removed" in done.stderr and "nothing else was deleted" in done.stderr
++    assert "cannot be removed" in done.stderr and "nothing was stopped or deleted" in done.stderr
+     assert folder.is_dir() and _kept(book)
+ 
+ 
+-_VERSION_GUARD_START = "if (( BASH_VERSINFO[0] < 4 ||"
++_VERSION_GUARD_START = "if (( BASH_VERSINFO[0] < bash_minimum[0] ||"
++_MINIMUM_START = "bash_minimum=("
+ 
+ 
+ def _version_guard_line() -> str:
+@@ -390,30 +397,175 @@ def _version_guard_line() -> str:
+     return found[0]
+ 
+ 
++def _minimum_line() -> str:
++    lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
++    found = [line for line in lines if line.startswith(_MINIMUM_START)]
++    assert len(found) == 1, "the bash minimum constant was not found exactly once at the start of a line"
++    return found[0]
++
++
++def _minimum_bash() -> tuple[int, int]:
++    """The README sentence names the minimum bash, once."""
++    found = re.findall(r"bash (\d+)\.(\d+) or newer", (REPO / "README.md").read_text(encoding="utf-8"))
++    assert len(found) == 1, f"the README must name the minimum bash version exactly once: {found}"
++    return int(found[0][0]), int(found[0][1])
++
++
++def test_text_only_the_bash_minimum_in_the_script_is_the_one_in_the_readme_and_the_old_macos_remark_is_gone() -> None:
++    """One pin test for the one constant: bash_minimum=(M N) in reset.sh equals the README's "bash M.N or newer"."""
++    found = re.fullmatch(r"bash_minimum=\((\d+) (\d+)\)(\s+#.*)?", _minimum_line())
++    assert found, _minimum_line()
++    assert (int(found.group(1)), int(found.group(2))) == _minimum_bash()
++    assert (int(found.group(1)), int(found.group(2))) >= (4, 4), "`mapfile -d` and `read -N` need bash 4.4"
++    assert "macOS ships" not in (REPO / "README.md").read_text(encoding="utf-8")
++
++
+ @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+-@pytest.mark.parametrize(
+-    ("version", "refused"),
+-    [("3 2 57", True), ("3 0 0", True), ("4 0 44", True), ("4 1 0", False), ("4 4 20", False), ("5 2 21", False)],
+-)
+-def test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2(version: str, refused: bool) -> None:
+-    """`read -N` needs bash 4.1. On an older bash a valid pid would read as empty and count as stale. The guard line
+-    is run alone with a made-up version (BASH_VERSINFO itself is read-only), as a standalone line with set -eu."""
++@pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
++def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
++    """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
++    (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
++    major, minor = _minimum_bash()
++    versions = {
++        "major-1": (major - 1, 9, 0),
++        "same-major-minor-1": (major, minor - 1, 99),
++        "minimum": (major, minor, 0),
++        "minimum-patch": (major, minor, 20),
++        "next-major": (major + 1, 0, 0),
++    }
++    refused = case in ("major-1", "same-major-minor-1")
++    version = " ".join(str(n) for n in versions[case])
+     line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+     done = _run(
+-        SCRIPT, Path("unused.sqlite3"), code=f"set -eu\nMADE_UP_VERSINFO=({version})\n{line}\necho PAST-THE-GUARD"
++        SCRIPT,
++        Path("unused.sqlite3"),
++        code=f"set -eu\nMADE_UP_VERSINFO=({version})\n{_minimum_line()}\n{line}\necho PAST-THE-GUARD",
+     )
+     if refused:
+         assert done.returncode == 2 and "PAST-THE-GUARD" not in done.stdout, (done.stdout, done.stderr)
+-        assert "bash 4.1" in done.stderr and "nothing was stopped or deleted" in done.stderr
++        assert "is too old for this script" in done.stderr and "nothing was stopped or deleted" in done.stderr
+     else:
+         assert done.returncode == 0 and "PAST-THE-GUARD" in done.stdout, (done.stdout, done.stderr)
+ 
+ 
+ @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+-def test_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs() -> None:
++def test_text_only_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs() -> None:
+     """dash has no BASH_VERSINFO (under set -u that would be an error instead of the bash message), so the guard
+     comes after the [[ ]] feature test; and it comes before the first python call and before any pid file is read."""
+     lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+-    keys = ('case "$( (eval ', _VERSION_GUARD_START, 'db="$(python -c')
++    keys = ('case "$( (eval ', _MINIMUM_START, _VERSION_GUARD_START, 'db="$(python -c')
+     at = {key: next(i for i, ln in enumerate(lines) if ln.startswith(key)) for key in keys}
+-    assert at['case "$( (eval '] < at[_VERSION_GUARD_START] < at['db="$(python -c']
++    assert at['case "$( (eval '] < at[_MINIMUM_START] < at[_VERSION_GUARD_START] < at['db="$(python -c']
++
++
++# -- one decision before any action (fix-5 round 7): the reset looks at BOTH pid files first and only then stops
++def _live_desk(book: Path, name: str, module: str, code: str) -> subprocess.Popen[bytes]:
++    """A stand-in for the desk (or the demo server) that runs until it is stopped; its pid file is written here."""
++    ready = book.parent / f"{name}.ready"
++    proc = start_module_proc(ready, code, module=module)
++    wait_until(ready.exists, what=f"the {name} stand-in is running")
++    (book.parent / f"{name}.pid").write_text(str(proc.pid), encoding="utf-8")
++    return proc
++
++
++_RUNS_UNTIL_STOPPED = "import sys, time; open(sys.argv[-1], 'w').close(); time.sleep(300)"
++_IGNORES_THE_STOP = (
++    "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
++    "open(sys.argv[-1], 'w').close(); time.sleep(300)"
++)
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++def test_reset_sh_stops_nothing_when_the_second_pid_file_names_another_program(book: Path) -> None:
++    """desk.pid is the real desk, fakes.pid is another program: exit 6 and the desk is STILL RUNNING (the message says
++    nothing was stopped). The old loop stopped the desk and removed desk.pid before it looked at fakes.pid."""
++    desk = _live_desk(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
++    other = book.parent / "fakes.pid"
++    other.write_text(str(os.getpid()), encoding="utf-8")  # this test process: not the demo server
++    try:
++        done = _run(SCRIPT, book, **reset_ports())
++        still_running = desk.poll() is None
++    finally:
++        desk.kill()
++        desk.wait()
++        stop_proc(desk)
++    assert done.returncode == 6 and "nothing was stopped or deleted" in done.stderr, (done.stdout, done.stderr)
++    assert still_running, "the desk was stopped although the reset refused with 'nothing was stopped'"
++    assert (book.parent / "desk.pid").exists() and other.exists() and _kept(book)
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++def test_reset_sh_stops_nothing_when_the_second_pid_file_is_a_folder(book: Path) -> None:
++    desk = _live_desk(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
++    (book.parent / "fakes.pid").mkdir()
++    try:
++        done = _run(SCRIPT, book, **reset_ports())
++        still_running = desk.poll() is None
++    finally:
++        desk.kill()
++        desk.wait()
++        stop_proc(desk)
++    assert done.returncode == 7 and "nothing was stopped or deleted" in done.stderr, (done.stdout, done.stderr)
++    assert still_running and (book.parent / "desk.pid").exists() and _kept(book)
++
++
++@pytest.mark.skipif(WINDOWS, reason="Windows ends a process at once; the slow stop is a POSIX case")
++def test_reset_sh_exit_5_names_what_it_already_stopped_and_deletes_nothing(book: Path) -> None:
++    """The desk stops, the demo server does not: exit 5, and the message says that the desk was stopped (it is no
++    longer true that 'nothing was stopped'). Both pid files and the book stay."""
++    desk = _live_desk(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
++    stubborn = _live_desk(book, "fakes", FAKES_MODULE, _IGNORES_THE_STOP)
++    try:
++        done = _run(SCRIPT, book, RESET_STOP_WAIT_SECONDS="1", **reset_ports())
++        wait_until(lambda: desk.poll() is not None, timeout=10, what="the desk stand-in ended")
++        desk_gone = desk.poll() is not None
++    finally:
++        for proc in (desk, stubborn):
++            proc.kill()
++            proc.wait()
++            stop_proc(proc)
++    assert done.returncode == 5 and "did not stop in time" in done.stderr, (done.stdout, done.stderr)
++    assert f"already stopped: desk (process {desk.pid})" in done.stderr, done.stderr
++    assert "nothing was stopped" not in done.stderr
++    assert desk_gone and (book.parent / "desk.pid").exists() and (book.parent / "fakes.pid").exists() and _kept(book)
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++def test_reset_sh_refuses_a_pid_file_that_is_a_link_to_a_folder_with_exit_7(book: Path) -> None:
++    target = book.parent / "elsewhere"
++    target.mkdir()
++    (target / "keep.txt").write_text("keep", encoding="utf-8")
++    link = book.parent / "desk.pid"
++    try:
++        link.symlink_to(target, target_is_directory=True)
++    except (OSError, NotImplementedError):
++        pytest.skip("this computer cannot make a symbolic link")
++    done = _run(SCRIPT, book, **reset_ports())
++    assert done.returncode == 7, (done.returncode, done.stdout, done.stderr)
++    assert link.is_symlink() and (target / "keep.txt").exists() and _kept(book)
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++def test_reset_sh_reads_a_pid_file_that_starts_with_a_utf8_byte_order_mark(book: Path) -> None:
++    """Notepad and some editors put EF BB BF in front of the number: the process is still the desk and is stopped."""
++    desk = _live_desk(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
++    (book.parent / "desk.pid").write_bytes(b"\xef\xbb\xbf" + str(desk.pid).encode() + b"\r\n")
++    try:
++        done = _run(SCRIPT, book, **reset_ports())
++        wait_until(lambda: desk.poll() is not None, timeout=10, what="the desk stand-in was stopped")
++    finally:
++        desk.kill()
++        desk.wait()
++        stop_proc(desk)
++    assert done.returncode == 0, (done.stdout, done.stderr)
++    assert not (book.parent / "desk.pid").exists() and not book.exists()
++
++
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++def test_reset_sh_treats_a_utf16_pid_file_as_stale(book: Path) -> None:
++    """A file saved as UTF-16 is not one plain number: nothing is stopped for it, it is deleted (reset_check refuses
++    with exit 3 or 4 when a desk is really running, so the book is never deleted under a live desk)."""
++    pidfile = book.parent / "desk.pid"
++    pidfile.write_bytes("1234\n".encode("utf-16"))
++    done = _run(SCRIPT, book, **reset_ports())
++    assert done.returncode == 0 and not pidfile.exists() and not book.exists(), (done.stdout, done.stderr)

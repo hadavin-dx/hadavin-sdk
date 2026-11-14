@@ -1,0 +1,3 @@
+# round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
+ps1 count not after the mark (re-pointed) | KILLED | 1 failed, 138 passed, 6 skipped in 34.14s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+sh 64 after the mark -> 65 (re-pointed to the current rule) | KILLED | 1 failed, 10 passed in 5.00s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]

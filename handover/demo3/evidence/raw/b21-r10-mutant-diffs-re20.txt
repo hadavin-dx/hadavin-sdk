@@ -5,3 +5,10 @@
 -                $bad = (($count - $from) -ge 64)
 +                $bad = ($count -ge 64)
 
+##### sh 64 after the mark -> 65 (re-pointed to the current rule) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -93 +93 @@
+-  if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
++  if (( ${#pid} >= 65 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
+
