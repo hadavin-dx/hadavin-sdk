@@ -1,0 +1,2 @@
+{"id": "dn1-23631-94d5b163e5c0418a-1", "model": "fake-model", "op": "reserve", "price_date": "2026-11-14", "run": "dn1", "t": "2026-11-14T10:17:21Z", "usd": "0.00044"}
+{"id": "dn1-23631-94d5b163e5c0418a-1", "op": "settle", "usd": "0.000042"}

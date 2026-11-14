@@ -1,0 +1,399 @@
+Finished migration BackfillInstanceAiEventLog1784000000051
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddInstanceCredentials1784815940111
+Finished migration AddInstanceCredentials1784815940111
+Starting migration CreateAgentEvalTables1784815940112
+Finished migration CreateAgentEvalTables1784815940112
+Starting migration AddAvailableInMcpToAgents1784897791636
+Finished migration AddAvailableInMcpToAgents1784897791636
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddAgentFileStorageColumns1785186578138
+Finished migration AddAgentFileStorageColumns1785186578138
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreatePollerStateTable1785926660580
+Finished migration CreatePollerStateTable1785926660580
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddAgentRevisionColumn1786666615644
+Finished migration AddAgentRevisionColumn1786666615644
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreateGitConnectionTable1787056876306
+Finished migration CreateGitConnectionTable1787056876306
+Starting migration AddTimezoneToAgentTasks1787057050000
+Finished migration AddTimezoneToAgentTasks1787057050000
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreateActivityEventTable1788425788714
+Finished migration CreateActivityEventTable1788425788714
+Starting migration CreateProjectPoolSettings1788445119183
+Finished migration CreateProjectPoolSettings1788445119183
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreatePromotionsTables1788759351166
+Finished migration CreatePromotionsTables1788759351166
+Starting migration DropGitConnectionTables1788780616817
+Finished migration DropGitConnectionTables1788780616817
+Starting migration CreateAiPreferenceTable1788882375989
+Finished migration CreateAiPreferenceTable1788882375989
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddSourceToAiPreference1789479099132
+Finished migration AddSourceToAiPreference1789479099132
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+[LONGRUN-REMOVED] Backfilled 0 checkpoint thread IDs; skipped 0 checkpoints.
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddAgentThreadOwnership1790014447117
+Finished migration AddAgentThreadOwnership1790014447117
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreateAgentMessageQueue1790241069212
+Finished migration CreateAgentMessageQueue1790241069212
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddAgentExecutionMessages1790590278292
+Finished migration AddAgentExecutionMessages1790590278292
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreateTrustedSourceTables1790672501346
+Finished migration CreateTrustedSourceTables1790672501346
+Starting migration AddAgentMessageSteering1790683443934
+Finished migration AddAgentMessageSteering1790683443934
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration MigrateMcpToolPermissions1790758111050
+Finished migration MigrateMcpToolPermissions1790758111050
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddAgentBackgroundJobPause1790937677019
+Finished migration AddAgentBackgroundJobPause1790937677019
+Starting migration CreateAgentPlanTables1791187410548
+Finished migration CreateAgentPlanTables1791187410548
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddMetadataToTrustedSource1791276719782
+Finished migration AddMetadataToTrustedSource1791276719782
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreateIdempotencyKeyTable1791540050944
+Finished migration CreateIdempotencyKeyTable1791540050944
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+[LONGRUN-REMOVED] Processed 0 agents rows; migrated 0; skipped 0 malformed rows.
+[LONGRUN-REMOVED] Processed 0 agent_history rows; migrated 0; skipped 0 malformed rows.
+Finished migration LONGRUN-REMOVED
+Starting migration CreateSkillsHubTables1791818723687
+Finished migration CreateSkillsHubTables1791818723687
+Starting migration AddInstanceScopeToAgents1792051765225
+Finished migration AddInstanceScopeToAgents1792051765225
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration CreateApps1792496430067
+Finished migration CreateApps1792496430067
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration AddKindToUserTable1792742505679
+Finished migration AddKindToUserTable1792742505679
+Starting migration LONGRUN-REMOVED
+Finished migration LONGRUN-REMOVED
+Starting migration MigrateAgentSkillsToHub1792764566513
+[MigrateAgentSkillsToHub1792764566513] Copied inline agent skills into the skills hub
+Finished migration MigrateAgentSkillsToHub1792764566513
+Starting migration AddSkillMcpAvailability1793000146414
+Finished migration AddSkillMcpAvailability1793000146414
+n8n Task Broker ready on LOOPBACK, port 5780
+Failed to start Python task runner in internal mode. because its virtual environment is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: LINK-REMOVED
+
+There are deprecations related to your n8n setup. Please take the recommended actions to update your configuration:
+ - N8N_RUNNERS_ENABLED -> Remove this environment variable; it is no longer needed.
+ - N8N_UNVERIFIED_PACKAGES_ENABLED -> The default for this variable will change to `false` in a future version. Set it to `true` explicitly to keep installing unverified community packages.
+ - N8N_RUNNERS_MODE -> Internal task runner mode is deprecated and will be removed in a future version. For isolation and scaling, run the task runner launcher as a separate process, set this variable to `external` and share `N8N_RUNNERS_AUTH_TOKEN` with the launcher. See LINK-REMOVED
+ - N8N_RUNNERS_TASK_TIMEOUT -> The default for this variable will be reduced from 300 (5 minutes) to 60 (1 minute) in a future version. Set it explicitly to keep your current task timeout.
+ - N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES -> The default for this variable will be reduced from 2 GiB to 256 MiB in a future version. Set it explicitly to keep your current limit.
+ - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES -> The default for this variable will be reduced from 5000 to 1000 in a future version. Set it explicitly to keep your current limit.
+
+[license SDK] Skipping renewal on init: license cert is not initialized
+Registered runner "JS Task Runner" (JpVx1u5cYgZ8PKTwZqyWX) 
+Seeded the system trusted source
+Generated new OAuth access-token signing key
+Instance registered
+Cluster aligned on version 2.46.6
+Discovered 4 cluster checks
+Recorded version change: (none) -> 2.46.6
+Generated new instance OAuth JWE key pair
+Sandbox: enabled=false provider=n8n-sandbox (from env)
+Version: 2.46.6
+Building workflow dependency index...
+Finished building workflow dependency index. Processed 0 draft workflows, 0 published workflows.
+Scheduler started
+
+Editor is now accessible via:
+LINK-REMOVED
+getaddrinfo ENOTFOUND api.n8n.io
+Error: getaddrinfo ENOTFOUND api.n8n.io
+    at AxiosError.from (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:1577:24)
+    at RedirectableRequest.handleRequestError (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:4792:25)
+    at RedirectableRequest.emit (node:events:526:24)
+    at ClientRequest.eventHandlers.<computed> (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/follow-redirects/index.js:56:24)
+    at ClientRequest.emit (node:events:514:28)
+    at emitErrorEvent (node:_http_client:114:11)
+    at TLSSocket.socketErrorListener (node:_http_client:774:5)
+    at TLSSocket.emit (node:events:526:24)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at Axios.request (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:6308:43)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at requestWithResponseLimit (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:52:10)
+    at invokeWithChallengeAuth (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:30:10)
+    at invokeAxios (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:10:10)
+    at sendHttpRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/request.ts:237:5)
+    at httpRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/request.ts:201:10)
+    at Object.request (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/outbound-http.ts:216:12)
+    at paginatedRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/n8n/src/utils/strapi-utils.ts:90:15)
+    at McpRegistryApiClient.fetchAllServers (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/n8n/src/modules/mcp-registry/registry/mcp-registry-api.client.ts:38:19)
+
+getaddrinfo ENOTFOUND api.n8n.io
+Error: getaddrinfo ENOTFOUND api.n8n.io
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:112:26)
+
+Error fetching from Strapi API (LINK-REMOVED getaddrinfo ENOTFOUND api.n8n.io
+A system task run failed
+Owner was set up successfully
+Initializing n8n process
+n8n ready on LOOPBACK, port 5679
+n8n Task Broker ready on LOOPBACK, port 5780
+Failed to start Python task runner in internal mode. because its virtual environment is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: LINK-REMOVED
+
+There are deprecations related to your n8n setup. Please take the recommended actions to update your configuration:
+ - N8N_RUNNERS_ENABLED -> Remove this environment variable; it is no longer needed.
+ - N8N_UNVERIFIED_PACKAGES_ENABLED -> The default for this variable will change to `false` in a future version. Set it to `true` explicitly to keep installing unverified community packages.
+ - N8N_RUNNERS_MODE -> Internal task runner mode is deprecated and will be removed in a future version. For isolation and scaling, run the task runner launcher as a separate process, set this variable to `external` and share `N8N_RUNNERS_AUTH_TOKEN` with the launcher. See LINK-REMOVED
+ - N8N_RUNNERS_TASK_TIMEOUT -> The default for this variable will be reduced from 300 (5 minutes) to 60 (1 minute) in a future version. Set it explicitly to keep your current task timeout.
+ - N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES -> The default for this variable will be reduced from 2 GiB to 256 MiB in a future version. Set it explicitly to keep your current limit.
+ - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES -> The default for this variable will be reduced from 5000 to 1000 in a future version. Set it explicitly to keep your current limit.
+
+[license SDK] Skipping renewal on init: license cert is not initialized
+Registered runner "JS Task Runner" (kAoYwbJdVGBlz9HkK8K33) 
+Instance registered
+Cluster aligned on version 2.46.6
+Discovered 4 cluster checks
+Sandbox: enabled=false provider=n8n-sandbox (from env)
+Version: 2.46.6
+Building workflow dependency index...
+Scheduler started
+Finished building workflow dependency index. Processed 0 draft workflows, 0 published workflows.
+
+Editor is now accessible via:
+LINK-REMOVED
+getaddrinfo ENOTFOUND api.n8n.io
+Error: getaddrinfo ENOTFOUND api.n8n.io
+    at AxiosError.from (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:1577:24)
+    at RedirectableRequest.handleRequestError (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:4792:25)
+    at RedirectableRequest.emit (node:events:526:24)
+    at ClientRequest.eventHandlers.<computed> (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/follow-redirects/index.js:56:24)
+    at ClientRequest.emit (node:events:514:28)
+    at emitErrorEvent (node:_http_client:114:11)
+    at TLSSocket.socketErrorListener (node:_http_client:774:5)
+    at TLSSocket.emit (node:events:526:24)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at Axios.request (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:6308:43)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at requestWithResponseLimit (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:52:10)
+    at invokeWithChallengeAuth (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:30:10)
+    at invokeAxios (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:10:10)
+    at sendHttpRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/request.ts:237:5)
+    at httpRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/request.ts:201:10)
+    at Object.request (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/outbound-http.ts:216:12)
+    at paginatedRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/n8n/src/utils/strapi-utils.ts:90:15)
+    at McpRegistryApiClient.fetchAllServers (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/n8n/src/modules/mcp-registry/registry/mcp-registry-api.client.ts:38:19)
+
+getaddrinfo ENOTFOUND api.n8n.io
+Error: getaddrinfo ENOTFOUND api.n8n.io
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:112:26)
+
+Error fetching from Strapi API (LINK-REMOVED getaddrinfo ENOTFOUND api.n8n.io
+A system task run failed
+Received request for unknown webhook: This webhook is not registered for GET requests. Did you mean to make a POST request?
+404 This webhook is not registered for GET requests. Did you mean to make a POST request?
+Received request for unknown webhook: The requested webhook "GET desk-webhook" is not registered.
+404 The requested webhook "GET desk-webhook" is not registered.
+Received request for unknown webhook: This webhook is not registered for GET requests. Did you mean to make a POST request?
+404 This webhook is not registered for GET requests. Did you mean to make a POST request?
+desk_unreachable lead_id=down-246dd3
+desk_unreachable lead_id=down-246dd3
+desk_unreachable lead_id=kill-6d2d88
+desk_unreachable lead_id=kill-6d2d88
+There is a conflict with one of the webhooks.
+409 There is a conflict with one of the webhooks.
+There is a conflict with one of the webhooks.
+409 There is a conflict with one of the webhooks.
+Initializing n8n process
+n8n ready on LOOPBACK, port 5679
+n8n Task Broker ready on LOOPBACK, port 5780
+Failed to start Python task runner in internal mode. because its virtual environment is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: LINK-REMOVED
+
+There are deprecations related to your n8n setup. Please take the recommended actions to update your configuration:
+ - N8N_RUNNERS_ENABLED -> Remove this environment variable; it is no longer needed.
+ - N8N_UNVERIFIED_PACKAGES_ENABLED -> The default for this variable will change to `false` in a future version. Set it to `true` explicitly to keep installing unverified community packages.
+ - N8N_RUNNERS_MODE -> Internal task runner mode is deprecated and will be removed in a future version. For isolation and scaling, run the task runner launcher as a separate process, set this variable to `external` and share `N8N_RUNNERS_AUTH_TOKEN` with the launcher. See LINK-REMOVED
+ - N8N_RUNNERS_TASK_TIMEOUT -> The default for this variable will be reduced from 300 (5 minutes) to 60 (1 minute) in a future version. Set it explicitly to keep your current task timeout.
+ - N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES -> The default for this variable will be reduced from 2 GiB to 256 MiB in a future version. Set it explicitly to keep your current limit.
+ - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES -> The default for this variable will be reduced from 5000 to 1000 in a future version. Set it explicitly to keep your current limit.
+
+[license SDK] Skipping renewal on init: license cert is not initialized
+Registered runner "JS Task Runner" (rfC68wV37yYV4lr0TuMs7) 
+Instance registered
+Cluster aligned on version 2.46.6
+Discovered 4 cluster checks
+Sandbox: enabled=false provider=n8n-sandbox (from env)
+Version: 2.46.6
+Building workflow dependency index...
+Scheduler started
+Finished building workflow dependency index. Processed 0 draft workflows, 0 published workflows.
+
+Editor is now accessible via:
+LINK-REMOVED
+getaddrinfo ENOTFOUND api.n8n.io
+Error: getaddrinfo ENOTFOUND api.n8n.io
+    at AxiosError.from (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:1577:24)
+    at RedirectableRequest.handleRequestError (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:4792:25)
+    at RedirectableRequest.emit (node:events:526:24)
+    at ClientRequest.eventHandlers.<computed> (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/follow-redirects/index.js:56:24)
+    at ClientRequest.emit (node:events:514:28)
+    at emitErrorEvent (node:_http_client:114:11)
+    at TLSSocket.socketErrorListener (node:_http_client:774:5)
+    at TLSSocket.emit (node:events:526:24)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at Axios.request (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:6308:43)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at requestWithResponseLimit (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:52:10)
+    at invokeWithChallengeAuth (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:30:10)
+    at invokeAxios (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:10:10)
+    at sendHttpRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/request.ts:237:5)
+    at httpRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/axios/request.ts:201:10)
+    at Object.request (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/@n8n/backend-network/src/http/outbound-http.ts:216:12)
+    at paginatedRequest (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/n8n/src/utils/strapi-utils.ts:90:15)
+    at McpRegistryApiClient.fetchAllServers (/tmp/rr/repo/data/n8n_evidence_run/d-s1t5/node_modules/n8n/src/modules/mcp-registry/registry/mcp-registry-api.client.ts:38:19)
+
+getaddrinfo ENOTFOUND api.n8n.io
+Error: getaddrinfo ENOTFOUND api.n8n.io
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:112:26)
+
+Error fetching from Strapi API (LINK-REMOVED getaddrinfo ENOTFOUND api.n8n.io
+A system task run failed
+Received request for unknown webhook: This webhook is not registered for GET requests. Did you mean to make a POST request?
+404 This webhook is not registered for GET requests. Did you mean to make a POST request?
+Received request for unknown webhook: This webhook is not registered for GET requests. Did you mean to make a POST request?
+404 This webhook is not registered for GET requests. Did you mean to make a POST request?
+desk_unreachable lead_id=t5-fail-c5009c
+desk_unreachable lead_id=t5-fail-c5009c

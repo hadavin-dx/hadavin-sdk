@@ -1,0 +1,218 @@
+{
+ "S1": {
+  "pass": true,
+  "why": "13 of 13 checks passed",
+  "cases": [
+   {
+    "case": "form: new lead 201",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 201,
+     "verdict": "new",
+     "desk": {
+      "receipt_id": 1,
+      "verdict": "new",
+      "lead_id": "L876eb3a464f0",
+      "replayed": false
+     },
+     "lead_ref": "forma-c5895e"
+    }
+   },
+   {
+    "case": "form: same id again 201 replayed",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 201,
+     "verdict": "new",
+     "desk": {
+      "receipt_id": 1,
+      "verdict": "new",
+      "lead_id": "L876eb3a464f0",
+      "replayed": true,
+      "payload_matches": true
+     },
+     "lead_ref": "forma-c5895e"
+    }
+   },
+   {
+    "case": "form: same e-mail other id 200 duplicate",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 200,
+     "verdict": "duplicate",
+     "desk": {
+      "receipt_id": 3,
+      "verdict": "duplicate",
+      "lead_id": "L876eb3a464f0",
+      "differing_fields": [],
+      "replayed": false
+     },
+     "lead_ref": "formb-ad4c66"
+    }
+   },
+   {
+    "case": "form: bad e-mail 202 review",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 202,
+     "verdict": "review",
+     "desk": {
+      "receipt_id": 4,
+      "verdict": "review",
+      "reason": "invalid_email",
+      "replayed": false
+     },
+     "lead_ref": "formc-33c35f"
+    }
+   },
+   {
+    "case": "webhook: new lead 201",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 201,
+     "verdict": "new",
+     "desk": {
+      "receipt_id": 5,
+      "verdict": "new",
+      "lead_id": "L29b2c548570d",
+      "replayed": false
+     },
+     "lead_ref": "webhooka-ed5528"
+    }
+   },
+   {
+    "case": "webhook: same id again 201 replayed",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 201,
+     "verdict": "new",
+     "desk": {
+      "receipt_id": 5,
+      "verdict": "new",
+      "lead_id": "L29b2c548570d",
+      "replayed": true,
+      "payload_matches": true
+     },
+     "lead_ref": "webhooka-ed5528"
+    }
+   },
+   {
+    "case": "webhook: same e-mail other id 200 duplicate",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 200,
+     "verdict": "duplicate",
+     "desk": {
+      "receipt_id": 7,
+      "verdict": "duplicate",
+      "lead_id": "L29b2c548570d",
+      "differing_fields": [],
+      "replayed": false
+     },
+     "lead_ref": "webhookb-f6f757"
+    }
+   },
+   {
+    "case": "webhook: bad e-mail 202 review",
+    "ok": true,
+    "http": 200,
+    "reply": {
+     "n8n_error": false,
+     "desk_status": 202,
+     "verdict": "review",
+     "desk": {
+      "receipt_id": 8,
+      "verdict": "review",
+      "reason": "invalid_email",
+      "replayed": false
+     },
+     "lead_ref": "webhookc-cb6853"
+    }
+   },
+   {
+    "case": "desk down: n8n_error true, no verdict, HTTP 502, 3 tries",
+    "ok": true,
+    "http": 502,
+    "reply": {
+     "n8n_error": true,
+     "error": "desk call failed after retries",
+     "lead_ref": "down-5198fe"
+    },
+    "tries": 3,
+    "secs": 2.1
+   },
+   {
+    "case": "desk killed mid-request (point A): no verdict, n8n_error true",
+    "ok": true,
+    "http": 502,
+    "reply": {
+     "n8n_error": true,
+     "error": "desk call failed after retries",
+     "lead_ref": "kill-824f3d"
+    },
+    "proxy": [
+     {
+      "t": 1794651105.5575771,
+      "ref": "kill-824f3d",
+      "error": "RemoteDisconnected",
+      "secs": 0.01
+     },
+     {
+      "t": 1794651106.5819209,
+      "ref": "kill-824f3d",
+      "error": "URLError",
+      "secs": 0.0
+     },
+     {
+      "t": 1794651107.5968041,
+      "ref": "kill-824f3d",
+      "error": "URLError",
+      "secs": 0.0
+     }
+    ]
+   },
+   {
+    "case": "after restart the caller's resend gets a verdict",
+    "ok": true,
+    "attempts": [
+     [
+      200,
+      {
+       "n8n_error": false,
+       "desk_status": 201,
+       "verdict": "new"
+      }
+     ]
+    ]
+   },
+   {
+    "case": "money: every model lead id called exactly once",
+    "ok": true,
+    "calls": {
+     "L876eb3a464f0": 1,
+     "L29b2c548570d": 1,
+     "Lea38c75203a1": 1
+    },
+    "ledger_reserves": 3
+   },
+   {
+    "case": "money: ledger reserve rows == model lead ids",
+    "ok": true
+   }
+  ]
+ }
+}

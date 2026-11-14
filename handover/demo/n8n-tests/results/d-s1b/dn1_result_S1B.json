@@ -1,0 +1,8 @@
+{
+ "S1B": {
+  "pass": true,
+  "why": "FAIL expected before the change: reply carries desk_status=False, n8n_error on desk down=False (the original flows pass the desk body only and a bare error)",
+  "http_up": 200,
+  "http_down": 500
+ }
+}

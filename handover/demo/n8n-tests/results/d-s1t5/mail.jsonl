@@ -1,0 +1,1 @@
+{"t": 1794651449.5098045, "to": ["alerts@example.test"], "subject": "Lead desk door: the desk did not answer", "body": "The desk did not answer after retries. desk_unreachable lead_id=t5-fail-c5009c. Execution 15.\r\n", "headers": ["From", "To", "Subject", "Message-ID", "Content-Transfer-Encoding", "Date", "MIME-Version", "Content-Type"]}

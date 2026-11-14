@@ -1,0 +1,166 @@
+{
+ "T2": {
+  "pass": true,
+  "why": "5 of 5: n8n killed 1.5 s after the call (desk still working, model stand-in slow 3 s), restarted, the caller sent the same request again: 1 lead, 1 CRM row, 1 e-mail, a verdict in the reply; money 1 per lead",
+  "rows": [
+   {
+    "i": 1,
+    "lead": "t2-1-c76472",
+    "killed_confirmed": true,
+    "restarted": true,
+    "first_call": [
+     200,
+     null
+    ],
+    "resend_attempts": [
+     [
+      200,
+      {
+       "n8n_error": false,
+       "desk_status": 201,
+       "verdict": "new"
+      }
+     ]
+    ],
+    "desk": {
+     "leads": 1,
+     "fu": [
+      "sent"
+     ],
+     "receipts": 1,
+     "crm_rows": 1,
+     "emails": 1
+    },
+    "desk_requests": 2
+   },
+   {
+    "i": 2,
+    "lead": "t2-2-6159d9",
+    "killed_confirmed": true,
+    "restarted": true,
+    "first_call": [
+     200,
+     null
+    ],
+    "resend_attempts": [
+     [
+      200,
+      {
+       "n8n_error": false,
+       "desk_status": 201,
+       "verdict": "new"
+      }
+     ]
+    ],
+    "desk": {
+     "leads": 1,
+     "fu": [
+      "sent"
+     ],
+     "receipts": 1,
+     "crm_rows": 1,
+     "emails": 1
+    },
+    "desk_requests": 2
+   },
+   {
+    "i": 3,
+    "lead": "t2-3-a0545b",
+    "killed_confirmed": true,
+    "restarted": true,
+    "first_call": [
+     200,
+     null
+    ],
+    "resend_attempts": [
+     [
+      200,
+      {
+       "n8n_error": false,
+       "desk_status": 201,
+       "verdict": "new"
+      }
+     ]
+    ],
+    "desk": {
+     "leads": 1,
+     "fu": [
+      "sent"
+     ],
+     "receipts": 1,
+     "crm_rows": 1,
+     "emails": 1
+    },
+    "desk_requests": 2
+   },
+   {
+    "i": 4,
+    "lead": "t2-4-1648aa",
+    "killed_confirmed": true,
+    "restarted": true,
+    "first_call": [
+     200,
+     null
+    ],
+    "resend_attempts": [
+     [
+      200,
+      {
+       "n8n_error": false,
+       "desk_status": 201,
+       "verdict": "new"
+      }
+     ]
+    ],
+    "desk": {
+     "leads": 1,
+     "fu": [
+      "sent"
+     ],
+     "receipts": 1,
+     "crm_rows": 1,
+     "emails": 1
+    },
+    "desk_requests": 2
+   },
+   {
+    "i": 5,
+    "lead": "t2-5-9c423e",
+    "killed_confirmed": true,
+    "restarted": true,
+    "first_call": [
+     200,
+     null
+    ],
+    "resend_attempts": [
+     [
+      200,
+      {
+       "n8n_error": false,
+       "desk_status": 201,
+       "verdict": "new"
+      }
+     ]
+    ],
+    "desk": {
+     "leads": 1,
+     "fu": [
+      "sent"
+     ],
+     "receipts": 1,
+     "crm_rows": 1,
+     "emails": 1
+    },
+    "desk_requests": 2
+   }
+  ],
+  "money": {
+   "expected_leads": 5,
+   "model_calls_total": 5,
+   "model_lead_ids": 5,
+   "max_calls_per_lead_id": 1,
+   "ledger_reserve_rows": 5,
+   "ok": true
+  }
+ }
+}

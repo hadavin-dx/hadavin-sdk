@@ -1,0 +1,8 @@
+>> T1 10:19:15Z
+prepare {'error_workflow': '7243BtzY0htiPA8E', 'door-form': ('5LJDYABrj6DRVTyo', 'activated'), 'door-hook': ('Xwby6SgxJMEa0S6I', 'activated')}
+REC {"test": "T1", "burst": 1, "lead": "t1-1-878fb8", "replies": [[[200, 201, "new", true], 9], [[200, 201, "new", false], 1]], "resend_attempts": [], "desk": {"leads": 1, "fu": ["sent"], "receipts": 1, "crm_rows": 1, "emails": 1}, "desk_requests": 10}
+REC {"test": "T1", "burst": 2, "lead": "t1-2-29403e", "replies": [[[200, 201, "new", true], 9], [[200, 201, "new", false], 1]], "resend_attempts": [], "desk": {"leads": 1, "fu": ["sent"], "receipts": 1, "crm_rows": 1, "emails": 1}, "desk_requests": 10}
+REC {"test": "T1", "burst": 3, "lead": "t1-3-e37f0d", "replies": [[[200, 201, "new", true], 9], [[200, 201, "new", false], 1]], "resend_attempts": [], "desk": {"leads": 1, "fu": ["sent"], "receipts": 1, "crm_rows": 1, "emails": 1}, "desk_requests": 10}
+REC {"test": "T1", "money": {"expected_leads": 3, "model_calls_total": 3, "model_lead_ids": 3, "max_calls_per_lead_id": 1, "ledger_reserve_rows": 3, "ok": true}}
+RESULT T1 PASS 3 bursts of 10 identical requests: each ended with 1 desk lead, 1 receipt, 1 CRM row, 1 e-mail; model calls 1 per lead id, ledger rows 1 per lead
+dn1 done

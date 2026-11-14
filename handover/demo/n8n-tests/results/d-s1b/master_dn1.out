@@ -1,0 +1,6 @@
+>> S1B 10:09:18Z
+REC {"test": "S1B", "deploy": "('4MYjAoPcYLr2Rre3', 'activated')"}
+REC {"test": "S1B", "case": "desk up, new lead", "http": 200, "reply": {"receipt_id": 1, "verdict": "new", "lead_id": "L8ba0005dcbae", "replayed": false}}
+REC {"test": "S1B", "case": "desk down", "http": 500, "reply": {"message": "Error in workflow"}}
+RESULT S1B PASS FAIL expected before the change: reply carries desk_status=False, n8n_error on desk down=False (the original flows pass the desk body only and a bare error)
+dn1 done
