@@ -1,5 +1,48 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:32 UTC / 12:02 IST
+
+**r7h REVIEW DONE (fresh, handover/core/review/core-fix-on-frozen-r7h-review.md): NOT CLEAN, 0 Blocker, 0 Major, 8 minor, 3 nit.** Closed: m1 Kelvin sign (ASCII check at all four validators; the reviewer's own sweep of lower/upper/casefold/normalize/re.I/\d found no missed sibling), m2 even share and n1 cap in the main case. It re-planted 12 of the builder's 15 mutants in clean copies: all killed; M9-02 and its 3 siblings killed by r7h's order pins; its own 15 mutants: 8 killed, 7 survived (O1, O4, O5, O6, O8, O9, O20). The old r7g gaierror test was replaced by the opposite property by decision (stricter for the new behaviour). Order of secret reading: enforced at FIVE separate sites by source order, no shared choke point (smtp send, live_claude, crm _call, imap, n8n at import); each pinned by its own test.
+Fix-dont-defer: ALL are fixed, in **r7j (source changes, so a second full run EV7J follows)**:
+| id | finding | fix |
+|---|---|---|
+| m1 | connect_bounded creates the socket outside the try: with IPv6 unavailable (errno 97) the IPv4 address is never tried (r7g too; create_connection would try it): a REAL behaviour bug on the connect path | socket creation inside the try |
+| m2 | the thread cap counts only abandoned look-ups: 20 concurrent callers run 20 threads against a cap of 8, so the doc claim "never more than 8" is false | reserve the slot under the lock before the thread starts; fix the doc |
+| m3 | at the cap IP literals and localhost are refused too | no look-up thread for them |
+| m4 | even share pinned only from above (mutant `left / (still + 1)` survives; the changed r7g test is looser below) | exact assertion, killing test |
+| m5 | linger test imports resource (fails on Windows instead of skipping); no-select.poll branch and poll timeout untested (O9, O8) | skip, new tests |
+| m6 | given_up wiring in run() untested (O5, O6 survive 152 tests) | tests on the real run() |
+| m7 | exit 0 with given-up requests is documented only in the patch chain's own docs; limits.md:101 lacks given_up and the NOTE | docs now; contract: ASK below |
+| n1/n2/n3 | second fixed look-up text; crm_hubspot.archive isdigit takes non-ASCII digits into a URL path; finished race branch unpinned (O1) | one text or justify; ASCII check; test |
+The reviewer did NOT run: the full suite, Windows/macOS, any real name server or mail host; it could not run the order tests on a tree-R7G copy (the file imports hung_lookups, which r7g lacks), so "the order was already right on r7g" rests on reading the code.
+
+**ASK (default in 10 min: YES) on m7:** a deadline run in which some requests were given up ends exit 0 today (documented in this chain's r7f/r7g docs; the frozen demo only says "reported, never hidden"). It is the same class as the stopped-run gap you ordered fixed in r7g (exit 3). My recommendation: end exit 3 whenever the count of given-up or stopped requests is above 0, one line, same count in the summary, tests and mutants. Cost: a run against a slow desk that used to pass now fails: that is the honest answer. Tell me if you want exit 0 kept; the r7j builder gets the answer by message.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| af6c47e8 (r7j builder, fresh) | all findings above, new tests/test_r7j_findings.py, fail-before, mutants | fix-dont-defer | 06:32 / 12:02 | 50 min box (about 07:25) | r7j | RUNNING (just started) | hand-back; then EV7J (full run) + r7j delta reviewer |
+| a5b69f39 (EV7I runner, full run on r7i) | one full run | base run; I will compare ids with EV7G | 06:27 | wrapper limit about 07:12 | EV7I | RUNNING (checkpoint: wrapper started 06:27:45). It becomes the base for EV7J (r7j changes source) | EV7I-EVIDENCE.md |
+| ae9c3a10 (r7i delta reviewer) | the 37 tests | independent | 06:27 | about 07:17 | review of r7i | RUNNING (mutant lanes; no finding yet) | report |
+| adb9596a (EV7H part 1) | non-full evidence on r7h | delta base | 06:10 | about 07:10 | part 1 | RUNNING (step 5 done at 06:28; own mutants N07-N15 in lane P) | file |
+| aa54df08 (mail pass 9) | big-set re-runs | classify | 05:35 | about 06:50 | pass 9 | RUNNING. Big-set results now in: M9-18 SURVIVED (timeout 0 no longer means the default) = REAL GAP; M9-08 SURVIVED (_wrap handshake runs with no budget timeout) = REAL GAP (low); M9-30 SURVIVED but classified EQUIVALENT in practice with a weak spot (agent's argument, I have not read it yet). All three are already in r7i's test file. M9-19 not yet | report |
+
+Whether to stop EV7I now that r7j will supersede it: I keep it (finished before r7j lands, so it costs only machine time and gives the failing-id base and a timing check for the 37 new tests under load); tell me if you want it stopped.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7I, EV7H part 1 results | running | read |
+| r7j patch; EV7J full run; fresh r7j reviewer | builder running | start at hand-back |
+| the M9-30 equivalence argument and M9-19 | not read | pass 9 report |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell, Windows (reviewer's m5: resource import fails there), Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Send the m7 answer to the r7j builder (yours, else my default after 10 min); read EV7I and EV7H part 1.
+2. At the r7j hand-back: verify sha256, copy (CRLF as .gz), EV7J (one full run, staged git copy, machine state) plus the fresh r7j reviewer together; compare ids with EV7G and EV7I.
+3. On a clean pass: freeze (final tree r7j), rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 06:27 UTC / 11:57 IST
 
 **r7i HANDED BACK (06:26Z), TEST-ONLY: no source file changed.** I verified: the three patch hashes match sha256-r7i.txt, git apply --check rc 0 on a-crlf, b-crlf, c-lf; copied to handover/core/fix/ (CRLF as .gz, unpack hash checked), pushed 65b86bf1. Everything else below is the builder's claim.
