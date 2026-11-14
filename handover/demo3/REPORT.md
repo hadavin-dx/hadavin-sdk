@@ -1,3 +1,19 @@
+## HEARTBEAT 132 (08:59Z) - B23 fix-10 round 5 handed back and linted; two fresh reviewers started; B21 r10 and B22 r12 building
+
+| Agent / job | State at 08:59Z |
+|---|---|
+| B23 fix-10 round 5 | handed back. My tree id c494f120 matches the builder's. My lint of a clean git ls-files copy: ruff check, ruff format, mypy linux, mypy win32, bandit all rc 0 (evidence/raw/b29-lint-b23-r5.log). Builder: red-first on the old tree 94 failed; 3 runs of the start/reset/ps1/scrub files 216 passed, 10 skipped; wall-clock files rc 0; callers 2485 passed (before its last two test additions); no full suite (stack covers it). Row 10 (scrub) unchanged, KEEP as you decided |
+| UNEXPLAINED, named for the reviewers | (a) run 3's first attempt "stopped with no summary line, cause unknown", then passed alone: not accepted as a flake, the reviewers must name a cause; (b) mutant r4-10 (start_all.sh alive check dropped) declared equivalent but killed by exactly one test, so either a missing test or a timing-coupled one |
+| R25a / R25b | fresh egm-design and egm-codebase-details started 08:59Z on tree c494f120 |
+| B21 fix-5 round 10 | building (checkpoint 08:56Z: scripts done, mutant passes running); no hand-back yet |
+| B22 fix-2 round 12 | building (checkpoint 08:45Z: full run in progress, the new lock-handle guard found a leaked handle in one test, being fixed); no hand-back yet |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new from me; the two unexplained items above are open.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; IPv6 real-bind tests skipped here (class choice only tested); no full suite on this tree; WINDOWS-RUN-1 lines from B23 (ownership line, code page) not yet written into the file.
+WHAT I WOULD DO NEXT (ranked): 1) save the two B23 reviews, resolve, round 6 only for a confirmed Major; 2) B21 r10 and B22 r12 hand-backs: lint, fresh review; 3) the one stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 131 (08:55Z) - B21 r10, B22 r12 and B23 r5 all near hand-back; none handed back yet
 
 | Agent / job | State at 08:55Z (from their own checkpoints, not yet verified by me) |

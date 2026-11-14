@@ -1,3 +1,6 @@
 # round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
 sh byte order mark not skipped | KILLED | 1 failed, 9 passed in 13.74s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
 sh version guard minor < 4 -> < 3 | KILLED | 1 failed, 92 passed, 1 skipped in 29.37s | tests/test_reset_scripts.py::test_text_only_the_bash_minimum_in_the_script_is_the_one_in_the_readme_and_the_old_macos_remark_is_gone
+ps1 final Test-Path without -LiteralPath | KILLED | 1 failed, 143 passed, 6 skipped in 33.48s | tests/test_reset_ps1_pid_rules.py::test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked
+ps1 byte order mark byte changed | KILLED | 1 failed, 138 passed, 6 skipped in 33.54s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+ps1 Stop-Process in pass 1 | KILLED | 1 failed, 141 passed, 6 skipped in 33.62s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_1_looks_at_both_pid_files_and_changes_nothing

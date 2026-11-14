@@ -6,3 +6,6 @@ Done (untested beyond narrow runs, unlinted, unstaged): row 6 (config_exit bytes
 
 ## Round 5 checkpoint 08:18 UTC
 All 24 rows edited. Lint on a clean ls-files copy: ruff check/format, mypy linux+win32, bandit all rc 0 (raw/b23-r5-lint-*.log). fails-before on a pristine r4 copy: 94 failed (raw/b23-r5-fails-before.log). Running: callers (raw/b23-r5-callers.log). Next: 3x runs of the start_all/late-refusal/reset files, wall-clock tests alone, mutants (/home/user/work/b23-mut5.py), patch, parts, sha256, notes. UNCERTAIN: IPv6 real-bind tests are SKIPPED here (kernel refuses AF_INET6), only class choice is tested with stand-ins.
+
+## Round 5 final (about 08:58 UTC)
+Survivors r4-3, r4-13, r5-5 fixed and killed. r4-10 still unexplained. Lint rc 0 all five. 3 runs 216 passed/10 skipped (run 3 redone once after a cut-off log). Patch + 5 parts + sha256 cut; same tree c494f120 on double apply and parts. Notes: lane3-fix-10-r5-notes.md. Handing back.

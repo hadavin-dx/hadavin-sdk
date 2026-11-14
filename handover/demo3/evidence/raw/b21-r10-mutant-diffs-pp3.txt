@@ -19,3 +19,23 @@
 -                $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction Stop
 +                $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction SilentlyContinue
 
+##### ps1 folder exit 7 -> 1 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -51 +51 @@
+-            exit 7
++            exit 1
+
+##### ps1 Remove-Item catch drops exit 7 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -159 +158,0 @@
+-        exit 7
+
+##### support width 5000 -> 6000 (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -18 +18 @@
+-_RANGE_WIDTH = 5000  # widest block of one worker (narrower when there are more workers)
++_RANGE_WIDTH = 6000  # widest block of one worker (narrower when there are more workers)
+

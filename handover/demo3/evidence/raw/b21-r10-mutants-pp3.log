@@ -1,3 +1,6 @@
 # round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
 sh folder check dropped | KILLED | 1 failed, 90 passed, 1 skipped in 29.49s | tests/test_reset_scripts.py::test_reset_sh_refuses_with_exit_7_when_the_pid_file_is_an_empty_folder_and_keeps_the_book[desk.pid]
 sh pid files not deleted (pass 3) | KILLED | 1 failed, 8 passed in 2.34s | tests/test_reset_order_and_words.py::test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file
+ps1 process lookup errors silenced | KILLED | 1 failed, 144 passed, 6 skipped in 33.43s | tests/test_reset_ps1_pid_rules.py::test_text_only_a_failed_process_lookup_refuses_with_exit_6_before_anything_is_stopped
+ps1 folder exit 7 -> 1 | KILLED | 1 failed, 139 passed, 6 skipped in 33.72s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
+ps1 Remove-Item catch drops exit 7 | KILLED | 1 failed, 139 passed, 6 skipped in 33.58s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed

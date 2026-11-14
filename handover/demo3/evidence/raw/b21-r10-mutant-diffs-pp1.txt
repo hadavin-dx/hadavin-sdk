@@ -26,3 +26,17 @@
 -            $full = Convert-Path -LiteralPath $pidFile
 +            $full = $pidFile
 
+##### ps1 pattern not anchored (\s* back) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -38 +38 @@
+-$ours = '^' + $interpreter + '\s+-m\s+(lead_desk\.server|demo_only\.fakes_server)(\s|$)'
++$ours = '^\s*' + $interpreter + '\s+-m\s+(lead_desk\.server|demo_only\.fakes_server)(\s|$)'
+
+##### ps1 exit 5 forgets already stopped (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -113 +113 @@
+-    $note = if ($stopped) { " (already stopped: $stopped)" } else { '' }
++    $note = ''
+

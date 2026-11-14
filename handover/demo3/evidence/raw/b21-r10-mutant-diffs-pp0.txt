@@ -19,3 +19,30 @@
 -      kind[$name]=ours
 +      kind[$name]=stale
 
+##### ps1 lookup failure no exit 6 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -94 +93,0 @@
+-                exit 6
+
+##### ps1 refusal back to Write-Host (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -132 +132 @@
+-        [Console]::Error.WriteLine("refused: process $procId did not stop in time; nothing was deleted$note")
++        Write-Host ("refused: process $procId did not stop in time; nothing was deleted$note")
+
+##### ps1 [Pp]ython -> python (interp 1) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -37 +37 @@
+-$interpreter = '("([^"]*[\\/])?[Pp]ython[^"\\/]*"|([^\s"]*[\\/])?[Pp]ython[^\s"\\/]*)'
++$interpreter = '("([^"]*[\\/])?python[^"\\/]*"|([^\s"]*[\\/])?[Pp]ython[^\s"\\/]*)'
+
+##### support width ignores count (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -39 +39 @@
+-    width = min(_RANGE_WIDTH, _HALF // total)
++    width = min(_RANGE_WIDTH, _HALF // 4)
+

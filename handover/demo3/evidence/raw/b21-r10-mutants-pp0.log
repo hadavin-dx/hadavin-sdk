@@ -1,3 +1,7 @@
 # round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
 sh pass 1 also stops (kill added in pass 1) | KILLED | 1 failed, 7 passed in 31.24s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
 sh read loop reads nothing | KILLED | 1 failed, 4 passed in 10.64s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
+sh ours judged stale | KILLED | 1 failed, 4 passed in 10.65s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
+ps1 lookup failure no exit 6 | KILLED | 1 failed, 144 passed, 6 skipped in 33.52s | tests/test_reset_ps1_pid_rules.py::test_text_only_a_failed_process_lookup_refuses_with_exit_6_before_anything_is_stopped
+ps1 refusal back to Write-Host | KILLED | 1 failed, 146 passed, 6 skipped in 33.81s | tests/test_reset_ps1_pid_rules.py::test_text_only_every_refusal_goes_to_standard_error_like_reset_sh
+ps1 [Pp]ython -> python (interp 1) | KILLED | 1 failed, 114 passed, 1 skipped in 33.48s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["\\Python312\\Python.exe" -m lead_desk.server-True]

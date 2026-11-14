@@ -19,3 +19,24 @@
 -    if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }
 +    if (Test-Path $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }
 
+##### ps1 byte order mark byte changed (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -73 +73 @@
+-                if ($count -ge 3 -and $buffer[0] -eq 0xEF -and $buffer[1] -eq 0xBB -and $buffer[2] -eq 0xBF) { $from = 3 }
++                if ($count -ge 3 -and $buffer[0] -eq 0xEE -and $buffer[1] -eq 0xBB -and $buffer[2] -eq 0xBF) { $from = 3 }
+
+##### ps1 Stop-Process in pass 1 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -100 +100 @@
+-            $plan += [pscustomobject]@{ Name = $name; PidFile = $pidFile; ProcId = $procId; Ours = $true }
++            $plan += [pscustomobject]@{ Name = $name; PidFile = $pidFile; ProcId = $procId; Ours = $true }; Stop-Process -Id $procId
+
+##### ps1 cap -ge 64 -> -gt 64 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -76 +76 @@
+-                $bad = (($count - $from) -ge 64)
++                $bad = (($count - $from) -gt 64)
+
