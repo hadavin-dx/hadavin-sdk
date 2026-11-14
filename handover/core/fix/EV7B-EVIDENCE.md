@@ -353,13 +353,17 @@ Mutation points not found: none. Mutants of the plan's N07-N09 (optional) not ru
 
 Full suite chunks: after A and after B the tree root (ls -A | cat -A, git status --short) was compared with the baseline taken before the run: the only difference was a new empty folder `data/` (created 23:09:13 UTC, during A; it is in .gitignore). No file named `a`+newline+`b` appeared in either chunk. The clean-tree guard in tests/conftest.py printed nothing (no 'REPOSITORY FOLDER CHANGED' line in full-A.log or full-B.log; `data/` is git-ignored, which the guard does not see).
 
-Per-file bisect (stray/bisect.sh): every test file run alone, one after the other, in a scratch copy of the tree, root listing and git status compared after each file. Files done at the time of writing: 100 of 123. Files that changed the root listing or git status:
+Per-file bisect (stray/bisect.sh): every test file run alone, one after the other, in a scratch copy of the tree, root listing and git status compared after each file. Files done at the time of writing: 123 of 123 (finished). Files that changed the root listing or git status:
 ```
 tests/test_mode_safety.py rc=0 ls-diff=[< data$ ] status-extra=[]
 tests/test_reset_scripts.py rc=0 ls-diff=[< data$ ] status-extra=[]
 ```
-Files with rc not 0 in this bisect: tests/test_hygiene.py rc=1; tests/test_r7_no_replace_of_special.py rc=1 (test_hygiene = the index state described in section 0; test_r7_no_replace_of_special = my long TMPDIR path, AF_UNIX path too long). No file named `a`+newline+`b` appeared after any of these runs.
+Files with rc not 0 in this bisect: tests/test_hygiene.py rc=1; tests/test_r7_no_replace_of_special.py rc=1 (test_hygiene = the index state described in section 0; test_r7_no_replace_of_special = my long TMPDIR path, AF_UNIX path too long). No file named `a`+newline+`b` appeared after any of these runs. ANSWER (measured): the empty folder `data/` in the tree root is created by `tests/test_mode_safety.py` and by `tests/test_reset_scripts.py`, each run alone (the default database path is ./data/desk.sqlite3). The `a`+newline+`b` file was not reproduced by any test file run alone, nor by the two suite chunks.
 
 ## 10. /dev/null uses on r7b (devnull-uses-r7b.txt; plan command: grep -rIn -E 'DEVNULL|/dev/null|os\.devnull' tests scripts src tools load_tools demo_only)
 
 35 lines in 15 files on r7b (r6 list: 31 lines in 16 files). Lines that REDIRECT to /dev/null from a shell script or a shell text in a test: scripts/start_all.sh (8), scripts/reset.sh (8), tests/test_shell_single_bracket.py (3), tests/test_book_folder_refusals.py:153, tests/test_nosemgrep_form.py:466. While /dev/null was a regular file, a test or script run that executes these may have written into it; I did not look at /dev/null (rule 7). `tests/test_r4_refusals.py:359` and `tests/test_book_folder_refusals.py:58-59` use the path `/dev/null/x.db` as a bad path (not written). `scripts/run_live_check.py:90` compares with `os.stat(os.devnull)`. The rest are `stdin=subprocess.DEVNULL` (open for read). In my full-suite results those tests passed (no failure named DEVNULL).
+
+## 11. Sweep at the end
+
+Processes I started: all finished or stopped (the suite, alone chain, hostile run, two mutant workers, N12b ext run, fail-before chains, stray bisect, extra runs). `pgrep -af` for pytest/unshare/lo_up/hostile/runmut at the end shows only pytest processes of other agents' trees (R7C/MAIL6 paths), which I did not start and did not touch. Scratch copies deleted at the end: tmp-EV7B (all mutant/alone/stray copies), tree-old-EV7B, tree-FB-EV7B, tree-EV7B/__pycache__ folders and `data/`. tree-EV7B itself (patched tree used for the suite) is kept for re-runs. Evidence files are in out/EV7B/ (not committed, nothing pushed).
