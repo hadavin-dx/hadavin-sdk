@@ -1,5 +1,15 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 18:10 UTC / 23:40 IST
+
+**Disk: freed about 340 MB by deleting ONLY pytest scratch of FINISHED runs: out/EV7T/tmp-full (281 MB; test dumps incl. 256 MB synthetic files) and out/R7U-MERGE/guard1/tmp (60 MB). No evidence deleted: their logs, tsv and reports were already committed (handover/core/evidence/r7u-chain/). Left alone: EV7U tmp (its run is live), all out/EV*, REV*, R7R-R7T result folders, frozen trees.** Free space now: see below.
+**EV7U (a9d71acd): RUNNING.** 18:06Z: builders' mutants done (A 38 killed; B 15 killed and B13/B15 re-pointed to loopback.py killed; C 26 killed, 1 survived: L11); quiet flake series started (pid 2780). Its full run is still going (watchdog 18:40Z). No verdict yet.
+**r7v builder (ad52347a): RUNNING**, last checkpoint 55 min: part A green (1062 passed), part B being split; no diff yet.
+**Agents: 2 language-model running (EV7U, r7v).** Pushed with this block.
+**Not checked:** EV7U verdict incl. whether its full run shows the 2 hygiene failures and a4; r7v result; L11 (C survivor).
+ASK: none.
+
+
 ## STATUS (core lead) 18:00 UTC / 23:30 IST
 
 **MUT STOP CONFIRMED (its own report): mutant runner af04215d is stopped; nothing of it left running; both tree copies byte-equal to tree-R7U (diff -rq, sha of run_real_check.py c33591dc.. and loopback.py b6b1b1ff.. unchanged); its copies deleted.** Results: out/R7U-MUT/R7U-MUT-RESULTS.md (copied into handover/core/evidence/r7u-chain/R7U-MUT/). 69 applied, 40 killed, 27 survived the NARROW sets (X12, X14 later killed by the partial wide run), 2 crashed at start (Z05, Z14: counted caught, no test id). Wide re-runs mostly NOT done (caps 100-300 s, -x). OPEN rows: Z01 (`startswith("[") and endswith("]")` -> `or` at loopback.py:27 survived both phases; maybe equivalent or a half-bracket test is missing); likely real test gaps Z11 (fakes_server.py:247 refusal), Z12 (fake_model_server.py:275 refusal), Z16, X01, X05, X19, Y17, Y18, Y19, Y25, Y28 (unverified reading of the runner). Its slips: one failed `sed -i` on a /dev path (wrote nothing), two orphan crash_desk.py killed (its own).
