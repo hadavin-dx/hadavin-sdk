@@ -388,3 +388,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R26a/R26b | closed 09:43Z: reviews saved (0B/3M each way) | | closed |
 | B21 | resumed 09:44Z for fix-5 round 11 (20-row resolve), expected end ~11:00Z | | in progress |
 | B22 | checkpoint 09:51Z DONE, hang withdrawn; hand-back awaited | 09:51Z | in progress |
+| B22 | closed 09:52Z: fix-2 r12 handed back, tree 5d144259 (mine matches), lint rc 0 x5 by me (raw/b31-lint-b22-r12.log) | | closed |
+| R27a/R27b | egm-design / egm-codebase-details on fix-2 r12, started 09:52Z, expected end ~10:25Z | | in progress |
