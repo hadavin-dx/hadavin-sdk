@@ -1,5 +1,35 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:44 UTC / 11:14 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| aaae555f (EV7G runner) | full run of r7g, then staged git copy, odd file, fail-before, 15 mutants, hostile cases, ruff | independent proof of r7g | 05:12 / 10:42 | box 90 min (about 06:42) | EV7G n1 | RUNNING step 4 on: full run DONE, staged git copy DONE | EV7G-EVIDENCE.md |
+| ae16bd9e (r7h builder) | m1 Kelvin sign + sweep, m2 even time split, n1 thread cap, three thread sites | fix-dont-defer | 05:20 / 10:50 | box ends about 06:10 | r7h | RUNNING: 05:44 "runsel running; fd-limit lingerer fix added (poll), hygiene fix" (it found two more things: a lingering-thread fd limit and a hygiene issue; I do not know details) | hand-back; then EV7H + delta reviewer in parallel (your 05:36 order) |
+| aa54df08 (mail pass 9) | 30+ new mutants, mail/secret modules r7h does not change | fresh pass | 05:35 / 11:05 | box ends about 06:50 | pass 9 | RUNNING: clean sets rc 0 so far: tls_trust 551 in 81 s, live_claude 406 in 227 s, crm_hubspot 283 in 74 s; no mutant result yet | mail-pass9-r7g.md |
+
+**EV7G full run on r7g (plain copy, no .git), 05:12:57 to about 05:39: 7 failed, 5468 passed, 8 skipped, 1559.68 s, rc 1.** The 7 failures, all git or hygiene tests that need a git checkout: test_hygiene (4: no_control_characters_in_markdown, hygiene_scan_public, sh_blobs_no_cr, secret_scan_files_have_no_carriage_return), test_nosemgrep_form::no_bare_nosemgrep_comment, test_raw_bidi_chars::no_tracked_file_holds_a_raw_direction_control_character, test_shell_single_bracket::no_tracked_script_or_workflow_run_block_holds_a_single_bracket_test. I read the ids from the log; the runner's one-line note says "7 git-only failures". The staged git copy (git init, add, no commit) ran 300 tests, passed, rc 0 (runner checkpoint 05:44; I have not yet read its file). My reading: the 7 are the known need-a-git-copy tests, not real failures; confirmed only by that rc 0 on the copy, not by me re-running. Skips are the known ones (Python 3.13 reserved-name, Windows-only, load measurement). The odd-file, fail-before, 15 mutants, hostile cases and ruff steps are NOT done yet. Machine: load about 1.3.
+
+Your 05:36 answer (EV7H): noted. Plan: when r7h lands, copy patches (CRLF as .gz, hash-check), start EV7H (ONE full run, recorded wrapper, staged git copy, no data/ folder, machine state in header) and a FRESH r7h delta reviewer in parallel; then compare EV7H and EV7G failures by test id and explain any id that fails in only one before hand-back.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7G steps after the git copy (odd file, fail-before, mutants, hostile, ruff) | in progress | EV7G-EVIDENCE.md |
+| r7h patch, EV7H, r7h delta reviewer | builder running | start at hand-back |
+| mail pass 9 result | in progress | decide r7i only for a real Blocker or Major |
+| older packages' hashes (r2 to r6, v1, v2, F*, docs, f8) | no recorded hash | compare to build originals |
+| first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7h hand-back: copy and hash-check patches, start EV7H and the fresh delta reviewer together.
+2. Read EV7G-EVIDENCE.md when done (odd file, fail-before, mutants), and mail pass 9; r7i only for a real Blocker or Major.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 05:36 UTC / 11:06 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
