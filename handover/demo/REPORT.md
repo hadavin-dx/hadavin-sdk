@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:48Z - page statements v4 and run sheet fixed and pushed; agents running 0
+- PAGE-STATEMENTS-V4.md fixed (af1f53cc): recovery 'within 60 s' only at lease 20 s; lane3 144.3 s at lease 120 s (n=1); K3/K3B 1 alert each; two K3 names; v3 B90 3 of 3; v4 B90 lane3 3 of 3 + laptop 1. Still UNBACKED: lane3 cases A and C, library timeouts, scan claim, 30 s alert timing. Still NOT RUN: v4 T8/T15, v4 kills, hold over 720 s, dead SMTP 10 min, Slack alert, cap-after-mail, Send Email wait, lease 45 s.
+- VIDEO-RUNSHEET.md fixed: scenes 3, 4, 7, 8, 9, 10 and closing card changed. Scene 3 no number (T13 not re-read), scene 8 fallback caption or CUT, scene 10 screenshot fallback, scene 11 optional and under review. New core time EST 340 s, 365 s with scene 11, minus 10 s if scene 8 is cut. Hygiene grep for 40+ runs and links on the sheet: run by me, result in the commit message.
+- Open for the lead: HB180/HB186 not in my checkout; V7 file 'v4 B90 n=2' line stale; 7 decisions table in AUDIT-VIDEO-RUNSHEET.md.
+NOT DONE / NOT CHECKED: I read only the greps of the two fixed files, not every line.
+WHAT I WOULD DO NEXT: 1. wait for the laptop table-screen import and the rehearsal result. 2. re-read T13 raw numbers when given. 3. update both files from the rehearsal.
 ## Block 16:48Z - both audits pushed, fixes running; agents running 2
 - AUDIT-PAGE-STATEMENTS-V4.md (agent A, done): 18 statements: OK 8, WRONG 1 (12: 'in my runs' for runs I did not do, 59.6 s without the lease 20 s condition), UNBACKED 4 (6, 8, 16, 18), OUTDATED 5 (4, 7, 13, 14, 17). I read the v4 recovery flow: 720 s window, backoff 60..300 s, 30 s tick, unknown-vs-failed SQL, film lease 45 s all confirmed.
 - AUDIT-VIDEO-RUNSHEET.md (agent B, done, c7405f1c): 12 scenes: OK 6, WRONG 1 (scene 7), UNBACKED 3, OUTDATED 2; 7-decisions table inside.
