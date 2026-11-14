@@ -1,0 +1,8 @@
+# Exact versions the Design A runs used (my runs, one Linux machine). Not a claim about other machines.
+Node.js        24.22.2   (24.22.x is fine; official tarball for your OS, no package manager version)
+n8n            2.46.6    (npm ci from a package.json with exactly: {"name":"n8n-evidence","private":true,"dependencies":{"n8n":"2.46.6"}} plus its lock file)
+Postgres       16        (container image pinned by digest in run_mf.py PG_IMAGE, or a native 16 on port 55432)
+Python         3.12 or newer, standard library only (no pip packages)
+Docker         any current Docker Desktop / engine (only for the Postgres container, see RUN-ON-LAPTOP.md part 6)
+OS             POSIX (Linux, macOS, or WSL2 on Windows): the driver uses process groups (os.killpg) to stop its stand-ins and to kill n8n.
+Public repo    duplicate-proof-lead-desk-n8n at the commit the evidence harness came from (n8n_evidence fix15 candidate); it supplies demo_only/ (fake model server) and the desk's lead_desk package.

@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 11:22Z - Design A runner package pushed for the laptop (RUN-ON-LAPTOP.md)
+
+No new test results (disk full here; lead decision: nothing deleted, kill series runs on the laptop).
+- PUSHED: handover/demo/RUN-ON-LAPTOP.md (commands in order, ports, what each script needs, counting rule, pass criteria per test, how a runner reports raw counts per kill point, docker parts and how to swap them), n8n-mainframe/run_chain.py (one test per run, copies raw output out), count_table.py (raw counts table), requirements-runner.txt (Node 24.22.x, n8n 2.46.6, Postgres 16, Python 3.12+ stdlib), examples/docker-native-pg-shim.py (my scratch docker wrapper for a native Postgres). Flows, mf_leads.sql, crm_stub.py, stage_server.py, smtp_catcher.py were pushed earlier. No results, no secrets.
+- NOT TRIED by me: this exact procedure on a laptop (macOS or WSL2 untested; the driver needs a POSIX system for process groups). Steps marked CHECK in the file are where a first run may need a fix. The old code files still carry loopback literals (hygiene pass pending); the new files carry none.
+- Needs from the lead: the public repo checkout at the harness commit on the laptop (harness folder, fake model server, desk package).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- All kill points and T8, T10, T11, T13 have no result. T4, T7, lead id pattern check, N8N-START.md, real-node flows, Design B on the same faults, compare table, page lease statement, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the laptop runner output as it lands and fix the design/flows if a point fails. 2. Lead id pattern check and T7 (small, no disk needed beyond the flows). 3. Prepare the real-node flows and N8N-START.md text.
+
 ## Block 11:20Z (16:50 IST) - BLOCKED: disk full, no test can run; need a decision on deleting scratch
 
 Real n8n 2.46.6, native Postgres 16, made-up data, one machine.
