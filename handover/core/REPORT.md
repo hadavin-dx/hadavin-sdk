@@ -1,5 +1,42 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:08 UTC / 11:38 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| ae16bd9e (r7h builder) | r7h | fix minors | 05:20 | closed 06:08 | r7h | DONE: hand-back read; patches verified and committed (37523b44) | none |
+| aae6f456 (r7h delta reviewer, fresh) | review of the r7h delta: m1 sibling sweep, m2, n1, thread sites, select.poll portability, the two changed tests, the M9-02 claim, 10 builder + 10 own mutants | independent read | 06:08 / 11:38 | 50 min box (about 06:58) | review 1 of r7h | RUNNING | core-fix-on-frozen-r7h-review.md |
+| aa54df08 (mail pass 9) | 30 new mutants; big-set re-runs of the 7 survivors | mail-path pass | 05:35 | box ends about 06:50 | pass 9 | RUNNING: big-set re-runs started 06:06:13 in two lanes (WA: M9-02, 12, 18, 19; WB: M9-22, 03, 08; 900 s each, 22-file set plus r7d/e/f/g). No big-set result yet. Selector pass: 14 rows as in my 06:06 block plus M9-27 KILLED, M9-28 KILLED, M9-29 KILLED, M9-30 (tls_trust: result check accepts version None or unknown) SURVIVED the selector set (paused; D-G lanes not yet run) | read results as they land; message the builder for each real gap |
+| EV7H | the one full run | final bytes | NOT STARTED | | | HELD: your order says the FINAL patch only, and r7h is probably not final (see below) | start on r7i, or on r7h if pass 9 finds no real gap |
+
+**r7h hand-back (builder claims; I verified only: the three patch hashes match sha256-r7h.txt, the apply matrix a-crlf, b-crlf, c-lf is git apply --check rc 0, and I copied them, CRLF ones as .gz, to handover/core/fix/ with RESULTS):**
+- Done: m1 (imap host check requires isascii; siblings fixed: SMTP from_env, envnum.split_url, run_real_check child_environment; other siblings judged not needed, reasons in RESULTS). m2 (even-share connect rule: 8 silent + 1 good at 1.2 s now tries all 9; docs/limits.md). n1 (LOOKUP_HUNG_MAX = 8, fixed refusal text, tested). Thread sites: reaper catches BaseException per pass; _Lingerer had a REAL defect (a descriptor number of 1024 or more made select raise ValueError and the loop spun): now poll; the head timer is not reachable from bad input. My 05:48 points: (a) every look-up failure is one fixed OSError text; (b) the deadline give-up exit code stays 0 by contract (r7f did the same): it added a given_up count and a stderr NOTE; rc 3 only for nothing answers or stopped early. I did not read the contract lines myself; the reviewer is told to judge whether exit 0 is a gap of the M2 class.
+- Numbers (builder): ruff 0.17.1 check rc 0 and format 220 files; suppressions 175/126/8/32/7 unchanged; staged git copy: test_r7h_findings 49, test_r7g_findings 60, test_file_call_guard 11 passed; mutants 15 of 15 killed plus 9 of 10 (survivor T04 was a vacuous test, fixed, then killed); restore by sha.
+- TWO changed r7g tests (gaierror text; total-limit count 3 to 4) said to be stricter, plus a new select.poll row in test_file_call_guard. NOT yet read by me; the reviewer puts old and new side by side.
+- **M9-02 (your 05:54 order): the builder says NO code defect on r7g.** smtp_provider.send reads the password (line 259) before attempts += 1 (268); live_claude, crm_hubspot._call and imap_count read the secret before counter, reserve or connect; smtp_outbox has no secret file. It added test_order_* pins that PASS on r7g by design and FAIL on the mutated copies (M9-02: 4 failed; M9-L/H/I: 4 each). So the survivor means the old tests had no order test, not that r7g is wrong; the new pins close it. Your "tests fail on the old code" rule cannot hold for them (code was already right): I will say so plainly and let the reviewer verify by planting the mutant. Not yet confirmed by me.
+- NOT DONE by the builder (box ended): M9-22 (empty send key allowed), M9-12 (login accepted on any 2xx), M9-03, 08, 18, 19 not worked on. The full per-file run had not finished: 17 of 32 files seen, all passed. Final fail-before on tree-R7G with the final test file not redone (earlier run: 18 failed, 31 passed). Two slips: it typed a device path inline twice (the tool refused one; no effect).
+
+**Decision:** r7i (a fresh builder) follows for every pass 9 REAL GAP (M9-22 and M9-12 are likely, because the old tests did not see them; unconfirmed until the big set ends), plus every Blocker or Major of the r7h review, plus the M9-02-class order pins if the reviewer wants more. EV7H runs on r7i. If pass 9 and the reviewer find nothing, EV7H runs on r7h.
+
+ASK (default in 10 min: YES): r7i may start as soon as the first big-set REAL GAP lands (about 06:20 to 06:30) without waiting for the end of pass 9 or the review, so the builder is not idle. Tell me if you want it held.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| big-set results for M9-02, 22, 12, 03, 18, 08, 19 and M9-30 | running | classify; real gaps to r7i |
+| r7h review | running | resolve |
+| EV7H | held for the final patch | start on r7i |
+| r7h full per-file run unfinished, final fail-before not redone | builder box ended | EV7H and the reviewer cover them; EV7H states it |
+| older packages' hashes (r2 to r6, v1, v2, F*, docs, f8) | no recorded hash | compare to build originals |
+| first clean-set CRASH, orphan-worker test, stray a<newline>b writer (not found in EV7G) | no evidence | README |
+| PowerShell, Windows (select.poll does not exist on Windows: reviewer judges), Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the first big-set results (M9-02, M9-22 lanes); start the r7i builder at the first real gap.
+2. Resolve the r7h review when it lands; fold its Blocker/Major findings into r7i.
+3. On a final patch: EV7H (one full run, staged git copy) plus the r7i delta reviewer; compare EV7H and EV7G failures by id; then freeze, README, sweep.
+
+
 ## STATUS (core lead) 06:04 UTC / 11:34 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
