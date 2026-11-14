@@ -309,3 +309,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R10b (a480e04f) | RUNNING from 05:18Z | fresh egm design review of fix-10, expected ~05:30Z |
 | B16 (a9b26c2d) | RUNNING (interim, waiting on its own background job) | fix-5 r7 |
 | B15b | interim: waiting on full run (log b15-full-final.log, one F seen early) | fix-2 r6 |
+| R10b (a480e04f) | CLOSED 05:21Z | fix-10 design review: 0 blocker, 4 major, 6 minor, saved evidence/review-lane3-fix-10-design.md. Majors: server.main duplicate refusal path/streams; exit 4 double meaning in reset scripts (collides with fix-5 exit table); start_all prints started when the desk died; address rule in 2 places (PLAIN_ADDRESS vs NUDGE_TO) |

@@ -1,3 +1,24 @@
+## HEARTBEAT 97 (05:21Z) - ANSWER TO "LEAD 5-MIN": HB96 (05:19Z, pushed fdb95e8f) HAS B16, B15b, B14b AND THE SHARE OF PLAN COVERED. NEW SINCE: FIX-10 DESIGN REVIEW BACK (4 MAJOR)
+
+FAILURES AND RETRIES: (1) fix-2 r6 full run still going (about 61% at 05:19Z), the early `F` is still unnamed; no change since HB96. (2) fix-10 design review has 4 majors, so fix-10 is NOT closed (see below). (3) B16 is on its targeted run; it reports 114 tests failing on the r6 scripts (its before-the-fix proof), full run held until 05:30Z.
+Share of plan the resumed builders covered (from their own reading of the diff, not re-run by me): B15b 0 of 15 fix-2 items (it did all 15 itself); B14b about 95% of fix-10 (only the final run, patch and notes were missing).
+
+fix-10 design review (R10b, saved evidence/review-lane3-fix-10-design.md): 0 blocker, 4 major, 6 minor. Majors: (1) server.main keeps its own copy of the refusal path (server.py:1129-1176), on stdout, while the shared reader prints on stderr: two implementations of one rule; (2) exit 4 means two things in the reset scripts (a refused setting, and "a port still answers" from reset_check.py:52), and fix-5 already uses codes 2-7 in the same scripts: a code clash between two patches; (3) start_all prints "started" and exits 0 when the desk dies at once on a bad setting that is only checked after Config is read (public bind, lead-flow file, approvers file, SMTP/HubSpot/live values); (4) the address rule is in two places: DESK_NUDGE_TO now needs exactly one "@", while identity.py PLAIN_ADDRESS (used by the SMTP from/recipient settings) still accepts a second "@". The code-details review (R10a) is still running. Plan: save it, then egm:egm-resolve (Opus) on both; the exit-code clash with fix-5 is a cross-patch decision I will ask you about once the resolve names the options.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| Item | Why | Next |
+|---|---|---|
+| fix-10 closed? | NO: 4 majors open | resolve, fix, fresh review |
+| Exit-code table owner (reset scripts): fix-5 uses 2-7, fix-10 wants 4 for a refused setting | two patches change one table | resolve will propose one table; I will ask you only if it needs a product choice |
+| fix-2 r6 full result, fix-5 r7 | running | tails at about 05:30Z |
+| ps1 files never run | no PowerShell here | your WINDOWS-RUN-1 on the final stack tree |
+| No stack yet; Python 3.11; CI-only tools | unchanged | unchanged |
+
+WHAT I WOULD DO NEXT (ranked)
+1. R10a lands: save, run egm-resolve for fix-10 on both reviews, start a fix-10 round-2 builder.
+2. fix-2 r6 full-run tail at about 05:30Z: name the failing test, fix at class level, fresh reviewers.
+3. B16 hand-back and full run; reviewers on fix-5 r7; then the ONE stack builder.
+
 ## HEARTBEAT 96 (05:19Z) - FIX-10 BUILT AND GREEN, 2 REVIEWERS RUNNING; FIX-2 R6 BUILT, FULL RUN HAS ONE FAILURE; FIX-5 R7 BUILDING
 
 FAILURES AND RETRIES: (1) fix-2 r6 full run (B15b, log raw/b15-full-final.log, clone b15b-clone) shows ONE `F` at about 3%; the test name is hidden by -q until the run ends (about 05:30Z). The head is NOT green until the tail says so. (2) B15b first wrote invented checkpoint times (05:25/05:45/06:05); it rewrote them with real times. (3) Log-name collision: B15b named its first log `b16-fails-before.log`, B16 overwrote it, and `raw/b16-mutation.log` still held a copy of B15b's mutants; I told B16 to overwrite both with its own output and to start its full run no earlier than 05:30Z (3 full runs at once). (4) The container restart at ~05:00Z killed B14 and B15; both were resumed (B14b, B15b). B15b says the old B15 had covered 0 of 15 items (my summary said the tree had 34 staged files; they were not the r6 plan), B14b says about 95% of fix-10 was already in the tree. Both statements are from builders' reading of the diff, not re-run by me.
