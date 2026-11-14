@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:58 UTC / 22:28 IST
+
+**AGENTS RUNNING: 2 language-model agents (A a07e3822: final test runs; EV7T acdc878b: mutant re-runs + quiet flake series) + script lanes: my trial run of the 4 r7u/r7t test files on the merged trial tree (still running, no rc yet), A's final-a and final-related runs, EV7T's runners.** Disk 2.6 GB free, flat.
+
+**A (its numbers):** 38/38 mutants killed, ruff clean, diff r7u-A.diff built (sha256 fef18f10...); the final runs started 16:46 and its note is 12 min old; RESULTS-A.md not yet written. Box ends about 17:07Z. I will not wait past 17:10Z: if no hand-back, I send it a stop-and-write order.
+
+**EV7T disk incident check, ANSWERED by EV7T (its statement, I did not re-run): the full run, the 30-run load flake series and all mutant runners ran DURING the ~16:00-16:05Z full-disk window; its hostile tables and the r7s before-run finished before it (15:53-15:56Z). It found no "No space left"/Errno 28 in any raw log of its own (grep at 16:06Z; re-grep promised at the end).** My reading, not its: the full run reached 100% with no failure characters, which is a good sign but not proof (a write error inside a test could show as F; it saw none). Its numbers so far: full run [100%] no failure chars; flake-load 30/30 rc=0 (note: the r7s race failed 1/30 under load; r7t 0/30 so far); builder mutants 43 (42 killed, 1 survived U6, which the r7t builder had called equivalent: EV7T lists it as survived, judgement is not its job); own40 and settle21 nearly done. Quiet flake series still to start. Decision: keep EV7T's r7t numbers as the r7t record only if its end-of-run re-grep is clean and nothing failed; r7u gets its OWN fresh EV7U on one clean tree, as you ordered, so the disk incident cannot touch the r7u evidence.
+
+**r7u MERGE PLAN AND ETA (UTC):**
+1. A closes (about 17:07, or my stop order at 17:10).
+2. 17:10-17:15: merge.sh on A's FINAL bytes into tree-R7U (trial merge of the three diffs already applied clean, so no conflict expected); read the A diff for the M1 cap, m2, m3 myself.
+3. 17:15-17:40: ONE guard run (about 20-25 min). In parallel from 17:15: mutant agent on the merged tree (builders' rows re-pointed, seam mutants between A's cap/result JSON and B's smtp reader, 30 fresh) and EV7U (independent runner, own tree copy).
+4. 17:45: package.sh, apply matrix, push snapshot-r7u. Then YOUR fresh reviewer.
+5. EV7U and the mutant agent finish about 18:45-19:00. Honest ETA of a final r7u with no Major: about 19:30Z (01:00 IST); with a Major, about 21:00Z.
+**Slow bits:** A's last runs; the guard run; EV7U full run (CPU shared). **Not checked:** A's final diff; trial test result; which of EV7T's survivors are real.
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 16:47 UTC / 22:17 IST
 
 **AGENTS RUNNING: 2 language-model agents (A, EV7T) + script lanes: my trial test run (pid 26689), A's final runs, EV7T's runs.** Disk 2.6 GB free.
