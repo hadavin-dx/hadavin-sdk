@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index 130ffe3..693e0d4 100644
+index 130ffe3..151f4fd 100644
 --- a/README.md
 +++ b/README.md
 @@ -46,3 +46,3 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
@@ -10,7 +10,7 @@ index 130ffe3..693e0d4 100644
 @@ -89,7 +89,7 @@ You have the demo working when the counts and the outbox match the comments abov
  
 -The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data`, or the bash is older than 4.1 (`scripts/reset.sh` only; macOS ships 3.2), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (both `scripts/reset.sh` and `scripts/reset.ps1` check it before they stop or delete anything; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time, 6 a pid file names another program.
-+The reset script looks at both pid files first and changes nothing until it has decided. It refuses, with one line of reason on standard error, in these cases (exit code): 2 the database is not inside `./data`, or the bash is too old (`scripts/reset.sh` only), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (both `scripts/reset.sh` and `scripts/reset.ps1` check it before they stop or delete anything; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time (nothing is deleted; the line names what was already stopped), 6 a pid file names another program, or (Windows) the program behind a process number could not be looked up. In the cases 2, 6 and the folder case of 7, the line says "nothing was stopped or deleted", and that is true: the two pid files are judged before the first program is stopped.
++The reset script looks at both pid files first and changes nothing until it has decided. It refuses, with one line of reason on standard error, in these cases (exit code): 2 the database is not inside `./data`, or the bash is too old (`scripts/reset.sh` only), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (both `scripts/reset.sh` and `scripts/reset.ps1` check it before they stop or delete anything; an empty value counts as not set and means 10), 3 a process still holds the desk's database (also exit 3: the lock file or the data folder cannot be looked at, or, on Linux, `ps` is not installed), 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time (nothing is deleted; the line names what was already stopped), 6 a pid file names another program, or (Windows) the program behind a process number could not be looked up. In the cases 2, 6 and the folder case of 7, the line says "nothing was stopped or deleted", and that is true: the two pid files are judged before the first program is stopped.
  
 -Also exit 7, in both scripts: a pid file cannot be removed (for example it is a folder, even an empty one). A pid file that is not one plain process
 -number (for example `abc`, `007`, two numbers, a file of 64 characters or more or an empty file; with reset.sh also a named pipe) is treated as stale: nothing is stopped
@@ -25,7 +25,7 @@ index 130ffe3..693e0d4 100644
 +
  ## What is claimed, and what is not
 diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
-index a5226de..c381592 100644
+index a5226de..297237b 100644
 --- a/scripts/reset.ps1
 +++ b/scripts/reset.ps1
 @@ -9,3 +9,3 @@ if ($env:RESET_STOP_WAIT_SECONDS) {
@@ -103,7 +103,7 @@ index a5226de..c381592 100644
 +            $plan += [pscustomobject]@{ Name = $name; PidFile = $pidFile; ProcId = $procId; Ours = $true }
          } else {
 -            Write-Host "refused: pid $procId in $pidFile is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)"
-+            [Console]::Error.WriteLine("refused: pid $procId in $pidFile is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)")
++            [Console]::Error.WriteLine("refused: process $procId named in $pidFile is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)")
              exit 6
          }
 -        try { Remove-Item -LiteralPath $pidFile -ErrorAction Stop } catch {
@@ -140,7 +140,7 @@ index a5226de..c381592 100644
 +    if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }
  }
 diff --git a/scripts/reset.sh b/scripts/reset.sh
-index 711920f..0624eb7 100644
+index 711920f..b3109e4 100644
 --- a/scripts/reset.sh
 +++ b/scripts/reset.sh
 @@ -7,4 +7,4 @@ set -eu
@@ -200,7 +200,7 @@ index 711920f..0624eb7 100644
 +    # the file is deleted. (a pid file with two numbers is not one this repository writes, and no guess is made about
 +    # which one is the desk)
      what=""
-@@ -86,10 +107,6 @@ for name in desk fakes; do
+@@ -86,12 +107,8 @@ for name in desk fakes; do
      if [[ -z "$what" ]]; then
 -      : # that process id is gone already, or the file is not one process number
 +      kind[$name]=stale # that process id is gone already, or the file is not one process number
@@ -214,6 +214,9 @@ index 711920f..0624eb7 100644
 +      kind[$name]=ours
 +      number[$name]="$pid"
      else
+-      echo "refused: pid $pid in $pidfile is not the desk or the demo server; nothing was stopped or deleted" \
++      echo "refused: process $pid named in $pidfile is not the desk or the demo server; nothing was stopped or deleted" \
+         "(delete the pid file yourself if it is stale)" >&2
 @@ -99,6 +116,26 @@ for name in desk fakes; do
      fi
 -    if ! rm -f -- "$pidfile" 2>/dev/null; then
