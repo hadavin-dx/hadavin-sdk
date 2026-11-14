@@ -1,5 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 17:54Z - CLOSEOUT FILE-INDEX; agents running 0 (none will write anything more)
+FILE-INDEX (all under handover/demo/):
+- REPORT.md: this file, newest block on top. Read first.
+- PLAN-4-NLITE-FROM-LEAD.md: lead plan (WP4 flow fix, WP5 run sheet, section 7).
+- n8n-flows/PAGE-STATEMENTS-V4.md: TRUTH for page claims (statements 1-20, tags, statement 20 FINAL lane3 HB194). Older drafts: PAGE-STATEMENTS-DRAFT.md, PAGE-STATEMENTS-V4-DRAFT.md (superseded).
+- VIDEO-RUNSHEET.md: the 12-scene run sheet, scene 4 caption final. DOUBTFUL-SCENE.md: stand-in drop scene. DECISION-INPUTS.md: V7 values table (needs refresh with final lane3 numbers).
+- V7-NUMBERS-lead-read.md: lead's V7 numbers (still says v4 B90 n=2: stale, lead's file).
+- AUDIT-PAGE-STATEMENTS-V4.md, AUDIT-VIDEO-RUNSHEET.md (incl. 7-decisions table), HYGIENE-FINDINGS.md: audits.
+- n8n-flows/DESIGN-A-README.md, N8N-START.md, mf-*.json, mf_leads.sql: design A flows and table (v1-superseded kept).
+- n8n-flows-real/-v3/-v4/-v5, n8n-flows-film/-v3/-v4/-v5: generated import flows. v5 = WP4 CrmIdOk fix, BUILT NOT RUN (V5-README.md, V5-NODE-DIFF.txt). Do not edit v3/v4.
+- n8n-mainframe/: build_mainframe.py, crm_stub.py (upsert_answer control), mf.py (tests incl. T17 T18), run_mf.py, run_chain.py.
+- harness-patched/ + LIB-PORT-PATCH.md: port/env pass-through patch with tests n8n-tests/test_envpass.py, test_runcfg.py, runcfg.py.
+- n8n-table-screen/, n8n-table-screen-v2/: table page flows (v2 has badges, dark mode, previews; NOT run in n8n by me).
+- sandbox-scratch-logs/: logs of lanes that could not run in the sandbox (NOT RUN evidence); skipped.txt lists left-out files.
+- Other folders/notes from earlier work (claims-audit, clean-machine, drift, gitleaks, hang, merge-ready, etc.): earlier lanes, not touched this segment.
+OPEN DECISIONS: laptop T17/T18/M1/K1 v5 results; real HubSpot node id vs vid (WP6); HYGIENE MUST FIX items in folders I do not own; Slack alert and real-mailbox step-2 fault NOT BUILT; Send Email node timeout (AF2) NOT RUN; K4/K5/T10/T11/T13, hold > 720 s, dead SMTP 10 min NOT RUN; V7 file stale line.
+RUNNING AGENTS: none.
+RESTART STEPS (new cloud session): 1) read REPORT.md top blocks, then PAGE-STATEMENTS-V4.md and VIDEO-RUNSHEET.md; 2) worktree: git worktree add /tmp/demo-push origin/demo/handover (branch demo/handover of the sdk repo), push with: git fetch -q origin demo/handover; git stash -q; git rebase -q FETCH_HEAD; git stash pop -q; git add; git commit; git push -q origin HEAD:demo/handover; 3) the public repo stays read only; no merge, no PR, no secrets; 4) sandbox has about 130 MB disk and no docker: tests run on the laptop only.
 ## Block 17:31Z - FINAL lane3 lease-45 numbers in; agents running 0
 - Statement 20 and scene 4 caption: 18 kill runs, 60.1 to 61.9 s, all correct (RELAYED-INDEPENDENT, HB194); recovery from n8n up 52.9 to 54.9 s; ERROR 3 of 3 failed, 1 alert, 0 mails, ~4 min; alert crash during alert send up to 13 min late (n=2). PROVISIONAL tags removed. Naming: lane3 K3 = my K3B, lane3 K6 = my K3.
 - K1/K2 medians (60.8/60.9) are from the earlier relay; final per-test medians not re-relayed. Caption uses the range. Raw not seen.

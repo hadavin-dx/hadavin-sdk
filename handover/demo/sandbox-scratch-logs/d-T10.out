@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "/tmp/demo-push/handover/demo/n8n-mainframe/run_mf.py", line 222, in main
+    body()
+    ~~~~^^
+  File "/tmp/demo-push/handover/demo/n8n-mainframe/run_mf.py", line 213, in body
+    print("n8n up (default concurrency):", lib.start_n8n(None), flush=True)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 28] No space left on device
+
+During handling of the above exception, another exception occurred:
+
+OSError: [Errno 28] No space left on device
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tmp/demo-push/handover/demo/n8n-mainframe/run_mf.py", line 239, in <module>
+    main()
+    ~~~~^^
+  File "/tmp/demo-push/handover/demo/n8n-mainframe/run_mf.py", line 229, in main
+    lib.kill_n8n(); lib.kill_fakes()
+    ~~~~~~~~~~~~^^
+  File "/tmp/rr/r2/demo_only/n8n_evidence/harness/lib.py", line 113, in kill_n8n
+    def kill_n8n(): return _kill_recorded("n8n")
+                           ~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/rr/r2/demo_only/n8n_evidence/harness/lib.py", line 47, in _kill_recorded
+    record_pid(name, 0)  # forget the PID at once, so the OS reusing it later can never make us kill a stranger
+    ~~~~~~~~~~^^^^^^^^^
+  File "/tmp/rr/r2/demo_only/n8n_evidence/harness/lib.py", line 32, in record_pid
+    with open(tmp, "w") as f: json.dump(dict(d, **{name: pid}), f)
+         ~~~~^^^^^^^^^^
+OSError: [Errno 28] No space left on device

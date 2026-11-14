@@ -1,0 +1,7 @@
+diag2-n8n.log
+dockerd-restart.log
+l1-AF2.out
+l1-K4.out
+l1-K5.out
+l2-T12.out
+t2sb.out

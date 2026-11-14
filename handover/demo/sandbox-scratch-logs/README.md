@@ -1,0 +1,2 @@
+# Sandbox scratch logs (cloud session, small text only)
+Copies of small *.out, *.rc, *.err, *.log files from the cloud sandbox scratch dir. They are the run logs of the lanes I could NOT run there (no space left on device at initdb; no docker daemon). They are evidence of NOT RUN, not results. Files with links or long id strings were left out (list: skipped.txt). Larger scratch dirs (stack copies, database copies, node logs) stay in the sandbox and are not saved.

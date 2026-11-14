@@ -1,0 +1,1 @@
+'2026-11-14 16:20:35.851 UTC [1157] FATAL:  could not write to file "base/5/2619": No space left on device\n2026-11-14 16:20:35.851 UTC [1157] STATEMENT:  CREATE DATABASE postgres OID = 5 STRATEGY = file_copy;\n\t\nchild process exited with exit code 1\ninitdb: removing data directory "/tmp/rr/pgnative/da'

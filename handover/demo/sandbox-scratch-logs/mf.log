@@ -1,0 +1,52 @@
+m0 start 10:24:48Z
+m0 end 10:25:24Z rc 0
+mf-M1 start 10:25:51Z
+mf-M1 end 10:29:15Z rc 0
+mf-K1 start 10:29:35Z
+m1b start 10:40:20Z
+m1b end 10:42:11Z rc 0
+a0 start 10:43:48Z
+a0 end 10:43:52Z rc 1
+a0b start 10:44:17Z
+a0b end 10:44:57Z rc 0
+a0c start 10:45:20Z
+a0c end 10:47:31Z rc 0
+a0d start 10:47:49Z
+a0d end 10:50:04Z rc 0
+b-T9 start 10:50:27Z
+b-T9 end 10:51:22Z rc 0
+b-T12 start 10:51:34Z
+b-T12 end 10:53:01Z rc 0
+b-T10 start 10:53:14Z
+c-T10 start 11:07:17Z
+VM restarted 11:15Z, chain c lost
+d-T10 start 11:15:53Z
+d-T10 end 11:16:48Z rc 1
+d-T8 start 11:16:53Z
+d-T8 end 11:16:58Z rc 1
+d-T11 start 11:17:03Z
+d-T11 end 11:17:08Z rc 1
+d-T13 start 11:17:15Z
+d-T13 end 11:17:20Z rc 1
+d-K1 start 11:17:29Z
+d-K1 end 11:17:35Z rc 1
+d-K2 start 11:17:47Z
+d-K2 end 11:17:51Z rc 1
+d-K3B start 11:18:05Z
+d-K3B end 11:18:09Z rc 1
+d-K3 start 11:18:27Z
+d-K3 end 11:18:31Z rc 1
+d-K4 start 11:18:48Z
+d-K4 end 11:18:53Z rc 1
+l1-AF2 start 16:18:06Z
+l1-AF2 end 16:18:16Z rc 1
+l1-K4 start 16:18:21Z
+l1-K4 end 16:18:27Z rc 1
+l1-K5 start 16:18:33Z
+l1-K5 end 16:18:39Z rc 1
+l2-T12 start 16:18:48Z
+l2-T12 end 16:18:54Z rc 1
+l1-AF2 start 16:19:37Z
+l1-AF2 end 16:19:44Z rc 1
+l1-AF2 start 16:20:34Z
+l1-AF2 end 16:20:40Z rc 1

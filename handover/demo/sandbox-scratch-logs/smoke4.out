@@ -1,0 +1,13 @@
+n8n up (limit 1): True
+>> setup.py 03:42:10Z
+>> deploy2.py a 03:42:10Z
+>> deploy2.py d 03:42:11Z
+>> deploy2.py c ={{ new Date($json.createdAt).getTime() === new Date($json.updatedAt).getTime() }} 03:42:11Z
+>> deploy_b.py 03:42:11Z
+smoke readiness: {"readiness_answered": true, "webhook_path": "g2-b2", "webhook_registered": true, "probes": [{"after_readiness_s": 0.01, "status": 404, "body": "{\"code\":404,\"message\":\"This webhook is not registered for GET requests. Did you mean to make a POST request?\",\"stacktrace\":\"ResponseError: This webhook is not registered for GET requests. Did you mean"}]}
+>> g12.py b default 3 03:42:21Z
+>> g3.py b K1 3 03:42:46Z
+>> g3.py b K2 3 03:43:36Z
+>> g3.py b K3 3 03:44:27Z
+client reply names seen (smoke): {"RemoteDisconnected": 90}
+RUN ALL DONE 03:45:17Z

@@ -1,0 +1,11 @@
+n8n up (limit 1): True
+>> setup.py 05:43:43Z
+>> deploy2.py a 05:43:43Z
+>> deploy2.py d 05:43:44Z
+>> deploy2.py c ={{ new Date($json.createdAt).getTime() === new Date($json.updatedAt).getTime() }} 05:43:44Z
+>> deploy_b.py 05:43:44Z
+n8n default up: True
+>> deploy3.py 05:43:52Z
+>> g3e.py K3 5 05:43:55Z
+>> g3e.py K2 5 05:50:00Z
+R2B-E DONE 05:56:02Z
