@@ -1,6 +1,6 @@
 # ON-PATH LIST: the take's imported files and which hardening changes touch them
 
-Written 2026-11-14 about 11:00 UTC (16:30 IST) by the core lead, from the lead's list `handover/core/TAKE-USED-FILES.md` (take head 27a1ed8) and my own trees. Supersedes my provisional version.
+Updated 2026-11-14 12:50 UTC (18:20 IST) for r7q and r7r (new section 'r7q and r7r' below); first written about 11:00 UTC (16:30 IST) by the core lead, from the lead's list `handover/core/TAKE-USED-FILES.md` (take head 27a1ed8) and my own trees. Supersedes my provisional version.
 
 ## What is NOT checked (first)
 - **I cannot see the take head or run the take.** The per-file answer "RUNS under Design A" is my reading of `scripts/run_real_check.py` on my tree-R7O, assuming Design A = n8n sends the mail and writes the CRM, the desk does the spend cap, the model call and the independent mail count. It is not traced and not confirmed on the take's own files. The take's `run_real_check.py` is an older file than mine (my patch changes it by +234/-69 against the frozen tree).
@@ -54,6 +54,26 @@ Not needed by the take's run: `scripts/desk_setting.py`, `scripts/refusals.py`, 
 
 ## What the take's tree must be (ORDER C-CORRECT)
 The r7p tree plus the r7q on-path fixes, never r7n alone. Open findings that touch ON-PATH files: money Major (banner worst-case model cost, run_real_check.py about line 1054), M9-74 and M9-79 checks, the echo-server test (done in r7p, unverified), hygiene literal (done in r7p, hygiene NOT run), MemoryError in secret_boundary (scrub.py), R08/K01 test gaps, the guard, the demo_only fakes' stray log line. r7q is being built now (builder aab1bf4c); then EV7P with the hygiene scan, then a fresh uncapped reviewer. Status of every step is in REPORT.md.
+
+## r7q and r7r: what changed on the path (added 12:50 UTC / 18:20 IST; builder, evidence and lead evidence in handover/core/fix/)
+Release chain now: ... r7p (test-only) -> r7q (on-path source and tests; EV7P found two failing tests) -> **r7r (two test files only; source and scripts byte-equal to r7q; this is the tree that goes to the take)**. Evidence on r7r: EV7R, full run in a staged git copy, 6021 passed, 7 skipped, 0 failed (runner's number). Independent egm review of r7q/r7r: started by the laptop lead 12:41Z, result not in yet.
+
+| file changed in r7q | what changed | runs under Design A (my reading, still unverified, not traced) |
+|---|---|---|
+| scripts/run_real_check.py | banner worst-case model cost now the largest request over every person and the twin (`longest_request_bytes`, `new_tag` once per run); `MODEL_CALLS_PER_LEAD` taken from `MODEL_CALLS_PER_LEAD_MAX` | YES (entry point; the banner is what the person reads before the Start answer) |
+| src/lead_desk/scrub.py | `MemoryError` passes through `secret_boundary` with its error chain scrubbed; docstring says what is not followed | YES (imported by imap_count, live_claude, regfile, crm_hubspot, smtp_provider) |
+| demo_only/bad_request.py | new `QuietServer` (silences only closed-connection errors) | only when adapters=demo or `--dry-fakes` self-test; no effect on the real take |
+| demo_only/fake_hubspot.py, fake_model_server.py | use `QuietServer` | `--dry-fakes` self-test only |
+| demo_only/fakes_server.py | uses `QuietServer` | NO for the run itself (started by scripts/start_all.*) |
+| tests/test_r7n_findings.py, tests/test_r7q_findings.py (new), tests/test_file_call_guard.py (r7r) | tests and the guard allow-list | not run in the take; they guard the files above |
+
+Consequences for the minimal subset: scripts/run_real_check.py and src/lead_desk/scrub.py are now the r7r versions (not the r7n/r7o ones listed above). The demo_only files are optional for the take (self-test only). Not new needs: no new source file after r7o.
+
+## Still open on the path (not fixed, stated plainly)
+- M9-74 (exit 0 with contacts left): a desk-created contact missing from the HubSpot list, for a lead not yet marked CRM-done, is not archived and does not fail the exit. Not probed; argued from source only; reachability unknown. Under Design A (n8n writes the CRM) the desk's own CRM path does not run, so it may be off-path: not confirmed.
+- M9-79 (live worst case with crash restart): reachable maximum read, not measured.
+- QuietServer would also hide a handler bug that surfaces as BrokenPipe (demo fakes only).
+- The independent reviewer's findings: not in yet.
 
 ## Next step that would confirm this list
 A runner that executes `run_real_check.py --dry-fakes` and a real-mode refusal run under `unshare -n` with `python -X importtime` or `sys.modules` dumped to a file, then diffs the module list against the table. Not started.
