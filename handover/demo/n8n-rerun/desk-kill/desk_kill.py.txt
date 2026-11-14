@@ -4,7 +4,7 @@ import json, os, shutil, sqlite3, subprocess, sys, time, urllib.request, urllib.
 ROOT = "/tmp/rr/t3exp"; PY = "/tmp/rr/repo/data/venv/bin/python"
 ENV = dict(os.environ, PYTHONPATH="src:.", DESK_LEADFLOW_FILE="off")
 point, kind, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
-D = "LOOPBACK-ADDR"; F = "LOOPBACK-ADDR"
+D = "LINK F = "LINK
 def get(u, t=3):
     try:
         with urllib.request.urlopen(u, timeout=t) as r: return r.status, r.read().decode()
@@ -52,9 +52,21 @@ def db_counts():
 res = []
 for i in range(1, n + 1):
     clean(); stop_all()
+    import socket
+    for _w in range(180):
+        ok_ports = True
+        for _p in (8765, 8766):
+            _s = socket.socket()
+            try: _s.bind(("LOOPBACK", _p))
+            except OSError: ok_ports = False
+            _s.close()
+        if ok_ports: break
+        time.sleep(1)
+    assert ok_ports, "ports 8765/8766 did not free up"
     start(["-m", "demo_only.fakes_server", "--outbox", kind, "--port", "8766"], "/tmp/rr/dk/fakes.log")
     desk = start(["scripts/crash_desk.py"], "/tmp/rr/dk/desk.log")
     assert up(D + "/counts") and up(F + "/fake/info"), "stack did not start"
+    _m = json.loads(get(F + "/fake/info")[1]).get("mode"); assert _m == kind, "fake mode %r is not %r (stale server on the port)" % (_m, kind); assert json.loads(get(F + "/fake/crm")[1])["count"] == 0, "fake not fresh"
     email = "kill-%s-%d@example.test" % (point.lower(), i)
     env = {"source": "form", "source_ref": "kill-%s-%d" % (point, i), "payload": {"name": "Test Person", "email": email, "company": "Example Ltd", "message": "made-up"}}
     open(ROOT + "/data/crash.flag", "w").write(point)

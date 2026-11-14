@@ -1,6 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:54Z (15:24 IST) - desk series ALL clean on fresh servers; compare file written; reviewer next
+
+- Keyed C0 and D2 reran on fresh servers (mode keyed, counters empty at start, 5 kills each, in my runs: real end exit 137, one machine, stand-ins, made-up data): C0: 1 lead, 1 receipt, 1 CRM row, 1 e-mail per kill (0 e-mails before the restart, 1 after), follow-up sent; D2: same, e-mail already out before the kill; lost 0 of 10, work twice 0 of 10. With A keyed (5), D2 blind (5), D1b blind (5): 25 of 25 desk kills, lost 0, doubled 0; blind D2 and D1b end UNKNOWN for a person.
+- n8n side: kill between insert and work lost the lead 5 of 5; n8n first then desk (P1a) lost 5 of 5; desk first (P1b) lost 0 of 5 because the caller sent again.
+- Pushed: n8n-vs-desk-kill-compare.md (plain result, three-point table saying which points are new and which are covered by repo tests, raw-count table, the NOTBLIND mistake kept visible, not-claimed list); page n8n-owns-vs-desk-owns.md items 9 and 11 added; raw desk files (fresh reruns replace the cumulative-counter keyed files) under n8n-rerun/desk-kill/ and n8n-rerun/desk-p1/. Hygiene grep on the new files: clean.
+- Plainly: two points lose a lead on the n8n side (kill after insert, before work; n8n-first front door). No desk point lost a lead or doubled work in these runs. The desk still depends on the caller sending again at point 1 and at A.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Fresh comprehension reviewer on the changed lines (starting now), fold, second hygiene scan.
+- n8n alone killed after the work and before the reply (point 3 on the n8n side) untested; the fix flow (status after the work plus re-send job) not tested against this kill; no independent rerun.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Reviewer, fold, hygiene scan, push.
+2. n8n-only kill after the work, before the reply, 5 kills; then the variant e shape on the skip insert (does the lost lead come back).
+3. Atlas pass 2 when ordered.
+
+
 ## Block 09:42Z (15:12 IST) - blind rerun DONE (D2 and D1b match the published table); keyed C0/D2 fresh rerun running; compare file next
 
 - Blind rerun, in my runs (desk on this Linux machine, blind stand-in mail server confirmed by its own mode field, fresh server per kill, counters 1, made-up data, real process end exit code 137, 5 kills per point): D2 (after the e-mail was sent): 5 of 5 = 1 desk lead, 1 receipt, 1 CRM row, 1 e-mail, follow-up UNKNOWN, counts page unknown 1; D1b (before the e-mail): 5 of 5 = 1 lead, 1 CRM row, 0 e-mails, follow-up UNKNOWN. The same request again got 201 (replayed) every time. Lost 0 of 10, doubled 0 of 10; the unknown ones are marked for a person (the desk does not resend by itself, per repo text).

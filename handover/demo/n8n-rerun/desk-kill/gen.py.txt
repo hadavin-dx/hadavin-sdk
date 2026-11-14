@@ -1,0 +1,15 @@
+import json,re,sys
+rows=[]
+for pt,kind in [("A","keyed"),("C0","keyed"),("D2","keyed"),("D2","blind"),("D1b","blind")]:
+    d=json.load(open(f"/tmp/rr/dk/result-{pt}-{kind}.json"))
+    n=len(d); st={}; lost=0; dbl=0; fu={}; modes=set(); fresh=True
+    for r in d:
+        a=r["after"];db=a["db"]
+        c=int(re.search(r'"count": (\d+)',a["crm"]).group(1)); o=int(re.search(r'"count": (\d+)',a["outbox"]).group(1))
+        modes.add(re.search(r'"mode": "(\w+)"',a["outbox"]).group(1))
+        if c!=1 or o>1: fresh=False
+        st.setdefault((r["first_call"][0],r["second_call"][0]),0); st[(r["first_call"][0],r["second_call"][0])]+=1
+        s=db["followup_rows"][0][1] if db["followup_rows"] else "none"; fu[s]=fu.get(s,0)+1
+        if db["leads"]!=1 or db["receipts"]!=1: lost+=1
+        if o>1 or c>1: dbl+=1
+    print(pt,kind,"n",n,"modes",modes,"calls",st,"followup states",fu,"fresh-counters",fresh,"lead/receipt!=1:",lost,"doubled:",dbl)

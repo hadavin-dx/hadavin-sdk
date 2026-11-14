@@ -1,0 +1,5 @@
+A keyed n 5 modes {'keyed'} calls {('RemoteDisconnected', 201): 5} followup states {'sent': 5} fresh-counters True lead/receipt!=1: 0 doubled: 0
+C0 keyed n 5 modes {'keyed'} calls {(201, 201): 5} followup states {'sent': 5} fresh-counters True lead/receipt!=1: 0 doubled: 0
+D2 keyed n 5 modes {'keyed'} calls {(201, 201): 5} followup states {'sent': 5} fresh-counters True lead/receipt!=1: 0 doubled: 0
+D2 blind n 5 modes {'blind'} calls {(201, 201): 5} followup states {'unknown': 5} fresh-counters True lead/receipt!=1: 0 doubled: 0
+D1b blind n 5 modes {'blind'} calls {(201, 201): 5} followup states {'unknown': 5} fresh-counters True lead/receipt!=1: 0 doubled: 0
