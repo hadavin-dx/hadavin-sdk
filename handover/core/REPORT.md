@@ -1,5 +1,34 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:36 UTC / 11:06 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| aaae555f (EV7G runner) | ONE full run of r7g, then git copy, odd file, fail-before, 15 mutants, hostile cases, ruff | independent proof of r7g | 05:12 / 10:42 | wrapper limit about 05:58; box 90 min | EV7G n1 | RUNNING: full run about 77% at 05:35 with 5 F marks in the progress output; failure ids NOT known yet (printed at the end) | read failure ids first when it ends |
+| ae16bd9e (r7h builder) | m1 Kelvin sign plus sweep of lowercase-before-match validators, m2 even time split, n1 thread cap, three thread sites | fix-dont-defer | 05:20 / 10:50 | 50 min box (about 06:10) | r7h | RUNNING: 05:35 checkpoint "mutants running, docs edited; runsel started" | hand-back; delta evidence |
+| aa54df08 (mail pass 9) | 30+ new mutants on smtp_outbox, smtp_provider, tls_trust, live_claude, crm_hubspot, regfile, jsonread, errcode, run_real_check | fresh mail-path pass, modules r7h does not change | 05:35 / 11:05 | 75 min box (about 06:50) | pass 9 | RUNNING (just started) | mail-pass9-r7g.md |
+| ae345331 (EV7F-PARTIAL) | mutants on r7f, hostile table | delta base | 04:52 | closed | retry 1 | DONE: 17 of 17 r7f mutants KILLED (G03, T01, T02, B02, A01, A02, A04, A06, A07, A08, A12, A14, C01, C05, E05, E06, F02) plus 4 spec8 extras (T01, T02, C01, C05) KILLED; 0 survived, 0 timeout, 0 BADMUT; clean selector sets all rc 0; hostile suite 80 cases x 2 trees rc 0, 0 tracebacks, 0 hangs, 0 escape characters; src/scripts/load_tools equal tree-R7F after | none |
+
+EV7F-PARTIAL NOT run: full suite and per-file odd-file loop (trimmed by your order), a standalone hung-DNS and closed-stdin driver (not in the hostile suite; covered only by tests).
+
+ASK (default in 10 min: NO): is a SECOND full run needed on r7h? My default: no, delta evidence only (EV7G is the full run on r7g; r7h touches netconnect.py, imap_count.py, at most three thread sites and docs).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7G result and failure ids | run in progress (about 77%) | read at the end; separate git-copy failures from real ones |
+| r7h hand-back, delta evidence, delta reviewer | builder running | copy patches (CRLF as .gz), hash-check the committed bytes |
+| mail pass 9 result | just started | decide r7i only for a real Blocker or Major |
+| older packages' hashes (r2 to r6, v1, v2, F*, docs, f8) | no recorded hash | compare to build originals |
+| first clean-set CRASH, orphan-worker test, stray a<newline>b file writer | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. When EV7G ends: read the failure ids first; any real failure joins the r7h batch.
+2. At the r7h hand-back: copy patches, hash-check, delta evidence runner and fresh delta reviewer in parallel; read pass 9.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 05:27 UTC / 10:57 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
