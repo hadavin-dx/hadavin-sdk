@@ -1,5 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 10:15Z (15:45 IST) - D-N1 step 1: first runs done (fail-before shown, S1 13 of 13); notifier fix being re-run
+
+- S1B (fail-before): the repo's original flows, imported unmodified, FAIL the new reply checks. FAIL-BEFORE CONFIRMED (in my run, real n8n 2.46.6).
+- S1 (new door flows, real n8n, one machine, made-up data): 13 of 13 checks passed. Desk up: 201 new, 201 repeat of same id (replayed), 200 duplicate, 202 review, on both doors, reply carries desk_status and the desk body. Desk down: HTTP 502, n8n_error true, no verdict, 3 tries in 2.1 s (counted by the pass-through). Desk killed at A mid-request: no verdict; after restart the caller's resend got 201 new. Money check ok: 3 lead ids, 1 model call each, 3 ledger reserves.
+- FOUND, not hidden: the S1 run sent NO notification. n8n log says the error workflow "is not active and cannot be executed". Cause: my set-up created the notifier but did not activate it. Fixed in the set-up code (activate call plus a check); S1 and T5 are re-running now (started 10:13Z), so the notifier claim is NOT shown yet.
+- Not pushed yet: flows, tests, raw output, N8N-START.md (Node 24.22.2, n8n 2.46.6, N8N_BLOCK_ENV_ACCESS_IN_NODE=false, DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Notifier firing exactly once, recipient, body content: not shown yet (T5 running).
+- T1 to T4, T6, T7: written, never run. README, page step-4 line, uncapped review: not done.
+- Raw S1B/S1 output not yet sanitized or pushed.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the S1+T5 result; if the notifier fires once, push flows, tests, N8N-START.md.
+2. Run T1, T2, T4 (the retry and kill ones) one at a time (disk is tight).
+3. T3, T6, T7, README, step-4 line, then the uncapped fresh review.
+
 
 ## Block 10:05Z (15:35 IST) - ORDER D-N1 picked up at 10:00Z; step 1 started (flows and tests written, first run next)
 
