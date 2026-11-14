@@ -1,0 +1,23 @@
+if-f1 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f10 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f2 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f3 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f4 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f5 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f6 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f7 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f8 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-f9 b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b1 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b2 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b3 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b4 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b5 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b6 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b7 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b8 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b9 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+if-reuse b10 rows 1 new 1 dup 9 non200 0 execs 10 {'success': 10}
+
+10 bursts: ('fresh', 1, 9, '1', 10, '{"success": 10}', 0)
+10 bursts: ('reused', 1, 9, '1', 10, '{"success": 10}', 0)

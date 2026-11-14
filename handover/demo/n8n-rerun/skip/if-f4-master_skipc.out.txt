@@ -1,0 +1,10 @@
+deployed sk-a ok
+deployed sk-b ok
+deployed sk-c ok
+deployed dt-up ok
+deployed dt-ne ok
+deployed dt-ne-ins ok
+deployed sk-if ok
+webhooks live: True
+{"path": "sk-if", "burst": 1, "lead_id": "burst-sk-if-1-179265", "http": {"200": 10}, "bodies": {"{\"branch\":\"new\"}": 1, "{\"branch\":\"duplicate\"}": 9}, "n_executions": 10, "exec_status": {"success": 10}, "insert_node_outputs": {"{\"IsNew\": [1, 0], \"NewBranch\": [1], \"PgInsert\": [1]}": 1, "{\"DupBranch\": [1], \"IsNew\": [0, 1], \"PgInsert\": [1]}": 9}, "rows_for_id": "1"}
+skipc done burst

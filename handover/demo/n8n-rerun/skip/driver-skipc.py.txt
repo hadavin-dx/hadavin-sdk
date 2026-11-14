@@ -44,6 +44,17 @@ WFS = {  # path: (workflow, what it is)
     "dt-ne": (lambda: wf("dt-ne", [dt_notexists(), dict(REPORT, position=[440, 0])], ["DtNotExists", "Report"]) , "webhook -> Data Table If Row Does Not Exist -> Code(report) (no insert: check only)"),
     "dt-ne-ins": (lambda: wf("dt-ne-ins", [dt_notexists(), dt_ins(), dict(REPORT, position=[660, 0])], ["DtNotExists", "DtInsert", "Report"]), "webhook -> If Row Does Not Exist -> Data Table Insert -> Code(report): check, then insert (two steps)"),
 }
+def if_node():
+    return {"parameters": {"conditions": {"options": {"caseSensitive": True, "leftValue": "", "typeValidation": "strict"}, "conditions": [
+        {"id": "c1", "leftValue": "={{ $json.lead_id }}", "rightValue": "", "operator": {"type": "string", "operation": "notEmpty", "singleValue": True}}], "combinator": "and"}, "options": {}},
+        "name": "IsNew", "type": "n8n-nodes-base.if", "typeVersion": 2.2, "position": [440, 0]}
+def branch(name, label, y):
+    return {"parameters": {"mode": "runOnceForAllItems", "jsCode": "return [{json: {branch: '%s'}}];" % label}, "name": name, "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [660, y]}
+def wf_if():
+    w = wf("sk-if", [pg_insert(), if_node(), branch("NewBranch", "new", -100), branch("DupBranch", "duplicate", 100)], ["PgInsert", "IsNew"])
+    w["connections"]["IsNew"] = {"main": [[{"node": "NewBranch", "type": "main", "index": 0}], [{"node": "DupBranch", "type": "main", "index": 0}]]}
+    return w
+WFS["sk-if"] = (wf_if, "webhook -> Postgres Insert (skip) -> IF lead_id not empty -> NewBranch (true) / DupBranch (false)")
 ids = {}
 for p, (mk, _) in WFS.items():
     w = mk(); fn = "skwf_%s.json" % p; json.dump(w, open(fn, "w")); r = api.deploy(fn, w["name"]); ids[p] = r[0]
@@ -116,7 +127,7 @@ else:
             rs = burst(p, lid); ev = execs_since(ids[p], since)
             rec = {"path": p, "burst": i + 1, "lead_id": lid, "http": dict(collections.Counter(str(s) for s, _ in rs)), "bodies": dict(collections.Counter(b for _, b in rs)),
                    "n_executions": len(ev), "exec_status": dict(collections.Counter(e.get("status") for e in ev)),
-                   "insert_node_outputs": dict(collections.Counter(json.dumps({k: v["outputs"] for k, v in e["nodes"].items() if k in ("PgInsert", "DtUpsert", "DtNotExists", "DtInsert")}, sort_keys=True) for e in ev)),
+                   "insert_node_outputs": dict(collections.Counter(json.dumps({k: v["outputs"] for k, v in e["nodes"].items() if k in ("PgInsert", "DtUpsert", "DtNotExists", "DtInsert", "IsNew", "NewBranch", "DupBranch")}, sort_keys=True) for e in ev)),
                    "rows_for_id": count(p, lid)}
             out["results"].append(rec); print(json.dumps(rec), flush=True)
 json.dump(out, open("skip_result_%s.json" % mode, "w"), indent=1)

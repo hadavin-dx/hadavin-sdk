@@ -1,6 +1,6 @@
 # What the n8n Postgres Insert (Skip on Conflict) returns for a new row and a duplicate
 
-Written 08:56Z. All statements are "in my runs": n8n 2.46.6, Node 24.22.2, Linux, a Postgres 16 container (pinned image), synthetic lead ids, loopback only, one n8n process, default concurrency. Nothing here comes from the n8n docs; the docs do not say what a skipped row returns.
+Written 08:56Z; section 3 added after the 08:55Z order. All statements are "in my runs": n8n 2.46.6, Node 24.22.2, Linux, a Postgres 16 container (pinned image), synthetic lead ids, loopback only, one n8n process, default concurrency. Nothing here comes from the n8n docs; the docs do not say what a skipped row returns.
 
 ## The one plain sentence
 
@@ -50,6 +50,13 @@ What each execution saw (all 4 workflows, all 40 bursts = 400 executions): every
 - sk-a, sk-c (20 bursts): HTTP 200 for all 10 calls; the Insert node output exactly 1 item in every execution; in each burst exactly 1 reply carried the row fields (id, lead_id, note) and 9 carried success true.
 - dt-up (10 bursts): HTTP 200 for all; the node output 1 item in every execution; in each burst exactly 1 reply had createdAt equal to updatedAt and 9 had later updatedAt values.
 - dt-ne-ins (10 bursts): the replies were a mix of HTTP 200 and HTTP 500 "No item to return was found". Number of 200 replies equalled the number of rows in every burst. The check-then-write is a race: more than one call passed the check before the first row was written. The table has no unique rule, so the extra rows were kept.
+
+## 3. The real IF node on the branch signal (order of 08:55Z)
+
+Workflow sk-if: Webhook, Postgres Insert (Skip on Conflict, unique index on lead_id), IF node (condition: lead_id is not empty, strict string check), true path = a Code node answering branch new, false path = a Code node answering branch duplicate. 10 calls at once, same lead id. Stack conditions as in section 2: 10 fresh stacks (1 burst each) and 1 reused stack (10 bursts), n8n 2.46.6, one machine.
+
+Exact distribution (from if-summary-table.txt): 20 of 20 bursts gave rows for the id = 1, "new" hits = 1, "duplicate" hits = 9, all 10 executions success, no HTTP error (10 fresh, 10 reused). No burst gave any other split. The IF read the skipped item (success true, no lead_id) as the false path every time. Per execution (from the stored execution data): the new one ran the Insert, the IF (true output) and NewBranch; each duplicate ran the Insert, the IF (false output) and DupBranch.
+Not tested: an IF on the id column instead of lead_id; other n8n versions; more than 10 parallel calls.
 
 ## What this does and does not say
 
