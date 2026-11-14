@@ -1,15 +1,14 @@
-## HEARTBEAT 159 (12:59Z) - kill script RUNNING: ERROR run 1 FAILED the expectation (lead lost, no alert); ERROR run 2, GREP, T14, fault repeats queued
+## HEARTBEAT 160 (13:07Z) - kill script RUNNING: ERROR run 2 (11:05Z flows) finishing; queue re-ordered to the lead's new order; fixed flows = demo commit 1ced4e1f
 
-| Item (11:05Z flows; journal stage stand-in; fresh n8n folder per run) | Result at 12:59Z |
+| Item | Status at 13:07Z |
 |---|---|
-| ERROR: the CRM refuses every call (HTTP 500) from the start; expected: 3 tries, then state failed and exactly 1 alert naming the lead, 0 other mails. n = 1 (je1) | NOT AS EXPECTED. The form answered HTTP 500 "Error in workflow" at once. The row went processing attempts 1, 2, 3 (leases 120 s apart) and then STAYED processing for the rest of the 700 s wait (about 4 minutes past the last lease): no failed state, 0 alerts, 0 mails to intake, 1 model call (3 stage requests, the extra two got the stored answer), 0 CRM rows. By the README counting rule this is LOST (no final state in time). |
-| Cause (named; observed, not yet proven by a fix) | F-REC-EMPTY again, now with a worse effect. mf-recovery has two branches from the same timer: ClaimStuck then RunSub, and MarkFailed then AlertFailed. Every 30 s the empty claim feeds a phantom item to RunSub; with the CRM refusing, RunSub fails (my fake logged 66 refused upserts for lead null plus 9 for the lead in this run), the run ends in error, and the second branch (MarkFailed) apparently never runs. Evidence: 0 alerts mails in 13 minutes while the row sat at attempts 3 with an expired lease. The fixed flows (8e2b6960) guard the empty item, so ERROR on them (fe1, fe2) is queued to see if failed + 1 alert now happens. |
-| n = 1 so far for ERROR | je2 runs next (13 minutes each); the claim above needs both. |
-| Earlier results | unchanged: K1, K2 3/3 done; K3, K6 3/3 unknown; BURST 3/3 pass; faults n = 1 each (repeats queued). |
-| Disk | 2.6G free, 94% used |
+| ERROR run 2 on the 11:05Z flows (je2) | running since 12:57Z (about 13 min per run); result next block |
+| Order change (lead message 13:07Z) | run_d now tests the NEWEST flows (1ced4e1f, ERROR fix plus T15 guard; fetched at batch start, commit recorded on every result as "flows"): ERROR n=3 (ferr1-3), T14 n=1 (ft14n), BURST n=1, K3 n=3, K6 n=3. Expected ERROR result: state failed, exactly 1 alert naming the lead, 0 mails to intake, 0 lost, within 3 x lease + 150 s |
+| Queue before that | GREP jg1-3, T14 on 8e2b6960 (ft14a-c), fault repeats (jfa2..jfc3). Starts after je2. Total end estimate about 15:30Z |
+| Results so far (11:05Z flows) | K1, K2 3/3 done; K3, K6 3/3 unknown; BURST 3/3 pass; ERROR 0/1 as expected (lead lost, no alert); faults n=1 each |
+| Disk | 4.3G free, 89% used (deleted my finished n8n folders, 1.8G) |
 
-ASK for the lead: none. Forward to the demo session: ERROR on the 11:05Z flows ends with a lead stuck in processing and no alert (see Cause).
-FAILURES AND RETRIES: none of mine. (An expectation failed; that is a test result, not a harness failure.)
-NOT DONE / NOT CHECKED (my list, for the lead to decide): ERROR run 2 and the two ERROR runs on the fixed flows; GREP; T14; fault repeats; the cause is observed from fake logs and row state, not proven by a patched copy of the flow; no comparison with the demo compare table (after my numbers are saved); WINDOWS-RUN-1 additions not written.
-WHAT I WOULD DO NEXT (ranked): 1) finish queues (about 14:15Z); 2) write kill/RESULTS.md; 3) compare; 4) optional: patched copy of mf-recovery to prove the cause; 5) WINDOWS-RUN-1 additions.
-
+ASK for the lead: none.
+FAILURES AND RETRIES: none of mine.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): je2, GREP, T14, fault repeats, all fixed-flow runs; cause of ERROR only observed, proven only if ERROR passes on 1ced4e1f; kill/RESULTS.md not written; no comparison with the demo compare table yet; WINDOWS-RUN-1 additions are written (section 10, unrun).
+WHAT I WOULD DO NEXT (ranked): 1) finish queue; 2) write kill/RESULTS.md before comparing; 3) compare; 4) update register.

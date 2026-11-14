@@ -249,6 +249,7 @@ def main():
     label, point = sys.argv[1], sys.argv[2]
     r = Run(label)
     out = {"label": label, "point": point, "t_start": time.strftime("%H:%M:%SZ", time.gmtime())}
+    out["flows"] = os.environ.get("FLOW_COMMIT", "11:05Z set (59202078)")
     leads = ["L-" + label]
     try:
         r.prepare_n8n()
