@@ -1,0 +1,30 @@
+FAILED tests/test_gitleaks_exceptions.py::test_a_blank_in_front_of_the_exact_line_is_allowed[leading blank]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[CRLF line ending]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[capital first letter]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dot suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[equals suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[key twice, space between]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[last character changed]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[look-alike file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[lower-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other character at the dot of the file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other character at the dot]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other folder and name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other project, letters and digits]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other toml file]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[readme]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[space and text suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[spaces around the equals sign]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text after the file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text before the name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[trailing blank]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case value]
+FAILED tests/test_gitleaks_exceptions.py::test_the_exact_line_is_allowed
+FAILED tests/test_gitleaks_semgrep_lock.py::test_semgrep_lock_allowances_are_narrow
+FAILED tests/test_gitleaks_semgrep_lock.py::test_widening_an_allowance_makes_the_negative_cases_pass
+FAILED tests/test_hygiene.py::test_a_relative_gitleaks_path_still_works_when_the_scan_changes_folder
+FAILED tests/test_hygiene.py::test_gitleaks_reports_a_carriage_return_in_the_key_file_but_not_the_lf_copy
+FAILED tests/test_hygiene.py::test_hygiene_scan_public
+FAILED tests/test_hygiene.py::test_lock_file_hashes_are_allowed_only_at_the_root
