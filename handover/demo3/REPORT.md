@@ -1,3 +1,17 @@
+## HEARTBEAT 143 (10:33Z) - L3-PLAN read; B23 resumed on fix-10 round 7; B21 and B22 still working
+
+| Agent / job | State at 10:33Z |
+|---|---|
+| ORDER L3-PLAN | read. (1) B21, B22, B23 continue until a fresh review finds nothing real on delete and secret code (this replaces the 'no new rounds' note of 10:2xZ). (2) stack builder stays STOPPED. (3) after the demo session pushes its flows (branch demo/handover, handover/demo/n8n-flows/, due Mon 16 12:00Z), I write my own kill script under handover/demo3/kill/ (T1-T3, T6, fault modes), without reading the demo session's raw results first; deadline Tue 17 18:00Z |
+| B23 fix-10 round 7 | resumed 10:33Z with the 16-row plan (rows 1-15 fix, 16 declined). Row 1 (exit codes 1-5): I chose option (a), pin (program, code, meaning) groups by name, because it matches your earlier rule that a test fails if a code has two meanings; you gave no ruling, tell me if you want (b) instead |
+| B21 fix-5 round 11 | no checkpoint since 10:05Z (mutants); checking now |
+| B22 fix-2 round 13 | last checkpoint 10:15Z (36 mutants); no hand-back |
+
+ASK for the lead: none open (row 1 decided as above, reversible).
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): fix-10 r6 had 4 open Majors, round 7 addresses them; no PowerShell run; no bash 4.4; IPv6 end-to-end skipped; B21/B22 final runs not read; WINDOWS-RUN-1 additions not written; kill script not started (waits for the demo flows).
+WHAT I WOULD DO NEXT (ranked): 1) B21/B22 hand-backs: tree id, lint, two reviewers, resolve, resume until clean; 2) B23 round 7 hand-back; 3) WINDOWS-RUN-1 additions, then the kill-script design from ORDERS only (no peeking at demo results).
+
 ## HEARTBEAT 142 (10:30Z) - B23 reviews in: 0 Blocker, 4 Major (design); plan saved, no resume; B21 and B22 still working
 
 | Agent / job | State at 10:30Z |

@@ -393,3 +393,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B22 | resumed 09:57Z for fix-2 round 13 (18-row resolve), expected end ~11:30Z | | in progress |
 | B23 | handed back 10:25Z, tree 8a5c446e; reviewers ac06baa0 (design), a42491a1 (code) started ~10:27Z | | in progress |
 | B23 | r6 reviews saved, resolve plan saved 10:3xZ; NO resume (lead order: no new rounds); row 1 needs the lead | | waiting for lead |
+| B23 | resumed 10:33Z for fix-10 round 7 (L3-PLAN: finish until fresh review clean), expected end ~12:00Z | | in progress |
