@@ -105,3 +105,14 @@ r5-21 prefix tuple gains a name not in the one list: pytest rc=1 -> KILLED | 1 f
 r5-22 PS1 pre-flight refusal dropped (text pin): pytest rc=1 -> KILLED | 2 failed, 38 passed, 6 skipped in 0.08s
       failing: tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[no pre-flight refusal]
       failing: tests/test_ps1_pins.py::test_text_only_the_start_pins_hold
+r5-23 reset stub demo server: no ownership line: pytest rc=1 -> KILLED | 8 failed, 37 passed in 139.11s (0:02:19)
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env0-LEADFLOW=[demo_only/leadflow.json] NUDGE=[reminder@example.test]]
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env1-LEADFLOW=[off] NUDGE=[<unset>]]
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env2-LEADFLOW=[] NUDGE=[<unset>]]
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env3-LEADFLOW=[x.json] NUDGE=[reminder@example.test]]
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env4-LEADFLOW=[of] NUDGE=[reminder@example.test]]
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env5-LEADFLOW=[*] NUDGE=[reminder@example.test]]
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env6-LEADFLOW=[x.json] NUDGE=[me@example.test]]
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env7-LEADFLOW=[x.json] NUDGE=[]]
+tree after all mutants (git status vs index; lines starting with a space are changes):
+(clean)
