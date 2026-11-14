@@ -1,3 +1,19 @@
+## HEARTBEAT 124 (08:02Z) - hold lifted by the lead; B21 and B22 widened to behaviour rows; fix-10 design review in (2 Major), code review still running
+
+| Agent / job | State at 08:02Z |
+|---|---|
+| LEAD answer 08:01Z | applied: dangling-symlink path only if a few lines at the one choke point (else OPEN-DEFERRED and I tell you); reset and start scripts stay in the stack and the Windows run; wording, helper dedupe and README-guard rows go to the stack docs pass; stack builder starts when B21 and B22 are clean |
+| B21 fix-5 round 9 | widened at 08:02Z to all behaviour and test-truth rows (reset.sh locale/BOM/trim, UTF-16, alive/EPERM, check-crash line, ps1 text pins, tests); docs, dedupe, README guard to the stack docs pass |
+| B22 fix-2 round 11 | widened at 08:02Z: stub race first, then behaviour rows; dangling link only if a few lines |
+| fix-10 r4 design review | saved (evidence/review-lane3-fix-10-r4-design.md): 2 Major, 4 minor, 2 nit. M1 the "one table" claim is not true for the desk's number lists in docs/limits.md and contract.md and the prose test cannot see them. M2 (I confirmed it) IPv6 host: start_all strips the brackets but the demo server always binds IPv4, so [::1] can never work; only a text pin and a skipped stub test cover it. m2: the survivor at start_all.sh:77 is a real test gap (grep shim, about 15 lines); the one at :47 is an equivalent mutant |
+| fix-10 r4 code-details review | still running; then egm-resolve normally, B23 round 5 |
+| Stack builder | waits for B21 and B22 |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no full run until the stack; OPEN-FOR-STACK-DOCS rows are not yet done.
+WHAT I WOULD DO NEXT (ranked): 1) fix-10 code review in, resolve, B23 round 5; 2) B21/B22 hand-backs: lint, reconcile, fresh review of each delta; 3) WINDOWS-RUN-1 update (add the demo-server ownership line and OutputEncoding line), then the stack builder.
+
 ## HEARTBEAT 123 (07:58Z) - LEAD note 07:55Z applied: in-flight work narrowed to confirmed Majors; no new rounds on key-file / path-check / take-harness code
 
 | Agent / job | State at 07:58Z |
