@@ -1,6 +1,6 @@
 # Page statements V4: alerts and recovery (rewrite of section C for the v4 flows)
 
-Changelog (2026-11-14 audit fixes):
+Changelog (2026-11-14 audit fixes; statement 19 added after lane3 HB189):
 1. Fixed: 4, 7, 12, 13, 14, 17 now use the settled numbers (K3 and K3B 1 alert each, v3 B90 n=3, v4 B90 n=3 plus 1 laptop run, lane3 K1 144.3 s at lease 120 s); 12 lost "in my runs" and "would pass".
 2. Moved to UNBACKED (do not publish until backed): the 30 s alert timing (6), lane3 cases A and C (8), library timeouts (16), the scan claim (18). Statements 1, 2, 3, 5 got small wording fixes.
 3. Added: two different K3 names, the new tag RELAYED-LEAD, and one recovery rule of thumb (statement 17).
@@ -131,6 +131,8 @@ Total: 18 statements.
 UNBACKED (do not publish until backed): 8, 16, 18, and the 30 s timing promise in 6.
 NOT RUN statements: 3, 14 (demo harness on v4). Part NOT RUN: 6 (normal-path alert time), 7 (hold beyond 720 s), 11 (dead mail server 10 minutes; Slack NOT BUILT), 15 (cap-after-mail branch), 16 (node wait), 17 (lease 45 s).
 
+19. "An alert can arrive up to about 13 minutes late if n8n itself dies while it is sending the alert; it is not lost." [RELAYED-INDEPENDENT, lane3 HB189 v4 kill series, n8n killed 10 s into the alert send: exactly 1 alert, not lost, 780 s late because the killed send holds the 12 minute claim until it runs out; n=not given to me, raw file not named to me, ask lead. The cause is the 720 s claim window (statement 1) read from the v4 flow. NOT run by me.] Plain meaning: v4 trades v3's possible second alert for a possible late alert, and only when n8n dies during the alert send. Not an engineering change (the lead's RIGHT-SIZE call): the main flow and the doubtful-case scene are unaffected. Must NOT be shortened to "alerts always arrive within minutes" or to "exactly one alert" without this delay.
+
 ## Honest limits (what is not measured)
 - The Send Email node timeout (AF2 not run).
 - AF2, K4, K5, T10, T11, T13: not in the claims above. T13 was never re-read by the lead.
@@ -139,5 +141,6 @@ NOT RUN statements: 3, 14 (demo harness on v4). Part NOT RUN: 6 (normal-path ale
 - A hold of the alert answer beyond 720 s: not run.
 - A real mailbox, a real HubSpot account, a Slack alert: none.
 - Lane3 claims are second-hand: HB180 and HB186 are named but absent from the handover tree. Cases A and C are undefined.
+- Alert delay: up to about 13 minutes if n8n dies during the alert send (statement 19); n and raw file not given to me.
 - One machine, made-up data, stand-in services, n small (n=3 for each lane3 hold, n=1 for the laptop V4-par run, n=1 for the 272.1 s alert, n=1 for the 144.3 s figure).
 - Stale source note: the V7 numbers file still says v4 B90 n=2; the settled value is n=3 on lane3 plus 1 on the laptop. Fix it at its source (not done here).
