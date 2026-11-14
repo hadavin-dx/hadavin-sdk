@@ -23,3 +23,6 @@ Full run 1: 1 failed (own new test, flake, cause not found); run 2 same tree: 39
 ## Checkpoint r9 start 07:46 UTC: round 9 started from tree cb769b22
 
 ## Checkpoint r9 07:53 UTC: reset.sh fixed at read_pid_file (bytes, NUL, non-ASCII, trim in C locale), guard, alive, recheck, check-crash exit 5; ps1 text edits; new tests/test_reset_pid_file_reading.py (54 pass; 48 failed before, raw/b21-r9-fails-before.log). Next: test refactor items 14-22,24,26, lint, mutants, full run.
+
+## Round 9 checkpoint 08:05Z (B21)
+Done: read_pid_file does BOM strip, 64-byte check, non-ASCII check, size check (NUL) and trim inside its own LC_ALL=C (rows 1,5); rows 7,8,9 in reset.sh; ps1 rows 11,12,13; tests rows 2,14,15,16,17,18,19,21,22 (+24,26 zip,6); red-first run saved raw/b21-r9-fails-before.log (14 failed on old script). Next: lint, narrow runs, mutants rerun on final script, ONE full run, patch, notes. Blockers: none.
