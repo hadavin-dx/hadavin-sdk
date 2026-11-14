@@ -1,4 +1,4 @@
-## FINAL CLOSEOUT (17:54Z) - lane3 branch demo/lane3: everything committed and pushed; 0 agents, 0 processes running
+## FINAL CLOSEOUT, ORDER WRAP-1 done, re-stamped 18:30Z (first written 17:54Z) - lane3 branch demo/lane3: everything committed and pushed; 0 agents, 0 processes running
 
 STATUS: all my work is in the repo on demo/lane3. Postgres, run scripts, fakes and n8n are stopped (pgrep count 0). No agent is running. Nothing is secret-like (scanned: no key or private-key patterns).
 
@@ -43,3 +43,5 @@ $ git worktree list
 $ ls /home/user/work/kill | wc -l (outside repo: probe copies of demo flows, pg data, n8n runs; not needed)
 44
 Ignored files that matter: none (scratch/fs/*.key are empty or made-up test fixtures for the key-file tests, recreated by scratch/fs_cases.sh; __pycache__ is generated).
+
+WRAP-1 notes: Core r7v and EV7U: not mine (lane3 is the demo kill and alert lane), nothing of them here. Free disk 2.5 GB; I freed space only by deleting my own finished run folders (n8n user folders), never evidence. No secret-like strings (scan repeated). 0 agents, 0 processes. STOPPED: no further tool calls until an order starting with GO.
