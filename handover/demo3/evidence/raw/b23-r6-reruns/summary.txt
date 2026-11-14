@@ -7,3 +7,7 @@ run 06 rc=0 09:35:48 ================== 112 passed, 2 skipped in 61.56s (0:01:01
 run 07 rc=0 09:36:50 ================== 112 passed, 2 skipped in 61.52s (0:01:01) ===================
 run 08 rc=0 09:37:51 ================== 112 passed, 2 skipped in 61.24s (0:01:01) ===================
 run 09 rc=0 09:38:52 ================== 112 passed, 2 skipped in 60.60s (0:01:00) ===================
+run 10 rc=0 09:39:54 tests/test_start_all_late_refusal.py::test_only_the_three_desk_codes_of_the_table_are_passed_on[3-3] 
+run 11 rc=0 09:40:55 ================== 112 passed, 2 skipped in 60.12s (0:01:00) ===================
+run 12 rc=0 09:41:55 ================== 112 passed, 2 skipped in 60.39s (0:01:00) ===================
+run 13 rc=0 09:42:56 ================== 112 passed, 2 skipped in 60.18s (0:01:00) ===================
