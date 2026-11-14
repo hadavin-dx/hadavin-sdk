@@ -96,3 +96,59 @@
 -_SLICES = 16  # most parts a block is cut into, one part per process number remainder (see session_window)
 +_SLICES = 1  # most parts a block is cut into, one part per process number remainder (see session_window)
 
+##### r9 M1 length rule outside C locale (scripts/reset.sh)
+--- good
++++ mutant
+@@ -93 +93 @@
+-  if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
++  if [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
+
+##### r9 M7 pass 2 no second look (elif alive -> else) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -147 +147 @@
+-    elif alive "$pid"; then # still there, and not the desk: (an empty line from a process that ended during the look is no reason to refuse)
++    else # still there, and not the desk: (an empty line from a process that ended during the look is no reason to refuse)
+
+##### r9 P3 ps1 bad-byte rule only >126 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -79 +79 @@
+-                    if ($b -gt 126 -or ($b -lt 32 -and ($b -lt 9 -or $b -gt 13))) { $bad = $true }
++                    if ($b -gt 126) { $bad = $true }
+
+##### r10 ps1 any other code not refused (raw code passed on) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -148 +148 @@
+-if ($null -eq $checkExit -or $checkExit -notin 0, 3, 4) {
++if ($null -eq $checkExit -or $false) {
+
+##### r10 ps1 refused setting exit 8 -> 2 (stop wait) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -12 +12 @@
+-        exit 8
++        exit 2
+
+##### r10 start_all guard without BASH_VERSINFO (scripts/start_all.sh)
+--- good
++++ mutant
+@@ -12 +12 @@
+-case "$( (eval '[[ a == a && -n ${BASH_VERSINFO+x} ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/start_all.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
++case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/start_all.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
+
+##### r10 sh data-folder refusal exit 8 -> 2 (scripts/reset.sh)
+--- good
++++ mutant
+@@ -24 +24 @@
+-  exit 8
++  exit 2
+
+##### r10 README exit 8 line loses run_real_check (README.md)
+--- good
++++ mutant
+@@ -98 +98 @@
+-- exit 8: a setting is refused (the same code `start_all` and `run_real_check` give a refused setting): the database is not inside `./data`, a desk setting that the configuration refuses (or python is not found), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (an empty value counts as not set and means 10; both scripts check it before they stop or delete anything). Nothing was stopped or deleted.
++- exit 8: a setting is refused (the same code `start_all` give a refused setting): the database is not inside `./data`, a desk setting that the configuration refuses (or python is not found), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (an empty value counts as not set and means 10; both scripts check it before they stop or delete anything). Nothing was stopped or deleted.
+

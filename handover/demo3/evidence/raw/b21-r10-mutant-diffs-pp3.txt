@@ -89,3 +89,50 @@
 +HOST = '127.0.0.1'
 +from port_blocks import _ATTEMPTS, bound_socket, worker_port_range  # noqa: E402, F401
 
+##### r9 M5 length rule only (scripts/reset.sh)
+--- good
++++ mutant
+@@ -93 +93 @@
+-  if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
++  if (( ${#pid} >= 64 )); then pid=""; return 0; fi
+
+##### r9 M10 length 64 -> 65 (scripts/reset.sh)
+--- good
++++ mutant
+@@ -93 +93 @@
+-  if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
++  if (( ${#pid} >= 65 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
+
+##### r10 ps1 stale LASTEXITCODE not cleared (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -143 +142,0 @@
+-$LASTEXITCODE = $null # a stale value from an earlier program must not pass for this call's answer
+
+##### r10 ps1 Continue not restored (P5 kind) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -146 +145,0 @@
+-$ErrorActionPreference = $previousPreference
+
+##### r10 ps1 config refusal exit 8 -> 1 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -21 +21 @@
+-    exit 8
++    exit 1
+
+##### r10 sh exit 5 for crash -> raw code (scripts/reset.sh)
+--- good
++++ mutant
+@@ -168 +168 @@
+-  *) echo "refused: the check program failed (exit $check_exit); nothing was deleted, not even the pid files${stopped:+ (already stopped: $stopped)}" >&2; exit 5 ;;
++  *) echo "refused: the check program failed (exit $check_exit); nothing was deleted, not even the pid files${stopped:+ (already stopped: $stopped)}" >&2; exit "$check_exit" ;;
+
+##### r10 sh config refusal exit 8 -> 1 (scripts/reset.sh)
+--- good
++++ mutant
+@@ -19 +19 @@
+-db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)' 2>/dev/null)" || { echo "refused: a desk setting was refused (or python was not found), so the database path could not be read; nothing was stopped or deleted (run python -c 'from lead_desk.config import Config; Config.from_env()' to see which setting)" >&2; exit 8; }
++db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)' 2>/dev/null)" || { echo "refused: a desk setting was refused (or python was not found), so the database path could not be read; nothing was stopped or deleted (run python -c 'from lead_desk.config import Config; Config.from_env()' to see which setting)" >&2; exit 1; }
+

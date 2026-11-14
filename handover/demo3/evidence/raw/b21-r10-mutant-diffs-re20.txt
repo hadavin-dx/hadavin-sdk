@@ -1,0 +1,7 @@
+##### ps1 count not after the mark (re-pointed) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -76 +76 @@
+-                $bad = (($count - $from) -ge 64)
++                $bad = ($count -ge 64)
+

@@ -110,3 +110,45 @@
 -    [[ "$err" == *"not permitted"* ]] || return 1
 +    return 1
 
+##### r9 P4 ps1 read loop offset dropped (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -68 +68 @@
+-                    $got = $stream.Read($buffer, $count, 67 - $count)
++                    $got = $stream.Read($buffer, 0, 67)
+
+##### r10 ps1 crash mapped to the raw code, not 5 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -151 +151 @@
+-    exit 5
++    exit $checkExit
+
+##### r10 ps1 refused setting exit 8 -> 2 (data folder) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -28 +28 @@
+-    exit 8
++    exit 2
+
+##### r10 sh python-missing wording removed (scripts/reset.sh)
+--- good
++++ mutant
+@@ -167 +167 @@
+-  127) echo "refused: python was not found, so the check program could not run (exit 127); nothing was deleted, not even the pid files${stopped:+ (already stopped: $stopped)}" >&2; exit 5 ;;
++  1270) echo "refused: python was not found, so the check program could not run (exit 127); nothing was deleted, not even the pid files${stopped:+ (already stopped: $stopped)}" >&2; exit 5 ;;
+
+##### r10 sh config refusal back to a traceback (no refusal) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -19 +19 @@
+-db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)' 2>/dev/null)" || { echo "refused: a desk setting was refused (or python was not found), so the database path could not be read; nothing was stopped or deleted (run python -c 'from lead_desk.config import Config; Config.from_env()' to see which setting)" >&2; exit 8; }
++db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)' 2>/dev/null)" || { true; echo "refused: a desk setting was refused (or python was not found), so the database path could not be read; nothing was stopped or deleted (run python -c 'from lead_desk.config import Config; Config.from_env()' to see which setting)" >&2; exit 8; }
+
+##### r10 sh header loses exit 5 meaning (scripts/reset.sh)
+--- good
++++ mutant
+@@ -5 +5 @@
+-# Exit codes: 2 wrong shell or too old bash (nothing changed); 8 a setting is refused (a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; the same code start_all and run_real_check give a refused setting; nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 EITHER a process did not stop in time OR the check program failed with some other exit code (the line says which); 6 a pid file names another program; 7 a pid file is a folder or could not be removed. Exit 5 has two meanings, told apart by the line printed.
++# Exit codes: 2 wrong shell or too old bash (nothing changed); 8 a setting is refused (a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; the same code start_all and run_real_check give a refused setting; nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 EITHER a process did not stop in time OR something else with some other exit code (the line says which); 6 a pid file names another program; 7 a pid file is a folder or could not be removed. Exit 5 has two meanings, told apart by the line printed.
+

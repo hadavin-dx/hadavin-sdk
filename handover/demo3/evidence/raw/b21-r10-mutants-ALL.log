@@ -1,0 +1,100 @@
+sh pass 1 also stops (kill added in pass 1) | KILLED | 1 failed, 7 passed in 31.24s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
+sh read loop reads nothing | KILLED | 1 failed, 4 passed in 10.64s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
+sh ours judged stale | KILLED | 1 failed, 4 passed in 10.65s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
+ps1 lookup failure no exit 6 | KILLED | 1 failed, 144 passed, 6 skipped in 33.52s | tests/test_reset_ps1_pid_rules.py::test_text_only_a_failed_process_lookup_refuses_with_exit_6_before_anything_is_stopped
+ps1 refusal back to Write-Host | KILLED | 1 failed, 146 passed, 6 skipped in 33.81s | tests/test_reset_ps1_pid_rules.py::test_text_only_every_refusal_goes_to_standard_error_like_reset_sh
+ps1 [Pp]ython -> python (interp 1) | KILLED | 1 failed, 114 passed, 1 skipped in 33.48s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["\\Python312\\Python.exe" -m lead_desk.server-True]
+support width ignores count | KILLED | 1 failed, 244 passed, 15 skipped in 83.49s (0:01:23) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+support every worker gets range 0 | KILLED | 1 failed, 244 passed, 15 skipped in 83.25s (0:01:23) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+support serial uses range always | KILLED | 1 failed in 0.14s | tests/test_reset_order_and_words.py::test_reset_check_prints_its_exit_4_refusal_on_standard_error_only
+sh recheck exit 6 -> 1 | KILLED | 1 failed, 7 passed in 1.30s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
+sh 64 -> 65 after the mark | NOT APPLIED (text not found)
+sh old-bash message names a version again | KILLED | 1 failed, 93 passed, 1 skipped in 29.70s | tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1]
+ps1 recheck exit 6 -> 1 | KILLED | 1 failed, 148 passed, 14 skipped in 33.94s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop
+ps1 reset_check dropped | KILLED | 1 failed, 150 passed, 14 skipped in 34.08s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_for_a_desk_nobody_listed_runs_after_the_stop_and_before_any_delete
+ports: session part index 0 | KILLED | 1 failed, 350 passed, 15 skipped in 84.00s (0:01:24) | tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]
+tests: a direct server bind added | KILLED | 1 failed, 322 passed, 15 skipped in 83.09s (0:01:23) | tests/test_port_helpers.py::test_no_test_binds_to_port_0_by_itself_except_the_listed_servers_that_keep_their_socket
+r9 M6 read not in C locale | KILLED | 1 failed, 9 passed in 13.79s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
+r9 P1 ps1 anchor \z -> $ | KILLED | 1 failed, 106 passed, 1 skipped in 34.20s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+r10 ps1 null exit code not refused | KILLED | 1 failed, 152 passed, 14 skipped in 34.31s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_exit_is_mapped_like_reset_sh_and_a_missing_exit_code_is_a_failure
+r10 ps1 Continue dropped (P2 kind) | KILLED | 1 failed, 151 passed, 14 skipped in 33.69s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back
+r10 sh guard without BASH_VERSINFO | KILLED | 1 failed, 40 passed, 1 skipped in 12.91s | tests/test_reset_order_and_words.py::test_text_only_the_shell_guard_also_needs_bash_version_info
+r10 sh stop-wait refusal exit 8 -> 2 | KILLED | 1 failed, 55 passed, 1 skipped in 23.71s | tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[1+1]
+r10 README exit 5 back to one meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.78s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+sh exit 5 message forgets what was stopped | KILLED | 1 failed, 7 passed in 1.41s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
+sh read not in C locale | KILLED | 1 failed, 9 passed in 13.56s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
+ps1 final delete without -LiteralPath | KILLED | 1 failed, 143 passed, 6 skipped in 33.51s | tests/test_reset_ps1_pid_rules.py::test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked
+ps1 Convert-Path dropped | KILLED | 1 failed, 145 passed, 6 skipped in 33.52s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_file_is_opened_by_its_full_path_and_a_utf8_byte_order_mark_is_skipped
+ps1 pattern not anchored (\s* back) | KILLED | 1 failed, 106 passed, 1 skipped in 33.65s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+ps1 exit 5 forgets already stopped | SURVIVED | 362 passed, 15 skipped in 83.66s (0:01:23) | 
+support restart uses first half | KILLED | 1 failed, 245 passed, 15 skipped in 83.63s (0:01:23) | tests/test_port_helpers.py::test_a_single_worker_gets_a_block_of_at_most_5000_numbers_in_each_half
+support range start back to 40000 | KILLED | 1 failed, 244 passed, 15 skipped in 82.82s (0:01:22) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+support missing count not max | KILLED | 1 failed, 312 passed, 15 skipped in 83.31s (0:01:23) | tests/test_port_helpers.py::test_a_missing_or_odd_worker_count_still_gives_disjoint_blocks[None]
+sh reset_check dropped | NOT APPLIED (text not found)
+sh read 64 instead of 67 | KILLED | 1 failed, 9 passed in 13.73s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
+check prints to stdout | KILLED | 1 failed in 0.20s | tests/test_reset_order_and_words.py::test_reset_check_prints_its_exit_4_refusal_on_standard_error_only
+ps1 Get-Item back to Test-Path | KILLED | 1 failed, 140 passed, 6 skipped in 34.00s | tests/test_reset_ps1_pid_rules.py::test_text_only_a_pid_file_that_is_a_dangling_link_is_seen_and_removed_in_pass_3
+ps1 command line trimmed | KILLED | 1 failed, 106 passed, 1 skipped in 33.65s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+ports: one part only | KILLED | 1 failed, 350 passed, 15 skipped in 83.93s (0:01:23) | tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]
+r9 M1 length rule outside C locale | KILLED | 1 failed, 10 passed in 4.95s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
+r9 M7 pass 2 no second look (elif alive -> else) | KILLED | 1 failed, 30 passed, 1 skipped in 13.03s | tests/test_reset_order_and_words.py::test_text_only_pass_2_looks_again_whether_the_process_is_still_there_before_it_says_another_program
+r9 P3 ps1 bad-byte rule only >126 | KILLED | 1 failed, 138 passed, 6 skipped in 34.23s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+r10 ps1 any other code not refused (raw code passed on) | KILLED | 1 failed, 152 passed, 14 skipped in 33.64s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_exit_is_mapped_like_reset_sh_and_a_missing_exit_code_is_a_failure
+r10 ps1 refused setting exit 8 -> 2 (stop wait) | KILLED | 1 failed, 44 passed, 1 skipped in 13.01s | tests/test_reset_order_and_words.py::test_text_only_reset_ps1_gives_a_refused_setting_exit_8
+r10 start_all guard without BASH_VERSINFO | KILLED | 1 failed, 40 passed, 1 skipped in 13.02s | tests/test_reset_order_and_words.py::test_text_only_the_shell_guard_also_needs_bash_version_info
+r10 sh data-folder refusal exit 8 -> 2 | KILLED | 1 failed, 45 passed, 1 skipped in 12.87s | tests/test_reset_scripts.py::test_reset_refuses_a_database_outside_the_data_folder
+r10 README exit 8 line loses run_real_check | KILLED | 1 failed, 38 passed, 1 skipped in 12.89s | tests/test_reset_order_and_words.py::test_text_only_the_readme_lists_one_line_per_exit_code_from_2_to_8
+sh byte order mark not skipped | KILLED | 1 failed, 9 passed in 13.74s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
+sh version guard minor < 4 -> < 3 | KILLED | 1 failed, 92 passed, 1 skipped in 29.37s | tests/test_reset_scripts.py::test_text_only_the_bash_minimum_in_the_script_is_the_one_in_the_readme_and_the_old_macos_remark_is_gone
+ps1 final Test-Path without -LiteralPath | KILLED | 1 failed, 143 passed, 6 skipped in 33.48s | tests/test_reset_ps1_pid_rules.py::test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked
+ps1 byte order mark byte changed | KILLED | 1 failed, 138 passed, 6 skipped in 33.54s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+ps1 Stop-Process in pass 1 | KILLED | 1 failed, 141 passed, 6 skipped in 33.62s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_1_looks_at_both_pid_files_and_changes_nothing
+ps1 cap -ge 64 -> -gt 64 | KILLED | 1 failed, 138 passed, 6 skipped in 34.02s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+support restart no modulo | KILLED | 1 failed, 318 passed, 15 skipped in 83.18s (0:01:23) | tests/test_port_helpers.py::test_a_worker_number_beyond_the_worker_count_still_gets_its_own_range
+support last = first+width | KILLED | 1 failed, 244 passed, 15 skipped in 82.78s (0:01:22) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+tests: a direct bind to port 0 added | KILLED | 1 failed, 322 passed, 15 skipped in 83.26s (0:01:23) | tests/test_port_helpers.py::test_no_test_binds_to_port_0_by_itself_except_the_listed_servers_that_keep_their_socket
+sh reset_check failure ignored | NOT APPLIED (text not found)
+sh removal sentence changed | KILLED | 1 failed, 37 passed, 1 skipped in 12.83s | tests/test_reset_order_and_words.py::test_text_only_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts
+check forgets pid files | KILLED | 1 failed, 4 passed in 0.66s | tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_desk_pid_file_when_the_check_refuses_after_it_stopped_the_desk
+ps1 buffer 67 -> 64 | KILLED | 1 failed, 138 passed, 6 skipped in 33.92s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+ps1 removal sentence changed | KILLED | 1 failed, 37 passed, 1 skipped in 12.97s | tests/test_reset_order_and_words.py::test_text_only_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts
+ports: part leaves the block | KILLED | 1 failed, 350 passed, 15 skipped in 83.76s (0:01:23) | tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]
+r9 M4 NUL size check off | KILLED | 1 failed, 21 passed, 1 skipped in 8.93s | tests/test_reset_order_and_words.py::test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-16-le]
+r9 M8 alive: not-permitted counts as gone | KILLED | 1 failed, 27 passed, 1 skipped in 10.25s | tests/test_reset_order_and_words.py::test_alive_counts_a_process_it_may_not_signal_as_alive_and_a_missing_one_as_gone
+r9 P4 ps1 read loop offset dropped | KILLED | 1 failed, 138 passed, 6 skipped in 34.11s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+r10 ps1 crash mapped to the raw code, not 5 | KILLED | 1 failed, 152 passed, 14 skipped in 34.24s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_exit_is_mapped_like_reset_sh_and_a_missing_exit_code_is_a_failure
+r10 ps1 refused setting exit 8 -> 2 (data folder) | KILLED | 1 failed, 44 passed, 1 skipped in 13.20s | tests/test_reset_order_and_words.py::test_text_only_reset_ps1_gives_a_refused_setting_exit_8
+r10 sh python-missing wording removed | KILLED | 1 failed, 26 passed, 1 skipped in 10.10s | tests/test_reset_order_and_words.py::test_reset_sh_says_python_was_not_found_when_the_check_program_cannot_start
+r10 sh config refusal back to a traceback (no refusal) | SURVIVED | 362 passed, 15 skipped in 83.83s (0:01:23) | 
+r10 sh header loses exit 5 meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.76s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+sh folder check dropped | KILLED | 1 failed, 90 passed, 1 skipped in 29.49s | tests/test_reset_scripts.py::test_reset_sh_refuses_with_exit_7_when_the_pid_file_is_an_empty_folder_and_keeps_the_book[desk.pid]
+sh pid files not deleted (pass 3) | KILLED | 1 failed, 8 passed in 2.34s | tests/test_reset_order_and_words.py::test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file
+ps1 process lookup errors silenced | KILLED | 1 failed, 144 passed, 6 skipped in 33.43s | tests/test_reset_ps1_pid_rules.py::test_text_only_a_failed_process_lookup_refuses_with_exit_6_before_anything_is_stopped
+ps1 folder exit 7 -> 1 | KILLED | 1 failed, 139 passed, 6 skipped in 33.72s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
+ps1 Remove-Item catch drops exit 7 | KILLED | 1 failed, 139 passed, 6 skipped in 33.58s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
+support width 5000 -> 6000 | KILLED | 1 failed, 245 passed, 15 skipped in 82.95s (0:01:22) | tests/test_port_helpers.py::test_a_single_worker_gets_a_block_of_at_most_5000_numbers_in_each_half
+support worker regex too loose | KILLED | 1 failed, 317 passed, 15 skipped in 83.18s (0:01:23) | tests/test_port_helpers.py::test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses
+support given-free not cleared | KILLED | 1 failed, 321 passed, 15 skipped in 83.03s (0:01:23) | tests/test_port_helpers.py::test_the_numbers_free_port_gave_away_are_forgotten_when_the_held_ports_are_released
+sh pass-2 recheck dropped | NOT APPLIED (text not found)
+sh dangling link not seen | KILLED | 1 failed, 8 passed in 2.50s | tests/test_reset_order_and_words.py::test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file
+sh folder message changed | KILLED | 1 failed, 139 passed, 6 skipped in 33.82s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
+ps1 recheck dropped | KILLED | 1 failed, 148 passed, 14 skipped in 33.47s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop
+ps1 count not after the mark | NOT APPLIED (text not found)
+ports: session part ignored | KILLED | 1 failed, 355 passed, 15 skipped in 84.38s (0:01:24) | tests/test_port_helpers.py::test_free_ports_of_a_session_lie_in_that_sessions_part_of_the_block
+tests: HOST defined twice | KILLED | 1 failed, 349 passed, 15 skipped in 84.09s (0:01:24) | tests/test_port_helpers.py::test_the_loopback_host_of_the_tests_is_defined_once
+r9 M5 length rule only | KILLED | 1 failed, 14 passed, 1 skipped in 8.56s | tests/test_reset_order_and_words.py::test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[1]
+r9 M10 length 64 -> 65 | KILLED | 1 failed, 10 passed in 4.80s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
+r10 ps1 stale LASTEXITCODE not cleared | KILLED | 1 failed, 151 passed, 14 skipped in 34.29s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back
+r10 ps1 Continue not restored (P5 kind) | KILLED | 1 failed, 151 passed, 14 skipped in 33.72s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back
+r10 ps1 config refusal exit 8 -> 1 | KILLED | 1 failed, 44 passed, 1 skipped in 12.96s | tests/test_reset_order_and_words.py::test_text_only_reset_ps1_gives_a_refused_setting_exit_8
+r10 sh exit 5 for crash -> raw code | KILLED | 1 failed, 25 passed, 1 skipped in 9.97s | tests/test_reset_order_and_words.py::test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop
+r10 sh config refusal exit 8 -> 1 | KILLED | 1 failed, 43 passed, 1 skipped in 12.86s | tests/test_reset_order_and_words.py::test_reset_sh_gives_a_refused_desk_setting_exit_8_with_one_line_and_keeps_every_file
+sh pass-2 recheck dropped (re-pointed: if is_ours -> if true) | KILLED | 1 failed, 7 passed in 2.47s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
+sh reset_check dropped (re-pointed) | KILLED | 1 failed, 3 passed in 1.36s | tests/test_reset_order_and_words.py::test_the_reset_script_keeps_standard_output_empty_when_the_check_refuses_for_a_port_that_answers
+sh reset_check failure ignored (re-pointed) | KILLED | 1 failed, 3 passed in 1.39s | tests/test_reset_order_and_words.py::test_the_reset_script_keeps_standard_output_empty_when_the_check_refuses_for_a_port_that_answers
+ps1 count not after the mark | NOT APPLIED (text not found)
+ps1 exit 5 forgets already stopped (rerun with the strengthened pin) | KILLED | 1 failed, 142 passed, 6 skipped in 33.86s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_refusal_in_pass_2_names_what_was_already_stopped
+r10 sh config refusal handler removed (exit 1 silently, from set -e) | KILLED | 1 failed, 43 passed, 1 skipped in 13.14s | tests/test_reset_order_and_words.py::test_reset_sh_gives_a_refused_desk_setting_exit_8_with_one_line_and_keeps_every_file
+r9 M1 length rule moved out of the C locale | KILLED | 1 failed, 10 passed in 4.69s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
+r9 M2 trim moved out of the C locale | KILLED | 1 failed, 14 passed, 1 skipped in 8.34s | tests/test_reset_order_and_words.py::test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[1]
+r9 M3 BOM strip moved out of the C locale | KILLED | 1 failed, 9 passed in 13.55s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]

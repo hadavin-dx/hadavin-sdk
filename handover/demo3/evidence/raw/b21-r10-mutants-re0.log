@@ -1,0 +1,6 @@
+# round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
+sh pass-2 recheck dropped (re-pointed: if is_ours -> if true) | KILLED | 1 failed, 7 passed in 2.47s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
+sh reset_check dropped (re-pointed) | KILLED | 1 failed, 3 passed in 1.36s | tests/test_reset_order_and_words.py::test_the_reset_script_keeps_standard_output_empty_when_the_check_refuses_for_a_port_that_answers
+sh reset_check failure ignored (re-pointed) | KILLED | 1 failed, 3 passed in 1.39s | tests/test_reset_order_and_words.py::test_the_reset_script_keeps_standard_output_empty_when_the_check_refuses_for_a_port_that_answers
+ps1 count not after the mark | NOT APPLIED (text not found)
+ps1 exit 5 forgets already stopped (rerun with the strengthened pin) | KILLED | 1 failed, 142 passed, 6 skipped in 33.86s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_refusal_in_pass_2_names_what_was_already_stopped

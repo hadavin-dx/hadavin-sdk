@@ -1,0 +1,28 @@
+##### sh pass-2 recheck dropped (re-pointed: if is_ours -> if true) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -145 +145 @@
+-    if is_ours "$pid" "$(proc_args "$pid" || true)"; then
++    if true; then
+
+##### sh reset_check dropped (re-pointed) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -163 +163 @@
+-python scripts/reset_check.py || check_exit=$?
++true
+
+##### sh reset_check failure ignored (re-pointed) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -163 +163 @@
+-python scripts/reset_check.py || check_exit=$?
++python scripts/reset_check.py || true
+
+##### ps1 exit 5 forgets already stopped (rerun with the strengthened pin) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -113 +113 @@
+-    $note = if ($stopped) { " (already stopped: $stopped)" } else { '' }
++    $note = ''
+

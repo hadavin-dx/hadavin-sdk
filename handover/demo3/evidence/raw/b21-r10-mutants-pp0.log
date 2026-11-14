@@ -14,3 +14,11 @@ sh old-bash message names a version again | KILLED | 1 failed, 93 passed, 1 skip
 ps1 recheck exit 6 -> 1 | KILLED | 1 failed, 148 passed, 14 skipped in 33.94s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop
 ps1 reset_check dropped | KILLED | 1 failed, 150 passed, 14 skipped in 34.08s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_for_a_desk_nobody_listed_runs_after_the_stop_and_before_any_delete
 ports: session part index 0 | KILLED | 1 failed, 350 passed, 15 skipped in 84.00s (0:01:24) | tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]
+tests: a direct server bind added | KILLED | 1 failed, 322 passed, 15 skipped in 83.09s (0:01:23) | tests/test_port_helpers.py::test_no_test_binds_to_port_0_by_itself_except_the_listed_servers_that_keep_their_socket
+r9 M6 read not in C locale | KILLED | 1 failed, 9 passed in 13.79s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]
+r9 P1 ps1 anchor \z -> $ | KILLED | 1 failed, 106 passed, 1 skipped in 34.20s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+r10 ps1 null exit code not refused | KILLED | 1 failed, 152 passed, 14 skipped in 34.31s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_exit_is_mapped_like_reset_sh_and_a_missing_exit_code_is_a_failure
+r10 ps1 Continue dropped (P2 kind) | KILLED | 1 failed, 151 passed, 14 skipped in 33.69s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back
+r10 sh guard without BASH_VERSINFO | KILLED | 1 failed, 40 passed, 1 skipped in 12.91s | tests/test_reset_order_and_words.py::test_text_only_the_shell_guard_also_needs_bash_version_info
+r10 sh stop-wait refusal exit 8 -> 2 | KILLED | 1 failed, 55 passed, 1 skipped in 23.71s | tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[1+1]
+r10 README exit 5 back to one meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.78s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header

@@ -1,3 +1,18 @@
+## HEARTBEAT 133 (09:12Z) - fix-10 r5 reviewed and resolved; B23 resumed for round 6; B21 r10 and B22 r12 still building
+
+| Agent / job | State at 09:12Z |
+|---|---|
+| R25a / R25b | egm-design and egm-codebase-details on fix-10 r5 finished: 0 Blocker, 4 Major (design: exit numbers outside the table, two unexplained failures; code: mutant r4-10 killed only by a ready-loop race, run 3 cut-off unexplained). Saved in evidence/. Resolve plan saved: evidence/resolve-lane3-fix-10-r5.md (20 fix, 1 declined wording row, 0 contested) |
+| B23 fix-10 round 6 | resumed 09:12Z with the 21-row plan (race fix, one exit table, desk UTF-8 refusal line, 20 logged reruns, one final full run) |
+| B21 fix-5 round 10 | building, no hand-back yet |
+| B22 fix-2 round 12 | building, no hand-back yet (full run in progress, leaked lock handle being fixed) |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: row 6 of the fix-10 plan: please confirm the table text. Reset 5 = "a process did not stop in time, or the check program crashed (nothing was deleted)"; reset 8 = "a setting is refused (same meaning as start_all and run_real_check)". I proceed with this text unless you say otherwise.
+FAILURES AND RETRIES: none new from me. The race in start_all.sh is a real bug (confirmed by reading), not a flake; run 3's cut-off stays open until a cause is named.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; IPv6 end-to-end skipped here; WINDOWS-RUN-1 lines (ownership line, code page, fix-5 r10 lines) not yet written; no full suite on fix-10 r6 yet.
+WHAT I WOULD DO NEXT (ranked): 1) B21 r10 and B22 r12 hand-backs: lint a clean copy, fresh reviewers; 2) B23 round 6 hand-back and review; 3) the one stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 132 (08:59Z) - B23 fix-10 round 5 handed back and linted; two fresh reviewers started; B21 r10 and B22 r12 building
 
 | Agent / job | State at 08:59Z |

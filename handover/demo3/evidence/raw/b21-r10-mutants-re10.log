@@ -1,0 +1,5 @@
+# round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
+r10 sh config refusal handler removed (exit 1 silently, from set -e) | KILLED | 1 failed, 43 passed, 1 skipped in 13.14s | tests/test_reset_order_and_words.py::test_reset_sh_gives_a_refused_desk_setting_exit_8_with_one_line_and_keeps_every_file
+r9 M1 length rule moved out of the C locale | KILLED | 1 failed, 10 passed in 4.69s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
+r9 M2 trim moved out of the C locale | KILLED | 1 failed, 14 passed, 1 skipped in 8.34s | tests/test_reset_order_and_words.py::test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[1]
+r9 M3 BOM strip moved out of the C locale | KILLED | 1 failed, 9 passed in 13.55s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[63-True]

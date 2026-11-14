@@ -13,3 +13,11 @@ sh folder message changed | KILLED | 1 failed, 139 passed, 6 skipped in 33.82s |
 ps1 recheck dropped | KILLED | 1 failed, 148 passed, 14 skipped in 33.47s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop
 ps1 count not after the mark | NOT APPLIED (text not found)
 ports: session part ignored | KILLED | 1 failed, 355 passed, 15 skipped in 84.38s (0:01:24) | tests/test_port_helpers.py::test_free_ports_of_a_session_lie_in_that_sessions_part_of_the_block
+tests: HOST defined twice | KILLED | 1 failed, 349 passed, 15 skipped in 84.09s (0:01:24) | tests/test_port_helpers.py::test_the_loopback_host_of_the_tests_is_defined_once
+r9 M5 length rule only | KILLED | 1 failed, 14 passed, 1 skipped in 8.56s | tests/test_reset_order_and_words.py::test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[1]
+r9 M10 length 64 -> 65 | KILLED | 1 failed, 10 passed in 4.80s | tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
+r10 ps1 stale LASTEXITCODE not cleared | KILLED | 1 failed, 151 passed, 14 skipped in 34.29s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back
+r10 ps1 Continue not restored (P5 kind) | KILLED | 1 failed, 151 passed, 14 skipped in 33.72s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back
+r10 ps1 config refusal exit 8 -> 1 | KILLED | 1 failed, 44 passed, 1 skipped in 12.96s | tests/test_reset_order_and_words.py::test_text_only_reset_ps1_gives_a_refused_setting_exit_8
+r10 sh exit 5 for crash -> raw code | KILLED | 1 failed, 25 passed, 1 skipped in 9.97s | tests/test_reset_order_and_words.py::test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop
+r10 sh config refusal exit 8 -> 1 | KILLED | 1 failed, 43 passed, 1 skipped in 12.86s | tests/test_reset_order_and_words.py::test_reset_sh_gives_a_refused_desk_setting_exit_8_with_one_line_and_keeps_every_file

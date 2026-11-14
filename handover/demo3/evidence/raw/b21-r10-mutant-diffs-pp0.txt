@@ -101,3 +101,51 @@
 @@ -28,0 +29 @@
 +    __import__('http.server').server.ThreadingHTTPServer(("127.0.0.1", 0), None).server_close()
 
+##### r9 M6 read not in C locale (scripts/reset.sh)
+--- good
++++ mutant
+@@ -83 +83 @@
+-  local LC_ALL=C chunk="" tries size
++  local chunk="" tries size
+
+##### r9 P1 ps1 anchor \z -> $ (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -87 +87 @@
+-        if (($text -cmatch '\A[1-9][0-9]*\z') -and [int]::TryParse($text, [ref]$procId)) {
++        if (($text -cmatch '^[1-9][0-9]*$') -and [int]::TryParse($text, [ref]$procId)) {
+
+##### r10 ps1 null exit code not refused (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -148 +148 @@
+-if ($null -eq $checkExit -or $checkExit -notin 0, 3, 4) {
++if ($checkExit -notin 0, 3, 4) {
+
+##### r10 ps1 Continue dropped (P2 kind) (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -142 +141,0 @@
+-$ErrorActionPreference = 'Continue'
+
+##### r10 sh guard without BASH_VERSINFO (scripts/reset.sh)
+--- good
++++ mutant
+@@ -8 +8 @@
+-case "$( (eval '[[ a == a && -n ${BASH_VERSINFO+x} ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
++case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
+
+##### r10 sh stop-wait refusal exit 8 -> 2 (scripts/reset.sh)
+--- good
++++ mutant
+@@ -15 +15 @@
+-  *) echo "refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted" >&2; exit 8 ;;
++  *) echo "refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted" >&2; exit 2 ;;
+
+##### r10 README exit 5 back to one meaning (README.md)
+--- good
++++ mutant
+@@ -95 +95 @@
+-- exit 5 has two meanings; the line printed tells them apart: a process did not stop in time, or the check program failed (`scripts/reset_check.py` gave an exit code other than 0, 3 or 4, for example because python was not found). Either way nothing was deleted, not even the pid files; the line names what was already stopped.
++- exit 5 has two meanings; the line printed tells them apart: a process did not stop in time, or the program failed (`scripts/reset_check.py` gave an exit code other than 0, 3 or 4, for example because python was not found). Either way nothing was deleted, not even the pid files; the line names what was already stopped.
+

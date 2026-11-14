@@ -15,3 +15,10 @@ ps1 buffer 67 -> 64 | KILLED | 1 failed, 138 passed, 6 skipped in 33.92s | tests
 ps1 removal sentence changed | KILLED | 1 failed, 37 passed, 1 skipped in 12.97s | tests/test_reset_order_and_words.py::test_text_only_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts
 ports: part leaves the block | KILLED | 1 failed, 350 passed, 15 skipped in 83.76s (0:01:23) | tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]
 r9 M4 NUL size check off | KILLED | 1 failed, 21 passed, 1 skipped in 8.93s | tests/test_reset_order_and_words.py::test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-16-le]
+r9 M8 alive: not-permitted counts as gone | KILLED | 1 failed, 27 passed, 1 skipped in 10.25s | tests/test_reset_order_and_words.py::test_alive_counts_a_process_it_may_not_signal_as_alive_and_a_missing_one_as_gone
+r9 P4 ps1 read loop offset dropped | KILLED | 1 failed, 138 passed, 6 skipped in 34.11s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+r10 ps1 crash mapped to the raw code, not 5 | KILLED | 1 failed, 152 passed, 14 skipped in 34.24s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_exit_is_mapped_like_reset_sh_and_a_missing_exit_code_is_a_failure
+r10 ps1 refused setting exit 8 -> 2 (data folder) | KILLED | 1 failed, 44 passed, 1 skipped in 13.20s | tests/test_reset_order_and_words.py::test_text_only_reset_ps1_gives_a_refused_setting_exit_8
+r10 sh python-missing wording removed | KILLED | 1 failed, 26 passed, 1 skipped in 10.10s | tests/test_reset_order_and_words.py::test_reset_sh_says_python_was_not_found_when_the_check_program_cannot_start
+r10 sh config refusal back to a traceback (no refusal) | SURVIVED | 362 passed, 15 skipped in 83.83s (0:01:23) | 
+r10 sh header loses exit 5 meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.76s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header

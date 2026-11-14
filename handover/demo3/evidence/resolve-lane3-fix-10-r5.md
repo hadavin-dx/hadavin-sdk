@@ -1,0 +1,41 @@
+# Resolution plan: fix-10 round 5 (tree c494f120), for round 6
+Status: resolved (non-interactive egm-resolve; saved by lane3). Inputs: review-lane3-fix-10-r5-design.md (2M/8m/3n), review-lane3-fix-10-r5-codedetails.md (2M/5m/1n), merged into 21 rows. Counts: 20 PROPOSE FIX, 0 contest, 0 escalate, 1 decline (row 21, dated to stack docs pass).
+Checked by lane3 by reading: start_all.sh ready loop greps the desk line THEN `kill -0 desk_pid || break` (race; also on the pristine r4 script, raw/b23-r5-fails-before.log 226-263, so one of the 94 is the race; mutant r4-10 never cleanly killed). Comment at start_all.sh:57 is false. contract.md:142 "exits 3" and server.py main docstring (1117-1128) list codes outside the table. constants.py:86 MEANING_RESET_NOT_STOPPED names one cause.
+
+| # | Item | Sev | Decision | Exact change |
+|---|---|---|---|---|
+| 1 | Table is not the only place numbers are stated (prose in contract.md:142, server.py main docstring, reset_check.py:2; limits.md:120 and contract.md:132 claim otherwise; load_tools/README.md:98, scripts/n8n_api.py:17, hubspot_probe, run_live_check, check_schema) | Major | FIX | Replace prose lists by a pointer to EXIT_CODE_TABLE, keep causes in words. Add table rows for hubspot_probe, run_live_check, check_schema, n8n_api, load_tools programs. Reword limits.md:120 / contract.md:132 to "every program listed by program in ONE table". Extend scan to src/, scripts/ headers, load_tools/*.md. Per-program test (text "exit N" next to a program name must match its rows) and reverse test (every script with an exit code has a row). Must fail on old code. |
+| 2 | Run 3 first attempt cut off, log overwritten, rc not recorded | Major | FIX | Give command line and rc if known. 20 reruns of the three files, one at a time, under setsid, `-p no:randomly -v --junitxml` per run, per-run logs never overwritten, rc and dmesg tail per run, no other heavy job. Harden test_reset_scripts.py:126 (write a child pid, not os.getpid()); never write pid 1; no test signals a pid read from a file without the is_ours-style check. Name a cause (rc 137/143 = signal) before hand-back. "Cause unknown" not accepted. |
+| 3 | Mutant r4-10 killed only by a race; comment start_all.sh:57 false | Major | FIX | After the alive check fails, grep the desk log once more before "ended at once". Stub desk `exec sleep` where a live desk is needed; separate stub that prints the line and exits. Correct the comment (second kill -0 guards the demo server dying between log line and port answer while a foreign program takes the port). New real test with the `grep "^fakes server"` shim: kill demo server, wait for death, thread binds port; assert desk never launched (marker absent). Mutant r4-10 must now fail it. Env0 reminder test 20x mutated and 20x unmutated, save assertion text of any failure. Replace _free_port() by a held socket. |
+| 4 | "started:" printed for a desk that printed its line then died (start_all.sh:84-89, .ps1:93-98; false comments start_all.sh:78-79, contract.md:134) | minor, behaviour | FIX | Require kill -0 desk_pid after the line is seen; dead desk takes the "ended at once" branch with the table code. Same in ps1 (TEXT PIN). Leadflow stubs exec sleep; new test: desk prints line and exits, expect early refusal and no "started". Fix comments and contract.md:134. |
+| 5 | Windows ownership line weaker: FakesServer allow_reuse_address allows second bind | minor | FIX + named exception | allow_reuse_address=False on win32 (or SO_EXCLUSIVEADDRUSE), unit pin with platform stubbed. Windows proof = third-party hardware; lane3 adds WINDOWS-RUN-1 line. |
+| 6 | Reset exit 5 one cause in table | minor | FIX, needs lead text | Table row reset 5 = "a process did not stop in time, or the check program crashed (nothing was deleted)"; reset 8 = "a setting is refused (same meaning as start_all and run_real_check)". MEANING_RESET_NOT_STOPPED becomes a two-cause row; page test reads the row. Rows marked "produced at the stack by fix-5 round 10 tests" until then. |
+| 7 | Desk's own refusal prints (server.py:1112 _refuse, :1134, :1171) break on a cp1252 stdout (UnicodeEncodeError, exit 1) | minor, behaviour | FIX at choke point | One function writes a refusal line as UTF-8 bytes (reuse config_exit bytes path); all three call sites use it; grep tree for other print(refusal_line(. Subprocess test PYTHONIOENCODING=cp1252 + non-ASCII leadflow entry name: exit 4 and UTF-8 line; fails on old code. |
+| 8 | Clock-coupled tests (test_clock_steps.py:226, :48-62; test_reset_scripts.py:147, :164) | minor | FIX | FakeClock or a controlled file instead of real sleep margins; grep start/reset tests for sleep(N>=1) margins, list each as fixed or justified. |
+| 9 | Tests that can pass without testing (listener-after-check test; test_start_all_late_refusal.py:285-314) | minor | FIX | Assert held.getsockname() and listening before the verdict; bind failure fails the test. |
+| 10 | contract.md:134 stale | minor | FIX | Rewrite to code: process alive, port answers, ownership line, pre-flight, desk alive. |
+| 11 | port_answers has no timeout if `timeout` missing | minor | FIX | Header states the need; refuse early with the table code if missing; drop the else branch. |
+| 12 | Wait counts 0.2 s sleeps; probe up to 1 s, message can be false | minor | FIX | Monotonic deadline via SECONDS; message states seconds actually waited; test with slow probe stub. |
+| 13 | Mutant rerun of r4-3, r4-13, r5-5 only in chat | minor | FIX | Rerun on final tree, save log/diffs/FAILED lines in raw/; r4-10 per row 3; baseline x3 first; one mutant at a time. |
+| 14 | One of "94 failed" is the race | minor | FIX | Redo red-first on a pristine r5 copy after row 3; report real behaviour / function-absent / text pins (tests, then cases), race excluded; never the bare total. |
+| 15 | "216 passed, 10 skipped x3" not backed by logs | minor | FIX | Three fresh runs, per-run logs in raw/; quote only logged runs. |
+| 16 | Table rows with no producing test (crash_desk 1,2,3,5,137; reset_check 4; reset.ps1; start_all.ps1; start_all row 1 covers 1 of 7 causes) | minor | FIX sh; named exception ps1 | Producing test per sh row producible here, named in the row. ps1 rows labelled "not produced on Linux; WINDOWS-RUN-1" in the printed table. |
+| 17 | IPv6 [::1] start_all end to end not shown | minor | FIX partial + named exception | End-to-end test that skips with reason where AF_INET6 is refused, runs where allowed; class test stands. Exception: kernel refuses here; next step a machine that allows it. |
+| 18 | test_round5_rows.py:89 assert __mro__ always true | nit | FIX | Assert address_family. |
+| 19 | test_windows_* hard-code 8,4,5 | nit | FIX | Read the constants. |
+| 20 | start_all.sh:119 reruns config_or_exit after "started:" | nit | FIX | Reuse first result. |
+| 21 | fakes_server.py:3 Run: docstring omits --host | nit | DECLINE | Wording; dated to the stack docs pass (2026-11-14/15). |
+
+## Builder work order (round 6)
+1. Failing-before tests first for rows 1,3,4,7,9,11,12,18; prove they fail on the unchanged r5 tree; honest split.
+2. Rows 3,4 first (shared script), then 5,6,7,11,12,20, then table and docs (1,6,10,16).
+3. Rows 8,9,15,17,18,19.
+4. Row 2: 20 reruns, per-run logs/rc/dmesg; name the cause or report what was ruled out. No "flake".
+5. Row 13 mutants on the final tree.
+6. git add -A, git write-tree, report tree id; lint clean git ls-files copy (ruff check, format --check, mypy linux and win32, bandit -ll), each rc.
+7. Narrow runs, then ONE final full run (clean clone, py3.13, DPLD_REQUIRE_SCAN=1, gitleaks on PATH, no data/, no xdist, detached).
+8. Notes: what failed first, what was not checked, dated deferral row 21. Report once. Do not commit.
+
+## Final fresh review must check
+Table is the only place exit numbers are stated (scan scope, every program has rows, pointers); no path prints "started" with a dead desk or dead/foreign demo server, race gone, r4-10 killed by its own test; run 3 named cause or 20 clean logged runs plus pid hardening; refusal lines and helper share one UTF-8 path; reset row has both causes and 8, consistent with fix-5 r10; honest counts; ps1 TEXT PIN; no unnamed "known limitation".
+For the lead: row 6 wording (reset 5 two causes, reset 8 refused setting) proposed above; confirm.

@@ -1,0 +1,35 @@
+##### r10 sh config refusal handler removed (exit 1 silently, from set -e) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -19 +19 @@
+-db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)' 2>/dev/null)" || { echo "refused: a desk setting was refused (or python was not found), so the database path could not be read; nothing was stopped or deleted (run python -c 'from lead_desk.config import Config; Config.from_env()' to see which setting)" >&2; exit 8; }
++db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)' 2>/dev/null)"
+
+##### r9 M1 length rule moved out of the C locale (scripts/reset.sh)
+--- good
++++ mutant
+@@ -93 +93 @@
+-  if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
++  if [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
+@@ -111 +111 @@
+-    if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi # 64 bytes (after the mark) or more is far longer than any process number
++    if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi; if (( ${#pid} >= 64 )); then pid=""; fi # 64 bytes (after the mark) or more is far longer than any process number
+
+##### r9 M2 trim moved out of the C locale (scripts/reset.sh)
+--- good
++++ mutant
+@@ -94 +93,0 @@
+-  pid="${pid#"${pid%%[![:space:]]*}"}"; pid="${pid%"${pid##*[![:space:]]}"}" # trim the spaces and the line end
+@@ -111 +110 @@
+-    if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi # 64 bytes (after the mark) or more is far longer than any process number
++    if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi; pid="${pid#"${pid%%[![:space:]]*}"}"; pid="${pid%"${pid##*[![:space:]]}"}" # 64 bytes (after the mark) or more is far longer than any process number
+
+##### r9 M3 BOM strip moved out of the C locale (scripts/reset.sh)
+--- good
++++ mutant
+@@ -92 +91,0 @@
+-  pid="${pid#$'\xef\xbb\xbf'}"
+@@ -111 +110 @@
+-    if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi # 64 bytes (after the mark) or more is far longer than any process number
++    if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi; pid="${pid#$'\xef\xbb\xbf'}" # 64 bytes (after the mark) or more is far longer than any process number
+
