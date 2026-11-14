@@ -177,10 +177,11 @@ def final_rows(ids, timeout=230):
     return rows
 def t8():
     mf_stack(); n8n_prepare_mf(); restart_n8n(); ids = []; rows = []; conn0 = smtp_conns()
-    for mode in ("refuse", "error", "timeout"):
+    for mode in ("refuse", "error", "timeout"):      # the fault mode is HELD until this lead is final (all recovery retries and the alert); the stage stand-in has one global mode, so one lead at a time
         stage_ctl(mode=mode, sleep=40); k = uid("t8-" + mode); ids.append(k); t0 = time.time(); st, rep = req("mf-form", fbody(k), t=120)
         rec("T8", mode=mode, lead=k, reply=[st, rep], seconds=round(time.time() - t0, 1))
-    stage_ctl(mode="ok"); rows = final_rows(ids); [rec("T8", **o) for o in rows]
+        rows += final_rows([k], timeout=3 * LEASE + 200); rec("T8", mode_held_until_final=mode, stage_stats_note="stage mode was %s during all retries" % mode)
+    stage_ctl(mode="ok"); [rec("T8", **o) for o in rows]
     ok = all(o["row"]["state"] == "failed" and o["mails"] == 0 and o["crm_rows"] == 0 and o["alerts"] == 1 and o["model_calls"] == 0 for o in rows) and smtp_conns() - conn0 == len(ids)   # only the alert mails connect: 1 per lead
     rec("T8", smtp_connections_total=smtp_conns(), alert_mails=len(ids))
     result("T8", ok, "cap stage refuses / errors / times out (also through the recovery retries, 3 tries): 0 mails to the intake recipient, 0 CRM writes, 0 model calls, state failed, exactly 1 alert per lead; SMTP connections = alerts only (%d)" % (smtp_conns() - conn0), per_lead=rows)

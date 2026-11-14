@@ -1,5 +1,19 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block ANSWER-T8 - T8 FAIL on 1ced4e1ff: HARNESS defect (mf.py t8), flows fail closed by code reading; fixed in mf.py, rerun T8 first
+
+(1) Harness: YES it switched the mode before each post, but it switched back too early. Old t8(): for each mode set stage mode, post the lead, move on to the next mode; then stage_ctl(mode="ok") BEFORE final_rows(). The form reply returns after the first run; the recovery retries come after the lease (about 20 s on the laptop), by then the stage was "ok" again, so retry 2/3 called the healthy stage, qualified, CRM, mail, done. That matches your numbers (state done, mail 1, CRM 1, model call 1, alerts 0, attempts 3, final 14 s). The old text of the test said "also through the recovery retries" but did not hold the mode: my defect.
+(2) Flows (read mf-sub-crm-mail.json, mf-recovery.json, mf-form.json): no path skips Qualify. Recovery ClaimStuck -> StuckRow -> RunSub runs the same sub-workflow: SubIn -> Qualify (error output -> OutStage; no CRM, no mail) ; LabelOk false -> OutStage; only LabelOk true -> CrmUpsert -> ... SendMail. A refused/erroring/timed-out stage leaves the lead in processing; after the lease recovery retries; at attempts >= 3 MarkFailed -> FailedRow -> AlertFailed (1 alert). So fail closed, as designed. This is reading, not a run.
+(3) Fix pushed in n8n-mainframe/mf.py t8(): one lead at a time; stage mode held (refuse, then error, then timeout) until that lead is final (final_rows timeout 3*LEASE+200), then next mode; "ok" only after all three. py_compile OK, not run (no disk). NO flow change, so flows commit stays 1ced4e1f.
+RERUN: T8 first (new mf.py), same flows; T8 now takes about 3 x (3*lease + 90 s) at lease 20 (about 7 min). Other tests unaffected (only t8() changed). Check in the T8 raw file: per lead state failed, mails 0, crm_rows 0, model_calls 0, alerts 1.
+One doubt I cannot clear without a run: "timeout" mode sleeps 40 s while n8n stops at 15 s; the stage thread still sleeps and then returns (no model call), so 0 model calls should hold.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- T8 not rerun; other V4 raw files unread; T7b raw unread; same hold-the-mode check for T15 (it uses crm fail_status persistent: fine by reading) and T14.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the rerun T8 raw file when named. 2. Check the other mode-switching tests (K, T10 CRM/smtp modes) for the same early-reset pattern. 3. Fill DECISION-INPUTS.
+
 ## Block 14:37Z - ANSWER to the 14:25 question (T7b env settings); N8N-START.md updated, pushed
 
 Did T7b start n8n with the four settings? By code reading of mf.py (t7b, line 237): YES for the n8n that handled the three T7b leads. t7b() runs EXTRA.update(EXECUTIONS_DATA_SAVE_ON_SUCCESS="none", EXECUTIONS_DATA_SAVE_ON_ERROR="none", EXECUTIONS_DATA_SAVE_ON_PROGRESS="false", EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS="false") and only then mf_stack(); n8n_prepare_mf(); restart_n8n(), and the n8n environment is built from EXTRA (dn1_common lib.n8n_env). Exact env set for that n8n: those four plus the common ones N8N_BLOCK_ENV_ACCESS_IN_NODE=false, DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO, MF_CRM_URL, MF_STAGE_URL, MF_STAGE_TIMEOUT_MS. NOT with the settings: the first n8n that run_mf.py starts before mf.py, and setup.py (flows were imported/activated there; no lead data then). I have not seen the raw REC/driver.out, so this is a reading, not a measurement: please check the n8n start line in the T7b raw log.
