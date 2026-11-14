@@ -1,0 +1,3 @@
+crash flag file: data/crash.flag  (write a point name such as D2 into it to arm the crash)
+desk listening on http://127.0.0.1:8765
+simulate crash

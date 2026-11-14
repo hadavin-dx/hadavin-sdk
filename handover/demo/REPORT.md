@@ -1,6 +1,20 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 08:11Z STATUS (demo cloud): 08:10Z answer applied
+- `n8n-owns-vs-desk-owns.md` now opens with a 10-line plain summary (what n8n owns, what the desk owns and why, one measured fact per variant with its condition, limits, what is not claimed); the word list moved to a glossary at the end; the long body is unchanged. Hygiene scan of the page: clean.
+- Keyed D2 once more (machine free, 1 minute): feed 201, desk exit code 137, outbox count 1 after the crash and after the restart, follow-up `sent`, unknown_followups 0, reset done. So keyed: three runs, same result; blind: one run (UNKNOWN). Results and desk logs: `n8n-rerun/D2-scene-results.txt` and `D2-scene-desk6/7*`.
+- Waiting for atlas pass 2 (about 09:10Z); not started. Machine free; no job running; R2b containers kept.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Blind D2 is one run; the table row in the page that says "one run" for desk rows was updated to keyed three, blind one.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Wait for the atlas files, then the atlas re-check of the n8n variants on your order.
+2. Blind D2 twice more if you want 3 and 3.
+3. Clean up scratch when you say R2b is finished.
+
+
 ## 08:08Z STATUS (demo cloud): 08:05Z order applied, second fresh reviewer folded
 - **Desk vs take harness now stated plainly in `n8n-owns-vs-desk-owns.md`:** in the desk (public repo): receipt, keyed claim, ambiguous sends marked for a person, portal, approval, own counts, AND (from the repo's own text, found by the reviewer) the live model step with a price, a per-run cap and a total cap (`live_claude.py`, `limits.md`) and on-screen masking P10. In the take harness (your laptop code, `run_real_check.py` masking and scrub, `live_claude.py` spend ledger and cap in that worktree): redaction and spend cap, STATED BY THE LEAD, NOT TESTED BY THIS LANE; I cannot see that code. My earlier "no redact word, spend/budget in 3 files" was too narrow: a text search of public `src/lead_desk` finds "spend" or "budget" in 10 files and no "redact" word; fixed on the page. The earlier line saying the desk does not hide personal data was wrong (P10 exists) and is gone.
 - **Second fresh comprehension reviewer (plain-words test, claims check): 5 Major, 10 Nit.** Fixed: (1) spend limit location and its self-contradiction; (2) the hit list; (3) personal-data hiding understated; (4) R2 called "one full run" without saying it ended exit code 2 (b K2 and K3 4 valid of 5), that R1 failed before measuring, and that every count comes from a harness with my scratch patches P1 and P2: now stated at the top; (5) the D2 rows had no result file: new `n8n-rerun/D2-scene-results.txt` holds the printed results (outbox counts, follow-up state, counts-page figure, exit code 137) next to the desk logs. Nits folded: the 12 of 12 first bursts also sit inside the 12 of 20 and 2 of 5 and the split was made after seeing the rows; R2b reused vs fresh explained; the second-e-mail case after a person's wrong "not sent" and "real services not tested" added; who the lead is, Make, stand-ins, exit code 137, slot, valid row, D1b, D2 and C0 explained. Not folded: "queue mode" (I did not test n8n's queue mode; the queue-log files are my own job queue, unrelated).
