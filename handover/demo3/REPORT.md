@@ -1,3 +1,18 @@
+## HEARTBEAT 126 (08:11Z) - LEAD answer 08:10Z applied; B21 checkpoint written; three builders still working
+
+| Agent / job | State at 08:11Z |
+|---|---|
+| Row 10 (scrub narrowing) | DECIDED by the lead: KEEP as is; recorded as a decided row, not deferred |
+| B21 fix-5 round 9 | checkpoint written (evidence/checkpoint-b21.md): at 08:05Z the reset.sh fix is in (read_pid_file keeps the 64-byte check, BOM strip, non-ASCII and size checks, and the trim inside the C locale), rows 7-9 done, ps1 pins and tests written, red-first run: 14 failed on the old script. Still to do: mutants, lint, narrow runs, one full run. No hand-back yet |
+| B22 fix-2 round 11 | checkpoint 08:05Z: building; no hand-back yet |
+| B23 fix-10 round 5 | checkpoint 08:09Z: building; no hand-back yet |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no full run until the stack; OPEN-FOR-STACK-DOCS rows not yet done.
+WHAT I WOULD DO NEXT (ranked): 1) lint, reconcile and fresh-review each hand-back; 2) WINDOWS-RUN-1 update; 3) the stack builder, stack reviewer, stack full run.
+
 ## HEARTBEAT 125 (08:05Z) - fix-10 r4 reviewed: 7 Majors, resolved, B23 round 5 started; B21 and B22 building
 
 | Agent / job | State at 08:05Z |

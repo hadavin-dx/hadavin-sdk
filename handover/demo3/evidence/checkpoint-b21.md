@@ -26,3 +26,6 @@ Full run 1: 1 failed (own new test, flake, cause not found); run 2 same tree: 39
 
 ## Round 9 checkpoint 08:05Z (B21)
 Done: read_pid_file does BOM strip, 64-byte check, non-ASCII check, size check (NUL) and trim inside its own LC_ALL=C (rows 1,5); rows 7,8,9 in reset.sh; ps1 rows 11,12,13; tests rows 2,14,15,16,17,18,19,21,22 (+24,26 zip,6); red-first run saved raw/b21-r9-fails-before.log (14 failed on old script). Next: lint, narrow runs, mutants rerun on final script, ONE full run, patch, notes. Blockers: none.
+
+## Lane3 note 08:11Z (written by lane3 at the lead's 08:10Z order; B21 wrote its own line at 08:05Z above)
+B21 resumed 07:45Z for fix-5 round 9. At 08:05Z it reported: read_pid_file does the BOM strip, the 64-byte check, the non-ASCII check, the size check and the trim inside its own C locale (rows 1, 5); rows 7, 8, 9 in reset.sh; ps1 rows 11-13 (text pins); tests for rows 2, 14-19, 21, 22 (and 6, 24, 26); red-first run saved (14 failed on the old script). Still to do: mutants, lint of a clean copy, narrow runs, ONE final full run, patch. Next lane3 check 08:20Z.
