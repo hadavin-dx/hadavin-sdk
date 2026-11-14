@@ -7,3 +7,4 @@ Blockers: none. Not run as root-able: the chmod-000 test skips as root (CORRECTI
 07:20Z final: all steps done; see lane3-fix-2-r9-notes.md. Final tree 151f9eff50eb3a4a523cba11fcf1dd811e448719.
 
 r10 (lead's message after the r9 review): done; final tree 1c973634c77ef0ddb214b4f101a1aa405a8cb8b8; see lane3-fix-2-r10-notes.md.
+# checkpoint B22 round 11 started 07:53Z

@@ -1,0 +1,1208 @@
+diff --git a/tests/support.py b/tests/support.py
+index 353043bf4ba123de0fe05e60fab814edf31b0e72..99ade321f3a2c62ba821cf94477faf244ed8cd30 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -26,6 +26,7 @@ from typing import Any, Final, cast
+ from demo_only.fakes import BlindOutbox, FakeCrm, KeyedOutbox, RecordedQualifier
+ from lead_desk.adapters import CrmNothingStored
+ from lead_desk.config import Config, read_leadflow
++from lead_desk.config_exit import SETTING_PREFIXES
+ from lead_desk.contract import SimulatedCrash
+ from lead_desk.desk import Desk
+ from lead_desk.hooks import Hooks
+@@ -70,7 +71,8 @@ def lead(**over: Any) -> dict[str, Any]:
+ 
+ def child_env(**extra: str) -> dict[str, str]:
+     """Environment for a child process: PYTHONPATH = src and the repo root (pytest's pythonpath is not inherited)."""
+-    env = dict(os.environ)
++    # no ambient setting leaks in
++    env = {k: v for k, v in os.environ.items() if not k.startswith(SETTING_PREFIXES)}
+     env["PYTHONPATH"] = os.pathsep.join([str(REPO / "src"), str(REPO)])
+     env.update(extra)
+     return env
+@@ -336,7 +338,8 @@ def call(base: str, method: str, path: str, body: Any = None, raw: bytes | None
+ 
+ 
+ def post_lead(base: str, source: str, ref: str, payload: Any) -> tuple[int, dict[str, Any]]:
+-    return call(base, "POST", "/leads", {"source": source, "source_ref": ref, "payload": payload})  # type: ignore[no-any-return]
++    body = {"source": source, "source_ref": ref, "payload": payload}
++    return call(base, "POST", "/leads", body)  # type: ignore[no-any-return]
+ 
+ 
+ def addr(base: str) -> tuple[str, int]:
+diff --git a/tests/test_exit_code_table.py b/tests/test_exit_code_table.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..f85f22f12192206dfecb190f63ad4fc39f3562e5
+--- /dev/null
++++ b/tests/test_exit_code_table.py
+@@ -0,0 +1,399 @@
++"""The one table of exit codes (`constants.EXIT_CODE_TABLE`, keyed by PROGRAM) must say what the programs do.
++
++Checked here: inside one program a code has one meaning; the numbers that mean different things in different programs
++are exactly the pinned list `SAME_NUMBER_DIFFERENT_MEANING` (computed from the table and compared); every `EXIT_*`
++constant is in the table; the rows of each program are compared by constant NAME with an own list written here (a
++deleted or added row fails); the code a program really returns is one of its rows (programs are run, not read); the
++codes the shell and PowerShell scripts write as plain numbers are rows of that script; the codes start_all passes on are
++the same in the table, the .sh and the .ps1; every row is either produced by a named test that exists or listed as not
++produced (a row in neither list fails); no page repeats a program's exit numbers (they live in the table, printed into
++docs/settings.md by tools/render_exit_table.py, and a test compares the printed table with the generator). The text-only
++checks are labelled "text pin" in their names: they read a file and prove the text, not the behaviour. The test that
++runs
++each program with a bad setting and compares with the by-program table is in tests/test_bad_setting_entry_points.py.
++"""
++
++from __future__ import annotations
++
++import os
++import re
++import shutil
++import socket
++import subprocess
++import sys
++from collections import defaultdict
++from pathlib import Path
++
++import pytest
++from support import REPO, child_env
++
++from lead_desk import constants as c
++from tools import render_exit_table as render
++
++TABLE = c.EXIT_CODE_TABLE
++PROGRAMS = {program for program, _, _ in TABLE}
++SHELL_SCRIPTS = ("reset.sh", "reset.ps1", "start_all.sh", "start_all.ps1")
++
++
++def _rows(program: str) -> dict[int, str]:
++    return {code: meaning for p, code, meaning in TABLE if p == program}
++
++
++def _overlap(table: tuple[tuple[str, int, str], ...] = TABLE) -> set[int]:
++    meanings: dict[int, set[str]] = defaultdict(set)
++    for _, code, meaning in table:
++        meanings[code].add(meaning)
++    return {code for code, texts in meanings.items() if len(texts) > 1}
++
++
++def test_no_program_has_a_code_with_two_meanings() -> None:
++    seen: dict[tuple[str, int], str] = {}
++    for program, code, meaning in TABLE:
++        assert (program, code) not in seen, (program, code, meaning, seen[(program, code)])
++        seen[(program, code)] = meaning
++    assert all(meaning.strip() for _, _, meaning in TABLE)
++
++
++def test_every_program_of_the_table_exists() -> None:
++    for program in PROGRAMS - {"server"}:
++        name = program if "." in program else f"{program}.py"
++        assert (REPO / "scripts" / name).exists(), program
++    assert set(SHELL_SCRIPTS) <= PROGRAMS
++
++
++def test_the_pinned_overlap_list_is_the_computed_overlap() -> None:
++    assert set(c.SAME_NUMBER_DIFFERENT_MEANING) == _overlap()
++    assert list(c.SAME_NUMBER_DIFFERENT_MEANING) == sorted(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_a_second_meaning_behind_a_free_number_is_seen_by_the_computation() -> None:
++    """The check itself: it is not vacuous (it finds an overlap that is not pinned)."""
++    extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, "something else entirely"))
++    assert c.EXIT_SIMULATED_KILL in _overlap(extra) - set(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_every_exit_constant_is_in_the_table() -> None:
++    codes = {code for _, code, _ in TABLE}
++    named = {v for k, v in vars(c).items() if k.startswith("EXIT_") and isinstance(v, int) and k != "EXIT_OK"}
++    assert named <= codes, named - codes
++
++
++def test_the_by_program_tables_name_only_programs_and_codes_of_the_table() -> None:
++    for by_program in (c.SETTING_REFUSED_EXIT_BY_PROGRAM, c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM):
++        for program, code in by_program.items():
++            assert program in PROGRAMS and code in _rows(program), (program, code)
++    assert set(c.SETTING_REFUSED_EXIT_BY_PROGRAM.values()) == {
++        c.EXIT_DESK_SETTING_REFUSED,
++        c.EXIT_SCRIPT_SETTING_REFUSED,
++    }
++    assert c.SETTING_REFUSED_EXIT_BY_PROGRAM["run_real_check"] == c.EXIT_SCRIPT_SETTING_REFUSED
++    assert c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM["crash_desk"] == c.EXIT_DESK_SETTING_REFUSED
++
++
++def test_the_numbers_each_shell_script_writes_are_rows_of_that_script() -> None:
++    for name in SHELL_SCRIPTS:
++        text = (REPO / "scripts" / name).read_text(encoding="utf-8")
++        code_lines = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
++        used = {int(n) for n in re.findall(r"\bexit ([0-9]+)\b", code_lines)} - {0}
++        assert used <= set(_rows(name)), (name, used - set(_rows(name)))
++        assert c.EXIT_SCRIPT_SETTING_REFUSED not in used, name  # 8 comes only from the reader, passed on
++
++
++def test_the_numbers_reset_check_returns_are_rows_of_reset_check() -> None:
++    text = (REPO / "scripts" / "reset_check.py").read_text(encoding="utf-8")
++    names = set(re.findall(r"return (EXIT_[A-Z_]+)", text))
++    assert names and not re.search(r"return [1-9]", text)  # by name, never a bare number
++    assert {getattr(c, n) for n in names} <= set(_rows("reset_check"))
++
++
++def test_the_two_reset_scripts_have_one_list_of_codes() -> None:
++    assert _rows("reset.sh") == _rows("reset.ps1")
++
++
++def test_no_script_uses_the_script_setting_code_as_a_bare_number() -> None:
++    for path in (REPO / "scripts").iterdir():
++        if path.suffix in {".sh", ".ps1", ".py"}:
++            pattern = rf"\b(?:exit|return|SystemExit\()\s*{c.EXIT_SCRIPT_SETTING_REFUSED}\b"
++            assert not re.search(pattern, path.read_text("utf-8")), path.name
++
++
++def _run(argv: list[str], tmp: Path, **extra: str) -> subprocess.CompletedProcess[str]:
++    env = child_env(DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), **extra)
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    return subprocess.run(  # noqa: S603 - fixed argv, made-up values
++        argv, cwd=REPO, env=env, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL, check=False
++    )
++
++
++def test_every_code_a_program_really_returns_is_one_of_its_rows(tmp_path: Path) -> None:
++    """The programs are RUN (each with a refusal it can really make); the code is looked up in that program's rows."""
++    py = sys.executable
++    scripts = REPO / "scripts"
++    runs: list[tuple[str, subprocess.CompletedProcess[str]]] = [
++        ("server", _run([py, "-m", "lead_desk.server"], tmp_path, DESK_PORT="abc")),
++        ("crash_desk", _run([py, str(scripts / "crash_desk.py")], tmp_path, DESK_PORT="abc")),
++        ("feed", _run([py, str(scripts / "feed.py"), "--source", "form", "--all"], tmp_path, DESK_PORT="abc")),
++        ("reset_check", _run([py, str(scripts / "reset_check.py")], tmp_path, DESK_PORT="abc")),
++        ("run_real_check", _run([py, str(scripts / "run_real_check.py")], tmp_path)),  # no --config: its own refusal
++    ]
++    if sys.platform != "win32":
++        bash = ["bash"]
++        runs += [
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, DESK_PORT="abc")),
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, RESET_STOP_WAIT_SECONDS="x")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, DESK_PORT="abc")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh"), "sideways"], tmp_path)),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, START_ALL_WAIT_SECONDS="0")),
++        ]
++    for program, done in runs:
++        assert done.returncode in _rows(program), (program, done.returncode, (done.stdout + done.stderr)[-300:])
++    assert runs[0][1].returncode == c.EXIT_DESK_SETTING_REFUSED
++    assert runs[4][1].returncode == c.EXIT_CHECK_REFUSED
++
++
++@pytest.mark.skipif(sys.platform == "win32", reason="the shell scripts are the non-Windows ones")
++def test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code(tmp_path: Path) -> None:
++    sh = shutil.which("sh")
++    probe = [sh, "-c", "[[ a == a ]]"] if sh else None
++    if probe is None or subprocess.run(probe, capture_output=True, check=False).returncode == 0:  # noqa: S603
++        pytest.skip("sh on this machine runs [[ ]] (it is bash): the refusal cannot be reached")
++    done = _run([sh, str(REPO / "scripts" / "start_all.sh")], tmp_path)
++    assert done.returncode == c.EXIT_NOT_BASH
++
++
++def test_contract_md_names_the_table_and_the_overlap_list() -> None:
++    text = (REPO / "contract.md").read_text(encoding="utf-8")
++    assert "EXIT_CODE_TABLE" in text and "SAME_NUMBER_DIFFERENT_MEANING" in text
++    assert "EXIT_SCRIPT_SETTING_REFUSED" in text and "EXIT_DESK_SETTING_REFUSED" in text
++
++
++# --- rows compared by constant NAME, per program (an own list, not read from the table) -------------------------------
++_DESK = {
++    "EXIT_ADAPTERS_UNREACHABLE": "MEANING_ADAPTERS_UNREACHABLE",
++    "EXIT_ANOTHER_DESK": "MEANING_ANOTHER_DESK",
++    "EXIT_OPEN_FILE_LIMIT": "MEANING_OPEN_FILE_LIMIT",
++    "EXIT_DESK_SETTING_REFUSED": "MEANING_DESK_SETTING_REFUSED",
++    "EXIT_PORT_UNAVAILABLE": "MEANING_PORT_UNAVAILABLE",
++}
++_SETTING = {"EXIT_SCRIPT_SETTING_REFUSED": "MEANING_SCRIPT_SETTING_REFUSED"}
++_RESET = {
++    "EXIT_RESET_REFUSED": "MEANING_RESET_REFUSED",
++    "EXIT_RESET_HELD": "MEANING_RESET_HELD",
++    "EXIT_RESET_ANSWERING": "MEANING_RESET_ANSWERING",
++    "EXIT_RESET_NOT_STOPPED": "MEANING_RESET_NOT_STOPPED",
++    "EXIT_RESET_WRONG_PROGRAM": "MEANING_RESET_WRONG_PROGRAM",
++    **_SETTING,
++}
++_START = {
++    "EXIT_START_NOT_DONE": "MEANING_START_NOT_DONE",
++    "EXIT_OPEN_FILE_LIMIT": "MEANING_OPEN_FILE_LIMIT",
++    "EXIT_DESK_SETTING_REFUSED": "MEANING_START_DESK_SETTING_REFUSED",
++    "EXIT_PORT_UNAVAILABLE": "MEANING_PORT_UNAVAILABLE",
++    **_SETTING,
++}
++EXPECTED_ROWS: dict[str, dict[str, str]] = {
++    "server": _DESK,
++    "crash_desk": {**_DESK, **_SETTING, "EXIT_SIMULATED_KILL": "MEANING_SIMULATED_KILL"},
++    "feed": _SETTING,
++    "reset.sh": _RESET,
++    "reset.ps1": _RESET,
++    "reset_check": {
++        "EXIT_RESET_HELD": "MEANING_RESET_HELD",
++        "EXIT_RESET_ANSWERING": "MEANING_RESET_ANSWERING",
++        **_SETTING,
++    },
++    "start_all.sh": {**_START, "EXIT_NOT_BASH": "MEANING_NOT_BASH"},
++    "start_all.ps1": _START,
++    "run_real_check": {
++        "EXIT_CHECK_STOPPED": "MEANING_CHECK_STOPPED",
++        "EXIT_CHECK_REFUSED": "MEANING_CHECK_REFUSED",
++        "EXIT_CHECK_FAILED": "MEANING_CHECK_FAILED",
++        **_SETTING,
++    },
++}
++
++
++def _expected_rows() -> set[tuple[str, int, str]]:
++    """EXPECTED_ROWS resolved by constant NAME to (program, code, meaning). A name that does not exist raises here."""
++    return {
++        (program, getattr(c, code_name), getattr(c, meaning_name))
++        for program, names in EXPECTED_ROWS.items()
++        for code_name, meaning_name in names.items()
++    }
++
++
++def test_each_program_has_exactly_the_rows_listed_here_by_constant_name() -> None:
++    assert len(TABLE) == len(set(TABLE))
++    assert set(TABLE) == _expected_rows(), set(TABLE) ^ _expected_rows()
++
++
++def test_a_deleted_or_a_wrong_row_is_seen_by_the_name_comparison() -> None:
++    """The check itself: it is not vacuous. A deleted row, an added row and a swapped meaning each make it fail."""
++    deleted = tuple(r for r in TABLE if not (r[0] == "run_real_check" and r[1] == c.EXIT_CHECK_STOPPED))
++    assert set(deleted) != _expected_rows()
++    added = (*TABLE, ("feed", c.EXIT_CHECK_FAILED, c.MEANING_CHECK_FAILED))
++    assert set(added) != _expected_rows()
++    swapped = tuple(
++        (p, code, c.MEANING_ANOTHER_DESK if (p, code) == ("server", c.EXIT_OPEN_FILE_LIMIT) else m)
++        for p, code, m in TABLE
++    )
++    assert set(swapped) != _expected_rows()
++
++
++def test_every_program_that_reads_the_settings_has_the_script_setting_code_exactly_once() -> None:
++    """The one script code is a row of every program except the desk, and has one meaning wherever it appears."""
++    with_it = {p for p, code, _ in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED}
++    assert with_it == PROGRAMS - {"server"}
++    assert {m for _, code, m in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED} == {c.MEANING_SCRIPT_SETTING_REFUSED}
++
++
++# --- the three desk codes start_all passes on: the table, the .sh and the .ps1 say the same --------------------------
++def test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts() -> None:
++    sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    ps = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
++    sh_codes = re.search(r"case \"\$desk_code\" in ([0-9|]+)\)", sh)
++    ps_codes = re.search(r"\$deskCode -in ([0-9, ]+)\)", ps)
++    assert sh_codes and ps_codes
++    assert tuple(int(n) for n in sh_codes.group(1).split("|")) == c.PASSED_ON_DESK_CODES
++    assert tuple(int(n.strip()) for n in ps_codes.group(1).split(",")) == c.PASSED_ON_DESK_CODES
++    for program in ("start_all.sh", "start_all.ps1"):
++        assert set(c.PASSED_ON_DESK_CODES) <= set(_rows(program)), program
++    assert set(c.PASSED_ON_DESK_CODES) <= set(_rows("server"))
++
++
++# --- every row has a test that produces it, or is listed as not produced ----------------------------------------------
++_BAD_T = "test_bad_setting_entry_points.py::"
++_SELF_T = "test_exit_code_table.py::"
++_HTTP_T = "test_http.py::"
++_SETTINGS_TABLE_TEST = _BAD_T + "test_the_by_program_table_matches_what_every_program_returns"
++_RESET_T = "test_reset_scripts.py::"
++_START_T = "test_start_all_late_refusal.py::"
++_CHECK_T = "test_real_check_dry.py::"
++PRODUCED_BY: dict[tuple[str, int], str] = {
++    ("server", c.EXIT_ADAPTERS_UNREACHABLE): _SELF_T
++    + "test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down",
++    ("server", c.EXIT_ANOTHER_DESK): _HTTP_T + "test_second_desk_refuses_to_start",
++    ("server", c.EXIT_OPEN_FILE_LIMIT): "test_stall_eviction.py::" + "test_main_exits_3_on_a_too_small_limit",
++    ("server", c.EXIT_DESK_SETTING_REFUSED): "test_model_stamp_and_reaper.py::"
++    + "test_main_exits_4_when_the_desk_refuses",
++    ("server", c.EXIT_PORT_UNAVAILABLE): _HTTP_T + "test_second_desk_refuses_to_start",
++    ("crash_desk", c.EXIT_DESK_SETTING_REFUSED): _BAD_T + "test_crash_desk_gives_the_desks_own_code_for_a_late_refusal",
++    ("crash_desk", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("feed", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("reset.sh", c.EXIT_RESET_REFUSED): _RESET_T + "test_reset_refuses_a_database_outside_the_data_folder",
++    ("reset.sh", c.EXIT_RESET_HELD): _RESET_T + "test_reset_refuses_when_a_process_holds_the_database",
++    ("reset.sh", c.EXIT_RESET_ANSWERING): _RESET_T + "test_reset_refuses_when_something_answers_on_the_desk_port",
++    ("reset.sh", c.EXIT_RESET_NOT_STOPPED): _RESET_T + "test_reset_sh_refuses_when_the_desk_does_not_stop",
++    ("reset.sh", c.EXIT_RESET_WRONG_PROGRAM): _RESET_T + "test_reset_refuses_a_pid_file_of_another_program",
++    ("reset.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("reset_check", c.EXIT_RESET_HELD): _RESET_T
++    + "test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at",
++    ("reset_check", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("start_all.sh", c.EXIT_START_NOT_DONE): _START_T + "test_a_bad_wait_setting_is_refused_before_anything_is_started",
++    ("start_all.sh", c.EXIT_NOT_BASH): _SELF_T
++    + "test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code",
++    ("start_all.sh", c.EXIT_OPEN_FILE_LIMIT): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_DESK_SETTING_REFUSED): _START_T
++    + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_PORT_UNAVAILABLE): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("run_real_check", c.EXIT_CHECK_STOPPED): _CHECK_T + "test_no_terminal_to_answer_on_is_a_stop_not_a_traceback",
++    ("run_real_check", c.EXIT_CHECK_REFUSED): _CHECK_T + "test_refuses_without_config_and_without_required_names",
++    ("run_real_check", c.EXIT_CHECK_FAILED): _CHECK_T + "test_a_dry_run_where_every_send_ends_in_doubt_fails",
++    ("run_real_check", c.EXIT_SCRIPT_SETTING_REFUSED): _CHECK_T
++    + "test_swapped_mailbox_order_is_a_refused_setting_with_one_line",
++}
++
++
++def test_every_row_has_a_producing_test_or_is_listed_as_not_produced() -> None:
++    rows = {(p, code) for p, code, _ in TABLE}
++    not_produced = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
++    assert not (set(PRODUCED_BY) & not_produced), set(PRODUCED_BY) & not_produced
++    assert set(PRODUCED_BY) | not_produced == rows, (
++        rows - set(PRODUCED_BY) - not_produced,
++        (set(PRODUCED_BY) | not_produced) - rows,
++    )
++
++
++def test_every_named_producing_test_exists() -> None:
++    for (program, code), where in PRODUCED_BY.items():
++        name, func = where.split("::")
++        text = (REPO / "tests" / name).read_text(encoding="utf-8")
++        assert re.search(rf"^(?:async )?def {re.escape(func)}\(", text, re.M), (program, code, where)
++
++
++def test_a_new_row_that_no_test_names_is_seen() -> None:
++    """The check itself: a row added to the table and to neither list is reported."""
++    extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, c.MEANING_SIMULATED_KILL))
++    rows = {(p, code) for p, code, _ in extra}
++    assert rows - set(PRODUCED_BY) - set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST) == {("feed", c.EXIT_SIMULATED_KILL)}
++
++
++def _free_port() -> int:
++    with socket.socket() as sock:
++        sock.bind(("127.0.0.1", 0))
++        return int(sock.getsockname()[1])
++
++
++def test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down(tmp_path: Path) -> None:
++    """Real behaviour: the desk is started with the demo server's port closed; code 1 of the `server` rows."""
++    done = _run([sys.executable, "-m", "lead_desk.server"], tmp_path, DESK_PORT="0", DESK_FAKES_PORT=str(_free_port()))
++    assert done.returncode == c.EXIT_ADAPTERS_UNREACHABLE, (done.stdout, done.stderr[-300:])
++    assert "Traceback" not in done.stderr
++
++
++# --- the printed table and the pages that must not repeat it
++# ------------------------------------------------------------
++def test_the_table_printed_in_docs_settings_md_is_the_generated_one() -> None:
++    text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
++    assert render.current_block(text) == render.block()
++    assert text.count(render.START) == 1 and text.count(render.END) == 1
++
++
++def test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces() -> None:
++    lines = render.render().splitlines()
++    assert len(lines) == len(TABLE) + 2
++    marked = [ln for ln in lines if render.NOT_PRODUCED in ln]
++    assert len(marked) == len(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
++
++
++_PAGES = (
++    *sorted((REPO / "docs").glob("*.md")),
++    REPO / "README.md",
++    REPO / "contract.md",
++    REPO / "load_tools" / "README.md",
++)
++_PROGRAM_WORDS = ("crash_desk", "reset_check", "run_real_check", "reset.sh", "reset.ps1", "start_all", "feed.py")
++_EXIT_NUMBER = re.compile(
++    r"(?:\bexit(?:s| code| codes)?\s*[(:]?\s*|\bcode\s+|\b(?:returns|gives|ends with)\s+(?:code\s+)?)(\d+)\b"
++)
++
++
++def _prose_numbers(text: str) -> list[tuple[int, str]]:
++    """Lines (outside the generated table) that name a program of the table and give an exit number other than 0 or
++    137."""
++    hits: list[tuple[int, str]] = []
++    inside = False
++    for number, line in enumerate(text.splitlines(), 1):
++        if render.START in line:
++            inside = True
++        elif render.END in line:
++            inside = False
++        elif not inside and any(word in line for word in _PROGRAM_WORDS):
++            if [n for n in _EXIT_NUMBER.findall(line) if n not in {"0", str(c.EXIT_SIMULATED_KILL)}]:
++                hits.append((number, line[:90]))
++    return hits
++
++
++def test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table() -> None:
++    for page in _PAGES:
++        assert not _prose_numbers(page.read_text(encoding="utf-8")), page.name
++
++
++def test_the_prose_check_finds_a_program_with_a_number() -> None:
++    """The check itself: it is not vacuous."""
++    assert _prose_numbers("`run_real_check` gives 2 for its own refusals")
++    assert _prose_numbers("start_all.sh ends with code 4")
++    assert _prose_numbers("reset.sh: exit 5 when it is slow")
++    assert not _prose_numbers("`run_real_check` gives the code of the table")
++    assert not _prose_numbers("the desk exits with 4 on a refused setting")  # the desk is the `server` rows
+diff --git a/tests/test_late_refusal_value_echo.py b/tests/test_late_refusal_value_echo.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..b00646b8f1b5a99185f603716e4ee396149edaef
+--- /dev/null
++++ b/tests/test_late_refusal_value_echo.py
+@@ -0,0 +1,178 @@
++"""Pin, not proof: a setting value never reaches the desk's output through ANY of its refusal sites.
++
++Bug class: a refusal message that carries what the person typed (a path, an address, a key file name). The desk words
++every refusal through one function (`_refuse` -> `config_exit.refusal_line`). This file runs `server.main` itself, once
++per late refusal site, with the real function behind that site replaced by one that refuses with a message that HOLDS
++the value of the setting it names (the worst case: a message that echoes). The line the person sees must not hold the
++value, must be one line, and the exit code is the desk's own. The sites after the first reading of the settings, in the
++order of `server.main`: the public bind address, the book check, the approvers file, the leadflow file, the adapters,
++building the Desk, and the run-time check of the Desk. Made-up values only; the lock file and the folder are in
++tmp_path.
++
++This file is a PIN, not proof: it plants the refusals with stand-ins for the real functions, so it shows that the
++line a person sees is scrubbed at each site, not that every real message the desk can make is free of values. The
++real messages are checked where they are made (tests/test_bad_setting_entry_points.py and the config tests).
++"""
++
++from __future__ import annotations
++
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from lead_desk import config as config_module
++from lead_desk import desk as desk_module
++from lead_desk import server
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
++from lead_desk.desk import DeskSettingRefused
++from lead_desk.envnum import SettingRefused
++
++SETTING = "DESK_REPLIES_PATH"  # a valid, unread-at-start path setting: its value is the thing that must not appear
++MARK = "zq-marker-9f3k"  # the made-up value, built into a path below
++
++
++class _StubServer:
++    def server_close(self) -> None:
++        return None
++
++
++class _StubDesk:
++    """A Desk that builds, and refuses (as the real one can) when it is started: the run-time site."""
++
++    def __init__(self, *_: Any, **__: Any) -> None:
++        return None
++
++    def start_background(self) -> None:
++        raise DeskSettingRefused(f"{SETTING} holds {self.value}")
++
++    def stop_background(self) -> None:
++        return None
++
++    def reaper_running(self) -> bool:
++        return False
++
++    def close(self) -> None:
++        return None
++
++    value = ""
++
++
++def _env(tmp: Path, monkeypatch: pytest.MonkeyPatch, **extra: str) -> str:
++    value = str(tmp / f"{MARK}.json")
++    for name, text in {
++        "DESK_DB_PATH": str(tmp / "data" / "desk.sqlite3"),
++        "DESK_PORT": "0",
++        SETTING: value,
++        **extra,
++    }.items():
++        monkeypatch.setenv(name, text)
++    return value
++
++
++def _message(value: str) -> str:
++    return f"{SETTING} is wrong: {value}"
++
++
++def _site_bind(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(config_module.Config, "public_bind_problem", lambda self: _message(value))
++
++
++def _site_book(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(desk_module, "book_problem", lambda path: _message(value))
++
++
++def _site_approvers(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_approvers", refuse)
++
++
++def _site_leadflow(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(path: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "read_leadflow", refuse)
++
++
++def _site_adapters(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", refuse)
++
++
++def _site_desk_build(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(*_: Any, **__: Any) -> Any:
++        raise DeskSettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", refuse)
++
++
++def _site_run_time(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    _StubDesk.value = value
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", _StubDesk)
++    monkeypatch.setattr(server, "make_server", lambda desk, config: _StubServer())
++    monkeypatch.setattr(server.signal, "signal", lambda *a, **k: None)
++
++
++# (site, how the refusal is planted, the extra settings that make the site reachable)
++SITES: list[tuple[str, Any, dict[str, str]]] = [
++    ("bind", _site_bind, {}),
++    ("book", _site_book, {}),
++    ("approvers", _site_approvers, {"DESK_LATER_MODE": "approval", "DESK_APPROVERS_FILE": "approvers.json"}),
++    ("leadflow", _site_leadflow, {"DESK_LEADFLOW_FILE": "flow.json", "DESK_NUDGE_TO": "n@example.test"}),
++    ("adapters", _site_adapters, {}),
++    ("desk_build", _site_desk_build, {}),
++    ("run_time", _site_run_time, {}),
++]
++
++
++@pytest.mark.parametrize(("site", "plant", "extra"), SITES, ids=[s[0] for s in SITES])
++def test_no_setting_value_reaches_the_output_at_a_late_refusal_site(
++    site: str, plant: Any, extra: dict[str, str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    value = _env(tmp_path, monkeypatch, **extra)
++    plant(monkeypatch, value)
++    with pytest.raises(SystemExit) as stop:
++        server.main()
++    assert stop.value.code == EXIT_DESK_SETTING_REFUSED, site
++    out = capsys.readouterr()
++    text = out.out + out.err
++    lines = [ln for ln in text.splitlines() if ln.strip()]
++    assert len(lines) == 1, (site, lines)
++    assert SETTING in lines[0] and "<value>" in lines[0], (site, lines[0])
++    assert MARK not in text and value not in text, site
++
++
++def test_the_seven_sites_are_all_the_late_refusal_sites_of_main() -> None:
++    """If a refusal site is added to `server.main`, this count fails and a case must be added above."""
++    source = (Path(server.__file__)).read_text(encoding="utf-8")
++    main_text = source[source.index("def main(") :]
++    assert main_text.count("_refuse(") == 8  # the first reading of the settings plus the seven sites above
++    assert len(SITES) == 7
++
++
++def _site_bind_names_no_setting(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(config_module.Config, "public_bind_problem", lambda self: f"cannot use {value} here")
++
++
++def test_a_message_that_names_no_setting_still_hides_the_value_of_a_secret_like_setting(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    """The stand-in message names no setting, yet holds the value of DESK_HUBSPOT_KEY_FILE (a secret-like name):
++    hidden."""
++    _env(tmp_path, monkeypatch)
++    value = str(tmp_path / f"{MARK}-key.txt")
++    monkeypatch.setenv("DESK_HUBSPOT_KEY_FILE", value)
++    _site_bind_names_no_setting(monkeypatch, value)
++    with pytest.raises(SystemExit) as stop:
++        server.main()
++    assert stop.value.code == EXIT_DESK_SETTING_REFUSED
++    out = capsys.readouterr()
++    text = out.out + out.err
++    assert len([ln for ln in text.splitlines() if ln.strip()]) == 1
++    assert MARK not in text and value not in text
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index b4140240c0c669d35a818a24d5f3de46f217a01c..0a39f1c71495833790fd9f5fa2b626ad6fe1a0ee 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -563,10 +563,10 @@ def test_run_real_check_reads_a_config_outside_the_allowed_folders(
+     (outside / "run.env").write_text("REAL_PERSONS=3\n", encoding="utf-8")
+     mod = _rrc(monkeypatch)
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_REFUSED
++    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "the config lacks" in out and "outside the allowed" not in out  # read, then judged on its content
+-    assert mod.main(["--config", "run\x1b.env"]) == mod.EXIT_REFUSED  # the operator's file is a checked text too
++    assert mod.main(["--config", "run\x1b.env"]) == mod.EXIT_CHECK_REFUSED  # the operator's file is a checked text too
+     assert "control character" in capsys.readouterr().out
+ 
+ 
+@@ -601,7 +601,7 @@ def test_a_real_run_with_config_and_book_outside_reaches_the_y_n_question_and_th
+     cfg = outside / "run.env"
+     cfg.write_text("\n".join(f"{k}={v}" for k, v in values.items()), encoding="utf-8")
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert mod.main(["--config", str(cfg)]) == mod.EXIT_STOPPED  # got to the question: nothing refused before it
++    assert mod.main(["--config", str(cfg)]) == mod.EXIT_CHECK_STOPPED  # got to the question: nothing refused before it
+     out = capsys.readouterr().out
+     assert "refused" not in out and "stopped, nothing was called" in out
+     # the book of that run, outside the allowed folders, is read by the run's own reads (the first desk's stop, the end)
+diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
+index 66461fcc04a8a9086b8fe0d79a4c09c8276a6513..687a897a9e3f93487eb64447972753c2c8e1d43d 100644
+--- a/tests/test_real_check_dry.py
++++ b/tests/test_real_check_dry.py
+@@ -20,10 +20,10 @@ FILLER = "x-value-" + "0001"  # a made-up setting value, built from parts
+ 
+ 
+ def test_refuses_without_config_and_without_required_names(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+-    assert rrc.main([]) == rrc.EXIT_REFUSED
++    assert rrc.main([]) == rrc.EXIT_CHECK_REFUSED
+     cfg = tmp_path / "c.env"
+     cfg.write_text("DESK_DB_PATH=x\n", encoding="utf-8")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "lacks" in capsys.readouterr().out
+ 
+ 
+@@ -186,7 +186,7 @@ def _config_file(tmp_path: Path, **over: str) -> Path:
+ 
+ 
+ def test_assume_yes_is_refused_for_a_real_run(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+-    assert rrc.main(["--config", str(_config_file(tmp_path)), "--assume-yes"]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(_config_file(tmp_path)), "--assume-yes"]) == rrc.EXIT_CHECK_REFUSED
+     assert "self-test" in capsys.readouterr().out
+ 
+ 
+@@ -196,14 +196,14 @@ def test_a_refusal_never_echoes_the_value_of_a_setting(
+ ) -> None:
+     secret_value = "sec" + "ret-value-77"
+     cfg = _config_file(tmp_path, **{name: secret_value})
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and secret_value not in out
+ 
+ 
+ def test_a_refusal_for_a_missing_file_shows_no_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+     cfg = _config_file(tmp_path, REAL_IMAP_1_CA_FILE=str(tmp_path / "no-such-folder" / "ca-name.pem"))
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "no-such-folder" not in capsys.readouterr().out
+ 
+ 
+@@ -216,7 +216,7 @@ def test_dry_fakes_leave_no_certificate_or_key_folder_behind(capsys: pytest.Capt
+ def test_a_dry_run_where_every_send_ends_in_doubt_fails(capsys: pytest.CaptureFixture[str]) -> None:
+     code = rrc.main(["--dry-fakes", "--assume-yes", "--dry-smtp-script", "final_452"])
+     out = capsys.readouterr().out
+-    assert code == rrc.EXIT_FAILED, out[-2500:]
++    assert code == rrc.EXIT_CHECK_FAILED, out[-2500:]
+     assert "F1  FAIL" in out and "@" not in out.split("AT LEAST ONE CHECK FAILED")[0].split("#  result")[1]
+     data = json.loads(Path(out.split("result file: ")[1].splitlines()[0]).read_text(encoding="utf-8"))
+     assert data["summary"]["followup_states"].get("sent", 0) == 0
+@@ -238,7 +238,7 @@ def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
+ ) -> None:
+     cfg = _valid_config(tmp_path, REAL_HUBSPOT_READBACK_MAX_CALLS=value)
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and "READBACK_MAX_CALLS" in out and "Start?" not in out
+     assert not (tmp_path / "run").exists()
+@@ -250,7 +250,7 @@ def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], name: str, value: str
+ ) -> None:
+     cfg = _valid_config(tmp_path, **{name: value})
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "refused" in out and name in out and "soon" not in out
+ 
+@@ -262,7 +262,7 @@ def test_no_terminal_to_answer_on_is_a_stop_not_a_traceback(
+         raise EOFError
+ 
+     monkeypatch.setattr("builtins.input", no_terminal)
+-    assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_STOPPED
++    assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_CHECK_STOPPED
+     assert "no terminal" in capsys.readouterr().out
+ 
+ 
+@@ -297,7 +297,7 @@ def test_stale_shell_values_do_not_reach_the_child_and_the_banner_tells_the_trut
+ 
+     monkeypatch.setattr(rrc, "child_environment", spy)
+     cfg = _valid_config(tmp_path, DESK_QUALIFIER="live_claude")  # even the config cannot start the paid model alone
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_STOPPED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_CHECK_STOPPED
+     out = capsys.readouterr().out
+     child = made[0]
+     assert child["DESK_QUALIFIER"] == "recorded" and child["DESK_HUBSPOT_ALLOW_ANY_BASE_URL"] == "no"
+@@ -430,7 +430,7 @@ def test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call(
+     started: list[str] = []
+     monkeypatch.setattr(rrc.Desk, "start", lambda self: started.append("desk"))
+     monkeypatch.setattr("builtins.input", lambda prompt="": started.append("asked") or "y")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "upper-case" in capsys.readouterr().out and started == []
+     # the second line of defence: even a dict that holds the name never passes it on
+     child = rrc.child_environment({"desk_qualifier": "live_claude", "DESK_PORT": "1"})
+@@ -440,7 +440,8 @@ def test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call(
+ def test_an_existing_database_file_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+     old = tmp_path / "old.db"
+     old.write_bytes(b"x")
+-    assert rrc.main(["--config", str(_valid_config(tmp_path, DESK_DB_PATH=str(old)))]) == rrc.EXIT_REFUSED
++    cfg = _valid_config(tmp_path, DESK_DB_PATH=str(old))
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "already exists" in out and "Start?" not in out
+ 
+@@ -449,7 +450,7 @@ def test_the_banner_shows_the_mailbox_reading_bound(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+ ) -> None:
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_STOPPED
++    assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_CHECK_STOPPED
+     out = capsys.readouterr().out
+     assert f"{rrc.IMAP_LOGINS_MAX + rrc.POLL_EXTRA_LOGINS} logins x 2 mailboxes" in out
+ 
+@@ -469,16 +470,17 @@ def test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked(
+         "DESK_LIVE_RUN_ID": "r1",
+     }
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert rrc.main(["--config", str(_valid_config(tmp_path, **live)), "--live-model"]) == rrc.EXIT_STOPPED
++    assert rrc.main(["--config", str(_valid_config(tmp_path, **live)), "--live-model"]) == rrc.EXIT_CHECK_STOPPED
+     assert "per-run cap US$1.25" in capsys.readouterr().out
+     other = "https://" + "model-host" + ".example.test"
+     cfg = _valid_config(tmp_path, DESK_LIVE_BASE_URL=other, **live)
+-    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED  # a stranger's host: no key goes there
++    # a stranger's host: no key goes there
++    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "not the provider's own address" in capsys.readouterr().out
+     # the host check lives in the settings themselves (tests/test_live_claude.py); here only that the script
+     # cannot be talked past it: a process variable cannot switch it off, only the config file can
+     monkeypatch.setenv("DESK_LIVE_ALLOW_ANY_BASE_URL", "yes")
+-    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     assert "not the provider's own address" in capsys.readouterr().out
+ 
+ 
+@@ -492,19 +494,23 @@ def test_a_mailbox_user_without_a_password_file_and_a_bad_folder_are_clear_refus
+         with pytest.raises(ValueError, match="REAL_IMAP_1_FOLDERS"):
+             rrc.imap_settings({**base, "REAL_IMAP_1_FOLDERS": folder})
+     cfg = _valid_config(tmp_path, REAL_IMAP_1_FOLDERS="Spamfölder")
+-    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "REAL_IMAP_1_FOLDERS" in out and "Spamf" not in out and "Traceback" not in out
++    # the same class, another setting of the script: a required name that is blank is also exit 8
++    cfg = _valid_config(tmp_path, REAL_IMAP_1_PASSWORD_FILE=" ")
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
++    assert "the config lacks: REAL_IMAP_1_PASSWORD_FILE" in capsys.readouterr().out
+ 
+ 
+ def test_dry_fakes_with_a_config_says_the_config_is_ignored(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+ ) -> None:
+     def no_fakes(*_a: Any, **_k: Any) -> Any:
+-        raise ValueError("stop here")
++        raise rrc.ToolMissing("stop here")
+ 
+     monkeypatch.setattr(rrc, "DryFakes", no_fakes)
+-    assert rrc.main(["--dry-fakes", "--assume-yes", "--config", str(tmp_path / "c.env")]) == rrc.EXIT_REFUSED
++    assert rrc.main(["--dry-fakes", "--assume-yes", "--config", str(tmp_path / "c.env")]) == rrc.EXIT_CHECK_REFUSED
+     assert "--config is ignored" in capsys.readouterr().out
+ 
+ 
+@@ -590,7 +596,7 @@ def test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_no
+     monkeypatch.setattr(rrc, "HubspotCrm", Broken)
+     code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+     out = capsys.readouterr().out
+-    assert code == rrc.EXIT_FAILED and "Traceback" not in out
++    assert code == rrc.EXIT_CHECK_FAILED and "Traceback" not in out
+     assert "read-back failed" in out and "NOT counted" in out and "NOT archived" in out and "by hand" in out
+     path = Path(out.split("result file: ")[1].splitlines()[0])
+     data = json.loads(path.read_text(encoding="utf-8"))
+@@ -621,7 +627,7 @@ def test_the_banner_names_the_domain_from_the_constant(
+         raise EOFError
+ 
+     monkeypatch.setattr("builtins.input", no_terminal)
+-    assert rrc.main(["--dry-fakes"]) == rrc.EXIT_STOPPED
++    assert rrc.main(["--dry-fakes"]) == rrc.EXIT_CHECK_STOPPED
+     out = capsys.readouterr().out
+     assert "addresses at altdomain" in out and "example.test" not in out
+ 
+@@ -832,3 +838,73 @@ def test_the_dry_run_waits_up_to_240_seconds_for_the_recovery_drain_and_the_real
+     finally:
+         fakes.close()
+     assert rrc.positive_seconds("REAL_DRAIN_SECONDS", {}, 150.0) == 150.0  # absent: the real default
++
++
++# -- fix-10 round 4: every refused setting of this script is exit 8, a wrong command line or a missing tool is 2 -----
++
++
++def _one_line(out: str) -> str:
++    lines = [ln for ln in out.splitlines() if ln.strip()]
++    assert len(lines) == 1, lines
++    return lines[0]
++
++
++def test_swapped_mailbox_order_is_a_refused_setting_with_one_line(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    """Real behaviour: main() with the mailbox users in the wrong order ends with the setting-refusal code (8), not the
++    command-line code (2), and prints one plain line without an address."""
++    cfg = _valid_config(tmp_path, REAL_IMAP_1_USER="b@example.test", REAL_IMAP_2_USER="a@example.test")
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
++    out = capsys.readouterr().out
++    line = _one_line(out)
++    assert line.startswith("refused:") and "DESK_SMTPP_RECIPIENTS" in line and "example.test" not in out
++
++
++def test_a_config_that_is_not_utf8_is_a_refused_setting_without_a_traceback(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    cfg = tmp_path / "bad.env"
++    cfg.write_bytes(b"DESK_DB_PATH=\xff\xfe\n")
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
++    out = capsys.readouterr().out
++    assert _one_line(out).startswith("refused:") and "Traceback" not in out and "xff" not in out
++
++
++def test_missing_live_model_settings_are_a_refused_setting(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The check after Config.from_env (a plain ValueError before this round, so exit 2) is a setting refusal."""
++    from types import SimpleNamespace
++
++    monkeypatch.setattr(rrc.Config, "from_env", classmethod(lambda cls, env=None: SimpleNamespace(live=None)))
++    assert rrc.main(["--config", str(_valid_config(tmp_path)), "--live-model"]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
++    assert _one_line(capsys.readouterr().out).startswith("refused:")
++
++
++def test_a_missing_openssl_is_a_wrong_start_not_a_setting(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """Stays 2: a missing tool is not a refused setting (regression pin: also true before this round)."""
++    monkeypatch.setattr("demo_only.fake_smtp_tls.make_cert", lambda *a, **k: None)
++    assert rrc.main(["--dry-fakes", "--assume-yes"]) == rrc.EXIT_CHECK_REFUSED
++    assert "openssl" in capsys.readouterr().out
++
++
++def test_a_file_error_of_the_self_test_servers_is_a_failure_with_a_fixed_text_not_a_setting(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    def broken(*_a: Any, **_k: Any) -> Any:
++        raise OSError("/very/private/folder/cannot-write")
++
++    monkeypatch.setattr(rrc, "DryFakes", broken)
++    assert rrc.main(["--dry-fakes", "--assume-yes"]) == rrc.EXIT_CHECK_STOPPED
++    out = capsys.readouterr().out
++    assert "could not start its local test servers" in out and "private" not in out and "Traceback" not in out
++
++
++def test_a_bad_ca_file_names_the_setting_and_shows_no_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    cfg = _valid_config(tmp_path, REAL_IMAP_1_CA_FILE=str(tmp_path / "no-such-folder" / "ca-name.pem"))
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_SCRIPT_SETTING_REFUSED
++    out = capsys.readouterr().out
++    assert "REAL_IMAP_1_CA_FILE" in out and "no-such-folder" not in out and "ca-name" not in out
+diff --git a/tests/test_setting_reader_guard.py b/tests/test_setting_reader_guard.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..9ce5bdf93554d79c43f442dc08c4e691fd6b63a4
+--- /dev/null
++++ b/tests/test_setting_reader_guard.py
+@@ -0,0 +1,286 @@
++"""Class guard: nothing reads a setting outside the readers that turn a refusal into a plain line.
++
++The bug class (a bad setting reaching a person as a traceback) comes back whenever a new program reads the settings with
++the bare reader. This test walks the syntax tree of every Python file under src/, scripts/, load_tools/, demo_only/,
++tools/ and the launchers in tests/, and finds: a call of `Config.from_env` (also through an alias of `Config`), a bare
++`from_env` call, and a read of a name that starts with DESK_ or LEAD_DESK_ from `os.environ` or `os.getenv`. The three
++modules that ARE the readers (config.py, envnum.py, config_exit.py) are skipped as files; every other hit must be on the
++allow-list below by file AND exact source line, with its reason. There is no whole-file exemption, and an allowance that
++no longer matches a hit fails the test (so it cannot go stale). The shell and PowerShell scripts are checked by text for
++`Config.from_env`.
++
++Two more bug classes of the same family are guarded here. (1) The other settings readers (`HubspotSettings`,
++`ProviderSettings`, `SmtpSettings`, `LiveSettings` `.from_env`, and `_live_from_env`) are tripwires too: a new caller
++must be allowed by file and line with the reason its refusal becomes a plain line. (2) A path read from setting text
++must go through `envnum.env_path`: a `Path(...)` of an environment subscript or of a `.get` on an environment mapping,
++anywhere in src/ or scripts/, fails (a lone surrogate or a NUL in such text crashes whatever prints it later).
++"""
++
++from __future__ import annotations
++
++import ast
++import re
++from pathlib import Path
++
++from support import REPO
++
++from lead_desk.config_exit import SETTING_PREFIXES
++
++READER_FILES = {"src/lead_desk/config.py", "src/lead_desk/envnum.py", "src/lead_desk/config_exit.py"}
++SETTINGS_CLASSES = {"HubspotSettings", "ProviderSettings", "SmtpSettings", "LiveSettings"}
++ENV_NAMES = {"env", "e", "environ", "cfg_env"}  # the names an environment mapping goes by
++ENV_ATTRS = {"environ", "env", "cfg_env"}  # ... and the attribute names (os.environ, self.env)
++ROOTS = ("src", "scripts", "load_tools", "demo_only", "tools")
++PREFIXES = SETTING_PREFIXES  # the one list of setting-name prefixes (lead_desk.config_exit)
++
++# (file, exact stripped source line) -> reason
++ALLOWED: dict[tuple[str, str], str] = {
++    (
++        "src/lead_desk/server.py",
++        "config = Config.from_env()",
++    ): "server.main: the refusal is caught on the next line and worded by _refuse (the shared formatter), exit 4",
++    (
++        "scripts/run_real_check.py",
++        'desk_config = Config.from_env({**env, "DESK_PORT": "0"})',
++    ): "reads a config FILE inside its refusal block: the except words it with refusal_line, exit 8",
++    (
++        "scripts/run_real_check.py",
++        "hs = HubspotSettings.from_env(env)",
++    ): "inside the same refusal block (refusal_line, exit 8)",
++    (
++        "scripts/run_real_check.py",
++        "pr = ProviderSettings.from_env(env)",
++    ): "inside the same refusal block (refusal_line, exit 8)",
++    (
++        "src/lead_desk/smtp_provider.py",
++        "s = ProviderSettings.from_env(os.environ)",
++    ): "the adapter loader: server.main catches its SettingRefused (load_demo_adapters) and words it with _refuse",
++    (
++        "src/lead_desk/smtp_outbox.py",
++        "return SmtpOutbox(SmtpSettings.from_env(env))",
++    ): "the adapter loader: server.main catches its SettingRefused (load_demo_adapters) and words it with _refuse",
++    (
++        "src/lead_desk/crm_hubspot.py",
++        "s = HubspotSettings.from_env(os.environ)",
++    ): "the adapter loader: server.main catches its SettingRefused (load_demo_adapters) and words it with _refuse",
++    (
++        "load_tools/check_invariants.py",
++        'a.model_required = os.environ.get("DESK_QUALIFIER") == "live_claude" or _facts_say_live(facts_path)',
++    ): "compares DESK_QUALIFIER with one word as plain text; no parse, cannot fail",
++    (
++        "load_tools/load_driver.py",
++        'qualifier=os.environ.get("DESK_QUALIFIER", ""),  # lets the checker know the AI step was live',
++    ): "copies DESK_QUALIFIER as plain text into a report; no parse, cannot fail",
++}
++
++
++def _python_files() -> list[Path]:
++    files: list[Path] = []
++    for root in ROOTS:
++        files += sorted((REPO / root).rglob("*.py"))
++    files += sorted((REPO / "tests").glob("*launcher*.py"))
++    return [f for f in files if f.relative_to(REPO).as_posix() not in READER_FILES and "__pycache__" not in f.parts]
++
++
++def _is_environ(node: ast.AST) -> bool:
++    if isinstance(node, ast.Attribute):
++        return node.attr == "environ"
++    return isinstance(node, ast.Name) and node.id == "environ"
++
++
++def _desk_name(node: ast.AST | None) -> bool:
++    return isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value.startswith(PREFIXES)
++
++
++def hits_in(source: str) -> list[tuple[int, str]]:
++    """(line number, what) of every bare read of the settings in one Python source text."""
++    tree = ast.parse(source)
++    config_names = {"Config"}
++    for node in ast.walk(tree):
++        if isinstance(node, ast.ImportFrom) and node.module and node.module.endswith("config"):
++            config_names |= {a.asname for a in node.names if a.name == "Config" and a.asname}
++        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name) and node.value.id in config_names:
++            config_names |= {t.id for t in node.targets if isinstance(t, ast.Name)}
++    found: list[tuple[int, str]] = []
++    for node in ast.walk(tree):
++        if isinstance(node, ast.Call):
++            fn = node.func
++            if (
++                isinstance(fn, ast.Attribute)
++                and fn.attr == "from_env"
++                and isinstance(fn.value, ast.Name)
++                and fn.value.id in config_names
++            ):
++                found.append((node.lineno, "Config.from_env"))
++            if (
++                isinstance(fn, ast.Attribute)
++                and fn.attr == "from_env"
++                and isinstance(fn.value, ast.Name)
++                and fn.value.id in SETTINGS_CLASSES
++            ):
++                found.append((node.lineno, f"{fn.value.id}.from_env"))
++            if isinstance(fn, ast.Name) and fn.id == "_live_from_env":
++                found.append((node.lineno, "_live_from_env"))
++            if isinstance(fn, ast.Name) and fn.id == "from_env":
++                found.append((node.lineno, "bare from_env"))
++            first = node.args[0] if node.args else None
++            if isinstance(fn, ast.Attribute) and fn.attr == "get" and _is_environ(fn.value) and _desk_name(first):
++                found.append((node.lineno, "environ.get"))
++            if isinstance(fn, ast.Attribute) and fn.attr == "getenv" and _desk_name(first):
++                found.append((node.lineno, "getenv"))
++            if isinstance(fn, ast.Name) and fn.id == "getenv" and _desk_name(first):
++                found.append((node.lineno, "getenv"))
++        if isinstance(node, ast.Subscript) and _is_environ(node.value) and _desk_name(node.slice):
++            found.append((node.lineno, "environ[...]"))
++    return found
++
++
++def test_the_detector_finds_each_kind_of_bare_read() -> None:
++    src = (
++        "import os\nfrom os import environ, getenv\nfrom lead_desk.config import Config as C\nX = C\n"
++        "a = C.from_env()\nb = X.from_env({})\nc = from_env()\nd = os.environ['DESK_PORT']\n"
++        "e = os.environ.get('DESK_BIND')\nf = getenv('LEAD_DESK_X')\ng = environ['DESK_Y']\nh = os.environ['HOME']\n"
++        "i = HubspotSettings.from_env(env)\nj = LiveSettings.from_env(env)\n"
++        "k = _live_from_env(env)\nl = Other.from_env(env)\n"
++    )
++    assert sorted(line for line, _ in hits_in(src)) == [5, 6, 7, 8, 9, 10, 11, 13, 14, 15]
++
++
++def _env_like(node: ast.AST) -> bool:
++    if isinstance(node, ast.Attribute):
++        return node.attr in ENV_ATTRS
++    return isinstance(node, ast.Name) and node.id in ENV_NAMES
++
++
++def _env_source(node: ast.AST, tainted: set[str]) -> bool:
++    """True when the expression is text read from an environment mapping (or from a name that holds such text)."""
++    if isinstance(node, ast.Subscript):
++        return _env_like(node.value)
++    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in {"get", "getenv"}:
++        return _env_like(node.func.value) or node.func.attr == "getenv"
++    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "getenv":
++        return True
++    if isinstance(node, ast.BoolOp):  # `x or default`, `x and y`: any operand
++        return any(_env_source(v, tainted) for v in node.values)
++    if isinstance(node, ast.IfExp):
++        return _env_source(node.body, tainted) or _env_source(node.orelse, tainted)
++    if isinstance(node, ast.NamedExpr):
++        return _env_source(node.value, tainted)
++    if isinstance(node, ast.Name):
++        return node.id in tainted
++    return False
++
++
++def bare_paths_in(source: str) -> list[int]:
++    """Line numbers of a `Path(...)` built from text that came out of an environment mapping.
++
++    The text may be an environment subscript, a `.get` or `getenv` of one, `x or default` of those, or a NAME that was
++    assigned from any of them earlier in the file (followed to a fixed point, so a name copied from a name counts).
++    Environment mappings are the names in ENV_NAMES and the attributes in ENV_ATTRS (`os.environ`, `self.env`).
++    """
++    tree = ast.parse(source)
++    tainted: set[str] = set()
++    changed = True
++    while changed:
++        changed = False
++        for node in ast.walk(tree):
++            pairs: list[tuple[ast.AST, ast.AST | None]] = []
++            if isinstance(node, ast.Assign):
++                pairs = [(t, node.value) for t in node.targets]
++            elif isinstance(node, ast.AnnAssign | ast.NamedExpr):
++                pairs = [(node.target, node.value)]
++            for target, value in pairs:
++                if (
++                    isinstance(target, ast.Name)
++                    and value is not None
++                    and target.id not in tainted
++                    and _env_source(value, tainted)
++                ):
++                    tainted.add(target.id)
++                    changed = True
++    found: list[int] = []
++    for node in ast.walk(tree):
++        if not (isinstance(node, ast.Call) and node.args):
++            continue
++        fn = node.func
++        named_path = isinstance(fn, ast.Name) and fn.id == "Path"
++        is_path = named_path or (isinstance(fn, ast.Attribute) and fn.attr == "Path")
++        if is_path and _env_source(node.args[0], tainted):
++            found.append(node.lineno)
++    return found
++
++
++def test_the_path_detector_finds_each_kind_of_bare_path() -> None:
++    src = (
++        "from pathlib import Path\nimport os\n"
++        "a = Path(env['X'])\nb = Path(e['X'])\nc = Path(env.get('X', 'y'))\nd = Path(os.environ['X'])\n"
++        "f = Path(os.getenv('X'))\ng = Path(env[p + 'F'])\nh = Path('literal')\ni = Path(argv[1])\n"
++        "j = Path(env_path(env, 'X'))\n"
++    )
++    assert sorted(bare_paths_in(src)) == [3, 4, 5, 6, 7, 8]
++
++
++def test_the_path_detector_finds_the_wider_shapes() -> None:
++    """Each shape is planted alone; each must be found (and the safe look-alikes must not be)."""
++    shapes = {
++        "assigned name": "x = env['K']\nq = Path(x)\n",
++        "assigned from get": "x = env.get('K')\nq = Path(x)\n",
++        "name copied from a name": "x = env['K']\ny = x\nq = Path(y)\n",
++        "or default": "q = Path(env.get('K') or 'd')\n",
++        "name or default": "x = env.get('K')\nq = Path(x or 'd')\n",
++        "attribute receiver": "q = Path(self.env['K'])\n",
++        "attribute get": "q = Path(self.env.get('K'))\n",
++        "cfg_env receiver": "q = Path(cfg_env['K'])\n",
++        "conditional": "q = Path(env['K'] if flag else 'd')\n",
++        "annotated assign": "x: str = env['K']\nq = Path(x)\n",
++        "walrus": "q = Path(x := env['K'])\n",
++        "pathlib.Path": "import pathlib\nq = pathlib.Path(env['K'])\n",
++        "os.environ get with default": "q = Path(os.environ.get('K', 'd'))\n",
++    }
++    for label, body in shapes.items():
++        assert bare_paths_in(body), label
++    safe = {
++        "helper": "x = env_path(env, 'K')\nq = Path(x)\n",
++        "literal": "x = 'a'\nq = Path(x)\n",
++        "argv": "x = argv[1]\nq = Path(x or 'd')\n",
++        "tainted name used elsewhere": "x = env['K']\nq = Path('lit')\nprint(x)\n",
++    }
++    for label, body in safe.items():
++        assert not bare_paths_in(body), label
++
++
++def test_no_path_is_read_from_setting_text_except_through_the_one_helper() -> None:
++    offenders: list[str] = []
++    for root in ROOTS:
++        for path in sorted((REPO / root).rglob("*.py")):
++            rel = path.relative_to(REPO).as_posix()
++            if "__pycache__" in path.parts or rel == "src/lead_desk/envnum.py":
++                continue
++            offenders += [f"{rel}:{n}" for n in bare_paths_in(path.read_text(encoding="utf-8"))]
++    assert offenders == [], offenders
++
++
++def test_no_program_reads_the_settings_outside_the_readers() -> None:
++    offenders: list[str] = []
++    used: set[tuple[str, str]] = set()
++    for path in _python_files():
++        rel = path.relative_to(REPO).as_posix()
++        text = path.read_text(encoding="utf-8")
++        lines = text.splitlines()
++        for number, what in hits_in(text):
++            key = (rel, lines[number - 1].strip())
++            if key in ALLOWED:
++                used.add(key)
++            else:
++                offenders.append(f"{rel}:{number} {what}")
++    assert offenders == [], offenders
++    assert set(ALLOWED) == used, f"an allowance matches nothing now: {sorted(set(ALLOWED) - used)}"
++
++
++def test_the_shell_and_powershell_scripts_never_call_the_bare_reader() -> None:
++    bare = re.compile(r"Config\.from_env\(")
++    for path in sorted((REPO / "scripts").iterdir()):
++        if path.suffix in {".sh", ".ps1"}:
++            assert not bare.search(path.read_text(encoding="utf-8")), path.name
++            named = {"start_all.sh", "start_all.ps1", "reset.sh", "reset.ps1"}
++            assert "config_or_exit" in path.read_text(encoding="utf-8") or path.name not in named
+diff --git a/tests/test_stall_eviction.py b/tests/test_stall_eviction.py
+index 640e1604104c1f0770dbc44589d10b41a0e68d98..8b84356610124801b3a4f7edc53ddb8bb82221da 100644
+--- a/tests/test_stall_eviction.py
++++ b/tests/test_stall_eviction.py
+@@ -220,7 +220,7 @@ def test_main_exits_3_on_a_too_small_limit(monkeypatch, capsys) -> None:
+     monkeypatch.setattr(server, "resource", _Res(soft=100, hard=100))
+     with pytest.raises(SystemExit) as info:
+         server.main()
+-    assert info.value.code == constants.EXIT_SETTING_REFUSED == 3
++    assert info.value.code == constants.EXIT_OPEN_FILE_LIMIT == 3
+     assert "MAX_HANDLER_THREADS" in capsys.readouterr().out
+ 
+ 

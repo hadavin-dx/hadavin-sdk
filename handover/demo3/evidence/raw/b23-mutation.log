@@ -50,3 +50,5 @@ M  tests/test_stall_eviction.py
 A  tests/test_start_all_late_refusal.py
 A  tools/render_exit_table.py
 
+row4 sh COMBINED (same-pass alive check + ready clear + stop branch all removed): pytest rc=1 -> KILLED | 2 failed, 24 passed, 1 skipped in 29.15s
+Note: the two single row-4 sh mutants above SURVIVED because the layers back each other up (the loop-top alive check and the others); only the removal of the group is caught. Not a proof that each layer is needed.

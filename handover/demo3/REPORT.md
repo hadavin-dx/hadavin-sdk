@@ -1,3 +1,17 @@
+## HEARTBEAT 122 (07:55Z) - B23 handed back fix-10 r4 (lint green by me); three reviews/rounds in flight
+
+| Agent / job | State at 07:55Z |
+|---|---|
+| B23 fix-10 r4 | handed back: tree 99ea382a = my copy; ruff check/format, mypy linux+win32, bandit all rc 0 (raw/b26-lint-b23.log). Builder: 31 tests fail on r3 code (17 real behaviour, 13 text pins, 1 function-absent); 24 caller files 2068 passed / 18 skipped; hygiene and wall-clock guards rc 0; mutation 16 of 18 single mutants killed, 2 SURVIVED (same-pass alive check alone; ready-clear alone: they back each other up; the combined mutant is killed). IPv6 behaviour test skipped here (no ::1). Another honest finding: with a foreign listener on the demo-server port plus a demo server alive one more second, the desk starts for a second, then is stopped (exit 1, no pid files) |
+| fix-10 r4 reviews | egm-design and egm-codebase-details running since 07:55Z; both told to judge the 2 survivors and hunt for races (lesson of the fix-5 locale bug and the fix-2 stub race) |
+| B21 fix-5 r9 | building since 07:45Z on my 28-row resolve; no hand-back |
+| B22 fix-2 r11 | building since 07:53Z on my 17-row resolve (stub race, dangling link); no hand-back |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: both fix-5 and fix-2 "unexplained flakes" turned out real bugs found by fresh reviewers; rule applied to every builder brief from now on: no flake wording, every failure gets a name and a cause.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run anywhere; fix-10 row 8 needs a WINDOWS-RUN-1 line (OutputEncoding, failing log line) which I add when the stack is cut; no full run until the stack.
+WHAT I WOULD DO NEXT (ranked): 1) collect fix-10 reviews, resolve, round 5 only if Major; 2) B21/B22 hand-backs: lint, reconcile, fresh reviewers; 3) WINDOWS-RUN-1 update then the one stack builder.
+
 ## HEARTBEAT 121 (07:48Z) - B22 handed back fix-2 r10 (lint green by me), reviewers running; B21 on round 9; B23 building
 
 | Agent / job | State at 07:48Z |
