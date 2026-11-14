@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 14:20 UTC / 19:50 IST
+
+**EV7S at 14:20Z (read from out/EV7S files; nothing judged; no EV7S-EVIDENCE.md yet):**
+- **pytest-full.log: progress marker 95%; 0 `F` characters; no FAILED/ERROR line; no final summary line yet.** Started 13:42Z, so about 38 min for 95%.
+- **Random 40 mutants: 40 rows = 34 KILLED, 6 SURVIVED: R07 (demo_only/bad_request.py), R10, R19, R20, R27 (scripts/run_real_check.py, tests s3), R39 (tests/support.py, tests s6).** Whether any is equivalent: NOT judged. The runner's checkpoint file has not been updated since 13:58Z; the results file is the source. Five of six are in the m3 counter/exit path or the openssl helper.
+- S01-S24, X1ctx, Q13/Q14/Q19/mutB/X1 KILLED; mutA NOT-APPLIED (pattern count 0), mutA2 KILLED.
+- Not seen yet: full-run summary, ruff, suppressions, hostile table read, final report.
+
+**ETA EV7S-EVIDENCE.md: about 14:30Z to 14:45Z (full-run end plus the report; box ends 14:57Z).** Then I push it and tell the lead; the lead starts the fresh reviewer, to whom the six survivors go raw. Agents running: 1. ASK: none. Next block about 14:30Z.
+
+
 ## STATUS (core lead) 14:10 UTC / 19:40 IST
 
 **EV7S at 14:10Z (read from out/EV7S files; no verdict, nothing judged; no EV7S-EVIDENCE.md yet):**
