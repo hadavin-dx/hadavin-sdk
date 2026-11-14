@@ -1,0 +1,52 @@
+row1 mailbox order -> command-line code: pytest rc=1 -> KILLED | 1 failed, 71 passed in 15.74s
+row1 live settings missing -> command-line code: pytest rc=1 -> KILLED | 1 failed, 73 passed in 16.37s
+row1 non-UTF-8 config -> command-line code: pytest rc=1 -> KILLED | 1 failed, 72 passed in 15.86s
+row2 meaning text changed (printed table drifts): pytest rc=1 -> KILLED | 1 failed, 21 passed in 1.01s
+row2 prose repeats a program number: pytest rc=1 -> KILLED | 1 failed, 23 passed in 0.94s
+row3 table row deleted: pytest rc=1 -> KILLED | 1 failed, 13 passed in 0.92s
+row3 start_all.sh passes on only 3|4: pytest rc=1 -> KILLED | 1 failed, 16 passed in 0.95s
+row3 start_all.ps1 passes on only 3, 4: pytest rc=1 -> KILLED | 1 failed, 16 passed in 0.87s
+row3 a row listed as not produced is dropped from the list: pytest rc=1 -> KILLED | 1 failed, 17 passed in 0.93s
+row4 sh: port answers but process not checked: pytest rc=0 -> SURVIVED | 25 passed, 1 skipped in 27.95s
+row4 sh: ready not cleared when demo server died: pytest rc=0 -> SURVIVED | 25 passed, 1 skipped in 28.23s
+row4 ps1: alive check dropped: pytest rc=1 -> KILLED | 1 failed, 2 passed in 0.04s
+row12 n8n_api back to a bare Path: pytest rc=1 -> KILLED | 1 failed, 3 passed in 0.26s
+row12 env_path accepts an empty text again: pytest rc=1 -> KILLED | 1 failed, 424 passed in 9.28s
+row12 new src file: name assigned from env then Path(x or d): pytest rc=1 -> KILLED | 1 failed, 3 passed in 0.25s
+row12 new tools file: Path(self.env[...]): pytest rc=1 -> KILLED | 1 failed, 3 passed in 0.27s
+row12 new demo_only file: Path(cfg_env.get(...)): pytest rc=1 -> KILLED | 1 failed, 3 passed in 0.24s
+row12 new load_tools file: name copied from a name: pytest rc=1 -> KILLED | 1 failed, 3 passed in 0.26s
+tree after all mutants (git status vs index; empty = restored):
+M  README.md
+M  contract.md
+M  docs/settings.md
+M  docs/tests.md
+M  scripts/crash_desk.py
+M  scripts/feed.py
+M  scripts/n8n_api.py
+M  scripts/reset.ps1
+M  scripts/reset.sh
+M  scripts/reset_check.py
+M  scripts/run_real_check.py
+M  scripts/start_all.ps1
+M  scripts/start_all.sh
+M  src/lead_desk/config.py
+A  src/lead_desk/config_exit.py
+M  src/lead_desk/constants.py
+M  src/lead_desk/crm_hubspot.py
+M  src/lead_desk/envnum.py
+M  src/lead_desk/server.py
+M  src/lead_desk/smtp_provider.py
+M  tests/support.py
+A  tests/test_bad_setting_entry_points.py
+A  tests/test_exit_code_table.py
+A  tests/test_late_refusal_value_echo.py
+M  tests/test_path_confinement.py
+A  tests/test_ps1_pins.py
+M  tests/test_real_check_dry.py
+M  tests/test_reset_scripts.py
+A  tests/test_setting_reader_guard.py
+M  tests/test_stall_eviction.py
+A  tests/test_start_all_late_refusal.py
+A  tools/render_exit_table.py
+
