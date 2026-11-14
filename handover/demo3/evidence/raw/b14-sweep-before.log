@@ -1,0 +1,33 @@
+--- DESK_PORT=abc
+scripts/crash_desk.py      rc=1   lines=10  traceback=1 | lead_desk.envnum.SettingRefused: DESK_PORT is not a number
+scripts/feed.py            rc=1   lines=12  traceback=1 | lead_desk.envnum.SettingRefused: DESK_PORT is not a number
+scripts/reset_check.py     rc=1   lines=12  traceback=1 | lead_desk.envnum.SettingRefused: DESK_PORT is not a number
+lead_desk.server           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+tests/crash_launcher.py    rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+scripts/start_all.sh       rc=1   lines=10  traceback=1 | lead_desk.envnum.SettingRefused: DESK_PORT is not a number
+scripts/reset.sh           rc=1   lines=10  traceback=1 | lead_desk.envnum.SettingRefused: DESK_PORT is not a number
+demo_only/fakes_server.py  rc=0   lines=7   traceback=0 |   --port PORT
+load_tools/check_invariants.py rc=0   lines=47  traceback=0 |                         the table)
+load_tools/load_driver.py  rc=0   lines=15  traceback=0 |                         request ids are <prefix>-<n>; change it for every run
+--- DESK_FAKES_URL=ftp://x:1
+scripts/crash_desk.py      rc=1   lines=7   traceback=1 | lead_desk.envnum.SettingRefused: DESK_FAKES_URL must use http
+scripts/feed.py            rc=1   lines=9   traceback=1 | lead_desk.envnum.SettingRefused: DESK_FAKES_URL must use http
+scripts/reset_check.py     rc=1   lines=9   traceback=1 | lead_desk.envnum.SettingRefused: DESK_FAKES_URL must use http
+lead_desk.server           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+tests/crash_launcher.py    rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+scripts/start_all.sh       rc=1   lines=7   traceback=1 | lead_desk.envnum.SettingRefused: DESK_FAKES_URL must use http
+scripts/reset.sh           rc=1   lines=7   traceback=1 | lead_desk.envnum.SettingRefused: DESK_FAKES_URL must use http
+demo_only/fakes_server.py  rc=0   lines=7   traceback=0 |   --port PORT
+load_tools/check_invariants.py rc=0   lines=47  traceback=0 |                         the table)
+load_tools/load_driver.py  rc=0   lines=15  traceback=0 |                         request ids are <prefix>-<n>; change it for every run
+--- DESK_NUDGE_TO=a@b@c.test
+scripts/crash_desk.py      rc=5   lines=2   traceback=0 | cannot bind 127.0.0.1:8765: OSError
+scripts/feed.py            rc=0   lines=6   traceback=0 | canned-6 form -> 500 {"error": "internal", "receipt_id": null}
+scripts/reset_check.py     rc=4   lines=1   traceback=0 | refused: something still answers on port 8765; nothing was deleted
+lead_desk.server           rc=5   lines=1   traceback=0 | cannot bind 127.0.0.1:8765: OSError
+tests/crash_launcher.py    rc=5   lines=1   traceback=0 | cannot bind 127.0.0.1:8765: OSError
+scripts/start_all.sh       rc=0   lines=3   traceback=0 | logs: /home/user/work/priv/b14-tmp/sw/data/fakes.log and /home/user/work/priv/b14-tmp/sw/data/desk.log
+scripts/reset.sh           rc=2   lines=1   traceback=0 | refused: the database path is not inside this repository's data/ folder, so nothing was stopped or deleted
+demo_only/fakes_server.py  rc=0   lines=7   traceback=0 |   --port PORT
+load_tools/check_invariants.py rc=0   lines=47  traceback=0 |                         the table)
+load_tools/load_driver.py  rc=0   lines=15  traceback=0 |                         request ids are <prefix>-<n>; change it for every run

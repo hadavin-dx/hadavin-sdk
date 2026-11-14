@@ -1,0 +1,33 @@
+--- DESK_PORT=abc
+scripts/crash_desk.py      rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+scripts/feed.py            rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+scripts/reset_check.py     rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+lead_desk.server           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+tests/crash_launcher.py    rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+scripts/start_all.sh       rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+scripts/reset.sh           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_PORT is not a number
+demo_only/fakes_server.py  rc=0   lines=7   traceback=0 |   --port PORT
+load_tools/check_invariants.py rc=0   lines=47  traceback=0 |                         the table)
+load_tools/load_driver.py  rc=0   lines=15  traceback=0 |                         request ids are <prefix>-<n>; change it for every run
+--- DESK_FAKES_URL=ftp://x:1
+scripts/crash_desk.py      rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+scripts/feed.py            rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+scripts/reset_check.py     rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+lead_desk.server           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+tests/crash_launcher.py    rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+scripts/start_all.sh       rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+scripts/reset.sh           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_FAKES_URL must use http
+demo_only/fakes_server.py  rc=0   lines=7   traceback=0 |   --port PORT
+load_tools/check_invariants.py rc=0   lines=47  traceback=0 |                         the table)
+load_tools/load_driver.py  rc=0   lines=15  traceback=0 |                         request ids are <prefix>-<n>; change it for every run
+--- DESK_NUDGE_TO=a@b@c.test
+scripts/crash_desk.py      rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_NUDGE_TO must be one plain address
+scripts/feed.py            rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_NUDGE_TO must be one plain address
+scripts/reset_check.py     rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_NUDGE_TO must be one plain address
+lead_desk.server           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_NUDGE_TO must be one plain address
+tests/crash_launcher.py    rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_NUDGE_TO must be one plain address
+scripts/start_all.sh       rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_NUDGE_TO must be one plain address
+scripts/reset.sh           rc=4   lines=1   traceback=0 | the desk refuses a setting: DESK_NUDGE_TO must be one plain address
+demo_only/fakes_server.py  rc=0   lines=7   traceback=0 |   --port PORT
+load_tools/check_invariants.py rc=0   lines=47  traceback=0 |                         the table)
+load_tools/load_driver.py  rc=0   lines=15  traceback=0 |                         request ids are <prefix>-<n>; change it for every run

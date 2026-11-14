@@ -1,3 +1,26 @@
+## HEARTBEAT 91 (04:41Z) - BROWSER SKIP REASONS READ; WAITING FOR B12 FINAL RUN (34%), B13, B14
+
+| Item | State |
+|---|---|
+| Browser skip reasons (lead order 04:34Z) | READ. M6 (playwright 1.63.0 present): run 1 113 passed, run 2 533 passed, 0 skipped (`grep -c skipped` = 0 in both logs, evidence/raw/m6-run1.log, m6-run2.log). M9 (no playwright): 166 browser tests skipped, reason "playwright not importable", nothing else. No skip is unexplained by a missing package. |
+| B12 final full run | RUNNING, about 34% at 04:40Z (priv/b12-tmp/full.log). Tail not read yet. |
+| B13, B14 | RUNNING, no hand-back. |
+| WINDOWS-RUN-1.md | pushed 04:37Z. Waiting for the lead's Windows output. |
+
+FAILURES AND RETRIES: none this block (the hygiene cause was corrected in HEARTBEAT 90).
+Load: about 0.8 at 04:36Z.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Stack, stack-docs-final, stack review, stack full run, browser tests on the stack, clean-tree check: not started (wait for B12 final and B13).
+- Fresh reviews of fix-5 r6, fix-2 r5, fix-10: not started.
+- B12's final run may show the hygiene failure caused by my ref (removed 04:37Z); if so I re-run that one test.
+- reset.ps1 / start_all.ps1 never run; Python 3.11, ruff, mypy, bandit, CodeQL, Sonar: CI only.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read B12's final tail (about 04:50Z); fresh egm reviewer on fix-5 r6.
+2. When B13 reports: tail check, fresh reviewer (incl. "demo CRM claim false" blocker), then ONE stack re-cut builder.
+3. When B14 reports: fresh reviewer on fix-10.
+
 ## HEARTBEAT 90 (04:37Z) - WINDOWS-RUN-1.md WRITTEN; SHARED-CLONE REF CAUSE CHECKED; B12 HAND-BACK (INTERIM) READ; B13, B14 RUNNING
 
 | Item | State |
