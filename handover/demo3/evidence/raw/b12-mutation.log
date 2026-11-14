@@ -1,0 +1,23 @@
+sh major guard < 4 -> < 3 | KILLED | 1 failed, 47 deselected in 0.08s
+sh minor guard < 1 -> < 0 | KILLED | 1 failed, 2 passed, 47 deselected in 0.06s
+sh guard exit 2 -> exit 1 | KILLED | 1 failed, 47 deselected in 0.05s
+sh guard moved after db=python -c | KILLED | 1 failed, 47 deselected in 0.05s
+ps1 -cmatch $ours -> -match | KILLED | 1 failed in 0.04s
+ps1 leaf check removed | KILLED | 1 failed, 29 passed, 5 skipped in 0.07s
+ps1 folder exit 7 -> 1 | KILLED | 1 failed, 29 passed, 5 skipped in 0.09s
+ps1 cap -ge 64 -> -gt 64 | KILLED | 1 failed, 28 passed, 5 skipped in 0.07s
+ps1 read 64 -> 65 | KILLED | 1 failed, 28 passed, 5 skipped in 0.08s
+ps1 [Pp]ython -> python (interp 1) | SURVIVED | 31 passed, 5 skipped in 0.08s
+ps1 Remove-Item catch dropped | SURVIVED | 31 passed, 5 skipped in 0.06s
+ps1 pattern module renamed | KILLED | 1 failed, 6 passed in 0.04s
+start_all.ps1 module renamed | KILLED | 1 failed, 30 passed, 5 skipped in 0.07s
+start_all.ps1 python -> path | KILLED | 1 failed, 30 passed, 5 skipped in 0.09s
+support width 5000 -> 6000 | KILLED | 1 failed, 5 passed in 0.04s
+support width ignores count | KILLED | 1 failed, 5 passed in 0.04s
+support total not raised to number+1 | KILLED | 1 failed, 7 passed in 0.04s
+support last = first+width | KILLED | 1 failed, 5 passed in 0.06s
+support worker regex too loose | SURVIVED | 9 passed in 0.04s
+support serial uses range always | KILLED | 1 failed in 0.06s
+ps1 [Pp]ython -> python (interp 1) | KILLED | 1 failed, 8 passed in 0.06s
+ps1 Remove-Item catch dropped | KILLED | 1 failed, 31 passed, 5 skipped in 0.08s
+support worker regex too loose | KILLED | 1 failed, 6 passed in 0.06s

@@ -1,3 +1,31 @@
+## HEARTBEAT 89 (04:33Z) - FIX-9 R3 CLOSED (REVIEW 0/0/2 MINOR, FULL RUN GREEN); NEEDED-CHECK DONE; WAITING FOR B12 AND B13 BEFORE THE STACK RE-CUT
+
+| Agent | Job | State |
+|---|---|---|
+| B11 | fix-9 r3 | CLOSED. patch 3c68d0bb applies on base (checked by me). Full run on its own head, tail read by me: 3723 passed, 169 skipped, 1 xfailed, rc 0, no data/ after. |
+| R9c | fresh review of the r2-to-r3 delta | CLOSED: 0 blocker, 0 major, 2 minor (evidence/review-lane3-fix-9-r3-delta.md): only the exit code 4 case has a test; `git ls-files` output read with the platform default encoding. Both folded into the stack re-cut (rounds on this non-security path are capped; minors are fixed without a new review). |
+| NC1 | NEEDED-CHECK duplicate check (lead order 04:23Z) | CLOSED. Saved evidence/review-lane3-needed-check-1.md and a table in evidence/patch-status.md. Reader's limits: nothing run; parts of fix-1, fix-2 and the interim fix-5 not read. Main findings: (A1) fix-5 and fix-9 both add a `book` fixture for the same job; fix-5's one leaves data/ behind, so with fix-9's check the whole run would fail: one fixture only; (B1-B4) the exit-code and key-file sentences are repeated 3 to 6 times in fix-2/fix-1 docs: one place; (B11) a claims sentence says `/` was not tested while a fix-1 test tests it: contradiction to fix in the stack; (D5) a stale "step (4)" reference after fix-2 renumbers the start-up list. Open items for you (judgment, not mine): keep or drop fix-5's port helpers (you approved them 03:49Z), fix-8's look-alike lists and fuzz tests (they came from review findings), fix-9's strict xfail. |
+| B12 | fix-5 r6 | RUNNING; interim patch only (03:59Z). Stop about 05:03Z. |
+| B13 | fix-2 r5 | RUNNING; interim patches only (03:59Z). Stop about 05:03Z. The re-cut of fix-8 depends on it. |
+| Stack builder | | NOT STARTED: waits for B13 (fix-2 final), B12 (fix-5 final); fix-9 and fix-8 are final. Your order 04:30Z read: claims, fix-1 r6, fix-2 r5, fix-5 r6, fix-8 r3, fix-9 r3, then ONE stack-docs-final.patch; 0001-0003 are not applied. |
+
+FAILURES AND RETRIES: no test failure this block. My slips: register times a few minutes ahead of the clock again (corrected where I caught it).
+ASK list: none.
+Load (measured 04:33Z): about 1; only B12 and B13 running.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Stack not built (waits for B12 and B13); stack-docs-final.patch not cut; stack reviewer, full run, browser tests and clean-tree check not done.
+- fix-5 r6 and fix-2 r5: no final patch, no fresh review; WINDOWS-RUN-1.md not written (waits for fix-5 r6).
+- fix-10 (crash_desk.py traceback): not started.
+- Browser skip reasons: only 'playwright not importable' seen so far (M9: 166 of 166); M6 -rs not read yet.
+- reset.ps1, start_all.ps1: never run (no PowerShell here). claims' start_all.ps1 change has no test.
+- Python 3.11, ruff, mypy, bandit, gitleaks on CI: not run.
+
+WHAT I WOULD DO NEXT (ranked)
+1. While B12 and B13 work: start fix-10 (crash_desk.py bad DESK_NUDGE_TO traceback) as a builder on the base; read browser skip reasons from M6.
+2. When B12 or B13 report: tail check, fresh review, then the stack re-cut builder; WINDOWS-RUN-1.md as soon as fix-5 r6 is final.
+3. Prepare the doc fix list for stack-docs-final from DOC-FIXES-v2.md, R-gaps.md and E-review-doc-patch.md.
+
 ## HEARTBEAT 88 (04:27Z) - FIX-8 R3 CLOSED (REVIEWS CLEAN, FULL RUN ON R2 PASSED); STACK DRY RUN SHOWS REAL CONFLICTS; NEEDED-CHECK STARTED
 
 | Agent | Job | State |
