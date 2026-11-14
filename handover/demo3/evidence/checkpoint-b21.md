@@ -32,3 +32,6 @@ B21 resumed 07:45Z for fix-5 round 9. At 08:05Z it reported: read_pid_file does 
 
 ## Round 9 checkpoint 08:23Z (B21)
 Done: all rows of the 08:01Z order except OPEN-FOR-STACK-DOCS ones; lint clean (5 rc=0); 15 mutants killed; patch + 3 parts cut and apply-checked (tree ce7113ea); notes written (lane3-fix-5-r9-notes.md). Running: the ONE full run on tree ce7113ea (log /home/user/work/b21-logs/full-r9.log, started 08:18:37Z, expected end ~08:38Z). Next: copy the log to raw/b21-r9-full-final.log, fill the "Full run" section in the notes, hand back. Blockers: none.
+
+## Round 10 checkpoint 08:56Z
+Done: scripts (ps1 exit-5 mapping + $LASTEXITCODE reset, BASH_VERSINFO guard, exit 5 both meanings in headers/README, exit 8 for a refused setting per lead answer 08:50Z incl. Config refusal, python-missing 127 wording, pid-reuse comment), test edits (rows 5 ps1 part, 6, 8, 9, 14-16, labels), narrow run 355 passed 15 skipped. Next: failing-before, mutants (61+15+new), lint, one full run, patch, notes. Row 5 path_confinement literals: see notes (they are the inputs of the Windows-path refusal under test).

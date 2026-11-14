@@ -1,3 +1,17 @@
+## HEARTBEAT 131 (08:55Z) - B21 r10, B22 r12 and B23 r5 all near hand-back; none handed back yet
+
+| Agent / job | State at 08:55Z (from their own checkpoints, not yet verified by me) |
+|---|---|
+| B21 fix-5 round 10 | checkpoint 08:56Z: scripts done (ps1 maps a crashed check to exit 5 and clears the stale exit code; non-bash shells refused; exit 5 named with both causes; refused setting = exit 8 per your 08:50Z answer; python-missing wording), tests edited, narrow runs started. Still to do per the checkpoint: the 61 old mutants, lint, ONE final full run, patch |
+| B22 fix-2 round 12 | checkpoint 08:45Z: all 15 rows coded; its own lint clean; non-root run 848 passed; mutation 18/18 killed; patch cut (tree 0b2031ee). Full run in progress: the new lock-handle guard already shows an ERROR in tests/test_claim_checks_and_crm_mode.py (a lock handle left open). The builder is fixing every such test after the run. A real finding by the guard, not a flake |
+| B23 fix-10 round 5 | checkpoint 08:18Z: all 24 rows edited, its own lint clean, red-first on the old tree: 94 failed; start-run repeats and caller runs going. No hand-back yet |
+| Stack builder | waits for B21 and B22 clean, then a fresh stack review |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new from me. B22's guard finding is the guard doing its job (it was added to kill the surviving mutant S2).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): I have not yet read any round 10 / 12 / 5 result myself: every figure above is the builder's; no PowerShell run; B21's 61-mutant re-run not yet seen.
+WHAT I WOULD DO NEXT (ranked): 1) on each hand-back: git add -A, reconcile the tree id, lint a clean copy myself, two fresh reviewers; 2) egm-resolve; 3) the one stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 130 (08:45Z) - B21 fix-5 round 9 reviewed (4 Major, 0 Blocker), resolved, round 10 next; B22 r12 and B23 r5 building
 
 | Agent / job | State at 08:45Z |
