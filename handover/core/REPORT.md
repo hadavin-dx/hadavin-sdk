@@ -1,5 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 18:21 UTC / 23:51 IST
+
+No new hand-back since block 108. **EV7U (a9d71acd) RUNNING:** last checkpoint 18:06Z (mutants done, quiet flake series started, full run still going, watchdog 18:40Z); no EVIDENCE file yet. **r7v builder (ad52347a) RUNNING:** r7v.diff exists in out/R7V (not final: no RESULTS-V.md, no hand-back; checkpoint last says part A green 1062 passed, part B split); its 60 min box from 17:45Z ends about 18:45-18:50Z.
+Agents: 2 language-model running. Disk 2.3 GB (95%). Everything so far is pushed (git status --porcelain empty at 18:11Z; r7v/EV7U progress files saved). Next: closeout checks and FILE-INDEX when both hand back.
+Not checked: EV7U verdict, r7v result, a4 cause, L11.
+ASK: none.
+
+
 ## STATUS (core lead) 18:10 UTC / 23:40 IST
 
 **Disk: freed about 340 MB by deleting ONLY pytest scratch of FINISHED runs: out/EV7T/tmp-full (281 MB; test dumps incl. 256 MB synthetic files) and out/R7U-MERGE/guard1/tmp (60 MB). No evidence deleted: their logs, tsv and reports were already committed (handover/core/evidence/r7u-chain/). Left alone: EV7U tmp (its run is live), all out/EV*, REV*, R7R-R7T result folders, frozen trees.** Free space now: see below.
