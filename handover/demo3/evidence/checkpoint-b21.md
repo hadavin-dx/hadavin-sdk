@@ -20,3 +20,4 @@ Blockers: none.
 
 ## Checkpoint 5, 07:38 UTC (final)
 Full run 1: 1 failed (own new test, flake, cause not found); run 2 same tree: 3962 passed. Guards alone rc 0, lint all rc 0, patch cut and apply-checked. Notes written. Handing back.
+## Checkpoint r9 start 07:46 UTC: round 9 started from tree cb769b22
