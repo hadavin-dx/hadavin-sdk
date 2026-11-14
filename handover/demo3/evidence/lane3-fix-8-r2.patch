@@ -190,10 +190,10 @@ index a60f7f5..312a5e0 100644
          try:
 diff --git a/tests/test_domain_labels.py b/tests/test_domain_labels.py
 new file mode 100644
-index 0000000..b355017
+index 0000000..8cb1630
 --- /dev/null
 +++ b/tests/test_domain_labels.py
-@@ -0,0 +1,260 @@
+@@ -0,0 +1,261 @@
 +"""A domain whose labels are not well formed is not a mailbox: it starts with a dot, ends with a dot, has two dots in
 +a row, or has a label that starts or ends with a hyphen. Such a lead email goes to review (never a lead of its own,
 +never a follow-up mail); the same rule guards the sender, recipient and reminder addresses. Made-up data only."""
@@ -201,6 +201,7 @@ index 0000000..b355017
 +from __future__ import annotations
 +
 +import random
++import string
 +from pathlib import Path
 +
 +import pytest
@@ -341,7 +342,7 @@ index 0000000..b355017
 +def test_fuzz_well_formed_domains_are_accepted() -> None:
 +    """Completeness: a domain built from well-formed labels is accepted by the lead check and the plain check."""
 +    rng = random.Random(10)
-+    label_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ü"
++    label_chars = string.ascii_letters + string.digits + "ü"
 +    for _ in range(3000):
 +        labels = []
 +        for _ in range(rng.randint(2, 5)):

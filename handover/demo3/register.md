@@ -267,3 +267,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | M9 | CLOSED 04:01Z | full log tail read by me, report written by me (agent handed back early) |
 | B11 | CLOSED 04:03Z | fix-9 r2 patch b1215b5a; full run tail read by me: 3722 passed, 169 skipped, 1 xfailed, rc 0, no data/ after |
 | R9b | fresh egm review of fix-9 r2 | STARTED 04:04Z (a1ad2f3a), expected ~04:15Z, read-only, tree /home/user/work/rv-fix9r2 |
+| R9b | CLOSED 04:09Z | fix-9 r2 review: 0 blocker 0 major 4 minor, saved evidence/review-lane3-fix-9-r2.md |
+| B11 (resumed) | RUNNING from 04:10Z | fix 4 minors -> lane3-fix-9-r3.patch + own full run; stop 04:55Z |
+| B10 | CLOSED 04:09Z (hand-back read) | fix-8 r2 patch 0c976b13; its full run was NOT on the final head (1 fail on hygiene literal, fixed after) -> EV10 |
+| EV10 | RUNNING from ~04:11Z (a4d976f1) | full serial 3.13 on final head of fix-8 r2, tree ev-b10; expected end ~04:35Z |
+| R8b | RUNNING from ~04:11Z (a27de75e) | fresh egm review of fix-8 r2, tree rv-fix8r2; expected ~04:25Z |
