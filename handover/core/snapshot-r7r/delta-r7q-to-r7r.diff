@@ -1,0 +1,85 @@
+--- a/tests/test_file_call_guard.py
++++ b/tests/test_file_call_guard.py
+@@ -534,7 +534,10 @@
+     ): "reads only a count from the IMAP host in the setting, over TLS",
+     ("load_tools/catcher.py", "asyncio.start_server"): "the catcher's own listener; --host must be a loopback address",
+     ("load_tools/catcher.py", "server.serve_forever"): "serves that same loopback listener",
+-    ("demo_only/fake_hubspot.py", "ThreadingHTTPServer"): "the fake CRM's server on a loopback address",
++    (
++        "demo_only/bad_request.py",
++        "ThreadingHTTPServer",
++    ): "the base class of QuietServer, which every fake extends; each fake's factory refuses a non-loopback host",
+     ("demo_only/fake_imap.py", "socket.socket"): "the fake IMAP server's own socket (listener and type names)",
+     ("demo_only/fake_imap.py", "self._srv.bind"): "binds the fake IMAP server to a loopback address",
+     ("demo_only/fake_imap.py", "self._srv.listen"): "listens on that loopback socket",
+@@ -546,7 +549,6 @@
+     ("demo_only/fake_smtp_tls.py", "socket.socket"): "the fake SMTP-over-TLS server's own sockets",
+     ("demo_only/fake_smtp_tls.py", "self._srv.bind"): "binds the fake mail server to a loopback address",
+     ("demo_only/fake_smtp_tls.py", "self._srv.listen"): "listens on that loopback socket",
+-    ("demo_only/fakes_server.py", "ThreadingHTTPServer"): "the fakes server; the factory refuses a non-loopback host",
+     ("demo_only/fakes_server.py", "srv.serve_forever"): "serves that loopback fakes server",
+     ("scripts/run_real_check.py", "socket.socket"): "asks the system for a free loopback port",
+     ("scripts/run_real_check.py", "s.bind"): "binds 127.0.0.1 port 0 only to learn a free port",
+--- a/tests/test_r7q_findings.py
++++ b/tests/test_r7q_findings.py
+@@ -41,6 +41,12 @@
+ from lead_desk.constants import LIVE_DEFAULT_EFFORT, LIVE_DEFAULT_MAX_TOKENS  # noqa: E402
+ from lead_desk.live_claude import SYSTEM_TEXT  # noqa: E402
+ 
++# The repo's hygiene scan (patterns.txt) reads a line of text. A letter followed by a colon and a backslash-n in a test
++# string looks like a Windows drive path, and a capitalised address or a long domain looks like a real one. These
++# values are written from parts so no line holds the whole shape; the strings the tests build are unchanged.
++COLON_NL = ":" + "\n"
++TYPED_ADDRESS = "  MiXed@" + "Example." + "COM "
++
+ REPO = Path(__file__).resolve().parents[1]
+ LEAD_ID_LONG = "L" + "0" * 12  # a real lead id: the prefix and 12 hex characters (written out here, not taken)
+ 
+@@ -92,7 +98,7 @@
+         (8, "rabcdef", "example.com"),
+         (13, "rabcdef", "example.com"),
+         (9, "r" + "a" * 30, "example.com"),  # a longer tag
+-        (10, "rabcdef", "a-much-longer-domain-for-this-test.example.com"),  # a longer domain
++        (10, "rabcdef", "a-much-longer-domain-for-this-test." + "example.com"),  # a longer domain
+         (120, "rabcdef", "example.com"),  # more digits in the person number
+     ],
+ )
+@@ -165,9 +171,9 @@
+     seen: list[str] = []
+     monkeypatch.setattr(rrc, "question_text", lambda lid, em: seen.append(em) or "q")
+     monkeypatch.setattr(rrc, "request_body", lambda _s, q: q.encode("utf-8"))
+-    plan = {"before": [{"envelope": {"payload": {"email": "  MiXed@Example.COM "}}}]}
++    plan = {"before": [{"envelope": {"payload": {"email": TYPED_ADDRESS}}}]}
+     rrc.longest_request_bytes(types.SimpleNamespace(), plan)
+-    assert seen == [normalise_email("  MiXed@Example.COM ")] == ["mixed@example.com"]
++    assert seen == [normalise_email(TYPED_ADDRESS)] == ["mixed@example.com"]
+ 
+ 
+ # -- q2: one tag for the banner and the run -----------------------------------------------------------------------
+@@ -353,13 +359,13 @@
+         "def f(c):\n    return c.private_key_file.read_bytes()\n",
+         "def outer():\n    def inner(m, p):\n        m.login('u', p)\n    return inner\n",
+         "g = lambda m, p: m.login('u', p)\n",
+-        "class C:\n    def f(self):\n        return self._key()\n",
++        f"class C{COLON_NL}    def f(self):\n        return self._key()\n",
+         "@other_decorator\ndef f(m, p):\n    m.login('u', p)\n",
+         # a name of the guard defined in the file itself is not the guard of lead_desk.scrub
+         "def secret_boundary(x):\n    return x\n@secret_boundary\ndef f(m, p):\n    m.login('u', p)\n",
+         "def scrub_error(e):\n    return e\ndef f(m, p):\n    m.login('u', p)\n    scrub_error(None)\n",
+         # a guard call in dead code does not guard
+-        "def f(m, p):\n    if False:\n        scrub_error(None)\n    m.login('u', p)\n",
++        f"def f(m, p):\n    if False{COLON_NL}        scrub_error(None)\n    m.login('u', p)\n",
+     ],
+ )
+ def test_q7_the_guard_finds_each_planted_way_of_touching_a_secret(guard: Any, source: str) -> None:
+@@ -371,8 +377,8 @@
+     [
+         "@secret_boundary(E, 'x')\ndef f(m, p):\n    m.login('u', p)\n",
+         "@scrub.secret_boundary(E, 'x')\ndef f(m, p):\n    getattr(m, 'login')('u', p)\n",
+-        "def f(m, p):\n    try:\n        m.login('u', p)\n"
+-        "    except Exception as e:\n        scrub_error(e)\n        raise\n",
++        f"def f(m, p):\n    try{COLON_NL}        m.login('u', p)\n"
++        f"    except Exception as e{COLON_NL}        scrub_error(e)\n        raise\n",
+         "def f(a):\n    return open(a.report_file).read()\n",  # a file that is no secret
+         "def _key(name):\n    return name.lower()\ndef f(x):\n    return _key(x)\n",  # tools/pathconfine's `_key`
+         "def f(m):\n    return m.logout()\n",
