@@ -504,7 +504,7 @@ index 89e6f8a..43160d5 100644
      def _count(self, *names: str) -> None:
          with self._lock:
 diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
-index 4045b96..a1187c5 100644
+index 4045b96..5376120 100644
 --- a/src/lead_desk/desk.py
 +++ b/src/lead_desk/desk.py
 @@ -75,6 +75,7 @@ from lead_desk.contract import (
@@ -520,7 +520,7 @@ index 4045b96..a1187c5 100644
  
  
 -MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
-+MEMORY_BOOK_PROBLEM = "the lead-book path must name a file: ':memory:' is empty for every thread but the first"
++MEMORY_BOOK_PROBLEM = "the lead-book must be a file: ':memory:' is empty for every thread but the first"
 +
 +
 +BOOK_IS_FOLDER_PROBLEM = "DESK_DB_PATH names a folder: it must name a file (the lead-book file)"
@@ -1329,10 +1329,10 @@ index 7b9d857..848e588 100644
  
 diff --git a/tests/test_one_key_file_rule_and_path_walk.py b/tests/test_one_key_file_rule_and_path_walk.py
 new file mode 100644
-index 0000000..7bc24b7
+index 0000000..a5d0462
 --- /dev/null
 +++ b/tests/test_one_key_file_rule_and_path_walk.py
-@@ -0,0 +1,655 @@
+@@ -0,0 +1,656 @@
 +"""One rule for every secret file, one parent walk for every file path a setting names (lane 3 fix 2, round 4).
 +
 +Made-up data only; key files hold made-up text built from parts. Each test below was run against the round 3 tree
@@ -1795,7 +1795,7 @@ index 0000000..7bc24b7
 +    assert "or a path inside a file" in text or "sits inside a file" in text
 +
 +
-+# ============================================================================================ round 5 (fix-2 r5)
++# ------------------------------------------------------------------------------ round 5 (fix-2 r5)
 +def test_with_the_demo_crm_and_another_outbox_a_bad_key_file_is_reported_at_once(
 +    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 +) -> None:
@@ -1984,10 +1984,11 @@ index 0000000..7bc24b7
 +    f.write_text("k" * (LIVE_KEY_MIN_CHARS - 1), encoding="utf-8")
 +    with pytest.raises(SettingRefused, match="empty or shorter than"):
 +        envnum.read_secret_file(f, "made-up key", "key")
-+    f.write_text("k k " + "k" * (LIVE_KEY_MIN_CHARS - 3), encoding="utf-8")  # spaces do not count toward the minimum
-+    assert envnum.read_secret_file(f, "made-up key", "key", strip_inner_space=True) == "kk" + "k" * (
-+        LIVE_KEY_MIN_CHARS - 3
-+    )
++    f.write_text("k k " + "k" * (LIVE_KEY_MIN_CHARS - 2), encoding="utf-8")  # spaces do not count toward the minimum
++    assert envnum.read_secret_file(f, "made-up key", "key", strip_inner_space=True) == "k" * LIVE_KEY_MIN_CHARS
++    f.write_text("k k " + "k" * (LIVE_KEY_MIN_CHARS - 3), encoding="utf-8")  # one short once the spaces are gone
++    with pytest.raises(SettingRefused, match="empty or shorter than"):
++        envnum.read_secret_file(f, "made-up key", "key", strip_inner_space=True)
 diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
 index 22baabc..cfce76d 100644
 --- a/tests/test_reset_scripts.py

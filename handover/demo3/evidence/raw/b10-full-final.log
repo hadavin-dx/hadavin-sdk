@@ -36,4 +36,38 @@
 ................................................ssssssssssssssss........ [ 65%]
 ........................................................................ [ 67%]
 .................................................ssssssssssssssssssss... [ 69%]
-.......ssssssssssssssssssss
+.......sssssssssssssssssssssss......sssssss.sssssssssssss..sss.......... [ 71%]
+..............................................ssssssssssssssssssssssssss [ 72%]
+........................................ssssssssssssssssssssssssssssssss [ 74%]
+s..........ss..s........................................................ [ 76%]
+........................................................................ [ 78%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 83%]
+........................................................................ [ 85%]
+................................................................s....... [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+..................................ssssssssssssss........................ [ 98%]
+..........s.....................................................         [100%]
+============================= slowest 15 durations =============================
+41.46s call     tests/test_hygiene.py::test_hygiene_scan_public
+28.37s call     tests/test_desk_edge_cases.py::test_burst_distinct_emails
+17.45s call     tests/test_desk_http_edge_cases.py::test_startup_50_pending
+15.48s call     tests/test_desk_edge_cases.py::test_startup_fast_reaper_sends
+11.36s teardown tests/test_portal_log.py::test_stored_list_covers_every_column
+10.06s call     tests/test_infra.py::test_connection_pragmas_and_busy_503
+10.03s call     tests/test_later_approval.py::test_decision_busy_is_503
+10.02s call     tests/test_mutants_more.py::test_mutant_resolve_size_check_removed
+9.95s call     tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[_clean]
+7.06s call     tests/test_desk_http_edge_cases.py::test_decision_write_retries_7s
+7.06s call     tests/test_desk_http_edge_cases.py::test_receipt_write_retries_7s
+6.62s call     tests/test_desk_edge_cases.py::test_burst_same_email
+6.45s call     tests/test_portal_api.py::test_big_book_is_fast_and_cheap
+6.38s call     tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[_LOCAL_BROKEN]
+5.74s call     tests/test_http.py::test_second_desk_refuses_to_start
+3783 passed, 169 skipped in 924.24s (0:15:24)
+rc=0

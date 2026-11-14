@@ -1,0 +1,241 @@
+........................................................................ [  1%]
+.................................FFF.................................... [  3%]
+........................................................................ [  5%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [ 10%]
+........................................................................ [ 12%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 17%]
+........................................................................ [ 19%]
+.....................................----------------------------------------.....----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 52064)
+.............................. [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 26%]
+..................................................F..................... [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 31%]
+........................................................................ [ 33%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+...................................ss...............................ssss [ 38%]
+s....s.................................................................. [ 40%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+...................................s.................................... [ 45%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+................F....................................................... [ 50%]
+........................................................................ [ 52%]
+..s..................................................................... [ 54%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 59%]
+........................................................................ [ 61%]
+........................................................................ [ 63%]
+ssssssssssssssss........................................................ [ 65%]
+........................................................................ [ 66%]
+.ssssssssssssssssssss..........sssssssssssssssssssssss......sssssss.ssss [ 68%]
+sssssssss..sss........................................................ss [ 70%]
+ssssssssssssssssssssssss........................................ssssssss [ 72%]
+sssssssssssssssssssssssss..........ss..s................................ [ 73%]
+........................................................................ [ 75%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 82%]
+........................................................................ [ 84%]
+................s....................................................... [ 86%]
+..s..................................................................... [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 91%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+....................................ssssssssssssss...................... [ 98%]
+............s.....................................................       [100%]
+=================================== FAILURES ===================================
+___________________ test_a_private_in_memory_book_is_refused ___________________
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt/test_a_private_in_memory_book_0')
+
+    def test_a_private_in_memory_book_is_refused(tmp_path: Path) -> None:
+        replies = tmp_path / "replies.json"
+        replies.write_text("{}", encoding="utf-8")
+        config = Config(db_path=Path(":memory:"), port=0, replies_path=replies)
+>       with pytest.raises(DeskSettingRefused, match="must be a file"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'must be a file'
+E         Actual message: "the lead-book path must name a file: ':memory:' is empty for every thread but the first"
+
+tests/test_codeant_desk.py:31: AssertionError
+____ test_main_refuses_a_memory_book_before_the_lock_step_and_makes_no_file ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fae5fc1dcd0>
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt/test_main_refuses_a_memory_boo0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fae5fc1cfb0>
+
+    def test_main_refuses_a_memory_book_before_the_lock_step_and_makes_no_file(
+        monkeypatch: Any, tmp_path: Path, capsys: Any
+    ) -> None:
+        """The lock file is named after the book (`<path>.lock`): a refusal that came after the lock step left a stray
+        `:memory:.lock` in the working folder at every refused start."""
+        work = tmp_path / "cwd"
+        work.mkdir()
+        monkeypatch.chdir(work)
+        monkeypatch.setenv("DESK_DB_PATH", ":memory:")
+        monkeypatch.setenv("DESK_PORT", "0")
+        assert _main_within(MAIN_WAIT_SECONDS) == EXIT_DESK_SETTING_REFUSED
+>       assert "must be a file" in capsys.readouterr().out
+E       assert 'must be a file' in "the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n"
+E        +  where "the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n" = CaptureResult(out="the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n", err='').out
+E        +    where CaptureResult(out="the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n", err='') = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x7fae5fc1cfb0>.readouterr
+
+/home/user/work/b13-tree/tests/test_codeant_desk.py:66: AssertionError
+______ test_main_refuses_a_memory_book_even_when_server_desk_is_replaced _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fae5fc1df10>
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt/test_main_refuses_a_memory_boo1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fae5fc1dac0>
+
+    def test_main_refuses_a_memory_book_even_when_server_desk_is_replaced(
+        monkeypatch: Any, tmp_path: Path, capsys: Any
+    ) -> None:
+        """The refusal must not reach for the name `server.Desk` (a test or a wrapper may replace it): it runs from its
+        own function, before the desk is built, so the refusal still comes (and the stand-in is never called)."""
+        called: list[str] = []
+    
+        def stand_in(*a: Any, **k: Any) -> Any:
+            called.append("built")
+            raise ValueError("some other problem")
+    
+        work = tmp_path / "cwd"
+        work.mkdir()
+        monkeypatch.chdir(work)
+        monkeypatch.setenv("DESK_DB_PATH", ":memory:")
+        monkeypatch.setenv("DESK_PORT", "0")
+        monkeypatch.setattr(server, "Desk", stand_in)
+        assert _main_within(MAIN_WAIT_SECONDS) == EXIT_DESK_SETTING_REFUSED
+>       assert "must be a file" in capsys.readouterr().out
+E       assert 'must be a file' in "the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n"
+E        +  where "the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n" = CaptureResult(out="the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n", err='').out
+E        +    where CaptureResult(out="the desk refuses to start: the lead-book path must name a file: ':memory:' is empty for every thread but the first\n", err='') = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x7fae5fc1dac0>.readouterr
+
+/home/user/work/b13-tree/tests/test_codeant_desk.py:89: AssertionError
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         tests/test_one_key_file_rule_and_path_walk.py:463:============================================================================================
+E       assert not ['tests/test_one_key_file_rule_and_path_walk.py:463:============================================================================================']
+
+tests/test_hygiene.py:146: AssertionError
+_____________ test_the_key_length_boundary_is_exactly_the_minimum ______________
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt/test_the_key_length_boundary_i0')
+
+    def test_the_key_length_boundary_is_exactly_the_minimum(tmp_path: Path) -> None:
+        from lead_desk.constants import LIVE_KEY_MIN_CHARS
+    
+        f = tmp_path / "k.txt"
+        f.write_text("k" * LIVE_KEY_MIN_CHARS, encoding="utf-8")
+        assert envnum.read_secret_file(f, "made-up key", "key") == "k" * LIVE_KEY_MIN_CHARS
+        f.write_text("k" * (LIVE_KEY_MIN_CHARS - 1), encoding="utf-8")
+        with pytest.raises(SettingRefused, match="empty or shorter than"):
+            envnum.read_secret_file(f, "made-up key", "key")
+        f.write_text("k k " + "k" * (LIVE_KEY_MIN_CHARS - 3), encoding="utf-8")  # spaces do not count toward the minimum
+>       assert envnum.read_secret_file(f, "made-up key", "key", strip_inner_space=True) == "kk" + "k" * (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            LIVE_KEY_MIN_CHARS - 3
+        )
+
+tests/test_one_key_file_rule_and_path_walk.py:653: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/home/user/work/priv/b13-tmp/bt/test_the_key_length_boundary_i0/k.txt')
+what = 'made-up key', noun = 'key', strip_inner_space = True
+
+    def read_secret_file(path: Path, what: str, noun: str, *, strip_inner_space: bool = False) -> str:
+        """The one rule for every secret file (a key or a password): a regular file (a folder, a named pipe or a device is
+        refused without being read), one line, at most SECRET_FILE_MAX_BYTES, UTF-8 (a byte-order mark is accepted), at
+        least LIVE_KEY_MIN_CHARS printable ASCII characters and no space or other blank inside. `strip_inner_space=True`
+        (the SMTP password only: providers show an app password in groups of letters) drops the plain spaces (U+0020) inside
+        instead of refusing them; a tab, a no-break space or any other blank inside is still refused. `what` names the file
+        in every text ("the {what} file ...") and `noun` the content ("key" or "password"). A refusal is a SettingRefused
+        whose text is fixed: it holds neither the path nor the content. The kinds wrap it in their own error
+        type; none imports another."""
+        try:
+            # O_NONBLOCK: opening a named pipe for reading would wait for a writer; the check below refuses it instead
+            fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0))
+        except (OSError, ValueError):  # ValueError: an embedded NUL in the path
+            raise SettingRefused(f"the {what} file cannot be read") from None  # the OS error holds the path
+        try:
+            if not stat.S_ISREG(os.fstat(fd).st_mode):  # on the open handle: nothing can be swapped in after the check
+                raise SettingRefused(f"the {what} file cannot be read")
+            with os.fdopen(fd, "rb", closefd=False) as f:
+                raw = f.read(SECRET_FILE_MAX_BYTES + 1)
+        except OSError:
+            raise SettingRefused(f"the {what} file cannot be read") from None
+        finally:
+            os.close(fd)
+        if len(raw) > SECRET_FILE_MAX_BYTES:
+            raise SettingRefused(f"the {what} file is too large: it must hold only the {noun}")
+        if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+            raise SettingRefused(f"the {what} file is UTF-16 text: save it as plain UTF-8 text")
+        try:
+            text = raw.decode("utf-8-sig").strip()
+        except UnicodeError:
+            raise SettingRefused(f"the {what} file is not UTF-8 text: save it as plain UTF-8 text") from None
+        if "\n" in text or "\r" in text:
+            raise SettingRefused(f"the {what} file has more than one line: it must hold only the {noun}")
+        secret = text.replace(" ", "") if strip_inner_space else text
+        if len(secret) < LIVE_KEY_MIN_CHARS:
+>           raise SettingRefused(
+                f"the {what} file is empty or shorter than {LIVE_KEY_MIN_CHARS} characters: it must hold the {noun}"
+            )
+E           lead_desk.envnum.SettingRefused: the made-up key file is empty or shorter than 8 characters: it must hold the key
+
+src/lead_desk/envnum.py:138: SettingRefused
+=========================== short test summary info ============================
+SKIPPED [22] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+SKIPPED [1] tests/test_path_confinement.py:284: ntpath.isreserved needs Python 3.13
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [113] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_settings_lane3.py:247: root ignores folder permissions: an unwritable folder cannot be tested as root
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+5 failed, 3922 passed, 171 skipped in 1104.17s (0:18:24)
+rc=1

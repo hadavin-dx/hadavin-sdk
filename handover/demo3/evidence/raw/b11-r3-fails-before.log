@@ -1,0 +1,29 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_the_data_folder_check_keeps_an_exit_code_that_is_not_a_plain_pass ____
+
+tmp_path = PosixPath('/home/user/work/priv/b11-tmp/bt3/test_the_data_folder_check_kee0')
+
+    def test_the_data_folder_check_keeps_an_exit_code_that_is_not_a_plain_pass(tmp_path: Path) -> None:
+        """A run that already ended with a usage-style code keeps that code; the message about data still shows."""
+        probe = (
+            "from pathlib import Path\n\nimport pytest\n\n"
+            "def test_leaves_data_then_stops():\n"
+            "    (Path(__file__).resolve().parent.parent / 'data').mkdir()\n"
+            "    pytest.exit('stop here', returncode=4)\n"
+        )
+        done, copy = _run_in_copy(tmp_path, probe)
+        assert (copy / "data").is_dir(), "the probe must have made the folder"
+>       assert done.returncode == 4, ("the original exit code was replaced", done.returncode, done.stdout[-1500:])
+E       AssertionError: ('the original exit code was replaced', 1, 'FAILED: this run left a data folder in the repository (/home/user/work/pri...move it.
+E         
+E         no tests ran in 0.14s
+E         !!!!!!!!!!!!!!!!!!!!!!! _pytest.outcomes.Exit: stop here !!!!!!!!!!!!!!!!!!!!!!!
+E         ')
+E       assert 1 == 4
+E        +  where 1 = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '-m', 'pytest', '-p', 'no:cacheprovider', '-q', '--bas...nno tests ran in 0.14s\n!!!!!!!!!!!!!!!!!!!!!!! _pytest.outcomes.Exit: stop here !!!!!!!!!!!!!!!!!!!!!!!\n', stderr='').returncode
+
+tests/test_data_folder_helper.py:167: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_data_folder_helper.py::test_the_data_folder_check_keeps_an_exit_code_that_is_not_a_plain_pass
+1 failed, 9 deselected in 0.57s

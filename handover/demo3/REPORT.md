@@ -1,3 +1,34 @@
+## HEARTBEAT 88 (04:27Z) - FIX-8 R3 CLOSED (REVIEWS CLEAN, FULL RUN ON R2 PASSED); STACK DRY RUN SHOWS REAL CONFLICTS; NEEDED-CHECK STARTED
+
+| Agent | Job | State |
+|---|---|---|
+| EV10 | fix-8 r2 full serial run, 3.13, gitleaks, DPLD_REQUIRE_SCAN=1 | CLOSED. I read the tail: `3783 passed, 169 skipped in 924.24s (0:15:24)`, rc 0, no FAILED/ERROR. An empty data/ folder was left (created 04:22Z during the run; fix-9 is not in this patch, so this is the known base creator). |
+| R8c | fresh review of fix-8 r3 delta | CLOSED: 0 blocker, 0 major, 0 minor, 2 nit (evidence/review-lane3-fix-8-r3-delta.md). My own slip: the delta file I gave the reviewer left out contract.md; the reviewer read the r3 tree anyway and judged that sentence correct against the code; I regenerated the delta with all 3 changed files. |
+| fix-8 r3 status | | built (3e07f8ab), r2 full run green, r3 subset 98 passed, reviews clean; no full run on r3 itself (stack run covers it, lead agreed). |
+| B11 | fix-9 r3 | RUNNING; patch lane3-fix-9-r3.patch exists, no report yet (stop 04:55Z) |
+| B12 | fix-5 r6 | RUNNING; interim only. Not overdue (stop about 05:03Z). |
+| B13 | fix-2 r5 | RUNNING; interim only. Not overdue (stop about 05:03Z). |
+| NC1 | NEEDED-CHECK duplicate check across fix-1, 2, 5, 8, 9 (lead order 04:23Z) | RUNNING (egm zoom-out reviewer, read-only), result into patch-status.md, about 04:40Z |
+
+STACK DRY RUN (04:22Z, scratch tree, interim fix-5/fix-2 files; details in evidence/patch-status.md): applying in the ordered sequence, claims, fix-1 r6 and fix-2 r5 apply clean; fix-5 r6 FAILS (README.md:46); fix-8 r3 FAILS (config.py:54, smtp_provider.py, because fix-2 changes the same code); fix-9 r3 applies, but will meet fix-5 on tests/conftest.py, tests/support.py, tests/test_reset_scripts.py; the demo docs patches 0001 and 0002 FAIL with git am, also with --3way (README.md:55, docs/tests.md:23, same lines changed by claims, fix-1, fix-5, fix-8), and 0001 and 0002 overlap each other. So no complete stack exists yet; one stack builder must re-cut after B11, B12, B13 report. Question for lead: is the "frozen claims series" = claims-stack-on-f3c39cf8.patch (v1 to v2b, v3 ignored)? And do 0001 and 0002 both apply, or does 0002 replace 0001?
+
+FAILURES AND RETRIES: no test failures this block; stack dry run: 4 patch applications failed (fix-5, fix-8, 0001, 0002) as above. My slips: register times written ahead of the real clock again (04:28Z instead of 04:26Z; corrected in the files).
+ASK list: the two questions above.
+Load (measured 04:26Z): about 1.2, B11, B12, B13, NC1 running.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Stack: not built (needs final B11/B12/B13 patches and conflict re-cuts); stack full run, browser tests and clean-tree check not done.
+- fix-9 r3, fix-5 r6, fix-2 r5: no final patch, no fresh review of the new versions; WINDOWS-RUN-1.md not written (waits for fix-5 r6).
+- fix-10 (crash_desk.py traceback): not started (queued).
+- Browser skip reasons: M9 shows 166 browser skips all "playwright not importable"; M6's 646 passed run had playwright; no other browser skip reason seen so far; I have not yet read M6's -rs.
+- reset.ps1, start_all.ps1 never run (no PowerShell here).
+- Python 3.11, ruff, mypy, bandit, gitleaks on CI: not run.
+
+WHAT I WOULD DO NEXT (ranked)
+1. As B11, B12, B13 report: tail check, fresh reviewer on the new version, resolve any Major; start the stack builder to re-cut the conflicts.
+2. Fold NC1's table into patch-status.md and tell the lead which changes should merge into one place.
+3. fix-10 (crash_desk.py) after the stack builder is running; write WINDOWS-RUN-1.md when fix-5 r6 is final.
+
 ## HEARTBEAT 87 (04:17Z) - FIX-8 R2 REVIEWED (0 BLOCKER, 0 MAJOR), R3 BUILT FOR THE 4 POINTS; EV10 AT ABOUT 60 PERCENT; B11, B12, B13 RUNNING
 
 | Agent | Job | State |
