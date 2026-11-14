@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 03:08Z: CLEAN-MACHINE: B running (chunk 06 of 12), C2 running (end-to-end on python 3.13), reviewer R done
+- LOAD: 2 agents running (B suite, C2 e2e 3.13).
+- B so far: chunks 00,01,04,05 pass. Chunks 02 and 03 FAILED (30 tests) only because the gitleaks program is not installed on a clean machine (message "gitleaks binary not found: put it on PATH or set GITLEAKS_BIN") with DPLD_REQUIRE_SCAN=1. Re-run with the 8.30.1 binary: both rc 0. FINDING: a stranger running the suite as the order says hits this; need to check whether any doc tells them to install gitleaks.
+- R (read-only first-reader review of README + A + C): 9 gaps in handover/demo/clean-machine/R-gaps.md: 1 Blocker (crash command, already fixed in the frozen claims series), 5 Major, 3 Nit. Open ones: G2 stop-the-desk-first sentence, G3 webhook prints 200 not 201, G5 curl -s, G6 README omits Node and Playwright for some tests, G8 python3 -V check.
+- Pushed: A-quickstart.md, C-e2e.md, R-gaps.md in handover/demo/clean-machine/. CLEAN-MACHINE-1.md follows when B ends.
+
+## REPORT 03:00Z: CLEAN-MACHINE: A and C DONE, B (suite) running
+- LOAD: 1 agent running (B, chunks 00-03 done of 12, one heavy pytest at a time). A and C finished.
+- A (README quick start, python 3.12.3 and 3.13.18, fresh clones, nothing installed): all 13 steps rc 0 on both; counts received 2 / new 1 / duplicate 1, outbox 1; reset done; ports free. Minor findings: webhook feed prints 200 (README comment names only the verdict); webhook receipt number 3 vs counts 2 not explained; curl lines without -s show a progress table when piped. Not run: pytest, portal, blind mode.
+- C (end-to-end under unshare -n, python 3.12): README steps work; the documented crash command on origin/main (PYTHONPATH=src) FAILS: "folder demo_only is missing" (exit 1). With src:. the scene runs: crash at D2 (exit 137), restart, re-send: final received 4, new 2, duplicate 2, 2 leads, 2 CRM contacts, 2 mails (one per person), review/open/unknown/failed 0, stable. Cleanup rc 0, ports free.
+- NOTE: the frozen claims series (49d3c859) ALREADY fixes C's crash-command finding (docs/tests.md line 26 and the script header say src:. and why). So that fix ships with the claims PR; no second patch needed.
+- NEXT: when B ends, write CLEAN-MACHINE-1.md; then one read-only egm reviewer (README plus that file) for first-reader gaps. Findings stay as text/patch under handover/demo/clean-machine/.
+
 ## REPORT 02:55Z: CLEAN-MACHINE VERIFICATION STARTED (order 02:49Z)
 - LOAD: 3 agents running (sonnet, background): A quick start on python 3.12 then 3.13; B full suite, 3.12, DPLD_REQUIRE_SCAN=1, 12 resumable chunks, rc from pytest itself; C end-to-end scenario (both doors, crash, restart, re-send) under unshare -n. Each uses its own clone of origin/main (head f3c39cf, same as before) in /tmp/cm1.
 - STATUS: briefs written (STUDIO-PREAMBLE v1 first). Next: evidence runner collects the three reports into handover/demo/CLEAN-MACHINE-1.md; then a read-only egm reviewer lists first-reader gaps.
