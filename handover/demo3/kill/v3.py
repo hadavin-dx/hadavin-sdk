@@ -54,7 +54,7 @@ def main():
             alerts = [m for m in mails if lead in m.get("subject", "") and "alerts@example.test" in str(m.get("rcpt"))]
             intake = [m for m in mails if lead in m.get("subject", "") and "intake@example.test" in str(m.get("rcpt"))]
             snap = (rw, len(intake), len(alerts))
-            if not timeline or timeline[-1][1:] != snap:
+            if not timeline or timeline[-1][1:] != list(snap):
                 timeline.append([round(time.time() - t0), *snap])
             if rw and rw[3] == "t" and sent_true_at is None:
                 sent_true_at = time.time()
