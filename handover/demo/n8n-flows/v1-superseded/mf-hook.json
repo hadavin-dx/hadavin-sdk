@@ -1,0 +1,655 @@
+{
+ "name": "Lead desk main frame: e-mail-style entry",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "mf-hook",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "name": "Receive",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "webhookId": "mf-hook-wh"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "lead_key",
+       "name": "lead_key",
+       "value": "={{ $json.body.message_id }}",
+       "type": "string"
+      },
+      {
+       "id": "email",
+       "name": "email",
+       "value": "={{ $json.body.from_email }}",
+       "type": "string"
+      },
+      {
+       "id": "name",
+       "name": "name",
+       "value": "={{ $json.body.from_name }}",
+       "type": "string"
+      },
+      {
+       "id": "mail_sent",
+       "name": "mail_sent",
+       "value": false,
+       "type": "boolean"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "name": "Item",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "INSERT INTO mf_leads(lead_key,email,name) VALUES ($1,$2,$3) ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key;",
+    "options": {
+     "queryReplacement": "={{ [$json.lead_key, $json.email, $json.name] }}"
+    }
+   },
+   "name": "Insert",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    440,
+    0
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.lead_key }}",
+       "rightValue": null,
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Inserted",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    660,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT state, label FROM mf_leads WHERE lead_key=$1;",
+    "options": {
+     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
+    }
+   },
+   "name": "StoredState",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    880,
+    300
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ { n8n_error: false, lead_key: $('Item').item.json.lead_key, state: $json.state, verdict: $json.state === 'done' ? 'new' : ($json.state === 'unknown' ? 'needs_person' : null), repeat: true } }}",
+    "options": {
+     "responseCode": 200
+    }
+   },
+   "name": "ReplyRepeat",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1100,
+    300
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $env.MF_STAGE_URL }}/qualify",
+    "sendBody": true,
+    "contentType": "json",
+    "specifyBody": "json",
+    "jsonBody": "={{ { lead_key: $('Item').item.json.lead_key, email: $('Item').item.json.email } }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "name": "Qualify",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    880,
+    -100
+   ],
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 1000
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "UPDATE mf_leads SET label=$2, updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
+    "options": {
+     "queryReplacement": "={{ [$('Item').item.json.lead_key, $json.label] }}"
+    }
+   },
+   "name": "SaveLabel",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    1100,
+    -100
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $env.MF_CRM_URL }}/search",
+    "sendBody": true,
+    "contentType": "json",
+    "specifyBody": "json",
+    "jsonBody": "={{ { lead_key: $('Item').item.json.lead_key } }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "name": "CrmSearch",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1320,
+    -100
+   ],
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 1000
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.results.length }}",
+       "rightValue": 0,
+       "operator": {
+        "type": "number",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "CrmNone",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1540,
+    -100
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $env.MF_CRM_URL }}/create",
+    "sendBody": true,
+    "contentType": "json",
+    "specifyBody": "json",
+    "jsonBody": "={{ { lead_key: $('Item').item.json.lead_key, email: $('Item').item.json.email, label: $('Qualify').item.json.label } }}",
+    "options": {
+     "timeout": 15000
+    }
+   },
+   "name": "CrmCreate",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1760,
+    -180
+   ]
+  },
+  {
+   "parameters": {},
+   "name": "CrmExists",
+   "type": "n8n-nodes-base.noOp",
+   "typeVersion": 1,
+   "position": [
+    1760,
+    -20
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "UPDATE mf_leads SET state='crm_done', updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
+    "options": {
+     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
+    }
+   },
+   "name": "SetCrm",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    1980,
+    -100
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $('Item').item.json.mail_sent }}",
+       "rightValue": null,
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "MailAlready",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    2200,
+    -100
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "UPDATE mf_leads SET state='unknown', updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
+    "options": {
+     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
+    }
+   },
+   "name": "MarkUnknown",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    2420,
+    20
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "UPDATE mf_leads SET mail_sent=true, updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
+    "options": {
+     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
+    }
+   },
+   "name": "MarkMailSent",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    2420,
+    -160
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "fromEmail": "desk@example.test",
+    "toEmail": "={{ $('Item').item.json.email }}",
+    "subject": "={{ 'Thanks, ref ' + $('Item').item.json.lead_key }}",
+    "emailFormat": "text",
+    "text": "made-up thank-you text",
+    "options": {
+     "appendAttribution": false
+    }
+   },
+   "name": "SendMail",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    2640,
+    -160
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "SMTP_CREDENTIAL_ID",
+     "name": "mf-mail-smtp"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "UPDATE mf_leads SET state='done', updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
+    "options": {
+     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
+    }
+   },
+   "name": "MarkDone",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    2860,
+    -160
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ { n8n_error: false, lead_key: $('Item').item.json.lead_key, state: 'done', verdict: 'new', label: $('Qualify').item.json.label, repeat: false } }}",
+    "options": {
+     "responseCode": 200
+    }
+   },
+   "name": "ReplyDone",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    3000,
+    -160
+   ]
+  }
+ ],
+ "connections": {
+  "Receive": {
+   "main": [
+    [
+     {
+      "node": "Item",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Item": {
+   "main": [
+    [
+     {
+      "node": "Insert",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Insert": {
+   "main": [
+    [
+     {
+      "node": "Inserted",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Inserted": {
+   "main": [
+    [
+     {
+      "node": "Qualify",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "StoredState",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Qualify": {
+   "main": [
+    [
+     {
+      "node": "SaveLabel",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "SaveLabel": {
+   "main": [
+    [
+     {
+      "node": "CrmSearch",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "CrmSearch": {
+   "main": [
+    [
+     {
+      "node": "CrmNone",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "CrmNone": {
+   "main": [
+    [
+     {
+      "node": "CrmCreate",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "CrmExists",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "CrmCreate": {
+   "main": [
+    [
+     {
+      "node": "SetCrm",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "CrmExists": {
+   "main": [
+    [
+     {
+      "node": "SetCrm",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "SetCrm": {
+   "main": [
+    [
+     {
+      "node": "MailAlready",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "MailAlready": {
+   "main": [
+    [
+     {
+      "node": "MarkUnknown",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "MarkMailSent",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "MarkMailSent": {
+   "main": [
+    [
+     {
+      "node": "SendMail",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "SendMail": {
+   "main": [
+    [
+     {
+      "node": "MarkDone",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "MarkDone": {
+   "main": [
+    [
+     {
+      "node": "ReplyDone",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "StoredState": {
+   "main": [
+    [
+     {
+      "node": "ReplyRepeat",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "saveDataSuccessExecution": "none",
+  "saveDataErrorExecution": "none",
+  "saveManualExecutions": false
+ }
+}

@@ -38,12 +38,6 @@
        "name": "name",
        "value": "={{ $json.body.from_name }}",
        "type": "string"
-      },
-      {
-       "id": "mail_sent",
-       "name": "mail_sent",
-       "value": false,
-       "type": "boolean"
       }
      ]
     },
@@ -59,17 +53,57 @@
   },
   {
    "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "lead_key",
+       "name": "lead_key",
+       "value": "={{ $json.lead_key }}",
+       "type": "string"
+      },
+      {
+       "id": "email",
+       "name": "email",
+       "value": "={{ $json.email }}",
+       "type": "string"
+      },
+      {
+       "id": "name",
+       "name": "name",
+       "value": "={{ $json.name }}",
+       "type": "string"
+      },
+      {
+       "id": "valid",
+       "name": "valid",
+       "value": "={{ /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test($json.email) }}",
+       "type": "boolean"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "name": "Valid",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    440,
+    0
+   ]
+  },
+  {
+   "parameters": {
     "operation": "executeQuery",
-    "query": "INSERT INTO mf_leads(lead_key,email,name) VALUES ($1,$2,$3) ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key;",
+    "query": "INSERT INTO mf_leads(lead_key,email,name,state,claimed_until,claim_token,attempts) VALUES ($1,$2,$3, CASE WHEN $4::boolean THEN 'processing' ELSE 'review' END, now() + interval '120 seconds', gen_random_uuid()::text, CASE WHEN $4::boolean THEN 1 ELSE 0 END) ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;",
     "options": {
-     "queryReplacement": "={{ [$json.lead_key, $json.email, $json.name] }}"
+     "queryReplacement": "={{ [$json.lead_key, $json.email, $json.name, $json.valid] }}"
     }
    },
-   "name": "Insert",
+   "name": "Claim",
    "type": "n8n-nodes-base.postgres",
    "typeVersion": 2.5,
    "position": [
-    440,
+    660,
     0
    ],
    "credentials": {
@@ -104,121 +138,13 @@
     },
     "options": {}
    },
-   "name": "Inserted",
+   "name": "Claimed",
    "type": "n8n-nodes-base.if",
    "typeVersion": 2.2,
    "position": [
-    660,
+    880,
     0
    ]
-  },
-  {
-   "parameters": {
-    "operation": "executeQuery",
-    "query": "SELECT state, label FROM mf_leads WHERE lead_key=$1;",
-    "options": {
-     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
-    }
-   },
-   "name": "StoredState",
-   "type": "n8n-nodes-base.postgres",
-   "typeVersion": 2.5,
-   "position": [
-    880,
-    300
-   ],
-   "credentials": {
-    "postgres": {
-     "id": "PG_CREDENTIAL_ID",
-     "name": "n8n-publish-pg"
-    }
-   },
-   "alwaysOutputData": true
-  },
-  {
-   "parameters": {
-    "respondWith": "json",
-    "responseBody": "={{ { n8n_error: false, lead_key: $('Item').item.json.lead_key, state: $json.state, verdict: $json.state === 'done' ? 'new' : ($json.state === 'unknown' ? 'needs_person' : null), repeat: true } }}",
-    "options": {
-     "responseCode": 200
-    }
-   },
-   "name": "ReplyRepeat",
-   "type": "n8n-nodes-base.respondToWebhook",
-   "typeVersion": 1.4,
-   "position": [
-    1100,
-    300
-   ]
-  },
-  {
-   "parameters": {
-    "method": "POST",
-    "url": "={{ $env.MF_STAGE_URL }}/qualify",
-    "sendBody": true,
-    "contentType": "json",
-    "specifyBody": "json",
-    "jsonBody": "={{ { lead_key: $('Item').item.json.lead_key, email: $('Item').item.json.email } }}",
-    "options": {
-     "timeout": 15000
-    }
-   },
-   "name": "Qualify",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    880,
-    -100
-   ],
-   "retryOnFail": true,
-   "maxTries": 3,
-   "waitBetweenTries": 1000
-  },
-  {
-   "parameters": {
-    "operation": "executeQuery",
-    "query": "UPDATE mf_leads SET label=$2, updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
-    "options": {
-     "queryReplacement": "={{ [$('Item').item.json.lead_key, $json.label] }}"
-    }
-   },
-   "name": "SaveLabel",
-   "type": "n8n-nodes-base.postgres",
-   "typeVersion": 2.5,
-   "position": [
-    1100,
-    -100
-   ],
-   "credentials": {
-    "postgres": {
-     "id": "PG_CREDENTIAL_ID",
-     "name": "n8n-publish-pg"
-    }
-   },
-   "alwaysOutputData": true
-  },
-  {
-   "parameters": {
-    "method": "POST",
-    "url": "={{ $env.MF_CRM_URL }}/search",
-    "sendBody": true,
-    "contentType": "json",
-    "specifyBody": "json",
-    "jsonBody": "={{ { lead_key: $('Item').item.json.lead_key } }}",
-    "options": {
-     "timeout": 15000
-    }
-   },
-   "name": "CrmSearch",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1320,
-    -100
-   ],
-   "retryOnFail": true,
-   "maxTries": 3,
-   "waitBetweenTries": 1000
   },
   {
    "parameters": {
@@ -231,10 +157,10 @@
      "conditions": [
       {
        "id": "c1",
-       "leftValue": "={{ $json.results.length }}",
-       "rightValue": 0,
+       "leftValue": "={{ $json.state }}",
+       "rightValue": "processing",
        "operator": {
-        "type": "number",
+        "type": "string",
         "operation": "equals"
        }
       }
@@ -243,184 +169,115 @@
     },
     "options": {}
    },
-   "name": "CrmNone",
+   "name": "IsProcessing",
    "type": "n8n-nodes-base.if",
    "typeVersion": 2.2,
    "position": [
-    1540,
+    1100,
     -100
    ]
   },
   {
    "parameters": {
-    "method": "POST",
-    "url": "={{ $env.MF_CRM_URL }}/create",
-    "sendBody": true,
-    "contentType": "json",
-    "specifyBody": "json",
-    "jsonBody": "={{ { lead_key: $('Item').item.json.lead_key, email: $('Item').item.json.email, label: $('Qualify').item.json.label } }}",
-    "options": {
-     "timeout": 15000
-    }
-   },
-   "name": "CrmCreate",
-   "type": "n8n-nodes-base.httpRequest",
-   "typeVersion": 4.2,
-   "position": [
-    1760,
-    -180
-   ]
-  },
-  {
-   "parameters": {},
-   "name": "CrmExists",
-   "type": "n8n-nodes-base.noOp",
-   "typeVersion": 1,
-   "position": [
-    1760,
-    -20
-   ]
-  },
-  {
-   "parameters": {
-    "operation": "executeQuery",
-    "query": "UPDATE mf_leads SET state='crm_done', updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
-    "options": {
-     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
-    }
-   },
-   "name": "SetCrm",
-   "type": "n8n-nodes-base.postgres",
-   "typeVersion": 2.5,
-   "position": [
-    1980,
-    -100
-   ],
-   "credentials": {
-    "postgres": {
-     "id": "PG_CREDENTIAL_ID",
-     "name": "n8n-publish-pg"
-    }
-   },
-   "alwaysOutputData": true
-  },
-  {
-   "parameters": {
-    "conditions": {
-     "options": {
-      "caseSensitive": true,
-      "leftValue": "",
-      "typeValidation": "loose"
-     },
-     "conditions": [
+    "assignments": {
+     "assignments": [
       {
-       "id": "c1",
-       "leftValue": "={{ $('Item').item.json.mail_sent }}",
-       "rightValue": null,
-       "operator": {
-        "type": "boolean",
-        "operation": "true",
-        "singleValue": true
-       }
+       "id": "lead_key",
+       "name": "lead_key",
+       "value": "={{ $json.lead_key }}",
+       "type": "string"
+      },
+      {
+       "id": "claim_token",
+       "name": "claim_token",
+       "value": "={{ $json.claim_token }}",
+       "type": "string"
+      },
+      {
+       "id": "email",
+       "name": "email",
+       "value": "={{ $('Valid').item.json.email }}",
+       "type": "string"
       }
-     ],
-     "combinator": "and"
+     ]
     },
     "options": {}
    },
-   "name": "MailAlready",
-   "type": "n8n-nodes-base.if",
-   "typeVersion": 2.2,
+   "name": "SubInput",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
    "position": [
-    2200,
-    -100
+    1320,
+    -160
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "value": "SUB_WORKFLOW_ID",
+     "mode": "id"
+    },
+    "mode": "each",
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   },
+   "name": "RunSub",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.2,
+   "position": [
+    1540,
+    -160
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ { n8n_error: false, lead_key: $json.lead_key, verdict: { done: 'new', unknown: 'unknown', stage_failed: 'processing', lost_claim: 'processing' }[$json.outcome] || 'processing' } }}",
+    "options": {
+     "responseCode": 200
+    }
+   },
+   "name": "ReplyRan",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1760,
+    -160
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ { n8n_error: false, lead_key: $('Valid').item.json.lead_key, verdict: 'review' } }}",
+    "options": {
+     "responseCode": 200
+    }
+   },
+   "name": "ReplyReview",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1320,
+    20
    ]
   },
   {
    "parameters": {
     "operation": "executeQuery",
-    "query": "UPDATE mf_leads SET state='unknown', updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
+    "query": "SELECT state FROM mf_leads WHERE lead_key=$1;",
     "options": {
-     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
+     "queryReplacement": "={{ [$('Valid').item.json.lead_key] }}"
     }
    },
-   "name": "MarkUnknown",
+   "name": "Stored",
    "type": "n8n-nodes-base.postgres",
    "typeVersion": 2.5,
    "position": [
-    2420,
-    20
-   ],
-   "credentials": {
-    "postgres": {
-     "id": "PG_CREDENTIAL_ID",
-     "name": "n8n-publish-pg"
-    }
-   },
-   "alwaysOutputData": true
-  },
-  {
-   "parameters": {
-    "operation": "executeQuery",
-    "query": "UPDATE mf_leads SET mail_sent=true, updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
-    "options": {
-     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
-    }
-   },
-   "name": "MarkMailSent",
-   "type": "n8n-nodes-base.postgres",
-   "typeVersion": 2.5,
-   "position": [
-    2420,
-    -160
-   ],
-   "credentials": {
-    "postgres": {
-     "id": "PG_CREDENTIAL_ID",
-     "name": "n8n-publish-pg"
-    }
-   },
-   "alwaysOutputData": true
-  },
-  {
-   "parameters": {
-    "fromEmail": "desk@example.test",
-    "toEmail": "={{ $('Item').item.json.email }}",
-    "subject": "={{ 'Thanks, ref ' + $('Item').item.json.lead_key }}",
-    "emailFormat": "text",
-    "text": "made-up thank-you text",
-    "options": {
-     "appendAttribution": false
-    }
-   },
-   "name": "SendMail",
-   "type": "n8n-nodes-base.emailSend",
-   "typeVersion": 2.1,
-   "position": [
-    2640,
-    -160
-   ],
-   "credentials": {
-    "smtp": {
-     "id": "SMTP_CREDENTIAL_ID",
-     "name": "mf-mail-smtp"
-    }
-   }
-  },
-  {
-   "parameters": {
-    "operation": "executeQuery",
-    "query": "UPDATE mf_leads SET state='done', updated_at=now() WHERE lead_key=$1 RETURNING lead_key;",
-    "options": {
-     "queryReplacement": "={{ [$('Item').item.json.lead_key] }}"
-    }
-   },
-   "name": "MarkDone",
-   "type": "n8n-nodes-base.postgres",
-   "typeVersion": 2.5,
-   "position": [
-    2860,
-    -160
+    1100,
+    240
    ],
    "credentials": {
     "postgres": {
@@ -433,17 +290,17 @@
   {
    "parameters": {
     "respondWith": "json",
-    "responseBody": "={{ { n8n_error: false, lead_key: $('Item').item.json.lead_key, state: 'done', verdict: 'new', label: $('Qualify').item.json.label, repeat: false } }}",
+    "responseBody": "={{ { n8n_error: false, lead_key: $('Valid').item.json.lead_key, verdict: ({ done: 'done', processing: 'processing', new: 'processing', review: 'review', unknown: 'unknown', failed: 'failed' })[$json.state] || 'processing', repeat: true } }}",
     "options": {
      "responseCode": 200
     }
    },
-   "name": "ReplyDone",
+   "name": "ReplyStored",
    "type": "n8n-nodes-base.respondToWebhook",
    "typeVersion": 1.4,
    "position": [
-    3000,
-    -160
+    1320,
+    240
    ]
   }
  ],
@@ -463,182 +320,98 @@
    "main": [
     [
      {
-      "node": "Insert",
+      "node": "Valid",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "Insert": {
+  "Valid": {
    "main": [
     [
      {
-      "node": "Inserted",
+      "node": "Claim",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "Inserted": {
+  "Claim": {
    "main": [
     [
      {
-      "node": "Qualify",
+      "node": "Claimed",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Claimed": {
+   "main": [
+    [
+     {
+      "node": "IsProcessing",
       "type": "main",
       "index": 0
      }
     ],
     [
      {
-      "node": "StoredState",
+      "node": "Stored",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "Qualify": {
+  "IsProcessing": {
    "main": [
     [
      {
-      "node": "SaveLabel",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "SaveLabel": {
-   "main": [
-    [
-     {
-      "node": "CrmSearch",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "CrmSearch": {
-   "main": [
-    [
-     {
-      "node": "CrmNone",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "CrmNone": {
-   "main": [
-    [
-     {
-      "node": "CrmCreate",
+      "node": "SubInput",
       "type": "main",
       "index": 0
      }
     ],
     [
      {
-      "node": "CrmExists",
+      "node": "ReplyReview",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "CrmCreate": {
+  "SubInput": {
    "main": [
     [
      {
-      "node": "SetCrm",
+      "node": "RunSub",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "CrmExists": {
+  "RunSub": {
    "main": [
     [
      {
-      "node": "SetCrm",
+      "node": "ReplyRan",
       "type": "main",
       "index": 0
      }
     ]
    ]
   },
-  "SetCrm": {
+  "Stored": {
    "main": [
     [
      {
-      "node": "MailAlready",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "MailAlready": {
-   "main": [
-    [
-     {
-      "node": "MarkUnknown",
-      "type": "main",
-      "index": 0
-     }
-    ],
-    [
-     {
-      "node": "MarkMailSent",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "MarkMailSent": {
-   "main": [
-    [
-     {
-      "node": "SendMail",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "SendMail": {
-   "main": [
-    [
-     {
-      "node": "MarkDone",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "MarkDone": {
-   "main": [
-    [
-     {
-      "node": "ReplyDone",
-      "type": "main",
-      "index": 0
-     }
-    ]
-   ]
-  },
-  "StoredState": {
-   "main": [
-    [
-     {
-      "node": "ReplyRepeat",
+      "node": "ReplyStored",
       "type": "main",
       "index": 0
      }
