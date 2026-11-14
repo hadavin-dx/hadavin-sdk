@@ -1,3 +1,18 @@
+## HEARTBEAT 147 (10:55Z) - PAUSED, ready for the n8n kill script (waiting for the demo flows)
+
+| Agent / job | State at 10:55Z |
+|---|---|
+| B21 fix-5 | PAUSED. Note evidence/paused-b21-2026-11-14.md, tree fc0fe30b (round 11). Mutants 121 of 121: 70 behaviour, 49 text pin, 2 survivors now pinned. Its one final full run was still running by itself at 10:52Z (no result when paused); see the note for where the log is |
+| B22 fix-2 | PAUSED. Note evidence/paused-b22-2026-11-14.md, tree 682a6969 (round 13 on the r12 tree 5d144259). Open: 4 of 36 mutants not cleanly killed (R2 O_NONBLOCK removed and R6 O_NOFOLLOW removed both SURVIVED; T9 and R11 killed only by other tests); no full runs on this tree; round 13 patch lane3-fix-2-r13-wip-on-r12-tree.patch is 103 KB (over the 85 KB limit), not verified on a fresh archive, not recut on the fix-1 base; narrow tests 585 (3.13) and 705 (3.12) pass; its lint clean |
+| B23 fix-10 | PAUSED. Note evidence/paused-b23-2026-11-14.md, tree cb8d2e87 (round 7 in progress); last good tree 8a5c446e (round 6, 4 Majors open). Rows 1, 3, 5 fixed in the tree by narrow tests; row 6 open; no full run, no lint, no patch for round 7 |
+| Reviews | none run on B21 r11, B22 r13, B23 r7 (order L3-STOP). Not lint-confirmed by me: B21 fc0fe30b, B22 682a6969, B23 cb8d2e87 (builders' lint only) |
+| Stack builder | STOPPED |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): fix-5, fix-2 and fix-10 have open findings and no clean fresh review; B22 has 2 surviving mutants on the key-file and ledger open path (a secret path: uncapped rule when work resumes); no PowerShell, no bash 4.4; none merged; WINDOWS-RUN-1 not updated for r6-r11 changes.
+WHAT I WOULD DO NEXT (ranked): 1) heartbeat every 10 minutes "paused, waiting for flows"; 2) when you say the demo flows landed on demo/handover (due Mon 16 12:00Z): read the flows read-only, write handover/demo3/kill/ for T1-T3, T6 and the three fault modes WITHOUT reading the demo session's raw results; 3) resume B21/B22/B23 only after the video, on your order.
+
 ## HEARTBEAT 146 (10:52Z) - L3-STOP: B21 PAUSED with note; B22 and B23 told to pause, notes not in yet
 
 | Agent / job | State at 10:52Z |
