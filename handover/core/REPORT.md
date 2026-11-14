@@ -1,5 +1,37 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## FINAL CLOSEOUT (core lead) 18:32 UTC / 00:02 IST (ORDER WRAP-1 applied)
+
+**FIRST: what is NOT finished or NOT verified.**
+- **r7u is NOT releasable and NOT verified.** The one guard run (34 files) FAILED 2 tests; EV7U's full run on the merged tree FAILED 3 (6295 passed, 7 skipped; the 3 are the same hygiene scans plus tests/test_portal_demo.py::test_only_loader_names_demo_only). Cause: new src/lead_desk/loopback.py names "demo_only" and contains `0.0.0.0`; tests/test_r7u_b_findings.py:269 and test_r7u_c_findings.py:127/129 trip the hardcoded-literal scan. The same 3 tests PASS on tree-R7T. Builders ran only their own files (defect class: run repo-wide guards in full after any change).
+- **r7v (the fix) is NOT verified:** builder ad52347a was ordered to stop (WRAP-1) and had NOT handed back when this block was written; out/R7V/r7v.diff (57 lines, sha in out/R7V/r7v.diff.sha256) is a work-in-progress diff, part A of its checks green (1062 passed), part B not completed. No RESULTS-V.md at this time.
+- **Mutants (r7u):** 69 applied, 40 killed, 27 survived narrow sets, wide re-runs mostly not run. EV7U: A 38/38, B 17/17 killed, C 26/27 (L11 half bracket survives; builder C calls it equivalent, only the premise was checked). Open: Z01 (loopback.py:27), likely test gaps Z11 Z12 Z16 X01 X05 X19 Y17 Y18 Y19 Y25 Y28; EV7T survivors T01 T13 N02 N24 not re-checked on r7u.
+- **a4 `test_a4_..._no_open_create...` failed once** in the mutant runner's full-file baseline; passed in the guard run, in EV7U's full run and in 6 single runs. Cause NOT proven (hypothesis: create_unknown>0 under load makes "were still open" appear, run_real_check.py 587-601). Not called a flake.
+- EV7U small items: a counter file rewritten to {"created": 0} while 9 contacts exist gives exit 0; `contacts_not_accounted_for` accepts True/1.5; "[::1]" passes the rule, then fails at bind after one socket; "LOCALHOST" and "::ffff:127.0.0.1" accepted by all 8 entry points (loopback, harmless). EV7U flake series: 4 of 60 runs finished, all passed; "load" was not loaded.
+- Never run: Windows/PowerShell/Python 3.14/IPv6, CodeQL, Sonar, CodeRabbit, semgrep, CI, bandit. Banner figures 0.0814/0.0832 not reproducible from the repo.
+- **EV7T (r7t record) is complete:** 6211 passed, 7 skipped, 0 failed; before/after 78F/60P on r7s; hashes/apply 0 differences; disk-full grep clean twice. Its survivors (above) are open.
+
+**Decision by the lead (block 96 answered): OPTION 3.** The video take uses the lead's new run_real_check_n8n.py (laptop); r7u/r7v and the Mode A script are NOT on the video path. Packaging for PR 12 (package.sh, apply matrix, snapshot push, README, ON-PATH-LIST update) waits until after the video is posted (after Wed 25). Not started.
+
+**Agents running: 1 language-model agent (r7v builder ad52347a, stop ordered, not confirmed). EV7U (a9d71acd) stopped and handed back; mutant runner af04215d stopped; EV7T closed.** Script lanes: 2 test processes of the r7v builder were visible at 18:31Z (not mine to kill). I start nothing.
+
+**FILE-INDEX (read in this order in a NEW session)**
+1. handover/README.md, STUDIO-RULES.md, STATUS.md, RULE-R456-WORK-CONDUCT.md, LEAD-ORDERS.md (newest ORDER WRAP-1 at the end): the rules and the lead's orders.
+2. handover/core/REPORT.md (this file; newest block on top): the truth about status.
+3. handover/ledger.md: blocker rows; new r7u rows DPLD-R7U-built, -HYG, -MUT, -A4 (OPEN or FIXED-UNVERIFIED).
+4. handover/core/review/review-r7t-lead-saved.md: the lead's r7t review = the spec of r7u (M1, m1..m8, n1..n5). review-r7s-lead-saved.md: the r7s review.
+5. handover/core/fix/: patch chain r6..r7t (core-fix-on-frozen-*-crlf.patch.gz, -lf.patch, delta patches, sha256, apply matrices, READMEs, EV7*-EVIDENCE.md). Newest README snippet: see fix/README.md line 31 pointer.
+6. handover/core/evidence/r7u-chain/ (new, 91 MB of small files): R7U-A/B/C (builder diffs and results; r7u-A.diff, r7u-B.diff, r7u-C.diff with sha256 in EV7U-EVIDENCE.md section 1), R7U-MERGE (merge.sh, guard_run.sh, package.sh, guard1/guard.log and guard.rc = the RED run), R7U-MUT/R7U-MUT-RESULTS.md (mutants), R7U-DOC/ON-PATH-LIST-r7t-section.md (replacement text for ON-PATH-LIST.md, NOT yet applied), R7U-DA/DA-PROBE.md (Design A probe), EV7T/EV7T-EVIDENCE.md, EV7U/EV7U-EVIDENCE.md, R7V/r7v.diff (work in progress).
+7. handover/core/ON-PATH-LIST.md (stale after r7q: corrections are in R7U-DOC), TAKE-USED-FILES.md, PAUSED-2026-11-14.md, PARKED.md, OPEN-QUESTIONS.md, run-ledger.tsv.
+8. handover/core/stash-saved/: patches of the two old git stashes (prh-strip-hidden-controls WIP; autostash from a stuck rebase). They are NOT dropped (see checks); the lead decides.
+Outside the repo (laptop/cloud machine only, lost with the container): /home/user/build/rr6/tree-R7U (merged r7u tree, rebuilt from the patches), tree-R7T, repo2 (frozen tree, head 58aa4031e911e682ec5702e0641d11cbaf927817), out/* raw logs and test dumps (large), venv-br. Not committed on purpose: the merged tree (gitleaks flagged 1975 probable fixture matches), raw logs, 256 MB synthetic test files.
+
+**Open decisions:** (1) after the video: finish r7v (hygiene fix), re-run the repo-wide guards in full, then the mutant gaps and a4, then package and push for PR 12 under the same EGM order (builder, evidence runner, fresh reviewer, uncapped on this mail/secret/money path). (2) Whether to drop the two old stashes. (3) Whether the take-side q1 banner test and take-imports test were run on the laptop (the lead's).
+
+**Restart steps for a NEW cloud session:** (a) read the file-index items 1-4; (b) git checkout core/cloud-handover; (c) the frozen tree and venv are gone: rebuild tree-R7U from the frozen repo2 head 58aa4031 + fix/ patches + evidence/r7u-chain/R7U-A,B,C diffs (order A, C, B), or start from handover/core/evidence/r7u-chain/R7V/r7v.diff once verified; (d) first task: make the two hygiene scans pass (loopback.py wording and the two test files), then run tests/test_hygiene.py, tests/test_portal_demo.py and every repo-wide guard in FULL; (e) never answer y to any script prompt; loopback only; no spend.
+
+**Free disk:** 2.3 GB free (95%), no evidence deleted (only pytest scratch of finished runs: EV7T/tmp-full, guard1/tmp).
+
 ## STATUS (core lead) 18:21 UTC / 23:51 IST
 
 No new hand-back since block 108. **EV7U (a9d71acd) RUNNING:** last checkpoint 18:06Z (mutants done, quiet flake series started, full run still going, watchdog 18:40Z); no EVIDENCE file yet. **r7v builder (ad52347a) RUNNING:** r7v.diff exists in out/R7V (not final: no RESULTS-V.md, no hand-back; checkpoint last says part A green 1062 passed, part B split); its 60 min box from 17:45Z ends about 18:45-18:50Z.
