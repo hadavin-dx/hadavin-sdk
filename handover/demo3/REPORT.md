@@ -1,3 +1,33 @@
+## HEARTBEAT 81 (03:30Z) - LEAD ANSWERS TO HB 80 APPLIED; B9 FULL RUN PAST 40 PERCENT; M3 CLOSED
+
+| Agent | Job | State |
+|---|---|---|
+| M3 | third shuffled order (seed 987654) | CLOSED: 30 failed, 3684 passed, 169 skipped, 903 s; the 30 failing ids are identical to M2's (I diffed the two id files: identical) |
+| M4 | gitleaks 8.30.1 full suite | running; 3 files passed 72/72 in both orders (I read both raw logs: 'rc=0'); binary checksum I re-checked: matches the checksums file downloaded with it (not an independent source) |
+| B9 | fix-9 test-folder fix (core helper) | closed interim; its own full serial run is a background process at 59 percent (my read of the log at 03:30Z); three-file reruns 3.13 and 3.12: 92 passed, 8 skipped, 1 expected failure, rc 0 (I read both logs) |
+| M6 | Playwright throwaway install and browser tests on 3.13 | running (started 03:27Z) |
+
+LEAD RULES APPLIED: (1) /helper.txt: left alone, no workaround, not asked of a person. One line for the report: file /helper.txt, 865 bytes, root, created by B9 (a mistaken command), outside the repo tree, in no patch, repo tree clean. (2) B9 resumes to re-copy the helper only after the lead writes that core r7f is reviewed; the symlink test stays an expected failure until then. (3) One fresh read-only egm reviewer on the fix-9 patch after the proof runs end; B9's 3.12 run of the core-helper version, required before the review: done (92 passed, 8 skipped, 1 xfailed, rc 0). (4) Fallback rule: if B9's full run is not past 40 percent by 03:45Z, stop it and run B9's test files plus the three data/ writer files plus one clean-checkout run. It is at 59 percent now, so the fallback is NOT triggered.
+FAILURES AND RETRIES: unchanged: 30 environment failures (missing gitleaks program) in M1, M2 and M3, identical ids. 0 flaky, 0 order-dependent in 3 different orders. Totals: closed M1, M2, M3, M5; interim B9; running M4, M6, B9's full run.
+ASK list: none open. (The lead decided the earlier asks.)
+Load (measured): idle CPU 77 percent, free RAM 15.3 GB; 3 heavy jobs (M4 full, B9 full, M6).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- B9 full-suite counts and data/ absent after the full run: running; next: read the log tail and ls the folder.
+- Reviewer on the fix-9 patch: starts after B9's full run ends; I will not start it earlier (the lead said after proof runs).
+- M4 full suite with gitleaks, M6 Playwright result: running; next: read raw logs.
+- Durations run (--durations=0, time per group): after B9 closes, as decided.
+- Read-only egm reviewers for fix-8, fix-2 r4, fix-5 r5; one reader each for E3b, PR #12 E marks, old xdist flake: only after B9 lands (lead decision); next: start them then.
+- Core r7f not reviewed, so not copied; symlink case stays an expected failure; whether r7f lands is the lead's call.
+- Python 3.11: skipped by decision. ruff, mypy, bandit, gitleaks on CI only, Windows not run.
+- MATRIX-1.md not written; next: when M4, M6, B9 are closed.
+- Unchecked: writes outside TMPDIR across the whole disk (the runners only looked at attributable paths).
+
+WHAT I WOULD DO NEXT (ranked)
+1. When B9's full run ends: read counts and the data/ check, then start one fresh egm reviewer on the fix-9 patch.
+2. Write MATRIX-1.md; run the durations run; start the read-only readers for the unexplained items.
+3. Read-only egm reviewers for fix-8, fix-2 r4 and fix-5 r5, one each.
+
 ## HEARTBEAT 80 (03:24Z) - B9 PATCH AND NOTES EXIST (NOT FULLY PROVEN); M3 AND M4 FULL RUNS CONTINUE
 
 | Agent | Job | State |
