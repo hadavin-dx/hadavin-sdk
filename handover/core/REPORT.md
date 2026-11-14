@@ -1,5 +1,38 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 07:00 UTC / 12:30 IST
+
+**EV7I (the BASE full run on r7i) FINISHED: 7 failed, 5554 passed, 8 skipped, 1782 s (29:42), rc 1. The 7 failing test ids are IDENTICAL to EV7G's 7 (I diffed the sorted id lists: same).** They are the git-only guards (test_hygiene x4, test_nosemgrep_form, test_raw_bidi_chars, test_shell_single_bracket) that need a git work tree; the plain full-run copy has none, and EV7G's staged git copy passed them (300). So r7i adds NO failing id over r7g. Still to come from the runner: step 4 (the staged git files alone) and its file. Load was 6 to 11 while it ran with 7 agents, so a timing result is noisy; none of the 7 is a timing test.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6bc3c56 (r7k builder) | M9-32, 40, 33, 34, 64, 65, 67, 61, handshake sibling | fix-dont-defer, money path | 06:52 / 12:22 | box ends about 07:42 | r7k | RUNNING. Checkpoints: 06:54 step 1 done: all 9 earlier survivors killed by the r7i/r7j tests (M9-18 listed in its results file); 06:58 tests file written, **source fixes in live_claude._post and regfile.read_secret_line**; 06:59 22 mutants running. So M9-32 or M9-34/64/65 were real code defects: a full run on r7k (EV7K) is needed | hand-back; EV7K + fresh r7k reviewer |
+| a1b1e5cd (EV7J) | ONE full run on r7j + hostile table | final-bytes run IF r7j were final; **r7k now changes source, so EV7J becomes the base for r7k** | 06:51 / 12:21 | wrapper about 45 min (about 07:40) | EV7J | RUNNING: about 20% at 06:57, no failure yet; BrokenPipe noise from scripts/http_guard in the log (I will ask whether EV7I log has it too) | EV7J-EVIDENCE.md |
+| ac1a11a8 (r7j reviewer) | fresh review of r7j | independent | 06:52 / 12:22 | about 07:42 | review 1 of r7j | RUNNING, no report yet | core-fix-on-frozen-r7j-review.md |
+| ae9c3a10 (r7i reviewer) | review of the 37 tests | independent | 06:27 / 11:57 | about 07:17 | review 1 of r7i | RUNNING: no verdict; narrow-set survivors Y1, Y2, X02, V01-V03 are being confirmed on the wide set | core-fix-on-frozen-r7i-review.md |
+| adb9596a (EV7H part 1) | non-full evidence on r7h | delta base | 06:10 / 11:40 | about 07:10 | part 1 | RUNNING (wide re-runs) | EV7H-NONFULL-EVIDENCE.md |
+| a01f7117 (mutant pass 10) | your 06:55 order: run_real_check M9-68..82 first, then the other unrun rows, then about 10 jsonread mutants; survivors on the big set; real gaps sent to a6bc3c56 | pass 9 ran only 43 of 82 | 06:57 / 12:27 | box 60 min (about 07:57) | pass 10 | RUNNING: clean runs of rrc and reg started 06:57. Limited to 2 test processes at once | mail-pass10-r7j.md |
+
+Machine: load 6 at 07:00 (peak 11 at 06:58 when pass 10 clean runs began) with 7 agents. Risk: timing tests in EV7J may flake; any failure there is re-run alone before it counts.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7k numbers and the two source fixes | running | verify; EV7K on the final tree; fresh r7k reviewer |
+| EV7J result; r7i and r7j review verdicts; EV7H numbers; pass 10 rows | running | resolve; Blocker/Major to r7k |
+| EV7I step 4 (staged git files alone) | runner still working | read |
+| the r7j tree is no longer the end if r7k changes source | r7k source fixes | EV7K, EV7J stays as comparison base |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell scripts never run, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7k hand-back: verify sha256, copy (CRLF as .gz), start EV7K (the one full run on the final bytes, staged git copy) and a fresh r7k reviewer together; compare ids with EV7I/EV7J.
+2. Read the r7i and r7j reviews and EV7H; forward any pass 10 real gap to r7k at once.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 06:52 UTC / 12:22 IST
 
 **r7j HANDED BACK and committed (0c96e27c). Hashes checked by me: the three patch hashes match sha256-r7j.txt; apply matrix a-crlf, b-crlf, c-lf rc 0. All r7j test numbers are builder claims only (26 of 27 own mutants killed, J04b equivalent; 22 tests fail on r7i; exit 3 for given-up or stopped above 0).**
