@@ -1,3 +1,15 @@
+## HEARTBEAT 71 (02:50Z 2026-11-14) - NEW ORDER (python/OS matrix) STARTING; freeze list repeated here so it is in the heartbeat
+
+NOT CHECKED / UNEXPLAINED (from FREEZE.md, repeated because HEARTBEAT 70 only pointed to the file):
+- No complete stack with all patches together was applied, and no full suite ran on any stack.
+- No ruff, mypy, bandit, gitleaks or Windows run anywhere.
+- fix-3 and fix-7 were not re-read for the freeze report (state is in the register).
+- The EGM drift report and the blocker ledger were not run (freeze order said no further steps).
+- Unexplained: the three cut E3b runs, the 2 `E` marks of the PR #12 run, the old xdist port-43217 flake (never reproduced).
+- fix-8, fix-2 r4, fix-5 r5 (product code) have no independent review of the final patch.
+
+NEW ORDER (ORDERS.md 02:49Z): second-Python matrix. Facts so far: the repo says requires-python >=3.12, so 3.11 is NOT a supported version (I will only record that 3.11 is refused, not run the suite on it). Python 3.13 is available (/usr/local/bin/python3.13). pytest-randomly is not installed and no new top-level dependency is allowed, so random order will use a small seeded shuffle plugin kept OUTSIDE the repo. Agents are being started now; status block in 5 minutes.
+
 ## HEARTBEAT 70 (15:45Z / 21:15 IST) - FROZEN
 
 B5e reported: its failed run was its own mistake (basetemp outside TMPDIR; proof raw/b5e-smtp-experiment.log: 13 errors outside, 67 passed inside); valid run 3780 passed, 206 skipped, 0 failed; xdist 20 of 20 passed. Agents running: 0. All rows closed. The one-page freeze report is in `handover/demo3/FREEZE.md` (merged-ready vs not, with unverified parts named).
