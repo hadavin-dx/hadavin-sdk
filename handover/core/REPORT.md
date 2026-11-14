@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 11:00 UTC / 16:30 IST
+
+**r7q builder aab1bf4c: 6 min in, NO progress to report yet.** Its checkpoint has one line of its own ("10:53 start, read prior diff, no tests run yet"). What I see on disk (my own look, not its claim): tree-R7Q still differs from the plain r7p copy in exactly the 7 files the first builder edited (demo_only/bad_request.py, fake_hubspot.py, fake_model_server.py, fakes_server.py, scripts/run_real_check.py, src/lead_desk/scrub.py, tests/test_r7n_findings.py); no tests/test_r7q_findings.py exists yet; machine load 0.1 (nothing running). So: no test written, no run, no mutant, no patch. The first builder's edits are still untested, and the existing M43-e test still expects the old placeholder banner number (it will fail on the banner fix).
+
+| id | what | started | expected end | state | next |
+|---|---|---|---|---|---|
+| aab1bf4c (r7q builder) | on-path items 1-9 (banner money Major first) | 10:53 | about 11:55 | RUNNING, reading | next check 11:10 for its first checkpoint (test file, fail-before run) |
+
+Agents running: 1 (EV7P and the reviewer wait for the r7q bytes; stated in the 11:00 block). ASK: none.
+NOT DONE: everything in r7q; EV7P; hygiene run; reviewer; traced check of the on-path list.
+
 ## STATUS (core lead) 10:54 UTC / 16:24 IST
 
 **ORDER C-CORRECT applied: the on-path hardening CONTINUES; C-STOP's pause now covers only off-path items.** What happened in order: C-STOP arrived, I stopped the first r7q builder (a7698e2c) at its checkpoint and wrote handover/core/PAUSED-2026-11-14.md; C-CORRECT then reversed the pause for on-path items, so I started a FRESH r7q builder (aab1bf4c, 10:54 UTC, 60 min box) on tree-R7Q, which holds the first builder's untested edits (it was told to judge them critically). PAUSED file now carries a correction line.
