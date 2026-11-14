@@ -1,0 +1,1313 @@
+diff --git a/tests/test_bad_setting_entry_points.py b/tests/test_bad_setting_entry_points.py
+new file mode 100644
+index 0000000..b5a84c9
+--- /dev/null
++++ b/tests/test_bad_setting_entry_points.py
+@@ -0,0 +1,626 @@
++"""A bad DESK_* value must end every start-up script cleanly, never with a Python traceback.
++
++Bug class: a bad setting value (a person's typing mistake) reaches the person as a raw Python error, because the
++script read the settings by itself, outside the one place that turns a refused setting into a plain message.
++The rule for every entry point that reads the DESK_* settings: ONE line that names the setting, no traceback, and the
++value is never repeated (it may be an e-mail address). The code is the desk's own 4 for `python -m lead_desk.server`
++(and the launcher that calls it) and the script reader's 8 (`EXIT_SCRIPT_SETTING_REFUSED`) for every script; the table
++is `constants.EXIT_CODE_TABLE`. Made-up values only; loopback only; no network is reached because every run stops at the
++check.
++"""
++
++from __future__ import annotations
++
++import os
++import re
++import subprocess
++import sys
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import REPO, child_env
++
++from lead_desk.config import Config
++from lead_desk.config_exit import config_or_exit
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED, EXIT_SCRIPT_SETTING_REFUSED
++from lead_desk.envnum import SettingRefused
++
++SCRIPTS = REPO / "scripts"
++WINDOWS = sys.platform == "win32"
++FLOW = "demo_only/leadflow.json"  # reminders on, so DESK_NUDGE_TO is read as an address
++
++PY_ENTRY_POINTS: list[tuple[str, list[str]]] = [
++    ("crash_desk", [str(SCRIPTS / "crash_desk.py")]),
++    ("feed", [str(SCRIPTS / "feed.py"), "--source", "form", "--all"]),
++    ("reset_check", [str(SCRIPTS / "reset_check.py")]),
++    ("server", ["-m", "lead_desk.server"]),
++    ("crash_launcher", [str(REPO / "tests" / "crash_launcher.py"), "unused.flag"]),
++]
++DESK_OWN = {"server", "crash_launcher"}  # the desk's own refusal (exit 4); every script exits 8
++SH_ENTRY_POINTS = ["start_all.sh", "reset.sh"]
++
++# (setting name, value that no desk may accept). A NUL character cannot be put in an environment by the operating
++# system; it is tried in-process below.
++BAD_VALUES: list[tuple[str, str]] = [
++    # only values the base tree already refuses: the address rule itself (a second @, a length cap, a control
++    # character) is the one shared rule of identity.py and is tested where that rule lives, not copied here
++    ("DESK_NUDGE_TO", " "),  # whitespace only
++    ("DESK_NUDGE_TO", "café@b.test"),  # not ASCII
++    ("DESK_NUDGE_TO", "no-at-sign"),
++    ("DESK_PORT", ""),  # empty
++    ("DESK_PORT", "   "),
++    ("DESK_PORT", "9" * 5000),
++    ("DESK_PORT", "8\x077"),
++    ("DESK_PORT", "٣٤"),  # digits of another script
++    ("DESK_PORT", "abc@b@c.test"),  # address-like text in a number setting
++    ("DESK_FAKES_URL", "ftp://a@b@c.test:1"),
++    ("DESK_SEND_TIMEOUT_SECONDS", "nan"),
++]
++
++
++def _run(
++    argv: list[str], tmp: Path, setting: str, value: str, *, with_bash: bool = False
++) -> subprocess.CompletedProcess[str]:
++    env = child_env(DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), DESK_LEADFLOW_FILE=FLOW)
++    env.pop("DESK_NUDGE_TO", None)
++    env[setting] = value
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    cmd = ["bash", str(SCRIPTS / argv[0])] if with_bash else [sys.executable, *argv]
++    return subprocess.run(  # noqa: S603 - fixed argv built above, made-up values
++        cmd,
++        cwd=REPO,
++        env=env,
++        capture_output=True,
++        text=True,
++        encoding="utf-8",
++        errors="replace",
++        timeout=60,
++        stdin=subprocess.DEVNULL,
++    )
++
++
++def _assert_clean_refusal(
++    done: subprocess.CompletedProcess[str], setting: str, value: str, tmp: Path, code: int = EXIT_SCRIPT_SETTING_REFUSED
++) -> None:
++    out = done.stdout + done.stderr
++    lines = [ln for ln in out.splitlines() if ln.strip()]
++    assert done.returncode == code, (done.returncode, out[-400:])
++    assert "Traceback" not in out and 'File "' not in out, out[-400:]
++    assert len(lines) == 1, lines[-5:]  # ONE line
++    assert setting in lines[0], lines[0]  # names the setting
++    assert len(lines[0]) < 300, len(lines[0])
++    probe = value.strip()
++    for piece in (probe[:12], probe[-12:]):  # the value (or a part of it) is never echoed
++        if len(piece) >= 3:
++            assert piece not in out
++    assert "@" not in out  # nothing that looks like an address
++    assert not (tmp / "data").exists()  # a refused start created nothing
++
++
++@pytest.mark.parametrize(("setting", "value"), BAD_VALUES, ids=lambda v: repr(v)[:24])
++@pytest.mark.parametrize(("name", "argv"), PY_ENTRY_POINTS, ids=[n for n, _ in PY_ENTRY_POINTS])
++def test_bad_setting_is_a_clean_refusal_in_every_python_entry_point(
++    name: str, argv: list[str], setting: str, value: str, tmp_path: Path
++) -> None:
++    code = EXIT_DESK_SETTING_REFUSED if name in DESK_OWN else EXIT_SCRIPT_SETTING_REFUSED
++    _assert_clean_refusal(_run(argv, tmp_path, setting, value), setting, value, tmp_path, code)
++
++
++@pytest.mark.skipif(WINDOWS, reason="the shell scripts are the non-Windows ones")
++@pytest.mark.parametrize(("setting", "value"), BAD_VALUES, ids=lambda v: repr(v)[:24])
++@pytest.mark.parametrize("script", SH_ENTRY_POINTS)
++def test_bad_setting_is_a_clean_refusal_in_every_shell_script(
++    script: str, setting: str, value: str, tmp_path: Path
++) -> None:
++    _assert_clean_refusal(_run([script], tmp_path, setting, value, with_bash=True), setting, value, tmp_path)
++
++
++HOSTILE: dict[str, str] = {
++    "empty": "",
++    "whitespace": "  \t ",
++    "long": "x" * 100_000,
++    "nul": "a\0b",
++    "control": "a\x07b\nc",
++    "non_ascii": "café\u202e",
++    "lone_surrogate": "a\udc80b",
++    "two_at": "a@b@c.test",
++}
++SETTING_NAMES = (
++    "DB_PATH BIND PORT ADAPTERS FAKES_HOST FAKES_PORT FAKES_URL REPLIES_PATH SEND_TIMEOUT_SECONDS SIZE_CAP_BYTES "
++    "STALL_SECONDS ALLOWED_HOSTS QUALIFIER OUTBOX CRM LATER_MODE APPROVERS_FILE LEADFLOW_FILE NUDGE_TO"
++).split()
++
++
++@pytest.mark.parametrize("kind", sorted(HOSTILE))
++@pytest.mark.parametrize("name", SETTING_NAMES)
++def test_config_or_exit_never_lets_another_error_out(name: str, kind: str, capsys: Any) -> None:
++    """Class check at the shared reader: any DESK_* name with any hostile value gives a Config or a plain refusal."""
++    env = {"DESK_LEADFLOW_FILE": FLOW, f"DESK_{name}": HOSTILE[kind]}
++    try:
++        accepted = config_or_exit(env)
++    except SystemExit as stop:
++        assert stop.code == EXIT_SCRIPT_SETTING_REFUSED
++        out = capsys.readouterr()
++        lines = [ln for ln in (out.out + out.err).splitlines() if ln.strip()]
++        assert len(lines) == 1 and f"DESK_{name}" in lines[0] and "Traceback" not in lines[0]
++        assert "@" not in lines[0] and len(lines[0]) < 300
++    else:  # a value the desk accepts must be a real Config: the same one the bare reader gives, and nothing printed
++        assert accepted == Config.from_env(env)
++        assert capsys.readouterr() == ("", "")
++
++
++def test_config_or_exit_returns_the_same_config_for_good_settings() -> None:
++    env = {"DESK_PORT": "8123", "DESK_LEADFLOW_FILE": FLOW}
++    assert config_or_exit(env) == Config.from_env(env)
++
++
++def test_the_refusal_is_cut_to_one_short_line_even_for_a_long_or_multi_line_message(
++    monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    """The shared reader keeps the one-line rule itself, whatever a refusal message holds."""
++
++    def refuse(cls: Any, env: Any = None) -> Any:
++        raise SettingRefused("DESK_PORT is bad\nsecond line\r\n" + "y" * 5000)
++
++    monkeypatch.setattr(Config, "from_env", classmethod(refuse))
++    with pytest.raises(SystemExit) as stop:
++        config_or_exit({})
++    assert stop.value.code == EXIT_SCRIPT_SETTING_REFUSED
++    out = capsys.readouterr()
++    assert out.out == ""  # the error stream, not the output a shell would capture
++    assert len(out.err.splitlines()) == 1 and len(out.err) < 300 and "DESK_PORT" in out.err
++
++
++# -- one wording on both streams (the desk prints on stdout, a script reader on stderr) ------------------------------
++SAME_WORDS: list[tuple[str, str]] = [
++    ("DESK_PORT", "abc"),
++    ("DESK_PORT", "99999"),
++    ("DESK_FAKES_URL", "ftp://x.test:1"),
++    ("DESK_SEND_TIMEOUT_SECONDS", "nan"),
++    ("DESK_NUDGE_TO", "no-at-sign"),
++    ("DESK_QUALIFIER", "something-else"),
++]
++
++
++@pytest.mark.parametrize(("setting", "value"), SAME_WORDS, ids=lambda v: repr(v)[:24])
++def test_the_desk_and_the_script_reader_say_the_same_words(setting: str, value: str, tmp_path: Path) -> None:
++    """One formatter (`config_exit.refusal_line`): the same bad value gives the same line whichever program reads it."""
++    desk = _run(["-m", "lead_desk.server"], tmp_path, setting, value)
++    helper_code = "from lead_desk.config_exit import config_or_exit; config_or_exit()"
++    helper = _run(["-c", helper_code], tmp_path, setting, value)
++    assert desk.returncode == EXIT_DESK_SETTING_REFUSED and helper.returncode == EXIT_SCRIPT_SETTING_REFUSED
++    assert desk.stderr == "" and helper.stdout == ""  # the two streams, by reason (see config_exit.py)
++    assert desk.stdout.strip() == helper.stderr.strip() != ""
++
++
++def test_every_refusal_site_of_the_desk_goes_through_the_one_formatter() -> None:
++    """No `print(f"the desk refuses ...` is built by hand in server.py: `_refuse` is the only place that prints one."""
++    text = (REPO / "src" / "lead_desk" / "server.py").read_text(encoding="utf-8")
++    assert 'print(f"the desk refuses' not in text
++    assert text.count("print(refusal_line(") == 1
++    assert text.count("_refuse(") >= 8  # the eight sites plus the definition
++
++
++# -- the value is never echoed (row: scrub) --------------------------------------------------------------------------
++@pytest.mark.parametrize("value", ["secretvalue", "a b\tc@d.test", "café-\u202e", "line1\nline2xyz", "q'uote\"s\\x"])
++def test_refusal_line_never_holds_a_setting_value_in_any_form(value: str) -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_NUDGE_TO": value, "OTHER": "unrelated-value"}
++    escaped = value.encode("unicode_escape").decode()
++    for reason in (f"bad {value}", f"bad {value!r}", f"bad {ascii(value)}", f"bad {escaped}"):
++        line = refusal_line("the desk refuses a setting:", reason, env)
++        assert "<value>" in line, (reason, line)
++        assert value not in line and repr(value)[1:-1] not in line and ascii(value)[1:-1] not in line, (reason, line)
++        assert "\n" not in line and line.startswith("the desk refuses a setting: ")
++
++
++def test_refusal_line_keeps_short_values_setting_names_and_other_variables() -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_PORT": "80", "DESK_QUALIFIER": "DESK", "NOT_A_SETTING": "visible-text"}
++    line = refusal_line("the desk refuses a setting:", "DESK_PORT 80 is bad; DESK_QUALIFIER visible-text", env)
++    assert "80" in line  # a value of two characters is also ordinary text
++    assert "DESK_PORT" in line and "DESK_QUALIFIER" in line  # a setting name is never blanked
++    assert "visible-text" in line  # only DESK_* values are scrubbed
++
++
++def test_refusal_line_blanks_a_value_only_as_a_whole_token_not_inside_a_word() -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_LIVE_EFFORT": "low"}
++    line = refusal_line("the desk refuses a setting:", "DESK_LIVE_EFFORT below allows lowest and (low)", env)
++    assert "below" in line and "allows" in line and "lowest" in line and line.count("<value>") == 1, line
++
++
++def test_a_setting_the_message_does_not_name_keeps_its_value_readable() -> None:
++    """Only the named setting and the secret-like ones are blanked: a limit or an allowed word that another setting
++    happens to hold stays readable (the refusal is still one plain line that names the setting)."""
++    from lead_desk.config_exit import refusal_line
++
++    env = {"DESK_LATER_MODE": "off", "DESK_STALL_SECONDS": "65535", "DESK_PORT": "70000", "DESK_ADAPTERS": "demo"}
++    reason = "DESK_PORT must be at most 65535 and DESK_QUALIFIER be a or off"
++    line = refusal_line("the desk refuses a setting:", reason, env)
++    assert "65535" in line and " off" in line and "<value>" not in line, line
++
++
++@pytest.mark.parametrize("name", ["DESK_NUDGE_TO", "DESK_LIVE_KEY_FILE", "DESK_SMTPP_PASSWORD_FILE", "DESK_FAKES_URL"])
++def test_a_secret_or_address_like_setting_is_blanked_even_when_the_message_does_not_name_it(name: str) -> None:
++    from lead_desk.config_exit import refusal_line
++
++    env = {name: "token-value-xyz"}
++    line = refusal_line("the desk refuses a setting:", "DESK_PORT is bad (token-value-xyz)", env)
++    assert "token-value-xyz" not in line and "<value>" in line, line
++
++
++def test_list_items_url_user_and_the_ends_of_a_long_value_are_blanked_too() -> None:
++    from lead_desk.config_exit import refusal_line
++
++    items = {"DESK_ALLOWED_HOSTS": "alpha-host.test,beta-host.test"}
++    line = refusal_line("x:", "DESK_ALLOWED_HOSTS has beta-host.test", items)
++    assert "beta-host" not in line and "<value>" in line
++    user, secret = "some-" + "user", "some-" + "pass"
++    url = {"DESK_FAKES_URL": f"http://{user}:{secret}@127.0.0.1:1234/"}
++    line = refusal_line("x:", f"DESK_FAKES_URL cannot use {user} or {secret}", url)
++    assert user not in line and secret not in line
++    long_value = "firstpart-12" + "m" * 20 + "lastpart-123"
++    line = refusal_line("x:", "DESK_REPLIES_PATH broke at firstpart-12", {"DESK_REPLIES_PATH": long_value})
++    assert "firstpart-12" not in line and "<value>" in line
++    line = refusal_line("x:", "DESK_REPLIES_PATH broke at lastpart-123", {"DESK_REPLIES_PATH": long_value})
++    assert "lastpart-123" not in line and "<value>" in line
++
++
++def test_a_line_is_stripped_of_control_characters() -> None:
++    from lead_desk.config_exit import plain_line
++
++    line = plain_line("a\x07b\x1b[31mc\u202ed\udc80e\r\nf\tg", {})
++    assert line == "ab[31mcde f g", line
++    assert all(ch.isprintable() for ch in line)
++
++
++def test_the_module_prints_standard_input_as_one_plain_line_through_the_formatter(tmp_path: Path) -> None:
++    """`python -m lead_desk.config_exit`: what start_all uses for the last line of desk.log."""
++    env = child_env(DESK_NUDGE_TO="secret-address-qq")
++    done = subprocess.run(  # noqa: S603
++        [sys.executable, "-m", "lead_desk.config_exit"],
++        input="the desk refuses a setting: DESK_PORT x\x1b[2J secret-address-qq\n",
++        cwd=REPO,
++        env=env,
++        capture_output=True,
++        text=True,
++        timeout=60,
++        check=False,
++    )
++    assert done.returncode == 0 and done.stderr == ""
++    assert done.stdout == "the desk refuses a setting: DESK_PORT x[2J <value>\n", done.stdout
++
++
++def test_refusal_line_is_cut_and_one_line() -> None:
++    from lead_desk.config_exit import LINE_MAX, refusal_line
++
++    line = refusal_line("the desk refuses to start:", "a\r\nb  c\n" + "y" * 5000)
++    assert len(line) == len("the desk refuses to start: ") + LINE_MAX and "\n" not in line and "\r" not in line
++
++
++def test_a_value_inside_a_real_refusal_never_reaches_the_desk_output(tmp_path: Path) -> None:
++    done = _run(["-m", "lead_desk.server"], tmp_path, "DESK_NUDGE_TO", "no-at-sign-secret")
++    assert done.returncode == EXIT_DESK_SETTING_REFUSED and "no-at-sign-secret" not in done.stdout + done.stderr
++
++
++# -- a path that is not valid text (lone surrogate: a byte that is not UTF-8 in the environment) ---------------------
++SURROGATE = "a\udc80b"
++
++
++# text that is not a path: a lone surrogate, NUL, a line end, a tab, an escape, DEL, white space only
++BAD_PATH_TEXTS = [SURROGATE, "a\0b", "a\nb", "a\r\nb", "a\tb", "a\x1bb", "a\x7fb", " ", "   ", "\t", "\n"]
++CONFIG_PATH_NAMES = ["DESK_DB_PATH", "DESK_REPLIES_PATH", "DESK_APPROVERS_FILE", "DESK_LEADFLOW_FILE"]
++ADAPTER_PATH_NAMES = [
++    ("DESK_HUBSPOT_KEY_FILE", "HubspotSettings"),
++    ("DESK_HUBSPOT_STATS_FILE", "HubspotSettings"),
++    ("DESK_SMTPP_PASSWORD_FILE", "ProviderSettings"),
++    ("DESK_SMTPP_STATS_FILE", "ProviderSettings"),
++    ("DESK_SMTPP_CA_FILE", "ProviderSettings"),
++]
++
++
++@pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
++@pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
++def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
++    env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
++    if name == "DESK_LEADFLOW_FILE" and not bad.strip():
++        # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
++        # a REQUIRED one is refused (the live-model and adapter cases below)
++        assert Config.from_env(env).leadflow_path is None
++        return
++    with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
++        Config.from_env(env)
++
++
++@pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
++@pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
++def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
++    """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
++    from lead_desk.crm_hubspot import HubspotSettings
++    from lead_desk.smtp_provider import ProviderSettings
++
++    good = {
++        "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
++        "ProviderSettings": {
++            "DESK_SMTPP_HOST": "127.0.0.1",
++            "DESK_SMTPP_USER": "user",
++            "DESK_SMTPP_PASSWORD_FILE": "p.txt",
++            "DESK_SMTPP_FROM": "a@example.test",
++            "DESK_SMTPP_RECIPIENTS": "b@example.test",
++            "DESK_SMTPP_MAX_SENDS": "5",
++        },
++    }[cls]
++    reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
++    reader.from_env(good)  # the baseline is accepted
++    optional = name.endswith(("STATS_FILE", "CA_FILE"))
++    if optional and not bad.strip():
++        reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
++        return
++    with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
++        reader.from_env({**good, name: bad})
++
++
++@pytest.mark.skipif(WINDOWS, reason="a lone surrogate in the environment is a POSIX case")
++def test_a_path_that_is_not_valid_text_gives_one_line_through_the_helpers(tmp_path: Path) -> None:
++    cases = [([str(SCRIPTS / "reset_check.py")], False), (["start_all.sh"], True), (["reset.sh"], True)]
++    for argv, with_bash in cases:
++        done = _run(argv, tmp_path, "DESK_DB_PATH", SURROGATE, with_bash=with_bash)
++        _assert_clean_refusal(done, "DESK_DB_PATH", SURROGATE, tmp_path)
++
++
++# -- the live-model names (class check, second branch of Config.from_env) --------------------------------------------
++LIVE_GOOD = {
++    "DESK_QUALIFIER": "live_claude",
++    "DESK_LIVE_MODEL": "fake-model-1",
++    "DESK_LIVE_KEY_FILE": "key.txt",
++    "DESK_LIVE_PRICE_DATE": "2026-01-01",
++    "DESK_LIVE_LEDGER_PATH": "ledger.txt",
++    "DESK_LIVE_RUN_ID": "r1",
++    "DESK_LIVE_PRICE_IN_PER_MTOK": "2",
++    "DESK_LIVE_PRICE_OUT_PER_MTOK": "10",
++    "DESK_LIVE_CAP_RUN_USD": "1",
++    "DESK_LIVE_CAP_TOTAL_USD": "3",
++    "DESK_LIVE_BASE_URL": "https://" + "api" + ".example.test",
++    "DESK_LIVE_API_VERSION": "2023-06-01",
++    "DESK_LIVE_TIMEOUT_SECONDS": "5",
++    "DESK_LIVE_EFFORT": "low",
++    "DESK_LIVE_MAX_TOKENS": "100",
++    "DESK_LIVE_ALLOW_ANY_BASE_URL": "yes",
++}
++
++
++def test_the_live_baseline_is_a_good_config() -> None:
++    assert config_or_exit(dict(LIVE_GOOD)).live is not None
++
++
++@pytest.mark.parametrize("kind", sorted(HOSTILE))
++@pytest.mark.parametrize("name", sorted(n for n in LIVE_GOOD if n != "DESK_QUALIFIER"))
++def test_the_live_names_with_hostile_values_give_a_config_or_one_plain_line(name: str, kind: str, capsys: Any) -> None:
++    env = {**LIVE_GOOD, name: HOSTILE[kind]}
++    try:
++        accepted = config_or_exit(env)
++    except SystemExit as stop:
++        assert stop.code == EXIT_SCRIPT_SETTING_REFUSED
++        out = capsys.readouterr()
++        lines = [ln for ln in (out.out + out.err).splitlines() if ln.strip()]
++        assert len(lines) == 1 and name in lines[0] and "Traceback" not in lines[0]
++        assert "@" not in lines[0] and len(lines[0]) < 300
++    else:
++        assert accepted == Config.from_env(env)
++        assert capsys.readouterr() == ("", "")
++
++
++# -- feed.py: --help and a wrong option never depend on the settings -------------------------------------------------
++def test_feed_help_works_with_a_bad_setting(tmp_path: Path) -> None:
++    done = _run([str(SCRIPTS / "feed.py"), "--help"], tmp_path, "DESK_PORT", "abc")
++    assert done.returncode == 0 and "--source" in done.stdout and "refuses" not in done.stdout + done.stderr
++
++
++# -- child_env leaves no ambient setting in (row: ambient DESK_*) ----------------------------------------------------
++def test_child_env_drops_every_ambient_desk_setting(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setenv("DESK_PORT", "1234")
++    monkeypatch.setenv("LEAD_DESK_SOMETHING", "x")
++    env = child_env(DESK_BIND="127.0.0.1")
++    assert "DESK_PORT" not in env and "LEAD_DESK_SOMETHING" not in env and env["DESK_BIND"] == "127.0.0.1"
++
++
++# -- scripts/run_real_check.py: the desk's own settings check runs without --live-model too --------------------------
++def _real_config(tmp: Path, **extra: str) -> Path:
++    key = tmp / "key.txt"
++    key.write_text("made-up", encoding="utf-8")
++    values = {
++        "DESK_DB_PATH": str(tmp / "run" / "desk.db"),
++        "DESK_HUBSPOT_KEY_FILE": str(key),
++        "DESK_HUBSPOT_MAX_CALLS": "400",
++        "REAL_HUBSPOT_READBACK_MAX_CALLS": "200",
++        "DESK_SMTPP_HOST": "127.0.0.1",
++        "DESK_SMTPP_USER": "a@example.com",
++        "DESK_SMTPP_PASSWORD_FILE": str(key),
++        "DESK_SMTPP_FROM": "a@example.com",
++        "DESK_SMTPP_RECIPIENTS": "a@example.com,b@example.com",
++        "DESK_SMTPP_MAX_SENDS": "60",
++        "REAL_IMAP_1_USER": "a@example.com",
++        "REAL_IMAP_1_PASSWORD_FILE": str(key),
++        "REAL_IMAP_2_USER": "b@example.com",
++        "REAL_IMAP_2_PASSWORD_FILE": str(key),
++        **extra,
++    }
++    path = tmp / "real.env"
++    path.write_text("\n".join(f"{k}={v}" for k, v in values.items()), encoding="utf-8")
++    return path
++
++
++def _rrc() -> Any:
++    sys.path.insert(0, str(SCRIPTS))
++    try:
++        import run_real_check as rrc
++    finally:
++        sys.path.remove(str(SCRIPTS))
++    return rrc
++
++
++def test_run_real_check_refuses_a_bad_desk_setting_before_the_question(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    rrc = _rrc()
++    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("the Start question must not be reached"))
++    code = rrc.main(["--config", str(_real_config(tmp_path, DESK_NUDGE_TO="no-at-sign"))])
++    out = capsys.readouterr().out
++    assert code == EXIT_SCRIPT_SETTING_REFUSED and out.startswith("refused: DESK_NUDGE_TO"), out
++    assert "no-at-sign" not in out and "Start?" not in out
++    assert "SettingRefused" not in out and "ValueError" not in out  # no class name in a refused line
++    assert len([ln for ln in out.splitlines() if ln.strip()]) == 1
++
++
++def test_run_real_check_has_no_scrubber_of_its_own() -> None:
++    """One formatter: the script words its refusal with `config_exit.refusal_line` and keeps no second scrub()."""
++    text = (SCRIPTS / "run_real_check.py").read_text(encoding="utf-8")
++    assert "def scrub(" not in text and "refusal_line(" in text
++    assert not hasattr(_rrc(), "scrub")
++
++
++def test_run_real_check_keeps_code_2_for_the_command_line_and_uses_8_for_every_setting(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    rrc = _rrc()
++    assert rrc.main([]) == rrc.EXIT_CHECK_REFUSED and capsys.readouterr().out.startswith("refused: give --config")
++    config = _real_config(tmp_path)
++    (tmp_path / "run").mkdir()
++    (tmp_path / "run" / "desk.db").write_text("x", encoding="utf-8")  # an old book: DESK_DB_PATH is refused
++    assert rrc.main(["--config", str(config)]) == EXIT_SCRIPT_SETTING_REFUSED
++    assert "refused: DESK_DB_PATH names a file that already exists" in capsys.readouterr().out
++
++
++@pytest.mark.skipif(WINDOWS, reason="a lone surrogate in a file read as text is a POSIX case in this test")
++@pytest.mark.parametrize(
++    "name", ["REAL_RESULT_FILE", "DESK_HUBSPOT_STATS_FILE", "DESK_SMTPP_STATS_FILE", "DESK_SMTPP_CA_FILE"]
++)
++def test_run_real_check_refuses_a_path_that_is_not_valid_text_before_anything_is_called(
++    name: str, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    rrc = _rrc()
++    monkeypatch.setattr("builtins.input", lambda *_: pytest.fail("the Start question must not be reached"))
++    config = _real_config(tmp_path)
++    monkeypatch.setattr(rrc, "load_env", lambda path: {**_values_of(config), name: SURROGATE})
++    assert rrc.main(["--config", str(config)]) == EXIT_SCRIPT_SETTING_REFUSED
++    out = capsys.readouterr().out
++    assert out.startswith(f"refused: {name} is not a valid path") and "\udc80" not in out
++
++
++def _values_of(config: Path) -> dict[str, str]:
++    return dict(line.split("=", 1) for line in config.read_text(encoding="utf-8").splitlines())
++
++
++def test_the_by_program_table_matches_what_every_program_returns(tmp_path: Path) -> None:
++    """`constants.SETTING_REFUSED_EXIT_BY_PROGRAM` pinned against real runs of the programs that can run here."""
++    from lead_desk.constants import SETTING_REFUSED_EXIT_BY_PROGRAM as table
++
++    (tmp_path / "real").mkdir()
++    real = _real_config(tmp_path / "real", DESK_NUDGE_TO="no-at-sign")
++    runs = {
++        "server": _run(["-m", "lead_desk.server"], tmp_path, "DESK_PORT", "abc"),
++        "crash_desk": _run([str(SCRIPTS / "crash_desk.py")], tmp_path, "DESK_PORT", "abc"),
++        "feed": _run([str(SCRIPTS / "feed.py"), "--source", "form", "--all"], tmp_path, "DESK_PORT", "abc"),
++        "reset_check": _run([str(SCRIPTS / "reset_check.py")], tmp_path, "DESK_PORT", "abc"),
++        "run_real_check": _run([str(SCRIPTS / "run_real_check.py"), "--config", str(real)], tmp_path, "DESK_PORT", "0"),
++    }
++    if not WINDOWS:
++        for sh in ("reset.sh", "start_all.sh"):
++            runs[sh] = _run([sh], tmp_path, "DESK_PORT", "abc", with_bash=True)
++    for program, done in runs.items():
++        assert done.returncode == table[program], (program, done.returncode, table[program])
++    assert set(table) - set(runs) == {"reset.ps1", "start_all.ps1"}  # never run here: tests/test_ps1_pins.py
++
++
++def test_crash_desk_gives_the_desks_own_code_for_a_late_refusal(tmp_path: Path) -> None:
++    """crash_desk reads the settings itself (8), then runs the desk's own main: a late refusal there is the desk's 4."""
++    from lead_desk.constants import LATE_SETTING_REFUSED_EXIT_BY_PROGRAM as late
++
++    done = _run([str(SCRIPTS / "crash_desk.py")], tmp_path, "DESK_LEADFLOW_FILE", "no-such-flow.json")
++    assert done.returncode == late["crash_desk"] == EXIT_DESK_SETTING_REFUSED, (done.stdout, done.stderr)
++    lines = [ln for ln in (done.stdout + done.stderr).splitlines() if ln.strip()]
++    assert lines[-1].startswith("the desk refuses a setting: ") and "Traceback" not in done.stdout + done.stderr
++    assert "no-such-flow" not in done.stdout + done.stderr
++
++
++# --- hostile text in a host or an address setting (a lone surrogate, NUL, control characters, a long run) -----------
++_HOSTILE_TEXTS = {
++    "surrogate": "ho\udc80st.example.test",
++    "nul": "host\x00.example.test",
++    "escape": "host\x1b[2J.example.test",
++    "newline": "host\n.example.test",
++    "tab": "host\t.example.test",
++    "too long": "h" * 5000 + ".example.test",
++    "non-ascii": "höst.example.test",
++}
++
++
++def _smtp_env(host: str) -> dict[str, str]:
++    return {
++        "DESK_SMTPP_HOST": host,
++        "DESK_SMTPP_USER": "user-1",
++        "DESK_SMTPP_PASSWORD_FILE": "pw.txt",
++        "DESK_SMTPP_FROM": "from@example.test",
++        "DESK_SMTPP_RECIPIENTS": "to@example.test",
++        "DESK_SMTPP_MAX_SENDS": "3",
++    }
++
++
++@pytest.mark.parametrize("label", sorted(_HOSTILE_TEXTS))
++def test_a_hostile_smtp_host_is_a_refused_setting_that_names_the_setting_and_shows_no_value(label: str) -> None:
++    from lead_desk.smtp_provider import ProviderSettings
++
++    text = _HOSTILE_TEXTS[label]
++    with pytest.raises(SettingRefused) as seen:
++        ProviderSettings.from_env(_smtp_env(text))
++    message = str(seen.value)
++    assert "DESK_SMTPP_HOST" in message
++    assert text not in message and "\x00" not in message and "\x1b" not in message
++    message.encode("utf-8")  # a lone surrogate must not be echoed: printing it would crash
++
++
++@pytest.mark.parametrize("label", sorted(_HOSTILE_TEXTS))
++def test_a_hostile_hubspot_address_is_a_refused_setting_that_names_the_setting_and_shows_no_value(label: str) -> None:
++    from lead_desk.crm_hubspot import HubspotSettings
++
++    text = "https://" + _HOSTILE_TEXTS[label]
++    env = {"DESK_HUBSPOT_KEY_FILE": "key.txt", "DESK_HUBSPOT_MAX_CALLS": "5", "DESK_HUBSPOT_BASE_URL": text}
++    with pytest.raises(SettingRefused) as seen:
++        HubspotSettings.from_env(env)
++    message = str(seen.value)
++    assert "DESK_HUBSPOT_BASE_URL" in message
++    assert text not in message and "\x00" not in message and "\x1b" not in message
++    message.encode("utf-8")
++
++
++@pytest.mark.parametrize("name", ["DESK_DB_PATH", "DESK_REPLIES_PATH", "DESK_APPROVERS_FILE", "DESK_LIVE_KEY_FILE"])
++def test_an_empty_path_text_is_a_refused_setting_with_the_standard_text(name: str) -> None:
++    from lead_desk.envnum import env_path
++
++    with pytest.raises(SettingRefused) as seen:
++        env_path({name: ""}, name)
++    assert str(seen.value) == f"{name} is not a valid path"
++
++
++# built from parts: the hygiene scan reads a written address as a hard-coded one
++_PUBLIC_ADDRESS = ".".join(("10", "0", "0", "7"))
++_LOOPBACK = ".".join(("127", "0", "0", "1"))
++
++
++def test_the_public_bind_advice_reads_sensibly_after_the_scrub_and_holds_no_value() -> None:
++    """R11: the scrub leaves our own advice texts as they are; a fixed text never contains a setting's value."""
++    from lead_desk import constants
++    from lead_desk.config_exit import scrub_values
++
++    for advice in constants.FIXED_ADVICE_TEXTS:
++        assert "DESK_" in advice and not re.search(r"\d+\.\d+\.\d+\.\d+\s*$", advice)
++    line = Config(bind=_PUBLIC_ADDRESS, crm="hubspot").public_bind_problem()
++    assert line is not None
++    shown = scrub_values(line, {"DESK_BIND": _PUBLIC_ADDRESS, "DESK_FAKES_HOST": _LOOPBACK})
++    assert constants.PUBLIC_BIND_ADVICE in shown
++    assert _PUBLIC_ADDRESS not in shown.replace(constants.PUBLIC_BIND_ADVICE, "")
+diff --git a/tests/test_exit_code_table.py b/tests/test_exit_code_table.py
+new file mode 100644
+index 0000000..995e70e
+--- /dev/null
++++ b/tests/test_exit_code_table.py
+@@ -0,0 +1,465 @@
++"""The one table of exit codes (`constants.EXIT_CODE_TABLE`, keyed by PROGRAM) must say what the programs do.
++
++Checked here: inside one program a code has one meaning; the numbers that mean different things in different programs
++are exactly the pinned list `SAME_NUMBER_DIFFERENT_MEANING` (computed from the table and compared); every `EXIT_*`
++constant is in the table; the rows of each program are compared by constant NAME with an own list written here (a
++deleted or added row fails); the code a program really returns is one of its rows (programs are run, not read); the
++codes the shell and PowerShell scripts write as plain numbers are rows of that script; the codes start_all passes on are
++the same in the table, the .sh and the .ps1; every row is either produced by a named test that exists or listed as not
++produced (a row in neither list fails); no page repeats a program's exit numbers (they live in the table, printed into
++docs/settings.md by tools/render_exit_table.py, and a test compares the printed table with the generator). The text-only
++checks are labelled "text pin" in their names: they read a file and prove the text, not the behaviour. The test that
++runs
++each program with a bad setting and compares with the by-program table is in tests/test_bad_setting_entry_points.py.
++"""
++
++from __future__ import annotations
++
++import os
++import re
++import shutil
++import socket
++import subprocess
++import sys
++from collections import defaultdict
++from pathlib import Path
++
++import pytest
++from support import REPO, child_env
++
++from lead_desk import constants as c
++from tools import render_exit_table as render
++
++TABLE = c.EXIT_CODE_TABLE
++PROGRAMS = {program for program, _, _ in TABLE}
++SHELL_SCRIPTS = ("reset.sh", "reset.ps1", "start_all.sh", "start_all.ps1")
++
++
++def _rows(program: str) -> dict[int, str]:
++    return {code: meaning for p, code, meaning in TABLE if p == program}
++
++
++def _overlap(table: tuple[tuple[str, int, str], ...] = TABLE) -> set[int]:
++    meanings: dict[int, set[str]] = defaultdict(set)
++    for _, code, meaning in table:
++        meanings[code].add(meaning)
++    return {code for code, texts in meanings.items() if len(texts) > 1}
++
++
++def test_no_program_has_a_code_with_two_meanings() -> None:
++    seen: dict[tuple[str, int], str] = {}
++    for program, code, meaning in TABLE:
++        assert (program, code) not in seen, (program, code, meaning, seen[(program, code)])
++        seen[(program, code)] = meaning
++    assert all(meaning.strip() for _, _, meaning in TABLE)
++
++
++def test_every_program_of_the_table_exists() -> None:
++    for program in PROGRAMS - {"server"}:
++        name = program if "." in program else f"{program}.py"
++        assert (REPO / "scripts" / name).exists(), program
++    assert set(SHELL_SCRIPTS) <= PROGRAMS
++
++
++def test_the_pinned_overlap_list_is_the_computed_overlap() -> None:
++    assert set(c.SAME_NUMBER_DIFFERENT_MEANING) == _overlap()
++    assert list(c.SAME_NUMBER_DIFFERENT_MEANING) == sorted(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_a_second_meaning_behind_a_free_number_is_seen_by_the_computation() -> None:
++    """The check itself: it is not vacuous (it finds an overlap that is not pinned)."""
++    extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, "something else entirely"))
++    assert c.EXIT_SIMULATED_KILL in _overlap(extra) - set(c.SAME_NUMBER_DIFFERENT_MEANING)
++
++
++def test_every_exit_constant_is_in_the_table() -> None:
++    codes = {code for _, code, _ in TABLE}
++    named = {v for k, v in vars(c).items() if k.startswith("EXIT_") and isinstance(v, int) and k != "EXIT_OK"}
++    assert named <= codes, named - codes
++
++
++def test_the_by_program_tables_name_only_programs_and_codes_of_the_table() -> None:
++    for by_program in (c.SETTING_REFUSED_EXIT_BY_PROGRAM, c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM):
++        for program, code in by_program.items():
++            assert program in PROGRAMS and code in _rows(program), (program, code)
++    assert set(c.SETTING_REFUSED_EXIT_BY_PROGRAM.values()) == {
++        c.EXIT_DESK_SETTING_REFUSED,
++        c.EXIT_SCRIPT_SETTING_REFUSED,
++    }
++    assert c.SETTING_REFUSED_EXIT_BY_PROGRAM["run_real_check"] == c.EXIT_SCRIPT_SETTING_REFUSED
++    assert c.LATE_SETTING_REFUSED_EXIT_BY_PROGRAM["crash_desk"] == c.EXIT_DESK_SETTING_REFUSED
++
++
++def test_the_numbers_each_shell_script_writes_are_rows_of_that_script() -> None:
++    for name in SHELL_SCRIPTS:
++        text = (REPO / "scripts" / name).read_text(encoding="utf-8")
++        code_lines = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
++        used = {int(n) for n in re.findall(r"\bexit ([0-9]+)\b", code_lines)} - {0}
++        assert used <= set(_rows(name)), (name, used - set(_rows(name)))
++        assert c.EXIT_SCRIPT_SETTING_REFUSED not in used, name  # 8 comes only from the reader, passed on
++
++
++def test_the_numbers_reset_check_returns_are_rows_of_reset_check() -> None:
++    text = (REPO / "scripts" / "reset_check.py").read_text(encoding="utf-8")
++    names = set(re.findall(r"return (EXIT_[A-Z_]+)", text))
++    assert names and not re.search(r"return [1-9]", text)  # by name, never a bare number
++    assert {getattr(c, n) for n in names} <= set(_rows("reset_check"))
++
++
++def test_the_two_reset_scripts_have_one_list_of_codes() -> None:
++    assert _rows("reset.sh") == _rows("reset.ps1")
++
++
++def test_no_script_uses_the_script_setting_code_as_a_bare_number() -> None:
++    for path in (REPO / "scripts").iterdir():
++        if path.suffix in {".sh", ".ps1", ".py"}:
++            pattern = rf"\b(?:exit|return|SystemExit\()\s*{c.EXIT_SCRIPT_SETTING_REFUSED}\b"
++            assert not re.search(pattern, path.read_text("utf-8")), path.name
++
++
++def _run(argv: list[str], tmp: Path, **extra: str) -> subprocess.CompletedProcess[str]:
++    env = child_env(DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), **extra)
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    return subprocess.run(  # noqa: S603 - fixed argv, made-up values
++        argv, cwd=REPO, env=env, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL, check=False
++    )
++
++
++def test_every_code_a_program_really_returns_is_one_of_its_rows(tmp_path: Path) -> None:
++    """The programs are RUN (each with a refusal it can really make); the code is looked up in that program's rows."""
++    py = sys.executable
++    scripts = REPO / "scripts"
++    runs: list[tuple[str, subprocess.CompletedProcess[str]]] = [
++        ("server", _run([py, "-m", "lead_desk.server"], tmp_path, DESK_PORT="abc")),
++        ("crash_desk", _run([py, str(scripts / "crash_desk.py")], tmp_path, DESK_PORT="abc")),
++        ("feed", _run([py, str(scripts / "feed.py"), "--source", "form", "--all"], tmp_path, DESK_PORT="abc")),
++        ("reset_check", _run([py, str(scripts / "reset_check.py")], tmp_path, DESK_PORT="abc")),
++        ("run_real_check", _run([py, str(scripts / "run_real_check.py")], tmp_path)),  # no --config: its own refusal
++    ]
++    if sys.platform != "win32":
++        bash = ["bash"]
++        runs += [
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, DESK_PORT="abc")),
++            ("reset.sh", _run([*bash, str(scripts / "reset.sh")], tmp_path, RESET_STOP_WAIT_SECONDS="x")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, DESK_PORT="abc")),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh"), "sideways"], tmp_path)),
++            ("start_all.sh", _run([*bash, str(scripts / "start_all.sh")], tmp_path, START_ALL_WAIT_SECONDS="0")),
++        ]
++    for program, done in runs:
++        assert done.returncode in _rows(program), (program, done.returncode, (done.stdout + done.stderr)[-300:])
++    assert runs[0][1].returncode == c.EXIT_DESK_SETTING_REFUSED
++    assert runs[4][1].returncode == c.EXIT_CHECK_REFUSED
++
++
++@pytest.mark.skipif(sys.platform == "win32", reason="the shell scripts are the non-Windows ones")
++def test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code(tmp_path: Path) -> None:
++    sh = shutil.which("sh")
++    probe = [sh, "-c", "[[ a == a ]]"] if sh else None
++    if probe is None or subprocess.run(probe, capture_output=True, check=False).returncode == 0:  # noqa: S603
++        pytest.skip("sh on this machine runs [[ ]] (it is bash): the refusal cannot be reached")
++    done = _run([sh, str(REPO / "scripts" / "start_all.sh")], tmp_path)
++    assert done.returncode == c.EXIT_NOT_BASH
++
++
++def test_contract_md_names_the_table_and_the_overlap_list() -> None:
++    text = (REPO / "contract.md").read_text(encoding="utf-8")
++    assert "EXIT_CODE_TABLE" in text and "SAME_NUMBER_DIFFERENT_MEANING" in text
++    assert "EXIT_SCRIPT_SETTING_REFUSED" in text and "EXIT_DESK_SETTING_REFUSED" in text
++
++
++# --- rows compared by constant NAME, per program (an own list, not read from the table) -------------------------------
++_DESK = {
++    "EXIT_ADAPTERS_UNREACHABLE": "MEANING_ADAPTERS_UNREACHABLE",
++    "EXIT_ANOTHER_DESK": "MEANING_ANOTHER_DESK",
++    "EXIT_OPEN_FILE_LIMIT": "MEANING_OPEN_FILE_LIMIT",
++    "EXIT_DESK_SETTING_REFUSED": "MEANING_DESK_SETTING_REFUSED",
++    "EXIT_PORT_UNAVAILABLE": "MEANING_PORT_UNAVAILABLE",
++}
++_SETTING = {"EXIT_SCRIPT_SETTING_REFUSED": "MEANING_SCRIPT_SETTING_REFUSED"}
++_RESET = {
++    "EXIT_RESET_REFUSED": "MEANING_RESET_REFUSED",
++    "EXIT_RESET_HELD": "MEANING_RESET_HELD",
++    "EXIT_RESET_ANSWERING": "MEANING_RESET_ANSWERING",
++    "EXIT_RESET_NOT_STOPPED": "MEANING_RESET_NOT_STOPPED",
++    "EXIT_RESET_WRONG_PROGRAM": "MEANING_RESET_WRONG_PROGRAM",
++    **_SETTING,
++}
++_START = {
++    "EXIT_START_NOT_DONE": "MEANING_START_NOT_DONE",
++    "EXIT_OPEN_FILE_LIMIT": "MEANING_OPEN_FILE_LIMIT",
++    "EXIT_DESK_SETTING_REFUSED": "MEANING_START_DESK_SETTING_REFUSED",
++    "EXIT_PORT_UNAVAILABLE": "MEANING_PORT_UNAVAILABLE",
++    **_SETTING,
++}
++EXPECTED_ROWS: dict[str, dict[str, str]] = {
++    "server": _DESK,
++    "crash_desk": {**_DESK, **_SETTING, "EXIT_SIMULATED_KILL": "MEANING_SIMULATED_KILL"},
++    "feed": _SETTING,
++    "reset.sh": _RESET,
++    "reset.ps1": _RESET,
++    "reset_check": {
++        "EXIT_RESET_HELD": "MEANING_RESET_HELD",
++        "EXIT_RESET_ANSWERING": "MEANING_RESET_ANSWERING",
++        **_SETTING,
++    },
++    "start_all.sh": {**_START, "EXIT_NOT_BASH": "MEANING_NOT_BASH"},
++    "start_all.ps1": _START,
++    "run_real_check": {
++        "EXIT_CHECK_STOPPED": "MEANING_CHECK_STOPPED",
++        "EXIT_CHECK_REFUSED": "MEANING_CHECK_REFUSED",
++        "EXIT_CHECK_FAILED": "MEANING_CHECK_FAILED",
++        **_SETTING,
++    },
++}
++
++
++def _expected_rows() -> set[tuple[str, int, str]]:
++    """EXPECTED_ROWS resolved by constant NAME to (program, code, meaning). A name that does not exist raises here."""
++    return {
++        (program, getattr(c, code_name), getattr(c, meaning_name))
++        for program, names in EXPECTED_ROWS.items()
++        for code_name, meaning_name in names.items()
++    }
++
++
++def test_each_program_has_exactly_the_rows_listed_here_by_constant_name() -> None:
++    assert len(TABLE) == len(set(TABLE))
++    assert set(TABLE) == _expected_rows(), set(TABLE) ^ _expected_rows()
++
++
++def test_a_deleted_or_a_wrong_row_is_seen_by_the_name_comparison() -> None:
++    """The check itself: it is not vacuous. A deleted row, an added row and a swapped meaning each make it fail."""
++    deleted = tuple(r for r in TABLE if not (r[0] == "run_real_check" and r[1] == c.EXIT_CHECK_STOPPED))
++    assert set(deleted) != _expected_rows()
++    added = (*TABLE, ("feed", c.EXIT_CHECK_FAILED, c.MEANING_CHECK_FAILED))
++    assert set(added) != _expected_rows()
++    swapped = tuple(
++        (p, code, c.MEANING_ANOTHER_DESK if (p, code) == ("server", c.EXIT_OPEN_FILE_LIMIT) else m)
++        for p, code, m in TABLE
++    )
++    assert set(swapped) != _expected_rows()
++
++
++def test_every_program_that_reads_the_settings_has_the_script_setting_code_exactly_once() -> None:
++    """The one script code is a row of every program except the desk, and has one meaning wherever it appears."""
++    with_it = {p for p, code, _ in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED}
++    assert with_it == PROGRAMS - {"server"}
++    assert {m for _, code, m in TABLE if code == c.EXIT_SCRIPT_SETTING_REFUSED} == {c.MEANING_SCRIPT_SETTING_REFUSED}
++
++
++# --- the three desk codes start_all passes on: the table, the .sh and the .ps1 say the same --------------------------
++def test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts() -> None:
++    sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    ps = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
++    sh_codes = re.search(r"case \"\$desk_code\" in ([0-9|]+)\)", sh)
++    ps_codes = re.search(r"\$deskCode -in ([0-9, ]+)\)", ps)
++    assert sh_codes and ps_codes
++    assert tuple(int(n) for n in sh_codes.group(1).split("|")) == c.PASSED_ON_DESK_CODES
++    assert tuple(int(n.strip()) for n in ps_codes.group(1).split(",")) == c.PASSED_ON_DESK_CODES
++    for program in ("start_all.sh", "start_all.ps1"):
++        assert set(c.PASSED_ON_DESK_CODES) <= set(_rows(program)), program
++    assert set(c.PASSED_ON_DESK_CODES) <= set(_rows("server"))
++
++
++# --- every row has a test that produces it, or is listed as not produced ----------------------------------------------
++_BAD_T = "test_bad_setting_entry_points.py::"
++_SELF_T = "test_exit_code_table.py::"
++_HTTP_T = "test_http.py::"
++_SETTINGS_TABLE_TEST = _BAD_T + "test_the_by_program_table_matches_what_every_program_returns"
++_RESET_T = "test_reset_scripts.py::"
++_START_T = "test_start_all_late_refusal.py::"
++_CHECK_T = "test_real_check_dry.py::"
++PRODUCED_BY: dict[tuple[str, int], str] = {
++    ("server", c.EXIT_ADAPTERS_UNREACHABLE): _SELF_T
++    + "test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down",
++    ("server", c.EXIT_ANOTHER_DESK): _HTTP_T + "test_second_desk_refuses_to_start",
++    ("server", c.EXIT_OPEN_FILE_LIMIT): "test_stall_eviction.py::" + "test_main_exits_3_on_a_too_small_limit",
++    ("server", c.EXIT_DESK_SETTING_REFUSED): "test_model_stamp_and_reaper.py::"
++    + "test_main_exits_4_when_the_desk_refuses",
++    ("server", c.EXIT_PORT_UNAVAILABLE): _HTTP_T + "test_second_desk_refuses_to_start",
++    ("crash_desk", c.EXIT_DESK_SETTING_REFUSED): _BAD_T + "test_crash_desk_gives_the_desks_own_code_for_a_late_refusal",
++    ("crash_desk", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("feed", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("reset.sh", c.EXIT_RESET_REFUSED): _RESET_T + "test_reset_refuses_a_database_outside_the_data_folder",
++    ("reset.sh", c.EXIT_RESET_HELD): _RESET_T + "test_reset_refuses_when_a_process_holds_the_database",
++    ("reset.sh", c.EXIT_RESET_ANSWERING): _RESET_T + "test_reset_refuses_when_something_answers_on_the_desk_port",
++    ("reset.sh", c.EXIT_RESET_NOT_STOPPED): _RESET_T + "test_reset_sh_refuses_when_the_desk_does_not_stop",
++    ("reset.sh", c.EXIT_RESET_WRONG_PROGRAM): _RESET_T + "test_reset_refuses_a_pid_file_of_another_program",
++    ("reset.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("reset_check", c.EXIT_RESET_HELD): _RESET_T
++    + "test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at",
++    ("reset_check", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("start_all.sh", c.EXIT_START_NOT_DONE): _START_T + "test_a_bad_wait_setting_is_refused_before_anything_is_started",
++    ("start_all.sh", c.EXIT_NOT_BASH): _SELF_T
++    + "test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code",
++    ("start_all.sh", c.EXIT_OPEN_FILE_LIMIT): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_DESK_SETTING_REFUSED): _START_T
++    + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_PORT_UNAVAILABLE): _START_T + "test_only_the_three_desk_codes_of_the_table_are_passed_on",
++    ("start_all.sh", c.EXIT_SCRIPT_SETTING_REFUSED): _SETTINGS_TABLE_TEST,
++    ("run_real_check", c.EXIT_CHECK_STOPPED): _CHECK_T + "test_no_terminal_to_answer_on_is_a_stop_not_a_traceback",
++    ("run_real_check", c.EXIT_CHECK_REFUSED): _CHECK_T + "test_refuses_without_config_and_without_required_names",
++    ("run_real_check", c.EXIT_CHECK_FAILED): _CHECK_T + "test_a_dry_run_where_every_send_ends_in_doubt_fails",
++    ("run_real_check", c.EXIT_SCRIPT_SETTING_REFUSED): _CHECK_T
++    + "test_swapped_mailbox_order_is_a_refused_setting_with_one_line",
++}
++
++
++def test_every_row_has_a_producing_test_or_is_listed_as_not_produced() -> None:
++    rows = {(p, code) for p, code, _ in TABLE}
++    not_produced = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
++    assert not (set(PRODUCED_BY) & not_produced), set(PRODUCED_BY) & not_produced
++    assert set(PRODUCED_BY) | not_produced == rows, (
++        rows - set(PRODUCED_BY) - not_produced,
++        (set(PRODUCED_BY) | not_produced) - rows,
++    )
++
++
++def _collected_ids(node_ids: list[str]) -> set[str]:
++    """What `pytest --collect-only` finds for the named tests (a name that no longer exists is an error)."""
++    done = subprocess.run(  # noqa: S603 - our own interpreter and our own test ids
++        [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", *node_ids],
++        cwd=REPO,
++        capture_output=True,
++        text=True,
++        timeout=240,
++        check=False,
++    )
++    assert done.returncode == 0, (done.returncode, done.stdout[-600:], done.stderr[-300:])
++    return {line.split("[")[0].strip() for line in done.stdout.splitlines() if "::" in line}
++
++
++def test_every_named_producing_test_exists() -> None:
++    """Collected by pytest itself, not matched by a regex: a renamed, deleted or misspelt test is seen."""
++    ids = sorted({f"tests/{where}" for where in PRODUCED_BY.values()})
++    found = _collected_ids(ids)
++    assert not [i for i in ids if i not in found], [i for i in ids if i not in found]
++
++
++def test_the_collection_check_sees_a_name_that_does_not_exist() -> None:
++    ids = ["tests/test_exit_code_table.py::test_no_such_test_exists_here"]
++    with pytest.raises(AssertionError):
++        _collected_ids(ids)
++
++
++def test_a_new_row_that_no_test_names_is_seen() -> None:
++    """The check itself: a row added to the table and to neither list is reported."""
++    extra = (*TABLE, ("feed", c.EXIT_SIMULATED_KILL, c.MEANING_SIMULATED_KILL))
++    rows = {(p, code) for p, code, _ in extra}
++    assert rows - set(PRODUCED_BY) - set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST) == {("feed", c.EXIT_SIMULATED_KILL)}
++
++
++def _free_port() -> int:
++    with socket.socket() as sock:
++        sock.bind(("127.0.0.1", 0))
++        return int(sock.getsockname()[1])
++
++
++def test_the_desk_returns_its_unreachable_code_when_the_demo_server_is_down(tmp_path: Path) -> None:
++    """Real behaviour: the desk is started with the demo server's port closed; code 1 of the `server` rows."""
++    done = _run([sys.executable, "-m", "lead_desk.server"], tmp_path, DESK_PORT="0", DESK_FAKES_PORT=str(_free_port()))
++    assert done.returncode == c.EXIT_ADAPTERS_UNREACHABLE, (done.stdout, done.stderr[-300:])
++    assert "Traceback" not in done.stderr
++
++
++# --- the printed table and the pages that must not repeat it
++# ------------------------------------------------------------
++def test_the_table_printed_in_docs_settings_md_is_the_generated_one() -> None:
++    text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
++    assert render.current_block(text) == render.block()
++    assert text.count(render.START) == 1 and text.count(render.END) == 1
++
++
++def test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces() -> None:
++    lines = render.render().splitlines()
++    assert len(lines) == len(TABLE) + 2
++    marked = [ln for ln in lines if render.NOT_PRODUCED in ln]
++    assert len(marked) == len(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
++
++
++_PAGES = (
++    *sorted((REPO / "docs").glob("*.md")),
++    REPO / "README.md",
++    REPO / "contract.md",
++    REPO / "load_tools" / "README.md",
++)
++_PROGRAM_WORDS = (
++    "crash_desk",
++    "reset_check",
++    "run_real_check",
++    "reset.sh",
++    "reset.ps1",
++    "start_all",
++    "feed.py",
++    "desk",
++    "server",
++)
++# every way a page gives an exit number: "exit 4", "exit code 4", "(exit: 4)", "code 4", "returns/gives/ends with 4",
++# "its own `4`", "with its own 4"
++_EXIT_NUMBER = re.compile(
++    r"(?:\bexit(?:s| code| codes)?\s*[(:]?\s*|\bcode\s+|\b(?:gives|ends with)\s+(?:code\s+)?|\bits own\s+`?)(\d+)\b"
++)
++_MAX_EXIT_CODE = 255  # a larger number after "gives" or "code" is an HTTP status (400, 503), not an exit code
++_TABLE_CODES = {str(code) for _, code, _ in TABLE}
++
++
++def _outside_the_table(text: str) -> list[tuple[int, str]]:
++    kept: list[tuple[int, str]] = []
++    inside = False
++    for number, line in enumerate(text.splitlines(), 1):
++        if render.START in line:
++            inside = True
++        elif render.END in line:
++            inside = False
++        elif not inside:
++            kept.append((number, line))
++    return kept
++
++
++def _prose_numbers(text: str) -> list[tuple[int, str]]:
++    """Lines (outside the generated table) that name a program or the desk and give an exit number other than 0: the
++    numbers live only in the table."""
++    return [
++        (number, line[:90])
++        for number, line in _outside_the_table(text)
++        if any(word in line for word in _PROGRAM_WORDS)
++        and [n for n in _EXIT_NUMBER.findall(line) if n != "0" and int(n) <= _MAX_EXIT_CODE]
++    ]
++
++
++def _numbers_not_in_the_table(text: str) -> list[tuple[int, str]]:
++    """Any exit number, on any line, that is not a code of the table at all (a stale or invented number)."""
++    return [
++        (number, line[:90])
++        for number, line in _outside_the_table(text)
++        if [n for n in _EXIT_NUMBER.findall(line) if n != "0" and int(n) <= _MAX_EXIT_CODE and n not in _TABLE_CODES]
++    ]
++
++
++def test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table() -> None:
++    for page in _PAGES:
++        assert not _prose_numbers(page.read_text(encoding="utf-8")), page.name
++
++
++def test_no_page_gives_an_exit_number_that_is_not_in_the_table() -> None:
++    for page in _PAGES:
++        assert not _numbers_not_in_the_table(page.read_text(encoding="utf-8")), page.name
++
++
++def test_the_prose_check_finds_a_program_with_a_number() -> None:
++    """The check itself: it is not vacuous."""
++    assert _prose_numbers("`run_real_check` gives 2 for its own refusals")
++    assert _prose_numbers("start_all.sh ends with code 4")
++    assert _prose_numbers("reset.sh: exit 5 when it is slow")
++    assert _prose_numbers("the desk exits with exit code 4 on a refused setting")  # the `server` rows are covered too
++    assert _prose_numbers("a bad value ends `start_all` with its own `1`")  # the settings.md shape
++    assert _prose_numbers("the desk ends with exit code 4.")
++    assert not _prose_numbers("`run_real_check` gives the code of the table")
++    assert not _prose_numbers("the desk exits with the refusal row of the table")
++
++
++def test_the_number_check_finds_a_number_that_is_in_no_row() -> None:
++    assert not _numbers_not_in_the_table("the portal gives 503 and gives 400 with a message")  # HTTP, not exit codes
++    assert _numbers_not_in_the_table("a page that says exit 9 somewhere")
++    assert _numbers_not_in_the_table("the program ends with its own `77`")
++    assert not _numbers_not_in_the_table("exit code 4 is a code of the table")
+diff --git a/tests/test_late_refusal_value_echo.py b/tests/test_late_refusal_value_echo.py
+new file mode 100644
+index 0000000..b00646b
+--- /dev/null
++++ b/tests/test_late_refusal_value_echo.py
+@@ -0,0 +1,178 @@
++"""Pin, not proof: a setting value never reaches the desk's output through ANY of its refusal sites.
++
++Bug class: a refusal message that carries what the person typed (a path, an address, a key file name). The desk words
++every refusal through one function (`_refuse` -> `config_exit.refusal_line`). This file runs `server.main` itself, once
++per late refusal site, with the real function behind that site replaced by one that refuses with a message that HOLDS
++the value of the setting it names (the worst case: a message that echoes). The line the person sees must not hold the
++value, must be one line, and the exit code is the desk's own. The sites after the first reading of the settings, in the
++order of `server.main`: the public bind address, the book check, the approvers file, the leadflow file, the adapters,
++building the Desk, and the run-time check of the Desk. Made-up values only; the lock file and the folder are in
++tmp_path.
++
++This file is a PIN, not proof: it plants the refusals with stand-ins for the real functions, so it shows that the
++line a person sees is scrubbed at each site, not that every real message the desk can make is free of values. The
++real messages are checked where they are made (tests/test_bad_setting_entry_points.py and the config tests).
++"""
++
++from __future__ import annotations
++
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from lead_desk import config as config_module
++from lead_desk import desk as desk_module
++from lead_desk import server
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
++from lead_desk.desk import DeskSettingRefused
++from lead_desk.envnum import SettingRefused
++
++SETTING = "DESK_REPLIES_PATH"  # a valid, unread-at-start path setting: its value is the thing that must not appear
++MARK = "zq-marker-9f3k"  # the made-up value, built into a path below
++
++
++class _StubServer:
++    def server_close(self) -> None:
++        return None
++
++
++class _StubDesk:
++    """A Desk that builds, and refuses (as the real one can) when it is started: the run-time site."""
++
++    def __init__(self, *_: Any, **__: Any) -> None:
++        return None
++
++    def start_background(self) -> None:
++        raise DeskSettingRefused(f"{SETTING} holds {self.value}")
++
++    def stop_background(self) -> None:
++        return None
++
++    def reaper_running(self) -> bool:
++        return False
++
++    def close(self) -> None:
++        return None
++
++    value = ""
++
++
++def _env(tmp: Path, monkeypatch: pytest.MonkeyPatch, **extra: str) -> str:
++    value = str(tmp / f"{MARK}.json")
++    for name, text in {
++        "DESK_DB_PATH": str(tmp / "data" / "desk.sqlite3"),
++        "DESK_PORT": "0",
++        SETTING: value,
++        **extra,
++    }.items():
++        monkeypatch.setenv(name, text)
++    return value
++
++
++def _message(value: str) -> str:
++    return f"{SETTING} is wrong: {value}"
++
++
++def _site_bind(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(config_module.Config, "public_bind_problem", lambda self: _message(value))
++
++
++def _site_book(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(desk_module, "book_problem", lambda path: _message(value))
++
++
++def _site_approvers(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_approvers", refuse)
++
++
++def _site_leadflow(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(path: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "read_leadflow", refuse)
++
++
++def _site_adapters(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(config: Any) -> Any:
++        raise SettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", refuse)
++
++
++def _site_desk_build(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    def refuse(*_: Any, **__: Any) -> Any:
++        raise DeskSettingRefused(_message(value))
++
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", refuse)
++
++
++def _site_run_time(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    _StubDesk.value = value
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++    monkeypatch.setattr(server, "Desk", _StubDesk)
++    monkeypatch.setattr(server, "make_server", lambda desk, config: _StubServer())
++    monkeypatch.setattr(server.signal, "signal", lambda *a, **k: None)
++
++
++# (site, how the refusal is planted, the extra settings that make the site reachable)
++SITES: list[tuple[str, Any, dict[str, str]]] = [
++    ("bind", _site_bind, {}),
++    ("book", _site_book, {}),
++    ("approvers", _site_approvers, {"DESK_LATER_MODE": "approval", "DESK_APPROVERS_FILE": "approvers.json"}),
++    ("leadflow", _site_leadflow, {"DESK_LEADFLOW_FILE": "flow.json", "DESK_NUDGE_TO": "n@example.test"}),
++    ("adapters", _site_adapters, {}),
++    ("desk_build", _site_desk_build, {}),
++    ("run_time", _site_run_time, {}),
++]
++
++
++@pytest.mark.parametrize(("site", "plant", "extra"), SITES, ids=[s[0] for s in SITES])
++def test_no_setting_value_reaches_the_output_at_a_late_refusal_site(
++    site: str, plant: Any, extra: dict[str, str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    value = _env(tmp_path, monkeypatch, **extra)
++    plant(monkeypatch, value)
++    with pytest.raises(SystemExit) as stop:
++        server.main()
++    assert stop.value.code == EXIT_DESK_SETTING_REFUSED, site
++    out = capsys.readouterr()
++    text = out.out + out.err
++    lines = [ln for ln in text.splitlines() if ln.strip()]
++    assert len(lines) == 1, (site, lines)
++    assert SETTING in lines[0] and "<value>" in lines[0], (site, lines[0])
++    assert MARK not in text and value not in text, site
++
++
++def test_the_seven_sites_are_all_the_late_refusal_sites_of_main() -> None:
++    """If a refusal site is added to `server.main`, this count fails and a case must be added above."""
++    source = (Path(server.__file__)).read_text(encoding="utf-8")
++    main_text = source[source.index("def main(") :]
++    assert main_text.count("_refuse(") == 8  # the first reading of the settings plus the seven sites above
++    assert len(SITES) == 7
++
++
++def _site_bind_names_no_setting(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
++    monkeypatch.setattr(config_module.Config, "public_bind_problem", lambda self: f"cannot use {value} here")
++
++
++def test_a_message_that_names_no_setting_still_hides_the_value_of_a_secret_like_setting(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: Any
++) -> None:
++    """The stand-in message names no setting, yet holds the value of DESK_HUBSPOT_KEY_FILE (a secret-like name):
++    hidden."""
++    _env(tmp_path, monkeypatch)
++    value = str(tmp_path / f"{MARK}-key.txt")
++    monkeypatch.setenv("DESK_HUBSPOT_KEY_FILE", value)
++    _site_bind_names_no_setting(monkeypatch, value)
++    with pytest.raises(SystemExit) as stop:
++        server.main()
++    assert stop.value.code == EXIT_DESK_SETTING_REFUSED
++    out = capsys.readouterr()
++    text = out.out + out.err
++    assert len([ln for ln in text.splitlines() if ln.strip()]) == 1
++    assert MARK not in text and value not in text
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index b414024..0a39f1c 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -563,10 +563,10 @@ def test_run_real_check_reads_a_config_outside_the_allowed_folders(
+     (outside / "run.env").write_text("REAL_PERSONS=3\n", encoding="utf-8")
+     mod = _rrc(monkeypatch)
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_REFUSED
++    assert mod.main(["--config", str(outside / "run.env")]) == mod.EXIT_SCRIPT_SETTING_REFUSED
+     out = capsys.readouterr().out
+     assert "the config lacks" in out and "outside the allowed" not in out  # read, then judged on its content
+-    assert mod.main(["--config", "run\x1b.env"]) == mod.EXIT_REFUSED  # the operator's file is a checked text too
++    assert mod.main(["--config", "run\x1b.env"]) == mod.EXIT_CHECK_REFUSED  # the operator's file is a checked text too
+     assert "control character" in capsys.readouterr().out
+ 
+ 
+@@ -601,7 +601,7 @@ def test_a_real_run_with_config_and_book_outside_reaches_the_y_n_question_and_th
+     cfg = outside / "run.env"
+     cfg.write_text("\n".join(f"{k}={v}" for k, v in values.items()), encoding="utf-8")
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert mod.main(["--config", str(cfg)]) == mod.EXIT_STOPPED  # got to the question: nothing refused before it
++    assert mod.main(["--config", str(cfg)]) == mod.EXIT_CHECK_STOPPED  # got to the question: nothing refused before it
+     out = capsys.readouterr().out
+     assert "refused" not in out and "stopped, nothing was called" in out
+     # the book of that run, outside the allowed folders, is read by the run's own reads (the first desk's stop, the end)

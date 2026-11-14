@@ -1,0 +1,481 @@
+diff --git a/tests/test_start_all_late_refusal.py b/tests/test_start_all_late_refusal.py
+new file mode 100644
+index 0000000..c4b5be7
+--- /dev/null
++++ b/tests/test_start_all_late_refusal.py
+@@ -0,0 +1,408 @@
++"""scripts/start_all.sh must tell the truth when the desk it just started ends at once.
++
++Bug class: a script starts a background program, prints "started" and exits 0 without looking at it again, so a desk
++that refuses a late setting (a leadflow file, an approvers file, a public bind address, a sender address) or cannot take
++its port is reported as running. The rule: wait (bounded) until the desk says it is listening; if it ends first, print
++ONE line with its last log line and its own exit code, stop what the script started, delete the two process-id files the
++script wrote, and exit with the desk's code when it is one of the three the table passes on (3, 4, 5: the program rows
++of `start_all.sh` in `constants.EXIT_CODE_TABLE`), else with the script's own 1. The demo server is waited for first,
++inside the same budget; if it does not answer, the desk is not started. The wait is injected (START_ALL_WAIT_SECONDS),
++so no test asserts a wall time: the PATH taken (a message that says "the desk ended at once" instead of "not ready after
++N seconds") shows that the script saw the desk end and did not sit out the wait. Made-up data, loopback only, throwaway
++folders under tmp_path; every process a test starts is stopped by that test.
++"""
++
++from __future__ import annotations
++
++import contextlib
++import os
++import shlex
++import signal
++import socket
++import subprocess
++import sys
++import threading
++from collections.abc import Iterator
++from pathlib import Path
++
++import pytest
++from support import REPO, START_WAIT, child_env, free_port
++
++from lead_desk.constants import (
++    EXIT_DESK_SETTING_REFUSED,
++    EXIT_OPEN_FILE_LIMIT,
++    EXIT_PORT_UNAVAILABLE,
++    EXIT_SCRIPT_SETTING_REFUSED,
++    EXIT_START_NOT_DONE,
++)
++
++pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="start_all.sh is the non-Windows script")
++LOOPBACK = "127.0.0.1"
++
++
++def _run(
++    tmp: Path, *, first_on_path: Path | None = None, wait: str = START_WAIT, **settings: str
++) -> subprocess.CompletedProcess[str]:
++    env = child_env(
++        DESK_DB_PATH=str(tmp / "data" / "desk.sqlite3"), DESK_PORT=str(free_port()), DESK_FAKES_PORT=str(free_port())
++    )
++    env.pop("DESK_NUDGE_TO", None)
++    env["START_ALL_WAIT_SECONDS"] = wait
++    env.update(settings)
++    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    if first_on_path is not None:
++        env["PATH"] = str(first_on_path) + os.pathsep + env["PATH"]
++    return subprocess.run(  # noqa: S603, S607 - our own script, made-up values, throwaway folder
++        ["bash", str(REPO / "scripts" / "start_all.sh")],  # noqa: S607
++        cwd=REPO,
++        env=env,
++        capture_output=True,
++        text=True,
++        timeout=120,
++        stdin=subprocess.DEVNULL,
++        check=False,
++    )
++
++
++def _answers(port: int) -> bool:
++    with contextlib.suppress(OSError), socket.create_connection((LOOPBACK, port), timeout=0.5):
++        return True
++    return False
++
++
++def _stop_started(tmp: Path) -> None:
++    """Whatever a test left running: only the process ids the script itself wrote."""
++    for name in ("desk", "fakes"):
++        pid_file = tmp / "data" / f"{name}.pid"
++        if pid_file.exists():
++            with contextlib.suppress(ValueError, OSError):
++                os.kill(int(pid_file.read_text(encoding="utf-8").strip()), signal.SIGKILL)
++
++
++@pytest.fixture
++def cleanup(tmp_path: Path) -> Iterator[None]:
++    yield
++    _stop_started(tmp_path)
++
++
++def _assert_failed_start(done: subprocess.CompletedProcess[str], tmp: Path, code: int, fakes_port: int) -> None:
++    out = done.stdout + done.stderr
++    assert done.returncode == code, (done.returncode, out[-600:])
++    assert "started:" not in out and "Traceback" not in out, out[-600:]
++    lines = [ln for ln in done.stderr.splitlines() if ln.strip()]
++    assert len(lines) == 1 and lines[0].startswith("the desk ended at once (exit "), lines
++    assert f"(exit {code})" in lines[0] and len(lines[0]) < 400
++    assert not (tmp / "data" / "desk.pid").exists() and not (tmp / "data" / "fakes.pid").exists()  # its own, removed
++    assert not _answers(fakes_port), "the demo server the script started is still running"
++
++
++LATE_REFUSALS: list[tuple[str, dict[str, str]]] = [
++    ("leadflow_file_missing", {"DESK_LEADFLOW_FILE": "no-such-file.json"}),
++    ("approvers_file_missing", {"DESK_LATER_MODE": "approval", "DESK_APPROVERS_FILE": "no-such-approvers.json"}),
++    # the all-zeros address: its refusal is what is tested
++    ("public_bind", {"DESK_BIND": ".".join(["0"] * 4), "DESK_CRM": "hubspot"}),
++    ("sender_address", {"DESK_OUTBOX": "smtp", "DESK_SMTP_HOST": "127.0.0.1", "DESK_SMTP_FROM": "no-at-sign"}),
++]
++
++
++@pytest.mark.parametrize(("label", "settings"), LATE_REFUSALS, ids=[n for n, _ in LATE_REFUSALS])
++def test_a_desk_that_refuses_a_late_setting_is_reported_not_started(
++    label: str, settings: dict[str, str], tmp_path: Path, cleanup: None
++) -> None:
++    fakes_port = free_port()
++    done = _run(tmp_path, DESK_FAKES_PORT=str(fakes_port), **settings)
++    _assert_failed_start(done, tmp_path, EXIT_DESK_SETTING_REFUSED, fakes_port)
++    assert "refuses" in done.stderr, label  # the desk's own last line, so the reason is visible
++
++
++def test_a_desk_that_cannot_take_its_port_is_reported_with_its_own_code(tmp_path: Path, cleanup: None) -> None:
++    fakes_port = free_port()
++    with socket.socket() as taken:
++        taken.bind((LOOPBACK, 0))
++        taken.listen()
++        done = _run(tmp_path, wait="60", DESK_PORT=str(taken.getsockname()[1]), DESK_FAKES_PORT=str(fakes_port))
++    _assert_failed_start(done, tmp_path, EXIT_PORT_UNAVAILABLE, fakes_port)
++    assert "cannot bind" in done.stderr
++
++
++def test_a_desk_that_listens_is_started(tmp_path: Path, cleanup: None) -> None:
++    done = _run(tmp_path)
++    assert done.returncode == 0 and "started:" in done.stdout, (done.stdout, done.stderr)
++    assert (tmp_path / "data" / "desk.pid").exists() and (tmp_path / "data" / "fakes.pid").exists()
++
++
++def _stub_python(tmp: Path, desk_body: str, fakes_body: str = "") -> Path:
++    """A stand-in `python` first on PATH: `-m lead_desk.server` runs `desk_body`, `-m demo_only.fakes_server` runs
++    `fakes_body` when it is not empty; everything else is the real interpreter."""
++    stub_dir = tmp / "stub"
++    stub_dir.mkdir(exist_ok=True)
++    stub = stub_dir / "python"
++    fakes = f'if [[ "$*" == *demo_only.fakes_server* ]]; then {fakes_body}; fi\n' if fakes_body else ""
++    stub.write_text(
++        f'#!/bin/bash\n{fakes}if [[ "$*" == *lead_desk.server* ]]; then {desk_body}; fi\n'
++        f'exec {shlex.quote(sys.executable)} "$@"\n',
++        encoding="utf-8",
++    )
++    stub.chmod(0o755)
++    return stub_dir
++
++
++def test_a_desk_that_never_listens_is_reported_after_the_wait_and_left_for_reset(tmp_path: Path, cleanup: None) -> None:
++    """The honest timeout path: a stand-in `python` makes the desk sleep without a word. After the injected wait the
++    script says so (and that the desk may still be starting), exits 1 and leaves the processes alone for reset.sh
++    (they are stopped by this test)."""
++    done = _run(tmp_path, first_on_path=_stub_python(tmp_path, "exec sleep 120"), wait="2")
++    assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
++    assert "desk not ready after 2 seconds" in done.stderr, (done.stdout, done.stderr)
++    assert "may still be starting" in done.stderr and "started:" not in done.stdout
++    assert (tmp_path / "data" / "desk.pid").exists()  # left for reset.sh
++
++
++@pytest.mark.parametrize(
++    ("fakes_body", "said"),
++    [("exec sleep 120", "the demo server did not answer in 2 seconds"), ("exit 3", "the demo server stopped at once")],
++    ids=["silent", "ends_at_once"],
++)
++def test_a_demo_server_that_does_not_come_up_stops_the_start_before_the_desk(
++    fakes_body: str, said: str, tmp_path: Path, cleanup: None
++) -> None:
++    """The desk asks the demo server once and ends if nobody answers: a slow demo server is a different failure from a
++    bad setting, so the script waits for it first, says so, and never starts the desk."""
++    marker = tmp_path / "desk-was-started"
++    stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 120", fakes_body)
++    done = _run(tmp_path, first_on_path=stub, wait="2")
++    assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
++    assert said in done.stderr and "the desk was not started" in done.stderr
++    assert "desk" not in done.stderr.replace("the desk was not started", "")
++    assert "started:" not in done.stdout and not marker.exists()
++    assert not (tmp_path / "data" / "desk.pid").exists() and not (tmp_path / "data" / "fakes.pid").exists()
++
++
++@pytest.mark.parametrize(
++    ("desk_code", "expected"),
++    [
++        (0, EXIT_START_NOT_DONE),  # a desk that stopped with 0 is not a start
++        (1, EXIT_START_NOT_DONE),
++        (2, EXIT_START_NOT_DONE),  # the desk's "another desk" is the script's own 1, so 2 means only "not bash"
++        (6, EXIT_START_NOT_DONE),
++        (
++            EXIT_SCRIPT_SETTING_REFUSED,
++            EXIT_START_NOT_DONE,
++        ),  # the desk never gives the scripts' code; if it did, it is the script's own 1
++        (137, EXIT_START_NOT_DONE),
++        (EXIT_OPEN_FILE_LIMIT, EXIT_OPEN_FILE_LIMIT),
++        (EXIT_DESK_SETTING_REFUSED, EXIT_DESK_SETTING_REFUSED),
++        (EXIT_PORT_UNAVAILABLE, EXIT_PORT_UNAVAILABLE),
++    ],
++)
++def test_only_the_three_desk_codes_of_the_table_are_passed_on(
++    desk_code: int, expected: int, tmp_path: Path, cleanup: None
++) -> None:
++    stub = _stub_python(tmp_path, f"echo 'a line'; exit {desk_code}")
++    done = _run(tmp_path, first_on_path=stub)
++    assert done.returncode == expected, (desk_code, done.stdout, done.stderr)
++    assert f"(exit {desk_code})" in done.stderr and "started:" not in done.stdout
++
++
++def test_the_last_log_line_goes_through_the_one_formatter(tmp_path: Path, cleanup: None) -> None:
++    """Control characters are removed and the value of a setting the line names is not shown."""
++    secret = str(tmp_path / "secret-replies-qq9.json")
++    body = (
++        "printf 'the desk refuses a setting: DESK_REPLIES_PATH holds %s \\033[2J\\007bell\\n' "
++        '"$DESK_REPLIES_PATH"; exit 4'
++    )
++    done = _run(tmp_path, first_on_path=_stub_python(tmp_path, body), DESK_REPLIES_PATH=secret)
++    assert done.returncode == EXIT_DESK_SETTING_REFUSED, (done.stdout, done.stderr)
++    assert "secret-replies-qq9" not in done.stderr and "<value>" in done.stderr and "DESK_REPLIES_PATH" in done.stderr
++    assert "\x1b" not in done.stderr and "\x07" not in done.stderr and "bell" in done.stderr
++    assert len([ln for ln in done.stderr.splitlines() if ln.strip()]) == 1
++
++
++def test_a_bad_wait_setting_is_refused_before_anything_is_started(tmp_path: Path, cleanup: None) -> None:
++    for bad in ("0", "abc", "-1", "015", "1000", "1.5", " 5"):
++        done = _run(tmp_path, wait=bad)
++        assert done.returncode == EXIT_START_NOT_DONE and "START_ALL_WAIT_SECONDS" in done.stderr, bad
++        assert not (tmp_path / "data" / "fakes.pid").exists(), bad
++
++
++def test_text_pin_the_start_script_waits_for_the_listening_line_inside_one_budget() -> None:
++    """TEXT PIN, not a proof of behaviour: it only shows the lines are in the file. The behaviour tests above (a desk
++    that never listens, a demo server that does not come up, a desk that ends at once) are the proof."""
++    text = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    assert 'WAIT_SECONDS="${START_ALL_WAIT_SECONDS:-15}"' in text and "desk listening on" in text
++    assert 'wait "$desk_pid"' in text and text.count("max_ticks") >= 3  # one counter for both waits
++    assert text.count("seq 1 ") == 0 and "the demo server did not answer in" in text
++
++
++def test_an_empty_desk_log_still_gives_a_readable_line(tmp_path: Path, cleanup: None) -> None:
++    """A desk that ends without a word: the line must not end in an empty tail ("(exit 1): ")."""
++    done = _run(tmp_path, first_on_path=_stub_python(tmp_path, "exit 1"))
++    assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
++    line = [ln for ln in done.stderr.splitlines() if ln.strip()][-1]
++    assert line.startswith("the desk ended at once (exit 1): ") and line.endswith("(the log line could not be read)")
++
++
++def test_a_formatter_that_fails_gives_its_own_line_not_the_empty_log_line(tmp_path: Path, cleanup: None) -> None:
++    """The one formatter itself cannot run: the line says the log line could not be SHOWN (the log had a line), which
++    differs from the empty-log text ("could not be read")."""
++    flag = tmp_path / "desk-ran"  # the formatter is also used earlier by the script; it fails only after the desk ran
++    stub_dir = _stub_python(tmp_path, f"echo the-desk-said-something; touch {shlex.quote(str(flag))}; exit 1")
++    stub = stub_dir / "python"
++    lines = stub.read_text(encoding="utf-8").splitlines()
++    lines.insert(1, f'if [[ "$*" == *lead_desk.config_exit* && -e {shlex.quote(str(flag))} ]]; then exit 3; fi')
++    stub.write_text("\n".join(lines) + "\n", encoding="utf-8")
++    done = _run(tmp_path, first_on_path=stub_dir)
++    assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
++    line = [ln for ln in done.stderr.splitlines() if ln.strip()][-1]
++    assert line.startswith("the desk ended at once (exit 1): ") and line.endswith("(the log line could not be shown)")
++
++
++def _held_port() -> tuple[socket.socket, int]:
++    """A port that something holds and listens on for the whole test (not a bind-then-close number)."""
++    held = socket.socket()
++    held.bind((LOOPBACK, 0))
++    held.listen()
++    return held, held.getsockname()[1]
++
++
++def test_a_foreign_listener_on_the_demo_server_port_is_refused_before_anything_is_started(
++    tmp_path: Path, cleanup: None
++) -> None:
++    """Bug class: "something answers on the port" taken as "our demo server is up". The script asks the port BEFORE it
++    starts anything: when it already answers, one fixed line, exit 1, no process started, no pid file written."""
++    marker = tmp_path / "something-was-started"
++    stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 120", f"touch {marker}; exec sleep 120")
++    held, fakes_port = _held_port()
++    with held:
++        done = _run(tmp_path, first_on_path=stub, DESK_FAKES_PORT=str(fakes_port))
++    assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, done.stdout, done.stderr)
++    assert done.stderr.strip() == "something else already answers on the demo server port; nothing was started"
++    assert "started:" not in done.stdout and not marker.exists()
++    assert not (tmp_path / "data" / "fakes.pid").exists() and not (tmp_path / "data" / "desk.pid").exists()
++    assert str(fakes_port) not in done.stderr
++
++
++def test_a_listener_that_appears_after_the_check_is_not_our_demo_server(tmp_path: Path, cleanup: None) -> None:
++    """The ownership line: a program takes the port AFTER the pre-flight check (this test binds it when the stand-in
++    demo server signals that it started), the demo server process is alive, but fakes.log never says
++    "fakes server ... on port N", so it is not up. No sleep margin: the test waits for the signal file."""
++    port = free_port()
++    signal_file = tmp_path / "fakes-started"
++    marker = tmp_path / "desk-was-started"
++    stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 60", f"touch {signal_file}; exec sleep 60")
++    held = socket.socket()
++    stop = threading.Event()
++
++    def take_the_port_when_signalled() -> None:
++        while not signal_file.exists() and not stop.is_set():
++            stop.wait(0.02)
++        if signal_file.exists():
++            held.bind((LOOPBACK, port))
++            held.listen()
++
++    thread = threading.Thread(target=take_the_port_when_signalled)
++    thread.start()
++    try:
++        done = _run(tmp_path, first_on_path=stub, wait="2", DESK_FAKES_PORT=str(port))
++    finally:
++        stop.set()
++        thread.join(timeout=10)
++        held.close()
++    assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
++    assert "the demo server did not answer in 2 seconds" in done.stderr and not marker.exists(), done.stderr
++    assert "started:" not in done.stdout
++    assert not (tmp_path / "data" / "fakes.pid").exists()
++
++
++def test_a_demo_server_that_dies_after_the_desk_said_listening_is_not_a_start(tmp_path: Path, cleanup: None) -> None:
++    """The survivor of the ready check: a `grep` stand-in kills the demo server the moment the script asks whether the
++    desk is listening, and returns the real answer. The desk looks ready, the demo server is gone: exit 1, "stopped at
++    once", no "started:", no pid file."""
++    shim_dir = tmp_path / "shim"
++    shim_dir.mkdir()
++    shim = shim_dir / "grep"
++    real_grep = "/usr/bin/grep" if Path("/usr/bin/grep").exists() else "/bin/grep"
++    data = tmp_path / "data"
++    shim.write_text(
++        "#!/bin/bash\n"
++        'if [[ "$*" == *"desk listening"* && -f "$FAKES_PID_FILE" ]]; then\n'
++        '  pid="$(cat "$FAKES_PID_FILE")"; kill "$pid" 2>/dev/null\n'
++        '  for _ in $(seq 1 100); do kill -0 "$pid" 2>/dev/null || break; sleep 0.05; done\n'
++        "fi\n"
++        f'exec {real_grep} "$@"\n',
++        encoding="utf-8",
++    )
++    shim.chmod(0o755)
++    stub = _stub_python(tmp_path, "echo 'desk listening on x'; exec sleep 60")
++    (stub / "grep").write_text((shim_dir / "grep").read_text(encoding="utf-8"), encoding="utf-8")
++    (stub / "grep").chmod(0o755)
++    done = _run(tmp_path, first_on_path=stub, FAKES_PID_FILE=str(data / "fakes.pid"))
++    out = done.stdout + done.stderr
++    assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, out[-500:])
++    assert "the demo server stopped at once" in done.stderr and "started:" not in out, out[-500:]
++    assert not (data / "fakes.pid").exists() and not (data / "desk.pid").exists()
++
++
++@pytest.mark.parametrize("fakes_body", ["exec sleep 120", "exit 3"], ids=["silent", "ends_at_once"])
++def test_a_failure_line_shows_no_folder_and_no_port(fakes_body: str, tmp_path: Path, cleanup: None) -> None:
++    """The failure lines name the log file (fakes.log, desk.log) but never the data folder or the port: both come
++    from settings (DESK_DB_PATH, DESK_FAKES_PORT)."""
++    fakes_port = free_port()
++    stub = _stub_python(tmp_path, "exec sleep 120", fakes_body)
++    done = _run(tmp_path, first_on_path=stub, wait="2", DESK_FAKES_PORT=str(fakes_port))
++    assert done.returncode == EXIT_START_NOT_DONE and "fakes.log" in done.stderr, (done.stdout, done.stderr)
++    assert str(tmp_path) not in done.stderr and str(fakes_port) not in done.stderr, done.stderr
++    desk = _run(tmp_path, first_on_path=_stub_python(tmp_path, "exec sleep 120"), wait="2")
++    assert "desk.log" in desk.stderr and str(tmp_path) not in desk.stderr, desk.stderr
++
++
++def _ipv6_loopback() -> bool:
++    try:
++        with socket.socket(socket.AF_INET6) as probe:
++            probe.bind(("::1", 0))
++        return True
++    except OSError:
++        return False
++
++
++@pytest.mark.skipif(
++    not _ipv6_loopback(),
++    reason="no IPv6 on this computer (checked 2026-11-14: AF_INET6 sockets are refused by this kernel)",
++)
++def test_the_real_demo_server_binds_an_ipv6_loopback_host_and_the_script_waits_for_it(
++    tmp_path: Path, cleanup: None
++) -> None:
++    """The settings keep the brackets of `http://[::1]:PORT`; the script strips them, starts the REAL demo server on
++    that host (`--host`) and waits until it answers there and has said it serves the port."""
++    port = free_port()
++    stub = _stub_python(tmp_path, "echo desk listening on x; exec sleep 60")
++    done = _run(tmp_path, first_on_path=stub, DESK_FAKES_URL=f"http://[::1]:{port}")
++    assert done.returncode == 0 and "started:" in done.stdout, (done.stdout, done.stderr)
++    with socket.create_connection(("::1", port), timeout=2):
++        pass
++
++
++@pytest.mark.skipif(
++    not _ipv6_loopback(),
++    reason="no IPv6 on this computer (checked 2026-11-14: AF_INET6 sockets are refused by this kernel)",
++)
++def test_a_foreign_listener_on_an_ipv6_loopback_port_is_refused_before_anything_is_started(
++    tmp_path: Path, cleanup: None
++) -> None:
++    with socket.socket(socket.AF_INET6) as held:
++        held.bind(("::1", 0))
++        held.listen()
++        port = held.getsockname()[1]
++        done = _run(tmp_path, DESK_FAKES_URL=f"http://[::1]:{port}")
++    assert done.returncode == EXIT_START_NOT_DONE and "something else already answers" in done.stderr, done.stderr
++    assert not (tmp_path / "data" / "fakes.pid").exists()
++
++
++def test_text_pin_both_start_scripts_strip_one_pair_of_brackets_and_pass_the_host() -> None:
++    """TEXT PIN, not run on Windows: the .ps1 cannot run here. The lines are present in both scripts."""
++    sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    ps1 = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
++    assert "^\\[(.*)\\]$" in sh and "'^\\[(.*)\\]$'" in ps1, "bracket rule"
++    assert '--host "$fakes_host"' in sh and "'--host', $fakesHost" in ps1
++    assert "already answers on the demo server port; nothing was started" in sh + ps1
++    assert "^fakes server .* on port" in sh and "^fakes server .* on port" in ps1
+diff --git a/tools/render_exit_table.py b/tools/render_exit_table.py
+new file mode 100644
+index 0000000..dde52a9
+--- /dev/null
++++ b/tools/render_exit_table.py
+@@ -0,0 +1,61 @@
++"""Print the exit-code table (`lead_desk.constants.EXIT_CODE_TABLE`) as a Markdown table.
++
++`python tools/render_exit_table.py --write` puts the table between the two marker lines in docs/settings.md; without
++`--write` it prints the table. tests/test_exit_code_table.py fails when the printed table differs from this output, so
++the table in the document is never typed by hand and cannot drift from the constants.
++"""
++
++from __future__ import annotations
++
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parent.parent
++if str(ROOT / "src") not in sys.path:
++    sys.path.insert(0, str(ROOT / "src"))
++
++from lead_desk import constants as c  # noqa: E402
++
++START = "<!-- exit-table:start (written by tools/render_exit_table.py; do not edit by hand) -->"
++END = "<!-- exit-table:end -->"
++TARGET = ROOT / "docs" / "settings.md"
++NOT_PRODUCED = "not produced by a test on this build"
++
++
++def render() -> str:
++    """The table as Markdown text: one row per (program, code), in the order of the constant."""
++    skipped = set(c.EXIT_ROWS_NOT_PRODUCED_BY_A_TEST)
++    lines = ["| Program | Code | Meaning | Run by a test here |", "|---|---|---|---|"]
++    for program, code, meaning in c.EXIT_CODE_TABLE:
++        note = NOT_PRODUCED if (program, code) in skipped else "yes"
++        lines.append(f"| `{program}` | {code} | {meaning} | {note} |")
++    return "\n".join(lines)
++
++
++def block() -> str:
++    return f"{START}\n{render()}\n{END}"
++
++
++def current_block(text: str) -> str | None:
++    """The marked block as it stands in `text` (markers included), or None when a marker is missing."""
++    start, end = text.find(START), text.find(END)
++    if start < 0 or end < start:
++        return None
++    return text[start : end + len(END)]
++
++
++def main(argv: list[str]) -> int:
++    if "--write" not in argv:
++        print(render())
++        return 0
++    text = TARGET.read_text(encoding="utf-8")
++    old = current_block(text)
++    if old is None:
++        print("the marker lines are missing in docs/settings.md", file=sys.stderr)
++        return 1
++    TARGET.write_text(text.replace(old, block()), encoding="utf-8")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main(sys.argv[1:]))
