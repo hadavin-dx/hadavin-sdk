@@ -1,5 +1,5 @@
 # lane3 kill and fault results (own harness; counts taken outside n8n per lead id)
-Generated 2026-11-14 17:22Z. n = number of runs behind each row. Flow sets: 11:05Z (59202078), 61e3804b (fixed), 6ebb7f62-v3, 7709d058-v4.
+Generated 2026-11-14 17:26Z. n = number of runs behind each row. Flow sets: 11:05Z (59202078), 61e3804b (fixed), 6ebb7f62-v3, 7709d058-v4.
 
 ## Part 1: kill points, faults, ERROR, burst, GREP (flows 11:05Z and 61e3804b)
 
@@ -29,6 +29,7 @@ Generated 2026-11-14 17:22Z. n = number of runs behind each row. Flow sets: 11:0
 | control2par [flows 11:05Z] | done, attempts=1, intake_mails=1, lead_alerts=0, crm_rows=1, model_calls=1 | 2 | jcp2 jcp2 |
 | error [flows 11:05Z] | processing, attempts=3, intake_mails=0, lead_alerts=0, crm_rows=0, model_calls=1 | 2 | je1 je2 |
 | error [flows 61e3804b] | failed, attempts=3, intake_mails=0, lead_alerts=1, crm_rows=0, model_calls=1 | 3 | ferr1 ferr2 ferr3 |
+| error [flows 873a908a-film-v4-lease45] | failed, attempts=3, intake_mails=0, lead_alerts=1, crm_rows=0, model_calls=1 | 3 | fl45err1 fl45err2 fl45err3 |
 | grep [flows 11:05Z] | done, attempts=1, intake_mails=1, lead_alerts=0, crm_rows=1, model_calls=1 | 3 | jg1 jg2 jg3 |
 | grep [flows 61e3804b + 4 env settings + PRUNE=false] | done, attempts=1, intake_mails=1, lead_alerts=0, crm_rows=1, model_calls=1 | 3 | fjg5 fjg6 fjg7 |
 | grep [flows 61e3804b + 4 n8n env settings] | done, attempts=1, intake_mails=1, lead_alerts=0, crm_rows=1, model_calls=1 | 3 | fjg2 fjg3 fjg4 |

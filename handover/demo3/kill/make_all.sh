@@ -10,4 +10,4 @@ echo; echo "## Part 2: alert cases on the v3 and v4 flows (case column: v3A mean
 python3 make_results_v.py
 echo; echo "## Part 3: recovery seconds (K1, K2, K3, K6) on v4 (lease 120 s, folder n8n-flows-v4) and film-v4 (lease 45 s). Voided runs are labelled VOID- in results.jsonl and left out."; echo
 python3 make_results_l45.py
-} > RESULTS.md
+echo; echo "
