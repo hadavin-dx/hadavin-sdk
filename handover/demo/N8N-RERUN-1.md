@@ -79,7 +79,7 @@ P1 changes only run_all.py (the wait before a restart of n8n). It does not chang
 2. Machine is free now: v3 doc tests, hygiene, CI-equivalent run on main and on the frozen tree + patches.
 3. If the lead says so: a second quiet full run (R2b) to see whether variant a's 12 of 20 repeats.
 
-## CORRECTIONS AND ADDITIONS FROM THE READ-ONLY REVIEW (04:50Z; facts, mine to apply, the lead decides on the rest)
+## CORRECTIONS AND ADDITIONS FROM THE READ-ONLY REVIEW (04:45Z; facts, mine to apply, the lead decides on the rest)
 - Names: in this file "R1" and "R2" mean RUN 1 (unmodified harness) and RUN 2 (patched); they are not the README's rules R1 and R2. "P1" = the one patch. K1 to K3 for variants a to d: K1 email request in flight (CRM already stored), K2 email stored with its reply held, K3 CRM request in flight; for variant e the letters name other moments (see R2-tables.md). "The lead" = the person who ordered this rerun; "the author of the published run" = whoever made the published numbers; the column "lead's number list" is their note of what to compare and is not part of any public text.
 - Cross-check row: published = 140 runs equal, 0 differ (tables.md); run 2 = 138 equal, 0 differ, 2 kill runs left out.
 - Kill rows differ in more than counts (facts from R2-tables.md versus tables.md): published rows mostly show one crashed entry after the restart with one retry press; run 2 rows for variants a and b mostly show ten crashed entries with ten retry presses; variant a K1 final (CRM, email) were (2,1) and (4,3) in two rows, K2 (4,3) in two rows, with (1,1) published; variant e client replies read RemoteDisconnected here and ConnectionResetError in the published file. I give no reason.

@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 04:48Z): R2b STARTED 04:47:09Z (quiet machine, P1 scratch harness, same flags as R2)
+- Quiet check before start: vmstat idle 100%, 0 containers, no n8n; agent H (CI-equivalent) STOPPED, nothing else runs.
+- Harness cannot start one case alone: g12.py takes a count (a default 5 is allowed), g12e.py is fixed at 5 bursts, both need the stack (Postgres, fakes, n8n, setup, deploys, restart). So I use a scratch driver run_r2b.py (copy of run_all.py, body cut to: setup, deploys a/d/c/b, restart with P1, g12.py a default 5, deploy3, g12e.py). Same stack for the 5 + 5 bursts, fresh e-mail per burst. Smallest unit the harness allows; NOT a fresh stack per burst.
+- Now: variant a 5 bursts running (since 04:47:51Z). Then variant e 5 bursts (about 5 min). Load goes to load.jsonl.
+- Local label fix 04:50Z -> 04:45Z pushed with this block.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Mapping of the two published lines (N8N-RERUN-1.md): after R2b.
+- READ of stale_running_after_kill (b K2, b K3), R3-partial, doc v3 tests, hygiene, CI-equivalent run, fresh doc reviewer: all wait until R2b ends.
+- Whether one stack for 5 bursts vs fresh stack per burst matters: not checked.
+## WHAT I WOULD DO NEXT (ranked)
+1. Finish R2b, write one row per burst with load.
+2. READ the stale_running_after_kill rows (no run), then mapping of the two published lines.
+3. R3-partial (b K2/K3 only) if you confirm.
 ## REPORT (clock 04:42:42): R2 FULL RUN ENDED (exit 2, incomplete): COUNTS PUSHED in N8N-RERUN-1.md (R2 section) + n8n-rerun/R2-tables.md
 - Ended 04:37:22Z after 50 min. Exit 2 = shortfall: b K2 and b K3 have 4 valid kill rows instead of 5 (1 attempt each invalid: stale_running_after_kill). Reported, not repeated.
 - Counts next to published (full table in the file): variant a ten-at-once 12 of 20 (published 18 of 20) DIFFERENT; b, c, d 20 of 20 each as published; a kill runs CRM-in-flight 1 of 5 (published 5 of 5) and email points 3 of 10 (published 9 of 10) DIFFERENT; kill rows without lost connection 0 of 15/13/15/15 (no kill without effect); variant e second CRM row 1 of 10 (published 4 of 10) DIFFERENT; e other counts as published; stand-in cross-check 138 equal, 0 differ. No reason given for any difference. The lead's "1 of 15" and "K1 visible 1 of 5" are not in tables.md as I read it (flagged).
