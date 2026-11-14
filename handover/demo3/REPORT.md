@@ -1,3 +1,18 @@
+## HEARTBEAT 78 (03:14Z) - GITLEAKS PROOF PARTLY IN; data/ WRITER FOUND; BUILDER B9 STARTED
+
+| Agent | Job | State |
+|---|---|---|
+| M3 | 3.13 shuffled seed 987654 (third order) | running |
+| M4 | gitleaks 8.30.1 run | running; first result below |
+| B9 (Sonnet builder) | fix-9: tests leave an empty data/ folder in the repo tree | running; no review yet |
+| M5 | closed | found the data/ creators |
+
+FAILURES AND RETRIES: still 30 environment failures in the two closed runs (missing gitleaks program). New: M4's three gitleaks files with the program present, shuffled order seed 20261114: 72 passed, rc 0, 67 s (I read raw/m4-bin-s20261114.log myself: '72 passed in 66.52s', 'rc=0'). Without the program the same files gave 30 failed / 42 passed. So for that order the 30 failures vanish when gitleaks is there; the reversed order and the full suite with gitleaks are still running (M4). The gitleaks version and checksum: M4's notes, NOT yet read by me.
+FINDING (M5, I read the three lines in the test files): the empty data/ comes from tests/test_reset_scripts.py:67 and :82 (a fixture used by 23 tests) and tests/test_mode_safety.py:334: each makes <repo>/data and removes only its own subfolder. Other files were not tested one by one, so more creators are not ruled out. Fix is in the builder B9; nothing reviewed yet, so no 'fixed' claim.
+ASK list: unchanged; none new.
+Load: see the next block (3 agents running, 2 heavy).
+Not checked: M4 reversed order and full suite with gitleaks; M3 result; B9 patch; playwright on 3.13; time per group.
+
 ## HEARTBEAT 77 (03:12Z) - M1 AND M2 BOTH CLOSED; M3, M4, M5 RUNNING
 
 | Agent | Job | State |
