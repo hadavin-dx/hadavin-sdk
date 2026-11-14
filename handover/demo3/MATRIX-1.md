@@ -57,7 +57,7 @@ Same ids in all runs: M3 and M4 reports say their sorted failed ids matched ids-
 Proof that they pass with the program present (M4):
 - Program: gitleaks 8.30.1 (`gitleaks version` printed 8.30.1, per M4 report; not re-run by me).
 - Source: https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz, plus the published checksums file in the same release.
-- sha256 (published equals computed, `sha256sum -c` OK per report): 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb.
+- sha256 of the ARCHIVE gitleaks_8.30.1_linux_x64.tar.gz (published in the checksums file downloaded with it equals computed; checked again by the number checker): 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb. The sha256 of the extracted program /home/user/work/priv/gitleaks-bin/x/gitleaks is 88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509 (computed by the checker; the first version of this line wrongly called the archive hash the program's hash).
 - Result: 72 passed on the three files (seed 20261114: m4-bin-s20261114.log, 66.52 s; seed 0: m4-bin-s0.log, 65.47 s), and the full suite 3714 passed, 169 skipped, 0 failed (m4-full.log).
 - The sha256 and URL come from the M4 report; the raw m4 logs do not contain them. Not matched to a log.
 
@@ -184,7 +184,7 @@ Not measurable: the runs used `-q` without `--durations`, so logs show only dots
 | ruff, mypy, bandit, Windows | not run | CI or a local gate run |
 | Numbers I could not match to a raw log | listed here | see "numbers not matched" below |
 
-Numbers not matched to a log: gitleaks URL, version 8.30.1 and sha256 551f6fc8...470eb (M4 report only); M4 full seed 20261114; playwright 1.63.0, greenlet 3.5.6, pyee 13.0.1, pytest 9.2.0 and pip rc 0 / 9.7 s (M6 report; raw/m6-pip-*.log not opened by me); chromium revision 1243 (M6 report); the 24/2/4 split came from ids-d1 which I counted, not from a log summary line.
+Numbers not matched to a log: gitleaks URL, version 8.30.1 and sha256 551f6fc8...470eb (M4 report only); M4 full seed 20261114; playwright 1.63.0, greenlet 3.5.6, pyee 13.0.1, pytest 9.2.0 and pip rc 0 / 9.7 s (M6 report; raw/m6-pip-*.log not opened by me); chromium revision 1243 (M6 report); the 24/2/4 split came from ids-d1 which I counted, not from a log summary line. | CHECKED 03:50Z (evidence/matrix1-check.md): gitleaks version 8.30.1 matches (the program prints it); playwright/greenlet/pyee/pytest versions match raw/m6-pip-list.txt; chromium 1243 matches /opt/pw-browsers; the 24/2/4 split matches ids-d1. Still only in reports, not in any raw log: gitleaks download URL, M4 full-run seed 20261114 (the run script takes it as an argument and does not record it), pip rc 0, rc of the M1/M2 re-runs (no rc line in those 12 logs).
 
 ## WHAT I WOULD DO NEXT (ranked 3)
 
