@@ -1,5 +1,7 @@
 # ON-PATH LIST: changed files the take's real-check run uses (r7o)
 
+**PROVISIONAL (written before ORDER C-PLAN): this list is built from my own reading of run_real_check.py on tree-R7O, not from the take's used-file list. It is replaced by the C-PLAN version once the lead sends the used-file list (Sun 15); that version must also give the minimal patch subset that applies on take head 27a1ed8.**
+
 Written 2026-11-14 about 10:35 UTC (16:05 IST) by the core lead. **Method and limit:** read from the import lines and call sites of `scripts/run_real_check.py` in `/home/user/build/rr6/tree-R7O`, then matched against the file list of `core-fix-on-frozen-r7o-crlf.patch.gz`. It is a reading of the code, NOT a traced run: nothing was executed to confirm a file is really reached, and indirect imports below the first level were only partly followed. "Changed" means the file is in the r7o patch relative to the frozen tree 49d3c859. A file that is not in the patch is unchanged.
 
 ## 1. Independent mail count (the run counts mails itself, from the mailboxes)
