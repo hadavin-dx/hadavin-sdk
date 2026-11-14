@@ -1,0 +1,185 @@
+# b12 fails-before: r6 tests on the r5 tree (base f3c39cf8 + lane3-fix-5-r5.patch), 2026-11-14T03:48:55Z
+F......F....................sssssFF..................................... [ 42%]
+...........FFFFFFF.....FFFF............................................. [ 85%]
+.....................s..                                                 [100%]
+=================================== FAILURES ===================================
+_____ test_the_old_bare_substring_match_and_the_unchecked_number_are_gone ______
+
+>       assert re.search(r"\$proc\.CommandLine\s+-cmatch\s+\$ours", code), "the command line is not judged by -cmatch"
+E       AssertionError: the command line is not judged by -cmatch
+E       assert None
+E        +  where None = <function search at 0x7f94a2d35300>('\\$proc\\.CommandLine\\s+-cmatch\\s+\\$ours', '$ErrorActionPreference = \'Stop\'\n$env:PYTHONPATH = \'src;.\'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n...kes.err.log", "$dataDir\\crash.flag") {\n    if (Test-Path $f) { Remove-Item -Force $f }\n}\nWrite-Host \'reset done\'')
+E        +    where <function search at 0x7f94a2d35300> = re.search
+
+tests/test_reset_ps1_pid_rules.py:43: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\Python312\\Python.exe -m lead_desk.server-True] _
+
+line = 'C:\\Python312\\Python.exe -m lead_desk.server', ours = True
+
+>       assert bool(re.search(_ours_pattern(), line)) is ours, line  # no IGNORECASE: -cmatch
+E       AssertionError: C:\Python312\Python.exe -m lead_desk.server
+E       assert False is True
+E        +  where False = bool(None)
+E        +    where None = <function search at 0x7f94a2d35300>('^\\s*("([^"]*[\\\\/])?python[^"\\\\/]*"|([^\\s"]*[\\\\/])?python[^\\s"\\\\/]*)\\s+-m\\s+(lead_desk\\.server|demo_only\\.fakes_server)(\\s|$)', 'C:\\Python312\\Python.exe -m lead_desk.server')
+E        +      where <function search at 0x7f94a2d35300> = re.search
+E        +      and   '^\\s*("([^"]*[\\\\/])?python[^"\\\\/]*"|([^\\s"]*[\\\\/])?python[^\\s"\\\\/]*)\\s+-m\\s+(lead_desk\\.server|demo_only\\.fakes_server)(\\s|$)' = _ours_pattern()
+
+tests/test_reset_ps1_pid_rules.py:76: AssertionError
+_ test_reset_ps1_reads_at_most_64_characters_of_a_pid_file_and_longer_means_stale _
+
+>       assert re.search(r"New-Object byte\[\]\s+64\b", code), "the pid file is not read through a 64 byte buffer"
+E       AssertionError: the pid file is not read through a 64 byte buffer
+E       assert None
+E        +  where None = <function search at 0x7f94a2d35300>('New-Object byte\\[\\]\\s+64\\b', '$ErrorActionPreference = \'Stop\'\n$env:PYTHONPATH = \'src;.\'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n...kes.err.log", "$dataDir\\crash.flag") {\n    if (Test-Path $f) { Remove-Item -Force $f }\n}\nWrite-Host \'reset done\'')
+E        +    where <function search at 0x7f94a2d35300> = re.search
+
+tests/test_reset_ps1_pid_rules.py:126: AssertionError
+______ test_reset_ps1_removes_only_a_plain_file_and_exits_7_like_reset_sh ______
+
+>       assert re.search(r"Test-Path\s+-LiteralPath\s+\$pidFile\s+-PathType\s+Leaf", code), "no leaf-only check"
+E       AssertionError: no leaf-only check
+E       assert None
+E        +  where None = <function search at 0x7f94a2d35300>('Test-Path\\s+-LiteralPath\\s+\\$pidFile\\s+-PathType\\s+Leaf', '$ErrorActionPreference = \'Stop\'\n$env:PYTHONPATH = \'src;.\'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n...kes.err.log", "$dataDir\\crash.flag") {\n    if (Test-Path $f) { Remove-Item -Force $f }\n}\nWrite-Host \'reset done\'')
+E        +    where <function search at 0x7f94a2d35300> = re.search
+
+tests/test_reset_ps1_pid_rules.py:137: AssertionError
+_____ test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[3 2 57-True] _____
+
+version = '3 2 57', refused = True
+
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+
+tests/test_reset_scripts.py:401: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:389: AssertionError
+_____ test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[3 0 0-True] ______
+
+version = '3 0 0', refused = True
+
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+
+tests/test_reset_scripts.py:401: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:389: AssertionError
+_____ test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[4 0 44-True] _____
+
+version = '4 0 44', refused = True
+
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+
+tests/test_reset_scripts.py:401: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:389: AssertionError
+_____ test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[4 1 0-False] _____
+
+version = '4 1 0', refused = False
+
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+
+tests/test_reset_scripts.py:401: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:389: AssertionError
+____ test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[4 4 20-False] _____
+
+version = '4 4 20', refused = False
+
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+
+tests/test_reset_scripts.py:401: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:389: AssertionError
+____ test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[5 2 21-False] _____
+
+version = '5 2 21', refused = False
+
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+
+tests/test_reset_scripts.py:401: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:389: AssertionError
+_ test_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs _
+
+>       at = {key: next(i for i, ln in enumerate(lines) if ln.startswith(key)) for key in keys}
+E       StopIteration
+
+tests/test_reset_scripts.py:422: StopIteration
+___________ test_the_port_ranges_of_two_xdist_workers_never_overlap ____________
+
+>       assert support.worker_port_range("gw0", "4") == (40000, 44999)
+E       AttributeError: module 'support' has no attribute 'worker_port_range'
+
+tests/test_port_helpers.py:101: AttributeError
+___ test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses ____
+
+>       assert support.worker_port_range(None, None) is None
+E       AttributeError: module 'support' has no attribute 'worker_port_range'
+
+tests/test_port_helpers.py:113: AttributeError
+____ test_a_worker_number_beyond_the_worker_count_still_gets_its_own_range _____
+
+>       low, high = support.worker_port_range("gw6", "2") or (0, 0)  # a count that is too small is raised to the number
+E       AttributeError: module 'support' has no attribute 'worker_port_range'
+
+tests/test_port_helpers.py:119: AttributeError
+____________ test_free_and_held_ports_of_a_worker_lie_in_its_range _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f94a18a26f0>
+
+>       low, high = support.worker_port_range("gw2", "4") or (0, 0)
+E       AttributeError: module 'support' has no attribute 'worker_port_range'
+
+tests/test_port_helpers.py:126: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\Python312\\Python.exe -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_reset_ps1_reads_at_most_64_characters_of_a_pid_file_and_longer_means_stale
+FAILED tests/test_reset_ps1_pid_rules.py::test_reset_ps1_removes_only_a_plain_file_and_exits_7_like_reset_sh
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[3 2 57-True]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[3 0 0-True]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[4 0 44-True]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[4 1 0-False]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[4 4 20-False]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_4_1_with_exit_2[5 2 21-False]
+FAILED tests/test_reset_scripts.py::test_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs
+FAILED tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+FAILED tests/test_port_helpers.py::test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses
+FAILED tests/test_port_helpers.py::test_a_worker_number_beyond_the_worker_count_still_gets_its_own_range
+FAILED tests/test_port_helpers.py::test_free_and_held_ports_of_a_worker_lie_in_its_range
+15 failed, 147 passed, 6 skipped in 67.15s (0:01:07)
+done

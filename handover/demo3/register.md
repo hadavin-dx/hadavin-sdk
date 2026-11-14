@@ -262,3 +262,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | M10 (a2ca151fe3fcfbea1) | STARTED 03:47Z | checker of MATRIX-1 numbers against raw logs; expected end ~04:00Z |
 | resolve fix-8/9 and fix-5/2 | DONE | saved evidence/resolve-lane3-fix-8-9-r1.md, resolve-lane3-fix-5-2-r1.md (via Skill, Opus) |
 | M10 | CLOSED 03:50Z | evidence/matrix1-check.md: 1 label mismatch (archive vs program sha256) fixed in MATRIX-1; 4 items stay report-only |
+| LEAD ORDER 03:49Z | applied | WINDOWS-RUN-1.md to be written after B12's patch (exit 7 fix); fresh egm reviewer on each rebuild; E3b recorded 'unproven, superseded by later complete runs on other heads'; PR #12 E marks closed as counting artifact; B12 told to add the two-worker free_port test |

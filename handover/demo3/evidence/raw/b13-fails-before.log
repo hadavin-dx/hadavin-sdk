@@ -1,0 +1,316 @@
+..........F..........................F.FFFFFFFFFFFFFFFFF                 [100%]
+=================================== FAILURES ===================================
+_ test_a_key_with_a_space_inside_is_refused_by_the_hubspot_and_live_kinds_and_dropped_by_the_smtp_password _
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_a_key_with_a_space_inside0')
+
+    def test_a_key_with_a_space_inside_is_refused_by_the_hubspot_and_live_kinds_and_dropped_by_the_smtp_password(
+        tmp_path: Path,
+    ) -> None:
+        f = tmp_path / "spaced.txt"
+        f.write_text("abcd efgh ijkl\n", encoding="utf-8")
+        for kind in ("hubspot", "live"):
+>           with pytest.raises(SettingRefused, match="must not hold a space"):
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'must not hold a space'
+E             Actual message: 'DESK_HUBSPOT_KEY_FILE: the hubspot key file holds no key'
+
+tests/test_one_key_file_rule_and_path_walk.py:133: AssertionError
+_ test_the_contract_says_when_a_bad_key_file_is_reported_and_what_it_leaves_behind _
+
+    def test_the_contract_says_when_a_bad_key_file_is_reported_and_what_it_leaves_behind() -> None:
+        text = " ".join((REPO / "contract.md").read_text(encoding="utf-8").split())
+        limits_raw = " ".join((REPO / "docs" / "limits.md").read_text(encoding="utf-8").split())
+>       assert "With the demo outbox in use a bad key file is therefore reported only after" in text
+E       assert 'With the demo outbox in use a bad key file is therefore reported only after' in '# contract.md In this file "fake" and "recorded" are internal names for the demo stand-ins (`FakeCrm`, the `/fake/...... its own (`Desk._bounded`, see `docs/limits.md`). - A duplicate reply returns the id of the other lead: kept as it is.'
+
+tests/test_one_key_file_rule_and_path_walk.py:453: AssertionError
+_ test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[file-separator] _
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_the_smtp_password_drops_o0')
+case = 'file-separator'
+
+    @pytest.mark.parametrize("case", sorted(SPACE_CASES))
+    def test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused(tmp_path: Path, case: str) -> None:
+        f = tmp_path / "pw.txt"
+        f.write_text(SPACE_CASES[case], encoding="utf-8")
+>       with pytest.raises(SettingRefused, match="must hold only plain printable ASCII"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_and_path_walk.py:500: Failed
+_ test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[ideographic-space] _
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_the_smtp_password_drops_o1')
+case = 'ideographic-space'
+
+    @pytest.mark.parametrize("case", sorted(SPACE_CASES))
+    def test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused(tmp_path: Path, case: str) -> None:
+        f = tmp_path / "pw.txt"
+        f.write_text(SPACE_CASES[case], encoding="utf-8")
+>       with pytest.raises(SettingRefused, match="must hold only plain printable ASCII"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_and_path_walk.py:500: Failed
+_ test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[no-break-space] _
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_the_smtp_password_drops_o2')
+case = 'no-break-space'
+
+    @pytest.mark.parametrize("case", sorted(SPACE_CASES))
+    def test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused(tmp_path: Path, case: str) -> None:
+        f = tmp_path / "pw.txt"
+        f.write_text(SPACE_CASES[case], encoding="utf-8")
+>       with pytest.raises(SettingRefused, match="must hold only plain printable ASCII"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_and_path_walk.py:500: Failed
+_ test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[tab] _
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_the_smtp_password_drops_o3')
+case = 'tab'
+
+    @pytest.mark.parametrize("case", sorted(SPACE_CASES))
+    def test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused(tmp_path: Path, case: str) -> None:
+        f = tmp_path / "pw.txt"
+        f.write_text(SPACE_CASES[case], encoding="utf-8")
+>       with pytest.raises(SettingRefused, match="must hold only plain printable ASCII"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_and_path_walk.py:500: Failed
+_ test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[unit-separator] _
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_the_smtp_password_drops_o4')
+case = 'unit-separator'
+
+    @pytest.mark.parametrize("case", sorted(SPACE_CASES))
+    def test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused(tmp_path: Path, case: str) -> None:
+        f = tmp_path / "pw.txt"
+        f.write_text(SPACE_CASES[case], encoding="utf-8")
+>       with pytest.raises(SettingRefused, match="must hold only plain printable ASCII"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_and_path_walk.py:500: Failed
+_____ test_three_distinct_refusal_texts_for_short_odd_characters_and_space _____
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_three_distinct_refusal_te0')
+
+    def test_three_distinct_refusal_texts_for_short_odd_characters_and_space(tmp_path: Path) -> None:
+        f = tmp_path / "k.txt"
+        seen = {}
+        for name, body in (("short", "abc"), ("empty", ""), ("odd", "abcdefgh\x07ijkl"), ("space", "abcdefgh ijkl")):
+            f.write_text(body, encoding="utf-8")
+            with pytest.raises(SettingRefused) as info:
+                envnum.read_secret_file(f, "made-up key", "key")
+            seen[name] = str(info.value)
+            assert os.sep not in seen[name] and "ijkl" not in seen[name]  # no path, no content
+>       assert seen["short"] == seen["empty"] and "empty or shorter than" in seen["short"]
+E       AssertionError: assert ('the made-up ... holds no key' == 'the made-up ... holds no key'
+E         
+E           the made-up key file holds no key and 'empty or shorter than' in 'the made-up key file holds no key')
+
+tests/test_one_key_file_rule_and_path_walk.py:517: AssertionError
+________ test_the_contract_and_limits_list_the_three_key_file_refusals _________
+
+    def test_the_contract_and_limits_list_the_three_key_file_refusals() -> None:
+        for name in ("contract.md", "docs/limits.md"):
+            text = " ".join((REPO / name).read_text(encoding="utf-8").split())
+>           assert "empty or too short" in text, name
+E           AssertionError: contract.md
+E           assert 'empty or too short' in '# contract.md In this file "fake" and "recorded" are internal names for the demo stand-ins (`FakeCrm`, the `/fake/...... its own (`Desk._bounded`, see `docs/limits.md`). - A duplicate reply returns the id of the other lead: kept as it is.'
+
+tests/test_one_key_file_rule_and_path_walk.py:526: AssertionError
+______ test_the_mailbox_counter_reads_its_password_with_the_one_function _______
+
+    def test_the_mailbox_counter_reads_its_password_with_the_one_function() -> None:
+        imported = _imports_of(SRC / "imap_count.py")
+>       assert "lead_desk.envnum.read_secret_file" in imported
+E       AssertionError: assert 'lead_desk.envnum.read_secret_file' in {'__future__', '__future__.annotations', 'collections', 'collections.Counter', 'collections.abc', 'collections.abc.Callable', ...}
+
+tests/test_one_key_file_rule_and_path_walk.py:533: AssertionError
+___ test_no_module_of_the_desk_takes_a_secret_file_reader_from_a_kind_module ___
+
+    def test_no_module_of_the_desk_takes_a_secret_file_reader_from_a_kind_module() -> None:
+        """Over all of src/lead_desk: a name `read_secret_file` is imported from `lead_desk.envnum` and from nowhere else."""
+        bad: list[tuple[str, str]] = []
+        for p in sorted(SRC.glob("*.py")):
+            for node in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
+                if isinstance(node, ast.ImportFrom) and any(a.name == "read_secret_file" for a in node.names):
+                    if node.module != "lead_desk.envnum":
+                        bad.append((p.name, str(node.module)))
+>       assert bad == [], bad
+E       AssertionError: [('imap_count.py', 'lead_desk.smtp_provider')]
+E       assert [('imap_count...tp_provider')] == []
+E         
+E         Left contains one more item: ('imap_count.py', 'lead_desk.smtp_provider')
+E         Use -v to get more diff
+
+tests/test_one_key_file_rule_and_path_walk.py:545: AssertionError
+_________ test_the_fake_model_server_reads_a_key_file_with_a_size_cap __________
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_the_fake_model_server_rea0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f185f27a780>
+
+    def test_the_fake_model_server_reads_a_key_file_with_a_size_cap(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.syspath_prepend(str(REPO))
+        from demo_only import fake_model_server as fms
+    
+        monkeypatch.setattr(fms, "confine_existing", lambda p, what="": Path(p))
+        monkeypatch.setattr(fms, "make_model_server", lambda **kw: (_ for _ in ()).throw(RuntimeError("reached")))
+        big = tmp_path / "big.txt"
+        big.write_text("k" * 5000, encoding="utf-8")
+        monkeypatch.setattr(sys, "argv", ["fake_model_server", "--port", "0", "--key-file", str(big)])
+        with pytest.raises(SystemExit):  # refused, not read whole
+>           fms.main()
+
+tests/test_one_key_file_rule_and_path_walk.py:558: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+demo_only/fake_model_server.py:266: in main
+    srv, state = make_model_server(port=a.port, mode=a.mode, key=key, call_log=call_log, control_file=control_file)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_one_key_file_rule_and_path_walk.py:553: in <lambda>
+    monkeypatch.setattr(fms, "make_model_server", lambda **kw: (_ for _ in ()).throw(RuntimeError("reached")))
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <tuple_iterator object at 0x7f185f278550>
+
+>   monkeypatch.setattr(fms, "make_model_server", lambda **kw: (_ for _ in ()).throw(RuntimeError("reached")))
+E   RuntimeError: reached
+
+tests/test_one_key_file_rule_and_path_walk.py:553: RuntimeError
+________ test_a_second_secret_reader_outside_src_has_a_cap_or_is_listed ________
+
+    def test_a_second_secret_reader_outside_src_has_a_cap_or_is_listed() -> None:
+        """Guard over scripts/ and demo_only/: a line that reads a key file whole (read_text / read_bytes on a name that
+        holds key) is not allowed; the two readers that exist (n8n_api, fake_model_server) read at most one byte over a cap
+        that is the desk's own number."""
+        from lead_desk.constants import SECRET_FILE_MAX_BYTES
+    
+        hits: list[str] = []
+        for folder in ("scripts", "demo_only"):
+            for p in sorted((REPO / folder).glob("*.py")):
+                for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+                    if re.search(r"key", line, re.I) and re.search(r"\.read_text\(|\.read_bytes\(", line):
+                        hits.append(f"{folder}/{p.name}:{n}")
+>       assert hits == [], hits
+E       AssertionError: ['demo_only/fake_model_server.py:265']
+E       assert ['demo_only/f...erver.py:265'] == []
+E         
+E         Left contains one more item: 'demo_only/fake_model_server.py:265'
+E         Use -v to get more diff
+
+tests/test_one_key_file_rule_and_path_walk.py:573: AssertionError
+________ test_a_named_pipe_as_a_key_file_is_refused_and_does_not_block _________
+
+tmp_path = PosixPath('/home/user/work/priv/b13-tmp/bt1/test_a_named_pipe_as_a_key_fil0')
+
+    @pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="no named pipes on this system")
+    def test_a_named_pipe_as_a_key_file_is_refused_and_does_not_block(tmp_path: Path) -> None:
+        fifo = tmp_path / "pipe.txt"
+        os.mkfifo(fifo)
+        result: list[str] = []
+    
+        def run() -> None:
+            try:
+                envnum.read_secret_file(fifo, "made-up key", "key")
+            except SettingRefused as e:
+                result.append(str(e))
+    
+        t = threading.Thread(target=run, daemon=True)
+        t.start()
+        t.join(3)
+        blocked = t.is_alive()
+        if blocked:  # let the stuck reader go before the test ends
+            fd = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
+            os.close(fd)
+            t.join(3)
+>       assert not blocked, "the key file reader blocked on a named pipe"
+E       AssertionError: the key file reader blocked on a named pipe
+E       assert not True
+
+tests/test_one_key_file_rule_and_path_walk.py:601: AssertionError
+_ test_the_script_class_guard_no_script_probes_a_path_with_the_raising_stdlib_calls _
+
+    def test_the_script_class_guard_no_script_probes_a_path_with_the_raising_stdlib_calls() -> None:
+        pattern = re.compile(r"\.is_dir\(|\.exists\(|\.is_file\(|os\.path\.exists\(|os\.path\.isdir\(|resolve\(strict=True")
+        hits: dict[str, int] = {}
+        for p in sorted((REPO / "scripts").glob("*.py")):
+            found = pattern.findall(p.read_text(encoding="utf-8"))
+            if found:
+                hits[p.name] = len(found)
+        # allowed: run_real_check.py's flag file, made by the same script one line above its `.exists()`
+>       assert hits == {"run_real_check.py": 1}, hits
+E       AssertionError: {'reset_check.py': 1, 'run_real_check.py': 2}
+E       assert {'reset_check..._check.py': 2} == {'run_real_check.py': 1}
+E         
+E         Differing items:
+E         {'run_real_check.py': 2} != {'run_real_check.py': 1}
+E         Left contains 1 more item:
+E         {'reset_check.py': 1}
+E         Use -v to get more diff
+
+tests/test_one_key_file_rule_and_path_walk.py:613: AssertionError
+_____ test_the_envnum_docstring_names_every_kind_of_setting_text_it_reads ______
+
+    def test_the_envnum_docstring_names_every_kind_of_setting_text_it_reads() -> None:
+        doc = " ".join((envnum.__doc__ or "").split()).lower()
+>       assert "number" in doc and "secret" in doc and "path" in doc and "web address" in doc
+E       AssertionError: assert ('number' in 'the one helper for every number read from setting text (desk_* environment names, config-file lines). a bad value is ...emo folder goes through `env_number`, never a bare int(), float() or decimal() on text that came from the environment.' and 'secret' in 'the one helper for every number read from setting text (desk_* environment names, config-file lines). a bad value is ...emo folder goes through `env_number`, never a bare int(), float() or decimal() on text that came from the environment.')
+
+tests/test_one_key_file_rule_and_path_walk.py:618: AssertionError
+__________________ test_the_contract_lock_sentences_are_exact __________________
+
+    def test_the_contract_lock_sentences_are_exact() -> None:
+        text = " ".join((REPO / "contract.md").read_text(encoding="utf-8").split())
+>       assert "a refused start leaves no `.lock` file" not in text
+E       AssertionError: assert 'a refused s...`.lock` file' not in '# contract....pt as it is.'
+E         
+E         'a refused start leaves no `.lock` file' is contained here:
+E         ?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_one_key_file_rule_and_path_walk.py:623: AssertionError
+_ test_the_contract_start_up_list_names_the_descriptor_check_and_the_public_bind_warning _
+
+    def test_the_contract_start_up_list_names_the_descriptor_check_and_the_public_bind_warning() -> None:
+        text = " ".join((REPO / "contract.md").read_text(encoding="utf-8").split())
+>       assert "(1) the open-file check (`ensure_descriptor_budget`)" in text
+E       assert '(1) the open-file check (`ensure_descriptor_budget`)' in '# contract.md In this file "fake" and "recorded" are internal names for the demo stand-ins (`FakeCrm`, the `/fake/...... its own (`Desk._bounded`, see `docs/limits.md`). - A duplicate reply returns the id of the other lead: kept as it is.'
+
+tests/test_one_key_file_rule_and_path_walk.py:630: AssertionError
+___________ test_the_book_refusal_texts_say_lead_book_with_a_hyphen ____________
+
+    def test_the_book_refusal_texts_say_lead_book_with_a_hyphen() -> None:
+        from lead_desk import desk
+    
+        for text in (desk.MEMORY_BOOK_PROBLEM, desk.BOOK_IS_FOLDER_PROBLEM):
+>           assert "lead book" not in text and "lead-book" in text
+E           AssertionError: assert ('lead book' not in 'the lead bo...ut the first'
+E             
+E             'lead book' is contained here:
+E               the lead book must be a file: ':memory:' is empty for every thread but the first
+E             ?     +++++++++)
+
+tests/test_one_key_file_rule_and_path_walk.py:638: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_a_key_with_a_space_inside_is_refused_by_the_hubspot_and_live_kinds_and_dropped_by_the_smtp_password
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_contract_says_when_a_bad_key_file_is_reported_and_what_it_leaves_behind
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[file-separator]
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[ideographic-space]
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[no-break-space]
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[tab]
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_smtp_password_drops_only_the_ascii_space_every_other_blank_is_refused[unit-separator]
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_three_distinct_refusal_texts_for_short_odd_characters_and_space
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_contract_and_limits_list_the_three_key_file_refusals
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_mailbox_counter_reads_its_password_with_the_one_function
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_no_module_of_the_desk_takes_a_secret_file_reader_from_a_kind_module
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_fake_model_server_reads_a_key_file_with_a_size_cap
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_a_second_secret_reader_outside_src_has_a_cap_or_is_listed
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_a_named_pipe_as_a_key_file_is_refused_and_does_not_block
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_script_class_guard_no_script_probes_a_path_with_the_raising_stdlib_calls
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_envnum_docstring_names_every_kind_of_setting_text_it_reads
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_contract_lock_sentences_are_exact
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_contract_start_up_list_names_the_descriptor_check_and_the_public_bind_warning
+FAILED tests/test_one_key_file_rule_and_path_walk.py::test_the_book_refusal_texts_say_lead_book_with_a_hyphen
+rc=1

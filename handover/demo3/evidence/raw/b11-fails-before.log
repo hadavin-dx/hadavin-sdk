@@ -1,0 +1,27 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+__________ test_the_whole_run_fails_when_a_test_leaves_a_data_folder ___________
+
+tmp_path = PosixPath('/home/user/work/priv/b11-tmp/bt2/test_the_whole_run_fails_when_0')
+
+    def test_the_whole_run_fails_when_a_test_leaves_a_data_folder(tmp_path: Path) -> None:
+        """The run-wide check in conftest.py: a passing test that makes `data` and keeps it must still fail the run."""
+        probe = (
+            "from pathlib import Path\n\n"
+            "def test_leaves_data():\n"
+            "    (Path(__file__).resolve().parent.parent / 'data').mkdir()\n"
+        )
+        done, copy = _run_in_copy(tmp_path, probe)
+        assert (copy / "data").is_dir(), "the probe must have made the folder"
+        assert "1 passed" in done.stdout, (done.stdout[-1500:], done.stderr[-500:])
+>       assert done.returncode != 0, ("the run passed although a data folder was left", done.stdout[-1500:])
+E       AssertionError: ('the run passed although a data folder was left', '.                                                                        [100%]
+E         1 passed in 0.02s
+E         ')
+E       assert 0 != 0
+E        +  where 0 = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '-m', 'pytest', '-p', 'no:cacheprovider', '-q', '--bas...dout='.                                                                        [100%]\n1 passed in 0.02s\n', stderr='').returncode
+
+tests/test_data_folder_helper.py:167: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_data_folder_helper.py::test_the_whole_run_fails_when_a_test_leaves_a_data_folder
+1 failed, 1 passed, 7 deselected in 0.84s

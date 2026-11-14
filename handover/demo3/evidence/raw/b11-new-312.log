@@ -1,0 +1,6 @@
+.....x......................................................ss.......... [ 69%]
+.....................sssss....s                                          [100%]
+=========================== short test summary info ============================
+SKIPPED [8] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+94 passed, 8 skipped, 1 xfailed in 65.58s (0:01:05)
+rc=0

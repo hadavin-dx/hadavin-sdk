@@ -1,0 +1,11 @@
+(0, 'killed', '1 failed, 39 passed in 0.23s')
+(1, 'killed', '1 failed, 50 passed in 0.35s')
+(2, 'SURVIVED', '118 passed in 19.85s')
+(3, 'killed', '1 failed, 8 passed in 0.14s')
+(4, 'killed', '1 failed, 44 passed in 0.18s')
+(5, 'killed', '1 failed, 10 passed in 0.12s')
+(6, 'killed', '1 failed, 50 passed in 3.31s')
+(7, 'killed', '1 failed, 6 passed in 0.11s')
+--- round 2 (boundary test added) ---
+(2, killed, boundary <= mutant)
+(extra, killed, boundary < MIN-1 mutant)
