@@ -1,16 +1,18 @@
-## HEARTBEAT 188 (16:45Z) - v4: B780 passes (1 alert, no duplicate); K2 passes; KS (kill during send) x2 and K3, K6, K1 repeats running
+## HEARTBEAT 189 (16:55Z) - v4 KS (n8n killed while the alert send waits): exactly 1 alert, but 13 minutes late; K3, K6 repeats pass
 
-WORKERS: 3 lanes (my script processes), 0 language-model agents. Lane 0: KS run 2. Lane 1: KS run 1 (ends about 16:55Z). Lane 2: K3, K6, K1 repeats.
+WORKERS: 2 lanes (my script processes), 0 language-model agents. Lane 0: KS run 2 (ends about 17:05Z). Lane 2: K1 repeat. Lane 1 free: nothing left on my video path to start; the final RESULTS.md waits for the last runs.
 
 | v4 flows (7709d058) | n | Result |
 |---|---|---|
-| B780 (alert answer held 780 s, longer than the 12 min claim) | 1 | EXACTLY 1 alert, at 720 s; alert_attempts 2; state unknown; 1 intake mail; alert_sent true. No duplicate. Why (my reading, from the timeline, not traced in a log): the mail library gives up after 10 min silence, the send fails, AlertBackoff sets a short retry, the retry is not held. So the duplicate the README fears (send longer than 12 min) did not happen here because the library stops the wait at 10 min. |
-| K2 (killed after the mail step) | 1 | done, attempts 2, 1 intake mail, 0 alerts, 1 CRM row, recovery 144.2 s |
-| K1, K3, K6 | 1 each | pass (HB187); repeats running |
-| B90 3 of 3, A 2 of 2, C 2 of 2 | | exactly 1 alert each |
-Recovery seconds on v4 flow files: 144 s in K1, K2, K6 (lease 120 s in this folder). Question open: which lease the video flows use.
+| KS: hold 90 s, n8n killed 10 s after the alert send began (killed at 40 s, up again at 46 s) | 1 (2nd running) | EXACTLY 1 alert, NOT lost, but it came at 780 s (13 min) after the unknown. State unknown, 1 intake mail, 1 CRM row, alert_attempts 2, alert_sent true. Reason (timeline): the killed send left a 12 min claim on the row; nothing releases it, so the next claim was after 12 min plus a sweep. This is the README's "up to 12 to 13 min late". The owner waits 13 min for the alert in this case. |
+| K3 repeat | 2 total | unknown, 0 intake mails, 1 alert, 1 CRM row; recovery 144.3 s |
+| K6 repeat | 2 total | unknown, 1 intake mail, 1 alert, 1 CRM row; recovery 144.4 s |
+| K1 repeat | running | |
+Earlier v4 numbers unchanged: B780 1 alert (720 s), B90 3 of 3 one alert, A 2 of 2, C 2 of 2, K1, K2 pass.
 
-ASK for the lead: lease for the video (20 s or 120 s)?
+Suggestion for the demo (not tested by me): when n8n starts, clear the alert claims of rows with alert_sent false, so a kill during a send does not cost 12 minutes. n8n node: one extra SQL at start; no code. The lead decides.
+
+ASK for the lead: is a 13 min late alert after an n8n kill acceptable for the video claim? If not, tell the demo session about the start-up clear.
 FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list): KS results (the kill-during-send case); K3, K6, K1 repeats; B780 n is 1; failed mark after a sent alert; comparison with the demo table.
-WHAT I WOULD DO NEXT (ranked): 1) KS x2 results; 2) repeats; 3) final RESULTS.md and compare; one video line.
+NOT DONE / NOT CHECKED (my list): KS run 2; K1 repeat; failed mark after a sent alert; comparison with the demo table; lease for the video (open question); n is 1 to 3 per case.
+WHAT I WOULD DO NEXT (ranked): 1) finish KS 2 and K1; 2) final RESULTS.md and compare with the demo table; 3) one video line.
