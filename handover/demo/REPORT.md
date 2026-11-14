@@ -1,5 +1,16 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:11Z): agent H state, control rows, what waits on what
+- Agent H: running, now in its FULL pytest on the frozen tree + doc patch v3 (pytest process in the t1 copy, 46 s old at 06:11:14Z; started about 06:10:28Z). It is a heavy command: pytest -q with DPLD_REQUIRE_SCAN=1 (the whole suite, about 46+ tests of the studio tool repo, not n8n). Earlier H steps (lint tools) ran 06:00-06:10Z. When pytest on t1 ends, H runs the same on origin main (t2).
+- Control row 3 (fresh stack 3, variant a, ran 06:10:33-06:11:08Z): (1 CRM, 1 email), replies 200 x1 / 500 x9, replay added 0. LOAD CAVEAT: idle before 99.2%, after 90.0%: H's pytest started at about 06:10:28Z, so row 3 is NOT proven quiet; I mark it "load-affected" and will redo it (3b) on a clean reading. Rows 1-2 (05:56-05:58Z, idle 97.8-99.8%) are clean. Rows so far: 1, 1, 1 (all no duplicates).
+- Queue (script): control rows 4, 5, then e ten-at-once 5 fresh stacks; each starts only when no pytest/ruff/mypy/bandit/gitleaks process has been seen for 15 s. Row 4 waits for H's pytest now. 3b and the doc v3 tests wait on H and on the queue (one heavy job at a time).
+- n8n-a-cause-1.md pushed (cause NOT ESTABLISHED; evidence in the file).
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Control rows 4, 5, 3b; e ten-at-once on fresh stacks; H result; doc v3 tests, hygiene, skip chunk, fresh doc-patch reviewer. Stand-in timing for variant a.
+## WHAT I WOULD DO NEXT (ranked)
+1. Let the queue run; add row 3b at the end.
+2. Fold rows into N8N-RERUN-1.md and n8n-a-cause-1.md.
+3. After H and the queue: doc v3 tests, hygiene, skip chunk; one fresh doc-patch reviewer.
 ## REPORT (clock 06:04Z): HB. New orders read (06:03Z). (3) cause analysis written; (1)+(2) queued behind agent H; (4) reviewer result already in the file
 - (4) The comprehension reviewer's result was folded into N8N-RERUN-1.md at 06:02Z (commit ed341ad6): 6 Majors fixed (loaded-laptop attribution, P2 timing = 7 setups unfixed, README has no visibility count, mapping scope = branch files only, retry is pressed by the harness, branch-not-published harness), evidence files added, cold-reader definitions added.
 - (3) handover/demo/n8n-a-cause-1.md (read of 25 own + 20 published bursts, no run): duplicates = number of 200 replies in ALL 45 bursts; load 95-99.8% idle in all of mine (does not separate); first-execution time overlaps between groups (does not separate); R2b burst 3 (10 rows) was slow (668 ms start spread, first stop 1965 ms) for a reason NOT ESTABLISHED. CAUSE OF 12/20 vs 18/20: NOT ESTABLISHED.
