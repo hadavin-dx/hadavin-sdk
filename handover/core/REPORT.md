@@ -1,5 +1,38 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 08:50 UTC / 14:20 IST
+
+**Lines below are agent checkpoint lines or claims; I have judged none.**
+
+- **r7k reviewer (a092c900): no written report yet; its 08:42 checkpoint gives the CAUSE of EV7K's 3 new failures: the r7k k15 tests pollute the module-level load_driver._ERRORS (confirmed in its pollute.log).** It also says some of its own wide-set kills (O07, O22, O12) were tainted by that pollution and it is re-running them with the load tests first. Its imap_count password finding (F1) stands as a checkpoint line. Box ends about 09:05.
+- **Pass 11 (a6bba99e), REAL GAPS (all survived the big set), now six, all sent to r7n:** M9-43 (money, reserve counts only the question), M9-54 (source bug, email slash in the contact path), M9-70 and M9-71 (banner x2 desk factor), **M9-81 (SECRET path: scrub() replaces shorter values first, so a value that contains another stays partly printed)**, M9-13 (smtp_provider accepts timeout 0, low). Killed: M9-76, M9-80. M9-58 argued equivalent (big set pending). Rows still queued: the rest of the 14 and M9-73..82.
+- **r7n builder (ac7638bd):** last checkpoint 08:37 "ruff clean, M9-54 test and mutant added, full mutant rerun and base run started" (13 min old). It has had since 08:30 M9-43; M9-81, M9-13, the k15 pollution cause and the hygiene scan failure were sent after, and the imap_count sweep result is not in a checkpoint I have seen. No patches yet. Box ends about 09:20.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n) | leak sweep, M9-43/54/70/71/81/13, r7l Majors, EV7K failures | orders | 08:17 / 13:47 | about 09:20 | r7n | RUNNING | hand-back, EV7N |
+| a092c900 (r7k reviewer) | review of r7k | independent | 08:03 / 13:33 | about 09:05 | review 1 | RUNNING | written report |
+| a6bba99e (pass 11) | 14 survivors, M9-73..82 | 08:01 order | 08:02 / 13:32 | about 09:02 | pass 11 | RUNNING | mail-pass11-r7m.md |
+
+Agents running: 3. Load 2.8.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n patches, EV7N, fresh reviewer, pass 11 on r7n | in progress | as ordered |
+| r7k written verdict; the rest of pass 11 | running | resolve |
+| the r7k reviewer's tainted wide-set kills | being re-run | read the report |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the r7k report and the last pass 11 rows; fold every Blocker/Major into r7n.
+2. At the r7n hand-back verify hashes and apply matrix, EV7N (one full run, plus staged git copy for hygiene), fresh reviewer, pass 11 on changed code.
+3. README, sweep, counts.
+
+
 ## STATUS (core lead) 08:42 UTC / 14:12 IST
 
 **EV7K DONE (committed EV7K-EVIDENCE.md): r7m is NOT deliverable. Full run on r7m: 10 failed, 5821 passed, 8 skipped, 1591 s, rc 1.** 7 failures are the known git-only ids. **3 are NEW (not in EV7G/EV7I/EV7J): tests in tests/test_real_check_dry.py fail with AttributeError: 'types.SimpleNamespace' object has no attribute 'get_lock' (load_driver.py:419); the file alone passes (79), but running tests/test_r7k_findings.py first then test_real_check_dry gives 5 failed: the r7k tests leave a fake pool value behind (state leak; cause not yet proven by anyone).** Staged git copy: **tests/test_hygiene.py::test_hygiene_scan_public FAILS** (EV7J passed): the hardcoded-literal scan flags IP-like strings (017.0.0.1, 15.0.0.1, 10.0.0.1/2, 1.2.3.4, 999.1.1.1, http://x.test/) in CHANGELOG.md:12, docs/limits.md:191, netconnect.py:10 and :56, tests/test_r7k_findings.py. The r7f f1 id now passes (M1 fix holds). Other numbers (runner's): patches r7m built, apply matrix rc 0 in all three cells, tree equals tree-R7M; ruff 0.17.1 clean (224 files); suppressions r7m = r7j except type-ignore 126 to 145 (+19 all in tests/test_r7l_findings.py); hostile table 20 hosts clean, burst:4 exit 3 in 61.8 s, new r7k cases as claimed; each new test file alone passes (r7i 37, r7j 40, r7k 139, r7l 91). Not run: Windows, real IPv6, mutation, quiet machine. Runner slips disclosed: first full launch aborted (6 stray files from a hostile script, deleted, relaunched), one rm with an unset variable (nothing existed), a start that silently did nothing until chmod. **Both new failures are sent to r7n (fix, no suppressions, no scan change, a test that runs the two files in both orders). r7m patches are not copied to handover (superseded by r7n).**
