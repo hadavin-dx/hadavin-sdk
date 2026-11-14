@@ -1,6 +1,26 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 07:46Z STATUS (demo cloud): the three owed items first, then exit code 137
+**(a) n8n 3-burst fresh-stack series, variant a, DONE (ran 07:00:58 to 07:06:06Z, 5 new stacks x 3 bursts = 15 bursts, all rc 0, all valid):** burst 1 clean 5 of 5; burst 2 clean 4 of 5 (stack a5: 7 CRM rows and 7 emails); burst 3 clean 4 of 5 (stack a3: 5 rows and 5 emails). Duplicates again equal the number of 200 replies; replay added 0 in all 15; lowest CPU idle 99.5 percent (sampled before and after each stack). By slot: first burst after a fresh start clean 12 of 12; later bursts in one stack clean 20 of 33. Pattern only: no cause, no significance claimed; duplicates do not grow with burst number. Files: section R2d in `N8N-RERUN-1.md`, items 8 and 9 in `n8n-a-cause-1.md`, raw rows `n8n-rerun/R2d-*`.
+**(b) PUBLISHABLE-NUMBERS table, DONE, in `n8n-published-numbers.md`** (19 lines, each with the stack condition). Short form:
+- REPRODUCED, reused stack: b, c, d ten at once 20 of 20 each; replay added 0 of 20 each; kill rows with no effect 0 of 15 (a, c, d; b 0 of 13 valid); c and d kill runs 5 of 5 and 10 of 10; b kill runs 4 of 4 and 9 of 9 valid; crashed entry visible 5 of 5; e two or more emails 10 of 10; e status not sent 0 of 15. REPRODUCED on fresh stacks: e ten at once 25 of 25 (1,1), e two or more emails 50 of 50, e status 0 of 50. Pattern: duplicates = number of 200 replies (all 45 own bursts and 20 published).
+- NOT REPRODUCED: variant a ten at once 18 of 20 (reused stack: R2 12 of 20, R2b 2 of 5; fresh stack: first burst 12 of 12 clean, bursts 2 and 3 clean 8 of 10); a kill in flight 1 of 5 vs 5 of 5 (reused); a email points 3 of 10 vs 9 of 10 (reused); e second CRM row 1 of 10 (reused) and 1 of 50 (fresh) vs 4 of 10.
+- NO MATCHING ROW: "K1 crashed entry visible 1 of 5"; "kill runs with no effect 1 of 15".
+Post rule applied: only REPRODUCED rows, each with its stack condition; variant a has no single number.
+**(c) egm comprehension reviewer on the R2c section and item 8: it RAN and returned (6 Major, 4 Nit; all raw counts verified: 6 fresh rows, 25 e bursts, 12 of 23, first bursts).** Fixed in the files: the 8 of 8 vs 7 of 7 count (now by slot), the unsound chance argument (removed), stale lines in `n8n-a-cause-1.md`, the "control reproduces it either way" wording (different measurement), the "build-up" wording (published and R2 rows do not show growth). Declined: two nits not checkable from the files given.
+**Crash scene exit code, MEASURED:** the desk ran with its exit status recorded; after `feed.py` printed 201 (lead 2, keyed demo server) the desk printed "simulate crash" and ended with exit code 137. The 137 claim is now measured (hooks.py also states it). Cleaned up with `reset.sh` (data folder empty).
+**Variant e 3-bursts-per-stack:** not run as asked (variant e ten at once is already 25 of 25 clean over 5 fresh stacks x 5 bursts, and e kill runs 1 of 50). I can run it now if you want it; it is a 6-minute job.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Blind-server crash scene (UNKNOWN column) not run; no cause for variant a; draft 003 not available; no live run on newest main with v5 text.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Variant e, 3 bursts per fresh stack on 5 stacks (6 minutes), only if you want it.
+2. Crash scene with the blind demo server, to measure the UNKNOWN column.
+3. Clean up dockerd, scratch node_modules and run folders when you say R2b is finished.
+
+
 ## 07:37Z STATUS (demo cloud): f3c39cf scan rc 0, live crash scene run, doc v5, n8n and reviewer status
 **(1) Newest public main f3c39cf, single-branch clone (`--single-branch --branch main`, one branch, 6 commits), repo's own config, exactly as lint.yml:** `gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow` on a clean git-archive export: rc 0, no leaks. `gitleaks git . (same flags)` on the clone: rc 0, no leaks. So the 927 hits at c30c373 appear only WITHOUT the repo's config; with it, CI-equivalent is clean. (Earlier hit counts came from scans without `--config`.)
 **(2) Live crash scene, clean export of f3c39cf, loopback, synthetic data, no mail, no key, Python 3.12, one desk and one demo server, ports were free:**
