@@ -1,0 +1,6 @@
+# Fresh review of the r2-to-r3 delta of lane3-fix-9 (r3 sha256 3c68d0bb...), reviewer egm:egm-codebase-details, read-only, ran nothing; saved by the lane 04:32Z
+Result: 0 blocker, 0 major, 2 minor.
+Exit-code logic (tests/conftest.py:48-49) correct: only OK(0) and NO_TESTS_COLLECTED(5) become TESTS_FAILED(1); 2, 3, 4 keep their codes; message printed first. New test (test_data_folder_helper.py:157-168) sound by reading of pytest's session handling (pytest.exit propagates, sessionfinish still runs, rc 4); no hang risk; probe writes inside the copy, not the real repo. S603: one noqa left, honest (the call takes `cmd` as a variable). Comment move and xfail wording: fine, plain.
+Minor 1: the new test covers only code 4 (codes 2, 3 and the 5 to 1 branch untested). Minor 2 (test_data_folder_helper.py:83-87, 97): `_run` uses text=True for `git ls-files -z` (platform default encoding; r2 decoded UTF-8 explicitly): add encoding="utf-8".
+Other suppressions in the repo (S608, BLE001/S110 in conftest, A002, type: ignore) pre-exist and are outside this delta.
+Could not check by reviewer: any run; the claim that the new test fails on r2 (raw/b11-r3-fails-before.log not opened); pytest internals read from memory; line length 120.

@@ -426,7 +426,7 @@ index 353043b..82f9a12 100644
  def is_write(fn: Any, name: str) -> bool:
 diff --git a/tests/test_port_helpers.py b/tests/test_port_helpers.py
 new file mode 100644
-index 0000000..9814541
+index 0000000..f1c19e6
 --- /dev/null
 +++ b/tests/test_port_helpers.py
 @@ -0,0 +1,181 @@
@@ -570,11 +570,11 @@ index 0000000..9814541
 +    """os.environ as seen by the code under test, except that PYTEST_XDIST_WORKER and PYTEST_XDIST_WORKER_COUNT
 +    answer per thread, so that two threads can play two xdist workers in one process."""
 +
-+    local = threading.local()
++    worker_of_thread: dict[int, str] = {}
 +
 +    def get(self, key: str, default: str | None = None) -> str | None:
 +        if key == "PYTEST_XDIST_WORKER":
-+            return getattr(self.local, "worker", None)
++            return self.worker_of_thread.get(threading.get_ident())
 +        if key == "PYTEST_XDIST_WORKER_COUNT":
 +            return "2"
 +        return os.environ.get(key, default)
@@ -595,7 +595,7 @@ index 0000000..9814541
 +    got: dict[str, list[int]] = {}
 +
 +    def play(worker: str) -> None:
-+        _PerThreadEnviron.local.worker = worker
++        _PerThreadEnviron.worker_of_thread[threading.get_ident()] = worker
 +        start.wait(timeout=10)  # both threads call free_port() together
 +        got[worker] = [free_port() for _ in range(200)]
 +
@@ -611,6 +611,34 @@ index 0000000..9814541
 +        assert (low, high) == ((40000, 44999) if worker == "gw0" else (45000, 49999))
 +        assert all(low <= n <= high for n in numbers), (worker, low, high)
 +    assert not set(got["gw0"]) & set(got["gw1"]), "two workers were given the same port number"
+diff --git a/tests/test_reset_ps1_links.py b/tests/test_reset_ps1_links.py
+index 82821f4..452e0a5 100644
+--- a/tests/test_reset_ps1_links.py
++++ b/tests/test_reset_ps1_links.py
+@@ -23,5 +23,7 @@ def _strip_comments(text: str) -> str:
+ 
+-ACTIONS = ("Get-Content", "Stop-Process", "Remove-Item")  # what reads a pid file, stops a program, deletes a file
++# what reads a pid file (reset.ps1 opens it with .NET and reads at most 64 bytes), stops a program, deletes a file
++ACTIONS = ("[System.IO.File]::Open", "Stop-Process", "Remove-Item")
+ # The short names PowerShell also accepts for the same three cmdlets (built in aliases, case does not matter).
+ ALIASES = {
++    "[System.IO.File]::Open": (),
+     "Get-Content": ("gc", "cat", "type"),
+@@ -57,3 +59,3 @@ def _check_code(text: str | None = None) -> str:
+     before = re.sub(r"'[^']*'|\"[^\"]*\"", '""', code[: found.end() + refusal.end()])  # text in quotes is not a command
+-    for action in ACTIONS:
++    for action in (*ACTIONS, "Get-Content"):  # Get-Content (the old reader) must not come back before the refusal
+         for name in (action, *ALIASES[action]):
+@@ -98,3 +100,3 @@ def test_the_refusal_must_come_before_every_read_stop_and_delete() -> None:
+         early = text.replace(marker, f"{action} -Path x{chr(10)}{marker}", 1)
+-        with pytest.raises(AssertionError, match=f"{action} comes before the refusal"):
++        with pytest.raises(AssertionError, match=f"{re.escape(action)} comes before the refusal"):
+             _check_code(early)
+@@ -116,3 +118,3 @@ def test_a_short_name_of_a_read_stop_or_delete_before_the_refusal_is_seen_too(na
+         early = text.replace(marker, f"{variant} x{chr(10)}{marker}", 1)
+-        with pytest.raises(AssertionError, match=f"(?i){variant} comes before the refusal"):
++        with pytest.raises(AssertionError, match=f"(?i){re.escape(variant)} comes before the refusal"):
+             _check_code(early)
 diff --git a/tests/test_reset_ps1_pid_rules.py b/tests/test_reset_ps1_pid_rules.py
 new file mode 100644
 index 0000000..006a087
