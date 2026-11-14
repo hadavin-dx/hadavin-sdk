@@ -46,7 +46,7 @@ Counts: 0 blocker, 0 major, 8 minor (m1 to m8), 3 nit (n1 to n3). Every r7g find
 
 - tests/test_r7h_findings.py + tests/test_file_call_guard.py: 60 passed. tests/test_r7g_findings.py: 60 passed.
 - Mutation runs: r7h + r7g files (and test_load_tools, test_load_driver_facts, test_burst_retry for O5), results above.
-- Broader files (logs out/REV7H/f1.log, f2.log): see the last line of this report for the result when they finished.
+- Broader files, no failure: test_hygiene, test_nosemgrep_form, test_smtp_provider, test_r7f_findings, test_real_check_dry, test_r7d_findings: 420 passed, 4 skipped (gitleaks program missing, and others) in 334 s; test_load_tools, test_cli_refusals, test_r7_mail_context, test_burst_retry, test_load_driver_facts, test_server_hardening, test_stall_eviction: 356 passed, 2 skipped in 77 s. Logs: /home/user/build/rr6/out/REV7H/f1.log and f2.log.
 - ruff 0.17.1 (the pinned binary) `check` on the touched source and test files: All checks passed. `format --check` on netconnect, server, load_driver and the r7h test: already formatted.
 - Probes (not pytest): out/REV7H/probe1.py (cap and literals), probe2.py (address family), probe3.py (concurrent callers).
 
