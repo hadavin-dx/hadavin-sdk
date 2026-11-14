@@ -1,5 +1,28 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:00 UTC / 17:30 IST
+
+**r7r HANDED BACK and PUSHED (handover/core/fix/ r7r set + handover/core/snapshot-r7r/ with MANIFEST.txt, 2 files, delta r7q-to-r7r 85 lines).** I verified the three patch hashes against sha256-r7r.txt (crlf 90e3b978..., lf 87bff76e..., delta a6714e48...) and read the apply matrix (a-crlf, b-crlf, c-lf rc 0); CRLF patch and delta stored as .gz. Only two TEST files differ from r7q (diff -rq of the two trees: tests/test_file_call_guard.py, tests/test_r7q_findings.py); src and scripts are byte-equal to r7q.
+
+**Builder claims (r7r builder a17df18e), NOT yet independently run:**
+- Guard allow-list: reproduced failing first (1 failed, 10 passed, three problems). Fix: ("demo_only/bad_request.py", "ThreadingHTTPServer") added with a reason; the two stale entries (fake_hubspot.py, fakes_server.py) removed; fake_model_server.py entry kept; no assertion changed. Test now 11 passed. Mutant A (entry removed) and mutant B (unlisted os.listdir added to bad_request.py) both make it fail.
+- Hygiene literals: reproduced in a git-staged copy (1 failed, 20 passed, 3 skipped; 7 hits at lines 95, 168, 170, 356, 362, 374, 375). Fix: strings built from parts (long domain, TYPED_ADDRESS constant, COLON_NL); built strings identical; scan files untouched. Four files together in a git copy: 193 passed, 4 skipped (gitleaks missing).
+- ruff 0.17.1: check clean, format clean (229 files). Suppressions r7q to r7r identical (noqa 193, type: ignore 126, nosec 8). It counts nosemgrep 31 (brief said 40; EV7P also found 31, so 40 was my error: the brief number came from the r7q builder's count by another method; delta 0).
+
+**NOT DONE / UNVERIFIED by the builder (stated plainly):** its 104-file grep-selected broad run is UNFINISHED (about 7 percent at 11:59, log out/R7R/after-grep2.log; it ends by itself at its 1700 s timeout); tests/test_load_tools.py not run on r7r (r7q touches no load_tools file); 45 of 150 test files not selected; full suite not run; gitleaks not installed so its secret tests skipped. **A permission denial occurred: the builder tried to kill its own broad run and the classifier refused ("Destructive or Unwanted Actions"). It did not retry or work around; I did not do it either. The run is harmless (its own copy, load average 0.3 at 12:00) and stops by itself by about 12:30Z; EV7R will note it.**
+
+| id | what | started UTC/IST | expected end | state | next |
+|---|---|---|---|---|---|
+| a7707d5f (EV7R) | ONE full run on r7r IN A STAGED GIT COPY (expect 0 failed), ruff, suppressions, hostile drivers, strings-identical check | 12:00 / 17:30 | about 13:00 (box 60 min; the full run took 31 min on r7q) | RUNNING | push EV7R-EVIDENCE.md, tell you |
+| a17df18e (r7r builder) | done; its own broad run still going by itself | 11:46 / 17:16 | run ends about 12:30 | WAITING on own run | close at its end; I do not touch it |
+
+Agents running: 2. ASK: none (the kill refusal needs nothing from you; stated for the record).
+
+NOT DONE / NOT CHECKED: EV7R result; your reviewer on r7r (snapshot-r7r pushed, EV7R to follow); M9-74 test, M9-79 measure; QuietServer BrokenPipe caveat (reviewer); README (LF patch needs an LF checkout); off-path items; ledger rows M1 and M2 stay OPEN until EV7R shows them fixed.
+
+WHAT I WOULD DO NEXT (ranked): 1. read EV7R, push it, tell you; 2. close ledger M1 and M2 only with EV7R as artifact; 3. fold your reviewer's Blocker/Major test-first. Next block about 12:15Z.
+
+
 ## STATUS (core lead) 11:52 UTC / 17:22 IST
 
 **EV7P DONE and pushed (handover/core/fix/EV7P-EVIDENCE.md): r7q is NOT clean. TWO real failures, both missed by the r7q builder (it never ran the guard test or the hygiene scan).**
