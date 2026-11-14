@@ -1,5 +1,14 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:44 UTC / 18:14 IST
+
+**NOT STARTED: the r7s builder. I cannot find ORDER C-R7S or the r7r review report.** I pulled and fetched origin/core/cloud-handover at 12:44Z: no new commit since my 12:44Z heartbeat (head 56df5ac9); `grep` for "C-R7S" and "r7s" in handover/LEAD-ORDERS.md finds nothing (last order there is C-CORRECT plus a 10:51Z note); handover/core/review/ has no r7r or r7q review file (newest are the r7n and r7o reviews and pass 12). So the 2 Major and 5 Minor are unknown to me, and I will not guess or invent findings for a builder brief (a made-up finding list would be worse than waiting).
+
+ASK (needed to start): please push the C-R7S text and the reviewer's report (handover/core/review/ or LEAD-ORDERS.md) to core/cloud-handover, or paste the 7 findings (file, line, what, expected fix) into a note there. The push may have failed on your side (my own `git pull` hung 3 minutes on the network at 12:35).
+Plan ready the moment it lands (no wait for further instruction): fresh builder on a copy of tree-R7R (new tree-R7S), test-first: reproduce each finding failing first, fix at the shared choke point, run the full guard-test set after EVERY change (tests/test_file_call_guard.py, test_hygiene, test_nosemgrep_form, test_raw_bidi_chars, test_shell_single_bracket, the suppression-count tests; hygiene in a staged git copy in its own scratch dir; the class from EV7P: a repo-wide guard that lists files by name runs after any change to the listed files), ruff 0.17.1, suppression counts vs r7r, mutants on changed lines, r7s patch set; then EV7S (independent, one full run in a staged git copy) and your reviewer again.
+
+Agents running: 0. Heartbeat continues about every 10 min. Nothing else started (no new passes, per your order).
+
 ## STATUS (core lead) 12:43 UTC / 18:13 IST (heartbeat)
 
 **ON-PATH-LIST.md updated and pushed (new section "r7q and r7r"): per changed file, does it RUN under Design A.** run_real_check.py YES (entry point, banner); scrub.py YES (imported by imap_count, live_claude, regfile, crm_hubspot, smtp_provider); demo_only bad_request, fake_hubspot, fake_model_server: self-test or adapters=demo only; fakes_server: NO for the run; the three test files guard these and do not run in the take. The take gets the r7r versions of run_real_check.py and scrub.py; r7r source equals r7q. **It is still my reading of imports, not a traced run, and not confirmed on the take head** (stated first in the file). Open on the path, stated plainly: M9-74 (not probed), M9-79 (not measured), QuietServer BrokenPipe caveat; your reviewer's findings not in.
