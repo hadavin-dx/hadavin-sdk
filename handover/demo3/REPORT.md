@@ -1,4 +1,31 @@
-## HEARTBEAT 89 (04:33Z) - FIX-9 R3 CLOSED (REVIEW 0/0/2 MINOR, FULL RUN GREEN); NEEDED-CHECK DONE; WAITING FOR B12 AND B13 BEFORE THE STACK RE-CUT
+## HEARTBEAT 90 (04:37Z) - WINDOWS-RUN-1.md WRITTEN; SHARED-CLONE REF CAUSE CHECKED; B12 HAND-BACK (INTERIM) READ; B13, B14 RUNNING
+
+| Item | State |
+|---|---|
+| B12 | Hand-back read (interim). Patch lane3-fix-5-r6.patch sha256 0117c654...eba applies on base and on base+claims (builder's check). Its own first full run failed 15 (14 = its own test guard, fixed; 1 = hygiene, see below). Final full run is running in b12-chk-final since 04:35Z (log priv/b12-tmp/full.log, about 7% at 04:36Z); expected end about 04:54Z. I have NOT yet read its tail. |
+| B13 (fix-2 r5), B14 (fix-10) | RUNNING, no hand-back yet (B13 stop about 05:03Z, B14 about 05:33Z). |
+| WINDOWS-RUN-1.md | WRITTEN (handover/demo3/WINDOWS-RUN-1.md). Commands, folders, expected exit codes incl. 7, refusal table, clean-up. The expected lines come from READING reset.ps1 / start_all.ps1; nothing was run on Windows. Lead: please run it and send the output back. |
+| Lead decision 04:34Z A1 (one book fixture) | B12 had already handed back, so I could not tell it in time. Handled in the stack re-cut instead: fix-9's `book` fixture wins, fix-5's copy is removed (stack builder brief). B1-B4, B11, D5 go into stack-docs-final. |
+
+SHARED-CLONE FINDING (my own slip, now checked): the hygiene test runs `gitleaks git` over the whole history of the clone. In /home/user/work/src, my `git fetch -q origin` at 04:21Z added ONE ref, remotes/origin/n8n-evidence-rerun (reflog: "storing head" 04:21:19Z). Every other remote ref was already there since 11-13. Measured with the repo's own config and flags: 972 findings with my ref, 933 without it, and origin/main alone gives 927. So (a) my ref added about 39 findings, (b) the test fails on any full-history clone even without it: the history holds old literals (the test itself says "a history scan can report literals that are no longer in the tree"). I did NOT find why CI passes; likely a shallow checkout (fetch-depth 1), NOT verified. I removed my ref (`git update-ref -d`). Consequence: clean-tree and stack full runs must use a shallow or single-commit clone, otherwise the hygiene test fails for a reason that is not the code. Earlier green full runs (EV10, B10, B11) are not affected: they were green with the same shared clone before 04:21Z or on trees whose result I read; B12's one hygiene failure is this cause.
+
+FAILURES AND RETRIES: no test failure this block. My slips: fetch in the shared clone (above); WINDOWS-RUN-1 first written with a time 4 minutes ahead (fixed).
+Load: about 1-2 (B12 full run, B13, B14).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Why CI's hygiene test passes with history: not verified (guess: shallow checkout). Next: read .github/workflows and the test's skip logic, then run the test on a depth-1 clone.
+- Stack not built; stack-docs-final not cut; stack review, full run, browser tests, clean-tree check not done (wait for B12 final run, B13).
+- fix-5 r6, fix-2 r5, fix-10: no fresh review yet.
+- Browser skip reasons: M6 -rs not read yet (M9 shows only 'playwright not importable').
+- reset.ps1 / start_all.ps1 never run (lead's laptop: WINDOWS-RUN-1.md).
+- Python 3.11, ruff, mypy, bandit, CodeQL, Sonar: CI only.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read CI's hygiene setup and prove the depth-1 clone passes; give the stack builder that recipe.
+2. Read M6 -rs skip reasons; read B12's final tail at about 04:54Z; start fresh reviewers for fix-5 r6 and fix-2 r5 as they land.
+3. Start the single stack re-cut builder after B13 reports.
+
+## HEARTBEAT 89 (04:32Z) - FIX-9 R3 CLOSED (REVIEW 0/0/2 MINOR, FULL RUN GREEN); NEEDED-CHECK DONE; WAITING FOR B12 AND B13 BEFORE THE STACK RE-CUT
 
 | Agent | Job | State |
 |---|---|---|
@@ -11,7 +38,7 @@
 
 FAILURES AND RETRIES: no test failure this block. My slips: register times a few minutes ahead of the clock again (corrected where I caught it).
 ASK list: none.
-Load (measured 04:33Z): about 1; only B12 and B13 running.
+Load (measured 04:32Z): about 1; only B12 and B13 running.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)
 - Stack not built (waits for B12 and B13); stack-docs-final.patch not cut; stack reviewer, full run, browser tests and clean-tree check not done.
