@@ -1,5 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 05:04Z): R2b RUNNING, NOT killed by any restart. Container up 2h12 (no restart seen; dockerd 1h50, my stack since 04:52Z)
+- Uptime check 05:02:59Z: `uptime` up 2:12; Postgres container "Up 10 minutes"; run_r2b_e.sh and g3e.py alive. Nothing of mine died.
+- VARIANT A ten-at-once, 5 bursts (04:47:51-04:48:37Z, quiet, idle 97-99.8%): final (CRM,email) per burst = (1,1), (2,2), (10,10), (1,1), (2,2) -> exactly 1+1 in 2 of 5 (R2 12 of 20, published 18 of 20). Replies: 200x1/500x9, 200x2/500x8, 200x10, 200x1/500x9, 200x2/500x8. Replay added 0 rows each. Row source: n8n-rerun file g12_a_default.jsonl.
+- VARIANT E, MY MISTAKE (said plainly): first I ran g12e.py (ten-at-once for e, 5 bursts, 04:48:40-04:51:40Z): 5 of 5 at (1 CRM, 1 email), 0 second CRM rows. That is NOT the measure you named. "Second CRM row 4 of 10" (README) = e KILL runs at the two email points (g3e K3+K2, 5 each = 10 rows). Kept as a row, labelled "e ten-at-once, not the asked measure".
+- RIGHT UNIT now: run_r2b_e.py = same stack, deploy3, g3e K3 5 + K2 5, one FRESH stack per unit, 5 units planned. Unit 1 FAILED at setup (n8n owner setup: "Password must contain at least 1 number", harness draws a random password; no test ran; recorded, to be redone as unit 1b at the end). Unit 2 running: K3 done 04:58:59Z, K2 running (load idle dips to 35% when n8n restarts, 99% otherwise). Units 3-5 follow (~11 min each; ETA all done about 05:40Z, then 1b about 05:51Z).
+- Harness cannot start one case alone (driver copies run_all.py body; see 04:48Z block).
+- Mapping (read-only, from tables.md/README/DETAILS.md): "K1 crashed entry visible 1 of 5" = NO MATCHING ROW (all kill points show 5 of 5 in tables.md, all variants; e table has no such column). "kill runs with no effect 1 of 15" = NO MATCHING ROW in tables.md (0 of 15 for a,b,c,d); nearest text is DETAILS.md "A kill can fail to take effect": ONE b kill run in a short dev test on a busy laptop, not a 15-row line. Full text goes into N8N-RERUN-1.md.
+- READ b K2/K3 stale_running (no run): in both rows 10 executions were started, 9 got "crashed" at the restart, ONE (2484 in K2, 2606 in K3) stayed "running" for the 60 s wait; n8n's own log at that restart listed only 9 unfinished ids (it skipped that one); the next restart marked it crashed (stoppedAt 04:13:58 for 2484). The harness only reads the list; the status row is n8n's. Why n8n skipped one is NOT established. Full text goes into the file.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- R2b variant e kill-run units 2-5 and 1b still running; no e count yet except K3 of unit 2 (not summarised).
+- N8N-RERUN-1.md not yet updated with R2b, mapping, READ (next, after rows are in).
+- R3-partial (b K2/K3), doc v3 tests, hygiene, CI-equivalent, fresh doc reviewer, egm reviewer on the updated file: wait for the quiet machine.
+- Whether a fresh stack per variant a burst changes the 2-of-5: not run (a ran 5 bursts in one stack).
+## WHAT I WOULD DO NEXT (ranked)
+1. Finish e units, summarise per unit with summarise.py --busy, write rows with load.
+2. Update N8N-RERUN-1.md: R2b rows, mapping, READ in plain words; push.
+3. Ask you: variant a again as 5 fresh stacks, or R3-partial first?
 ## REPORT (clock 04:48Z): R2b STARTED 04:47:09Z (quiet machine, P1 scratch harness, same flags as R2)
 - Quiet check before start: vmstat idle 100%, 0 containers, no n8n; agent H (CI-equivalent) STOPPED, nothing else runs.
 - Harness cannot start one case alone: g12.py takes a count (a default 5 is allowed), g12e.py is fixed at 5 bursts, both need the stack (Postgres, fakes, n8n, setup, deploys, restart). So I use a scratch driver run_r2b.py (copy of run_all.py, body cut to: setup, deploys a/d/c/b, restart with P1, g12.py a default 5, deploy3, g12e.py). Same stack for the 5 + 5 bursts, fresh e-mail per burst. Smallest unit the harness allows; NOT a fresh stack per burst.
