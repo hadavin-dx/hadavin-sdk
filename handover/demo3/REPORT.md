@@ -1,3 +1,17 @@
+## HEARTBEAT 138 (09:58Z) - B22 resumed on round 13 (18 rows); B21 round 11 and B23 round 6 running
+
+| Agent / job | State at 09:58Z |
+|---|---|
+| B22 fix-2 round 13 | resumed 09:57Z with the 18-row resolve (evidence/resolve-lane3-fix-2-r12.md). Round 12 reviews: 0 Blocker, 2 Major each way. Majors: spend ledger opened with a plain open (a planted link or a FIFO would be followed or block), ledger lock name built from the unresolved path (two names for one ledger = two locks = cap race), run_live_check without the refusal, SQLite -wal/-shm/-journal untested, database opens not one choke point, three-builders test vacuous |
+| B23 fix-10 round 6 | 20 of 20 reruns pass; red-first, mutants, 3 logged runs and the one final full run still to do. Told about the confirmed row 6 text and the two-meanings test |
+| B21 fix-5 round 11 | resumed 09:46Z with the 20-row plan, lead ruling on row 5 applied (literals from parts, no exception). No hand-back yet |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new this block. Earlier: my git stash cut live logs (named in HB137); fetch + merge only now.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no bash 4.4; no full run yet on final fix-5 / fix-2 / fix-10 trees; WINDOWS-RUN-1 lines for r8-r11 ps1 behaviour, the link check and the stack patch not yet written; key-file owner and ACLs not checked on Windows.
+WHAT I WOULD DO NEXT (ranked): 1) on each hand-back: git add -A, reconcile tree id, lint a clean copy, two fresh reviewers; 2) write the WINDOWS-RUN-1 additions while builders run; 3) start the stack builder once B21 and B22 are clean.
+
 ## HEARTBEAT 137 (09:51Z) - B22 hang withdrawn (it was my git stash); B23 20/20 reruns pass; B21 on round 11
 
 | Agent / job | State at 09:51Z (builders' checkpoints, not yet verified by me) |
