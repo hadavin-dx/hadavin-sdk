@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 10:35 UTC / 16:05 IST
+
+**r7o reviewer DONE: NOT CLEAN, 0 Blocker, 1 Major, 2 minor, 3 nit (committed core-fix-on-frozen-r7o-review.md; ledger rows added).** Major (CI gate): the hygiene scan FAILS on r7o: tests/test_r7o_findings.py lines 218-219 hold a literal host; staged git copy gives test_hygiene 1 failed (r7n: all pass). So r7o is NOT deliverable as it stands. Minors (real gaps): regfile.py:161 `from None` unpinned (traceback would name the codec and bytes); crm_hubspot.py:164 `or parts.password` unpinned (password-only base address). Nits: raw U+FEFF characters in the test source; R7O-RESULTS "no new suppression" is false (8 noqa E402 + 1 type: ignore[misc] in the new file); REAL_DRAIN_SECONDS bounds and default unpinned. **BOM decision: reviewer recommends KEEPING utf-8-sig, no Major**: secret files do not go through read_regular_text; a second or mid-file BOM is still refused; before r7o a BOM made a crash flag file never fire (fault silently not injected) and gave a misleading config refusal; no refusal turns into an allow. All 14 PINs real (8 pass-12 mutants killed, restore by byte compare each time); "source already right" confirmed for 6 items by its own probes. Not run by the reviewer: full suite, mypy; gitleaks absent (3 hygiene tests skipped). Its own 15 mutants: 12 killed narrow, 1 killed wide, 2 survived (= m1, m2).
+
+**r7p BUILDER STARTED (a1621b9a, fresh, test-first, tree-R7P copy of r7o, one builder, no full suite).** Items: hygiene literal, m1, m2, the _EchoImap rewrite (must reach LOGIN, with a server-side counter so it cannot be vacuous; fail on r7m, pass on r7p), nits, REAL_DRAIN_SECONDS pins, and an explanation of the EV7N differences. The r7n reviewer's findings will be sent to it when they land (one re-freeze).
+
+| id | what it does | state | next action |
+|---|---|---|---|
+| a8c42155 (r7n reviewer) | whole r7n delta, 38 own mutants | RUNNING, box ends about 10:55 | core-fix-on-frozen-r7n-review.md |
+| a1621b9a (r7p builder) | items above | RUNNING from 10:35 UTC, 60 min box | hand-back; then EV7P (one full run) + fresh reviewer |
+
+Agents running: 2. ASK: none.
+NOT DONE / NOT CHECKED: r7n verdict; r7p; EV7P; fresh r7p reviewer; EV7N count differences; the C-PLAN on-path list (waits for the used-file list); Windows, PowerShell, CodeQL, Sonar, CodeRabbit, CI.
+
 ## STATUS (core lead) 10:33 UTC / 16:03 IST
 
 **ORDER C-PLAN read; applied as written.** Review rules unchanged. (1) r7n reviewer (a8c42155) and r7o reviewer (a1d9e112) keep running; no report has landed. r7p will be one test-first builder with every real gap, the `_EchoImap` rewrite and the lows; then mutants on changed code, one full suite, a fresh uncapped reviewer. No new pass family, no new module. (2) ON-PATH-LIST: my early version (handover/core/ON-PATH-LIST.md) is now marked PROVISIONAL: it came from my own reading of run_real_check.py, not from the take's used-file list. The real one waits for the lead's used-file list (Sun 15), due Sun 15 18:00Z; it will give the minimal patch subset for take head 27a1ed8. I will not try to make the 162-file patch apply there. (3) Deadline Mon 16 12:00Z, then idle with a heartbeat line.
