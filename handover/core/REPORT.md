@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 15:30 UTC / 21:00 IST
+
+**Lead answer applied: r7t builder box EXTENDED to about 16:10Z (more if the two gaps need it); GAP 1 and GAP 2 confirmed by the lead; the builder was told (message queued) that every t15 test must force the window by a hook, must each fail on the r7s sources, and must be listed with before/after ids in R7T-RESULTS.md.**
+
+**I READ THE BODIES of four t15 tests in tree-R7T/tests/test_r7t_findings.py (lines 735-830); I ran nothing:**
+1. `test_t15_the_counting_rule...`: pure function table on `contacts_not_accounted_for(created, accounted, open, leads)`: (8,8,1,9)=1, (8,9,1,9)=0, (9,9,1,9)=0 (capped by the leads), (9,8,1,9)=1, (8,8,0,9)=0, negative open never lowers (f(8,4,-3,9)=4), `None` created raises `CounterUnreadable`. Deterministic.
+2. `..._the_window_after_the_request_and_before_the_count_leaves_the_create_open`: uses the repo's fake CRM rig; patches `HubspotCrm._settle_create` to raise `_Killed` (a `BaseException`, so `except Exception` does not see it and nothing after runs: stands for a hard kill at the exact point); then asserts HubSpot made 1 contact, the stats file says `created 0, create_open 1`, and the reader plus the counting rule give 1 unaccounted. **Deterministic: no sleep, no real kill, no timing. It forces exactly the window the lead named.**
+3. `..._the_window_before_the_reply_also_leaves_the_create_open`: patches `HubspotCrm._once` to raise `_Killed` (kill after the counter write, before the reply); asserts `create_open == 1`. Deterministic; no sleep.
+**My reading of fail-on-r7s: both window tests would fail on r7s sources, but for a MISSING NAME, not a behaviour difference: on r7s `_settle_create` does not exist (monkeypatch.setattr raises AttributeError), and `create_open` is absent from the stats (KeyError). That proves "the r7s code has no open-create counter", which is the point, but it is a name-missing failure.** I would accept it only if the builder ALSO shows the r7s window by a behaviour test that does not use a new name (e.g. patch the r7s `_count` to raise `_Killed` and assert the stats show created 0 and NO sign of the in-flight create: documents the undercount on r7s). Asked for in R7T-RESULTS.md as a "r7s behaviour" row. Also note the second test is coupled to the private name `_settle_create`: after GAP 1 (new unknown-outcome handling) the hook name may change; the test must follow, not be dropped.
+**Bodies not read yet:** `test_t15_every_normal_end...`, `..._a_run_with_a_window_in_the_counter_and_a_hidden_contact...`, `..._no_false_alarm`, `..._429...` (they come after the two gaps' changes).
+
+**Builder at 15:30Z:** last checkpoint stamp is 15:18 (M2 test fixed; flake30 on r7s running; guard run to restart on final bytes); no message back yet on GAP 1 and GAP 2 (delivery queued). The 30-run flake series: no result seen. **ETA snapshot-r7t: hand-back about 16:10Z to 16:30Z; my hash and apply check 10 min after; EV7T about 60 min; lead's reviewer.** Agents running: 1. ASK: none. Next block about 15:40Z.
+
+
 ## STATUS (core lead) 15:20 UTC / 20:50 IST
 
 **I READ the builder's settle fix (diff of src/lead_desk/crm_hubspot.py r7s -> r7t, the counting rule in run_real_check.py, run_stats.write_stats, and the t15 test names). I ran nothing. My review found TWO GAPS in the fix; I sent both to the builder (test-first) at 15:20Z.**
