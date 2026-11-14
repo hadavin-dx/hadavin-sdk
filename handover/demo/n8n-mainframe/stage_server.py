@@ -9,7 +9,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qs
 from lead_desk import config
 from lead_desk.live_claude import LiveQualifier
+import time
 PORT, JOURNAL, MAILF = int(sys.argv[1]), sys.argv[2], sys.argv[3]
+CTL = {"mode": "ok", "sleep": 40}
 Q = LiveQualifier(config._live_from_env(os.environ)); LK = threading.Lock()
 def journal():
     d = {}
@@ -34,8 +36,12 @@ class H(BaseHTTPRequestHandler):
         self._j(404, {})
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0); o = json.loads(self.rfile.read(n) or b"{}")
+        if self.path == "/control": CTL.update(o); return self._j(200, CTL)
         if self.path != "/qualify": return self._j(404, {})
         k = o["lead_key"]
+        if CTL["mode"] == "refuse": return self._j(403, {"error": "refused"})                  # fault mode (D-N2a): the cap stage refuses / errors / does not answer in time
+        if CTL["mode"] == "error": return self._j(500, {"error": "stage_error"})
+        if CTL["mode"] == "timeout": time.sleep(float(CTL.get("sleep", 40))); return self._j(200, {"label": "warm", "late": True})
         with LK:
             j = journal().get(k, {})
             if j.get("label"): return self._j(200, {"label": j["label"], "cached": True})

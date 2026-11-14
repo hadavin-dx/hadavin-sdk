@@ -6,6 +6,10 @@ class H(socketserver.StreamRequestHandler):
     def w(self, s): self.wfile.write((s + "\r\n").encode()); self.wfile.flush()
     def handle(self):
         rcpt, frm, data = [], "", None
+        with open(FILE + ".conn", "a") as f: f.write(json.dumps({"t": time.time()}) + "\n")          # one line per connection (counts SMTP node executions)
+        try: pre = float(open(FILE + ".pre").read().strip() or 0)                                  # optional: seconds to wait BEFORE the greeting (D-N2a)
+        except (OSError, ValueError): pre = 0
+        if pre > 0: time.sleep(pre)
         self.w("220 catcher ready")
         while True:
             line = self.rfile.readline()
@@ -29,6 +33,10 @@ class H(socketserver.StreamRequestHandler):
                 try: d = float(open(FILE + ".delay").read().strip() or 0)   # optional: seconds to wait AFTER storing, BEFORE the acknowledgement (D-N2 kill tests)
                 except (OSError, ValueError): d = 0
                 if d > 0: time.sleep(d)
+                try: drop = int(open(FILE + ".drop").read().strip() or 0)                          # fault mode: accept the mail (stored above), then drop the connection without the acknowledgement; the number = messages still to drop
+                except (OSError, ValueError): drop = 0
+                if drop > 0:
+                    open(FILE + ".drop", "w").write(str(drop - 1)); return
                 self.w("250 queued"); rcpt = []
             elif u == "QUIT": self.w("221 bye"); return
             elif u == "RSET": rcpt = []; self.w("250 ok")
