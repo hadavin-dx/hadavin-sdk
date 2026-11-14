@@ -1,2 +1,3 @@
 10min: running, ~38%
 ~15min: ~77%
+~15min run done 881s; reruns done; writing report
