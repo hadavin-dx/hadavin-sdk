@@ -1,6 +1,21 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 07:09Z STATUS (demo cloud): tree-2 pytest and doc-patch v3 reviewer started
+- Pushed 26c5463: R2d series, reviewer fixes, PUBLISHABLE-NUMBERS table (see the 07:09 block below).
+- Started 07:08:50Z: tree-2 full pytest (origin main 61ded9e, clean export copy, DPLD_REQUIRE_SCAN=1, gitleaks binary set), one heavy job, nothing else heavy running. Output `/tmp/rr/t2pytest.out`, rc file when done. Earlier tree-2 lint steps (H, rc 0 each) stay as reported; gitleaks dir on the clean export rc 0.
+- Started the fresh read-only reviewer on doc patch v3 (patches 0001 to 0003).
+- Finding to classify: `gitleaks dir` on this `handover/demo` WORKING folder (not a clean export) gave 73 generic-api-key hits, all in other lanes' files (sonar JSON files 66, gitleaks test text 2, claims-audit, coverage, merge-ready review and mutant evidence 5). None in my files (`n8n-rerun`, REPORT, N8N-RERUN-1, n8n-a-cause-1, n8n-published-numbers). I did not open the values. Not mine to fix; the lead may want those files checked before they leave the branch.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Tree-2 pytest result not yet in; doc-patch v3 reviewer result not yet in; the 73 hits are not looked at in value (redacted scan only).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the tree-2 pytest result and report rc and any failure by name.
+2. Fold the v3 reviewer findings into the patches (v4) the same turn.
+3. Tell the lead which handover/demo files carry the 73 scan hits so their lane owners can classify them.
+
+
 ## 07:08Z STATUS (demo cloud): R2d series done, reviewer folded, publishable table written
 - R2d (5 fresh stacks x 3 bursts, variant a, 07:00:58 to 07:06:06Z, all rc 0): burst 1 clean 5 of 5, burst 2 clean 4 of 5 (a5: 7 CRM rows), burst 3 clean 4 of 5 (a3: 5 rows); duplicates = number of 200 replies again; replay added 0; lowest CPU idle 99.5. By slot: first burst after a fresh start clean 12 of 12; later bursts in one stack clean 20 of 33. Pattern only, no cause, no significance claimed; duplicates do not grow with burst number in any series. Files `n8n-rerun/R2d-*`, section R2d in `N8N-RERUN-1.md`, items 8 and 9 in `n8n-a-cause-1.md`.
 - Fresh egm comprehension reviewer on R2c + item 8: 6 Major, 4 Nit, all raw counts verified. Fixed: 8 of 8 vs 7 of 7 (now counted by slot: 7 of 7, then 12 of 12), the chance argument removed (it was not a sound test), stale lines in `n8n-a-cause-1.md` corrected, the "control does not reproduce it" wording (different measurement from 20 bursts on one stack), "build-up" wording (published and R2 rows do not show growth). Declined: nits 9, 10 (not checkable from the given files; stated as given).
