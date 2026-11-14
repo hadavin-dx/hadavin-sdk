@@ -1,5 +1,42 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:27 UTC / 10:57 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| aaae555f (EV7G runner) | ONE full run of r7g, then git copy, odd file, fail-before, 15 mutants, hostile cases | independent proof of r7g | 05:12 / 10:42 | wrapper limit 45 min (about 05:58); box 90 min | EV7G n1 | RUNNING: full run about 52% at 05:3x (output only; failures still unidentified) | read EV7G-EVIDENCE.md failure ids first |
+| ae16bd9e (r7h builder, fresh) | fixes the r7g review minors m1, m2, n1 and checks three thread sites | fix-dont-defer: minors are fixed, not listed | 05:27 / 10:57 | 50 min box | r7h | RUNNING | hand-back; delta evidence |
+| ae345331 (EV7F-PARTIAL) | mutants on r7f, hostile table | delta base | 04:52 / 10:22 | box ends about 05:52 | retry 1 | RUNNING (6 of about 17 rows KILLED at last read) | EV7F-PARTIAL.md |
+| a68a37b4 (r7g reviewer) | review of r7g | independent | 05:12 | closed | review 1 | DONE: NOT CLEAN, 0 Blocker, 0 Major, 2 minor, 1 nit | r7h |
+
+**LINE-ENDING ORDER (your 05:24) DONE.** Method: for every recorded hash in sha256-*.txt I hashed the committed bytes (git show HEAD:path). Table in handover/core/fix/COMMITTED-HASH-CHECK.md. Result: 18 files checked; 9 MISMATCH (the plain CRLF patches r7b, r7c, r7d, r7e, r7f, r7g and the deltas r7-to-r7b, r7b-to-r7c, r7c-to-r7d); 9 match (all -lf patches, deltas r7d-to-r7e, r7e-to-r7f, r7f-to-r7g). For each mismatch the true bytes are stored as -crlf.patch.gz next to it (9 files) and each unpacks to exactly the recorded hash (checked by hashing the unpacked bytes). CRLF-NOTE.md now says the .gz is the source of truth with the apply commands (gunzip, hash check, git apply --check); .gitattributes not touched. NOT CHECKED: the older packages with no recorded hash file in this folder (r2 to r6, v1, v2, F*-fix, docs, f8 patches): I did not compare them with the build-folder originals. Pushed.
+
+**r7g review (fresh, independent; handover/core/review/core-fix-on-frozen-r7g-review.md):** NOT CLEAN but 0 Blocker, 0 Major. All five r7f findings (M1, M2, m1, m2, n1) are closed. The reviewer re-planted 10 of the builder's 15 mutants: all killed. For your 05:10 rule it planted the OLD-intent mutant (stopped count reads only driver:stopped lines) and a second mutant (exit 0 with a count above 0): the changed test and the new tests fail on both; the changed test checks the same property and is not weaker. Open (each cheap, real, so fixed, not listed):
+- m1: the mailbox host check lowercases before matching, so ImapSettings("Kexample.invalid") with a Kelvin sign is accepted: the checked text differs from the looked-up text, and "same rule as SMTP" in the docs is wrong. Fix: ASCII check, test, docs.
+- m2: with 3 or more silent addresses at a short limit the last address is never tried (12 s limit, 8 silent + 1 good: only 3 tried); the total deadline holds; docs overclaim.
+- n1 (nit): timed-out look-up threads are not capped (20 hung look-ups left 20 daemon threads; process still exits); not in the docs.
+Other: exit 2 for a bad mailbox host in run_real_check is RIGHT (the stated exception in constants.py and docs/settings.md); 12 hostile names gave one fixed line, no traceback; 17 hostile --base-url values refused rc 2; 21 test files pass in a staged git copy. The reviewer did NOT run: full suite, 5 of 15 mutants, a real blackholed IPv6 address (faked), and did not re-verify exception handling at three thread sites the builder's sweep omitted (desk.py:704, server.py:245, the http_guard Timer): put in the r7h batch.
+
+**r7h builder launched** (small batch: m1 with a sweep of every other validator that lowercases before matching, m2 even split of the time left over the addresses not yet tried, n1 a cap or an evidenced limit, the three thread sites). Evidence plan for r7h: delta evidence (touched modules and their test files, ruff, suppression counts, fail-before on r7g), then a fresh review of the delta.
+
+ASK (default in 10 min): is a SECOND full run needed on r7h? My default: NO full run, because r7h touches only netconnect.py, imap_count.py, possibly three thread sites and docs, and EV7G's full run on r7g is the base; I run the touched-module files plus the git-copy files. Order 268 says one full run on the final head: tell me if you want that read as r7h.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7G result and its failure ids | run in progress | read at the end |
+| r7h not built | builder started | delta evidence + fresh reviewer for the delta |
+| mail pass 9 | waits for r7h so it tests the last code; slot also limited | start on the r7h snapshot |
+| older packages' hashes (r2 to r6, v1, v2, F*, docs, f8) | no recorded hash | compare to build originals, add .gz where they differ |
+| first clean-set CRASH, orphan-worker test | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read EV7G's failure ids when it ends; any real failure joins the r7h batch.
+2. At the r7h hand-back: copy (CRLF as .gz), hash-check the committed bytes, delta evidence runner and a fresh reviewer on the delta, in parallel; then mail pass 9 on r7h.
+3. On a clean pass: freeze, rewrite README.md, sweep agents and processes and report counts.
+
+
 ## STATUS (core lead) 05:19 UTC / 10:49 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
