@@ -1,0 +1,27 @@
+F
+=================================== FAILURES ===================================
+_ test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut/pytest-of-unknown/pytest-24/test_t18_a_counters_file_that_0')
+
+    def test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent(tmp_path: Path) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmCounterUnwritable
+    
+        rig = Rig(tmp_path)
+        try:
+            taken = tmp_path / "desk-rabcdef-1.hubspot.json"
+            taken.mkdir()  # a folder with the file's name: the replace cannot succeed
+            crm = rig.crm(stats_file=taken)
+            with pytest.raises(CrmCounterUnwritable, match="create was not sent"):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 0  # nothing left the desk
+>           assert crm.stats()["calls"] == 0 and crm.stats()["create_open"] == 0
+E           assert (1 == 0)
+
+tests/test_r7t_findings.py:1053: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 137 deselected in 0.79s

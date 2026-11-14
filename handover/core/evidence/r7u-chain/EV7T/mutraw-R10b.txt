@@ -1,0 +1,16 @@
+F
+=================================== FAILURES ===================================
+_______________ test_t1_the_counting_rule_and_an_unknown_counter _______________
+
+    def test_t1_the_counting_rule_and_an_unknown_counter() -> None:
+        assert rrc.contacts_not_accounted_for(0, 0) == 0  # a counter that says 0 and nothing shown: nothing is missing
+>       assert rrc.contacts_not_accounted_for(0, 3) == 0
+E       assert -3 == 0
+E        +  where -3 = <function contacts_not_accounted_for at 0x7f1c2d0bf880>(0, 3)
+E        +    where <function contacts_not_accounted_for at 0x7f1c2d0bf880> = rrc.contacts_not_accounted_for
+
+tests/test_r7t_findings.py:59: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t1_the_counting_rule_and_an_unknown_counter
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 89 deselected in 0.26s

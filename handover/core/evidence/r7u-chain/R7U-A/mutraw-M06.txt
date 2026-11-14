@@ -1,0 +1,23 @@
+....F
+=================================== FAILURES ===================================
+_____ test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input ______
+
+    def test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input() -> None:
+        f = rrc.contacts_not_accounted_for
+        for created in range(0, 8):
+            for accounted in range(0, 9):
+                for open_creates in range(-1, 8):
+                    for leads in range(0, 9):
+>                       assert f(created, accounted, open_creates, leads) == _oracle(
+                            created, accounted, open_creates, leads
+                        ), (created, accounted, open_creates, leads)
+E                       AssertionError: (1, 0, -1, 0)
+E                       assert 0 == 1
+E                        +  where 0 = <function contacts_not_accounted_for at 0x7fa502147380>(1, 0, -1, 0)
+E                        +  and   1 = _oracle(1, 0, -1, 0)
+
+tests/test_r7u_a_findings.py:62: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 4 passed, 33 deselected in 0.20s

@@ -1,0 +1,23 @@
+======================== FAILURES ===================================
+_ test_a3_the_counter_check_is_ok_only_for_a_known_counter_and_no_unseen_contact _
+
+    def test_a3_the_counter_check_is_ok_only_for_a_known_counter_and_no_unseen_contact() -> None:
+        ok = rrc.counter_check(True, 0, {"created": 3})
+        assert ok["id"] == "F7" and ok["ok"] is True and ok["offender_count"] == 0 and ok["offenders"] == []
+        for known, unseen in [(False, 0), (True, 1), (False, 2), (True, 5)]:
+            assert rrc.counter_check(known, unseen, {})["ok"] is False, (known, unseen)
+        assert "not known" in rrc.counter_check(False, 0, {})["detail"]
+        assert "2 contacts" in rrc.counter_check(True, 2, {"created": 3})["detail"]
+>       assert rrc.counter_check(True, 0, {"created": 3})["values"] == {"counter_known": True, "unseen_contacts": 0}
+E       AssertionError: assert {'counter_kno..._contacts': 0} == {'counter_kno..._contacts': 0}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'counter_known': False} != {'counter_known': True}
+E         Use -v to get more diff
+
+tests/test_r7u_a_findings.py:370: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a3_the_counter_check_is_ok_only_for_a_known_counter_and_no_unseen_contact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 40 deselected in 0.17s

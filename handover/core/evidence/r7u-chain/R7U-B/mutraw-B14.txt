@@ -1,0 +1,29 @@
+ what the shared rule says (a yes for all three) and what a real bind of the
+        stand-in server did (measured here, on this computer: see the expected column)."""
+        from demo_only.bad_request import require_loopback_host
+    
+        # (spelling, rule accepts, a real bind works, the address it got when it works)
+        expected: list[tuple[str, bool, bool, str | None]] = [
+            ("LOCALHOST", True, True, "127.0.0.1"),  # accepted ON PURPOSE; resolves to the IPv4 loopback address
+            ("[::1]", True, False, None),  # accepted, but an IPv4 socket cannot be bound to it: not a listener
+            ("::ffff:127.0.0.1", True, True, "127.0.0.1"),  # accepted; the system reads it as the IPv4 address
+        ]
+        table = []
+        for host, rule_yes, bind_ok, address in expected:
+            assert require_loopback_host(host) == host, host  # the rule says yes (returns the host unchanged)
+            got = _bound_address(host)
+            table.append((host, rule_yes, got is not None, None if got is None else got[0]))
+            if got is not None:
+                assert got[1] > 0 and socket.inet_aton(got[0]) == socket.inet_aton("127.0.0.1"), (host, got)
+>       assert table == [(h, r, b, a) for h, r, b, a in expected], table
+E       AssertionError: [('LOCALHOST', True, True, '127.0.0.1'), ('[::1]', True, True, '127.0.0.1'), ('::ffff:127.0.0.1', True, True, '127.0.0.1')]
+E       assert [('LOCALHOST'... '127.0.0.1')] == [('LOCALHOST'... '127.0.0.1')]
+E         
+E         At index 1 diff: ('[::1]', True, True, '127.0.0.1') != ('[::1]', True, False, None)
+E         Use -v to get more diff
+
+tests/test_r7u_b_findings.py:218: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_b_findings.py::test_b8_the_rule_accepts_these_spellings_by_design_and_a_bind_is_a_separate_fact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 10 deselected in 0.16s

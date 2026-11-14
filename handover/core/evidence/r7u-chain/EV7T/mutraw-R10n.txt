@@ -1,0 +1,29 @@
+d nothing shown: nothing is missing
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7t_findings.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+created = 0, accounted = 0, open_creates = 0, leads = None
+
+    def contacts_not_accounted_for(
+        created: int | None, accounted: int, open_creates: int = 0, leads: int | None = None
+    ) -> int:
+        """How many contacts the desk may have created that the check did not account for. `created` is the desk's own
+        counter for THIS run (contacts HubSpot answered 201 for and the desk counted), `open_creates` the creates that were
+        sent and whose outcome is not known (a desk stopped hard before the count, or a timeout, a
+        transport error, a 5xx: the contact may exist and no counter shows it), `leads` the leads in the book (each lead
+        makes at most one contact, so the possible number can never be more than that), `accounted` the contacts the CRM
+        list showed (archived or left). The possible number is `created + open_creates`, at most `leads`; what the list
+        did not show of it is the answer. More shown than possible is not an error (a 409 answer is no create).
+        `created` None means the counter is not known: that raises CounterUnreadable (fail closed). The check that
+        compares the CRM list with the leads marked CRM-done (F3) never reads the counter, so it cannot cover this."""
+        if not created:
+>           raise CounterUnreadable("the number of contacts the desk created is not known")
+E           run_real_check.CounterUnreadable: the number of contacts the desk created is not known
+
+scripts/run_real_check.py:618: CounterUnreadable
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t1_the_counting_rule_and_an_unknown_counter
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 89 deselected in 0.28s

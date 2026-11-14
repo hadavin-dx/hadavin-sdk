@@ -1,0 +1,28 @@
+ture[str], monkeypatch: pytest.MonkeyPatch, open_: int, unknown: int
+    ) -> None:
+        """The number in the note follows the counting rule: created + the open part, the open part capped by the leads
+        that have no created contact (so the note never claims more contacts than leads)."""
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        real = rrc.read_counter_files_checked
+    
+        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
+            read = real(run_dir, suffix, tag)
+            if suffix != ".hubspot.json":
+                return read
+            return rrc.CounterRead({"created": 2, "create_open": open_, "create_unknown": unknown}, read.files, 0)
+    
+        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
+        rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        capsys.readouterr()
+        leads = seen[-1]["leads_in_book"]
+        note = seen[-1]["note"]
+>       assert f"up to {leads} contacts may still be in HubSpot" in note, (leads, note)
+E       AssertionError: (9, "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts...ontacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.")
+E       assert 'up to 9 contacts may still be in HubSpot' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts in ...contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand."
+
+tests/test_r7u_a_findings.py:454: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[0-100]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 4 passed, 35 deselected in 227.33s (0:03:47)

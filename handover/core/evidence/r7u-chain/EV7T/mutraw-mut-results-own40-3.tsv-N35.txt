@@ -1,0 +1,26 @@
+..F
+=================================== FAILURES ===================================
+_________ test_t2_the_checked_reader_counts_files_and_unreadable_files _________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut-mutY3/pytest-of-unknown/pytest-6/test_t2_the_checked_reader_cou0')
+
+    def test_t2_the_checked_reader_counts_files_and_unreadable_files(tmp_path: Path) -> None:
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+        assert (read.totals, read.files, read.unreadable) == ({}, 0, 0) and not rrc.counter_is_known(read)  # empty glob
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": 2, "calls": 4}', encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+        assert (read.totals, read.files, read.unreadable) == ({"created": 2, "calls": 4}, 1, 0)
+        assert rrc.counter_is_known(read)
+        (tmp_path / "desk-raaaaaa-2.hubspot.json").write_text('{"created": ', encoding="utf-8")  # half written
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.files, read.unreadable) == (2, 1) and not rrc.counter_is_known(read)
+E       assert ((2, 0) == (2, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff)
+
+tests/test_r7t_findings.py:92: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t2_the_checked_reader_counts_files_and_unreadable_files
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed, 118 deselected in 0.47s

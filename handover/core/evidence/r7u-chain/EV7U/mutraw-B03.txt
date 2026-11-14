@@ -1,0 +1,29 @@
+.F
+=================================== FAILURES ===================================
+______ test_a4_the_readback_note_with_no_open_create_does_not_mention_one ______
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb0df7d8f50>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb0df7d8ef0>
+
+    def test_a4_the_readback_note_with_no_open_create_does_not_mention_one(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        capsys.readouterr()
+        assert code == rrc.EXIT_FAILED
+>       assert "were still open" not in seen[-1]["note"], seen[-1]["note"]
+E       AssertionError: the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 9 contacts in total (its own counter), and 0 create requests were still open and 0 ended with an unknown outcome (each may have made one more contact); up to 9 contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+E       assert 'were still open' not in 'the CRM rea...hem by hand.'
+E         
+E         'were still open' is contained here:
+E         ?           ^^^^
+E            requests were still open and 0 ended with an unknown outcome (each may have made one more contact); up to 9 contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+E         ?           ^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7u_a_findings.py:407: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_with_no_open_create_does_not_mention_one
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed, 35 deselected in 66.15s (0:01:06)
