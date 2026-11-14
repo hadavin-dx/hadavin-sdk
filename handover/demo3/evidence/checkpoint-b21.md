@@ -47,3 +47,13 @@ Next: failing-before tests on b7841d40 (rows 1, 2, 6, 7, 8, 11, 14, 15, 16, 17),
 Done: all code and test rows written (1, 2, 5, 6, 7, 8, 9, 10, 11, 14, 15, 16, 17); row 3 reports saved (RuleID/File/Commit); lint on a clean git ls-files copy (ruff check, ruff format --check, mypy linux and win32, bandit -ll) all clean; failing-before run on b7841d40 done (12 fail, see log). Tree id now: ad9c1a26abfa3d15e99c1668104852e8a4b5447d.
 Running: 3 baseline runs of the mutation file set, then 121 distinct mutants in 4 parts (logs in /home/user/work/b21-logs/r11/).
 Next: survivors -> pins/tests, then ONE full run on a one-commit scratch repo of the final tree, patch, notes, hand back.
+
+## Checkpoint 2026-11-14T10:45:37Z (round 11, tree now 1df3af99; the 10:05Z line named an older tree)
+- Mutants: 121 of 121 done. 70 killed by behaviour or function-level tests, 49 killed only by text pins (all reset.ps1, README or header wording, never run here), 2 SURVIVED.
+- Survivor 1: "r11 sh pass 1 unreadable refusal ignores alive" (second alive look removed). Fixed: new test test_reset_sh_calls_a_process_gone_when_it_ends_between_the_first_look_and_the_reading_of_its_program (behaviour); on the mutant it fails with exit 6, on the real script it passes.
+- Survivor 2: "r11 test code: port guard skips every server_address" (property check dropped). Fixed: planted case "plain method named server_address returns (HOST, 0)" in test_port_helpers.py; fails on the mutant, passes on the real guard.
+- Both fixes checked by hand on tree copies (1 failed on each mutant). Mutants copy the tree at each start, so mutants started after the new tests were added ran with them.
+- Running now: failing-before check of the FINAL tests on old scripts (b7841d40), log /home/user/work/b21-logs/r11/failing-before-final.log.
+- Left: lint on clean copy, narrow non-root run, ONE full run (about 16 min), patch and parts, sha256, copy logs, notes, hand-back.
+- Expected hand-back: about 60 to 75 minutes from this line.
+- 2026-11-14T10:46:55Z final tree fc0fe30b; lint 6/6 rc=0; failing-before-final: 14 failed (8 behaviour, 6 text pins) on old scripts; full run started, log /home/user/work/b21-logs/r11/full-final.log

@@ -1,3 +1,17 @@
+## HEARTBEAT 146 (10:52Z) - L3-STOP: B21 PAUSED with note; B22 and B23 told to pause, notes not in yet
+
+| Agent / job | State at 10:52Z |
+|---|---|
+| ORDER L3-STOP | read (pulled). I sent the pause order to B21, B22 and B23 at 10:50Z: no new command, let a running one end, write evidence/paused-<name>-2026-11-14.md, hand back once. No reviews run. Stack builder stays stopped |
+| B21 fix-5 | PAUSED, note evidence/paused-b21-2026-11-14.md written, hand-back received. Tree fc0fe30b7a4e (my git write-tree on its tree gives the same id; I did not lint this tree, so it is NOT lint-confirmed by me; the builder says 6 of 6 lint rc 0 on a clean copy). Mutants 121 of 121 finished: 70 killed by behaviour tests, 49 by text pins only, 2 survived (both now have tests that fail on the mutant, checked by hand on 2 copies, not by a rerun of all 121). Failing-before on old scripts: 14 failed (8 behaviour, 6 text pins). ONE final full run is STILL RUNNING on its own (log /home/user/work/b21-logs/r11/full-final.log, about 27% at 10:52Z); no result, nothing called passed. No fresh review of round 11. gitleaks row 3: the pre-fix commit alone gives 2 findings (hardcoded-absolute-path, hardcoded-ipv4 in tests/test_port_helpers.py), the final single commit none |
+| B22 fix-2 | pause order sent; note not yet written; mutation rerun was still running at 10:45Z (a planted mutation may be in its tree: I asked it to check). No tree id yet |
+| B23 fix-10 | pause order sent; note not yet written; round 7 checkpoint 2 at 10:43Z (rows 8, 11, 12 done in tests; rows 5, 6, 7, 9, 10, 15 not done) |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B21's full run will still end by itself in the background (order says let a running command end); I will read its last line and record it in the note, nothing else.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): all three fixes unreviewed after their last rounds (B21 r11, B22 r13, B23 r7); no PowerShell run; no bash 4.4; none merged anywhere; WINDOWS-RUN-1 not updated.
+WHAT I WOULD DO NEXT (ranked): 1) collect B22 and B23 pause notes, commit and push; 2) final block "PAUSED, ready for the n8n kill script"; 3) heartbeat every 10 minutes "paused, waiting for flows"; kill script starts only when you say the flows landed.
+
 ## HEARTBEAT 145 (10:45Z) - B22 rerun of mutants started 10:39Z and writing; B21 still silent since 10:05Z; B23 round 7 checkpoint 2
 
 | Agent / job | State at 10:45Z (checkpoints and logs; not verified by me) |
