@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 13:21Z - GREP finding 2 (plaintext in n8n's -wal): test T7b and N8N-START.md pushed, cause NOT yet found, NOT RUN
+
+- Env names read from the n8n 2.46.6 source (node_modules, @n8n/config): EXECUTIONS_DATA_SAVE_ON_SUCCESS, _ON_ERROR, _ON_PROGRESS, EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS. My harness did NOT set them at env level (grep of the harness env: none). My flows DO set saveDataSuccessExecution=none, saveDataErrorExecution=none, saveManualExecutions=false in every workflow's settings (build_mainframe.py line 33). So lane3's hits were with workflow-level none already on.
+- Where the data sits: NOT determined (no disk, no run). My unproven reading: n8n writes an execution record when a run starts and deletes it when saving is off, so the content stays in the write-ahead file until a checkpoint. If that is right, the environment variables will NOT remove the hits, and the honest statement for the page becomes: lead data may sit in n8n's files. The key is a different matter: in my flows the fake key never reaches n8n (the stage reads it from its own key file; n8n has no key parameter and no node outputs it), so a key hit means lane3's setup sends it through n8n (a field in the planted lead or a header): please tell me where they plant it.
+- Pushed: T7b in mf.py (plants a fake SMTP password in the n8n credential, a lead name and e-mail, 3 runs + recovery, env-level saving off; greps every file of n8nhome incl. -wal/-shm, n8n log and the flow JSON; hits per file per needle; pass = key 0, SMTP password 0, name 0, e-mail 0), and n8n-flows/N8N-START.md (draft, execution-saving part, with the not-proven statement). Order D-N2a says made-up lead payload may sit in table and execution data: this stays on the page unless T7b shows 0.
+- NOT RUN by me. Laptop: run T7b next (it also gives the answer on name/e-mail with env-level saving off); if the -wal still has them, a second variant (stop n8n cleanly so SQLite checkpoints, then grep) tells wal-only from database file.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- The table/field that holds the data; env-level effect; real-node flows and the three-variable part of N8N-START.md; T4, pattern check, Design B same faults, compare table, 2.47.7 redaction check; kill-point counts unread.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read laptop T15 and T7b. 2. After T7b: a clean-stop variant to separate -wal from the main file. 3. Lead id pattern check.
+
 ## Block 13:10Z - heartbeat: idle, nothing running; laptop runner will run T15 x8, T14, T10, K3, K3B on 1ced4e1f, lane3 tests the same commit; nothing new pushed, nothing read.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)

@@ -1,5 +1,5 @@
 """D-N2 / D-N2a tests: Design A (n8n as the main frame, lease claim, create-or-update CRM, one CRM+mail sub-workflow) on the real n8n 2.46.6 with stand-ins (made-up data, loopback only, no spend).
-Runs inside a prepared harness work folder (see README.md).   python mf.py M0 M1 K1 K2 K3 K3B K4 K5 T8 T9 T10 T11 T12 T13 T14 T15
+Runs inside a prepared harness work folder (see README.md).   python mf.py M0 M1 K1 K2 K3 K3B K4 K5 T8 T9 T10 T11 T12 T13 T14 T15 T7b
   env MF_REPS = kills per point (default 20), MF_LEASE = lease seconds used by the TESTS (default 20; the design value is 120, see README).
 COUNTS ARE TAKEN OUTSIDE THE FLOW: this driver reads the CRM stand-in, the mail stand-in's file and the model call log after each run; expected set (lead ids sent) against observed set; extras count as failures.
 Prints REC (raw) and RESULT lines; writes mf_result_<tests>.json."""
@@ -47,7 +47,7 @@ def mf_stack(model_slow=None):
 def n8n_prepare_mf(recovery_copies=1):
     api.login(); inst = json.load(open(os.path.join(WORK, ".run", "instance.json")))
     c = api.call("POST", "/credentials", {"name": "mf-mail-smtp", "type": "smtp", "projectId": inst["project_id"],
-         "data": {"user": "stand-in", "password": "stand-in", "host": "127.0.0.1", "port": MAILP, "secure": False, "disableStartTls": True, "hostName": ""}})
+         "data": {"user": "stand-in", "password": os.environ.get("MF_SMTP_PASS", "stand-in"), "host": "127.0.0.1", "port": MAILP, "secure": False, "disableStartTls": True, "hostName": ""}})
     d = c.get("data", c); assert "id" in d, c
     out = os.path.join(S, "mfflows"); res = {}
     def build(subid): subprocess.run([sys.executable, os.path.join(HERE_MF, "build_mainframe.py"), out, inst["pg_credential_id"], d["id"], subid, str(LEASE)], check=True, capture_output=True)
@@ -230,6 +230,31 @@ def t15():
     ok = all(o["row"]["state"] == "failed" and o["alerts"] == 1 and o["mails"] == 0 and o["crm_rows"] == 0 and o["seconds_to_final"] is not None for o in rows)
     result("T15", ok, "CRM refuses every call (HTTP 500) from the start: sample %d: state failed %d, alerts per lead %s, mails to intake %s, CRM rows %s, seconds to final %s (limit %d), CRM calls refused %d" % (
         len(rows), sum(o["row"]["state"] == "failed" for o in rows), [o["alerts"] for o in rows], [o["mails"] for o in rows], [o["crm_rows"] for o in rows], [o["seconds_to_final"] for o in rows], 3 * LEASE + 150, refused), per_lead=rows)
+def t7b():
+    """T7b (lane3 finding 2): after real runs, grep ALL files of n8n's data folder (database.sqlite, -wal, -shm, everything), n8n's log and the exported flow JSON for planted values: fake model key, fake SMTP password, planted lead name and e-mail.
+    Pass: key 0 hits and SMTP password 0 hits (credentials are encrypted at rest; they must not appear in execution data), name and e-mail 0 hits when execution saving is off (env-level EXECUTIONS_DATA_SAVE_ON_SUCCESS=none, _ON_ERROR=none, _ON_PROGRESS=false, manual saving off, plus the workflow settings already in the flows). Hits are reported per file, never merged."""
+    smtp = "FAKE-SMTP-PASS-7b-planted"; os.environ["MF_SMTP_PASS"] = smtp; nm = "Planted-Name-7b-Zed"; em = "planted7b-zed@example.test"
+    EXTRA.update(EXECUTIONS_DATA_SAVE_ON_SUCCESS="none", EXECUTIONS_DATA_SAVE_ON_ERROR="none", EXECUTIONS_DATA_SAVE_ON_PROGRESS="false", EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS="false")
+    mf_stack(); n8n_prepare_mf(); restart_n8n(); ids = []
+    for i in range(3):
+        k = uid("t7b-%d" % (i + 1)); ids.append(k); st, rep = req("mf-form", form(k, email="planted7b-%d@example.test" % i if i else em, name=nm)); rec("T7b", lead=k, reply=[st, rep])
+    time.sleep(40)   # recovery runs too
+    needles = {"fake_model_key": KEYTEXT, "fake_smtp_password": smtp, "planted_name": nm, "planted_email": em}; hits = {n: {} for n in needles}
+    roots = [os.path.join(WORK, "n8nhome")]; files = [os.path.join(r, f) for root in roots for r, _, fs in os.walk(root) for f in fs] + [os.path.join(WORK, f) for f in os.listdir(WORK) if f.startswith("n8n") and f.endswith(".log")]
+    for f in files:
+        try: b = open(f, "rb").read()
+        except OSError: continue
+        for n, v in needles.items():
+            c = b.count(v.encode())
+            if c: hits[n][os.path.relpath(f, WORK)] = c
+    exp = os.path.join(S, "t7b-export"); os.makedirs(exp, exist_ok=True)
+    for fn in os.listdir(os.path.join(S, "mfflows")):
+        b = open(os.path.join(S, "mfflows", fn), "rb").read()
+        for n, v in needles.items():
+            if v.encode() in b: hits[n]["flows/" + fn] = b.count(v.encode())
+    rec("T7b", files_scanned=len(files), hits=hits, wal_present=any(f.endswith("-wal") for f in files))
+    ok = not hits["fake_model_key"] and not hits["fake_smtp_password"] and not hits["planted_name"] and not hits["planted_email"]
+    result("T7b", ok, "files scanned %d (n8n data folder incl. -wal/-shm, n8n log, deployed flow JSON), execution saving off at env and workflow level: hits per needle: %s" % (len(files), json.dumps(hits)), hits=hits)
 def t14():
     """IDLE stack (F-REC-EMPTY): no lead sent; the recovery flow runs every 30 s for IDLE_S seconds (default 120). Expected: 0 stage requests, 0 model calls, 0 CRM requests, 0 mails (no alert), 0 SMTP connections, 0 table rows."""
     mf_stack(); n8n_prepare_mf(); restart_n8n(); secs = int(os.environ.get("MF_IDLE_S", "120"))
@@ -248,7 +273,7 @@ def t13():
     time.sleep(3); subprocess.run(["docker", "kill", lib.PG], capture_output=True); time.sleep(3); subprocess.run(["docker", "start", lib.PG], capture_output=True); pg_ready()
     time.sleep(5); kill_n8n_now(); restart_n8n(); rows = final_rows(ids); [rec("T13", **o) for o in rows]
     summarize("T13", "duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n killed and restarted with half-done runs", rows, ids)
-TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15}
+TESTS = {"M0": m0, "M1": m1, "K1": k1, "K2": k2, "K3": k3, "K3B": k3b, "K4": k4, "K5": k5, "T8": t8, "T9": t9, "T10": t10, "T11": t11, "T12": t12, "T13": t13, "T14": t14, "T15": t15, "T7b": t7b}
 if __name__ == "__main__":
     for t in sys.argv[1:]:
         try: TESTS[t]()
