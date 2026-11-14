@@ -1,5 +1,40 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 08:36 UTC / 14:06 IST
+
+**Lines below are agent checkpoint lines or claims; I have judged none.**
+
+- **Pass 11 (a6bba99e), REAL GAPS so far (all survived the big set), all sent to r7n:** M9-43 (money: reserve counts only the question text, not the whole request body); M9-70 and M9-71 (the Start banner's worst-case mail and HubSpot call counts have no test for the x2 desk-process factor); **M9-54 (a source bug, not only a missing test: crm_hubspot.set_fields builds the contact path with quote(email) that keeps the slash, so an email such as a/b@x.example adds URL path parts)**. Killed: M9-80 (scrubber lists). M9-58 argued equivalent (big-set run pending). It reports about 6 rows done; the rest of the 14 plus M9-73..82 are still queued.
+- **r7n builder (ac7638bd):** 08:30 M9-43 fix and tests added; 08:31 its mutants and a base run started. Not yet reported: the imap_count fix and sweep list, the r7l Majors, M9-70/71 and M9-54 (the last two just sent). No patches yet.
+- **EV7K (a6dafd10):** full run on r7m at 34 minutes (started 08:02:33), still running; no result.
+- **r7k reviewer (a092c900):** still no written report (about 37 min in; box ends about 09:05). Last checkpoint 08:27.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n) | leak sweep, M9-43/54/70/71, r7l Majors | 08:15 order | 08:17 / 13:47 | about 09:20 | r7n | RUNNING | hand-back, EV7N |
+| a6dafd10 (EV7K) | full run on r7m | final bytes | 08:02 / 13:32 | about 09:15 | EV7K | RUNNING | EV7K-EVIDENCE.md |
+| a092c900 (r7k reviewer) | review of r7k | independent | 08:03 / 13:33 | about 09:05 | review 1 | RUNNING | written report |
+| a6bba99e (pass 11) | 14 survivors, M9-73..82 | 08:01 order | 08:02 / 13:32 | about 09:02 | pass 11 | RUNNING | mail-pass11-r7m.md |
+
+Agents running: 4. Load 2.6.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n patches, fail-before, EV7N, fresh reviewer, pass 11 on r7n | in progress | as ordered |
+| EV7K, r7k verdict, rest of pass 11 | running | resolve |
+| M9-58 equivalence | argument only | big-set run |
+| README (R7J count 41), older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Forward every further confirmed pass 11 gap to r7n; read the r7k report when it lands.
+2. At the r7n hand-back verify hashes and apply matrix, EV7N (one run), fresh reviewer, pass 11 on changed code.
+3. README, sweep, counts.
+
+
 ## STATUS (core lead) 08:25 UTC / 13:55 IST
 
 **All lines below are agent checkpoint lines or claims, none judged by me yet.**
