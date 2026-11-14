@@ -1,17 +1,16 @@
-## HEARTBEAT 181 (16:08Z) - v4 B90 PASSES (n = 1); v4 A, v4 C and v4 B90 repeat now run in 3 parallel lanes plus 1 trace agent
+## HEARTBEAT 182 (16:13Z) - v4 B90 passes 2 of 2 (1 alert each); trace agent finished; v4 A and v4 C still running
 
-AGENTS AND LANES RIGHT NOW: 4 workers. 3 parallel test lanes (processes of my own script, not language-model agents: each has its own ports, its own database and its own n8n folder) + 1 trace agent (read-only, reading the n8n source and the recovery flow for B90; report file trace-b90-report.md). Lane 0: v4 A (started 16:05Z). Lane 1: v4 C (16:07Z), then v4 C repeat. Lane 2: v4 B90 repeat (16:07Z), then v4 A repeat. After v4 A ends, lane 0 runs the remaining v3 repeats (C, B20, A). Collision check: ports (crm, stage, smtp, n8n and the n8n task broker) are shifted per lane, the database is kill_t, kill_t1, kill_t2 (one table each), run folders are per label; nothing shared. Machine: 4 cores, load 1.5 with 3 lanes. Risk I name: all timing here is in seconds, so a loaded machine could shift times a few seconds; I will compare against the single-lane times.
+AGENTS AND LANES NOW: 3 parallel test lanes (my own script processes): lane 0 v4 A, lane 1 v4 C, lane 2 starts v4 A repeat. The trace agent has finished and is closed (0 agents running).
 
-| v4 flows (demo commit 7709d058), my cases, n = 1 | Result |
+| v4 flows (7709d058), hold 90 s (B90) | Result |
 |---|---|
-| B90 (hold 90 s) | PASS: exactly 1 alert (stored at 120 s), alert_attempts 1, alert_sent true, 1 intake mail, 1 CRM row, no second alert in the 150 s watch. The same case gave 2 alerts in 3 of 3 runs on v3 (alerts at 120+120, 120+120, 90+120 s). |
-| A (refuse alert recipient twice) | running (lane 0) |
-| C (dead 600 s) | running (lane 1) |
-| B90 repeat | running (lane 2) |
+| Run 1 | 1 alert (stored 120 s), alert_attempts 1, alert_sent true, 1 intake mail, no second alert in 150 s |
+| Run 2 (run in parallel with 2 other lanes) | 1 alert (120 s), alert_attempts 1, alert_sent true, 1 intake mail, 1 CRM row |
+Same case on v3: 2 alerts in 3 of 3 runs. So v4 removes the duplicate in this case, n = 2.
 
-Tool note: the lanes need a change in my own harness (ports, database and credential file per lane); single-lane runs (lane 0) are unchanged.
+Trace of the v3 duplicate (agent report evidence/trace-b90-report.md; read by me, I have not re-checked every line): name ALERT-CLAIM-SHORTER-THAN-SEND. Claim lasts 60 s, the held send took 90 s, the sweep (every 30 s) claimed the row again while send 1 waited, two sends ran on two connections. The mark (alert_sent = true) is guarded by the claim token, the send is not, so both mails go out. The Send Email node sets no timeout of its own; the library gives connect 2 min, greeting 30 s, socket silence 10 min (so one send can wait up to 10 min, which fits the v4 choice of a 12 min claim). Not verified by the agent or me: the database token rows during B90; why the 96 s sweep tick missed in runs 1 and 2 but hit in run 3 (no tick times in the n8n log); that the held answer was specifically the RCPT answer.
 
 ASK for the lead: none.
-FAILURES AND RETRIES: my own slip, named: two of my queue scripts waited on a process name that matched their own command line (would have waited forever); I caught it within 5 minutes and restarted them; no test result was affected.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): v4 A, C, B90 repeat results; the trace agent report; K3/K6/T12/T11 on v4 (not ordered); RESULTS.md and comparison with the demo table.
-WHAT I WOULD DO NEXT (ranked): 1) finish the v4 cases and repeats; 2) fold in the trace report; 3) RESULTS.md with v3 and v4, then compare.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): v4 A, v4 C results (due about 16:15Z and 16:25Z); repeats (v4 A, v4 C, then v3 C, B20, A); a hold longer than 12 min on v4 (would still give a duplicate by the demo README; not tested); K3/K6/T12/T11 on v4; RESULTS.md and comparison with the demo table.
+WHAT I WOULD DO NEXT (ranked): 1) v4 A and C results and repeats; 2) RESULTS.md with v3 and v4; 3) compare with the demo table.
