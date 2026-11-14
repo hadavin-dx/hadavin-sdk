@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 02:55Z: CLEAN-MACHINE VERIFICATION STARTED (order 02:49Z)
+- LOAD: 3 agents running (sonnet, background): A quick start on python 3.12 then 3.13; B full suite, 3.12, DPLD_REQUIRE_SCAN=1, 12 resumable chunks, rc from pytest itself; C end-to-end scenario (both doors, crash, restart, re-send) under unshare -n. Each uses its own clone of origin/main (head f3c39cf, same as before) in /tmp/cm1.
+- STATUS: briefs written (STUDIO-PREAMBLE v1 first). Next: evidence runner collects the three reports into handover/demo/CLEAN-MACHINE-1.md; then a read-only egm reviewer lists first-reader gaps.
+- ASK (default applied): the order says "branch demo/clean-machine-fixes off origin/main". My standing limits forbid any push to the public repo and any branch there. Default: fixes go as a PATCH FILE plus text in handover/demo/clean-machine/ on demo/handover (private channel). Tell me if you want a real branch name pushed somewhere else.
+- FAILURES: none yet. Machine: python 3.12 and 3.13 present, 4 cpus, disk 4.2G free.
+
 ## REPORT 16:45Z: IDLE (harness branch ETA about 17:45Z lead clock). No agent, no job, nothing running. Disk 4.2G free. Not polling. Paper items and runbook current. QUEUE DONE, idle by order.
 
 ## REPORT 16:38Z: UNTESTED STEPS TESTED (no harness needed); still waiting for the harness branch (ETA ~16:55Z)
