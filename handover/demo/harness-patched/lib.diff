@@ -1,0 +1,71 @@
+--- /tmp/rr/orig/lib.py	2026-11-14 16:17:16.243610636 +0000
++++ lib.py	2026-11-14 16:17:16.310033773 +0000
+@@ -6,9 +6,10 @@
+ NODE_DIR = os.environ["N8N_EVD_NODE"]  # CHANGED: folder that holds node.exe (Windows) or node (Linux), Node 24.x
+ IS_NT = os.name == "nt"  # the one place that decides Windows or POSIX (tests switch it to check both branches on any computer)
+ def node_name(): return "node.exe" if IS_NT else "node"  # the node binary of the OS
+-N8N_PORTS = (5679, 5780)  # n8n and its task-runner broker: both must be free after a kill
++N8N_PORT_ = int(os.environ.get("MF_N8N_PORT", "5679")); BROKER_PORT_ = int(os.environ.get("MF_N8N_BROKER_PORT", "5780")); FAKE_PORT_ = int(os.environ.get("MF_RUN_PORT", "8790"))
++N8N_PORTS = (N8N_PORT_, BROKER_PORT_)  # n8n and its task-runner broker: both must be free after a kill
+ PG = os.environ.get("N8N_EVD_PG", "n8n-publish-pg")  # CHANGED: name of the Postgres container (variants b and e)
+-FAKE = "http://127.0.0.1:8790"
++FAKE = "http://127.0.0.1:%d" % FAKE_PORT_
+ def _project_id():  # CHANGED: was a literal id of the original run's n8n; now read from the file setup.py writes
+     try: return json.load(open(os.path.join(WORK, ".run", "instance.json")))["project_id"]
+     except OSError: return ""
+@@ -62,7 +63,7 @@
+ def up(timeout=120):
+     for _ in range(timeout):
+         try:
+-            if urllib.request.urlopen("http://127.0.0.1:5679/healthz", timeout=2).status == 200: return True
++            if urllib.request.urlopen("http://127.0.0.1:%d/healthz" % N8N_PORT_, timeout=2).status == 200: return True
+         except Exception: pass
+         time.sleep(1)
+     return False
+@@ -82,12 +83,12 @@
+     # CHANGED: the environment of the old start script, set here; node.exe is started directly (no Git-bash wrapper)
+     env.update(N8N_USER_FOLDER=os.path.join(WORK, "n8nhome"), N8N_DIAGNOSTICS_ENABLED="false",
+                N8N_VERSION_NOTIFICATIONS_ENABLED="false", N8N_PERSONALIZATION_ENABLED="false", N8N_HOST="127.0.0.1", N8N_LISTEN_ADDRESS="127.0.0.1",
+-               N8N_PORT="5679", N8N_RUNNERS_BROKER_PORT="5780", N8N_TEMPLATES_ENABLED="false", N8N_HIRING_BANNER_ENABLED="false",
++               N8N_PORT=str(N8N_PORT_), N8N_RUNNERS_BROKER_PORT=str(BROKER_PORT_), N8N_TEMPLATES_ENABLED="false", N8N_HIRING_BANNER_ENABLED="false",
+                N8N_RUNNERS_ENABLED="true", N8N_SECURE_COOKIE="false")
+     return env
+ def webhook_status(path):  # (status, first 300 characters of the body) of a GET on the production webhook
+     try:
+-        with urllib.request.urlopen(f"http://127.0.0.1:5679/webhook/{path}", timeout=3) as x: return x.status, x.read(300).decode(errors="replace")
++        with urllib.request.urlopen(f"http://127.0.0.1:{N8N_PORT_}/webhook/{path}", timeout=3) as x: return x.status, x.read(300).decode(errors="replace")
+     except urllib.error.HTTPError as e: return e.code, e.read(300).decode(errors="replace")
+     except Exception as e: return type(e).__name__, ""
+ LIVE_TEXT_DEFAULT = "not registered for"
+@@ -103,19 +104,19 @@
+     return not todo
+ def start_n8n(limit=None, log="n8n2.log", paths=()):
+     """paths: webhook paths that must answer (registered) before this returns True; callers pass the workflows they are about to fire at."""
+-    if not _wait_port_free(5679, 20) or not port_free(5780): raise RuntimeError("port 5679 or 5780 is busy: refusing to start n8n")
++    if not _wait_port_free(N8N_PORT_, 20) or not port_free(BROKER_PORT_): raise RuntimeError("the n8n port or its broker port is busy: refusing to start n8n")
+     f = open(os.path.join(WORK, log), "ab")
+     p = subprocess.Popen([os.path.join(NODE_DIR, node_name()), os.path.join("node_modules", "n8n", "bin", "n8n"), "start"], cwd=WORK, env=n8n_env(limit), stdout=f, stderr=f, **_spawn_kw())
+     record_pid("n8n", p.pid)
+     f.close()  # the child holds its own copy of the log handle
+     # was a fixed 3 s wait after /healthz. /healthz/readiness answers 200 once n8n's database is connected and migrated (UNVERIFIED here: n8n could not be run when this was written; the evidence runner's --smoke run checks it)
+-    return up() and _ready("http://127.0.0.1:5679/healthz/readiness", 30) and webhooks_live(paths, 60)  # and the webhooks answer
++    return up() and _ready("http://127.0.0.1:%d/healthz/readiness" % N8N_PORT_, 30) and webhooks_live(paths, 60)  # and the webhooks answer
+ def kill_n8n(): return _kill_recorded("n8n")
+ def kill_n8n_confirmed(timeout=15):
+     """True only when the OS reported the kill AND nothing listens on the n8n port afterwards (a kill that took no effect is recorded as such). and the task-runner port is free too."""
+     return bool(kill_n8n()) and all(_wait_port_free(p, timeout) for p in N8N_PORTS)
+ def start_fakes():
+-    if not port_free(8790): raise RuntimeError("port 8790 is busy: refusing to start the stand-in server")
++    if not port_free(FAKE_PORT_): raise RuntimeError("the stand-in server port is busy: refusing to start the stand-in server")
+     f = open(os.path.join(WORK, "fakes2.log"), "ab")  # CHANGED: runs in the work folder, so calls2.jsonl is written there
+     p = subprocess.Popen([sys.executable, os.path.join(HERE, "fakes2.py")], cwd=WORK, env=_base_env(), stdout=f, stderr=f, **_spawn_kw())
+     record_pid("fakes", p.pid); f.close()
+@@ -190,7 +191,7 @@
+     return end
+ def lead(email, rid): return json.dumps({"source": "webhook", "request_id": rid, "payload": {"name": "Asha Verma", "email": email}}).encode()
+ def fire(path, email, n=10, rid_prefix="r", timeout=60):
+-    url = f"http://127.0.0.1:5679/webhook/{path}"; bar = threading.Barrier(n); res = []
++    url = f"http://127.0.0.1:{N8N_PORT_}/webhook/{path}"; bar = threading.Barrier(n); res = []
+     sent = []
+     def go(i):
+         bar.wait(); sent.append(time.time())

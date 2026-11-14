@@ -1,0 +1,13 @@
+--- /tmp/rr/orig/fakes2.py	2026-11-14 16:17:16.243656684 +0000
++++ fakes2.py	2026-11-14 16:17:20.980930398 +0000
+@@ -1,3 +1,4 @@
++import os
+ import json, time, threading, urllib.parse
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ calls = {"outbox": [], "crm": []}; lock = threading.Lock()
+@@ -43,4 +44,4 @@
+             with lock: return self._send({kk: sum(1 for c in v if em in c["body"]) for kk, v in calls.items()})
+         k = p.rsplit("/", 1)[-1] if p.startswith("/fake/") else None
+         self._send(calls[k] if k in calls else {kk: len(v) for kk, v in calls.items()})
+-ThreadingHTTPServer(("127.0.0.1", 8790), H).serve_forever()
++ThreadingHTTPServer(("127.0.0.1", int(os.environ.get("MF_RUN_PORT", "8790"))), H).serve_forever()

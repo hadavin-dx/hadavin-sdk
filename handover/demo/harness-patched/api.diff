@@ -1,0 +1,12 @@
+--- /tmp/rr/orig/api.py	2026-11-14 16:17:16.243707269 +0000
++++ api.py	2026-11-14 16:17:20.982861398 +0000
+@@ -1,7 +1,8 @@
++import os
+ import json, sys, urllib.request, http.cookiejar
+ cj = http.cookiejar.CookieJar()
+ op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+-B = "http://127.0.0.1:5679/rest"
++B = "http://127.0.0.1:%s/rest" % os.environ.get("MF_N8N_PORT", "5679")
+ import os
+ def _owner():  # CHANGED: was a literal account; now the generated one that setup.py wrote
+     return json.load(open(os.path.join(os.environ["N8N_EVD_WORK"], ".run", "owner.json")))
