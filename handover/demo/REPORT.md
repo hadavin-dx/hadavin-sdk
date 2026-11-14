@@ -1,6 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 10:05Z (15:35 IST) - ORDER D-N1 picked up at 10:00Z; step 1 started (flows and tests written, first run next)
+
+- Picked up. Plan and what exists NOW (not yet run): door flows built from scratch (the repo's two flow files stay untouched, licence): Webhook with Respond to Webhook, same field mapping as the repo's files, desk call with desk address and timeout from n8n's environment (DESK_URL, DESK_TIMEOUT_MS), 3 tries 1 s apart, success output shapes {n8n_error false, desk_status, verdict, desk}, error output shapes {n8n_error true, no verdict} with HTTP 502 and then fails the run so the error workflow fires. Error notifier: Error Trigger -> Send Email (SMTP credential name desk-alert-smtp), fixed recipient from the environment, lead id only in the body, attribution off, at most 3 tries. Stand-ins: a tiny SMTP catcher for the notifier, a counting pass-through between n8n and the desk (so a test can count real n8n retries), the desk run with its live-model qualifier against the model stand-in with a spend ledger (so the money check works: model calls per lead id and ledger reserve rows).
+- Checked on the desk first (made-up lead): 201 new, 201 replayed for the same id, 200 duplicate for the same e-mail under another id, 202 review for an invalid e-mail; one model call and one ledger reserve per lead.
+- Tests written (not run yet): S1B (the repo's original flows imported unmodified: shown to FAIL the new reply checks = fail-before), S1 (desk up 201/200/202, desk down, desk killed at A mid-request, money check), then T1 to T7 in one driver. Files will be under n8n-tests/ and n8n-flows/ in handover/demo.
+- Fact to carry into the page: n8n 2.46.6 blocks environment variables in nodes by default; the door needs N8N_BLOCK_ENV_ACCESS_IN_NODE=false (goes into N8N-START.md).
+- Not done: any run of the new flows; N8N-START.md; README; page item for step 4.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Everything above that says "not run". Whether n8n's Respond to Webhook plus a later Stop and Error step fires the error workflow once per run is unproven until S1/T5 run.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Run S1B and S1 (fail-before, then pass) and push the flows, driver and raw output.
+2. Error-notifier proof (T5), then T1 to T4, T6, T7.
+3. N8N-START.md, README, page step-4 line, uncapped fresh review.
+
+
 ## Block 09:55Z (15:25 IST) - reviewer folded, hygiene clean; kill-compare box done, queue empty
 
 - Fresh comprehension reviewer on n8n-vs-desk-kill-compare.md and page items 9-11: counts all matched the raw files; 10 Majors on conditions and wording, all folded: which series were fresh per kill (desk) and which ran in a row on one stack (n8n-only 5, point 1 10); the kill methods are different (desk self-exit at a named point, n8n outside kill on a timer) so the table is "where the story stops", not like for like; point 3 re-slotted (desk follow-up work runs after the first answer; D1b is just before the e-mail); "Lost" defined, and D1b blind stated as 0 e-mails until a person acts; keyed rows say the single e-mail is the stand-in dropping a repeat key; headline now says "the one n8n flow I tested", default settings, no status column; P1b labelled as the caller's resend, not a desk recovery; variant e defined; a terms list added to the compare file, point A added to the page glossary.
