@@ -1,6 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 08:05Z STATUS (demo cloud): fresh review of `n8n-owns-vs-desk-owns.md` folded
+Reviewer: 6 Major, 5 Nit; numbers it could check match (12 of 20, 2 of 5, 12 of 12, 8 of 10, 25 of 25, 1 of 10, 1 of 50, the "redact" search); it did not open the per-burst raw files. Fixed in the page: (1) the scope line now separates the n8n numbers, the published laptop figures and the desk rows, and the D2 logs are now in `n8n-rerun/D2-scene-*`; (2) "CRM rows equal the 200 replies" (not "duplicate rows"), 45 slots / 46 rows; (3) kill lines split by point (in flight 1 CRM / 0 e-mails: b 4 of 4, c 5 of 5, d 5 of 5, a 1 of 5; two e-mail points: c 10 of 10, d 10 of 10, b 9 of 9, a 3 of 10) and "0 of 15 / b 0 of 13" in the source wording; (4) variant a's 3 of 10 and variant e's e-mail repeated in every kill run (50 of 50) added; (5) the desk claim now reads as the repo states it (in tests, with stand-ins; not exactly once; the blind D1b and C0 cases named; keyed needs the mail system to honour the key); (6) UNKNOWN defined for blind only. Also: variants a to e defined on the page, the two D2 rows relabelled "DESK, not n8n" and the column header changed, "fresh first burst clean" softened (R2d later bursts on fresh stacks had 2 of 10 duplicates, no significance), run names explained. Not done: the three-column D2 repeat.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Page not re-reviewed after the fix; D2 rows are one run each; variant b, c, d descriptions rest on the run log and the branch text.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Repeat each D2 scene 3 times (5 minutes, light).
+2. One more fresh reviewer on the page only if you want the page to go public.
+3. Clean up scratch when you say R2b is finished.
+
+
 ## 08:03Z STATUS (demo cloud): n8n-owns-vs-desk-owns.md written, blind crash scene measured, variant e 3-bursts covered
 - **(1) `n8n-owns-vs-desk-owns.md` written** (one page, about 800 words, labels explained, each number with its condition: fresh or reused stack, n8n 2.46.6 self-hosted only, Make never tested). "Measured" and "stated" are kept apart. Claims check: no "exactly once" (it says keyed, retry-safe, ambiguous sends marked for a person); n8n not understated (b, c, d gave 20 of 20 through n8n alone with a database check; variant a cause NOT established). TWO LABELS I COULD NOT SUPPORT: the spend limit and the personal-data hiding are stated by you, I did not test them; a text search of `src/` found no "redact" word, so check that label before it goes into any post.
 - **(2) Blind-server crash scene, measured (clean export of f3c39cf, loopback, synthetic, one run):** demo server `--outbox blind`, D2 armed, lead 2 sent: feed printed 201; desk printed "simulate crash", exit code 137; outbox count 1; after the restart the follow-up state is `unknown`, counts page unknown_followups 1, outbox still count 1; `reset.sh` done, data empty. Keyed column (earlier run): one e-mail, `sent`. So both columns of the D2 row are measured: keyed one e-mail and `sent`, blind one e-mail and UNKNOWN.

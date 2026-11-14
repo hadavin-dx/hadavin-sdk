@@ -1,0 +1,2 @@
+D2 crash scene runs, made 07:4x to 08:1xZ on the Linux cloud machine, clean export of the newest public main, loopback, made-up data.
+desk1/desk2: keyed demo server, first run (desk1 = crash, desk2 = restart). desk3: keyed run with exit status recorded (rc file: 137). desk4/desk5: blind demo server (desk4 = crash, rc 137; desk5 = restart). Results (outbox counts, follow-up state) were printed in the terminal and are written in REPORT.md blocks; these files hold the desk logs only.
