@@ -1,5 +1,34 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Container clock 04:13 UTC = 09:43 IST. Applied the lead's 04:09Z answer.
+
+STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
+- a712ad32 | r7f builder | candidate for EV7F | 03:03 / 08:33 | to 04:20 (will overrun) | r7f, no cap | running. Note 04:05: its two full-suite halves stopped at the same second (03:55:39-40 by log time, about 6 min after start): first by SIGTERM (rc 143), second by SIGINT; not an out-of-memory kill (that would be 137) and not its own timeout (1500 s); its own 'kill by name' calls were at 03:23 and 03:28 and hit its own lanes only. Cause NOT proven. My note: 03:55 is the minute I stopped mutant lane 1 (that agent first tried a kill by name, which the harness denied, then killed only its own runner by pid). It may or may not be related; I have no evidence either way | wait for its report; EV7F decides
+- aebef140 | wave 2 lane A | | 03:46 / 09:16 | to 04:31 | evidence | running (paused runall at 04:05 by the clean-set rule). Results: F01 F03 G01 G02 KILLED; SURVIVED on the module test set: G03 (crm_hubspot, hubspot read: ...; 689 passed) and T01 (tls_trust: BOM strip removed; 433 passed) | next: full-suite 900 s recheck of G03 and T01 (the lead's method)
+- a7f6b110 | wave 2 lane B | | 03:55 / 09:25 | to 04:40 | evidence | running: B01 KILLED (test_a_multi_line_reply_over_the_cap_is_refused_whole), B02 SURVIVED on its module set (smtp_outbox; reply cap buffer; 724 passed), A08 TIMEOUT | 900 s full recheck of B02
+- aaabb673 | wave 2 lane C | | 03:55 / 09:25 | to 04:40 | evidence | running: clean smtp_provider (1166 passed, 412 s) and tls_trust (433 passed, 65 s) sets PASSED; clean smtp_outbox set still not proven; no mutant result yet | collect
+- closed: a1942238, ab9f9527, a5676b32, a954ceb0, a86b10ca, a4355ac3, a3b90516, a9760115
+
+Heavy suites: builder + lanes A, B, C = 4 at times; no pause per the lead's 04:09Z answer; I record the overlap: 03:55-04:13 four at once; no new TIMEOUT cause shown yet.
+
+Mutant totals on r7e (of 54): KILLED 24 (lane 1: A03 A05; lane 2: C02-C04 C06-C10 D01-D05 E01 E02; lane 3: E04 E07; wave 2: F01 F03 G01 G02 B01), SURVIVED on the module set 3 awaiting the 900 s full recheck (G03 T01 B02), TIMEOUT-unknown 10 (A01 A02 A04 A06 A07 A08 C01 C05 E03 E05 E06 minus those re-run), BADMUT 1 (B04), not run about 15. A survivor on the module set is NOT yet a proven survivor: the full-suite recheck decides; if confirmed it needs a killing test or an evidenced equivalence (r7g builder).
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (item | why | next)
+- G03, T01, B02 full-suite rechecks not done | lanes queued them | collect; then r7g builder for confirmed ones
+- About 15 mutants not run; 10 unknown; B04 new mutant | wave 2 | collect 04:40
+- Cause of the builder's SIGTERM/SIGINT at 03:55:40: not proven | no evidence | EV7F runs under a recorded wrapper
+- r7f not built; the r7e Major open | builder | EV7F
+- r7f new code (netconnect.py, cipher string) unreviewed | not built | reviewer and mail pass 9
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI | end, clean patch | later
+- Newline-named stray file writer not found yet | builder hunting | EV7F per-file listing
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect full rechecks of G03 T01 B02; start the r7g builder for any confirmed survivor and for the r7f hand-back.
+2. EV7F on r7f alone on a quiet machine (no other test process), recorded wrapper and exit code, checkout without data/; fresh reviewer and mail pass 9 in parallel.
+3. Final README and sweep.
+## STATUS (core lead)
 Container clock 04:08 UTC = 09:38 IST. Applied the lead's 04:04Z answer.
 
 STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
