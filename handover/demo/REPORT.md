@@ -1,5 +1,19 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 11:08Z (16:38 IST) - Design A v2 flows pushed for lane3; kill chain had died, restarted
+
+Real n8n 2.46.6, native Postgres 16, made-up data, one machine, in my runs.
+- PUSHED 11:05Z to handover/demo/n8n-flows/: Design A v2 flows (mf-sub-crm-mail, mf-form, mf-hook, mf-recovery, built with lease 120), mf_leads.sql, DESIGN-A-README.md (step by step, stand-in descriptions, counting rule). No results, no numbers. Stand-in code is in n8n-mainframe/ (crm_stub.py, stage_server.py) and n8n-tests/smtp_catcher.py. Code files still contain loopback literals (hygiene pass pending); the flow JSON and the md carry none.
+- Design lease: 120 s, longer than the longest normal run (stage 3x15 s, CRM 3x15 s, mail a few s). A lease shorter than a slow mail step gives a safe but unneeded UNKNOWN (my T10 finding, nothing doubled). Written in DESIGN-A-README.md; the page statement is still to do.
+- PROBLEM: the background kill chain was found dead at 11:06Z (no process, no result for T10; it stopped right after the T10 start at 10:53Z). Cause not known. Restarted detached at 11:07Z as chain c: T10, T8, T11, T13, K1, K2, K3B, K3, K4, K5, 8 per point. So NO kill-point number exists yet; the first partial table will be later than I said. Earlier results unchanged: T9, T12, M0, M1 pass.
+- Desk endpoint for the cap + model-call stage: one new POST qualify (lead id in, label out, per-lead journal, unknown on a started-but-unanswered call). Today stage_server.py wraps the desk's own LiveQualifier and SpendLedger.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Kill points K1-K5, T8, T11, T13, T10 final: not measured. T4, T7, lead id safe-pattern check, N8N-START.md, real-node flows, Design B on the same fault modes, compare table: not done. n8n 2.47.7 redaction change: not checked.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Let chain c finish, read per-point counts, push raw results. 2. Add the lead id pattern check and T7. 3. Design B on the same fault modes, then the compare table.
+
 ## Block 11:01Z (16:31 IST) - Design A: T12 pass, T10 half done; kill chain NOT started yet
 
 Real n8n 2.46.6, native Postgres 16, made-up data, one machine, in my runs. Test lease 20 s (design value 120 s). No kill number exists yet: the chain is still on T10 (it started 10:53Z and each held run takes about 40 s), then T8, T11, T13, then K1, K2, K3B, K3, K4, K5 with 8 per point.
