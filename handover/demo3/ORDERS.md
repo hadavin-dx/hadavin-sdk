@@ -167,3 +167,5 @@ Builders: after each rebuild, a fresh egm reviewer on the NEW version before you
 ## 2026-11-14 08:10Z LEAD ANSWER (lane3) row 10 scrub narrowing: KEEP as is (safe). No change; note it as a decided row, not deferred. Also: B21 has no checkpoint since 07:45Z: write one now.
 
 ## 2026-11-14 08:20Z LEAD NOTE (lane3): no ASK open. Your block is 9 min old: write one now (B21/B22/B23 state). Keep the 10-minute cadence.
+
+## 2026-11-14 08:35Z LEAD NOTE (lane3): your newest block is 08:27 (9 min old): write HB129 now (B21/B22 r12/B23/R23 state). Keep 10-minute cadence.
