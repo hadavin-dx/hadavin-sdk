@@ -1,18 +1,18 @@
-## HEARTBEAT 192 (17:19Z) - lease 45 s: K1 5, K2 5, K3 4, K6 2 runs; all correct; RESULTS.md has the new section; one run voided (my slip)
+## HEARTBEAT 193 (17:22Z) - lease 45 s kill points done: 15 valid runs, all correct; caption numbers below; ERROR (CRM refuses every call) at lease 45 s x3 now running
 
-WORKERS: 2 lanes (my script processes): K3 run 5 and K6 run 3 at lease 45 s (end about 17:23Z), 0 language-model agents.
+WORKERS: 3 lanes (my script processes), 0 language-model agents. Each lane runs ONE script: the ERROR case at lease 45 s (CRM answers 500 to every call from the start), n = 3 in parallel; ends about 17:35Z. Criteria as before: state failed, exactly 1 alert naming the lead, 0 mails to intake, 0 CRM rows, within 3 x lease + 150 s.
 
-| film-v4, lease 45 s (demo 873a908a) | n | Final state | Intake / alerts / CRM rows | Recovery s (n8n up to final), median / max | Kill to final s, median / max |
+CAPTION NUMBERS (film-v4, lease 45 s, demo 873a908a, start point = the KILL):
+| Point | n | Final state | Intake / alerts / CRM rows | Kill to final s, median / max | n8n up to final s, median / max |
 |---|---|---|---|---|---|
-| K1 | 5 | done | 1 / 0 / 1 | 52.9 / 54.9 | 60.8 / 61.9 |
-| K2 | 5 | done | 1 / 0 / 1 | 52.9 / 52.9 | 60.9 / 61.2 |
-| K3 | 4 (5th running) | unknown | 0 / 1 / 1 | 53.9 / 54.9 | 61.0 / 61.6 |
-| K6 | 2 (3rd running) | unknown | 1 / 1 / 1 | 53.8 / 54.8 | 60.8 / 61.5 |
-Lease 120 s (n8n-flows-v4): recovery 144.2 to 144.4 s (K1 2, K2 1, K3 1, K6 2). Table with all rows: kill/RESULTS.md (Part 3).
+| K1 (killed at CRM write) | 5 | done | 1 / 0 / 1 | 60.8 / 61.9 | 52.9 / 54.9 |
+| K2 (killed after the mail step) | 5 | done | 1 / 0 / 1 | 60.9 / 61.2 | 52.9 / 52.9 |
+| K3 (killed after CRM write) | 5 | unknown | 0 / 1 / 1 | see Part 3 of kill/RESULTS.md | 52.8 to 54.9 |
+| K6 (killed after mail stored) | 3 | unknown | 1 / 1 / 1 | see Part 3 | 52.8 to 54.8 |
+So the caption can say: "about a minute after the crash" (61 to 62 s at the worst in 18 valid runs; my restart takes 7 to 9 s of it; measured every 2 s). Nothing lost, nothing doubled: 1 CRM row in every run.
+Not run: K3B (my harness has no such point; I do not know the case and may not read the demo results; one line from you and I run it).
 
-MY SLIP, named: I started a second script on lane 1 while the first was still running there. The second run's start-up cleared the table of the first (K3 run 2). Result: K3 run 2 reached no final state (void) and the other run failed to start (fakes_not_up). Both are labelled VOID- in results.jsonl and left out of every table; I reran them (K3 run 5 and K6 run 3 now). No product fault.
-
-ASK for the lead: (1) What is T8? My harness has no T8 and I may not read the demo's result files; tell me the case in one line (what is killed or faulted, what is expected) and I run it once at lease 45 s. (2) Same question as before: caption start point, kill or n8n up.
-FAILURES AND RETRIES: see the slip above.
-NOT DONE / NOT CHECKED (my list): K3 run 5 and K6 run 3 results; T8; failed mark after a sent alert; comparison with the demo table; 15 runs counted: 5 K1, 5 K2, 4 K3 valid, 2 K6 valid.
-WHAT I WOULD DO NEXT (ranked): 1) finish K3 and K6; 2) T8 once you define it; 3) compare with the demo table, one video line.
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list): ERROR at lease 45 s (running); K3B; failed mark after a sent alert; comparison with the demo table (I have saved all numbers; will compare after ERROR).
+WHAT I WOULD DO NEXT (ranked): 1) ERROR x3 result; 2) compare with the demo table, state differences plainly; 3) one video line; then stop all processes and report counts.
