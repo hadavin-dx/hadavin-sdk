@@ -1,6 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 08:35Z - Skip-on-Conflict test started (08:30Z order)
+
+- Found at start of this job: dockerd had died (its log ends 07:06Z), so the R2b containers are gone. I restarted dockerd on the same data folder (same flags, pid file kept). Docker answers, the pinned postgres image is still there. The R2b run folders and scratch node_modules are untouched.
+- Built (scratch, not published harness files): a driver copy and a new in-stack script. Workflows: webhook -> Postgres Insert (operation insert, Skip on Conflict on) on a table with a unique index on lead_id; plus a variant with a Code node that reports item count and fields; plus one with Always Output Data on; plus Data Table upsert, "If Row Does Not Exist", and "If Row Does Not Exist then Insert". Read from the 2.46.6 node source: Data Table has the operations insert, upsert, "If Row Exists", "If Row Does Not Exist" (the last one only checks; it does not insert).
+- First launch was refused by the permission check because my script passed --min-idle 0 (my standing order forbids it). Removed; default idle gate used.
+- Running now: one fresh stack, single NEW and single DUPLICATE probes on every workflow. No numbers yet.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No burst results yet; no row counts yet; the report file n8n-skip-on-conflict.md is not written.
+- The Data Table "insert if not exists" is not a single operation in this version as far as I read the source; I will say what I measured, not what the docs imply.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the probe output, fix anything in my workflows that is my error.
+2. 5 fresh stacks x 1 burst and 1 reused stack x 5 bursts, per workflow that matters.
+3. Write n8n-skip-on-conflict.md with the one-sentence answer, push.
+
+
 ## 08:21Z STATUS (demo cloud): hold; page checked against the atlas facts
 - No job running; holding as ordered. R2b containers kept.
 - Checked `n8n-owns-vs-desk-owns.md` against the four atlas facts. Changed: summary line 3 no longer says a database check "was reliable" as a general claim; it says "in my runs" and names the documented uniqueness (Postgres insert with Skip on Conflict plus a unique index, guarantee from the database). New first bullet under "What follows": the lead's reading of the n8n docs (no exactly-once or at-least-once statement; Remove Duplicates and Data Tables silent on concurrency; Idempotency-Key from 2.45.0 on POST /api/v1 only, does not dedupe incoming webhooks), the four GitHub issues marked "user reports, not facts, not tested by me", and that my variant a duplicates are my own measurement, not those reports. Variant c and d clean 20 of 20 is now stated as an observation, not a documented guarantee; variant b is the documented kind. The page already says "exactly once" is not claimed for the desk and "n8n alone is enough" and "n8n is broken" are not claimed; no line found that overstates n8n or our code beyond what was fixed here.
