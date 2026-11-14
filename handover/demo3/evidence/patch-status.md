@@ -1,7 +1,7 @@
-# Patch status (lane3), written 04:27Z for the lead: one read. Failures and open items first.
+# Patch status (lane3), written 04:22Z for the lead: one read. Failures and open items first.
 Base for all: f3c39cf8 (origin/main of the demo repo, unchanged at 04:21Z).
 
-## Stack conflicts found by a dry run (04:26Z, scratch tree, apply order claims-stack, fix-1 r6, fix-2 r5-on-fix-1-r6, fix-5 r6 INTERIM, fix-8 r3, fix-9 r3, then demo docs 0001, 0002)
+## Stack conflicts found by a dry run (04:22Z, scratch tree, apply order claims-stack, fix-1 r6, fix-2 r5-on-fix-1-r6, fix-5 r6 INTERIM, fix-8 r3, fix-9 r3, then demo docs 0001, 0002)
 | patch | `git apply --check` after the ones before it | cause (files both patches change) |
 |---|---|---|
 | claims-stack | clean | (first) |

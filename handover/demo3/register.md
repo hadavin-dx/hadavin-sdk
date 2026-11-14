@@ -276,5 +276,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R8b | CLOSED 04:13Z | fix-8 r2 review: 0 blocker 0 major 2 minor 2 nit, saved evidence/review-lane3-fix-8-r2.md |
 | B10 (resumed) | RUNNING from 04:13Z | fix-8 r3 (4 review points); stop 04:45Z; no full run by B10 (EV10 runs r2 full; stack run covers r3) |
 | B10 | CLOSED 04:17Z | fix-8 r3 patch 3e07f8ab (+ on-fix-4-r4 variant, apply check only); subset 98 passed (I read the tail) |
-| LEAD ANSWER 04:19Z | applied | r3 delta reviewer (a29cd0b9), stack dry run done 04:26Z, patch-status.md written; fix-10 queued |
+| LEAD ANSWER 04:19Z | applied | r3 delta reviewer (a29cd0b9), stack dry run done 04:22Z, patch-status.md written; fix-10 queued |
 | R8c | RUNNING from 04:21Z (a29cd0b9) | fresh review of fix-8 r3 delta only; expected 04:30Z |
