@@ -155,3 +155,19 @@ With these, b K2 and b K3 have 5 valid rows each when R2 and R3-partial are put 
 **Definitions for a cold reader.** "Unit" (variant e): one fresh stack running `g3e.py K3 5` then `g3e.py K2 5` = 10 kill rows; units were 1 (failed at setup, 0 rows), 2, 3, 4, 5, then 1b (the redo of unit 1, run last): 5 valid units, 6 attempts. "Stand-in" = the fake CRM and e-mail server the harness runs (see DETAILS.md). "Agent H" = the helper that runs the CI-equivalent checks; it was stopped before R2b. "The lead's order 1 / 4 / note of 04:49Z or 05:04Z" = entries in `ORDERS.md` of this folder. "The builder's overloaded-laptop rerun" = the unpublished loaded run named in GLOSSARY.md. The lead's list in this file is a comparison column only, not public text.
 
 **Limit of the R3-partial completion.** REPRODUCTION-RULE R2 asks for the full count in one run. The two b rows from R3-partial come from a separate fresh stack with P2, so they do not turn R2's exit 2 into a complete run under that rule; R2 stays "exit 2, shortfall", and R3-partial is an addition next to it.
+
+## R2c: FAIR CONTROL AND VARIANT E TEN-AT-ONCE ON FRESH STACKS (lead's order of 06:03Z; ran 06:10 to 06:58Z; files `R2c-*`)
+**Variant a, ONE burst per fresh stack (new work folder, new Postgres container, new n8n; P1 and P2, same flags).** Rows (the first two are in the R2b control section above):
+
+| row | ran | final CRM / email | replies | replay added | CPU idle before / after | note |
+|---|---|---|---|---|---|---|
+| 1 | 05:56:39Z | 1 / 1 | 200 x1, 500 x9 | 0 | 99.7 / 97.8 | clean |
+| 2 | 05:57:30Z | 1 / 1 | 200 x1, 500 x9 | 0 | 99.8 / 99.0 | clean |
+| 3 | 06:10:33Z | 1 / 1 | 200 x1, 500 x9 | 0 | 99.2 / 90.0 | LOAD-AFFECTED: the CI-equivalent pytest of the helper agent started about 06:10:28Z |
+| 4 | 06:29:30Z | 1 / 1 | 200 x1, 500 x9 | 0 | 99.0 / 97.8 | no other heavy job |
+| 5 | 06:36:52Z | 1 / 1 | 200 x1, 500 x9 | 0 | 99.7 / 99.8 | no other heavy job |
+| 3b | 06:57:21Z | 1 / 1 | 200 x1, 500 x9 | 0 | 99.8 / 99.2 | clean redo of row 3 |
+
+Plain sentence: 6 of 6 bursts on fresh stacks (5 clean-load rows plus the load-affected one) ended with exactly one CRM row and one email, no duplicates. In the one-stack series the later bursts were clean 12 of 23 (R2 attempts 2 to 20: 11 of 19; R2b bursts 2 to 5: 1 of 4) and the first burst of each series was clean. So on this machine variant a is clean in the first burst after a fresh start in 8 of 8 tries (6 control rows plus the first burst of R2 and R2b) and often not in later bursts of the same stack. That is a pattern in the rows (`n8n-a-cause-1.md`), not a shown cause. The published 18 of 20 came from one stack, so the control does not reproduce it either way; to test whether it is the number of bursts already run, a series of 3 bursts per fresh stack would be needed (not run).
+
+**Variant e, ten at once, 5 fresh stacks x 5 bursts (`g12e.py`, 25 bursts).** Every one of the 25 bursts: 10 replies 200, final 1 CRM row and 1 email, status `sent`, the same counts 35 s later (no second CRM row, no second email). Per stack lowest CPU idle 99.3, 99.0, 99.5, 99.5, 99.5 percent. Same result as the first variant e ten-at-once run in R2b (5 of 5). Published README for variant e ten at once: no duplicate was reported for e at the ten-at-once step (the README's "second CRM row 4 of 10" is the kill-run measure, tested in R2b: 1 of 50).

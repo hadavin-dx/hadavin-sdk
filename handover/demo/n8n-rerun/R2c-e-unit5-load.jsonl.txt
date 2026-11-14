@@ -1,0 +1,7 @@
+{"ts": "2026-11-14T06:54:05.796Z", "setup": "e ten at once", "when": "before", "cpu_idle_pct": 99.5, "free_ram_mb": 14206.3}
+{"ts": "2026-11-14T06:54:36.798Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 100.0, "free_ram_mb": 14553.2}
+{"ts": "2026-11-14T06:55:07.799Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.7, "free_ram_mb": 14538.3}
+{"ts": "2026-11-14T06:55:38.801Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.8, "free_ram_mb": 14532.4}
+{"ts": "2026-11-14T06:56:09.804Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.5, "free_ram_mb": 14533.6}
+{"ts": "2026-11-14T06:56:40.806Z", "setup": "e ten at once", "when": "during", "cpu_idle_pct": 99.8, "free_ram_mb": 14544.5}
+{"ts": "2026-11-14T06:57:05.606Z", "setup": "e ten at once", "when": "after", "cpu_idle_pct": 100.0, "free_ram_mb": 14563.2}

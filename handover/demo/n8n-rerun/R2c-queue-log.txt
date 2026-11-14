@@ -1,0 +1,18 @@
+r2b-a3 start 06:10:33Z
+r2b-a3 end 06:11:08Z rc 0
+r2b-a4 start 06:29:30Z
+r2b-a4 end 06:30:06Z rc 0
+r2b-a5 start 06:36:52Z
+r2b-a5 end 06:37:26Z rc 0
+r2c-e1 start 06:37:56Z
+r2c-e1 end 06:41:25Z rc 0
+r2c-e2 start 06:41:51Z
+r2c-e2 end 06:45:19Z rc 0
+r2c-e3 start 06:45:45Z
+r2c-e3 end 06:49:14Z rc 0
+r2c-e4 start 06:49:42Z
+r2c-e4 end 06:53:11Z rc 0
+r2c-e5 start 06:53:38Z
+r2c-e5 end 06:57:08Z rc 0
+a3b start 06:57:21Z
+a3b end 06:57:58Z

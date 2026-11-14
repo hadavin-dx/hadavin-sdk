@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:58Z): ALL QUEUED n8n ROWS DONE AND PUSHED (control rows 3-5, 3b; e units 1-5); machine free
+- Variant a, one burst per fresh stack: 6 of 6 ended (1 CRM, 1 email), no duplicates (rows 1, 2, 4, 5, 3b clean-load; row 3 load-affected by H's pytest, redone as 3b). Later bursts in one stack: 12 of 23 clean (CORRECTION: my 06:46 block said "11 of 24"; the right figure is 12 of 23). First burst after a fresh start: clean 8 of 8. Pattern, cause NOT ESTABLISHED (n8n-a-cause-1.md).
+- Variant e ten-at-once on 5 fresh stacks x 5 bursts = 25 of 25 bursts: 10 x 200, (1 CRM, 1 email), sent, unchanged after 35 s; no second CRM row. Idle 99.0-99.5%.
+- Files and the R2c section are in N8N-RERUN-1.md and n8n-rerun/R2c-*; gitleaks on the folder: no leaks. Nothing n8n runs now; dockerd up, 0 containers.
+- I did NOT run the 3-bursts-per-fresh-stack series (tests the first-burst pattern): your word needed.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- 3-burst series on fresh stacks; stand-in per-request timing for variant a; egm reviewer on the R2c additions.
+- Tree-2 lint steps + pytest; doc v3 tests, hygiene, skip chunk, fresh doc-patch reviewer (machine is quiet now; I start them next, one heavy job at a time).
+## WHAT I WOULD DO NEXT (ranked)
+1. Doc v3 tests + hygiene on the quiet machine (one command at a time), then non-root skip chunk.
+2. Tree-2 lint steps (clean-export gitleaks first), then tree-2 pytest last.
+3. One fresh doc-patch reviewer; egm reviewer on the R2c section.
 ## REPORT (clock 06:45Z): control row 5 done; e ten-at-once units 1-2 done, unit 3 running; 3b queued after unit 5
 - Control row 5 (06:36:52-06:37:26Z): (1,1), 200 x1 / 500 x9, replay 0, idle 99.7 / 99.8. Variant a, one burst per fresh stack, 5 rows (3 load-affected): all (1 CRM, 1 email), 0 duplicates in 5 of 5. In the one-stack series 11 of 24 later bursts were clean. First burst after a fresh start: clean 7 of 7 (n8n-a-cause-1.md item 8; a pattern, cause NOT ESTABLISHED).
 - Variant e ten-at-once on fresh stacks (g12e.py = 5 bursts per stack): unit 1 (06:37:56-06:41:25Z) 5 of 5 bursts (1 CRM, 1 email, sent, 200 x10); unit 2 (06:41:51-06:45:19Z) 5 of 5 the same. Second CRM row 0 of 10 bursts so far; no duplicate. Unit 3 running (started about 06:45:20Z); units 4, 5 follow (ends about 06:57Z); then row 3b (a clean redo of load-affected row 3).
