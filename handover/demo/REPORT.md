@@ -1,5 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 14:25Z - heartbeat: idle, nothing running; waiting for the lead's V4 raw file paths (~14:35Z) to fill DECISION-INPUTS.md; nothing new pushed.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- V4 and extended T7b numbers unread; 2.47.7 redaction check; T4, pattern check, Design B same faults, compare table.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Fill DECISION-INPUTS values and N8N-START T7b line from the named raw files. 2. 2.47.7 release-note read. 3. Lead id pattern check.
+
 ## Block 14:15Z - heartbeat: DECISION-INPUTS.md pushed (table only, no values: no raw file given to me yet); idle, nothing running.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)
