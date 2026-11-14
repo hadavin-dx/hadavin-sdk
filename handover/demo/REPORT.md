@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 04:16Z): R2 FULL RUN RUNNING, no rc yet; ONE NOTE FROM THE HARNESS
+- Run log: g3 b K1 04:10:04Z; g3 b K2 04:11:28Z, which printed: "g3.py b K2 5 exited with code 4 (kill rows that do not count); the run goes on, the shortfall check at the end decides"; g3 b K3 04:13:47Z. I report the note as printed. I do NOT yet know how many of the 5 rows of b K2 did not count or why (the per-row result files are read after the run; no heavy read now). The harness shortfall check at the end will say whether b K2 is short.
+- Disk 4.9 GB free.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Meaning of the b K2 exit code 4 (kill rows that do not count): not read yet; next: read the rows and the harness text for exit code 4 after the run, and put both next to the published K2 numbers in N8N-RERUN-1.md, never hidden.
+- No counts, no kill results yet; R2 section of N8N-RERUN-1.md waits for rc.
+- Variant e restart after deploy (e's path not in the P1 check list): not reached yet.
+- v3 doc tests, fresh reviewer, CI-equivalent run, non-root skip chunk: after the run.
+## WHAT I WOULD DO NEXT (ranked)
+1. Next light log read in 5 min; push block.
+2. At run end: read b K2 rows and the shortfall check; write N8N-RERUN-1.md R2 with counts next to published numbers; egm reviewer.
+3. Then v3 doc tests, fresh reviewer, CI-equivalent run.
+
 ## REPORT (clock 04:12Z): R2 FULL RUN RUNNING, no rc yet
 - Run log: g3 c K3 04:08:42Z; g3 b K1 04:10:04Z; g3 b K2 04:11:28Z. Next: b K3, restart, variant e (deploy, kill runs, burst), ten-at-once, replay. Disk 4.9 GB free.
 - No kill result read yet (harness summary at the end).
