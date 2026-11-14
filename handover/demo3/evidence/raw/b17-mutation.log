@@ -1,0 +1,22 @@
+M1 refusal_line keeps line ends: KILLED (9s) 1 failed, 230 passed in 8.90s
+M2 refusal_line no cut: KILLED (9s) 1 failed, 230 passed in 8.65s
+M3 scrub does nothing: KILLED (9s) 1 failed, 238 passed in 9.04s
+M4 scrub only the typed form: KILLED (10s) 1 failed, 239 passed in 9.39s
+M5 scrub blanks short values: KILLED (10s) 1 failed, 243 passed in 9.63s
+M6 scrub blanks setting names: KILLED (10s) 1 failed, 243 passed in 10.05s
+M6b scrub also inside words: SURVIVED (11s) 376 passed in 10.63s
+M7 desk refusal on stderr: KILLED (9s) 1 failed, 231 passed in 8.70s
+M8 one desk site built by hand: KILLED (10s) 1 failed, 237 passed in 9.45s
+M9 reader exits 4: KILLED (1s) 1 failed in 0.25s
+M10 reader prints on stdout: KILLED (7s) 1 failed, 55 passed in 7.13s
+M11 start_all no death check: SURVIVED (93s) 8 passed in 92.79s (0:01:32)
+M12 start_all leaves the demo server: KILLED (120s) 1 failed in 120.16s (0:02:00)
+M13 start_all leaves pid files: KILLED (1s) 1 failed in 0.37s
+M14 start_all exits 0 on a dead desk: KILLED (1s) 1 failed in 0.41s
+M15 start_all waits 1 s: KILLED (3s) 1 failed, 4 passed in 2.60s
+M16 start_all never checks readiness: KILLED (1s) 1 failed in 0.43s
+M17 start_all matches any log line: KILLED (1s) 1 failed in 0.45s
+M18 feed reads settings by hand: KILLED (1s) 1 failed, 1 passed in 0.29s
+M19 feed reads before the arguments: KILLED (11s) 1 failed, 372 passed in 10.72s
+M20 path check off: KILLED (10s) 1 failed, 246 passed in 9.99s
+M21 real check only with live model: KILLED (11s) 1 failed, 374 passed in 10.32s
