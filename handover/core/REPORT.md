@@ -1,5 +1,33 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Container clock 03:56 UTC = 09:26 IST.
+
+STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
+- a712ad32 | r7f builder | candidate for EV7F | 03:03 / 08:33 | to 04:20 | r7f, no cap | running. Checkpoint 03:47: the DNS lookup is now bounded (new file src/lead_desk/netconnect.py, used by imap_count and smtp_provider; tests f6); it also changed the cipher string in a test setup (adds !aNULL) which I will have the reviewer look at; next on its list: file_call_guard, the newline-named file writer | collect report
+- a1942238 | mutant lane 1 (A01-B03), full set | | 03:36 / 09:06 | stop 03:56 by lead yes | evidence | stopping now: done A01 TIMEOUT, A02 TIMEOUT, A03 KILLED, A04 TIMEOUT, A05 KILLED, A06 TIMEOUT (A07 was running); asked to restore by sha and write REPORT.md | its unrun ids A08-B03 plus timeouts went to wave 2 lane B
+- ab9f9527 | mutant lane 2 (B04-E02) | | 03:36 / 09:06 | | evidence | REPORTED, closed: KILLED 15 (C02 C03 C04 C06 C07 C08 C09 C10 D01 D02 D03 D04 D05 E01 E02), TIMEOUT 2 (C01, C05; unknown), BADMUT 1 (B04: the reply-cap code was rewritten in r7d so the old text is gone), SURVIVED 0; restore check clean (its claim: sha match, diff of src/ and scripts/ vs tree-R7E empty) | wave 2 lane C
+- aebef140 | wave 2 lane A (E03 E05 E06 + F01-P02, 16 ids) per-module test sets | | 03:46 / 09:16 | to 04:31 | evidence | running, no line yet (clean selector baselines first) | collect
+- a7f6b110 | wave 2 lane B (A08-A15, B01-B03, then A01 A02 A04 A06) per-module test sets, 900 s full recheck for survivors | | 03:55 / 09:25 | to 04:40 | evidence | running (just started) | collect
+- aaabb673 | wave 2 lane C (C01, C05, new B04 mutant for the rewritten reply-cap line, then mail-8 security mutants T03 T04 P01 P04 L03) | | 03:55 / 09:25 | to 04:40 | evidence | running (just started) | collect
+- closed earlier: a954ceb0, a86b10ca, a4355ac3, a3b90516, a9760115, a5676b32
+
+Mutant totals on r7e so far (counted from the progress files; of 54): KILLED 17 (A03 A05 and lane 2's 15; lane 3's E04 and E07 not in lane 1/2 are counted below) — correct sum with lane 3: KILLED 19, TIMEOUT 9 (A01 A02 A04 A06 C01 C05 E03 E05 E06), BADMUT 1 (B04), SURVIVED 0, not run about 25. No mutant has been shown to survive the full suite yet.
+
+ASK:
+1. Lead: wave 2 uses 3 evidence runners plus the builder (4 heavy jobs). You said at most 2 heavy suites; each wave-2 runner runs one small per-module set at a time, and only a survivor gets a full-suite run at 900 s. Default I take: if the 900 s survivors queue up, I tell lanes B and C to run them one after the other, not at the same time.
+
+NOT DONE / NOT CHECKED (item | why | next)
+- About 25 of 54 mutants not run on r7e; 9 TIMEOUT unknown; B04 needs a new mutant (lane C does it) | old method too slow | wave 2 results at about 04:40
+- r7f not built; the r7e Major (stopped run exits 0) open | builder working | EV7F
+- New code in r7f not yet reviewed: netconnect.py (name lookup bound) and the cipher-string test change | not built yet | reviewer and mail pass 9
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI | end, clean patch | later
+- Newline-named file writer not yet found (builder on it)
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect the builder and wave 2; every survivor killed or proved equivalent; re-map any other BADMUT.
+2. EV7F alone on a checkout without data/, fresh reviewer and mail pass 9 on r7f in parallel.
+3. Final README and sweep.
+## STATUS (core lead)
 Container clock 03:46 UTC = 09:16 IST. Applied the lead's 03:44Z answers.
 
 STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
