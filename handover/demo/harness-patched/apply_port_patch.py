@@ -3,7 +3,7 @@ import sys, os, re
 d = sys.argv[1]
 def sub(fn, pairs, head=None):
     p = os.path.join(d, fn); s = open(p, encoding="utf-8").read()
-    if "MF_N8N_PORT" in s: print(fn, "already patched"); return
+    if re.search(r"MF_(N8N|RUN|PG)_PORT", s): print(fn, "already patched"); return
     for a, b in pairs:
         if a not in s: raise SystemExit(fn + ": literal not found: " + a)
         s = s.replace(a, b)
@@ -24,3 +24,10 @@ sub("lib.py", [
 sub("fakes2.py", [('("127.0.0.1", 8790)', '("127.0.0.1", int(os.environ.get("MF_RUN_PORT", "8790")))')])
 sub("setup.py", [('"port": 55432', '"port": int(os.environ.get("MF_PG_PORT", "55432"))')])
 sub("api.py", [('B = "http://127.0.0.1:5679/rest"', 'B = "http://127.0.0.1:%s/rest" % os.environ.get("MF_N8N_PORT", "5679")')])
+# second patch (16:50Z): child envs must keep MF_*, DN1_*, RUN_ID (start_fakes dropped MF_RUN_PORT; fakes2 then bound the default port)
+p = os.path.join(d, "lib.py"); s = open(p, encoding="utf-8").read()
+if "_pass_vars" not in s:
+    a = "def _base_env():"
+    if a not in s: raise SystemExit("lib.py: _base_env not found")
+    s = s.replace(a, "def _pass_vars(): return {k: v for k, v in os.environ.items() if k.startswith((\"MF_\", \"DN1_\", \"N8N_EVD_\")) or k == \"RUN_ID\"}\ndef _base_env():\n    env = _base_env0(); env.update(_pass_vars()); return env\ndef _base_env0():", 1)
+    open(p, "w", encoding="utf-8").write(s); print("lib.py env pass-through patched")

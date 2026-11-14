@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:34Z - env pass-through fix for child processes; agents running 0
+- DEFECT (lead): start_fakes used _base_env(), which dropped MF_RUN_PORT, so the stand-in server bound the default port. FIX: lib.py _base_env now also passes every variable starting MF_, DN1_, N8N_EVD_ plus RUN_ID (nothing else; unrelated variables still dropped). n8n_env builds on it, so the n8n child gets them too. Other child-env builders I read: run_mf.py script_env (KEEP_ENV list, already has all port names, V4 and lease names), mf.py spawns with os.environ.copy, dn1_common.spawn takes env from its callers. NOT read: other harness scripts that call Popen directly (g3, skip*).
+- TEST: n8n-tests/test_envpass.py <lib.py> <lib.py dir>. Run here: PASS on the patched lib; FAIL (10 dropped vars listed) on a lib with only the first patch. It starts nothing.
+- harness-patched/: apply_port_patch.py now has the second patch (idempotent), *.diff and *.py.patched regenerated.
+NOT DONE / NOT CHECKED: a real start of fakes2 with MF_RUN_PORT (no stack can run here); fakes2 reads the var at import, so a wrong value shows only at runtime; direct Popen scripts.
+WHAT I WOULD DO NEXT: 1. read the V4-par result. 2. fill V4-3. 3. fix whatever the runner finds next.
 ## Block 16:26Z - V7 numbers folded in; agents running 1 (hygiene audit, read-only)
 - DONE (pushed with this block): DECISION-INPUTS V7 table (MEASURED-ON-LAPTOP, lead-read, I read no raw file), DOUBTFUL-SCENE retag, page statements 8 and 9 reworded to what V7 shows (9 limited to K1, K2, K3, K3B), RUN-PARALLEL example RUN_ID p2 plus the letter-first note, N8N-START T7b raw file name. Table-screen flow pushed earlier (95cedfa2), NOT RUN.
 - HONEST FLAG: AF1 first alert came at 272.1 s (n=1). The scene text must not say 30 seconds for the dead-alert-SMTP case. Not in the V7 file: K4, K5, T10, T11, T13, recovery seconds, lease 45/120.

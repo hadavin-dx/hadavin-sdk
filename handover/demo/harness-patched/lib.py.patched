@@ -67,7 +67,10 @@ def up(timeout=120):
         except Exception: pass
         time.sleep(1)
     return False
-def _base_env():  # explicit minimal environment (nothing of the parent's secrets or settings is inherited)
+def _pass_vars(): return {k: v for k, v in os.environ.items() if k.startswith(("MF_", "DN1_", "N8N_EVD_")) or k == "RUN_ID"}
+def _base_env():
+    env = _base_env0(); env.update(_pass_vars()); return env
+def _base_env0():  # explicit minimal environment (nothing of the parent's secrets or settings is inherited)
     if not IS_NT:  # POSIX: HOME (node and npm look there), a short PATH; TMPDIR and LANG only when set
         env = {k: os.environ[k] for k in ("HOME", "TMPDIR", "LANG") if k in os.environ}
         env["PATH"] = os.pathsep.join([NODE_DIR, "/".join(("", "usr", "bin")), "/bin"])  # the system folder is built from parts (the public hygiene scan flags path-shaped literals)

@@ -1,5 +1,5 @@
 --- /tmp/rr/orig/lib.py	2026-11-14 16:17:16.243610636 +0000
-+++ lib.py	2026-11-14 16:17:16.310033773 +0000
++++ lib.py	2026-11-14 16:33:59.937897176 +0000
 @@ -6,9 +6,10 @@
  NODE_DIR = os.environ["N8N_EVD_NODE"]  # CHANGED: folder that holds node.exe (Windows) or node (Linux), Node 24.x
  IS_NT = os.name == "nt"  # the one place that decides Windows or POSIX (tests switch it to check both branches on any computer)
@@ -13,7 +13,7 @@
  def _project_id():  # CHANGED: was a literal id of the original run's n8n; now read from the file setup.py writes
      try: return json.load(open(os.path.join(WORK, ".run", "instance.json")))["project_id"]
      except OSError: return ""
-@@ -62,7 +63,7 @@
+@@ -62,11 +63,14 @@
  def up(timeout=120):
      for _ in range(timeout):
          try:
@@ -22,7 +22,15 @@
          except Exception: pass
          time.sleep(1)
      return False
-@@ -82,12 +83,12 @@
+-def _base_env():  # explicit minimal environment (nothing of the parent's secrets or settings is inherited)
++def _pass_vars(): return {k: v for k, v in os.environ.items() if k.startswith(("MF_", "DN1_", "N8N_EVD_")) or k == "RUN_ID"}
++def _base_env():
++    env = _base_env0(); env.update(_pass_vars()); return env
++def _base_env0():  # explicit minimal environment (nothing of the parent's secrets or settings is inherited)
+     if not IS_NT:  # POSIX: HOME (node and npm look there), a short PATH; TMPDIR and LANG only when set
+         env = {k: os.environ[k] for k in ("HOME", "TMPDIR", "LANG") if k in os.environ}
+         env["PATH"] = os.pathsep.join([NODE_DIR, "/".join(("", "usr", "bin")), "/bin"])  # the system folder is built from parts (the public hygiene scan flags path-shaped literals)
+@@ -82,12 +86,12 @@
      # CHANGED: the environment of the old start script, set here; node.exe is started directly (no Git-bash wrapper)
      env.update(N8N_USER_FOLDER=os.path.join(WORK, "n8nhome"), N8N_DIAGNOSTICS_ENABLED="false",
                 N8N_VERSION_NOTIFICATIONS_ENABLED="false", N8N_PERSONALIZATION_ENABLED="false", N8N_HOST="127.0.0.1", N8N_LISTEN_ADDRESS="127.0.0.1",
@@ -37,7 +45,7 @@
      except urllib.error.HTTPError as e: return e.code, e.read(300).decode(errors="replace")
      except Exception as e: return type(e).__name__, ""
  LIVE_TEXT_DEFAULT = "not registered for"
-@@ -103,19 +104,19 @@
+@@ -103,19 +107,19 @@
      return not todo
  def start_n8n(limit=None, log="n8n2.log", paths=()):
      """paths: webhook paths that must answer (registered) before this returns True; callers pass the workflows they are about to fire at."""
@@ -60,7 +68,7 @@
      f = open(os.path.join(WORK, "fakes2.log"), "ab")  # CHANGED: runs in the work folder, so calls2.jsonl is written there
      p = subprocess.Popen([sys.executable, os.path.join(HERE, "fakes2.py")], cwd=WORK, env=_base_env(), stdout=f, stderr=f, **_spawn_kw())
      record_pid("fakes", p.pid); f.close()
-@@ -190,7 +191,7 @@
+@@ -190,7 +194,7 @@
      return end
  def lead(email, rid): return json.dumps({"source": "webhook", "request_id": rid, "payload": {"name": "Asha Verma", "email": email}}).encode()
  def fire(path, email, n=10, rid_prefix="r", timeout=60):
