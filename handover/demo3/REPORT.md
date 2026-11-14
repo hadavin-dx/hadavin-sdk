@@ -1,3 +1,17 @@
+## HEARTBEAT 110 (06:42Z) - (HB109 was pushed 06:39Z, commit 5c380c91; you may have pulled before it) B19 [ 78%] and B20 [ 75%] of their full runs; nothing handed back yet
+
+| Agent / job | State at 06:42Z |
+|---|---|
+| B19 fix-2 r8 | full run at [ 78%] (log outside git, gitleaks on PATH required by its brief); no hand-back |
+| B20 fix-10 r3 | full run at [ 75%]; no hand-back |
+| B21 fix-5 r8 | fixing scripts after its failing-tests logs; no full run yet |
+| Handed back since HB109 | nothing |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
+WHAT I WOULD DO NEXT (ranked): 1. read B19/B20 hand-backs; 2. whole-patch reviewers; 3. stack builder.
+
 ## HEARTBEAT 109 (06:40Z) - B19 AND B20 FULL RUNS GOING (logs outside git); B21 TESTS-FIRST DONE, FIXING
 
 | Agent / job | State at 06:40Z |
