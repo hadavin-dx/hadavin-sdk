@@ -19,3 +19,8 @@ On Python 3.13.18 Path.resolve() does not raise on a loop of links, so two exist
 
 ## Not checked
 ruff, mypy, bandit, CodeQL (CI only, by order). Windows. run_live_check handling of SettingRefused beyond the cap tests. No independent EGM review of the r6 result yet.
+
+## Full runs on the final head (tree 3633781d719a6ebf05b248851e0855a9ef102037, clone without the n8n ref and without data/)
+- Run 1 (raw/b15-full-final.log, earlier head): 2 failed, 4011 passed, 170 skipped. Both failures were in my new test file (guard patterns in test text); fixed.
+- Run 2 (raw/b15-full-final2-hung-at-18pct.log): hung at about 18% in tests/test_fakes_body_before_answer.py; I killed it. The file passes alone (17 passed, 22.6 s). Cause not established (guess: clash with other builders' runs on the same machine).
+- Run 3 (raw/b15-full-final3.log), final head: `4013 passed, 170 skipped in 896.78s (0:14:56)`, 0 failed, started 05:57Z.

@@ -2,7 +2,7 @@
 
 | Agent / job | State |
 |---|---|
-| fix-2 r6 run 3 (b15b-clone) | still running, no result yet; run 4 was interrupted (not a result) |
+| fix-2 r6 run 3 (b15b-clone) | ENDED 06:13Z: 4013 passed, 170 skipped, 0 failed in 896.78s (DPLD_REQUIRE_SCAN=1, gitleaks on PATH; raw/b15-full-final3.log). First green full run of the r6 tree, now superseded by r7/r8; run 4 was interrupted (not a result) |
 | B18 full run (fix-2 r7, tree 8db4b0ba) | ENDED: 30 failed, 4090 passed, 170 skipped. All 30 failures are gitleaks tests: "gitleaks binary not found" (the run did not have gitleaks on PATH; my brief to B18 missed it). NOT a product result; r7 is superseded by r8, whose run must have gitleaks on PATH |
 | B19 fix-2 r8 | building (agent a7931e335857343bf), from the 06:05Z resolve (25 fix, 1 declined) |
 | B20 fix-10 r3 | building (agent adc22f500e42e7314), from the fix-10 resolve (21 fix, 1 declined, 0 escalated) |

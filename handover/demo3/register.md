@@ -343,3 +343,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R16b | a77ee82f6a52ce8d5 | fix-5 r7 code review | closed 06:09Z | - | - | report saved (0/3/7/4) | wait R16a, resolve |
 | B21 | ae4b137300f1b75b2 | fix-5 r8 builder (plan resolve-lane3-fix-5-r7.md) | 06:11Z | stop by +90 min | - | running | check at 30 min |
 | B20 | adc22f500e42e7314 | fix-10 r3 builder | 06:09Z | +90 min | - | running | check at 30 min |
+| RUN3 | pid 5475/5476 | fix-2 r6 full run 3 (tree 3633781d, DPLD_REQUIRE_SCAN=1, gitleaks on PATH) | 05:58Z | 06:13Z | closed | ENDED: 4013 passed, 170 skipped, 0 failed in 896.78s (raw/b15-full-final3.log). First green full run of the r6 tree; superseded by r7/r8 (rules changed), recorded only | none |
