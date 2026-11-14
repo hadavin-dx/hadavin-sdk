@@ -1,3 +1,30 @@
+## HEARTBEAT 98 (05:28Z) - FIX-2 R6 FULL RUN IS RED (2 FAILURES, BOTH IN ITS OWN NEW TEST FILE); FIX-10 RESOLVED -> B17 STARTED; LEAD'S EXIT-CODE DECISION APPLIED
+
+FAILURES AND RETRIES: (1) fix-2 r6 full run on the final head of B15b: `2 failed, 4011 passed, 170 skipped in 889.13s` (I read the tail and the failure sections of raw/b15-full-final.log). Failure 1: `test_wall_clock_is_only_used_for_calendar_stamps`, because the allow-list text in tests/test_one_key_file_rule_r6.py:349 contains the words `st_mtime <` and the repo guard reads test text as code. Failure 2: `test_hygiene_scan_public`, a time-of-day literal `07:28:00` at tests/test_one_key_file_rule_r6.py:245. Both are defects of B15b's own new test file, not of the product code. The class: a test text that contains a pattern a repo guard looks for. I told B15b (05:27Z) to fix at the class level (sweep every file it added), prove each guard passes, re-cut BOTH patches (and re-check the on-fix-1-r6 one with git apply --check), run a second full run (raw/b15-full-final2.log) and write the notes. The two existing patches (d783103e, d103c9d0) are therefore NOT final. (2) Earlier unverified-by-me builder claims remain unverified: the 15-of-15 fix-10 mutants and the 231-failed before-run are B14's logs; the fix-10 code-details reviewer notes that about 150 of those 231 failures are only "function absent" and that the real old-code proof is the 98 subprocess cases (this is now a plan row for B17). (3) No other failures this block.
+
+| Agent | Job | State |
+|---|---|---|
+| R10a, R10b | fresh egm reviews of fix-10 | CLOSED: design 0 blocker 4 major 6 minor; code-details 0 blocker 2 major 8 minor 4 nit; saved evidence/review-lane3-fix-10-design.md and -codedetails.md. Both majors of code-details are the same as two of the design majors. |
+| Resolve fix-10 r1 | egm:egm-resolve (Opus, Skill tool) | DONE: 15 rows, 13 fix, 1 escalate (ps1 never run), 1 decline; evidence/resolve-lane3-fix-10-r1.md. Key finding: fix-10's own DESK_NUDGE_TO address rule duplicates fix-8 r3's `plain_address_ok`, so fix-10 drops it. |
+| Lead decision 05:24Z | exit-code clash | APPLIED. Overrides my resolve row 2 (I had proposed exit 2 for the reset family): one exit-code table in one place, fix-5's codes 2-7 unchanged, the script-side refusal gets an unused code (I told B17 to take 8 after grepping that it is unused; the desk's own refusal stays 4), a test fails if a code has two meanings. Residual question for you, not a blocker: the same cause then has two numbers (4 from the desk, 8 from a script reading a setting); the table will name both. Say so if you want one number. |
+| B17 | fix-10 r2 builder | RUNNING from 05:25Z (agent a33ad038); full run no earlier than 05:50Z; stop about 06:25Z. |
+| B15b | fix-2 r6 | RED, fixing + second full run (see failures). |
+| B16 | fix-5 r7 | RUNNING (checkpoint at 05:2xZ: tests first 114 failed on r6 scripts; rewrote reset.sh/reset.ps1 in three passes; full run no earlier than 05:30Z). |
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| Item | Why | Next |
+|---|---|---|
+| fix-2 r6 green full run | red now | B15b second run, then fresh egm reviewers |
+| fix-5 r7, fix-10 r2 | building | hand-backs, reviewers |
+| Two numbers for one refusal cause (4 desk, 8 scripts) | follows from your rule "not 4" with the desk's tested contract of 4 | your call if you want one number; I keep both in one table |
+| ps1 files never run (reset, start_all, the fix-10 helpers) | no PowerShell here (exception 2(c)) | WINDOWS-RUN-1 on the final stack tree |
+| No stack yet; Python 3.11; CI-only tools | unchanged | unchanged |
+
+WHAT I WOULD DO NEXT (ranked)
+1. B15b second full run: read tail and failure names myself; fresh egm reviewers on fix-2 r6.
+2. B16 hand-back: tail of its full run; fresh reviewers on fix-5 r7.
+3. B17 hand-back; then fresh reviewers on fix-10 r2; then the ONE stack builder (order: claims, fix-1 r6, fix-2 r6, fix-5 r7, fix-8 r3, fix-10 r2, fix-9 r3, stack-docs-final; fix-9's `book` fixture wins).
+
 ## HEARTBEAT 97 (05:21Z) - ANSWER TO "LEAD 5-MIN": HB96 (05:19Z, pushed fdb95e8f) HAS B16, B15b, B14b AND THE SHARE OF PLAN COVERED. NEW SINCE: FIX-10 DESIGN REVIEW BACK (4 MAJOR)
 
 FAILURES AND RETRIES: (1) fix-2 r6 full run still going (about 61% at 05:19Z), the early `F` is still unnamed; no change since HB96. (2) fix-10 design review has 4 majors, so fix-10 is NOT closed (see below). (3) B16 is on its targeted run; it reports 114 tests failing on the r6 scripts (its before-the-fix proof), full run held until 05:30Z.

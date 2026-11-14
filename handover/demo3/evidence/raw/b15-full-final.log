@@ -81,4 +81,78 @@ ssss....s............................................................... [ 39%]
 ........................................................................ [ 80%]
 ........................................................................ [ 82%]
 ........................................................................ [ 84%]
-....
+.............................s.......................................... [ 86%]
+...............s........................................................ [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 94%]
+........................................................................ [ 96%]
+.................................................ssssssssssssss......... [ 98%]
+.........................s.............................................. [ 99%]
+.......                                                                  [100%]
+=================================== FAILURES ===================================
+_______________ test_wall_clock_is_only_used_for_calendar_stamps _______________
+
+    def test_wall_clock_is_only_used_for_calendar_stamps() -> None:
+        """Guard: any read of the calendar clock in the code folders and the tests (WALL above) must say `# wall-clock:`
+        on the same line (why a calendar time is needed); a line that is only a comment reads nothing. Durations,
+        deadlines, timeouts and poll windows use the monotonic clock."""
+        bad = []
+        for folder in FOLDERS:
+            for path in sorted((REPO / folder).rglob("*.py")):
+                for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                    if WALL.search(line) and "# wall-clock:" not in line and not line.lstrip().startswith("#"):
+                        bad.append(f"{path.relative_to(REPO)}:{n}: {line.strip()}")
+>       assert not bad, "use time.monotonic() for durations, or mark a calendar stamp with '# wall-clock:'\n" + "\n".join(
+            bad
+        )
+E       AssertionError: use time.monotonic() for durations, or mark a calendar stamp with '# wall-clock:'
+E         tests/test_one_key_file_rule_r6.py:349: ("demo_only/portal_demo.py", "if f.is_file() and not f.is_symlink() and f.stat().st_mtime < cutoff:"): "inside try/except OSError",
+E       assert not ['tests/test_one_key_file_rule_r6.py:349: ("demo_only/portal_demo.py", "if f.is_file() and not f.is_symlink() and f.stat().st_mtime < cutoff:"): "inside try/except OSError",']
+
+tests/test_clock_steps.py:117: AssertionError
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/home/user/work/tmp-b15b/pytest-of-root/pytest-19/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         tests/test_one_key_file_rule_r6.py:245:07:28:00
+E       assert not ['tests/test_one_key_file_rule_r6.py:245:07:28:00']
+
+tests/test_hygiene.py:146: AssertionError
+=========================== short test summary info ============================
+SKIPPED [22] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [113] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_settings_lane3.py:247: root ignores folder permissions: an unwritable folder cannot be tested as root
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+2 failed, 4011 passed, 170 skipped in 889.13s (0:14:49)
