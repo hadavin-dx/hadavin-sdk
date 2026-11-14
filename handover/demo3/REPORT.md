@@ -1,3 +1,17 @@
+## HEARTBEAT 120 (07:41Z) - B21 handed back; its flake is a REAL bug in reset.sh (security path), round 9 needed
+
+| Agent / job | State at 07:41Z |
+|---|---|
+| B21 fix-5 r8 | handed back; tree cb769b22; I linted a clean copy: ruff check/format, mypy linux/win32, bandit all rc 0 (raw/b24-lint-b21.log); full run 2 was 3962 passed / 183 skipped but run 1 had 1 red test |
+| fix-5 r8 reviews | egm-design done: 0 blocker / 1 MAJOR / 3 minor / 1 nit (evidence/review-lane3-fix-5-r8-design.md). I confirmed the major in the code: reset.sh:95 and :97 count and trim in the caller's language setting, so a pid file with a 1-, 4- or 7-digit number plus about 60 bytes of Unicode spaces can be read as the desk's number and stop the desk. That is the cause of B21's "unexplained" red test. Foreign programs are still protected by the is_ours check. egm-codebase-details still running |
+| B22 fix-2 r10 | building; r10 logs exist; its r9 tree id (151f9eff) is not reconciled yet |
+| B23 fix-10 r4 | building; code written in b23-tree; fails-before, clean lint, mutation to do |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B21 said "cause not found, flake"; the reviewer found it by reading. Lesson for the stack: an unexplained red test goes to a reviewer for its cause before it is called a flake. Round 9 of fix-5 is needed (security path: uncapped).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): reset.ps1 and start_all.ps1 never run (no PowerShell here); no non-root run of the unreadable-folder test; ACLs not checked; planted 0600 file read as root stays recorded.
+WHAT I WOULD DO NEXT (ranked): 1) send B21 the Major + codebase-details findings as one batch (round 9) with a deterministic test; 2) lint and reconcile B22/B23 on hand-back, then fresh reviewers; 3) WINDOWS-RUN-1 update, then the stack builder.
+
 ## HEARTBEAT 119 (07:32Z) - B21 full run red (1 failed), B22 r10 and B23 r4 building; nothing handed back
 
 | Agent / job | State at 07:32Z |
