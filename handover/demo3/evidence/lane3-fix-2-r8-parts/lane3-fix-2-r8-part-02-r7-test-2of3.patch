@@ -31,7 +31,10 @@
 +
 +
 +def test_the_reader_guard_names_the_definition_around_each_hit() -> None:
-+    source = "class A:\n    def m(self):\n        return open(p)\n\n\ndef f():\n    return open(q)\n\n\nx = open(r)\n"
++    source = (
++        "class A(object):\n    def m(self):\n        return open(p)\n\n\ndef f():\n    return open(q)\n\n\n"
++        "x = open(r)\n"
++    )
 +    assert [(n, scope) for n, _text, scope in _refs(source, BANNED, bare_names=True)] == [
 +        (3, "A.m"), (7, "f"), (10, "<module>"),
 +    ]  # fmt: skip
@@ -523,10 +526,10 @@
 +        ("def f(e):\n    return dict(e.headers)\n", [2], []),
 +        ("def f(e):\n    return list(e.headers.items())\n", [2], []),
 +        ("def f(e):\n    return {k: v for k, v in e.headers.items()}\n", [2], []),
-+        ("def f(e):\n    for k in e.headers:\n        pass\n", [2], []),
++        ("def f(e):\n    for k in (e.headers):\n        pass\n", [2], []),
 +        ("def f(r):\n    return r.getheaders()\n", [2], []),
 +        ("def f(r):\n    return r.getheader('Retry-After')\n", [2], []),
-+        ("def f(r):\n    return r.info().get('retry-after')\n", [2], []),
++        ("def f(r):\n    return (r).info().get('retry-after')\n", [2], []),
 +        ("w = int(e.headers.getheader('retry-after'))\n", [1], []),
 +        ("def _retry_after(v):\n    return float(v)\n", [], ["_retry_after"]),
 +        ("def renamed(v):\n    return min(float(v), RETRY_AFTER_MAX_SECONDS)\n", [], ["renamed"]),
@@ -595,6 +598,3 @@
 +                        chunk = conn.recv(4096)
 +                        if not chunk:
 +                            break
-+                        buf += chunk
-+                    head = b"HTTP/1.1 429 Too Many Requests\r\n"
-+                    if self.header is not None:

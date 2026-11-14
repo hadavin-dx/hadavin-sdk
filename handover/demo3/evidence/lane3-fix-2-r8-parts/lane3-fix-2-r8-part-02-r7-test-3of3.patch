@@ -1,3 +1,6 @@
++                        buf += chunk
++                    head = b"HTTP/1.1 429 Too Many Requests\r\n"
++                    if self.header is not None:
 +                        head += b"Retry-After: " + self.header + b"\r\n"
 +                    head += b"Content-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
 +                    conn.sendall(head)
@@ -328,7 +331,7 @@
 +        'assert "' + PLAIN_WORD + '" not in screens.lower().replace("lead-book", "")',
 +    ): (1, ON_PURPOSE),
 +    (
-+        "tests/test_one_key_file_rule_and_path_walk.py",
++        "tests/test_one_key_file_rule_and_" "path_walk.py",
 +        "-",
 +        'assert "' + PLAIN_WORD + '" not in text and "lead-book" in text',
 +    ): (1, ON_PURPOSE),

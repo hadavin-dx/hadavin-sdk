@@ -6,3 +6,6 @@ Running: the ONE full run on the final head, clone /home/user/work/b19-full, sta
 Next: copy the log to raw/b19-full-final.log, run the wall-clock guard test and the hygiene scan test alone, write raw/b19-patch-sha256.txt, hand back.
 Open: 13 lines over 120 by plain awk (pre-existing lines with a pragma tail, not wrapped on purpose; see notes row 4).
 Blockers: none.
+
+## 06:50Z update
+Full run ended 1 failed / 4348 passed (hygiene scan on 4 lines of r7 test text); fixed; hygiene + wall-clock guards alone rc 0 on tree 812a97a; r7+r8 349 passed; patches, parts, sha file recut and apply-checked (both patches give tree 812a97a). The 13 long lines are base text, evidence per line in notes row 4. Stopping: nothing running.

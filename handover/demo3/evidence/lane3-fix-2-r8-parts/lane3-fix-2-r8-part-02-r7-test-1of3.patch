@@ -1,9 +1,9 @@
 diff --git a/tests/test_one_key_file_rule_r7.py b/tests/test_one_key_file_rule_r7.py
 new file mode 100644
-index 0000000..f618bd6
+index 0000000..2ea70dc
 --- /dev/null
 +++ b/tests/test_one_key_file_rule_r7.py
-@@ -0,0 +1,1582 @@
+@@ -0,0 +1,1585 @@
 +"""Fix-2 rounds 7 and 8: the guards (a reader guard and a shell-script guard, both banning a read of a file outside a
 +named allow-list, and a probe guard for a setting's path; all three are tripwires, not proofs), the Retry-After rule
 +tested on real HTTP 429 replies at every reader, key files that are links, and the wording pins.

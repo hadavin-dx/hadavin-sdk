@@ -1,0 +1,68 @@
+B21 mutation run, 61 mutants, 2026-11-14 06:2x-06:44 UTC, tree b21-tree (pre-final tests)
+sh pass 1 also stops (kill added in pass 1) | KILLED | 1 failed, 7 passed in 4.09s
+sh byte order mark not skipped | KILLED | 1 failed, 9 passed in 14.99s
+sh read loop reads nothing | KILLED | 1 failed, 4 passed in 10.58s
+sh version guard minor < 4 -> < 3 | KILLED | 1 failed, 66 passed in 22.32s
+sh ours judged stale | KILLED | 1 failed, 4 passed in 10.65s
+ps1 final Test-Path without -LiteralPath | KILLED | 1 failed, 120 passed, 5 skipped in 30.81s
+ps1 lookup failure no exit 6 | KILLED | 1 failed, 121 passed, 5 skipped in 30.77s
+ps1 byte order mark byte changed | KILLED | 1 failed, 115 passed, 5 skipped in 31.02s
+ps1 refusal back to Write-Host | KILLED | 1 failed, 123 passed, 5 skipped in 30.69s
+ps1 Stop-Process in pass 1 | KILLED | 1 failed, 118 passed, 5 skipped in 30.67s
+ps1 [Pp]ython -> python (interp 1) | KILLED | 1 failed, 92 passed in 31.01s
+ps1 cap -ge 64 -> -gt 64 | KILLED | 1 failed, 115 passed, 5 skipped in 30.83s
+support width ignores count | KILLED | 1 failed, 218 passed, 14 skipped in 78.72s (0:01:18)
+support restart no modulo | KILLED | 1 failed, 292 passed, 14 skipped in 78.89s (0:01:18)
+support every worker gets range 0 | KILLED | 1 failed, 218 passed, 14 skipped in 79.03s (0:01:19)
+support last = first+width | KILLED | 1 failed, 218 passed, 14 skipped in 79.39s (0:01:19)
+support serial uses range always | KILLED | 1 failed in 0.11s
+tests: a direct bind to port 0 added | KILLED | 1 failed, 296 passed, 14 skipped in 79.16s (0:01:19)
+sh recheck exit 6 -> 1 | KILLED | 1 failed, 7 passed in 2.52s
+sh reset_check failure ignored | KILLED | 1 failed, 3 passed in 1.40s
+sh 64 -> 65 after the mark | KILLED | 1 failed, 10 passed in 6.09s
+sh removal sentence changed | KILLED | 1 failed, 17 passed in 6.20s
+sh old-bash message names a version again | KILLED | 1 failed, 67 passed in 22.36s
+check forgets pid files | KILLED | 1 failed, 4 passed in 0.58s
+ps1 recheck exit 6 -> 1 | SURVIVED | 313 passed, 14 skipped in 78.94s (0:01:18)
+ps1 buffer 67 -> 64 | KILLED | 1 failed, 115 passed, 5 skipped in 30.98s
+ps1 reset_check dropped | KILLED | 1 failed, 127 passed, 13 skipped in 30.95s
+ps1 removal sentence changed | KILLED | 1 failed, 17 passed in 6.11s
+ports: session part index 0 | KILLED | 1 failed, 301 passed, 14 skipped in 79.08s (0:01:19)
+ports: part leaves the block | SURVIVED | 313 passed, 14 skipped in 79.34s (0:01:19)
+tests: a direct server bind added | KILLED | 1 failed, 296 passed, 14 skipped in 79.03s (0:01:19)
+sh exit 5 message forgets what was stopped | KILLED | 1 failed, 7 passed in 3.16s
+sh folder check dropped | KILLED | 1 failed, 64 passed in 22.42s
+sh read not in C locale | SURVIVED | 313 passed, 14 skipped in 78.83s (0:01:18)
+sh pid files not deleted (pass 3) | KILLED | 1 failed, 8 passed in 3.66s
+ps1 final delete without -LiteralPath | KILLED | 1 failed, 120 passed, 5 skipped in 30.69s
+ps1 process lookup errors silenced | KILLED | 1 failed, 121 passed, 5 skipped in 30.81s
+ps1 Convert-Path dropped | KILLED | 1 failed, 122 passed, 5 skipped in 30.74s
+ps1 folder exit 7 -> 1 | KILLED | 1 failed, 116 passed, 5 skipped in 30.87s
+ps1 pattern not anchored (\s* back) | KILLED | 1 failed, 84 passed in 30.87s
+ps1 Remove-Item catch drops exit 7 | KILLED | 1 failed, 116 passed, 5 skipped in 30.86s
+ps1 exit 5 forgets already stopped | KILLED | 1 failed, 119 passed, 5 skipped in 30.94s
+support width 5000 -> 6000 | KILLED | 1 failed, 219 passed, 14 skipped in 78.63s (0:01:18)
+support restart uses first half | KILLED | 1 failed, 219 passed, 14 skipped in 78.65s (0:01:18)
+support worker regex too loose | KILLED | 1 failed, 291 passed, 14 skipped in 79.81s (0:01:19)
+support range start back to 40000 | KILLED | 1 failed, 218 passed, 14 skipped in 78.91s (0:01:18)
+support given-free not cleared | KILLED | 1 failed, 295 passed, 14 skipped in 79.32s (0:01:19)
+support missing count not max | KILLED | 1 failed, 286 passed, 14 skipped in 79.13s (0:01:19)
+sh pass-2 recheck dropped | KILLED | 1 failed, 7 passed in 3.58s
+sh reset_check dropped | KILLED | 1 failed, 3 passed in 1.33s
+sh dangling link not seen | KILLED | 1 failed, 8 passed in 3.80s
+sh read 64 instead of 67 | KILLED | 1 failed, 10 passed in 6.17s
+sh folder message changed | KILLED | 1 failed, 116 passed, 5 skipped in 31.15s
+check prints to stdout | KILLED | 1 failed in 0.17s
+ps1 recheck dropped | KILLED | 1 failed, 125 passed, 13 skipped in 30.93s
+ps1 Get-Item back to Test-Path | KILLED | 1 failed, 117 passed, 5 skipped in 31.02s
+ps1 count not after the mark | KILLED | 1 failed, 115 passed, 5 skipped in 31.16s
+ps1 command line trimmed | KILLED | 1 failed, 84 passed in 31.10s
+ports: session part ignored | KILLED | 1 failed, 306 passed, 14 skipped in 79.03s (0:01:19)
+ports: one part only | KILLED | 1 failed, 301 passed, 14 skipped in 78.73s (0:01:18)
+tests: HOST defined twice | KILLED | 1 failed, 300 passed, 14 skipped in 79.12s (0:01:19)
+
+SURVIVORS in the run: 3 (sh read not in C locale; ps1 recheck exit 6 -> 1; ports: part leaves the block).
+Each was then killed by a new or tightened test, checked by re-applying the mutant by hand:
+ - C locale: test_reset_order_and_words ideographic-space real-file test (mutant: remove 'local LC_ALL=C') -> test fails
+ - ps1 exit 6 -> 1 (line 105): tightened test_text_only_pass_2_looks_at_the_program_again... -> 1 failed
+ - ports part low +7: test_two_sessions_on_one_machine... now checks parts tile the block -> 6 failed

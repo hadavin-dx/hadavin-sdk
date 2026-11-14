@@ -1,0 +1,925 @@
+=== B21 fails-before part 1: main set on the unchanged r7 scripts (32 failed, 275 passed, 14 skipped) ===
+FFFFFFFFF.FFFF...FF..FF......................FF...................FFFFFF [ 22%]
+F..........................................sssssFFF..F....ssssssssF.F... [ 44%]
+...............................................................s........ [ 67%]
+........................................................................ [ 89%]
+.................................                                        [100%]
+=================================== FAILURES ===================================
+______ test_reset_check_prints_its_exit_4_refusal_on_standard_error_only _______
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-jf1ysnwq/desk.sqlite3')
+
+    def test_reset_check_prints_its_exit_4_refusal_on_standard_error_only(book: Path) -> None:
+        with bound_socket() as listener:
+            listener.listen(1)
+            done = _check(book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
+>       assert done.returncode == 4 and done.stdout == "", (done.stdout, done.stderr)
+E       AssertionError: ('refused: something still answers on port 43151; nothing was deleted
+E         ', '')
+E       assert (4 == 4 and 'refused: som...was deleted\n' == ''
+E        +  where 4 = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '/home/user/work/b21-tree/scripts/reset_check.py'], returncode=4, stdout='refused: something still answers on port 43151; nothing was deleted\n', stderr='').returncode
+E         
+E         + refused: something still answers on port 43151; nothing was deleted)
+
+tests/test_reset_order_and_words.py:69: AssertionError
+______ test_reset_check_prints_its_exit_3_refusal_on_standard_error_only _______
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-bp_n7eva/desk.sqlite3')
+
+    def test_reset_check_prints_its_exit_3_refusal_on_standard_error_only(book: Path) -> None:
+        from lead_desk import lockfile
+    
+        handle = lockfile.acquire(book)
+        try:
+            done = _check(book, **reset_ports())
+        finally:
+            handle.close()
+>       assert done.returncode == 3 and done.stdout == "", (done.stdout, done.stderr)
+E       AssertionError: ('refused: a process still holds the database (the desk is running); nothing was deleted
+E         ', '')
+E       assert (3 == 3 and 'refused: a p...was deleted\n' == ''
+E        +  where 3 = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '/home/user/work/b21-tree/scripts/reset_check.py'], returncode=3, stdout='refused: a process still holds the database (the desk is running); nothing was deleted\n', stderr='').returncode
+E         
+E         + refused: a process still holds the database (the desk is running); nothing was deleted)
+
+tests/test_reset_order_and_words.py:81: AssertionError
+___ test_reset_check_refusal_survives_a_redirect_of_standard_error_to_a_file ___
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-1hhq73ll/desk.sqlite3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-25/test_reset_check_refusal_survi0')
+
+    def test_reset_check_refusal_survives_a_redirect_of_standard_error_to_a_file(book: Path, tmp_path: Path) -> None:
+        """`2>file` takes the refusal and leaves standard output empty: the shape a wrapper script or a user gets."""
+        target = tmp_path / "err.txt"
+        with bound_socket() as listener, target.open("w", encoding="utf-8") as err:
+            listener.listen(1)
+            env = {**os.environ, "DESK_DB_PATH": str(book), "PYTHONPATH": f"{REPO / 'src'}{os.pathsep}{REPO}"}
+            env.update(DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
+            done = subprocess.run(  # noqa: S603 (this repository's own script)
+                [sys.executable, str(REPO / "scripts" / "reset_check.py")],
+                cwd=REPO,
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=err,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+>       assert done.returncode == 4 and done.stdout == ""
+E       AssertionError: assert (4 == 4 and 'refused: som...was deleted\n' == ''
+E        +  where 4 = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '/home/user/work/b21-tree/scripts/reset_check.py'], returncode=4, stdout='refused: something still answers on port 42891; nothing was deleted\n').returncode
+E         
+E         + refused: something still answers on port 42891; nothing was deleted)
+
+tests/test_reset_order_and_words.py:102: AssertionError
+_ test_the_reset_script_keeps_standard_output_empty_for_every_refusal_of_the_check _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-7do1pv0y/desk.sqlite3')
+
+    @_posix
+    def test_the_reset_script_keeps_standard_output_empty_for_every_refusal_of_the_check(book: Path) -> None:
+        with bound_socket() as listener:
+            listener.listen(1)
+            done = reset_run(SH, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
+>       assert done.returncode == 4 and done.stdout == "" and "something still answers" in done.stderr
+E       AssertionError: assert (4 == 4 and 'refused: som...was deleted\n' == ''
+E        +  where 4 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=4, stdout='refused: something still answers on port 50123; nothing was deleted\n', stderr='').returncode
+E         
+E         + refused: something still answers on port 50123; nothing was deleted)
+
+tests/test_reset_order_and_words.py:111: AssertionError
+_ test_reset_sh_keeps_both_pid_files_when_the_check_refuses_after_it_stopped_the_desk _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-aozewbdg/desk.sqlite3')
+
+    @_posix
+    def test_reset_sh_keeps_both_pid_files_when_the_check_refuses_after_it_stopped_the_desk(book: Path) -> None:
+        """The desk (named in desk.pid) is stopped, then something else answers on its port: exit 4. The old order had
+        already deleted desk.pid, so the refusal left no trace of what was stopped; now the pid files stay."""
+        desk = _live(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
+        try:
+            with bound_socket() as listener:
+                listener.listen(1)
+                done = reset_run(SH, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
+            wait_until(lambda: desk.poll() is not None, timeout=10, what="the desk stand-in was stopped")
+        finally:
+            _end(desk)
+>       assert done.returncode == 4 and done.stdout == "", (done.stdout, done.stderr)
+E       AssertionError: ('refused: something still answers on port 36021; nothing was deleted
+E         ', '')
+E       assert (4 == 4 and 'refused: som...was deleted\n' == ''
+E        +  where 4 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=4, stdout='refused: something still answers on port 36021; nothing was deleted\n', stderr='').returncode
+E         
+E         + refused: something still answers on port 36021; nothing was deleted)
+
+tests/test_reset_order_and_words.py:128: AssertionError
+_ test_reset_sh_keeps_the_utf16_pid_file_of_a_running_desk_when_the_port_check_refuses _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-3ubvk7uj/desk.sqlite3')
+
+    @_posix
+    def test_reset_sh_keeps_the_utf16_pid_file_of_a_running_desk_when_the_port_check_refuses(book: Path) -> None:
+        """A pid file saved as UTF-16 is stale (nothing is stopped for it). The desk it names really runs and holds the
+        port: exit 4, the desk still runs, and the pid file is kept as the only clue (the old order deleted it first)."""
+        desk = _live(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_bytes(str(desk.pid).encode("utf-16"))
+        try:
+            with bound_socket() as listener:
+                listener.listen(1)
+                done = reset_run(SH, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
+            still_running = desk.poll() is None
+        finally:
+            _end(desk)
+        assert done.returncode == 4 and still_running, (done.returncode, done.stdout, done.stderr)
+>       assert pidfile.exists() and reset_kept(book)
+E       AssertionError: assert (False)
+E        +  where False = exists()
+E        +    where exists = PosixPath('/home/user/work/b21-tree/data/reset-guard-3ubvk7uj/desk.pid').exists
+
+tests/test_reset_order_and_words.py:148: AssertionError
+_ test_the_exit_3_and_4_lines_say_what_happened_to_the_pid_files_and_the_records _
+
+    @_posix
+    def test_the_exit_3_and_4_lines_say_what_happened_to_the_pid_files_and_the_records() -> None:
+        text = (REPO / "scripts" / "reset_check.py").read_text(encoding="utf-8")
+>       assert text.count("nothing was deleted, not even the pid files") == 1, "one shared sentence for exit 3 and 4"
+E       AssertionError: one shared sentence for exit 3 and 4
+E       assert 0 == 1
+E        +  where 0 = <built-in method count of str object at 0x1cb10d90>('nothing was deleted, not even the pid files')
+E        +    where <built-in method count of str object at 0x1cb10d90> = '"""Run by reset.sh and reset.ps1 AFTER they stopped the desk and BEFORE they delete anything. Exit 0 = nothing uses t...rt}; nothing was deleted")\n            return 4\n    return 0\n\n\nif __name__ == "__main__":\n    sys.exit(main())\n'.count
+
+tests/test_reset_order_and_words.py:154: AssertionError
+_ test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-iw4qk7xz/desk.sqlite3')
+
+    @_posix
+    def test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look(book: Path) -> None:
+        """Pass 1 sees both pid files name the desk and the demo server. The desk needs 1.5 seconds to end; while the
+        reset waits, the demo server stand-in executes another program (its command line changes), as a reused number
+        would. The second look refuses with exit 6 and does NOT stop it; the desk, already stopped, is named."""
+        desk = _live(book, "desk", DESK_MODULE, _ENDS_SLOWLY)
+        fakes = _live(book, "fakes", FAKES_MODULE, _CHANGES_ITS_LINE)
+        go = Path(str(book.parent / "fakes.ready") + ".go")
+        stopping = Path(str(book.parent / "desk.ready") + ".stopping")
+        # the demo server changes as soon as the desk has been told to stop
+    
+        def trigger() -> None:
+            wait_until(stopping.exists, timeout=30, what="the desk was told to stop")
+            go.write_text("", encoding="utf-8")
+    
+        helper = threading.Thread(target=trigger, daemon=True)
+        helper.start()
+        try:
+            done = reset_run(SH, book, **reset_ports())
+            helper.join(timeout=30)
+            fakes_running = fakes.poll() is None
+        finally:
+            _end(desk, fakes)
+>       assert done.returncode == 6, (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (0, 'reset done
+E         ', '')
+E       assert 0 == 6
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_order_and_words.py:203: AssertionError
+______ test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file _______
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-yz1u1iaj/desk.sqlite3')
+
+    @_posix
+    def test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file(book: Path) -> None:
+        link = book.parent / "desk.pid"
+        try:
+            link.symlink_to(book.parent / "no-such-target")
+        except (OSError, NotImplementedError):
+            pytest.skip("this computer cannot make a symbolic link")
+        assert link.is_symlink() and not link.exists()
+        done = reset_run(SH, book, **reset_ports())
+        assert done.returncode == 0, (done.stdout, done.stderr)
+>       assert not link.is_symlink() and not book.exists()
+E       AssertionError: assert (not True)
+E        +  where True = is_symlink()
+E        +    where is_symlink = PosixPath('/home/user/work/b21-tree/data/reset-guard-yz1u1iaj/desk.pid').is_symlink
+
+tests/test_reset_order_and_words.py:221: AssertionError
+_____ test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False] ______
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-mzhru5gs/desk.sqlite3')
+content_bytes = 64, stopped = False
+
+    @_posix
+    @pytest.mark.parametrize(("content_bytes", "stopped"), [(63, True), (64, False)])
+    def test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark(book: Path, content_bytes: int, stopped: bool) -> None:
+        """Mark + number + spaces: 63 bytes after the mark still name the desk (it is stopped); 64 bytes are stale (nothing
+        is stopped; the same rule as reset.ps1, which reads 67 bytes and judges those after the mark)."""
+        desk = _live(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
+        number = str(desk.pid).encode()
+        (book.parent / "desk.pid").write_bytes(b"\xef\xbb\xbf" + number + b" " * (content_bytes - len(number)))
+        try:
+            done = reset_run(SH, book, **reset_ports())
+            if stopped:
+                wait_until(lambda: desk.poll() is not None, timeout=10, what="the desk stand-in was stopped")
+            still_running = desk.poll() is None
+        finally:
+            _end(desk)
+        assert done.returncode == 0, (done.stdout, done.stderr)
+>       assert still_running is (not stopped), (content_bytes, still_running)
+E       AssertionError: (64, False)
+E       assert False is not False
+
+tests/test_reset_order_and_words.py:241: AssertionError
+_ test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records[scripts/reset.sh] _
+
+rel = 'scripts/reset.sh'
+
+    @pytest.mark.parametrize("rel", [*_WORDED, "tests/test_reset_scripts.py", "tests/test_reset_order_and_words.py"])
+    def test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records(rel: str) -> None:
+        """One word, one meaning (the README says "the desk's records"; the older two-word name is gone from these files)."""
+        text = (REPO / rel).read_text(encoding="utf-8")
+        forbidden = "lead" + " book"  # written in two parts so that this file does not hold the old word itself
+>       assert forbidden not in text.lower().replace("lead-book", ""), rel
+E       AssertionError: scripts/reset.sh
+E       assert 'lead book' not in '#!/usr/bin/...eset done"\n'
+E         
+E         'lead book' is contained here:
+E           elete the lead book, so the next run starts empty.
+E         ?           +++++++++
+E           # run from the repository root with bash (it uses [[ ]]): `sh scripts/reset.sh` fails where sh is dash. it deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+E           # and refuses to run when the database path is not inside the repository's data/ folder.
+E           set -eu...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_reset_order_and_words.py:254: AssertionError
+_ test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records[scripts/reset.ps1] _
+
+rel = 'scripts/reset.ps1'
+
+    @pytest.mark.parametrize("rel", [*_WORDED, "tests/test_reset_scripts.py", "tests/test_reset_order_and_words.py"])
+    def test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records(rel: str) -> None:
+        """One word, one meaning (the README says "the desk's records"; the older two-word name is gone from these files)."""
+        text = (REPO / rel).read_text(encoding="utf-8")
+        forbidden = "lead" + " book"  # written in two parts so that this file does not hold the old word itself
+>       assert forbidden not in text.lower().replace("lead-book", ""), rel
+E       AssertionError: scripts/reset.ps1
+E       assert 'lead book' not in "# stop what...eset done'\n"
+E         
+E         'lead book' is contained here:
+E           elete the lead book, so the next run starts empty.
+E         ?           +++++++++
+E           # run from the repository root. it deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+E           # and refuses to run when the database path is not inside the repository's data folder.
+E           $erroractionpreference = 'stop'...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_reset_order_and_words.py:254: AssertionError
+_ test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records[scripts/reset_check.py] _
+
+rel = 'scripts/reset_check.py'
+
+    @pytest.mark.parametrize("rel", [*_WORDED, "tests/test_reset_scripts.py", "tests/test_reset_order_and_words.py"])
+    def test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records(rel: str) -> None:
+        """One word, one meaning (the README says "the desk's records"; the older two-word name is gone from these files)."""
+        text = (REPO / rel).read_text(encoding="utf-8")
+        forbidden = "lead" + " book"  # written in two parts so that this file does not hold the old word itself
+>       assert forbidden not in text.lower().replace("lead-book", ""), rel
+E       AssertionError: scripts/reset_check.py
+E       assert 'lead book' not in '"""run by r...it(main())\n'
+E         
+E         'lead book' is contained here:
+E            uses the
+E           lead book: no process holds its lock file and nothing answers on the desk's or the demo server's port. exit 3 = a
+E         ? +++++++++
+E           process still holds the database or the lock file cannot be tested, 4 = something still answers on a port.
+E           prints one line, no values."""...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_reset_order_and_words.py:254: AssertionError
+______ test_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts _______
+
+    def test_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts() -> None:
+        sentence = "the desk's records and the logs were not deleted"
+        readme = (REPO / "README.md").read_text(encoding="utf-8")
+        assert readme.count(sentence) == 1
+        for rel in ("scripts/reset.sh", "scripts/reset.ps1"):
+>           assert (REPO / rel).read_text(encoding="utf-8").count(sentence) == 1, rel
+E           AssertionError: scripts/reset.sh
+E           assert 0 == 1
+E            +  where 0 = <built-in method count of str object at 0x1cafef70>("the desk's records and the logs were not deleted")
+E            +    where <built-in method count of str object at 0x1cafef70> = '#!/usr/bin/env bash\n# Stop what start_all.sh started (only those process ids) and delete the lead book, so the next ... "$db-wal" "$db-shm" "$db.lock" "$data_dir/desk.log" "$data_dir/fakes.log" "$data_dir/crash.flag"\necho "reset done"\n'.count
+E            +      where '#!/usr/bin/env bash\n# Stop what start_all.sh started (only those process ids) and delete the lead book, so the next ... "$db-wal" "$db-shm" "$db.lock" "$data_dir/desk.log" "$data_dir/fakes.log" "$data_dir/crash.flag"\necho "reset done"\n' = read_text(encoding='utf-8')
+E            +        where read_text = (PosixPath('/home/user/work/b21-tree') / 'scripts/reset.sh').read_text
+
+tests/test_reset_order_and_words.py:262: AssertionError
+___________ test_the_readme_lists_one_line_per_exit_code_from_2_to_7 ___________
+
+    def test_the_readme_lists_one_line_per_exit_code_from_2_to_7() -> None:
+        """The refusals are a list with one entry per exit code, not one long sentence; each entry starts with its code."""
+        readme = (REPO / "README.md").read_text(encoding="utf-8")
+        codes = re.findall(r"(?m)^- exit ([2-7])\b", readme)
+>       assert codes == ["2", "3", "4", "5", "6", "7"], codes
+E       AssertionError: []
+E       assert [] == ['2', '3', '4', '5', '6', '7']
+E         
+E         Right contains 6 more items, first extra item: '2'
+E         Use -v to get more diff
+
+tests/test_reset_order_and_words.py:269: AssertionError
+__________ test_reset_refuses_when_something_answers_on_the_desk_port __________
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-oonxbgz2/desk.sqlite3')
+
+    def test_reset_refuses_when_something_answers_on_the_desk_port(book: Path) -> None:
+        """A desk started by hand has no pid file: the port that still answers stops the reset."""
+        with bound_socket() as listener:
+            listener.listen(1)
+            done = _run(SCRIPT, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(held_port()))
+>       assert done.returncode == 4 and "answers on port" in done.stderr, (done.stdout, done.stderr)
+E       AssertionError: ('refused: something still answers on port 32981; nothing was deleted
+E         ', '')
+E       assert (4 == 4 and 'answers on port' in '')
+E        +  where 4 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=4, stdout='refused: something still answers on port 32981; nothing was deleted\n', stderr='').returncode
+E        +  and   '' = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=4, stdout='refused: something still answers on port 32981; nothing was deleted\n', stderr='').stderr
+
+tests/test_reset_scripts.py:52: AssertionError
+_____________ test_reset_refuses_when_a_process_holds_the_database _____________
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-c7j7uaxg/desk.sqlite3')
+
+    def test_reset_refuses_when_a_process_holds_the_database(book: Path) -> None:
+        from lead_desk import lockfile
+    
+        handle = lockfile.acquire(book)
+        try:
+            done = _run(SCRIPT, book, **reset_ports())
+        finally:
+            handle.close()
+>       assert done.returncode == 3 and "holds the database" in done.stderr, (done.stdout, done.stderr)
+E       AssertionError: ('refused: a process still holds the database (the desk is running); nothing was deleted
+E         ', '')
+E       assert (3 == 3 and 'holds the database' in '')
+E        +  where 3 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=3, stdout='refused: a process still holds the database (the desk is running); nothing was deleted\n', stderr='').returncode
+E        +  and   '' = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=3, stdout='refused: a process still holds the database (the desk is running); nothing was deleted\n', stderr='').stderr
+
+tests/test_reset_scripts.py:64: AssertionError
+___ test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fdea8ff7a10>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fdea90ea510>
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-8o5p40q1/desk.sqlite3')
+
+    def test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], book: Path
+    ) -> None:
+        import importlib.util
+    
+        from lead_desk import lockfile
+    
+        spec = importlib.util.spec_from_file_location("reset_check_under_test", REPO / "scripts" / "reset_check.py")
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    
+        class Unreadable:
+            def exists(self) -> bool:
+                raise PermissionError("no access")
+    
+        monkeypatch.setenv("DESK_DB_PATH", str(book))
+        monkeypatch.setattr(lockfile, "lock_path", lambda _db: Unreadable())
+        assert module.main() == 3
+        seen = capsys.readouterr()
+        out = seen.err.strip()
+>       assert seen.out == "", "a refusal must go to standard error, not to standard output"
+E       AssertionError: a refusal must go to standard error, not to standard output
+E       assert 'refused: the...ing deleted\n' == ''
+E         
+E         + refused: the data folder cannot be looked at, so it is not known whether the desk runs; nothing deleted
+
+tests/test_reset_scripts.py:213: AssertionError
+_ test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a_refusal _
+
+book = PosixPath('/home/user/work/b21-tree/data/reset-guard-zn5sk7v8/desk.sqlite3')
+
+    def test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a_refusal(book: Path) -> None:
+        lock = Path(f"{book.resolve()}.lock")
+        lock.mkdir()  # a lock file that cannot be opened: nothing says that no desk holds the book
+        try:
+            done = _run(SCRIPT, book, **reset_ports())
+        finally:
+            lock.rmdir()
+>       assert done.returncode == 3 and "cannot be tested" in done.stderr, (done.stdout, done.stderr)
+E       AssertionError: ('refused: the lock file of the database cannot be tested, so it is not known whether the desk runs; nothing was deleted
+E         ', '')
+E       assert (3 == 3 and 'cannot be tested' in '')
+E        +  where 3 = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=3, stdout='refused: the lock file of the database cannot be tested, so it is not known whether the desk runs; nothing was deleted\n', stderr='').returncode
+E        +  and   '' = CompletedProcess(args=['bash', '/home/user/work/b21-tree/scripts/reset.sh'], returncode=3, stdout='refused: the lock file of the database cannot be tested, so it is not known whether the desk runs; nothing was deleted\n', stderr='').stderr
+
+tests/test_reset_scripts.py:224: AssertionError
+_ test_the_bash_minimum_in_the_script_is_the_one_in_the_readme_and_the_old_macos_remark_is_gone _
+
+    def test_the_bash_minimum_in_the_script_is_the_one_in_the_readme_and_the_old_macos_remark_is_gone() -> None:
+        """One pin test for the one constant: bash_minimum=(M N) in reset.sh equals the README's "bash M.N or newer"."""
+>       found = re.fullmatch(r"bash_minimum=\((\d+) (\d+)\)(\s+#.*)?", _minimum_line())
+                                                                       ^^^^^^^^^^^^^^^
+
+tests/test_reset_scripts.py:410: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _minimum_line() -> str:
+        lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+        found = [line for line in lines if line.startswith(_MINIMUM_START)]
+>       assert len(found) == 1, "the bash minimum constant was not found exactly once at the start of a line"
+E       AssertionError: the bash minimum constant was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:397: AssertionError
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1] _
+
+case = 'major-1'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_scripts.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _version_guard_line() -> str:
+        lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+        found = [line for line in lines if line.startswith(_VERSION_GUARD_START)]
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:390: AssertionError
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[same-major-minor-1] _
+
+case = 'same-major-minor-1'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_scripts.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _version_guard_line() -> str:
+        lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+        found = [line for line in lines if line.startswith(_VERSION_GUARD_START)]
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:390: AssertionError
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[minimum] _
+
+case = 'minimum'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_scripts.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _version_guard_line() -> str:
+        lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+        found = [line for line in lines if line.startswith(_VERSION_GUARD_START)]
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:390: AssertionError
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[minimum-patch] _
+
+case = 'minimum-patch'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_scripts.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _version_guard_line() -> str:
+        lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+        found = [line for line in lines if line.startswith(_VERSION_GUARD_START)]
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:390: AssertionError
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[next-major] _
+
+case = 'next-major'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+>       line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+               ^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_scripts.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _version_guard_line() -> str:
+        lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+        found = [line for line in lines if line.startswith(_VERSION_GUARD_START)]
+>       assert len(found) == 1, "the bash version guard was not found exactly once at the start of a line"
+E       AssertionError: the bash version guard was not found exactly once at the start of a line
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_reset_scripts.py:390: AssertionError
+_ test_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs _
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    def test_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs() -> None:
+        """dash has no BASH_VERSINFO (under set -u that would be an error instead of the bash message), so the guard
+        comes after the [[ ]] feature test; and it comes before the first python call and before any pid file is read."""
+        lines = (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8").splitlines()
+        keys = ('case "$( (eval ', _MINIMUM_START, _VERSION_GUARD_START, 'db="$(python -c')
+>       at = {key: next(i for i, ln in enumerate(lines) if ln.startswith(key)) for key in keys}
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests/test_reset_scripts.py:450: StopIteration
+_ test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh _
+
+    def test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh() -> None:
+        """The rule of reset.sh (tested there with real files): an optional UTF-8 byte order mark, then 64 bytes or more
+        is stale. reset.ps1 reads up to 67 bytes, skips the mark, and judges the bytes after it. Anchored to whole
+        lines of the script."""
+        code = _code()
+>       assert re.search(r"New-Object byte\[\]\s+67\b", code), "the pid file is not read through a 67 byte buffer"
+E       AssertionError: the pid file is not read through a 67 byte buffer
+E       assert None
+E        +  where None = <function search at 0x7fdea9e2a5c0>('New-Object byte\\[\\]\\s+67\\b', "$ErrorActionPreference = 'Stop'\n$env:PYTHONPATH = 'src;.'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n    ...   if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }\n}\nWrite-Host 'reset done'")
+E        +    where <function search at 0x7fdea9e2a5c0> = re.search
+
+tests/test_reset_ps1_pid_rules.py:159: AssertionError
+_ test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed _
+
+    def test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed() -> None:
+        """The folder line (exit 7, pass 1) and the removal line (exit 7, pass 3) are the same words in both scripts,
+        and the README holds the removal sentence once."""
+        ps1, sh = _code(), _reset_sh_code()
+        for words in ("is a folder, not a pid file, so it cannot be removed; nothing was stopped or deleted",
+                      "the desk's records and the logs were not deleted"):
+>           assert words in ps1 and words in sh, words
+E           AssertionError: is a folder, not a pid file, so it cannot be removed; nothing was stopped or deleted
+E           assert ('is a folder, not a pid file, so it cannot be removed; nothing was stopped or deleted' in "$ErrorActionPreference = 'Stop'\n$env:PYTHONPATH = 'src;.'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n    ...   if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }\n}\nWrite-Host 'reset done'")
+
+tests/test_reset_ps1_pid_rules.py:178: AssertionError
+_ test_text_only_a_pid_file_that_is_a_dangling_link_is_seen_and_removed_in_pass_3 _
+
+    def test_text_only_a_pid_file_that_is_a_dangling_link_is_seen_and_removed_in_pass_3() -> None:
+        """Test-Path says false for a link whose target is gone, so the file would be neither read nor deleted: Get-Item
+        -Force sees the link itself. (Not run on Windows: see the notes for the lead.)"""
+        one, three = _pass(1), _pass(3)
+>       assert re.search(r"Get-Item\s+-LiteralPath\s+\$pidFile\s+-Force\s+-ErrorAction\s+SilentlyContinue", one)
+E       assert None
+E        +  where None = <function search at 0x7fdea9e2a5c0>('Get-Item\\s+-LiteralPath\\s+\\$pidFile\\s+-Force\\s+-ErrorAction\\s+SilentlyContinue', '$plan = @()\nforeach ($name in \'desk\', \'fakes\') {\n    $pidFile = "$dataDir\\$name.pid"\n    if (Test-Path -Liter...othing was stopped or deleted (delete the pid file yourself if it is stale)")\n            exit 6\n        }\n    }\n}')
+E        +    where <function search at 0x7fdea9e2a5c0> = re.search
+
+tests/test_reset_ps1_pid_rules.py:192: AssertionError
+_ test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked _
+
+    def test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked() -> None:
+        """Test-Path and Remove-Item read a '[' in a folder name as a pattern unless -LiteralPath is used."""
+        code = _code()
+        uses = re.findall(r"(?<![\w$.:\-])(Test-Path|Remove-Item|Get-Item)\b([^\n]*)", code)
+>       assert len(uses) >= 5, uses
+E       AssertionError: [('Test-Path', ' -LiteralPath $pidFile) {'), ('Test-Path', ' -LiteralPath $pidFile -PathType Leaf)) {'), ('Remove-Item...orAction Stop } catch {'), ('Test-Path', ' -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }')]
+E       assert 4 >= 5
+E        +  where 4 = len([('Test-Path', ' -LiteralPath $pidFile) {'), ('Test-Path', ' -LiteralPath $pidFile -PathType Leaf)) {'), ('Remove-Item...orAction Stop } catch {'), ('Test-Path', ' -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }')])
+
+tests/test_reset_ps1_pid_rules.py:231: AssertionError
+___ test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop ____
+
+    def test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop() -> None:
+        """A process number is judged in pass 1, but a stop of an earlier program can take up to 999 seconds, and the
+        number can then belong to another program: the command line is read again and compared with -cmatch right before
+        Stop-Process; a program that changed is not stopped (exit 6, naming what was already stopped)."""
+        two = _pass(2)
+        stop = two.index("Stop-Process")
+>       again = two.index("Get-CimInstance Win32_Process")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: substring not found
+
+tests/test_reset_ps1_pid_rules.py:368: ValueError
+_ test_text_only_the_check_for_a_desk_nobody_listed_runs_after_the_stop_and_before_any_delete _
+
+    def test_text_only_the_check_for_a_desk_nobody_listed_runs_after_the_stop_and_before_any_delete() -> None:
+        """reset_check.py (a desk with no pid file, a port that answers) runs between pass 2 and pass 3, so a refusal
+        leaves the pid files in place, and the exit 3 and 4 lines can say that nothing was deleted."""
+        for text in (SCRIPT_TEXT, (REPO / "scripts" / "reset.sh").read_text(encoding="utf-8")):
+            at = text.index("scripts/reset_check.py")
+>           assert text.index("# PASS 2") < at < text.index("# PASS 3"), "reset_check.py is not between pass 2 and pass 3"
+E           AssertionError: reset_check.py is not between pass 2 and pass 3
+E           assert 7288 < 6727
+E            +  where 6727 = <built-in method index of str object at 0x1cad7b10>('# PASS 3')
+E            +    where <built-in method index of str object at 0x1cad7b10> = "# Stop what start_all.ps1 started (only those process ids) and delete the lead book, so the next run starts empty.\n#... if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }\n}\nWrite-Host 'reset done'\n".index
+
+tests/test_reset_ps1_pid_rules.py:389: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_order_and_words.py::test_reset_check_prints_its_exit_4_refusal_on_standard_error_only
+FAILED tests/test_reset_order_and_words.py::test_reset_check_prints_its_exit_3_refusal_on_standard_error_only
+FAILED tests/test_reset_order_and_words.py::test_reset_check_refusal_survives_a_redirect_of_standard_error_to_a_file
+FAILED tests/test_reset_order_and_words.py::test_the_reset_script_keeps_standard_output_empty_for_every_refusal_of_the_check
+FAILED tests/test_reset_order_and_words.py::test_reset_sh_keeps_both_pid_files_when_the_check_refuses_after_it_stopped_the_desk
+FAILED tests/test_reset_order_and_words.py::test_reset_sh_keeps_the_utf16_pid_file_of_a_running_desk_when_the_port_check_refuses
+FAILED tests/test_reset_order_and_words.py::test_the_exit_3_and_4_lines_say_what_happened_to_the_pid_files_and_the_records
+FAILED tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
+FAILED tests/test_reset_order_and_words.py::test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file
+FAILED tests/test_reset_order_and_words.py::test_reset_sh_counts_the_64_bytes_after_a_byte_order_mark[64-False]
+FAILED tests/test_reset_order_and_words.py::test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records[scripts/reset.sh]
+FAILED tests/test_reset_order_and_words.py::test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records[scripts/reset.ps1]
+FAILED tests/test_reset_order_and_words.py::test_the_reset_scripts_the_readme_and_their_tests_call_the_database_the_desks_records[scripts/reset_check.py]
+FAILED tests/test_reset_order_and_words.py::test_the_exit_7_sentence_of_the_readme_is_the_one_in_both_scripts
+FAILED tests/test_reset_order_and_words.py::test_the_readme_lists_one_line_per_exit_code_from_2_to_7
+FAILED tests/test_reset_scripts.py::test_reset_refuses_when_something_answers_on_the_desk_port
+FAILED tests/test_reset_scripts.py::test_reset_refuses_when_a_process_holds_the_database
+FAILED tests/test_reset_scripts.py::test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at
+FAILED tests/test_reset_scripts.py::test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a_refusal
+FAILED tests/test_reset_scripts.py::test_the_bash_minimum_in_the_script_is_the_one_in_the_readme_and_the_old_macos_remark_is_gone
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[same-major-minor-1]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[minimum]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[minimum-patch]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[next-major]
+FAILED tests/test_reset_scripts.py::test_the_bash_version_guard_comes_after_the_bash_guard_and_before_any_program_runs
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_a_pid_file_that_is_a_dangling_link_is_seen_and_removed_in_pass_3
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_pass_2_looks_at_the_program_again_right_before_each_stop
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_for_a_desk_nobody_listed_runs_after_the_stop_and_before_any_delete
+32 failed, 275 passed, 14 skipped in 79.40s (0:01:19)
+
+=== part 2: port tests with the old port_blocks.py and support.py (7 failed, 87 passed) ===
+........................................................................ [ 76%]
+...............FFFFFFF                                                   [100%]
+=================================== FAILURES ===================================
+_____________ test_the_loopback_host_of_the_tests_is_defined_once ______________
+
+    def test_the_loopback_host_of_the_tests_is_defined_once() -> None:
+        """support.py takes HOST from port_blocks.py: two assignments could drift apart."""
+        assert support.HOST is port_blocks.HOST
+        text = (Path(__file__).resolve().parent / "support.py").read_text(encoding="utf-8")
+>       assert not re.search(r"(?m)^HOST\s*=", text), "support.py defines HOST again"
+E       AssertionError: support.py defines HOST again
+E       assert not <re.Match object; span=(1047, 1053), match='HOST ='>
+E        +  where <re.Match object; span=(1047, 1053), match='HOST ='> = <function search at 0x7f6ca57825c0>('(?m)^HOST\\s*=', '"""Shared test helpers. Made-up data only; hosts and ports come from Config; no secrets."""\n\nfrom __future__ import...)} drive_free={free} "  # noqa: SLF001\n        f"drive_waiters={waiting} threads={threading.active_count()}"\n    )\n')
+E        +    where <function search at 0x7f6ca57825c0> = re.search
+
+tests/test_port_helpers.py:343: AssertionError
+_ test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1] _
+
+count = 1
+
+    @pytest.mark.parametrize("count", [1, 2, 4, 16, 64])
+    def test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block(count: int) -> None:
+        """Two pytest runs at once both have a gw0 with the same block. The part of the block a process draws from depends
+        on its process number (pid % slices), so neighbouring process numbers get disjoint parts; the part lies inside the
+        block, and a block too narrow to share is used whole."""
+        block = support.worker_port_range("gw0", str(count))
+        assert block is not None
+>       windows = [port_blocks.session_window(block, pid) for pid in range(5000, 5000 + 40)]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'port_blocks' has no attribute 'session_window'
+
+tests/test_port_helpers.py:353: AttributeError
+_ test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[2] _
+
+count = 2
+
+    @pytest.mark.parametrize("count", [1, 2, 4, 16, 64])
+    def test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block(count: int) -> None:
+        """Two pytest runs at once both have a gw0 with the same block. The part of the block a process draws from depends
+        on its process number (pid % slices), so neighbouring process numbers get disjoint parts; the part lies inside the
+        block, and a block too narrow to share is used whole."""
+        block = support.worker_port_range("gw0", str(count))
+        assert block is not None
+>       windows = [port_blocks.session_window(block, pid) for pid in range(5000, 5000 + 40)]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'port_blocks' has no attribute 'session_window'
+
+tests/test_port_helpers.py:353: AttributeError
+_ test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[4] _
+
+count = 4
+
+    @pytest.mark.parametrize("count", [1, 2, 4, 16, 64])
+    def test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block(count: int) -> None:
+        """Two pytest runs at once both have a gw0 with the same block. The part of the block a process draws from depends
+        on its process number (pid % slices), so neighbouring process numbers get disjoint parts; the part lies inside the
+        block, and a block too narrow to share is used whole."""
+        block = support.worker_port_range("gw0", str(count))
+        assert block is not None
+>       windows = [port_blocks.session_window(block, pid) for pid in range(5000, 5000 + 40)]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'port_blocks' has no attribute 'session_window'
+
+tests/test_port_helpers.py:353: AttributeError
+_ test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[16] _
+
+count = 16
+
+    @pytest.mark.parametrize("count", [1, 2, 4, 16, 64])
+    def test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block(count: int) -> None:
+        """Two pytest runs at once both have a gw0 with the same block. The part of the block a process draws from depends
+        on its process number (pid % slices), so neighbouring process numbers get disjoint parts; the part lies inside the
+        block, and a block too narrow to share is used whole."""
+        block = support.worker_port_range("gw0", str(count))
+        assert block is not None
+>       windows = [port_blocks.session_window(block, pid) for pid in range(5000, 5000 + 40)]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'port_blocks' has no attribute 'session_window'
+
+tests/test_port_helpers.py:353: AttributeError
+_ test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[64] _
+
+count = 64
+
+    @pytest.mark.parametrize("count", [1, 2, 4, 16, 64])
+    def test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block(count: int) -> None:
+        """Two pytest runs at once both have a gw0 with the same block. The part of the block a process draws from depends
+        on its process number (pid % slices), so neighbouring process numbers get disjoint parts; the part lies inside the
+        block, and a block too narrow to share is used whole."""
+        block = support.worker_port_range("gw0", str(count))
+        assert block is not None
+>       windows = [port_blocks.session_window(block, pid) for pid in range(5000, 5000 + 40)]
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'port_blocks' has no attribute 'session_window'
+
+tests/test_port_helpers.py:353: AttributeError
+_____ test_free_ports_of_a_session_lie_in_that_sessions_part_of_the_block ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6ca491c1a0>
+
+    def test_free_ports_of_a_session_lie_in_that_sessions_part_of_the_block(monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("PYTEST_XDIST_WORKER", "gw0")
+        monkeypatch.setenv("PYTEST_XDIST_WORKER_COUNT", "1")
+        block = support.worker_port_range("gw0", "1")
+        assert block is not None
+>       low, high = port_blocks.session_window(block, os.getpid())
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'port_blocks' has no attribute 'session_window'
+
+tests/test_port_helpers.py:369: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_port_helpers.py::test_the_loopback_host_of_the_tests_is_defined_once
+FAILED tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[1]
+FAILED tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[2]
+FAILED tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[4]
+FAILED tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[16]
+FAILED tests/test_port_helpers.py::test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block[64]
+FAILED tests/test_port_helpers.py::test_free_ports_of_a_session_lie_in_that_sessions_part_of_the_block
+7 failed, 87 passed in 0.18s
+
+=== part 3: FINAL README-reading bash-minimum test against the r6 scripts (2 failed, 4 passed) ===
+FF....                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1] _
+
+case = 'major-1'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+        line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+        done = _run(
+            SCRIPT, Path("unused.sqlite3"), code=f"set -eu\nMADE_UP_VERSINFO=({version})\n{line}\necho PAST-THE-GUARD"
+        )
+        if refused:
+            assert done.returncode == 2 and "PAST-THE-GUARD" not in done.stdout, (done.stdout, done.stderr)
+>           assert "mapfile -d" in done.stderr and "nothing was stopped or deleted" in done.stderr
+E           AssertionError: assert ('mapfile -d' in 'refused: this script needs bash 4.1 or newer (this is bash 5.2.21(1)-release); nothing was stopped or deleted\n')
+E            +  where 'refused: this script needs bash 4.1 or newer (this is bash 5.2.21(1)-release); nothing was stopped or deleted\n' = CompletedProcess(args=['bash', '-c', 'set -eu\nMADE_UP_VERSINFO=(3 9 0)\nif (( MADE_UP_VERSINFO[0] < 4 || (MADE_UP_VER...derr='refused: this script needs bash 4.1 or newer (this is bash 5.2.21(1)-release); nothing was stopped or deleted\n').stderr
+
+tests/test_reset_scripts.py:419: AssertionError
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[same-major-minor-1] _
+
+case = 'same-major-minor-1'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+        line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+        done = _run(
+            SCRIPT, Path("unused.sqlite3"), code=f"set -eu\nMADE_UP_VERSINFO=({version})\n{line}\necho PAST-THE-GUARD"
+        )
+        if refused:
+>           assert done.returncode == 2 and "PAST-THE-GUARD" not in done.stdout, (done.stdout, done.stderr)
+E           AssertionError: ('PAST-THE-GUARD
+E             ', '')
+E           assert (0 == 2)
+E            +  where 0 = CompletedProcess(args=['bash', '-c', 'set -eu\nMADE_UP_VERSINFO=(4 3 99)\nif (( MADE_UP_VERSINFO[0] < 4 || (MADE_UP_VE...ing was stopped or deleted" >&2; exit 2; fi\necho PAST-THE-GUARD'], returncode=0, stdout='PAST-THE-GUARD\n', stderr='').returncode
+
+tests/test_reset_scripts.py:418: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[same-major-minor-1]
+2 failed, 4 passed, 57 deselected in 0.13s

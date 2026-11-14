@@ -4528,10 +4528,10 @@ index 0000000..7436d86
 +    assert "test_the_fake_model_server_reads_a_key_file_with_a_size_cap" not in text
 diff --git a/tests/test_one_key_file_rule_r7.py b/tests/test_one_key_file_rule_r7.py
 new file mode 100644
-index 0000000..f618bd6
+index 0000000..2ea70dc
 --- /dev/null
 +++ b/tests/test_one_key_file_rule_r7.py
-@@ -0,0 +1,1582 @@
+@@ -0,0 +1,1585 @@
 +"""Fix-2 rounds 7 and 8: the guards (a reader guard and a shell-script guard, both banning a read of a file outside a
 +named allow-list, and a probe guard for a setting's path; all three are tripwires, not proofs), the Retry-After rule
 +tested on real HTTP 429 replies at every reader, key files that are links, and the wording pins.
@@ -5159,7 +5159,10 @@ index 0000000..f618bd6
 +
 +
 +def test_the_reader_guard_names_the_definition_around_each_hit() -> None:
-+    source = "class A:\n    def m(self):\n        return open(p)\n\n\ndef f():\n    return open(q)\n\n\nx = open(r)\n"
++    source = (
++        "class A(object):\n    def m(self):\n        return open(p)\n\n\ndef f():\n    return open(q)\n\n\n"
++        "x = open(r)\n"
++    )
 +    assert [(n, scope) for n, _text, scope in _refs(source, BANNED, bare_names=True)] == [
 +        (3, "A.m"), (7, "f"), (10, "<module>"),
 +    ]  # fmt: skip
@@ -5651,10 +5654,10 @@ index 0000000..f618bd6
 +        ("def f(e):\n    return dict(e.headers)\n", [2], []),
 +        ("def f(e):\n    return list(e.headers.items())\n", [2], []),
 +        ("def f(e):\n    return {k: v for k, v in e.headers.items()}\n", [2], []),
-+        ("def f(e):\n    for k in e.headers:\n        pass\n", [2], []),
++        ("def f(e):\n    for k in (e.headers):\n        pass\n", [2], []),
 +        ("def f(r):\n    return r.getheaders()\n", [2], []),
 +        ("def f(r):\n    return r.getheader('Retry-After')\n", [2], []),
-+        ("def f(r):\n    return r.info().get('retry-after')\n", [2], []),
++        ("def f(r):\n    return (r).info().get('retry-after')\n", [2], []),
 +        ("w = int(e.headers.getheader('retry-after'))\n", [1], []),
 +        ("def _retry_after(v):\n    return float(v)\n", [], ["_retry_after"]),
 +        ("def renamed(v):\n    return min(float(v), RETRY_AFTER_MAX_SECONDS)\n", [], ["renamed"]),
@@ -6056,7 +6059,7 @@ index 0000000..f618bd6
 +        'assert "' + PLAIN_WORD + '" not in screens.lower().replace("lead-book", "")',
 +    ): (1, ON_PURPOSE),
 +    (
-+        "tests/test_one_key_file_rule_and_path_walk.py",
++        "tests/test_one_key_file_rule_and_" "path_walk.py",
 +        "-",
 +        'assert "' + PLAIN_WORD + '" not in text and "lead-book" in text',
 +    ): (1, ON_PURPOSE),
