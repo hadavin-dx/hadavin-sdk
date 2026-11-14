@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 04:00Z): R2 FULL RUN RUNNING, no rc yet
+- Run log: "n8n limit 1 up: True" (the P1 wait passed before this restart too); g12 d limit1 03:55:20Z, g3 d K1 03:57:50Z, g3 d K2 03:59:11Z (kill runs for variant d in progress). Disk free 4.9 GB.
+- Kill results: not read yet (counts come from the harness summary at the end; I will report any kill with no effect).
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No counts, no kill results yet: the run is not finished; N8N-RERUN-1.md R2 section waits for rc.
+- v3 doc tests, fresh reviewer, CI-equivalent run, non-root skip chunk: after the run.
+- Disk: 4.9 GB free; the run writes small files only; if free space drops under 2 GB I will say so at once.
+## WHAT I WOULD DO NEXT (ranked)
+1. Next light log read in 5 min; push block.
+2. At run end: N8N-RERUN-1.md R2 with counts next to published numbers, then egm reviewer.
+3. Then v3 doc tests, fresh reviewer, CI-equivalent run.
+
 ## REPORT (clock 03:56:05): R2 FULL RUN RUNNING; DOC PATCH v3 (text only) PUSHED
 - Run: last step ">> g12.py d limit1 20 03:55:20Z"; no rc yet.
 - Agent F (read-only) finished: 200/201, reset.sh with stale pid, crash_desk needs the desk stopped, GITLEAKS texts CONFIRMED by reading. Found real doc gaps: crash scene needs a second terminal, a lead sent after arming (else no crash), stop step only fits a start_all desk, address must be one plain address, a Python 3.13 skip line that read backwards, skip reasons worded differently in two files. All fixed in clean-machine/0003 patch (DOC-FIXES-v2.md has the list). One CODE finding left for the lead (frozen series): crash_desk.py shows a raw Python error for a bad DESK_NUDGE_TO instead of a clean message.
