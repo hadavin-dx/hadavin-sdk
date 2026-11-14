@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:41 UTC / 22:11 IST
+
+R456 read (handover/RULE-R456-WORK-CONDUCT.md). **AGENTS RUNNING: 3 language-model agents (A, B, EV7T) + 3 script lanes (A's mutant runner, B's final-bytes test run, EV7T's full run + 3 mutant runners).** Disk 2.6 GB free (94%), no growth.
+
+| id | doing | state |
+|---|---|---|
+| A a07e3822 | M1 cap, m1-m4 | before on r7t: 29 failed, 12 pins (its number; I will read which 12); mutants F/B running; no diff yet; box ends about 17:07Z |
+| B a397ac1e | m7, m8, m5 | 17/17 mutants killed; RESULTS-B drafted; waiting for its final-bytes run; I READ its diff list and RESULTS-B: touches run_real_check.py (smtp read only), test_r7t_findings.py (one rename) and its own test file. Honest from B: the smtp `attempts` counter is NOT turned into a check; a mail in delivery lag after a hard kill stays invisible to both counters (the same third-party lag as HubSpot); the m8 table tests are PINS (code was right, claims were loose) |
+| EV7T acdc878b | evidence on r7t | alive; its notes stale since 16:02: I messaged it 16:40 for a checkpoint and the disk statement; box ends about 17:23Z |
+
+**Critical path to the posted video (my side), steps with no dependency started now:** nothing left to start: A and B are the only inputs to the merge; the merge tooling and docs are done; EV7U and the mutant agent need the merged bytes. I read B's results while waiting (not idle). **Not started and why:** the "external sender" mode: needs YOUR choice 1/2/3 from block 96; I will not build code the n8n nodes might do. If you say option 2, a builder starts the same minute on run_real_check.py after A is merged (A owns that file now: two builders on one file would collide).
+**Slow:** A's mutant run is the slowest step (about 60+ mutants one at a time on one tree). I did not ask for more runners because the guard says ONE runner per tree copy and 6 cores are shared by 3 agents plus EV7T.
+**Not checked:** A's tests and diff; whether A and B/C diffs merge cleanly (test_r7t_findings.py is touched by both B and C); EV7T numbers.
+
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 16:33 UTC / 22:03 IST
 
 **AGENTS RUNNING: 3** (A, B, EV7T). Closed: C, DOC, DA-PROBE, MERGE-PREP. Disk 2.7 GB free (94%), flat. Numbers are the agents' own unless I say I checked.
