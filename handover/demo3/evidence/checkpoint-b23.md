@@ -23,3 +23,6 @@ Coordinator named the cause of the log cut-offs: a `git pull --rebase --autostas
 
 ## Round 6 final (10:26 UTC)
 Tree 8a5c446e3b59a87b7568497b5ace90631d9b303a staged, not committed. Final full run on a one-commit scratch repo: rc 0, 4409 passed, 179 skipped. Patch, 6 parts, sha256 and notes (lane3-fix-10-r6-notes.md) written. First full run (no .git) had 9 git-dependent failures: my setup slip; the rerun found 2 real slips of mine (demo_only paths in constants.py, hard-coded paths in tests), fixed.
+
+## Round 7 checkpoint 1 (about 10:45 UTC)
+Start tree 8a5c446e. Row 1 done (named groups MEANING_GROUPS for codes 1-5, test that plants new meanings). Next: M4 ps1, M3 reset test, row 11/12/13/14, row 5 producing tests, rows 6-10/15, mutants, final run.

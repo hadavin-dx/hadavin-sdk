@@ -1,3 +1,17 @@
+## HEARTBEAT 144 (10:39Z) - B22 mutation log shows a crash (told B22); B21 mutants running; B23 round 7 working
+
+| Agent / job | State at 10:39Z |
+|---|---|
+| B22 fix-2 round 13 | I read b22-logs/mutation-r13-raw.log: only a traceback from 10:17Z (b22-mut5.py:17, assert MODE_BLOCK in s failed on the first mutant), so the 36-mutant run it announced at 10:15Z produced no result. No checkpoint since 10:15Z. I messaged it at 10:39Z: fix the plant, rerun on the final tree, write a checkpoint, never count a failed plant as killed. Its answer is not in yet |
+| B21 fix-5 round 11 | processes alive: mutate-r11.py parts p2 and p3 plus a pytest run of test_start_all_late_refusal.py; logs mut-p0..p3 written until 10:33Z. No checkpoint since 10:05Z (30-minute rule due 10:35Z: overdue by my clock) |
+| B23 fix-10 round 7 | resumed 10:34Z; your answer: row 1 option (a) confirmed. No checkpoint yet (first due ~11:04Z) |
+| Stack builder | STOPPED |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B22's mutation run crashed on a failed plant (above); not yet answered.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): B21 and B22 results not yet read; no PowerShell run; no bash 4.4; IPv6 end-to-end skipped; WINDOWS-RUN-1 additions not written; kill script waits for the demo flows (due Mon 16 12:00Z).
+WHAT I WOULD DO NEXT (ranked): 1) check B21 and B22 checkpoints next block; 2) on hand-back: tree id, lint, two reviewers, resolve, resume; 3) WINDOWS-RUN-1 additions now while waiting.
+
 ## HEARTBEAT 143 (10:33Z) - L3-PLAN read; B23 resumed on fix-10 round 7; B21 and B22 still working
 
 | Agent / job | State at 10:33Z |
