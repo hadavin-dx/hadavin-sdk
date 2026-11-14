@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 13:25 UTC / 18:55 IST
+
+**r7s builder (af05acef) at 13:25Z, from its tsv/log files (builder numbers; I ran nothing):**
+- **S21 and S24 second pass: KILLED** (S21: 1 failed, 1 passed in test_r7s s6; S24: 1 failed in test_r7q q9). Second pass now S13, S19, S20, S21, S24 all KILLED, each restored byte-equal. A third pass (mut-results-S3.tsv) is running on the final bytes.
+- **X1ctx (q9 `__context__` mutant) still SURVIVED in the m8 file (mut-results-R.tsv, 3 passed): that run was on r7r tests, before the q9 strengthening.** I have NOT seen X1ctx re-run on the strengthened q9; it stays OPEN until it is killed on the final bytes.
+- **Full guard run on the strengthened bytes (hy-guard4, staged git copy): 1123 passed, 1 skipped, rc 0, 6 min 53 s** (skip = ntpath.isreserved needs Python 3.13). It is the builder's run, not independent; EV7S repeats it.
+- **r7p full-file m8 (pcopy-r7q.log): the r7q test file on a plain r7p copy: 44 failed, 21 passed.** I have not yet counted which failures are only AttributeError/ImportError (my grep count is not read yet); the 21 that pass are pins by design. Builder's own claim, unverified.
+- Builder has now written TAKE-USED-FILES-r7r.md, test_take_imports.py, APPLY-README-r7s.md and delta-r7r-to-r7s.diff in out/R7S/snapshot-r7s (I have not read or run them). Still missing: ruff 0.17.1, suppression counts, patches/hashes/apply matrix, R7S-RESULTS.md.
+
+**ETA hand-back about 13:45Z to 14:00Z (box end 14:00Z).** Then my hash and apply-matrix check, push of snapshot-r7s, EV7S (about 60 min). Agents running: 1. ASK: none. Next block about 13:35Z.
+
+
 ## STATUS (core lead) 13:15 UTC / 18:45 IST
 
 **r7s builder (af05acef) at 13:15Z, read from its tsv files, logs and checkpoint (builder claims; I ran nothing):**
