@@ -1,5 +1,32 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Container clock 04:02 UTC = 09:32 IST.
+
+STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
+- a712ad32 | r7f builder | candidate for EV7F | 03:03 / 08:33 | to 04:20 | r7f, no cap | running. Last checkpoints: 03:47 DNS lookup bounded in a new file src/lead_desk/netconnect.py (used by imap_count and smtp_provider; tests added) and a cipher-string change in a test set-up (adds !aNULL); 03:49 full-suite halves started on its stage3/stage4 trees, which also hunt the newline-named stray file with a listing of untracked files afterwards. No newer note in 12 minutes | ask it for a note if none by 04:08
+- aebef140 | wave 2 lane A: E03 E05 E06 + F01-P02 (16 ids), per-module test sets | resolve the lane-3 leftovers | 03:46 / 09:16 | to 04:31 | evidence | running: 1 of 16 done: F01 KILLED (tests/test_live_claude.py::test_header_trickle_hits_the_total_deadline, 74 s) | collect
+- a7f6b110 | wave 2 lane B: A07 A08 A09-A15 B01-B03 then A01 A02 A04 A06 | resolve lane-1 leftovers | 03:55 / 09:25 | to 04:40 | evidence | running: 1 done: A08 TIMEOUT even with the per-module set (243 s, unknown); its clean run of the smtp_outbox set ended in CRASH at 1 s (log shows the clean run not finishing) | collect; I will ask it to explain the clean-set crash
+- aaabb673 | wave 2 lane C: C01 C05, new B04 mutant (spec written: out/M7E/w2c/spec-B04new.json), then T03 T04 P01 P04 L03 | resolve lane-2 leftovers | 03:55 / 09:25 | to 04:40 | evidence | running: no mutant result yet; its clean run of the 14-file smtp_outbox set stopped at 69% after 84 s and was recorded as CRASH (raw log ends mid-run, no failure line); this means the clean set is NOT yet proven passing in that lane, so no mutant result of that module counts until it is | collect
+- closed: a1942238 (lane 1: KILLED 2, TIMEOUT 5, ABORTED 1, NOT RUN 10; restore checked by sha), ab9f9527 (lane 2), a5676b32 (lane 3), a954ceb0, a86b10ca, a4355ac3, a3b90516, a9760115
+
+Mutant totals on r7e (of 54), clean version: KILLED 20 (lane 1: A03 A05; lane 2: C02 C03 C04 C06 C07 C08 C09 C10 D01 D02 D03 D04 D05 E01 E02; lane 3: E04 E07; wave 2: F01), TIMEOUT-unknown 11 (A01 A02 A04 A06 A07 A08 C01 C05 E03 E05 E06), BADMUT 1 (B04; new spec written), ABORTED 1 (A08 in lane 1, now a TIMEOUT in wave 2), SURVIVED confirmed 0, not run about 21. My 03:56 block's total line was garbled; this line replaces it.
+
+ASK:
+1. Lead: two wave-2 lanes show a clean selector run that ends mid-way with no failure text (84 s and 1 s). Possible cause: another agent's process clean-up (a lane stopped its own runner by pid; one tried a pattern kill that the harness denied) or the load. Default I take: message lanes B and C to re-run their clean selector sets alone and not count a module's mutants until its clean set passes.
+
+NOT DONE / NOT CHECKED (item | why | next)
+- About 21 mutants not run; 11 unknown (TIMEOUT); B04 new mutant not run yet | wave 2 early | collect at 04:40
+- Clean selector baselines in lanes B and C not proven | runs cut short | re-run alone
+- r7f not built; the r7e Major open | builder | EV7F
+- r7f new code (netconnect.py, cipher string change) unreviewed | not built | reviewer, mail pass 9
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI | end, clean patch | later
+- Newline-named stray file writer: not found yet (builder hunting)
+
+WHAT I WOULD DO NEXT (ranked)
+1. Get lanes B and C onto proven clean baselines; collect all wave 2 results; every survivor killed or proved equivalent.
+2. EV7F once on r7f alone, checkout without data/, fresh reviewer and mail pass 9 in parallel.
+3. Final README, sweep, QUEUE DONE.
+## STATUS (core lead)
 Container clock 03:56 UTC = 09:26 IST.
 
 STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
