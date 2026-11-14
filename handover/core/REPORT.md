@@ -1,4 +1,39 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+
+## STATUS (core lead) 04:21 UTC / 09:51 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a712ad32 (r7f builder) | built patch r7f on r7e | close r7e review Major + mail survivors | 03:01 / 08:31 | closed | r7f | DONE (claims unverified) | EV7F |
+| a0da50e2 (r7f reviewer) | fresh whole-patch review of r7f | independent read of diff + builder file | 04:19 / 09:49 | about 05:10 / 10:40 (50 min box) | review 1 of r7f | RUNNING | read report, resolve |
+| aebef140 (lane A) | wave-2 mutants, tls/hubspot/live modules | independent kill proof on r7e | 03:56 / 09:26 | open | wave 2 | RUNNING (stopped runall at G03/T01 survivors) | 900 s rechecks |
+| a7f6b110 (lane B) | wave-2 mutants, smtp_outbox | same | 03:56 / 09:26 | open | wave 2 | RUNNING | continue |
+| aaabb673 (lane C) | wave-2 clean sets, B04new | same | 03:56 / 09:26 | open | wave 2 | RUNNING | continue |
+
+**r7f builder note (builder claims, NOT independently run yet):** r7f patches are in handover/core/fix/ (sha256 verified by me: OK). Claims: 8 new tests fail on r7e, 71 CONTROL tests pass; the stopped-run exit 0 Major is fixed (any driver:stopped line gives exit 3); the DNS look-up bound is a new src/lead_desk/netconnect.py (helper thread; a hung look-up thread stays alive until the system answers, holds no connection or secret); anonymous-cipher check now matches "ADH-" / "AECDH-" instead of "anon" (mail pass 8 gap T03); hubspot _mask prints fixed words only; ruff clean. Not done by the builder: 22 of 140 test files not run; the stray file named a<newline>b was NOT found; EQUIVALENT claims (A10, D21) not re-proven by anyone else.
+
+**Rechecks on r7e (what I measured, wave-2 lanes):** G03 (hubspot per-read arm removed): survived the module set AND the selector run, 689 passed, so r7e has a real gap here. T01 (BOM strip removed): survived, 433 passed. B02 (reply cap: buffered bytes not counted): survived module set (724 passed) AND the full 22-file + r7d/e set at 900 s (1172 passed, 434 s): a confirmed survivor on r7e. The r7f builder says tests for G03, T01 and B02 now kill them; I have not run that. Lane B/C clean smtp_outbox set: lane C re-ran it alone and it passed (724 passed, 143 s, rc 0); the earlier CRASH (84 s, no failure text) is still unexplained and is NOT counted. B04 new mutant: killed (test_n3 [4096-single]). Totals so far on r7e: KILLED 24+, SURVIVED 3 confirmed (G03, T01, B02), TIMEOUT about 10 (unknown), not run about 15.
+
+ASK 1: stop lanes A, B, C after their current mutant so EV7F (one full run on r7f, quiet machine) can start? Default in 10 min (04:31 UTC): YES.
+ASK 2: should the mutant proof move to the r7f tree (builder says the r7e survivors are killed there)? Default: YES, re-run G03 T01 B02 and the 14 claimed rows on r7f inside EV7F.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7f full suite (140 files) | builder ran 118; no independent run yet | EV7F alone, no data/ folder |
+| the a<newline>b stray file writer | not found | per-file run with git ls-files -o after each file, in EV7F |
+| 3 survivors G03, T01, B02 on r7f | claims only | run them on r7f |
+| about 10 TIMEOUT and 15 not-run mutants | machine load | re-run on a quiet machine |
+| PowerShell scripts, Windows, Python 3.13/3.14 | no such runtime here | owner Windows run |
+| CodeQL, Sonar, CodeRabbit, CI | stay for the end | run on the clean patch |
+| fix/README.md still the old file | final step | rewrite after the frozen patch |
+| clean smtp_outbox set crash (84 s) | unexplained | note in final README if it repeats |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Stop the lanes (ASK 1) and run EV7F on r7f alone.
+2. Read the r7f reviewer report and run fresh mail pass 9 over 30+ mutants on r7f in parallel with EV7F evidence reading.
+3. If a real Blocker or Major appears, start the r7g builder; otherwise freeze and rewrite fix/README.md.
+
 ## STATUS (core lead)
 Container clock 04:13 UTC = 09:43 IST. Applied the lead's 04:09Z answer.
 
