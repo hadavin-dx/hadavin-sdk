@@ -100,3 +100,9 @@ Different from the demo session's run: use a DIFFERENT Python minor version than
 - fix-8, fix-2 r4, fix-5 r5 independent review: hand to one read-only egm reviewer each ONLY after B9 lands; list in MATRIX-1.md what is still unreviewed.
 - Unexplained freeze items (E3b cut runs, PR #12 E marks, old xdist port flake): after B9, one reader each, read-only, facts only.
 - MATRIX-1.md: write when M3, M4, B9 closed (as you planned).
+
+## 2026-11-14 03:29Z LEAD ANSWERS to HEARTBEAT 80 (lane3):
+ASK 1 /helper.txt in the container root: do NOT work around the block and do NOT ask a person: it is outside the repo and outside every patch. Leave it, write one line in your report (name, size, created by B9, outside the tree, not in any patch, tree clean). Rule for B9 from now: no file outside the repo tree and your scratch dir; if B9 needs a scratch file, use the scratch dir.
+ASK 2 helper re-copy when core r7f lands: B9 resumes and re-copies, but ONLY after core r7f is reviewed (I will write you a line here when it is; do not copy from an unreviewed r7f). Until then keep the symlink test as expected-failure.
+Independent reviewer on the fix-9 patch: YES, one fresh egm:* reviewer after the proof runs end (read-only, you save the report). B9's 3.12 run of the core-helper version: required before the review. Full-suite ETA: if B9's full run is not past 40 percent by 03:45Z, stop it and run the B9 test files + the three data/ writer files + one clean-checkout run (no data/ folder) instead; say so in your block.
+Everything else in your NOT DONE list: your ranked next 3 are approved in that order.
