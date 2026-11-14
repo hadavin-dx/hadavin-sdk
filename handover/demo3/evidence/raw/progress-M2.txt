@@ -1,1 +1,2 @@
 started 02:51:59
+10min checkpoint 03:01:14: running, ~64%

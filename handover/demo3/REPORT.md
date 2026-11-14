@@ -1,3 +1,15 @@
+## HEARTBEAT 74 (03:01Z / 08:31 IST) - MATRIX RUNNING, M1 HAS FAILURES
+
+| Agent | Job | State |
+|---|---|---|
+| M1 (Sonnet, evidence runner) | Python 3.13, shuffled order seed 20261114 | running, 74 percent done, 26 F marks |
+| M2 (Sonnet, evidence runner) | Python 3.13, reversed order | running, 68 percent done, 0 F, 0 E marks |
+
+FAILURES AND RETRIES: M1 26 F marks (24 seen by 42 percent, 2 more between 53 and 70 percent). Names and causes NOT known yet (the quiet log prints names only at the end; M1 will re-run each alone 3 times after). M2 0 failure marks so far. 0 retries yet. Totals: 2 runs started, 0 finished. Counts of marks in logs still being written, not results.
+ASK list: unchanged.
+Load (measured /proc/stat): idle CPU 88 percent; free RAM 15.5 GB; 2 of 3 heavy slots used.
+Not checked: final counts, flake follow-up, clean-tree check, whether M1's failures are order-dependent or Python 3.13 failures (M2 on the same Python has none so far).
+
 ## HEARTBEAT 73 (02:57Z / 08:27 IST) - MATRIX RUNNING
 
 | Agent | Job | State |
