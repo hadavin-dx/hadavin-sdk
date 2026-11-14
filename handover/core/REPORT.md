@@ -1,5 +1,26 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:10 UTC / 17:40 IST
+
+**EV7R (a7707d5f, started 11:59) progress, read from its files at 12:10Z (raw, runner has not written its evidence file):**
+- Its own checkpoints: patch hashes OK; its tree built from the CRLF patch equals tree-R7R except pycache; staged git copy made (318 files); **full run started 12:00:51Z IN THE STAGED GIT COPY**.
+- **Full run at about 31 percent at 12:10Z, no F or E in the progress dots so far (my grep of the log: 0). A progress line without F proves nothing about the last 69 percent.**
+- ruff 0.17.1 (its raw files): check "All checks passed!", format "229 files already formatted". Suppression counts and the string-equality check: runner says done (12:01 checkpoint), numbers not yet in a file I have read. Hostile drivers: not yet run (after the full run).
+- Load at 12:10: 1.77 (full run plus the builder's run). No denial.
+
+**"My own broad run": I started none.** The only other run is the r7r BUILDER's own 104-file grep-selected run (pid 20085, in its own copy, started about 12:00): at about 46 percent, 0 F or E in its dots (same caveat), ends by itself at its 1700 s timeout (about 12:30Z). It adds load while EV7R's full run goes; EV7R records the load. The builder cannot be asked to stop it (its kill was refused; I did not retry it for it).
+
+**ETA:** the r7q full run took 30 min 30 s, so the EV7R full run should end about 12:32Z; then hostile drivers, about 10 min, then the evidence file: **EV7R-EVIDENCE.md about 12:45Z** (box ends 13:00). I push it the moment it lands and tell you.
+
+| id | what | started UTC/IST | expected end | state | next |
+|---|---|---|---|---|---|
+| a7707d5f (EV7R) | full run in staged git copy, hostile, ruff, supp | 11:59 / 17:29 | evidence about 12:45 | RUNNING (full run about 31%) | push evidence |
+| a17df18e (r7r builder) | done; own broad run going | 11:46 / 17:16 | run ends about 12:30 | WAITING | read its final tail, report raw |
+
+Agents running: 2. ASK: none.
+NOT DONE / NOT CHECKED: EV7R final counts and hostile table; your reviewer on r7r; M9-74, M9-79; ledger M1 and M2 OPEN until EV7R shows the fixes. Next block about 12:20Z.
+
+
 ## STATUS (core lead) 12:00 UTC / 17:30 IST
 
 **r7r HANDED BACK and PUSHED (handover/core/fix/ r7r set + handover/core/snapshot-r7r/ with MANIFEST.txt, 2 files, delta r7q-to-r7r 85 lines).** I verified the three patch hashes against sha256-r7r.txt (crlf 90e3b978..., lf 87bff76e..., delta a6714e48...) and read the apply matrix (a-crlf, b-crlf, c-lf rc 0); CRLF patch and delta stored as .gz. Only two TEST files differ from r7q (diff -rq of the two trees: tests/test_file_call_guard.py, tests/test_r7q_findings.py); src and scripts are byte-equal to r7q.
