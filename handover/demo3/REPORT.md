@@ -1,18 +1,15 @@
-## HEARTBEAT 177 (15:35Z) - v3 case C (SMTP dead 600 s) looks like a PASS so far (n = 1); final 150 s watch still running
+## HEARTBEAT 178 (15:43Z) - v3 case C PASS (n = 1); case B90 FAILS the "exactly 1 alert" rule (n = 1): 2 alerts
 
-| v3 flows 6ebb7f62, case C, n = 1 (read from the run's own event log and the database, not yet the saved result) | Numbers at 15:35Z |
-|---|---|
-| Lead mail | stored at 0 s, then dropped by the fake: state unknown, attempts 1, mail_sent true |
-| Fake SMTP | dead (closes the connection without a greeting) from 0 s to 600 s |
-| Alert tries while dead | 4 tries, at 29 s, 119 s, 239 s, 419 s: each refused, alert_attempts counts up, alert_sent stays false |
-| Alert after restore | 5th try at about 690 s: accepted, 1 alert stored (to the alerts address), alert_sent true, alert_attempts 5 |
-| Spin / extra load | none: 6 SMTP connections in total (1 lead mail, 4 refused, 1 alert), spacing 90 to 180 s |
-| Counts (outside n8n, per lead id) | 1 intake mail, exactly 1 alert, 1 CRM row |
-| Remaining | the 150 s check that no second alert appears (ends about 15:38Z); then V3B90 |
+| v3 flows 6ebb7f62, my own cases (plan: kill/PLAN-V3-ALERT.md) | n | Result |
+|---|---|---|
+| A: SMTP refuses the alert recipient twice, then accepts | 1 | PASS: 1 alert (at 240 s), alert_sent true, 1 intake mail |
+| B20: SMTP holds the alert answer 20 s | 1 | PASS: 1 alert (at 50 s), alert_sent true |
+| C: SMTP dead 600 s, then restored | 1 | PASS: 4 refused tries (29, 119, 239, 419 s), 1 alert at 690 s, alert_sent true, 1 intake mail, no second alert in the 150 s watch |
+| B90: SMTP holds the alert answer 90 s (longer than the 60 s first claim window) | 1 | FAIL for "exactly 1 alert": 2 alerts, both stored at about 120 s. 1 intake mail, 1 CRM row, alert_sent true, alert_attempts 2. |
 
-Note: the alert came about 90 s after the SMTP came back (restore at 600 s, next try at 690 s). Not a loss; the delay is the retry spacing.
+Cause of B90 (from the timeline, not yet traced in the node logs): the first claim lasts 60 s (alert_until = now + 60 s x (1 + attempts)). The send was held 90 s, so the claim ran out at about 60 s while send 1 was still waiting. The sweep at about 91 s claimed the row again (attempts 2) and sent alert 2. Both mails arrived at the fake at about 120 s. alert_sent turns true only after a send succeeds, so nothing stops the second claim. The demo README already says a duplicate can happen when a send outlasts the claim window; this run measures it: the owner gets 2 alerts, never 0. Danger direction is the safe one (duplicate, not loss). Fix options for the demo (not tested by me): make the claim window longer than the node timeout (the SMTP node timeout is the number to compare), or set the node timeout below the first claim window.
 
-ASK for the lead: none.
-FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): C final verdict (150 s watch); V3B90; repeats (n = 2 or 3); K3/K6/T12/T11 on v3 (not ordered); RESULTS.md and comparison with the demo table.
-WHAT I WOULD DO NEXT (ranked): 1) finish C and B90; 2) repeats; 3) RESULTS.md, then compare.
+ASK for the lead: should the demo session decide if 2 alerts in the slow-SMTP case is accepted (then the owner-facing text must say "possible duplicate alert") or fixed? Please forward B90 to them.
+FAILURES AND RETRIES: none new. B90 is a named finding with a cause, not a flake.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): n = 1 for every case so far (repeats queued: A, C, B20, B90, A, about 40 min); B90 cause not yet traced in the n8n log; K3/K6/T12/T11 on v3 (not ordered); RESULTS.md and comparison with the demo table.
+WHAT I WOULD DO NEXT (ranked): 1) repeats, starting with B90 (is the duplicate always there?); 2) trace B90 in the n8n log; 3) RESULTS.md, then compare.
