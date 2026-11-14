@@ -1,5 +1,34 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:09 UTC / 10:39 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a2783837 (r7g builder) | finishes r7g | r7f review NOT CLEAN | 04:52 / 10:22 | box ends about 05:52 | r7g retry 1 | RUNNING, NO HAND-BACK YET. Its 05:00 checkpoint: it changed an r7f test (tests/test_r7f_findings.py, the stopped-run assertion, because the M2 fix changes the text), will re-run it, run the git-needing tests in a git copy and REBUILD the patches. So the sha256 values in my 05:00 block are stale; I will use the new ones. A mutant run on the new tests is in progress now (process list, 05:09) | hand-back; check the RESULTS line for the changed test (old assertion, new assertion, why not weaker) |
+| ae345331 (EV7F-PARTIAL) | mutants on r7f, hostile table | delta base | 04:52 / 10:22 | box ends about 05:52 | EV7F retry 1 | RUNNING, NO MUTANT RESULT YET. Clean sets only so far, all rc 0: crm_hubspot, tls_trust, smtp_outbox (04:57), imap_count 244 s (05:02), smtp_provider 238 s (05:06); mutants start next | EV7F-PARTIAL.md |
+| EV7G | the one full run on r7g | independent proof of the final code | NOT STARTED | starts when the r7g patch lands | | WAITING for the rebuilt r7g patch (starting it on the old patch would test code that is about to change) | start at hand-back with the fresh reviewer |
+
+Machine: load about 0.6-0.8 at 05:09, up 19 min since the restart; the builder and EV7F are both running real work but with low CPU use (the loop is mostly waiting, so the machine is quiet).
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7g patch not final | builder is rebuilding after a test change | verify sha256 at hand-back |
+| the changed r7f test | assertion change not yet read | read the RESULTS line and the diff before EV7G; if the new assertion is weaker, send it back |
+| EV7F-PARTIAL mutant results, hostile table | not produced yet | wait; read EV7F-PARTIAL.md |
+| EV7G, r7g reviewer, mail pass 9 | wait for the patch | start together at hand-back |
+| raw_bidi test failure in the builder's loop | probably needs the git copy; builder is re-running it there | read the result |
+| first clean-set CRASH cause, orphan-worker test | no evidence | list in README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the builder hand-back: read the changed-test line, verify sha256 of the three patches, copy to handover/core/fix/, then start EV7G (one full run) and the fresh r7g reviewer together.
+2. Mail pass 9 on an exported r7g snapshot (30+ mutants).
+3. Freeze on a clean pass; rewrite handover/core/fix/README.md; sweep agents and processes.
+
+
 ## STATUS (core lead) 05:00 UTC / 10:30 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
