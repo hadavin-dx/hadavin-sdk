@@ -1,0 +1,8 @@
+<   if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
+>   if [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
+<     if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi # 64 bytes (after the mark) or more is far longer than any process number
+>     if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi; if (( ${#pid} >= 64 )); then pid=""; fi # 64 bytes (after the mark) or more is far longer than 
+M1 [length check moved to the caller (caller locale)]: rc=1 KILLED :: 1 failed, 37 passed, 59 deselected in 20.83s
+<   pid="${pid#"${pid%%[![:space:]]*}"}"; pid="${pid%"${pid##*[![:space:]]}"}" # trim the spaces and the line end
+<     if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi # 64 bytes (after the mark) or more is far longer than any process number
+>     if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi; pid="${pid#"${pid%%[![:space:]]*}"}"; pid="${pid%"${pid##*[![:space:]]}"}" # 64 bytes (after th
