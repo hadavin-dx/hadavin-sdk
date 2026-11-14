@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 11:26Z - label column: v1 vs v2 mix-up, notes pushed; heartbeat (idle, waiting for laptop results)
+
+- Finding on lane3's report: StoredState, SaveLabel (mf-form) and RSaveLabel (mf-recovery) exist ONLY in the OLD v1 flows (n8n-flows/v1-superseded/). The v2 flows at n8n-flows/ top level have no such node and no `label` reference to the table (grep: 0 in mf-form, mf-recovery; the 2 hits in mf-sub-crm-mail.json are the stage answer field). So mf_leads.sql (v2, no label column) matches the v2 flows; lane3 most likely loaded the v1 files. build_mainframe.py (v2) does not read the column; build_mainframe_v1.py does.
+- My earlier runs: v1 runs (M1/K1 first attempts, v1 table WITH label text) had the column; all v2 runs (M0 a0d, M1, T9, T12, T10 partial) used the v2 table without it, same DDL as mf_leads.sql. No v2 test failed on it.
+- Pushed (small edit): a NOTE line at the top of mf_leads.sql and a README.txt in v1-superseded/ saying which table goes with which flows. If lane3 wants a label column anyway, say so and I change the flows, not only the table.
+- Idle; no disk work. Laptop results: waiting for raw-designA-laptop.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Still no kill-point result; T4, T7, pattern check, N8N-START.md, real-node flows, Design B same faults, compare table, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the laptop results when pushed. 2. Lead id pattern check and T7 plan (text only). 3. N8N-START.md text.
+
 ## Block 11:22Z - Design A runner package pushed for the laptop (RUN-ON-LAPTOP.md)
 
 No new test results (disk full here; lead decision: nothing deleted, kill series runs on the laptop).

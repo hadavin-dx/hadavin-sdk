@@ -1,0 +1,1 @@
+Superseded v1 flows. They use a lead table WITH a label column (label text), unlike mf_leads.sql one folder up (v2, no label column). Use the v2 flows with mf_leads.sql; these are kept for the compare only. No claim.
