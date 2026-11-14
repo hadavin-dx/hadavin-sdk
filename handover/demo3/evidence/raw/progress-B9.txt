@@ -2,3 +2,4 @@ start 03:14:48
 10min: edits done, running affected tests 03:15:27
 20min: fails-before done 03:17:14
 30min: switched to core helper 03:20:38
+40min budget: full run started 03:22:29

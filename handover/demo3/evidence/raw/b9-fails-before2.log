@@ -1,0 +1,39 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_the_tests_that_use_the_data_folder_leave_none_in_the_repository _____
+
+tmp_path = PosixPath('/home/user/work/priv/m6-tmp/bt7/test_the_tests_that_use_the_da0')
+
+    def test_the_tests_that_use_the_data_folder_leave_none_in_the_repository(tmp_path: Path) -> None:
+        """Runs the affected test files in a copy of the repository: no `data` folder may exist in the copy afterwards."""
+        copy = tmp_path / "copy"
+        copy.mkdir()
+        _copy_repo(copy)
+        assert not (copy / "data").exists(), "the copy must start without a data folder"
+        files = [f for f in AFFECTED if (copy / f).is_file()]
+        assert files, "the affected test files are missing from the copy"
+        env = {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "DESK_"))}
+        env["TMPDIR"] = str(tmp_path / "tmp")
+        (tmp_path / "tmp").mkdir()
+        done = subprocess.run(  # noqa: S603 (this interpreter, our own test files)
+            [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-q", "--basetemp", str(tmp_path / "bt"), *files],
+            cwd=copy,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            check=False,
+        )
+>       assert (copy / "data").exists() is False, ("a data folder is left in the repository", done.stdout[-1500:])
+E       AssertionError: ('a data folder is left in the repository', '...................................................ss................... ...%]
+E         ............sssss....s                                                   [100%]
+E         86 passed, 8 skipped in 32.40s
+E         ')
+E       assert True is False
+E        +  where True = exists()
+E        +    where exists = (PosixPath('/home/user/work/priv/m6-tmp/bt7/test_the_tests_that_use_the_da0/copy') / 'data').exists
+
+tests/test_data_folder_helper.py:124: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_data_folder_helper.py::test_the_tests_that_use_the_data_folder_leave_none_in_the_repository
+1 failed in 32.87s
