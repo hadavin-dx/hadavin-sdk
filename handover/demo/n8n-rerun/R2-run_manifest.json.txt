@@ -1,0 +1,25 @@
+{
+ "n8n": "2.46.6",
+ "node": "v24.22.2",
+ "python": "3.13.18",
+ "os": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+ "machine": "x86_64",
+ "webhook_live_text": "not registered for",
+ "git_head": null,
+ "harness_dirty": null,
+ "started_utc": "2026-11-14T03:47:23Z",
+ "start_load": {
+  "cpu_idle_pct": 100.0,
+  "free_ram_mb": 15236.0
+ },
+ "start_utc": "2026-11-14T03:47:24Z",
+ "smoke": false,
+ "min_idle": 80.0,
+ "gate_wait_min": 10.0,
+ "end_load": {
+  "cpu_idle_pct": 100.0,
+  "free_ram_mb": 15243.8
+ },
+ "end_utc": "2026-11-14T04:37:22Z",
+ "status": "exit 2"
+}

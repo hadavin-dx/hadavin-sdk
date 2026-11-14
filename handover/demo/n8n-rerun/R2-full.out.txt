@@ -1,0 +1,35 @@
+n8n up (limit 1): True
+>> setup.py 03:47:36Z
+>> deploy2.py a 03:47:37Z
+>> deploy2.py d 03:47:37Z
+>> deploy2.py c ={{ new Date($json.createdAt).getTime() === new Date($json.updatedAt).getTime() }} 03:47:38Z
+>> deploy_b.py 03:47:38Z
+n8n default up: True
+>> g12.py a default 20 03:47:48Z
+>> g12.py b default 20 03:50:14Z
+>> g12.py c default 20 03:52:45Z
+n8n limit 1 up: True
+>> g12.py d limit1 20 03:55:20Z
+>> g3.py d K1 5 03:57:50Z
+>> g3.py d K2 5 03:59:11Z
+>> g3.py d K3 5 04:00:30Z
+n8n default up: True
+>> g3.py a K1 5 04:01:55Z
+>> g3.py a K2 5 04:03:16Z
+>> g3.py a K3 5 04:04:36Z
+>> g3.py c K1 5 04:05:57Z
+>> g3.py c K2 5 04:07:20Z
+>> g3.py c K3 5 04:08:42Z
+>> g3.py b K1 5 04:10:04Z
+>> g3.py b K2 5 04:11:28Z
+note: g3.py b K2 5 exited with code 4 (kill rows that do not count); the run goes on, the shortfall check at the end decides
+>> g3.py b K3 5 04:13:47Z
+note: g3.py b K3 5 exited with code 4 (kill rows that do not count); the run goes on, the shortfall check at the end decides
+>> deploy3.py 04:16:05Z
+>> g3e.py K3 5 04:16:08Z
+>> g3e.py K2 5 04:22:14Z
+>> g3e.py K1 5 04:28:17Z
+>> g12e.py 04:34:21Z
+RUN ALL INCOMPLETE:
+* g3 b K2: expected 5 valid kill runs, found 4
+* g3 b K3: expected 5 valid kill runs, found 4

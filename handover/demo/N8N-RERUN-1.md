@@ -30,3 +30,51 @@ None exist: no variant produced a count. Published numbers (from n8n-published-n
 1. Run the bounded diagnostic above and write the exact n8n activation error for g2-b2 (facts only, no change to the harness).
 2. If the cause is in the harness or the Postgres credential setup (not in n8n): write the one-line change as a proposed patch text for the lead, run it ONLY if told, as a separate labelled run.
 3. Then the egm reviewer on N8N-RERUN-1.md plus the README of the branch, and delete the 2.8 GB node_modules after the lead says the result folders are saved.
+
+---
+# R2-PATCHED RUN (the lead's order 03:29Z/03:40Z). R1 above stays on record: exit 1, no counts, never replaced.
+What R2 is: the same harness commit, run from a scratch copy with ONE change, patch P1 (text diff n8n-rerun/R2-patch-P1.diff, reason in n8n-diag-1.md): before every restart of n8n (and before the smoke kill), wait until the webhooks of the deployed workflows answer in the running process. SHA256SUMS of the harness no longer matches the scratch copy (not recomputed; not needed). No n8n version change; default idle gate 80 percent kept (no min-idle override). node_modules of the work folder are hard links to the first smoke folder's install (disk): a deviation from "its own npm ci". Same machine as R1 (Linux, 4 cpus, 16 GB, n8n 2.46.6, Node 24.22.2, Python 3.13.18).
+
+## Run facts
+- Quiet check before: vmstat 5 s x 22, mean idle 91 percent, load 0.11. Harness idle reading at start 100 percent, at end 100 percent (run_manifest). Run folder load file: see R2-tables.md section "Machine load".
+- Started 03:47:23Z, ended 04:37:22Z (50 minutes). EXIT CODE 2: "RUN ALL INCOMPLETE": g3 b K2: expected 5 valid kill runs, found 4; g3 b K3: expected 5 valid kill runs, found 4. The harness printed, for b K2 and b K3, "exited with code 4 (kill rows that do not count)". Reason in the summary: stale_running_after_kill x2 (an execution still showed running after the kill and the retry): 1 attempt in b K2 and 1 in b K3. Both attempts are kept and counted as invalid, not hidden. I did NOT run extra attempts (the harness does not).
+- n8n restarts passed the P1 wait every time (log: "n8n default up: True", "n8n limit 1 up: True"). Variant e's path is not in the harness's check list; e ran through.
+- Raw files: R2-tables.md (the harness's own summarise output, unedited apart from path/long-id masking), R2-full.out.txt, R2-run_manifest.json.txt, R2-exit.txt, in n8n-rerun/.
+
+## Counts next to the published ones (rerun = this run R2; published = the branch's tables.md; the lead's numbers file in the last column). Differences are marked, not explained.
+| item | published (tables.md) | R2 rerun | lead's number list |
+|---|---|---|---|
+| variant a, ten at once, exactly 1 CRM row and 1 email | 18 of 20 | 12 of 20 (attempts 20, invalid 0) | 18 of 20 (builder's overloaded-laptop rerun 10 of 20) -> DIFFERENT |
+| variant b, ten at once | 20 of 20 (attempts 20) | 20 of 20 (attempts 21, invalid 1: no overlap) | - |
+| variant c, ten at once | 20 of 20 (attempts 75, invalid 55) | 20 of 20 (attempts 20, invalid 0) | - |
+| variant d, ten at once | 20 of 20 (attempts 55, invalid 35) | 20 of 20 (attempts 20, invalid 0) | - |
+| replay added posts, a to d | 0 of 20 each | 0 of 20 each | - |
+| kill rows where no client lost its connection (kill possibly without effect) | a 0 of 15, b 0 of 15, c 0 of 15, d 0 of 15 | a 0 of 15, b 0 of 13 valid, c 0 of 15, d 0 of 15 | 1 of 15 -> that figure is NOT in tables.md as I read it; I report both without a reading |
+| a kill runs, CRM request in flight: 1 CRM row and 0 emails after one retry | 5 of 5 | 1 of 5 | -> DIFFERENT |
+| a kill runs, the two email points: 1 CRM row and 1 email | 9 of 10 | 3 of 10 | -> DIFFERENT |
+| b kill runs, CRM in flight / two email points | 5 of 5 / 10 of 10 | 4 of 4 / 9 of 9 (2 attempts invalid) | - |
+| c kill runs | 5 of 5 / 10 of 10 | 5 of 5 / 10 of 10 | - |
+| d kill runs | 5 of 5 / 10 of 10 (2 attempts invalid) | 5 of 5 / 10 of 10 | - |
+| crashed entry visible (variant a K1, email request in flight) | 5 of 5 | 5 of 5 (table rows, all "yes") | "K1 crashed entry visible 1 of 5" -> that wording is not in tables.md as I read it |
+| variant e, ten at once (final 1 CRM, 1 email) | 5 runs, (1,1) x5 | 5 runs, (1,1) x5 | - |
+| variant e, second CRM row at the two email points | 4 of 10 | 1 of 10 -> DIFFERENT (equals the builder's overloaded-laptop rerun in the lead's list) | 4 of 10 (builder rerun 1 of 10) |
+| variant e, 2 or more emails at the two email points | 10 of 10 | 10 of 10 | - |
+| variant e, status not sent at 60 s | 0 of 15 | 0 of 15 | - |
+| cross-check with the stand-in's own log | (see tables.md) | 138 runs equal, 0 differ, 2 kill runs left out | - |
+Reading note, fact only: variant a in R2 ended far from 1 CRM row and 1 email more often than in the published table (12 vs 18 of 20), and variant a's kill runs ended with a different number of rows than published. I give no reason; the interval text in R2-tables.md says the runs are not independent.
+
+## Did P1 touch any published claim?
+P1 adds one wait (webhooks live in the running n8n) BEFORE the kill step of restart(); it does not touch g3.py or g3e.py, where the kill points K1 to K3 are set (the kill inside a test run happens at a known trigger in those scripts, read from their code names, not changed). So the kill windows and the ten-at-once tests are unchanged; only the time between deploy and the restart is longer in R2 than in R1. Whether a longer pre-restart wait could change a count is NOT established.
+
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- The two missing valid kill rows (b K2, b K3): not repeated (harness has no extra attempts; running them by hand is outside the order); next: if told, run b K2 and K3 only, labelled R3-partial.
+- Reason for variant a's 12 of 20: not investigated; next (if told): a second quiet full run to see whether 12 repeats, or variant a alone.
+- Published "1 of 15" and "K1 crashed entry visible 1 of 5": I could not find them in tables.md; lead to say where they come from.
+- Whether the pre-restart wait changes counts: not tested (would need R1-style runs with no wait, which fail).
+- Hard-linked node_modules and the scratch copy: disclosed deviations.
+- Egm reviewer on this file and the branch README: not started; next: start now.
+- CI-equivalent run, non-root skip chunk, v3 doc tests: now allowed (the run ended); not started yet.
+## WHAT I WOULD DO NEXT (ranked)
+1. Egm read-only reviewer on N8N-RERUN-1.md + the branch README (gaps list).
+2. Machine is free now: v3 doc tests, hygiene, CI-equivalent run on main and on the frozen tree + patches.
+3. If the lead says so: a second quiet full run (R2b) to see whether variant a's 12 of 20 repeats.
