@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 04:25Z): R2 FULL RUN RUNNING, no rc yet
+- Run log: g3e K3 (variant e kill runs) 04:16:08Z took about 6 min, then g3e K2 04:22:14Z. No new harness note since the two code-4 notes for b K2 and b K3. Next: e K1, e burst, ten-at-once, replay. Disk 4.9 GB free.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Meaning and size of the code-4 notes for b K2 and b K3: not read; after the run.
+- No counts, no kill results yet; R2 section of N8N-RERUN-1.md waits for rc.
+- Whether e's webhook was live at its kill runs: not checked.
+- v3 doc tests, fresh reviewer, CI-equivalent run, non-root skip chunk: after the run.
+## WHAT I WOULD DO NEXT (ranked)
+1. Next light log read in 5 min; push block.
+2. At run end: read b K2/K3 rows and shortfall check; N8N-RERUN-1.md R2 with counts next to published numbers; egm reviewer.
+3. Then v3 doc tests, fresh reviewer, CI-equivalent run.
+
 ## REPORT (clock 04:21Z): R2 FULL RUN RUNNING, no rc yet; TWO HARNESS NOTES
 - Run log: b K2 and now ALSO b K3 each printed "exited with code 4 (kill rows that do not count); the run goes on, the shortfall check at the end decides" (b K1 did not print it). After b K3 the harness ran deploy3.py (04:16:05Z) and g3e.py K3 (04:16:08Z, variant e kill runs); the restart before e did not stop the run. Disk 4.9 GB free.
 - Reported as printed. Not yet read: how many of the 5 rows in b K2 and b K3 did not count, and why; the shortfall check at the end will say whether b K2 and K3 are short of 5.
