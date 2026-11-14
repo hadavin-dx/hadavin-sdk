@@ -7,7 +7,7 @@ import sys, os, json, time, subprocess, threading, uuid, collections, statistics
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "n8n-tests"))
 from dn1_common import *
 HERE_MF = os.path.dirname(os.path.abspath(__file__))
-STAGEP, CRMP = 8770, 8771
+from runcfg import STAGEP, CRMP   # defaults 8770 / 8771; env MF_STAGE_PORT / MF_CRM_PORT
 ST_URL, CRM_URL = "http://127.0.0.1:%d" % STAGEP, "http://127.0.0.1:%d" % CRMP
 JOURNAL, CRMLOG = os.path.join(S, "stage-journal.jsonl"), os.path.join(S, "crm.log.jsonl")
 REPS = int(os.environ.get("MF_REPS", "20")); LEASE = int(os.environ.get("MF_LEASE", "20")); RESULTS = {}

@@ -14,9 +14,9 @@ HERE = os.environ.get("N8N_HARNESS_DIR", "/tmp/rr/r2/demo_only/n8n_evidence/harn
 DN1 = os.path.dirname(os.path.abspath(__file__))  # this folder (dn1.py)
 PG_IMAGE = "postgres@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657"  # postgres:16 on 2026-11-09, RepoDigest read from the local image of a Windows x64 Docker Desktop; expected to be the multi-arch index (so also arm64), UNVERIFIED
 HOPELESS_PULL_TEXT = (b"cannot connect to the docker daemon", b"is the docker daemon running", b"permission denied while trying to connect")  # the docker client cannot reach its daemon (not running, or this user may not use its socket): waiting cannot help
-PG_NAME, LABEL = "n8n-publish-pg", "n8n-evidence.run=1"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "n8n-tests"))
+from runcfg import PG_NAME, LABEL, PORTS, PGP   # defaults = the old values; RUN_ID suffixes the container name and the label VALUE (cleanup removes only containers with THIS label value)
 COND = "={{ new Date($json.createdAt).getTime() === new Date($json.updatedAt).getTime() }}"
-PORTS = (5679, 5780, 8790, 55432)
 PATHS_ABCD = ("g2-a", "g2-d", "g2-b2", "g2-c2")  # webhook paths of the variants a to d (g12.py / g3.py)
 EXIT_SHORTFALL, EXIT_LOAD_GATE_FAILED = 2, 3  # exit codes of run_all.py: 2 = fewer valid runs than expected, 3 = the machine never became idle enough (other failures exit with a message)
 
@@ -27,7 +27,7 @@ def port_free(p):
         return s.connect_ex(("127.0.0.1", p)) != 0
 
 
-KEEP_ENV = ("PATH", "SystemRoot", "SystemDrive", "windir", "ComSpec", "PATHEXT", "TEMP", "TMP", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "HOMEDRIVE", "HOMEPATH",
+KEEP_ENV = ("RUN_ID", "MF_STAGE_PORT", "MF_CRM_PORT", "DN1_DESK_PORT", "DN1_FAKE_PORT", "DN1_MODEL_PORT", "DN1_PROXY_PORT", "DN1_MAIL_PORT", "MF_N8N_PORT", "MF_N8N_BROKER_PORT", "MF_PG_PORT", "MF_RUN_PORT", "PATH", "SystemRoot", "SystemDrive", "windir", "ComSpec", "PATHEXT", "TEMP", "TMP", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "HOMEDRIVE", "HOMEPATH",
             "HOME", "XDG_RUNTIME_DIR", "DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_CONFIG")  # HOME and XDG_RUNTIME_DIR for the docker client on Linux (rootless docker keeps its socket there)
 
 
@@ -202,7 +202,7 @@ def main():
 
     def body():
         pull_image(PG_IMAGE, env, work)
-        subprocess.run(["docker", "run", "-d", "--name", PG_NAME, "--label", LABEL, "-p", "127.0.0.1:55432:5432", "-e", "POSTGRES_PASSWORD", PG_IMAGE],
+        subprocess.run(["docker", "run", "-d", "--name", PG_NAME, "--label", LABEL, "-p", "127.0.0.1:%d:5432" % PGP, "-e", "POSTGRES_PASSWORD", PG_IMAGE],
                        env=dict(env, POSTGRES_PASSWORD=pgpw), check=True, capture_output=True)
         for _ in range(60):
             if subprocess.run(["docker", "exec", PG_NAME, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"], capture_output=True).returncode == 0: break  # over TCP, which the image's temporary start-up server does not offer (was: socket check plus sleep 3)

@@ -8,7 +8,7 @@ ROOT = os.environ.get("DN1_DESK_REPO", "/tmp/rr/t3exp")          # clean export 
 S = os.path.join(WORK, "dn1"); os.makedirs(S, exist_ok=True)
 KEYTEXT = "FAKEKEY-planted-0123456789"                              # made-up model key (T7 greps for it)
 KEY, LEDGER, CALLS, PXLOG, MAIL = (os.path.join(S, n) for n in ("key.txt", "ledger.jsonl", "calls.log", "proxy.log", "mail.jsonl"))
-DESKP, FAKEP, MODELP, PROXYP, MAILP = 8765, 8766, 48767, 8760, 8791
+from runcfg import DESKP, FAKEP, MODELP, PROXYP, MAILP, N8NP   # defaults = the old literal values (8765, 8766, 48767, 8760, 8791, n8n 5679); env-configurable, see runcfg.py
 D = "http://127.0.0.1:%d" % DESKP; F = "http://127.0.0.1:%d" % FAKEP; M = "http://127.0.0.1:%d" % MODELP
 ALERT_TO = "alerts@example.test"
 PLANT_EMAIL, PLANT_NAME = "planted.t7@example.test", "Planted Tester"
@@ -110,7 +110,7 @@ def n8n_restart(paths=("desk-form", "desk-webhook"), **env):
     lib.kill_n8n_confirmed(); EXTRA.update(env); return lib.start_n8n(None, paths=paths)
 # ---- calls
 def post(path, body, t=45):
-    r = urllib.request.Request("http://127.0.0.1:5679/webhook/%s" % path, json.dumps(body).encode(), {"Content-Type": "application/json"})
+    r = urllib.request.Request("http://127.0.0.1:%d/webhook/%s" % (N8NP, path), json.dumps(body).encode(), {"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(r, timeout=t) as x: st, txt = x.status, x.read().decode()
     except urllib.error.HTTPError as e: st, txt = e.code, e.read().decode()

@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:11Z - H-PARAM done in my files (pushed): RUN_ID + env ports, default = old values; BLOCKER: harness lib.py needs a patch; agents running 0
+
+Env names: RUN_ID; MF_STAGE_PORT MF_CRM_PORT; DN1_DESK_PORT DN1_FAKE_PORT DN1_MODEL_PORT DN1_PROXY_PORT DN1_MAIL_PORT; MF_N8N_PORT MF_N8N_BROKER_PORT MF_PG_PORT MF_RUN_PORT. RUN_ID suffixes the Postgres container name and the label VALUE (n8n-evidence.run=<RUN_ID>, default 1); cleanup removes only containers with THIS label value; run_chain tag defaults to RUN_ID. New n8n-tests/runcfg.py + test_runcfg.py (two RUN_IDs get disjoint ports/names/labels, defaults equal the old literals, bad ids refused): ran it here, it printed PASS (it starts nothing). Launch recipe (6 lines) and file list in RUN-PARALLEL.md. No flow, no test body changed.
+BLOCKER: harness lib.py (the rig) hard-codes n8n 5679, broker 5780 and the stand-in server 8790 in about 10 places; I did not edit it; LIB-PORT-PATCH.md lists each place. Without that patch a second run's n8n cannot start while V7 runs (port busy). Need your go (or apply it yourself on the laptop). Also not checked: setup.py / api.py may carry the same literals.
+AGENTS RUNNING: 0 (disk 155 MB, docker not usable here; nothing started; AF2, T12, K4, K5 have no numbers from me).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Parallel run itself never tried; run_dn1.py still has its own copy of the old constants (not changed); AF2/T12/K4/K5 not run.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Your go on LIB-PORT-PATCH.md (or you apply it); then the laptop starts run B. 2. Retag after the numbers file. 3. Hygiene pass on loopback literals.
+
 ## Block 16:10Z - AGENTS RUNNING: 0. AF2 / T12 / K4+K5 lanes: NOT STARTED (no numbers). H-PARAM: in progress (edits only, nothing pushed yet)
 
 Why no run lanes (facts, checked just now): df shows 155 MB free on / (100% used, same as since 11:15Z); every earlier run failed in seconds on this; the classifier still refuses deletion and I do not work around it. In addition "docker ps" did not return within 120 s here (hung, I stopped it): this machine has no usable docker for the Postgres container. Starting 3 parallel n8n + Postgres stacks here would produce failures, not numbers; I will not report those as test results. K4 and K5 DO exist in mf.py (k4 stage killed mid-call, k5 Postgres killed once). If you want the three lanes run, they have to run on a machine with disk and docker (the laptop, with the H-PARAM change below to run in parallel with V7).

@@ -7,7 +7,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser()
 ap.add_argument("--tests", required=True); ap.add_argument("--reps", default="8"); ap.add_argument("--lease", default="20")
 ap.add_argument("--out", required=True); ap.add_argument("--work-root", required=True); ap.add_argument("--node-dir", required=True); ap.add_argument("--node-modules", required=True, help="folder holding node_modules, package.json, package-lock.json from npm ci")
-ap.add_argument("--tag", default="r"); ap.add_argument("--min-idle", default="80")
+ap.add_argument("--tag", default=os.environ.get("RUN_ID") or "r"); ap.add_argument("--min-idle", default="80")
 a = ap.parse_args()
 os.environ["MF_REPS"] = a.reps; os.environ["MF_LEASE"] = a.lease
 os.makedirs(a.out, exist_ok=True); os.makedirs(a.work_root, exist_ok=True)
