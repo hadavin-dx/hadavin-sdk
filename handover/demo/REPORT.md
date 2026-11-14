@@ -1,5 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 11:01Z (16:31 IST) - Design A: T12 pass, T10 half done; kill chain NOT started yet
+
+Real n8n 2.46.6, native Postgres 16, made-up data, one machine, in my runs. Test lease 20 s (design value 120 s). No kill number exists yet: the chain is still on T10 (it started 10:53Z and each held run takes about 40 s), then T8, T11, T13, then K1, K2, K3B, K3, K4, K5 with 8 per point.
+- T12 PASS (sample 5): SMTP stand-in accepts the mail, then drops the connection: every lead ended with exactly 1 mail, state unknown, 1 alert, no resend, 1 CRM row, 1 model call; outside count no extras.
+- T10, 6 of 10 runs read so far (not final): CRM held 40 s: the n8n HTTP node's own 15 s timeout fires first, its retry gets the stored row back from the create-or-update call, lead ends done with 1 CRM row, 1 mail, 1 model call (3 of 3), so this variant does NOT exercise the lease. SMTP answer held 40 s with a 20 s lease: recovery takes the lead while the first run is still waiting; it finds mail_sent already set and marks the lead UNKNOWN (3 of 3: 1 mail delivered, state unknown, 1 alert, 1 CRM row, 1 model call, nothing doubled). So a lease shorter than the SMTP hold gives a safe but unneeded UNKNOWN for a person. With the design lease of 120 s that hold would not trigger recovery; I will rerun that variant with 120 s to show it.
+- Fault modes built and switchable: CRM search blind for N s, CRM hold before storing, CRM hold after storing, SMTP accepts then drops (T12 used it), SMTP held before the greeting and after the store, cap stage refuse / error / time out (T8 next). "SMTP delay past the node timeout": the Send Email node has no timeout setting in 2.46.6, so there is no node timeout to pass; the hold test above is what exists.
+- T9 PASS earlier; M0 and M1 PASS earlier (see block 10:53Z).
+- Not started: T8, T11, T13 (queued), all kill points. NOT DONE: T4, T7, README, N8N-START.md, lead id pattern check, real-node flows.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Everything under "not started" above; sample sizes for kills will be 8 per point first, 20 later.
+- The chain is serial: about 50 minutes for the first kill batch after T10, T8, T11, T13 finish.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Let the chain run; report T8, T11, T13 and the first K points as they land.
+2. Rerun the SMTP-hold variant with the 120 s design lease.
+3. Add the lead id pattern check, then T4 and T7.
+
 ## Block 10:53Z (16:23 IST) - D-FOCUS: Design A is the only job; smoke and T9 pass, kill chain running
 
 - Read D-FOCUS and your answer: native Postgres 16 stays (no image pull); the refused deletion is not retried or worked around; nothing deleted. Only Design A work runs now; Design B stays as it is for the compare.
