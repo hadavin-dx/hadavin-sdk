@@ -1,5 +1,12 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 18:30Z - FINAL CLOSEOUT (ORDER WRAP-1); agents running 0
+FILE-INDEX a NEW session must read (all under handover/demo/): REPORT.md (top blocks, incl. the CLOSEOUT FILE-INDEX block below this one); n8n-flows/PAGE-STATEMENTS-V4.md (truth for page claims, statement 20 FINAL lane3 HB194); VIDEO-RUNSHEET.md (12 scenes, scene 4 caption final); DOUBTFUL-SCENE.md; DECISION-INPUTS.md (needs refresh with final numbers); V7-NUMBERS-lead-read.md (lead's, one stale line); PLAN-4-NLITE-FROM-LEAD.md; ORDERS.md (lead orders, WRAP-1 last); n8n-flows-real-v5 and n8n-flows-film-v5 (WP4 fix, BUILT NOT RUN, with V5-README.md); n8n-mainframe/ (build, crm_stub, mf.py T17 T18, run_chain.py); harness-patched/ plus LIB-PORT-PATCH.md and n8n-tests/test_envpass.py; n8n-table-screen-v2/; sandbox-scratch-logs/ (NOT RUN logs); audits AUDIT-*.md and HYGIENE-FINDINGS.md.
+OPEN DECISIONS: laptop T17/T18/M1/K1 v5 results; real HubSpot id vs vid (WP6); hygiene MUST FIX items in folders I do not own; Slack alert and real-mailbox step-2 fault NOT BUILT; AF2, K4, K5, T10, T11, T13, hold over 720 s, dead SMTP NOT RUN by me.
+RUNNING AGENTS: 0. Nothing more will be written.
+r7v and EV7U: I do not know where they stand. They are not in my files or my context; I ran nothing and read nothing about them. Ask the lead or the laptop session.
+DISK: 129 MB free in the sandbox, nothing deleted; /tmp/rr scratch kept (small logs already in the repo).
+RESTART STEPS: 1) read this block, then the CLOSEOUT FILE-INDEX block, then PAGE-STATEMENTS-V4.md and VIDEO-RUNSHEET.md; 2) git worktree add a checkout of branch demo/handover, only files under handover/demo/; 3) push: fetch, stash, rebase on FETCH_HEAD, stash pop, add, commit, git push origin HEAD:demo/handover; no force, no merge, no PR, no public-repo writes, no secrets; 4) tests run on the laptop only; 5) wait for an order starting with GO.
 ## Block 17:54Z - FINAL CLOSEOUT; agents running 0
 Checks run in /tmp/demo-push at commit f04d9f6e (raw):
 - git status --porcelain: (empty)
