@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 04:29Z): R2 FULL RUN RUNNING, no rc yet
+- Run log: g3e K2 04:22:14Z (about 6 min), g3e K1 04:28:17Z. No new harness note. Next: e burst, ten-at-once, replay. Disk 4.9 GB free.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Meaning and size of the code-4 notes for b K2 and b K3: not read; after the run.
+- No counts, no kill results yet; R2 section of N8N-RERUN-1.md waits for rc.
+- Whether e's webhook was live at its kill runs: not checked.
+- v3 doc tests, fresh reviewer, CI-equivalent run, non-root skip chunk: after the run.
+## WHAT I WOULD DO NEXT (ranked)
+1. Next light log read in 5 min; push block.
+2. At run end: read b K2/K3 rows and shortfall check; N8N-RERUN-1.md R2 with counts next to published numbers; egm reviewer.
+3. Then v3 doc tests, fresh reviewer, CI-equivalent run.
+
 ## REPORT (clock 04:25Z): R2 FULL RUN RUNNING, no rc yet
 - Run log: g3e K3 (variant e kill runs) 04:16:08Z took about 6 min, then g3e K2 04:22:14Z. No new harness note since the two code-4 notes for b K2 and b K3. Next: e K1, e burst, ten-at-once, replay. Disk 4.9 GB free.
 ## NOT DONE / NOT CHECKED (my list, for the lead to decide)
