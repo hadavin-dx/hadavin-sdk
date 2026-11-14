@@ -1,5 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:48Z - both audits pushed, fixes running; agents running 2
+- AUDIT-PAGE-STATEMENTS-V4.md (agent A, done): 18 statements: OK 8, WRONG 1 (12: 'in my runs' for runs I did not do, 59.6 s without the lease 20 s condition), UNBACKED 4 (6, 8, 16, 18), OUTDATED 5 (4, 7, 13, 14, 17). I read the v4 recovery flow: 720 s window, backoff 60..300 s, 30 s tick, unknown-vs-failed SQL, film lease 45 s all confirmed.
+- AUDIT-VIDEO-RUNSHEET.md (agent B, done, c7405f1c): 12 scenes: OK 6, WRONG 1 (scene 7), UNBACKED 3, OUTDATED 2; 7-decisions table inside.
+- NOW RUNNING: fix agent 1 edits PAGE-STATEMENTS-V4.md only; fix agent 2 edits VIDEO-RUNSHEET.md only. Settled facts given to both: v3 B90 3/3, v4 B90 lane3 n=3 + laptop 1, K3/K3B 1 alert each, recovery 59.6 s only at lease 20 s, lane3 144.3 s at lease 120 s, film lease 45 s unmeasured, two K3 meanings named apart.
+- STILL MISSING (cannot fix here): lane3 reports HB180 and HB186 are not in my checkout, so every lane3 number is a relay. V7-NUMBERS file still says v4 B90 n=2 in its Reading line (lead's file, not mine).
+- HONEST: the 'lease + 25 s' rule fits only one figure (144.3 s at lease 120); at lease 20 s the max was lease + 40 s. Do not put the formula on the page; quote the measured numbers.
+NOT DONE / NOT CHECKED: the fixed files (not yet read by me); T13 raw re-read; any run.
+WHAT I WOULD DO NEXT: 1. read and push both fixed files. 2. tell the lead which scenes are cut. 3. rehearsal checklist.
 ## Block 16:37Z - page statements v4 + video run sheet pushed; agents running 0
 - AGENT 1 (done): n8n-flows/PAGE-STATEMENTS-V4.md, 18 statements, tags and raw file names (lane3 raw names not given to me, said so per claim). 6d3491f1. NOT RUN: v4 T8/T15, v4 kill series, lease 45/120; partly: hold over 720 s, dead SMTP 10 min, cap-after-mail, Send Email node wait.
 - AGENT 2 (done): VIDEO-RUNSHEET.md, 12 scenes (5 main, 5 doubtful-case steps, 1 optional dead-alert wait, closing card), core EST 330 s, 355 s with the optional scene. Screen times are estimates; the waits behind sped-up scenes are the lead-read V7 numbers.
