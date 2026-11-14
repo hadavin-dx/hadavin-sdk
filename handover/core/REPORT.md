@@ -1,5 +1,47 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 04:35 UTC / 10:05 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a89776f7 (r7g builder) | fixes the r7f review findings in one batch | review NOT CLEAN: 2 Major | 04:35 / 10:05 | 60 min box | r7g | RUNNING | EV7G + fresh review + mail pass |
+| add05263 (EV7F) | full run of r7f, odd-file listing, mutants on r7f | independent proof; numbers stay useful as a delta base for r7g | 04:25 / 09:55 | 90 min box | EV7F n1 | RUNNING (waiting for quiet) | read EV7F-EVIDENCE.md |
+| aaabb673 (lane C) | wave-2 mutants on r7e | stop order sent; finishing current mutant | 03:56 / 09:26 | soon | wave 2 | RUNNING | read final report |
+| a0da50e2 (r7f reviewer) | whole-patch review | done | 04:19 / 09:49 | closed | review 1 | DONE: NOT CLEAN, 0 Blocker, 2 Major, 2 minor, 1 nit | r7g |
+| a7f6b110, aebef140 (lanes B, A) | wave-2 mutants on r7e | stopped by order | 03:56 / 09:26 | closed | wave 2 | DONE, incomplete | see below |
+
+**r7f review (independent; handover/core/review/core-fix-on-frozen-r7f-review.md, pushed):** NOT CLEAN. Each finding was reproduced by the reviewer on loopback.
+- M1 Major (regression from r7e): the netconnect.py thread catches only OSError. A host label over 63 characters, an empty label or a lone surrogate makes the name look-up raise UnicodeError: a traceback on stderr and a bare IndexError to the caller (REAL_IMAP host settings are not validated; the SMTP host is). run_real_check would end in a traceback. This is the defect class the patch exists to remove, in new code. Fix: catch Exception, one fixed refusal.
+- M2 Major (r7e Major only partly closed): a request already retrying when the stop was set is logged gave_up "stopped", not driver:stopped, so a run can end rc 0 with an error counted; docs/limits.md says every stopped run ends rc 3, which is false here.
+- m1: connect_bounded gives all addresses one shared time, so a silent IPv6 address can stop IPv4 from ever being tried (r7e gave each address its own time). m2: limits.md overclaims. n1: socket closed only on OSError.
+- Fine per the reviewer: cipher words ADH-/AECDH- cover all 13 anonymous ciphers on OpenSSL 3.0.13 (the old word matched none, so the gap was real); the ALL:!aNULL test setup does not weaken its test; hubspot _mask and data-link refusal closed; 13 CONTROL tests fail on their mutants (failure reason beyond test name not checked); suppression counts unchanged; no test weakened; the 22 unrun files pass (422 passed, 1 skipped).
+- Reviewer did not run: full suite, 58 other CONTROL tests, frozen-tree label check, IPv6 blackhole test, PowerShell, real services, gitleaks history.
+
+**r7g builder launched** with all five items in one batch, plus: check load_driver.py:433 (hung look-up; route through netconnect if yes), a RESULTS line for any changed test, fail-before on r7f by real run, no full suite (an independent runner does that). NEEDED-CHECK: the builder must state NEEDED / DUPLICATE / NOT-NEEDED per item.
+
+**Lane B final (r7e, measured):** KILLED B01 B03; SURVIVED on the full set A08 and B02 (1172 passed); 12 not run. Clean sets alone: imap_count 538 (260 s), smtp_outbox 724 (120 s). **Lane C:** C01 (a run_real_check mutant) SURVIVED the full set on r7e. These are r7e facts; r7f is claimed to kill them and EV7F re-runs them.
+
+SLIP lane B: used pkill by name once before the rule (04:04); one pattern was a pytest argument string; it saw no sign other processes died but cannot exclude it. Same class as lane A's slip (04:35 block). Its first clean runs at 03:54 are discarded.
+SLIP core lead: my first command for this block typed a /dev path inline. The harness refused the whole command; nothing ran. My re-run then pushed the review file alone under a commit message that wrongly says the status block was included; this block is the real one.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7g not built or tested | builder just started | EV7G on r7g alone, then fresh reviewer and mail pass 9 |
+| r7f full run | EV7F running | read EV7F-EVIDENCE.md; r7g needs its own full run |
+| mail pass 9 | waits for r7g so it tests the final code | start on the r7g snapshot |
+| IPv6 blackhole test, frozen-tree label check, 58 other CONTROL tests | reviewer did not run | EV7G / pass 9 |
+| survivors T02 T03 T05 F02 P01 E03 E05 E06 P02 A09-A15 on r7f | never run | pass 9 on r7g |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. When r7g lands: EV7G (short evidence plus ONE full run on a quiet machine) and a fresh whole-patch reviewer in parallel.
+2. Fresh mail pass 9 on r7g (30+ mutants, per-mutant selector, limit above clean time).
+3. Repeat only on a real Blocker or Major; else freeze, rewrite fix/README.md, sweep agents and processes.
+
+
 ## STATUS (core lead) 04:31 UTC / 10:01 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
