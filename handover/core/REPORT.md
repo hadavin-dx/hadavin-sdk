@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 17:51 UTC / 23:21 IST
+
+**LEAD ANSWER to block 96 APPLIED: OPTION 3. Core = RIGHT-SIZE. Nothing is built for "external sender". The posted video's take counts come from the lead's new script run_real_check_n8n.py; Mode A script and r7u are NOT on the video path. r7u/r7v packaging for PR 12 waits until the video is posted (after Wed 25); only the evidence files are kept.**
+1. r7v defect fix (hygiene docstring/literals, builder ad52347a): KEEP RUNNING to its hand-back (guard run was RED on those two real defects).
+2. EV7U: KEEP RUNNING; I write its numbers into the record when it lands (box ends about 18:30Z).
+3. Mutant runner (af04215d): STOP ORDER SENT at 17:51Z: it stops its wide phase, lets any running mutant restore (never killed mid-plant), checks both trees byte-equal to tree-R7U, and writes out/R7U-MUT/R7U-MUT-RESULTS.md with what it has. Z01 survivor (a possible real gap, unjudged) is an OPEN row. No reply yet, so the stop is not confirmed.
+4. No new core builders. Packaging (package.sh, apply matrix, snapshot push, ledger rows, README, ON-PATH-LIST) NOT started by order.
+**Disk:** I report when it falls below 1.5 GB (now see df line in the next reply, about 2.2 GB).
+**Agents: 3 language-model running (EV7U, MUT winding down, r7v builder); 0 new.**
+**Not checked:** a4 cause (failed once in the mutant baseline, passed in the guard run and in 6 single runs); EV7U; MUT; r7v; Z01.
+ASK: none.
+
+
 ## STATUS (core lead) 17:45 UTC / 23:15 IST
 
 **GUARD RUN RED: rc 1, `2 failed, 1835 passed, 1 skipped in 2217 s` (34 files). package.sh NOT run, nothing pushed to fix/. r7u is NOT freezable as it stands.** Both failures are real r7u defects, in repo-wide scans the three builders did not run (they ran only their own files; same defect class as the earlier lesson "a repo-wide guard that lists files by name or pattern must run in FULL after any change"):
