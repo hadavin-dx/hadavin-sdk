@@ -1,5 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:43 UTC / 18:13 IST (heartbeat)
+
+**ON-PATH-LIST.md updated and pushed (new section "r7q and r7r"): per changed file, does it RUN under Design A.** run_real_check.py YES (entry point, banner); scrub.py YES (imported by imap_count, live_claude, regfile, crm_hubspot, smtp_provider); demo_only bad_request, fake_hubspot, fake_model_server: self-test or adapters=demo only; fakes_server: NO for the run; the three test files guard these and do not run in the take. The take gets the r7r versions of run_real_check.py and scrub.py; r7r source equals r7q. **It is still my reading of imports, not a traced run, and not confirmed on the take head** (stated first in the file). Open on the path, stated plainly: M9-74 (not probed), M9-79 (not measured), QuietServer BrokenPipe caveat; your reviewer's findings not in.
+
+No new passes started. Agents running: 0. Your egm reviewer (started 12:41Z) is running on your side; I wait. A `git pull` hung about 3 minutes on the network at 12:35 (my own command, finished by itself; no process left). Next heartbeat about 12:53Z.
+
+ASK: none.
+
 ## STATUS (core lead) 12:37 UTC / 18:07 IST
 
 **EV7R DONE and pushed (handover/core/fix/EV7R-EVIDENCE.md, runner a7707d5f, 12:00 to about 12:36Z): the full pytest run on the r7r bytes IN A STAGED GIT COPY shows 6021 passed, 7 skipped, 0 failed, 60 warnings, rc 0 (34 min 10 s).** Both EV7P failures are gone: the file-call guard test passes, and all hygiene tests pass with gitleaks actually run (DPLD_REQUIRE_SCAN=1; the 7 skips are environment-only: root reads any file 2, needs Python 3.13 1, model-fake-only route 2, load-measurement 1, Windows-only 1). Ledger DPLD-R7Q-M1 and M2 now FIXED-VERIFIED with EV7R as the artifact.
