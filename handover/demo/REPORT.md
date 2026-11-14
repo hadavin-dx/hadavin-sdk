@@ -1,6 +1,20 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 07:32Z STATUS (demo cloud): doc v4 written and tested, single-branch clone result
+- **Doc patch v4** (`clean-machine/0004-Docs-v4-...patch`, applied on top of v3 in my scratch tree): step 3 now says what the code does (missing DESK_NUDGE_TO with reminders on: clean refusal, exit 4; the Python-error cases are DESK_NUDGE_TO without the settings file or a bad address); step 5 uses `--index 2` and says a repeat of an existing lead's request does not reach the crash point (traced: `_run_followup` in desk.py returns unless the follow-up row is `pending`; I did not run it); step 6 notes the desk takes the terminal and is not in `data/desk.pid`; new step 7 is the way back to clean (Ctrl+C the desk and demo server, then `bash scripts/reset.sh`); nits: `<number>` named, feed.py error text, empty-screen hint after `curl -s`, how to get Python 3.12, checksums file name marked as not checked in the repo. Not done: the nit "expected D2 outcome" is done as a sentence; the nit "only archive name in lint.yml" is stated in the text. Doc hygiene tests on v4: 46 passed (hygiene, codeant hygiene, reset_ps1 links; 40 s). Fresh reviewer on v4 started (two Majors changed meaning).
+- **CI-equivalent for main, single-branch clone** (`git clone --single-branch --branch main`, reset to 61ded9e): the three files (test_hygiene, test_raw_bidi_chars, test_shell_single_bracket): first run 172 passed, 1 failed (`test_hygiene_scan_public`); cause: the clone still held `origin/main`, which has moved on. FINDING FOR THE LEAD: public main is now f3c39cf, not 61ded9e; its history has a commit (starts c30c373) that adds `requirements-semgrep.txt/.in`, `tests/test_gitleaks_semgrep_lock.py`, `docs/tests.md` text; the gitleaks history scan over that commit gives 927 hits (919 `long-hex-token` in `requirements-semgrep.txt` [hash pins], 8 `hardcoded-hostname`). With that ref removed (only 61ded9e and its history): 173 passed, 0 failed, rc 0. So at 61ded9e the six files pass; at the newer main the history scan fails unless the repo's own gitleaks exceptions cover those lines (not checked).
+- n8n: R2d series and the PUBLISHABLE-NUMBERS table are pushed (see the 07:09 and 07:3x blocks): burst 1 clean 5 of 5, burst 2 clean 4 of 5, burst 3 clean 4 of 5; first burst on a fresh stack 12 of 12 clean; later bursts 20 of 33.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- v4 reviewer result not in; the newer main f3c39cf not tested at all; step 5 with `--index 2` not run live.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Fold the v4 reviewer findings in (v5 if a Major).
+2. Run the live crash scene once on the v4 recipe (index 2, D2) to confirm the text, light job.
+3. Run the CI-equivalent history scan on a single-branch clone of newer main f3c39cf and say if the repo's exceptions cover the 927 hits.
+
+
 ## 07:28Z STATUS (demo cloud): shape table of the 73 hits, tree-2 pytest, v3 doc reviewer
 **73 gitleaks hits in this folder (working-folder scan, rule generic-api-key; values never printed, shape computed locally):**
 

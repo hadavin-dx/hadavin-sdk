@@ -1,0 +1,65 @@
+From 2c2aea4c4fb91648952547617dedf6069152026b Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 07:31:54 +0000
+Subject: [PATCH] Docs v4: crash scene exit code and settings text, new lead
+ index, way back to clean, feed output, small nits
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8
+---
+ README.md     |  4 ++--
+ docs/tests.md | 11 ++++++-----
+ 2 files changed, 8 insertions(+), 7 deletions(-)
+
+diff --git a/README.md b/README.md
+index ef11afb..c8c3538 100644
+--- a/README.md
++++ b/README.md
+@@ -55,11 +55,11 @@ You need Linux or Windows (macOS was not tried), Python 3.12 or newer (`pyprojec
+ 
+ **Linux**
+ 
+-    python3 -V                                 # must print 3.12 or higher to run the demo; to run the tests it must print 3.12.x (see "Supported" in the test paragraph below). If it does not, use python3.12 in place of python3 in the next line (install Python 3.12 first if `python3.12 -V` is not found)
++    python3 -V                                 # must print 3.12 or higher to run the demo; to run the tests it must print 3.12.x (see "Supported" in the test paragraph below). If it does not, use python3.12 in place of python3 in the next line (install Python 3.12 first, with your system's package manager or from the Python website, if `python3.12 -V` is not found)
+     python3 -m venv .venv && . .venv/bin/activate
+     export PYTHONPATH=src                      # tells Python where the code is
+     bash scripts/start_all.sh keyed            # starts the demo server and the desk in the background
+-    for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -si http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
++    for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -si http://127.0.0.1:8765/counts # waits up to 10 seconds; an empty screen means the desk did not start (see "does not answer" below); it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
+     python scripts/feed.py --source form --index 1       # sends one lead; prints 201 ... "verdict": "new"
+     python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+     python scripts/feed.py --source webhook --index 1    # same person through the other door: prints 200 (not 201) ... "verdict": "duplicate"
+diff --git a/docs/tests.md b/docs/tests.md
+index 36aff7a..0972bea 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -29,12 +29,13 @@ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene has
+ 
+ The crash script ends the desk at a crash point you choose, so that you can watch the restart. Everything here was run on Linux; the Windows forms were not run, and the stop step in item 1 has no Windows form here. The settings file for lead owner, lead stage and reminder is described in the README, section "Optional features"; `scripts/start_all.sh` sets it for you, the crash script and a desk started by hand do not.
+ 
+-1. Stop the desk that is running. If `scripts/start_all.sh` started it, run from the repository root `kill "$(cat data/desk.pid)"` (`data` is the folder that holds the database file), then wait until the old desk has ended (`kill -0 <that number>` prints an error). If you started the desk by hand, stop it with Ctrl+C in its own terminal instead: `data/desk.pid` then does not exist or names an old desk. If the old desk is still running at step 4, the crash script ends with "another desk is using this database". Do not run `scripts/reset.sh` for this: it deletes the records. The kill leaves the file `data/desk.pid`; before a later `bash scripts/start_all.sh` run `bash scripts/reset.sh` (it also stops what `start_all.sh` started and deletes the records), because `start_all.sh` refuses to start while that file exists. If you started the demo server by hand (step 2), stop it first (Ctrl+C in its terminal): `reset.sh` ends with an error while something still answers on its port.
++1. Stop the desk that is running. If `scripts/start_all.sh` started it, run from the repository root `kill "$(cat data/desk.pid)"` (`data` is the folder that holds the database file), then wait until the old desk has ended (`kill -0 <number>`, where `<number>` is the number inside `data/desk.pid`, prints an error). If you started the desk by hand, stop it with Ctrl+C in its own terminal instead: `data/desk.pid` then does not exist or names an old desk. If the old desk is still running at step 4, the crash script ends with "another desk is using this database". Do not run `scripts/reset.sh` for this: it deletes the records. The kill leaves the file `data/desk.pid`; before a later `bash scripts/start_all.sh` run `bash scripts/reset.sh` (it also stops what `start_all.sh` started and deletes the records), because `start_all.sh` refuses to start while that file exists. If you started the demo server by hand (step 2), stop it first (Ctrl+C in its terminal): `reset.sh` ends with an error while something still answers on its port.
+ 2. The demo server must be running (it stays in the foreground, so a hand-started one needs its own terminal). If you started with `scripts/start_all.sh` it is already running; start it with `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed` only if it is not (a second one fails because port 8766 is taken). Writing `blind` instead of `keyed` starts a mail system that cannot recognise a repeated send.
+-3. Export the two settings: `export DESK_LEADFLOW_FILE=demo_only/leadflow.json` (the settings file for lead owner, lead stage and reminder) and `export DESK_NUDGE_TO=<one plain address>` (the address that gets reminder emails; use the example address named at the top of `scripts/start_all.sh`; it must be one plain address without spaces or angle brackets, and it must be set whenever `DESK_LEADFLOW_FILE` is set, or the crash script stops at once with a Python error). Without them the desk starts without the lead owner, lead stage and reminder.
++3. Export the two settings: `export DESK_LEADFLOW_FILE=demo_only/leadflow.json` (the settings file for lead owner, lead stage and reminder) and `export DESK_NUDGE_TO=<one plain address>` (the address that gets reminder emails; use the example address named at the top of `scripts/start_all.sh`; it must be one plain address without spaces or angle brackets, and set it together with `DESK_LEADFLOW_FILE`: if the settings file asks for reminders and `DESK_NUDGE_TO` is missing, the desk refuses to start with a clear message ("reminders are on in the leadflow file but DESK_NUDGE_TO is not set", exit code 4); `DESK_NUDGE_TO` set without `DESK_LEADFLOW_FILE`, or an address that is not one plain address, makes the crash script stop with a Python error text instead). Without them the desk starts without the lead owner, lead stage and reminder.
+ 4. Run `PYTHONPATH=src:. python scripts/crash_desk.py`. It stays in the foreground and prints the path of a flag file (`data/crash.flag` with the default data folder). Open a second terminal in the repository root for the next steps. (The `.` lets Python find the `demo_only` folder; with `PYTHONPATH=src` alone the desk stops with "the folder demo_only is missing".)
+-5. Write a crash point name into that file, for example `echo D2 > data/crash.flag` (`D2` is one of the points in the table under "What each promise rests on"). Then send a lead from the second terminal (with `.venv` switched on and `PYTHONPATH=src`: `python scripts/feed.py --source form --index 1`): a crash point is reached only while the desk handles a request. The desk prints "simulate crash" and ends at once with exit code 137, and the feed shows a connection error.
+-6. Restart the desk by hand with the same two settings exported: `PYTHONPATH=src:. python -m lead_desk.server`.
++5. Write a crash point name into that file, for example `echo D2 > data/crash.flag` (`D2` is one of the points in the table under "What each promise rests on"). Then send a lead from the second terminal (with `.venv` switched on and `PYTHONPATH=src`: `python scripts/feed.py --source form --index 2`): a crash point is reached only while the desk handles a request for a lead whose follow-up has not been sent yet. Use a lead the README demo did not send (index 1 of the README demo already exists; the desk drives a follow-up only while it is waiting to be sent, so a repeat of that request does not reach the crash point and nothing crashes). The desk prints "simulate crash" and ends at once with exit code 137, and `feed.py` ends with a Python error text that names a refused or dropped connection (it handles HTTP answers only). What should have happened for D2: one email, and the follow-up recorded as UNKNOWN (see the table under "What each promise rests on").
++6. Restart the desk by hand with the same two settings exported: `PYTHONPATH=src:. python -m lead_desk.server`. It stays in the foreground and uses this terminal; `data/desk.pid` does not list it.
++7. To get back to a clean state: stop this desk with Ctrl+C in its terminal, stop a hand-started demo server the same way, then run `bash scripts/reset.sh`. `reset.sh` ends with an error while a desk or the demo server is still running, and it deletes the records.
+ 
+ On Windows set `PYTHONPATH` with `;` between entries when two are needed (`src;.`). The tests set the path for their own processes.
+ 
+@@ -48,7 +49,7 @@ Gitleaks is a program that scans files and history for leaked secrets. A few tes
+ 
+ The version this repository was checked with is 8.30.1 (the version in `.github/workflows/lint.yml`). The steps below are for Linux on a 64-bit Intel or AMD computer (x86_64); an ARM computer needs a different archive. To set it up:
+ 
+-1. Find the releases page of the gitleaks project on its public code-hosting site (search the web for "gitleaks releases"), open version 8.30.1 and download two files: `gitleaks_8.30.1_linux_x64.tar.gz` and `gitleaks_8.30.1_checksums.txt`. The checksums file is a text file that lists the expected SHA-256 fingerprint of each download.
++1. Find the releases page of the gitleaks project on its public code-hosting site (search the web for "gitleaks releases"), open version 8.30.1 and download two files: `gitleaks_8.30.1_linux_x64.tar.gz` and the checksums file of that release (its name is `gitleaks_8.30.1_checksums.txt` on the releases page; this name was not checked in this repository, only the archive name is in `.github/workflows/lint.yml`). The checksums file is a text file that lists the expected SHA-256 fingerprint of each download.
+ 2. In the folder that holds both files, run `sha256sum -c --ignore-missing gitleaks_8.30.1_checksums.txt`. It recomputes the fingerprint of the archive and compares it; it must print `gitleaks_8.30.1_linux_x64.tar.gz: OK`. If it does not, delete the archive and download it again. This check finds a damaged download; it does not prove who made the file, because the checksums file comes from the same place.
+ 3. Unpack the archive into a folder of your own: `mkdir -p <folder> && tar -xzf gitleaks_8.30.1_linux_x64.tar.gz -C <folder>`.
+ 4. Check the program: `<folder>/gitleaks version` must print 8.30.1.
+-- 
+2.43.0
+
