@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 03:55Z): R2 FULL RUN RUNNING, no rc yet
+- Run log: n8n default up True after the P1 wait (no stop); g12 a default 03:47:48Z, b default 03:50:14Z, c default 03:52:45Z (about 2.5 min each). Still at variant c; the d, e, ten-at-once and kill runs follow. Instant idle reading 79 percent (one sample; the run itself loads the machine; the harness gates and records its own load).
+- Agent F (light reader of the doc claims, read-only) running since about 03:53Z.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No counts yet; N8N-RERUN-1.md R2 section waits for rc.
+- Doc patch v2 tests and fresh reviewer: after the run.
+- CI-equivalent run, non-root skip chunk, crash points: after the run.
+- Whether kills K1 to K3 take effect: unknown until those steps run; any no-effect kill will be reported as such.
+## WHAT I WOULD DO NEXT (ranked)
+1. Next light log read in 5 min; push block.
+2. Collect agent F's findings, fold into patch v3 text only if real.
+3. At run end: N8N-RERUN-1.md with counts next to published numbers.
+
 ## REPORT (clock 03:50:35): DOC PATCH v2 WRITTEN (text only); R2 FULL RUN STILL RUNNING
 - RUN: full R2-patched run at variant b default (03:50:14Z); variant a default finished in about 2.5 min. n8n up, no stop. Light reads only.
 - v2: clean-machine/0002-...patch + DOC-FIXES-v2.md: all 4 Major and the real Nits applied, declines listed there. Only a gitleaks scan of the folder ran (no leaks).
