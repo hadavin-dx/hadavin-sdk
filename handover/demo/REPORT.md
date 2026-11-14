@@ -1,6 +1,24 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:15Z - desk kill test at three points: progress (desk side running, n8n side built)
+
+- Plan, from the order: point 1 = n8n killed after its insert and before the desk has the request (n8n side, two flows: with an n8n insert first, and desk first with no n8n insert); point 2 = desk ended right after its receipt, before any work (desk crash point A) and with the CRM write about to start (C0); point 3 = desk ended after the e-mail was sent, result not yet noted (D2, keyed and blind) plus D1b blind (send marked, mail system not called). The desk is ended for real (os exit 137 through the repo's crash script flag file) on the clean export of the public main; each point 5 kills, a fresh desk record book per kill; then the SAME request is sent again and counts are read (desk leads, CRM rows, e-mails, follow-up state).
+- Coverage by existing material: the published desk tests simulate nine of ten points by an exception, only D2 is a real kill (repo text); my 08:xx runs did D2 keyed 3 and blind 1. This test adds 5 real process ends per point. My n8n-only variant e runs are the n8n-side comparison for the mail points; the new n8n flows for point 1 are mine (built from scratch, not edits of the repo's n8n files, whose licence allows import only).
+- Results so far (in my runs, desk on this Linux machine, keyed demo mail, made-up data): point A (receipt written, no verdict), 5 of 5 real ends: after restart and the same request again, 1 desk lead, 1 CRM row, 1 e-mail, no lost lead, no double (the repeat got a 201 reply). The first call got a dropped connection in 5 of 5. Point D2 keyed: the first call had already got its 201 reply (the follow-up runs after the reply), then 1 CRM row, 1 e-mail after the restart (1 run so far in this series; 3 earlier runs same).
+- Hiccup: the C0 series stopped at start-up (my driver started the next stack before the old ports were free); rerun queued after the series.
+- Not yet: C0, D2 keyed x5, D2 blind x5, D1b blind x5, the n8n point 1 (10 kills), compare file, reviewer.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Everything marked "not yet" above; no n8n-front-door run of points 2 and 3 (the desk is hit directly in those, like the published feed script does).
+- Kills only at named points, one kill per desk start.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish the desk series (C0 rerun), then the n8n point-1 run (both flows, 5 kills each).
+2. Write n8n-vs-desk-kill-compare.md with raw counts and one table; say plainly any point that loses or doubles.
+3. Fresh comprehension reviewer on the changed page lines, fold, hygiene scan.
+
+
 ## Block 09:09Z - reviewer folded, hygiene rescan clean, kill-between-steps DONE: lead LOST 5 of 5
 
 - Reviewer (fresh egm comprehension): 5 claims Majors, 4 plain-words Majors, Nits; counts all matched my tables. Folded: item 6 rewritten (which 20 is which, "new" does not mean later steps finished, upsert not documented as a guarantee, advice now "let a database unique index decide; do not rely on look-first-then-write in a Data Table"), serial-id row limited to the first fresh stack, HTTP 500 row says it is the webhook's answer and the run counted as success, Postgres row reworded, glossary gets 15 terms, stale "IF node not built" lines in n8n-skip-on-conflict.md fixed.
