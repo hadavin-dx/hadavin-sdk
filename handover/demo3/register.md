@@ -224,3 +224,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 
 | M2 (a1483e65d4dc84a94) | CLOSED 03:1xZ | reported: 30 failed / 3684 passed / 169 skipped, all 30 'gitleaks binary not found' (missing tool, DPLD_REQUIRE_SCAN=1), 3+3 re-runs of the three files identical; report evidence/m2-report.md; unverified by me until I read it |
 | M3 (new) | STARTED | 3.13, shuffle seed 987654, own worktree; expected end ~03:45Z; purpose: wider order coverage while M1 finishes |
+| M4 (a7888955f4dcb3097) | STARTED 03:13Z | installs gitleaks 8.30.1 in scratch dir (checksum verified), runs the 3 gitleaks files in 2 orders plus 1 full suite on 3.13; expected end ~03:50Z (lead answer Q-M1) |
