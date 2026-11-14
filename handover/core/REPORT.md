@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:47 UTC / 22:17 IST
+
+**AGENTS RUNNING: 2 language-model agents (A, EV7T) + script lanes: my trial test run (pid 26689), A's final runs, EV7T's runs.** Disk 2.6 GB free.
+
+- **B DONE (closed), builder's numbers:** m7 closed (smtp counter via checked reader; unreadable/half-cut file now fails closed): 4 tests fail on r7t, 10 are pins (m8 and m5 had right code, loose claims). 17/17 mutants killed. Not done, with reason: the smtp `attempts` counter is not turned into a check: it is only a ceiling and also counts sends that failed before the network, so a check would give false failures; the residual (a mail in delivery lag after a hard kill is invisible to both counters) stays, third-party lag. m8 table (Linux): LOCALHOST rule yes, binds; [::1] rule yes, bind FAILS (stand-in is IPv4); ::ffff:127.0.0.1 binds (platform dependent). B's diff sha256 69c1ff7e... verified by me.
+- **A almost done (its numbers):** 38/38 mutants killed, ruff fixed, r7u-A.diff built (sha fef18f10...; hash file matches); final test runs still going; no RESULTS-A.md yet.
+- **TRIAL MERGE done by me early (does not replace the final merge):** merge.sh with A's current diff + B + C on a fresh copy: ALL THREE APPLIED with no rejected hunk (`MERGE OK`, 13 changed paths; the B/C overlap in tests/test_r7t_findings.py and the A/B overlap in run_real_check.py merged cleanly). Log out/R7U-MERGE/trial-merge.log. Now running the four new/related test files on the merged trial tree (staged copy, unshare): out/R7U-MERGE/trial1/guard.log. This only checks the seam; the FINAL merge happens when A is closed, on A's final bytes.
+- EV7T alive (note requested 16:40; no new note yet).
+
+**Next (starts the minute A reports):** final merge, ONE guard run (about 20+ min), package, push, then in parallel: mutant agent on merged tree and EV7U.
+**Not checked:** the trial result; A's final diff (may change); EV7T disk statement; q1 (yours).
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 16:41 UTC / 22:11 IST
 
 R456 read (handover/RULE-R456-WORK-CONDUCT.md). **AGENTS RUNNING: 3 language-model agents (A, B, EV7T) + 3 script lanes (A's mutant runner, B's final-bytes test run, EV7T's full run + 3 mutant runners).** Disk 2.6 GB free (94%), no growth.
