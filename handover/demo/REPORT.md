@@ -1,5 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:21Z): H state, rows, what waits
+- Agent H, tree 1 (frozen tree + doc patch v3), per H's summary file: gitleaks dir rc=1 (NOT yet read by me: a finding or a tool error; I will read it before saying), gitleaks history rc=0, ruff check rc=0, ruff format rc=0, mypy (linux, win32) rc=0, bandit rc=0, schema rc=0, hardcoded-literal scan rc=0, canary rc=0. Full pytest: its first try was cut by H's own timeout at 06:10 (file "pytest-interrupted-by-my-timeout"; at 61%), the second try has run 11 minutes and is at about 64% (whole suite is long, about 2,400 tests; a run measured earlier in this session took about 9.5 min when the machine was quiet, so H's run is slower now). Then H does tree 2 (origin main): another 10+ min. Nothing of H is n8n.
+- Control rows: 1 (05:56Z) 1/1, 2 (05:57Z) 1/1 clean; 3 (06:10Z) 1/1 but load-affected (see 06:11 block); rows 4, 5 and e ten-at-once units are queued behind H's pytest (the script waits until no pytest/lint process has been seen for 15 s): H's pytest on tree 1 then on tree 2 can hold the queue for about 20+ min. 3b not run.
+- Choice for the lead: (a) keep waiting for H (quiet rule kept), or (b) tell H to skip tree 2's pytest and run it after the n8n queue (the n8n rows are short: 3 bursts about 2 min; e units 5 x 4 min). I recommend (b); I wait for your word, nothing changed.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Control rows 4, 5, 3b; e ten-at-once fresh stacks; H tree 2; gitleaks dir rc=1 detail; doc v3 tests/hygiene/skip chunk; fresh doc-patch reviewer.
+## WHAT I WOULD DO NEXT (ranked)
+1. Read H's gitleaks rc=1 detail (file read only).
+2. Run the n8n queue as soon as it may (your choice a/b).
+3. Fold rows into N8N-RERUN-1.md and n8n-a-cause-1.md.
 ## REPORT (clock 06:11Z): agent H state, control rows, what waits on what
 - Agent H: running, now in its FULL pytest on the frozen tree + doc patch v3 (pytest process in the t1 copy, 46 s old at 06:11:14Z; started about 06:10:28Z). It is a heavy command: pytest -q with DPLD_REQUIRE_SCAN=1 (the whole suite, about 46+ tests of the studio tool repo, not n8n). Earlier H steps (lint tools) ran 06:00-06:10Z. When pytest on t1 ends, H runs the same on origin main (t2).
 - Control row 3 (fresh stack 3, variant a, ran 06:10:33-06:11:08Z): (1 CRM, 1 email), replies 200 x1 / 500 x9, replay added 0. LOAD CAVEAT: idle before 99.2%, after 90.0%: H's pytest started at about 06:10:28Z, so row 3 is NOT proven quiet; I mark it "load-affected" and will redo it (3b) on a clean reading. Rows 1-2 (05:56-05:58Z, idle 97.8-99.8%) are clean. Rows so far: 1, 1, 1 (all no duplicates).
