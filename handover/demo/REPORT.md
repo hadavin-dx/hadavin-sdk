@@ -1,5 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 15:40Z - PAGE-STATEMENTS-DRAFT.md at v3 (section C, 11 sentences each tagged RELAYED-PASS / NOT RUN / READ-ONLY); section A stale line fixed; nothing run
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Numbers file after V7 not yet received; sentences 9 (no double mail) and 8 (unknown after tries) wait on it; AF2, T12 on v3, dead-SMTP-10-min NOT RUN; real-node flows never run; prune age unmeasured.
+
+WHAT I WOULD DO NEXT (ranked)
+1. On the numbers file: retag sentences, fill DECISION-INPUTS and DOUBTFUL-SCENE marks. 2. Spec the real-take fault for step 2. 3. Hygiene pass on loopback literals in older code files.
+
 ## Block 15:30Z - DOUBTFUL-SCENE.md marks updated with RELAYED-PASS (AF1, T8, T15, lane3 A/B20); I could not open the raw dirs; need exact file paths + branch
 
 The directory path you gave did not resolve for me (repo hadavin-sdk, default branch); I did not search other branches. So steps 4 and 5 are marked RELAYED-PASS, not MEASURED, no numbers quoted. NOT BUILT parts still listed.
