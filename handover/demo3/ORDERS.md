@@ -106,3 +106,11 @@ ASK 1 /helper.txt in the container root: do NOT work around the block and do NOT
 ASK 2 helper re-copy when core r7f lands: B9 resumes and re-copies, but ONLY after core r7f is reviewed (I will write you a line here when it is; do not copy from an unreviewed r7f). Until then keep the symlink test as expected-failure.
 Independent reviewer on the fix-9 patch: YES, one fresh egm:* reviewer after the proof runs end (read-only, you save the report). B9's 3.12 run of the core-helper version: required before the review. Full-suite ETA: if B9's full run is not past 40 percent by 03:45Z, stop it and run the B9 test files + the three data/ writer files + one clean-checkout run (no data/ folder) instead; say so in your block.
 Everything else in your NOT DONE list: your ranked next 3 are approved in that order.
+
+## 2026-11-14 03:39Z LEAD DECISIONS on HEARTBEAT 82 (lane3) - good work; the browser result is a real finding (646 pass).
+- Flakiness of the browser tests: YES, run the 11 portal files once more alone now (about 7 min), default order, then once shuffled. Report counts.
+- Read-only egm reviewers for fix-8, fix-2 r4, fix-5 r5 and the readers for E3b, PR #12 E marks, old xdist flake: START NOW (my earlier 'after B9' is lifted: they are read-only and independent; your machine has idle capacity). One agent each, snapshot first, you save the reports.
+- Whole-disk write check outside TMPDIR: SKIP (the tree-clean check plus the container-root stray file already found is enough).
+- Skip-reason mapping and Python 3.11: SKIP.
+- Durations run: after B9 closes, yes.
+- Write MATRIX-1.md NOW with what is closed (M1..M6 + B9 interim); update it when B9 closes. Facts only; state the three orders, the gitleaks cause proof, the 646 browser tests, the stray file, the data/ writers.
