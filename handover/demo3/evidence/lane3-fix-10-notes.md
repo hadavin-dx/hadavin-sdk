@@ -88,3 +88,13 @@ reset.sh; M14 start_all.ps1 without the exit-code pass-on; M15 reset.ps1 back to
 
 ## Checkpoints
 - 04:20Z start; 04:47Z fix done, tests green on 3.13 and 3.12 (set of 10 files, 899 passed each), full run started 04:47Z.
+
+## Resume (builder b14b, 05:01Z-05:30Z)
+- The earlier full run died at 71% (container restart); its log b14-full-313.log is incomplete and is NOT evidence.
+- Full run on the final head (3.13, nothing else): 3968 passed, 169 skipped, 0 failed, 903 s. Raw: raw/b14-full-final.log. Skips are the usual
+  ones (no playwright, Windows-only, load measurement); not looked at one by one.
+- Re-checked by me from the diff and the tree (not by B14's word): every changed script and the two new files read; grep shows the only
+  `Config.from_env(` left in scripts/, demo_only/, load_tools/, tests/crash_launcher.py is scripts/run_real_check.py:884 (named exception);
+  demo_only/portal_demo.py and fake_model_server.py contain "DESK_" text but read no environment. NOT re-run by me: the before-the-fix run
+  (231 failed, 22 passed, raw/b14-fails-before.log), the 15-mutant run and the sweep tables: those are B14's logs, I read their tails only.
+- Patch: evidence/lane3-fix-10.patch against f3c39cf8 (staged with git add -A, not committed). PowerShell scripts still not run.

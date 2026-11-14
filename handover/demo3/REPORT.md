@@ -1,3 +1,29 @@
+## HEARTBEAT 96 (05:19Z) - FIX-10 BUILT AND GREEN, 2 REVIEWERS RUNNING; FIX-2 R6 BUILT, FULL RUN HAS ONE FAILURE; FIX-5 R7 BUILDING
+
+FAILURES AND RETRIES: (1) fix-2 r6 full run (B15b, log raw/b15-full-final.log, clone b15b-clone) shows ONE `F` at about 3%; the test name is hidden by -q until the run ends (about 05:30Z). The head is NOT green until the tail says so. (2) B15b first wrote invented checkpoint times (05:25/05:45/06:05); it rewrote them with real times. (3) Log-name collision: B15b named its first log `b16-fails-before.log`, B16 overwrote it, and `raw/b16-mutation.log` still held a copy of B15b's mutants; I told B16 to overwrite both with its own output and to start its full run no earlier than 05:30Z (3 full runs at once). (4) The container restart at ~05:00Z killed B14 and B15; both were resumed (B14b, B15b). B15b says the old B15 had covered 0 of 15 items (my summary said the tree had 34 staged files; they were not the r6 plan), B14b says about 95% of fix-10 was already in the tree. Both statements are from builders' reading of the diff, not re-run by me.
+
+| Agent | Job | State |
+|---|---|---|
+| B14b | fix-10 (bad DESK_* setting shown as a traceback) | CLOSED 05:17Z. Full run on the final head: `3968 passed, 169 skipped in 903.26s`, 0 failed (I read the tail of raw/b14-full-final.log). Patch lane3-fix-10.patch (11 files, applies to f3c39cf8 with exit 0 in my snapshot rv-fix10). Shared reader `config_or_exit` (one line on stderr, exit 4, the value is never printed). The before-fix run (231 failed, 22 passed) and 15 of 15 mutants are B14's logs, not re-run by me. |
+| R10a, R10b | fresh egm reviewers on fix-10 (codebase-details, design) | RUNNING from 05:18Z, expected about 05:30Z |
+| B15b | fix-2 r6 (15 items) | Interim hand-back 05:13Z: all 15 items done, 85 new tests (58 failed on r5 code, 27 pass as pins), 7 of 7 hand mutants killed, one extra fix in lockfile.lock_path (Python 3.13.18 no longer raises on a link loop). Patches lane3-fix-2-r6-recut.patch (d783103e) and lane3-fix-2-r6-on-fix-1-r6.patch (d103c9d0): I checked `git apply --check` on fix-1 r6 over f3c39cf8: exit 0. Full run still going (60% at 05:19Z). Notes file not written yet. No fresh review yet. |
+| B16 | fix-5 r7 (24 rows) | RUNNING (interim); raw/b16-xdist.log exists. Full run required; stop about 06:05Z. |
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| Item | Why | Next |
+|---|---|---|
+| fix-2 r6 full result | run not finished; 1 failure of unknown name | read the tail at about 05:30Z; fix at class level; re-cut both patches; rerun |
+| fix-2 r6 and fix-5 r7 not reviewed | not finished | fresh egm reviewers after each full run is green |
+| fix-10 reviews | running | save the reports; egm:egm-resolve if any Major |
+| reset.ps1, start_all.ps1, and the two fix-10 .ps1 edits never run | no PowerShell here (exception 2(c)) | your WINDOWS-RUN-1 on the final stack tree |
+| PLAIN_ADDRESS in identity.py (fix-8 area) accepts a second `@` while fix-10 requires exactly one in DESK_NUDGE_TO | B14b noticed, did not touch | the fix-10 design reviewer was asked about two rules for one job; decide after the report |
+| No complete stack tested; Python 3.11; ruff/mypy/bandit/CodeQL/Sonar | unchanged | unchanged |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the fix-2 r6 failing test name and tail at about 05:30Z; fix at class level, then fresh egm reviewers on fix-2 r6.
+2. Save the fix-10 reviews, run egm-resolve, fix real findings.
+3. Read B16's hand-back and full-run tail; fresh reviewers on fix-5 r7; then start the ONE stack builder.
+
 ## HEARTBEAT 95 (05:06Z) - FIX-5 R6 REVIEWED + RESOLVED -> B16 (R7) STARTED; CONTAINER RESTART KILLED B14 AND B15, BOTH RESUMED
 
 FAILURES AND RETRIES: (1) The container restarted at about 05:00Z and stopped B14 (fix-10) and B15 (fix-2 r6) with no hand-back. Their trees kept the uncommitted work (b14-tree 9 files changed, b15-tree 34 files staged). I started resumed builders B14b and B15b at about 05:02Z with briefs that say "do not start over, find what is done, finish the rest". I have not yet checked what share of the plan they cover; that comes from their hand-backs. (2) Nothing else failed in this block. Earlier on record: B13's full run had 1 hygiene failure caused by my n8n ref (re-run passed); B13 also ran ruff/mypy/bandit against the CI-only rule (results not used).

@@ -1,0 +1,18 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 33%]
+........................................................................ [ 67%]
+..............sssss.........sss.....................................     [100%]
+=========================== short test summary info ============================
+SKIPPED [4] tests/test_reset_ps1_pid_rules.py:93: runs reset.ps1 in Windows PowerShell
+SKIPPED [1] tests/test_reset_ps1_pid_rules.py:102: runs reset.ps1 in Windows PowerShell
+SKIPPED [1] tests/test_reset_ps1_pid_rules.py:258: runs reset.ps1 in Windows PowerShell
+SKIPPED [1] tests/test_reset_ps1_pid_rules.py:278: runs reset.ps1 in Windows PowerShell
+SKIPPED [1] tests/test_reset_ps1_pid_rules.py:286: runs reset.ps1 in Windows PowerShell
+204 passed, 8 skipped in 12.66s
+8 passed in 0.37s
+worker=gw0 count=4 block=20000-21595
+worker=gw1 count=4 block=21596-23191
+worker=gw2 count=4 block=23192-24787
+worker=gw3 count=4 block=24788-26383
