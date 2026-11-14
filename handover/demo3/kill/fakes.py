@@ -187,6 +187,10 @@ class SmtpHandler(socketserver.StreamRequestHandler):
         event(wd, "smtp", "connect")
         if ctl.get("pre_s"):
             time.sleep(ctl["pre_s"])
+        once = ctl.pop("pre_once_s", 0)  # one-shot greeting hold: only the first connection waits
+        if once:
+            write_ctl(os.path.join(wd, "smtp.ctl"), ctl)
+            time.sleep(once)
         self.reply("220 stand-in ESMTP")
         rcpts, subject, body_lines = [], "", []
         while True:

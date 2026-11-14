@@ -324,6 +324,9 @@ def main():
         elif point == "Fc":
             r.ctl("smtp.ctl", {"pre_s": 40})
             out["send"] = r.send(leads[0])
+        elif point == "Fc1":  # same hold, but only the first SMTP connection (the lead mail); the alert connection answers at once
+            r.ctl("smtp.ctl", {"pre_once_s": 40})
+            out["send"] = r.send(leads[0])
         out["reached_terminal"] = r.wait_terminal(leads, 700 if point == "error" else 330) if leads else True
         time.sleep(20 if leads else 0)  # settle: a late double would show here
         out["states"] = r.states()
