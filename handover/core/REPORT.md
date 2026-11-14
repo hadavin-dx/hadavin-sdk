@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 17:45 UTC / 23:15 IST
+
+**GUARD RUN RED: rc 1, `2 failed, 1835 passed, 1 skipped in 2217 s` (34 files). package.sh NOT run, nothing pushed to fix/. r7u is NOT freezable as it stands.** Both failures are real r7u defects, in repo-wide scans the three builders did not run (they ran only their own files; same defect class as the earlier lesson "a repo-wide guard that lists files by name or pattern must run in FULL after any change"):
+1. `tests/test_hygiene.py::test_no_demo_only_outside_loader`: the new `src/lead_desk/loopback.py` names "demo_only" in its docstring (only loader.py may in src/).
+2. `tests/test_hygiene.py::test_hygiene_scan_public`: hardcoded-literal scan flags `loopback.py:12` (`0.0.0.0`), `test_r7u_b_findings.py:269` (a test name), `test_r7u_c_findings.py:127` and `:129` (`y:\n`, `r:\n`).
+**Fix started at once: r7v builder ad52347a (sonnet, test-first, tree-R7V from tree-R7U, boxes 60 min, expected about 18:50Z / 00:20 IST).** It rewords the docstring and the flagged text (no guard edit, no suppression, per-line old/new), checks every other r7u file for the same patterns, and runs the repo-wide guards in full. r7u + r7v are then packaged together as the r7u release (one patch chain, honest names).
+
+**a4 `no_open_create`: it did NOT fail in the 34-file guard run (it is in that run and passed: only the 2 hygiene tests failed).** So it failed once in the mutant runner's baseline (likely under heavy load with several runners) and not in the guard run. My 6-run loop has written no result file yet (first run still going under load). Cause still NOT proven: hypothesis stays create_unknown>0 under load. EV7U's full run will tell if it shows again. Not called a flake until named.
+
+**Agents: 3 language-model (EV7U, MUT, r7v builder).** EV7U: probe table done 17:35Z, "chain" 25935 running (its full run and before/after still to report); box ends about 18:30Z. MUT: narrow phase done (35 rows runner 1), wide phase restarted 17:39Z with caps 120/100 s to fit its box (ends about 18:20Z); Z01 survived the wide re-run (a possible real gap, unjudged). Script lanes: a4 loop pid 20329, EV7U chain. Disk 2.2 GB (95%).
+**Not checked:** a4 cause; EV7U result; MUT result; r7v; the EV7T survivors on r7u (T01, T13, N02, N24); whether EV7U's full run shows the same 2 hygiene failures (expected).
+ASK: choose 1/2/3 (block 96).
+
+
 ## STATUS (core lead) 17:34 UTC / 23:04 IST
 
 **Guard run still has no result (about 95%, no failure so far; slower than the r7t run because EV7U and MUT load the machine). package.sh NOT run.**
