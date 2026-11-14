@@ -1,5 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 15:30Z - DOUBTFUL-SCENE.md marks updated with RELAYED-PASS (AF1, T8, T15, lane3 A/B20); I could not open the raw dirs; need exact file paths + branch
+
+The directory path you gave did not resolve for me (repo hadavin-sdk, default branch); I did not search other branches. So steps 4 and 5 are marked RELAYED-PASS, not MEASURED, no numbers quoted. NOT BUILT parts still listed.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- AF1, T8, T15 raw files and lane3 HB176 unread; AF1 attempts/first-alert time, AlertMark pairing result unknown to me; AF2, T12 not in V7.
+
+WHAT I WOULD DO NEXT (ranked)
+1. On exact file paths + branch: read AF1 mf_result, fill MEASURED marks and DECISION-INPUTS. 2. PAGE-STATEMENTS-DRAFT v3. 3. Spec the real-take fault for step 2.
+
 ## Block 15:20Z - DOUBTFUL-SCENE.md pushed: 5 steps, marks MEASURED 0 / READ-ONLY 4 / NOT BUILT 3 parts; V7 raw still unread; nothing run
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)
