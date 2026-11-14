@@ -1,0 +1,112 @@
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index a210eaf..47b58b2 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -17,7 +17,7 @@ from collections.abc import Callable, Iterator
+ from contextlib import contextmanager
+ from dataclasses import dataclass, field
+ from pathlib import Path
+-from typing import Any, Literal, TypeVar, cast
++from typing import Any, Literal, TypeVar, cast, get_args
+ 
+ from lead_desk import db, identity
+ from lead_desk.config import Config
+@@ -75,7 +75,7 @@ from lead_desk.contract import (
+     SendUnreachable,
+     is_fd_exhaustion,
+ )
+-from lead_desk.envnum import env_file_problem, file_problem_text
++from lead_desk.envnum import FileProblem, env_file_problem, file_problem_text
+ from lead_desk.gate import (
+     BUSY_ERRORS,
+     CRM_WORKERS_MAX,
+@@ -311,11 +311,8 @@ MEMORY_BOOK_PROBLEM = "the lead-book must be a file: ':memory:' is empty for eve
+ 
+ 
+ BOOK_UNREADABLE_PROBLEM = file_problem_text("DESK_DB_PATH", "unreadable")
+-BOOK_PROBLEMS = {  # the same fixed texts as the other settings that name a file (envnum.file_problem_text)
+-    "folder": file_problem_text("DESK_DB_PATH", "folder"),
+-    "inside_file": file_problem_text("DESK_DB_PATH", "inside_file"),
+-    "unreadable": BOOK_UNREADABLE_PROBLEM,
+-}
++# the same fixed texts as the other settings that name a file (envnum.file_problem_text), one for every kind of problem
++BOOK_PROBLEMS = {kind: file_problem_text("DESK_DB_PATH", kind) for kind in get_args(FileProblem)}
+ 
+ 
+ def book_problem(db_path: Path | str) -> str | None:
+diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
+index 87b4647..d39a248 100644
+--- a/src/lead_desk/envnum.py
++++ b/src/lead_desk/envnum.py
+@@ -52,8 +52,9 @@ _ABSENT_WINERRORS = (123, 21, 1921)
+ def path_kind(path: Path) -> PathKind:
+     """What a setting's path is right now: `folder`, `file` (anything else that exists), `absent`, or `unreadable`
+     (the system will not tell us, for example no permission to look inside a parent folder). The one place that
+-    looks at a setting's path before the desk uses it: `Path.is_dir()` and `Path.exists()` raise PermissionError on
+-    Python 3.12 and later, which ended in a traceback (exit code 1) where a refusal (exit code 4) is documented.
++    looks at a setting's path before the desk uses it: `Path.is_dir()` and `Path.exists()` raise PermissionError for a
++    folder that cannot be looked at (seen as an ordinary user on Python 3.11, 3.12 and 3.13), which ended in a
++    traceback (exit code 1) where a refusal (exit code 4) is documented.
+     Every caller treats `unreadable` as a refusal with a fixed text (no path in it)."""
+     try:
+         mode = path.stat().st_mode
+@@ -66,14 +67,22 @@ def path_kind(path: Path) -> PathKind:
+     return "folder" if stat.S_ISDIR(mode) else "file"
+ 
+ 
+-FileProblem = Literal["folder", "inside_file", "unreadable"]
++FileProblem = Literal["folder", "inside_file", "unreadable", "link"]
+ 
+ 
+ def env_file_problem(path: Path) -> FileProblem | None:
+     """Why a path cannot be the place of a FILE the desk writes or reads (None: it can). `folder`: the path is a
+-    folder. `inside_file`: the first part of the path that exists is a file, where a folder must be. `unreadable`: the
+-    system will not let the desk look at the path or at a part of it. The one parent walk for the lead-book path, the
+-    live ledger and both counters files; every probe goes through `path_kind`."""
++    folder. `inside_file`: the first part of the path that exists is a file, where a folder must be. `link`: the path,
++    or a part of it above the first folder that exists, is a symbolic link that leads nowhere (the target is missing
++    or the links go round in a circle): opening such a name would create a file at the link's target, or fail
++    in a way no one can read. `unreadable`: the system will not let the desk look at the path or at a part of it.
++    A link that leads to an existing folder or file keeps the answer of that target. The one parent walk for the
++    lead-book path, the live ledger and both counters files; every probe goes through `path_kind`, which reads a
++    dangling link and a link that loops as `absent` (the system answers "no such file"): this walk is what tells
++    them apart from a name that is really free. The last branch (a part above the path that cannot be looked at) is
++    practically unreachable on a real system, because a look at the path itself fails first; it stays for a system
++    that answers the path as absent and its parent as unreadable, and a test reaches it by making only the parent
++    raise."""
+     kind = path_kind(path)
+     if kind == "folder":
+         return "folder"
+@@ -81,14 +90,17 @@ def env_file_problem(path: Path) -> FileProblem | None:
+         return "unreadable"
+     if kind == "file":
+         return None
+-    for folder in path.parents:  # the path is absent: the first part that exists must be a folder
+-        parent_kind = path_kind(folder)
+-        if parent_kind == "folder":
++    for part in (path, *path.parents):  # the path is absent: the first part that exists must be a folder
++        part_kind = path_kind(part)
++        if part_kind == "absent":
++            if _is_link(part):  # absent although the name is a link: dangling, or a loop
++                return "link"
++            continue
++        if part_kind == "folder":
+             return None
+-        if parent_kind == "file":
++        if part_kind == "file":
+             return "inside_file"
+-        if parent_kind == "unreadable":
+-            return "unreadable"
++        return "unreadable"
+     return None
+ 
+ 
+@@ -98,6 +110,8 @@ def file_problem_text(name: str, problem: FileProblem) -> str:
+         return f"{name} names a folder, not a file"
+     if problem == "inside_file":
+         return f"{name} sits inside something that is a file, not a folder"
++    if problem == "link":
++        return f"{name} is, or sits behind, a symbolic link that leads nowhere: name a real file"
+     return f"{name} cannot be looked at (the system would not let the desk look at a part of that path)"
+ 
+ 

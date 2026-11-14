@@ -1,0 +1,402 @@
+diff --git a/tests/support.py b/tests/support.py
+index 7984cc4..4f2257b 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -32,6 +32,8 @@ from lead_desk.hooks import Hooks
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ WAIT_SECONDS = 15.0
++BLOCK_CHECK_SECONDS = 10.0  # how long a test waits for a thread that must NOT block (costs time only when it does)
++STUB_IO_SECONDS = 10.0  # a stub's read time limit and the join of its thread: generous, so a loaded machine is no cause
+ HOST = Config().bind  # the one source of the loopback host for tests
+ # the demo lead owner list, steps and reminder wait, read once; a test changes a copy.deepcopy, never this original
+ DEMO_LEADFLOW: Final[dict[str, Any]] = json.loads((REPO / "demo_only" / "leadflow.json").read_text(encoding="utf-8"))
+@@ -614,3 +616,78 @@ def stall_report(rig: Rig) -> str:
+         f"abandoned={dict(d._abandoned)}\nreaper_running={d.reaper_running()} drive_free={free} "  # noqa: SLF001
+         f"drive_waiters={waiting} threads={threading.active_count()}"
+     )
++
++
++class RawStub:
++    """A loopback server that answers every request with a 429 and exactly the Retry-After bytes it is given.
++    `hits` counts a request BEFORE its answer is sent (under a lock), so a client that has the answer can read the
++    count at once: counting after the answer let a test read it one request short. `pause_after_send` (seconds) is for
++    the test that proves this: the server thread waits that long after sending, before it does anything else."""
++
++    def __init__(self, header: bytes | None, pause_after_send: float = 0.0) -> None:
++        self.header = header
++        self._pause = pause_after_send
++        self._lock = threading.Lock()
++        self._hits = 0
++        self.sock = socket.socket()
++        self.sock.bind((HOST, 0))
++        self.sock.listen(8)
++        self.sock.settimeout(0.2)  # only how often the loop looks at its stop flag; no test result depends on it
++        self.port = self.sock.getsockname()[1]
++        self.stop_event = threading.Event()
++        self.thread = threading.Thread(target=self._loop, daemon=True)
++        self.thread.start()
++
++    @property
++    def hits(self) -> int:
++        with self._lock:
++            return self._hits
++
++    def _loop(self) -> None:
++        while not self.stop_event.is_set():
++            try:
++                conn, _ = self.sock.accept()
++            except (TimeoutError, OSError):
++                continue
++            with conn:
++                conn.settimeout(STUB_IO_SECONDS)
++                try:
++                    buf = b""
++                    while b"\r\n\r\n" not in buf:
++                        chunk = conn.recv(4096)
++                        if not chunk:
++                            break
++                        buf += chunk
++                    head = b"HTTP/1.1 429 Too Many Requests\r\n"
++                    if self.header is not None:
++                        head += b"Retry-After: " + self.header + b"\r\n"
++                    head += b"Content-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
++                    with self._lock:
++                        self._hits += 1  # before the answer is sent
++                    conn.sendall(head)
++                    time.sleep(self._pause)
++                except OSError:
++                    pass
++
++    @property
++    def url(self) -> str:
++        return f"http://{HOST}:{self.port}"
++
++    def close(self) -> None:
++        self.stop_event.set()
++        self.thread.join(STUB_IO_SECONDS)
++        self.sock.close()
++
++
++def fresh_script(monkeypatch: Any, name: str, path: Path) -> Any:
++    """Load a file as a module with its own name. `monkeypatch` puts `sys.modules` back at the end of the test, so
++    nothing leaks to a later test (one helper for every test that loads a script from `scripts/`)."""
++    import importlib.util
++    import sys
++
++    spec = importlib.util.spec_from_file_location(name, path)
++    assert spec and spec.loader
++    mod = importlib.util.module_from_spec(spec)
++    monkeypatch.setitem(sys.modules, name, mod)
++    spec.loader.exec_module(mod)
++    return mod
+diff --git a/tests/test_one_key_file_rule_r11.py b/tests/test_one_key_file_rule_r11.py
+new file mode 100644
+index 0000000..2583dac
+--- /dev/null
++++ b/tests/test_one_key_file_rule_r11.py
+@@ -0,0 +1,157 @@
++"""Round 11 of the key-file work: a counting stub that cannot be read one request short, and a path that is, or sits
++behind, a symbolic link that leads nowhere (a missing target, or links that go round in a circle). Made-up data only."""
++
++from __future__ import annotations
++
++import os
++import socket
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import RawStub, fresh_script
++
++from lead_desk import desk, envnum, server
++from lead_desk.envnum import SettingRefused
++
++REPO = Path(server.__file__).parents[2]
++POSIX = pytest.mark.skipif(os.name != "posix", reason="symbolic links need a POSIX system here")
++LINK_TEXT = "DESK_DB_PATH is, or sits behind, a symbolic link that leads nowhere: name a real file"
++
++
++# ------------------------------------------------------------------------------ item 1: the counting stub
++def _ask(stub: RawStub) -> bytes:
++    with socket.create_connection(("127.0.0.1", stub.port), timeout=5) as c:
++        c.sendall(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n")
++        got = b""
++        while b"{}" not in got:
++            chunk = c.recv(4096)
++            if not chunk:
++                break
++            got += chunk
++    return got
++
++
++def test_the_stub_has_counted_a_request_by_the_time_the_client_has_its_answer() -> None:
++    """The server thread waits 0.3 s AFTER it has sent the answer. A count made after the answer would still read 0
++    here (the old order: the count was one request short); the count is made before it, so it reads 1 at once."""
++    stub = RawStub(b"1", pause_after_send=0.3)
++    try:
++        for want in (1, 2):
++            assert b"429" in _ask(stub)
++            assert stub.hits == want  # no wait, no poll
++    finally:
++        stub.close()
++
++
++# ------------------------------------------------------------------------------ item 3: a link that leads nowhere
++def _link(link: Path, target: Path) -> None:
++    link.symlink_to(target)
++
++
++def _loop(a: Path, b: Path) -> None:
++    a.symlink_to(b)
++    b.symlink_to(a)
++
++
++@POSIX
++def test_a_dangling_link_a_loop_and_a_link_in_a_parent_are_one_problem_called_link(tmp_path: Path) -> None:
++    dangling = tmp_path / "dangling.db"
++    _link(dangling, tmp_path / "nowhere" / "target.db")
++    loop_a, loop_b = tmp_path / "loop-a", tmp_path / "loop-b"
++    _loop(loop_a, loop_b)
++    dangling_dir = tmp_path / "dangling-dir"
++    _link(dangling_dir, tmp_path / "missing-folder")
++    assert envnum.path_kind(dangling) == "absent"  # the system answers "no such file": path_kind alone cannot tell
++    assert envnum.env_file_problem(dangling) == "link"
++    assert envnum.env_file_problem(loop_a) == "link"
++    assert envnum.env_file_problem(loop_a / "book.db") == "link"  # a loop in a parent
++    assert envnum.env_file_problem(dangling_dir / "book.db") == "link"  # a dangling link in a parent
++    assert envnum.env_file_problem(dangling_dir / "a" / "b" / "book.db") == "link"
++    assert not (tmp_path / "nowhere").exists() and not (tmp_path / "missing-folder").exists()
++
++
++@POSIX
++def test_a_link_to_something_that_exists_keeps_the_answer_of_its_target(tmp_path: Path) -> None:
++    folder = tmp_path / "real-folder"
++    folder.mkdir()
++    plain = tmp_path / "real-file"
++    plain.write_text("x", encoding="utf-8")
++    to_folder, to_file = tmp_path / "to-folder", tmp_path / "to-file"
++    _link(to_folder, folder)
++    _link(to_file, plain)
++    assert envnum.env_file_problem(to_folder) == "folder"
++    assert envnum.env_file_problem(to_file) is None
++    assert envnum.env_file_problem(to_folder / "book.db") is None  # a free name below a link to a real folder
++    assert envnum.env_file_problem(to_file / "book.db") == "inside_file"
++    assert envnum.env_file_problem(tmp_path / "plain-free-name.db") is None
++    assert envnum.env_file_problem(tmp_path / "none" / "x" / "book.db") is None
++
++
++@POSIX
++def test_the_one_text_for_a_link_names_the_setting_and_never_the_path(tmp_path: Path) -> None:
++    assert envnum.file_problem_text("DESK_DB_PATH", "link") == LINK_TEXT
++    assert desk.BOOK_PROBLEMS["link"] == LINK_TEXT
++    dangling = tmp_path / "dangling.db"
++    _link(dangling, tmp_path / "nowhere.db")
++    assert desk.book_problem(dangling) == LINK_TEXT
++    with pytest.raises(SettingRefused) as e:
++        envnum.refuse_unusable_file("DESK_LIVE_LEDGER_PATH", dangling)  # the same helper serves the other file settings
++    assert str(e.value) == LINK_TEXT.replace("DESK_DB_PATH", "DESK_LIVE_LEDGER_PATH")
++    assert str(tmp_path) not in str(e.value)
++
++
++@POSIX
++@pytest.mark.parametrize("shape", ["dangling", "loop", "loop_in_parent", "dangling_parent"])
++def test_run_real_check_refuses_a_link_that_leads_nowhere_in_one_line_and_creates_nothing(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], shape: str
++) -> None:
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    mod: Any = fresh_script(monkeypatch, "run_real_check", REPO / "scripts" / "run_real_check.py")
++    target = tmp_path / "target-folder" / "target.db"
++    if shape == "dangling":
++        book = tmp_path / "book.db"
++        _link(book, target)
++    elif shape == "loop":
++        book = tmp_path / "loop-a"
++        _loop(book, tmp_path / "loop-b")
++    elif shape == "loop_in_parent":
++        _loop(tmp_path / "loop-a", tmp_path / "loop-b")
++        book = tmp_path / "loop-a" / "book.db"
++    else:
++        _link(tmp_path / "gone", tmp_path / "target-folder")
++        book = tmp_path / "gone" / "book.db"
++    values = dict.fromkeys(mod.REQUIRED, "x") | {"DESK_DB_PATH": str(book)}
++    cfg = tmp_path / "run.env"
++    cfg.write_text("\n".join(f"{k}={v}" for k, v in values.items()) + "\n", encoding="utf-8")
++    monkeypatch.setattr("builtins.input", lambda prompt="": pytest.fail("the question must not be reached"))
++    before = sorted(p.name for p in tmp_path.rglob("*"))
++    code = mod.main(["--config", str(cfg)])
++    out = capsys.readouterr().out
++    assert code == mod.EXIT_REFUSED, out
++    assert out.strip().splitlines() == [f"refused: ValueError: {LINK_TEXT}"], out
++    assert str(tmp_path) not in out and "Traceback" not in out
++    assert not (tmp_path / "target-folder").exists(), "a file or folder was made at the link's target"
++    assert sorted(p.name for p in tmp_path.rglob("*")) == before, "something was created"
++
++
++@POSIX
++@pytest.mark.usefixtures("main_lock_handles_closed")
++def test_the_desk_refuses_to_start_on_a_link_that_leads_nowhere_and_makes_nothing(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    dangling = tmp_path / "book.db"
++    _link(dangling, tmp_path / "target-folder" / "target.db")
++    monkeypatch.setenv("DESK_DB_PATH", str(dangling))
++    monkeypatch.setenv("DESK_PORT", "0")
++
++    def must_not_serve(*a: Any, **k: Any) -> Any:
++        raise AssertionError("the desk went on although the lead-book path is a link that leads nowhere")
++
++    monkeypatch.setattr(server, "make_server", must_not_serve)
++    with pytest.raises(SystemExit) as e:
++        server.main()
++    out = capsys.readouterr().out
++    assert e.value.code == 4, out
++    assert out.strip() == f"the desk refuses to start: {LINK_TEXT}", out
++    assert not (tmp_path / "target-folder").exists() and not list(tmp_path.glob("*.lock"))
+diff --git a/tests/test_one_key_file_rule_r6.py b/tests/test_one_key_file_rule_r6.py
+index 7436d86..b968cf8 100644
+--- a/tests/test_one_key_file_rule_r6.py
++++ b/tests/test_one_key_file_rule_r6.py
+@@ -13,6 +13,7 @@ from email.utils import formatdate
+ from pathlib import Path
+ 
+ import pytest
++from support import BLOCK_CHECK_SECONDS
+ 
+ from lead_desk import envnum, server
+ from lead_desk.envnum import SettingRefused
+@@ -137,11 +138,11 @@ def test_the_n8n_script_does_not_block_on_a_named_pipe(monkeypatch: pytest.Monke
+ 
+     t = threading.Thread(target=run, daemon=True)
+     t.start()
+-    t.join(3)
++    t.join(BLOCK_CHECK_SECONDS)
+     blocked = t.is_alive()
+     if blocked:
+         os.close(os.open(fifo, os.O_WRONLY | os.O_NONBLOCK))
+-        t.join(3)
++        t.join(BLOCK_CHECK_SECONDS)
+     assert not blocked and out and "cannot be read" in out[0]
+ 
+ 
+diff --git a/tests/test_one_key_file_rule_r7.py b/tests/test_one_key_file_rule_r7.py
+index 9912a8b..721c85a 100644
+--- a/tests/test_one_key_file_rule_r7.py
++++ b/tests/test_one_key_file_rule_r7.py
+@@ -11,9 +11,7 @@ import importlib.util
+ import math
+ import os
+ import re
+-import socket
+ import sys
+-import threading
+ import time
+ import types
+ from collections.abc import Iterator
+@@ -22,6 +20,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
++from support import RawStub, fresh_script, wait_until
+ 
+ from lead_desk import constants, envnum, server
+ from lead_desk.envnum import SettingRefused
+@@ -994,16 +993,6 @@ REFUSED_AFTER = [
+ ]  # fmt: skip
+ 
+ 
+-def _fresh(monkeypatch: pytest.MonkeyPatch, name: str, path: Path) -> types.ModuleType:
+-    """Load a file as a module with its own name; monkeypatch puts sys.modules back: nothing leaks to a later test."""
+-    spec = importlib.util.spec_from_file_location(name, path)
+-    assert spec and spec.loader
+-    mod = importlib.util.module_from_spec(spec)
+-    monkeypatch.setitem(sys.modules, name, mod)
+-    spec.loader.exec_module(mod)
+-    return mod
+-
+-
+ @pytest.fixture
+ def copies(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+     monkeypatch.syspath_prepend(str(REPO / "scripts"))
+@@ -1203,55 +1192,6 @@ def test_every_retry_after_reader_in_the_repository_is_the_one_reader_or_a_pinne
+ 
+ 
+ # ---------------------------------------------- the real 429 replies, at the HubSpot adapter and at the live model kind
+-class RawStub:
+-    """A loopback server that answers every request with a 429 and exactly the Retry-After bytes it is given."""
+-
+-    def __init__(self, header: bytes | None) -> None:
+-        self.header = header
+-        self.hits = 0
+-        self.sock = socket.socket()
+-        self.sock.bind(("127.0.0.1", 0))
+-        self.sock.listen(8)
+-        self.sock.settimeout(0.2)
+-        self.port = self.sock.getsockname()[1]
+-        self.stop_event = threading.Event()
+-        self.thread = threading.Thread(target=self._loop, daemon=True)
+-        self.thread.start()
+-
+-    def _loop(self) -> None:
+-        while not self.stop_event.is_set():
+-            try:
+-                conn, _ = self.sock.accept()
+-            except (TimeoutError, OSError):
+-                continue
+-            with conn:
+-                conn.settimeout(2)
+-                try:
+-                    buf = b""
+-                    while b"\r\n\r\n" not in buf:
+-                        chunk = conn.recv(4096)
+-                        if not chunk:
+-                            break
+-                        buf += chunk
+-                    head = b"HTTP/1.1 429 Too Many Requests\r\n"
+-                    if self.header is not None:
+-                        head += b"Retry-After: " + self.header + b"\r\n"
+-                    head += b"Content-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
+-                    conn.sendall(head)
+-                    self.hits += 1
+-                except OSError:
+-                    pass
+-
+-    @property
+-    def url(self) -> str:
+-        return f"http://127.0.0.1:{self.port}"
+-
+-    def close(self) -> None:
+-        self.stop_event.set()
+-        self.thread.join(3)
+-        self.sock.close()
+-
+-
+ @pytest.fixture
+ def stub_for() -> Iterator[Any]:
+     made: list[RawStub] = []
+@@ -1307,6 +1247,7 @@ def test_hubspot_adapter_ignores_a_retry_after_the_rule_refuses_and_uses_its_fin
+         _hubspot(tmp_path, stub.url, max_429_retries=1).put("L-1", REC)
+     assert e.value.retry_after is None, raw
+     assert slept == [crm_hubspot.BACKOFF_FIRST_SECONDS] and math.isfinite(slept[0]), (raw, slept)
++    wait_until(lambda: stub.hits == 2, 5, "the stub to have counted both requests")  # bounded; no bare assert
+     assert stub.hits == 2
+ 
+ 
+@@ -1399,7 +1340,7 @@ def test_the_load_driver_uses_its_copy_when_the_desk_code_is_not_importable(monk
+     monkeypatch.setattr(sys, "path", [p for p in sys.path if not (Path(p or ".") / "lead_desk").is_dir()])
+     importlib.invalidate_caches()
+     monkeypatch.syspath_prepend(str(REPO))
+-    mod = _fresh(monkeypatch, "load_driver_without_src", _driver_source())
++    mod = fresh_script(monkeypatch, "load_driver_without_src", _driver_source())
+     assert mod._retry_after is mod._retry_after_fallback
+     assert mod._retry_after("2") == 2.0 and mod._retry_after("inf") is None
+ 
+@@ -1431,7 +1372,7 @@ def test_the_load_driver_does_not_hide_a_broken_desk_behind_its_copy(
+     monkeypatch.syspath_prepend(str(_fake_desk(tmp_path, envnum_text)))
+     monkeypatch.syspath_prepend(str(REPO))
+     with pytest.raises(ImportError):
+-        _fresh(monkeypatch, "load_driver_with_broken_desk", _driver_source())
++        fresh_script(monkeypatch, "load_driver_with_broken_desk", _driver_source())
+ 
+ 
+ # -------------------------------------------------------------------------------- key files that are links, and modes

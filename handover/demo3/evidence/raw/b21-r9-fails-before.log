@@ -1,9 +1,48 @@
-.FFFFFFFFFFFFFF                                                          [100%]
+...........FFFFFFFFFFFFFFFFF.........F.......................FFFFFFFFsss [ 35%]
+ssF.........ssssssss...FF............................................... [ 70%]
+...........................................................              [100%]
 =================================== FAILURES ===================================
 _ test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting[0] _
 
-book = PosixPath('/home/user/work/b21-old/data/reset-guard-neccfzg2/desk.sqlite3')
+book = PosixPath('/home/user/work/b21-old/data/reset-guard-6zaaztf8/desk.sqlite3')
 r = 0
+
+    @_posix
+    @_NEEDS_UTF8_BASH
+    @pytest.mark.parametrize("r", [0, 1, 2])
+    def test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting(book: Path, r: int) -> None:
+        """The desk's own number, plain spaces (3 more for each step of r; the base count is chosen
+        so that the 67-byte cut falls between two characters, whatever the digit count of the number; the old test passed
+        or failed by pid luck). In a UTF-8 setting that counts characters the file would trim to the desk's number and
+        stop it; the script reads, counts and trims in the C locale (64 bytes or more is stale) and stops nothing."""
+        desk = _live(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
+        number = str(desk.pid)
+        content = number.encode() + b" " * ((67 - len(number)) % 3 + 3 * r) + "\u3000".encode() * 30
+        (book.parent / "desk.pid").write_bytes(content)
+        try:
+            done = reset_run(SH, book, LC_ALL="C.UTF-8", **reset_ports())
+            still_running = desk.poll() is None
+            returncode = desk.returncode
+        finally:
+            _end(desk)
+>       assert done.returncode == 0 and still_running, (
+            done.returncode,
+            still_running,
+            returncode,
+            len(content),
+            done.stdout,
+            done.stderr,
+        )
+E       AssertionError: (0, False, -15, 94, 'reset done
+E         ', '')
+E       assert (0 == 0 and False)
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_order_and_words.py:314: AssertionError
+_ test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting[1] _
+
+book = PosixPath('/home/user/work/b21-old/data/reset-guard-1kfvxnle/desk.sqlite3')
+r = 1
 
     @_posix
     @_NEEDS_UTF8_BASH
@@ -36,11 +75,11 @@ E         ', '')
 E       assert (0 == 0 and False)
 E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
 
-tests/test_reset_order_and_words.py:283: AssertionError
-_ test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting[1] _
+tests/test_reset_order_and_words.py:314: AssertionError
+_ test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting[2] _
 
-book = PosixPath('/home/user/work/b21-old/data/reset-guard-qyid47kk/desk.sqlite3')
-r = 1
+book = PosixPath('/home/user/work/b21-old/data/reset-guard-dubgn787/desk.sqlite3')
+r = 2
 
     @_posix
     @_NEEDS_UTF8_BASH
@@ -73,53 +112,18 @@ E         ', '')
 E       assert (0 == 0 and False)
 E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
 
-tests/test_reset_order_and_words.py:283: AssertionError
-_ test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting[2] _
-
-book = PosixPath('/home/user/work/b21-old/data/reset-guard-w7os3r48/desk.sqlite3')
-r = 2
-
-    @_posix
-    @_NEEDS_UTF8_BASH
-    @pytest.mark.parametrize("r", [0, 1, 2])
-    def test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting(book: Path, r: int) -> None:
-        """The desk's own number, plain spaces (3 more for each step of r; the base count is chosen
-        so that the 67-byte cut falls between two characters, whatever the digit count of the number; the old test passed
-        or failed by pid luck). In a UTF-8 setting that counts characters the file would trim to the desk's number and
-        stop it; the script reads, counts and trims in the C locale (64 bytes or more is stale) and stops nothing."""
-        desk = _live(book, "desk", DESK_MODULE, _RUNS_UNTIL_STOPPED)
-        number = str(desk.pid)
-        content = number.encode() + b" " * ((67 - len(number)) % 3 + 3 * r) + "\u3000".encode() * 30
-        (book.parent / "desk.pid").write_bytes(content)
-        try:
-            done = reset_run(SH, book, LC_ALL="C.UTF-8", **reset_ports())
-            still_running = desk.poll() is None
-            returncode = desk.returncode
-        finally:
-            _end(desk)
->       assert done.returncode == 0 and still_running, (
-            done.returncode,
-            still_running,
-            returncode,
-            len(content),
-            done.stdout,
-            done.stderr,
-        )
-E       AssertionError: (0, False, -15, 103, 'reset done
-E         ', '')
-E       assert (0 == 0 and False)
-E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
-
-tests/test_reset_order_and_words.py:283: AssertionError
+tests/test_reset_order_and_words.py:314: AssertionError
 _ test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[1] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_counts_and_0')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_counts_and_0')
 digits = 1
 
     @_posix
     @_NEEDS_UTF8_BASH
     @pytest.mark.parametrize("digits", [1, 2, 3, 4, 5, 6, 7])
-    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(tmp_path: Path, digits: int) -> None:
+    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(
+        tmp_path: Path, digits: int
+    ) -> None:
         number = "7" * digits
         target = tmp_path / "p.pid"
         # a number then ideographic spaces: 64 bytes or more after it is stale whatever the characters would count
@@ -132,16 +136,18 @@ E           assert '7ã\x80\x80ã\...\x80ã\x80\x80' == ''
 E             
 E             + 7ãããããããããããããããããããããã
 
-tests/test_reset_order_and_words.py:322: AssertionError
+tests/test_reset_order_and_words.py:355: AssertionError
 _ test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[2] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_counts_and_1')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_counts_and_1')
 digits = 2
 
     @_posix
     @_NEEDS_UTF8_BASH
     @pytest.mark.parametrize("digits", [1, 2, 3, 4, 5, 6, 7])
-    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(tmp_path: Path, digits: int) -> None:
+    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(
+        tmp_path: Path, digits: int
+    ) -> None:
         number = "7" * digits
         target = tmp_path / "p.pid"
         # a number then ideographic spaces: 64 bytes or more after it is stale whatever the characters would count
@@ -154,16 +160,18 @@ E           assert '77  ã\x80\x8...\x80ã\x80\x80' == ''
 E             
 E             + 77  ããããããããããããããããããããã
 
-tests/test_reset_order_and_words.py:322: AssertionError
+tests/test_reset_order_and_words.py:355: AssertionError
 _ test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[3] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_counts_and_2')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_counts_and_2')
 digits = 3
 
     @_posix
     @_NEEDS_UTF8_BASH
     @pytest.mark.parametrize("digits", [1, 2, 3, 4, 5, 6, 7])
-    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(tmp_path: Path, digits: int) -> None:
+    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(
+        tmp_path: Path, digits: int
+    ) -> None:
         number = "7" * digits
         target = tmp_path / "p.pid"
         # a number then ideographic spaces: 64 bytes or more after it is stale whatever the characters would count
@@ -176,16 +184,18 @@ E           assert '777 ã\x80\x8...\x80ã\x80\x80' == ''
 E             
 E             + 777 ããããããããããããããããããããã
 
-tests/test_reset_order_and_words.py:322: AssertionError
+tests/test_reset_order_and_words.py:355: AssertionError
 _ test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[4] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_counts_and_3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_counts_and_3')
 digits = 4
 
     @_posix
     @_NEEDS_UTF8_BASH
     @pytest.mark.parametrize("digits", [1, 2, 3, 4, 5, 6, 7])
-    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(tmp_path: Path, digits: int) -> None:
+    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(
+        tmp_path: Path, digits: int
+    ) -> None:
         number = "7" * digits
         target = tmp_path / "p.pid"
         # a number then ideographic spaces: 64 bytes or more after it is stale whatever the characters would count
@@ -198,16 +208,18 @@ E           assert '7777ã\x80\x8...\x80ã\x80\x80' == ''
 E             
 E             + 7777ããããããããããããããããããããã
 
-tests/test_reset_order_and_words.py:322: AssertionError
+tests/test_reset_order_and_words.py:355: AssertionError
 _ test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[5] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_counts_and_4')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_counts_and_4')
 digits = 5
 
     @_posix
     @_NEEDS_UTF8_BASH
     @pytest.mark.parametrize("digits", [1, 2, 3, 4, 5, 6, 7])
-    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(tmp_path: Path, digits: int) -> None:
+    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(
+        tmp_path: Path, digits: int
+    ) -> None:
         number = "7" * digits
         target = tmp_path / "p.pid"
         # a number then ideographic spaces: 64 bytes or more after it is stale whatever the characters would count
@@ -220,16 +232,18 @@ E           assert '77777  ã\x80...\x80ã\x80\x80' == ''
 E             
 E             + 77777  ãããããããããããããããããããã
 
-tests/test_reset_order_and_words.py:322: AssertionError
+tests/test_reset_order_and_words.py:355: AssertionError
 _ test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[6] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_counts_and_5')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_counts_and_5')
 digits = 6
 
     @_posix
     @_NEEDS_UTF8_BASH
     @pytest.mark.parametrize("digits", [1, 2, 3, 4, 5, 6, 7])
-    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(tmp_path: Path, digits: int) -> None:
+    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(
+        tmp_path: Path, digits: int
+    ) -> None:
         number = "7" * digits
         target = tmp_path / "p.pid"
         # a number then ideographic spaces: 64 bytes or more after it is stale whatever the characters would count
@@ -242,16 +256,18 @@ E           assert '777777 ã\x80...\x80ã\x80\x80' == ''
 E             
 E             + 777777 ãããããããããããããããããããã
 
-tests/test_reset_order_and_words.py:322: AssertionError
+tests/test_reset_order_and_words.py:355: AssertionError
 _ test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting[7] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_counts_and_6')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_counts_and_6')
 digits = 7
 
     @_posix
     @_NEEDS_UTF8_BASH
     @pytest.mark.parametrize("digits", [1, 2, 3, 4, 5, 6, 7])
-    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(tmp_path: Path, digits: int) -> None:
+    def test_read_pid_file_counts_and_trims_bytes_for_every_digit_count_under_a_utf8_setting(
+        tmp_path: Path, digits: int
+    ) -> None:
         number = "7" * digits
         target = tmp_path / "p.pid"
         # a number then ideographic spaces: 64 bytes or more after it is stale whatever the characters would count
@@ -264,10 +280,10 @@ E           assert '7777777ã\x80...\x80ã\x80\x80' == ''
 E             
 E             + 7777777ãããããããããããããããããããã
 
-tests/test_reset_order_and_words.py:322: AssertionError
+tests/test_reset_order_and_words.py:355: AssertionError
 _ test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-16-le] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_empties_a_f0')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_empties_a_f0')
 encoding = 'utf-16-le'
 
     @_posix
@@ -282,10 +298,10 @@ E       AssertionError: assert '4242\n' == ''
 E         
 E         + 4242
 
-tests/test_reset_order_and_words.py:338: AssertionError
+tests/test_reset_order_and_words.py:371: AssertionError
 _ test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-16-be] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_empties_a_f1')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_empties_a_f1')
 encoding = 'utf-16-be'
 
     @_posix
@@ -300,10 +316,10 @@ E       AssertionError: assert '4242\n' == ''
 E         
 E         + 4242
 
-tests/test_reset_order_and_words.py:338: AssertionError
+tests/test_reset_order_and_words.py:371: AssertionError
 _ test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-32-le] _
 
-tmp_path = PosixPath('/tmp/pytest-of-root/pytest-314/test_read_pid_file_empties_a_f2')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_read_pid_file_empties_a_f2')
 encoding = 'utf-32-le'
 
     @_posix
@@ -318,10 +334,10 @@ E       AssertionError: assert '4242\n' == ''
 E         
 E         + 4242
 
-tests/test_reset_order_and_words.py:338: AssertionError
+tests/test_reset_order_and_words.py:371: AssertionError
 _ test_reset_sh_does_not_stop_the_desk_named_by_a_utf16_pid_file_without_a_mark _
 
-book = PosixPath('/home/user/work/b21-old/data/reset-guard-y2pr7ckw/desk.sqlite3')
+book = PosixPath('/home/user/work/b21-old/data/reset-guard-vjqme1uy/desk.sqlite3')
 
     @_posix
     def test_reset_sh_does_not_stop_the_desk_named_by_a_utf16_pid_file_without_a_mark(book: Path) -> None:
@@ -333,13 +349,341 @@ book = PosixPath('/home/user/work/b21-old/data/reset-guard-y2pr7ckw/desk.sqlite3
             returncode = desk.returncode
         finally:
             _end(desk)
->       assert done.returncode == 0 and still_running, (done.returncode, still_running, returncode, done.stdout, done.stderr)
+>       assert done.returncode == 0 and still_running, (
+            done.returncode,
+            still_running,
+            returncode,
+            done.stdout,
+            done.stderr,
+        )
 E       AssertionError: (0, False, -15, 'reset done
 E         ', '')
 E       assert (0 == 0 and False)
 E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b21-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
 
-tests/test_reset_order_and_words.py:351: AssertionError
+tests/test_reset_order_and_words.py:384: AssertionError
+_ test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop _
+
+book = PosixPath('/home/user/work/b21-old/data/reset-guard-10wxskh8/desk.sqlite3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-353/test_reset_sh_says_so_in_one_l0')
+
+    @_posix
+    def test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop(book: Path, tmp_path: Path) -> None:
+        """A `python` that fails for scripts/reset_check.py stands in for a crash: one line, exit 5, every file kept."""
+        folder = tmp_path / "bin"
+        folder.mkdir()
+        stand_in = folder / "python"
+        stand_in.write_text(
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == scripts/reset_check.py ]]; then echo "Traceback made up" >&2; exit 1; fi\n'
+            f'exec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        stand_in.chmod(0o755)
+        done = reset_run(SH, book, first_on_path=folder, **reset_ports())
+>       assert done.returncode == 5, (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (1, '', 'Traceback made up
+E         ')
+E       assert 1 == 5
+E        +  where 1 = CompletedProcess(args=['bash', '/home/user/work/b21-old/scripts/reset.sh'], returncode=1, stdout='', stderr='Traceback made up\n').returncode
+
+tests/test_reset_order_and_words.py:409: AssertionError
+_ test_alive_counts_a_process_it_may_not_signal_as_alive_and_a_missing_one_as_gone _
+
+    @_posix
+    def test_alive_counts_a_process_it_may_not_signal_as_alive_and_a_missing_one_as_gone() -> None:
+        """Process 1 belongs to another user: kill -0 answers "Operation not permitted" (EPERM), which is not "gone". Run as
+        root the signal is allowed, so then the user nobody tries it; skipped where that is impossible."""
+        as_nobody = hasattr(os, "geteuid") and os.geteuid() == 0
+        if as_nobody and not (shutil.which("runuser") and shutil.which("id")):
+            pytest.skip("running as root without runuser: the signal is never refused")
+        if as_nobody and _alive_answer(1, as_nobody=True) not in (0, 1):
+            pytest.skip("the user nobody cannot run bash here")
+        if not Path("/proc/1").exists():
+            pytest.skip("no process 1 to test with")
+>       assert _alive_answer(1, as_nobody=as_nobody) == 0, "a process we may not signal read as stopped"
+E       AssertionError: a process we may not signal read as stopped
+E       assert 1 == 0
+E        +  where 1 = _alive_answer(1, as_nobody=True)
+
+tests/test_reset_order_and_words.py:441: AssertionError
+_ test_text_only_pass_2_looks_again_whether_the_process_is_still_there_before_it_says_another_program _
+
+    def test_text_only_pass_2_looks_again_whether_the_process_is_still_there_before_it_says_another_program() -> None:
+        text = _script_text()
+        two = text[text.index("# PASS 2") : text.index("# PASS 3")]
+        refuse = two.index("is another program now")
+>       assert two.rfind("elif alive", 0, refuse) > two.index("if is_ours"), (
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^
+            "an ended process must not be called another program"
+        )
+E       ValueError: substring not found
+
+tests/test_reset_order_and_words.py:451: ValueError
+_ test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone _
+
+    def test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone() -> None:
+        code = _code()
+        assert not re.search(r"-match\s+'lead_desk\\\.server\|", code), "the bare substring match is back"
+        assert "[int](Get-Content" not in code, "the pid file is converted without a shape check (abc, two lines throw)"
+>       assert "[int]::TryParse" in code and "-cmatch '\\A[1-9][0-9]*\\z'" in code, "the pid shape rule is missing"
+E       AssertionError: the pid shape rule is missing
+E       assert ('[int]::TryParse' in "$ErrorActionPreference = 'Stop'\n$env:PYTHONPATH = 'src;.'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n    ...   if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }\n}\nWrite-Host 'reset done'" and "-cmatch '\\A[1-9][0-9]*\\z'" in "$ErrorActionPreference = 'Stop'\n$env:PYTHONPATH = 'src;.'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n    ...   if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }\n}\nWrite-Host 'reset done'")
+
+tests/test_reset_ps1_pid_rules.py:73: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[123-True] _
+
+text = '123', plain = True
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[1-True] _
+
+text = '1', plain = True
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[007-False] _
+
+text = '007', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[0-False] _
+
+text = '0', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[abc-False] _
+
+text = 'abc', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12 34-False] _
+
+text = '12 34', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12\n34-False] _
+
+text = '12\n34', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[123\n-False] _
+
+text = '123\n', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [
+            ("123", True),
+            ("1", True),
+            ("007", False),
+            ("0", False),
+            ("abc", False),
+            ("12 34", False),
+            ("12\n34", False),
+            ("123\n", False),  # the old `$` accepted a line end after the number; \z does not
+        ],
+    )
+    def test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        """The rule is cut out of the script text and tried on the sample in Python (there the end mark is Z)."""
+        found = re.search(r"-cmatch '(?P<rule>\\A\[1-9\]\[0-9\]\*\\z)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:136: AssertionError
+_ test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh _
+
+    def test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh() -> None:
+        """The rule of reset.sh (tested there with real files): an optional UTF-8 byte order mark, then 64 bytes or more
+        is stale. reset.ps1 reads up to 67 bytes, skips the mark, and judges the bytes after it. Anchored to whole
+        lines of the script."""
+        code = _code()
+        assert re.search(r"New-Object byte\[\]\s+67\b", code), "the pid file is not read through a 67 byte buffer"
+>       assert re.search(r"while \(\$count -lt 67\)", code), "the read does not go on until 67 bytes or the end"
+E       AssertionError: the read does not go on until 67 bytes or the end
+E       assert None
+E        +  where None = <function search at 0x7f40229825c0>('while \\(\\$count -lt 67\\)', "$ErrorActionPreference = 'Stop'\n$env:PYTHONPATH = 'src;.'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n    ...   if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }\n}\nWrite-Host 'reset done'")
+E        +    where <function search at 0x7f40229825c0> = re.search
+
+tests/test_reset_ps1_pid_rules.py:179: AssertionError
+_ test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back _
+
+    def test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back() -> None:
+        """With 'Stop' in force, Windows PowerShell 5.1 turns what a program writes to standard error (when the caller joins
+        the streams with 2>&1) into an error record and ends the script before the exit code is read."""
+        code = _code()
+        at = code.index("python scripts/reset_check.py")
+        before, after = code[:at], code[at:]
+>       assert re.search(
+            r"\$previousPreference = \$ErrorActionPreference\s+\$ErrorActionPreference = 'Continue'\s*$",
+            before.rstrip() + "\n",
+        ), before[-300:]
+E       AssertionError: s -Id $procId -ErrorAction SilentlyContinue) {
+E                 [Console]::Error.WriteLine("refused: process $procId did not stop in time; nothing was deleted$note")
+E                 exit 5
+E             }
+E             $stopped = if ($stopped) { "$stopped, $($item.Name) (process $procId)" } else { "$($item.Name) (process $procId)" }
+E         }
+E         
+E       assert None
+E        +  where None = <function search at 0x7f40229825c0>("\\$previousPreference = \\$ErrorActionPreference\\s+\\$ErrorActionPreference = 'Continue'\\s*$", ('$ErrorActionPreference = \'Stop\'\n$env:PYTHONPATH = \'src;.\'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n...$stopped = if ($stopped) { "$stopped, $($item.Name) (process $procId)" } else { "$($item.Name) (process $procId)" }\n}' + '\n'))
+E        +    where <function search at 0x7f40229825c0> = re.search
+E        +    and   '$ErrorActionPreference = \'Stop\'\n$env:PYTHONPATH = \'src;.\'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n...$stopped = if ($stopped) { "$stopped, $($item.Name) (process $procId)" } else { "$($item.Name) (process $procId)" }\n}' = <built-in method rstrip of str object at 0xd980950>()
+E        +      where <built-in method rstrip of str object at 0xd980950> = '$ErrorActionPreference = \'Stop\'\n$env:PYTHONPATH = \'src;.\'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n...topped = if ($stopped) { "$stopped, $($item.Name) (process $procId)" } else { "$($item.Name) (process $procId)" }\n}\n'.rstrip
+
+tests/test_reset_ps1_pid_rules.py:433: AssertionError
+_______ test_text_only_reset_ps1_and_reset_sh_call_the_same_bytes_stale ________
+
+    def test_text_only_reset_ps1_and_reset_sh_call_the_same_bytes_stale() -> None:
+        """One rule for both: 64 bytes or more after the mark, a NUL, a byte above 126 and a control character other than
+        white space are stale. reset.sh is tested with real files; here the same rule is read off the text of both."""
+        code = _code()
+        sh = _reset_sh_code()
+>       assert "[![:print:][:space:]]" in sh  # print = 32..126, space = 9..13 and 32
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert '[![:print:][:space:]]' in 'set -eu\ncase "$( (eval \'[[ a == a ]]\') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script wi...b" "$db-wal" "$db-shm" "$db.lock" "$data_dir/desk.log" "$data_dir/fakes.log" "$data_dir/crash.flag"\necho "reset done"'
+
+tests/test_reset_ps1_pid_rules.py:449: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_reset_order_and_words.py::test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting[0]
 FAILED tests/test_reset_order_and_words.py::test_reset_sh_counts_bytes_not_characters_of_the_pid_file_whatever_the_language_setting[1]
@@ -355,5 +699,20 @@ FAILED tests/test_reset_order_and_words.py::test_read_pid_file_empties_a_file_wh
 FAILED tests/test_reset_order_and_words.py::test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-16-be]
 FAILED tests/test_reset_order_and_words.py::test_read_pid_file_empties_a_file_whose_zero_bytes_were_dropped_by_read[utf-32-le]
 FAILED tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_the_desk_named_by_a_utf16_pid_file_without_a_mark
-14 failed, 1 passed, 18 deselected in 5.34s
+FAILED tests/test_reset_order_and_words.py::test_reset_sh_says_so_in_one_line_when_the_check_program_crashes_after_the_stop
+FAILED tests/test_reset_order_and_words.py::test_alive_counts_a_process_it_may_not_signal_as_alive_and_a_missing_one_as_gone
+FAILED tests/test_reset_order_and_words.py::test_text_only_pass_2_looks_again_whether_the_process_is_still_there_before_it_says_another_program
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[123-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[1-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[007-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[0-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[abc-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12 34-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12\n34-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[123\n-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_the_check_program_runs_with_continue_in_force_and_the_old_preference_comes_back
+FAILED tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_and_reset_sh_call_the_same_bytes_stale
+29 failed, 161 passed, 13 skipped, 1 deselected in 11.03s
 rc=1

@@ -1,0 +1,2232 @@
+......................FF...ssF..F........FFFFF...F...F..F..F...F.....sss [ 10%]
+sss..............................F...................................... [ 20%]
+.F.......F.............................................................. [ 30%]
+........................................................................ [ 40%]
+........................................................................ [ 50%]
+....................................................FFFFFFFFF..FFFFFFFFF [ 60%]
+..FFFFFFFFF..FFFFF......FFFFF......FFFFF......FFFFF......FFFFF......FFFF [ 71%]
+F......FFFFF......FFFFF................................................. [ 81%]
+........................................................................ [ 91%]
+....................................ssFFFFF.FF.F..FF.........            [100%]
+=================================== FAILURES ===================================
+_ test_a_foreign_listener_on_the_demo_server_port_is_refused_before_anything_is_started _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-360/test_a_foreign_listener_on_the0')
+cleanup = None
+
+    def test_a_foreign_listener_on_the_demo_server_port_is_refused_before_anything_is_started(
+        tmp_path: Path, cleanup: None
+    ) -> None:
+        """Bug class: "something answers on the port" taken as "our demo server is up". The script asks the port BEFORE it
+        starts anything: when it already answers, one fixed line, exit 1, no process started, no pid file written."""
+        marker = tmp_path / "something-was-started"
+        stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 120", f"touch {marker}; exec sleep 120")
+        held, fakes_port = _held_port()
+        with held:
+            done = _run(tmp_path, first_on_path=stub, DESK_FAKES_PORT=str(fakes_port))
+        assert done.returncode == EXIT_START_NOT_DONE, (done.returncode, done.stdout, done.stderr)
+>       assert done.stderr.strip() == "something else already answers on the demo server port; nothing was started"
+E       AssertionError: assert 'desk not rea...sh to stop it' == 'something el...g was started'
+E         
+E         - something else already answers on the demo server port; nothing was started
+E         + desk not ready after 30 seconds (it may still be starting); see desk.log in the data folder; run scripts/reset.sh to stop it
+
+tests/test_start_all_late_refusal.py:260: AssertionError
+_____ test_a_listener_that_appears_after_the_check_is_not_our_demo_server ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-360/test_a_listener_that_appears_a0')
+cleanup = None
+
+    def test_a_listener_that_appears_after_the_check_is_not_our_demo_server(tmp_path: Path, cleanup: None) -> None:
+        """The ownership line: a program takes the port AFTER the pre-flight check (this test binds it when the stand-in
+        demo server signals that it started), the demo server process is alive, but fakes.log never says
+        "fakes server ... on port N", so it is not up. No sleep margin: the test waits for the signal file."""
+        port = free_port()
+        signal_file = tmp_path / "fakes-started"
+        marker = tmp_path / "desk-was-started"
+        stub = _stub_python(tmp_path, f"touch {marker}; exec sleep 60", f"touch {signal_file}; exec sleep 60")
+        held = socket.socket()
+        stop = threading.Event()
+    
+        def take_the_port_when_signalled() -> None:
+            while not signal_file.exists() and not stop.is_set():
+                stop.wait(0.02)
+            if signal_file.exists():
+                held.bind((LOOPBACK, port))
+                held.listen()
+    
+        thread = threading.Thread(target=take_the_port_when_signalled)
+        thread.start()
+        try:
+            done = _run(tmp_path, first_on_path=stub, wait="2", DESK_FAKES_PORT=str(port))
+        finally:
+            stop.set()
+            thread.join(timeout=10)
+            held.close()
+        assert done.returncode == EXIT_START_NOT_DONE, (done.stdout, done.stderr)
+>       assert "the demo server did not answer in 2 seconds" in done.stderr and not marker.exists(), done.stderr
+E       AssertionError: desk not ready after 2 seconds (it may still be starting); see desk.log in the data folder; run scripts/reset.sh to stop it
+E         
+E       assert ('the demo server did not answer in 2 seconds' in 'desk not ready after 2 seconds (it may still be starting); see desk.log in the data folder; run scripts/reset.sh to stop it\n')
+E        +  where 'desk not ready after 2 seconds (it may still be starting); see desk.log in the data folder; run scripts/reset.sh to stop it\n' = CompletedProcess(args=['bash', '/home/user/work/b23-r4-pristine/scripts/start_all.sh'], returncode=1, stdout='', stder... ready after 2 seconds (it may still be starting); see desk.log in the data folder; run scripts/reset.sh to stop it\n').stderr
+
+tests/test_start_all_late_refusal.py:293: AssertionError
+_ test_text_pin_both_start_scripts_strip_one_pair_of_brackets_and_pass_the_host _
+
+    def test_text_pin_both_start_scripts_strip_one_pair_of_brackets_and_pass_the_host() -> None:
+        """TEXT PIN, not run on Windows: the .ps1 cannot run here. The lines are present in both scripts."""
+        sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+        ps1 = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
+>       assert "^\\[(.*)\\]$" in sh and "'^\\[(.*)\\]$'" in ps1, "bracket rule"
+E       AssertionError: bracket rule
+E       assert ('^\\[(.*)\\]$' in '#!/usr/bin/env bash\n# Start the demo mail/CRM server and the desk in the background (Linux).\n# Usage: bash scripts/...port (check with: curl http://127.0.0.1:$desk_port/counts)"\necho "logs: $data_dir/fakes.log and $data_dir/desk.log"\n')
+
+tests/test_start_all_late_refusal.py:380: AssertionError
+______________________ test_text_only_the_start_pins_hold ______________________
+
+    def test_text_only_the_start_pins_hold() -> None:
+>       assert start_problems((SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")) == [], "TEXT PIN, not run on Windows:"
+E       AssertionError: TEXT PIN, not run on Windows:
+E       assert ['the demo se...k in finally'] == []
+E         
+E         Left contains 5 more items, first extra item: 'the demo server is up only if alive AND the port answers AND it says it is ours'
+E         Use -v to get more diff
+
+tests/test_ps1_pins.py:143: AssertionError
+____ test_text_only_each_start_pin_rejects_its_mutant[alive check dropped] _____
+
+mutant = 'alive check dropped'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: alive check dropped
+E       assert 'if ($fakesUp -and $owned -and -not $fakes.HasExited) { break }' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+_______ test_text_only_each_start_pin_rejects_its_mutant[brackets kept] ________
+
+mutant = 'brackets kept'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: brackets kept
+E       assert "if ($fakesHost -match '^\\[(.*)\\]$') { $fakesHost = $Matches[1] }" in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+_ test_text_only_each_start_pin_rejects_its_mutant[brackets stripped from both ends separately] _
+
+mutant = 'brackets stripped from both ends separately'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: brackets stripped from both ends separately
+E       assert "if ($fakesHost -match '^\\[(.*)\\]$') { $fakesHost = $Matches[1] }" in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+_ test_text_only_each_start_pin_rejects_its_mutant[console encoding not put back] _
+
+mutant = 'console encoding not put back'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: console encoding not put back
+E       assert 'try { [Console]::OutputEncoding = $previousConsoleEncoding } catch { $null = $_ }' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+_ test_text_only_each_start_pin_rejects_its_mutant[console encoding set outside try] _
+
+mutant = 'console encoding set outside try'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: console encoding set outside try
+E       assert 'try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false } catch { $null = $_ }' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+___ test_text_only_each_start_pin_rejects_its_mutant[encoding not put back] ____
+
+mutant = 'encoding not put back'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: encoding not put back
+E       assert '$OutputEncoding = $previousPipeEncoding' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+____ test_text_only_each_start_pin_rejects_its_mutant[native errors fatal] _____
+
+mutant = 'native errors fatal'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: native errors fatal
+E       assert "$ErrorActionPreference = 'Continue'\n    try {" in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+_ test_text_only_each_start_pin_rejects_its_mutant[no host passed to the demo server] _
+
+mutant = 'no host passed to the demo server'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: no host passed to the demo server
+E       assert "'--host', $fakesHost" in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+___ test_text_only_each_start_pin_rejects_its_mutant[no pre-flight refusal] ____
+
+mutant = 'no pre-flight refusal'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: no pre-flight refusal
+E       assert 'if ($taken) {' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+___ test_text_only_each_start_pin_rejects_its_mutant[ownership line dropped] ___
+
+mutant = 'ownership line dropped'
+
+    @pytest.mark.parametrize("mutant", sorted(START_MUTANTS))
+    def test_text_only_each_start_pin_rejects_its_mutant(mutant: str) -> None:
+        old, new = START_MUTANTS[mutant]
+        text = (SCRIPTS / "start_all.ps1").read_text(encoding="utf-8")
+>       assert old in text, f"TEXT PIN, not run on Windows: {mutant}"
+E       AssertionError: TEXT PIN, not run on Windows: ownership line dropped
+E       assert 'if ($fakesUp -and $owned -and -not $fakes.HasExited) { break }' in '# Start the demo mail/CRM server and the desk in the background (Windows PowerShell 5.1 or later).\n# Usage: powershe...st http://127.0.0.1:$deskPort/counts)"\nWrite-Host "logs: $dataDir\\fakes.log and $dataDir\\desk.log (and .err.log)"\n'
+
+tests/test_ps1_pins.py:214: AssertionError
+_ test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env1-LEADFLOW=[off] NUDGE=[<unset>]] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-360/test_start_all_sh_turns_the_re1')
+env = {'DESK_LEADFLOW_FILE': 'off'}, expected = 'LEADFLOW=[off] NUDGE=[<unset>]'
+
+    @pytest.mark.skipif(WINDOWS, reason="start_all.sh is the non-Windows script")
+    @pytest.mark.parametrize(
+        ("env", "expected"),
+        [
+            ({}, "LEADFLOW=[demo_only/leadflow.json] NUDGE=[reminder@example.test]"),  # default: on
+            ({"DESK_LEADFLOW_FILE": "off"}, "LEADFLOW=[off] NUDGE=[<unset>]"),  # script line 12: != off
+            ({"DESK_LEADFLOW_FILE": ""}, "LEADFLOW=[] NUDGE=[<unset>]"),  # script line 12: -n
+            ({"DESK_LEADFLOW_FILE": "x.json"}, "LEADFLOW=[x.json] NUDGE=[reminder@example.test]"),
+            ({"DESK_LEADFLOW_FILE": "of"}, "LEADFLOW=[of] NUDGE=[reminder@example.test]"),  # a near miss of "off" is a file
+            ({"DESK_LEADFLOW_FILE": "*"}, "LEADFLOW=[*] NUDGE=[reminder@example.test]"),  # no pattern matching in [[ ]] rhs
+            (
+                {"DESK_LEADFLOW_FILE": "x.json", "DESK_NUDGE_TO": "me@example.test"},
+                "LEADFLOW=[x.json] NUDGE=[me@example.test]",
+            ),
+            (
+                {"DESK_LEADFLOW_FILE": "x.json", "DESK_NUDGE_TO": ""},
+                "LEADFLOW=[x.json] NUDGE=[]",
+            ),  # a set empty value is kept
+        ],
+    )
+    def test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file(
+        tmp_path: Path, env: dict[str, str], expected: str
+    ) -> None:
+        """Runs the real scripts/start_all.sh (the [[ ]] test of its leadflow line, which SonarCloud shell:S7688 made
+        us rewrite) with a stub `python`, and reads the environment the launched desk process would get."""
+        done, data = _start_all(tmp_path, **env)
+>       assert done.returncode == 0, (done.stdout, done.stderr)
+E       AssertionError: ('', 'the desk ended at once (exit 0): (the log line could not be read)
+E         ')
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['bash', '/home/user/work/b23-r4-pristine/scripts/start_all.sh'], returncode=1, stdout='', stderr='the desk ended at once (exit 0): (the log line could not be read)\n').returncode
+
+tests/test_reset_scripts.py:396: AssertionError
+_______ test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table ________
+
+    def test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table() -> None:
+        for page in _PAGES:
+>           assert not _prose_numbers(page.read_text(encoding="utf-8")), page.name
+E           AssertionError: limits.md
+E           assert not [(58, '  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a'), (118, '* Open fil... the portal's c"), (120, '* Exit codes: 1 the sender cannot be reached, or a Python traceback (a constant that is ou')]
+E            +  where [(58, '  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a'), (118, '* Open fil... the portal's c"), (120, '* Exit codes: 1 the sender cannot be reached, or a Python traceback (a constant that is ou')] = _prose_numbers('# Limits and details\n\nThis page holds the detail behind the short "What is not claimed" list in the README. Skip th...one write (`OPEN`) accepted; the full list of default options and the write against our own portal are not verified.\n')
+E            +    where '# Limits and details\n\nThis page holds the detail behind the short "What is not claimed" list in the README. Skip th...one write (`OPEN`) accepted; the full list of default options and the write against our own portal are not verified.\n' = read_text(encoding='utf-8')
+E            +      where read_text = PosixPath('/home/user/work/b23-r4-pristine/docs/limits.md').read_text
+
+tests/test_exit_code_table.py:433: AssertionError
+____________ test_no_program_reads_the_settings_outside_the_readers ____________
+
+    def test_no_program_reads_the_settings_outside_the_readers() -> None:
+        offenders: list[str] = []
+        used: set[tuple[str, str]] = set()
+        for path in _python_files():
+            rel = path.relative_to(REPO).as_posix()
+            text = path.read_text(encoding="utf-8")
+            lines = text.splitlines()
+            for number, what in hits_in(text):
+                key = (rel, lines[number - 1].strip())
+                if key in ALLOWED:
+                    used.add(key)
+                else:
+                    offenders.append(f"{rel}:{number} {what}")
+>       assert offenders == [], offenders
+E       AssertionError: ['scripts/run_real_check.py:890 HubspotSettings.from_env', 'scripts/run_real_check.py:891 ProviderSettings.from_env', 'scripts/run_real_check.py:909 Config.from_env']
+E       assert ['scripts/run...fig.from_env'] == []
+E         
+E         Left contains 3 more items, first extra item: 'scripts/run_real_check.py:890 HubspotSettings.from_env'
+E         Use -v to get more diff
+
+tests/test_setting_reader_guard.py:303: AssertionError
+__ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\nb] __
+
+name = 'DESK_DB_PATH', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\r\nb] _
+
+name = 'DESK_DB_PATH', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+__ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\tb] __
+
+name = 'DESK_DB_PATH', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\x1bb] _
+
+name = 'DESK_DB_PATH', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\x7fb] _
+
+name = 'DESK_DB_PATH', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+___ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH- ] ____
+
+name = 'DESK_DB_PATH', bad = ' '
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+__ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-   ] ___
+
+name = 'DESK_DB_PATH', bad = '   '
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+___ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-\t] ___
+
+name = 'DESK_DB_PATH', bad = '\t'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+___ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-\n] ___
+
+name = 'DESK_DB_PATH', bad = '\n'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\nb] _
+
+name = 'DESK_REPLIES_PATH', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\r\nb] _
+
+name = 'DESK_REPLIES_PATH', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\tb] _
+
+name = 'DESK_REPLIES_PATH', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\x1bb] _
+
+name = 'DESK_REPLIES_PATH', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\x7fb] _
+
+name = 'DESK_REPLIES_PATH', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH- ] _
+
+name = 'DESK_REPLIES_PATH', bad = ' '
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-   ] _
+
+name = 'DESK_REPLIES_PATH', bad = '   '
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-\t] _
+
+name = 'DESK_REPLIES_PATH', bad = '\t'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-\n] _
+
+name = 'DESK_REPLIES_PATH', bad = '\n'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\nb] _
+
+name = 'DESK_APPROVERS_FILE', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\r\nb] _
+
+name = 'DESK_APPROVERS_FILE', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\tb] _
+
+name = 'DESK_APPROVERS_FILE', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\x1bb] _
+
+name = 'DESK_APPROVERS_FILE', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\x7fb] _
+
+name = 'DESK_APPROVERS_FILE', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE- ] _
+
+name = 'DESK_APPROVERS_FILE', bad = ' '
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-   ] _
+
+name = 'DESK_APPROVERS_FILE', bad = '   '
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-\t] _
+
+name = 'DESK_APPROVERS_FILE', bad = '\t'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-\n] _
+
+name = 'DESK_APPROVERS_FILE', bad = '\n'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\nb] _
+
+name = 'DESK_LEADFLOW_FILE', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\r\nb] _
+
+name = 'DESK_LEADFLOW_FILE', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\tb] _
+
+name = 'DESK_LEADFLOW_FILE', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\x1bb] _
+
+name = 'DESK_LEADFLOW_FILE', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\x7fb] _
+
+name = 'DESK_LEADFLOW_FILE', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\nb] _
+
+name = 'DESK_LIVE_KEY_FILE', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\r\nb] _
+
+name = 'DESK_LIVE_KEY_FILE', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\tb] _
+
+name = 'DESK_LIVE_KEY_FILE', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\x1bb] _
+
+name = 'DESK_LIVE_KEY_FILE', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\x7fb] _
+
+name = 'DESK_LIVE_KEY_FILE', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\nb] _
+
+name = 'DESK_LIVE_LEDGER_PATH', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\r\nb] _
+
+name = 'DESK_LIVE_LEDGER_PATH', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\tb] _
+
+name = 'DESK_LIVE_LEDGER_PATH', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\x1bb] _
+
+name = 'DESK_LIVE_LEDGER_PATH', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\x7fb] _
+
+name = 'DESK_LIVE_LEDGER_PATH', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize("name", CONFIG_PATH_NAMES + ["DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"])
+    def test_a_path_that_is_not_valid_text_is_refused_by_config(name: str, bad: str) -> None:
+        env = {**LIVE_GOOD, "DESK_LATER_MODE": "approval", name: bad}
+        if name == "DESK_LEADFLOW_FILE" and not bad.strip():
+            # the one rule for an OPTIONAL file setting: empty or white space only means unset (here: the feature is off);
+            # a REQUIRED one is refused (the live-model and adapter cases below)
+            assert Config.from_env(env).leadflow_path is None
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:336: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\nb] _
+
+name = 'DESK_HUBSPOT_KEY_FILE', cls = 'HubspotSettings', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\r\nb] _
+
+name = 'DESK_HUBSPOT_KEY_FILE', cls = 'HubspotSettings', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\tb] _
+
+name = 'DESK_HUBSPOT_KEY_FILE', cls = 'HubspotSettings', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\x1bb] _
+
+name = 'DESK_HUBSPOT_KEY_FILE', cls = 'HubspotSettings', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\x7fb] _
+
+name = 'DESK_HUBSPOT_KEY_FILE', cls = 'HubspotSettings', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\nb] _
+
+name = 'DESK_HUBSPOT_STATS_FILE', cls = 'HubspotSettings', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\r\nb] _
+
+name = 'DESK_HUBSPOT_STATS_FILE', cls = 'HubspotSettings', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\tb] _
+
+name = 'DESK_HUBSPOT_STATS_FILE', cls = 'HubspotSettings', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\x1bb] _
+
+name = 'DESK_HUBSPOT_STATS_FILE', cls = 'HubspotSettings', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\x7fb] _
+
+name = 'DESK_HUBSPOT_STATS_FILE', cls = 'HubspotSettings', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\nb] _
+
+name = 'DESK_SMTPP_PASSWORD_FILE', cls = 'ProviderSettings', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\r\nb] _
+
+name = 'DESK_SMTPP_PASSWORD_FILE', cls = 'ProviderSettings', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\tb] _
+
+name = 'DESK_SMTPP_PASSWORD_FILE', cls = 'ProviderSettings', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\x1bb] _
+
+name = 'DESK_SMTPP_PASSWORD_FILE', cls = 'ProviderSettings', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\x7fb] _
+
+name = 'DESK_SMTPP_PASSWORD_FILE', cls = 'ProviderSettings', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\nb] _
+
+name = 'DESK_SMTPP_STATS_FILE', cls = 'ProviderSettings', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\r\nb] _
+
+name = 'DESK_SMTPP_STATS_FILE', cls = 'ProviderSettings', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\tb] _
+
+name = 'DESK_SMTPP_STATS_FILE', cls = 'ProviderSettings', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\x1bb] _
+
+name = 'DESK_SMTPP_STATS_FILE', cls = 'ProviderSettings', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\x7fb] _
+
+name = 'DESK_SMTPP_STATS_FILE', cls = 'ProviderSettings', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\nb] _
+
+name = 'DESK_SMTPP_CA_FILE', cls = 'ProviderSettings', bad = 'a\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\r\nb] _
+
+name = 'DESK_SMTPP_CA_FILE', cls = 'ProviderSettings', bad = 'a\r\nb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\tb] _
+
+name = 'DESK_SMTPP_CA_FILE', cls = 'ProviderSettings', bad = 'a\tb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\x1bb] _
+
+name = 'DESK_SMTPP_CA_FILE', cls = 'ProviderSettings', bad = 'a\x1bb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\x7fb] _
+
+name = 'DESK_SMTPP_CA_FILE', cls = 'ProviderSettings', bad = 'a\x7fb'
+
+    @pytest.mark.parametrize("bad", BAD_PATH_TEXTS)
+    @pytest.mark.parametrize(("name", "cls"), ADAPTER_PATH_NAMES)
+    def test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader(name: str, cls: str, bad: str) -> None:
+        """The adapters' own readers (crm_hubspot, smtp_provider) use the same path helper as Config."""
+        from lead_desk.crm_hubspot import HubspotSettings
+        from lead_desk.smtp_provider import ProviderSettings
+    
+        good = {
+            "HubspotSettings": {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "10"},
+            "ProviderSettings": {
+                "DESK_SMTPP_HOST": "127.0.0.1",
+                "DESK_SMTPP_USER": "user",
+                "DESK_SMTPP_PASSWORD_FILE": "p.txt",
+                "DESK_SMTPP_FROM": "a@example.test",
+                "DESK_SMTPP_RECIPIENTS": "b@example.test",
+                "DESK_SMTPP_MAX_SENDS": "5",
+            },
+        }[cls]
+        reader = {"HubspotSettings": HubspotSettings, "ProviderSettings": ProviderSettings}[cls]
+        reader.from_env(good)  # the baseline is accepted
+        optional = name.endswith(("STATS_FILE", "CA_FILE"))
+        if optional and not bad.strip():
+            reader.from_env({**good, name: bad})  # an optional file setting that is only white space means unset
+            return
+>       with pytest.raises(SettingRefused, match=f"{name} (is not a valid path|is required)"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_bad_setting_entry_points.py:364: Failed
+_ test_the_demo_server_picks_the_address_family_of_its_host_without_binding[::1-six-address0] _
+
+host = '::1', family = 'six', address = ('::1', 0)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f04e82fdcc0>
+
+    @pytest.mark.parametrize(
+        ("host", "family", "address"),
+        [("::1", "six", ("::1", 0)), ("[::1]", "six", ("::1", 0)), ("127.0.0.1", "four", ("127.0.0.1", 0))],
+    )
+    def test_the_demo_server_picks_the_address_family_of_its_host_without_binding(
+        host: str, family: str, address: tuple[str, int], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Runs on a computer with no IPv6 at all: the class chosen and the address handed to it are checked with stand-ins."""
+        import demo_only.fakes_server as fs
+    
+        made: list[tuple[str, tuple[str, int]]] = []
+    
+        class Six:
+            def __init__(self, addr: tuple[str, int], handler: object) -> None:
+                made.append(("six", addr))
+    
+        class Four(Six):
+            def __init__(self, addr: tuple[str, int], handler: object) -> None:
+                made.append(("four", addr))
+    
+>       monkeypatch.setattr(fs, "FakesServer6", Six)
+E       AttributeError: <module 'demo_only.fakes_server' from '/home/user/work/b23-r4-pristine/demo_only/fakes_server.py'> has no attribute 'FakesServer6'
+
+tests/test_round5_rows.py:82: AttributeError
+_ test_the_demo_server_picks_the_address_family_of_its_host_without_binding[[::1]-six-address1] _
+
+host = '[::1]', family = 'six', address = ('::1', 0)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f04e83e34d0>
+
+    @pytest.mark.parametrize(
+        ("host", "family", "address"),
+        [("::1", "six", ("::1", 0)), ("[::1]", "six", ("::1", 0)), ("127.0.0.1", "four", ("127.0.0.1", 0))],
+    )
+    def test_the_demo_server_picks_the_address_family_of_its_host_without_binding(
+        host: str, family: str, address: tuple[str, int], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Runs on a computer with no IPv6 at all: the class chosen and the address handed to it are checked with stand-ins."""
+        import demo_only.fakes_server as fs
+    
+        made: list[tuple[str, tuple[str, int]]] = []
+    
+        class Six:
+            def __init__(self, addr: tuple[str, int], handler: object) -> None:
+                made.append(("six", addr))
+    
+        class Four(Six):
+            def __init__(self, addr: tuple[str, int], handler: object) -> None:
+                made.append(("four", addr))
+    
+>       monkeypatch.setattr(fs, "FakesServer6", Six)
+E       AttributeError: <module 'demo_only.fakes_server' from '/home/user/work/b23-r4-pristine/demo_only/fakes_server.py'> has no attribute 'FakesServer6'
+
+tests/test_round5_rows.py:82: AttributeError
+_ test_the_demo_server_picks_the_address_family_of_its_host_without_binding[127.0.0.1-four-address2] _
+
+host = '127.0.0.1', family = 'four', address = ('127.0.0.1', 0)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f04e83e26d0>
+
+    @pytest.mark.parametrize(
+        ("host", "family", "address"),
+        [("::1", "six", ("::1", 0)), ("[::1]", "six", ("::1", 0)), ("127.0.0.1", "four", ("127.0.0.1", 0))],
+    )
+    def test_the_demo_server_picks_the_address_family_of_its_host_without_binding(
+        host: str, family: str, address: tuple[str, int], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Runs on a computer with no IPv6 at all: the class chosen and the address handed to it are checked with stand-ins."""
+        import demo_only.fakes_server as fs
+    
+        made: list[tuple[str, tuple[str, int]]] = []
+    
+        class Six:
+            def __init__(self, addr: tuple[str, int], handler: object) -> None:
+                made.append(("six", addr))
+    
+        class Four(Six):
+            def __init__(self, addr: tuple[str, int], handler: object) -> None:
+                made.append(("four", addr))
+    
+>       monkeypatch.setattr(fs, "FakesServer6", Six)
+E       AttributeError: <module 'demo_only.fakes_server' from '/home/user/work/b23-r4-pristine/demo_only/fakes_server.py'> has no attribute 'FakesServer6'
+
+tests/test_round5_rows.py:82: AttributeError
+_____________ test_the_ipv6_server_class_is_an_ipv6_socket_server ______________
+
+    def test_the_ipv6_server_class_is_an_ipv6_socket_server() -> None:
+        import demo_only.fakes_server as fs
+    
+>       assert fs.FakesServer6.address_family == socket.AF_INET6 and issubclass(fs.FakesServer6, fs.FakesServer)
+               ^^^^^^^^^^^^^^^
+E       AttributeError: module 'demo_only.fakes_server' has no attribute 'FakesServer6'. Did you mean: 'FakesServer'?
+
+tests/test_round5_rows.py:92: AttributeError
+________________ test_the_demo_server_command_line_takes_a_host ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f04e82ff000>
+
+    def test_the_demo_server_command_line_takes_a_host(monkeypatch: pytest.MonkeyPatch) -> None:
+        import demo_only.fakes_server as fs
+    
+        seen: dict[str, object] = {}
+    
+        class Stop(Exception):
+            pass
+    
+        def fake_make(mode: str, port: int, crm: str, host: str | None) -> object:
+            seen.update(mode=mode, port=port, host=host)
+            raise Stop
+    
+        monkeypatch.setattr(fs, "make_fakes_server", fake_make)
+        with pytest.raises(Stop):
+>           fs.main(["--outbox", "keyed", "--port", "5", "--host", "[::1]"])
+
+tests/test_round5_rows.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+demo_only/fakes_server.py:245: in main
+    args = ap.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/argparse.py:1930: in parse_args
+    self.error(msg)
+/usr/local/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='demo_only.fakes_server', usage=None, description=None, formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = 'demo_only.fakes_server: error: unrecognized arguments: --host [::1]\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/local/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: demo_only.fakes_server [-h] --outbox {keyed,blind}
+                              [--crm {keyed,blind}] [--port PORT]
+demo_only.fakes_server: error: unrecognized arguments: --host [::1]
+_ test_the_formatter_module_writes_utf8_bytes_under_a_narrow_console_code_page _
+
+    def test_the_formatter_module_writes_utf8_bytes_under_a_narrow_console_code_page() -> None:
+        line = "the log said café – über 中"
+        env = child_env(PYTHONIOENCODING="cp1252", PYTHONUTF8="0")
+        done = subprocess.run(  # noqa: S603 - our own interpreter and module
+            [sys.executable, "-m", "lead_desk.config_exit"],
+            input=line.encode("utf-8"),
+            capture_output=True,
+            env=env,
+            cwd=REPO,
+            timeout=60,
+            check=False,
+        )
+>       assert done.returncode == 0, done.stderr[-300:]
+E       AssertionError: b'hon3.13/encodings/cp1252.py", line 19, in encode
+E             return codecs.charmap_encode(input,self.errors,encoding_table)...codeEncodeError: \'charmap\' codec can\'t encode character \'\\u4e2d\' in position 25: character maps to <undefined>
+E         '
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/py313-venv/bin/python', '-m', 'lead_desk.config_exit'], returncode=1, stdout=b...odeEncodeError: \'charmap\' codec can\'t encode character \'\\u4e2d\' in position 25: character maps to <undefined>\n').returncode
+
+tests/test_round5_rows.py:131: AssertionError
+________ test_a_reader_that_cannot_open_a_file_names_its_setting_group _________
+
+    def test_a_reader_that_cannot_open_a_file_names_its_setting_group() -> None:
+        def reader() -> None:
+            raise PermissionError(13, "denied: /made/up/secret-path-qq1")
+    
+        with pytest.raises(SettingRefused) as seen:
+>           rrc._readable("DESK_SMTPP_*", reader)
+            ^^^^^^^^^^^^^
+E           AttributeError: module 'run_real_check' has no attribute '_readable'
+
+tests/test_round5_rows.py:141: AttributeError
+__ test_a_named_reader_failure_ends_the_check_with_one_line_naming_the_group ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f04e821a2e0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f04e6ffd650>
+
+    def test_a_named_reader_failure_ends_the_check_with_one_line_naming_the_group(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        def boom(env: object) -> list[object]:
+            raise PermissionError(13, "denied: /made/up/secret-path-qq3")
+    
+        monkeypatch.setattr(rrc, "imap_settings", boom)
+        code = rrc.main(["--dry-fakes", "--assume-yes"])
+        out = capsys.readouterr().out
+        assert code == EXIT_SCRIPT_SETTING_REFUSED, out[-500:]
+>       assert "refused: a file named by a REAL_IMAP_* setting cannot be read" in out and "qq3" not in out
+E       AssertionError: assert ('refused: a file named by a REAL_IMAP_* setting cannot be read' in 'refused: a setting or a file named in the config cannot be used\n')
+
+tests/test_round5_rows.py:171: AssertionError
+_ test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused[ ] _
+
+empty = ' '
+
+    @pytest.mark.parametrize("empty", ["", " ", "\t"])
+    def test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused(empty: str) -> None:
+        base = {"REAL_IMAP_1_USER": "someone", "REAL_IMAP_1_PASSWORD_FILE": "pw.txt"}
+>       inboxes = rrc.imap_settings({**base, "REAL_IMAP_1_CA_FILE": empty})
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_round5_rows.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = {'REAL_IMAP_1_USER': 'someone', 'REAL_IMAP_1_PASSWORD_FILE': 'pw.txt', 'REAL_IMAP_1_CA_FILE': ' '}
+
+    def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+        """The counted mailboxes REAL_IMAP_1_*, REAL_IMAP_2_* ... (host default MAIL_IMAP_DEFAULT_HOST, a Workspace mailbox
+        uses the same host). Mailbox n is the n-th address of DESK_SMTPP_RECIPIENTS."""
+        out: list[ImapSettings] = []
+        n = 1
+        while env.get(f"REAL_IMAP_{n}_USER"):
+            p = f"REAL_IMAP_{n}_"
+            ca = str(env_path(env, p + "CA_FILE")) if env.get(p + "CA_FILE") else None
+            try:
+                context = ssl.create_default_context(cafile=ca) if ca else None
+            except (OSError, ssl.SSLError):  # a missing, unreadable or not-a-certificate file: the setting, not the path
+>               raise SettingRefused(f"{p}CA_FILE cannot be used (a missing file or not a certificate file)") from None
+E               lead_desk.envnum.SettingRefused: REAL_IMAP_1_CA_FILE cannot be used (a missing file or not a certificate file)
+
+scripts/run_real_check.py:633: SettingRefused
+_ test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused[\t] _
+
+empty = '\t'
+
+    @pytest.mark.parametrize("empty", ["", " ", "\t"])
+    def test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused(empty: str) -> None:
+        base = {"REAL_IMAP_1_USER": "someone", "REAL_IMAP_1_PASSWORD_FILE": "pw.txt"}
+>       inboxes = rrc.imap_settings({**base, "REAL_IMAP_1_CA_FILE": empty})
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_round5_rows.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = {'REAL_IMAP_1_USER': 'someone', 'REAL_IMAP_1_PASSWORD_FILE': 'pw.txt', 'REAL_IMAP_1_CA_FILE': '\t'}
+
+    def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+        """The counted mailboxes REAL_IMAP_1_*, REAL_IMAP_2_* ... (host default MAIL_IMAP_DEFAULT_HOST, a Workspace mailbox
+        uses the same host). Mailbox n is the n-th address of DESK_SMTPP_RECIPIENTS."""
+        out: list[ImapSettings] = []
+        n = 1
+        while env.get(f"REAL_IMAP_{n}_USER"):
+            p = f"REAL_IMAP_{n}_"
+            ca = str(env_path(env, p + "CA_FILE")) if env.get(p + "CA_FILE") else None
+            try:
+                context = ssl.create_default_context(cafile=ca) if ca else None
+            except (OSError, ssl.SSLError):  # a missing, unreadable or not-a-certificate file: the setting, not the path
+>               raise SettingRefused(f"{p}CA_FILE cannot be used (a missing file or not a certificate file)") from None
+E               lead_desk.envnum.SettingRefused: REAL_IMAP_1_CA_FILE cannot be used (a missing file or not a certificate file)
+
+scripts/run_real_check.py:633: SettingRefused
+=========================== short test summary info ============================
+FAILED tests/test_start_all_late_refusal.py::test_a_foreign_listener_on_the_demo_server_port_is_refused_before_anything_is_started
+FAILED tests/test_start_all_late_refusal.py::test_a_listener_that_appears_after_the_check_is_not_our_demo_server
+FAILED tests/test_start_all_late_refusal.py::test_text_pin_both_start_scripts_strip_one_pair_of_brackets_and_pass_the_host
+FAILED tests/test_ps1_pins.py::test_text_only_the_start_pins_hold - Assertion...
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[alive check dropped]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[brackets kept]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[brackets stripped from both ends separately]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[console encoding not put back]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[console encoding set outside try]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[encoding not put back]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[native errors fatal]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[no host passed to the demo server]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[no pre-flight refusal]
+FAILED tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[ownership line dropped]
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env1-LEADFLOW=[off] NUDGE=[<unset>]]
+FAILED tests/test_exit_code_table.py::test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table
+FAILED tests/test_setting_reader_guard.py::test_no_program_reads_the_settings_outside_the_readers
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH- ]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-   ]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-\t]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-\n]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH- ]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-   ]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-\t]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-\n]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE- ]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-   ]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-\t]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-\n]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FILE-HubspotSettings-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_FILE-HubspotSettings-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_FILE-ProviderSettings-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FILE-ProviderSettings-a\x7fb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\r\nb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\tb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\x1bb]
+FAILED tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-ProviderSettings-a\x7fb]
+FAILED tests/test_round5_rows.py::test_the_demo_server_picks_the_address_family_of_its_host_without_binding[::1-six-address0]
+FAILED tests/test_round5_rows.py::test_the_demo_server_picks_the_address_family_of_its_host_without_binding[[::1]-six-address1]
+FAILED tests/test_round5_rows.py::test_the_demo_server_picks_the_address_family_of_its_host_without_binding[127.0.0.1-four-address2]
+FAILED tests/test_round5_rows.py::test_the_ipv6_server_class_is_an_ipv6_socket_server
+FAILED tests/test_round5_rows.py::test_the_demo_server_command_line_takes_a_host
+FAILED tests/test_round5_rows.py::test_the_formatter_module_writes_utf8_bytes_under_a_narrow_console_code_page
+FAILED tests/test_round5_rows.py::test_a_reader_that_cannot_open_a_file_names_its_setting_group
+FAILED tests/test_round5_rows.py::test_a_named_reader_failure_ends_the_check_with_one_line_naming_the_group
+FAILED tests/test_round5_rows.py::test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused[ ]
+FAILED tests/test_round5_rows.py::test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused[\t]
+94 failed, 605 passed, 10 skipped in 98.23s (0:01:38)
+rc=1

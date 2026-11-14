@@ -1,0 +1,281 @@
+diff --git a/tests/test_one_key_file_rule_and_path_walk.py b/tests/test_one_key_file_rule_and_path_walk.py
+index 94ecb83..ba8c247 100644
+--- a/tests/test_one_key_file_rule_and_path_walk.py
++++ b/tests/test_one_key_file_rule_and_path_walk.py
+@@ -15,12 +15,13 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
++from support import BLOCK_CHECK_SECONDS, port_nobody_listens_on
+ 
+ from lead_desk import envnum, loader, server
+ from lead_desk.config import Config, read_approvers
+ from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings
+ from lead_desk.desk import BOOK_UNREADABLE_PROBLEM, book_problem
+-from lead_desk.envnum import SettingRefused, env_file_problem, path_kind
++from lead_desk.envnum import SettingRefused, env_file_problem, file_problem_text, path_kind
+ from lead_desk.live_claude import LiveQualifier
+ from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox, read_smtp_password
+ 
+@@ -330,7 +331,9 @@ def test_a_loop_of_links_is_never_a_traceback_in_any_of_the_five_file_settings(
+     f.write_text(FAKE_KEY + "\n", encoding="utf-8")
+     assert path_kind(loop) == "absent" and path_kind(loop / "x") == "absent"
+     for name, build in _settings_builders(f, tmp_path, str(loop / "x.json")).items():
+-        build()  # a path that cannot be used is judged where it is used; the setting itself is not a traceback
++        with pytest.raises(SettingRefused) as refused:  # since round 11 a loop is refused where the setting is read
++            build()
++        assert str(refused.value) == file_problem_text(name, "link") and str(tmp_path) not in str(refused.value)
+     with pytest.raises(SettingRefused, match="DESK_APPROVERS_FILE cannot be read"):
+         read_approvers(loop)
+     for db in (str(loop), str(loop / "d.sqlite3")):
+@@ -454,21 +457,17 @@ def test_with_the_demo_crm_and_another_outbox_a_bad_key_file_is_reported_at_once
+     """B1: the demo CRM makes no call when it is built (only the demo outbox asks the demo server), so with the demo
+     CRM and the SMTP provider outbox nothing is contacted and the bad key file is the first refusal (no demo server
+     listens on that port, yet there is no FakesUnreachable)."""
+-    import socket
+-
+-    with socket.socket() as s:
+-        s.bind(("127.0.0.1", 0))
+-        port = s.getsockname()[1]
+     bad = tmp_path / "pw.txt"
+     bad.write_text("abc", encoding="utf-8")
+-    env = _provider(bad, {"DESK_OUTBOX": "smtp_provider", "DESK_FAKES_PORT": str(port)})
+-    for name, value in env.items():
+-        monkeypatch.setenv(name, value)
+-    config = Config.from_env(env)
+-    assert config.crm != "hubspot"
+-    crm, outbox, qualifier = loader.load_demo_adapters(config)  # no FakesUnreachable
+-    with pytest.raises(SettingRefused, match="smtp password"):
+-        loader.check_secret_files(crm, outbox, qualifier)
++    with port_nobody_listens_on() as port:
++        env = _provider(bad, {"DESK_OUTBOX": "smtp_provider", "DESK_FAKES_PORT": str(port)})
++        for name, value in env.items():
++            monkeypatch.setenv(name, value)
++        config = Config.from_env(env)
++        assert config.crm != "hubspot"
++        crm, outbox, qualifier = loader.load_demo_adapters(config)  # no FakesUnreachable
++        with pytest.raises(SettingRefused, match="smtp password"):
++            loader.check_secret_files(crm, outbox, qualifier)
+ 
+ 
+ SPACE_CASES = {
+@@ -538,12 +537,12 @@ def test_a_named_pipe_as_a_key_file_is_refused_and_does_not_block(tmp_path: Path
+ 
+     t = threading.Thread(target=run, daemon=True)
+     t.start()
+-    t.join(3)
++    t.join(BLOCK_CHECK_SECONDS)
+     blocked = t.is_alive()
+     if blocked:  # let the stuck reader go before the test ends
+         fd = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
+         os.close(fd)
+-        t.join(3)
++        t.join(BLOCK_CHECK_SECONDS)
+     assert not blocked, "the key file reader blocked on a named pipe"
+     assert result == ["the made-up key file cannot be read"]
+ 
+diff --git a/tests/test_one_key_file_rule_r8.py b/tests/test_one_key_file_rule_r8.py
+index 8289f02..46d99bf 100644
+--- a/tests/test_one_key_file_rule_r8.py
++++ b/tests/test_one_key_file_rule_r8.py
+@@ -46,8 +46,13 @@ def test_the_test_session_makes_private_files_so_one_helper_covers_every_test()
+     """tests/conftest.py sets one umask for the whole session (no test makes its own): a plain write is mode 0600."""
+     if os.name != "posix":
+         pytest.skip("umask is a POSIX notion")
+-    current = os.umask(0)
+-    os.umask(current)
++    status = Path("/proc/self/status")
++    if not status.is_file():
++        pytest.skip(
++            "this system has no /proc/self/status to read the mask from (reading it with os.umask would change it)"
++        )
++    line = next(x for x in status.read_text(encoding="ascii").splitlines() if x.startswith("Umask:"))
++    current = int(line.split()[1], 8)
+     assert current & 0o077 == 0o077, oct(current)
+ 
+ 
+@@ -377,7 +382,7 @@ def test_the_demo_assets_of_an_unreadable_folder_are_left_out_not_a_traceback(mo
+ 
+     def deny(self: Path, *a: Any, **k: Any) -> Any:
+         if self.name in portal_demo.ASSET_TYPES:
+-            raise PermissionError(13, "denied")  # what Python 3.12 and later raises for a folder it cannot look at
++            raise PermissionError(13, "denied")  # what Python raises for a folder it cannot look at (3.11 to 3.13)
+         return real_read(self, *a, **k)
+ 
+     def deny_stat(self: Path, *a: Any, **k: Any) -> Any:
+@@ -422,9 +427,12 @@ def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> Non
+         assert part in section, part
+ 
+ 
++# part of the list is derived from the names the code gives each kind of file (KINDS above), so a new kind is
++# covered without anyone editing this list; the fixed part holds the general words
++_KIND_NAMES = "|".join(re.escape(name).replace(r"\ ", r"[-\s]") for name in sorted(KINDS))
+ KEY_FILE_WORDS = re.compile(
+-    r"key[- ]file|password[- ]file|secret[- ]file|credential[- ]file|KEY_FILE|PASSWORD_FILE|read_secret_file"
+-    r"|key or password",
++    r"key[- ]file|password[- ]file|token[- ]file|secret[- ]file|credential[- ]file|KEY_FILE|PASSWORD_FILE"
++    r"|read_secret_file|key or password|" + _KIND_NAMES,
+     re.I,
+ )
+ # the words of the rule; case does not matter, a hyphen or a space (or a line break) may sit between two words
+@@ -433,7 +441,9 @@ RULE_WORDS = re.compile(
+     re.I,
+ )
+ TEXT_SUFFIXES = (".md", ".txt", ".example")
+-SKIPPED_FOLDERS = {".git", ".venv", "node_modules", "__pycache__"}
++SKIPPED_FOLDERS = {
++    ".git", ".venv", "node_modules", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "build", "dist",
++}  # fmt: skip
+ 
+ 
+ def _paragraphs(lines: list[str]) -> list[tuple[int, str]]:
+@@ -483,6 +493,7 @@ def _text_files() -> list[Path]:
+         if p.suffix in TEXT_SUFFIXES
+         and p.is_file()
+         and not (set(p.relative_to(REPO).parts) & SKIPPED_FOLDERS)
++        and not any(part.endswith(".egg-info") for part in p.relative_to(REPO).parts)
+         and not p.name.startswith("requirements")
+     )
+ 
+@@ -514,6 +525,10 @@ def test_no_other_page_repeats_the_key_file_rule_it_links_to_it() -> None:
+         "The credential file is read by\nother users only if nobody else can.",
+         "A key file may be at most\n4096 bytes.",
+         "The password file holds\nprintable\nASCII only.",
++        "The token file may be at most 4096 bytes.",
++        "The smtp password may hold printable ASCII only.",  # a name from KINDS, no word 'file'
++        "The mailbox-password must not be a named pipe.",
++        "The n8n API key may start with a byte-order mark.",
+     ],
+ )
+ def test_the_repeat_scan_sees_a_planted_copy_of_the_rule_on_any_page(planted: str) -> None:
+diff --git a/tests/test_one_key_file_rule_r9.py b/tests/test_one_key_file_rule_r9.py
+index 6eec45d..19b0053 100644
+--- a/tests/test_one_key_file_rule_r9.py
++++ b/tests/test_one_key_file_rule_r9.py
+@@ -5,20 +5,20 @@ was not tried about mounts. Made-up data only; fake keys are built from parts.""
+ 
+ from __future__ import annotations
+ 
+-import importlib
+ import os
+ import socket
+ from decimal import Decimal
+ from pathlib import Path
+-from typing import Any
++from typing import Any, get_args
+ 
+ import pytest
++from support import fresh_script
+ 
+ from lead_desk import desk, envnum, loader, server
+ from lead_desk.config import Config
+ from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings
+ from lead_desk.envnum import SettingRefused
+-from lead_desk.live_claude import LiveQualifier, LiveSettings
++from lead_desk.live_claude import LiveQualifier, LiveSettings, LiveTransport
+ from lead_desk.trace import TracedCrm, Tracer
+ 
+ REPO = Path(server.__file__).parents[2]
+@@ -143,7 +143,7 @@ def test_the_lead_book_folder_texts_come_from_the_one_helper(tmp_path: Path) ->
+     assert desk.book_problem(plain / "inner.db") == envnum.file_problem_text("DESK_DB_PATH", "inside_file")
+     assert desk.BOOK_PROBLEMS == {
+         k: envnum.file_problem_text("DESK_DB_PATH", k)  # type: ignore[arg-type]
+-        for k in ("folder", "inside_file", "unreadable")
++        for k in get_args(envnum.FileProblem)
+     }
+ 
+ 
+@@ -176,6 +176,41 @@ def test_the_live_model_key_that_other_users_can_use_stops_the_start(tmp_path: P
+     q.check_start()  # a private file is accepted
+ 
+ 
++@POSIX
++def test_the_live_model_key_is_read_at_start_and_again_at_its_first_call_then_kept(tmp_path: Path) -> None:
++    """docs/settings.md: "read at start and again at its first call, and the key is kept in memory after that"."""
++    f = _key_file(tmp_path, 0o600)
++    q = LiveQualifier(_live_settings(tmp_path, f))
++    q.check_start()  # the read at start: nothing is kept from it
++    f.chmod(0o644)  # the file changes between the start and the first call
++    with pytest.raises(LiveTransport) as e:
++        q._read_key()  # the first call reads the file AGAIN, so the change is seen
++    assert USED in str(e.value) and str(tmp_path) not in str(e.value)
++    f.chmod(0o600)
++    assert q._read_key() == KEY  # now read once more and kept
++    f.chmod(0o644)
++    assert q._read_key() == KEY  # kept in memory: the file is not read again after the first good read
++
++
++@POSIX
++def test_a_part_above_the_path_that_cannot_be_looked_at_is_refused(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The branch of `env_file_problem` for a parent that cannot be looked at. On a real system the look at the path
++    itself fails first, so only the parent raises here (the path answers "no such file")."""
++    parent = tmp_path / "parent"
++    parent.mkdir()
++    real_stat = Path.stat
++
++    def stat(self: Path, *args: Any, **kwargs: Any) -> os.stat_result:
++        if self == parent:
++            raise PermissionError(13, "no permission")
++        return real_stat(self, *args, **kwargs)
++
++    monkeypatch.setattr(Path, "stat", stat)
++    assert envnum.env_file_problem(parent / "book.db") == "unreadable"
++
++
+ @POSIX
+ def test_the_demo_model_server_refuses_a_key_file_other_users_can_use(
+     tmp_path: Path, capsys: pytest.CaptureFixture[str]
+@@ -248,6 +283,7 @@ def _desk_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, bad_key: Path) ->
+ 
+ 
+ @POSIX
++@pytest.mark.usefixtures("main_lock_handles_closed")
+ def test_server_main_with_the_smtp_sender_exits_4_on_a_bad_key_file_before_any_demo_server_is_called(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+ ) -> None:
+@@ -267,6 +303,7 @@ def test_server_main_with_the_smtp_sender_exits_4_on_a_bad_key_file_before_any_d
+ 
+ 
+ @POSIX
++@pytest.mark.usefixtures("main_lock_handles_closed")
+ def test_server_main_with_the_smtp_sender_exits_4_on_a_bad_live_model_key_file_before_any_demo_server_is_called(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+ ) -> None:
+@@ -314,7 +351,7 @@ def test_a_timing_wrapper_around_a_kind_still_has_its_start_check_run(tmp_path:
+ # ------------------------------------------------------------------------------ row 4: a book path it cannot look at
+ def _real_check(monkeypatch: pytest.MonkeyPatch) -> Any:
+     monkeypatch.syspath_prepend(str(REPO / "scripts"))
+-    return importlib.import_module("run_real_check")
++    return fresh_script(monkeypatch, "run_real_check", REPO / "scripts" / "run_real_check.py")
+ 
+ 
+ def _config_with_book(mod: Any, tmp_path: Path, book: Path) -> Path:
+@@ -350,8 +387,9 @@ def test_run_real_check_refuses_a_book_path_the_system_will_not_show_in_one_line
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+ ) -> None:
+     """The same refusal where the test cannot take away its own permission (root, or a system without modes): the
+-    system's own `Path.stat` raises PermissionError for the book path, so the real `path_kind` and the real parent walk
+-    run and answer `unreadable`, as they do for a folder with no permission."""
++    system's own `Path.stat` raises PermissionError for the book path itself, so the real `path_kind` answers
++    `unreadable` at once (the first look of `env_file_problem`; its parent walk is not reached). The parent walk has its
++    own test (`test_a_part_above_the_path_that_cannot_be_looked_at_is_refused`)."""
+     mod = _real_check(monkeypatch)
+     book = tmp_path / "x" / "desk.db"
+     cfg = _config_with_book(mod, tmp_path, book)
+diff --git a/tests/test_settings_lane3.py b/tests/test_settings_lane3.py
+index 38494da..98d6704 100644
+--- a/tests/test_settings_lane3.py
++++ b/tests/test_settings_lane3.py
+@@ -405,8 +405,8 @@ def test_the_main_docstring_names_the_demo_servers_for_exit_code_1() -> None:
+     assert "the sender cannot be reached" not in doc
+ 
+ 
+-# The class guard for the probes of a setting's path (Path.is_dir()/exists() raise PermissionError on Python 3.12 and
+-# later) is the AST scan in tests/test_one_key_file_rule_r7.py, which covers every file of src/lead_desk.
++# The class guard for the probes of a setting's path (Path.is_dir()/exists() raise PermissionError, seen on Python
++# 3.11 to 3.13) is the AST scan in tests/test_one_key_file_rule_r7.py, which covers every file of src/lead_desk.
+ 
+ 
+ # REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)

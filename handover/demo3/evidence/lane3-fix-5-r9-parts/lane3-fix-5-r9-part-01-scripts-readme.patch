@@ -1,0 +1,469 @@
+diff --git a/README.md b/README.md
+index 130ffe3..a2ae1ce 100644
+--- a/README.md
++++ b/README.md
+@@ -44,7 +44,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ 
+ ## Try it
+ 
+-You need Linux or Windows (macOS was not tried; `scripts/reset.sh` also needs bash 4.1 or newer and refuses an older bash, such as the 3.2 that macOS ships, with exit 2), Python 3.12 or newer and git, and ports 8765 and 8766 on your computer must be free. The desk needs no extra packages.
++You need Linux or Windows (macOS was not tried; `scripts/reset.sh` also needs bash 4.4 or newer and refuses an older bash with exit 2), Python 3.12 or newer and git, and ports 8765 and 8766 on your computer must be free. The desk needs no extra packages.
+ 
+ 1. On this repository's GitHub page press the green Code button and copy the address it shows.
+ 2. Run `git clone <that address>`, then `cd` into the new folder.
+@@ -87,13 +87,18 @@ If PowerShell refuses to run the scripts at all (a policy set by your organisati
+ 
+ You have the demo working when the counts and the outbox match the comments above: 2 requests received, 1 new, 1 duplicate, and exactly one email. If `/counts` does not answer within a few seconds, read `data/desk.log` (on Windows also `data/desk.err.log`), run the reset script and start again. The desk has no page at `/` or `/health` and answers 404 for an address it does not know (`tests/test_http.py` checks this for other unknown addresses; `/` and `/health` were not tested separately). On Windows, starting again on the same port right after a stop can fail for a while (the operating system keeps the port closed for a time; how long was not measured here). The `/fake/...` paths are the demo servers' own addresses and keep that word in the URL.
+ 
+-The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data`, or the bash is older than 4.1 (`scripts/reset.sh` only; macOS ships 3.2), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (both `scripts/reset.sh` and `scripts/reset.ps1` check it before they stop or delete anything; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time, 6 a pid file names another program.
++The reset script works in three passes. Pass 1 looks at both pid files and changes nothing. Pass 2 stops the desk and the demo server it found, desk first; right before each stop it reads the program's command line again, because the number could belong to another program by then. Then it checks that no desk started by hand still holds the database or answers on a port. Pass 3 deletes the pid files, the desk's records and the logs. A refusal is one line on standard error (standard output stays empty), and ends the script with one of these exit codes:
+ 
+-Also exit 7, in both scripts: a pid file cannot be removed (for example it is a folder, even an empty one). A pid file that is not one plain process
+-number (for example `abc`, `007`, two numbers, a file of 64 characters or more or an empty file; with reset.sh also a named pipe) is treated as stale: nothing is stopped
+-for it, and the reset deletes it and goes on. The desk and the demo server are recognised by their whole command line:
+-`python -m lead_desk.server` or `python -m demo_only.fakes_server` (a program that only has these words somewhere in
+-its line is another program).
++- exit 2: the database is not inside `./data`, or the bash is too old (`scripts/reset.sh` only), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (an empty value counts as not set and means 10; both scripts check it before they stop or delete anything). Nothing was stopped or deleted.
++- exit 3: a process still holds the desk's database, or the lock file or the data folder cannot be looked at, or (Linux) `ps` is not installed. Nothing was deleted, not even the pid files; a program named in a pid file may already have been stopped.
++- exit 4: something still answers on the desk's or the demo server's port. Nothing was deleted, not even the pid files; a program named in a pid file may already have been stopped.
++- exit 5: a process did not stop in time. Nothing was deleted; the line names what was already stopped.
++- exit 6: a pid file names another program, or (Windows) the program behind a process number could not be looked up, or a program changed between pass 1 and its stop (it is then not stopped). In pass 1 nothing was stopped or deleted; in pass 2 the line names what was already stopped.
++- exit 7: a pid file is a folder (or a link to one), even an empty one (pass 1: nothing was stopped or deleted), or a pid file could not be removed after the stop (the line then says that the desk's records and the logs were not deleted, and that the programs have been stopped).
++
++A pid file that is not one plain process number (for example `abc`, `007`, two numbers, a file with any byte that is not plain ASCII text (a file saved as UTF-16 has zero bytes), 64 bytes or more after an optional UTF-8 byte order mark, counted in bytes whatever the language setting of your shell, an empty file, a link to a file that is gone; with reset.sh also a named pipe) is treated as stale: nothing is stopped for it, and the reset deletes it and goes on (a desk that is really running is still caught by the port and database checks, exit 3 or 4, and the pid file then stays). A UTF-8 byte order mark in front of the number is skipped and is not counted in the 64 bytes. The desk and the demo server are recognised by their whole command line, from its first character: `python -m lead_desk.server` or `python -m demo_only.fakes_server` (a program that only has these words somewhere in its line is another program).
++
++`scripts/reset.ps1` was checked by reading it and by text tests only. It has not been run on Windows in this build (2026-11-14): no PowerShell was available. Run the Windows check list of the build notes (WINDOWS-RUN-1) before relying on it. What was measured on Linux is reset.sh and the port helpers of the tests.
+ 
+ ## What is claimed, and what is not
+ 
+diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
+index a5226de..f2d6911 100644
+--- a/scripts/reset.ps1
++++ b/scripts/reset.ps1
+@@ -1,4 +1,4 @@
+-# Stop what start_all.ps1 started (only those process ids) and delete the lead book, so the next run starts empty.
++# Stop what start_all.ps1 started (only those process ids) and delete the desk's records, so the next run starts empty.
+ # Run from the repository root. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+ # and refuses to run when the database path is not inside the repository's data folder.
+ $ErrorActionPreference = 'Stop'
+@@ -7,7 +7,7 @@ $env:PYTHONPATH = 'src;.'
+ $stopWait = 10
+ if ($env:RESET_STOP_WAIT_SECONDS) {
+     if ($env:RESET_STOP_WAIT_SECONDS -cnotmatch '^(0|[1-9][0-9]{0,2})$') {
+-        Write-Host 'refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted'
++        [Console]::Error.WriteLine('refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted')
+         exit 2
+     }
+     $stopWait = [int]$env:RESET_STOP_WAIT_SECONDS
+@@ -17,7 +17,7 @@ $dataDir = Split-Path -Parent $db
+ # real paths: a junction or symlink inside data\ that points elsewhere is followed (same check as reset.sh)
+ $inside = python -c "import os, sys; d = os.path.normcase(os.path.realpath(sys.argv[1])); r = os.path.normcase(os.path.realpath('data')); print(d == r or d.startswith(r + os.sep))" $dataDir
+ if ("$inside".Trim() -ne 'True') {
+-    Write-Host "refused: the database path is not inside this repository's data folder, so nothing was stopped or deleted"
++    [Console]::Error.WriteLine("refused: the database path is not inside this repository's data folder, so nothing was stopped or deleted")
+     exit 2
+ }
+ # the desk or the demo server is `python -m lead_desk.server ...` or `python -m demo_only.fakes_server ...` (what
+@@ -26,64 +26,128 @@ if ("$inside".Trim() -ne 'True') {
+ # then -m, then exactly one of the two modules as a word of its own. An editor with lead_desk.server.py in its line,
+ # `cmd /c echo python -m ...`, or python-tools\less.exe -m lead_desk.server is another program; an interpreter
+ # path with a space and no quotes is not recognised, and the reset then refuses (exit 6), the safe side. The line is
+-# compared with -cmatch (letter case counts), like reset.sh: python and Python are interpreters, PYTHON.EXE -M is not
++# compared with -cmatch (letter case counts) from its first character, like reset.sh: python and Python are interpreters, PYTHON.EXE -M is not
+ $interpreter = '("([^"]*[\\/])?[Pp]ython[^"\\/]*"|([^\s"]*[\\/])?[Pp]ython[^\s"\\/]*)'
+-$ours = '^\s*' + $interpreter + '\s+-m\s+(lead_desk\.server|demo_only\.fakes_server)(\s|$)'
++$ours = '^' + $interpreter + '\s+-m\s+(lead_desk\.server|demo_only\.fakes_server)(\s|$)'
++# A refusal goes to standard error (like reset.sh), then the script ends with the exit code named in the README
++# PASS 1: look at both pid files and change nothing. Every refusal here says "nothing was stopped or deleted", and it is true
++$plan = @()
+ foreach ($name in 'desk', 'fakes') {
+     $pidFile = "$dataDir\$name.pid"
+-    if (Test-Path -LiteralPath $pidFile) {
++    # Get-Item -Force also sees a link whose target is gone (Test-Path may call it missing, and it would never be deleted)
++    $found = Get-Item -LiteralPath $pidFile -Force -ErrorAction SilentlyContinue
++    if ($null -ne $found) {
+         # a pid file is a plain file. A folder with that name (Remove-Item would delete an empty one without a word)
+-        # is refused with exit 7 and the same words as reset.sh; nothing else is deleted
+-        if (-not (Test-Path -LiteralPath $pidFile -PathType Leaf)) {
+-            Write-Host "refused: $pidFile cannot be removed (is it a folder?); nothing else was deleted"
++        # is refused with exit 7 and the same words as reset.sh
++        if ($found.PSIsContainer) {
++            [Console]::Error.WriteLine("refused: $pidFile is a folder, not a pid file, so it cannot be removed; nothing was stopped or deleted (remove or rename that folder yourself)")
+             exit 7
+         }
+-        # same rule as reset.sh: at most 64 bytes are read (64 or more is far longer than any process number, so the
+-        # file is stale), and only one plain process number (no leading zero, not 0, small enough for a 32 bit
+-        # number) names a process. Anything else ("abc", "007", two lines, an empty or unreadable file) is a stale
+-        # file: nothing is looked up or stopped, and the file is deleted below
++        # same rule as reset.sh: at most 67 bytes are read (a UTF-8 byte order mark is 3 bytes; 64 bytes after it or
++        # more is far longer than any process number, so the file is stale), and only one plain process number (no leading zero, not 0, small enough for a 32 bit
++        # number) names a process. Anything else ("abc", "007", two lines, an empty or unreadable file, a file saved
++        # as UTF-16) is a stale file: nothing is looked up or stopped, and the file is deleted in pass 3. A UTF-8 byte
++        # order mark (EF BB BF) in front of the number is skipped. The path is made absolute first: .NET resolves a
++        # relative one against the process folder, which is not always PowerShell's current folder
+         $raw = $null
+         try {
+-            $stream = [System.IO.File]::Open($pidFile, 'Open', 'Read', 'ReadWrite')
++            $full = Convert-Path -LiteralPath $pidFile
++            $stream = [System.IO.File]::Open($full, 'Open', 'Read', 'ReadWrite')
+             try {
+-                $buffer = New-Object byte[] 64
+-                $count = $stream.Read($buffer, 0, 64)
+-                if ($count -ge 64) { $raw = $null } else { $raw = [System.Text.Encoding]::ASCII.GetString($buffer, 0, $count) }
++                $buffer = New-Object byte[] 67
++                # one Read may return less than asked before the end of the file: read on until 67 bytes or the end (as reset.sh does)
++                $count = 0
++                while ($count -lt 67) {
++                    $got = $stream.Read($buffer, $count, 67 - $count)
++                    if ($got -le 0) { break }
++                    $count += $got
++                }
++                $from = 0
++                if ($count -ge 3 -and $buffer[0] -eq 0xEF -and $buffer[1] -eq 0xBB -and $buffer[2] -eq 0xBF) { $from = 3 }
++                # 64 bytes or more after the mark is stale, and so is any byte that is not plain ASCII text (a NUL, a byte above 126,
++                # a control character other than the white space ones): the same rule as reset.sh, which judges the same bytes
++                $bad = (($count - $from) -ge 64)
++                for ($i = $from; $i -lt $count; $i++) {
++                    $b = $buffer[$i]
++                    if ($b -gt 126 -or ($b -lt 32 -and ($b -lt 9 -or $b -gt 13))) { $bad = $true }
++                }
++                if ($bad) { $raw = $null } else { $raw = [System.Text.Encoding]::ASCII.GetString($buffer, $from, $count - $from) }
+             } finally { $stream.Dispose() }
+         } catch { $raw = $null }
+         $text = if ($null -eq $raw) { '' } else { "$raw".Trim() }
+         $procId = 0
+         $proc = $null
+-        if (($text -cmatch '^[1-9][0-9]*$') -and [int]::TryParse($text, [ref]$procId)) {
++        if (($text -cmatch '\A[1-9][0-9]*\z') -and [int]::TryParse($text, [ref]$procId)) {
+             # only stop a process that still is the desk or the demo server (a process id can be reused by another
+-            # program)
+-            $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction SilentlyContinue
++            # program). A lookup that fails is not "the process is gone": it is refused
++            try {
++                $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction Stop
++            } catch {
++                [Console]::Error.WriteLine("refused: process $procId (named in $pidFile) could not be looked up; nothing was stopped or deleted")
++                exit 6
++            }
+         }
+         if ($null -eq $proc) {
+-            # that process id is gone already, or the file is not one process number
++            $plan += [pscustomobject]@{ Name = $name; PidFile = $pidFile; ProcId = 0; Ours = $false }
+         } elseif ($proc.CommandLine -cmatch $ours) {
+-            Stop-Process -Id $procId -ErrorAction SilentlyContinue
+-            try { Wait-Process -Id $procId -Timeout $stopWait -ErrorAction Stop } catch { }
+-            if (Get-Process -Id $procId -ErrorAction SilentlyContinue) {
+-                Write-Host "refused: process $procId did not stop in time; nothing was deleted"
+-                exit 5
+-            }
++            $plan += [pscustomobject]@{ Name = $name; PidFile = $pidFile; ProcId = $procId; Ours = $true }
+         } else {
+-            Write-Host "refused: pid $procId in $pidFile is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)"
++            [Console]::Error.WriteLine("refused: process $procId named in $pidFile is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)")
+             exit 6
+         }
+-        try { Remove-Item -LiteralPath $pidFile -ErrorAction Stop } catch {
+-            Write-Host "refused: $pidFile cannot be removed (is it a folder?); nothing else was deleted"
+-            exit 7
+-        }
+     }
+ }
+-# a desk started by hand (no pid file) or one that is still running: nothing may hold the database or answer on a port
++# PASS 2: stop what is ours (desk first) and wait for each. Nothing is deleted yet: a process that does not stop
++# leaves every file in place, and the message says which one was already stopped
++$stopped = ''
++foreach ($item in $plan) {
++    if (-not $item.Ours) { continue }
++    $procId = $item.ProcId
++    $note = if ($stopped) { " (already stopped: $stopped)" } else { '' }
++    # pass 1 judged this number a while ago (an earlier stop may have waited for seconds): the number may belong to
++    # another program now, so the command line is read again right before the stop. A process that ended meanwhile
++    # is simply gone. A lookup that fails is refused, as in pass 1
++    try {
++        $again = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction Stop
++    } catch {
++        [Console]::Error.WriteLine("refused: process $procId (named in $($item.PidFile)) could not be looked up; nothing was deleted$note")
++        exit 6
++    }
++    if (($null -ne $again) -and -not ($again.CommandLine -cmatch $ours)) {
++        [Console]::Error.WriteLine("refused: process $procId named in $($item.PidFile) was the desk or the demo server when checked, but is another program now; it was not stopped, and nothing was deleted$note")
++        exit 6
++    }
++    if ($null -ne $again) {
++        Stop-Process -Id $procId -ErrorAction SilentlyContinue
++        try { Wait-Process -Id $procId -Timeout $stopWait -ErrorAction Stop } catch { }
++    }
++    if (Get-Process -Id $procId -ErrorAction SilentlyContinue) {
++        [Console]::Error.WriteLine("refused: process $procId did not stop in time; nothing was deleted$note")
++        exit 5
++    }
++    $stopped = if ($stopped) { "$stopped, $($item.Name) (process $procId)" } else { "$($item.Name) (process $procId)" }
++}
++# between the stop and the first delete: a desk started by hand (no pid file) or one that is still running. Nothing may
++# hold the database or answer on a port. A refusal here leaves every file in place, the pid files too
++# Its messages go to standard error: with 'Stop' in force, Windows PowerShell 5.1 would turn them (when the caller joins
++# the streams with 2>&1) into an error record and end the script, so 'Continue' is in force only around this call
++$previousPreference = $ErrorActionPreference
++$ErrorActionPreference = 'Continue'
+ python scripts/reset_check.py
+-if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
++$checkExit = $LASTEXITCODE
++$ErrorActionPreference = $previousPreference
++if ($checkExit -ne 0) { exit $checkExit }
++# PASS 3: delete the pid files (a stale one too), and then the records and the logs
++foreach ($item in $plan) {
++    $pidFile = $item.PidFile
++    try { Remove-Item -LiteralPath $pidFile -Force -ErrorAction Stop } catch {
++        [Console]::Error.WriteLine("refused: $pidFile could not be removed (another program may hold it open, or you may not be allowed to delete it); the desk's records and the logs were not deleted (the desk and the demo server, if they were running, have been stopped)")
++        exit 7
++    }
++}
+ Start-Sleep -Seconds 1
+ foreach ($f in $db, "$db-wal", "$db-shm", "$db.lock", "$dataDir\desk.log", "$dataDir\desk.err.log",
+     "$dataDir\fakes.log", "$dataDir\fakes.err.log", "$dataDir\crash.flag") {
+-    if (Test-Path $f) { Remove-Item -Force $f }
++    if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }
+ }
+ Write-Host 'reset done'
+diff --git a/scripts/reset.sh b/scripts/reset.sh
+index 711920f..001b264 100644
+--- a/scripts/reset.sh
++++ b/scripts/reset.sh
+@@ -1,12 +1,13 @@
+ #!/usr/bin/env bash
+-# Stop what start_all.sh started (only those process ids) and delete the lead book, so the next run starts empty.
++# Stop what start_all.sh started (only those process ids) and delete the desk's records, so the next run starts empty.
+ # Run from the repository root with bash (it uses [[ ]]): `sh scripts/reset.sh` fails where sh is dash. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+ # and refuses to run when the database path is not inside the repository's data/ folder.
+ set -eu
+ # a feature test, not the name BASH_VERSION (dash takes any variable from the environment): only a shell that runs [[ ]] passes
+ case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
+-# the pid file is read with `read -N`, which needs bash 4.1 or newer (macOS ships 3.2): on an older bash a valid process number would read as empty, count as stale, and its file would be deleted without stopping the desk
+-if (( BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 1) )); then echo "refused: this script needs bash 4.1 or newer (this is bash ${BASH_VERSION}); nothing was stopped or deleted" >&2; exit 2; fi
++# the full command line of a process is read with `mapfile -d` (and the pid file with `read -N`), which an old bash does not have (the one macOS ships): a valid process number could then read as empty, or be judged on the weaker ps text. So the script refuses to start. The oldest bash that works is named in the README only; this one constant must equal it (a test compares them)
++bash_minimum=(4 4)
++if (( BASH_VERSINFO[0] < bash_minimum[0] || (BASH_VERSINFO[0] == bash_minimum[0] && BASH_VERSINFO[1] < bash_minimum[1]) )); then echo "refused: this bash (${BASH_VERSION}) is too old for this script: it cannot read the full command line of a process, so it could not tell the desk from another program; nothing was stopped or deleted (the README names the oldest bash that works)" >&2; exit 2; fi
+ # a plain whole number of seconds: 0, or one to three digits with no leading zero (a shell reads 08 as a bad octal)
+ case "${RESET_STOP_WAIT_SECONDS:-10}" in
+   0|[1-9]|[1-9][0-9]|[1-9][0-9][0-9]) ;;
+@@ -26,7 +27,15 @@ if ! command -v ps >/dev/null 2>&1 && { [[ -e "$data_dir/desk.pid" ]] || [[ -e "
+   exit 3
+ fi
+ # a process that has ended but is not yet collected by its parent (state Z) is stopped
+-alive() { kill -0 "$1" 2>/dev/null && [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]; }
++# kill -0 also fails for a process we may not sign (EPERM, "Operation not permitted"): it is there, so it counts as alive.
++# Only "No such process" means gone. The message is read in the C locale so that its words do not depend on the language
++alive() {
++  local err
++  if ! err="$(LC_ALL=C kill -0 "$1" 2>&1)"; then
++    [[ "$err" == *"not permitted"* ]] || return 1
++  fi
++  [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]
++}
+ # the whole command line of a process, never cut at a terminal width: ps cuts it at $COLUMNS (even into a pipe) and
+ # the marker is the last word. Linux: /proc (NUL separators become spaces); else ps -ww (unlimited width), else plain ps
+ proc_args() {
+@@ -46,7 +55,7 @@ proc_args() {
+ # python3.12 ...), argv[1] is -m and argv[2] is exactly one of the two modules, which is how start_all.sh starts them.
+ # Linux: the arguments are read one by one from /proc (NUL separated), so a shell that has the marker in a quoted string
+ # (bash -c "python -m lead_desk.server") or a program that only has "python" in its folder name is another program.
+-# Without /proc (BSD, or a bash older than 4.4, which has no mapfile -d) or when it cannot be read: the line from ps ($2) is matched as text (the fallback). bash older than 4.1 (macOS 3.2) is refused at the top
++# Without /proc (BSD) or when it cannot be read: the line from ps ($2) is matched as text (the fallback). An old bash is refused at the top
+ is_ours() {
+   local -a argv=()
+   if [[ -r "/proc/$1/cmdline" ]] && mapfile -d '' -t argv 2>/dev/null < "/proc/$1/cmdline" &&
+@@ -61,21 +70,47 @@ is_ours() {
+   local line_is_ours='^([^ ]*/)?[Pp]ython[^ /]* -m (lead_desk\.server|demo_only\.fakes_server)( |$)'
+   [[ "$2" =~ $line_is_ours ]]
+ }
++# the first 67 bytes of a file into $pid (a loop, because one read may return less than asked before the end of the
++# file). 67 is 64 plus the 3 bytes of a byte order mark (EF BB BF, UTF-8) that an editor may have put in front; the mark
++# is dropped, so 64 counts the bytes after it (reset.ps1 does the same). Everything that counts, looks at or trims the
++# text happens inside this function, under its own LC_ALL=C (which ends with the function), so that every number is a
++# count of bytes, as the README says, whatever the language setting of the caller's shell. Whatever cannot be read, is
++# 64 bytes or more after the mark, has a byte that is not plain printable text (a UTF-16 file or any non-ASCII byte), or
++# lost zero bytes to `read` leaves $pid empty (a stale file); otherwise $pid is the text without its outer spaces
++read_pid_file() {
++  local LC_ALL=C chunk="" tries size
++  pid=""
++  { for ((tries = 0; tries < 67 && ${#pid} < 67; tries++)); do
++    IFS= read -r -N $((67 - ${#pid})) -u 9 chunk || { pid+="$chunk"; break; }
++    pid+="$chunk"
++  done; } 2>/dev/null 9< "$1" || { pid=""; return 0; }
++  size="$(wc -c < "$1" 2>/dev/null)" || size=""
++  size="${size//[[:space:]]/}"
++  if [[ ! "$size" =~ ^[0-9]+$ ]] || (( ${#pid} != (size < 67 ? size : 67) )); then pid=""; return 0; fi # zero bytes were dropped
++  pid="${pid#$'\xef\xbb\xbf'}"
++  if (( ${#pid} >= 64 )) || [[ "$pid" == *[![:print:][:space:]]* ]]; then pid=""; return 0; fi
++  pid="${pid#"${pid%%[![:space:]]*}"}"; pid="${pid%"${pid##*[![:space:]]}"}" # trim the spaces and the line end
++}
++# PASS 1: look at both pid files and change nothing. Every refusal below says "nothing was stopped or deleted", and it is true
++declare -A kind=() number=()
+ for name in desk fakes; do
+   pidfile="$data_dir/$name.pid"
+-  if [[ -e "$pidfile" ]]; then
+-    # a plain file only, and at most 64 characters, read with the shell's own read (no program, no wait): a named
+-    # pipe would block the read for ever, a folder or an unreadable file would stop the script under set -e.
++  kind[$name]=none
++  if [[ -e "$pidfile" || -L "$pidfile" ]]; then # a link to nothing is a pid file too: -e alone says it is not there
++    # a folder (or a link to one) is no pid file and cannot be removed with rm -f
++    if [[ -d "$pidfile" ]]; then
++      echo "refused: $pidfile is a folder, not a pid file, so it cannot be removed; nothing was stopped or deleted (remove or rename that folder yourself)" >&2
++      exit 7
++    fi
++    # a plain file only, and at most 67 bytes (64 after a byte order mark), read with the shell's own read (and its size asked of wc, on a plain file only): a named
++    # pipe would block the read for ever, an unreadable file would stop the script under set -e.
+     # Whatever cannot be read is an empty answer, and an empty answer is a stale file (see below)
+     pid=""
+-    if [[ -f "$pidfile" ]]; then
+-      IFS= read -r -N 64 pid 2>/dev/null < "$pidfile" || true
+-      if (( ${#pid} >= 64 )); then pid=""; fi # far longer than any process number
+-    fi
+-    pid="${pid#"${pid%%[![:space:]]*}"}"; pid="${pid%"${pid##*[![:space:]]}"}" # trim the spaces and the line end
++    if [[ -f "$pidfile" ]]; then read_pid_file "$pidfile"; fi # 64 bytes (after the mark) or more is far longer than any process number
+     # only one plain process number (no leading zero, not 0) names a process. Anything else ("abc", "123 456", two
+-    # lines, "self", "../1", an empty file) is a stale file: nothing is looked up or stopped, the file is deleted.
+-    # (a pid file with two numbers is not one this repository writes, and no guess is made about which one is the desk)
++    # lines, "self", "../1", an empty file, a file saved as UTF-16) is a stale file: nothing is looked up or stopped,
++    # the file is deleted. (a pid file with two numbers is not one this repository writes, and no guess is made about
++    # which one is the desk)
+     what=""
+     if [[ "$pid" =~ ^[1-9][0-9]*$ ]]; then
+       # only stop a process that still is the desk or the demo server (a pid can be reused by another program);
+@@ -84,27 +119,59 @@ for name in desk fakes; do
+       if [[ "$(ps -p "$pid" -o stat= 2>/dev/null | cut -c1)" == "Z" ]]; then what=""; fi
+     fi
+     if [[ -z "$what" ]]; then
+-      : # that process id is gone already, or the file is not one process number
++      kind[$name]=stale # that process id is gone already, or the file is not one process number
+     elif is_ours "$pid" "$what"; then
+-      kill "$pid" 2>/dev/null || true
+-      for _ in $(seq 1 $(( ${RESET_STOP_WAIT_SECONDS:-10} * 10 ))); do alive "$pid" || break; sleep 0.1; done
+-      if alive "$pid"; then
+-        echo "refused: process $pid did not stop in time; nothing was deleted" >&2
+-        exit 5
+-      fi
++      kind[$name]=ours
++      number[$name]="$pid"
+     else
+-      echo "refused: pid $pid in $pidfile is not the desk or the demo server; nothing was stopped or deleted" \
++      echo "refused: process $pid named in $pidfile is not the desk or the demo server; nothing was stopped or deleted" \
+         "(delete the pid file yourself if it is stale)" >&2
+       exit 6
+     fi
+-    if ! rm -f -- "$pidfile" 2>/dev/null; then
+-      echo "refused: $pidfile cannot be removed (is it a folder?); nothing else was deleted" >&2
+-      exit 7
++  fi
++done
++# PASS 2: stop what is ours (desk first), and wait for each. Nothing is deleted yet: a process that does not stop
++# leaves every file in place, and the message says which one was already stopped
++stopped=""
++for name in desk fakes; do
++  [[ "${kind[$name]}" == ours ]] || continue
++  pid="${number[$name]}"
++  # pass 1 judged this number a while ago (an earlier stop may have waited for seconds): the number may belong to
++  # another program now, so it is looked at again right before the stop. A process that ended meanwhile is simply gone
++  if alive "$pid"; then
++    if is_ours "$pid" "$(proc_args "$pid" || true)"; then
++      kill "$pid" 2>/dev/null || true
++    elif alive "$pid"; then # still there, and not the desk: (an empty line from a process that ended during the look is no reason to refuse)
++      echo "refused: process $pid named in $data_dir/$name.pid was the desk or the demo server when checked, but is another program now; it was not stopped, and nothing was deleted${stopped:+ (already stopped: $stopped)}" >&2
++      exit 6
+     fi
+   fi
++  for _ in $(seq 1 $(( ${RESET_STOP_WAIT_SECONDS:-10} * 10 ))); do alive "$pid" || break; sleep 0.1; done
++  if alive "$pid"; then
++    echo "refused: process $pid did not stop in time; nothing was deleted${stopped:+ (already stopped: $stopped)}" >&2
++    exit 5
++  fi
++  stopped="$stopped, $name (process $pid)"
++  stopped="${stopped#, }"
++done
++# between the stop and the first delete: a desk started by hand (no pid file) or one that is still running. Nothing may hold
++# the database or answer on a port. A refusal here leaves every file in place, the pid files too
++check_exit=0
++python scripts/reset_check.py || check_exit=$?
++case "$check_exit" in
++  0) ;;
++  3|4) exit "$check_exit" ;; # the check says why on standard error
++  *) echo "refused: the check program failed (exit $check_exit); nothing was deleted, not even the pid files${stopped:+ (already stopped: $stopped)}" >&2; exit 5 ;;
++esac
++# PASS 3: delete the pid files (a stale one too), and then the records and the logs
++for name in desk fakes; do
++  [[ "${kind[$name]}" != none ]] || continue
++  pidfile="$data_dir/$name.pid"
++  if ! rm -f -- "$pidfile" 2>/dev/null; then
++    echo "refused: $pidfile could not be removed (another program may hold it open, or you may not be allowed to delete it); the desk's records and the logs were not deleted (the desk and the demo server, if they were running, have been stopped)" >&2
++    exit 7
++  fi
+ done
+-# a desk started by hand (no pid file) or one that is still running: nothing may hold the database or answer on a port
+-python scripts/reset_check.py || exit $?
+ sleep 1
+ rm -f "$db" "$db-wal" "$db-shm" "$db.lock" "$data_dir/desk.log" "$data_dir/fakes.log" "$data_dir/crash.flag"
+ echo "reset done"
+diff --git a/scripts/reset_check.py b/scripts/reset_check.py
+index ebc1b45..ead9606 100644
+--- a/scripts/reset_check.py
++++ b/scripts/reset_check.py
+@@ -1,7 +1,7 @@
+-"""Run by reset.sh and reset.ps1 AFTER they stopped the desk and BEFORE they delete anything. Exit 0 = nothing uses the
+-lead book: no process holds its lock file and nothing answers on the desk's or the demo server's port. Exit 3 = a
+-process still holds the database or the lock file cannot be tested, 4 = something still answers on a port.
+-Prints one line, no values."""
++"""Run by reset.sh and reset.ps1 AFTER they stopped the desk and BEFORE they delete anything (pid files too). Exit 0 =
++nothing uses the desk's records: no process holds the lock file and nothing answers on the desk's or the demo server's
++port. Exit 3 = a process still holds the database or the lock file cannot be tested, 4 = something still answers on a
++port. A refusal is one line on standard error (standard output stays empty), with no values."""
+ 
+ from __future__ import annotations
+ 
+@@ -13,6 +13,8 @@ from lead_desk.config import Config
+ 
+ LOOPBACK = "127.0.0.1"
+ CONNECT_SECONDS = 1.0
++# true for every refusal below: the check runs before the first delete; a program named in a pid file may be stopped
++KEPT = "nothing was deleted, not even the pid files (a program named in a pid file may already have been stopped)"
+ 
+ 
+ def answers(port: int) -> bool:
+@@ -23,6 +25,10 @@ def answers(port: int) -> bool:
+         return False
+ 
+ 
++def refuse(reason: str) -> None:
++    print(f"refused: {reason}; {KEPT}", file=sys.stderr)
++
++
+ def main() -> int:
+     config = Config.from_env()
+     # only "there is no lock file" means that nothing holds the book; a lock file that cannot be tested is a refusal,
+@@ -32,23 +38,20 @@ def main() -> int:
+     except OSError:  # an unreadable folder: exists() raises instead of answering
+         has_lock_file = None
+     if has_lock_file is None:
+-        print("refused: the data folder cannot be looked at, so it is not known whether the desk runs; nothing deleted")
++        refuse("the data folder cannot be looked at, so it is not known whether the desk runs")
+         return 3
+     if has_lock_file:
+         try:
+             lockfile.acquire(config.db_path).close()
+         except lockfile.LockHeldError:
+-            print("refused: a process still holds the database (the desk is running); nothing was deleted")
++            refuse("a process still holds the database (the desk is running)")
+             return 3
+         except lockfile.LockUnavailableError:
+-            print(
+-                "refused: the lock file of the database cannot be tested, so it is not known whether the desk runs; "
+-                "nothing was deleted"
+-            )
++            refuse("the lock file of the database cannot be tested, so it is not known whether the desk runs")
+             return 3
+     for port in (config.port, config.fakes_port):
+         if port and answers(port):
+-            print(f"refused: something still answers on port {port}; nothing was deleted")
++            refuse(f"something still answers on port {port}")
+             return 4
+     return 0
+ 

@@ -1,3 +1,18 @@
+## HEARTBEAT 127 (08:21Z) - LEAD note 08:20Z applied; B22 round 11 handed back and linted; two fresh reviewers started; B21 and B23 building
+
+| Agent / job | State at 08:21Z |
+|---|---|
+| B22 fix-2 round 11 | handed back. My tree id 77fa1c0d matches the builder's. My lint of a clean git ls-files copy: ruff check, ruff format, mypy linux, mypy win32, bandit all rc 0 (evidence/raw/b27-lint-b22-r11.log). Builder evidence: 12 failed on the old code; changed files 778 passed x3; hygiene 31, guards 47 passed; mutation baseline x3 green; 8 mutants killed by their own target, S2 SURVIVED (the lock fixture only closes handles). The 429 stub race is fixed (RawStub counts under a lock before it replies). New "link" refusal for a dangling link or a loop |
+| R23a / R23b | fresh egm-design and egm-codebase-details started 08:21Z on tree 77fa1c0d; S2, the "link" refusal and the one test whose meaning changed are named in the briefs |
+| B21 fix-5 round 9 | building (last checkpoint 08:05Z); no hand-back yet |
+| B23 fix-10 round 5 | building (last checkpoint 08:09Z); no hand-back yet |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; root container (no non-root chmod-000 run); key-file owner and ACLs not checked (documented); B22 rows 10, 13, 14, 15 wait for the stack docs pass (the docs do not yet list the new "link" refusal); WINDOWS-RUN-1 still needs the new lines.
+WHAT I WOULD DO NEXT (ranked): 1) save the two reviews, run egm-resolve, round 12 only for a confirmed Major; 2) lint, reconcile and review the B21 and B23 hand-backs; 3) start the one stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 126 (08:11Z) - LEAD answer 08:10Z applied; B21 checkpoint written; three builders still working
 
 | Agent / job | State at 08:11Z |

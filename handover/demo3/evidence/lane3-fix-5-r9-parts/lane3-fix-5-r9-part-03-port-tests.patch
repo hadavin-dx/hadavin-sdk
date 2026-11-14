@@ -1,0 +1,688 @@
+diff --git a/tests/port_blocks.py b/tests/port_blocks.py
+new file mode 100644
+index 0000000..1756360
+--- /dev/null
++++ b/tests/port_blocks.py
+@@ -0,0 +1,86 @@
++"""Port numbers for tests, without any import of the demo folder (so a test file that is not about the demo can use
++it, and the removable demo folder stays removable). support.py re-exports these names."""
++
++from __future__ import annotations
++
++import os
++import re
++import secrets
++import socket
++
++from lead_desk.config import Config
++
++HOST = Config().bind  # the one definition of the loopback host for tests (support.py imports it)
++_ATTEMPTS = 100  # how often a number is asked for again when the operating system hands out one that is taken
++
++_RANGE_START = 20000  # xdist workers draw their port numbers from 20000 up, one block each (see worker_port_range)
++_RANGE_END = 32767  # below 32768, where Linux starts its own numbers (Windows, macOS: 49152)
++_RANGE_WIDTH = 5000  # widest block of one worker (narrower when there are more workers)
++_HALF = (_RANGE_END - _RANGE_START + 1) // 2  # first half: the workers xdist starts first; second half: restarted ones
++_SLICES = 16  # most parts a block is cut into, one part per process number remainder (see session_window)
++_MIN_SLICE = 32  # a part is never narrower than this many numbers
++_MAX_WORKERS = 256  # a count above this (or a missing count) is treated as this many: the blocks stay disjoint
++
++
++def worker_port_range(worker: str | None, count: str | None) -> tuple[int, int] | None:
++    """The block of port numbers (first, last) that xdist worker `worker` ("gw0", "gw1", ...) draws from, or None when
++    the tests run in one process (then the operating system chooses, as before).
++    `count` is PYTEST_XDIST_WORKER_COUNT. The width is the same for every worker of a run (it depends on the count
++    only), so no block depends on which worker asks. Workers 0 to count-1 get the first half, one block each. When a
++    worker dies xdist starts gw<count>, gw<count+1> ...: those get the second half, block (number - count) mod count, so
++    a restarted worker never overlaps a first worker that is still alive. Two restarted workers share a block only when
++    one of them outlives `count` later restarts. A missing or odd count is treated as the largest supported count."""
++    found = re.fullmatch(r"gw(\d+)", worker or "")
++    if found is None:
++        return None
++    number = int(found.group(1))
++    total = int(count) if count and count.isdigit() and int(count) > 0 else _MAX_WORKERS
++    total = min(total, _MAX_WORKERS)
++    width = min(_RANGE_WIDTH, _HALF // total)
++    if number < total:
++        first = _RANGE_START + number * width
++    else:
++        first = _RANGE_START + _HALF + ((number - total) % total) * width
++    return first, first + width - 1
++
++
++def session_window(block: tuple[int, int], pid: int) -> tuple[int, int]:
++    """The part of a worker's block that the process with number `pid` draws from. Two pytest runs on one machine
++    both have a gw0 with the same block; the block is cut into up to 16 equal parts (none narrower than 32 numbers) and
++    a process uses part pid % parts, so two runs share a part only when their process numbers are equal modulo the
++    number of parts. A block too narrow to cut (many workers) is used whole."""
++    first, last = block
++    width = last - first + 1
++    parts = max(1, min(_SLICES, width // _MIN_SLICE))
++    size = width // parts
++    index = pid % parts
++    low = first + index * size
++    return low, (last if index == parts - 1 else low + size - 1)
++
++
++def _draw(window: tuple[int, int]) -> socket.socket | None:
++    for _ in range(_ATTEMPTS * 5):
++        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++        try:
++            s.bind((HOST, window[0] + secrets.randbelow(window[1] - window[0] + 1)))
++        except OSError:
++            s.close()
++            continue
++        return s
++    return None
++
++
++def bound_socket() -> socket.socket:
++    """A socket bound to a number the operating system chose (bind to port 0); it does not listen. Under xdist the
++    number is drawn from this worker's own block instead (worker_port_range); a number that is taken is skipped."""
++    block = worker_port_range(os.environ.get("PYTEST_XDIST_WORKER"), os.environ.get("PYTEST_XDIST_WORKER_COUNT"))
++    if block is None:
++        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++        s.bind((HOST, 0))  # the one place that binds to port 0 (checked in test_port_helpers.py)
++        return s
++    # this process's part of the block first (two runs at once rarely meet), then the whole block
++    for window in (session_window(block, os.getpid()), block):
++        s = _draw(window)
++        if s is not None:
++            return s
++    raise AssertionError(f"no free port number in {block[0]}-{block[1]}")
+diff --git a/tests/test_crm_hubspot.py b/tests/test_crm_hubspot.py
+index e53c003..347e111 100644
+--- a/tests/test_crm_hubspot.py
++++ b/tests/test_crm_hubspot.py
+@@ -12,7 +12,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import HOST, stop_within
++from support import HOST, bound_socket, stop_within
+ 
+ from demo_only import fake_hubspot as fh
+ from lead_desk.adapters import CrmError, CrmNothingStored, HttpCrm
+@@ -535,10 +535,7 @@ def test_archive_is_counted_as_an_archive_not_as_a_read(rig: Rig) -> None:
+ def test_one_request_is_bounded_as_a_whole_even_when_the_status_line_trickles_in(tmp_path: Path) -> None:
+     """The socket timeout is per read, so a server that sends one byte at a time inside it could keep the call alive
+     for as long as it liked. The whole request (headers included) ends at the budget."""
+-    import socket
+-
+-    srv = socket.socket()
+-    srv.bind((HOST, 0))
++    srv = bound_socket()
+     srv.listen(1)
+     stop = threading.Event()
+ 
+diff --git a/tests/test_http_guard.py b/tests/test_http_guard.py
+index d9c6253..4931764 100644
+--- a/tests/test_http_guard.py
++++ b/tests/test_http_guard.py
+@@ -2,7 +2,6 @@
+ 
+ from __future__ import annotations
+ 
+-import socket
+ import sys
+ import urllib.error
+ import urllib.request
+@@ -13,6 +12,7 @@ import pytest
+ REPO = Path(__file__).resolve().parents[1]
+ sys.path.insert(0, str(REPO / "scripts"))
+ from http_guard import open_http  # noqa: E402
++from port_blocks import bound_socket  # noqa: E402
+ 
+ 
+ @pytest.mark.parametrize(
+@@ -26,8 +26,7 @@ def test_a_scheme_other_than_http_and_https_is_refused_before_anything_is_opened
+ 
+ 
+ def test_an_http_address_is_really_tried() -> None:
+-    with socket.socket() as s:
+-        s.bind(("127.0.0.1", 0))
++    with bound_socket() as s:
+         port = s.getsockname()[1]
+     with pytest.raises(urllib.error.URLError):  # nothing listens on the port that was just freed
+         open_http(f"http://127.0.0.1:{port}/", 1)
+diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
+index 7b9d857..d4dba86 100644
+--- a/tests/test_live_claude.py
++++ b/tests/test_live_claude.py
+@@ -17,7 +17,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import REPO, lead, start_serving, stop_serving
++from support import REPO, bound_socket, lead, start_serving, stop_serving
+ 
+ from demo_only.fake_model_server import ModelState, make_model_server
+ from lead_desk import live_claude as lc
+@@ -626,10 +626,7 @@ def test_live_adapter_declares_its_limit_for_the_desk_check(tmp_path: Path, mode
+ def test_header_trickle_hits_the_total_deadline(tmp_path: Path, model: Any) -> None:
+     """A server that sends its status line one byte at a time never trips a per-operation socket timeout; only a total
+     deadline stops it."""
+-    import socket
+-
+-    srv = socket.socket()
+-    srv.bind(("127.0.0.1", 0))
++    srv = bound_socket()
+     srv.listen(1)
+     stop = threading.Event()
+ 
+diff --git a/tests/test_load_tools.py b/tests/test_load_tools.py
+index bd23577..f5ffcf6 100644
+--- a/tests/test_load_tools.py
++++ b/tests/test_load_tools.py
+@@ -5,7 +5,6 @@ from __future__ import annotations
+ 
+ import hashlib
+ import json
+-import socket
+ import sqlite3
+ import sys
+ import threading
+@@ -18,7 +17,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import FakeClock, start_serving, stop_serving
++from support import FakeClock, bound_socket, start_serving, stop_serving
+ 
+ from demo_only import fake_model_server
+ from lead_desk.constants import FOLLOWUP_BODY_TEMPLATE, FOLLOWUP_SUBJECT_TEMPLATE
+@@ -498,8 +497,7 @@ class _Flaky:
+     """A loopback server that refuses connections for `down` seconds (the port is closed), then answers `code`."""
+ 
+     def __init__(self, down: float, code: int = 201) -> None:
+-        s = socket.socket()
+-        s.bind(("127.0.0.1", 0))
++        s = bound_socket()
+         self.port = s.getsockname()[1]
+         s.close()
+         self.down, self.code, self.hits = down, code, 0
+@@ -926,10 +924,7 @@ def test_dupmix_all_repeats_is_refused() -> None:
+ 
+ def test_broken_error_body_is_a_code() -> None:
+     """A 503 whose body breaks off (IncompleteRead is not an OSError) must come back as a try with a code."""
+-    import socket
+-
+-    srv = socket.socket()
+-    srv.bind(("127.0.0.1", 0))
++    srv = bound_socket()
+     srv.listen(1)
+ 
+     def serve() -> None:
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+index fc39f31..4164400 100644
+--- a/tests/test_n8n_api_url.py
++++ b/tests/test_n8n_api_url.py
+@@ -7,7 +7,6 @@ from __future__ import annotations
+ import importlib
+ import json
+ import os
+-import socket
+ import subprocess
+ import sys
+ from http import HTTPStatus
+@@ -15,7 +14,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+ 
+ import pytest
+-from support import start_serving, stop_all, stop_serving
++from support import bound_socket, start_serving, stop_all, stop_serving
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ RESERVED = "example" + "." + "test"  # the reserved test domain, as the repository's own rules allow it
+@@ -314,8 +313,7 @@ def test_a_200_answer_with_bytes_that_are_not_text_is_a_clean_message(
+ 
+ 
+ def test_an_unreachable_n8n_is_a_clean_message_without_the_key(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+-    with socket.socket() as s:  # a local port that nothing listens on: bind, read the number, close
+-        s.bind(("127.0.0.1", 0))
++    with bound_socket() as s:  # a local port that nothing listens on: bind, read the number, close
+         port = s.getsockname()[1]
+     mod = _load(monkeypatch, tmp_path, None)
+     monkeypatch.setattr(mod, "BASE", _u("http", f"127.0.0.1:{port}"))
+diff --git a/tests/test_port_helpers.py b/tests/test_port_helpers.py
+index f1c19e6..c78230e 100644
+--- a/tests/test_port_helpers.py
++++ b/tests/test_port_helpers.py
+@@ -4,13 +4,17 @@ here (a stand-in for the socket module), so the result is exact on every machine
+ 
+ from __future__ import annotations
+ 
++import ast
+ import os
++import re
+ import socket
+ import threading
+ from collections import deque
++from pathlib import Path
+ from types import SimpleNamespace
+ from typing import Any
+ 
++import port_blocks
+ import pytest
+ import support
+ from support import HOST, free_port, held_port, release_held_ports
+@@ -64,7 +68,7 @@ def _operating_system_hands_out(monkeypatch: pytest.MonkeyPatch, numbers: list[i
+     _MadeUpSocket.numbers = deque(numbers)
+     stand_in = SimpleNamespace(socket=_MadeUpSocket, AF_INET=socket.AF_INET, SOCK_STREAM=socket.SOCK_STREAM)
+     monkeypatch.delenv("PYTEST_XDIST_WORKER", raising=False)  # the made-up numbers are the serial case
+-    monkeypatch.setattr(support, "socket", stand_in)
++    monkeypatch.setattr(port_blocks, "socket", stand_in)
+     monkeypatch.setattr(support, "_HELD_PORTS", [])
+     monkeypatch.setattr(support, "_GIVEN_FREE", deque(maxlen=512), raising=False)
+ 
+@@ -99,16 +103,66 @@ def _ranges(count: int) -> list[tuple[int, int]]:
+     return ranges
+ 
+ 
++def _all_disjoint(ranges: list[tuple[int, int]]) -> bool:
++    ordered = sorted(ranges)
++    return all(high < low for (_, high), (low, _) in zip(ordered, ordered[1:], strict=False))
++
++
+ def test_the_port_ranges_of_two_xdist_workers_never_overlap() -> None:
+-    assert support.worker_port_range("gw0", "4") == (40000, 44999)
+-    assert support.worker_port_range("gw1", "4") == (45000, 49999)
+-    assert support.worker_port_range("gw3", "4") == (55000, 59999)
++    assert support.worker_port_range("gw0", "4") == (20000, 21595)
++    assert support.worker_port_range("gw1", "4") == (21596, 23191)
++    assert support.worker_port_range("gw3", "4") == (24788, 26383)
+     for count in (1, 2, 4, 5, 6, 8, 16, 32, 64):
+-        ranges = sorted(_ranges(count))
+-        for (_, high), (low, _) in zip(ranges, ranges[1:], strict=False):
+-            assert high < low, (count, ranges)
+-        assert ranges[0][0] >= 40000 and ranges[-1][1] <= 65535, (count, ranges)
++        ranges = _ranges(count)
++        assert _all_disjoint(ranges), (count, ranges)
+         assert all(low <= high for low, high in ranges)
++        assert all(20000 <= low and high <= 32767 for low, high in ranges), (count, ranges)
++
++
++def test_a_single_worker_gets_a_block_of_at_most_5000_numbers_in_each_half() -> None:
++    """With one worker the half is 6384 numbers wide, but a block is never wider than 5000."""
++    assert support.worker_port_range("gw0", "1") == (20000, 24999)
++    assert support.worker_port_range("gw1", "1") == (26384, 31383)  # a restarted single worker: second half
++
++
++def test_the_blocks_lie_below_the_numbers_the_operating_system_hands_out_by_itself() -> None:
++    """Linux gives out 32768-60999 when a program binds to port 0, Windows and macOS 49152-65535: a block below
++    32768 never contains a number that a bind to port 0 (in a test or in a program under test) is given."""
++    assert port_blocks._RANGE_START == 20000 and port_blocks._RANGE_END < 32768
++
++
++@pytest.mark.parametrize("count", range(1, 65))
++def test_a_restarted_worker_never_gets_the_block_of_a_worker_that_is_alive(count: int) -> None:
++    """xdist starts gw<count>, gw<count+1> ... when a worker dies, while the others go on. Every worker number from 0
++    to 2*count-1 has a block, the first `count` and the second `count` numbers are each disjoint among themselves, and a
++    restarted block is disjoint from every first block (the dead worker's block is not known to the new one)."""
++    first = [support.worker_port_range(f"gw{n}", str(count)) for n in range(count)]
++    again = [support.worker_port_range(f"gw{n}", str(count)) for n in range(count, 2 * count)]
++    assert None not in first and None not in again
++    blocks = [b for b in first + again if b is not None]
++    assert _all_disjoint([b for b in first if b is not None]), (count, first)
++    assert _all_disjoint([b for b in again if b is not None]), (count, again)
++    assert _all_disjoint(blocks), (count, "a restarted block overlaps a live one")
++    assert all(20000 <= low <= high <= 32767 for low, high in blocks), (count, blocks)
++    assert all(high - low + 1 >= 24 for low, high in blocks), (count, "a block is too narrow to be of use")
++
++
++def test_eight_workers_and_the_restarted_ninth_do_not_overlap() -> None:
++    """The review's own case: gw7 of 8 and the restart gw8 (the count variable stays 8)."""
++    gw7 = support.worker_port_range("gw7", "8")
++    gw8 = support.worker_port_range("gw8", "8")
++    assert gw7 is not None and gw8 is not None
++    assert gw8[0] > gw7[1] or gw8[1] < gw7[0], (gw7, gw8)
++    for n in range(8):
++        other = support.worker_port_range(f"gw{n}", "8")
++        assert other is not None and (gw8[0] > other[1] or gw8[1] < other[0]), (n, other, gw8)
++
++
++@pytest.mark.parametrize("count", [None, "", "x", "0", "-3"])
++def test_a_missing_or_odd_worker_count_still_gives_disjoint_blocks(count: str | None) -> None:
++    blocks = [support.worker_port_range(f"gw{n}", count) for n in range(64)]
++    assert None not in blocks
++    assert _all_disjoint([b for b in blocks if b is not None]), count
+ 
+ 
+ def test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses() -> None:
+@@ -119,8 +173,9 @@ def test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses() ->
+ 
+ 
+ def test_a_worker_number_beyond_the_worker_count_still_gets_its_own_range() -> None:
+-    low, high = support.worker_port_range("gw6", "2") or (0, 0)  # a count that is too small is raised to the number
+-    assert (low, high) not in _ranges(2) and 40000 <= low <= high <= 65535
++    low, high = support.worker_port_range("gw6", "2") or (0, 0)  # a restarted worker: a block of its own kind
++    assert (low, high) not in _ranges(2) and 20000 <= low <= high <= 32767
++    assert _all_disjoint([*_ranges(2), (low, high)])
+ 
+ 
+ def test_free_and_held_ports_of_a_worker_lie_in_its_range(monkeypatch: pytest.MonkeyPatch) -> None:
+@@ -136,9 +191,11 @@ def test_free_and_held_ports_of_a_worker_lie_in_its_range(monkeypatch: pytest.Mo
+ 
+ class _PerThreadEnviron:
+     """os.environ as seen by the code under test, except that PYTEST_XDIST_WORKER and PYTEST_XDIST_WORKER_COUNT
+-    answer per thread, so that two threads can play two xdist workers in one process."""
++    answer per thread, so that two threads can play two xdist workers in one process. The thread-to-worker table
++    belongs to the instance, so no test can see the table of another."""
+ 
+-    worker_of_thread: dict[int, str] = {}
++    def __init__(self) -> None:
++        self.worker_of_thread: dict[int, str] = {}
+ 
+     def get(self, key: str, default: str | None = None) -> str | None:
+         if key == "PYTEST_XDIST_WORKER":
+@@ -149,21 +206,26 @@ class _PerThreadEnviron:
+ 
+ 
+ class _OsWithPerThreadEnviron:
+-    environ = _PerThreadEnviron()
++    def __init__(self, environ: _PerThreadEnviron) -> None:
++        self.environ = environ
+ 
+     def __getattr__(self, name: str) -> Any:
+         return getattr(os, name)
+ 
+ 
+-def test_two_workers_calling_free_port_at_once_get_distinct_numbers_inside_their_own_ranges(
++def test_two_threads_playing_two_workers_get_distinct_numbers_inside_their_own_ranges(
+     monkeypatch: pytest.MonkeyPatch,
+ ) -> None:
+-    monkeypatch.setattr(support, "os", _OsWithPerThreadEnviron())
++    """Two threads that call free_port() 200 times each, started together by a barrier. (It is a stand-in for two
++    xdist workers: the real run with -n is in raw/b16-xdist.log.) A mutant that gives every worker the same range
++    fails it."""
++    environ = _PerThreadEnviron()
++    monkeypatch.setattr(port_blocks, "os", _OsWithPerThreadEnviron(environ))
+     start = threading.Barrier(2)
+     got: dict[str, list[int]] = {}
+ 
+     def play(worker: str) -> None:
+-        _PerThreadEnviron.worker_of_thread[threading.get_ident()] = worker
++        environ.worker_of_thread[threading.get_ident()] = worker
+         start.wait(timeout=10)  # both threads call free_port() together
+         got[worker] = [free_port() for _ in range(200)]
+ 
+@@ -176,6 +238,232 @@ def test_two_workers_calling_free_port_at_once_get_distinct_numbers_inside_their
+     assert set(got) == {"gw0", "gw1"}
+     for worker, numbers in got.items():
+         low, high = support.worker_port_range(worker, "2") or (0, 0)
+-        assert (low, high) == ((40000, 44999) if worker == "gw0" else (45000, 49999))
++        assert (low, high) == ((20000, 23191) if worker == "gw0" else (23192, 26383))
+         assert all(low <= n <= high for n in numbers), (worker, low, high)
+     assert not set(got["gw0"]) & set(got["gw1"]), "two workers were given the same port number"
++
++
++def test_the_numbers_free_port_gave_away_are_forgotten_when_the_held_ports_are_released() -> None:
++    """The fixture in conftest.py calls release_held_ports() after every test: the list of given-away numbers must not
++    keep numbers of earlier tests (it would refuse them to held_port() for ever, up to 512 of them)."""
++    for _ in range(5):
++        free_port()
++    assert len(support._GIVEN_FREE) >= 5
++    release_held_ports()
++    assert not support._GIVEN_FREE
++
++
++# a bind to port 0 in any shape: .bind((host, 0)), a server constructor ((host, 0), Handler) or asyncio's start_server
++_SITE = re.compile(r"\(\s*\(\s*[^,()]+,\s*0\s*\)|\bstart_server\([^)]*,\s*0\s*\)")
++_KEPT_OPEN = (
++    "the server keeps its own socket open until it is closed, and the number comes from the operating system's "
++    "own range (32768 and up on Linux, 49152 and up on Windows and macOS: checked by the range test below), which "
++    "no worker block contains; there is no gap between giving the number away and binding it"
++)
++# file -> (how many sites, why a direct bind to port 0 is allowed there). A new site, or one fewer, fails the test.
++_ALLOWED_SITES: dict[str, tuple[int, str]] = {
++    "support.py": (1, _KEPT_OPEN),
++    "test_followup_edge_cases.py": (1, _KEPT_OPEN),
++    "test_hubspot_probe.py": (1, _KEPT_OPEN),
++    "test_load_tools.py": (2, _KEPT_OPEN),
++    "test_n8n_api_url.py": (6, _KEPT_OPEN),
++    "test_portal_demo.py": (1, _KEPT_OPEN),
++    "test_server_stop_guard.py": (1, _KEPT_OPEN),
++    "test_sonar_p2_choke_points.py": (3, _KEPT_OPEN),
++    "test_standins_body_before_answer.py": (2, _KEPT_OPEN),
++}
++
++
++def _direct_sites() -> dict[str, list[str]]:
++    here = Path(__file__).resolve().parent
++    found: dict[str, list[str]] = {}
++    for path in sorted(here.glob("*.py")):
++        if path.name in ("port_blocks.py", Path(__file__).name):
++            continue
++        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
++            if _SITE.search(line) and "server_address" not in line:  # a stand-in's attribute binds nothing
++                found.setdefault(path.name, []).append(f"{path.name}:{number}: {line.strip()}")
++    return found
++
++
++def test_no_test_binds_to_port_0_by_itself_except_the_listed_servers_that_keep_their_socket() -> None:
++    """A bind to port 0 that is closed and bound again later (free_port) gets a number that no worker block knows
++    about, so tests ask bound_socket() (or free_port() / held_port()). The only direct sites left are servers that keep
++    their own socket; each file is listed with its count and the reason, so a new site fails here."""
++    found = _direct_sites()
++    surplus = {name: lines for name, lines in found.items() if name not in _ALLOWED_SITES}
++    assert not surplus, f"direct binds to port 0 (use bound_socket, or list them with a reason): {surplus}"
++    for name, (count, reason) in _ALLOWED_SITES.items():
++        assert len(found.get(name, [])) == count, (name, count, found.get(name))
++        assert reason and len(reason) > 40, name
++
++
++def _is_zero_port_pair(node: ast.AST) -> bool:
++    """(host, 0): a pair whose second part is the number 0 and whose first part is a name or a text with a dot."""
++    return (
++        isinstance(node, ast.Tuple)
++        and len(node.elts) == 2
++        and isinstance(node.elts[1], ast.Constant)
++        and node.elts[1].value == 0
++        and type(node.elts[1].value) is int
++        and (
++            isinstance(node.elts[0], ast.Name)
++            or (
++                isinstance(node.elts[0], ast.Constant)
++                and isinstance(node.elts[0].value, str)
++                and "." in node.elts[0].value
++            )
++        )
++    )
++
++
++def _ast_sites(text: str) -> list[int]:
++    """The class, not the line shape: any call given a (host, 0) pair (a bind, a server constructor, over several lines,
++    nested in other parentheses), a (host, 0) pair kept in a variable to be used later, and start_server/serve with the
++    port 0. A stand-in's server_address attribute binds nothing and is left out."""
++    lines: list[int] = []
++    for node in ast.walk(ast.parse(text)):
++        if isinstance(node, ast.Call):
++            args = [*node.args, *(k.value for k in node.keywords)]
++            if any(_is_zero_port_pair(a) for a in args):
++                lines.append(node.lineno)
++            name = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
++            if name in ("start_server", "serve") and any(
++                isinstance(a, ast.Constant) and a.value == 0 and type(a.value) is int for a in node.args[1:]
++            ):
++                lines.append(node.lineno)
++        elif (
++            isinstance(node, ast.Assign)
++            and _is_zero_port_pair(node.value)
++            and all(isinstance(t, ast.Name) and t.id != "server_address" for t in node.targets)
++        ):
++            lines.append(node.lineno)
++    return lines
++
++
++def test_the_syntax_guard_for_direct_binds_agrees_with_the_listed_sites() -> None:
++    """The line guard above only sees one-line shapes. The same class is read from the syntax tree: a multi-line
++    constructor, nested parentheses or an address kept in a variable is counted too, and the counts must equal the
++    listed ones."""
++    here = Path(__file__).resolve().parent
++    found = {}
++    for path in sorted(here.glob("*.py")):
++        if path.name in ("port_blocks.py", Path(__file__).name):
++            continue
++        sites = _ast_sites(path.read_text(encoding="utf-8"))
++        if sites:
++            found[path.name] = sites
++    surplus = {name: lines for name, lines in found.items() if name not in _ALLOWED_SITES}
++    assert not surplus, f"direct binds to port 0 in a shape the line guard misses: {surplus}"
++    for name, (count, _reason) in _ALLOWED_SITES.items():
++        assert len(found.get(name, [])) == count, (name, count, found.get(name))
++
++
++@pytest.mark.parametrize(
++    "code",
++    [
++        'cls(\n    ("127.0.0.1", 0),\n    Handler,\n)',
++        'wrap(f(("127.0.0.1", 0)))',
++        'addr = ("127.0.0.1", 0)',
++        "addr = (HOST, 0)",
++        'await asyncio.start_server(h, "127.0.0.1", 0)',
++        "s.bind((HOST, 0))",
++    ],
++)
++def test_the_syntax_guard_for_direct_binds_fails_on_a_planted_case(code: str) -> None:
++    assert _ast_sites(code), code
++
++
++@pytest.mark.parametrize(
++    "code",
++    [
++        "s.bind((HOST, port))",
++        "x = (1, 0)",
++        "self.bad, self.tries = bad, 0",
++        'w["a"] = ("sent", 0)',
++        "s.bind((HOST, 80))",
++    ],
++)
++def test_the_syntax_guard_for_direct_binds_leaves_other_pairs_alone(code: str) -> None:
++    assert not _ast_sites(code), code
++
++
++def test_the_allowed_direct_binds_are_servers_that_keep_the_socket_and_none_is_closed_and_bound_again() -> None:
++    """A direct site that only asks for a number and closes it (the free_port shape) would be a gap: none of the listed
++    sites calls .close() on a socket it bound to port 0 and then binds the number again."""
++    here = Path(__file__).resolve().parent
++    for name in _ALLOWED_SITES:
++        text = (here / name).read_text(encoding="utf-8")
++        assert not re.search(r"\.bind\(\s*\(\s*[^,()]+,\s*0\s*\)\s*\)", text), f"{name} binds a plain socket to port 0"
++
++
++def test_the_numbers_the_operating_system_hands_out_never_overlap_the_worker_blocks() -> None:
++    """Linux: /proc/sys/net/ipv4/ip_local_port_range is the range a bind to port 0 draws from. A machine whose setting
++    was widened over the worker blocks is a property of that machine, not of the code: the test is skipped there with
++    the numbers named. (Windows and macOS have no such file; their documented range starts at 49152, above the
++    blocks.)"""
++    proc = Path("/proc/sys/net/ipv4/ip_local_port_range")
++    if not proc.exists():
++        pytest.skip("no /proc/sys/net/ipv4/ip_local_port_range on this system")
++    low, high = (int(n) for n in proc.read_text(encoding="utf-8").split())
++    if not (low > port_blocks._RANGE_END or high < port_blocks._RANGE_START):
++        pytest.skip(
++            f"this machine hands out {low}-{high}, which overlaps the worker blocks "
++            f"{port_blocks._RANGE_START}-{port_blocks._RANGE_END} (a setting of the machine, not of the code)"
++        )
++
++
++def test_the_guard_for_direct_binds_sees_the_shapes_in_use() -> None:
++    shapes = (
++        's.bind(("127.0.0.1", 0))',
++        "srv.bind((HOST, 0))",
++        "self.sock.bind( (HOST,0) )",
++        "ThreadingHTTPServer((HOST, 0), H)",
++        'socketserver.TCPServer(("127.0.0.1", 0), H)',
++        'await asyncio.start_server(cat.handle, "127.0.0.1", 0)',
++    )
++    for line in shapes:
++        assert _SITE.search(line), line
++    other_shapes = ("s.bind((HOST, port))", "s.bind((HOST, first + 0))", 'bind(("127.0.0.1", 80))', "range(a, 0)")
++    for line in (*other_shapes, "x = (1, 0)"):
++        assert not _SITE.search(line), line
++
++
++def test_the_loopback_host_of_the_tests_is_defined_once() -> None:
++    """support.py takes HOST from port_blocks.py: two assignments could drift apart."""
++    assert support.HOST is port_blocks.HOST
++    text = (Path(__file__).resolve().parent / "support.py").read_text(encoding="utf-8")
++    assert not re.search(r"(?m)^HOST\s*=", text), "support.py defines HOST again"
++
++
++@pytest.mark.parametrize("count", [1, 2, 4, 16, 64])
++def test_two_sessions_on_one_machine_draw_from_different_parts_of_the_same_block(count: int) -> None:
++    """Two pytest runs at once both have a gw0 with the same block. The part of the block a process draws from depends
++    on its process number (pid % slices), so neighbouring process numbers get disjoint parts; the part lies inside the
++    block, and a block too narrow to share is used whole."""
++    block = support.worker_port_range("gw0", str(count))
++    assert block is not None
++    windows = [port_blocks.session_window(block, pid) for pid in range(5000, 5000 + 40)]
++    assert all(block[0] <= low <= high <= block[1] for low, high in windows)
++    distinct = sorted(set(windows))
++    assert _all_disjoint(distinct), (count, distinct)
++    assert distinct[0][0] == block[0] and distinct[-1][1] == block[1], (count, distinct)
++    assert all(nxt[0] == prev[1] + 1 for prev, nxt in zip(distinct, distinct[1:], strict=False)), (count, distinct)
++    if block[1] - block[0] + 1 >= 2 * port_blocks._MIN_SLICE:
++        assert len(distinct) >= 2, (count, "neighbouring process numbers share one part")
++        assert port_blocks.session_window(block, 5000) != port_blocks.session_window(block, 5001)
++    else:
++        assert distinct == [block]
++
++
++def test_free_ports_of_a_session_lie_in_that_sessions_part_of_the_block(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setenv("PYTEST_XDIST_WORKER", "gw0")
++    monkeypatch.setenv("PYTEST_XDIST_WORKER_COUNT", "1")
++    block = support.worker_port_range("gw0", "1")
++    assert block is not None
++    low, high = port_blocks.session_window(block, os.getpid())
++    try:
++        numbers = [free_port() for _ in range(5)] + [held_port() for _ in range(5)]
++    finally:
++        release_held_ports()
++    assert all(low <= n <= high for n in numbers), (low, high, numbers)
+diff --git a/tests/test_smtp_outbox.py b/tests/test_smtp_outbox.py
+index d9d308e..8788d82 100644
+--- a/tests/test_smtp_outbox.py
++++ b/tests/test_smtp_outbox.py
+@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
+ from pathlib import Path
+ 
+ import pytest
+-from support import HOST, REPO, free_port, wait_until
++from support import HOST, REPO, bound_socket, free_port, wait_until
+ 
+ from lead_desk.config import Config
+ from lead_desk.contract import SendAmbiguous, SendNoDescriptors, SendRefused, SendUnreachable
+@@ -74,8 +74,7 @@ class Script:
+ 
+     def __init__(self, stage: str) -> None:
+         self.stage = stage
+-        self.sock = socket.socket()
+-        self.sock.bind((HOST, 0))
++        self.sock = bound_socket()
+         self.sock.listen(4)
+         self.port = int(self.sock.getsockname()[1])
+         self.thread = threading.Thread(target=self._run, daemon=True)
+diff --git a/tests/test_stall_eviction.py b/tests/test_stall_eviction.py
+index 640e160..dba9ae5 100644
+--- a/tests/test_stall_eviction.py
++++ b/tests/test_stall_eviction.py
+@@ -17,7 +17,7 @@ from dataclasses import replace
+ from typing import Any
+ 
+ import pytest
+-from support import HOST, addr, call, lead, raw_http, wait_until
++from support import HOST, addr, bound_socket, call, lead, raw_http, wait_until
+ 
+ from lead_desk import adapters, constants, lockfile, server
+ from lead_desk.adapters import HttpOutbox
+@@ -286,8 +286,7 @@ def test_adapter_maps_emfile_to_no_descriptors(env, monkeypatch) -> None:
+ 
+ # -- a refusal never waits for a silent client
+ def _tcp_pair() -> tuple[socket.socket, socket.socket]:
+-    ls = socket.socket()
+-    ls.bind((HOST, 0))
++    ls = bound_socket()
+     ls.listen(1)
+     c = socket.create_connection(ls.getsockname(), timeout=8)
+     s, _ = ls.accept()

@@ -11,3 +11,6 @@ r10 (lead's message after the r9 review): done; final tree 1c973634c77ef0ddb214b
 
 ## round 11 checkpoint 08:05Z
 Done: rows 1,4 (stub + fixture), 3 (link kind at env_file_problem), 5,6,7,8,9,11,12 coded; fails-before log saved. Next: other-suite check, lint copy, 3 runs, mutation (b22-mut3.py), patch, notes. Rows 10,13,14,15 listed OPEN-FOR-STACK-DOCS per lead 08:01Z. Rows 16,17 declined/escalated.
+
+## round 11 stop 08:19Z
+All gates done, patch cut, notes written; handing back.

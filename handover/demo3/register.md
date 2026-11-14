@@ -370,3 +370,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B21 / B22 | narrowed 07:58Z by lead note 07:55Z to confirmed Majors only | | in progress |
 | R22a/R22b | closed 08:05Z: fix-10 r4 reviews saved (design 2M; codedetails 5M) | | closed |
 | B23 | resumed 08:05Z for fix-10 round 5 (24-row resolve), expected end ~09:05Z | | in progress |
+| B22 | closed 08:21Z: fix-2 r11 handed back, tree 77fa1c0d (mine matches), lint rc 0 x5 by me (raw/b27-lint-b22-r11.log) | | closed |
+| R23a/R23b | egm-design / egm-codebase-details on fix-2 r11, started 08:21Z, expected end ~08:50Z | | in progress |

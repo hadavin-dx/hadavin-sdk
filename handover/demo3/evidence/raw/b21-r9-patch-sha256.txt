@@ -1,0 +1,7 @@
+B21 round 9 patch check, 2026-11-14T08:19:06Z
+base: f3c39cf8 + claims-stack-on-f3c39cf8.patch + lane3-fix-5-r6.patch (tree 79006fe3e7dcf6d72db72c343c3e468697915462); the r9 patch is cumulative on that base (r8 + r9), like r8
+result tree (b21-tree, b21-full, whole patch on a temporary index, the 3 parts in order): ce7113ea1552ecb5d111a4c2db8d2abd676130aa
+ba47bd852c87ea674a5d1ada4e5f0ae15205e699535948d862f74b398853d573  lane3-fix-5-r9.patch
+8fa5512daefff589b2003ec6e17844e4bf2f7eeca90f6076e199aeafbca8e9e0  lane3-fix-5-r9-parts/lane3-fix-5-r9-part-01-scripts-readme.patch
+3cb4389ada71b852f30babd9ad97a9ab024b6d0fa8a9ae4c1f0ec59ab389171d  lane3-fix-5-r9-parts/lane3-fix-5-r9-part-02-reset-tests.patch
+052fa3aadca25d0618f2f1e982bf9a05f23f028928342a2e7e152a0b33f3ed08  lane3-fix-5-r9-parts/lane3-fix-5-r9-part-03-port-tests.patch
