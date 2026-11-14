@@ -1,0 +1,10 @@
+path_sha256: demo_only/bad_request.py  2e02c62b6e40b9f8b5458905c105e3be3cca7140d942e936f1b2bb6879a0c238
+path_sha256: demo_only/fake_hubspot.py  f23d754aa890164cabd38a3ebb4a57df81a7ce6b17c8346b293236b4f5ccd31a
+path_sha256: demo_only/fake_model_server.py  9a5d56727edc7d877ff246cde28fa979153066ea9b82978a88f05c27c29c331d
+path_sha256: demo_only/fakes_server.py  33991a684c4e436732937223c6effbc17ee98ceec16aabf3a2e0305fe941ec77
+path_sha256: scripts/run_real_check.py  7b1e32da776871101f9ee829ad3e5f6046702cbf1c5d002ba6346dbfa183cbdf
+path_sha256: src/lead_desk/scrub.py  0a6423bae055a7bf57dd7491444c003ff8d87b47d542c786a22b423ebe8ecc88
+path_sha256: tests/test_r7n_findings.py  4f095038c29e6bddd0013aa9a4fd107d7957a2dcd53f986e6de4fc96347a0699
+path_sha256: tests/test_r7q_findings.py  009356bf4f4f43a8d06501ef6b624ba22afa8307c4a88f5954a466b75ceddd10
+base: frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca + r7p (tree-R7P); r7q = r7p + delta-r7p-to-r7q.diff (files above; tests/test_r7q_findings.py is new)
+full patches: handover/core/fix/ (r7q lf sha 03dc17bdfc8b67af08317c1f1fe6f00267b72afb1c571c899d6b74ee855a3dfe)
