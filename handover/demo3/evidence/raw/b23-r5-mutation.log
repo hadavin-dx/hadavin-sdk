@@ -16,3 +16,12 @@ r4-7 start_all.sh passes on only 3|4: pytest rc=1 -> KILLED | 3 failed, 53 passe
       failing: tests/test_exit_code_table.py::test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts
       failing: tests/test_start_all_late_refusal.py::test_a_desk_that_cannot_take_its_port_is_reported_with_its_own_code
       failing: tests/test_start_all_late_refusal.py::test_only_the_three_desk_codes_of_the_table_are_passed_on[5-5]
+r4-8 start_all.ps1 passes on only 3, 4: pytest rc=1 -> KILLED | 3 failed, 65 passed, 6 skipped in 1.84s
+      failing: tests/test_exit_code_table.py::test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts
+      failing: tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[no pass-through limit]
+      failing: tests/test_ps1_pins.py::test_text_only_the_start_pins_hold
+r4-9 not-produced row dropped from the list: pytest rc=1 -> KILLED | 4 failed, 24 passed in 1.66s
+      failing: tests/test_exit_code_table.py::test_a_new_row_that_no_test_names_is_seen
+      failing: tests/test_exit_code_table.py::test_every_row_has_a_producing_test_or_is_listed_as_not_produced
+      failing: tests/test_exit_code_table.py::test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces
+      failing: tests/test_exit_code_table.py::test_the_table_printed_in_docs_settings_md_is_the_generated_one
