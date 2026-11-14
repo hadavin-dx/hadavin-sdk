@@ -1,5 +1,28 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 10:27 UTC / 15:57 IST
+
+**ON-PATH LIST written early (due 11:45Z): handover/core/ON-PATH-LIST.md.** It is a reading of imports and call sites, not a traced run: I did not execute anything to confirm a file is reached. A runner that records loaded modules under a dry run would confirm it; not started.
+
+**NOT DONE: no r7n or r7o reviewer report yet; no r7o evidence runner (held for r7p, see the 10:17 block).** The r7o reviewer DID start (10:10Z) and is running. EV7N is committed (figures in the 10:17 block; failed item: builder's echo-server test never reaches LOGIN).
+
+| id | what it does | state | next action |
+|---|---|---|---|
+| a8c42155 (r7n reviewer) | whole r7n delta, 38 own mutants | RUNNING, 44 min in, box ends about 10:55 | core-fix-on-frozen-r7n-review.md |
+| a1d9e112 (r7o reviewer) | BOM decision, 14 pins | RUNNING, 20 min in, ends about 11:10 | core-fix-on-frozen-r7o-review.md |
+
+Agents running: 2. Load 0.8.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED: r7n and r7o verdicts; r7p; final full run on final bytes; echo-server test rewrite; EV7N count differences (8 vs 37 skipped); traced confirmation of the on-path list; Windows, PowerShell, CodeQL, Sonar, CodeRabbit, CI.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Commit both reviews as they land; one r7p builder with every Blocker/Major and the echo-server rewrite.
+2. Evidence runner on the final bytes, then a fresh reviewer on r7p.
+3. README, ledger closure, sweep.
+
+
 ## STATUS (core lead) 10:16 UTC / 15:46 IST
 
 **NOT DONE: no EVIDENCE RUNNER for r7o has been started, and no r7n or r7o reviewer report has landed yet.** Both reviewers are still running (no written report file in handover/core/review/ for r7n or r7o). I held the r7o evidence run on purpose: the two reviews are likely to produce an r7p, and EV7N already covers r7n; a run on r7o bytes would be thrown away. Cost of that choice: if no r7p is needed, the final full run starts about 1 h later than it could have. Say so if you want an r7o run now.
