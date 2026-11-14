@@ -1,0 +1,7 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/rr6/out/R7V/stage2
+configfile: pyproject.toml
+collected 41 items
+
+tests/test_r7u_a_findings.py .......................................rc=124
