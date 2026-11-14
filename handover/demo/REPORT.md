@@ -1,5 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 04:42:42): R2 FULL RUN ENDED (exit 2, incomplete): COUNTS PUSHED in N8N-RERUN-1.md (R2 section) + n8n-rerun/R2-tables.md
+- Ended 04:37:22Z after 50 min. Exit 2 = shortfall: b K2 and b K3 have 4 valid kill rows instead of 5 (1 attempt each invalid: stale_running_after_kill). Reported, not repeated.
+- Counts next to published (full table in the file): variant a ten-at-once 12 of 20 (published 18 of 20) DIFFERENT; b, c, d 20 of 20 each as published; a kill runs CRM-in-flight 1 of 5 (published 5 of 5) and email points 3 of 10 (published 9 of 10) DIFFERENT; kill rows without lost connection 0 of 15/13/15/15 (no kill without effect); variant e second CRM row 1 of 10 (published 4 of 10) DIFFERENT; e other counts as published; stand-in cross-check 138 equal, 0 differ. No reason given for any difference. The lead's "1 of 15" and "K1 visible 1 of 5" are not in tables.md as I read it (flagged).
+- P1 touches only the wait before a restart; kill windows are in g3.py/g3e.py (unchanged); effect on counts of the longer wait is not established (stated).
+- RUNNING: egm read-only reviewer on N8N-RERUN-1.md + branch README (started 04:44Z).
+- Machine now free of the n8n run (no n8n, no containers; dockerd still up for a possible second run).
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Two missing valid rows (b K2, b K3): not repeated; next if told: R3-partial of b K2/K3 only.
+- Reason for variant a's 12 of 20 and for a's kill-run differences: not investigated; next if told: second quiet full run R2b.
+- Source of the lead's "1 of 15" and "K1 1 of 5": lead to say.
+- v3 doc tests, hygiene, CI-equivalent run, non-root skip chunk: not started yet (allowed now).
+- dockerd, 4.9 GB scratch (node_modules): kept for a possible second run; cleanup when told.
+## WHAT I WOULD DO NEXT (ranked)
+1. Fold the reviewer's gaps into N8N-RERUN-1.md.
+2. v3 doc tests + hygiene (one heavy pytest) and CI-equivalent run, then the fresh reviewer on v3.
+3. If the lead says so: R2b full run to see whether variant a's 12 of 20 repeats.
+
 ## REPORT (clock 04:37Z): R2 FULL RUN RUNNING, no rc yet
 - Run log: g3e K1 04:28:17Z finished; g12e.py (variant e burst) started 04:34:21Z. No new harness note. Next: ten-at-once, replay, then the harness summary and shortfall check. Disk 4.9 GB free.
 ## NOT DONE / NOT CHECKED (my list, for the lead to decide)
