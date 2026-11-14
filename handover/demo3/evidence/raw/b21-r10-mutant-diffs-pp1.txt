@@ -40,3 +40,17 @@
 -    $note = if ($stopped) { " (already stopped: $stopped)" } else { '' }
 +    $note = ''
 
+##### support restart uses first half (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -43 +43 @@
+-        first = _RANGE_START + _HALF + ((number - total) % total) * width
++        first = _RANGE_START + (number % total) * width
+
+##### support range start back to 40000 (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -16 +16 @@
+-_RANGE_START = 20000  # xdist workers draw their port numbers from 20000 up, one block each (see worker_port_range)
++_RANGE_START = 40000  # xdist workers draw their port numbers from 20000 up, one block each (see worker_port_range)
+

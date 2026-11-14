@@ -40,3 +40,17 @@
 -                $bad = (($count - $from) -ge 64)
 +                $bad = (($count - $from) -gt 64)
 
+##### support restart no modulo (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -43 +43 @@
+-        first = _RANGE_START + _HALF + ((number - total) % total) * width
++        first = _RANGE_START + _HALF + (number - total) * width
+
+##### support last = first+width (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -44 +44 @@
+-    return first, first + width - 1
++    return first, first + width
+

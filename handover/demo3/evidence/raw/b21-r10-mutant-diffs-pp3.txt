@@ -39,3 +39,10 @@
 -_RANGE_WIDTH = 5000  # widest block of one worker (narrower when there are more workers)
 +_RANGE_WIDTH = 6000  # widest block of one worker (narrower when there are more workers)
 
+##### support worker regex too loose (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -33 +33 @@
+-    found = re.fullmatch(r"gw(\d+)", worker or "")
++    found = re.match(r"gw(\d+)", worker or "")
+

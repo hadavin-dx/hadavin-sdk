@@ -4,3 +4,5 @@ sh read not in C locale | KILLED | 1 failed, 9 passed in 13.56s | tests/test_res
 ps1 final delete without -LiteralPath | KILLED | 1 failed, 143 passed, 6 skipped in 33.51s | tests/test_reset_ps1_pid_rules.py::test_text_only_every_path_command_uses_literal_path_and_every_delete_is_checked
 ps1 Convert-Path dropped | KILLED | 1 failed, 145 passed, 6 skipped in 33.52s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_pid_file_is_opened_by_its_full_path_and_a_utf8_byte_order_mark_is_skipped
 ps1 pattern not anchored (\s* back) | KILLED | 1 failed, 106 passed, 1 skipped in 33.65s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+ps1 exit 5 forgets already stopped | SURVIVED | 362 passed, 15 skipped in 83.66s (0:01:23) | 
+support restart uses first half | KILLED | 1 failed, 245 passed, 15 skipped in 83.63s (0:01:23) | tests/test_port_helpers.py::test_a_single_worker_gets_a_block_of_at_most_5000_numbers_in_each_half

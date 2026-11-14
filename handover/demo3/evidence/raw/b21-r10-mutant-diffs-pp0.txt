@@ -46,3 +46,10 @@
 -    width = min(_RANGE_WIDTH, _HALF // total)
 +    width = min(_RANGE_WIDTH, _HALF // 4)
 
+##### support every worker gets range 0 (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -41 +41 @@
+-        first = _RANGE_START + number * width
++        first = _RANGE_START
+
