@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 07:31 UTC / 13:01 IST
+
+**EV7J (the full run on r7j) DONE: 8 failed, 5594 passed, 8 skipped, 1842 s, rc 1. 7 failures = the same ids as EV7G and EV7I; the 8th is the NEW one on r7j: tests/test_r7f_findings.py::test_f1_a_connect_that_never_completes_ends_at_the_total_not_at_the_step** (ImapConnectionError instead of ImapTotalTimeout; it fails again alone on r7j, passes alone on r7i, 79 passed). The runner's cause matches the reviewer's M1: this host has no IPv6 (errno 97), r7j's localhost shortcut returns 127.0.0.1 then ::1; 127.0.0.1 hangs in the test, ::1 fails at once and that error wins. So **r7j is NOT deliverable as is**; r7k fixes it. EV7J as the base for r7k: ids (7 + 1) are all explained. Other EV7J numbers (runner's): staged git files each alone all pass (24, 114, 3, 146, 11, 2, 44, 4); ruff 0.17.1 clean (222 files); marker counts equal r7g (noqa 176, nosemgrep 40, type: ignore 126); hostile table: 20 hosts no traceback and 0 stderr bytes, **burst:4 now exits 3 after 61.8 s with one 248-byte stderr line (EV7G gave 0)**, first address silent with a 3 s total now connects after 1.5 s, 8 silent + 1 good at 1.2 s connected in 1.07 s. Runner slips (disclosed): ruff cache folder (43 files) sat in the tree during the full run (git-ignored; run not repeated); six git files ran twice. Not run: Windows, real IPv6, mutation.
+
+**PASS 10: M9-69 SURVIVED THE BIG SET (1444 passed, 480 s) = REAL GAP, mailbox safety.** run_real_check.py ~1075 `if answer != "y": stopped`: the mutant makes anything but "n" start the run; no test feeds an empty answer, "yes" or "maybe" to the Start question. Sent to r7k with a full test table (answers; zero connections; EOF; each flag alone) and 5 sibling mutants. Pass 10 rows so far: M9-15 KILLED, M9-42, 44, 45, 46, 47 KILLED; **M9-16 (smtp_provider.py:154 default ports ssl 587 / starttls 465 swapped) SURVIVED the narrow set, big set pending.**
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6bc3c56 (r7k builder) | pass 9 gaps, N05/N06, r7j review M1-M3 m1-m4, now M9-69 | fix-dont-defer | 06:52 / 12:22 | box 60 min, about 07:51 (may need extension for M9-69) | r7k | RUNNING. 07:26 "all N mutants KILLED (N20 after test fix); fail-before 42 FAILED on r7j; starting clean group runs on final bytes"; 07:29 its clean mail group: rc 1 with 593 passed (no failing count shown to me: I asked in the next message to name the id) | hand-back; EV7K |
+| a762c1d8 (r7l builder) | r7i review F1-F4, minors | fix-dont-defer | 07:17 / 12:47 | about 08:17 | r7l | RUNNING: 07:21 test file written, 87 tests pass on its tree; 07:24 first run 35 of 36 mutants killed, V03 equivalent; 07:30 reader/lingerer pins added, sweep survivors S2, S3 being re-run | hand-back |
+| a01f7117 (pass 10) | run_real_check M9-68..82, then other rows, then jsonread | your order | 06:57 / 12:27 | about 07:57 | pass 10 | RUNNING (see above) | mail-pass10-r7j.md |
+
+Agents running: 3 (r7k, r7l, pass 10). Below your 2-minimum? No: 3 running. EV7J, EV7I, EV7H, both reviewers done. A fresh r7k reviewer and the EV7K run start at the r7k and r7l hand-backs.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| the r7k 07:29 mail group rc 1 | I have not seen the failing id | read at hand-back; r7k must name it |
+| M9-16 big-set verdict; rest of pass 10 (M9-68..82 other rows, jsonread) | running | forward real gaps |
+| r7k and r7l hand-backs, merge, EV7K, fresh reviewers | running | disjoint files, one merged tree |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer (EV7I and EV7J again found none) | no evidence on the first three | README |
+| PowerShell scripts never run, Windows, Python 3.14, real IPv6-less host, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect the r7k hand-back (M9-69, M1, M3 and the rest); verify hashes; start EV7K on the merged r7k+r7l tree and fresh reviewers.
+2. Forward every pass 10 confirmed gap at once (M9-16 pending).
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep, report counts.
+
+
 ## STATUS (core lead) 07:21 UTC / 12:51 IST
 
 **M1 id check (answer): the "1 failed" on the clean runs of pass 10 (reg group on tree-M10, a copy of r7j) is EXACTLY the id the r7j reviewer named: tests/test_r7f_findings.py::test_f1_a_connect_that_never_completes_ends_at_the_total_not_at_the_step.** The r7k builder's own clean live group (1 failed, 472 passed) I have not seen by id yet, but is most likely the same one. So on r7j this one test is red; r7k fixes the code (no invented ::1). Pass 10's mutant results run on a tree with one known-red test: a mutant counts as KILLED only by a test that is not that one (I told no one yet: I will message pass 10 now).
