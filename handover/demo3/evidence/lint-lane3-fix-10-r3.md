@@ -1,0 +1,4 @@
+# Lint on fix-10 r3, by lane3 (hash-locked venv /home/user/work/lint-venv: ruff 0.17.4, mypy 2.4.1, bandit 1.9.4)
+Tree: the patch lane3-fix-10-r3.patch applied on base f3c39cf8 in a fresh worktree, git write-tree = 7d32f6fc1585bebd65ffd426f5376e6357ac0e7f (reproduces the builder's id).
+ruff check 0 | ruff format --check 0 | mypy linux 0 | mypy win32 0 | bandit -ll 0 | ruff E501 0. Logs raw/b20p-*.log.
+Tree id reconciliation (lead 07:15Z): my first lint (raw/b20-*.log, tree 3e4cfad3) was of the builder's worktree index and MISSED the new untracked file tests/test_late_refusal_value_echo.py, so it is void. The worktree differs from the patch-on-base tree in two ways only: start_all.ps1 has LF in the worktree and CRLF in the patch (diff --strip-trailing-cr is empty), and an untracked data/ folder. The re-lint above is on the right tree.
