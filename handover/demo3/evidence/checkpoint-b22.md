@@ -20,3 +20,6 @@ base tree 77fa1c0d
 
 ## round 12 checkpoint 08:29Z
 Done: rows 1,2,4,5(conftest guard),8,9/10 docs,12,13,14; tests red-before recorded next. Next: non-root run, mutants, lint copy, full run (source changed), patch, notes.
+
+## round 12 checkpoint 08:45Z
+Done: all 15 rows coded; lint clean, non-root run 848 passed, mutation 18/18 killed (log), patch cut (tree 0b2031ee). Full run in progress: the new autouse lock-handle guard already shows an ERROR in tests/test_claim_checks_and_crm_mode.py (leaked lock handle); fixing all such tests after the run ends, then re-lint, re-run, re-cut patch.

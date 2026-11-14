@@ -1,3 +1,19 @@
+## HEARTBEAT 130 (08:45Z) - B21 fix-5 round 9 reviewed (4 Major, 0 Blocker), resolved, round 10 next; B22 r12 and B23 r5 building
+
+| Agent / job | State at 08:45Z |
+|---|---|
+| R24a / R24b fix-5 r9 reviews | saved: design 0B/2M/4m/1n; codedetails 0B/4M/4m/1n. No exploitable bug in the new pid-file reading. Majors: (1) reset.ps1 passes a crashed check on as exit 1 with no line, while reset.sh gives exit 5; and a stale $LASTEXITCODE could let the check be skipped before the delete step (I confirmed both by reading); (2) exit 5 now has two meanings and the README says one; (3) the 61 older mutants were not re-run; (4) the mutation log has counts only, rows 19 and 24 left open |
+| egm-resolve fix-5 r9 | done: 19 rows, 16 accepted, 3 declined, 0 escalated (evidence/resolve-lane3-fix-5-r9.md). Two items need you at stack time: exit 5 as a two-cause row in fix-10's table; exit 2 for a refused setting in reset.sh |
+| B21 round 10 | starting now: ps1 fix, exit table, all 61 mutants, ONE final full run (scripts change) |
+| B22 fix-2 round 12 | building (resumed 08:29Z); no hand-back yet |
+| B23 fix-10 round 5 | building; last checkpoint 08:09Z, no hand-back yet |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none (the two table items above are for the stack builder, answer when it starts).
+FAILURES AND RETRIES: none new.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no bash 4.4 run; B22 and B23 not yet reviewed after their rounds.
+WHAT I WOULD DO NEXT (ranked): 1) B22 r12 and B23 r5 hand-backs: lint, fresh review; 2) B21 round 10 hand-back; 3) the one stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 129 (08:35Z) - B21 fix-5 round 9 handed back and linted; two fresh reviewers started; B22 round 12 and B23 round 5 building
 
 | Agent / job | State at 08:35Z |

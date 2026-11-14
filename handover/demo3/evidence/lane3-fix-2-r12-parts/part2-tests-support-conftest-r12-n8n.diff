@@ -1,0 +1,279 @@
+diff --git a/tests/conftest.py b/tests/conftest.py
+index fcfd3bc..9944492 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -169,6 +169,28 @@ def _no_desk_settings_from_the_shell(monkeypatch: pytest.MonkeyPatch) -> None:
+         monkeypatch.delenv(name)
+ 
+ 
++@pytest.fixture(autouse=True)
++def _no_lock_handle_left_open(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
++    """Every lock handle taken through `lockfile.acquire` while a test runs must be closed when the test ends (an open
++    handle keeps the lock file locked for the rest of the test run). A test that runs `server.main()` past the lock
++    step asks for `main_lock_handles_closed`, which closes them first; any other test that leaves one open fails
++    here, naming no path. This is the outer wrapper: it is set up first and checked last."""
++    handles: list[Any] = []
++    real_acquire = lockfile.acquire
++
++    def acquire(db_path: Path | str) -> Any:
++        handle = real_acquire(db_path)
++        handles.append(handle)
++        return handle
++
++    monkeypatch.setattr(lockfile, "acquire", acquire)
++    yield
++    left = [h for h in handles if not h.closed]
++    for handle in left:
++        handle.close()  # give the lock back whatever the verdict
++    assert not left, f"{len(left)} lock handle(s) taken by this test were still open at its end"
++
++
+ @pytest.fixture
+ def main_lock_handles_closed(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+     """For a test that runs `server.main()` in THIS process past the lock step: the lock handle `main` takes is kept
+diff --git a/tests/support.py b/tests/support.py
+index 4f2257b..64caeeb 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -662,6 +662,8 @@ class RawStub:
+                     if self.header is not None:
+                         head += b"Retry-After: " + self.header + b"\r\n"
+                     head += b"Content-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}"
++                    if b"\r\n\r\n" not in buf:
++                        continue  # a connection that closed without a request is not a request
+                     with self._lock:
+                         self._hits += 1  # before the answer is sent
+                     conn.sendall(head)
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+index 17f6c02..5f08252 100644
+--- a/tests/test_n8n_api_url.py
++++ b/tests/test_n8n_api_url.py
+@@ -17,6 +17,9 @@ from pathlib import Path
+ import pytest
+ from support import start_serving, stop_all, stop_serving
+ 
++from lead_desk import envnum
++from lead_desk.envnum import SettingRefused
++
+ REPO = Path(__file__).resolve().parents[1]
+ RESERVED = "example" + "." + "test"  # the reserved test domain, as the repository's own rules allow it
+ DOC_IP = "198.51.100." + "7"  # a documentation address (RFC 5737)
+@@ -510,7 +513,7 @@ def test_a_key_file_that_is_a_directory_is_a_clean_message_with_the_error_type_o
+ @pytest.mark.skipif(
+     not hasattr(os, "geteuid") or os.geteuid() == 0, reason="root (and Windows) can read a file with no permissions"
+ )
+-def test_a_key_file_without_read_permission_is_a_clean_message_with_the_error_type_only(
++def test_a_key_file_without_read_permission_is_a_clean_message_with_no_error_type_and_no_path(
+     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+ ) -> None:
+     secret = tmp_path / "locked-key.txt"
+@@ -520,8 +523,31 @@ def test_a_key_file_without_read_permission_is_a_clean_message_with_the_error_ty
+         msg = _key_file_refusal(monkeypatch, secret)
+     finally:
+         secret.chmod(0o600)
+-    assert "key file" in msg and "PermissionError" in msg
+-    assert KEY_TEXT not in msg and "locked-key" not in msg
++    assert msg == "the n8n API key file cannot be read"  # the one rule's fixed text: no path, no error type
++    assert KEY_TEXT not in msg and "locked-key" not in msg and "PermissionError" not in msg
++
++
++def test_a_key_file_the_system_will_not_open_gives_the_same_message_also_as_root(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    """The root twin of the test above: root can open a file with no permissions, so the system's refusal is made
++    by patching `os.open` for the key path only (the real reader, the real import)."""
++    secret = tmp_path / "locked-key.txt"
++    secret.write_text(KEY_TEXT, encoding="utf-8")
++    real = os.open
++
++    def refuse(path: object, *a: object, **k: object) -> int:
++        if str(path) == str(secret):
++            raise PermissionError(13, "made-up refusal")
++        return real(path, *a, **k)  # type: ignore[arg-type]
++
++    monkeypatch.setattr(os, "open", refuse)
++    msg = _key_file_refusal(monkeypatch, secret)
++    assert msg == "the n8n API key file cannot be read"
++    assert KEY_TEXT not in msg and "locked-key" not in msg and "PermissionError" not in msg
++    with pytest.raises(SettingRefused) as direct:
++        envnum.read_secret_file(secret, "n8n API key", "key")
++    assert str(direct.value) == "the n8n API key file cannot be read"
+ 
+ 
+ def _call_with_base(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, base: str) -> str:
+diff --git a/tests/test_one_key_file_rule_r12.py b/tests/test_one_key_file_rule_r12.py
+new file mode 100644
+index 0000000..1404e7d
+--- /dev/null
++++ b/tests/test_one_key_file_rule_r12.py
+@@ -0,0 +1,170 @@
++"""Round 12 of the key-file work: the names the desk derives from a setting (`<stats>.tmp`, `<book>.lock`,
++`<ledger>.lock`) are never followed through a link that leads nowhere; the RawStub does not count an empty connection;
++every list of file problems in the docs names every kind; a lock handle left open by a test is a failure. Made-up data
++only."""
++
++from __future__ import annotations
++
++import errno
++import json
++import os
++import re
++import socket
++from pathlib import Path
++from typing import get_args
++
++import pytest
++from support import RawStub, fresh_script
++
++from lead_desk import desk, envnum, lockfile, run_stats, server
++from lead_desk.live_claude import LiveCapReached, SpendLedger
++
++REPO = Path(server.__file__).parents[2]
++POSIX = pytest.mark.skipif(os.name != "posix", reason="symbolic links need a POSIX system here")
++
++
++def _dangling(link: Path, tmp_path: Path) -> Path:
++    """Make `link` a link to a name in an existing folder that does not exist; return that name (the target)."""
++    target = tmp_path / "target-of-the-link"
++    link.symlink_to(target)
++    assert not target.exists() and not target.is_symlink()
++    return target
++
++
++# ------------------------------------------------------------------------------ row 4: the derived names
++@POSIX
++def test_the_counters_file_temp_name_is_never_followed_through_a_link(tmp_path: Path) -> None:
++    stats = tmp_path / "stats.json"
++    target = _dangling(Path(f"{stats}.tmp"), tmp_path)
++    run_stats.write_stats(stats, {"sent": 3})
++    assert not target.exists(), "a file was made at the target of the link"
++    assert json.loads(stats.read_text(encoding="utf-8")) == {"sent": 3}  # the link is replaced, the write goes on
++    assert not Path(f"{stats}.tmp").exists() and not Path(f"{stats}.tmp").is_symlink()
++
++
++@POSIX
++def test_the_counters_file_temp_name_that_is_a_folder_is_left_alone_and_nothing_is_written(tmp_path: Path) -> None:
++    stats = tmp_path / "stats.json"
++    Path(f"{stats}.tmp").mkdir()
++    run_stats.write_stats(stats, {"sent": 3})  # never breaks a send
++    assert not stats.exists()
++    assert Path(f"{stats}.tmp").is_dir()
++
++
++@POSIX
++def test_the_lead_book_lock_name_is_never_followed_through_a_link(tmp_path: Path) -> None:
++    book = tmp_path / "book.db"
++    target = _dangling(Path(f"{book}.lock"), tmp_path)
++    with pytest.raises(lockfile.LockUnavailableError) as e:
++        lockfile.acquire(book)
++    assert str(tmp_path) not in str(e.value)
++    assert not target.exists(), "a file was made at the target of the link"
++
++
++@POSIX
++def test_the_live_ledger_lock_name_is_never_followed_through_a_link(tmp_path: Path) -> None:
++    ledger = tmp_path / "ledger.jsonl"
++    target = _dangling(Path(f"{ledger}.lock"), tmp_path)
++    from lead_desk.live_claude import _FileLock
++
++    with pytest.raises(LiveCapReached) as e, _FileLock(Path(f"{ledger}.lock")):
++        pass
++    assert str(tmp_path) not in str(e.value)
++    assert not target.exists(), "a file was made at the target of the link"
++    assert SpendLedger(ledger) is not None
++
++
++@POSIX
++def test_the_one_lock_opener_takes_a_plain_file_and_refuses_a_link(tmp_path: Path) -> None:
++    plain = tmp_path / "plain.lock"
++    f = lockfile.open_lock_file(plain)
++    try:
++        assert plain.is_file() and (plain.stat().st_mode & 0o077) == 0  # private
++    finally:
++        f.close()
++    link = tmp_path / "link.lock"
++    link.symlink_to(plain)
++    with pytest.raises(OSError) as e:
++        lockfile.open_lock_file(link)
++    assert e.value.errno in (errno.ELOOP, getattr(errno, "EMLINK", errno.ELOOP))
++
++
++# ------------------------------------------------------------------------------ row 13: the stub and empty connections
++def test_the_stub_does_not_count_a_connection_that_sent_nothing() -> None:
++    stub = RawStub(b"1")
++    try:
++        with socket.create_connection(("127.0.0.1", stub.port), timeout=5):
++            pass  # opens and closes: no request
++        with socket.create_connection(("127.0.0.1", stub.port), timeout=5) as c:
++            c.sendall(b"GET / HTTP/1.1\r\nHost: x\r\n\r\n")
++            got = b""
++            while b"{}" not in got:
++                chunk = c.recv(4096)
++                if not chunk:
++                    break
++                got += chunk
++        assert b"429" in got
++        assert stub.hits == 1  # the empty connection above was not a request
++    finally:
++        stub.close()
++
++
++# ------------------------------------------------------------------------------ row 2: the docs name every kind
++def test_every_list_of_file_problems_in_the_docs_names_the_link_refusal() -> None:
++    kinds = get_args(envnum.FileProblem)
++    assert "link" in kinds
++    needle = re.compile(r"symbolic link that leads nowhere|link that leads nowhere", re.I)
++    for name in ("docs/settings.md", "docs/limits.md", "contract.md"):
++        text = " ".join((REPO / name).read_text(encoding="utf-8").split())
++        assert needle.search(text), f"{name} does not name the refusal of a link that leads nowhere"
++    assert desk.BOOK_PROBLEMS["link"].endswith("name a real file")
++
++
++# ------------------------------------------------------------------------------ row 8: pins
++@POSIX
++def test_a_loop_at_the_path_is_refused_by_each_of_the_three_builders(tmp_path: Path) -> None:
++    from lead_desk.config import Config
++    from lead_desk.crm_hubspot import HubspotSettings
++    from lead_desk.smtp_provider import ProviderSettings
++
++    a, b = tmp_path / "loop-a", tmp_path / "loop-b"
++    a.symlink_to(b)
++    b.symlink_to(a)
++    key = tmp_path / "good-key"
++    key.write_text("made" + "-up-" + "key-" + "0123456789\n", encoding="utf-8")
++    assert fresh_script is not None and a.is_symlink()
++    text = envnum.file_problem_text
++    with pytest.raises(envnum.SettingRefused) as e1:
++        envnum.refuse_unusable_file("DESK_HUBSPOT_STATS_FILE", a)
++    assert str(e1.value) == text("DESK_HUBSPOT_STATS_FILE", "link")
++    with pytest.raises(envnum.SettingRefused) as e2:
++        envnum.refuse_unusable_file("DESK_SMTPP_STATS_FILE", a)
++    assert str(e2.value) == text("DESK_SMTPP_STATS_FILE", "link")
++    with pytest.raises(envnum.SettingRefused) as e3:
++        envnum.refuse_unusable_file("DESK_LIVE_LEDGER_PATH", a)
++    assert str(e3.value) == text("DESK_LIVE_LEDGER_PATH", "link")
++    assert Config and HubspotSettings and ProviderSettings  # the three builders reach the same helper (see path_walk)
++
++
++# ------------------------------------------------------------------------------ row 9: the Windows answer for a loop
++@POSIX
++def test_a_link_that_the_system_answers_with_the_windows_loop_code_is_still_called_link(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    """On Windows a link that cannot be followed answers `winerror` 1921, which `path_kind` reads as absent; the walk
++    then asks `os.lstat` and finds the link. Here a real dangling link, with the stat answer patched to that code."""
++    link = tmp_path / "gone"
++    link.symlink_to(tmp_path / "nowhere")
++
++    class WindowsStyleError(OSError):
++        def __init__(self) -> None:
++            super().__init__(errno.EIO, "x")
++            self.winerror = 1921  # only Windows sets it; the test sets it by hand
++
++    def stat(self: Path, *args: object, **kwargs: object) -> os.stat_result:
++        raise WindowsStyleError()
++
++    monkeypatch.setattr(Path, "stat", stat)
++    assert envnum.path_kind(link) == "absent"
++    assert envnum.env_file_problem(link) == "link"
++    assert envnum.env_file_problem(link / "below.db") == "link"
