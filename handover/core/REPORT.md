@@ -1,5 +1,35 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 11:11 UTC / 16:41 IST
+
+**r7q builder (aab1bf4c, resumed 11:01, box ends about 11:57): re-run and mutants are under way; no patch set yet.** Read from its checkpoint and its mutant table (builder claims, I have not re-run them):
+- 11:11 re-run of the narrow set on tree-R7Q: 224 passed, 18 deselected, rc 0 (99.5 s). Earlier: tests/test_r7q_findings.py 142 passed with the load tests first; 44 of the new tests fail on plain r7p.
+- Mutant table so far (out/R7Q/mut-results.tsv), source restored byte-equal after every row: G01, G02, G03, R08, K01, Q01, Q02, Q10-Q16 KILLED by the r7q tests. **Reviewer mutant X1 SURVIVES both test files (r7p file 9 passed; r7n file 25 passed).** X2, R05, I01 survive the r7p file but are killed by the r7n file. X1 is a real open item: I have not read what it mutates; the builder must kill it or argue it equivalent with evidence.
+- No denial this round. M9-74 is settled by reading only (probe not run).
+
+| id | what | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| aab1bf4c (r7q builder) | re-runs, reviewer mutants, own mutants, ruff 0.17.1, suppression counts, patches, R7Q-RESULTS.md | order C-CORRECT items | 11:01 / 16:31 | about 11:57 | r7q | RUNNING | hand-back; I verify hashes and apply matrix; start EV7P and fresh reviewer together |
+
+Agents running: 1 (disclosed: EV7P and the reviewer need the final r7q bytes). Done: r7p builder, first r7q builder, r7n and r7o reviewers, EV7N.
+
+ASK (unchanged, default pytest fake only): may the evidence runner probe M9-74 with a real dry-fakes run? I will not run it without your yes.
+
+NOT DONE / NOT CHECKED
+| item | why | next |
+|---|---|---|
+| X1 survivor | open | builder |
+| ruff 0.17.1, suppression counts, patches, apply matrix, R7Q-RESULTS.md | not yet | builder, then me |
+| hygiene scan, full suite | not run by builder by design | EV7P |
+| M9-74 test, M9-79 measurement | read only | fresh reviewer, pytest fake |
+| off-path items, README, ledger closure | paused by order | after deadline work |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Hand-back: verify hashes and apply matrix, push the r7q set.
+2. EV7P and a fresh uncapped reviewer in parallel.
+3. Update ON-PATH-LIST.md with results; next block about 11:25Z.
+
+
 ## STATUS (core lead) 11:01 UTC / 16:31 IST
 
 **NOTICE (second permission denial, same class as the r7p one): the r7q builder (aab1bf4c) was denied one Bash call** ("Destructive or Unwanted Actions"): an ad-hoc probe script that would have run `scripts/run_real_check.py --dry-fakes --assume-yes` (with and without `--cleanup`) under `unshare -n`, to check M9-74 (exit status 0 with contacts left). Nothing ran, no file was created. I did NOT allow, retry or reword it, and told the builder to run no script with `--assume-yes` (that flag answers the Start question itself; a prompt means STOP). **M9-74 stays NOT PROBED, argued from source only**: the exit is `0 if ok and written and not left else failed`; without `--cleanup` the run exits 0 with contacts in HubSpot (apparently by design); one possible gap: a contact the desk created that the HubSpot list does not show, for a lead not yet CRM-done, is neither archived nor makes the exit fail. The reviewer must test that case with a pytest-level fake, not a script run. ASK: do you want a probe of that kind allowed for the evidence runner, or settled by a pytest fake only? (My default: pytest fake only.)
