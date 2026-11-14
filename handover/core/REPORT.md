@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:37 UTC / 18:07 IST
+
+**EV7R DONE and pushed (handover/core/fix/EV7R-EVIDENCE.md, runner a7707d5f, 12:00 to about 12:36Z): the full pytest run on the r7r bytes IN A STAGED GIT COPY shows 6021 passed, 7 skipped, 0 failed, 60 warnings, rc 0 (34 min 10 s).** Both EV7P failures are gone: the file-call guard test passes, and all hygiene tests pass with gitleaks actually run (DPLD_REQUIRE_SCAN=1; the 7 skips are environment-only: root reads any file 2, needs Python 3.13 1, model-fake-only route 2, load-measurement 1, Windows-only 1). Ledger DPLD-R7Q-M1 and M2 now FIXED-VERIFIED with EV7R as the artifact.
+
+Runner measurements: patch hashes OK; its tree from the CRLF patch equals tree-R7R (source identical, pycache aside); ruff 0.17.1 check and format clean (229 files); suppression diff r7q to r7r empty (runner counts noqa 192, type-ignore 126, nosemgrep 32, nosec 8; **my notes differ by method: EV7P counted noqa 193 and nosemgrep 31 for the same trees; the counts are not comparable across runners, only the zero delta is**); r7q vs r7r built strings identical (normalised AST of test_r7q_findings.py, 242 string constants each); hostile drivers byte-identical to EV7P: banner 0 mismatches, MemoryError 24 cases 0 leaks, QuietServer 22 rows rc 0 (its own trace_lines counter differs from EV7P in 3 rows, stderr byte counts identical in all 22). Load 0.18 at start, 0.67 at end; the builder's run was still going at the start.
+
+**NOT CHECKED (plainly):** guard mutants A and B are the builder's claim only (EV7R did not run them; the guard test passed inside the full run); Windows/PowerShell, IPv6, bandit, mypy, Python other than 3.12, a quiet machine; M9-74 and M9-79 (reviewer); QuietServer BrokenPipe caveat (reviewer); load tests ran inside the full run but no separate load measurement; README (LF patch needs an LF checkout).
+
+**For you: r7r is ready for your egm reviewer.** Inputs pushed: handover/core/snapshot-r7r/ (MANIFEST, 2 files, delta r7q to r7r), the full r7r patch set in handover/core/fix/, the full r7q source snapshot handover/core/snapshot-r7q/ (src and scripts of r7r are byte-equal to r7q), EV7P and EV7R evidence, R7Q-RESULTS.md and R7R-RESULTS.md (builder claims), the r7n and r7o reviews, and the ledger. Review rules: mail/secret/money path, no round cap; ON-PATH items 1 to 3 of order C-CORRECT are now done on the builder and evidence side; step 4 (fresh uncapped reviewer) is yours.
+
+Agents running: 0. Closed: EV7R, r7r builder, EV7P, r7q builder. ASK: none.
+WHAT I WOULD DO NEXT: wait for your reviewer's report; fold any real Blocker/Major test-first (new builder, then a delta EV run), update ON-PATH-LIST.md with the r7r results, then README. Heartbeat until Mon 16 12:00Z.
+
+
 ## STATUS (core lead) 12:30 UTC / 18:00 IST
 
 **EV7R has NOT ended: the full run in the staged git copy is at about 78 percent at 12:30Z (it was expected about 12:33; it is slower than r7q's 30 min 30 s because the builder's broad run shared the machine until now). No result, no counts, no hostile table yet. New ETA: full run end about 12:40Z, hostile drivers about 10 min, EV7R-EVIDENCE.md about 12:55Z (box ends 13:00).** Progress dots show no F or E so far (my grep; meaningless until the summary line). Runner checkpoint 12:21: full run about 62 percent. No denial.
