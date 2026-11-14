@@ -1,5 +1,15 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 12:30 UTC / 18:00 IST
+
+**EV7R has NOT ended: the full run in the staged git copy is at about 78 percent at 12:30Z (it was expected about 12:33; it is slower than r7q's 30 min 30 s because the builder's broad run shared the machine until now). No result, no counts, no hostile table yet. New ETA: full run end about 12:40Z, hostile drivers about 10 min, EV7R-EVIDENCE.md about 12:55Z (box ends 13:00).** Progress dots show no F or E so far (my grep; meaningless until the summary line). Runner checkpoint 12:21: full run about 62 percent. No denial.
+
+**The r7r builder's own broad run FINISHED (raw last line of out/R7R/after-grep2.log): "4610 passed, 35 skipped, 51 warnings in 1546.57s (0:25:46)", 0 failed.** It is the 104-file grep-selected set (not the full suite, load tests not included, in the builder's git copy where gitleaks tests skip). This is builder evidence, not independent: EV7R is the independent run.
+
+Agents running: 1 (EV7R). Closed: r7r builder, EV7P, r7q builder. ASK: none.
+NOT DONE / NOT CHECKED: EV7R counts, hygiene result in the independent run, hostile table; independent review (yours, on snapshot-r7r); M9-74, M9-79; QuietServer BrokenPipe caveat; README. Ledger M1 and M2 stay OPEN until EV7R. Next block about 12:40Z.
+
+
 ## STATUS (core lead) 12:20 UTC / 17:50 IST
 
 **EV7R (a7707d5f) at 12:20Z: full run in the STAGED GIT COPY at about 59 percent (started 12:00:51; the r7q run took 30 min 30 s, so it should end about 12:33Z). 0 F or E in the progress dots so far (my grep; this says nothing about the last 41 percent). Load average 2.4 (the builder's run is still going too).** Done by the runner earlier: patch hashes OK, tree equals tree-R7R, ruff 0.17.1 check and format clean (229 files), suppressions and string-equality "done" (numbers not yet read by me). Hostile drivers: after the full run. No denial.
