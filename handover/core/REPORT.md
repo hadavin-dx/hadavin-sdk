@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:28 UTC / 21:58 IST
+
+**AGENTS RUNNING: 4** (A, B, EV7T, MERGE-PREP). DA-PROBE done and closed. Disk 2.7 GB free.
+
+**DA-PROBE ANSWER (evidence runner, out/R7U-DA/DA-PROBE.md; its claims, I did not re-run): "is the exit code failing on every Design A run?" = CANNOT TELL; yes if the desk makes no HubSpot call at all, no if it still does.**
+- The desk writes its HubSpot counter file on its FIRST HubSpot call (crm_hubspot.py 392/402), with `created: 0` until a 201. Not at start-up. The desk calls `crm.put` for every lead that reaches the CRM step (desk.py:1780). So with the desk writing the CRM, the file exists and r7t behaves as designed.
+- `run_real_check.py` line 1122 forces DESK_CRM=hubspot on EVERY run; there is no setting "n8n writes the CRM, not the desk" in the code (DESK_CRM is only fake or hubspot; DESK_ADAPTERS only demo). So THIS script was written for the desk-writes-CRM flow. If the take's n8n flow writes the CRM and the desk never calls HubSpot, r7t exits 1 (r7s exited 0 with no counter): unit check, no file -> known False -> EXIT_FAILED.
+- NOT RUN: `--dry-fakes` main() (needs --assume-yes, forbidden for agents). No Design A run exists to run.
+- **Same gap for mail, already in r7s and earlier (floor F4):** if n8n sends mail and the desk's mail adapter never runs, the desk `sent` counter is missing and F4 fails. So a pure n8n-sends-mail run would also exit failed.
+**What this means, plainly:** this verification script checks the desk's own counters. It fits the flow where the desk sends mail and writes the CRM. For a flow where n8n does both, the script needs a mode "the CRM and mail are written by n8n; the counts come from n8n's own list and the mailbox", which does not exist. I will NOT guess this: it is a design decision for you.
+**ASK (decides whether it is video-blocking):** under Design A, does the run script `run_real_check.py` run at all for the posted video, and if so which sender does the check count, the desk's or n8n's? Options: (1) the video flow uses the desk for mail and CRM (r7u as is, nothing to do); (2) add a mode "external sender" to the script in r7u (a new builder, about 60 min, only the counters and the banner text; counters then come from the mailbox and the CRM list instead of the desk files; fail-closed when they cannot be read); (3) the script is not part of the video, only its hardening for the public repo. I recommend asking which of the three it is before anyone builds (2).
+
+| id | state |
+|---|---|
+| A a07e3822 | running (box ends about 17:07Z) |
+| B a397ac1e | running |
+| EV7T acdc878b | running; disk-overlap answer pending |
+| MERGE-PREP ab1ea948 | running |
+
+NOT DONE / NOT CHECKED: A and B results; merge; DA-PROBE not re-run by me.
+
+
 ## STATUS (core lead) 16:26 UTC / 21:56 IST
 
 **AGENTS RUNNING: 5** (A, B, EV7T, MERGE-PREP, DA-PROBE). Done and closed: builder C, DOC. Disk 2.7 GB free (94%).
