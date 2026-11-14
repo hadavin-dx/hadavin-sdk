@@ -1,3 +1,12 @@
-# lane3 fix 2 r5 notes (B13), started 03:48Z
-Tests first written; fails-before at raw/b13-fails-before.log (r4 tree, 19 failed; the 2 order/B1-code tests are regression pins).
-Checkpoint $(date): all items implemented; tests green on the 5 touched suites; mutation 9 mutants envnum: 8 killed, 1 survived (<= boundary) -> boundary test added, both boundary mutants now killed (raw/b13-mutation.log).
+# Lane 3 fix 2, round 5 (B13), 2026-11-14
+Tree base f3c39cf8 + fix-1 r6 + fix-2 r4-on-fix-1-r6 (+ r5 changes). No commit, no push.
+
+## Checkpoint 1 (~04:00Z)
+All items B-B1, B-M1, B-m1..B-m8 done (B-m9 declined as resolved). Tests first: raw/b13-fails-before.log = 18 failed on the r4 tree (new/changed tests in tests/test_one_key_file_rule_and_path_walk.py). Not failing before (regression pins, say so): start-up order pin (now also pins ensure_descriptor_budget and public_bind_problem), B1 code-fact test (the demo CRM makes no call when built: true on r4 too, the false part was only the docs).
+Changes: envnum.read_secret_file: regular file only (os.open with O_NONBLOCK + fstat S_ISREG, FIFO/device/folder refused as "cannot be read"), strip_inner_space = text.replace(" ", ""), three distinct texts (empty or too short / only plain printable ASCII / must not hold a space); imap_count uses envnum.read_secret_file; demo_only/fake_model_server.py bounded key read (4096+1); scripts/reset_check.py and run_real_check.py use envnum.path_kind (no raising exists()); envnum docstring; desk.py "lead-book" wording; contract.md/docs/limits.md/docs/settings.md edited (demo outbox only, refusal list, lock sentences, start-up list steps 1, 2, 13).
+Existing test changed: tests/test_reset_scripts.py fake now raises on stat() (reset_check asks path_kind).
+Also fixed (not in the list, found by ruff on the r4 tree): config.py:109 PLR2004 (`.version == 6` -> isinstance IPv6Address); ruff format of tests/test_docs_claims_lane3.py and tests/test_settings_lane3.py (they were unformatted on r4).
+Mutation (raw/b13-mutation.log): 9 hand-made mutants of envnum.py changed lines; 8 killed, 1 survived (`<=` min-length boundary) -> boundary test added; the two boundary mutants then killed.
+Patches: raw/b13-patch-sha256.txt. Both `git apply --check` rc 0 on fresh worktrees, resulting tree identical to this tree.
+Variants: on-fix-1-r4 and on-fix-1-r5 and for-stack do NOT apply (delta from r4 to r5 conflicts in contract.md and docs/limits.md exit-code lines; other files merge); not made.
+ruff check/format --check . clean, bandit -ll 0 issues in src/scripts/demo_only, mypy src clean (all run by me on this tree).

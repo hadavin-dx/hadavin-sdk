@@ -265,3 +265,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | LEAD ORDER 03:49Z | applied | WINDOWS-RUN-1.md to be written after B12's patch (exit 7 fix); fresh egm reviewer on each rebuild; E3b recorded 'unproven, superseded by later complete runs on other heads'; PR #12 E marks closed as counting artifact; B12 told to add the two-worker free_port test |
 | M8 | CLOSED 04:02Z | report read; shuffle order checked by me (collect-only md5 differs) |
 | M9 | CLOSED 04:01Z | full log tail read by me, report written by me (agent handed back early) |
+| B11 | CLOSED 04:03Z | fix-9 r2 patch b1215b5a; full run tail read by me: 3722 passed, 169 skipped, 1 xfailed, rc 0, no data/ after |
+| R9b | fresh egm review of fix-9 r2 | STARTED 04:04Z (a1ad2f3a), expected ~04:15Z, read-only, tree /home/user/work/rv-fix9r2 |

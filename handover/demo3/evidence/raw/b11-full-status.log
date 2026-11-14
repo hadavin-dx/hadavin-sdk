@@ -1,0 +1,15 @@
+M  tests/conftest.py
+M  tests/support.py
+A  tests/test_data_folder_helper.py
+M  tests/test_mode_safety.py
+M  tests/test_reset_scripts.py
+!! .ruff_cache/
+!! demo_only/__pycache__/
+!! load_tools/__pycache__/
+!! scripts/__pycache__/
+!! src/lead_desk/__pycache__/
+!! tests/__pycache__/
+!! tools/__pycache__/
+--- ls data
+ls: cannot access 'data': No such file or directory
+ls rc=2
