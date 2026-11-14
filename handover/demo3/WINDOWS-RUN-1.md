@@ -100,3 +100,30 @@ finding for fix-5: send it as text, lane3 will build a fix and a test that fails
 * PowerShell 7 (`pwsh`) and Windows 10: not asked.
 * `scripts/reset.sh` on macOS bash 3.2: not run anywhere (its refusal is exit 2 by reading, and a text test).
 * n8n workflows are not part of this run.
+
+## 10. Extra lines collected from the builders' notes (13:00Z on 2026-11-14, by lane3)
+READ THIS FIRST: nothing in this section has run on Windows either. The three fix lanes are PAUSED (fix-5 at round 11, fix-2 at round 13, fix-10 at round 7), so the patch series is not final: step 1 above will be replaced by one final stack patch, and these lines must be run on THAT tree. Each line names the note it came from; the "expect" text is the builder's reading of the code, not a run.
+
+### 10a. reset.ps1 pid-file and exit-code cases (source: evidence/lane3-fix-5-r9-notes.md and lane3-fix-5-r10-notes.md)
+1. Port still answered (check refuses): run once with `2>&1` joined and once plain. Expect exit 4, the ONE refusal line, and no red NativeCommandError block (Windows PowerShell 5.1 turns a program's stderr into one under `$ErrorActionPreference='Stop'`).
+2. desk.pid holding the live desk's number saved as UTF-16 (with and without a byte-order mark) and, separately, the number plus one U+3000 (wide space): expect the file called stale, the desk still running, the file deleted.
+3. desk.pid "123" plus a line end: still read as the number. "12" newline "34": stale.
+4. desk.pid with 64 bytes and with 63 bytes after a UTF-8 mark: 64 is stale; 63 (plus digits) reads as before.
+5. `$env:PATH` without python, then `powershell -File scripts/reset.ps1`: expect the line "refused: a desk setting was refused (or python was not found) ..." and exit 8.
+6. A stand-in `python.cmd` that exits 1 for scripts\reset_check.py: expect "refused: the check program failed (exit 1) ..." and exit 5, pid files kept.
+7. In the same session first run `cmd /c exit 9`, then the reset with a check stand-in that prints nothing and ends with no exit code: expect exit 5 (the stale 9 must not be reused).
+8. `$env:DESK_PORT='abc'`, then the reset: exit 8. `$env:RESET_STOP_WAIT_SECONDS='08'`, or a value with a trailing line end: exit 8.
+9. Plain run with a running desk: exit 0.
+
+### 10b. process lookup (source: evidence/lane3-fix-5-r8-notes.md, "WINDOWS-RUN-1 lines for the lead")
+1. `Get-CimInstance Win32_Process` for the desk's pid: `$p.CommandLine` printed with brackets around it must read from its FIRST character (no leading space or quote), so the anchored match holds. Same for the demo server: it must read `python -m demo_only.fakes_server` from its first character (also fix-5 round 7, "launcher / Start-Process quoting").
+2. A process that has ended gives `$null` with no error (the pid file is then stale: exit 0 in pass 1; in pass 2 the program is skipped as "gone"); a lookup that throws gives exit 6 "could not be looked up".
+3. What `Get-Item -LiteralPath -Force` does with a dangling symbolic link (reset.ps1, row 18): unverified; run it and copy the line.
+
+### 10c. start_all.ps1 (source: evidence/lane3-fix-10-r2-notes.md, r4, r5 notes)
+1. bad `DESK_PORT` for reset.ps1 AND start_all.ps1: expect exit 8 and one line. A bad `DESK_NUDGE_TO` (set `DESK_LEADFLOW_FILE` first): the same. start_all.ps1 with a taken port: expect exit 5 and no "started" line.
+2. (5b) make the desk log end with a non-ASCII line, run start_all.ps1 against a failing desk: the failure line shows it as readable text, the script ends with the exit code of the table, not a red error block, and the console code page (`[Console]::OutputEncoding`) is the same after the run as before.
+3. The demo server counts as up only when `fakes.log` holds "fakes server ... on port N". Include the case where something else already holds the port (two binds to the same port at once).
+
+### 10d. Not covered, still
+PowerShell 7, Windows 10, and the full test suite on Windows (section 6) are as before. The Linux side of every line above is covered by tests; the Windows side is not.
