@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 13:41 UTC / 19:11 IST
+
+**r7s HANDED BACK and PUSHED: handover/core/fix/ (crlf.gz, lf, delta-crlf.gz, sha256-r7s.txt, apply-matrix-r7s.txt, R7S-RESULTS.md, README-r7s-SNIPPET.md) and handover/core/snapshot-r7s/ (MANIFEST, files, delta, take list, take-import test, mutant rows), commit 42acf307.**
+- **I verified myself:** the three patch hashes equal sha256-r7s.txt; `git apply --check` rc 0 on three fresh copies of the frozen tree (a-crlf, b-crlf, c-lf with the two .ps1 files sed to LF); the CRLF patch applied to a plain frozen copy equals tree-R7S byte for byte (diff -rq empty); snapshot MANIFEST sha256 entries all OK; the .gz unpack hashes match.
+- **Builder numbers, NOT verified by me (EV7S now repeats them):** guard run 1123 passed / 1 skipped; changed-existing-tests run 744 passed; ruff 0.17.1 clean; suppressions 367 = 367 (one grep method); S01-S24 all killed on final tests; **X1ctx KILLED on the final tests (row in snapshot-r7s/mut-results.tsv; it survived on r7r tests)**; fail-before 37 failed / 14 passed (14 pins by design); r7q file on plain r7p 44 failed / 21 passed.
+- **Not checked / still open:** no full suite yet; take tree not on this machine (take-import test run on r7s 390 passed, r7p 2 failed, builder); Windows not applied; the ordinary openssl skip not exercised (openssl installed); M9-79 not measured; QuietServer BrokenPipe caveat (demo fakes only); my read of R7S-RESULTS.md is partial (first 25 lines). Ledger rows R7R-M1/M2/m3..m8 stay OPEN until EV7S (I added DPLD-R7S-built as FIXED-UNVERIFIED).
+
+| id | what | why | started UTC/IST | expected end | round | state | next |
+|---|---|---|---|---|---|---|---|
+| a42ce038e00e82958 (EV7S, EVIDENCE RUNNER) | hashes, apply, ONE full run in staged git copy (guard, gitleaks), ruff 0.17.1, suppressions, hostile table, S/Q/X mutants on r7s + 40 own | order C-R7S | 13:41 / 19:11 | about 75 min (box) | EV7S | RUNNING | EV7S-EVIDENCE.md, push, tell lead, lead starts fresh reviewer |
+
+Builder af05acef: done, closed. Agents running: 1. ASK: none. Next block about 13:55Z.
+
+
 ## STATUS (core lead) 13:35 UTC / 19:05 IST
 
 **r7s builder (af05acef) at 13:35Z. All numbers are the builder's, read from its files; I ran nothing.**
