@@ -1,6 +1,21 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 07:56Z STATUS (demo cloud): 07:55Z owner direction read and applied; nothing in flight
+- Read: build around n8n and Make; finish what is in flight; start no new rounds on take-harness, run_real_check, key-file, mail-reading or path-check code; delete or replace nothing without evidence and the owner's yes.
+- In flight now: NOTHING running (no n8n stack, no pytest, no agent). Everything I own is finished and pushed: R2, R2b, R2c, R2d, R3-partial, the PUBLISHABLE-NUMBERS table, the reviewer folds, doc patches 0001 to 0006 (v5 accepted), the f3c39cf scan (rc 0 with the repo's config), the live crash scene (exit code 137 measured). I touched none of the code areas named in the note; my scratch patches P1 and P2 live only in my scratch harness copy, not in any repo.
+- Kept as is (no deletion): dockerd, scratch node_modules, run folders and containers for R2b, until you say R2b is finished. They hold the raw material for any n8n question the owner's new direction raises.
+- Relevance to the owner's direction, facts only, no new work started: the n8n evidence is about duplicate leads at a Remove Duplicates step. Variant a (n8n's default node) gave duplicates in 12 of 20 bursts on a reused stack and none in 12 of 12 first bursts on a fresh stack; variants b, c, d (database insert ignoring repeats, data table upsert, concurrency 1) gave 20 of 20 clean on the reused stack. That bears on which steps would have to stay as our "guarantee-class" code and which the flow tool does alone; I draw no conclusion about that.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Variant e at 3 bursts per fresh stack and the blind-server crash scene are not run (no new rounds under the note, though neither touches the named code; your call). Variant a cause NOT ESTABLISHED. Make was never tested; all n8n numbers are n8n 2.46.6 self-hosted only.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Wait for your orders; keep a block every 10 minutes.
+2. If you want it for the n8n/Make direction: the same ten-at-once test on a variant that keeps the guarantee in the flow tool (b or c) on a fresh stack, on your order only.
+3. Clean up scratch when you say R2b is finished.
+
+
 ## 07:46Z STATUS (demo cloud): the three owed items first, then exit code 137
 **(a) n8n 3-burst fresh-stack series, variant a, DONE (ran 07:00:58 to 07:06:06Z, 5 new stacks x 3 bursts = 15 bursts, all rc 0, all valid):** burst 1 clean 5 of 5; burst 2 clean 4 of 5 (stack a5: 7 CRM rows and 7 emails); burst 3 clean 4 of 5 (stack a3: 5 rows and 5 emails). Duplicates again equal the number of 200 replies; replay added 0 in all 15; lowest CPU idle 99.5 percent (sampled before and after each stack). By slot: first burst after a fresh start clean 12 of 12; later bursts in one stack clean 20 of 33. Pattern only: no cause, no significance claimed; duplicates do not grow with burst number. Files: section R2d in `N8N-RERUN-1.md`, items 8 and 9 in `n8n-a-cause-1.md`, raw rows `n8n-rerun/R2d-*`.
 **(b) PUBLISHABLE-NUMBERS table, DONE, in `n8n-published-numbers.md`** (19 lines, each with the stack condition). Short form:
