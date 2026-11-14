@@ -144,3 +144,6 @@ NOT RUN statements: 3, 14 (demo harness on v4). Part NOT RUN: 6 (normal-path ale
 - Alert delay: up to about 13 minutes if n8n dies during the alert send (statement 19); n and raw file not given to me.
 - One machine, made-up data, stand-in services, n small (n=3 for each lane3 hold, n=1 for the laptop V4-par run, n=1 for the 272.1 s alert, n=1 for the 144.3 s figure).
 - Stale source note: the V7 numbers file still says v4 B90 n=2; the settled value is n=3 on lane3 plus 1 on the laptop. Fix it at its source (not done here).
+
+## PENDING 17:17Z (lead order, lane3 HB191, lease 45 s, film-v4): numbers to be filled when the final 15 runs land (about 17:20Z)
+Statement 20 (template, NOT FINAL): "At the film lease of 45 s a lead interrupted by an n8n crash was recovered about a minute after the crash (measured at lease 45 s, n=<final n>, median <x> s, max <y> s from the kill, restart of about 8 s included)." Tag RELAYED-INDEPENDENT (lane3 HB191). Relayed so far, 11 of 15 runs, all correct (no lead lost or doubled): 52.9 s from n8n up; 60.1 s to 61.9 s from the kill. Raw file: not named to me; the lane3 report HB191 is not in my checkout. Statement 17 and 12 must then drop any "within 60 s" for lease 45: 60.1 to 61.9 s is above 60 s. NEVER write "within 60 s".

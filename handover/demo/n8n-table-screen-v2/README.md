@@ -47,3 +47,5 @@ Coexisting with v1: v2 uses the path demo-table-v2 and v1 uses demo-table, so bo
 ## Unverified
 - Never run in n8n: the real expression parser, the Postgres date type as n8n delivers it (the code accepts an ISO string or a date object), and rendering in a real browser (colours, sticky header, dark mode) are not checked.
 - Shows at most 50 rows, newest first; no paging. The page is public to anyone who can reach the webhook; do not expose it beyond the demo.
+
+Update 17:17Z: an unexpected state now gets a neutral grey badge with its own text, and the summary strip shows an extra box "other state" only when such a row exists (processing counts only the known in-progress states). Re-rendered with node and re-checked in a browser (light and dark previews replaced). Still NOT run in n8n.

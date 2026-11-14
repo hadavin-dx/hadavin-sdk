@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 17:16Z - lane3 HB191 templates in place, numbers pending; table v2 flaw fixed; agents running 0
+- Could NOT read handover/demo3/REPORT.md (not in my checkout); used the relayed numbers: lease 45, film-v4, 11 of 15 runs, all correct, 52.9 s from n8n up, 60.1 to 61.9 s from the kill (about 8 s restart included). Marked RELAYED-INDEPENDENT.
+- PAGE-STATEMENTS-V4: pending section with statement 20 template (n, median, max left blank) and the rule 'never within 60 s'. VIDEO-RUNSHEET: scene 4 caption template 'recovered about a minute after the crash (measured at lease 45 s, n=..., median .., max ..)'. Final numbers go in when the 15 runs land (about 17:20Z); I will not guess them.
+- Table screen v2: unexpected state now has a neutral grey badge (own text); summary strip adds 'other state' box only when needed; re-rendered with node and checked in a browser; NOT run in n8n.
+NOT DONE / NOT CHECKED: final n/median/max; statements 12 and 17 still carry the old text until the final numbers (they never say 'within 60 s' without the lease 20 s condition).
+WHAT I WOULD DO NEXT: 1. fill the numbers at 17:20Z and push. 2. T17/T18 result. 3. WP6 id/vid list.
 ## Block 17:05Z - lead answers applied; agents running 0
 - Shipped lease 45 s written into DESIGN-A-README (120 s kept only as the older design value; 45 s flows use 2 tries of 10 s). 'Lease plus 25 to 30' caption dropped in VIDEO-RUNSHEET: no recovery number until lane3 lease-45 runs land. Scene 5 caption approved wording added. Owner crop list (7 points) added to the run sheet.
 - Table screen v2 pushed earlier (0fdfaa1b): badges, dark mode, plain words, UTC time, title; browser preview checked by me; NOT run in n8n. Flaw: an unexpected state shows no badge.
