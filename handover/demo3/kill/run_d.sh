@@ -2,7 +2,7 @@
 # lane3 kill script, fourth batch: the FIXED flows (newest flows on origin/demo/handover when this batch starts; commit recorded).
 # ERROR x3, BURST x1, K3 x3, K6 x3. Starts after run_c.sh. Reads the flow files only (git show), nothing else from the demo branch.
 cd "$(dirname "$0")" || exit 1
-while pgrep -f run_c.sh > /dev/null; do sleep 5; done
+true
 REPO=/home/user/hadavin-sdk
 git -C "$REPO" fetch -q origin demo/handover
 C=$(git -C "$REPO" log -1 --format=%h origin/demo/handover -- handover/demo/n8n-flows)
