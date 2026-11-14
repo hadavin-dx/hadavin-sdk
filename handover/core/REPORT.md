@@ -1,5 +1,46 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 07:11 UTC / 12:41 IST
+
+**r7j REVIEW DONE (fresh; handover/core/review/core-fix-on-frozen-r7j-review.md, committed): NOT CLEAN, 0 Blocker, 3 Major, 4 minor, 4 nit.** All go into r7k (sent to a6bc3c56; its box is extended to 60 min, end about 07:51):
+| id | finding | consequence |
+|---|---|---|
+| M1 | tests/test_r7f_findings.py::test_f1_a_connect_that_never_completes_ends_at_the_total_not_at_the_step FAILS on clean r7j (passes on r7i). Cause: netconnect._without_lookup invents ::1 for localhost; refusal of ::1 replaces the time-out error (ImapConnectionError instead of ImapTotalTimeout). Real behaviour change, not only a test problem. The r7j builder did not run test_r7f_findings | **EV7J (full run on r7j) will show this id as a new failure vs EV7I: expected, not a surprise.** Code fix in r7k |
+| M2 | the lower bound added to tests/test_r7g_findings.py:285-287 (0.24 <= t) failed 4 of 10 runs under 4 busy loops; test_m4 already pins the share | delete or loosen, RESULTS line |
+| M3 | driver_error requests give exit 0 (3 requests all driver errors: exit 0, no line): same class as m7 | exit 3, test, mutant |
+| m1-m4 | Thread.start() failure releases the cap slot twice (cap drifts to 9, "never more than 8" false); mutant N4 (non-OSError swallowed) survives; IP-literal check refuses 127.1 / 0x7f.1 / 2130706433 / 017.0.0.1; stale comments | all in r7k |
+Reviewer held up: sockets closed on every path (50 real failed connects leaked no fd); cap held at 8 with 30 callers; exit_code_and_line is the only exit path; changed r7h/r7j tests equal or stronger except M2; J04b equivalent on Python 3.12.3 and 3.13.18; 12 of the 27 builder mutants re-planted, all killed; its 16 own: N4 survived, N22 equivalent. NOT run by it: full suite, Windows, Python 3.14, a real IPv6-less host or hung resolver.
+
+**EV7H part 1 DONE (committed EV7H-NONFULL-EVIDENCE.md):** patch hashes match; 43 test files each alone in a staged git copy rc 0; 25 mutants run, 23 killed, **2 SURVIVED: N05 and N06 (LOOKUP_HUNG_MAX 8 to 9 and to 7; no test pins 8; docs say 8) = a real test gap, forwarded to r7k (test k10 already written)**; N08 flaked once (240 s, then killed in 6 s three times; cause unknown); fail-before: the r7h file does not import on r7g, so with a 3-line shim 18 failed / 31 passed, the 4 order tests pass on r7g as said; builder's 15 mutants not run (it ran 10); ruff 0.17.1 clean; suppression counts equal r7g. Its slip: one pkill (denied, nothing ran); it killed its own runners by pid.
+**EV7I DONE (committed): 7 failed (same ids as EV7G), 5554 passed**; the 8 git files pass alone in the git copy; no stray file.
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a6bc3c56 (r7k builder) | pass 9 gaps + N05/N06 + r7j review M1-M3, m1-m4 | fix-dont-defer | 06:52 / 12:22 | box 60 min, about 07:51 | r7k | RUNNING. 07:08 its clean run of the live group shows rc 1 (1 failed, 472 passed): I assume the same M1 id or another already-red test; not yet explained: I will ask for the id | hand-back; EV7K + fresh r7k reviewer |
+| a1b1e5cd (EV7J) | full run on r7j | comparison base for r7k | 06:51 / 12:21 | about 07:40 | EV7J | RUNNING about 52% at 07:09. Expect the M1 id to fail | EV7J-EVIDENCE.md |
+| ae9c3a10 (r7i reviewer) | review of the 37 tests | independent | 06:27 / 11:57 | about 07:17 | review 1 of r7i | RUNNING: lane F (X05, Y1, Y2 on the wide set), lane G (X16-X34 narrow); an earlier contaminated lane was discarded and the tree restored (verified identical). No verdict | core-fix-on-frozen-r7i-review.md |
+| a01f7117 (pass 10) | run_real_check M9-68..82 first, then M9-05.. rows, then jsonread | your 06:55 order | 06:57 / 12:27 | box 60 min (about 07:57) | pass 10 | RUNNING: clean runs: mail rc 0 (537 passed), reg rc 1 (1 failed, 504 passed; it is looking into it), lane A (rrc mutants) started 07:05, lane B (mail/live/crm sets) 07:06. No mutant result yet | mail-pass10-r7j.md |
+
+Agents: 4 running (r7k builder, EV7J, r7i reviewer, pass 10). Done: EV7I, EV7H, r7j reviewer, pass 9. Under your standing order I keep 2 or more running.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7k hand-back (M1-M3 etc.), EV7K on the final bytes, fresh r7k reviewer | builder running | start EV7K and the reviewer at hand-back |
+| the 1-failed "clean" rows (reg in pass 10, live in r7k) | not explained | ask both agents for the failing id; if it is the M1 id on r7j it is the known r7f failure |
+| EV7J, r7i review, pass 10 rows | running | resolve |
+| N08 flake cause; EV7H's 15 builder mutants | not run | r7k reviewer samples; EV7K |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell scripts never run, Windows, Python 3.13/3.14 (3.14 untested), real IPv6-less host, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. At the r7k hand-back: verify sha256, copy (CRLF as .gz); start EV7K (one full run on the final bytes, staged git copy) and a fresh r7k reviewer together; compare ids with EV7I and EV7J.
+2. Read the r7i review and pass 10 survivors; forward real gaps to r7k while its box is open, else an r7l test-only delta.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 07:00 UTC / 12:30 IST
 
 **EV7I (the BASE full run on r7i) FINISHED: 7 failed, 5554 passed, 8 skipped, 1782 s (29:42), rc 1. The 7 failing test ids are IDENTICAL to EV7G's 7 (I diffed the sorted id lists: same).** They are the git-only guards (test_hygiene x4, test_nosemgrep_form, test_raw_bidi_chars, test_shell_single_bracket) that need a git work tree; the plain full-run copy has none, and EV7G's staged git copy passed them (300). So r7i adds NO failing id over r7g. Still to come from the runner: step 4 (the staged git files alone) and its file. Load was 6 to 11 while it ran with 7 agents, so a timing result is noisy; none of the 7 is a timing test.
