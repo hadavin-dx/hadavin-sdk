@@ -1,5 +1,5 @@
 diff --git a/README.md b/README.md
-index 130ffe3..a2fb4e3 100644
+index 130ffe3..c981be5 100644
 --- a/README.md
 +++ b/README.md
 @@ -44,7 +44,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
@@ -35,10 +35,10 @@ index 130ffe3..a2fb4e3 100644
 +- exit 2: `scripts/reset.sh` only: the shell is not bash, or the bash is too old. Nothing was stopped or deleted.
 +- exit 3: a process still holds the desk's database, or the lock file or the data folder cannot be looked at, or (Linux) `ps` is not installed. Nothing was deleted, not even the pid files; a program named in a pid file may already have been stopped.
 +- exit 4: something still answers on the desk's or the demo server's port. Nothing was deleted, not even the pid files; a program named in a pid file may already have been stopped.
-+- exit 5 has two meanings; the line printed tells them apart: a process did not stop in time, or the check program failed (`scripts/reset_check.py` gave an exit code other than 0, 3 or 4, for example because python was not found). Either way nothing was deleted, not even the pid files; the line names what was already stopped.
++- exit 5 has two meanings, told apart by the line printed: a process did not stop in time, or the check program crashed (it gave an exit code other than 0, 3 or 4, for example because python was not found). Either way nothing was deleted, not even the pid files; the line names what was already stopped.
 +- exit 6: a pid file names another program, or (Windows) the program behind a process number could not be looked up, or a program changed between pass 1 and its stop (it is then not stopped). In pass 1 nothing was stopped or deleted; in pass 2 the line names what was already stopped.
 +- exit 7: a pid file is a folder (or a link to one), even an empty one (pass 1: nothing was stopped or deleted), or a pid file could not be removed after the stop (the line then says that the desk's records and the logs were not deleted, and that the programs have been stopped).
-+- exit 8: a setting is refused (the same code `start_all` and `run_real_check` give a refused setting): the database is not inside `./data`, a desk setting that the configuration refuses (or python is not found), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (an empty value counts as not set and means 10; both scripts check it before they stop or delete anything). Nothing was stopped or deleted.
++- exit 8: a setting is refused (same meaning as `start_all` and `run_real_check`): the database is not inside `./data`, a desk setting that the configuration refuses (or python is not found), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (an empty value counts as not set and means 10; both scripts check it before they stop or delete anything). Nothing was stopped or deleted.
 +
 +A pid file that is not one plain process number (for example `abc`, `007`, two numbers, a file with any byte that is not plain ASCII text (a file saved as UTF-16 has zero bytes), 64 bytes or more after an optional UTF-8 byte order mark, counted in bytes whatever the language setting of your shell, an empty file, a link to a file that is gone; with reset.sh also a named pipe) is treated as stale: nothing is stopped for it, and the reset deletes it and goes on (a desk that is really running is still caught by the port and database checks, exit 3 or 4, and the pid file then stays). A UTF-8 byte order mark in front of the number is skipped and is not counted in the 64 bytes. The desk and the demo server are recognised by their whole command line, from its first character: `python -m lead_desk.server` or `python -m demo_only.fakes_server` (a program that only has these words somewhere in its line is another program).
 +
@@ -47,7 +47,7 @@ index 130ffe3..a2fb4e3 100644
  ## What is claimed, and what is not
  
 diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
-index a5226de..4753675 100644
+index a5226de..88222e0 100644
 --- a/scripts/reset.ps1
 +++ b/scripts/reset.ps1
 @@ -1,24 +1,31 @@
@@ -55,7 +55,7 @@ index a5226de..4753675 100644
 +# Stop what start_all.ps1 started (only those process ids) and delete the desk's records, so the next run starts empty.
  # Run from the repository root. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
  # and refuses to run when the database path is not inside the repository's data folder.
-+# Exit 8: a setting is refused (a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data), the same code as start_all and run_real_check. exit 5 has two meanings, told apart by the line printed: a process did not stop in time, or the check program failed with an exit code other than 0, 3 or 4.
++# Exit codes of note: exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data).
  $ErrorActionPreference = 'Stop'
  $env:PYTHONPATH = 'src;.'
  # a plain whole number of seconds: 0, or one to three digits with no leading zero (same rule as reset.sh)
@@ -257,7 +257,7 @@ index a5226de..4753675 100644
  }
  Write-Host 'reset done'
 diff --git a/scripts/reset.sh b/scripts/reset.sh
-index 711920f..47a77bf 100644
+index 711920f..207b015 100644
 --- a/scripts/reset.sh
 +++ b/scripts/reset.sh
 @@ -1,24 +1,27 @@
@@ -266,7 +266,7 @@ index 711920f..47a77bf 100644
 +# Stop what start_all.sh started (only those process ids) and delete the desk's records, so the next run starts empty.
  # Run from the repository root with bash (it uses [[ ]]): `sh scripts/reset.sh` fails where sh is dash. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
  # and refuses to run when the database path is not inside the repository's data/ folder.
-+# Exit codes: 2 wrong shell or too old bash (nothing changed); 8 a setting is refused (a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; the same code start_all and run_real_check give a refused setting; nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 EITHER a process did not stop in time OR the check program failed with some other exit code (the line says which); 6 a pid file names another program; 7 a pid file is a folder or could not be removed. Exit 5 has two meanings, told apart by the line printed.
++# Exit codes: 2 wrong shell or too old bash (nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 6 a pid file names another program; 7 a pid file is a folder or could not be removed; 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; nothing changed).
  set -eu
 -# a feature test, not the name BASH_VERSION (dash takes any variable from the environment): only a shell that runs [[ ]] passes
 -case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
@@ -1343,7 +1343,7 @@ index f1c19e6..5f52fb8 100644
 +    assert all(low <= n <= high for n in numbers), (low, high, numbers)
 diff --git a/tests/test_reset_order_and_words.py b/tests/test_reset_order_and_words.py
 new file mode 100644
-index 0000000..3d265b3
+index 0000000..41357c3
 --- /dev/null
 +++ b/tests/test_reset_order_and_words.py
 @@ -0,0 +1,655 @@
@@ -1944,10 +1944,10 @@ index 0000000..3d265b3
 +    codes = re.findall(r"(?m)^- exit ([2-8])\b", readme)
 +    assert codes == ["2", "3", "4", "5", "6", "7", "8"], codes
 +    entry = next(line for line in readme.splitlines() if line.startswith("- exit 8"))
-+    assert "a setting is refused" in entry and "start_all" in entry and "run_real_check" in entry, entry
++    assert "a setting is refused (same meaning as `start_all` and `run_real_check`)" in entry, entry
 +    for name in ("reset.sh", "reset.ps1"):  # the table row is named in each script's header
 +        head = "\n".join((REPO / "scripts" / name).read_text(encoding="utf-8").splitlines()[:8])
-+        assert "8" in head and "a setting is refused" in head and "run_real_check" in head, name
++        assert "a setting is refused (same meaning as start_all and run_real_check" in head, name
 +
 +
 +def test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header() -> None:
@@ -1955,10 +1955,10 @@ index 0000000..3d265b3
 +    (any exit other than 0, 3, 4). Both are named in the README's exit 5 entry and in the header of each script."""
 +    readme = (REPO / "README.md").read_text(encoding="utf-8")
 +    entry = next(line for line in readme.splitlines() if line.startswith("- exit 5"))
-+    assert "did not stop in time" in entry and "check program failed" in entry, entry
++    assert "did not stop in time" in entry and "check program crashed" in entry, entry
 +    for name in ("reset.sh", "reset.ps1"):
 +        head = "\n".join((REPO / "scripts" / name).read_text(encoding="utf-8").splitlines()[:8])
-+        assert "exit 5" in head and "did not stop in time" in head and "check program failed" in head, name
++        assert "exit 5" in head and "did not stop in time" in head and "check program crashed" in head, name
 +
 +
 +# -- the guard against another shell: the feature test also needs BASH_VERSINFO, which zsh and busybox ash lack

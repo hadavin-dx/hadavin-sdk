@@ -1,0 +1,42 @@
+##### r10b README exit 5 loses the crash meaning (README.md)
+--- good
++++ mutant
+@@ -95 +95 @@
+-- exit 5 has two meanings, told apart by the line printed: a process did not stop in time, or the check program crashed (it gave an exit code other than 0, 3 or 4, for example because python was not found). Either way nothing was deleted, not even the pid files; the line names what was already stopped.
++- exit 5 has two meanings, told apart by the line printed: a process did not stop in time, or the program ended (it gave an exit code other than 0, 3 or 4, for example because python was not found). Either way nothing was deleted, not even the pid files; the line names what was already stopped.
+
+##### r10b README exit 8 loses the same-meaning clause (README.md)
+--- good
++++ mutant
+@@ -98 +98 @@
+-- exit 8: a setting is refused (same meaning as `start_all` and `run_real_check`): the database is not inside `./data`, a desk setting that the configuration refuses (or python is not found), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (an empty value counts as not set and means 10; both scripts check it before they stop or delete anything). Nothing was stopped or deleted.
++- exit 8: a setting is refused (a bad setting): the database is not inside `./data`, a desk setting that the configuration refuses (or python is not found), or `RESET_STOP_WAIT_SECONDS` is not a whole number from 0 to 999 without a leading zero (an empty value counts as not set and means 10; both scripts check it before they stop or delete anything). Nothing was stopped or deleted.
+
+##### r10b sh header loses the crash meaning (scripts/reset.sh)
+--- good
++++ mutant
+@@ -5 +5 @@
+-# Exit codes: 2 wrong shell or too old bash (nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 6 a pid file names another program; 7 a pid file is a folder or could not be removed; 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; nothing changed).
++# Exit codes: 2 wrong shell or too old bash (nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 = a process did not stop in time, or something (nothing was deleted; two meanings, told apart by the line printed); 6 a pid file names another program; 7 a pid file is a folder or could not be removed; 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; nothing changed).
+
+##### r10b sh header loses the exit 8 same-meaning clause (scripts/reset.sh)
+--- good
++++ mutant
+@@ -5 +5 @@
+-# Exit codes: 2 wrong shell or too old bash (nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 6 a pid file names another program; 7 a pid file is a folder or could not be removed; 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; nothing changed).
++# Exit codes: 2 wrong shell or too old bash (nothing changed); 3 the database is still held or ps is missing; 4 a port still answers; exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 6 a pid file names another program; 7 a pid file is a folder or could not be removed; 8 = a setting is refused (a bad setting: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data/; nothing changed).
+
+##### r10b ps1 header loses the crash meaning (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -4 +4 @@
+-# Exit codes of note: exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data).
++# Exit codes of note: exit 5 = a process did not stop in time, or something (nothing was deleted; two meanings, told apart by the line printed); 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data).
+
+##### r10b ps1 header loses the exit 8 same-meaning clause (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -4 +4 @@
+-# Exit codes of note: exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 8 = a setting is refused (same meaning as start_all and run_real_check: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data).
++# Exit codes of note: exit 5 = a process did not stop in time, or the check program crashed (nothing was deleted; two meanings, told apart by the line printed); 8 = a setting is refused (a bad setting: a bad RESET_STOP_WAIT_SECONDS, a desk setting that Config refuses, a database outside data).
+

@@ -1,0 +1,7 @@
+# round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
+r10b README exit 5 loses the crash meaning | KILLED | 1 failed, 39 passed, 1 skipped in 13.05s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+r10b README exit 8 loses the same-meaning clause | KILLED | 1 failed, 38 passed, 1 skipped in 12.89s | tests/test_reset_order_and_words.py::test_text_only_the_readme_lists_one_line_per_exit_code_from_2_to_8
+r10b sh header loses the crash meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.97s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+r10b sh header loses the exit 8 same-meaning clause | KILLED | 1 failed, 38 passed, 1 skipped in 12.98s | tests/test_reset_order_and_words.py::test_text_only_the_readme_lists_one_line_per_exit_code_from_2_to_8
+r10b ps1 header loses the crash meaning | KILLED | 1 failed, 39 passed, 1 skipped in 12.95s | tests/test_reset_order_and_words.py::test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header
+r10b ps1 header loses the exit 8 same-meaning clause | KILLED | 1 failed, 38 passed, 1 skipped in 12.96s | tests/test_reset_order_and_words.py::test_text_only_the_readme_lists_one_line_per_exit_code_from_2_to_8

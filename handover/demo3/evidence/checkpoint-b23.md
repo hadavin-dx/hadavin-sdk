@@ -9,3 +9,6 @@ All 24 rows edited. Lint on a clean ls-files copy: ruff check/format, mypy linux
 
 ## Round 5 final (about 08:58 UTC)
 Survivors r4-3, r4-13, r5-5 fixed and killed. r4-10 still unexplained. Lint rc 0 all five. 3 runs 216 passed/10 skipped (run 3 redone once after a cut-off log). Patch + 5 parts + sha256 cut; same tree c494f120 on double apply and parts. Notes: lane3-fix-10-r5-notes.md. Handing back.
+
+## Round 6 checkpoint 1 (09:19 UTC; started 09:12; stop at 10:12)
+Done: rows 3, 4, 11, 12, 20 in start_all.sh (deadline clock, desk alive after its line, timeout refused, second kill -0 comment, own test kills mutant r4-10), row 6 (reset 5 two causes via reset.sh/ps1 + table text, reset 8 text, code-8 uniqueness test), row 7 (config_exit.write_line, all refusal prints through it, cp1252 tests), row 9, 18. Fails-before log raw/b23-r6-fails-before-start.log. Next: row 1 (table-only numbers), 5, ps1 text for 4/12, 8, 16, 17, 19, 2 (20 reruns), 13-15, lint, final full run. Not committed.

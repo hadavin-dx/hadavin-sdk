@@ -1,6 +1,6 @@
 diff --git a/tests/test_reset_order_and_words.py b/tests/test_reset_order_and_words.py
 new file mode 100644
-index 0000000..3d265b3
+index 0000000..41357c3
 --- /dev/null
 +++ b/tests/test_reset_order_and_words.py
 @@ -0,0 +1,655 @@
@@ -601,10 +601,10 @@ index 0000000..3d265b3
 +    codes = re.findall(r"(?m)^- exit ([2-8])\b", readme)
 +    assert codes == ["2", "3", "4", "5", "6", "7", "8"], codes
 +    entry = next(line for line in readme.splitlines() if line.startswith("- exit 8"))
-+    assert "a setting is refused" in entry and "start_all" in entry and "run_real_check" in entry, entry
++    assert "a setting is refused (same meaning as `start_all` and `run_real_check`)" in entry, entry
 +    for name in ("reset.sh", "reset.ps1"):  # the table row is named in each script's header
 +        head = "\n".join((REPO / "scripts" / name).read_text(encoding="utf-8").splitlines()[:8])
-+        assert "8" in head and "a setting is refused" in head and "run_real_check" in head, name
++        assert "a setting is refused (same meaning as start_all and run_real_check" in head, name
 +
 +
 +def test_text_only_the_readme_names_both_meanings_of_exit_5_and_the_script_says_the_same_in_its_header() -> None:
@@ -612,10 +612,10 @@ index 0000000..3d265b3
 +    (any exit other than 0, 3, 4). Both are named in the README's exit 5 entry and in the header of each script."""
 +    readme = (REPO / "README.md").read_text(encoding="utf-8")
 +    entry = next(line for line in readme.splitlines() if line.startswith("- exit 5"))
-+    assert "did not stop in time" in entry and "check program failed" in entry, entry
++    assert "did not stop in time" in entry and "check program crashed" in entry, entry
 +    for name in ("reset.sh", "reset.ps1"):
 +        head = "\n".join((REPO / "scripts" / name).read_text(encoding="utf-8").splitlines()[:8])
-+        assert "exit 5" in head and "did not stop in time" in head and "check program failed" in head, name
++        assert "exit 5" in head and "did not stop in time" in head and "check program crashed" in head, name
 +
 +
 +# -- the guard against another shell: the feature test also needs BASH_VERSINFO, which zsh and busybox ash lack

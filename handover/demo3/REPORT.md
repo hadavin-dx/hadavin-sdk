@@ -1,3 +1,17 @@
+## HEARTBEAT 134 (09:21Z) - B23 round 6 half coded; B21 r10 and B22 r12 still not handed back
+
+| Agent / job | State at 09:21Z (builders' own checkpoints, not yet verified by me) |
+|---|---|
+| B23 fix-10 round 6 | checkpoint 09:19Z (started 09:12Z): rows 3, 4, 11, 12, 20 done in start_all.sh (deadline clock, desk must be alive after its line, `timeout` program required, new test that kills mutant r4-10); row 6 done with the lead's exact text plus the code-8 uniqueness test; row 7 started (one UTF-8 write path for refusal lines). Still to do: table rows and docs, 20 logged reruns, mutants, lint, one full run |
+| B21 fix-5 round 10 | last checkpoint 08:56Z (scripts done, mutant passes and the one full run to go). It has my message with the lead's exact reset 5 / reset 8 text. No hand-back |
+| B22 fix-2 round 12 | last checkpoint 08:45Z (all rows coded, full run in progress, leaked lock handle being fixed). 36 min since a checkpoint: I ask it for one now |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new from me.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; IPv6 end-to-end skipped here; WINDOWS-RUN-1 lines not yet written; every figure above is a builder's, I have read none of the round 6, 10 or 12 results.
+WHAT I WOULD DO NEXT (ranked): 1) B21 and B22 hand-backs: git add -A, tree id, lint a clean copy, two fresh reviewers; 2) B23 round 6 hand-back and review; 3) the one stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 133 (09:12Z) - fix-10 r5 reviewed and resolved; B23 resumed for round 6; B21 r10 and B22 r12 still building
 
 | Agent / job | State at 09:12Z |
