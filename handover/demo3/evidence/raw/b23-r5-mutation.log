@@ -2,3 +2,17 @@ r4-1 mailbox order -> command-line code: pytest rc=1 -> KILLED | 1 failed, 604 p
       failing: tests/test_real_check_dry.py::test_swapped_mailbox_order_is_a_refused_setting_with_one_line
 r4-2 live settings missing -> command-line code: pytest rc=1 -> KILLED | 1 failed, 604 passed in 27.35s
       failing: tests/test_real_check_dry.py::test_missing_live_model_settings_are_a_refused_setting
+r4-3 non-UTF-8 config accepted: pytest rc=0 -> SURVIVED | 605 passed in 26.46s
+r4-4 meaning text changed (printed table drifts): pytest rc=1 -> KILLED | 1 failed, 27 passed in 1.79s
+      failing: tests/test_exit_code_table.py::test_the_table_printed_in_docs_settings_md_is_the_generated_one
+r4-5 prose repeats a program number: pytest rc=1 -> KILLED | 1 failed, 27 passed in 1.92s
+      failing: tests/test_exit_code_table.py::test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table
+r4-6 table row deleted: pytest rc=1 -> KILLED | 4 failed, 24 passed in 1.70s
+      failing: tests/test_exit_code_table.py::test_each_program_has_exactly_the_rows_listed_here_by_constant_name
+      failing: tests/test_exit_code_table.py::test_every_row_has_a_producing_test_or_is_listed_as_not_produced
+      failing: tests/test_exit_code_table.py::test_the_numbers_each_shell_script_writes_are_rows_of_that_script
+      failing: tests/test_exit_code_table.py::test_the_table_printed_in_docs_settings_md_is_the_generated_one
+r4-7 start_all.sh passes on only 3|4: pytest rc=1 -> KILLED | 3 failed, 53 passed, 2 skipped in 34.04s
+      failing: tests/test_exit_code_table.py::test_text_pin_start_all_passes_on_the_codes_of_the_table_in_both_scripts
+      failing: tests/test_start_all_late_refusal.py::test_a_desk_that_cannot_take_its_port_is_reported_with_its_own_code
+      failing: tests/test_start_all_late_refusal.py::test_only_the_three_desk_codes_of_the_table_are_passed_on[5-5]

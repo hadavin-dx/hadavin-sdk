@@ -1,3 +1,17 @@
+## HEARTBEAT 128 (08:27Z) - B22 round 11 reviewed (1+2 Major), resolved, round 12 next; B21 and B23 building
+
+| Agent / job | State at 08:27Z |
+|---|---|
+| R23a / R23b fix-2 r11 reviews | saved: design 0B/1M/4m/2n, codedetails 0B/2M/4m/4n. I confirmed the stale test myself: tests/test_n8n_api_url.py:523 still expects an error type, and as a non-root user (setpriv, which works in this container) it fails (raw/b22-r11-nonroot-lane3.log). It was hidden because the container is root and the test skips |
+| egm-resolve fix-2 r11 | done: 15 rows, 13 accepted, 2 declined, 0 escalated (evidence/resolve-lane3-fix-2-r11.md). The other Majors: new "link" refusal missing from four docs lists; the "checked as non-root" claim had no log. Also: sibling file names (stats .tmp, the two .lock files) follow a dangling link |
+| B22 round 12 | starting now from the resolve file |
+| B21 fix-5 round 9 / B23 fix-10 round 5 | building; no hand-back yet |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: my earlier claim that a non-root run was impossible here was wrong; fixed, the builder now runs the changed files as non-root.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no Windows run of the link check; stack docs deferrals only rows 13/14 (dedupe).
+WHAT I WOULD DO NEXT (ranked): 1) B22 round 12, then lint and fresh review; 2) B21 and B23 hand-backs; 3) the one stack builder.
+
 ## HEARTBEAT 127 (08:21Z) - LEAD note 08:20Z applied; B22 round 11 handed back and linted; two fresh reviewers started; B21 and B23 building
 
 | Agent / job | State at 08:21Z |
