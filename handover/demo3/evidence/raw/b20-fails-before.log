@@ -1,0 +1,69 @@
+B20 failing-before run: base f3c39cf8 + lane3-fix-10-r2.patch, with the NEW and changed test files copied in. Command:
+  python -m pytest -q --continue-on-collection-errors tests/test_late_refusal_value_echo.py tests/test_exit_code_table.py tests/test_setting_reader_guard.py tests/test_bad_setting_entry_points.py tests/test_start_all_late_refusal.py tests/test_reset_scripts.py tests/test_ps1_pins.py
+
+50 failed, 457 passed, 6 skipped, 1 error in 26.02s
+
+SPLIT (never one combined number):
+  real behaviour (a program/function RUN gave a different result): 27
+  function absent (AttributeError/ImportError on a new name): 8
+  text or syntax-tree checks (read source/contract text, no run): 6
+  TEXT-ONLY ps1 pins on new start_all.ps1 text (not behaviour): 9
+  whole module could not be imported (its tests cannot be counted one by one): 1 module (tests/test_start_all_late_refusal.py, 20 tests)
+  NOT failing before: tests/test_late_refusal_value_echo.py (7 sites + count): the old code already scrubbed named values at those sites, so these are pins, not proof of a fix.
+
+== REAL BEHAVIOUR (27)
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\x00b]
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\x00b]
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\x00b]
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_KEY_FILE-a\x00b]
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LIVE_LEDGER_PATH-a\x00b]
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-a\x00b]
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FIL
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_KEY_FIL
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_F
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_HUBSPOT_STATS_F
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-P
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_CA_FILE-P
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_PASSWORD_
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FIL
+  test_bad_setting_entry_points::test_a_path_that_is_not_valid_text_is_refused_by_every_adapter_reader[DESK_SMTPP_STATS_FIL
+  test_bad_setting_entry_points::test_a_setting_the_message_does_not_name_keeps_its_value_readable
+  test_bad_setting_entry_points::test_list_items_url_user_and_the_ends_of_a_long_value_are_blanked_too
+  test_bad_setting_entry_points::test_run_real_check_keeps_its_own_code_for_its_own_refusals
+  test_bad_setting_entry_points::test_run_real_check_refuses_a_bad_desk_setting_before_the_question
+  test_bad_setting_entry_points::test_run_real_check_refuses_a_path_that_is_not_valid_text_before_anything_is_called[DESK_H
+  test_bad_setting_entry_points::test_run_real_check_refuses_a_path_that_is_not_valid_text_before_anything_is_called[DESK_S
+  test_bad_setting_entry_points::test_run_real_check_refuses_a_path_that_is_not_valid_text_before_anything_is_called[DESK_S
+  test_bad_setting_entry_points::test_run_real_check_refuses_a_path_that_is_not_valid_text_before_anything_is_called[REAL_R
+  test_bad_setting_entry_points::test_the_by_program_table_matches_what_every_program_returns
+  test_bad_setting_entry_points::test_the_module_prints_standard_input_as_one_plain_line_through_the_formatter
+  test_exit_code_table::test_every_code_a_program_really_returns_is_one_of_its_rows
+== FUNCTION ABSENT (8)
+  test_bad_setting_entry_points::test_a_line_is_stripped_of_control_characters
+  test_bad_setting_entry_points::test_crash_desk_gives_the_desks_own_code_for_a_late_refusal
+  test_exit_code_table::test_a_second_meaning_behind_a_free_number_is_seen_by_the_computation
+  test_exit_code_table::test_start_all_passes_on_exactly_the_three_desk_codes_it_can_explain
+  test_exit_code_table::test_start_all_sh_in_a_shell_that_is_not_bash_returns_its_own_not_bash_code
+  test_exit_code_table::test_the_by_program_tables_name_only_programs_and_codes_of_the_table
+  test_exit_code_table::test_the_pinned_overlap_list_is_the_computed_overlap
+  test_exit_code_table::test_the_script_setting_code_has_one_meaning_everywhere
+== TEXT/AST (6)
+  test_bad_setting_entry_points::test_run_real_check_has_no_scrubber_of_its_own
+  test_exit_code_table::test_contract_md_names_the_table_and_the_overlap_list
+  test_exit_code_table::test_every_program_of_the_table_exists
+  test_exit_code_table::test_the_numbers_each_shell_script_writes_are_rows_of_that_script
+  test_exit_code_table::test_the_numbers_reset_check_returns_are_rows_of_reset_check
+  test_setting_reader_guard::test_no_path_is_read_from_setting_text_except_through_the_one_helper
+== TEXT-ONLY PS1 PINS (9)
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[formatter dropped]
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[log read can fail]
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[no demo server message]
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[no handle kept]
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[no null guard]
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[no pass-through limit]
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[no wait for exit]
+  test_ps1_pins::test_text_only_each_start_pin_rejects_its_mutant[timeout exits 0]
+  test_ps1_pins::test_text_only_the_start_pins_hold
+== COLLECTION ERROR (1)
+  ::tests.test_start_all_late_refusal

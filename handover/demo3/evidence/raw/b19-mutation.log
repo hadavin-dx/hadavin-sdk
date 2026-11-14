@@ -1,0 +1,49 @@
+B19 mutation check, fix-2 round 8. Each line: one rule reverted or one violation planted in the b19 worktree, the named test file(s) run with pytest -x, the file restored afterwards (git diff checked clean).
+Date: 2026-11-14T06:23:25Z
+
+== rules reverted (mut.py) ==
+KILLED  no mode check: rc=1 1 failed, 1 passed in 0.10s
+KILLED  mode check on group bits only: rc=1 1 failed, 3 passed in 0.05s
+KILLED  mode check on other bits only: rc=1 1 failed, 3 passed in 0.04s
+KILLED  no lstat link look: rc=1 1 failed, 83 passed in 0.16s
+KILLED  no inode compare: rc=1 1 failed, 84 passed in 0.19s
+SURVIVED inode compare even when inode is 0: rc=0 96 passed in 0.29s
+SURVIVED no O_NOFOLLOW: rc=0 96 passed in 0.29s
+KILLED  open error says cannot be read for a link: rc=1 1 failed, 81 passed in 0.14s
+KILLED  no clamp in envnum: rc=1 1 failed, 88 passed in 0.28s
+KILLED  infinite float gives None in envnum: rc=1 1 failed, 89 passed in 0.30s
+KILLED  no clamp in load_driver: rc=1 1 failed, 88 passed in 0.25s
+KILLED  no clamp in hubspot_probe: rc=1 1 failed, 88 passed in 0.25s
+KILLED  flag file asked with exists(): rc=1 1 failed, 91 passed in 0.25s
+KILLED  assets asked with is_file(): rc=1 1 failed, 92 passed in 0.29s
+KILLED  umask fixture off: rc=1 1 failed in 0.03s
+KILLED  no inode compare: rc=1 1 failed, 84 passed in 0.23s
+KILLED  inode compare even when inode is 0: rc=1 1 failed, 86 passed in 0.22s
+KILLED  no O_NOFOLLOW: rc=1 1 failed, 87 passed in 0.17s
+
+== violations planted / docs repeated (mut2.py) ==
+KILLED  probe planted in src (is_dir): rc=1 1 failed, 160 passed in 0.83s
+KILLED  probe planted in src (resolve on a setting): rc=1 1 failed, 160 passed in 0.82s
+KILLED  probe planted in src (is_mount): rc=1 1 failed, 160 passed in 0.83s
+KILLED  probe planted in src (expanduser): rc=1 1 failed, 160 passed in 0.78s
+KILLED  reader planted in src (shutil.copy): rc=1 1 failed, 40 passed in 0.38s
+KILLED  reader planted in src (FileIO): rc=1 1 failed, 40 passed in 0.36s
+KILLED  reader planted in src (open): rc=1 1 failed, 40 passed in 0.39s
+KILLED  reader planted in src (read_text): rc=1 1 failed, 40 passed in 0.37s
+KILLED  retry-after read planted (subscript): rc=1 1 failed, 185 passed in 1.50s
+KILLED  retry-after read planted (getheader): rc=1 1 failed, 185 passed in 1.58s
+KILLED  shell reader of a key planted: rc=1 1 failed, 123 passed in 0.46s
+KILLED  shell reader of a key in a workflow file: rc=1 1 failed, 123 passed in 0.53s
+KILLED  key-file rule repeated in contract.md: rc=1 1 failed, 95 passed in 0.33s
+KILLED  old permission sentence back in limits.md: rc=1 1 failed, 95 passed in 0.30s
+KILLED  the wrong word planted in a doc: rc=1 1 failed, 240 passed in 9.43s
+KILLED  no chmod 600 in the settings section: rc=1 1 failed, 94 passed in 0.27s
+KILLED  a second key-files section in settings.md: rc=1 1 failed, 94 passed in 0.29s
+KILLED  allow-list entry removed: rc=2 1 error in 0.14s
+KILLED  allow-list entry removed: rc=1 1 failed, 160 passed in 0.84s
+
+NOTE: the first pass had 2 SURVIVED lines ("inode compare even when inode is 0", "no O_NOFOLLOW"). Both were weak tests, not
+equivalent mutants: I added a test with the handle saying inode 0 while the name shows the real one, and a test that spies on the
+flags of os.open. The re-run of those 3 mutations is the last 3 lines of the first block: all KILLED. Final count: every
+mutation KILLED. The probe/reader/Retry-After/shell guards live in the test file itself, so they cannot fail "on the old tree";
+they are proved by planting the violation in the real tree (second block) and by the planted cases inside the test file.

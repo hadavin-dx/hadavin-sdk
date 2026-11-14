@@ -1,3 +1,17 @@
+## HEARTBEAT 107 (06:27Z) - B18 CLOSED (r7 superseded by r8); B19, B20, B21 each have a checkpoint and a fails-before log
+
+| Agent / job | State at 06:27Z |
+|---|---|
+| B18 fix-2 r7 | handed back 06:25Z. Its full run is not green only because gitleaks was not on PATH (30 gitleaks tests); those files re-run alone: 72 passed. Wall-clock and hygiene guards alone: rc 0 each. r7 itself was reviewed (3+3 major) and is replaced by r8 |
+| B19 fix-2 r8 | checkpoint, fails-before and mutation logs written; no hand-back; its one full run must have gitleaks on PATH |
+| B20 fix-10 r3 | checkpoint and fails-before log written |
+| B21 fix-5 r8 | checkpoint written; fails-before next |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: none new (B18's gitleaks slip already recorded in HB104).
+NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
+WHAT I WOULD DO NEXT (ranked): 1. read B19, B20, B21 hand-backs; 2. whole-patch fresh reviewers for each; 3. stack builder.
+
 ## HEARTBEAT 106 (06:22Z) - B19, B20, B21 STILL BUILDING; B19 saved its failing-tests log, B21 wrote checkpoint 1
 
 | Agent / job | State at 06:22Z |

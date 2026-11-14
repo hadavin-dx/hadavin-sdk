@@ -1,0 +1,1449 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF........... [ 75%]
+.......FFFFFFF...FFFFFFF                                                 [100%]
+=================================== FAILURES ===================================
+__ test_the_test_session_makes_private_files_so_one_helper_covers_every_test ___
+
+    def test_the_test_session_makes_private_files_so_one_helper_covers_every_test() -> None:
+        """tests/conftest.py sets one umask for the whole session (no test makes its own): a plain write is mode 0600."""
+        if os.name != "posix":
+            pytest.skip("umask is a POSIX notion")
+        current = os.umask(0)
+        os.umask(current)
+>       assert current & 0o077 == 0o077, oct(current)
+E       AssertionError: 0o22
+E       assert (18 & 63) == 63
+
+tests/test_one_key_file_rule_r8.py:51: AssertionError
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use0')
+kind = 'hubspot key', mode = 420
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-416] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use1')
+kind = 'hubspot key', mode = 416
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-388] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use2')
+kind = 'hubspot key', mode = 388
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-432] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use3')
+kind = 'hubspot key', mode = 432
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-438] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use4')
+kind = 'hubspot key', mode = 438
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-288] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use5')
+kind = 'hubspot key', mode = 288
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-292] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use6')
+kind = 'hubspot key', mode = 292
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-385] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use7')
+kind = 'hubspot key', mode = 385
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-392] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use8')
+kind = 'hubspot key', mode = 392
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-456] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use9')
+kind = 'hubspot key', mode = 456
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-420] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use10')
+kind = 'live model key', mode = 420
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-416] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use11')
+kind = 'live model key', mode = 416
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-388] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use12')
+kind = 'live model key', mode = 388
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-432] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use13')
+kind = 'live model key', mode = 432
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-438] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use14')
+kind = 'live model key', mode = 438
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-288] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use15')
+kind = 'live model key', mode = 288
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-292] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use16')
+kind = 'live model key', mode = 292
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-385] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use17')
+kind = 'live model key', mode = 385
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-392] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use18')
+kind = 'live model key', mode = 392
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-456] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use19')
+kind = 'live model key', mode = 456
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-420] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use20')
+kind = 'mailbox password', mode = 420
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-416] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use21')
+kind = 'mailbox password', mode = 416
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-388] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use22')
+kind = 'mailbox password', mode = 388
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-432] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use23')
+kind = 'mailbox password', mode = 432
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-438] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use24')
+kind = 'mailbox password', mode = 438
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-288] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use25')
+kind = 'mailbox password', mode = 288
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-292] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use26')
+kind = 'mailbox password', mode = 292
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-385] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use27')
+kind = 'mailbox password', mode = 385
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-392] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use28')
+kind = 'mailbox password', mode = 392
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-456] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use29')
+kind = 'mailbox password', mode = 456
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-420] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use30')
+kind = 'model key', mode = 420
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-416] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use31')
+kind = 'model key', mode = 416
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-388] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use32')
+kind = 'model key', mode = 388
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-432] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use33')
+kind = 'model key', mode = 432
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-438] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use34')
+kind = 'model key', mode = 438
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-288] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use35')
+kind = 'model key', mode = 288
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-292] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use36')
+kind = 'model key', mode = 292
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-385] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use37')
+kind = 'model key', mode = 385
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-392] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use38')
+kind = 'model key', mode = 392
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-456] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use39')
+kind = 'model key', mode = 456
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-420] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use40')
+kind = 'n8n API key', mode = 420
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-416] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use41')
+kind = 'n8n API key', mode = 416
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-388] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use42')
+kind = 'n8n API key', mode = 388
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-432] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use43')
+kind = 'n8n API key', mode = 432
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-438] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use44')
+kind = 'n8n API key', mode = 438
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-288] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use45')
+kind = 'n8n API key', mode = 288
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-292] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use46')
+kind = 'n8n API key', mode = 292
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-385] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use47')
+kind = 'n8n API key', mode = 385
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-392] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use48')
+kind = 'n8n API key', mode = 392
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-456] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use49')
+kind = 'n8n API key', mode = 456
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-420] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use50')
+kind = 'smtp password', mode = 420
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-416] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use51')
+kind = 'smtp password', mode = 416
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-388] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use52')
+kind = 'smtp password', mode = 388
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-432] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use53')
+kind = 'smtp password', mode = 432
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-438] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use54')
+kind = 'smtp password', mode = 438
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-288] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use55')
+kind = 'smtp password', mode = 288
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-292] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use56')
+kind = 'smtp password', mode = 292
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-385] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use57')
+kind = 'smtp password', mode = 385
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-392] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use58')
+kind = 'smtp password', mode = 392
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-456] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_other_use59')
+kind = 'smtp password', mode = 456
+
+    @POSIX
+    @pytest.mark.parametrize("mode", [0o644, 0o640, 0o604, 0o660, 0o666, 0o440, 0o444, 0o601, 0o610, 0o700 | 0o010])
+    @pytest.mark.parametrize("kind", sorted(KINDS))
+    def test_a_key_file_that_other_users_can_read_is_refused_for_every_kind(tmp_path: Path, kind: str, mode: int) -> None:
+        what, noun, inner = KINDS[kind]
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY + "\n", encoding="utf-8")
+        f.chmod(mode)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:62: Failed
+_ test_the_mode_refusal_comes_after_the_link_and_kind_checks_and_has_no_way_round _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_the_mode_refusal_comes_af0')
+
+    @POSIX
+    def test_the_mode_refusal_comes_after_the_link_and_kind_checks_and_has_no_way_round(tmp_path: Path) -> None:
+        f = tmp_path / "secret-file.txt"
+        f.write_text(KEY, encoding="utf-8")
+        f.chmod(0o644)
+        import inspect
+    
+        assert "strict" not in inspect.signature(envnum.read_secret_file).parameters
+        assert [p for p in inspect.signature(envnum.read_secret_file).parameters] == [
+            "path", "what", "noun", "strip_inner_space",
+        ]  # fmt: skip
+>       with pytest.raises(SettingRefused, match="other users"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:90: Failed
+____ test_a_world_readable_key_stops_every_wrapper_with_the_same_fixed_text ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_world_readable_key_stop0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9e9e667930>
+
+    @POSIX
+    def test_a_world_readable_key_stops_every_wrapper_with_the_same_fixed_text(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        f = tmp_path / "k.txt"
+        f.write_text(KEY, encoding="utf-8")
+        f.chmod(0o644)
+        from lead_desk import imap_count, smtp_provider
+        from lead_desk.crm_hubspot import CrmConfigError, HubspotCrm, HubspotSettings
+    
+>       with pytest.raises(smtp_provider.SendRefused, match="other users"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SendRefused
+
+tests/test_one_key_file_rule_r8.py:104: Failed
+_________ test_a_key_file_that_is_a_link_is_refused_with_its_own_text __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_key_file_that_is_a_link0')
+
+    def test_a_key_file_that_is_a_link_is_refused_with_its_own_text(tmp_path: Path) -> None:
+        real = tmp_path / "real-key.txt"
+        real.write_text(KEY + "\n", encoding="utf-8")
+        link = tmp_path / "link-key.txt"
+        _make_link(link, real)
+        with pytest.raises(SettingRefused) as e:
+            envnum.read_secret_file(link, "made-up key", "key")
+>       assert str(e.value) == LINK_TEXT and KEY not in str(e.value) and str(tmp_path) not in str(e.value)
+E       AssertionError: assert ('the made-up ...annot be read' == 'the made-up ...the real file'
+E         
+E         - the made-up key file is a symbolic link: name the real file
+E         + the made-up key file cannot be read)
+
+tests/test_one_key_file_rule_r8.py:140: AssertionError
+________ test_a_broken_link_and_a_link_that_loops_are_refused_as_links _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_broken_link_and_a_link_0')
+
+    def test_a_broken_link_and_a_link_that_loops_are_refused_as_links(tmp_path: Path) -> None:
+        broken = tmp_path / "broken.txt"
+        _make_link(broken, tmp_path / "nothing-here.txt")
+        loop = tmp_path / "loop.txt"
+        _make_link(loop, loop)
+        for link in (broken, loop):
+            with pytest.raises(SettingRefused) as e:
+                envnum.read_secret_file(link, "made-up key", "key")
+>           assert str(e.value) == LINK_TEXT, link.name
+E           AssertionError: broken.txt
+E           assert 'the made-up ...annot be read' == 'the made-up ...the real file'
+E             
+E             - the made-up key file is a symbolic link: name the real file
+E             + the made-up key file cannot be read
+
+tests/test_one_key_file_rule_r8.py:152: AssertionError
+________ test_a_link_is_refused_where_the_system_has_no_no_follow_flag _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_link_is_refused_where_t0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9e9e5d8d00>
+
+    def test_a_link_is_refused_where_the_system_has_no_no_follow_flag(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Windows has no O_NOFOLLOW (getattr gives 0 there): the open follows the link, the second look (lstat) refuses."""
+        real = tmp_path / "real-key.txt"
+        real.write_text(KEY + "\n", encoding="utf-8")
+        link = tmp_path / "link-key.txt"
+        _make_link(link, real)
+        monkeypatch.delattr(os, "O_NOFOLLOW", raising=False)
+        assert getattr(os, "O_NOFOLLOW", 0) == 0
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:165: Failed
+_____ test_a_file_swapped_between_the_open_and_the_second_look_is_refused ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_file_swapped_between_th0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9e9e5f5fd0>
+
+    @POSIX
+    def test_a_file_swapped_between_the_open_and_the_second_look_is_refused(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        a = tmp_path / "a-key.txt"
+        a.write_text(KEY, encoding="utf-8")
+        b = tmp_path / "b-key.txt"
+        b.write_text(KEY, encoding="utf-8")
+        real_lstat = os.lstat
+    
+        def swapped(path: Any, *args: Any, **kw: Any) -> os.stat_result:
+            return real_lstat(b if Path(path) == a else path, *args, **kw)
+    
+        monkeypatch.setattr(os, "lstat", swapped)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:184: Failed
+_______ test_a_second_look_that_says_link_refuses_whatever_the_open_did ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-7/test_a_second_look_that_says_l0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9e9dd0f700>
+
+    def test_a_second_look_that_says_link_refuses_whatever_the_open_did(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        f = tmp_path / "k.txt"
+        f.write_text(KEY, encoding="utf-8")
+        real_lstat = os.lstat
+    
+        def as_link(path: Any, *args: Any, **kw: Any) -> os.stat_result:
+            r = real_lstat(path, *args, **kw)
+            if Path(path) != f:
+                return r
+            return os.stat_result((stat.S_IFLNK | 0o777, *tuple(r)[1:]))
+    
+        monkeypatch.setattr(os, "lstat", as_link)
+>       with pytest.raises(SettingRefused) as e:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_one_key_file_rule_r8.py:204: Failed
+__________ test_a_number_with_too_many_digits_is_clamped_not_dropped ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9e9e664210>
+
+    def test_a_number_with_too_many_digits_is_clamped_not_dropped(monkeypatch: pytest.MonkeyPatch) -> None:
+        """A text that the rule accepts but that is too big for a float is a long wait, not no wait: 308 digits is the
+        largest finite number; every longer text used to give None (a jump in the answers)."""
+        top = constants.RETRY_AFTER_MAX_SECONDS
+        for name, fn in _copies(monkeypatch).items():
+            for digits in (305, 308, 309, 310, 400, 5000):
+>               assert fn("9" * digits) == top, (name, digits)
+E               AssertionError: ('envnum', 309)
+E               assert None == 3600.0
+E                +  where None = <function retry_after_seconds at 0x7f9e9e6e0ae0>(('9' * 309))
+
+tests/test_one_key_file_rule_r8.py:269: AssertionError
+___ test_the_clamp_and_the_wording_are_written_down_once_in_the_limits_page ____
+
+    def test_the_clamp_and_the_wording_are_written_down_once_in_the_limits_page() -> None:
+        text = _doc("docs/limits.md")
+        for part in (
+            "RETRY_AFTER_MAX_SECONDS",
+            "3600 seconds",
+            "a decimal part is accepted",
+            "A Retry-After that is an HTTP date is read as no value",
+        ):
+>           assert part in text, part
+E           AssertionError: RETRY_AFTER_MAX_SECONDS
+E           assert 'RETRY_AFTER_MAX_SECONDS' in '# Limits and details This page holds the detail behind the short "What is not claimed" list in the README. Skip this ...d one write (`OPEN`) accepted; the full list of default options and the write against our own portal are not verified.'
+
+tests/test_one_key_file_rule_r8.py:283: AssertionError
+_ test_the_dry_run_flag_file_is_removed_without_asking_the_system_if_it_exists _
+
+    def test_the_dry_run_flag_file_is_removed_without_asking_the_system_if_it_exists() -> None:
+        text = (REPO / "scripts" / "run_real_check.py").read_text(encoding="utf-8")
+>       assert ".exists(" not in text and "unlink(missing_ok=True)" in text
+E       assert ('.exists(' not in '"""Real ser...it(main())\n'
+E         
+E         '.exists(' is contained here:
+E              if flag.exists():
+E         ?           ++++++++
+E                       flag.unlink()
+E                   d2.start()
+E                   lost = [...
+E         
+E         ...Full output truncated, use '-vv' to show)
+
+tests/test_one_key_file_rule_r8.py:294: AssertionError
+__ test_the_demo_assets_of_an_unreadable_folder_are_left_out_not_a_traceback ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9e9d46a190>
+
+    def test_the_demo_assets_of_an_unreadable_folder_are_left_out_not_a_traceback(monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.syspath_prepend(str(REPO))
+        from demo_only import portal_demo
+    
+        real_read = Path.read_bytes
+    
+        def deny(self: Path, *a: Any, **k: Any) -> Any:
+            if self.name in portal_demo.ASSET_TYPES:
+                raise PermissionError(13, "denied")  # what Python 3.12 and later raises where the folder cannot be looked at
+            return real_read(self, *a, **k)
+    
+        def deny_stat(self: Path, *a: Any, **k: Any) -> Any:
+            raise AssertionError("the assets are not asked about with stat or is_file")
+    
+        monkeypatch.setattr(Path, "read_bytes", deny)
+        monkeypatch.setattr(Path, "is_file", deny_stat)
+>       page = portal_demo.PortalDemo(desk=object(), desk_url="http://127.0.0.1:1")  # type: ignore[arg-type]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_one_key_file_rule_r8.py:313: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+demo_only/portal_demo.py:202: in __init__
+    if f.is_file():  # a missing file is left out, not an error
+       ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/home/user/work/b19-tree/demo_only/portal_demo.js'), a = ()
+k = {}
+
+    def deny_stat(self: Path, *a: Any, **k: Any) -> Any:
+>       raise AssertionError("the assets are not asked about with stat or is_file")
+E       AssertionError: the assets are not asked about with stat or is_file
+
+tests/test_one_key_file_rule_r8.py:309: AssertionError
+_____ test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page ______
+
+    def test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page() -> None:
+        text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
+>       assert text.count(SECTION) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = <built-in method count of str object at 0x3c269c40>('## Key and password files')
+E        +    where <built-in method count of str object at 0x3c269c40> = '# Settings\n\nEvery setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad ...he run look green). Without it a missing folder skips each such test file as one item and the other files still run.\n'.count
+
+tests/test_one_key_file_rule_r8.py:328: AssertionError
+_________ test_no_other_page_repeats_the_key_file_rule_it_links_to_it __________
+
+    def test_no_other_page_repeats_the_key_file_rule_it_links_to_it() -> None:
+        for name in (
+            "contract.md", "docs/limits.md", "docs/n8n-recipe.md", "docs/real-services.md", "README.md", "SECURITY.md",
+            "docs/tests.md", "load_tools/README.md", "scripts/real-run.env.example",
+        ):  # fmt: skip
+            text = _doc(name)
+>           assert RULE not in text, name
+E           AssertionError: contract.md
+E           assert 'Only the li...e is removed' not in '# contract....pt as it is.'
+E             
+E             'Only the line brea...the file is removed' is contained here:
+E             ?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ...
+E             
+E             ...Full output truncated, use '-vv' to show
+
+tests/test_one_key_file_rule_r8.py:353: AssertionError
+____ test_the_settings_page_agrees_with_itself_about_when_each_file_is_read ____
+
+    def test_the_settings_page_agrees_with_itself_about_when_each_file_is_read() -> None:
+        text = _doc("docs/settings.md")
+>       assert "The permissions of the file are not checked" not in text and "permissions of the file are not checked" not in text
+E       AssertionError: assert ('The permiss... not checked' not in '# Settings ...s still run.'
+E         
+E         'The permissions of...ile are not checked' is contained here:
+E            still run. and 'permissions... not checked' not in '# Settings ...s still run.'
+E         
+E         'permissions of the file are not checked' is contained here:
+E         ?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   ...
+E         
+E         ...Full output truncated, use '-vv' to show)
+
+tests/test_one_key_file_rule_r8.py:362: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_one_key_file_rule_r8.py::test_the_test_session_makes_private_files_so_one_helper_covers_every_test
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-420]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-416]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-388]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-432]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-438]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-288]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-292]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-385]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-392]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[hubspot key-456]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-420]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-416]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-388]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-432]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-438]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-288]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-292]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-385]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-392]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[live model key-456]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-420]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-416]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-388]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-432]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-438]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-288]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-292]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-385]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-392]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[mailbox password-456]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-420]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-416]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-388]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-432]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-438]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-288]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-292]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-385]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-392]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[model key-456]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-420]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-416]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-388]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-432]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-438]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-288]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-292]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-385]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-392]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[n8n API key-456]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-420]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-416]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-388]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-432]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-438]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-288]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-292]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-385]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-392]
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_other_users_can_read_is_refused_for_every_kind[smtp password-456]
+FAILED tests/test_one_key_file_rule_r8.py::test_the_mode_refusal_comes_after_the_link_and_kind_checks_and_has_no_way_round
+FAILED tests/test_one_key_file_rule_r8.py::test_a_world_readable_key_stops_every_wrapper_with_the_same_fixed_text
+FAILED tests/test_one_key_file_rule_r8.py::test_a_key_file_that_is_a_link_is_refused_with_its_own_text
+FAILED tests/test_one_key_file_rule_r8.py::test_a_broken_link_and_a_link_that_loops_are_refused_as_links
+FAILED tests/test_one_key_file_rule_r8.py::test_a_link_is_refused_where_the_system_has_no_no_follow_flag
+FAILED tests/test_one_key_file_rule_r8.py::test_a_file_swapped_between_the_open_and_the_second_look_is_refused
+FAILED tests/test_one_key_file_rule_r8.py::test_a_second_look_that_says_link_refuses_whatever_the_open_did
+FAILED tests/test_one_key_file_rule_r8.py::test_a_number_with_too_many_digits_is_clamped_not_dropped
+FAILED tests/test_one_key_file_rule_r8.py::test_the_clamp_and_the_wording_are_written_down_once_in_the_limits_page
+FAILED tests/test_one_key_file_rule_r8.py::test_the_dry_run_flag_file_is_removed_without_asking_the_system_if_it_exists
+FAILED tests/test_one_key_file_rule_r8.py::test_the_demo_assets_of_an_unreadable_folder_are_left_out_not_a_traceback
+FAILED tests/test_one_key_file_rule_r8.py::test_the_whole_key_file_rule_is_in_one_section_of_the_settings_page
+FAILED tests/test_one_key_file_rule_r8.py::test_no_other_page_repeats_the_key_file_rule_it_links_to_it
+FAILED tests/test_one_key_file_rule_r8.py::test_the_settings_page_agrees_with_itself_about_when_each_file_is_read
+75 failed, 21 passed in 0.70s

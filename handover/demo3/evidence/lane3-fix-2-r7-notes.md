@@ -32,3 +32,9 @@ Reads: 47 distinct lines, 49 occurrences (ALLOWED_READS): web requests through t
 
 ## Not checked
 ruff, mypy, bandit, CodeQL (CI only, by order). Windows (O_NOFOLLOW absent there). No independent EGM review of the r7 result yet. gitleaks on the patch not run by me (the hygiene scan test runs it in the full run).
+
+## Full run result (read this part first)
+- First full run, final tree 8db4b0ba, fresh clone, Python 3.13.18, DPLD_REQUIRE_SCAN=1, detached, 05:54Z to 06:09Z: `30 failed, 4090 passed, 170 skipped in 875.68s`, rc=1 (raw/b18-full-final.log). ALL 30 failures are one cause, my slip: the gitleaks program was not on PATH and I did not set GITLEAKS_BIN ("gitleaks binary not found"; 24 in test_gitleaks_exceptions, 2 in test_gitleaks_semgrep_lock, 4 in test_hygiene). No failure is in code I changed.
+- Re-run of those three test files only (not a second full run, time box) with GITLEAKS_BIN pointing at the studio's gitleaks program, same clone and tree: `72 passed in 53.42s`, rc=0 (raw/b18-gitleaks-rerun.log). So the 4090 other tests passed in the full run and the 72 gitleaks-dependent ones passed in the re-run; there is no single log that shows a green full run. If the lead wants one, rerun the full suite with GITLEAKS_BIN set (about 15 min).
+- Alone on the final tree: wall-clock guard test rc=0 (raw/b18-wallclock-alone.log), hygiene scan test rc=0 (raw/b18-hygiene-alone.log).
+- Earlier incidental slip: my first targeted runs used a --basetemp outside the allowed folders and showed 50 false failures in test_load_tools (path confinement); fixed by using a basetemp under /tmp.

@@ -1,0 +1,67 @@
+FF....                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1] _
+
+case = 'major-1'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+        line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+        done = _run(
+            SCRIPT, Path("unused.sqlite3"), code=f"set -eu\nMADE_UP_VERSINFO=({version})\n{line}\necho PAST-THE-GUARD"
+        )
+        if refused:
+            assert done.returncode == 2 and "PAST-THE-GUARD" not in done.stdout, (done.stdout, done.stderr)
+>           assert "mapfile -d" in done.stderr and "nothing was stopped or deleted" in done.stderr
+E           AssertionError: assert ('mapfile -d' in 'refused: this script needs bash 4.1 or newer (this is bash 5.2.21(1)-release); nothing was stopped or deleted\n')
+E            +  where 'refused: this script needs bash 4.1 or newer (this is bash 5.2.21(1)-release); nothing was stopped or deleted\n' = CompletedProcess(args=['bash', '-c', 'set -eu\nMADE_UP_VERSINFO=(3 9 0)\nif (( MADE_UP_VERSINFO[0] < 4 || (MADE_UP_VER...derr='refused: this script needs bash 4.1 or newer (this is bash 5.2.21(1)-release); nothing was stopped or deleted\n').stderr
+
+tests/test_reset_scripts.py:419: AssertionError
+_ test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[same-major-minor-1] _
+
+case = 'same-major-minor-1'
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize("case", ["major-1", "same-major-minor-1", "minimum", "minimum-patch", "next-major"])
+    def test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2(case: str) -> None:
+        """`mapfile -d` is missing on an older bash. The guard line is run alone with a made-up version
+        (BASH_VERSINFO itself is read-only), as a standalone line with set -eu. The minimum is read from the README."""
+        major, minor = _minimum_bash()
+        versions = {
+            "major-1": (major - 1, 9, 0),
+            "same-major-minor-1": (major, minor - 1, 99),
+            "minimum": (major, minor, 0),
+            "minimum-patch": (major, minor, 20),
+            "next-major": (major + 1, 0, 0),
+        }
+        refused = case in ("major-1", "same-major-minor-1")
+        version = " ".join(str(n) for n in versions[case])
+        line = _version_guard_line().replace("BASH_VERSINFO", "MADE_UP_VERSINFO")
+        done = _run(
+            SCRIPT, Path("unused.sqlite3"), code=f"set -eu\nMADE_UP_VERSINFO=({version})\n{line}\necho PAST-THE-GUARD"
+        )
+        if refused:
+>           assert done.returncode == 2 and "PAST-THE-GUARD" not in done.stdout, (done.stdout, done.stderr)
+E           AssertionError: ('PAST-THE-GUARD
+E             ', '')
+E           assert (0 == 2)
+E            +  where 0 = CompletedProcess(args=['bash', '-c', 'set -eu\nMADE_UP_VERSINFO=(4 3 99)\nif (( MADE_UP_VERSINFO[0] < 4 || (MADE_UP_VE...ing was stopped or deleted" >&2; exit 2; fi\necho PAST-THE-GUARD'], returncode=0, stdout='PAST-THE-GUARD\n', stderr='').returncode
+
+tests/test_reset_scripts.py:418: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1]
+FAILED tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[same-major-minor-1]
+2 failed, 4 passed, 57 deselected in 0.13s

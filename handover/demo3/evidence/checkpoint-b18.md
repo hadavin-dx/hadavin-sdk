@@ -4,3 +4,4 @@ Done: new tests (tests/test_one_key_file_rule_r7.py, 118 tests) + r6 file trimme
 Next: sibling sweep list, one full run detached on the final head, wall-clock + hygiene tests alone, recut patches, notes.
 Blockers: none. Commit SHA: none (no commit by order).
 05:55Z (date -u): patches cut (tree 8db4b0ba, both apply-checked, sha256 in raw/b18-patch-sha256.txt); notes written (lane3-fix-2-r7-notes.md); full run detached since 05:54Z in /home/user/work/b18-full, log /home/user/work/b18-logs/b18-full-final.log. Next: wait for it, copy log, run wall-clock guard + hygiene scan alone, finish notes.
+06:25Z final: notes complete; stop. Processes: none of mine running.
