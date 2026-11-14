@@ -324,3 +324,7 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B18 | 05:43Z | Builder B18 fix-2 r7 from resolve-lane3-fix-2-r6.md | agent ab52e2b8db4a3f12a | expected 06:45Z | running | read hand-back, fresh reviewers |
 | B15b | 05:46Z | B15b final hand-back received (agent closed). Its pids 13798/13800 not seen; run I killed was 19272/19273 in b15b-clone. Only run 3 (scratchpad b15-full-final3.log, started 05:40Z) counts; no green run on tree 3633781d yet | open | tail at ~05:57Z |
 | DUP1 | 05:45Z | MY SLIP 2: I stopped pids 13798/13800 believing they were a duplicate run; they were my own run 3 (B15b had reported them as its own at 05:41Z, which fits: same clone). Run 4 (DPLD_REQUIRE_SCAN=1, gitleaks on PATH) started 05:45Z, log scratchpad b15-full-final4.log, ends ~06:02Z. Rule: check cwd and log path of a pid before stopping it | restarted |
+| LAYOUT | 05:57Z | lead layout order applied: REPORT.md newest first (HB102 on top, HB99 below), old blocks in evidence/REPORT-archive-2026-11-14.md, 24 lines | closed |
+| R17a | 05:59Z | egm-codebase-details reviewer on fix-2 r7 snapshot rv-fix2r7 (tree 8db4b0ba, shas 0d46426a / d6d67651), whole patch | agent a85f06547acec41d3 | expected 06:15Z | running |
+| R17b | 05:59Z | egm-design reviewer, same snapshot | agent ad779f690f4a202a4 | expected 06:15Z | running |
+| B18 | 05:59Z | B18 interim stop; its full run (started 05:54Z, /home/user/work/b18-logs) still going; copy to raw/b18-full-final.log when done | running |
