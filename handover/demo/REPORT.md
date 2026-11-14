@@ -1,5 +1,16 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:10Z - AGENTS RUNNING: 0. AF2 / T12 / K4+K5 lanes: NOT STARTED (no numbers). H-PARAM: in progress (edits only, nothing pushed yet)
+
+Why no run lanes (facts, checked just now): df shows 155 MB free on / (100% used, same as since 11:15Z); every earlier run failed in seconds on this; the classifier still refuses deletion and I do not work around it. In addition "docker ps" did not return within 120 s here (hung, I stopped it): this machine has no usable docker for the Postgres container. Starting 3 parallel n8n + Postgres stacks here would produce failures, not numbers; I will not report those as test results. K4 and K5 DO exist in mf.py (k4 stage killed mid-call, k5 Postgres killed once). If you want the three lanes run, they have to run on a machine with disk and docker (the laptop, with the H-PARAM change below to run in parallel with V7).
+H-PARAM so far (read): hard-coded places in MY files: mf.py line 10 (8770/8771), dn1_common line 11 (five fake ports) and line 113 (n8n port 5679), run_mf.py lines 17/19/205 (PG name, label, ports, 55432 mapping), cleanup at 232 filters by LABEL (so with a per-run label value it removes only this run's containers; I will make the label value n8n-evidence.run=<RUN_ID>, default 1). run_dn1.py has copies of the same constants. BLOCKER outside handover/demo: the harness lib.py (rig) hard-codes n8n port 5679 and broker 5780 in 7 places (lines 9, 65, 85, 90, 106, 112, 116, 193); I may not edit it. I will deliver a patch file for it and everything else in my files.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No AF2, T12, K4, K5 run; H-PARAM unfinished; lib.py change needs your go (it is the rig).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Finish H-PARAM in my files (runcfg.py, RUN_ID, disjointness test, launch recipe) and push. 2. Write LIB-PORT-PATCH.diff for lib.py (for you to apply). 3. Retag after the numbers file.
+
 ## Block 15:55Z - K-SERIES-V4.md pushed: re-run list for v4 with cost (my estimates, not measured; replace with V7 timings)
 
 Tier 1 (alert path, must re-run): B90 8, AF1 10, AF2 13, T8 8, T15 12, K3+K3B 20, T12 5 = about 76 min. Tier 2 (not touched by the diff, rule "tested = shipped"): T14 4, K1+K2 20, T10 12, T11 4, T13 5 = about 45 min. Minimal v4 = Tier 1 + T14 + T11 = about 84 min; whole series about 2 h. v3 alternative: B90 + AF2 on v3 only, about 21 min, and keep "can send two alerts" on the page.
