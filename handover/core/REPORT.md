@@ -1,5 +1,41 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:23 UTC / 11:53 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a2740d00 (r7i builder) | fixes or pins every pass 9 real gap | mail-safety, uncapped | 06:16 / 11:46 | 50 min box (about 07:06) | r7i | RUNNING. Checkpoints: 06:17 ruff clean; 06:19 "9 mutants killed by tests/test_r7i_findings.py (34 pass clean)"; 06:25-stamped line "builder mutants 12/12 killed (clean stages A,B); own mutants O1-O20 running"; sibling sweep: no missed casefold sibling, candidates noted (archive isdigit nit, cap vs IP literal, no floor on share). M9-12 and M9-03 forwarded to it at 06:23 | hand-back |
+| aa54df08 (mail pass 9) | big-set re-runs, 2 lanes | classify | 05:35 | box ends about 06:50 | pass 9 | RUNNING: 4 of 8 big-set results in; M9-18, 08, 19, 30 still to come | forward each |
+| aae6f456 (r7h reviewer) | review of the r7h delta | independent | 06:08 | box ends about 06:58 | review 1 | RUNNING: 06:16 sibling sweep found no missed lowercase-before-match sibling; 06:2x "tests r7h/r7g/fcg pass 60/60, starting mutants". No findings yet; verdict unknown | report file |
+| adb9596a (EV7H non-full runner) | r7h evidence without the full run | delta base | 06:10 | box ends about 07:10 | EV7H part 1 | RUNNING: step 2 lanes A done, B running (06:16); step 3 (fail-before) done 06:20; step 5a hostile launched 06:23; mutants lane started 06:16 (pid 24732). No numbers read by me yet | EV7H-NONFULL-EVIDENCE.md |
+
+**Big-set results (22-file set + r7d/e/f/g, 900 s), all from pass 9's checkpoint:**
+| id | line | mutation | result | killing test in words |
+|---|---|---|---|---|
+| M9-02 | smtp_provider.py:251 | password file read after the send counter | SURVIVED 336 s = REAL TEST GAP on r7g (code right per r7h builder; its test_order_* pins close it; r7i re-checks) | missing / two-line / non-UTF-8 password file: send refused, counter 0, stats file not written, no connection |
+| M9-22 | smtp_outbox.py:225 | empty send key allowed | SURVIVED 311 s = REAL GAP | send("") raises SendRefused("empty send key"), fake server sees no connection |
+| M9-12 | smtp_provider.py:326 | AUTH accepted on any 2xx | SURVIVED 376 s = REAL GAP | "250 ok" to AUTH PLAIN: SendRefused("login refused"), MAIL FROM never received; 334 then 235 and 235 controls |
+| M9-03 | smtp_provider.py:262 | provider timeout cap ignored | SURVIVED 342 s = REAL GAP | timeout_seconds=1, silent server, send(timeout=30) fails with SendUnreachable within about 1.5 s; timeout=0 uses the provider value |
+| M9-18, 08, 19, 30 | | | NOT YET: lanes still running | |
+Every real gap: sent to r7i (the full-run decision, made at 06:18, stands: EV7I full run on r7i). I have not independently reproduced any of these 4 survivors; they rest on pass 9's raw files.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| M9-18, 08, 19, 30 big-set results | running | forward each real gap to a2740d00 |
+| r7i patch, EV7I full run, fresh r7i delta reviewer | builder running | start at hand-back |
+| r7h review verdict, EV7H non-full numbers | running | read; fold Blocker/Major into r7i (the r7i patch must contain them) |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell, Windows (select.poll absent there), Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Forward M9-18, 08, 19, 30 results to the r7i builder as they land; read the r7h review and EV7H part 1 and fold any Blocker or Major into r7i before its hand-back.
+2. At the r7i hand-back: verify sha256, copy (CRLF as .gz), start EV7I (one full run) and the fresh r7i delta reviewer together; compare failures with EV7G by id.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 06:15 UTC / 11:45 IST
 
 **FULL-RUN DECISION (due 06:30Z, made early): the ONE full run goes on r7i, not on r7h.** Reason: the first two big-set results are REAL GAPS (below), so r7h is not final. EV7H non-full steps still run on r7h as ordered.
