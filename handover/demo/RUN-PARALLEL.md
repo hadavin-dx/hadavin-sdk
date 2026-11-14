@@ -8,10 +8,12 @@ Data dirs: each run already has its own --work-dir (run_chain: --work-root plus 
 ## BLOCKER for a real parallel run: the harness lib.py hard-codes n8n 5679, broker 5780 and the stand-in server 8790; see LIB-PORT-PATCH.md (needs the lead's go, the rig is not mine). Until it is applied the second run can differ only in RUN_ID/label/PG name/PG port/the 5 fake ports/stage/CRM ports, and its n8n would still try port 5679 and be refused (port busy): it would NOT start while V7 runs.
 ## Launch recipe for the second run (after the lib patch), six lines
 1. cd handover/demo/n8n-mainframe  (same commit as the first run)
-2. export RUN_ID=b MF_N8N_PORT=15679 MF_N8N_BROKER_PORT=15780 MF_RUN_PORT=18790 MF_PG_PORT=65432
+2. export RUN_ID=p2 MF_N8N_PORT=15679 MF_N8N_BROKER_PORT=15780 MF_RUN_PORT=18790 MF_PG_PORT=65432
 3. export MF_STAGE_PORT=18770 MF_CRM_PORT=18771 DN1_DESK_PORT=18765 DN1_FAKE_PORT=18766 DN1_MODEL_PORT=58767 DN1_PROXY_PORT=18760 DN1_MAIL_PORT=18791
 4. python ../n8n-tests/test_runcfg.py   (must print PASS) ; check the ports are free
 5. python run_chain.py --tests "AF2 T12 K4 K5" --reps 8 --lease 20 --out OUT-B --work-root WORK-B --node-dir NODEDIR --node-modules DIR_WITH_NPM_CI_OUTPUT   (add MF_V4 builds as in K-SERIES-V4.md)
 6. Raw files land in OUT-B/<RUN_ID>-<TEST>-<time>/ exactly as for the first run.
 ## What the test proves and does not
 test_runcfg.py proves only that the configured names and numbers are different. It does NOT prove two stacks run side by side (nobody has run that), and it does not look at lib.py.
+
+Note 16:40Z: RUN_ID must start with a lowercase letter (runcfg refuses a digit first, e.g. 1 or 2); the laptop parallel run uses p2.

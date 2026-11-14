@@ -51,3 +51,5 @@ Earlier lane3 finding on the 11:05Z flows (no settings): the planted key was in 
 HubSpot search or write lag, rate limits, property creation, the contacts v1 endpoint on a real account; a real Gmail server (the node has no timeout setting; TLS and app-password handling); and no run of the four real-node files at all (built, not run). The stand-in versions were tested on one machine, with made-up data, no real mailbox, no spend, not independently.
 ## Not in this file
 Per-lease recovery times (no measured table yet; see PAGE-STATEMENTS-DRAFT.md and the laptop lease runs).
+
+T7b raw file (laptop-local, named by the lead 16:40Z): V5-T7b-demo444dcbf65 under the V5 raw folder of the laptop run; I have not read it.

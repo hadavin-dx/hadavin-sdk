@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:26Z - V7 numbers folded in; agents running 1 (hygiene audit, read-only)
+- DONE (pushed with this block): DECISION-INPUTS V7 table (MEASURED-ON-LAPTOP, lead-read, I read no raw file), DOUBTFUL-SCENE retag, page statements 8 and 9 reworded to what V7 shows (9 limited to K1, K2, K3, K3B), RUN-PARALLEL example RUN_ID p2 plus the letter-first note, N8N-START T7b raw file name. Table-screen flow pushed earlier (95cedfa2), NOT RUN.
+- HONEST FLAG: AF1 first alert came at 272.1 s (n=1). The scene text must not say 30 seconds for the dead-alert-SMTP case. Not in the V7 file: K4, K5, T10, T11, T13, recovery seconds, lease 45/120.
+- Idle: nothing else I can start without the laptop. Agent 1 (hygiene) not finished.
+NOT DONE / NOT CHECKED: raw files; v4 numbers; whether statement 8's cap branch ever ran.
+WHAT I WOULD DO NEXT: 1. fold HYGIENE-FINDINGS and push. 2. v4 page statements when lane3 final B90 is named. 3. K-SERIES-V4 list marked with what V7 already covered.
 ## Block 16:24Z - critical path + agents (R456); agents running 2
 AGENTS NOW: (1) table-screen: builds an n8n-only flow (Webhook GET, Postgres SELECT without name/e-mail, HTML, respond) in new folder n8n-table-screen/. (2) hygiene: read-only audit of my demo files, writes only HYGIENE-FINDINGS.md. Disjoint files; I push, they do not commit. No worktree copies: handover/demo is 96 MB and the disk has about 150 MB free, so copies would break the disk; they work in place in separate paths.
 MY CRITICAL PATH TO THE POSTED VIDEO (what only I can move): a) doubtful-case scene screens: table screen (agent 1, JSON only) -> must be imported and looked at on the laptop; b) page statements v4: V4-3 needs lane3 final B90 numbers + named raw file (waits on lane3/laptop); c) DECISION-INPUTS / DOUBTFUL-SCENE retag needs the lead's V7 numbers file (waits on lead); d) hygiene before publish (agent 2).

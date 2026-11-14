@@ -22,3 +22,20 @@ Raw file path pattern (written by n8n-mainframe/run_chain.py, summarised by coun
 | 12 | Planted secrets / lead data in n8n's files | T7b | .../mf_result_T7b.json (hits per file), REC after_stop_and_checkpoint (extended version) | first version: lead's relayed result only (name 3, e-mail 2 in the write-ahead file; key and SMTP password none); NOT given to me as a file | |
 | 13 | Lease table per lease value | K1 K2 K3B K3 K4 at lease 20/45/120 | count_table.py output per run | NOT RUN | |
 | 14 | Real-node flows | none possible without a HubSpot account and mailbox | n/a | BUILT, NOT RUN (n8n-flows-real/) | |
+
+## V7 v3 values (update 16:40Z). Status = MEASURED-ON-LAPTOP: the lead read these from the laptop raw files (V7-NUMBERS-lead-read.md, runner abefbabd, v3 flows 6ebb7f62e, lease 20 s). I did NOT read the raw files. Independent harness = lane3 only.
+| Row | Test | Value (n; lost / doubled / unknown) | Open |
+|---|---|---|---|
+| 1,2 | K1 | n=20; 0 / 0 / 0 | |
+| 1,2 | K2 | n=20; 0 / 0 / 0 | |
+| 1,2,3 | K3B | n=20; 0 / 0 / 20 (1 alert each, no intake mail) | |
+| 1,2,3 | K3 | n=20; 0 / 0 / 20 (mail delivered, not re-mailed, 1 alert each) | |
+| 1,2 | K4, K5 | not in the file: NOT RUN on v3 | |
+| 3 | T10, T11, T13 | not in the file given to me: status unknown to me | ask the lead |
+| 7 | T8 | n=3; pass true; failed, exactly 1 alert, 0 CRM writes, 0 model calls | |
+| 11 | T15 | n=3; pass true; failed, alerts 1 each, 0 mails, 0 CRM rows, 91+ s to final | |
+| 10 | T14 | pass true; all counts 0 over 120 s idle | |
+| 4 | Recovery seconds | NOT READ (the lead says: see mf_result recovery seconds) | open |
+| 13 | Lease 45/120 table | NOT RUN | open |
+| 5,6 | model calls / ledger | the file shows model calls per lead 1 where a lead reached the model; ledger rows not in the file | open |
+Known v3 flaw (lane3 B90, 3 of 3 runs): two alerts when the alert send outlasts the 60 s first claim. v4 in lane3 runs: B90 n=2, exactly 1 alert; v4 is not in the V7 file.
