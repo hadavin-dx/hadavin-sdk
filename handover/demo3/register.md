@@ -273,3 +273,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | EV10 | RUNNING from ~04:11Z (a4d976f1) | full serial 3.13 on final head of fix-8 r2, tree ev-b10; expected end ~04:35Z |
 | R8b | RUNNING from ~04:11Z (a27de75e) | fresh egm review of fix-8 r2, tree rv-fix8r2; expected ~04:25Z |
 | CORRECTION | 04:10Z | the 'from 04:10Z/04:11Z' start times in the 4 rows above were written ahead of the clock; real start of B11 resume, EV10, R8b was about 04:08-04:09Z |
+| R8b | CLOSED 04:13Z | fix-8 r2 review: 0 blocker 0 major 2 minor 2 nit, saved evidence/review-lane3-fix-8-r2.md |
+| B10 (resumed) | RUNNING from 04:13Z | fix-8 r3 (4 review points); stop 04:45Z; no full run by B10 (EV10 runs r2 full; stack run covers r3) |
