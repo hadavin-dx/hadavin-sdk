@@ -1,5 +1,37 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 09:11 UTC / 14:41 IST
+
+**Lines below are agent checkpoint lines or claims; I have judged none.**
+
+- **r7n (ac7638bd) re-froze TWICE since the last block:** 09:02 "RE-FREEZE: M9-77, M9-25 added; r7l Majors A14/S13R/A17/A19/A22/A9, imap leak sweep, F2, F3, M9-54/81/13/17/55 in bytes"; **09:09 "FINAL RE-FREEZE 2: M9-73, M9-57 added; full mutants + full suite started; no more edits to tree-R7N".** So by its own line all 15 items I sent are in the bytes; I have NOT seen its test-to-mutant mapping, the fail-before proof, the sweep list or the patches (hand-back by 09:30). Each re-freeze restarted its full suite (cost stated: uncapped mail/secret path).
+- **Pass 11 report committed (mail-pass11-r7m.md): NOT CLEAN, 12 REAL GAPS, 2 KILLED (M9-80, M9-76), 1 argued equivalent (M9-58, not run).** Real gaps: money M9-43; secret M9-81, M9-73, M9-55; mail/CRM M9-54, M9-57, M9-77, M9-25, M9-70/71, M9-17, M9-13 (low). **11 rows were NOT run (M9-56, 74, 75, 78, 79, 82, J02, J06, J09, J12, J13): pass 12 (a5f77882, started 09:08, ends about 10:10) runs them on r7m.** Pass 11 also skipped its narrow re-check (used the big set; a superset) and had no tls clean run.
+- **Ledger rows added (handover/ledger.md, committed): 8 rows, all OPEN:** r7k F1 (imap_count password in __context__), r7k F2 (k15 pollution), r7l Major 1 (EHLO after STARTTLS), r7l Major 2 (server.py guards), EV7K hygiene-scan failure, pass 11 money/secret gaps, pass 11 mail/CRM gaps, the 11 unrun rows. The ledger is not yet in the checker's exact format (ids and columns vary across the file); I used the file's common column order; I did not run ledger_check (the tool is not in this repository). They become FIXED-VERIFIED only after EV7N and a fresh reviewer.
+
+| id | what it does | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n) | 15 items, final re-freeze 2 | orders | 08:17 / 13:47 | 09:30 | r7n | RUNNING (mutants + full suite on frozen bytes) | hand-back, EV7N, fresh reviewer |
+| a5f77882 (pass 12) | the 11 unrun rows on r7m | fix-dont-defer | 09:08 / 14:38 | about 10:10 | pass 12 | RUNNING | mail-pass12-r7m.md |
+
+Agents running: 2. Load 2.3.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n patches, fail-before, EV7N, fresh reviewer, pass 11 mutants on r7n changed code | in progress | as ordered |
+| the 11 unrun rows | pass 12 running | read, forward gaps (they may need an r7o) |
+| ledger rows OPEN -> FIXED-VERIFIED | needs EV7N and a reviewer | after r7n |
+| README, older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. r7n hand-back: verify hashes and apply matrix; start EV7N (one run, plus staged git copy) and a fresh reviewer together.
+2. Pass 11 mutants on r7n changed code only; read pass 12 rows.
+3. Close ledger rows, README, sweep, counts.
+
+
 ## STATUS (core lead) 09:01 UTC / 14:31 IST
 
 **Lines below are agent checkpoint lines or claims; I have judged none.**
