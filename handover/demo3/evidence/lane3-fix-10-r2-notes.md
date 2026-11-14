@@ -1,0 +1,71 @@
+# lane3 fix-10 round 2 (builder B17): a bad DESK_* setting gives one clean line and a non-zero exit, never a traceback
+
+Base f3c39cf89ec989f032ea48a23cfd824b88da9c68. Tree /home/user/work/b17-tree (not committed, `git add -A`). Patch: evidence/lane3-fix-10-r2.patch
+(sha256 starts 25b8fe2e; it is the WHOLE fix-10 against the base and REPLACES lane3-fix-10.patch, r1). Python 3.13. Started 05:24Z, tree done 05:42Z.
+
+## What failed or is open (first)
+1. Full run on the final head: 2 failed, 4125 passed, 171 skipped, 908.87 s (raw/b17-full-final.log). BOTH failures were in my own new test files:
+   hardcoded literals (`https://api.example.test`, the all-zeros address) and a raw U+202E character. Fixed by building the values from parts and
+   writing the escape; then re-ran the two guard files plus my two files: 456 passed (raw/b17-rerun-after-fix.log). I did NOT re-run the whole
+   suite after that fix (the brief allows one full run); the head the full run saw differs from the final head only in those two test files.
+2. Row 15 (the two PowerShell scripts were never run): ESCALATED, not fixable here (needs Windows, 2(c)). Next step: the lead's WINDOWS-RUN-1 on the final stack tree
+   with the added cases below. Every claim about them in the scripts and contract.md says "not run on Windows in this build".
+3. Old-code proof: see "Before-run". 65 real-program failures are the proof; 292 failures are "function absent" and are NOT proof.
+4. Resolve row 6 asked for scripts/n8n_api.py:74 as a second allowed exception. At this base that file reads no DESK_* name (grep), so there is nothing to allow; the guard has two
+   allowances for run_real_check/server and two for load_tools (plain text reads of DESK_QUALIFIER).
+5. Not checked: Windows behaviour of anything; the other Python versions (3.12) were not run; ruff, mypy, bandit (CI only); fix-8 and fix-5 stacked trees (see "what the stack must do").
+6. Heavy-slot rule: I started the one full run at 05:41Z with load average 0.84 (the brief: no earlier than 05:50Z OR load below 3; load was below 3).
+
+## Lead orders applied
+- 05:24Z lead decision (overrides resolve row 2): fix-5's codes 2-7 untouched; desk keeps 4; every SCRIPT that reads the settings (crash_desk, feed, reset_check, reset.sh/.ps1, start_all.sh/.ps1) exits with NEW code 8
+  (`EXIT_SCRIPT_SETTING_REFUSED`; grep: 8 was unused in constants.py, scripts, contract.md, README, docs). start_all passes the desk's own code through when the desk it started refuses a setting (4) or cannot take its port (5).
+  ONE table in ONE place: `constants.EXIT_CODE_TABLE` (family, code, meaning) and `constants.SETTING_REFUSED_EXIT_BY_PROGRAM` (which program returns which number for a refused setting). Tests: tests/test_exit_code_table.py (no code has two meanings inside a family,
+  8 is in no other family, every EXIT_ constant listed, reset family == the numbers reset.sh/.ps1/reset_check actually use) and tests/test_bad_setting_entry_points.py::test_the_by_program_table_matches_what_every_program_returns (runs the programs, pins both numbers).
+  Honest limit of "one table": the numbers 2 to 5 already have different meanings in the desk family and the reset family (fix-5's and the desk's existing contracts); the table keeps them as two families and does not merge them. A merged single list would have changed fix-5 or the desk.
+- Lead's second message: two numbers (desk 4, scripts 8), one table, one pinning test: done as above.
+
+## Row by row
+| Row | Status | What and where |
+|---|---|---|
+| 1 duplicate refusal path | FIXED (partial contest stands) | `config_exit.refusal_line(prefix, reason, env)` is the one formatter; `server._refuse` calls it at ALL EIGHT sites (the resolve text said six: Config, bind, book, approvers, leadflow, adapters, Desk-build, run-time Desk). Test: same line from desk (stdout) and helper (stderr) for 6 bad values; source test: no hand-built `print(f"the desk refuses` left. Streams stay different on purpose; stated once in config_exit.py and contract.md. |
+| 2 exit-code clash | CHANGED BY LEAD ORDER | see above (8 for scripts; reset_check keeps 3 and 4; fix-5's pinned tests untouched, tests/test_reset_scripts.py changed only in the start_all stand-in, see row 3). |
+| 3 start_all prints started for a dead desk | FIXED | start_all.sh and .ps1: wait at most 15 s (constant, no new setting), poll 0.2 s; ready = desk.log has a line starting `desk listening on `; desk gone = last log line + its exit code on stderr, demo server stopped, both pid files removed, exit with the desk's code (0 becomes 1); silent after 15 s = `desk not ready after 15 seconds`, exit 1, processes left for reset. Subprocess tests (tests/test_start_all_late_refusal.py): missing leadflow file, missing approvers file, public bind address with a real CRM kind, bad sender address, taken port (exit 5), a listening desk (control), a silent desk (15 s path). Each: one stderr line, right code, no pid file, demo server stopped, under 12 s. tests/test_reset_scripts.py: its stand-in `python` now prints the listening line (it modelled a desk that ends at once, which the new script rightly reports as failed). |
+| 4 address rule in two places | FIXED by removal | fix-10 holds NO address rule: its extras in config.py (length, one "@", control character) are gone; DESK_NUDGE_TO and the SMTP addresses stay on the one rule in identity.py (at this base the PLAIN_ADDRESS pattern, which fix-8 r3 replaces by `plain_address_ok`). Sweep: grep shows PLAIN_ADDRESS used only by config.py (NUDGE_TO) and smtp_outbox.py; no other address check. Tests use only values the base refuses. fix-8 r3's own tests for the second "@", length and control characters belong to fix-8 (its test names: test_more_than_one_at_sign_is_refused_in_a_plain_address, test_provider_refuses_more_than_one_at_sign, test_sender_recipient_and_reminder_addresses_use_the_same_rule, test_fuzz_plain_address_matches_an_independent_oracle). I did not run fix-8's tests (not on this base). contract.md line 77 no longer states the r1 extras. |
+| 5 value echo | FIXED | `scrub_values`: every DESK_*/LEAD_DESK_* value of 3+ characters, in typed, repr, ascii and unicode-escape forms, becomes `<value>`; only as a whole token (not inside a word: value `low` does not break `allows`, found by the first test run: it turned "allows" into "al<value>s"); setting names are kept; 1-2 character values are kept. 8 unit tests. |
+| 6 guard | FIXED | tests/test_setting_reader_guard.py: AST walk over src, scripts, load_tools, demo_only, tools, tests/*launcher*; finds Config.from_env (also through an alias), a bare from_env, os.environ[...]/.get/getenv of a DESK_/LEAD_DESK_ name; only the three reader modules are skipped; 4 allowances by file AND exact line with a reason; stale allowance fails; detector self-test covers each kind; shell/ps1 text check. No whole-file exemption. n8n_api: see open item 4. |
+| 7 run_real_check normal run | FIXED | scripts/run_real_check.py: `Config.from_env({**env, "DESK_PORT": "0"})` runs inside the try in EVERY run, before the Start question. Test: bad DESK_NUDGE_TO without --live-model gives `refused: SettingRefused: DESK_NUDGE_TO`, the question is never reached. |
+| 8 ps1 | FIXED as far as possible, never run | Read-DeskSetting in both ps1 files splits the merged output (error records vs output), shows the error text only on a non-zero code via `[Console]::Error.WriteLine`, `exit $code`; refusal lines of start_all.ps1 go to the error stream. tests/test_ps1_pins.py: multi-line regex pins + mutants (drop `exit $code`, drop the stderr write, no split, exit code not kept) for BOTH files, 5 start_all.ps1 mutants; a Windows-only runtime test (skipped here with a reason). Claims say "not run on Windows in this build" in both scripts, contract.md and the test. |
+| 9 lone surrogate path | FIXED at the choke point | config.py `_path_setting`: every path setting (DB path, replies, approvers, leadflow, the two live paths) that cannot be written as UTF-8 is refused as `DESK_X is not a valid path`. Base accepted it, and the helper then crashed printing the path. Tests: 4 names in-process, and reset_check, start_all.sh, reset.sh with a real lone-surrogate environment: one line, exit 8. |
+| 10 live branch | FIXED | class test: 15 DESK_LIVE_* names x 8 hostile values (120 cases) plus a good-baseline test; no other error type escaped. |
+| 11 docs drift | FIXED | docs/settings.md nudge_to row points to the one rule in identity.py; Config.from_env docstring says SettingRefused and config_or_exit; contract.md lines 77 and 131 rewritten (README.md untouched). |
+| 12 evidence caveat | FIXED | see Before-run: behaviour-level and "function absent" counted separately; all new tests write only under tmp_path or pytest's basetemp, except the guard and table tests which only read the repository. |
+| 13 feed --help | FIXED | feed.py reads the settings after the arguments; test: --help with a bad setting exits 0 and prints help. |
+| 14 ambient DESK_* in child_env | FIXED | tests/support.py child_env drops every DESK_ and LEAD_DESK_ variable; test + mutant. |
+| 15 ps1 never run | ESCALATED 2(c) | see open item 2; the Windows-only test covers reset.ps1 and start_all.ps1 with a bad DESK_PORT (exit 8, one line). The resolve row also wanted a bad DESK_NUDGE_TO case; DESK_PORT was used because a refused NUDGE_TO needs the leadflow file; add it when WINDOWS-RUN-1 is run. |
+
+## Before-run (old code), raw/b17-behaviour-before.log
+Base tree f3c39cf8 plus ONLY a shim (the new constants and a config_exit.py whose functions raise "absent"), my new test files, no fix. 359 failed, 25 passed.
+- Behaviour-level (a real program run or a real file read on the base): 67 failures, of which 65 run a real program (33 Python entry-point cases, 22 shell-script cases, 4 late-refusal start_all cases, taken-port, silent-desk, surrogate through helpers, feed --help, run_real_check, desk-real-output table) and 2 are source-text tests (one formatter in server.py; the wait loop in start_all.sh). The 25 passes on base are the cases the desk already handled (server and the launcher).
+- "Function absent": 292 failures (config_or_exit/refusal_line do not exist in the base): NOT proof of behaviour; listed only so the count adds up. I do not quote the r1 figure of 231.
+- Classification script output is appended to that log.
+
+## Mutation (raw/b17-mutation.log): 31 mutants of rows 1-3, 5, 6, 8 and the table
+First run: 29 killed, 2 SURVIVED: M6b (the scrub also blanking part of a word) and M11 (start_all without the "desk is gone" check: result was the same, only 15 s slower).
+Fix-up: a whole-token test (`below`, `lowest`, `allows` kept) and a time limit (under 12 s) in the start tests; re-run: both killed (M6b on the before side and the after side, M11 in 15 s). M12 was killed only by the 120 s subprocess timeout (the mutant leaves the demo server holding the pipe); it is killed, not clean. No mutant of the PowerShell code runs for real, only the text pins.
+
+## Full run (raw/b17-full-final.log)
+`DPLD_REQUIRE_SCAN=1 GITLEAKS_BIN=... pytest -p no:cacheprovider -rs`, 3.13, no data/ folder, clone without the n8n-evidence-rerun ref: 2 failed, 4125 passed, 171 skipped, 908.87 s. The 2 failures: see open item 1. Skips: the usual ones plus my 2 Windows-only PowerShell cases; not looked at one by one.
+
+## What the stack must do
+- Apply AFTER fix-5 r7 and fix-8 r3. Expected conflicts: scripts/reset.sh (the helper call line and the new comment lines), scripts/reset.ps1 (the function and the `$db =` line), scripts/reset_check.py (import and `config = config_or_exit()`), src/lead_desk/config.py (the path helper; the NUDGE_TO line must be fix-8's version, fix-10 no longer touches it), tests/support.py child_env, contract.md lines 77 and 131, tests/test_reset_scripts.py (the stand-in). identity.py: no conflict (not touched).
+- Codes: 8 must stay unused by fix-5 and fix-8; the table test fails if a family reuses it. fix-5's table (2-7) stays; if fix-5 r7 adds a code 7 or 8 anywhere, add it to `EXIT_CODE_TABLE` family "reset" and re-check.
+- README.md:90 (the reset-script exit-code sentence) goes in stack-docs-final: add "8 a DESK_* setting is refused (one line)" for the reset script, and that start_all passes on the desk's own code.
+- After stacking run tests/test_exit_code_table.py, test_setting_reader_guard.py (a new fix may add a reader), test_start_all_late_refusal.py, test_bad_setting_entry_points.py, test_reset_scripts.py, then one full run. Fix-8's tests for the address rule must exist on the stack (names above).
+- WINDOWS-RUN-1 on the final stack tree: reset.ps1 and start_all.ps1 with a bad DESK_PORT, and with a bad DESK_NUDGE_TO (set DESK_LEADFLOW_FILE first); expect exit 8 and one line; start_all.ps1 with a taken port: expect exit 5, no "started".
+
+## Plan share
+All 14 non-escalated rows done, row 15 escalated: 14 of 15 rows are built and tested here (the ps1 part of row 8 only by text pins). Already covered by r1 before I started: the reader (`config_or_exit`), its use in 5 Python entry points and the helper calls in the 4 scripts, one fix of the 14 sweep values, 254 tests. That is about the groundwork of rows 8 and 12 only; no row was complete in r1. Re-checked by me by diff (not by r1's word): applied r1 cleanly to the base and read every changed script and both new files in full before editing; re-ran the r1 test file (it needed changes: the 3 nudge values the base accepts, and the exit codes).
+
+## Files
+src/lead_desk/config_exit.py (new), constants.py (table, code 8), server.py (_refuse), config.py (_path_setting, docstring), scripts: crash_desk.py, feed.py, reset.sh, reset.ps1, reset_check.py, run_real_check.py, start_all.sh, start_all.ps1; contract.md, docs/settings.md; tests: test_bad_setting_entry_points.py, test_start_all_late_refusal.py, test_exit_code_table.py, test_setting_reader_guard.py, test_ps1_pins.py (new), support.py, test_reset_scripts.py. Nothing committed; `git add -A` done. identity.py and README.md untouched.
+R-numbers: R448 (code last: the only new code is the reader/table, a safety guarantee; start_all wait is glue), R449 not touched; the bible files are not in this checkout, so I did not grep them (preamble rule 1: not done).
