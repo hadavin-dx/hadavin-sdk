@@ -1,0 +1,3 @@
+508135cc44a65ea51cb9f2993fc0f9f718da1ecd78ae77bf226914c240393134  core-fix-on-frozen-r7e.patch
+89ca3a2ddeba2a1a1c006d32a38520643861aa94848730b8fcdcf1a46457cee8  core-fix-on-frozen-r7e-lf.patch
+29b429c007008966584ba7275036d1a7373810033caed5e518e8a7014a9f6f1e  core-fix-r7d-to-r7e-delta.patch
