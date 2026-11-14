@@ -1,5 +1,33 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 16:24 UTC / 21:54 IST
+
+**AGENTS RUNNING: 6** (builders A, B, C; EV7T; MERGE-PREP; DOC). Disk: 2.7 GB free (94%). Order R456 applied: two more independent steps started NOW (below). What I edited myself: README n5 done and pushed (deleted APPLY-README-SNIPPET.md and README-r7s-SNIPPET.md, fixed the apply note in fix/README.md line 31).
+
+**Critical path to the posted video, from my side (honest: the video itself, n8n flow and take are yours; core's part is the hardened patches the take needs):**
+1. r7u builders A/B/C finish about 17:05Z (22:35 IST) (60 min box). SLOW STEP 1: tests plus mutants inside the boxes.
+2. Merge three diffs into tree-R7U (script being prepared now, so about 5 min, not 30), ONE guard run (about 20 min; r7t took 1137 s), package, apply matrix, push: about 17:35Z.
+3. Mutant agent on merged tree and EV7U (independent evidence) in PARALLEL on separate trees: about 18:30Z. SLOW STEP 2: full staged run and mutants.
+4. Your fresh reviewer on the pushed snapshot: about 19:15Z. If a Major comes back, r7v adds about 90 min. Honest estimate: patches final about 19:30Z (01:00 IST) without a Major, about 21:00Z with one. Deadline Mon 16 12:00Z (17:30 IST): not threatened by this chain.
+5. Then the take: you run q1 and test_take_imports on the laptop (`tests/test_r7q_findings.py` q1 tests). That is on your side.
+
+| id | what | state |
+|---|---|---|
+| A a07e3822 | M1 cap, m1-m4 in run_real_check.py | running, after-run started 16:14 |
+| B a397ac1e | m7 smtp counter, m8, m5 | running, after-run started 16:14 |
+| C a489ebfb | m6 loopback light module, docstrings, extra tests | running |
+| EV7T acdc878b | evidence on r7t | running; disk-overlap check requested |
+| MERGE-PREP ab1ea948 | merge.sh, guard_run.sh, package.sh tested on a dummy: removes my post-hand-back wait | NEW, 40 min box |
+| DOC a7a135f3 | text for ON-PATH-LIST.md r7s/r7t (the take needs to know which files changed; not video-blocking but cheap) | NEW, 30 min box, writes only out/R7U-DOC |
+
+**Which of my steps could start NOW and why they had not:** (a) merge and guard tooling: not started earlier because I was waiting for the builders; it does not depend on them, started now. (b) ON-PATH-LIST text: it was on my list since r7q and I kept putting it behind the evidence work: slow of me, started now. (c) README n5: done now by me. (d) EV7U and the mutant agent: CANNOT start yet; they need the merged tree (final bytes). (e) Windows/PowerShell test, CodeQL, Sonar, CodeRabbit, CI: these need a machine or service I do not have here; not video-blocking; I will not start side projects.
+
+**What I did not check / what is slow:** the three diffs may overlap in run_real_check.py (A and B); I only learn at merge. B's tests had 10 passes on r7t, 6 pin-like: not yet read. EV7T may be spoiled by the disk-full window (asked it to say). The long steps are the full guard run and mutant runs: they are CPU bound (6 cores shared with 6 agents), so I run the mutant agent and EV7U after the builders end.
+n8n first: nothing here adds code that an n8n node could do; all r7u work is the money/mail counters and fakes (our brain), as ordered.
+
+ASK: none.
+
+
 ## STATUS (core lead) 16:15 UTC / 21:45 IST
 
 **AGENTS RUNNING: 4 (A, B, C, EV7T). DISK df: 2.8 GB free, 93% used (6.4 MB per tree copy; no growth seen since 16:06).** Builder numbers below are from their checkpoints, unverified.
