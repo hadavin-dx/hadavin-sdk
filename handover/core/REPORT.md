@@ -1,5 +1,42 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 06:27 UTC / 11:57 IST
+
+**r7i HANDED BACK (06:26Z), TEST-ONLY: no source file changed.** I verified: the three patch hashes match sha256-r7i.txt, git apply --check rc 0 on a-crlf, b-crlf, c-lf; copied to handover/core/fix/ (CRLF as .gz, unpack hash checked), pushed 65b86bf1. Everything else below is the builder's claim.
+- One new file tests/test_r7i_findings.py (37 tests). Builder claims it kills 9 pass-9 survivors: M9-22, M9-02, M9-12, M9-03, M9-18, M9-08, M9-19, M9-23, M9-30, and 3 extra sibling mutants it found itself (IMAP handshake with no settimeout in imap_count; data write with no settimeout in smtp_outbox and in smtp_provider): all 3 survived at first, then killed by new tests i10 and i11. A fourth sibling (provider connect with a fixed 600 s) was already killed by the old test_f6.
+- Builder: NO code defect on r7g; every survivor was a missing test; all new tests pass on r7h by design (fail-before proof = they fail on the mutants; I accept that for pins, labelled). The single choke point for the secret-read order was judged NOT-NEEDED (shared read_secret_line; order read, then counter, then connect differs per adapter and r7h test_order_* pins each). I have not verified that verdict; the new reviewer is asked to.
+- Builder numbers: new file 37 passed on tree-R7I and on a copy of tree-R7H; 9 guard/hygiene/gitleaks files 168 passed in a staged git copy; ruff 0.17.1 check and format clean (whole tree); no noqa/type-ignore in the new file; no literal fake secret; it could NOT reproduce the 175/126/8/32/7 counts, only that it added none. No existing test changed or deleted.
+- NOT covered by the builder: survivors classified after about 06:27Z; server.py recv/sendall (not swept); slip: typed a null-device redirect inline twice (the classifier blocked both before running).
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a5b69f39 (EV7I runner) | THE ONE FULL RUN on r7i (detached wrapper, plain copy, no data/), compare failing ids with EV7G, staged git files alone, odd-file listing, ruff | your order: one full run on the final bytes | 06:27 / 11:57 | 75 min box; wrapper limit 45 min | EV7I n1 | RUNNING (just started). NOT a quiet machine: load was 2.45 at 06:26 with pass 9, the r7h reviewer, EV7H part 1 and the new reviewer running; machine state goes into its header. A timing-looking failure is re-run alone and both results recorded | EV7I-EVIDENCE.md |
+| ae9c3a10 (r7i delta reviewer, fresh) | whether the 37 tests are non-vacuous (plants the mail-safety mutants), 12 own mutants, hardcoded literals, timing flakiness, the choke-point verdict, 3 mutants in server.py recv/sendall | independent | 06:27 / 11:57 | 50 min box | review 1 of r7i | RUNNING | core-fix-on-frozen-r7i-review.md |
+| aae6f456 (r7h reviewer) | r7h delta | independent | 06:08 | about 06:58 | review 1 of r7h | RUNNING: earlier checkpoint: "builder mutants 12/12 killed (clean stages A,B); own mutants O1-O20 running"; no findings yet | report |
+| adb9596a (EV7H part 1) | non-full evidence on r7h | delta base | 06:10 | about 07:10 | part 1 | RUNNING: step 5a hostile launched 06:23 | EV7H-NONFULL-EVIDENCE.md |
+| aa54df08 (mail pass 9) | rest of the big-set re-runs | classify | 05:35 | about 06:50 | pass 9 | RUNNING. The builder's survivor message at about 06:27 covered M9-18, 08, 19, 30 from its own reproduction; pass 9's own big-set result lines for those four are not read by me yet | report |
+
+The 06:18 full-run decision stands (the full run is on r7i). If the r7h review finds a Blocker or Major that needs a source change, a new r7j exists and EV7I must be repeated on it.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| EV7I result and failure ids by name vs EV7G | running | read at the end |
+| r7i review, r7h review, EV7H part 1, pass 9 report | running | resolve; Blocker/Major to r7j |
+| M9-18, 08, 19, 30 as classified by pass 9 itself | not read | read the final report |
+| server.py recv/sendall sibling sweep | builder did not | the new reviewer plants 3 mutants |
+| suppression counts 175/126/8/32/7 re-derived | builder could not; EV7G earlier did compare with r7f | EV7I ruff step; I ask for a count |
+| older packages' hashes, first clean-set CRASH, orphan-worker test, stray a<newline>b writer | no evidence | README |
+| PowerShell, Windows (select.poll absent there), Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read the r7h review and pass 9 final report the moment they land; any Blocker/Major with a source change starts an r7j builder and repeats EV7I on it.
+2. Read EV7I at its end (failing ids vs EV7G) and the r7i review; resolve.
+3. On a clean pass: freeze (final tree r7i), rewrite handover/core/fix/README.md with the final patch table and open list, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 06:23 UTC / 11:53 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
