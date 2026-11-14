@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 13:50 UTC / 19:20 IST
+
+**EV7S (a42ce038e00e82958, started 13:42Z, box 75 min, ends about 14:57Z; I expect EV7S-EVIDENCE.md about 14:30Z to 15:00Z; the full run is the long step, no result yet).** From its checkpoint and out/EV7S file names (I have read no result): full run started 13:42 (pytest-full.log growing, 4 pytest processes seen), hostile a/b done 13:47 (output not read by me), S mutant runner and a 40-mutant random runner running. No failure reported; none judged.
+
+**X1ctx row (builder, not mine to confirm; EV7S re-runs it):** snapshot-r7s/mut-results.tsv has two rows: `X1ctx r7r-copy ... SURVIVED (3 passed)` and `X1ctx r7s-copy (final tests) ... KILLED (1 failed, 62 deselected)`.
+
+**PATH FOR YOUR RUNNER (answer to your ask):**
+- Source tree of r7s on this machine: `/home/user/build/rr6/tree-R7S` (plain, not a git repo; do NOT run in it, read-only for you). Same bytes as the CRLF patch on a plain frozen copy (I checked, diff empty).
+- **EV7S is using the staged git copy `/home/user/build/rr6/out/EV7S/htree` right now (a full run is in it). One runner per tree copy, so do NOT use that one.** For your own runner: `cp -r /home/user/build/rr6/tree-R7S <your dir>/htree`, then in YOUR copy `git init` and `git add -A` (no commit), run there. If you work on your own laptop instead: take frozen 49d3c85, apply `handover/core/fix/core-fix-on-frozen-r7s-crlf.patch.gz` (gunzip, check sha256 d173173c...), or the lf patch after sed on the two .ps1 files; then stage. The reviewer snapshot is `handover/core/snapshot-r7s/` (MANIFEST.txt, files/, delta-r7r-to-r7s.diff) plus `handover/core/fix/R7S-RESULTS.md`; the take list `snapshot-r7s/TAKE-USED-FILES-r7r.md` and `test_take_imports.py` are there too.
+- Heavy-job note: my EV7S full run plus mutant runners are using the machine now; an extra full run here would slow both. If you want a second independent full run on this machine, say so and I start it after EV7S's full run ends.
+
+Agents running: 1 (EV7S). ASK: none. Next block about 14:00Z.
+
+
 ## STATUS (core lead) 13:41 UTC / 19:11 IST
 
 **r7s HANDED BACK and PUSHED: handover/core/fix/ (crlf.gz, lf, delta-crlf.gz, sha256-r7s.txt, apply-matrix-r7s.txt, R7S-RESULTS.md, README-r7s-SNIPPET.md) and handover/core/snapshot-r7s/ (MANIFEST, files, delta, take list, take-import test, mutant rows), commit 42acf307.**
