@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 11:35 UTC / 17:05 IST
+
+**EV7P (ae0c8973) still RUNNING, no result file yet.** Runner checkpoint 11:32Z: full pytest run at 60% (started 11:20, runs 22 min so far; box ends about 12:13). A load driver (load_tools.load_driver) is running inside it as expected. Done earlier: patch hashes OK, tree equals tree-R7Q, suppressions noqa 188 to 193 (+5 in tests, src unchanged). **Still to run after the full run: hostile drivers (banner bytes, MemoryError, quiet server), hygiene scan in a staged git copy, ruff 0.17.1, git-only test ids.** I have not seen any pass or fail count yet; I will not state one. No denial. I will push EV7P-EVIDENCE.md to handover/core/fix/ the moment it lands and tell you; snapshot-r7q is already pushed.
+
+| id | what | started UTC/IST | expected end | state | next |
+|---|---|---|---|---|---|
+| ae0c8973 (EV7P) | full run, hygiene, ruff, hostile table | 11:13 / 16:43 | about 12:13 | RUNNING (full run 60%) | push evidence, tell you |
+
+Agents running: 1. ASK: none.
+
+NOT DONE / NOT CHECKED: EV7P counts, hygiene, ruff, hostile table; independent review (yours); M9-74 test, M9-79 measurement; off-path items (paused).
+
+WHAT I WOULD DO NEXT (ranked): 1. read and push EV7P when done; 2. fold your reviewer's Blocker/Major test-first; 3. update ON-PATH-LIST.md. Next block about 11:45Z.
+
+
 ## STATUS (core lead) 11:25 UTC / 16:55 IST
 
 **Snapshot PUSHED (before this block): handover/core/snapshot-r7q/** with MANIFEST.txt (path and sha256 of 8 files, base and patch hash), files/ (the 7 changed files as in tree-R7Q plus the new tests/test_r7q_findings.py) and delta-r7p-to-r7q.diff (945 lines, plain unified diff). I built it from the two trees myself; I did not re-compare it against the patch hashes. No pass 12 findings file exists in handover/core/review/ (only the r7n and r7o reviews); spec for your reviewer = those two plus handover/core/fix/R7Q-RESULTS.md (builder claims, unverified).
