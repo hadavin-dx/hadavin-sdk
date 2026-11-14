@@ -1,18 +1,18 @@
-## HEARTBEAT 191 (17:10Z) - lease 45 s (film-v4): recovery 52.9 s from n8n up; 60.1 to 61.9 s from the kill; 11 of 15 runs done, all correct
+## HEARTBEAT 192 (17:19Z) - lease 45 s: K1 5, K2 5, K3 4, K6 2 runs; all correct; RESULTS.md has the new section; one run voided (my slip)
 
-WORKERS: 2 lanes still running (my script processes: K3 and K2 last runs, about 17:15Z), 0 language-model agents. Lanes 0 and 1 are free.
+WORKERS: 2 lanes (my script processes): K3 run 5 and K6 run 3 at lease 45 s (end about 17:23Z), 0 language-model agents.
 
-Flow files: demo folder n8n-flows-film-v4 (demo commit 873a908a), lease 45 s, 2 tries, 10 s timeout. Same harness as the lease-120 runs. "Recovery" = seconds from "n8n is up again" to the lead being in a final state (polled every 2 s, so +-2 s). "Kill to final" = seconds from the kill to the same point (includes my n8n restart time, 7.0 to 8.8 s).
+| film-v4, lease 45 s (demo 873a908a) | n | Final state | Intake / alerts / CRM rows | Recovery s (n8n up to final), median / max | Kill to final s, median / max |
+|---|---|---|---|---|---|
+| K1 | 5 | done | 1 / 0 / 1 | 52.9 / 54.9 | 60.8 / 61.9 |
+| K2 | 5 | done | 1 / 0 / 1 | 52.9 / 52.9 | 60.9 / 61.2 |
+| K3 | 4 (5th running) | unknown | 0 / 1 / 1 | 53.9 / 54.9 | 61.0 / 61.6 |
+| K6 | 2 (3rd running) | unknown | 1 / 1 / 1 | 53.8 / 54.8 | 60.8 / 61.5 |
+Lease 120 s (n8n-flows-v4): recovery 144.2 to 144.4 s (K1 2, K2 1, K3 1, K6 2). Table with all rows: kill/RESULTS.md (Part 3).
 
-| Point (film-v4, lease 45 s) | n so far | State | Intake mails | Alerts | CRM rows | Recovery s | Kill to final s |
-|---|---|---|---|---|---|---|---|
-| K1 (killed at CRM write) | 5 | done, attempts 2 | 1 | 0 | 1 | 52.8 to 54.9 (median 52.9) | 60.1 to 61.9 |
-| K2 (killed after the mail step) | 4 (5th running) | done, attempts 2 | 1 | 0 | 1 | 52.9 each | 60.4 to 61.2 |
-| K3 (killed after CRM write) | 2 (3 more running) | unknown, attempts 2 | 0 | 1 | 1 | 52.8, 52.9 | 60.1, 60.4 |
-Reading for the caption: it takes about 53 s from n8n back up (lease 45 s + one 30 s sweep tick, minus where the clock was), and about 61 s from the moment of the kill when my restart takes 7 to 9 s. A 60 s limit counted from the kill is missed by 0.1 to 1.9 s in 11 of 11 runs (I first wrote 9 of 11: my miscount, corrected); counted from n8n up it passes with 7 s to spare. Say which start point the caption uses. Lease 120 s gave 144 s.
-Nothing lost, nothing doubled in any run: 1 CRM row each, intake mails 1 (K1, K2) or 0 (K3, with 1 alert).
+MY SLIP, named: I started a second script on lane 1 while the first was still running there. The second run's start-up cleared the table of the first (K3 run 2). Result: K3 run 2 reached no final state (void) and the other run failed to start (fakes_not_up). Both are labelled VOID- in results.jsonl and left out of every table; I reran them (K3 run 5 and K6 run 3 now). No product fault.
 
-ASK for the lead: which start point does the caption use (kill or n8n up)? If kill, 60 s is not met on these flow files; a lease of 30 s would meet it (my estimate, not measured).
-FAILURES AND RETRIES: none new. Note: my progress lines for these runs print the old flow label "7709d058-v4"; the result rows carry the right label (873a908a-film-v4-lease45).
-NOT DONE / NOT CHECKED (my list): K3 n = 5 and K2 n = 5 still finishing; K6 at lease 45 s; failed mark after a sent alert; comparison with the demo table.
-WHAT I WOULD DO NEXT (ranked): 1) finish K2, K3; 2) K6 at lease 45 s n = 3 in the free lanes; 3) final RESULTS.md and compare; one video line.
+ASK for the lead: (1) What is T8? My harness has no T8 and I may not read the demo's result files; tell me the case in one line (what is killed or faulted, what is expected) and I run it once at lease 45 s. (2) Same question as before: caption start point, kill or n8n up.
+FAILURES AND RETRIES: see the slip above.
+NOT DONE / NOT CHECKED (my list): K3 run 5 and K6 run 3 results; T8; failed mark after a sent alert; comparison with the demo table; 15 runs counted: 5 K1, 5 K2, 4 K3 valid, 2 K6 valid.
+WHAT I WOULD DO NEXT (ranked): 1) finish K3 and K6; 2) T8 once you define it; 3) compare with the demo table, one video line.
