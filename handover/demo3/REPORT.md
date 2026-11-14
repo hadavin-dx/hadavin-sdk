@@ -1,3 +1,17 @@
+## HEARTBEAT 148 (11:06Z) - kill script STARTED: flows found on demo/handover, environment checked
+
+| Item | State at 11:06Z |
+|---|---|
+| Flows on demo/handover | present since commit 5bb7a8ef (10:45Z, message "Design A v2 (D-N2a) flows"): handover/demo/n8n-flows/ desk-error-notifier, desk-form-door, desk-webhook-door, mf-form, mf-hook, mf-recovery (.json). I copied only these six files to /home/user/work/demo-ro (read-only copy). Flow shape (mf-form): webhook, insert into table mf_leads ON CONFLICT DO NOTHING, qualify call, save label, CRM search then create, set crm_done, mark mail_sent BEFORE the send, SMTP send, mark done; mf-recovery every 30 s reclaims rows not done/unknown |
+| Environment | Postgres 16 binaries exist (no psql python driver, no docker daemon: I use initdb in a scratch folder), node 22.23, n8n 2.46.6 resolves on npm; install running in the background (log /home/user/work/kill-n8n/install.log) |
+| DISCLOSURE (independence) | to look for the n8n start instructions I opened handover/demo/n8n-kill-between-steps.md and read its first ~40 lines: it is the demo session's write-up with RAW COUNTS of a different test workflow (a "sk-k" skip-on-conflict kill diagnostic, 5 kills), not the Design A v2 compare table. I stopped there and did not open the n8n-rerun result files. My script will not use those numbers; I tell you so you can judge if that touches the independence rule. I also read the mf.py/build_mainframe.py lines that define the table mf_leads (its DDL): allowed (DDL), and I will write my own fakes and driver from the flow JSON, not from their code |
+| FLOWS VERSION QUESTION | the six JSON files in n8n-flows use a recovery that matches on updated_at older than 20 s (a first-version style), while build_mainframe.py on the same branch builds a newer variant with claim_token, claimed_until and attempts (max 3, state failed). I do not know which one is "Design A v2 (D-N2a)". I will test the six committed JSON files exactly as committed unless you say otherwise |
+
+ASK for the lead (please answer in ORDERS.md, I am not blocked yet): (1) one plain line each for what T1, T2, T3 and T6 mean (I cannot find their definitions in my orders: I assume T = a kill point in the flow, for example T1 after insert and before qualify, T2 after CRM create and before mark crm_done, T3 after mark mail_sent and before send, T6 after send and before mark done; tell me if wrong); (2) the table mf_leads has no CRM id or outbox counter columns in the committed DDL I saw: I count "work done" at the fakes (CRM create calls, SMTP messages), which I believe is the intended pass criterion; (3) which flow variant (above).
+FAILURES AND RETRIES: none.
+NOT DONE / NOT CHECKED: no kill code written yet; the paused B21/B22/B23 stay paused (notes pushed).
+WHAT I WOULD DO NEXT (ranked): 1) write kill/PLAN.md with my own pass criteria BEFORE running anything; 2) write fakes (CRM search/create, stage qualify, SMTP catcher with drop/delay modes), a Postgres 16 scratch cluster and the n8n launcher with a fresh data dir; 3) write the driver (send, kill at point, restart, wait for recovery, count at fakes), run controls first, save my numbers, then compare.
+
 ## HEARTBEAT 147 (10:55Z) - PAUSED, ready for the n8n kill script (waiting for the demo flows)
 
 | Agent / job | State at 10:55Z |

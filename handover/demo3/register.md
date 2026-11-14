@@ -397,3 +397,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | b21 | PAUSED by lead order L3-STOP 10:50Z; note evidence/paused-b21-2026-11-14.md | | paused |
 | b22 | PAUSED by lead order L3-STOP 10:50Z; note evidence/paused-b22-2026-11-14.md | | paused |
 | b23 | PAUSED by lead order L3-STOP 10:50Z; note evidence/paused-b23-2026-11-14.md | | paused |
+| KILL | started 11:06Z: n8n 2.46.6 install in /home/user/work/kill-n8n (bg, bounded), Postgres 16 binaries present, no docker daemon | | in progress |
