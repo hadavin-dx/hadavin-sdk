@@ -1,0 +1,20 @@
+# r12 fails-before: r11 tree 77fa1c0d (src, scripts, docs) + ALL r12 test files (complete copy, no missing import). Run as root, so the n8n permission test is skipped; the non-root proof is raw/b22-r12-nonroot.log
+Sat Nov 14 08:31:50 UTC 2026
+FAILED tests/test_one_key_file_rule_r12.py::test_the_counters_file_temp_name_is_never_followed_through_a_link
+FAILED tests/test_one_key_file_rule_r12.py::test_the_lead_book_lock_name_is_never_followed_through_a_link
+FAILED tests/test_one_key_file_rule_r12.py::test_the_live_ledger_lock_name_is_never_followed_through_a_link
+FAILED tests/test_one_key_file_rule_r12.py::test_the_one_lock_opener_takes_a_plain_file_and_refuses_a_link
+FAILED tests/test_one_key_file_rule_r12.py::test_every_list_of_file_problems_in_the_docs_names_the_link_refusal
+FAILED tests/test_one_key_file_rule_r7.py::test_no_code_outside_envnum_reads_a_file_except_the_named_allow_list
+ERROR tests/test_one_key_file_rule_r12.py::test_the_lead_book_lock_name_is_never_followed_through_a_link
+6 failed, 765 passed, 3 skipped, 1 error in 21.56s
+## with the r11 tests/support.py (no empty-connection guard):
+FAILED tests/test_one_key_file_rule_r12.py::test_the_stub_does_not_count_a_connection_that_sent_nothing
+1 failed, 8 deselected in 0.03s
+## split (honest)
+real behaviour on old code: 3 (counters temp name, lead-book lock name, ledger lock name followed through a link) + 1 teardown ERROR from the new autouse lock-handle guard (the leaked lock handle of the lock-name test)
+function absent: 1 (open_lock_file)
+text pin: 1 (docs name the link refusal) ; allow-list pin: 1 (r7, new fdopen sites)
+empty connection counted: 1 (needs the r11 support.py; see above)
+pass on old code (regression guards, declared): folder-named .tmp, loop at the path for the three builders, Windows loop code, n8n twin (root)
+n8n permission test: red on old code only as non-root (stale assertion); see raw/b22-r12-nonroot.log for the run that passes with the fixed assertion

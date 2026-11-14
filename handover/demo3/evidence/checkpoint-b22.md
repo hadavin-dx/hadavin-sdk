@@ -14,3 +14,9 @@ Done: rows 1,4 (stub + fixture), 3 (link kind at env_file_problem), 5,6,7,8,9,11
 
 ## round 11 stop 08:19Z
 All gates done, patch cut, notes written; handing back.
+
+## round 12 start 08:27Z
+base tree 77fa1c0d
+
+## round 12 checkpoint 08:29Z
+Done: rows 1,2,4,5(conftest guard),8,9/10 docs,12,13,14; tests red-before recorded next. Next: non-root run, mutants, lint copy, full run (source changed), patch, notes.

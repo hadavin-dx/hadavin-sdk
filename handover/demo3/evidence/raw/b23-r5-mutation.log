@@ -25,3 +25,83 @@ r4-9 not-produced row dropped from the list: pytest rc=1 -> KILLED | 4 failed, 2
       failing: tests/test_exit_code_table.py::test_every_row_has_a_producing_test_or_is_listed_as_not_produced
       failing: tests/test_exit_code_table.py::test_the_generator_prints_one_row_per_table_row_and_marks_the_rows_no_test_produces
       failing: tests/test_exit_code_table.py::test_the_table_printed_in_docs_settings_md_is_the_generated_one
+r4-10 sh: port answers but process not checked (race guard, declared equivalent): pytest rc=1 -> KILLED | 1 failed, 72 passed, 2 skipped in 50.57s
+      failing: tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env0-LEADFLOW=[demo_only/leadflow.json] NUDGE=[reminder@example.test]]
+r4-11 sh: ready not cleared when demo server died: pytest rc=1 -> KILLED | 1 failed, 27 passed, 2 skipped in 31.78s
+      failing: tests/test_start_all_late_refusal.py::test_a_demo_server_that_dies_after_the_desk_said_listening_is_not_a_start
+r4-12 ps1: alive check dropped: pytest rc=1 -> KILLED | 3 failed, 37 passed, 6 skipped in 0.09s
+      failing: tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[alive check dropped]
+      failing: tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[ownership line dropped]
+      failing: tests/test_ps1_pins.py::test_text_only_the_start_pins_hold
+r4-13 n8n_api back to a bare Path: pytest rc=0 -> SURVIVED | 6 passed in 0.60s
+r5-1 pre-flight dropped: pytest rc=1 -> KILLED | 1 failed, 27 passed, 2 skipped in 61.51s (0:01:01)
+      failing: tests/test_start_all_late_refusal.py::test_a_foreign_listener_on_the_demo_server_port_is_refused_before_anything_is_started
+r5-2 ownership line not required: pytest rc=1 -> KILLED | 2 failed, 26 passed, 2 skipped in 32.15s
+      failing: tests/test_start_all_late_refusal.py::test_a_listener_that_appears_after_the_check_is_not_our_demo_server
+      failing: tests/test_start_all_late_refusal.py::test_text_pin_both_start_scripts_strip_one_pair_of_brackets_and_pass_the_host
+r5-3 --host not passed: pytest rc=1 -> KILLED | 1 failed, 72 passed, 2 skipped in 51.87s
+      failing: tests/test_start_all_late_refusal.py::test_text_pin_both_start_scripts_strip_one_pair_of_brackets_and_pass_the_host
+r5-4 brackets cut from both ends separately: pytest rc=1 -> KILLED | 1 failed, 27 passed, 2 skipped in 31.59s
+      failing: tests/test_start_all_late_refusal.py::test_text_pin_both_start_scripts_strip_one_pair_of_brackets_and_pass_the_host
+r5-5 formatter failure text same as unreadable: pytest rc=0 -> SURVIVED | 28 passed, 2 skipped in 31.06s
+r5-6 config_exit prints through print(): pytest rc=1 -> KILLED | 1 failed, 15 passed, 2 skipped in 1.68s
+      failing: tests/test_round5_rows.py::test_the_formatter_module_writes_utf8_bytes_under_a_narrow_console_code_page
+r5-7 demo server ignores IPv6 (always IPv4 class): pytest rc=1 -> KILLED | 2 failed, 14 passed, 2 skipped in 1.60s
+      failing: tests/test_round5_rows.py::test_the_demo_server_picks_the_address_family_of_its_host_without_binding[::1-six-address0]
+      failing: tests/test_round5_rows.py::test_the_demo_server_picks_the_address_family_of_its_host_without_binding[[::1]-six-address1]
+r5-8 demo server ignores --host: pytest rc=1 -> KILLED | 1 failed, 15 passed, 2 skipped in 1.61s
+      failing: tests/test_round5_rows.py::test_the_demo_server_command_line_takes_a_host
+r5-9 env_path accepts white space only: pytest rc=1 -> KILLED | 6 failed, 522 passed in 9.85s
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-   ]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE- ]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-   ]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH- ]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH-   ]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_REPLIES_PATH- ]
+r5-10 env_path accepts a line end: pytest rc=1 -> KILLED | 44 failed, 484 passed in 10.13s
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\nb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\r\nb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\x1bb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_APPROVERS_FILE-a\x7fb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\nb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\r\nb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\x1bb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_DB_PATH-a\x7fb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\nb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\r\nb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\x1bb]
+      failing: tests/test_bad_setting_entry_points.py::test_a_path_that_is_not_valid_text_is_refused_by_config[DESK_LEADFLOW_FILE-a\x7fb]
+      ... and 32 more
+r5-11 _readable lets an OSError through: pytest rc=1 -> KILLED | 2 failed, 14 passed, 2 skipped in 1.70s
+      failing: tests/test_round5_rows.py::test_a_named_reader_failure_ends_the_check_with_one_line_naming_the_group
+      failing: tests/test_round5_rows.py::test_a_reader_that_cannot_open_a_file_names_its_setting_group
+r5-12 fixed fallback text changed: pytest rc=1 -> KILLED | 1 failed, 15 passed, 2 skipped in 1.47s
+      failing: tests/test_round5_rows.py::test_an_error_no_reader_names_gets_the_fixed_text_and_the_setting_exit_code
+r5-13 scrub: drop secret-like names: pytest rc=1 -> KILLED | 6 failed, 2 passed in 0.03s
+      failing: tests/test_scrub_boundaries.py::test_a_fixed_advice_text_stays_readable_when_a_host_setting_holds_its_words
+      failing: tests/test_scrub_boundaries.py::test_a_secret_like_setting_is_blanked_even_when_the_message_does_not_name_it
+      failing: tests/test_scrub_boundaries.py::test_each_secret_like_name_shape_is_blanked_unnamed[DESK_LIVE_BASE_URL]
+      failing: tests/test_scrub_boundaries.py::test_each_secret_like_name_shape_is_blanked_unnamed[DESK_NUDGE_TO]
+      failing: tests/test_scrub_boundaries.py::test_each_secret_like_name_shape_is_blanked_unnamed[DESK_SMTP_FROM]
+      failing: tests/test_scrub_boundaries.py::test_each_secret_like_name_shape_is_blanked_unnamed[REAL_IMAP_1_USER]
+r5-14 scrub: drop name-in-named: pytest rc=1 -> KILLED | 1 failed, 7 passed in 0.03s
+      failing: tests/test_scrub_boundaries.py::test_a_path_setting_is_blanked_when_the_message_names_it
+r5-15 scrub: drop the advice exemption: pytest rc=1 -> KILLED | 1 failed, 7 passed in 0.03s
+      failing: tests/test_scrub_boundaries.py::test_a_fixed_advice_text_stays_readable_when_a_host_setting_holds_its_words
+r5-16 stale prose: a page says exit 9: pytest rc=1 -> KILLED | 2 failed, 26 passed in 1.68s
+      failing: tests/test_exit_code_table.py::test_no_page_gives_an_exit_number_that_is_not_in_the_table
+      failing: tests/test_exit_code_table.py::test_no_page_repeats_the_exit_numbers_of_a_program_of_the_table
+r5-17 PRODUCED_BY names a test that does not exist: pytest rc=1 -> KILLED | 1 failed, 27 passed in 1.81s
+      failing: tests/test_exit_code_table.py::test_every_named_producing_test_exists
+r5-18 guard blind to Path(x.strip()): pytest rc=1 -> KILLED | 1 failed, 5 passed in 0.47s
+      failing: tests/test_setting_reader_guard.py::test_the_path_detector_finds_the_wider_shapes
+r5-19 optional CA file: whitespace means a path: pytest rc=1 -> KILLED | 2 failed, 542 passed, 2 skipped in 11.83s
+      failing: tests/test_round5_rows.py::test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused[ ]
+      failing: tests/test_round5_rows.py::test_an_empty_optional_ca_file_is_unset_and_an_empty_password_file_is_refused[\t]
+r5-20 start_all.sh: the desk's 8 passed on: pytest rc=1 -> KILLED | 1 failed, 27 passed, 2 skipped in 31.81s
+      failing: tests/test_start_all_late_refusal.py::test_only_the_three_desk_codes_of_the_table_are_passed_on[8-1]
+r5-21 prefix tuple gains a name not in the one list: pytest rc=1 -> KILLED | 1 failed, 15 passed, 2 skipped in 1.54s
+      failing: tests/test_round5_rows.py::test_the_prefixes_the_check_passes_on_are_a_subset_of_the_one_list
+r5-22 PS1 pre-flight refusal dropped (text pin): pytest rc=1 -> KILLED | 2 failed, 38 passed, 6 skipped in 0.08s
+      failing: tests/test_ps1_pins.py::test_text_only_each_start_pin_rejects_its_mutant[no pre-flight refusal]
+      failing: tests/test_ps1_pins.py::test_text_only_the_start_pins_hold

@@ -1,0 +1,5 @@
+ruff=0
+fmt=0
+mypy-l=0
+mypy-w=0
+bandit=0

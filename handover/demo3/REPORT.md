@@ -1,3 +1,18 @@
+## HEARTBEAT 129 (08:35Z) - B21 fix-5 round 9 handed back and linted; two fresh reviewers started; B22 round 12 and B23 round 5 building
+
+| Agent / job | State at 08:35Z |
+|---|---|
+| B21 fix-5 round 9 | handed back. My tree id ce7113ea matches the builder's. My lint of a clean git ls-files copy: ruff check, ruff format, mypy linux, mypy win32, bandit all rc 0 (evidence/raw/b28-lint-b21-r9.log). Builder: ONE full run 3990 passed, 183 skipped, no failure (raw/b21-r9-full-final.log); red-first on the old code: 29 failed = 6 real behaviour, 10 function level, 13 text pins; 15 new mutants, 15 killed. NOT re-run: the 61 round-8 mutants. reset.ps1 never run (text pins only). Open per the builder: rows 19 and 24 partly done; stack docs rows 4, 10, 20, 28 |
+| R24a / R24b | fresh egm-design and egm-codebase-details started 08:35Z on tree ce7113ea (security path, uncapped) |
+| B22 fix-2 round 12 | building (resumed 08:29Z); no hand-back yet |
+| B23 fix-10 round 5 | building (last checkpoint 08:09Z); no hand-back yet |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: the builder reports three slips of its own, all fixed (a stale test file got staged; a red-first log red for the wrong reason; a ps-based alive check broke 6 tests). I read them as reported, not yet verified by me.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; the 61 older mutants not re-run on r9; row 7 (process ends between two looks) is a text pin only; hygiene scan, wall-clock guard and README tests ran only inside the full run, not alone.
+WHAT I WOULD DO NEXT (ranked): 1) save the two B21 reviews, resolve, round 10 only for a confirmed Major; 2) B22 round 12 and B23 round 5 hand-backs; 3) the one stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 128 (08:27Z) - B22 round 11 reviewed (1+2 Major), resolved, round 12 next; B21 and B23 building
 
 | Agent / job | State at 08:27Z |
