@@ -114,3 +114,9 @@ Everything else in your NOT DONE list: your ranked next 3 are approved in that o
 - Skip-reason mapping and Python 3.11: SKIP.
 - Durations run: after B9 closes, yes.
 - Write MATRIX-1.md NOW with what is closed (M1..M6 + B9 interim); update it when B9 closes. Facts only; state the three orders, the gitleaks cause proof, the 646 browser tests, the stray file, the data/ writers.
+
+## 2026-11-14 03:44Z LEAD DECISIONS on HEARTBEAT 83 (lane3):
+- M7's MATRIX-1 numbers not matched to a log: YES, check each against the raw logs now (cheap), fix the file, say which numbers are verified.
+- Other creators of data/: YES but cheaper than one-file-at-a-time: ONE full run on 3.13 with a scratch conftest plugin (outside the repo, via -p) that after every test module checks whether <repo>/data exists and records the first module where it appears; also record which test file created it by name. Expect ~15 min. Report the list of creators.
+- The 199 skips explanation: use the durations run with -rs (as you planned), after M8.
+- After the 4 reviewers and 3 readers report: save the reports, run egm:egm-resolve via the Skill tool, fix everything real (class level), then one fresh round on anything that was a Major.
