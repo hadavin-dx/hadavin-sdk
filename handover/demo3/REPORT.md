@@ -1,9 +1,9 @@
-## HEARTBEAT 111 (06:50Z) - B19 handed back (fix-2 r8): its one full run had 1 failure (hygiene scan, 4 test-text lines), fixed in text only; two fresh reviewers started
+## HEARTBEAT 111 (06:48Z) - B19 handed back (fix-2 r8): its one full run had 1 failure (hygiene scan, 4 test-text lines), fixed in text only; two fresh reviewers started
 
-| Agent / job | State at 06:50Z |
+| Agent / job | State at 06:48Z |
 |---|---|
 | B19 fix-2 r8 | HANDED BACK. Full run on tree eb5e171: 1 failed, 4348 passed, 170 skipped (not a clean pass). Cause: 4 lines of its own test text matched the hygiene patterns; fixed in text only (final tree 812a97a). NOT a second full run: hygiene guard alone rc 0, wall-clock guard alone rc 0, r7+r8 files 349 passed. 75 of 75 new r8 tests fail on old code (all behavioural). 37 mutations, all killed |
-| fix-2 r8 reviewers | egm-design and egm-codebase-details started 06:50Z on the 8 patch parts; no report yet |
+| fix-2 r8 reviewers | egm-design and egm-codebase-details started 06:48Z on the 8 patch parts; no report yet |
 | B20 fix-10 r3 | full run still going; no hand-back |
 | B21 fix-5 r8 | still fixing scripts; no hand-back |
 

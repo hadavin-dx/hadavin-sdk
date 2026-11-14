@@ -1,0 +1,7 @@
+B21 patch check, 2026-11-14T06:48:32Z
+base: f3c39cf8 + claims-stack-on-f3c39cf8.patch + lane3-fix-5-r6.patch (tree 79006fe3e7dcf6d72db72c343c3e468697915462)
+result tree (b21-tree, b21-full, fresh worktree A with whole patch, fresh worktree B with the 3 parts): cb769b2281b589538b933c442bc3612e5599f8db
+1142c9a8abeaf9a250d136e90333501db4f28ad69e1bd921e1b74b7ec236eb76  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-5-r8.patch
+40a6bd23422e1f639589074c551979df3ca492ee58fc1a5d5ca13fc73ca609c7  lane3-fix-5-r8-parts/lane3-fix-5-r8-part-01-scripts-readme.patch
+8c221df922a87393632a1210d7c4ed279654074038d280cbb0ce2902ee7d84e5  lane3-fix-5-r8-parts/lane3-fix-5-r8-part-02-reset-tests.patch
+fb3a6c7372cbce6ccb8a16af7d39c902825cb52cca0a0537f8c339fb24afd2d3  lane3-fix-5-r8-parts/lane3-fix-5-r8-part-03-port-tests.patch
