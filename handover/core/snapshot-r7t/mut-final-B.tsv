@@ -1,0 +1,37 @@
+M1	scripts/run_real_check.py	t15	KILLED	['1 failed, 130 deselected in 0.20s']
+M1	restored-byte-equal=True
+M2	scripts/run_real_check.py	t15	KILLED	['1 failed, 130 deselected in 0.21s']
+M2	restored-byte-equal=True
+M3	scripts/run_real_check.py	t15	KILLED	['1 failed, 130 deselected in 0.19s']
+M3	restored-byte-equal=True
+M4	scripts/run_real_check.py	t15	KILLED	['1 failed, 130 deselected in 0.20s']
+M4	restored-byte-equal=True
+M5	scripts/run_real_check.py	t15	KILLED	['1 failed, 4 passed, 130 deselected in 38.79s']
+M5	restored-byte-equal=True
+M6	scripts/run_real_check.py	t15	KILLED	['1 failed, 6 passed, 130 deselected in 77.83s (0:01:17)']
+M6	restored-byte-equal=True
+C1	src/lead_desk/crm_hubspot.py	t15	KILLED	['1 failed, 1 passed, 130 deselected in 1.04s']
+C1	restored-byte-equal=True
+C2	NOT-APPLIED count=2
+C3	NOT-APPLIED count=0
+C4	src/lead_desk/crm_hubspot.py	t15	KILLED	['1 failed, 7 passed, 130 deselected in 137.30s (0:02:17)']
+C4	restored-byte-equal=True
+C5	src/lead_desk/crm_hubspot.py	t15	KILLED	['1 failed, 3 passed, 130 deselected in 1.79s']
+C5	restored-byte-equal=True
+C6	src/lead_desk/crm_hubspot.py	t15	KILLED	['1 failed, 3 passed, 130 deselected in 1.80s']
+C6	restored-byte-equal=True
+C7	NOT-APPLIED count=0
+U1	scripts/run_real_check.py	t17	KILLED	['1 failed, 6 passed, 131 deselected in 88.35s (0:01:28)']
+U1	restored-byte-equal=True
+U2	src/lead_desk/crm_hubspot.py	t17	KILLED	['1 failed, 1 passed, 131 deselected in 1.29s']
+U2	restored-byte-equal=True
+U3	src/lead_desk/crm_hubspot.py	t17	KILLED	['1 failed, 131 deselected in 0.80s']
+U3	restored-byte-equal=True
+U4	src/lead_desk/crm_hubspot.py	t17	KILLED	['1 failed, 1 passed, 131 deselected in 1.29s']
+U4	restored-byte-equal=True
+U5	src/lead_desk/crm_hubspot.py	t18	KILLED	['1 failed, 137 deselected in 0.80s']
+U5	restored-byte-equal=True
+U6	src/lead_desk/crm_hubspot.py	t18	SURVIVED	['1 passed, 137 deselected in 0.75s']
+U6	restored-byte-equal=True
+U7	src/lead_desk/crm_hubspot.py	t18	KILLED	['1 failed, 137 deselected in 0.82s']
+U7	restored-byte-equal=True
