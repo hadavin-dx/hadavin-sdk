@@ -1,5 +1,12 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 16:37Z - page statements v4 + video run sheet pushed; agents running 0
+- AGENT 1 (done): n8n-flows/PAGE-STATEMENTS-V4.md, 18 statements, tags and raw file names (lane3 raw names not given to me, said so per claim). 6d3491f1. NOT RUN: v4 T8/T15, v4 kill series, lease 45/120; partly: hold over 720 s, dead SMTP 10 min, cap-after-mail, Send Email node wait.
+- AGENT 2 (done): VIDEO-RUNSHEET.md, 12 scenes (5 main, 5 doubtful-case steps, 1 optional dead-alert wait, closing card), core EST 330 s, 355 s with the optional scene. Screen times are estimates; the waits behind sped-up scenes are the lead-read V7 numbers.
+- RISKS (agent 2): table screen NOT RUN (fallbacks in the sheet, owner decides); hand-timed kill may miss K1/K3 kill point; numbers are at lease 20 s, design is 120 s; v3 can send 2 alerts on a slow send; step-2 real mailbox and Slack alert NOT BUILT (stand-in fault used).
+- FOR THE LEAD TO SETTLE: v3 B90 n (1 vs 3), v4 B90 n (2 vs 3), K3/K3B 'alert each' (first table says 1 each, runner caveat says no per-lead count); 7 open decisions listed in the run sheet. I have not read either file in full myself; both are agent output.
+NOT DONE / NOT CHECKED: my own read of the two files; any run. Disk 150 MB, no stack here.
+WHAT I WOULD DO NEXT: 1. read both files and fix what is wrong. 2. fill lane3 raw names when given. 3. rehearsal checklist for the laptop.
 ## Block 16:34Z - env pass-through fix for child processes; agents running 0
 - DEFECT (lead): start_fakes used _base_env(), which dropped MF_RUN_PORT, so the stand-in server bound the default port. FIX: lib.py _base_env now also passes every variable starting MF_, DN1_, N8N_EVD_ plus RUN_ID (nothing else; unrelated variables still dropped). n8n_env builds on it, so the n8n child gets them too. Other child-env builders I read: run_mf.py script_env (KEEP_ENV list, already has all port names, V4 and lease names), mf.py spawns with os.environ.copy, dn1_common.spawn takes env from its callers. NOT read: other harness scripts that call Popen directly (g3, skip*).
 - TEST: n8n-tests/test_envpass.py <lib.py> <lib.py dir>. Run here: PASS on the patched lib; FAIL (10 dropped vars listed) on a lib with only the first patch. It starts nothing.
