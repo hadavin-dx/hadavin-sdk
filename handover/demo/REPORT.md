@@ -1,5 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 15:55Z - K-SERIES-V4.md pushed: re-run list for v4 with cost (my estimates, not measured; replace with V7 timings)
+
+Tier 1 (alert path, must re-run): B90 8, AF1 10, AF2 13, T8 8, T15 12, K3+K3B 20, T12 5 = about 76 min. Tier 2 (not touched by the diff, rule "tested = shipped"): T14 4, K1+K2 20, T10 12, T11 4, T13 5 = about 45 min. Minimal v4 = Tier 1 + T14 + T11 = about 84 min; whole series about 2 h. v3 alternative: B90 + AF2 on v3 only, about 21 min, and keep "can send two alerts" on the page.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Minutes are estimates from code reading; two runners in parallel not checked; B90/AF2/v4 never run.
+
+WHAT I WOULD DO NEXT (ranked)
+1. On your decision: nothing to build for v4 (done); wait for the laptop runs. 2. Retag PAGE-STATEMENTS after the numbers file. 3. Spec the step-2 fault for the real take.
+
 ## Block 15:46Z - B90 ORDER: choice + v4 built (n8n-flows-v4, film-v4, real-v4), test B90 added as NEW name; V7 commit 6ebb7f62e untouched
 
 CHOICE: neither pure (a) option. The node timeout cannot be set below the claim window (Send Email node has NO timeout setting), and I have NO measured node timeout (AF2 not run). So: claim window 720 s (12 min), longer than the longest single wait I READ in the nodemailer code inside n8n 2.46.6 (connect 2 min, greeting 30 s, socket inactivity 10 min), PLUS a new node AlertBackoff on AlertSend's error output that resets the retry time to the old 60..300 s backoff, so a quick failure is not delayed to 12 min (AF1 behaviour kept). Why not only a longer claim: it would delay the retry after every quick failure. Cost: a hung SMTP can make the alert 12 to 13 min late; a send over 12 min or a failed mark can still duplicate.
