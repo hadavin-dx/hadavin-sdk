@@ -1,14 +1,15 @@
-## HEARTBEAT 172 (14:51Z) - PRUNE=false test: rows are now removed but the text stays in the file; I agree with the lead's reading of the key; F-a/F-b/F-c on the fixed flows running
+## HEARTBEAT 173 (15:03Z) - F-a/F-b/F-c on the fixed flows 3/3 each: F-c STILL gives unknown + 0 alerts; Fc1 variant and my own v3 alert cases prepared
 
-| Item | Result at 14:51Z |
+| Fault on the fixed flows (61e3804b = 1ced4e1f files), n = 3 each | Result |
 |---|---|
-| GREP with the four settings + EXECUTIONS_DATA_PRUNE=false (fjg5-7; fixed flows 61e3804b; n = 3) | 3 of 3 identical. The execution table is now EMPTY (0 rows; n8n hard-deletes the not-saved runs), so the soft-delete cause from HB171 is confirmed and PRUNE=false fixes the rows. But the bytes are still in the file: the -wal file holds name x1, e-mail x2, key x1; after a checkpoint (on a copy) the main database file holds name 1, e-mail 1, key 1 (deleted pages are not erased: SQLite does not overwrite them, and I did not find an n8n setting for that in what I read). n8n log 0, exported flow JSON 0. So the expectation "no hits in n8n's files" is still NOT met with all five settings. Honest limit: this is n8n on SQLite; I did not test n8n on Postgres. |
-| Do I agree that a credential is not stored but a webhook body field is? | Yes, as far as my data goes. Body fields (name, e-mail, my key) are stored in execution data. I did not plant a fake credential password; the only credential text I could search is the stand-in SMTP text "stand-in", 0 hits in the WAL (a weak test: a generic word, and credentials are stored encrypted). So: body field stored, credential not seen stored, not proven for credentials. |
-| What would keep personal data out of n8n's file (proposal, not tested) | (a) do not send the raw request into n8n: a small front door of ours masks name and e-mail (and drops any key field) before the webhook, so n8n only ever sees a masked copy; (b) or n8n on Postgres with its own scheduled cleanup plus the five settings, accepting deleted rows linger until vacuum; (c) or full-disk encryption plus the five settings, stating that the bytes are still there. (a) is the only one that keeps the data out; I can test it if the demo adds it. |
-| F-a / F-b / F-c on the FIXED flows (n = 3 each) | running since 14:51Z, about 2 min each, ends about 15:10Z. |
-| Sandbox | no restart since 13:50Z with my turn open. |
+| F-a (CRM search empty after create) | 3 of 3 done, 1 intake mail, 0 alerts, 1 CRM row, 1 model call. Same as the 11:05Z flows (3 of 3). |
+| F-b (SMTP stores the mail, then drops the connection) | 3 of 3 unknown, attempts 1, 1 intake mail, 1 alert naming the lead, 1 CRM row, 1 model call. Same as the 11:05Z flows. |
+| F-c (SMTP holds its greeting 40 s on EVERY connection) | 3 of 3 unknown, attempts 1, 0 intake mails, 0 ALERTS, 1 CRM row, 1 model call. STILL NO ALERT on the fixed flows, same as the 11:05Z flows (3 of 3). |
+| F-c answers for the demo (written to questions-for-lead.md as Q-20) | (a) pre-greeting hold (the fake waits 40 s before its first line); (b) YES still active for the alert connection (the hold covers every connection); (c) no node error text observed (n8n's log has only start-up lines). Node: the in-run alert node (AlertUnknown in v2): its connection waited and gave up, flow ends quietly. Caution: in my F-c the alert goes through the same slow server, so this is partly my test. |
+| Fc1 (hold only the FIRST SMTP connection, so the alert connection answers at once) | running now (3 runs on the fixed flows, then 3 on the 11:05Z flows), result in the next heartbeat. |
+| New job: my own v3 alert-loss cases | Plan written and pushed BEFORE any v3 run: kill/PLAN-V3-ALERT.md (cases V3A refuse twice then accept, V3B20 and V3B90 hold then answer, V3C dead 600 s then restored; pass criteria stated). Built: v3 harness (kill/v3.py), fake SMTP switches (alert refuse, alert hold, dead-until), v3 flows from demo commit 6ebb7f62 (4 flow files, read directly; V3-README and the table DDL read, no other demo file). Starts after Fc1, about 15:20Z; about 40 minutes for n = 1 each. |
 
-ASK for the lead: forward to the demo: PRUNE=false is needed (rows) but not sufficient (bytes); the real fix is to mask before n8n.
+ASK for the lead: none.
 FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): F-a/F-b/F-c on the fixed flows; GREP on n8n with Postgres; a credential needle; RESULTS.md; comparison with the demo table; K1, K2 on the fixed flows.
-WHAT I WOULD DO NEXT (ranked): 1) fault modes on the fixed flows and the F-c alert check, then questions-for-lead.md if F-c still gives 0 alerts; 2) RESULTS.md then compare; 3) K1, K2 on the fixed flows.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): Fc1 results; all v3 runs; GREP on Postgres-backed n8n; credential needle; RESULTS.md; comparison with the demo table; K1, K2 on the fixed flows.
+WHAT I WOULD DO NEXT (ranked): 1) Fc1; 2) v3 cases A, B20, B90, C; 3) repeats of the v3 cases; 4) RESULTS.md and compare.

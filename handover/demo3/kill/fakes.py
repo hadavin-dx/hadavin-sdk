@@ -174,6 +174,10 @@ def stage(port, workdir):
     return ThreadingHTTPServer(("127.0.0.1", port), make_http("stage", workdir, handle))
 
 
+_V3 = {"refused": 0, "held": False}
+_V3_LOCK = threading.Lock()
+
+
 class SmtpHandler(socketserver.StreamRequestHandler):
     workdir = "."
 
@@ -185,6 +189,10 @@ class SmtpHandler(socketserver.StreamRequestHandler):
         wd, ctl_path = self.workdir, os.path.join(self.workdir, "smtp.ctl")
         ctl = read_ctl(ctl_path)
         event(wd, "smtp", "connect")
+        c2 = read_ctl(os.path.join(wd, "smtp2.ctl"))  # v3 alert-fault switches, written by the harness only
+        if c2.get("dead_until", 0) > time.time():
+            event(wd, "smtp", "refused_dead")
+            return  # closed without a greeting
         if ctl.get("pre_s"):
             time.sleep(ctl["pre_s"])
         once = ctl.pop("pre_once_s", 0)  # one-shot greeting hold: only the first connection waits
@@ -214,6 +222,24 @@ class SmtpHandler(socketserver.StreamRequestHandler):
                 self.reply("250 ok")
             elif up.startswith("RCPT TO"):
                 rcpts.append(cmd.split(":", 1)[1].strip().strip("<>"))
+                if rcpts[-1].lower().startswith("alerts@"):
+                    c2 = read_ctl(os.path.join(wd, "smtp2.ctl"))
+                    with _V3_LOCK:
+                        refuse = _V3["refused"] < c2.get("alert_refuse", 0)
+                        if refuse:
+                            _V3["refused"] += 1
+                        hold = 0 if (_V3["held"] or refuse) else c2.get("alert_hold_s", 0)
+                        if hold:
+                            _V3["held"] = True
+                    if refuse:
+                        event(wd, "smtp", "alert_rcpt_refused", n=_V3["refused"])
+                        self.reply("451 try again later")
+                        rcpts.pop()
+                        continue
+                    if hold:
+                        event(wd, "smtp", "alert_hold_start", s=hold)
+                        time.sleep(hold)
+                        event(wd, "smtp", "alert_hold_end")
                 self.reply("250 ok")
             elif up == "DATA":
                 self.reply("354 go")
