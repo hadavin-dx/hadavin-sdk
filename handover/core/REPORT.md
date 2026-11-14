@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 15:10 UTC / 20:40 IST
+
+**FLAKE INVESTIGATION (r7t builder aab061ec; all builder claims, I have read its checkpoint, logs and one grep of crm_hubspot.py; I did not run or review the fix):**
+- **CAUSE NAMED by the builder at 15:09Z (checkpoint): `crm_hubspot.put` counted a created contact only AFTER the 201 reply (window: request sent -> reply -> count). If the desk is killed in that window the contact exists in the CRM but the desk counter says "not created": created is undercounted, `unseen` is 0, exit 0 with a contact left. So it is a REAL race in the counter, not only the test's timing.** (The line I could see: crm_hubspot.py ~417-418 `if reply.status == _HTTP_CREATED ... self._settle_create("created")`, a settle call now exists in r7t.)
+- **FIX in progress (builder, 15:09Z):** a new counter "create_open" is written BEFORE the request and settled with the outcome in ONE write; `run_real_check` takes `possible = min(created + open, leads)` so an open (unsettled) create counts as maybe-created; new test t15 (running). **Not yet shown by me or by the builder in my files: that t15 forces the window deterministically (no sleep, no real kill timing) and fails on r7s sources; I have no result of t15 yet (t15.log is growing).**
+- **Failure rate so far:** on r7t (before the fix) under the guard load: **1 failure in 6 runs** (flake.log: 5 passed, 1 failed, ~35-65 s per run). On r7s with its own load script: **5 runs, 5 passed** (flake-r7s-load.sum, 15:07 to 15:10Z; the sixth still running), i.e. 0 of 5 so far. **The order asked for at least 30 runs with and without load: NOT done. flake30.sh exists (usage <tree> <tag> <n>) but no 30-run result is in my files yet.** 5 of 6 passes on r7s do not show the race is absent; it is a timing race, rare at ~35 s per run.
+- Guard run 2 on the final head (hy-guard.log): about 91%, no failure character seen so far in the visible tail (I read the last lines only); the head changed after it started (crm_hubspot change at 15:09), so **it will have to be re-run on the final bytes.**
+
+**Class question for the fix (open, mine to check at hand-back):** is the open counter itself written atomically and read back when the desk is killed with kill() after the 10 s terminate timeout (the same window one step earlier)? Does the same count-after-reply pattern exist in smtp_provider (mail sent counted after the server reply: M9-74 class for mail)? I have asked for neither yet; I add both to the builder's list now.
+
+**ETA:** hand-back about 15:40Z to 15:55Z (the box ends 15:40Z; the 30-run series, t15, guard re-run decide it; I will not call it earlier). Agents running: 1. ASK: none. Next block about 15:20Z.
+
+
 ## STATUS (core lead) 15:00 UTC / 20:30 IST
 
 **r7t builder (aab061ec) at 15:00Z, from out/R7T files (builder numbers; I ran nothing; nothing judged).**
