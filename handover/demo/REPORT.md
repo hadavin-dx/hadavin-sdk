@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 05:05Z, real date -u; the 05:04Z label above was written at 05:03:20Z): R2b e unit 2 DONE, units 3-5 running
+- e kill-run unit 2 (fresh stack, K3 5 + K2 5, rc 0, ran 04:52:56-05:05Z): 10 rows, final at 60 s: every row 1 CRM / 2 emails / status sent. Second CRM row 0 of 10 (R2 1 of 10, published 4 of 10); 2 or more emails 10 of 10 (as published and R2). Client replies: RemoteDisconnected on 4-10 of 10 in every row.
+- Unit 1 failed at setup (password without a digit, harness random draw); redo later as 1b.
+- Running now: unit 3 (about 05:05Z start); ETA units 3-5 about 05:40Z, 1b about 05:51Z. Container uptime fine, dockerd 1h55.
+- Variant a: 2 of 5 bursts at exactly (1,1) (see 05:04 block). Variant e ten-at-once (wrong unit): 5 of 5 at (1,1).
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Units 3-5 and 1b of e not finished; no combined e count yet.
+- N8N-RERUN-1.md update (R2b rows, mapping, READ): after the last unit.
+- R3-partial, doc tests, CI-equivalent, fresh doc reviewer, egm reviewer on the updated file: wait for quiet machine.
+## WHAT I WOULD DO NEXT (ranked)
+1. Finish units, write the R2b table with load per row.
+2. Update N8N-RERUN-1.md and push.
+3. R3-partial b K2/K3 only (your order 4), then offer a rerun of a as 5 fresh stacks.
 ## REPORT (clock 05:04Z): R2b RUNNING, NOT killed by any restart. Container up 2h12 (no restart seen; dockerd 1h50, my stack since 04:52Z)
 - Uptime check 05:02:59Z: `uptime` up 2:12; Postgres container "Up 10 minutes"; run_r2b_e.sh and g3e.py alive. Nothing of mine died.
 - VARIANT A ten-at-once, 5 bursts (04:47:51-04:48:37Z, quiet, idle 97-99.8%): final (CRM,email) per burst = (1,1), (2,2), (10,10), (1,1), (2,2) -> exactly 1+1 in 2 of 5 (R2 12 of 20, published 18 of 20). Replies: 200x1/500x9, 200x2/500x8, 200x10, 200x1/500x9, 200x2/500x8. Replay added 0 rows each. Row source: n8n-rerun file g12_a_default.jsonl.
