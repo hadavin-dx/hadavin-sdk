@@ -1921,3 +1921,10 @@ MUST: MAJOR M1 (do not cap `created`; cap only the open part: possible = created
 SHOULD: m5 (rewrite t9 test 2 to test the unreadable-counter-with-contact case), m6 (move require_loopback_host to a light module so the two raw-socket fakes import nothing heavy; show standalone import test), n1, n2 (docstrings), n5 (delete or rewrite superseded README lines on disk), put-where-_settle_create-raises test, two-concurrent-puts test (create_open == 2), 201-without-id counted unknown.
 Mutants on the new lines (cap formula, int-only check, result-file fields). Same box rules: 75 min, checkpoint every 15 min, REPORT block each 10 min. Then EV7U (independent runner) + fresh egm reviewer, uncapped.
 Also ASK back: exact file and test name of the take-side banner test q1 (the lead runs it on the laptop).
+
+## ORDER WRAP-1 (lead, 18:29Z UTC / 23:59 IST): WRAP UP NOW, START NOTHING NEW (owner order, weekly limit)
+1. Start NO new agent, builder, reviewer, runner or job. Anything already running may finish; do not extend its time box or retry it.
+2. Commit and push everything to YOUR OWN branch (core/cloud-handover) only (no force, no merge, no other branch). Repeat after each running agent hands back.
+3. Raw checks in your report: git status --porcelain empty, git log origin/core/cloud-handover..HEAD empty, git diff origin/core/cloud-handover --stat empty, git stash list empty, scratch results copied into the repo handover folder, no secret-like strings.
+4. Write a FINAL CLOSEOUT block (newest on top of your REPORT): FILE-INDEX of every file a NEW session must read, open decisions, running agents (must be 0 at the end), restart steps for a NEW cloud session. Core: also say where r7v and EV7U stand and free disk space without deleting evidence.
+5. Then STOP: no further tool calls until an order starting with GO. The lead's new studio handoff files (handoff/SESSION-HANDOFF.md, LOCAL-CONTROL.md, CLOUD-SESSIONS.md) exist on the laptop; keep your REPORT FILE-INDEX self-contained.
