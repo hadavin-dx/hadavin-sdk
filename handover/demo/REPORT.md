@@ -1,5 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 03:42:21): R2-patched SMOKE RUNNING; AGENT E (read-only doc-patch reviewer) RUNNING
+- CORRECTION: my previous block was labelled 03:46Z; the real clock then was about 03:39Z. Wrong label, mine.
+- RUNNING: (1) R2-patched smoke "smoke4" (scratch copy of the harness with P1, text diff in n8n-rerun/R2-patch-P1.diff, started 03:41:57Z, ETA about 5 min). A first patched smoke ("smoke3", cut by my own 110 s timeout at the K2 step) already showed the webhook g2-b2 registered at once (webhook_registered true), and then ran g12 b default and K1. I report that as a partial, not a result. (2) egm comprehension reviewer on the doc patch (read-only, started 03:42Z).
+- Lead's finding wording taken: the quiet, faster machine makes the kill land earlier; "cause" only after P1 confirms (smoke3 is the first sign, smoke4 the full smoke).
+- NEXT: when smoke4 is done and the machine is quiet: R2-patched FULL run. P1 touches only the wait BEFORE a restart (a webhook-live check on the running n8n); it does not change any kill point K1 to K3 (those are inside g3.py); I will check the README kill text and say so in N8N-RERUN-1.md.
+- LOAD: smoke4 (n8n, postgres container, stand-in server) plus the reviewer (reads files only).
+
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Full R2-patched run: not started yet (waits for smoke4 end and a quiet machine); next: start at once after smoke4 rc 0.
+- N8N-RERUN-1.md not yet updated with R2 and the side-by-side numbers: waits for counts; next: write the moment the run ends.
+- Whether P1 is enough for the later restarts of the full run (after deploy of variant e the e path is not in PATHS_ABCD): not checked; the full run will show; next: if e's webhook is missing after a restart, report it, do not patch further without the lead.
+- CI-equivalent run, exit codes 2-6, nine other crash points, non-root skip chunk: not done on purpose (they need a quiet machine; after the n8n full run, as ordered).
+- Smoke folders share node_modules by hard links (disk): disclosed deviation.
+## WHAT I WOULD DO NEXT (ranked)
+1. Start the R2-patched full run the moment smoke4 ends rc 0 and idle is >= 80 percent.
+2. Collect the reviewer's findings on the doc patch and push them as text.
+3. After the full run: CI-equivalent run on main and on frozen tree plus doc patch, then non-root skip chunk.
+
 ## REPORT (clock 03:46Z): CAUSE FOUND, IN THE ORDER OF EVENTS OF THE HARNESS (details n8n-diag-1.md)
 - n8n 2.46.6 publishes a workflow through an outbox table with a 2-minute lease. The harness kills the first n8n within a second after deploy_b: record 4 (workflow b) is in_progress at that moment (read from the database after the failed smoke2 run); a, d, c are completed. After the restart the harness waits 60 s, n8n takes the record again only after 120 s: the webhook g2-b2 appears at 03:35:42 when n8n is left running (outbox record 4 completed), never inside the harness's 60 s. Same failure reproduced twice (smoke and smoke2). Workflow, path and credential are fine (diagnostic A: g2-b2 registered 3 s after boot when the record was free).
 - NO harness change made. Proposed text fix P1 (wait for the webhooks in the first process before the kill) in n8n-diag-1.md; R1 (exit 1, no counts) stays on record.

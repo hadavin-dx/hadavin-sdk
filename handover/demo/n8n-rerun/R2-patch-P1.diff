@@ -1,0 +1,18 @@
+--- <scratch>/run_all.orig.py	2026-11-14 03:39:40.227704489 +0000
++++ run_all.py	2026-11-14 03:39:40.242703079 +0000
+@@ -215,6 +215,7 @@
+         n = "3" if a.smoke else "20"
+         k = "3" if a.smoke else "5"
+         if a.smoke:  # variant b only, n8n at default concurrency
++            lib.webhooks_live(("g2-b2",), 60) or sys.exit("R2 patch: g2-b2 not live in the first n8n within 60 s")  # R2 patch P1
+             lib.kill_n8n_confirmed() or sys.exit("smoke: the first n8n could not be killed")
+             smoke_readiness(work, lib)  # proof that the webhook answers after readiness (raw evidence file)
+             phase("b default", "g12.py", "b", "default", n, tag="g12_b_default")
+@@ -222,6 +223,7 @@
+             print("client reply names seen (smoke):", json.dumps(summarise.reply_keys(work, "jsonl")), flush=True)  # the real names of the errors the clients saw while n8n was killed
+             return finish(work, True, lib)
+         def restart(limit, what):  # kill proven (process and both ports), then start, and the four webhooks must answer; a failed restart stops the run
++            lib.webhooks_live(PATHS_ABCD, 60) or sys.exit("R2 patch: the webhooks are not live in the running n8n within 60 s (%s)" % what)  # R2 patch P1
+             lib.kill_n8n_confirmed() or sys.exit("n8n could not be killed before the restart (%s)" % what)
+             ok = lib.start_n8n(limit, paths=PATHS_ABCD); print("n8n %s up:" % what, ok, flush=True)
+             ok or sys.exit("n8n did not come up (%s): see n8n2.log" % what)
