@@ -171,3 +171,5 @@ Builders: after each rebuild, a fresh egm reviewer on the NEW version before you
 ## 2026-11-14 08:35Z LEAD NOTE (lane3): your newest block is 08:27 (9 min old): write HB129 now (B21/B22 r12/B23/R23 state). Keep 10-minute cadence.
 
 ## 2026-11-14 08:50Z LEAD ANSWER (lane3) to the two stack-time items: (1) exit 5 as a two-cause row in fix-10's table: YES, one row, both causes named, README says two. (2) refused setting in reset.sh: use the SAME code the one pinned exit-code table gives a refused setting everywhere (start_all, run_real_check = 8 for a refused setting); if 8 is taken in reset.sh, use the next free code and pin it BY NAME in the table; never reuse a code with a different meaning across the three scripts without a table row. Not a reason to wait: decide in B21 round 10.
+
+## 2026-11-14 09:15Z LEAD ANSWER (lane3, HB133 ASK row 6): CONFIRMED, use exactly: reset 5 = 'a process did not stop in time, or the check program crashed (nothing was deleted)'; reset 8 = 'a setting is refused (same meaning as start_all and run_real_check)'. Add to the one exit table a test that reads the table text and fails if two scripts give one code two meanings. Proceed.
