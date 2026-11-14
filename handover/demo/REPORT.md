@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 03:56:05): R2 FULL RUN RUNNING; DOC PATCH v3 (text only) PUSHED
+- Run: last step ">> g12.py d limit1 20 03:55:20Z"; no rc yet.
+- Agent F (read-only) finished: 200/201, reset.sh with stale pid, crash_desk needs the desk stopped, GITLEAKS texts CONFIRMED by reading. Found real doc gaps: crash scene needs a second terminal, a lead sent after arming (else no crash), stop step only fits a start_all desk, address must be one plain address, a Python 3.13 skip line that read backwards, skip reasons worded differently in two files. All fixed in clean-machine/0003 patch (DOC-FIXES-v2.md has the list). One CODE finding left for the lead (frozen series): crash_desk.py shows a raw Python error for a bad DESK_NUDGE_TO instead of a clean message.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Patch v3 not run through the doc tests or hygiene test; fresh reviewer on v3: after the n8n run (ordered).
+- The crash_desk.py code finding: not fixed (frozen series, no third freeze); decide: leave or one-line fix as separate text.
+- Windows forms and the remaining browser skip lines: not read by anyone.
+- N8N-RERUN-1.md R2 section, counts, kill results: wait for the run.
+## WHAT I WOULD DO NEXT (ranked)
+1. Light log read at the next tick; push block.
+2. At run end: N8N-RERUN-1.md R2 with counts next to published numbers; egm reviewer.
+3. Then v3 doc tests/hygiene, fresh reviewer on v3, CI-equivalent run.
+
 ## REPORT (clock 03:55Z): R2 FULL RUN RUNNING, no rc yet
 - Run log: n8n default up True after the P1 wait (no stop); g12 a default 03:47:48Z, b default 03:50:14Z, c default 03:52:45Z (about 2.5 min each). Still at variant c; the d, e, ten-at-once and kill runs follow. Instant idle reading 79 percent (one sample; the run itself loads the machine; the harness gates and records its own load).
 - Agent F (light reader of the doc claims, read-only) running since about 03:53Z.
