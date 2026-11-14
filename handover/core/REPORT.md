@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 18:00 UTC / 23:30 IST
+
+**MUT STOP CONFIRMED (its own report): mutant runner af04215d is stopped; nothing of it left running; both tree copies byte-equal to tree-R7U (diff -rq, sha of run_real_check.py c33591dc.. and loopback.py b6b1b1ff.. unchanged); its copies deleted.** Results: out/R7U-MUT/R7U-MUT-RESULTS.md (copied into handover/core/evidence/r7u-chain/R7U-MUT/). 69 applied, 40 killed, 27 survived the NARROW sets (X12, X14 later killed by the partial wide run), 2 crashed at start (Z05, Z14: counted caught, no test id). Wide re-runs mostly NOT done (caps 100-300 s, -x). OPEN rows: Z01 (`startswith("[") and endswith("]")` -> `or` at loopback.py:27 survived both phases; maybe equivalent or a half-bracket test is missing); likely real test gaps Z11 (fakes_server.py:247 refusal), Z12 (fake_model_server.py:275 refusal), Z16, X01, X05, X19, Y17, Y18, Y19, Y25, Y28 (unverified reading of the runner). Its slips: one failed `sed -i` on a /dev path (wrote nothing), two orphan crash_desk.py killed (its own).
+**r7v builder ad52347a: RUNNING.** Its checkpoint: fixes edited; part A green (1062 passed); part B timed out at 480 s (9%), being split. No hand-back, no diff yet.
+**EV7U a9d71acd: RUNNING.** Full run (about 6200 tests) needs more than 60 min; the runner replaced its 3600 s timeout and put a watchdog to 18:40Z. Probe tables and before-run done. Result expected about 18:40-18:50Z.
+**Pushed:** commit "closeout save of the r7u chain evidence" (5685 small files, 91 MB, gitleaks clean on that folder; the merged tree-R7U NOT committed because gitleaks flagged 1975 matches, probably fixtures; it is rebuilt from the patches in fix/). git status --porcelain empty after the push.
+**Agents: 2 language-model running (EV7U, r7v). Disk 2.0 GB (95%).** Disk limit 1.5 GB not reached.
+**Not checked:** EV7U result; r7v result; a4 cause (failed once in the mutant baseline; passed in the guard run and in 6 single runs); the open mutant rows.
+ASK: none.
+
+
 ## STATUS (core lead) 17:51 UTC / 23:21 IST
 
 **LEAD ANSWER to block 96 APPLIED: OPTION 3. Core = RIGHT-SIZE. Nothing is built for "external sender". The posted video's take counts come from the lead's new script run_real_check_n8n.py; Mode A script and r7u are NOT on the video path. r7u/r7v packaging for PR 12 waits until the video is posted (after Wed 25); only the evidence files are kept.**
