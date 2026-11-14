@@ -1,5 +1,34 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 05:59 UTC / 11:29 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| ae16bd9e (r7h builder) | m1, m2, n1, three thread sites, my 05:48 note, and now M9-02 (your 05:54 order, sent to it at about 05:56) | fix-dont-defer | 05:20 / 10:50 | box ends about 06:10; may overrun because of the added work | r7h | RUNNING, NO HAND-BACK. Last checkpoint is still 05:52 "runsel at 63/81" (no newer line at 05:58). It has not yet acknowledged the M9-02 order in a checkpoint. The 05:46 patch in out/R7H is not final | hand-back; if the box ends without M9-02 done I start r7i right after |
+| aa54df08 (mail pass 9) | 30+ new mutants, mail/secret modules | fresh pass | 05:35 / 11:05 | box ends about 06:50 | pass 9 | RUNNING: 10 mutant rows so far (see below). The 900 s re-run on the 22-file set has NOT been reported yet (checkpoint has no line for it; it likely waits until the selector pass of a module ends). I cannot say whether M9-02 survives | mail-pass9-r7g.md |
+
+**Pass 9 rows so far (selector-set result, 240 s or 630 s limit, restore by sha OK on all):** KILLED 5: M9-01 (smtp_provider pre-network TLS context re-check removed), M9-04 (STARTTLS connection not wrapped, login in clear), M9-07 (phase 2 exception classed unreachable instead of maybe sent), M9-06 (final non-2xx reply classed refusal, retry safe, instead of maybe sent), M9-14 (X-Send-Key carries the per-attempt token). SURVIVED the selector set 5, each still to be re-run on the 22-file set at 900 s: M9-02 (password file read after the send counter; your 05:54 decision applies if it survives the big set), M9-08 (_wrap handshake gets no budget timeout), M9-12 (login accepted on any 2xx), M9-03 (provider timeout cap ignored, caller's timeout used), M9-18 (smtp_outbox: timeout 0 means a zero budget). None of the 5 is yet a finding: a selector-set survivor is only a candidate until the big-set re-run. No BADMUT, no timeout so far.
+
+I applied your M9-02 decision: builder told (queued message at about 05:56: one place orders read and validate secrets, then take the counter, then send; sweep imap_count, live_claude, crm_hubspot, smtp_outbox; new tests failing on r7g; mutant per path). If any other survivor also survives the big set, it joins the same batch; I will not wait for the builder to hand back before telling it.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| M9-02 and the other 4 survivors on the 22-file set | pass 9 has not reported them | read mail-pass9-r7g.md; I will message the builder at once for any that survive |
+| r7h final patch, EV7H, fresh r7h delta reviewer | builder running | start EV7H and reviewer together on the FINAL patch only |
+| the two EV7G facts (raw gaierror text, burst:4 exit 0 with errors) | with the builder | its RESULTS |
+| older packages' hashes (r2 to r6, v1, v2, F*, docs, f8) | no recorded hash | compare to build originals |
+| first clean-set CRASH, orphan-worker test, stray a<newline>b writer (not found) | no evidence | README |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Push the builder for a checkpoint now if none by about 06:05 (it is silent since 05:52), and at hand-back verify sha256 and RESULTS (M9-02 order fix, two EV7G facts), then start EV7H and the fresh delta reviewer together.
+2. Read the 22-file re-run results of the 5 survivors; each real gap goes to the builder or r7i; EQUIVALENT ones need the argument, which I check.
+3. On a clean pass: freeze, rewrite handover/core/fix/README.md, sweep agents and processes, report counts.
+
+
 ## STATUS (core lead) 05:53 UTC / 11:23 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
