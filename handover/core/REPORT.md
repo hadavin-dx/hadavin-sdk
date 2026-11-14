@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 04:39 UTC / 10:09 IST
+
+| id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| a89776f7 (r7g builder) | fixes the r7f review findings (2 Major, 2 minor, 1 nit) in one batch | review NOT CLEAN | 04:33 / 10:03 | 60 min box (about 05:33) | r7g | RUNNING: checkpoint 04:38 says netconnect fix, IMAP host check, load_driver stopped count and the line-433 probe are written, tests written, running next | EV7G, fresh reviewer, mail pass 9 |
+| add05263 (EV7F) | ONE full run of r7f (detached, wrapper log), then odd-file listing, mutants on r7f, hostile drivers | independent proof of r7f | 04:25 / 09:55 | full run started 04:37; 90 min box | EV7F n1 | RUNNING (full run) | read EV7F-EVIDENCE.md |
+| lanes A, B, C | wave-2 mutants on r7e | stopped by order | 03:56 | closed | wave 2 | ALL DONE, incomplete (see below) | none |
+
+**Lane C final (r7e, measured):** B04new KILLED (dropping the "+ 2" in the reply-cap test is caught by test_n3 [4096-single]); C01 (`buf.clear()` after the STARTTLS wrap removed) SURVIVED the full 22-file set plus r7d/r7e finding files (1172 passed, rc 0, 353 s): a real gap on r7e, claimed killed on r7f, EV7F re-runs it. C05, T03, T04, P01, P04, L03 not run. Two early results VOID (spec id collision: C01 and C05 exist in both spec files; the runner now picks the right one). Restore: src/, scripts/, load_tools/ identical to tree-R7E (diff empty). One of its first runs was killed by SIGTERM mid-mutant, left run_real_check.py planted, restored by copy from tree-R7E and diff-checked. Clean sets passed alone with a full summary: smtp_outbox 724 (143 s, rc 0 recorded), smtp_provider 1166 (412 s), tls_trust 433 (65 s), load_driver 1285 (330 s); rc recorded only for the first. The earlier clean-set CRASH (84 s, no failure text) is still NOT explained (dmesg shows no OOM line; other lanes ran at the same time).
+
+**Wave-2 totals on r7e (all lanes, measured, incomplete):** survived the full set: B02, A08, C01; survived the module set only (not re-run on the full set): G03, T01, T02, T03, T05; killed: B01, B03, B04new, F01, F03, G01, G02, T04 (plus the 24 earlier). Not run or no result: F02, P01, P04, L03, C05, E03, E05, E06, P02, A09-A15, A01 A02 A04 A06 A07. All are r7e facts; r7g makes them stale unless pass 9 re-runs them.
+
+**FOUND, NOT MINE TO KILL (machine load):** four orphan Python worker processes (pids 24504-24507, parent 1, 2 h 03 min old, about 78% CPU each, about 3 cores) hold the load average near 95 and slow every run (EV7F noted them too). Read-only inspection: working folder tree-EV7C, temp folder under out/EV7D, so they came from my earlier evidence runner EV7D (a test's worker pool left behind), not from a current agent. I tried to stop them by pid; the harness REFUSED it ("destructive or unwanted action") and I did not retry or work around it.
+ASK 1: may I stop those four pids (kill by pid, SIGTERM, only those four)? Default in 10 min: NO, I leave them and EV7F and EV7G run under that load (timing numbers inflated; I will say so). Reason to say yes: about 3 of 6 cores come back, and a full run on a quiet machine is your own order.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7g not finished or tested | builder in progress | EV7G on r7g alone; fresh reviewer; mail pass 9 |
+| r7f full run | EV7F running under load from the orphans | read EV7F-EVIDENCE.md |
+| mail pass 9 | waits for r7g so it tests the final code | 30+ mutants on the r7g snapshot, limits above clean times (smtp_provider 630 s, load_driver 510 s, imap 390 s) |
+| why the first clean-set CRASH happened | no evidence left | list as unexplained in the final README |
+| which test left the 4 orphan workers | not examined | find with a per-file process listing in EV7G |
+| PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, CI, README rewrite | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Get your answer on ASK 1, then EV7G (short evidence plus ONE full run) and a fresh whole-patch reviewer on r7g in parallel as soon as it lands.
+2. Mail pass 9 on r7g.
+3. Freeze on a clean pass; rewrite handover/core/fix/README.md; sweep agents and processes.
+
+
 ## STATUS (core lead) 04:35 UTC / 10:05 IST
 
 | id | what it does | why | started UTC/IST | expected end / left | round or retry | state | next action |
