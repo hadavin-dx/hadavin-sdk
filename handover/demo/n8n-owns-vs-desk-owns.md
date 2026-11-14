@@ -35,7 +35,7 @@ Plain claim, not stronger (a person who wrongly marks a follow-up "not sent" can
 | Stop n8n mid-flow (kill runs), a/b/c/d | reused stack | no kill row where no client lost its connection (0 of 15; b 0 of 13 valid rows, 2 attempts invalid). Stop while the CRM request is in flight: b 4 of 4, c 5 of 5, d 5 of 5 ended with 1 CRM row and 0 e-mails after one retry (the published expectation); variant a 1 of 5 (published 5 of 5, NOT reproduced). Stop at the two e-mail points (1 CRM row and 1 e-mail): c 10 of 10, d 10 of 10, b 9 of 9 valid, variant a 3 of 10 (published 9 of 10, NOT reproduced) |
 | Variant e, ten at once | reused (R2b) / fresh (R2c) | 5 of 5 / 25 of 25 bursts clean, status sent |
 | Variant e, kill at the two e-mail points | reused R2 / fresh R2b | a second CRM row: 1 of 10 / 1 of 50 (published 4 of 10, NOT reproduced); two or more e-mails: 10 of 10 / 50 of 50 (published 10 of 10, reproduced: the e-mail is sent again in every kill run) |
-| DESK, not n8n: crash scene D2 (e-mail sent, result not yet noted), keyed demo mail server | desk, this Linux machine, one run | one e-mail, follow-up `sent`, desk ended with exit code 137 |
+| DESK, not n8n: crash scene D2 (e-mail sent, result not yet noted), keyed demo mail server | desk, this Linux machine, three runs | one e-mail, follow-up `sent`, desk ended with exit code 137 |
 | DESK, not n8n: the same, blind demo mail server | desk, this Linux machine, one run | one e-mail, follow-up `unknown` (counts page: unknown follow-ups 1), desk exit code 137 |
 
 ## What follows, facts only
