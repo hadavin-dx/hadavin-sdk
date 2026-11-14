@@ -1,5 +1,24 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 10:53Z (16:23 IST) - D-FOCUS: Design A is the only job; smoke and T9 pass, kill chain running
+
+- Read D-FOCUS and your answer: native Postgres 16 stays (no image pull); the refused deletion is not retried or worked around; nothing deleted. Only Design A work runs now; Design B stays as it is for the compare.
+- Design A v2 (D-N2a), real n8n 2.46.6, one machine, made-up data, in my runs:
+  - M0 smoke PASS: both entries give verdict new then done on the repeat (no new work); an invalid e-mail gives review with no CRM write, no mail and no model call; 1 CRM row, 1 mail, 1 model call per lead; outside count (mail, CRM and model sets against the lead ids sent) has no extras.
+  - M1 burst PASS: 3 bursts of 10 same lead id on the production path: replies 1 new and 9 processing each time; 1 CRM row, 1 mail, 1 model call per lead; ledger rows 1 per lead. Sample: 3 leads.
+  - T9 PASS: three crafted inputs (line break plus Bcc in the e-mail field, a "to:" in the name, extra to/recipient fields) and a lead id with a line break and a Bcc header: every mail went to the constant recipient only, no Bcc header in any mail. FINDING: the lead id with the line break was ACCEPTED as a lead id (it reached the table and the CRM stand-in). It did no harm here, but the real flow should reject ids outside a safe pattern (review verdict). I will add that check in the next build.
+- RUNNING now, one test per fresh run, sample 8 per kill point first (the rest of the 20 later): T12, T10, T8, T11, T13, then kills K1 (after claim, before CRM), K2 (after CRM write, before mail), K3B (after mail_sent set, before delivery), K3 (after delivery, before table update), K4 (desk stage killed), K5 (Postgres killed). Test lease is 20 s (design value 120 s) so recovery fits in the run; stated in every result.
+- Desk endpoint for the cap + model call: none exists in the desk today; my wrapper (stage_server.py, my folder) calls the desk's own LiveQualifier and SpendLedger. For the take: ONE new endpoint, POST qualify (lead id in, label out, per-lead journal so a retry never calls the model twice, started-but-unanswered = unknown, no second call).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Kill numbers (first batch running), T4 timeouts 1/3/8 s with a 2 s node timeout against Design A, T7 secret grep, T1/T2/T3 re-run in Design A terms, lead id pattern check, README, N8N-START.md, real-node flows (HubSpot node, SMTP node), n8n 2.47.7 redaction check.
+- Mail count caveat: the SMTP node in n8n cannot set a custom header, so the lead id token is in the subject after the [demo] tag.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read T12, T10, T8, T11, T13 as they land; fix anything that fails.
+2. First kill numbers with sample sizes by about 12:00Z; then the second batch to reach 20 per point.
+3. T4, T7, README, N8N-START.md; then the real-node flows.
+
 ## Block 10:47Z (16:17 IST) - disk, Postgres, D-N2a flows status
 
 - Disk: NOT freed by deletion. The first delete of R2b scratch (run folders, by literal path) was refused by the permission classifier even after your OK, so I did not retry or work around it; nothing was deleted. Free space now about 420 MB of the allowance.
