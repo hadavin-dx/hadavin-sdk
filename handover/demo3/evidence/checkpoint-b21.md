@@ -38,3 +38,7 @@ Done: scripts (ps1 exit-5 mapping + $LASTEXITCODE reset, BASH_VERSINFO guard, ex
 
 ## Round 10 final checkpoint
 Tree b7841d401deeb3d19060bed139cd589d99ba018b (git add -A, not committed). Notes: lane3-fix-5-r10-notes.md (FAILED/UNCERTAIN first: full run had 7 failures from my copy having no .git; re-run of git-using files passes; rest of suite not re-run on the final tree). Patch lane3-fix-5-r10.patch + 4 parts, sha256 in raw/b21-r10-patch-sha256.txt.
+
+## Round 11 checkpoint 09:54Z
+Done: reset.sh (rows 2, 6, 7, 8, 9, 16, 17 code), reset.ps1 python block (row 2, text only, never run), README wording; row 5 per lead ruling (Windows path texts in tests/test_path_confinement.py built from parts, equality test, no exception added; hygiene scan 24 passed with gitleaks on PATH). Narrow run 1 showed 16 failures from my own script changes (old expectations): fixed tests (EPERM wording and no-wait check, fake-ps now counts stat calls and reaches pass 2, ps text fallback is now a named function-level test because a live process is read from /proc, exit 8 line, ps1 exit 8 count 4).
+Next: failing-before tests on b7841d40 (rows 1, 2, 6, 7, 8, 11, 14, 15, 16, 17), mutants, lint, one full run. Logs outside the tree: /home/user/work/b21-logs/r11/.
