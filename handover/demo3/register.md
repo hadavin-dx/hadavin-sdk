@@ -250,3 +250,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | RD3 (ac317eb4ce63dcca5) | STARTED 03:42Z | reader xdist port flake; expected ~03:57Z |
 | R8 | CLOSED 03:46Z | report saved evidence/review-lane3-fix-8-r1.md: 0 blocker, 1 major, 5 minor; resolve pending |
 | R9 | CLOSED 03:48Z | report saved evidence/review-lane3-fix-9-r1.md: 0 blocker, 0 major, 7 minor; resolve pending |
+| R5 | CLOSED 03:57Z | report saved evidence/review-lane3-fix-5-r5.md: 0 blocker, 2 major (reset.ps1 exit 7 vs README; reset.ps1 never run), 5 minor; resolve pending |
+| RD1, RD2, RD3 | CLOSED 03:57Z | reports on disk: evidence/reader-e3b.md, reader-pr12-e-marks.md, reader-xdist-flake.md (read by me only as hand-backs; files not yet read) |
+| R2 | CLOSED 04:00Z | report saved evidence/review-lane3-fix-2-r4.md: 1 blocker (doc claim), 1 major (strip), 9 minor; resolve pending |
+| B10 (aaf6651a2f49660eb) | STARTED 03:58Z | builder fix-8 r2 (F8-1..F8-6), tree b10-tree; checkpoints every 30 min, stop at 60 min (~04:58Z); then evidence runner + fresh reviewer |
+| B11 (ad525a7a963c03ea3) | STARTED 03:58Z | builder fix-9 r2 (F9-1,2,3,5), tree b11-tree; stop at 60 min (~04:58Z) |
