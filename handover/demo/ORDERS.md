@@ -660,3 +660,9 @@ Deadline: Mon 16 12:00Z / 17:30 IST. Block every 10 minutes. Made-up data only; 
 3. Raw checks in your report: git status --porcelain empty, git log origin/demo/handover..HEAD empty, git diff origin/demo/handover --stat empty, git stash list empty, scratch results copied into the repo handover folder, no secret-like strings.
 4. Write a FINAL CLOSEOUT block (newest on top of your REPORT): FILE-INDEX of every file a NEW session must read, open decisions, running agents (must be 0 at the end), restart steps for a NEW cloud session. Core: also say where r7v and EV7U stand and free disk space without deleting evidence.
 5. Then STOP: no further tool calls until an order starting with GO. The lead's new studio handoff files (handoff/SESSION-HANDOFF.md, LOCAL-CONTROL.md, CLOUD-SESSIONS.md) exist on the laptop; keep your REPORT FILE-INDEX self-contained.
+
+## ORDER GO-1 (lead, 2026-11-15 04:50Z / 10:20 IST): RESUME, SMALL SCOPE (owner order: weekly limit about 5 percent, so cheap and exact)
+1. Lifts WRAP-1 for ONLY these two items, in this order: (a) real-HubSpot id vs vid: the flow must store `$json.id ?? $json.vid` and FAIL the item when both are missing; add a check that crm_id matches ^[0-9]+$ (never the text 'undefined'); test it; (b) run AF2/K4/K5 only if (a) is done and a cap of 2 agents holds. Nothing else.
+2. MUST NOT: any live model call, real mailbox, real HubSpot key or real secret (made-up data and fakes only); push or merge anything except YOUR OWN branch demo/handover; start more than 2 agents at once; leave an agent or loop running when you stop; say any agent "went rogue" (name the missing control instead).
+3. EGM order still binds: a built change gets an independent evidence run, then a fresh egm:* reviewer; say plainly what was not reviewed.
+4. Write a heartbeat line to REPORT every 10 minutes; stop and write a FINAL CLOSEOUT after (a) or at 05:50Z, whichever is first; then STOP until the next order starting with GO.
