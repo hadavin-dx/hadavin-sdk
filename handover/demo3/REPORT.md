@@ -1,3 +1,11 @@
+## CORRECTION + FINAL STATE 05:11Z (2026-11-15), after STOP-2: one earlier line in my closeout was wrong
+
+CORRECTION: my STOP-2 closeout said "0 processes running". That was incomplete: one background shell of mine (the first Postgres-start command of GO-1, which also ran a slow search over the whole disk) was still listed as running. I had killed the search but not the shell task. It is now stopped. Checked afterwards: no run script, fake mail/CRM/stage server, n8n, Postgres or agent of mine is running (ps shows none). Agents 0, loops 0, shells 0.
+EVERYTHING FOR THE LEAD IS IN THE REPO (branch demo/lane3): REPORT.md (this block and the STOP-2 closeout below it), kill/PLAN-GO1.md, kill/make_go1.py, kill/flows-go1/ (fixed recovery flow, one new start trigger and one SQL), kill/run_p.sh (version 5 = fixed flows), kill/data/results.jsonl and kill/data/runs/go1-* (raw rows and logs of the four GO-1 runs), evidence/go1/ (the stopped agent's raw output: file diff, SQL review, one fixed KS run at 60 s; the mutant run never finished).
+RESULT (unchanged): old v4 KS alert at 750 s; fixed flows 60 s in 3 of 3 runs, B90 on fixed flows 1 alert at 120 s. NOT reviewed (no egm:* reviewer ran), no mutant result, two-instance case not tested, not imported into the demo flows, no second alert channel (open item).
+STOPPED: no further tool calls until an order starting with GO.
+
+---
 ## FINAL CLOSEOUT, ORDER STOP-2 05:09Z (2026-11-15): GO-1 withdrawn mid-way; 0 agents, 0 processes running
 
 STATUS: stopped by order. Evidence runner agent stopped (TaskStop), run scripts, fakes, n8n and Postgres stopped. Counts: agents 0, loops 0, run scripts 0 (a pgrep count of 2 was my own shell matching its own command line).

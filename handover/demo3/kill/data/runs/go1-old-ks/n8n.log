@@ -1,0 +1,113 @@
+Initializing n8n process
+n8n ready on 127.0.0.1, port 5690
+n8n Task Broker ready on 127.0.0.1, port 5679
+Failed to start Python task runner in internal mode. because its virtual environment is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: https://docs.n8n.io/hosting/configuration/task-runners/#setting-up-external-mode
+
+There are deprecations related to your n8n setup. Please take the recommended actions to update your configuration:
+ - N8N_UNVERIFIED_PACKAGES_ENABLED -> The default for this variable will change to `false` in a future version. Set it to `true` explicitly to keep installing unverified community packages.
+ - N8N_RUNNERS_MODE -> Internal task runner mode is deprecated and will be removed in a future version. For isolation and scaling, run the task runner launcher as a separate process, set this variable to `external` and share `N8N_RUNNERS_AUTH_TOKEN` with the launcher. See https://docs.n8n.io/deploy/host-n8n/configure-n8n/set-up-task-runners
+ - N8N_RUNNERS_TASK_TIMEOUT -> The default for this variable will be reduced from 300 (5 minutes) to 60 (1 minute) in a future version. Set it explicitly to keep your current task timeout.
+ - N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES -> The default for this variable will be reduced from 2 GiB to 256 MiB in a future version. Set it explicitly to keep your current limit.
+ - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES -> The default for this variable will be reduced from 5000 to 1000 in a future version. Set it explicitly to keep your current limit.
+ - Running n8n outside a container is deprecated. Future versions will require running n8n via the official Docker image. See https://docs.n8n.io/deploy/host-n8n
+
+[license SDK] Skipping renewal on init: license cert is not initialized
+Registered runner "JS Task Runner" (cIHs9l2SJb3NmfcAUf7JK) 
+Seeded the system trusted source
+Generated new OAuth access-token signing key
+Instance registered
+Cluster aligned on version 2.46.6
+Discovered 4 cluster checks
+Recorded version change: (none) -> 2.46.6
+Generated new instance OAuth JWE key pair
+Sandbox: enabled=false provider=n8n-sandbox (from env)
+Received request for unknown webhook: The requested webhook "GET mf-form" is not registered.
+404 The requested webhook "GET mf-form" is not registered.
+Version: 2.46.6
+Building workflow dependency index...
+Scheduler started
+
+Editor is now accessible via:
+http://127.0.0.1:5690
+Request failed with status code 403
+AxiosError: Request failed with status code 403
+    at settle (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:2530:12)
+    at IncomingMessage.handleStreamEnd (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:4772:11)
+    at IncomingMessage.emit (node:events:526:24)
+    at endReadableNT (node:internal/streams/readable:1783:12)
+    at processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:6308:43)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at requestWithResponseLimit (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:52:10)
+    at invokeWithChallengeAuth (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:30:10)
+    at invokeAxios (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:10:10)
+    at sendHttpRequest (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/request.ts:237:5)
+    at httpRequest (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/request.ts:201:10)
+    at Object.request (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/outbound-http.ts:216:12)
+    at paginatedRequest (/home/user/work/kill-n8n/node_modules/n8n/src/utils/strapi-utils.ts:90:15)
+    at McpRegistryApiClient.fetchAllServers (/home/user/work/kill-n8n/node_modules/n8n/src/modules/mcp-registry/registry/mcp-registry-api.client.ts:38:19)
+
+Error fetching from Strapi API (https://api.n8n.io/api/mcp-servers): Request failed with status code 403
+A system task run failed
+Received request for unknown webhook: The requested webhook "GET mf-form" is not registered.
+404 The requested webhook "GET mf-form" is not registered.
+Finished building workflow dependency index. Processed 0 draft workflows, 4 published workflows.
+Received request for unknown webhook: This webhook is not registered for GET requests. Did you mean to make a POST request?
+404 This webhook is not registered for GET requests. Did you mean to make a POST request?
+Initializing n8n process
+n8n ready on 127.0.0.1, port 5690
+n8n Task Broker ready on 127.0.0.1, port 5679
+Failed to start Python task runner in internal mode. because its virtual environment is missing from this system. Launching a Python runner in internal mode is intended only for debugging and is not recommended for production. Users are encouraged to deploy in external mode. See: https://docs.n8n.io/hosting/configuration/task-runners/#setting-up-external-mode
+
+There are deprecations related to your n8n setup. Please take the recommended actions to update your configuration:
+ - N8N_UNVERIFIED_PACKAGES_ENABLED -> The default for this variable will change to `false` in a future version. Set it to `true` explicitly to keep installing unverified community packages.
+ - N8N_RUNNERS_MODE -> Internal task runner mode is deprecated and will be removed in a future version. For isolation and scaling, run the task runner launcher as a separate process, set this variable to `external` and share `N8N_RUNNERS_AUTH_TOKEN` with the launcher. See https://docs.n8n.io/deploy/host-n8n/configure-n8n/set-up-task-runners
+ - N8N_RUNNERS_TASK_TIMEOUT -> The default for this variable will be reduced from 300 (5 minutes) to 60 (1 minute) in a future version. Set it explicitly to keep your current task timeout.
+ - N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES -> The default for this variable will be reduced from 2 GiB to 256 MiB in a future version. Set it explicitly to keep your current limit.
+ - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES -> The default for this variable will be reduced from 5000 to 1000 in a future version. Set it explicitly to keep your current limit.
+ - Running n8n outside a container is deprecated. Future versions will require running n8n via the official Docker image. See https://docs.n8n.io/deploy/host-n8n
+
+[license SDK] Skipping renewal on init: license cert is not initialized
+Registered runner "JS Task Runner" (jHHf-imkEdQv6cJOSqcvr) 
+Instance registered
+Cluster aligned on version 2.46.6
+Discovered 4 cluster checks
+Sandbox: enabled=false provider=n8n-sandbox (from env)
+Received request for unknown webhook: This webhook is not registered for GET requests. Did you mean to make a POST request?
+404 This webhook is not registered for GET requests. Did you mean to make a POST request?
+Currently active workflows:
+   - Lead desk main frame: CRM + mail (sub-workflow) (ID: subflow0000000001)
+   - Lead desk main frame: form entry (ID: form000000000001)
+   - Lead desk main frame: e-mail-style entry (ID: hook000000000001)
+   - Lead desk main frame: recovery (every 30 s) (ID: recov00000000001)
+Marked executions as `crashed`
+[Recovery] Logs available, amended execution
+Found unfinished executions: 3
+This could be due to a crash of an active workflow or a restart of n8n
+Version: 2.46.6
+Building workflow dependency index...
+Scheduler started
+Finished building workflow dependency index. Processed 0 draft workflows, 0 published workflows.
+
+Editor is now accessible via:
+http://127.0.0.1:5690
+Request failed with status code 403
+AxiosError: Request failed with status code 403
+    at settle (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:2530:12)
+    at IncomingMessage.handleStreamEnd (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:4772:11)
+    at IncomingMessage.emit (node:events:526:24)
+    at endReadableNT (node:internal/streams/readable:1783:12)
+    at processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/node_modules/axios/dist/node/axios.cjs:6308:43)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at requestWithResponseLimit (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:52:10)
+    at invokeWithChallengeAuth (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:30:10)
+    at invokeAxios (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/invoke.ts:10:10)
+    at sendHttpRequest (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/request.ts:237:5)
+    at httpRequest (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/axios/request.ts:201:10)
+    at Object.request (/home/user/work/kill-n8n/node_modules/@n8n/backend-network/src/http/outbound-http.ts:216:12)
+    at paginatedRequest (/home/user/work/kill-n8n/node_modules/n8n/src/utils/strapi-utils.ts:90:15)
+    at McpRegistryApiClient.fetchAllServers (/home/user/work/kill-n8n/node_modules/n8n/src/modules/mcp-registry/registry/mcp-registry-api.client.ts:38:19)
+
+Error fetching from Strapi API (https://api.n8n.io/api/mcp-servers): Request failed with status code 403
+A system task run failed
