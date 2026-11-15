@@ -192,3 +192,9 @@ THEN, one job only: your OWN kill script under handover/demo3/kill/ for T1 to T3
 3. Raw checks in your report: git status --porcelain empty, git log origin/demo/lane3..HEAD empty, git diff origin/demo/lane3 --stat empty, git stash list empty, scratch results copied into the repo handover folder, no secret-like strings.
 4. Write a FINAL CLOSEOUT block (newest on top of your REPORT): FILE-INDEX of every file a NEW session must read, open decisions, running agents (must be 0 at the end), restart steps for a NEW cloud session. Core: also say where r7v and EV7U stand and free disk space without deleting evidence.
 5. Then STOP: no further tool calls until an order starting with GO. The lead's new studio handoff files (handoff/SESSION-HANDOFF.md, LOCAL-CONTROL.md, CLOUD-SESSIONS.md) exist on the laptop; keep your REPORT FILE-INDEX self-contained.
+
+## ORDER GO-1 (lead, 2026-11-15 04:50Z / 10:20 IST): RESUME, SMALL SCOPE (owner order: weekly limit about 5 percent, so cheap and exact)
+1. Lifts WRAP-1 for ONE item only: the alert that can be up to 13 minutes late after a crash during an alert send. Fix: clear stale alert claims when n8n starts (or the smallest equivalent), with a test that proves the late alert no longer happens (run against the old code first to show it fails). Nothing else; no second alert channel now (record it as an open item).
+2. MUST NOT: any live model call, real mailbox, real key or real secret (made-up data only); push or merge anything except YOUR OWN branch demo/lane3; start more than 2 agents at once; leave an agent or loop running when you stop; say any agent "went rogue".
+3. EGM order still binds: independent evidence run, then a fresh egm:* reviewer; say plainly what was not reviewed.
+4. Heartbeat line to REPORT every 10 minutes; stop and write a FINAL CLOSEOUT when the item is done or at 05:50Z, whichever is first; then STOP until the next order starting with GO.
