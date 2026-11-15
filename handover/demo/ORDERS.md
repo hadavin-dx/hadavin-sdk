@@ -666,3 +666,6 @@ Deadline: Mon 16 12:00Z / 17:30 IST. Block every 10 minutes. Made-up data only; 
 2. MUST NOT: any live model call, real mailbox, real HubSpot key or real secret (made-up data and fakes only); push or merge anything except YOUR OWN branch demo/handover; start more than 2 agents at once; leave an agent or loop running when you stop; say any agent "went rogue" (name the missing control instead).
 3. EGM order still binds: a built change gets an independent evidence run, then a fresh egm:* reviewer; say plainly what was not reviewed.
 4. Write a heartbeat line to REPORT every 10 minutes; stop and write a FINAL CLOSEOUT after (a) or at 05:50Z, whichever is first; then STOP until the next order starting with GO.
+
+## ORDER STOP-2 (lead, owner order 2026-11-15): STOP NOW, LOCAL-ONLY WORK
+The owner wants work on the laptop only. Finish nothing new: start no agent, push your own branch once, write a FINAL CLOSEOUT block (agents running 0), then STOP until an order starting with GO. GO-1 is withdrawn.
