@@ -1,3 +1,9 @@
+## MISTAKE FOUND AND FIXED 05:11Z: I pushed four n8n working folders by accident (commit d7cccdcf)
+
+WHAT: while copying the GO-1 run logs I also copied each run's n8nhome folder (about 54 MB each, 4 folders). Each holds that run's throwaway n8n config (with the encryption key n8n generated for that run), a database with stand-in credentials only (made-up values: loopback fake servers, no real key, no real mailbox), and n8n's own cache. No real secret was involved, but it is secret-shaped and large, and it does not belong in git.
+FIXED: removed from the branch in the next commit (git rm; only logs events.jsonl, mails.jsonl, crm/stage/smtp logs stay under kill/data/runs/go1-*).
+NOT FIXED, needs the lead/owner: the files stay in the git HISTORY of demo/lane3 (about 220 MB) because I may not rewrite history or force-push. Decision for the lead: leave it (all values are made-up run-local stand-ins) or have the branch deleted and re-created without them. I did not touch any other branch.
+---
 ## CORRECTION + FINAL STATE 05:11Z (2026-11-15), after STOP-2: one earlier line in my closeout was wrong
 
 CORRECTION: my STOP-2 closeout said "0 processes running". That was incomplete: one background shell of mine (the first Postgres-start command of GO-1, which also ran a slow search over the whole disk) was still listed as running. I had killed the search but not the shell task. It is now stopped. Checked afterwards: no run script, fake mail/CRM/stage server, n8n, Postgres or agent of mine is running (ps shows none). Agents 0, loops 0, shells 0.
