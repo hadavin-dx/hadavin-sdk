@@ -7,7 +7,7 @@ LANE=$1; WAIT=$2; shift 2
 for spec in "$@"; do
   v=${spec%%:*}; r=${spec#*:}; c=${r%%:*}; l=${r#*:}
   grep -q "\"label\": \"$l\"" $K/results.jsonl && continue
-  if [ $v = 4 ]; then FC=7709d058-v4; FP=$K/probe-v4; else FC=6ebb7f62-v3; FP=$K/probe-v3; fi
+  if [ $v = 5 ]; then FC=go1-v4-clearclaims; FP=$K/probe-go1; elif [ $v = 4 ]; then FC=7709d058-v4; FP=$K/probe-v4; else FC=6ebb7f62-v3; FP=$K/probe-v3; fi
   LANE=$LANE FLOW_COMMIT=$FC FLOW_PROBE=$FP python3 v3.py $l $c > $K/last-run-p$LANE.out 2>&1
   echo "$(date -u +%H:%M:%SZ) lane$LANE v$v $c:$l ($FC) rc=$?" >> $K/run_all.progress
 done

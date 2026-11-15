@@ -1,3 +1,12 @@
+## HB-GO1-1 04:52Z (2026-11-15): ORDER GO-1 started 04:47Z, stop 05:50Z. One item: alert 13 min late after an n8n kill during the alert send.
+
+STATUS: Postgres restarted (data folder owner was reset by the sandbox restart; fixed with chown). Fix built: kill/make_go1.py adds to the demo v4 recovery flow an "n8n started" trigger plus one SQL that clears stale alert claims (alert_until, alert_token) for unsent alerts in state unknown/failed. Files: kill/flows-go1/.
+RUNNING NOW (2 run scripts, 0 agents): lane 0 = KS on the OLD v4 flows (proof it fails again, expect about 780 s); lane 1 = KS on the FIXED flows (expect 1 alert soon after restart, well under 12 min). Each takes about 13 min at worst.
+NEXT: B90 on the fixed flows (must still be exactly 1 alert), then an EVIDENCE RUNNER agent, then a fresh egm reviewer. Then FINAL CLOSEOUT by 05:50Z.
+OPEN ITEMS (named): no second alert channel now (by order). Two n8n instances at once (T11) is NOT tested; the start-up clear could duplicate an alert there (a claim another live instance still holds).
+NOT DONE / NOT CHECKED: everything above is not yet measured.
+
+---
 ## FINAL CLOSEOUT, ORDER WRAP-1 done, re-stamped 18:30Z (first written 17:54Z) - lane3 branch demo/lane3: everything committed and pushed; 0 agents, 0 processes running
 
 STATUS: all my work is in the repo on demo/lane3. Postgres, run scripts, fakes and n8n are stopped (pgrep count 0). No agent is running. Nothing is secret-like (scanned: no key or private-key patterns).
