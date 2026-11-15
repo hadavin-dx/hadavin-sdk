@@ -49,7 +49,7 @@ def sub():
          iff("LabelOk", "={{ ['hot','warm','cold'].includes($json.label) && !$json.unknown_model }}", "boolean", "true", None, [440, -60]),
          (hubspot("CrmUpsert", [660, -60]) if REAL else None) or http("CrmUpsert", "={{ $env.MF_CRM_URL }}/upsert", "={{ { hadavin_lead_id: %s, email: $('SubIn').first().json.email, label: $('Qualify').first().json.label } }}" % KEY, [660, -60], True, errout=True),
          pg("SetCrmId", "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "={{ [%s, String($json.id ?? $json.vid ?? ''), %s] }}" % (KEY, TOK), [880, -60]),
-         iff("CrmIdOk", "={{ String($('CrmUpsert').first().json.id ?? $('CrmUpsert').first().json.vid ?? '') }}", "string", "notEmpty", None, [990, 60]),   # v5: no id AND no vid in the CRM answer = same failure path as a CRM refusal (OutStage)
+         iff("CrmIdOk", "={{ /^[0-9]+$/.test(String($('CrmUpsert').first().json.id ?? $('CrmUpsert').first().json.vid ?? '')) }}", "boolean", "true", None, [990, 60]),   # v5: no id AND no vid in the CRM answer = same failure path as a CRM refusal (OutStage)
          iff("OwnsClaim1", "={{ $json.lead_key }}", "string", "notEmpty", None, [1100, -60]),
          pg("MailClaim", "UPDATE mf_leads SET mail_sent=true, updated_at=now() WHERE lead_key=$1 AND claim_token=$2 AND mail_sent=false AND state='processing' RETURNING lead_key;", "={{ [%s, %s] }}" % (KEY, TOK), [1320, -60]),
          iff("MailRowBack", "={{ $json.lead_key }}", "string", "notEmpty", None, [1540, -60]),

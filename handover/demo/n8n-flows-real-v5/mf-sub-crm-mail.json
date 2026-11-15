@@ -143,11 +143,11 @@
      "conditions": [
       {
        "id": "c1",
-       "leftValue": "={{ String($('CrmUpsert').first().json.id ?? $('CrmUpsert').first().json.vid ?? '') }}",
+       "leftValue": "={{ /^[0-9]+$/.test(String($('CrmUpsert').first().json.id ?? $('CrmUpsert').first().json.vid ?? '')) }}",
        "rightValue": null,
        "operator": {
-        "type": "string",
-        "operation": "notEmpty",
+        "type": "boolean",
+        "operation": "true",
         "singleValue": true
        }
       }
