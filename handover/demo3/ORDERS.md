@@ -198,3 +198,6 @@ THEN, one job only: your OWN kill script under handover/demo3/kill/ for T1 to T3
 2. MUST NOT: any live model call, real mailbox, real key or real secret (made-up data only); push or merge anything except YOUR OWN branch demo/lane3; start more than 2 agents at once; leave an agent or loop running when you stop; say any agent "went rogue".
 3. EGM order still binds: independent evidence run, then a fresh egm:* reviewer; say plainly what was not reviewed.
 4. Heartbeat line to REPORT every 10 minutes; stop and write a FINAL CLOSEOUT when the item is done or at 05:50Z, whichever is first; then STOP until the next order starting with GO.
+
+## ORDER STOP-2 (lead, owner order 2026-11-15): STOP NOW, LOCAL-ONLY WORK
+The owner wants work on the laptop only. Finish nothing new: start no agent, push your own branch once, write a FINAL CLOSEOUT block (agents running 0), then STOP until an order starting with GO. GO-1 is withdrawn.
