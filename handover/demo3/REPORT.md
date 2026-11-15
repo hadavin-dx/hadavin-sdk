@@ -1,3 +1,10 @@
+## HB-GO1-2 04:59Z: fixed flow works in the first run; checks continue
+
+STATUS: KS on the FIXED flows: alert at 60 s after the start of the run (kill at 40 s, restart at 46 s), counts alert 1, intake mail 1, alert_sent true, state unknown (row: kill/data results label go1-fix-ks). KS on the OLD v4 flows (lane 0, label go1-old-ks) was still waiting at 04:57Z with the claim set until 05:06:31Z (late, as before); final row due about 05:10Z.
+RUNNING (1 agent, 2 run scripts): agent = EVIDENCE RUNNER (lane 2: diff of the flow files, KS rerun on fixed flows, one mutant); lane 0 = old KS; lane 1 = B90 on fixed flows, then KS repeat. Plan: kill/PLAN-GO1.md.
+NOT DONE / NOT CHECKED: B90 on fixed flows; second KS repeat; mutant; reviewer; two-instance case (T11) will not be run.
+
+---
 ## HB-GO1-1 04:52Z (2026-11-15): ORDER GO-1 started 04:47Z, stop 05:50Z. One item: alert 13 min late after an n8n kill during the alert send.
 
 STATUS: Postgres restarted (data folder owner was reset by the sandbox restart; fixed with chown). Fix built: kill/make_go1.py adds to the demo v4 recovery flow an "n8n started" trigger plus one SQL that clears stale alert claims (alert_until, alert_token) for unsent alerts in state unknown/failed. Files: kill/flows-go1/.
