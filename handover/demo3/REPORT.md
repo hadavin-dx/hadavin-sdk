@@ -1,3 +1,13 @@
+## FINAL CLOSEOUT, ORDER STOP-2 05:09Z (2026-11-15): GO-1 withdrawn mid-way; 0 agents, 0 processes running
+
+STATUS: stopped by order. Evidence runner agent stopped (TaskStop), run scripts, fakes, n8n and Postgres stopped. Counts: agents 0, loops 0, run scripts 0 (a pgrep count of 2 was my own shell matching its own command line).
+MEASURED (my harness, made-up data; raw rows kill/data/results.jsonl, raw agent output evidence/go1/): KS = kill n8n during the alert send. OLD v4 flows: alert at 750 s, 1 alert, 1 intake mail (go1-old-ks; the earlier n=2 runs were 780 s). FIXED flows (kill/flows-go1: n8n "started" trigger + one SQL clearing unsent alert claims): alert at 60 s in 3 of 3 runs (go1-fix-ks, go1-fix-ks2, and the agent's ev-go1-ks), 1 alert and 1 intake mail each. B90 (hold 90 s, no kill) on fixed flows: 1 alert at 120 s, no duplicate (1 run).
+NOT DONE / NOT CHECKED: the agent was stopped before its mutant run finished (no mutant result), so "the test fails without the SQL" is shown only by old-flows vs fixed-flows, not by a mutant. No egm:* reviewer ran, so the fix is NOT reviewed. Two n8n instances at once (T11) not tested; the clear at start could duplicate an alert there. No second alert channel (open item by order). The flow file was not imported into the real demo; it is only under kill/flows-go1.
+OPEN DECISIONS (lead): take kill/flows-go1/mf-recovery.json (or make_go1.py) into the demo flows, then review; run T11.
+FILES: kill/make_go1.py, kill/flows-go1/, kill/PLAN-GO1.md, kill/run_p.sh (version 5), evidence/go1/.
+STOPPED: no further tool calls until an order starting with GO.
+
+---
 ## HB-GO1-2 04:59Z: fixed flow works in the first run; checks continue
 
 STATUS: KS on the FIXED flows: alert at 60 s after the start of the run (kill at 40 s, restart at 46 s), counts alert 1, intake mail 1, alert_sent true, state unknown (row: kill/data results label go1-fix-ks). KS on the OLD v4 flows (lane 0, label go1-old-ks) was still waiting at 04:57Z with the claim set until 05:06:31Z (late, as before); final row due about 05:10Z.

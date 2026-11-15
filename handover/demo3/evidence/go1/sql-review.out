@@ -1,0 +1,12 @@
+== ClaimStuck
+UPDATE mf_leads SET claimed_until=now() + interval '120 seconds', claim_token=gen_random_uuid()::text, attempts=attempts+1, updated_at=now() WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts < 3 ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5) RETURNING lead_key, email, claim_token;
+== MarkFailed
+UPDATE mf_leads SET state=CASE WHEN mail_sent THEN 'unknown' ELSE 'failed' END, updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;
+== AlertClaim
+UPDATE mf_leads SET alert_until=now() + interval '720 seconds', alert_token=gen_random_uuid()::text, alert_attempts=alert_attempts+1 WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state IN ('unknown','failed') AND alert_sent=false AND (alert_until IS NULL OR alert_until < now()) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5) RETURNING lead_key, state, alert_token;
+== AlertBackoff
+UPDATE mf_leads SET alert_until=now() + interval '60 seconds' * LEAST(alert_attempts, 5) WHERE lead_key=$1 AND alert_token=$2 AND alert_sent=false RETURNING lead_key;
+== AlertMark
+UPDATE mf_leads SET alert_sent=true, updated_at=now() WHERE lead_key=$1 AND alert_token=$2 AND alert_sent=false RETURNING lead_key;
+== ClearStaleAlertClaims
+UPDATE mf_leads SET alert_until=NULL, alert_token=NULL WHERE alert_sent=false AND alert_token IS NOT NULL AND state IN ('unknown','failed') RETURNING lead_key;

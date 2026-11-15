@@ -1,0 +1,59 @@
+--- v4
++++ go1
+@@ -69,2 +69,13 @@
+       "node": "AlertClaim",
++      "type": "main"
++     }
++    ]
++   ]
++  },
++  "OnN8nStart": {
++   "main": [
++    [
++     {
++      "index": 0,
++      "node": "ClearStaleAlertClaims",
+       "type": "main"
+@@ -332,2 +343,38 @@
+    "typeVersion": 2.5
++  },
++  {
++   "name": "OnN8nStart",
++   "parameters": {
++    "events": [
++     "init"
++    ]
++   },
++   "position": [
++    -200,
++    600
++   ],
++   "type": "n8n-nodes-base.n8nTrigger",
++   "typeVersion": 1
++  },
++  {
++   "alwaysOutputData": false,
++   "credentials": {
++    "postgres": {
++     "id": "PG_CREDENTIAL_ID",
++     "name": "n8n-publish-pg"
++    }
++   },
++   "name": "ClearStaleAlertClaims",
++   "onError": "continueRegularOutput",
++   "parameters": {
++    "operation": "executeQuery",
++    "options": {},
++    "query": "UPDATE mf_leads SET alert_until=NULL, alert_token=NULL WHERE alert_sent=false AND alert_token IS NOT NULL AND state IN ('unknown','failed') RETURNING lead_key;"
++   },
++   "position": [
++    40,
++    600
++   ],
++   "type": "n8n-nodes-base.postgres",
++   "typeVersion": 2.5
+   }
+ADDED NODES {'OnN8nStart', 'ClearStaleAlertClaims'} REMOVED set()
+CONN keys v4 ['AlertClaim', 'AlertRow', 'AlertSend', 'ClaimStuck', 'Every30s', 'StuckRow']
+CONN keys go1 ['AlertClaim', 'AlertRow', 'AlertSend', 'ClaimStuck', 'Every30s', 'OnN8nStart', 'StuckRow']
+CONN CHANGED OnN8nStart null -> {"main": [[{"node": "ClearStaleAlertClaims", "type": "main", "index": 0}]]}

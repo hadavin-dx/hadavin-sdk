@@ -1,0 +1,4 @@
+374c374
+<     "query": "UPDATE mf_leads SET alert_until=NULL, alert_token=NULL WHERE alert_sent=false AND alert_token IS NOT NULL AND state IN ('unknown','failed') RETURNING lead_key;"
+---
+>     "query": "UPDATE mf_leads SET alert_until=NULL, alert_token=NULL WHERE alert_sent=true RETURNING lead_key;"
