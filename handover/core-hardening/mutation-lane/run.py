@@ -726,7 +726,9 @@ def helper_env() -> dict:
     return {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "LC_ALL": "C"}
 
 
-HELPER_TIMEOUT = 300  # seconds for one git or patch call (r9 minor 2); `--helper-timeout` changes it
+HELPER_TIMEOUT = (
+    300  # seconds for one git or patch call (r9 minor 2); `--helper-timeout` changes it
+)
 
 
 def run_cmd(
@@ -1195,8 +1197,10 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str, bool]:
         if differs:
             return (
                 False,
-                f"STILL PLANTED: {m['file']} differs from the backup kept by a run that used another TMPDIR; "
-                f"restore with: TMPDIR={parent} python3 {sys.argv[0]} --root {root} --restore",
+                (
+                    f"STILL PLANTED: {m['file']} differs from the backup kept by a run that used another TMPDIR; "
+                    f"restore with: TMPDIR={parent} python3 {sys.argv[0]} --root {root} --restore"
+                ),
                 True,
             )
         notes.append(
@@ -1206,9 +1210,11 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str, bool]:
         return True, "; ".join(notes), True
     return (
         True,
-        f"no marker in {STATE} or in {sorted(map(str, spots - {here}))}: nothing is recorded as planted, but WITHOUT a "
-        f"marker this CANNOT TELL whether a file is still planted (a lost marker, or a run that used another state "
-        f"folder, for example another TMPDIR)",
+        (
+            f"no marker in {STATE} or in {sorted(map(str, spots - {here}))}: nothing is recorded as planted, but WITHOUT a "
+            f"marker this CANNOT TELL whether a file is still planted (a lost marker, or a run that used another state "
+            f"folder, for example another TMPDIR)"
+        ),
         False,
     )
 
@@ -1293,7 +1299,10 @@ def verify_against_git(
     (exit 3) and the first differing files are named."""
     diffs = diff_trees(expected_ref, root, extra)
     if not diffs:
-        return True, "the tree equals the git archive given with --sha: no file is planted or changed"
+        return (
+            True,
+            "the tree equals the git archive given with --sha: no file is planted or changed",
+        )
     return False, (
         f"the tree differs from the git archive given with --sha in {len(diffs)} file(s), first: {diffs[:5]}: a mutant may "
         f"still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each"
@@ -1415,15 +1424,22 @@ def discard_marker(
             continue
         try:
             m = loads_json(read_state(path))
-            note, settled = stop_orphan(m, root) if isinstance(m, dict) else ("no test group recorded", True)
+            note, settled = (
+                stop_orphan(m, root) if isinstance(m, dict) else ("no test group recorded", True)
+            )
         except (Refused, ValueError, OSError):
-            note, settled = "the marker could not be read: its test group, if any, was not looked for", True
+            note, settled = (
+                "the marker could not be read: its test group, if any, was not looked for",
+                True,
+            )
         if not settled:
             return False, f"marker NOT discarded: {note}; stop that test group by hand first"
         notes.append(f"{path.name}: {note}")
         unlink_state(path)
     unlink_state(STATE / f"{key}.backup")
-    return True, "marker and backup discarded (" + "; ".join(notes) + "). A folder that was renamed away is NOT checked"
+    return True, "marker and backup discarded (" + "; ".join(
+        notes
+    ) + "). A folder that was renamed away is NOT checked"
 
 
 def test_env(pythonpath: str | None) -> dict:
@@ -2297,7 +2313,9 @@ def main():
         ap.error("--helper-timeout must be at least 1")
     HELPER_TIMEOUT = a.helper_timeout
     if a.discard_marker and not (a.restore and a.sha):
-        ap.error("--discard-marker needs --restore and --sha (git must confirm the files are original)")
+        ap.error(
+            "--discard-marker needs --restore and --sha (git must confirm the files are original)"
+        )
     repo_given = a.repo is not None
     default_repo = str(pathlib.Path(__file__).resolve().parent)
     if not a.restore or repo_given or a.sha:
@@ -2415,7 +2433,9 @@ def main():
                 raise Refused(
                     f"--raw {rawdir} lies inside --root {root}: refused (it would change the scratch tree)"
                 )
-            if rawdir.resolve().is_relative_to(STATE.resolve()):  # before anything is created there (r9 N4 gap)
+            if rawdir.resolve().is_relative_to(
+                STATE.resolve()
+            ):  # before anything is created there (r9 N4 gap)
                 raise Refused(
                     f"--raw {rawdir} lies in the state folder {STATE}: refused (a file written there could pose as a marker)"
                 )

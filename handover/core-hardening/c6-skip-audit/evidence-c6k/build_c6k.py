@@ -140,7 +140,7 @@ edit("rs41a", "RS", OLD["rs41a"], "Voice over one card, four short lines.", "Car
 edit("rs41b", "RS", "", "Line 1, claim, spoken: \"A lead sent twice with the same id is processed once. Not claimed: a second send after a gap longer than the lease, the 45 seconds for which a lead stays reserved to its first run.\" Line 2, alerts, spoken: \"We do not claim that alerts always arrive quickly.\" Line 3, retention, spoken: \"The made-up name and address sent to n8n stay in n8n's saved runs until n8n's pruning removes them; we did not measure how long that takes.\" Line 4, not tested, spoken: \"Not tested: other mailboxes or CRMs, a Slack alert, other lease settings. One machine, made-up people, our own runs.\"",
      "Exact speakable lines (c6j design review M2 and M4): line 1 gets the lease sentence; old lines 2 and 3 (80 kills, recovery time) are cut because the K3B 'mail left' wording is false and the recovery line contradicts the data; the alert line says only what is not claimed, which also agrees with the withdrawn 13-minute line (row for run sheet line 82); retention says node data as well as the request body because the take saves every run.",
      [("MF", "def k3b"), ("RS", "Added 17:40Z (lead note, lane3 HB189)"), ("ORD", "Q21.2:")],
-     dep="Q1, Q2, L-LEASE, L-SAVE", span=("Line 1, claim: a lead sent twice", "own runs."))
+     dep="Q1, L-LEASE, L-SAVE", span=("Line 1, claim: a lead sent twice", "own runs."))
 edit("rs41c", "RS", OLD["rs41c"], "NO NUMBER on the card. The V7 kill series, the lane3 144.3 s figure and the lane3 B90 alert counts are not shown; they belong to stand-in flows, not to the take.",
      "Matches the card text after the previous edit.", [("RS", "| 12. Closing card |")], dep="Q1")
 edit("rs44", "RS", "- Core scenes 1 to 10 and 12:",
@@ -275,3 +275,4 @@ for i, e in enumerate(EDITS, 1):
 NUM = {e["key"]: e["n"] for e in EDITS}
 json.dump(EDITS, open(C6 + "/evidence-c6k/edits.json", "w"), indent=1)
 print("edits", len(EDITS))
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'report_c6k.py')).read())
