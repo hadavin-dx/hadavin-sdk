@@ -940,3 +940,14 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 678 L5ac r5: layered notes. FIXED by READ FIRST r5.
 - 679 L4c r5: quarantine list incomplete. FIXED by QUARANTINE LIST r5 (checked by grep, 16 Nov).
+
+- 680 L1c r8: severity and terms inconsistent. FIXED by CURRENT r8 (rows not rewritten, TO DO).
+- 681 merged-findings r5: legend not standalone. FIXED by CURRENT LEGEND r6.
+- 682 premortem r8: owner and gate undefined. FIXED by CURRENT r8.
+- 683-685 decision-list r8, end-delete-cases r8, L3c r6, L5ac r6, L4c r6: completed, hand-backs NOT seen after compaction; re-read in this round.
+
+- 683 end-delete-cases r8: list source undefined. FIXED by CURRENT r8.
+- 684 L3c r6: four glossaries conflict. FIXED by GLOSSARY r6.
+- 685 decision-list r8: body stale. FIXED by CURRENT r8 (rows not rewritten, TO DO).
+- 686 L4c r6: next list sends reader to real-run. FIXED by CURRENT r6.
+- 687 L5ac r6: stacked terms. FIXED by GLOSSARY r6.
