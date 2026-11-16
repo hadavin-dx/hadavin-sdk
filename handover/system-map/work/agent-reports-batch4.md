@@ -2305,3 +2305,20 @@ CLASS NOTE 6: the t19 pages (1964, 1968, 1969) all stop on terms only the studio
 1976 | work/t19-and-stored-data-steps.md (a86a8f23c7c622958): 3 Blockers (status log not steps; no way to run T19; F8 has no actor) + 3 Majors.
 1977 | work/plan-resolve-r1.md (a1af3d537a1c3e2e3): 1 Blocker (table is only id-to-section pointers) + 4 Majors (count 16 vs 15, resolved vs not re-reviewed, terms, banner).
 CLASS NOTE 7: all 8 pages are scratch notes that depend on other files or on studio-head terms. Same class as NOTES 4 and 6. Next: fix the board and REPORT pages (owned, readers named exact lines); add a "what this note is" opening line to scratch notes only if cheap.
+1978 | work/GLOSSARY.md (a898f6245f1d3d6cd): 2 Blockers ("lead" in two senses; D-04 defined at line 5 and contradicted at line 67; V5 has two definitions) + 5 Majors (stray instruction, studio head vs owner, "my" voice, no whom-to-ask, L5a/L5b no instruction).
+1979 | work/open-items-table.md (ae2366846104e0056): 3 Blockers (L6/L19 blocking rules contradict; L19 unreadable; 4b order repeat) + 5 Majors.
+1980 | work/owner-timeline-draft.md (a1005e613cda7574b): 4 Blockers (retire check, n8n removal, 6-digit number NOT RECORDED; A13 defined twice; row numbers do not match the terms line; "never deletes" vs row 9 "Screen says delete") + 5 Majors.
+1981 | work/decision-list-for-lead.md (a2ffb834d3109cd1f): 3 Blockers (answer format reads backwards; two glossaries conflict; "decisions file" vs decisions/D04-D05.md) + 6 Majors.
+1982 | work/end-delete-cases.md (a3ac5dff556d0702d): 3 Blockers (L5 dense; old steps not shown; L16 unreadable) + 5 Majors.
+1983 | work/critical-path-r1.md (adfda4f1245e8a47b): 2 Blockers (notice time 01:30 vs 22:30 wording; 30 min after setup unexplained) + 4 Majors.
+CLASS NOTE 8: GLOSSARY and decision-list still carry duplicate or conflicting definitions (D-04, V5, take, app-role). Fix at the choke point: one definition per term in GLOSSARY, other pages cite it.
+1984 | ARCHITECTURE-AUDIT-CHECKLIST.md (a72fcc5be81ee8695): 3 Blockers (ledger path differs line 2 vs 22 and 9 columns not listed; no root for the copy path; 25 map fields with no template) + 6 Majors (R454, brain, preamble, claims check undefined; reviewer lenses not tied to egm:* names; round cap contradicts; handoff file unnamed). Same three Blockers as digest 1963; fix next.
+1985 | work/merged-findings.md (add363aac0efb40b8): 4 Blockers (line 2 promises a coverage table that does not exist; terms marked "term undefined" are not marked; DECISION lines 7, 14-17 not quoted; severity table not defined) + 5 Majors. DECISION-line facts go to LEAD-NOTICE.
+1986 | work/L2c.md (a3581953b992c41b3): 2 Blockers (E9/B6c rerun rows unnamed; line 3 cited but blank) + 4 Majors.
+1987 | work/row-dm-plain.md (a5bb360a002aad2af): 2 Blockers (C1, E2, F, "line 555 item 9" not defined; "state unknown with alerts == 1" unexplained) + 4 Majors. Needs studio-lead terms.
+1988 | work/not-checked-r2.md (a96d9d77a74216c18): 2 Blockers (row 6 gate or not; run order and starter missing) + 6 Majors. Fixable: row 6 wording, F2 cell, row 4 pass condition.
+1989 | work/t19-gap-facts.md (a7224f04ff2311172): 3 Blockers (page not usable alone; 14 undefined labels; premortem unreadable) + 5 Majors. Same class as NOTE 6.
+1990 | work/L1.md (aaa1c032c76d16e40): 3 Blockers (summary counts vs table; scope path of "decision 1" not recorded; DECISION line N not quoted) + 4 Majors. Same class as NOTE 5.
+1991 | work/review-r460-tools.md (a05f86ed5a4ffee29): 2 Blockers (compressed list, no definitions or paths; B4 holds six defects) + 3 Majors.
+1992 | work/L1c.md (ac9d86384e04fa8cd): 3 Blockers (DECISION sentences not quoted; Status block lacks the next step and date; FD-001 severity contradicts itself) + 4 Majors. Same class as NOTE 5.
+1993 | ARCHITECTURE-AUDIT-CHECKLIST.md re-read (ab0187d4d1c873c2e): 2 Blockers (fill path private; ledger location contradictory) + 8 Majors. Both Blockers edited this turn (ledger path with both locations; in-repo fill path). Checklist is now at round 3: cap rule applies, no further reader unless Blocker-only.
