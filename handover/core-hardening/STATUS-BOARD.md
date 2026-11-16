@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:29:00Z
+UPDATED_UTC: 2026-11-16T10:31:00Z
 SESSION: core-hardening
 ORDER: 021 + decisions 10:02Z; 024; lead answers Q14/Q15/Q18 applied
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: 3dcae981
 ITEMS_TOTAL: 13
 ITEMS_OPEN: 8
 PERCENT: 93
-AGENTS_RUNNING: 9
-CAPACITY: load 1.1 of 4 cores, mem 1.0 of 15.7 GB used, disk 9.3 GB free (76% used, limit 90%), 9 light + 0 heavy agents (run.py r3 and C7b fix may run tests, 1 at a time)
+AGENTS_RUNNING: 7
+CAPACITY: load 1.1 of 4 cores, mem 1.0 of 15.7 GB used, disk 9.0 GB free (77% used, limit 90%), 7 light + 0 heavy agents
 INTERRUPTED: none
-FAILED: run.py round 2 reviews: 2 majors (pytest-args denylist bypassable: @file, clustered flags, --collect-only; round-1 comparison run contaminated from T23 so M5 tests unproven on old code) plus stale lint evidence and MUTANTS-V2-PLAN aimed at v2 patches not v5 -> r3 fix running. C3b v5 round 2: no blocker, 3 majors (P-4b stand-in recipe and uid filter unproven, 7000-word lead paragraph, no patched-plan how-to) -> fix running. v10 owner sheet: security 11 majors, naive 3 blockers 12 majors -> v11 building (money/secret path, uncapped). C7b evidence: 5 majors (real id-vs-command-withheld bug at gate.py:671) -> fix running. Real-v5 edit list v6 built, not yet independently reviewed (2 reviewers running). Nothing run with n8n, pwsh, shellcheck, WSL.
-NEXT: save C7b fix, v11, C13, C14, C3b facts review hand-backs; v11 reviewers (security uncapped) then C12 stranger read; review run.py r3, C3b v6, v6 edit list findings; ask lead Q16/Q17 still open; disk watch.
-PUSHED_UTC: 2026-11-16T10:29:00Z
+FAILED: run.py round 2 reviews: 2 majors (pytest-args denylist bypassable: @file, clustered flags, --collect-only; round-1 comparison run contaminated from T23 so M5 tests unproven on old code) plus stale lint evidence and MUTANTS-V2-PLAN aimed at v2 patches not v5 -> r3 fix running. C3b v5 round 2: no blocker, 3 majors (P-4b stand-in recipe and uid filter unproven, 7000-word lead paragraph, no patched-plan how-to) -> fix running. v10 owner sheet: security 11 majors, naive 3 blockers 12 majors -> v11 building (money/secret path, uncapped). C7b evidence: 5 majors (real id-vs-command-withheld bug at gate.py:671) -> fix running. Real-v5 edit list v6 built, not yet independently reviewed (2 reviewers running). C3b v5 facts review: 4 majors (acceptance rule proves text only, R2 checks leader pid only, LEAD-GO is procedural not a control, positive control narrower than claimed) -> sent to C3b fix. C14 claims check: no numeric mismatch; E repeat "8 min" vs 5 min in plan, 153/173 only in v6, OWNER-STEPS v3 line 75 still says port 5678. Nothing run with n8n, pwsh, shellcheck, WSL.
+NEXT: save C7b fix, v11, C13 and reviewer hand-backs; v11 reviewers (security uncapped) then C12 stranger read; review run.py r3 and C3b v6; Q16/Q17 open; disk watch.
+PUSHED_UTC: 2026-11-16T10:31:00Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
@@ -30,15 +30,13 @@ PUSHED_UTC: 2026-11-16T10:29:00Z
 | C10 | who-types-what table | in v9 | 80 | steps-edits/OWNER-STEPS-realrun-v9.md | being reviewed |
 | C11 | HubSpot probe step | in v9 (step 0 kept as 7-call probe) | 80 | steps-edits/OWNER-STEPS-realrun-v9.md | |
 
-## AGENTS (9 running; lanes per ORDER 021 menu)
+## AGENTS (7 running; lanes per ORDER 021 menu)
 | id | role / lane | model | what it does | started UTC | expected end UTC | state |
 |---|---|---|---|---|---|---|
 | ad55bf1459157f7b6 | builder C7b evidence fix | sonnet | M1-M4, W1-W5, flake fix patch | 10:23Z | 11:25Z | running |
-| a14e2038899f56310 | builder v11 owner sheet | sonnet | closes v10 security/naive/citation findings | 10:26Z | 11:30Z | running |
-| ab6c726bf9e49f0c6 | (a) C3b v5 facts reviewer | sonnet | facts angle | 10:26Z | 10:50Z | running |
+| a14e2038899f56310 | builder v11 owner sheet | sonnet | closes v10 findings | 10:26Z | 11:30Z | running |
 | ad99f5923a31656c5 | C13 re-smoke gate rows | sonnet | 2 gate rows plus psql count | 10:28Z | 11:10Z | running |
-| aca989fd9a0f65563 | (b) C14 claims check | sonnet | plan numbers and dates | 10:28Z | 11:00Z | running |
 | a935be1660a498231 | builder run.py r3 | sonnet | args allowlist, clean R1 evidence, lint | 10:29Z | 11:30Z | running |
 | a3f5e0e1cfd50c6be | (a) v6 edit list reviewer A | sonnet | followable | 10:29Z | 10:55Z | running |
 | a2c560752aadd80b3 | (a) v6 edit list reviewer B | sonnet | facts | 10:29Z | 10:55Z | running |
-| a9781b6572c9be99f | builder C3b v5 fix | sonnet | M-1..M-3 and minors | 10:29Z | 11:25Z | running |
+| a9781b6572c9be99f | builder C3b v5 fix | sonnet | readiness and facts majors | 10:29Z | 11:25Z | running |
