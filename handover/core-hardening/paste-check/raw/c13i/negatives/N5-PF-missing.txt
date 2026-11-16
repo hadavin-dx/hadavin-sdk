@@ -1,0 +1,13 @@
+NEGATIVE N5-PF-missing  setup: rm $PF  VARX: 
+##### b34
+STOP PF: the plan file PF (/z/hbroot/egm/duplicate-proof-lead-desk/wp6/plan-wp6-resmoke-v5.md) does not exist or is a symbolic link (a link could send a change to another file). Next: do A8 (copy the patched plan); if PF is a link, tell the builder, then aside "$PF" and do A8 again (every fill made 
+##### b34 exit=1
+##### b31
+STOP PF: the plan file PF (/z/hbroot/egm/duplicate-proof-lead-desk/wp6/plan-wp6-resmoke-v5.md) does not exist or is a symbolic link (a link could send a change to another file). Next: do A8 (copy the patched plan); if PF is a link, tell the builder, then aside "$PF" and do A8 again (every fill made 
+##### b31 exit=1
+##### b35
+STOP PF: the plan file PF (/z/hbroot/egm/duplicate-proof-lead-desk/wp6/plan-wp6-resmoke-v5.md) does not exist or is a symbolic link (a link could send a change to another file). Next: do A8 (copy the patched plan); if PF is a link, tell the builder, then aside "$PF" and do A8 again (every fill made 
+##### b35 exit=1
+##### b37
+STOP C9: C7 is not clean. Next: run C7.
+##### b37 exit=1

@@ -1,0 +1,12 @@
+NEGATIVE N8c-P4b-changed-after-control  setup: echo "# edit" >> $PS/P-4b.sh  VARX: 
+##### b27
+dash syntax ok
+STOP C2c: the first line of the control file does not hold the checksum of P-4b.sh. Next: make the control file again (C2b step 4).
+##### b27 exit=1
+##### b36
+dash syntax ok
+STOP C2c: the first line of the control file does not hold the checksum of P-4b.sh. Next: make the control file again (C2b step 4).
+##### b36 exit=1
+##### b37
+STOP C9: the P-4b files do not pass C2c. Next: run C2c and fix.
+##### b37 exit=1

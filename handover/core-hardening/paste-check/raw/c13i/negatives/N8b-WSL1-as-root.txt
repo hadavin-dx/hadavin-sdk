@@ -1,0 +1,6 @@
+NEGATIVE N8b-WSL1-as-root  setup: :  VARX: HBW=/z/hbroot
+##### b22
+/z/hbroot/_local/scratch/wp6-smoke/pastes
+user: root uid=0 (must not be 0)
+STOP C2b: wrong folder, root user, or dash -n failed. Next: fix it (HBW line, user, P-4b.sh), run WSL-1 again.
+##### b22 exit=1

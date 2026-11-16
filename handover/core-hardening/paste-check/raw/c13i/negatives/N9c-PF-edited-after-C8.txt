@@ -1,0 +1,4 @@
+NEGATIVE N9c-PF-edited-after-C8  setup: echo "extra line" >> $PF  VARX: 
+##### b37
+STOP C9: C8 has not printed ok for this PF (no proof-c8.txt, or PF changed after C8). Next: run C7 and C8 again.
+##### b37 exit=1

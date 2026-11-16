@@ -1,0 +1,4 @@
+NEGATIVE N9e-PF-missing-C9-but-C6-not-run  setup: rm -f $WK/proof-c6.txt  VARX: 
+##### b37
+STOP C9: C6 has not printed ACCEPT for this PIN. Next: do C6.
+##### b37 exit=1

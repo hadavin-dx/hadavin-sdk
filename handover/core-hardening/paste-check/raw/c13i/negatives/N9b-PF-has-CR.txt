@@ -1,0 +1,8 @@
+NEGATIVE N9b-PF-has-CR  setup: sed -i "5s/\$/\r/" $PF  VARX: 
+##### b34
+counts 0 0 2 1 (must be 0 0 2 1); CR=1 (0); first 3 bytes in hex=232057 (BOM if efbbbf); distinct 40-character shas: 1 (1, and equal to PIN)
+STOP C7: PF holds 1 carriage returns. Next: close the editor, run: sed -i 's/\r$//' "$PF" , then C7 again.
+##### b34 exit=1
+##### b37
+STOP C9: C7 is not clean. Next: run C7.
+##### b37 exit=1

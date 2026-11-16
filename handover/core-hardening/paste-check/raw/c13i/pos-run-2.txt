@@ -1,0 +1,54 @@
+##### b31
+rows filled by this run: 20 (20 the first time; 0 on a repeat is fine if open is 0)
+rows still open: 0 (must be 0)
+CR count: 0
+ok C4: now run: accept 6
+##### b31 exit=0
+##### blocks/x-accept1.sh
+3:LEAD-FILL 6
+287:LEAD-FILL 6
+(end of list; CR count in PF: 0, must be 0)
+##### blocks/x-accept1.sh exit=0
+##### blocks/x-accept6.sh
+(end of list; CR count in PF: 0, must be 0)
+##### blocks/x-accept6.sh exit=0
+##### b32
+known
+== n8n_start.sh
++refused: new wording
+== n8n_kill.py
++refused: new wording
++    return 3
+== end
+##### b32 exit=0
+##### b33
+ACCEPT
+---- the n8n_kill.py part, read it:
+== n8n_kill.py
++refused: new wording
++    return 3
+== end
+##### b33 exit=0
+##### b34
+counts 0 0 2 1 (must be 0 0 2 1); CR=0 (0); first 3 bytes in hex=232057 (BOM if efbbbf); distinct 40-character shas: 1 (1, and equal to PIN)
+ok C7
+##### b34 exit=0
+##### b35
+names in PF (count, name):
+      3 nlite-fix3
+      1 nlite-fix4
+     15 nlite-fix5
+      1 nlite-int
+      1 nlite-int-r5
+      1 take/n8n.lock
+      1 take/n8n.pid
+      2 take/nlite-int-r3
+      1 take/nlite-int-r4
+      9 take/nlite-int-r5
+ok C8
+##### b35 exit=0
+##### b36
+dash syntax ok
+P-4b files ok
+ok C8b: stand-in gone for the current control file
+##### b36 exit=0
