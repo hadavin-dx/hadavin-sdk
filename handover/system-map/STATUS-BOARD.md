@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:24:15Z
-PUSHED_UTC: 2026-11-16T13:24:15Z
+UPDATED_UTC: 2026-11-16T13:27:30Z
+PUSHED_UTC: 2026-11-16T13:27:35Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 at this beat (8 helpers started at this beat; the 10 before them have all finished).
-CAPACITY nproc=4 load=0.25 disk: 20G free
-NEXT: hand-backs digested through 1066 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+AGENTS_RUNNING: 8 of 8 at this beat (8 helpers started at this beat; the 8 before them have all finished).
+CAPACITY nproc=4 load=0.19 disk: 18G free
+NEXT: hand-backs digested through 1100 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,17 +46,16 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| ad576cdc7209b6992 | cold read of work/open-items-table.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| ab28b366a91f68aad | cold read of work/premortem-r1.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| a9d7a54ef747145bd | cold read of work/t19-gaps-r2.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| aa7f7eb8a8eb1fc10 | cold read of work/not-checked-r2.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| a5f63a566d81d2c9c | cold read of work/merged-findings.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| a829d6e1e38382d27 | cold read of work/L1c.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| a9aa7fb1dd2a569ec | cold read of work/L2.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| aaef35722e46f4db5 | cold read of work/t19-gap-facts.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
-| a0264045726c186e5 | cold read of work/owner-timeline-draft.md | 2026-11-16T13:24:15Z | about +5 min | running | nothing yet |
+| a03edc5c4a532cc8a | cold read of work/BRIEF-EVIDENCE-1.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
+| a184020b9c1a85adc | cold read of work/BRIEF-EVIDENCE-2.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
+| a0057135b5bdad762 | cold read of work/README-old.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
+| a8ae89ddf440f1064 | cold read of work/drift-report.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
+| a1959d9bfe736d85d | cold read of work/evidence-1.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
+| a6fbd0c0fdab7d950 | cold read of work/evidence-2.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
+| a2798c00deb657ae8 | cold read of work/banned-claims-review-r1.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
+| a40ded41a649c63a3 | cold read of work/o7-resolve-1.md | 2026-11-16T13:27:30Z | about +5 min | running | nothing yet |
 
-The earlier cold reads finished; their reports are digested as lines 1013-1066 in work/agent-reports-batch4.md.
+The earlier cold reads finished; their reports are digested as lines 1013-1100 in work/agent-reports-batch4.md.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
