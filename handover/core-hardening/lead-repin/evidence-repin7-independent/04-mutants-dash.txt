@@ -12,3 +12,4 @@ m11 := rule broken: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1382 
 m12 awk blob 24->240: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1378 failed=19 (the made-up input and output files were deleted) (116s)
 m13 umask 077->022: occurrences_replaced=1 SURVIVED exit=0 SELF-TEST: passed=1398 failed=0 (the made-up input and output files were deleted) (64s)
 m14 git hooksPath removed: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1397 failed=1 (the made-up input and output files were deleted) (67s)
+m15 git gpg.program removed: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1397 failed=1 (the made-up input and output files were deleted) (66s)

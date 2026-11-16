@@ -14,7 +14,7 @@ b top
 /^(([^:]+[:-])?[0-9]+[-:])?[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]+["']?[[:space:]]*:|^--$/b top
 s/^(([^:]+[:-])?[0-9]+[-:])?.*/\1<masked>/
 }
-/-----BEGIN [A-Z ]*(PRIVATE|SECRET|ENCRYPTED)[A-Z ]*-----/{
+/-----BEGIN [A-Z ]*(PRIVATE|SECRET)[A-Z ]*-----/{
 /-----END /!{
 s/(-----BEGIN [A-Z ]*-----).*/\1<masked>/
 :pem
