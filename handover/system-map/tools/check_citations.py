@@ -6,8 +6,9 @@ CITE = re.compile(r'`?([\w./\-]+):(\d+)\s+"([^"\n]{6,120})"`?')
 
 
 def check(root, path, line, quote, window=5):
-    full = os.path.join(root, path)
-    if not os.path.isfile(full):
+    base = os.path.realpath(root)
+    full = os.path.realpath(os.path.join(base, path))
+    if os.path.isabs(path) or not full.startswith(base + os.sep) or not os.path.isfile(full):
         return "NO-FILE"
     try:
         with open(full, "r", encoding="utf-8", errors="replace") as fh:
@@ -35,7 +36,7 @@ def main(root, out, files):
     for r in rows:
         counts[r[3]] = counts.get(r[3], 0) + 1
     print(counts, "total", len(rows))
-    return 0 if set(counts) <= {"FOUND"} else 1
+    return 0 if rows and set(counts) == {"FOUND"} else 1
 
 
 if __name__ == "__main__":

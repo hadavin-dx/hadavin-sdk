@@ -6,7 +6,8 @@ LANE_HEADS = ["Coverage", "Components", "Stores", "Workflows", "Workflow walk", 
               "Credentials", "Docs and tests and folders", "Findings", "Checkpoint"]
 KEYS = ["STORE", "LOG", "FILTER", "COUNTER", "RETRY", "NOTICE", "OTHER"]
 SECRETS = [r"AKIA[0-9A-Z]{16}", r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"ghp_[A-Za-z0-9]{36}",
-           r"xox[baprs]-[A-Za-z0-9-]{10,}", r"sk-[A-Za-z0-9]{20,}",
+           r"xox[baprs]-[A-Za-z0-9-]{10,}", r"sk-[A-Za-z0-9_-]{20,}", r"github_pat_[A-Za-z0-9_]{20,}", r"gh[ours]_[A-Za-z0-9]{30,}",
+           r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", r"[Bb]earer [A-Za-z0-9._~+/=-]{20,}",
            r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}"]
 ALLOWED = {"AKIAIOSFODNN7EXAMPLE", "noreply@anthropic.com"}
 STATUS = {"READ", "SKIMMED", "NOT-READ"}
@@ -94,7 +95,14 @@ def secrets(name, text):
     d = []
     for pat in SECRETS:
         for m in re.finditer(pat, text):
-            if m.group(0) not in ALLOWED:
+            v = m.group(0)
+            if v in ALLOWED:
+                continue
+            if "@" in v and re.search(r"@(?:[a-z0-9-]+\.)*(?:example\.(?:com|org|net|test)|invalid|test|localhost)$", v):
+                continue  # reserved made-up domains (RFC 2606)
+            if v.startswith("sk-") and sum(c.isupper() or c.isdigit() for c in v) < 6:
+                continue  # an identifier such as sk-address-required-after-v2, not a key
+            if True:
                 d.append(f"{name}: secret-like value of type {pat[:20]}")
     return d
 
@@ -112,11 +120,11 @@ def run(base):
                 defects += owner_count(t)
             if f in OUT_HEADS:
                 defects += empty_fields(f, t, OUT_HEADS[f])
-    for root, _, files in os.walk(base):
-        if os.sep + "tests" in root or os.sep + "tools" in root:
-            continue
+    skip = {os.path.realpath(os.path.join(base, "tests")), os.path.realpath(os.path.join(base, "tools"))}
+    for root, dirs, files in os.walk(base):
+        dirs[:] = [d for d in dirs if os.path.realpath(os.path.join(root, d)) not in skip and d != "__pycache__"]
         for f in files:
-            if f.endswith((".md", ".tsv")):
+            if f.endswith((".md", ".tsv", ".json", ".patch", ".txt", ".py", ".sh", ".sql", ".yml", ".yaml", ".env")):
                 defects += secrets(os.path.relpath(os.path.join(root, f), base),
                                    open(os.path.join(root, f), encoding="utf-8", errors="replace").read())
     return defects
