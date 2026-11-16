@@ -1,0 +1,24 @@
+banned strings in test list: 10
+OWNER-STEPS-realrun-v13.md: banned=0 PENDING/TBD/TODO=0 bracketed-UNVERIFIED=0 bytes=28609
+OWNER-DAY-CARD-v13.md: banned=0 PENDING/TBD/TODO=0 bracketed-UNVERIFIED=0 bytes=8636
+OWNER-STEPS-v13-APPENDIX.md: banned=0 PENDING/TBD/TODO=0 bracketed-UNVERIFIED=0 bytes=27356
+v13-CHANGES.md: banned=0 PENDING/TBD/TODO=0 bracketed-UNVERIFIED=1 bytes=8208
+v13-OPEN-FOR-LEAD.md: banned=0 PENDING/TBD/TODO=0 bracketed-UNVERIFIED=0 bytes=5522
+step headings found in sheet: ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', 'A.0', 'A.0b', 'A.1', 'A.2', 'A.3', 'A.4', 'A.5', 'A.6', 'B', 'C.1', 'C.2', 'C.3', 'D', 'E', 'E.0', 'F', 'F.1', 'F.2', 'F.3', 'F.4', 'F.5', 'G', 'H', 'I', 'I.0', 'I.1', 'I.2', 'I.3', 'I.4', 'I.5', 'I.6', 'I.7', 'J', 'T']
+run card rows in appendix 2: 1 .. 23 count 23
+appendix sections 1 .. 17 17
+go items: ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+money rule items: ['1', '2', '3', '4', '5', '6']
+ban list items in appendix 8: 13
+sheet says full list of 13
+S 18:29 UTC = 23:59 IST 3
+C 18:29 UTC = 23:59 IST 1
+S 25 Nov 2026 15:00 UTC = 20:30 IST 2
+C 25 Nov 2026 15:00 UTC = 20:30 IST 1
+23 rows mentions 1
+removed phrase 'exit 3 only' 0
+removed phrase 'or 60 minutes after' 0
+removed phrase 'full list of 12' 0
+removed phrase 'appendix G' 0
+removed phrase 'only when C is unknown' 0
+TOTAL PROBLEMS 0
