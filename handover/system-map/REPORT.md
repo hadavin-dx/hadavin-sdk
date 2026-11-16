@@ -10,7 +10,8 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L3 | audit demo3 evidence, tools, scratch (1420 files, mostly skimmable patch chains) | 06:53 | +60 min | running |
 | LANE-L4 | audit rest of handover/demo (1659 files, mostly scan outputs) | 06:53 | +60 min | running |
 | LANE-L5a | audit .claude, .github, demos, docs, tools, root files (111 files) | 06:53 | +60 min | running |
-| LANE-L5b | audit src and tests (core, out of take scope; job-key grep) (376 files) | 06:53 | +60 min | running |
+| LANE-L5b | audit src and tests (core, out of take scope; job-key grep) (376 files) | 06:53 | +60 min | closed (reported: PARTIAL by design, all SKIMMED, 79/79 own citations found, 11 findings) |
+| PR3-impl | egm-implementation-readiness sonnet, PLAN-002 v3 round 3 | 06:57 | +10 min | running |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
 ## Status 2026-11-16 06:50 UTC / 12:20 IST - ORDER 002 plan v2 written
