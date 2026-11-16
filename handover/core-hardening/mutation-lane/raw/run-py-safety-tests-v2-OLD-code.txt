@@ -109,3 +109,8 @@ no marker: nothing to restore
   PASS: T15 orphan stopped
   PASS: T15 file restored
 == T16 SIGHUP restores too (exit 129)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 74: kill: (27097) - No such process
+  exit code 0
+  FAIL: T16 exit 129
+  PASS: T16 file restored
+== T17 --restore while a run is live is refused (lock)
