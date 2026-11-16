@@ -67,3 +67,35 @@ ok   M1: reviewer line 'P.a.t C.l.a.u.d.e, 2026-11-16' is exit 4 with the review
 ok   f8-r5: reviewer line 'Pat Smith, 2026-11-16' is accepted (would-be pass with the override: exit 5) (got exit 5)
 ok   f8-r5: reviewer line 'O'Brien, 2026-11-16' is accepted (would-be pass with the override: exit 5) (got exit 5)
 ok   f8-r5: reviewer line 'Aiden Botha, 2026-11-16' is accepted (would-be pass with the override: exit 5) (got exit 5)
+ok   f8-r5: reviewer line 'Zed Smith, 2026-11-16' is accepted (would-be pass with the override: exit 5) (got exit 5)
+ok   M1: with the test flag AND a pin override, a 'Testonly ...' name is accepted and the run is exit 5, never 0 (got exit 5)
+ok   M1: the mirror run printed the combined flows sha256 (needed to build the stand-in pins below)
+ok   M1: 'Testonly Reviewer, 2026-11-16' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'Test Reviewer, 2026-11-16' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'Runall Standin, 2026-11-16' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'TBD., 2026-11-16' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'Claude-Code, 2026-11-16' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1 (honesty check): a made-up human-looking name in the real pin place IS accepted, exit 0: the script cannot know who read the pin; it only turns away stand-ins (got exit 0)
+ok   B3: test flag plus a leaked TAKE_CHECK_CK (and the pin override) is exit 5 with the FINAL line saying 5, not exit 0 (got exit 5)
+ok   B3: TAKE_CHECK_FLOWS and --flows both set is exit 2 (got exit 2)
+ok   B3: a folder taken from TAKE_CHECK_FLOWS is printed as coming from the variable (got exit 5)
+ok   B3: a folder given with --flows is printed as given with --flows
+ok   snapshot order: a flow file written by the first python3 read is caught (got exit 4)
+ok   sha256sum failure: exit 4 with a loud line, no empty hash (got exit 4)
+ok   B4: with nobody holding the lock, run_all.sh --lock-only takes it, exits 0 and leaves no lock file in TMPDIR (got exit 0)
+ok   M2: a second run_all.sh on a locked raw folder is refused, exit 2
+ok   M2: the same raw folder with a DIFFERENT TMPDIR is refused, exit 2
+ok   M2: the same raw folder given through a symbolic link (and another TMPDIR) is refused, exit 2
+ok   M2: the same raw folder given as a relative path from another folder is refused, exit 2
+ok   M2: the same raw folder given with a double slash, a link and .. is refused, exit 2
+ok   M2: a DIFFERENT raw folder is not blocked by that lock (exit 0)
+ok   M2: no lock file was left in either TMPDIR
+ok   RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit 2)
+ok   Q5: a checker that exits 3 is shown as 3 and the take exits 3 (got exit 3)
+ok   Q5: a checker that exits 4 is shown as 4 and the take exits 3 (got exit 3)
+ok   Q5: a checker that exits 127 is shown as 127 and the take exits 3 (got exit 3)
+ok   Q5: a checker that exits 137 is shown as 137 and the take exits 3 (got exit 3)
+ok   Q5: --write-warn-pin with a checker that exits 127 writes nothing and exits 3 (got exit 3)
+ok   count: mf-form.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+ok   count: mf-hook.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+test_take_check: 100 of 100 cases as expected, 0 not as expected
