@@ -176,3 +176,4 @@ Review file: reviews/take-checklist-reader-r63.md (15 Majors). Fix report: revie
 1x Major 13: item 20 has one default and one LEAD DECIDES; item references written in full.
 1x Major 14: missing IST pairs added outside the frozen block.
 1x Major 15: ACCEPTED count rule written: PASS if 1 or 2.
+- r64 TAKE-CHECKLIST fixer: B1-B4, M1-M8 edited by text (see fix-takechecklist64.md); RUNBOOK step 18 switching sentence and RUNBOOK section 10 (h) left for the lead; static, untested.
