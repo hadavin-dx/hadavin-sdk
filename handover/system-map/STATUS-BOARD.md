@@ -49,15 +49,15 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- ae6c813ac85811aad READ-OWNER-VIEW: fresh read after edit; next: fix Blockers/Majors
-- a168f649f69c5bb7b READ-RUN-DAY-CARD: fresh read; next: fix findings
-- a7d6a16b98b504fd3 READ-CLEANUP-CARD: fresh read; next: fix findings
-- aed691c3a84e83ed8 READ-LEAD-PAGE: fresh read; next: fix findings
-- a53610d1f4d401b7d READ-TAKE-BLOCKERS: fresh read; next: fix findings
-- a4fc70401e3c42312 READ-QUEUE: fresh read; next: fix findings
+- a149d0333e87400f1 FIX-README-QUESTIONS: fixing fresh-read findings; next: report
+- a6aa725907f61dee6 FIX-CLEANUP-CARD: fixing findings; next: report
+- ae845677fc8510e78 FIX-QUEUE: fixing findings; next: report
+- a3230bebf15ee321b FIX-OWNER-VIEW: fixing findings; next: report
+- a7287eb1c6f928d9a FIX-LEAD-PAGE: fixing findings; next: report
+- a9304e06d9c5c6dd5 FIX-RUN-DAY-CARD: fixing findings; next: report
 - a6762d54d43dac00e READ-SWEEP: fresh read; next: fix findings
-- a8f6fbda23a347bae TIMING-B2: patch and timing pages updated with Batch 2; next: report
-EMPTY SLOTS: 0 (8 running). README and QUESTIONS fixes wait for a free slot.
+- a8f6fbda23a347bae TIMING-B2: patch and timing pages with Batch 2; next: report
+EMPTY SLOTS: 0 (8 running). TAKE-BLOCKERS fix waits for a free slot.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
