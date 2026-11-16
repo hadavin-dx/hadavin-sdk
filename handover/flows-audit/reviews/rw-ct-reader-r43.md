@@ -1,0 +1,10 @@
+# RW / CT round 43 stranger read (agent abe4d295, egm-comprehension), Blockers/Majors only, non-security (beyond round 2)
+Saved by flows-audit, condensed. Reviewer words unverified; static. 0 Blockers, 7 Majors. Read RW 56-204 and 515-574; CT 153-297 only. NOT read: RW 1-55, 205-514, 575-end; CT 1-152, 298-482 (Table 1 from row 38, Table 2, lane tables). Desk-repo cites not checkable. Counts held: 82+64+98+9+77=330; lane A 100, lane B 230; 25 exceptions; 45+42=87 rows; UTC/IST and weekdays correct.
+M1 CT "claims to leave out" third bullet says "(11 + 71 = 82 untraced in all)"; CT's own count says UNTRACED 77 (6+71). Fix: "(6 + 71 = 77 ...)".
+M2 RW A-004 (7c) note starts "UNTRACED"; CT regraded A-004 to OVERSTATED (round 41). Fix: start "OVERSTATED:".
+M3 RW line 70 "Q21 and Q25 are ANSWERED" vs CT Checks "Q21 proposed; the lead decides". Fix: reconcile, name which Q21 each file means.
+M4 CT "Start here" step 3 live-row list omits sub-row 19b ([LIVE, TEXT ONLY], live DELETE of "up to 13 min late (n=2)" at R:90; RW A-023a DELETE). Fix: add 19b.
+M5 CT rows 10 and 11 "replace with" strings are plain fact; RW round 41 changed A-030, A-033a, A-033b, A-035 to "is built to ...". Fix: copy RW strings into CT or add "RW string wins".
+M6 CT row 36 hedge names the wrong source for n8n's own storage (flow files do not show it; source is DECISION-one-store.md line 8 and N8N-START.md; P4b not run). Fix: "(stated in DECISION-one-store.md line 8 and N8N-START.md; not checked here; P4b not run)".
+M7 CT UNTRACED definition ("not safe to film or post as fact") vs RW A-016f/A-016b/A-016h plain sentence; allowed only after RW step 15 proof, which CT's definition and UNTRACED list (A-099, A-100) do not mention. Fix: one sentence in the definition and list, or "UNTRACED until proof" on those RW rows.
+Minor: RW line 68 Q-H "ANSWERED" with no date vs RW 149 re-pin date UNANSWERED; RW 125 "V-41" undefined; CT 33/33d B-215 used for two sentences; B-215b and B-214 have no lane row yet counted in the 97.
