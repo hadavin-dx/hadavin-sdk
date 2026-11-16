@@ -6,7 +6,7 @@ For the studio lead only. Moved out of OWNER-VIEW.md on 2026-11-16 (ORDER 017); 
 2. Say whether the "rehearsal passed" rule applies to run (a) the stand-in rehearsal, run (b) the filled patched real-v5 run, or both (TAKE-BLOCKERS.md row 2).
 3. Answer D-04 and D-05 by replying "D-04 apply, D-05 apply" (or edits) and name who edits step J (QUESTIONS.md item 2; decisions/D04-D05.md). This blocks the post on Wed 25 Nov, not the take.
 4. Decide LP-1 (form password yes or no) and LP-5 (accept that the session can read secrets, or use a second laptop user), both open; LP-4 depends on D-05 (section 3).
-5. Deadline for LP-1, LP-4 and LP-5: Tue 17 Nov 12:29 UTC / 17:59 IST (line 41 of this page).
+5. Deadline for LP-1, LP-4 and LP-5: Tue 17 Nov 12:29 UTC / 17:59 IST (the deadline text is in section 3 below, items LP-1 to LP-5).
 6. Start Docker Desktop and run the first laptop rehearsal after the loopback re-smoke passes (decision 12; start hour LEAD FILLS). Wed 18 Nov is not yet confirmed.
 
 ## Next action
@@ -33,7 +33,7 @@ The old rows 16 to 23 here were written from the stale v3 steps file and contrad
 | laptop settings (v5 B): OWNER-VIEW.md row 2; label, profile (v5 C) | OWNER-RUN-DAY-CARD.md steps 1 to 4; restore at OWNER-CLEANUP-CARD.md step 7. The n8n sign-in is no longer an owner step (decision 7): first-visit setup is done (inputs/FACTS-ALREADY-DONE.md); the lead imports and activates the flows with scripts\n8n_api.py. |
 | the run, the pause, `end`, failed run (v5 E, F, G) | OWNER-RUN-DAY-CARD.md steps 8 to 16 (v5 E), 17 to 22 (v5 F), 23 to 25 (v5 G) (run exit codes: 0 pass, 1 wrong answer, 2 refused to start or go on, 3 count or verdict failed; v5 lines 188 to 192) |
 | watch the cut (v5 H) | OWNER-RUN-DAY-CARD.md step 27 (OWNER-VIEW.md row 4) |
-| after the run: delete demo mails, "accepted", model key (v5 I) | OWNER-RUN-DAY-CARD.md steps 23 to 28; then OWNER-CLEANUP-CARD.md |
+| after the run: delete demo mails, "accepted", model key (v5 I) | OWNER-RUN-DAY-CARD.md step 22 (delete by hand, rules in 23 to 25), step 26 ("accepted") and step 28 (model key; step 27 is the cut review, its own row above); then OWNER-CLEANUP-CARD.md |
 | clean-up (v5 I); the deadline is the lead's own and is NOT the stop time | OWNER-CLEANUP-CARD.md and its release words |
 | post (v5 J): the full must-NOT list and the rule that the lead's exact final words and a second checker come first | OWNER-VIEW.md row 6 |
 | latest start | Mon 23 Nov before 18:14:40 UTC / 23:44:40 IST (v5 rounds it to about 18:15 / 23:45) (stop time 18:29 UTC / 23:59 IST). Use 18:14:40; never 18:15. |

@@ -7,7 +7,7 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
 PERCENT: 85
-AGENTS_RUNNING: 6 (ac6f48 OWNER-VIEW round 2; a78791 run-day card step order; af188c clean-up card round 2; a281ec LEAD-PAGE step cites; a56370 MASTER-MAP vs ONE-PLACE counts; aa0b9f date and time pairs). Read and digested this stretch: batches 33-39 in work/agent-reports-batch4.md.
+AGENTS_RUNNING: 5 (ac6f48 OWNER-VIEW round 2; a78791 run-day card step order; af188c clean-up card round 2; a56370 MASTER-MAP vs ONE-PLACE counts; aa0b9f date and time pairs). One more being launched.
 INTERRUPTED: none
 NEXT: collect the 6 hand-backs, grep-verify, apply safe fixes; send the lead the decision list (23 items, work/agent-reports-batch4.md BATCH 26), the row 1 generator-vs-JSON finding, T19 not runnable, the zoom-out finding, and the F1 deadline self-release conflict in the clean-up card; MASTER-MAP L8-X-020..024 rows wait for the lead.
 CAPACITY: nproc 4, load 0.15, RAM 856/16087 MB used, DISK 24G free of 252G (41% used); top3 /tmp/claude-0 1.3G, /tmp/sm-fresh 624M, /tmp/pytest-of-root 616M; nothing removed
