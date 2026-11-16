@@ -1,5 +1,10 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:32 UTC / 13:02 IST: round 2 comprehension + codebase-details applied; zoom-out pending
+- Done: result-review-2a.md (codebase: 16 of 16 supported, small fact slips fixed in the text), 2c.md (naive reader: summary rewritten, one reconciled list of worst items, question labels, 36-use and line fixes). AUDIT-FINDINGS.md rebuilt (571 lines), banned-string check clean.
+- Register: a1ffa3792b4edc893 egm-zoom-out round 2 (sonnet, read-only) running. a6b1ec9d26c8cfa2f and a43eefe25fb9f16f9 closed.
+- Next: collect zoom-out, egm-resolve round 2, FINAL block. Hard stop part 1: 09:15 UTC.
+
 ## STATUS 07:45 UTC / 13:15 IST: round 1 of result review applied; round 2 running
 Failed or weak first: (1) Round 1 reviewers read only parts of the documents (design and zoom-out did not read Parts II to VI; codebase-details read about half). (2) Round 1 found one wrong finding (D1-03, narrowed), 5 wrong line numbers, 7 missing items and wording that a non-engineer could not follow; all applied except two: no hygiene bucket column, and the section 9b items are not judged by a builder. (3) Reviewers proposed 5 severity re-ratings; I did NOT change any lane severity: they are in AUDIT-FINDINGS.md section 2b for the lead. (4) Part IV text for D1-03 is still the builder's original; section 9d overrides it. (5) Plan v4 not re-reviewed.
 Delivered so far: MASTER-MAP.md (800 lines), AUDIT-FINDINGS.md (571 lines), patches/C-01-and-A-02.patch (applies with git apply --check; ruff check and format pass on the two files; tests NOT run, so a test fixture with a zero price route could break: UNVERIFIED), patches/ledger-rows.md, result-review-1a..1d.md, result-resolve-1.md.

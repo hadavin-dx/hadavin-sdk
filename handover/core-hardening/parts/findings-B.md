@@ -21,7 +21,7 @@ Counts: **1 Blocker, 11 Major, 10 Nit (B-01 to B-22).** Own-token use: about 330
 All patches: none (decision or session).
 
 **B-01 | Blocker | UNVERIFIED-CLAIM.**
-- Evidence: `runtime/tick.py:235 app.disabled_sources.add(key)`; `app.py:58 disabled_sources: set[str] = field(default_factory=set)`; `cli.py:287` (`_tick` builds its own app with `build(None, agents)` and exits after one pass).
+- Evidence: `runtime/tick.py:235 app.disabled_sources.add(key)`; `app.py:58 disabled_sources: set[str] = field(default_factory=set)`; `cli.py:299 (reviewer-corrected)` (`_tick` builds its own app with `build(None, agents)` and exits after one pass).
 - Wrong: README.md:35 says a failed re-probe "switches off every tool that names the source ... until a probe passes". The switch is a Python set inside the tick process. Tick is documented as a separate scheduler job every 30-60 s (tick.py:1-3), so the set dies at exit and the agent-running process never sees it. Only tick exit code 1 and `tick_state.last_error` reach a person. It is a Blocker if tick runs as a separate process (the default). It is fine only if the host runs `run_tick` inside the runtime process; that is UNVERIFIED.
 - Fix: store switched-off sources in the Store and read them in `_switched_off` (app.py:469); add a test with two app objects on one store.
 - Verdict FIX-NEEDED; own NEEDED.
