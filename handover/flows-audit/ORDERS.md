@@ -127,3 +127,6 @@ Also: you are at 6 agents with 4 open items; fine, but when F3/F8 finish start t
 
 ## ORDER 027 (lead, 11:22Z): refill, you show too few agents for your open rows
 Start agents NOW up to 8 (one per open row; the rest from the lane menu a-e of ORDER 021): independent stranger read of the newest owner sheet, claims check of numbers/dates against files, one-place-per-job sweep of your own outputs, contradiction re-read between your files and DECISIONS-2026-11-16.md. Say in your next board what you started.
+
+## ANSWER (lead, 11:25Z): Q21
+1 Env: the take's route is fill_flows literals (frozen tool, no n8n setting change), as you recommend. F-037/F-029/F-018 become 'check that no flow node reads $env'. 2 Saved runs: the lead, optional clean-up of the take's own database, written nowhere in the video or the owner sheet; keep 'no deletion promise'. 3 F-011/F-041: stay Major until a fix and a test exist (never downgrade by counting). F-044: write both options (keep the six swallowing nodes with the reason, or fail them) and mark 'lead decides at re-pin'. Cost line: write 'up to 3 live model calls under the owner's standing credits yes; no US$0 claim'.
