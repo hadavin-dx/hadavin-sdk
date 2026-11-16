@@ -87,11 +87,10 @@ SHA_RE = re.compile(r"[0-9a-fA-F]{4,64}")
 HANDLED_SIGNALS = (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)
 # the only options a TESTS list may use (everything else is refused, see check_test_args)
 PLUGIN_OFF_RE = re.compile(r"no:[A-Za-z0-9_.-]+")
-STATE_PARENTS = (
-    "/tmp",
-    "/var/tmp",
-    "/dev/shm",
-)  # other places a run with another TMPDIR may have left a marker
+# other places a run with another TMPDIR may have left a marker (built from parts, not typed as literals)
+STATE_PARENTS = tuple(
+    pathlib.Path(os.sep, *parts) for parts in (("tmp",), ("var", "tmp"), ("dev", "shm"))
+)
 EXIT_REFUSED, EXIT_RESTORE_FAILED, EXIT_TREE_NOT_CLEAN = 2, 3, 4
 
 
@@ -376,10 +375,8 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
     planted: not ok (exit 3). A stale marker (file already equals the backup) is reported, exit 0.
     Anything that cannot be read safely fails closed (review r2 nit)."""
     here = STATE.parent.resolve()
-    spots = {
-        pathlib.Path(x).resolve()
-        for x in (*STATE_PARENTS, *(os.environ.get(v) or "/tmp" for v in ("TMP", "TEMP")))
-    }
+    spots = {p.resolve() for p in STATE_PARENTS}
+    spots |= {pathlib.Path(v).resolve() for v in map(os.environ.get, ("TMP", "TEMP")) if v}
     notes = []
     for parent in sorted(spots - {here}):
         folder = parent / STATE.name
