@@ -69,16 +69,16 @@ p AS (
     LEFT JOIN tick_state t ON t.step = w.step
     WHERE t.step IS NULL
        OR t.last_ok_at IS NULL
-Set the values first, as shell variables, so that no placeholder in angle brackets is ever pasted (a pasted `<name>` is a shell redirection that reads or creates a file): `CA=/path/of/the/CA/file; DBHOST=the-host; DBPORT=5432; DBNAME=the-database` (your own values; the database administrator hands them over). Then run (T2), as ONE line; the two settings before `psql` apply to that one command only (see "Connection" below); `${CA:?}` and the other `:?` stop the line while a variable is empty; `-X` means "read no `psqlrc` file" (a `psqlrc` could silence the output) and `-w` means "never ask for a password":
-`PGSSLMODE=verify-full PGSSLROOTCERT="${CA:?}" psql -X -w -h "${DBHOST:?}" -p "${DBPORT:?}" -U deadman_reader -d "${DBNAME:?}" -v ON_ERROR_STOP=1 -v limit_s=180 -At -f dead-man-check.sql`
+       OR t.last_ok_at < now() - make_interval(secs => :limit_s)
+       OR t.last_ok_at > now() + interval '1 minute'
 )
 SELECT step, last_ok_at, last_run_at, problem FROM p
 UNION ALL
 SELECT 'OK', NULL, NULL, (SELECT count(*) FROM w)::text
 ORDER BY 1;
 ```
-Run (T2), as ONE line; the two settings before `psql` apply to that one command only (see "Connection" below):
-`PGSSLMODE=verify-full PGSSLROOTCERT=<path of the CA file> psql -h <host> -U deadman_reader -d <database> -v ON_ERROR_STOP=1 -v limit_s=180 -At -f dead-man-check.sql`
+Set the values first, as shell variables, so that no placeholder in angle brackets is ever pasted (a pasted `<name>` is a shell redirection that reads or creates a file): `CA=/path/of/the/CA/file; DBHOST=the-host; DBPORT=5432; DBNAME=the-database` (your own values; the database administrator hands them over). Then run (T2), as ONE line; the two settings before `psql` apply to that one command only (see "Connection" below); `${CA:?}` and the other `:?` stop the line while a variable is empty; `-X` means "read no `psqlrc` file" (a `psqlrc` could silence the output) and `-w` means "never ask for a password":
+`PGSSLMODE=verify-full PGSSLROOTCERT="${CA:?}" psql -X -w -h "${DBHOST:?}" -p "${DBPORT:?}" -U deadman_reader -d "${DBNAME:?}" -v ON_ERROR_STOP=1 -v limit_s=180 -At -f dead-man-check.sql`
 - `<host>` and `<database>`: the same host and database name as the store setting of the deployment's config; the database administrator (D3) hands them over.
 - Password: never on the command line (a process list shows it), and not as an environment variable if a password file is possible. First choice: a password file (`PGPASSFILE`, permission 600, written by the
   scheduler at job start from the secret `deadman_reader_password` read through the secrets kind (a named lookup), removed by a `trap ... EXIT` line at job end however the job ends, except `kill -9` or a power cut (job script below, NOT RUN); the one line in it has the form `<host>:<port>:<database>:deadman_reader:<password>`); the `psql` manual calls it the safer form. Second choice, only where a password file is
