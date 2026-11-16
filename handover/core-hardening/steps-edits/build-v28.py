@@ -52,11 +52,16 @@ def build():
         out['OWNER-CARD-v28-%s.md' % k] = card; out['OWNER-NUMBERS-v28-%s.md' % k] = nums; films.append(film)
     assert films[0] == films[1], 'the film page differs between A and B'
     out['OWNER-FILM-v28.md'] = films[0]
+    wc = {}
+    for k in 'AB':
+        w = [len(out[x % k].split()) for x in ('OWNER-SHEET-v28-%s.md', 'OWNER-CARD-v28-%s.md', 'OWNER-NUMBERS-v28-%s.md')] + [len(out['OWNER-FILM-v28.md'].split())]
+        wc.update({'WC_SHEET_' + k: w[0], 'WC_CARD_' + k: w[1], 'WC_NUM_' + k: w[2], 'WC_FILM_' + k: w[3], 'WC_ALL_' + k: sum(w)})
     for s, d in (('LEAD-RELEASE-NOTE-v12-SOURCE.md', 'LEAD-RELEASE-NOTE-v12.md'), ('v28-OPEN-FOR-LEAD-SOURCE.md', 'v28-OPEN-FOR-LEAD.md')):
         if os.path.exists(D + s):
             o = fill(open(D + s, encoding='utf-8').read())
             if d.startswith('LEAD'): o = o.replace('@@NUMBERS_SAMPLE@@', sample_block(src))
-            assert '{{' not in o; out[d] = o
+            for kk, vv in wc.items(): o = o.replace('@@%s@@' % kk, '{:,}'.format(vv))
+            assert '{{' not in o and '@@WC_' not in o; out[d] = o
     return out
 def sample_block(src):
     """the numbers message sample, generated once from the owner sheet source (the note embeds it, so the two cannot drift)"""

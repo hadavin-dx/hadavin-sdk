@@ -283,6 +283,8 @@ L367 src/hadavin_sdk/app.py:162-162 | llm = llm or make("llm", b.llm, secrets, r
 L367 src/hadavin_sdk/cli.py:150-150 | make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes), | ANCHOR ok
 L367 src/hadavin_sdk/llm/common.py:233-233 | def _retry(self, call: Callable[[], Answer]) -> Answer: | ANCHOR ok
 L377 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | CHECK words=window,clock,make,SpendWindow
+L403 src/hadavin_sdk/config.py:377-377 | def _anchor_refusals(environment: str, b: Backends) -> list[str]: | ANCHOR ok (ambiguous file)
+L403 src/hadavin_sdk/backends/table.py:155-155 | retain_days: int = Field(default=1, ge=1) | CHECK words=audit,config,config,_anchor_refusals
 L414 .github/workflows/ci.yml:79-79 | run: ruff check src tests demos | ANCHOR ok
 L414 .github/workflows/ci.yml:81-81 | run: ruff format --check src tests demos | ANCHOR ok
 L414 .github/workflows/ci.yml:88-88 | run: pytest -q -m "not live and not perf" -rs | ANCHOR ok
@@ -295,9 +297,10 @@ L414 .github/workflows/ci.yml:83-83 | run: psql --version | ANCHOR ok
 L417 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | ANCHOR ok
 L424 src/hadavin_sdk/llm/bedrock.py:108-108 | code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") | ANCHOR ok
 L429 src/hadavin_sdk/guard/injection.py:92-97 | _LOG.warning( | CHECK words=SpendRefused,code,AKIAIOSFODNN7EXAMPLE,settle
+L441 .github/workflows/ci.yml:108-144 | checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645" | ANCHOR ok
 L445 src/hadavin_sdk/k1b/loop.py:176-176 | except ProviderError: | ANCHOR ok
 L445 src/hadavin_sdk/runtime/agent_loop.py:432-433 | except ( | ANCHOR ok
 L478 src/hadavin_sdk/guard/bedrock_guardrail.py:36-36 | retries={"total_max_attempts": 2, "mode": "standard"}, | CHECK words=statement_timeout,transaction,tcp_user_timeout,migrate
 L478 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | CHECK words=statement_timeout,transaction,tcp_user_timeout,migrate
 L478 src/hadavin_sdk/guard/judge.py:107-107 | v = injection_check(judge, case["text"], "golden") | CHECK words=migrate,gemini,build,NetworkLLM
-TOTAL cites=301 missing_or_range=0 anchor_check=54
+TOTAL cites=304 missing_or_range=0 anchor_check=55

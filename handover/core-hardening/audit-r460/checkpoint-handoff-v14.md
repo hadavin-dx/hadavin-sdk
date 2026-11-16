@@ -1,0 +1,1 @@
+# checkpoint v14 (15:59Z): done: both v14 documents (v13 untouched), v14-CHANGES.md, v14-OPEN-FOR-LEAD.md, held SQL rewritten (B1, minors 3 and 4), Postgres runs (61 of 61), citation/count/fence/snippet/banned/import-cycle programs re-run. Not done: N0 (older sentences not rewritten), 98 anchor-miss rows unread, tests/ruff/bandit/gate4/17.10/EGM not run. Next: independent review.

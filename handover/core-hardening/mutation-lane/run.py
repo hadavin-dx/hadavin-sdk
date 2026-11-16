@@ -138,6 +138,13 @@ state folder that is searched (ours, /tmp, /var/tmp, /dev/shm, TMP, TEMP), and a
 result file of this tool (a JSON list of objects with id and verdict; r10 m3). Helper programs (git, patch, the import probe) run
 in their own process group and the whole group is killed on a timeout (r10 m8); text taken from a state file is quoted and control
 characters are shown as \\xNN (r10 m9).
+Limit (d), exact: a plain `--restore` (no --sha) believes the marker and the backup in the state folder; a person or program
+that can write that folder AS THIS USER can write a forged marker plus a backup whose hash matches, and plain --restore would write that
+text into the file (a mode with the execute bits or writable by everybody is cut to at most 0777, never more). Only `--restore --sha
+COMMIT` closes it: the original then comes from git, a forged marker is refused or ignored, never trusted (T98d, T98e). Use --sha
+whenever the state folder may not be trusted. A path over 4096 bytes, or a name over 255 bytes, is refused with exit 2 (T98a). The
+signal handlers are installed right after the imports; a signal before that (Python's own start-up, about 20 to 50 ms) ends the
+process by that signal at a time when nothing has been written (T98b).
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
 scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. The modes (chmod) of the
 other files in the tree are not compared; the tree is compared by content. Paths inside --root

@@ -7,7 +7,7 @@
 -- already write give-backs and settles as UPDATE (S-2a); this check refuses the INSERT ... ON CONFLICT shape for a
 -- negative amount (raw-pg-b1-v13.txt T1).
 -- ADD CONSTRAINT takes an ACCESS EXCLUSIVE lock on the table until the migration's transaction ends (run on 16.15:
--- raw-pg-lock-v14.txt); the runner sets no lock_timeout, so the file sets one for its own transaction: if a run
+-- raw-pg-real-code-v14.txt); the runner sets no lock_timeout, so the file sets one for its own transaction: if a run
 -- still holds the table, this migration fails after 5 seconds and rolls back instead of queueing every spend call.
 SET LOCAL lock_timeout = '5s';
 ALTER TABLE spend ADD CONSTRAINT spend_usd_ok CHECK (usd >= 0 AND usd < 'Infinity'::numeric);

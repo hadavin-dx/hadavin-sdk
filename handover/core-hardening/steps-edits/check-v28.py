@@ -110,7 +110,7 @@ for n, t in (('A', A), ('B', B)):
     for m in re.finditer(r'\*\*([A-Z][A-Za-z -]+)\*\* =', t[i:j]):
         term = m[1].lower(); pos = t.lower().find(term, i)
         if pos != i + m.start() + 2: fail('C10', '%s card term %r used before its definition' % (n, m[1]))
-        if t[i:t.find("### The rules")].lower().count(term) < 2: fail('C10', '%s card term %r defined but not used again in the card' % (n, m[1]))
+        if t[t.find('### THE CARD'):t.find('### The rules')].lower().count(term) < 2: fail('C10', '%s card term %r defined but not used again in the card' % (n, m[1]))
 # C11 pointers: every "x.y" step reference exists and points at the right topic
 for n, t in (('A', A), ('B', B)):
     steps = {}
@@ -230,7 +230,7 @@ else:
 # C20 angle-bracket placeholders in the sheet come from one list
 PH_OK = {'<amount or none>', '<call ceiling>', '<date>', '<expected total>', '<in words>', '<its name or none>', '<its name>', '<key file>', "<lead's answer>", '<model settings file>',
          '<name and how>', '<name>', '<number or none>', '<number>', '<page address>', '<path from the message>', '<range>', '<run name>', '<setting name>', '<step>',
-         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>', '<address>', '<folder path>', '<minutes>', "<the lead's exact sentence>", '<masked address>', '<the cd line>', '<name and how to call>', '<yes or no>', '<sample word or unknown>'}
+         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<time or never>', '<word, or "from the look key">', '<scopes the key page offers>', '<the older-key time of the message>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>', '<address>', '<folder path>', '<minutes>', "<the lead's exact sentence>", '<masked address>', '<the cd line>', '<name and how to call>', '<yes or no>', '<sample word or unknown>'}
 for n, t in (('A', A), ('B', B)):
     for m in set(re.findall(r'<[A-Za-z][^<>\n]{0,45}>', t)):
         if m not in PH_OK: fail('C20', '%s: placeholder not in the list: %s' % (n, m))

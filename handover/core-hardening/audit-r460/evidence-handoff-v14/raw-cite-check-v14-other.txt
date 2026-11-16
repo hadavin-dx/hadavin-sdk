@@ -1,4 +1,4 @@
-=== /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v14-other-tracks.md
+=== /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v14/../CORE-PR-HANDOFF-v14-other-tracks.md
 L34 src/hadavin_sdk/approvals/gate.py:681-698 | def withhold_commands(text: str) -> str: | ANCHOR ok
 L35 src/hadavin_sdk/approvals/gate.py:647-678 | _WRITE_SHAPES = re.compile( | ANCHOR ok
 L36 src/hadavin_sdk/llm/fake.py:39-40 | doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") | ANCHOR ok
@@ -11,82 +11,82 @@ L39 src/hadavin_sdk/models.py:218-222 | class DeadLetter(Shape): | ANCHOR ok
 L39 src/hadavin_sdk/extract.py:18-25 | @dataclass | ANCHOR ok
 L40 src/hadavin_sdk/guard/injection.py:85-101 | def injection_check(detector: Detector, text: str, source: str) -> Verdict: | ANCHOR ok
 L47 .github/workflows/ci.yml:119-119 | run: bandit -q -r src demos -ll | ANCHOR ok
-L51 src/hadavin_sdk/config.py:317-317 | environment: Literal["dev", "pilot", "prod"] | ANCHOR ok
-L52 src/hadavin_sdk/audit/chain.py:171-171 | self.checkpoint_every = checkpoint_every | ANCHOR ok
-L52 src/hadavin_sdk/audit/chain.py:360-360 | return verify_rows(rows, checkpoints, public, anchors, alg, row_algs) | ANCHOR ok
-L59 src/hadavin_sdk/audit/chain.py:161-161 | checkpoint_every: int = 100, | ANCHOR ok
-L59 src/hadavin_sdk/backends/table.py:193-193 | checkpoint_every: int = Field(default=100, ge=1) | ANCHOR ok
-L59 src/hadavin_sdk/backends/table.py:192-193 | class ChainSettings(KindSettings): | ANCHOR ok
-L61 src/hadavin_sdk/audit/anchor_gcs.py:69-85 | def probed(bucket: Any, settings) -> GcsAnchor: | ANCHOR ok
-L61 src/hadavin_sdk/audit/anchor_azure.py:83-96 | def probed(container: Any, settings) -> AzureBlobAnchor: | ANCHOR ok
-L63 src/hadavin_sdk/cli.py:349-363 | def audit_verify(audit) -> int: | ANCHOR ok
-L63 src/hadavin_sdk/audit/chain.py:171-171 | self.checkpoint_every = checkpoint_every | ANCHOR ok
-L63 src/hadavin_sdk/audit/chain.py:360-360 | return verify_rows(rows, checkpoints, public, anchors, alg, row_algs) | ANCHOR ok
-L63 src/hadavin_sdk/audit/chain.py:203-203 | if self.signer is not None and seq % self.checkpoint_every == 0: | ANCHOR ok
-L67 src/hadavin_sdk/evals.py:63-63 | doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8") | ANCHOR ok
-L67 src/hadavin_sdk/models.py:221-221 | errors: list[str] | ANCHOR ok
-L67 src/hadavin_sdk/evals.py:63-63 | doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8") | ANCHOR ok
-L67 src/hadavin_sdk/extract.py:58-58 | errors.append(f"{exc.__class__.__name__}: {safe_head(str(exc), 300)}") | ANCHOR ok
-L75 src/hadavin_sdk/llm/fake.py:39-40 | doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") | ANCHOR ok
-L79 src/hadavin_sdk/actions/secrets_file.py:49-64 | with os.fdopen(fd, "rb") as f: | CHECK words=secrets_file,_fetch
-L81 src/hadavin_sdk/audit/signer.py:104-108 | else: | ANCHOR ok
-L81 src/hadavin_sdk/actions/secrets_file.py:54-54 | if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH): | CHECK words=audit,signer,build_local,allow_group_read
-L82 src/hadavin_sdk/actions/secrets_file.py:54-54 | if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH): | ANCHOR ok
-L82 src/hadavin_sdk/config.py:395-396 | if b.signer.kind == "ed25519_local" and b.signer.private_key_path is not None: | ANCHOR ok
-L82 src/hadavin_sdk/audit/signer.py:182-182 | _create(private_real, pem, 0o600) | CHECK words=ed25519_local
-L83 src/hadavin_sdk/audit/signer.py:197-197 | return _private_key(path.read_bytes(), passphrase, str(path)) | ANCHOR ok
-L83 src/hadavin_sdk/audit/signer.py:209-209 | key = serialization.load_pem_public_key(path.read_bytes()) | ANCHOR ok
-L84 tests/test_lockin_guard.py:68-75 | LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their layer | ANCHOR ok
-L90 tests/test_g4_parity.py:98-98 | "update its set of rules", | ANCHOR ok
-L113 src/hadavin_sdk/approvals/gate.py:4-4 | (`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral  | ANCHOR ok
-L113 src/hadavin_sdk/approvals/gate.py:366-377 |  | ANCHOR ok
-L113 src/hadavin_sdk/approvals/channel.py:19-21 | """WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control cha | ANCHOR ok
-L114 src/hadavin_sdk/approvals/gate.py:546-546 | _TOKEN = re.compile(r"[^\S\n]+([^\s]+)") | ANCHOR ok
-L114 src/hadavin_sdk/approvals/gate.py:695-695 | end = text.find("\n", m.end()) | ANCHOR ok
-L115 src/hadavin_sdk/approvals/gate.py:608-615 | def _story(text: str, prog: str, s: int, e: int, toks: list[str]) -> bool: | ANCHOR ok
-L117 src/hadavin_sdk/approvals/gate.py:674-674 | r"|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)" | ANCHOR ok
-L117 src/hadavin_sdk/approvals/gate.py:540-540 | _NAMES = ["aws", *_VERB_FIRST, *_WORD_RUN] | ANCHOR ok
-L118 src/hadavin_sdk/approvals/gate.py:404-404 | _AWS_READ_PREFIXES = ("describe-", "get-", "list-", "head-", "batch-get-", "lookup-", "sea | ANCHOR ok
-L118 src/hadavin_sdk/approvals/gate.py:597-597 | words[1].startswith(_AWS_READ_PREFIXES) or (words[0] == "s3" and words[1] == "ls") | ANCHOR ok
-L123 src/hadavin_sdk/approvals/gate.py:573-589 | def _subcommands(toks: list[str]) -> list[str]: | ANCHOR ok
-L128 src/hadavin_sdk/guard/redact.py:472-472 | "PHONE", | ANCHOR ok
-L130 tests/warden_port/privacy_corpus.py:42-42 | "card 4111 1111 1111 1111", | ANCHOR ok
-L130 tests/warden_port/test_redaction.py:309-309 | for pan in ("4111 1111 1111 1111", "4111-1111-1111-1111"): | CHECK words=CREDITCARD
-L132 src/hadavin_sdk/guard/redact.py:513-513 | # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie | CHECK words=CREDPAIR,redact
-L132 src/hadavin_sdk/guard/redact.py:513-513 | # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie | CHECK words=CREDPAIR,redact
-L132 src/hadavin_sdk/guard/redact.py:513-519 | # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie | CHECK words=CREDPAIR,redact,tests,test_redaction
-L132 src/hadavin_sdk/k1b/redaction.py:103-103 | def _pair(key: str, value: str, f: Callable[[str], str]) -> str: | ANCHOR ok
-L140 src/hadavin_sdk/config.py:451-454 | except ConfigError: | ANCHOR ok
-L140 src/hadavin_sdk/config.py:317-317 | environment: Literal["dev", "pilot", "prod"] | ANCHOR ok
-L140 src/hadavin_sdk/config.py:366-367 | if self.environment != "dev": | ANCHOR ok
-L140 src/hadavin_sdk/config.py:19-19 | from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings | ANCHOR ok
-L140 src/hadavin_sdk/backends/table.py:593-593 | DEV_ONLY: frozenset[tuple[str, str]] = frozenset( | ANCHOR ok
-L140 tests/test_lockin_guard.py:18-18 | from hadavin_sdk.backends.table import DEV_ONLY, NOT_PROD, TABLE | ANCHOR ok
-L140 tests/test_p4_secrets.py:106-106 | def _config(tmp_path, secrets, environment="dev"): | ANCHOR ok
-L140 tests/warden_port/test_audit_chain.py:568-568 | found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local)) | CHECK words=Config,ValueError,environment,renamed
-L140 tests/test_p1b_backends.py:89-91 | @pytest.mark.parametrize("env", ["pilot", "prod"]) | ANCHOR ok
-L140 src/hadavin_sdk/actions/secrets_env.py:1-1 | """`env` secrets: read from environment variables (`dev` only, by the environment table). | ANCHOR ok
-L140 src/hadavin_sdk/audit/signer.py:64-64 | """An Ed25519 key in a PEM file (dev and pilot; refused in prod by the environment table). | ANCHOR ok
-L140 src/hadavin_sdk/backends/table.py:126-126 | # (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth. | CHECK words=Config,ValueError,environment,renamed
-L140 src/hadavin_sdk/config.py:346-346 | )  # dev executor only | CHECK words=Config,ValueError,environment,renamed
-L140 src/hadavin_sdk/defaults.py:100-100 | EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_ | ANCHOR ok
-L140 src/hadavin_sdk/registry.py:50-50 | # Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash:  | ANCHOR ok
-L140 src/hadavin_sdk/tools.py:361-361 | Without a pin (dev only; pilot and prod require one) it is an ordinary import.""" | CHECK words=Config,ValueError,environment,renamed
-L140 src/hadavin_sdk/runtime/agent_loop.py:179-179 | # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev  | CHECK words=Config,ValueError,environment,renamed
-L140 src/hadavin_sdk/actions/contract.py:34-34 | """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 | ANCHOR ok
-L140 src/hadavin_sdk/store/postgres.py:75-75 | captured by an impostor); an explicit weaker `sslmode` is an opt-down for dev. With iam_au | CHECK words=Config,ValueError,environment,renamed
-L140 src/hadavin_sdk/guard/redact.py:1162-1162 | "dev", | CHECK words=Config,ValueError,environment,renamed
-L141 src/hadavin_sdk/backends/table.py:155-155 | retain_days: int = Field(default=1, ge=1) | ANCHOR ok
-L141 src/hadavin_sdk/config.py:377-398 | def _anchor_refusals(environment: str, b: Backends) -> list[str]: | ANCHOR ok
-L141 src/hadavin_sdk/backends/table.py:150-157 | class _AnchorSettings(KindSettings): | ANCHOR ok
-L141 src/hadavin_sdk/audit/anchor_gcs.py:69-85 | def probed(bucket: Any, settings) -> GcsAnchor: | ANCHOR ok
-L141 src/hadavin_sdk/audit/anchor_azure.py:83-96 | def probed(container: Any, settings) -> AzureBlobAnchor: | ANCHOR ok
-L141 src/hadavin_sdk/audit/anchor_s3.py:5-7 | never overwritten even before Object Lock applies (a 412 with the same bytes is an earlier | CHECK words=probed,client,settings,anchor_s3
-L142 handover/egm/A24/snapshot-db0e0ce/files/CHANGELOG.md:35-35 | - New settings, both under `evidence`: `max_map_entries` defaults to 2000 (a run whose tex | ANCHOR ok (ambiguous file)
-L142 src/hadavin_sdk/audit/chain.py:140-140 | False  # the audit or its anchors could not be read: not checked, not "tampered" | CHECK words=guaranteed,cannot,never,lost
-L177 .github/workflows/ci.yml:86-87 | HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres | ANCHOR ok
-L177 .github/workflows/ci.yml:77-77 | run: uv sync --locked --no-build --all-extras --group test | CHECK words=handover,core,hardening,audit
-L177 .github/workflows/ci.yml:83-83 | run: psql --version | CHECK words=handover,core,hardening,audit
-L181 .github/workflows/ci.yml:79-79 | run: ruff check src tests demos | ANCHOR ok
-L206 src/hadavin_sdk/audit/chain.py:171-171 | self.checkpoint_every = checkpoint_every | ANCHOR ok
+L52 src/hadavin_sdk/config.py:317-317 | environment: Literal["dev", "pilot", "prod"] | ANCHOR ok
+L53 src/hadavin_sdk/audit/chain.py:171-171 | self.checkpoint_every = checkpoint_every | ANCHOR ok
+L53 src/hadavin_sdk/audit/chain.py:360-360 | return verify_rows(rows, checkpoints, public, anchors, alg, row_algs) | ANCHOR ok
+L60 src/hadavin_sdk/audit/chain.py:161-161 | checkpoint_every: int = 100, | ANCHOR ok
+L60 src/hadavin_sdk/backends/table.py:193-193 | checkpoint_every: int = Field(default=100, ge=1) | ANCHOR ok
+L60 src/hadavin_sdk/backends/table.py:192-193 | class ChainSettings(KindSettings): | ANCHOR ok
+L62 src/hadavin_sdk/audit/anchor_gcs.py:69-85 | def probed(bucket: Any, settings) -> GcsAnchor: | ANCHOR ok
+L62 src/hadavin_sdk/audit/anchor_azure.py:83-96 | def probed(container: Any, settings) -> AzureBlobAnchor: | ANCHOR ok
+L64 src/hadavin_sdk/cli.py:349-363 | def audit_verify(audit) -> int: | ANCHOR ok
+L64 src/hadavin_sdk/audit/chain.py:171-171 | self.checkpoint_every = checkpoint_every | ANCHOR ok
+L64 src/hadavin_sdk/audit/chain.py:360-360 | return verify_rows(rows, checkpoints, public, anchors, alg, row_algs) | ANCHOR ok
+L64 src/hadavin_sdk/audit/chain.py:203-203 | if self.signer is not None and seq % self.checkpoint_every == 0: | ANCHOR ok
+L68 src/hadavin_sdk/evals.py:63-63 | doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8") | ANCHOR ok
+L68 src/hadavin_sdk/models.py:221-221 | errors: list[str] | ANCHOR ok
+L68 src/hadavin_sdk/evals.py:63-63 | doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8") | ANCHOR ok
+L68 src/hadavin_sdk/extract.py:58-58 | errors.append(f"{exc.__class__.__name__}: {safe_head(str(exc), 300)}") | ANCHOR ok
+L76 src/hadavin_sdk/llm/fake.py:39-40 | doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") | ANCHOR ok
+L80 src/hadavin_sdk/actions/secrets_file.py:49-64 | with os.fdopen(fd, "rb") as f: | CHECK words=secrets_file,_fetch
+L82 src/hadavin_sdk/audit/signer.py:104-108 | else: | ANCHOR ok
+L82 src/hadavin_sdk/actions/secrets_file.py:54-54 | if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH): | CHECK words=audit,signer,build_local,allow_group_read
+L83 src/hadavin_sdk/actions/secrets_file.py:54-54 | if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH): | ANCHOR ok
+L83 src/hadavin_sdk/config.py:395-396 | if b.signer.kind == "ed25519_local" and b.signer.private_key_path is not None: | ANCHOR ok
+L83 src/hadavin_sdk/audit/signer.py:182-182 | _create(private_real, pem, 0o600) | CHECK words=ed25519_local
+L84 src/hadavin_sdk/audit/signer.py:197-197 | return _private_key(path.read_bytes(), passphrase, str(path)) | ANCHOR ok
+L84 src/hadavin_sdk/audit/signer.py:209-209 | key = serialization.load_pem_public_key(path.read_bytes()) | ANCHOR ok
+L85 tests/test_lockin_guard.py:68-75 | LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their layer | ANCHOR ok
+L91 tests/test_g4_parity.py:98-98 | "update its set of rules", | ANCHOR ok
+L114 src/hadavin_sdk/approvals/gate.py:4-4 | (`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral  | ANCHOR ok
+L114 src/hadavin_sdk/approvals/gate.py:366-377 |  | ANCHOR ok
+L114 src/hadavin_sdk/approvals/channel.py:19-21 | """WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control cha | ANCHOR ok
+L115 src/hadavin_sdk/approvals/gate.py:546-546 | _TOKEN = re.compile(r"[^\S\n]+([^\s]+)") | ANCHOR ok
+L115 src/hadavin_sdk/approvals/gate.py:695-695 | end = text.find("\n", m.end()) | ANCHOR ok
+L116 src/hadavin_sdk/approvals/gate.py:608-615 | def _story(text: str, prog: str, s: int, e: int, toks: list[str]) -> bool: | ANCHOR ok
+L118 src/hadavin_sdk/approvals/gate.py:674-674 | r"|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)" | ANCHOR ok
+L118 src/hadavin_sdk/approvals/gate.py:540-540 | _NAMES = ["aws", *_VERB_FIRST, *_WORD_RUN] | ANCHOR ok
+L119 src/hadavin_sdk/approvals/gate.py:404-404 | _AWS_READ_PREFIXES = ("describe-", "get-", "list-", "head-", "batch-get-", "lookup-", "sea | ANCHOR ok
+L119 src/hadavin_sdk/approvals/gate.py:597-597 | words[1].startswith(_AWS_READ_PREFIXES) or (words[0] == "s3" and words[1] == "ls") | ANCHOR ok
+L124 src/hadavin_sdk/approvals/gate.py:573-589 | def _subcommands(toks: list[str]) -> list[str]: | ANCHOR ok
+L129 src/hadavin_sdk/guard/redact.py:472-472 | "PHONE", | ANCHOR ok
+L131 tests/warden_port/privacy_corpus.py:42-42 | "card 4111 1111 1111 1111", | ANCHOR ok
+L131 tests/warden_port/test_redaction.py:309-309 | for pan in ("4111 1111 1111 1111", "4111-1111-1111-1111"): | CHECK words=CREDITCARD
+L133 src/hadavin_sdk/guard/redact.py:513-513 | # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie | CHECK words=CREDPAIR,redact
+L133 src/hadavin_sdk/guard/redact.py:513-513 | # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie | CHECK words=CREDPAIR,redact
+L133 src/hadavin_sdk/guard/redact.py:513-519 | # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie | CHECK words=CREDPAIR,redact,tests,test_redaction
+L133 src/hadavin_sdk/k1b/redaction.py:103-103 | def _pair(key: str, value: str, f: Callable[[str], str]) -> str: | ANCHOR ok
+L141 src/hadavin_sdk/config.py:451-454 | except ConfigError: | ANCHOR ok
+L141 src/hadavin_sdk/config.py:317-317 | environment: Literal["dev", "pilot", "prod"] | ANCHOR ok
+L141 src/hadavin_sdk/config.py:366-367 | if self.environment != "dev": | ANCHOR ok
+L141 src/hadavin_sdk/config.py:19-19 | from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings | ANCHOR ok
+L141 src/hadavin_sdk/backends/table.py:593-593 | DEV_ONLY: frozenset[tuple[str, str]] = frozenset( | ANCHOR ok
+L141 tests/test_lockin_guard.py:18-18 | from hadavin_sdk.backends.table import DEV_ONLY, NOT_PROD, TABLE | ANCHOR ok
+L141 tests/test_p4_secrets.py:106-106 | def _config(tmp_path, secrets, environment="dev"): | ANCHOR ok
+L141 tests/warden_port/test_audit_chain.py:568-568 | found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local)) | CHECK words=Config,ValueError,environment,renamed
+L141 tests/test_p1b_backends.py:89-91 | @pytest.mark.parametrize("env", ["pilot", "prod"]) | ANCHOR ok
+L141 src/hadavin_sdk/actions/secrets_env.py:1-1 | """`env` secrets: read from environment variables (`dev` only, by the environment table). | ANCHOR ok
+L141 src/hadavin_sdk/audit/signer.py:64-64 | """An Ed25519 key in a PEM file (dev and pilot; refused in prod by the environment table). | ANCHOR ok
+L141 src/hadavin_sdk/backends/table.py:126-126 | # (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth. | CHECK words=Config,ValueError,environment,renamed
+L141 src/hadavin_sdk/config.py:346-346 | )  # dev executor only | CHECK words=Config,ValueError,environment,renamed
+L141 src/hadavin_sdk/defaults.py:100-100 | EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_ | ANCHOR ok
+L141 src/hadavin_sdk/registry.py:50-50 | # Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash:  | ANCHOR ok
+L141 src/hadavin_sdk/tools.py:361-361 | Without a pin (dev only; pilot and prod require one) it is an ordinary import.""" | CHECK words=Config,ValueError,environment,renamed
+L141 src/hadavin_sdk/runtime/agent_loop.py:179-179 | # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev  | CHECK words=Config,ValueError,environment,renamed
+L141 src/hadavin_sdk/actions/contract.py:34-34 | """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 | ANCHOR ok
+L141 src/hadavin_sdk/store/postgres.py:75-75 | captured by an impostor); an explicit weaker `sslmode` is an opt-down for dev. With iam_au | CHECK words=Config,ValueError,environment,renamed
+L141 src/hadavin_sdk/guard/redact.py:1162-1162 | "dev", | CHECK words=Config,ValueError,environment,renamed
+L142 src/hadavin_sdk/backends/table.py:155-155 | retain_days: int = Field(default=1, ge=1) | ANCHOR ok
+L142 src/hadavin_sdk/config.py:377-398 | def _anchor_refusals(environment: str, b: Backends) -> list[str]: | ANCHOR ok
+L142 src/hadavin_sdk/backends/table.py:150-157 | class _AnchorSettings(KindSettings): | ANCHOR ok
+L142 src/hadavin_sdk/audit/anchor_gcs.py:69-85 | def probed(bucket: Any, settings) -> GcsAnchor: | ANCHOR ok
+L142 src/hadavin_sdk/audit/anchor_azure.py:83-96 | def probed(container: Any, settings) -> AzureBlobAnchor: | ANCHOR ok
+L142 src/hadavin_sdk/audit/anchor_s3.py:5-7 | never overwritten even before Object Lock applies (a 412 with the same bytes is an earlier | CHECK words=probed,client,settings,anchor_s3
+L143 handover/egm/A24/snapshot-db0e0ce/files/CHANGELOG.md:35-35 | - New settings, both under `evidence`: `max_map_entries` defaults to 2000 (a run whose tex | ANCHOR ok (ambiguous file)
+L143 src/hadavin_sdk/audit/chain.py:140-140 | False  # the audit or its anchors could not be read: not checked, not "tampered" | CHECK words=guaranteed,cannot,never,lost
+L178 .github/workflows/ci.yml:86-87 | HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres | ANCHOR ok
+L178 .github/workflows/ci.yml:77-77 | run: uv sync --locked --no-build --all-extras --group test | CHECK words=handover,core,hardening,audit
+L178 .github/workflows/ci.yml:83-83 | run: psql --version | CHECK words=handover,core,hardening,audit
+L182 .github/workflows/ci.yml:79-79 | run: ruff check src tests demos | ANCHOR ok
+L207 src/hadavin_sdk/audit/chain.py:171-171 | self.checkpoint_every = checkpoint_every | ANCHOR ok
 TOTAL cites=90 missing_or_range=0 anchor_check=18
