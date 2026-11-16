@@ -104,3 +104,12 @@ REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpa
   PASS: T19 state empty
 == T20 four signals in a row while a mutant is planted (5 times): file restored, marker gone, exit 129/130/143
   (probabilistic: it cannot force the second signal into the exact window; see T21 for the deterministic part)
+  PASS: T20.1 exit 129/130/143 (got 129)
+  PASS: T20.1 file restored
+  PASS: T20.1 state empty
+  PASS: T20.2 exit 129/130/143 (got 129)
+  PASS: T20.2 file restored
+  PASS: T20.2 state empty
+  PASS: T20.3 exit 129/130/143 (got 129)
+  PASS: T20.3 file restored
+  PASS: T20.3 state empty

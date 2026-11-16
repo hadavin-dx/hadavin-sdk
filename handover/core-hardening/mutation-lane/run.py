@@ -2415,6 +2415,10 @@ def main():
                 raise Refused(
                     f"--raw {rawdir} lies inside --root {root}: refused (it would change the scratch tree)"
                 )
+            if rawdir.resolve().is_relative_to(STATE.resolve()):  # before anything is created there (r9 N4 gap)
+                raise Refused(
+                    f"--raw {rawdir} lies in the state folder {STATE}: refused (a file written there could pose as a marker)"
+                )
             rawdir.mkdir(parents=True, exist_ok=True)
             outs = [rawdir / f"{a.prefix}-{n}.txt" for n in sorted(RESERVED_IDS)]
             outs += [rawdir / f"{a.prefix}-{m['id']}.txt" for m in ms]

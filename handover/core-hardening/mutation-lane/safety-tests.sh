@@ -1378,7 +1378,7 @@ open(mod, "w").write(orig.replace("return 1", "return 2"))
 scen.append((go("--sha", sha, "--repo", repo), "when the tree differs from git"))
 open(mod, "w").write(orig)
 os.makedirs(state, mode=0o700, exist_ok=True)
-mk = os.path.join(state, key + ".planted.json"); open(mk, "w").write(json.dumps({"root": "/nowhere/else", "backup": "x"}))
+mk = os.path.join(state, key + ".planted.json"); open(mk, "w").write(json.dumps({"root": "/nowhere/else", "backup": "x", "file": "src/mod.py", "orig_sha256": "0" * 64, "mutant": "m1"}))
 scen.append((go(), "names another root or another backup path"))
 os.unlink(mk)
 for rc, phrase in scen:
