@@ -17,6 +17,7 @@ Options:
   --expect-credential KIND=NAME a node credential of this kind (for example postgres, smtp) must have exactly this name, else FAIL (repeatable)
   --block-env-access            a node that reads $env.X is a FAIL (default: WARN-LEAD-DECISION): use when the take switches off env access inside nodes
   --require-real-credential-ids a credential id or sub-workflow id that is still a placeholder is a FAIL (default: always printed as WARN, even with --quiet-info)
+  --ddl FILE                    SQL file with the CREATE TABLE of the lead table: every column used in a postgres query string of the flows must exist in it, else WARN naming the missing columns. Without it the columns are NOT checked and the run says so loudly
   --fail-unverified             rules that come from memory of n8n (marked 'n8n rule UNVERIFIED') are WARN by default; this makes them FAIL
 Needs Python 3.10 or newer (the script says so and exits 3 on an older one).
 
@@ -31,7 +32,7 @@ equal the expected ones; onError=continueErrorOutput nodes have a non-empty main
 every $('Name') and $node["Name"] inside an expression names a node of the same file.
 Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, n8n-nodes-base.cron, or a type
 ending in 'Trigger'. respondToWebhook is NOT a trigger.
-F-002 Claim is printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002. A node with alwaysOutputData AND onError=continueErrorOutput is a FAIL (round 3).
+F-002 Claim is printed with a WARN (UNPROVEN until a test run in n8n): exit 0 does NOT clear F-002. A node with alwaysOutputData AND onError=continueErrorOutput is a FAIL (round 3).
 WARN-LEAD-DECISION lines (webhook or form without authentication, nodes that read $env) keep exit 0 on purpose, but the closing block always prints 'OPEN LEAD DECISIONS: n webhook(s) without auth, m $env node(s)'.
 Rules that come from MEMORY of n8n, not from a source in this repo (tag 'n8n rule UNVERIFIED'; WARN only unless --fail-unverified): webhook authentication values (none, basicAuth, headerAuth, jwtAuth;
 form trigger: none, basicAuth), the credential kind each of them needs (httpBasicAuth, httpHeaderAuth, jwtAuth), the credential kinds of postgres, smtp and hubspot nodes, the position of the error output,

@@ -753,6 +753,12 @@ def _real_ids(obj):
         pr = n.get("parameters") or {}
         if "workflowId" in pr:
             pr["workflowId"] = "wf-real-1"
+        if pr:
+            n["parameters"] = json.loads(
+                json.dumps(pr)
+                .replace("FROM_ADDRESS_PLACEHOLDER", "desk@example.test")
+                .replace("INTAKE_ADDRESS_PLACEHOLDER", "intake@example.test")
+            )
 
 
 def g_ids_real(j, d):
