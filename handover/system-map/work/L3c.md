@@ -18,11 +18,14 @@ Older notes: work/L3c-history.md and work/L3c-history-2.md (ignore). Cite findin
 > - take = the one recorded run of the lead-intake demo (made-up data, run through n8n), planned for 23 Nov 2026.
 > - lane = one read-only audit pass over a set of files by one agent. L1c, L3c, L4c, L5ac are continuation lanes that read what the first lane left. Findings are cited by id (for example L1c-FD-003 = finding 3 of lane L1c), not by line number; the merged list is merged-findings.md.
 > - Size columns are bytes unless the header says otherwise.
-> - Status words: READ = opened fully, apart from any cut named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ.
+> - Status words: READ = opened fully, apart from any cut named in the row. READ-TRUNCATED = opened fully but long lines were cut at the length named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ.
 > - UNVERIFIED = no source file states it and nobody checked. NOT FOUND = searched, none found. N/A = does not apply (the reason follows).
 > - Job keys (what a component does): COUNTER counts events; FILTER refuses input; RETRY repeats a failed step; LOG records output; STORE holds data; NOTICE alerts a person; OTHER none of these.
 > - DECISION line N = a cite to a numbered line of the lead session's decision list; what N points to is NOT RECORDED on this page (see GLOSSARY.md).
 > - The lead / lead session = the Claude session giving orders. Studio lead = the Claude session doing the technical steps. Other terms: GLOSSARY.md.
+
+<!-- TABLE-KEY -->
+> TABLE KEY (added 16 Nov 2026). Coverage tables on this page have the columns: path | size in bytes | status | note. If a row says SKIMMED but its note says "not opened", read it as LISTED-ONLY (name, size, and where the note says so a checksum; contents not read). If a note says only a grep or a count line was taken, the file's contents were not read and no claim on this page rests on them. A size of 0 means the file is empty. A note repeated on many rows describes the method for the whole group; it is not a per-file result. Where a note names a search (grep) without its pattern or its hits, the pattern and the hits are NOT RECORDED.
 
 
 ## Coverage

@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:56:07Z
-PUSHED_UTC: 2026-11-16T14:56:07Z
+UPDATED_UTC: 2026-11-16T14:57:36Z
+PUSHED_UTC: 2026-11-16T14:57:36Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1601. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1613. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,15 +43,15 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:56:07Z | PUSHED_UTC: 2026-11-16T14:56:07Z
+UPDATED_UTC: 2026-11-16T14:57:36Z | PUSHED_UTC: 2026-11-16T14:57:36Z
 | id | purpose | started | state |
 |---|---|---|---|
-| abe3975d54fd5eabd, ac840cb84d0b7926c, aaf4bdac38117a27e, a3f9ff155a85bfb81, aec11fded8f0ea303, ac52fcad88c7668b5 | cold reads: L5b 60-130, L6 130-end, L3c 60-130, L4c 130-200, L5a 60-130, merged-findings 60-130 (id-to-page order not recorded) | earlier | running |
-| (two new, ids in session list) | cold reads: L2 170-240, L3 130-200 | 14:56Z | running |
-Closed and digested 1600-1601: a31865cc88bf693e6, a82d19bb413529978.
-Slip noted: the previous push failed (rc=128, shell was in the wrong folder); this beat repeats it from the repo root.
+| aed356e98c4570f40 | cold read L4c 200-270 | earlier | running |
+| (seven new, ids in session list) | re-reads AFTER the key clean-up: L2 1-50, L5b 1-50, L5a 1-50, L1c 1-50, L3 1-50, L4 1-50, L6 1-50 (tests that the old legends no longer clash with the new KEY) | 14:57Z | running |
+Closed and digested 1606-1613: acaae475e12d35716, a1ecbf103415ff110, a777629a5b8ac2fd5, a292cbc971a07f8dd, af7d1d8bfe4dd0f0e, af16d8be5305c28b7, a3409135c9e88bed9, a678ed3f61f9f4390; earlier: aaf4bdac38117a27e, ac52fcad88c7668b5, a67c11dde1aafd3c8, a0b02682c66e17388 (reports digested in 1602-1605 range; not separately numbered: L3c 60-130 Blocker no header, merged-findings 60-130 Blocker L3-FD-001 to 011 bare quotes, L2 170-240 and L3 130-200 same table class).
+FINDING: old LEGEND blocks clashed with the new KEY (two definitions of NOT-READ). Fixed this beat: old legend lines replaced by one PAGE SCOPE line and the GLOSSARY pointer on line 1 rewritten, on all 12 pages. READ-TRUNCATED added. A TABLE-KEY (columns, LISTED-ONLY, empty, repeated notes) added to 9 table pages.
 CAPACITY: 8 of 8. No missing slots.
-NEXT 5: per-page fixes the key does not cover: L5ac old lines 2-8; L1c finding sentences and 18 unread files; L3 md5 result; merged-findings legend (17 lane-labelled Blockers, 0 confirmed); decision-list-for-lead (cite format, answer order, A5 deadline). Then t19 pages: inline glossary and numbered steps. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
+NEXT 5: read the 7 re-read reports (does the class gap close?); write one group row above each 71-row table (L2, L4c, L5b) naming grep patterns and results; L1c finding sentences for FD-001, FD-016, FD-021 (read merged-findings first); L5ac old lines 2-8; merged-findings legend (17 lane-labelled Blockers, 0 confirmed). Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
 
 
 ## Details (long text moved from the FAILED line)
