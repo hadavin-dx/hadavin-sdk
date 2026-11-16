@@ -185,6 +185,7 @@ sub('| C2 | FINAL5 or NAMES_OK not yes, PIN or BR wrong,', '| C2 | PF missing, F
 sub('| C3b | strings.txt missing or the runner count is 0 |', '| C3b | strings.txt missing or the runner count is 0 (both print STOP) |')
 sub('| C2b / C2c | a P-4b file is missing, has CR or non-ASCII, holds a banned word,', '| C2b / C2c | a P-4b file is missing, has CR or non-ASCII, holds a banned word (also when saving it in step 2),')
 
+sub('a `LEAD-YES` already there, or a `kill exit=3` line exists (a normal `GONE-FAIL` does not block) |', 'a `LEAD-YES` already there, a `kill exit=3` line exists (a normal `GONE-FAIL` does not block), or the write failed |')
 # ---------- changelog ----------
 sub('## Changelog\n', '## Changelog\nRevision 13 (2026-11-16): fixes of the hostile-input observations 1 to 7 of the independent evidence run `evidence-c11-independent.md`: `OLD` must be hex and differ from `PIN`, `BR` must not start with `-`; `acc5.sh` stays a text check and the text now says what it accepts; every STOP ends the block with exit code 1 (blocks tested are listed in `evidence-c13.md`); C8 writes `proof-c8.txt` and C9 refuses without it; C9, D1 and the stand-in note refuse a symbolic `PROGRESS.md` and print STOP when the write fails; `PF` missing or a symbolic link is refused (`STOP PF`), also the control file, `P-4b.sh`, `standin-gone.txt` and the files of `$PC` (`STOP LINK`); A3, A4 and A5b print STOP when `patch` is missing (the `git apply` fallback is removed); the limit of `P-4b.sh` is stated in C2b step 2; table in `v13-CHANGES.md`.\n\n')
 
