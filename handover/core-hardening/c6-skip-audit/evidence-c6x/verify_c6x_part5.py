@@ -33,7 +33,7 @@ check("C8-5 the start box has a row with label, question and answer for L-Q27, L
 _l3 = Q[2] if len(Q) >= 3 else ""
 check("C8-6 card line 3 names one place ('n8n's own database') and no number of databases or stores; L-ONEDB says its scope and the open conflict",
       "own database" in _l3 and not re.search(r"\b(one|two|three|both|single|\d+)\b[^.]{0,20}\b(databases?|stores?)\b", _l3, re.I)
-      and any("SCOPE OF THIS RULE" in l and "card line 3" in l.lower() for l in txt if l.startswith("| L-ONEDB (")), _l3[:80])
+      and any("SCOPE OF THIS RULE" in l and "card line 3" in l.lower() for l in txt if l.startswith("| L-ONEDB | studio lead")), _l3[:80])
 # C8-7 (naive M9): the typed line says that the three names are chosen by the studio lead
 check("C8-7 the start box says that builder-A, reviewer-B and reviewer-C are names the studio lead chooses and that no program reads the line", "NAMES YOU CHOOSE" in _b and "No program reads this line" in _b, "")
 # C8-8 (naive M8): the counts of the stop lists are recomputed: 7 stop steps, 11 gate rows of section 3e
@@ -54,7 +54,7 @@ for _l in raw[_k3:].split("\n"):
 _stop7 = len(re.findall(r"rehearsal list items 11 to 15", sec1c)) >= 1 and "risks list items 11 and 12" in sec1c
 _kk = [l for l in sec1c.split("\n") if l.startswith("- SEVEN STOP STEPS AND ELEVEN GATE ROWS")]
 check("C8-8 section 3e has %d gate rows; section 1c-K says ELEVEN and SEVEN, and the section 9 reconciliation says eleven" % len(_gr),
-      len(_gr) == 11 and len(_kk) == 1 and "ELEVEN gate rows" in _kk[0] and "SEVEN stop steps" in _kk[0] and _stop7 and "eleven gate rows in section 3e" in raw, len(_gr))
+      len(_gr) == 11 and len(_kk) == 1 and "ELEVEN GATE ROWS" in _kk[0] and "SEVEN STOP STEPS" in _kk[0] and _stop7 and "eleven gate rows in section 3e" in raw, len(_gr))
 # C8-9 (the brief): the first lines say what failed, what is uncertain and what was not run
 _fl = raw.split("\n")[2] if len(raw.split("\n")) > 2 else ""
 check("C8-9 the first lines of the report say what failed, what is uncertain and what was not run, and that no reviewer has read it",
