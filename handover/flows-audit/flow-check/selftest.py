@@ -2423,7 +2423,7 @@ def main():
         ],
     )
     for nm_, val_, want_ in (
-        ("not_an_address", "nobody", "not shaped like an address"),
+        ("not_an_address", "zq" + "wv" + "-not-" + "mail", "not shaped like an address"),
         ("change_me", "CHANGE_ME", "CHANGE_ME"),
         ("todo_word", "TODO fill in", "TODO"),
         ("replace_me", "REPLACE_ME_NOW", "REPLACE_ME_NOW"),
@@ -2438,6 +2438,7 @@ def main():
             [dm, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
             0,
             must=[("  - ", "setting 'toEmail'"), ("  - ", want_)],
+            must_not=[val_] if nm_ == "not_an_address" else (),   # f8-r9: a filled value of a mail setting is never printed
         )
     for nm_, val_ in (
         ("plain", "someone@example.test"),

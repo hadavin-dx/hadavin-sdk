@@ -74,12 +74,12 @@ run_set() { # name variant state(pristine|patched|bare) extra-args...
   } > "$out" 2>&1
 }
 for v in real film; do
-  run_set pristine $v pristine & 
-  run_set patched $v patched &
-  run_set pristine-strict $v pristine $STRICT &
-  run_set patched-strict $v patched $STRICT &
+  run_set pristine $v pristine 9<&- &
+  run_set patched $v patched 9<&- &
+  run_set pristine-strict $v pristine $STRICT 9<&- &
+  run_set patched-strict $v patched $STRICT 9<&- &
 done
-run_set pristine-no-baseline real bare &
+run_set pristine-no-baseline real bare 9<&- &
 wait
 T1=$(date +%s)
 FC_OUT="${FC_OUT:-$W/selftest-out}" python3 -I "$HERE/selftest.py" "$D/n8n-flows-real-v5" "$W/g/real" "$D/n8n-flows-film-v5" > "$RAW/selftest-new.txt" 2>&1; ST=$?
@@ -239,12 +239,13 @@ tcfail zero-queries "0 QUERY STRINGS WERE READ" TAKE_CHECK_FLOWS="$W/tc/noquery"
 # (Q4) a caller that exported TAKE_CHECK_* variables must not change any result, and a take case that goes wrong must print its first FAIL or !!! line: RUN_ALL_PLANT_TCFAIL_FLOWS points one extra case at a folder with a disabled mail step (exit 1, a FAIL line).
 if [ -z "${RUN_ALL_NESTED:-}" ]; then
   mkdir -p "$W/tc/nested-raw" "$W/tc/nested-raw-b" "$W/tc/nested-raw-c" "$W/tc/nested-raw-d"
-  RUN_ALL_NESTED=1 RUN_ALL_RAW="$W/tc/nested-raw" RUN_ALL_TAKE_FLOWS="$W/tc/form-off" FC_OUT="$W/tc/nested-selftest-out" bash "$HERE/run_all.sh" "$W/tc/nested-work" > "$W/tc/nested.txt" 2>&1 & NPID=$!
-  RUN_ALL_NESTED=1 RUN_ALL_DROP_LEAD=1 RUN_ALL_RAW="$W/tc/nested-raw-b" FC_OUT="$W/tc/nested-selftest-out-b" bash "$HERE/run_all.sh" "$W/tc/nested-work-b" > "$W/tc/nested-b.txt" 2>&1 & NPIDB=$!
-  TAKE_CHECK_TEST=1 TAKE_CHECK_DDL="$W/tc/does-not-exist.sql" TAKE_CHECK_WARN_PIN="$W/tc/does-not-exist.pin" TAKE_CHECK_FLOWS="$W/tc/does-not-exist" RUN_ALL_NESTED=1 RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/disabled-send" RUN_ALL_RAW="$W/tc/nested-raw-c" FC_OUT="$W/tc/nested-selftest-out-c" bash "$HERE/run_all.sh" "$W/tc/nested-work-c" > "$W/tc/nested-c.txt" 2>&1 & NPIDC=$!
+  RUN_ALL_NESTED=1 RUN_ALL_RAW="$W/tc/nested-raw" RUN_ALL_TAKE_FLOWS="$W/tc/form-off" FC_OUT="$W/tc/nested-selftest-out" bash "$HERE/run_all.sh" "$W/tc/nested-work" 9<&- > "$W/tc/nested.txt" 2>&1 & NPID=$!
+  RUN_ALL_NESTED=1 RUN_ALL_DROP_LEAD=1 RUN_ALL_RAW="$W/tc/nested-raw-b" FC_OUT="$W/tc/nested-selftest-out-b" bash "$HERE/run_all.sh" "$W/tc/nested-work-b" 9<&- > "$W/tc/nested-b.txt" 2>&1 & NPIDB=$!
+  TAKE_CHECK_TEST=1 TAKE_CHECK_DDL="$W/tc/does-not-exist.sql" TAKE_CHECK_WARN_PIN="$W/tc/does-not-exist.pin" TAKE_CHECK_FLOWS="$W/tc/does-not-exist" RUN_ALL_NESTED=1 RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/disabled-send" RUN_ALL_RAW="$W/tc/nested-raw-c" FC_OUT="$W/tc/nested-selftest-out-c" bash "$HERE/run_all.sh" "$W/tc/nested-work-c" 9<&- > "$W/tc/nested-c.txt" 2>&1 & NPIDC=$!
   # round 10d (A2): the planted case wants a text that IS printed (the title line of the take) but not on a !!! or FAIL line, in a take that exits 4 for another reason: tcfail must still report it
-  RUN_ALL_NESTED=1 RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/form-off" RUN_ALL_PLANT_TCFAIL_WANT="NOTHING RAN IN n8n" RUN_ALL_RAW="$W/tc/nested-raw-d" FC_OUT="$W/tc/nested-selftest-out-d" bash "$HERE/run_all.sh" "$W/tc/nested-work-d" > "$W/tc/nested-d.txt" 2>&1 & NPIDD=$!
+  RUN_ALL_NESTED=1 RUN_ALL_PLANT_TCFAIL_FLOWS="$W/tc/form-off" RUN_ALL_PLANT_TCFAIL_WANT="NOTHING RAN IN n8n" RUN_ALL_RAW="$W/tc/nested-raw-d" FC_OUT="$W/tc/nested-selftest-out-d" bash "$HERE/run_all.sh" "$W/tc/nested-work-d" 9<&- > "$W/tc/nested-d.txt" 2>&1 & NPIDD=$!
   wait "$NPID"; NX=$?; wait "$NPIDB"; NXB=$?; wait "$NPIDC"; NXC=$?; wait "$NPIDD"; NXD=$?
+  for nf in nested nested-b nested-c nested-d; do nr=$(grep -m 1 '^REFUSED' "$W/tc/$nf.txt" 2>/dev/null | cut -c1-200); [ -z "$nr" ] || TCMISS="$TCMISS [nested run $nf was REFUSED: $nr (its raw folder: $W/tc/nested-raw*; a refusal there exits 2, not the exit the checks below want)]"; done   # f8-r9 (second angle M2): say so, do not only fail the exit-status check
   [ "$NX" = 1 ] && grep -q -F "[take_check.sh exit=4] missing lines:" "$W/tc/nested.txt" && grep -q -F "run_all exit status (real-v5 default runs + self-test): 1" "$W/tc/nested.txt" && ! grep -q -i "unbound variable" "$W/tc/nested.txt" || TCMISS="$TCMISS [nested run with a failing take check: want exit 1, a clean 'take_check.sh exit=4' report and no crash, got exit $NX]"
   [ "$NXB" = 1 ] && grep -q -F "run_all exit status (real-v5 default runs + self-test): 1" "$W/tc/nested-b.txt" && grep -q -F "OPEN LEAD DECISIONS (real-v5, the take): unknown" "$W/tc/nested-b.txt" && grep -q -F "[take_check.sh exit=5] missing lines: none" "$W/tc/nested-b.txt" || TCMISS="$TCMISS [nested run without the OPEN LEAD DECISIONS line: want real exit 1 AND the printed run_all exit status 1, got exit $NXB (see nested-take-failure-b.txt)]"
   [ "$NXC" = 1 ] && grep -q -F "[take_check.sh exit=5] missing lines: [take_check planted: want exit 4, got exit 1; first FAIL or !!! line of" "$W/tc/nested-c.txt" && grep -q -F "is an external-call node and is disabled" "$W/tc/nested-c.txt" && ! grep -q -F "does-not-exist" "$W/tc/nested-c.txt" || TCMISS="$TCMISS [nested run with exported TAKE_CHECK_* variables and one planted take case: want a clean take (exit=0), only the planted case missing, with its first FAIL line shown, got exit $NXC (see nested-take-failure-c.txt)]"

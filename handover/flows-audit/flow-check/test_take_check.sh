@@ -374,7 +374,8 @@ if [ -n "${RV_ONLY:-}" ]; then echo "test_take_check (RV_ONLY: the word check on
 # the control: the plain take on the patched copy. Exit 0 only when the committed pin carries a reviewer line that is not a session (round 10c); until then exit 4 with the plain reason
 tk control -- --flows "$P"
 CRL=$(sed -n 's/^# reviewed by: //p' "$PIN" | head -n 1)
-{ [ "$RC" = 0 ] || { [ "$RC" = 4 ] && has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
+CWANT=4; bash "$TAKE" --check-reviewer-line "$CRL" "$PD" "$RCPT" > /dev/null 2>&1 && CWANT=0   # the expected exit is derived from the same helper: 0 only when the committed reviewer line passes it
+{ [ "$RC" = "$CWANT" ] && { [ "$CWANT" = 0 ] || has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exactly the exit its reviewer line earns (0, or 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
 # Q1: with a person's reviewer line the same take is exit 0, and the output never says a person read the pin
 tk q1ok TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
 [ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, $RD" && has q1ok "The reviewer line is text; not verified." && ! says_person "$S/q1ok.txt"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
@@ -463,7 +464,7 @@ for n in j["nodes"]:
 json.dump(j, open(p, "w", encoding="utf-8"))
 PYEOF
 tk w4 -- --flows "$S/nokey" --write-warn-pin "$S/w4.pin"
-{ [ "$RC" = 4 ] || [ "$RC" = 1 ]; } && [ ! -e "$S/w4.pin" ] && has w4 "NO PIN WRITTEN"; ok $? "M-3: key check absent writes no pin, exit 4 or 1 (got exit $RC)"
+[ "$RC" = 1 ] && [ ! -e "$S/w4.pin" ] && has w4 "NO PIN WRITTEN"; ok $? "M-3: key check absent writes no pin, exit 1 (the checker FAILs on the renamed step; deterministic) (got exit $RC)"
 
 # M-1 and M-2: the run-saving INFO line promises no deletion; the top block and the FINAL line carry the sha256 of the four flow files
 tk sha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
@@ -806,5 +807,23 @@ sys.exit(r.returncode)
 PYEOF
 tk r9-ro TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/ro.py" -- --flows "$S/ro"
 [ "$RC" = 4 ] && has r9-ro "A FLOW FILE CHANGED WHILE THIS CHECK RAN"; ok $? "f8-r9: a file changed in the ORIGINAL folder while the checker read the private copy is still caught at the end (exit 4) (got exit $RC)"
+
+# f8-r9 (second angle M1): a filled mail setting that is not an address must never be printed, logged or written into a pin (fake value built from parts)
+FAKEV="zq""wv""-leak-""probe"
+cp -r -- "$P" "$S/leak"; python3 -I - "$S/leak/mf-form.json" "$FAKEV" <<'PYEOF'
+import json, sys
+p, v = sys.argv[1], sys.argv[2]
+j = json.load(open(p, encoding="utf-8"))
+for n in j["nodes"]:
+    if "Trigger" not in n["type"] and "webhook" not in n["type"].lower() and "stickyNote" not in n["type"]:
+        n["parameters"]["toEmail"] = v
+        break
+else:
+    sys.exit(3)
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+LKX=$?
+tk r9-leak TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$S/leak" --write-warn-pin "$S/r9-leak.pin"
+[ "$LKX" = 0 ] && ! grep -q -F -- "$FAKEV" "$S/r9-leak.txt" && { [ ! -e "$S/r9-leak.pin" ] || ! grep -q -F -- "$FAKEV" "$S/r9-leak.pin"; } && grep -q -F "not shaped like an address" "$S/r9-leak.txt"; ok $? "f8-r9 M1(second angle): a mail field filled with a made-up bad value is reported by name only: the value is absent from stdout, stderr and the written pin (planted: $LKX, exit $RC)"
 echo "test_take_check: $((N-BAD)) of $N cases as expected, $BAD not as expected"
 [ "$BAD" = 0 ]
