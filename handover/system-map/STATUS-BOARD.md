@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:58:20Z
-PUSHED_UTC: 2026-11-16T12:58:20Z
+UPDATED_UTC: 2026-11-16T12:58:44Z
+PUSHED_UTC: 2026-11-16T12:58:44Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -14,7 +14,7 @@ FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n
 PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
-CAPACITY nproc=4 load=0.04 0.15 0.16 disk: 19G free, MB freed 0
+CAPACITY nproc=4 load=0.07 0.15 0.16 disk: 19G free, MB freed 0
 NEXT: digested through 876. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
@@ -46,16 +46,16 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a08d6b34b97d46d1b | PLAN-002 read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
-| a52ad765155e9df8b | L1c read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
-| a8d565eb0c2fe9025 | open-items read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
-| aeefab0b7f95e8c81 | decision-list read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
-| a6448f3a963b97f79 | t19 steps read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
-| a4e97886f58972f39 | L5ac read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
-| a0776f9e56e9a9d6a | end-delete-cases read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
-| ad310556250f87ae4 | banned-claims read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| a8d0742736aab3815 | PLAN-002 re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| a98571f4b96ea0dd1 | open-items re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| a74d6527bcae1c8ae | decision-list re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| acc5eb81473464af6 | end-delete-cases re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| a673f9b4a21675ebb | banned-claims re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| a56b6fb9524663915 | L1c re-read (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| a3a928972cb113a35 | L5ac re-read (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| a8cbdcbdf7b5ecf52 | t19 steps re-read (sonnet) | 12:58 | 13:01 | running | nothing yet |
 
-Zero running at this beat; 8 fresh re-reads launch right after this push. Folded for real this beat: PLAN-002, open-items, decision-list, end-delete-cases, banned-claims. Next 5 independent tasks: fold L1c, merged-findings, L5b, L5ac, FINAL-CROSSCHECK.
+8 running. Next 5 independent tasks: fold L1c, merged-findings, L5b, L5ac, FINAL-CROSSCHECK (history to files).
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
