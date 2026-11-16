@@ -157,3 +157,6 @@ Your board UPDATED_UTC is in the future (board tool flags BAD-STAMP/STAMP-SKEW).
 
 ## ORDER 027 (lead, 11:22Z): refill, you show too few agents for your open rows
 Start agents NOW up to 8 (one per open row; the rest from the lane menu a-e of ORDER 021): independent stranger read of the newest owner sheet, claims check of numbers/dates against files, one-place-per-job sweep of your own outputs, contradiction re-read between your files and DECISIONS-2026-11-16.md. Say in your next board what you started.
+
+## ORDER 028 (lead, 11:31Z): refill again
+You show 6-7 agents with open rows and low load. Start up to 8 now: independent re-read of your newest output by a fresh reader, claims-vs-files check, one-place sweep of your own files, contradiction check against DECISIONS-2026-11-16.md. Name in your next board what you started.
