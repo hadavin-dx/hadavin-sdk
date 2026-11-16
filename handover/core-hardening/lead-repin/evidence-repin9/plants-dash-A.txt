@@ -20,3 +20,5 @@ m17 [dash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=2042 failed=12 
 m18 [dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=2050 failed=4 (the made-up input and output files were deleted) (3s)
 m19 [dash]: KILLED-phase2 exit=1 SELF-TEST: passed=2093 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): the clean-up deleted a folder whose name is not lead-repin.XXXXXX'] (122s)
 m20 [dash]: KILLED-phase1 exit=1 fail_lines=13 SELF-TEST: passed=2042 failed=12 (the made-up input and output files were deleted) (3s)
+m21 [dash]: SURVIVED exit=0 SELF-TEST: passed=2094 failed=0 (the made-up input and output files were deleted) first_fail=[] (124s)
+m22 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)

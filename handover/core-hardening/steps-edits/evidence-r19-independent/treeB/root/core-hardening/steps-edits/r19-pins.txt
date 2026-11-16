@@ -2069,7 +2069,7 @@
 1	What would settle it: the saved export of the take's flows (which HubSpot step uses which saved credential) or the plan's list of the take's credentials.
 1	What you have not finished by 18:29 UTC = 23:59 IST you finish by Tue 24 Nov 2026 18:29 UTC = 23:59 IST (this date is to be confirmed by the studio lead before you rely on it) (key step D.5);
 1	What you have not finished by 18:29 UTC = 23:59 IST you finish yourself by Tue 24 Nov 2026 18:29 UTC = 23:59 IST (this date is to be confirmed by the studio lead before you rely on it): you act, and nobody does an owner item for you.
-1	Whatever you answer, the secret key for the model that the take uses ends by Mon 23 Nov 2026 18:19 UTC = 23:49 IST (step 22 item 3): that is the security decision of 16 Nov 2026, confirmed in writing by the studio lead.
+1	Whatever you answer, the secret key for the model that the take uses ends by Tue 23 Nov 2026 18:19 UTC = 23:49 IST (step 22 item 3): that is the security decision of 16 Nov 2026, confirmed in writing by the studio lead.
 1	When G5 opens the studio lead applies E-49, E-50 and E-53 together, and rule R6 then checks five facts instead of four.
 1	When G5 opens, the studio lead applies E-49, E-50 and E-53 together (rule R8);
 1	When alarm 1 rings: if a session with the assistant is open and it asks you its two questions (key step F), answer them, but do not wait for them;
