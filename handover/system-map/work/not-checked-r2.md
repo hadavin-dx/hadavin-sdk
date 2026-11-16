@@ -12,8 +12,9 @@ Terms: T19 = the test that sends one lead twice and counts mails and contact wri
 | 7 | flowcheck blind spots (writes without "crm" in the address, `$node[...]`, disabled steps). | core-hardening session | after the rehearsal |
 | 8 | Duplicate behaviour of `CrmUpsert` on the owner's own free HubSpot trial is unchecked. | studio lead | same time as row 1 |
 
-## Current text (Mon 16 Nov 2026; the only paragraph that counts; older paragraphs are in not-checked-r2-history.md, ignore them)
-What this is: eight checks still open before the filmed take (the filmed run of the lead-intake demo on made-up data). Three of them gate the take: row 1 (the changed flows reach MarkDone in n8n once), row 2 (T19: a lead sent twice is processed once) and row 4 (stored runs hold personal-looking data; check the n8n executions page is off camera or cleaned). The other rows (3, 5, 6, 7, 8) are checks the studio lead tracks; none has an owner or date set by a file.
-Dates: no file sets a deadline for any row. Row 1 needs the fill script (fill_flows.py) which is not built and has no named owner, so any due time for rows 1, 2, 4 and 8 is NOT SET. Earlier "04:30 UTC / 10:00 IST" times were my proposals and are withdrawn.
-Merged: row 8 (CrmUpsert duplicate behaviour) is part of the row 2 run. Row 7 (flowcheck blind spots) is a backlog item after the rehearsal, not a gate. Row 5 (owner confirms mail sender and 3 recipients) depends on S9-1, which is deferred (decision 5), so it is a manual owner check only.
+## Current text (Mon 16 Nov 2026; replaces the earlier paragraph)
+Goal: settle the open checks before the take (one filmed run of the lead-intake demo on made-up data). Gates the take: rows 1, 2 and 4. Row 8 is run together with row 2. Row 7 happens after the rehearsal. Rows 3, 5 and 6 are tracked by the studio lead and do not gate the take.
+Pass rules: row 2 (T19) = send one lead twice; pass is one mail and one contact write in total, counts recorded. Row 4 = the executions page and the Postgres tables hold no real-looking data on camera; record what was seen. Row 6 = every scene 1 to 4 sentence that mentions stand-ins, refusal, 60 s or counts is marked.
+Missing row: build fill_flows.py (BL-wp6-G1); owner NOT SET; row 1 cannot run before it exists.
+Times: the table's due column gives the decision 12 target (tonight or tomorrow morning IST); no file sets an exact time, so exact times are NOT SET.
 Words: take = the filmed run; studio lead = the Claude session doing the technical steps; owner = the human at the laptop; row N = row N of the table above.
