@@ -214,11 +214,17 @@ done
 tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 # f8-r4 (M1): the bypasses of review f8-r3 (words joined by dots or hyphens, two stand-in words, a repeated letter, the script's own stand-in names, a date far in the past or before the pin's own date). Each must be exit 4 with the reviewer-line message, even with the test flag and the pin override (a name that is not "Testonly ..." gets no test allowance)
-for pair in "m1-tbd-dot:TBD., 2026-11-16" "m1-claude-code:Claude-Code, 2026-11-16" "m1-agent-dot:Agent., 2026-11-16" "m1-unknown-dash:Unknown-, 2026-11-16" "m1-sonnet-opus:Sonnet Opus, 2026-11-16" "m1-aaa:Aaa, 2026-11-16" "m1-runall:Runall Standin, 2026-11-16" "m1-test-reviewer:Test Reviewer, 2026-11-16" "m1-testonly-no-flag-name:Testonly Reviewer, 2026-11-16" "m1-model-in-name:Jane Gemini, 2026-11-16" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15"; do
+for pair in "m1-tbd-dot:TBD., 2026-11-16" "m1-claude-code:Claude-Code, 2026-11-16" "m1-agent-dot:Agent., 2026-11-16" "m1-unknown-dash:Unknown-, 2026-11-16" "m1-sonnet-opus:Sonnet Opus, 2026-11-16" "m1-aaa:Aaa, 2026-11-16" "m1-runall:Runall Standin, 2026-11-16" "m1-test-reviewer:Test Reviewer, 2026-11-16" "m1-testonly-no-flag-name:Testonly Reviewer, 2026-11-16" "m1-model-in-name:Jane Gemini, 2026-11-16" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15" "m1-dotted-llm:Pat O.L.L.M., 2026-11-16" "m1-dotted-claude:P.a.t C.l.a.u.d.e, 2026-11-16"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$nm" = m1-testonly-no-flag-name ] && tk "$nm" TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"   # the test allowance needs BOTH the flag and the override
   [ "$RC" = 4 ] && grep -q -E "^!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON" "$S/$nm.txt"; ok $? "M1: reviewer line '${pair#*:}' is exit 4 with the reviewer-line message (got exit $RC)"
+done
+# f8-r5: names that must still be accepted (would-be pass with the override: exit 5, never the stand-in message). 'Zed' (3 letters, human-looking) is accepted by design: a script cannot tell it from a real name
+for pair in "r5-pat-smith:Pat Smith, 2026-11-16" "r5-obrien:O'Brien, 2026-11-16" "r5-aiden-botha:Aiden Botha, 2026-11-16" "r5-zed:Zed Smith, 2026-11-16"; do
+  nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
+  [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r5: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 done
 # the test allowance: flag + override + first word Testonly = exit 5 (never 0); the same name without the flag was refused above
 { echo "# reviewed by: Testonly Runall, 2026-11-16"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"

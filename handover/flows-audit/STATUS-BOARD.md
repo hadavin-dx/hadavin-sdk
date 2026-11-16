@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T12:40:39Z
+UPDATED_UTC: 2026-11-16T12:46:32Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 72
-AGENTS_RUNNING: 8
-CAPACITY: 1.46 load of 4 cores, mem 0/15 GB, RAM 943/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.1G /tmp/claude-0 , agents 8 (light+heavy per list)
+PERCENT: 90
+AGENTS_RUNNING: 7
+CAPACITY: 0.73 load of 4 cores, mem 0/15 GB, RAM 998/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.3G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
-FAILED: FAILED: none now. ruff format --check rc 0 (504 files), ruff check rc 0 on 12:33Z head; the one file was lead-owned inputs/plan-wp6-resmoke-v5.md (ORDER 037 asked for the run; code-fence reformat only, listed in REPORT.md).
-NEXT: collect fixers; verify with checkers; egm review per file; refresh drift-007
-PUSHED_UTC: 2026-11-16T12:40:39Z
+FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
+NEXT: collect fixers (TAKE-CHECKLIST, FINDINGS, REVIEW.md, RUNBOOK r7, F8 r5), second-angle reviews, drift-007 refresh
+PUSHED_UTC: 2026-11-16T12:46:32Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,14 +30,13 @@ PUSHED_UTC: 2026-11-16T12:40:39Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| ae01e2f | fixer | sonnet | RUNBOOK r6 Majors (5) + ORDER 037 stand-in text | 12:36 | 13:00 | running | - |
-| ac847cb | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r6 Majors (10) | 12:36 | 13:10 | running | - |
-| a177eb6 | fixer | sonnet | FINDINGS/LEDGER ratings, pass lines (6) | 12:36 | 13:00 | running | - |
-| aa359ac | fixer | sonnet | QUESTIONS r8 Majors (8) | 12:36 | 13:00 | running | - |
-| ad7cb8d | evidence | sonnet | citation/time/sum check RUNBOOK, TAKE-CHECKLIST, FIX-PLAN | 12:36 | 13:00 | running | - |
-| ab1b219 | reviewer | sonnet | REVIEW.md round 10 (source cites, grants) | 12:38 | 12:58 | running | - |
-| a517392 | evidence | sonnet | F8 round 4 scripts: tests, hostile names, lock | 12:41 | 13:10 | running | - |
-| a7d8d25 | fixer | sonnet | owner part round 15 (14 Majors) | 12:42 | 13:05 | running | - |
+| ac847cb | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN 10 Majors | 12:35Z | 13:10Z | running | edits in progress |
+| ac782bc | fixer | sonnet | REVIEW.md round 10 (M1-M3) | 12:41Z | 13:10Z | running | backup bak-rev10 |
+| aaba096 | fixer | sonnet | FINDINGS/LEDGER round 8 | 12:43Z | 13:10Z | running | none yet |
+| a94f85f | egm-comprehension | sonnet | stranger read QUESTIONS r9 | 12:44Z | 13:00Z | running | none yet |
+| a2b5712 | fixer | sonnet | F8 round 5 dotted-name fix | 12:47Z | 13:10Z | running | none yet |
+| ae01e2f | fixer | sonnet | RUNBOOK round 7 B1+M1-M10 | 12:49Z | 13:20Z | running | none yet |
+| ac2726c | egm-comprehension | sonnet | stranger read OWNER-STEPS r16 | 12:50Z | 13:05Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. Fresh stranger read of QUESTIONS after round 7 (Blockers/Majors only) once the owner-part fixer is done
