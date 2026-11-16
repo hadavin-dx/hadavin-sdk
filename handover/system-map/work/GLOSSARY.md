@@ -5,13 +5,13 @@ Written Mon 16 Nov 2026 by the system-map session.
 ## Rules for writing pages
 - Only meanings found in files are given. Where no file gives a meaning, the entry says "meaning not recorded"; the Unknown table says whom to ask.
 - "Line N" on a page means line N of the file that page names; if no file is named, mark the cite UNVERIFIED.
-- For the one-store decision write "DECISION line N (root copy)" or "(inputs copy)".
+- For the one-store decision write "DECISION line N (root copy)" or "(inputs copy)"; root copy = handover/system-map/DECISION-one-store.md, inputs copy = handover/system-map/inputs/DECISION-one-store.md.
 - Old text is in GLOSSARY-history.md (ignore it).
 
 ## People and sessions (one table)
 | name | what it is | kind |
 |---|---|---|
-| lead session | the Claude session that gives the system-map session its orders (older pages write "the lead"; it is not the studio lead; never write "lead" alone) | Claude session |
+| lead session | the Claude session that gives the system-map session its orders (older pages write "the lead"; it is not the studio lead; "lead" alone is banned for a session; for a sales contact write "lead record" or "lead id") | Claude session |
 | studio lead | the Claude session that does the technical steps on the take and messages the owner | Claude session |
 | core-hardening | a separate Claude session that owns V5 and the held pages | Claude session |
 | system-map session | this Claude session; it writes only inside handover/system-map/ | Claude session |
@@ -33,27 +33,27 @@ Written Mon 16 Nov 2026 by the system-map session.
 ## Held pages (one row each; this session writes a one-line digest of what each cold read found and does not edit them)
 | page | owner |
 |---|---|
-| OWNER-VIEW.md | core-hardening session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| OWNER-RUN-DAY-CARD.md | core-hardening session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| OWNER-CLEANUP-CARD.md | core-hardening session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| LEAD-PAGE.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| TAKE-BLOCKERS.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| SWEEP.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| MASTER-MAP.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| README.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| QUESTIONS.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| QUEUE.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| ORDERS.md | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| inputs/ (folder) | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| tools/ (folder) | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
-| tests/ (folder) | lead session (UNVERIFIED which of the two owns it; meaning of the page: see its first lines) |
+| OWNER-VIEW.md | core-hardening session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| OWNER-RUN-DAY-CARD.md | core-hardening session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| OWNER-CLEANUP-CARD.md | core-hardening session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| LEAD-PAGE.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| TAKE-BLOCKERS.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| SWEEP.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| MASTER-MAP.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| README.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| QUESTIONS.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| QUEUE.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| ORDERS.md | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| inputs/ (folder) | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| tools/ (folder) | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
+| tests/ (folder) | lead session (owner unknown: core-hardening session or lead session; see the page's first lines) |
 
 ## Words used on the pages (one definition each)
 - **take**: one recorded run of the lead-intake demo on made-up data. The one claim it makes: "a lead sent twice with the same id is processed once". Say "take" only for the filmed run, not for preparation.
 - **lead record**: one made-up sales contact. **lead id**: that record's id. **HubSpot**: the sales-contact tool the demo writes contacts to. **n8n**: the tool that runs the demo steps.
 - **T19**: the test that sends the same made-up lead twice and expects one mail, one HubSpot write and one stored row in the demo's database (which store: see work/t19-gap-facts.md "Purpose"). Not run yet.
 - **row N**: row N of the table on that page, unless the page writes "TAKE-BLOCKERS row N".
-- **READ / SKIMMED / NOT-READ / OWNER-ONLY**: (a read status, not the file) how much of a file a lane read: all / part / none (so the lane says nothing about that file) / a file only the owner may open.
+- **READ / SKIMMED / NOT-READ / OWNER-ONLY-FILE**: (a read status, not the file; OWNER-ONLY-FILE = a lane did not open it because only the owner may) how much of a file a lane read: all / part / none (so the lane says nothing about that file) / a file only the owner may open.
 - **UNVERIFIED**: stated, not checked against a file or command output. **NOT VISIBLE**: the lane could not see it. **NOT FOUND**: searched, not present. **NOT SET / TO DO**: nobody has filled it in.
 - **Severity** in a finding row: the lane's own label; the lead session has confirmed none.
 
@@ -100,8 +100,7 @@ Each term has meaning NOT RECORDED in any file. Ask the lead session first (it p
 | ORDER 002 | ORDERS.md, PLAN-002.md, REPORT.md |
 | PLAN section 5.2 | L6.md, agent-reports-batch4.md |
 
-Job keys: STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER. Claim types: dead, idle, ops. L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in work/not-checked-r2.md Terms.
-D-04 is not unknown: it is the rule that a lead sent twice is processed once (decision-list-for-lead.md, Reading notes).
+Job keys: STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (meanings not recorded; they label what a flow step is for). Claim types: dead, idle, ops (meanings not recorded). L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in work/not-checked-r2.md Terms.
 The one-store decision's source copy is also unknown (same asking rule).
 
 ## Lanes (one line each)
