@@ -28,34 +28,94 @@ node is flagged (only its query field is read). A disabled Postgres node is flag
 checked as if enabled). A forbidden keyword inside a string literal, a dollar-quoted string and an
 unbalanced quote are flagged (the check cannot tell data from SQL there; pass values as parameters).
 Rough parser: it can miss unusual SQL. The real proof is the database tests."""
-import json, re, sys, pathlib
+
+import json
+import pathlib
+import re
+import sys
 
 TABLE = "mf_leads"
-MAX_FILE_BYTES = 5 * 1024 * 1024   # a flow file or the roles document above this is refused unread
+MAX_FILE_BYTES = 5 * 1024 * 1024  # a flow file or the roles document above this is refused unread
 KINDS = ("select", "insert", "update")
-FORBIDDEN = ("delete", "truncate", "drop", "alter", "create", "grant", "revoke", "copy",
-             "merge", "call", "execute", "vacuum", "comment")
-COLS = ("lead_key email name state claimed_until claim_token attempts crm_id mail_sent "
-        "created_at updated_at alert_sent alert_token alert_until alert_attempts").split()
-NODE_LOGIN = {("mf-form", "Claim"): "mf_door", ("mf-form", "Stored"): "mf_door",
-              ("mf-hook", "Claim"): "mf_door", ("mf-hook", "Stored"): "mf_door",
-              ("mf-recovery", "ClaimStuck"): "mf_recover", ("mf-recovery", "MarkFailed"): "mf_recover",
-              ("mf-recovery", "AlertClaim"): "mf_alert", ("mf-recovery", "AlertBackoff"): "mf_alert",
-              ("mf-recovery", "AlertMark"): "mf_alert"}
+FORBIDDEN = (
+    "delete",
+    "truncate",
+    "drop",
+    "alter",
+    "create",
+    "grant",
+    "revoke",
+    "copy",
+    "merge",
+    "call",
+    "execute",
+    "vacuum",
+    "comment",
+)
+COLS = [
+    "lead_key",
+    "email",
+    "name",
+    "state",
+    "claimed_until",
+    "claim_token",
+    "attempts",
+    "crm_id",
+    "mail_sent",
+    "created_at",
+    "updated_at",
+    "alert_sent",
+    "alert_token",
+    "alert_until",
+    "alert_attempts",
+]
+NODE_LOGIN = {
+    ("mf-form", "Claim"): "mf_door",
+    ("mf-form", "Stored"): "mf_door",
+    ("mf-hook", "Claim"): "mf_door",
+    ("mf-hook", "Stored"): "mf_door",
+    ("mf-recovery", "ClaimStuck"): "mf_recover",
+    ("mf-recovery", "MarkFailed"): "mf_recover",
+    ("mf-recovery", "AlertClaim"): "mf_alert",
+    ("mf-recovery", "AlertBackoff"): "mf_alert",
+    ("mf-recovery", "AlertMark"): "mf_alert",
+}
 SUB = "mf_sub"
 EXPECTED_FLOWS = {"mf-form", "mf-hook", "mf-recovery", "mf-sub-crm-mail"}
-EXPECTED_PG_NODES = 14      # per folder; a different count means a wrong folder or a changed flow
-OLD_CREDENTIAL = "n8n-publish-pg"   # the shared login the proposal replaces
+EXPECTED_PG_NODES = 14  # per folder; a different count means a wrong folder or a changed flow
+OLD_CREDENTIAL = "n8n-publish-pg"  # the shared login the proposal replaces
 PG_TYPE = "n8n-nodes-base.postgres"
+# what a surprising file shape can raise; main() turns these into one FAIL line, never a traceback
+UNEXPECTED = (OSError, ValueError, LookupError, TypeError, AttributeError, RecursionError)
 # any node type containing one of these is a database door the check does not read
-DB_TYPE_WORDS = ("postgres", "mysql", "mariadb", "mssql", "sql", "oracle", "mongo", "redis",
-                 "snowflake", "bigquery", "cockroach", "timescale", "questdb", "supabase",
-                 "database", "dynamo", "cassandra", "elastic", "sqlite", "db2")
+DB_TYPE_WORDS = (
+    "postgres",
+    "mysql",
+    "mariadb",
+    "mssql",
+    "sql",
+    "oracle",
+    "mongo",
+    "redis",
+    "snowflake",
+    "bigquery",
+    "cockroach",
+    "timescale",
+    "questdb",
+    "supabase",
+    "database",
+    "dynamo",
+    "cassandra",
+    "elastic",
+    "sqlite",
+    "db2",
+)
 SQL_TEXT = re.compile(
     r"\bselect\b[^;]*\bfrom\b|\binsert\s+into\b|\bupdate\s+[\w.\"]+\s+set\b|\bdelete\s+from\b"
     r"|\bdrop\s+(table|schema|database|role|user|index|view)\b|\btruncate\b|\balter\s+(table|role|user)\b"
     r"|\bcreate\s+(table|role|user|index|view|function)\b|\bgrant\s+\w+.*\bto\b|\bmf_leads\b",
-    re.I | re.S)
+    re.IGNORECASE | re.DOTALL,
+)
 DEFAULT_DOC = pathlib.Path(__file__).resolve().parent.parent / "ROLES-PROPOSAL.md"
 
 
@@ -93,12 +153,22 @@ def flow_nodes(path):
         if not isinstance(x, dict):
             problems.append(f"malformed node {i}: it is {type_name(x)}, expected an object")
             continue
-        bad = [f"'{k}' is {type_name(x[k])}, expected text" for k in ("name", "type")
-               if k in x and not isinstance(x[k], str)]
-        bad += [f"'{k}' is {type_name(x[k])}, expected an object" for k in ("parameters", "credentials")
-                if x.get(k) is not None and not isinstance(x[k], dict)]
+        bad = [
+            f"'{k}' is {type_name(x[k])}, expected text"
+            for k in ("name", "type")
+            if k in x and not isinstance(x[k], str)
+        ]
+        bad += [
+            f"'{k}' is {type_name(x[k])}, expected an object"
+            for k in ("parameters", "credentials")
+            if x.get(k) is not None and not isinstance(x[k], dict)
+        ]
         cr = x.get("credentials")
-        if isinstance(cr, dict) and cr.get("postgres") is not None and not isinstance(cr["postgres"], dict):
+        if (
+            isinstance(cr, dict)
+            and cr.get("postgres") is not None
+            and not isinstance(cr["postgres"], dict)
+        ):
             bad.append(f"credentials.postgres is {type_name(cr['postgres'])}, expected an object")
         if bad:
             problems.append(f"malformed node {i} ({x.get('name', '?')!s:.40}): " + "; ".join(bad))
@@ -117,12 +187,15 @@ def parse_grants(doc_path):
     text, why = read_limited(doc_path)
     if why:
         return {}, [f"cannot read roles document {doc_path}: {why}"]
-    m = re.search(r"^## 4\..*?(?=^## 5\.)", text, re.S | re.M)
+    m = re.search(r"^## 4\..*?(?=^## 5\.)", text, re.DOTALL | re.MULTILINE)
     if not m:
         return {}, ["roles document has no section 4"]
     sec = re.sub(r"--[^\n]*", "", m.group(0))
-    for g in re.finditer(r"\bGRANT\s+(SELECT|INSERT|UPDATE)\b\s*(\([^)]*\))?\s+ON\s+(?:TABLE\s+)?(\w+)\s+TO\s+([\w,\s]+?);",
-                         sec, re.I):
+    for g in re.finditer(
+        r"\bGRANT\s+(SELECT|INSERT|UPDATE)\b\s*(\([^)]*\))?\s+ON\s+(?:TABLE\s+)?(\w+)\s+TO\s+([\w,\s]+?);",
+        sec,
+        re.IGNORECASE,
+    ):
         kind, cols, table, roles = g.group(1).lower(), g.group(2), g.group(3), g.group(4)
         roles = [r.strip() for r in roles.split(",") if r.strip()]
         if table != TABLE:
@@ -157,7 +230,9 @@ def foreign_db_access(node):
     for txt in strings([node.get("parameters"), node.get("notes")]):
         m = SQL_TEXT.search(txt)
         if m:
-            why.append(f"SQL-like text in a {t!r} node ({m.group(0)[:30]!r}); the check reads only {PG_TYPE} nodes")
+            why.append(
+                f"SQL-like text in a {t!r} node ({m.group(0)[:30]!r}); the check reads only {PG_TYPE} nodes"
+            )
             break
     return why
 
@@ -168,8 +243,10 @@ def stray_sql_in_postgres_node(node):
     for txt in strings([params, node.get("notes")]):
         m = SQL_TEXT.search(txt)
         if m:
-            return (f"SQL-like text ({m.group(0)[:30]!r}) in the notes or another parameter of a Postgres "
-                    "node; only its query field is checked, so move the text out or into the query")
+            return (
+                f"SQL-like text ({m.group(0)[:30]!r}) in the notes or another parameter of a Postgres "
+                "node; only its query field is checked, so move the text out or into the query"
+            )
     return None
 
 
@@ -179,7 +256,9 @@ def parse_credentials(doc_path):
     if why:
         return {}
     out = {}
-    for m in re.finditer(r"^\|\s*(mf_\w+)\s*\|[^\n]*\|\s*`([^`]+)`[^|\n]*\|\s*$", text, re.M):
+    for m in re.finditer(
+        r"^\|\s*(mf_\w+)\s*\|[^\n]*\|\s*`([^`]+)`[^|\n]*\|\s*$", text, re.MULTILINE
+    ):
         out[m.group(1)] = m.group(2)
     return out
 
@@ -202,9 +281,12 @@ def statements(sql):
 
 
 def table_names(stmt):
-    s = re.sub(r"\bfor\s+(no\s+key\s+)?(update|share)\b", " ", stmt, flags=re.I)
-    names = [m.group(2).lower() for m in re.finditer(r"\b(from|join|into|update)\s+([\w.\"]+)", s, re.I)]
-    comma = re.search(r"\bfrom\s+[\w.\"]+(\s+\w+)?\s*,", s, re.I)
+    s = re.sub(r"\bfor\s+(no\s+key\s+)?(update|share)\b", " ", stmt, flags=re.IGNORECASE)
+    names = [
+        m.group(2).lower()
+        for m in re.finditer(r"\b(from|join|into|update)\s+([\w.\"]+)", s, re.IGNORECASE)
+    ]
+    comma = re.search(r"\bfrom\s+[\w.\"]+(\s+\w+)?\s*,", s, re.IGNORECASE)
     return names, bool(comma)
 
 
@@ -220,8 +302,10 @@ def analyse(sql):
         errors.append("unbalanced single quote (the rest of the query cannot be read)")
     for lit in LITERAL.findall(sql):
         for w in sorted({w for w in toks(lit.lower()) if w in FORBIDDEN}):
-            errors.append(f"forbidden keyword {w.upper()} inside a string literal "
-                          "(the check cannot tell data from SQL; pass it as a parameter)")
+            errors.append(
+                f"forbidden keyword {w.upper()} inside a string literal "
+                "(the check cannot tell data from SQL; pass it as a parameter)"
+            )
     for st in sts:
         low = st.lower()
         first = (toks(low) or [""])[0]
@@ -234,7 +318,9 @@ def analyse(sql):
             errors.append("quoted name not allowed (a quoted name hides the real table or column)")
         if re.search(r"\bwith\b", low):
             errors.append("WITH (CTE) not allowed")
-        if re.search(r"\bselect\s+(distinct\s+)?\*|\breturning\s+\*|,\s*\*\s*(from\b|,|;|$)|\w\.\*", low):
+        if re.search(
+            r"\bselect\s+(distinct\s+)?\*|\breturning\s+\*|,\s*\*\s*(from\b|,|;|$)|\w\.\*", low
+        ):
             errors.append("SELECT * / RETURNING * not allowed (name the columns)")
         if first == "insert" and not re.match(r"\s*insert\s+into\s+[\w.]+\s*\(", low):
             errors.append("INSERT without a column list not allowed")
@@ -248,28 +334,37 @@ def analyse(sql):
             errors.append("comma-joined tables not allowed")
     s = " ; ".join(sts).lower()
     writes_i, writes_u = set(), set()
-    m = re.search(r"insert\s+into\s+\w+\s*\(([^)]*)\)", s, re.I)
+    m = re.search(r"insert\s+into\s+\w+\s*\(([^)]*)\)", s, re.IGNORECASE)
     ins_tokens = []
     if m:
         ins_tokens = toks(m.group(1))
         writes_i = {t for t in ins_tokens if t in COLS}
     set_tokens = []
-    for m in re.finditer(r"\bset\b(.*?)(?=\bwhere\b|\breturning\b|\bfrom\b|$)", s, re.I | re.S):
+    for m in re.finditer(
+        r"\bset\b(.*?)(?=\bwhere\b|\breturning\b|\bfrom\b|$)", s, re.IGNORECASE | re.DOTALL
+    ):
         depth, cur, parts = 0, "", []
         for ch in m.group(1):
-            depth += ch == "("; depth -= ch == ")"
-            if ch == "," and depth == 0: parts.append(cur); cur = ""
-            else: cur += ch
+            depth += ch == "("
+            depth -= ch == ")"
+            if ch == "," and depth == 0:
+                parts.append(cur)
+                cur = ""
+            else:
+                cur += ch
         parts.append(cur)
         for p in parts:
-            t = re.match(r"\s*([a-z_]+)\s*=", p, re.I)
+            t = re.match(r"\s*([a-z_]+)\s*=", p, re.IGNORECASE)
             if t and t.group(1) in COLS:
-                writes_u.add(t.group(1)); set_tokens.append(t.group(1))
+                writes_u.add(t.group(1))
+                set_tokens.append(t.group(1))
     reads = set()
     skip = list(ins_tokens) + set_tokens
     for t in (t for t in toks(s) if t in COLS):
-        if t in skip: skip.remove(t)
-        else: reads.add(t)
+        if t in skip:
+            skip.remove(t)
+        else:
+            reads.add(t)
     return writes_i, writes_u, reads, errors
 
 
@@ -285,7 +380,9 @@ def run(folders, doc, out=print, require_new_cred=False):
     grants, problems = parse_grants(doc)
     creds = parse_credentials(doc)
     if require_new_cred and not creds:
-        problems.append("--require-new-credentials: no login/credential table found in the roles document")
+        problems.append(
+            "--require-new-credentials: no login/credential table found in the roles document"
+        )
     for p in problems:
         fail(p)
     if not folders:
@@ -315,8 +412,10 @@ def run(folders, doc, out=print, require_new_cred=False):
                     continue
                 file_pg += 1
                 if node.get("disabled") not in (None, False):
-                    fail(f"{label} {flow} {node.get('name', '?')}: node is disabled "
-                         f"({node.get('disabled')!r}); it is checked as if enabled, remove it or enable it")
+                    fail(
+                        f"{label} {flow} {node.get('name', '?')}: node is disabled "
+                        f"({node.get('disabled')!r}); it is checked as if enabled, remove it or enable it"
+                    )
                 stray = stray_sql_in_postgres_node(node)
                 if stray:
                     fail(f"{label} {flow} {node.get('name', '?')}: {stray}")
@@ -325,43 +424,62 @@ def run(folders, doc, out=print, require_new_cred=False):
                 q = q if isinstance(q, str) else ""
                 name = node.get("name", "?")
                 if params.get("operation") != "executeQuery":
-                    fail(f"{label} {flow} {name}: operation is {params.get('operation')!r}, only executeQuery is checked")
+                    fail(
+                        f"{label} {flow} {name}: operation is {params.get('operation')!r}, only executeQuery is checked"
+                    )
                 if q.startswith("="):
-                    fail(f"{label} {flow} {name}: query is an n8n expression (starts with '='); the real SQL is not visible to this check")
+                    fail(
+                        f"{label} {flow} {name}: query is an n8n expression (starts with '='); the real SQL is not visible to this check"
+                    )
                     q = q[1:]
                 cred = ((node.get("credentials") or {}).get("postgres") or {}).get("name")
                 login = NODE_LOGIN.get((flow, name)) or (SUB if flow == "mf-sub-crm-mail" else None)
                 n += 1
                 if login is None:
-                    fail(f"{label} {flow} {name}: no login mapped"); continue
+                    fail(f"{label} {flow} {name}: no login mapped")
+                    continue
                 if not cred:
                     fail(f"{label} {flow} {name}: no postgres credential on the node")
                 elif require_new_cred:
                     if cred == OLD_CREDENTIAL:
-                        fail(f"{label} {flow} {name}: still uses the old shared credential {OLD_CREDENTIAL!r}")
+                        fail(
+                            f"{label} {flow} {name}: still uses the old shared credential {OLD_CREDENTIAL!r}"
+                        )
                     elif cred != creds.get(login):
-                        fail(f"{label} {flow} {name}: credential {cred!r} is not {creds.get(login)!r} (the one for {login})")
+                        fail(
+                            f"{label} {flow} {name}: credential {cred!r} is not {creds.get(login)!r} (the one for {login})"
+                        )
                 wi, wu, rd, errs = analyse(q)
                 for e in errs:
                     fail(f"{label} {flow} {name}: {e}")
                 if login not in grants:
-                    fail(f"{label} {flow} {name}: login {login} has no grants in the document"); continue
+                    fail(f"{label} {flow} {name}: login {login} has no grants in the document")
+                    continue
                 g = grants[login]
                 u = used.setdefault(login, {k: set() for k in KINDS})
-                u["insert"] |= wi; u["update"] |= wu; u["select"] |= rd
-                miss = ([("INSERT", c) for c in sorted(wi - g["insert"])] + [("UPDATE", c) for c in sorted(wu - g["update"])]
-                        + [("SELECT", c) for c in sorted(rd - g["select"])])
+                u["insert"] |= wi
+                u["update"] |= wu
+                u["select"] |= rd
+                miss = (
+                    [("INSERT", c) for c in sorted(wi - g["insert"])]
+                    + [("UPDATE", c) for c in sorted(wu - g["update"])]
+                    + [("SELECT", c) for c in sorted(rd - g["select"])]
+                )
                 if miss:
                     fail(f"{label} {flow} {name} -> {login}: UNCOVERED {miss}")
                 elif not errs:
                     out(f"{label} {flow} {name} -> {login}: covered")
             if file_pg == 0:
-                fail(f"{label} {flow}: this file has zero Postgres nodes (nothing in it was checked)")
+                fail(
+                    f"{label} {flow}: this file has zero Postgres nodes (nothing in it was checked)"
+                )
         out(f"{label}: {n} postgres nodes")
         if seen_files != EXPECTED_FLOWS:
             fail(f"{label}: flow files are {sorted(seen_files)}, expected {sorted(EXPECTED_FLOWS)}")
         if n != EXPECTED_PG_NODES:
-            fail(f"{label}: {n} postgres nodes, expected {EXPECTED_PG_NODES} (wrong folder or changed flow)")
+            fail(
+                f"{label}: {n} postgres nodes, expected {EXPECTED_PG_NODES} (wrong folder or changed flow)"
+            )
         if n == 0:
             fail(f"{label}: zero Postgres nodes (nothing was checked)")
         for login, g in sorted(grants.items()):
@@ -369,7 +487,9 @@ def run(folders, doc, out=print, require_new_cred=False):
             for k in KINDS:
                 extra = sorted(g[k] - u[k])
                 if extra:
-                    fail(f"{label}: unused grant {k.upper()} {extra} for {login} (no query needs it)")
+                    fail(
+                        f"{label}: unused grant {k.upper()} {extra} for {login} (no query needs it)"
+                    )
     out(f"TOTAL PROBLEMS: {bad}")
     return bad
 
@@ -381,13 +501,15 @@ def main(argv):
             newc, args = True, args[1:]
         elif args[0] == "--roles-doc":
             if len(args) < 2:
-                print("FAIL --roles-doc needs a path"); return 1
+                print("FAIL --roles-doc needs a path")
+                return 1
             doc, args = args[1], args[2:]
         else:
-            print(f"FAIL unknown option {args[0]}"); return 1
+            print(f"FAIL unknown option {args[0]}")
+            return 1
     try:
         return 1 if run(args, doc, require_new_cred=newc) else 0
-    except Exception as e:  # last safety net: an unexpected shape must never end in a traceback
+    except UNEXPECTED as e:  # last safety net: an unexpected shape must never end in a traceback
         print(f"FAIL internal error while checking ({type(e).__name__}: {e}); nothing is verified")
         return 1
 

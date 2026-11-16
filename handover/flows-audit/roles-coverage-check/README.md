@@ -5,8 +5,10 @@
 Where the grants come from: the script PARSES them from section 4 (part A) of `../ROLES-PROPOSAL.md` (option `--roles-doc PATH` to use another copy). Nothing is copied into the script, so the script and the document cannot differ. A test (`test_script_and_document_cannot_differ`) fails if grants are hardcoded again.
 
 Run: `python3 -I check_grants_cover_queries.py ../../demo/n8n-flows-real-v5 ../../demo/n8n-flows-film-v5`
-Tests: `python3 -m unittest -v test_check_grants` (set `SCRIPT=<path>` to test another copy of the script).
+Tests (run from this folder; do NOT add `-I`, it hides the folder from the import path and the tests are not found): `python3 -m unittest -v test_check_grants` (set `SCRIPT=<path>` to test another copy of the script).
 
 Limit that stays: it is a text parser, so unusual SQL can slip past it; the database tests are the real proof. The mapping of flow node to login (`NODE_LOGIN`) is still in the script, because the document does not contain it.
 
 Round 4 (see `fix-roles-r4.md`): the check now also flags database-type nodes and SQL-like text in nodes other than the checked Postgres node, any flow file with no Postgres node, a folder that is not exactly 4 files and 14 Postgres nodes, non-executeQuery or `=` queries, SELECT * / RETURNING * / INSERT without column list / UPDATE...FROM / WITH, quoted names, and (option `--require-new-credentials`) wrong or old shared credentials.
+
+Round 5 (see `fix-roles-r5.md`): a flow file that is not an object with a `nodes` list of objects (null, string, wrong field types, deeply nested, not UTF-8) is one clean FAIL line, never a traceback; flow files and the roles document over 5 MB are refused unread; SQL-like text in the notes or another parameter of a Postgres node, a disabled Postgres node (still checked as if enabled), a forbidden keyword inside a string literal, a dollar-quoted string and an unbalanced quote are flagged.

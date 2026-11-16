@@ -1,6 +1,19 @@
-"""Mutation tests for check_grants_cover_queries.py. Run: python3 -I -m unittest test_check_grants
-(from this folder). Env SCRIPT=<path> runs the tests against another copy of the script."""
-import json, os, pathlib, shutil, subprocess, sys, tempfile, unittest
+"""Mutation tests for check_grants_cover_queries.py. Run, from this folder:
+python3 -m unittest -v test_check_grants   (no -I: it would hide this folder from the import path).
+Env SCRIPT=<path> runs the tests against another copy of the script. The script is run in this
+process the way `python3 script.py ...` runs it (runpy, as __main__), output and exit code captured."""
+
+import contextlib
+import io
+import json
+import os
+import pathlib
+import runpy
+import shutil
+import sys
+import tempfile
+import traceback
+import unittest
 
 HERE = pathlib.Path(__file__).resolve().parent
 SCRIPT = os.environ.get("SCRIPT", str(HERE / "check_grants_cover_queries.py"))
@@ -9,8 +22,28 @@ REAL = HERE.parent.parent / "demo" / "n8n-flows-real-v5"
 
 
 def run(*args):
-    p = subprocess.run([sys.executable, "-I", SCRIPT, *map(str, args)], capture_output=True, text=True)
-    return p.returncode, p.stdout + p.stderr
+    buf, rc = io.StringIO(), 0
+    old_argv = sys.argv
+    sys.argv = [SCRIPT, *map(str, args)]
+    try:
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            try:
+                runpy.run_path(SCRIPT, run_name="__main__")
+            except SystemExit as e:
+                rc = e.code if isinstance(e.code, int) else 1
+            except (
+                OSError,
+                ValueError,
+                LookupError,
+                TypeError,
+                AttributeError,
+                RecursionError,
+            ):  # an uncaught error is what "Traceback" in the output stands for
+                buf.write(traceback.format_exc())
+                rc = 1
+    finally:
+        sys.argv = old_argv
+    return rc, buf.getvalue()
 
 
 class Base(unittest.TestCase):
@@ -57,23 +90,31 @@ class Tests(Base):
         self.assertEqual(rc, 0, out)
 
     def test_g7_table_level_grant(self):
-        self.edit_doc("GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;",
-                      "GRANT SELECT ON mf_leads TO mf_sub;")
+        self.edit_doc(
+            "GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;",
+            "GRANT SELECT ON mf_leads TO mf_sub;",
+        )
         self.assertFails("table-level")
 
     def test_g7b_extra_column_grant(self):
-        self.edit_doc("GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;",
-                      "GRANT SELECT (lead_key, claim_token, state, mail_sent, email, name) ON mf_leads TO mf_sub;")
+        self.edit_doc(
+            "GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;",
+            "GRANT SELECT (lead_key, claim_token, state, mail_sent, email, name) ON mf_leads TO mf_sub;",
+        )
         self.assertFails("unused grant SELECT ['email', 'name'] for mf_sub")
 
     def test_grant_on_second_table(self):
-        self.edit_doc("GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;",
-                      "GRANT SELECT (lead_key) ON secret_other TO mf_sub;\n"
-                      "GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;")
+        self.edit_doc(
+            "GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;",
+            "GRANT SELECT (lead_key) ON secret_other TO mf_sub;\n"
+            "GRANT SELECT (lead_key, claim_token, state, mail_sent)       ON mf_leads TO mf_sub;",
+        )
         self.assertFails("secret_other")
 
     def test_f3_delete(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: "DELETE FROM mf_leads WHERE lead_key=$1;")
+        self.set_query(
+            "mf-sub-crm-mail", "MarkDone", lambda q: "DELETE FROM mf_leads WHERE lead_key=$1;"
+        )
         self.assertFails("DELETE")
 
     def test_f3b_truncate_and_other_kind(self):
@@ -81,26 +122,39 @@ class Tests(Base):
         self.assertFails("not allowed")
 
     def test_f3c_delete_hidden_in_second_statement(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q + " DELETE FROM mf_leads;")
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: "SELECT state FROM mf_leads WHERE lead_key=$1; DELETE FROM mf_leads;",
+        )
         self.assertFails("DELETE")
 
     def test_f4_second_table(self):
-        self.set_query("mf-form", "Stored", lambda q: "SELECT state FROM secret_other WHERE lead_key=$1;")
+        self.set_query(
+            "mf-form", "Stored", lambda q: "SELECT state FROM secret_other WHERE lead_key=$1;"
+        )
         self.assertFails("secret_other")
 
     def test_f4b_join_second_table(self):
-        self.set_query("mf-form", "Stored",
-                       lambda q: "SELECT state FROM mf_leads JOIN secret_other ON true WHERE lead_key=$1;")
+        self.set_query(
+            "mf-form",
+            "Stored",
+            lambda q: "SELECT state FROM mf_leads JOIN secret_other ON true WHERE lead_key=$1;",
+        )
         self.assertFails("secret_other")
 
     def test_f1_new_column_read(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q.replace("state='processing'", "email='x'", 1))
+        self.set_query(
+            "mf-sub-crm-mail", "MarkDone", lambda q: q.replace("state='processing'", "email='x'", 1)
+        )
         self.assertFails("UNCOVERED")
 
     def test_zero_postgres_nodes(self):
         e = self.tmp / "empty"
         e.mkdir()
-        (e / "mf-form.json").write_text(json.dumps({"nodes": [{"type": "n8n-nodes-base.set", "name": "x"}]}))
+        (e / "mf-form.json").write_text(
+            json.dumps({"nodes": [{"type": "n8n-nodes-base.set", "name": "x"}]})
+        )
         self.assertFails("zero Postgres nodes", extra=(e,))
 
     def test_empty_folder(self):
@@ -112,8 +166,14 @@ class Tests(Base):
         self.assertFails("folder does not exist", extra=(self.tmp / "nope",))
 
     def test_missing_role_clean_message(self):
-        self.edit_doc("GRANT SELECT (lead_key, state, created_at, alert_sent, alert_token, alert_until, alert_attempts) ON mf_leads TO mf_alert;", "")
-        self.edit_doc("GRANT UPDATE (alert_until, alert_token, alert_attempts, alert_sent, updated_at)                  ON mf_leads TO mf_alert;", "")
+        self.edit_doc(
+            "GRANT SELECT (lead_key, state, created_at, alert_sent, alert_token, alert_until, alert_attempts) ON mf_leads TO mf_alert;",
+            "",
+        )
+        self.edit_doc(
+            "GRANT UPDATE (alert_until, alert_token, alert_attempts, alert_sent, updated_at)                  ON mf_leads TO mf_alert;",
+            "",
+        )
         self.assertFails("login mf_alert has no grants")
 
     def test_malformed_json_clean_message(self):
@@ -125,7 +185,9 @@ class Tests(Base):
         self.assertFails("cannot read roles document")
 
     def test_grant_removed_in_doc_uncovered(self):
-        self.edit_doc("GRANT SELECT (lead_key, state, claim_token)", "GRANT SELECT (lead_key, state)")
+        self.edit_doc(
+            "GRANT SELECT (lead_key, state, claim_token)", "GRANT SELECT (lead_key, state)"
+        )
         self.assertFails("UNCOVERED")
 
     def test_script_and_document_cannot_differ(self):
@@ -138,11 +200,20 @@ class Tests(Base):
         g, problems = m.parse_grants(DOC)
         self.assertEqual(problems, [])
         self.assertEqual(sorted(g), ["mf_alert", "mf_door", "mf_recover", "mf_sub"])
-        self.assertEqual(g["mf_door"]["insert"], {"lead_key", "email", "name", "state", "claimed_until", "claim_token", "attempts"})
+        self.assertEqual(
+            g["mf_door"]["insert"],
+            {"lead_key", "email", "name", "state", "claimed_until", "claim_token", "attempts"},
+        )
         self.assertFalse(hasattr(m, "G"), "grants must not be hardcoded in the script")
 
 
 PGT = "n8n-nodes-base.postgres"
+GOOD = {
+    "mf_door": "n8n-publish-pg-door",
+    "mf_sub": "n8n-publish-pg-sub",
+    "mf_recover": "n8n-publish-pg-recover",
+    "mf_alert": "n8n-publish-pg-alert",
+}
 
 
 class Round4(Base):
@@ -164,32 +235,60 @@ class Round4(Base):
 
     # F6a-d: SQL or database access in a node that is not the checked Postgres node
     def test_f6a_sql_in_code_node(self):
-        self.add_node("mf-form", {"name": "Sneaky", "type": "n8n-nodes-base.code",
-                                  "parameters": {"jsCode": "const q = 'DELETE FROM mf_leads';"}})
+        self.add_node(
+            "mf-form",
+            {
+                "name": "Sneaky",
+                "type": "n8n-nodes-base.code",
+                "parameters": {"jsCode": "const q = 'DELETE FROM mf_leads';"},
+            },
+        )
         self.assertFails("Sneaky")
 
     def test_f6b_mysql_type_node(self):
-        self.add_node("mf-form", {"name": "M", "type": "n8n-nodes-base.mySql", "parameters": {"query": "x"}})
+        self.add_node(
+            "mf-form", {"name": "M", "type": "n8n-nodes-base.mySql", "parameters": {"query": "x"}}
+        )
         self.assertFails("database node type")
 
     def test_f6c_postgres_tool_node(self):
-        self.add_node("mf-form", {"name": "T", "type": "n8n-nodes-base.postgresTool", "parameters": {}})
+        self.add_node(
+            "mf-form", {"name": "T", "type": "n8n-nodes-base.postgresTool", "parameters": {}}
+        )
         self.assertFails("database node type")
 
     def test_f6d_sql_text_in_set_node(self):
-        self.add_node("mf-form", {"name": "S", "type": "n8n-nodes-base.set",
-                                  "parameters": {"values": {"string": [{"name": "q", "value": "DROP TABLE mf_leads"}]}}})
+        self.add_node(
+            "mf-form",
+            {
+                "name": "S",
+                "type": "n8n-nodes-base.set",
+                "parameters": {
+                    "values": {"string": [{"name": "q", "value": "DROP TABLE mf_leads"}]}
+                },
+            },
+        )
         self.assertFails("SQL-like text")
 
     def test_f6e_innocent_node_text_not_flagged(self):
-        self.add_node("mf-form", {"name": "Ok", "type": "n8n-nodes-base.set",
-                                  "parameters": {"values": {"string": [{"name": "a", "value": "please update your details"}]}}})
+        self.add_node(
+            "mf-form",
+            {
+                "name": "Ok",
+                "type": "n8n-nodes-base.set",
+                "parameters": {
+                    "values": {"string": [{"name": "a", "value": "please update your details"}]}
+                },
+            },
+        )
         rc, out = self.check()
         self.assertEqual(rc, 0, out)
 
     # I4c: one file with no Postgres node while the others keep theirs
     def test_i4c_file_without_postgres_node(self):
-        self.edit_nodes("mf-hook", lambda ns: ns.__setitem__(slice(None), [n for n in ns if n["type"] != PGT]))
+        self.edit_nodes(
+            "mf-hook", lambda ns: ns.__setitem__(slice(None), [n for n in ns if n["type"] != PGT])
+        )
         self.assertFails("mf-hook: this file has zero Postgres nodes")
 
     # S1
@@ -208,6 +307,7 @@ class Round4(Base):
                 if n["type"] == PGT and n["name"] == "Stored":
                     del ns[i]
                     return
+
         self.edit_nodes("mf-form", drop_one)
         self.assertFails("13 postgres nodes, expected 14")
 
@@ -217,6 +317,7 @@ class Round4(Base):
             for n in ns:
                 if n["type"] == PGT and n["name"] == "Stored":
                     n["parameters"]["operation"] = "deleteTable"
+
         self.edit_nodes("mf-form", op)
         self.assertFails("only executeQuery is checked")
 
@@ -229,6 +330,7 @@ class Round4(Base):
             for n in ns:
                 if n["type"] == PGT and n["name"] == "Stored":
                     del n["parameters"]["operation"]
+
         self.edit_nodes("mf-form", op)
         self.assertFails("only executeQuery is checked")
 
@@ -236,19 +338,21 @@ class Round4(Base):
     def creds(self, mapping):
         """Point every Postgres node at the credential for its login."""
         import importlib.util
+
         spec = importlib.util.spec_from_file_location("chk", HERE / "check_grants_cover_queries.py")
         m = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(m)
         for flow in m.EXPECTED_FLOWS:
+
             def setc(ns, flow=flow):
                 for n in ns:
                     if n["type"] == PGT:
                         login = m.NODE_LOGIN.get((flow, n["name"])) or m.SUB
-                        n["credentials"] = {"postgres": {"id": "x", "name": mapping.get(login, "wrong")}}
-            self.edit_nodes(flow, setc)
+                        n["credentials"] = {
+                            "postgres": {"id": "x", "name": mapping.get(login, "wrong")}
+                        }
 
-    GOOD = {"mf_door": "n8n-publish-pg-door", "mf_sub": "n8n-publish-pg-sub",
-            "mf_recover": "n8n-publish-pg-recover", "mf_alert": "n8n-publish-pg-alert"}
+            self.edit_nodes(flow, setc)
 
     def test_s3_old_shared_credential_rejected(self):
         rc, out = run("--roles-doc", self.doc, "--require-new-credentials", self.flows)
@@ -256,12 +360,12 @@ class Round4(Base):
         self.assertIn("still uses the old shared credential", out)
 
     def test_s3_correct_credentials_pass(self):
-        self.creds(self.GOOD)
+        self.creds(GOOD)
         rc, out = run("--roles-doc", self.doc, "--require-new-credentials", self.flows)
         self.assertEqual(rc, 0, out)
 
     def test_s3_wrong_credential_for_login(self):
-        self.creds(dict(self.GOOD, mf_sub="n8n-publish-pg-door"))
+        self.creds(dict(GOOD, mf_sub="n8n-publish-pg-door"))
         rc, out = run("--roles-doc", self.doc, "--require-new-credentials", self.flows)
         self.assertEqual(rc, 1, out)
         self.assertIn("is not 'n8n-publish-pg-sub'", out)
@@ -271,6 +375,7 @@ class Round4(Base):
             for n in ns:
                 if n["type"] == PGT and n["name"] == "Stored":
                     n.pop("credentials")
+
         self.edit_nodes("mf-form", nocred)
         self.assertFails("no postgres credential")
 
@@ -280,22 +385,34 @@ class Round4(Base):
         self.assertFails("SELECT *")
 
     def test_s4_returning_star(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q.replace("RETURNING lead_key", "RETURNING *"))
+        self.set_query(
+            "mf-sub-crm-mail", "MarkDone", lambda q: q.replace("RETURNING lead_key", "RETURNING *")
+        )
         self.assertFails("SELECT * / RETURNING *")
 
     def test_s4_insert_without_column_list(self):
-        self.set_query("mf-form", "Claim", lambda q: "INSERT INTO mf_leads VALUES ($1,$2,$3,'x',now(),'t',0);")
+        self.set_query(
+            "mf-form", "Claim", lambda q: "INSERT INTO mf_leads VALUES ($1,$2,$3,'x',now(),'t',0);"
+        )
         self.assertFails("INSERT without a column list")
 
     def test_s4_update_from(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone",
-                       lambda q: "UPDATE mf_leads SET state='done' FROM mf_leads WHERE lead_key=$1;")
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: "UPDATE mf_leads SET state='done' FROM mf_leads WHERE lead_key=$1;",
+        )
         self.assertFails("UPDATE ... FROM")
 
     def test_s4_cte_write(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone",
-                       lambda q: "UPDATE mf_leads SET state='done' WHERE lead_key IN "
-                                 "(WITH d AS (DELETE FROM mf_leads RETURNING lead_key) SELECT lead_key FROM d);")
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: (
+                "UPDATE mf_leads SET state='done' WHERE lead_key IN "
+                "(WITH d AS (DELETE FROM mf_leads RETURNING lead_key) SELECT lead_key FROM d);"
+            ),
+        )
         self.assertFails("WITH (CTE) not allowed")
 
     def test_s4_copy(self):
@@ -304,16 +421,209 @@ class Round4(Base):
 
     # S5
     def test_s5_uppercase_column_is_read(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q.replace("state='processing'", "EMAIL='x'", 1))
+        self.set_query(
+            "mf-sub-crm-mail", "MarkDone", lambda q: q.replace("state='processing'", "EMAIL='x'", 1)
+        )
         self.assertFails("UNCOVERED")
 
     def test_s5_mixed_case_write(self):
-        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q.replace("SET state='done'", "SET Name='z', state='done'", 1))
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: q.replace("SET state='done'", "SET Name='z', state='done'", 1),
+        )
         self.assertFails("UNCOVERED [('UPDATE', 'name')]")
 
     def test_s5_quoted_name(self):
-        self.set_query("mf-form", "Stored", lambda q: 'SELECT state FROM "mf_leads" WHERE lead_key=$1;')
+        self.set_query(
+            "mf-form", "Stored", lambda q: 'SELECT state FROM "mf_leads" WHERE lead_key=$1;'
+        )
         self.assertFails("quoted name")
+
+
+class Round5(Base):
+    """Round 5: malformed shapes, text outside the query, disabled nodes, size limit, string literals."""
+
+    def put(self, flow, fn):
+        f = self.flows / f"{flow}.json"
+        d = json.loads(f.read_text())
+        d = fn(d)
+        f.write_text(json.dumps(d))
+
+    def pg(self, d, name="Stored"):
+        return next(n for n in d["nodes"] if n["type"] == PGT and n["name"] == name)
+
+    def assertClean(self, text):
+        rc, out = self.check()
+        self.assertEqual(rc, 1, out)
+        self.assertNotIn("Traceback", out)
+        self.assertIn(text, out)
+
+    # (2) malformed shapes: each must be rc=1 with one clean message, no traceback
+    SHAPES = (
+        ("nodes_null", lambda d: dict(d, nodes=None), "'nodes' is null"),
+        ("nodes_string", lambda d: dict(d, nodes="abc"), "'nodes' is str"),
+        ("nodes_object", lambda d: dict(d, nodes={"a": 1}), "'nodes' is dict"),
+        ("nodes_number", lambda d: dict(d, nodes=5), "'nodes' is int"),
+        (
+            "nodes_missing",
+            lambda d: {k: v for k, v in d.items() if k != "nodes"},
+            "'nodes' is null",
+        ),
+        ("top_list", lambda d: [d], "top level is list"),
+        ("top_null", lambda d: None, "top level is null"),
+        ("node_string", lambda d: dict(d, nodes=d["nodes"] + ["x"]), "is str, expected an object"),
+        ("node_null", lambda d: dict(d, nodes=d["nodes"] + [None]), "is null, expected an object"),
+        ("node_list", lambda d: dict(d, nodes=d["nodes"] + [[1]]), "is list, expected an object"),
+    )
+
+    def test_malformed_shapes_clean(self):
+        for label, fn, text in self.SHAPES:
+            with self.subTest(label):
+                self.put("mf-hook", fn)
+                self.assertClean(text)
+                shutil.copy(REAL / "mf-hook.json", self.flows / "mf-hook.json")
+
+    NODE_SHAPES = (
+        ("parameters_string", "parameters", "abc", "'parameters' is str"),
+        ("parameters_list", "parameters", [1], "'parameters' is list"),
+        ("name_list", "name", ["a"], "'name' is list, expected text"),
+        ("name_number", "name", 7, "'name' is int, expected text"),
+        ("type_number", "type", 7, "'type' is int, expected text"),
+        ("credentials_string", "credentials", "abc", "'credentials' is str"),
+        (
+            "credentials_postgres_string",
+            "credentials",
+            {"postgres": "abc"},
+            "credentials.postgres is str",
+        ),
+    )
+
+    def test_malformed_node_fields_clean(self):
+        for label, key, value, text in self.NODE_SHAPES:
+            with self.subTest(label):
+
+                def edit(d, key=key, value=value):
+                    self.pg(d)[key] = value
+                    return d
+
+                self.put("mf-form", edit)
+                self.assertClean(text)
+                shutil.copy(REAL / "mf-form.json", self.flows / "mf-form.json")
+
+    def test_deeply_nested_json_clean(self):
+        (self.flows / "mf-hook.json").write_text("[" * 100000 + "]" * 100000)
+        self.assertClean("cannot read flow file")
+
+    def test_non_utf8_file_clean(self):
+        (self.flows / "mf-hook.json").write_bytes(b"\xff\xfe{")
+        self.assertClean("cannot read flow file")
+
+    # (3) SQL text outside the query field of a Postgres node
+    def test_sql_in_postgres_node_notes(self):
+        self.put("mf-form", lambda d: self.pg(d).update(notes="DELETE FROM mf_leads") or d)
+        self.assertClean("notes or another parameter of a Postgres node")
+
+    def test_sql_in_postgres_other_parameter(self):
+        self.put(
+            "mf-form",
+            lambda d: (
+                self.pg(d)["parameters"].update(options={"queryReplacement": "DROP TABLE mf_leads"})
+                or d
+            ),
+        )
+        self.assertClean("notes or another parameter of a Postgres node")
+
+    def test_plain_notes_on_postgres_node_not_flagged(self):
+        self.put("mf-form", lambda d: self.pg(d).update(notes="claims the lead once") or d)
+        rc, out = self.check()
+        self.assertEqual(rc, 0, out)
+
+    # (4) disabled nodes
+    def test_disabled_postgres_node_flagged(self):
+        self.put("mf-form", lambda d: self.pg(d).update(disabled=True) or d)
+        self.assertClean("node is disabled")
+
+    def test_disabled_text_value_flagged(self):
+        self.put("mf-form", lambda d: self.pg(d).update(disabled="true") or d)
+        self.assertClean("node is disabled")
+
+    def test_disabled_false_not_flagged(self):
+        self.put("mf-form", lambda d: self.pg(d).update(disabled=False) or d)
+        rc, out = self.check()
+        self.assertEqual(rc, 0, out)
+
+    def test_disabled_node_with_bad_query_still_read(self):
+        def edit(d):
+            n = self.pg(d)
+            n["disabled"] = True
+            n["parameters"]["query"] = "DROP TABLE mf_leads;"
+            return d
+
+        self.put("mf-form", edit)
+        rc, out = self.check()
+        self.assertEqual(rc, 1, out)
+        self.assertIn("node is disabled", out)
+        self.assertIn("'drop' not allowed", out)
+
+    # (5) size limit
+    def test_big_flow_file_refused_unread(self):
+        f = self.flows / "mf-hook.json"
+        d = json.loads(f.read_text())
+        d["pad"] = "x" * (5 * 1024 * 1024 + 10)
+        f.write_text(json.dumps(d))
+        self.assertClean("over the 5242880 byte limit")
+
+    def test_flow_file_just_under_limit_read(self):
+        f = self.flows / "mf-hook.json"
+        d = json.loads(f.read_text())
+        d["pad"] = "x" * (4 * 1024 * 1024)
+        f.write_text(json.dumps(d))
+        rc, out = self.check()
+        self.assertEqual(rc, 0, out)
+
+    def test_big_roles_document_refused(self):
+        self.doc.write_text(self.doc.read_text() + "\n" + "x" * (5 * 1024 * 1024 + 10))
+        self.assertFails("over the 5242880 byte limit")
+
+    # (6) forbidden words inside string literals, dollar quotes, unbalanced quotes
+    def test_delete_inside_string_literal_flagged(self):
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: "UPDATE mf_leads SET state='DELETE FROM mf_leads' WHERE lead_key=$1;",
+        )
+        self.assertFails("forbidden keyword DELETE inside a string literal")
+
+    def test_drop_inside_escaped_literal_flagged(self):
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: "UPDATE mf_leads SET state='it''s a drop table' WHERE lead_key=$1;",
+        )
+        self.assertFails("forbidden keyword DROP inside a string literal")
+
+    def test_harmless_literal_not_flagged(self):
+        rc, out = self.check()
+        self.assertEqual(rc, 0, out)
+
+    def test_dollar_quote_flagged(self):
+        self.set_query(
+            "mf-form", "Stored", lambda q: "SELECT state FROM mf_leads WHERE lead_key=$$x$$;"
+        )
+        self.assertFails("dollar-quoted string not allowed")
+
+    def test_unbalanced_quote_flagged(self):
+        self.set_query(
+            "mf-form", "Stored", lambda q: "SELECT state FROM mf_leads WHERE lead_key='x;"
+        )
+        self.assertFails("unbalanced single quote")
+
+    # (7) the README command
+    def test_readme_unittest_command_has_no_dash_i(self):
+        text = (HERE / "README.md").read_text()
+        self.assertIn("python3 -m unittest -v test_check_grants", text)
+        self.assertNotIn("-I -m unittest", text)
 
 
 if __name__ == "__main__":
