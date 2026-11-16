@@ -76,38 +76,49 @@ No read-only login for people is proposed. n8n's own storage login (F-011) is a 
 
 ## 4. SQL (UNTESTED; throwaway server only until the owner says otherwise)
 
-Two parts. **Part A only adds** logins and grants; it takes nothing away from the old login. **Part B removes rights** (owner change, PUBLIC revokes, old login) and is a change window (section 7). Both parts start with a guard that stops the script unless the person running it has typed a marker setting first.
+Three parts, each meant to be saved as its own file by the lead (`mf-roles-part-a.sql`, `mf-roles-part-b.sql`, `mf-roles-part-c.sql`; today they live only in this file, section 10). **Part A only adds** logins and grants; it takes nothing away. **Part B** changes the table owner and removes rights from PUBLIC. **Part C** retires the old shared login. B and C are a change window (section 7). Each part carries its own guard (round-3 finding: one guard at the top of one paste does not protect a part that is run days later) and runs as ONE transaction: if any statement fails, psql stops and nothing of that part is kept (Postgres rule I rely on, UNVERIFIED: CREATE ROLE, ALTER ROLE, GRANT, REVOKE and ALTER TABLE are all transactional DDL; manual, "SQL Commands", and the note on CREATE ROLE; I have not run it).
+
+**How the guard knows which server it is on.** The earlier guard was a setting anyone can type (`SET mf.throwaway = 'yes'`), so it could not tell the take's server from the throwaway one. Now the person running the file passes, on the psql command line, the database name and the server's own identifier (`system_identifier`, a number fixed when the server's data folder was created, shown by `SELECT system_identifier FROM pg_control_system();`, run by the administrator). These two values are written down in the handover notes for each server **before** the first run: the throwaway server's pair for throwaway runs, the take's pair for the real change. In throwaway mode the database name must also start with `mf_throwaway`, so a copy-paste of the throwaway command cannot match the take's server. This stops a paste into the wrong window; it does not stop an administrator who deliberately types the take's values, and nothing can. Whether `pg_control_system()` may be run by the login used, and whether psql stops cleanly when a variable is missing, are UNVERIFIED (try both first on the throwaway server).
 
 ```sql
 -- ############################################################################
--- UNTESTED.  NOT BEFORE THE VIDEO.  Throwaway server first (section 6).
+-- PART A.  UNTESTED.  NOT BEFORE THE VIDEO.  Throwaway server first (section 6).
 -- Run by the database administrator's own login, by hand. Not by an agent.
--- Roles belong to the whole server, not to one database; the REVOKE lines in
--- part B remove rights from EVERY login on the server, not just ours.
--- Passwords: set by hand with psql's \password or in n8n's form. Never in this file.
--- <db>, <old_flow_role>, <old_table_owner> are placeholders. <date> = a real expiry date.
--- To run: first type   SET mf.throwaway = 'yes';   (throwaway server)
---         or           SET mf.throwaway = 'owner-yes-and-backup-and-group-L-done';  (take's server, after the video only)
+-- Roles belong to the whole server, not to one database.
+-- Passwords: set by hand AFTER commit with psql's \password, or in n8n's form. Never in this file.
+-- Command line (all four -v values are required; a missing one is a psql error and the file stops):
+--   psql -v ON_ERROR_STOP=1 -v mode=throwaway -v expect_db=mf_throwaway_x \
+--        -v expect_sysid=<server_identifier_written_down> -v valid_until='<date>' -f mf-roles-part-a.sql
+--   (mode is 'throwaway' or 'take'; 'take' only after the video, with the owner's yes, a backup and group L done)
 -- ############################################################################
 \set ON_ERROR_STOP on
+SELECT (:'mode' IN ('throwaway','take')
+        AND current_database() = :'expect_db'
+        AND (SELECT system_identifier::text FROM pg_control_system()) = :'expect_sysid'
+        AND (:'mode' <> 'throwaway' OR current_database() LIKE 'mf\_throwaway%')) AS guard_ok \gset
+\if :guard_ok
+\else
+  \echo 'STOP: this is not the server and database named on the command line; read section 7 of ROLES-PROPOSAL.md'
+  \quit
+\endif
+
+BEGIN;
+-- A0. Stop if any of our logins already exists (roles are server-wide; a rerun must not half-apply).
 DO $$ BEGIN
-  IF current_setting('mf.throwaway', true) IS DISTINCT FROM 'yes'
-     AND current_setting('mf.throwaway', true) IS DISTINCT FROM 'owner-yes-and-backup-and-group-L-done' THEN
-    RAISE EXCEPTION 'STOP: marker mf.throwaway not set; read section 7 of ROLES-PROPOSAL.md';
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname IN ('mf_tableowner','mf_door','mf_sub','mf_recover','mf_alert')) THEN
+    RAISE EXCEPTION 'STOP: one of the mf_ logins already exists; read section 7';
   END IF;
 END $$;
 
--- ===== PART A: add only (does not change the old login's rights) =====
 -- A1. Logins. No superuser, no create-role, no create-db, no bypass of row rules.
 CREATE ROLE mf_tableowner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
-CREATE ROLE mf_door    LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 6 VALID UNTIL '<date>';
-CREATE ROLE mf_sub     LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 6 VALID UNTIL '<date>';
-CREATE ROLE mf_recover LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 3 VALID UNTIL '<date>';
-CREATE ROLE mf_alert   LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 3 VALID UNTIL '<date>';
--- (set each password by hand: \password mf_door ... ; scram-sha-256, see section 8)
+CREATE ROLE mf_door    LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 6 VALID UNTIL :'valid_until';
+CREATE ROLE mf_sub     LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 6 VALID UNTIL :'valid_until';
+CREATE ROLE mf_recover LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 3 VALID UNTIL :'valid_until';
+CREATE ROLE mf_alert   LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS CONNECTION LIMIT 3 VALID UNTIL :'valid_until';
 
 -- A2. Let the four logins in.
-GRANT CONNECT ON DATABASE <db> TO mf_door, mf_sub, mf_recover, mf_alert;
+GRANT CONNECT ON DATABASE :"expect_db" TO mf_door, mf_sub, mf_recover, mf_alert;
 GRANT USAGE   ON SCHEMA public TO mf_door, mf_sub, mf_recover, mf_alert;
 
 -- A3. mf_door: S1-S4
@@ -122,39 +133,101 @@ GRANT UPDATE (claimed_until, claim_token, attempts, state, updated_at)          
 -- A6. mf_alert: S12-S14
 GRANT SELECT (lead_key, state, created_at, alert_sent, alert_token, alert_until, alert_attempts) ON mf_leads TO mf_alert;
 GRANT UPDATE (alert_until, alert_token, alert_attempts, alert_sent, updated_at)                  ON mf_leads TO mf_alert;
+COMMIT;
+-- After COMMIT, by hand: \password mf_door  (and mf_sub, mf_recover, mf_alert). Check password_encryption first (section 8).
 
--- ===== PART B: removes rights; only inside the change window of section 7 step 8 =====
--- Before B: save the group L output (it is the re-grant record). STOP if the old login is
--- a superuser, the administrator's own login, or a member of ANY group (group L shows this): ask the owner.
+-- ############################################################################
+-- PART B.  UNTESTED.  NOT BEFORE THE VIDEO.  Separate file, run only in the change window
+-- (section 7 step 8), after the owner has said yes to retiring the old login (step 7).
+-- Removes rights from EVERY login on the server, not just ours.
+-- Command line: same four -v values as part A (valid_until not needed) plus
+--   -v old_flow_role=<old login> -v old_table_owner=<current owner of mf_leads, from group L>
+-- ############################################################################
+\set ON_ERROR_STOP on
+SELECT (:'mode' IN ('throwaway','take')
+        AND current_database() = :'expect_db'
+        AND (SELECT system_identifier::text FROM pg_control_system()) = :'expect_sysid'
+        AND (:'mode' <> 'throwaway' OR current_database() LIKE 'mf\_throwaway%')) AS guard_ok \gset
+\if :guard_ok
+\else
+  \echo 'STOP: wrong server or database; read section 7'
+  \quit
+\endif
+-- B0. Preconditions: all five mf_ logins exist (part A was run), the table owner is the one group L recorded,
+--     and the old login is NOT a superuser and is not a member of any group (else: owner decides, section 10).
+SELECT ((SELECT count(*) FROM pg_roles WHERE rolname IN ('mf_tableowner','mf_door','mf_sub','mf_recover','mf_alert')) = 5
+        AND (SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid = 'public.mf_leads'::regclass) = :'old_table_owner'
+        AND NOT (SELECT rolsuper FROM pg_roles WHERE rolname = :'old_flow_role')
+        AND NOT EXISTS (SELECT 1 FROM pg_auth_members am JOIN pg_roles m ON m.oid = am.member WHERE m.rolname = :'old_flow_role')) AS pre_ok \gset
+\if :pre_ok
+\else
+  \echo 'STOP: part B preconditions failed (part A missing, table owner differs from group L, old login is a superuser or in a group)'
+  \quit
+\endif
+
+BEGIN;
 -- B1. The table belongs to mf_tableowner, not to a flow login.
---     (Needs a superuser, or a login that is a member of both the old owner and mf_tableowner and has CREATE on the schema.)
+--     Postgres rule I rely on (UNVERIFIED, manual page ALTER TABLE): to change the owner the running login must be
+--     the table's owner or a superuser, must be able to SET ROLE to the NEW owner, and the NEW owner must hold CREATE
+--     on the table's schema. (Round-3 fix: the CREATE right is needed by mf_tableowner, not by the administrator.)
+--     So mf_tableowner first gets USAGE and CREATE on the schema, as the schema's own owner or a superuser.
+GRANT USAGE, CREATE ON SCHEMA public TO mf_tableowner;
 ALTER TABLE mf_leads OWNER TO mf_tableowner;
+--     Changing the owner moves only the old owner's entries to the new owner. EVERY OTHER grantee keeps its rights
+--     (rule I rely on, UNVERIFIED, manual: ALTER TABLE / Privileges). Group L lists them; revoke each one by hand here:
+-- REVOKE ALL ON TABLE mf_leads FROM <grantee listed by group L>;   -- one line per grantee that is not an mf_ login
 -- B2. Take away what PUBLIC (every login on the server) gets by default.
-REVOKE ALL ON DATABASE <db> FROM PUBLIC;            -- removes CONNECT and TEMP
+REVOKE ALL ON DATABASE :"expect_db" FROM PUBLIC;    -- removes CONNECT and TEMP
 REVOKE ALL ON SCHEMA public FROM PUBLIC;            -- includes CREATE on the schema
 REVOKE ALL ON TABLE mf_leads FROM PUBLIC;
 REVOKE ALL (lead_key, email, name, state, claimed_until, claim_token, attempts, crm_id, mail_sent,
             created_at, updated_at, alert_sent, alert_token, alert_until, alert_attempts)
-       ON TABLE mf_leads FROM PUBLIC;               -- column level too; whether the table-level REVOKE already does this is UNVERIFIED
--- B3. Tables made LATER by the table owner must not be open to PUBLIC either.
-ALTER DEFAULT PRIVILEGES FOR ROLE mf_tableowner IN SCHEMA public REVOKE ALL ON TABLES FROM PUBLIC;
--- (group L also lists existing default privileges of the old login: pg_default_acl)
--- B4. Retire the old shared login (only after the flows have run on the new logins; section 7).
-REVOKE ALL ON TABLE mf_leads FROM <old_flow_role>;
+       ON TABLE mf_leads FROM PUBLIC;               -- belt and braces: the table-level line should already do this (UNVERIFIED); C5 checks the result
+-- B3. (round-3 fix) The old line "ALTER DEFAULT PRIVILEGES ... REVOKE ALL ON TABLES FROM PUBLIC" is removed:
+--     tables have no default PUBLIC rights, so it did nothing (rule I rely on, UNVERIFIED, manual "Privileges":
+--     PUBLIC gets by default only CONNECT and TEMP on databases, EXECUTE on functions, USAGE on languages and types).
+--     If group L shows rows in pg_default_acl for the old owner, decide each one with the owner; none is assumed.
+-- B4. Check the exact result BEFORE keeping it: the table's ACL and every column's ACL must equal the expected list
+--     (section 5, check C5; the expected list is generated from the group MX table, not typed twice). Any difference rolls back.
+-- (the C5 query goes here, producing  acl_ok  via \gset)
+\if :acl_ok
+  COMMIT;
+\else
+  \echo 'STOP: the rights after part B are not exactly the expected list; rolling back'
+  ROLLBACK;
+\endif
+
+-- ############################################################################
+-- PART C.  UNTESTED.  NOT BEFORE THE VIDEO.  Retires the old shared login. Same guard header and -v values as part B.
+-- Path A (old login is an ordinary login): below.
+-- Path B (old login is a superuser, which is likely when the database came from a Docker image whose default login
+--   is a superuser; round-3 finding N9): REVOKE does nothing to a superuser. Part C then only (1) changes its password
+--   by hand and (2) removes it from n8n. The superuser stays the administrator's login. Owner question 3, section 11.
+-- ############################################################################
+BEGIN;
+REVOKE ALL ON TABLE mf_leads FROM :"old_flow_role";
 REVOKE ALL (lead_key, email, name, state, claimed_until, claim_token, attempts, crm_id, mail_sent,
             created_at, updated_at, alert_sent, alert_token, alert_until, alert_attempts)
-       ON TABLE mf_leads FROM <old_flow_role>;
-REVOKE CREATE ON SCHEMA public FROM <old_flow_role>;
-ALTER ROLE <old_flow_role> NOLOGIN PASSWORD NULL;
+       ON TABLE mf_leads FROM :"old_flow_role";
+REVOKE CREATE ON SCHEMA public FROM :"old_flow_role";
+ALTER ROLE :"old_flow_role" NOLOGIN PASSWORD NULL;
+COMMIT;
+-- Column-level rights of the old login are removed by the table-level REVOKE (rule I rely on, UNVERIFIED, manual page REVOKE:
+-- "when revoking privileges on a table, the corresponding column privileges (if any) are automatically revoked on each
+-- column of the table"); check C5 proves it (it lists column ACLs).
 -- Open sessions of the old login stay open until closed: list them with
---   SELECT pid, usename, state FROM pg_stat_activity WHERE usename='<old_flow_role>';
+--   SELECT pid, usename, state FROM pg_stat_activity WHERE usename = :'old_flow_role';
 -- and have the administrator end them with pg_terminate_backend(pid).
 
--- ===== PART B ROLLBACK (re-grant what group L recorded; the text below is the shape, the recorded ACL is the truth) =====
--- ALTER TABLE mf_leads OWNER TO <old_table_owner>;
--- ALTER ROLE <old_flow_role> LOGIN;   -- then set its password again by hand
--- GRANT <the exact privileges recorded in relacl> ON TABLE mf_leads TO <old_flow_role>;
--- GRANT CONNECT, TEMP ON DATABASE <db> TO PUBLIC;   GRANT USAGE ON SCHEMA public TO PUBLIC;   -- only if group L showed them
+-- ===== ROLLBACK (the group L record is the truth; this text is only the shape) =====
+-- Part C undone: the old login's password was set to NULL, so rollback needs a NEW password (set by hand) and a NEW
+--   n8n credential (the old one is deleted in step 8 and its password was never kept anywhere):
+--   ALTER ROLE <old_flow_role> LOGIN;  then \password <old_flow_role>;  then create the n8n credential again.
+-- Part B undone: ALTER TABLE mf_leads OWNER TO <old_table_owner>;
+--   GRANT <exact privileges recorded in relacl and column acl by group L> ON TABLE mf_leads TO <old_flow_role>;
+--   GRANT <each other grantee's recorded privileges> ...;  default-privilege rows: restore from the pg_default_acl record;
+--   GRANT CONNECT, TEMP ON DATABASE <db> TO PUBLIC;  GRANT USAGE ON SCHEMA public TO PUBLIC;  (only if group L showed them)
+--   and take back what part B gave mf_tableowner if wanted: REVOKE CREATE ON SCHEMA public FROM mf_tableowner;
 ```
 
 Built-in functions: Postgres lets everyone run built-ins such as `gen_random_uuid()` and `now()`. I do not revoke that (it would break the flows).

@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-16T09:44:51Z
+UPDATED_UTC: 2026-11-16T09:45:45Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
-PERCENT: 78
+PERCENT: 80
 AGENTS_RUNNING: 9
-CAPACITY: 5.01 load of 4 cores, mem 0/15 GB, disk free 28G, agents 9 (light+heavy per list)
+CAPACITY: 4.76 load of 4 cores, mem 0/15 GB, disk free 28G, agents 9 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: $env nodes, 2 webhooks without auth, 7 false-pass Majors (fixer running)
 F3: fixer done (14 mutants killed by its own run); independent rerun + fresh security review running; Python 3.9/3.10 never run (README says 3.9+)
-ROLES: script 5 mutants survive + 7 script gaps; doc 8 Majors from security r3 (two fixers running)
+ROLES: script fixed by its own run (22 of 25 new tests fail on old; S3 credential check OFF by default, 14 failures with it on); independent rerun running; doc fixer running (8 Majors)
 claims: no fresh review of r3 yet (2 reviewers running); F-01 unreadable; 'the lead' wording left in pasted text
 F5: all Blockers/Majors fixed by r3 fixer but NOT reviewed since; N-8 start commands, ports, take-script switch UNCHECKED; 2 fresh reviewers running
-NEXT: collect F8, ROLES x2, claims x2, F3 x2, F5 x2
-PUSHED_UTC: 2026-11-16T09:44:51Z
+NEXT: collect F8, ROLES doc, ROLES evidence, claims x2, F3 x2, F5 x2
+PUSHED_UTC: 2026-11-16T09:45:45Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -38,7 +38,6 @@ PUSHED_UTC: 2026-11-16T09:44:51Z
 | (roles sec r3) | reviewer ROLES security r3 | sonnet | fresh security design | 09:57 | 10:05 | 30 | running | - |
 | (claims r3 fixer) | fixer claims table reader fixes | sonnet | Blockers/Majors from reader | 10:04 | 10:15 | 30 | running | CLAIMS-TABLE.md |
 | (roles rerun) | evidence ROLES script rerun | sonnet | 18 own mutants | 10:08 | 10:16 | 30 | running | roles-coverage-check/evidence-rerun.md |
-| a643eeae | ROLES survivors fixer | sonnet | fix 5 surviving mutants in coverage script | 09:44 | 09:55 | 5 | running | roles-coverage-check/fix-roles-r4.md |
 | ae5d88f1 | claims reader r3 | egm-comprehension | naive read of CLAIMS-TABLE | 09:44 | 09:52 | 5 | running | inline |
 | aa4dd7eb | claims facts r3 | egm-codebase-details | cites and totals check | 09:44 | 09:55 | 5 | running | inline |
 | aeb408d4 | ROLES doc fixer r3 | sonnet | fix M1-M8, N1-N10 in ROLES-PROPOSAL.md | 09:47 | 10:00 | 5 | running | reviews-roles/fix-roles-r3.md |
@@ -46,6 +45,7 @@ PUSHED_UTC: 2026-11-16T09:44:51Z
 | a3c7bc5f | F3 security reviewer r2 | egm-design | fresh static security review | 09:50 | 10:00 | 5 | running | inline |
 | aab6e65c | F5 facts reviewer | egm-codebase-details | fresh cites/numbers check | 09:52 | 10:02 | 5 | running | inline |
 | ad7e2658 | F5 reader reviewer | egm-comprehension | fresh naive read | 09:52 | 10:00 | 5 | running | inline |
+| a10cbf4d | ROLES script evidence r4 | sonnet | EVIDENCE RUNNER tests, mutants, 15 hostile flows | 09:55 | 10:07 | 5 | running | roles-coverage-check/evidence-r4.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

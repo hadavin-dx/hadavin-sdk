@@ -236,7 +236,7 @@ class Round4(Base):
     def creds(self, mapping):
         """Point every Postgres node at the credential for its login."""
         import importlib.util
-        spec = importlib.util.spec_from_file_location("chk", SCRIPT)
+        spec = importlib.util.spec_from_file_location("chk", HERE / "check_grants_cover_queries.py")
         m = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(m)
         for flow in m.EXPECTED_FLOWS:
