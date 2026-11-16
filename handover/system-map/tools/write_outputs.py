@@ -4,6 +4,7 @@ Usage: python3 tools/write_outputs.py <dir>"""
 import re, sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
 from safe_write import safe_write, refused, adopt
+import scan_outputs
 OVERWRITE_OK = "--force" in sys.argv
 from collections import Counter
 _args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -35,8 +36,9 @@ fl = []
 for l in open(os.path.join(base, "work/merged-findings.md"), encoding="utf-8"):
     if l.startswith("| ") and not l.startswith("| id "):
         c = [x.strip() for x in l.strip().strip("|").split(" | ")]
-        if len(c) == 6:
-            fl.append(c)
+        if len(c) != 6:
+            sys.exit("merged-findings.md: findings row with %d cells (expected 6), id %s" % (len(c), c[0]))
+        fl.append(c)
 RERATE = {"L4-FD-004": ("Major", "count slip, no action changes"), "L3-FD-040": ("Major", "no claim sentence; the cited review says 0 Blocker"),
           "L2c-FD-001": ("Major", "shell hygiene, no real call shown"), "L6-FD-017": ("Blocker", "a request is lost with no mail (severity table: mail)"),
           "L2-FD-007": ("Blocker", "a request in state review gets no notice; L6-FD-017 is the same finding and is counted once in the deduplicated row"),
@@ -57,6 +59,15 @@ EXTRA = [
  ["L6-FD-026", "ops", "Blocker", "The recovery sweep, the only RETRY owner, swallows database errors (onError continueRegularOutput), so a Postgres hiccup can stop recovery with no notice. `handover/demo3/kill/flows-go1/mf-recovery.json:43 \"continueRegularOutput\"`", "DECISION line 7", "RETRY"],
  ["L6-FD-027", "ops", "Major", "One Postgres holds intake, claim state, recovery, n8n data and the execution log: if it is down everything stops. Backup, restore test, volume persistence, retention, start/stop/kill and egress answers are in no file seen (UNVERIFIED for the take). `handover/system-map/DECISION-one-store.md:14 \"ONE database for everything we own\"`", "DECISION line 14", "STORE"],
  ["L6-FD-028", "unverified", "Major", "Tenant isolation: the take serves one client, so N/A if the studio head confirms; the table has no source or tenant column. `handover/demo3/kill/flows-go1/mf_leads.sql:4 \"CREATE TABLE mf_leads(\"`", "DECISION line 14", "STORE"]]
+_ids_all = [c[0] for c in fl + EXTRA]
+_dup = sorted({i for i in _ids_all if _ids_all.count(i) > 1})
+if _dup:
+    sys.exit("duplicate finding ids in merged-findings.md: %s" % _dup)
+_known = set(_ids_all)
+for _nm, _ids in (("RERATE", RERATE), ("NOTE", NOTE), ("DEDUP", DEDUP), ("RETYPE", RETYPE)):
+    _miss = sorted(set(_ids) - _known)
+    if _miss:
+        sys.exit("%s names finding ids that are not in the data: %s" % (_nm, _miss))
 LANE_SCOPE = [("L2", "take-rig"), ("L3", "take-rig"), ("L5", "core or demo"), ("L1", "build-process"), ("L4", "desk (retired from the take)"), ("L6", "cross-lane")]
 def scope(i):
     for p, s in LANE_SCOPE:
@@ -98,9 +109,17 @@ rows = {}
 for l in open(os.path.join(base, "work/L6.md"), encoding="utf-8"):
     m = re.match(r"\| (L6-J-(\d+)) \|", l)
     if m:
-        rows[int(m.group(2))] = [x.strip() for x in l.strip().strip("|").split(" | ")]
+        cells = [x.strip() for x in l.strip().strip("|").split(" | ")]
+        if m.group(1) in rows:
+            sys.exit("work/L6.md: duplicate job row id %s" % m.group(1))
+        if len(cells) < 15:
+            sys.exit("work/L6.md: job row %s has %d cells (expected at least 15)" % (m.group(1), len(cells)))
+        rows[m.group(1)] = cells
+NJOBS = len(rows)
+_have = sorted(int(k.rsplit("-", 1)[1]) for k in rows)
+assert _have == list(range(1, NJOBS + 1)), "work/L6.md job rows are not contiguous L6-J-001..%03d" % NJOBS
 RANGES = [("STORE", 1, 12), ("LOG", 13, 23), ("FILTER", 24, 33), ("COUNTER", 34, 40), ("RETRY", 41, 50), ("NOTICE", 51, 57), ("OTHER", 58, 59)]
-assert sorted(rows) == list(range(1, 60)), "work/L6.md job rows are not exactly L6-J-001..059: %s" % sorted(set(range(1, 60)) ^ set(rows))
+assert RANGES[-1][2] == NJOBS and all(RANGES[i][2] + 1 == RANGES[i + 1][1] for i in range(len(RANGES) - 1)), "RANGES do not cover exactly the %d job rows in work/L6.md" % NJOBS
 APPX = {12, 18, 22, 33, 39, 40, 49, 50, 57, 59}
 OWNERLINE = {
  "STORE": "Postgres table mf_leads in the single Postgres of the take (written by the n8n Postgres nodes)",
@@ -152,13 +171,13 @@ def verdict(n, p):
     if n in FORCE: return FORCE[n]
     for v in ["OWNER", "CRM-COULD-DO", "DUPLICATE", "NOT-NEEDED", "NEEDED"]:
         if p.startswith(v) and not (v == "NEEDED" and p.startswith("NOT")): return v
-    return "NOT-NEEDED"
+    raise ValueError("job row %d: unknown verdict word %r" % (n, p[:40]))
 def info(n):
-    c = rows[n]; name, purpose, ev = c[1], TEXT.get(n, c[2]), EVID.get(n, c[14])
+    c = rows["L6-J-%03d" % n]; name, purpose, ev = c[1], TEXT.get(n, c[2]), EVID.get(n, c[14])
     v = verdict(n, c[2])
     ex = re.search(r"L6-EX-\d+", c[2])
     exid = ex.group(0) if (ex and v == "NEEDED") else "none"
-    if v == "NEEDED" and exid == "none": exid = "L6-EX-05"
+    # a NEEDED row with no exception id stays "none"; scan_outputs reports it
     m = re.search(r"MERGE-INTO ([^;,.()]+)", c[2])
     if n in PROP: prop = PROP[n]
     elif v == "KEEP-CORE": prop = "KEEP-CORE (out of take scope; no move)"
@@ -206,7 +225,7 @@ def first_sentence(t):
         cut = s[:240].rfind(". ")
         s = s[:cut + 1] if cut > 40 else s[:240].rsplit(" ", 1)[0]
     return s.rstrip(".") + ". (full text: Findings)"
-named = " ".join(r[1] for r in fixrows)
+named = {i for r in fixrows for i in re.split(r"[,\s]+", r[1]) if i}
 blk = [(c, s) for c, s in rows_f if s == "Blocker" and c[0] not in named and c[0] not in DEDUP]
 for c, s in blk:
     ev = esc(ACTIONS.get(c[0]) or first_sentence(c[3]))
@@ -221,6 +240,14 @@ for key, a, b in RANGES:
     if todo:
         fixrows.append((W3, "ONE-PLACE-TABLE.md block %s" % key, "apply the proposals of this block, one at a time: " + "; ".join(todo), "laptop lead", "yes", "no"))
 fixrows = [(r[0], r[1], r[2].rstrip().rstrip(".") + ".", r[3], r[4], r[5]) for r in fixrows]
+NR = {}
+for _f in sorted(os.listdir(os.path.join(base, "work"))):
+    if re.fullmatch(r"L\d\w*c\.md", _f):
+        _t = open(os.path.join(base, "work", _f), encoding="utf-8").read()
+        _n = sum(1 for r in scan_outputs.table_rows(scan_outputs.sections(_t).get("Coverage", [])) if len(r) > 2 and r[2] == "NOT-READ")
+        if _n:
+            NR[_f[:-3]] = _n
+NR_LIST = ", ".join("%s %d" % kv for kv in NR.items()); NR_TOTAL = sum(NR.values())
 claims = [
  ("the final tree of PRs 2 to 4 is identical to PR #1", "handover/demo/pr-text/github-current/pr3-body.md:5", "VERIFY.md measured 95 files differing (L1c-FD-021)", "CONTRADICTED"),
  ("SonarQube runs on every pull request", "pr4 text v5", "AB-PAPER shows 0 SonarQube jobs since 0841f36 (L1c-FD-002)", "CONTRADICTED"),
@@ -238,7 +265,7 @@ claims = [
  ("the kill tests prove the money guard", "kill RESULTS", "model_calls=1 is counted from an in-memory fake journal (L6-FD-004)", "UNVERIFIED"),
  ("the DeepSource carry-over holds about 96 distinct findings among 213 comments", "L1c-FD-003", "counted by block, rows not compared one by one", "UNVERIFIED"),
  ("test totals quoted across the lanes (2329, 3138, 4125, 4409 and others)", "L1, L2c, L3, L4", "no lane reconciles them (L6-FD-019)", "UNVERIFIED"),
- ("every file under handover/ was read", "lane Coverage tables", "183 files NOT-READ (L1c 18, L3c 66, L4c 99)", "CONTRADICTED"),
+ ("every file under handover/ was read", "lane Coverage tables", "%d files NOT-READ (%s)" % (NR_TOTAL, NR_LIST), "CONTRADICTED"),
 ]
 HEADLINE = ["## Headline", ""]
 for key, a, b in RANGES:
@@ -250,7 +277,7 @@ HEADLINE += ["- Open for the laptop lead: the place that holds the dollar cap, t
              "- NOT VISIBLE: the take repository `duplicate-proof-lead-desk`; anything that needs n8n running is UNVERIFIED.", ""]
 out = ["# SWEEP: duplicates, dead, idle, inconsistent and unverified parts", "",
  "Static review of the repository on branch cloud/system-map. No n8n runtime, no network: anything needing a runtime is UNVERIFIED. The take code repository `duplicate-proof-lead-desk` is NOT VISIBLE here (the laptop lead covers it locally).", "",
- "**NOT-READ files: L1c 18, L3c 66, L4c 99 (183 in total). Unread means UNVERIFIED, not clean.** The laptop lead may order one more continuation lane for these three lists.", ""] + HEADLINE + [
+ "**NOT-READ files: %s (%d in total). Unread means UNVERIFIED, not clean.** The laptop lead may order one more continuation lane for these lists." % (NR_LIST, NR_TOTAL), ""] + HEADLINE + [
  "The citation check proves each quoted line exists, not that it supports the claim; support was checked by sample by the result reviewers. Some findings are counted twice by two lanes (see Counts: raw and deduplicated).", "", KEY_TEXT,
  "## Findings", "", "Scope: take-rig = evidence comes from the kill rig, not the take flows; desk (retired from the take) = the older desk program; build-process = patches, pull requests, CI; core or demo = `src/`, `demos/`; cross-lane = the job pass. Default by lane; the evidence cell is the proof.", "",
  "| id | claim type | severity | evidence | conflicts with | job key | scope |", "|---|---|---|---|---|---|---|"]

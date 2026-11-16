@@ -2,7 +2,9 @@
 Usage: python3 tools/check_citations.py <repo_root> <out_tsv> <file.md> [...]  (exit 1 if any not FOUND)"""
 import re, sys, os
 
-CITE = re.compile(r'`?([\w./\-]+):(\d+)\s+"([^"\n]{6,120})"`?')
+CITE = re.compile(r'`?([\w./\-]+):(\d+)\s+"([^"\n]{12,120})"`?')
+LIKE = re.compile(r'[\w./\-]+:\d+\s+"')  # anything that looks like a citation start
+# quotes shorter than 12 characters do not parse, so they are counted as UNPARSED
 
 
 def check(root, path, line, quote, window=5):
@@ -12,7 +14,7 @@ def check(root, path, line, quote, window=5):
         return "NO-FILE"
     try:
         with open(full, "r", encoding="utf-8", errors="replace") as fh:
-            lines = fh.read().splitlines()
+            lines = fh.read().split("\n")
     except OSError:
         return "NO-FILE"
     q, n = quote.strip(), int(line)
@@ -27,8 +29,15 @@ def check(root, path, line, quote, window=5):
 def main(root, out, files):
     rows = []
     for f in files:
-        for m in CITE.finditer(open(f, encoding="utf-8", errors="replace").read()):
+        text = open(f, encoding="utf-8", errors="replace").read()
+        found = list(CITE.finditer(text))
+        if not found:
+            rows.append((os.path.basename(f), "-", "0", "NO-CITATION"))  # every input file must cite something
+        for m in found:
             rows.append((os.path.basename(f), m.group(1), m.group(2), check(root, m.group(1), m.group(2), m.group(3))))
+        n_like = len(LIKE.findall(text))
+        if n_like > len(found):
+            rows.append((os.path.basename(f), "-", str(n_like - len(found)), "UNPARSED"))  # citation-like text the pattern did not parse
     with open(out, "w") as fh:
         for r in rows:
             fh.write("\t".join(r) + "\n")

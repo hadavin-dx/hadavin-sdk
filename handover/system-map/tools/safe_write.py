@@ -34,7 +34,7 @@ def refused(base, name, force=False):
     path = _path(base, name)
     if force or not os.path.exists(path):
         return False
-    with open(path, encoding="utf-8", errors="replace") as fh:
+    with open(path, encoding="utf-8", errors="replace", newline="") as fh:
         return _load(base).get(name) != _sha(fh.read())
 
 
@@ -45,13 +45,13 @@ def safe_write(base, name, text, force=False):
         return False
     path = _path(base, name)
     if force and os.path.exists(path):
-        with open(path, encoding="utf-8", errors="replace") as fh:
+        with open(path, encoding="utf-8", errors="replace", newline="") as fh:
             old = fh.read()
         bak = "%s.%s.bak" % (path, _sha(old)[:8])  # one backup per distinct old text; never replaced
         if not os.path.exists(bak):
-            with open(bak, "w", encoding="utf-8") as fh:
+            with open(bak, "w", encoding="utf-8", newline="") as fh:
                 fh.write(old)
-    with open(path, "w", encoding="utf-8") as fh:
+    with open(path, "w", encoding="utf-8", newline="") as fh:
         fh.write(text)
     hashes[name] = _sha(text)
     reg = os.path.join(base, REG)
@@ -66,7 +66,7 @@ def adopt(base, name):
     """Record the sha of the file as it is now (a hand edit becomes the new baseline); nothing else is written."""
     path = _path(base, name)
     hashes = _load(base)
-    with open(path, encoding="utf-8", errors="replace") as fh:
+    with open(path, encoding="utf-8", errors="replace", newline="") as fh:
         hashes[name] = _sha(fh.read())
     reg = os.path.join(base, REG)
     os.makedirs(os.path.dirname(reg), exist_ok=True)

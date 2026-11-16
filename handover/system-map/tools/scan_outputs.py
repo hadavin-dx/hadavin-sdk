@@ -70,6 +70,36 @@ def owner_count(text):
     return defects
 
 
+def missing_jobs(text):
+    d = sections_by_job(text)
+    return [f"ONE-PLACE: missing section ## Job: {k}" for k in KEYS if k not in d]
+
+
+def counts_consistent(text):
+    """The Findings table must agree with the 'all (raw rows)' row of Counts; a severity outside Blocker/Major/Nit is a defect."""
+    d, defects = sections(text), []
+    tally = {"Blocker": 0, "Major": 0, "Nit": 0}
+    rows = table_rows(d.get("Findings", []))
+    for r in rows:
+        m = re.match(r"(\w+)", r[2]) if len(r) > 2 else None
+        sev = m.group(1) if m else ""
+        if sev not in tally:
+            defects.append(f"SWEEP: finding {r[0] if r else '?'} has severity {sev!r} (expected Blocker, Major or Nit)")
+        else:
+            tally[sev] += 1
+    raw = [r for r in table_rows(d.get("Counts", [])) if r and r[0].startswith("all (raw rows)")]
+    if len(raw) != 1:
+        return defects + [f"SWEEP: Counts has {len(raw)} 'all (raw rows)' rows (expected 1)"]
+    try:
+        got = [int(x) for x in raw[0][1:5]]
+    except ValueError:
+        return defects + ["SWEEP: Counts 'all (raw rows)' row has a non-number cell"]
+    want = [tally["Blocker"], tally["Major"], tally["Nit"], len(rows)]
+    if got != want:
+        defects.append(f"SWEEP: Counts 'all (raw rows)' says Blocker/Major/Nit/total {got} but the Findings table has {want}")
+    return defects
+
+
 def sections_by_job(text):
     out, key, cols = {}, None, None
     for line in text.splitlines():
@@ -117,7 +147,9 @@ def run(base):
         if os.path.exists(p):
             t = open(p, encoding="utf-8", errors="replace").read()
             if f == "ONE-PLACE-TABLE.md":
-                defects += owner_count(t)
+                defects += missing_jobs(t) + owner_count(t)
+            if f == "SWEEP.md":
+                defects += counts_consistent(t)
             if f in OUT_HEADS:
                 defects += empty_fields(f, t, OUT_HEADS[f])
     skip = {os.path.realpath(os.path.join(base, "tests")), os.path.realpath(os.path.join(base, "tools"))}
