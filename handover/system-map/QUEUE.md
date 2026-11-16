@@ -11,9 +11,12 @@ Times: UTC first, IST (= UTC + 5:30) second, for example 12:00 UTC / 17:30 IST. 
 7. ring = a round of fresh independent readers over a finished file (item M10); log in rings/RING-LOG.md.
 8. ORDER 021 etc. = a numbered order from the lead, in ORDERS.md (same folder). "Decision N" = the numbered lead decision in inputs/DECISIONS-2026-11-16.md.
 9. drift = two files saying different things about the same fact; drift/REPORT.md lists each one, row 101 of its table is the open list of 8 Blocker rows for the lead.
-10. HubSpot = the contact system the take writes to. M-numbers (M1 to M20) are the items below.
+10. HubSpot = the contact system (CRM) that the n8n flows write made-up test contacts into with their own key; the take program's own HubSpot key can only read. M-numbers (M1 to M20) are the items below.
+11. UNVERIFIED = not yet confirmed by a test run; the lead's loopback re-smoke is the test that can confirm it. Loopback re-smoke = the free local rehearsal with stand-in programs (US$0, no real account) described in inputs/plan-wp6-resmoke-v5.md; it runs before any real take. Where a line is marked UNVERIFIED, do not state it as a fact.
+12. EGM reviewers = fresh reviewer agents of the studio's review method (`egm:*` types) that each read a finished file cold. Evidence runner = an agent that only runs checks and saves the raw output, without judging. R460 = the studio rule that asks for the whole-system architecture audit (see ARCHITECTURE-AUDIT-CHECKLIST.md).
+13. lane = one line of parallel work, one agent each. slots = the 3 heavy test places on the laptop that may run big test jobs at once. REFILL = a time stamped block where the lead adds new items. claim rows = rows in the take's database that mark one test contact as being handled, so it is processed once. DM = the crash-test row of the plan: a crash after the mail is stored and before the contact is marked done (plan line 476). A-01 and C-01 = ids of core patches in inputs/DECISIONS-2026-11-16.md decision 4. S9-n = row ids of security items in drift/REPORT.md. UTC/IST: see the line under the title.
 
-## Percent legend (digest 382)
+## Percent legend (digest 382 = the lead's numbered status digest that set this legend; it is not in this folder)
 A percentage on a row = the share of that row's acceptance checks that have a command and output on file. It is not confidence.
 
 ## Rules of the queue
@@ -26,20 +29,20 @@ Owner HARD rule 2026-11-16: complete the video work by Wed 18 Nov (the lead name
 6. Inputs copied for you (read-only, made-up data): handover/system-map/inputs/.
 7. MUST-NOT: no real keys, mailboxes or client data; no pushes outside cloud/system-map; no edits outside handover/system-map/; no secrets; do not touch other sessions' folders (read via git show).
 
-## Decisions in force (who decided: the lead, 16 Nov 2026; the owner may veto any line)
-1. Decision 1: one video, real-v5 only (scenes 1 to 4); no flow-set switch.
-2. Decision 2 (restored by the lead at 17:46 UTC / 23:16 IST; the 16:41 and 16:50 UTC wordings, that the program tries to archive, are withdrawn by the lead 17:46Z): the take's HubSpot key stays read-only. "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list." UNVERIFIED until the lead's loopback re-smoke on the merged program.
-3. Decision 4: core patch A-01 deferred, C-01 extras cut.
-4. Decision 5: security items S9-5, S9-12 and S9-3 applied as text; S9-2 kept with an honest sentence.
-5. Decision 7: the owner's n8n first-visit setup is already done; the lead imports and activates the flows; the owner only types y, the challenge and end.
-6. Decision 11: licence copies under handover/promotion-inputs are never overwritten or re-licensed.
-7. Storage (decision 10 and DECISION-one-store.md): one Postgres server with two databases (n8n's own and the take's), holding n8n state and claim rows; the file stage.journal is the one stated exception.
-8. Executions are saved ON (made-up data only) and deleted at clean-up; the video makes no portal, approval or audit-trail claims.
-9. Narrow claim: "the same lead id sent twice is processed once".
-10. n8n outgoing network access is switched off by environment names and observed (not enforced).
-11. The loopback re-smoke (a free local test run, US$0, before any real take) comes first; the lead runs it, Tue 17 or Wed 18 Nov. Facts it proves are UNVERIFIED until then.
-12. Take branches are local only, never in your branch.
-13. Builders r37, r38, r39 (laptop lead agents, not a named person) finish about 17:15, 18:10 and 18:40 UTC (22:45, 23:40 and 00:10 IST); then reviews and the merge chain; re-pin target Tue 17 Nov 08:00 UTC / 13:30 IST. Dollar limit: the API credits (US$189 prepaid, with an in-code backstop below it), window to Mon 23 Nov 18:29 UTC / 23:59 IST. Estimate: about 2 days of agent time to the take. Video: recorded earlier on Wed 18 Nov, posted Wed 18 Nov 15:00 UTC / 20:30 IST. Crash test (DM): required.
+## Decisions in force (who decided: the lead, 16 Nov 2026; the owner may veto any line). List items are lettered (a) to (m); "Decision N" is always the lead's numbered decision N in inputs/DECISIONS-2026-11-16.md, "answer N" is item N in work/LEAD-ANSWERS.md
+(a) Decision 1: one video, real-v5 only (scenes 1 to 4); no flow-set switch.
+(b) Decision 2 (restored by the lead at 17:46 UTC / 23:16 IST; an earlier wrong note, written at 16:41 UTC / 22:11 IST and 16:50 UTC / 22:20 IST, said the program archives contacts; it was withdrawn by the lead at 17:46 UTC / 23:16 IST. The program archives and deletes nothing): the take's HubSpot key stays read-only. "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list." UNVERIFIED until the lead's loopback re-smoke on the merged program.
+(c) Decision 4: core patch A-01 deferred, C-01 extras cut.
+(d) Decision 5: security items S9-5, S9-12 and S9-3 applied as text; S9-2 kept with an honest sentence.
+(e) Decision 7: the owner's n8n first-visit setup is already done; the lead imports and activates the flows; the owner only types y, the challenge and end.
+(f) Decision 11: licence copies under handover/promotion-inputs are never overwritten or re-licensed.
+(g) Storage (decision 10 and DECISION-one-store.md): one Postgres server with two databases (n8n's own and the take's), holding n8n state and claim rows; the file stage.journal is the one stated exception.
+(h) Executions are saved ON (made-up data only) and deleted at clean-up; the video makes no portal, approval or audit-trail claims.
+(i) Narrow claim: "the same lead id sent twice is processed once".
+(j) n8n outgoing network access is switched off by environment names and observed (not enforced).
+(k) The loopback re-smoke (a free local test run, US$0, before any real take) comes first; the lead runs it, Tue 17 or Wed 18 Nov. Facts it proves are UNVERIFIED until then.
+(l) Take branches are local only, never in your branch.
+(m) Builders r37, r38, r39 (laptop lead agents, not a named person) finish about 17:15, 18:10 and 18:40 UTC (22:45, 23:40 and 00:10 IST); then reviews and the merge chain; re-pin target Tue 17 Nov 08:00 UTC / 13:30 IST. Dollar limit: the API credits (US$189 prepaid, with an in-code backstop below it), window to Mon 23 Nov 18:29 UTC / 23:59 IST. Estimate: about 2 days of agent time to the take. Video: recorded earlier on Wed 18 Nov, posted Wed 18 Nov 15:00 UTC / 20:30 IST. Crash test (DM): required.
 
 ## Items
 Fixed order on each row: STATE | date | owner | due | percent | open items. Detail is on the line below. Owner means the person or session that must act; "system-map" is this session.
@@ -52,7 +55,7 @@ M3 [REVIEWED, fixes PARTLY applied | 2026-11-16 | system-map | no due | 92% | op
   Drift check of the take documents (critical path): inputs/ OWNER-STEPS, AGENT-SCOPE, DECISION-one-store, plan v5. Every number, file name, port, step id and claim that appears in two documents must agree; list each disagreement with both quotes and line numbers; one place per job. Output drift/REPORT.md with an exact fix list. Two EGM reviewers. Tag reconciled to the board 16 Nov 10:40 UTC / 16:10 IST.
 M4 [REVIEWED round 1, fixes applied; round 2 started, result not seen | 2026-11-16 | system-map | no due | percent [LEAD FILLS at refill from the live state] (earlier figure: 90%) | open: round 2 result]
   MASTER-MAP refresh: add this session's new files (board duty files, queues, fill_flows when it lands, paste-check, steps-edits) to MASTER-MAP.md and ONE-PLACE-TABLE.md; mark duplicates. Tag reconciled 16 Nov 10:40 UTC / 16:10 IST.
-M5 [round 3 fixes applied; round 2 naive-reader running | 2026-11-16 | system-map | due Tue 17 Nov 12:00 UTC / 17:30 IST | percent [LEAD FILLS at refill from the live state] | open: naive-reader result; the clean-up sentence in M17 (expected case: all three contacts are printed for you to delete by hand) is UNVERIFIED until the loopback re-smoke]
+M5 [round 3 fixes applied; round 2 naive-reader running | 2026-11-16 | system-map | due Tue 17 Nov 12:00 UTC / 17:30 IST | percent [LEAD FILLS at refill from the live state] | open: naive-reader result; the clean-up sentence in M17 (expected case: all three test contacts, named take-<tag>-a, -b, -c at example.com, are printed for the owner to delete by hand with a HubSpot search by that text) is UNVERIFIED until the loopback re-smoke]
   OWNER VIEW: one page, plain words: what is done, what runs, what is still the owner's (the written yes, typing y, the challenge and end, deleting by hand the made-up contacts on the list the program prints after the take (expected: all three, because the take's HubSpot key is read-only; UNVERIFIED until the re-smoke), revoking the model key at clean-up). Accounts and n8n setup are already done (decisions 2 and 7). Built from the board and REPORT files of all three sessions (read others via git show).
 M6 [R460 review DONE (work/review-r460-tools.md); B1, B2 and B4 fixed | 2026-11-16 | system-map | no due | percent [LEAD FILLS at refill from the live state] (earlier figure: 90%) | open: B3 (a tool's check results are matched to table rows by row number, so a moved row would get another row's result)]
   Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit. Tag reconciled 16 Nov 10:40 UTC / 16:10 IST.
@@ -69,7 +72,7 @@ M10 [PARTLY DONE, fresh round running | 2026-11-16 | system-map | no due | perce
 M11 [DONE | 2026-11-16 | system-map | no due | percent [LEAD FILLS at refill from the live state] | open: none; results in drift/REPORT.md section 11]
   FACTS-ALREADY-DONE SWEEP: grep every document in the repo and in the other two sessions' pushed files (git show origin/cloud/<name>:...) for owner-step lists that ask the owner for accounts, keys, mailboxes, Docker, HubSpot accounts; list each place with line number and exact fix.
 M12 [DONE | 2026-11-16 | system-map | no due | percent [LEAD FILLS at refill from the live state] | open: none; drift/REPORT.md section 11]
-  VIDEO-DATE SWEEP: every place that states a take date, post date or first slot (the queue says Wed 18 Nov morning IST; no owner-steps file gives a take date; deadline Wed 25 Nov 20:30 IST): list place, quote, fix.
+  VIDEO-DATE SWEEP: every place that states a take date, post date or first slot (the queue says Wed 18 Nov morning IST; no owner-steps file gives a take date; the post is planned for Wed 18 Nov 15:00 UTC / 20:30 IST by lead answer 7; "Wed 25 Nov 20:30 IST" in the first version of this line was the old, wrong date): list place, quote, fix.
 M13 [DONE | 2026-11-16 | system-map | no due | percent [LEAD FILLS at refill from the live state] | open: none; drift/REPORT.md section 12]
   THREE-WAY CONSISTENCY: ports, folder names, file names, step ids in OWNER-STEPS v4, plan v5 and the run sheet: table of disagreements.
 M14 [RUNNING | 2026-11-16 | core-hardening owns the fix | no due | percent not stated | open: 1 real failure (the licence-files test)]
@@ -79,17 +82,17 @@ M15 [PARTLY DONE | 2026-11-16 | system-map | no due | 80% (board) | open: the on
 Keep at least 6 agents running, up to 8; when one finishes, start the next in the same turn.
 
 ### REFILL at 09:45 UTC / 15:15 IST (lead)
-M16 [CLOSED by lead decision 1 | 2026-11-16 | lead | no due | percent not stated | open: archive the flowset report, never delete]
-  FLOW-SET QUESTION (history): the take scripts contain no code that switches the n8n flow set from real-v5 (scenes 1 to 4) to film-v5 (scenes 5 to 11). Decision 1: the one video is real-v5 only, so there is no flow-set switch. Output was to be flowset/REPORT.md.
+M16 [CLOSED by lead decision 1 | 2026-11-16 | lead | no due | percent not stated | open: the report still sits at flowset/REPORT.md (checked with ls, 16 Nov); move it to the archive folder only through the cut list, never delete]
+  FLOW-SET QUESTION (history): the take scripts contain no code that switches the n8n flow set from real-v5 (scenes 1 to 4) to film-v5 (scenes 5 to 11). Decision 1: the one video is real-v5 only, so there is no flow-set switch. The output flowset/REPORT.md exists at that path today.
 
 ### REFILL 3 at 17:30 UTC / 23:00 IST (lead, batch 3 answer 7) items
-M17 [NOT STARTED | 2026-11-16 | lead (applies the text to v5, the run-day card, the program notice, TAKE-BLOCKERS; program notice and prompt text are edited by the fix builders, the lead approves) | due Tue 17 Nov 12:00 UTC / 17:30 IST | 70% | open: whole item]
-  Text for item 1 (what end does to contacts), restored at 17:46Z: "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list." The key gets no write right (decision 2). v4.2 lines 453 and 507 are right for the final program: NO CHANGE. Targets: v5, run-day card, program notice, TAKE-BLOCKERS. UNVERIFIED until the lead's loopback re-smoke.
-M18 [CLOSED, settled by decisions 4 and 5 | 2026-11-16 | lead | was due Tue 17 Nov 12:00 UTC / 17:30 IST | 90% | open: archive the draft decisions/D04-D05.md, never delete]
+M17 [NOT STARTED | 2026-11-16 | lead (applies the text to v5, the run-day card, the program notice, TAKE-BLOCKERS; program notice and prompt text are edited by the fix builders, the lead approves) | due Tue 17 Nov 12:00 UTC / 17:30 IST | percent [LEAD FILLS: the lead's refill gave 70%, but the legend counts only checks with a command and output on file, so 70% contradicts NOT STARTED] | open: whole item]
+  Text for item 1 (what end does to contacts), restored at 17:46Z: "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list." The take program's key gets no write right (decision 2). v4.2 lines 453 and 507 are right for the final program: NO CHANGE (v4.2 = inputs/LEAD-RUNBOOK-TAKE-DAY-v4.2.md). For the clean-up, the three left-behind test contacts are found by searching HubSpot for take-<tag>-a, -b, -c with domain example.com (<tag> = the run name; where it first shows on screen: UNVERIFIED); this search is what the lead's note calls the "filtered list". Targets: v5, run-day card, program notice, TAKE-BLOCKERS. UNVERIFIED until the lead's loopback re-smoke.
+M18 [CLOSED, settled by decisions 4 and 5 | 2026-11-16 | lead | was due Tue 17 Nov 12:00 UTC / 17:30 IST | 90% | open: the draft decisions/D04-D05.md still exists at that path (checked with ls, 16 Nov); move it to the archive folder only through the cut list, never delete]
   decisions/D04-D05.md (one page): was written, awaiting the lead.
 M19 [round 2 cold reads done | 2026-11-16 | system-map | due Tue 17 Nov 12:00 UTC / 17:30 IST | 60% | open: further rounds]
   Independent reader pass over the final owner-steps page (stranger test, 10 minutes of steps, no jargon).
 M20 [BLOCKED | 2026-11-16 | lead | due Tue 17 Nov 12:00 UTC / 17:30 IST | percent [LEAD FILLS at refill from the live state] | open: SESSION-HANDOFF must be pasted into inputs/ by that time, or M20 is dropped from the take]
   Re-verify every number and date in SESSION-HANDOFF live state against files (claims check); list mismatches.
 
-M16 is CLOSED by decision 1: the flowset report is moved to the archive folder, not deleted (a repo file, not a HubSpot contact).
+M16 is CLOSED by decision 1. The flowset report is a repo file, not a HubSpot contact: it will go to the archive folder through the cut list, never be deleted. As of 16 Nov it has not been moved.
