@@ -50,7 +50,7 @@ INTERRUPTED: none
 
 ## AGENTS
 - adee8fe2ad0c522b0 | steps v5 round-12 fixer (money path) | started about 20:12Z | running, expected end about 20:20Z | next: digest, round-13 readers
-- (L-01 round-12 naive reader and fact reader started at 20:14Z; ids in the next beat) | security path | running, expected end about 20:14Z + 7 min | next: save findings, one fixer batch
+- (ids a99cca9f7bb8c5f1f naive reader and af8ac853614ad42a9 fact reader; started at 20:14Z; ids in the next beat) | security path | running, expected end about 20:14Z + 7 min | next: save findings, one fixer batch
 - EMPTY SLOTS (3 of 6): all other rows are at the reader cap or wait on r41 (ETA 20:20Z), r42 (ETA 21:00Z), the merge chain, lead notice 1-13, the loopback re-smoke, or on steps v5/L-01 settling (cite pass); r43 is cancelled.
 
 ## Details (long text moved from the FAILED line)
