@@ -1026,3 +1026,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 742 BRIEF-LANE r11: line 42 conflict. FIXED by BINDING r12.
 - 743 rehearsal-limits r7: message not assemblable. Recorded in CURRENT r7; 'passed' rule NOT SET.
 - 744 owner-timeline r10: wait rule contradiction. FIXED by CURRENT r11; cells not ready.
+
+- 745 L4c r7: stale lines. FIXED by CURRENT r7; in-place edits TO DO.
+- 746 L5ac r7: glossary stack. FIXED by GLOSSARY r7.
+- 747 premortem r11: terms, risk count. FIXED by CURRENT r11.
