@@ -1,0 +1,8 @@
+# QUESTIONS.md Q31 (420-638) round 4 lead read (agent a158134), Blockers and Majors only. Saved by flows-audit; reviewer words unverified. 0 Blockers, 4 Majors.
+Checks passed (its claim): counts 66 main (64 OPEN, 1 ANSWERED, 1 NOTE), second list 2 OPEN 5 NOTE, 15A OPEN; total 74 labelled, 67 OPEN; index covers every open item; table vs items 1-31 and items 32-73 vs index match; 67-73 have ANSWER BY and IF UNANSWERED.
+M1 (517, 513, 421) The Monday-night conflict (choice a/b/c for asks 2, 15, 27 vs owner sheet "act on no request") has no item number, time (must be before Mon 20:30Z, item 30) or IF NOT line.
+M2 (505, 546, 563-564, 573, 547) Item 58 says Wed 05:45Z then Tue 09:00Z (item 70); index has item 58 only in the Wed 05:45Z row with the Wednesday consequence; no Tue 09:00Z row though GO row 2 needs it; item 70 due Tue 07:00Z; unclear which item carries run_real_check_n8n.py (item 71 says it holds it).
+M3 (485-512, 516) About 25 items (33-38, 47, 50-52, 54, 55, 57, 58, 60-65) say "DEFAULT none stated; lead decides" with no consequence of silence (wait, skip, NO-GO). State the audit's proposed fallback per item or mark the gap once at the top of the index.
+M4 (463, 491, 498, 522, 550, 484, 505, 544, 570, 573) Undefined terms: Block R1/R2/R2j/R3/R6j/R7j, GO row N, answer cells, TAKE-CHECKLIST row 3 (c), L27/L20. Add a glossary line in the Q31 preamble (421-422) or quote the meaning.
+Nits: item 26 (07:00Z) uses item 18 evidence also due 07:00Z; 15A after History heading (638) not located by index; item 24 lines split; item 39 no own time.
+Not read: lines 1-419; any other file; no source line or clock time verified.
