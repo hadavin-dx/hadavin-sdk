@@ -937,3 +937,6 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 675 banned-claims-clean r4: roles contradict. FIXED by ROLES r4.
 - 676 owner-timeline r6: same as 672 (already fixed).
 - 677 BRIEF-LANE r9: layered rule set. FIXED by BINDING r9.
+
+- 678 L5ac r5: layered notes. FIXED by READ FIRST r5.
+- 679 L4c r5: quarantine list incomplete. FIXED by QUARANTINE LIST r5 (checked by grep, 16 Nov).
