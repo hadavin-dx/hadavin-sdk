@@ -25,351 +25,351 @@ control_real_ids_pass_when_ids_are_required@real-mf-form.json (exit 0, no FAIL) 
 control_real_ids_pass_when_ids_are_required@film-mf-form.json (exit 0, no FAIL) as expected
 control_closing_block_sums_lead_decisions (webhook without auth counted) as expected
 control_known_problems_are_listed (REPLY GAP and no authentication counted) as expected
-orphan_node@real-mf-form.json (FAIL, exit 1)                             NOT AS EXPECTED rc=2 named=0 stray=[]
-orphan_node@real-mf-hook.json (FAIL, exit 1)                             NOT AS EXPECTED rc=2 named=0 stray=[]
-orphan_node@real-mf-recovery.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-orphan_node@real-mf-sub-crm-mail.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-orphan_node@film-mf-form.json (FAIL, exit 1)                             NOT AS EXPECTED rc=2 named=0 stray=[]
-cycle_only@real-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-cycle_only@real-mf-hook.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-cycle_only@real-mf-recovery.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-cycle_only@real-mf-sub-crm-mail.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-cycle_only@film-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-dangling@real-mf-form.json (FAIL, exit 1)                                NOT AS EXPECTED rc=2 named=0 stray=[]
-dangling@real-mf-hook.json (FAIL, exit 1)                                NOT AS EXPECTED rc=2 named=0 stray=[]
-dangling@real-mf-recovery.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-dangling@real-mf-sub-crm-mail.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-dangling@film-mf-form.json (FAIL, exit 1)                                NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_name@real-mf-form.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_name@real-mf-hook.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_name@real-mf-recovery.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_name@real-mf-sub-crm-mail.json (FAIL, exit 1)                  NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_name@film-mf-form.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-name_case_dup@real-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-name_case_dup@real-mf-hook.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-name_case_dup@real-mf-recovery.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-name_case_dup@real-mf-sub-crm-mail.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-name_case_dup@film-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_id@real-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_id@real-mf-hook.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_id@real-mf-recovery.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_id@real-mf-sub-crm-mail.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-duplicate_id@film-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_has_input@real-mf-form.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_has_input@real-mf-hook.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_has_input@real-mf-recovery.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_has_input@real-mf-sub-crm-mail.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_has_input@film-mf-form.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_with_link@real-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_with_link@real-mf-hook.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_with_link@real-mf-recovery.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_with_link@real-mf-sub-crm-mail.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_with_link@film-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_sk@real-mf-form.json (FAIL, exit 1)                               NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_sk@real-mf-hook.json (FAIL, exit 1)                               NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_sk@real-mf-recovery.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_sk@real-mf-sub-crm-mail.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_sk@film-mf-form.json (FAIL, exit 1)                               NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_aws@real-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_aws@real-mf-hook.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_aws@real-mf-recovery.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_aws@real-mf-sub-crm-mail.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_aws@film-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_github@real-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_github@real-mf-hook.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_github@real-mf-recovery.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_github@real-mf-sub-crm-mail.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_github@film-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_slack@real-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_slack@real-mf-hook.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_slack@real-mf-recovery.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_slack@real-mf-sub-crm-mail.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_slack@film-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_private_key@real-mf-form.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_private_key@real-mf-hook.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_private_key@real-mf-recovery.json (FAIL, exit 1)                  NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_private_key@real-mf-sub-crm-mail.json (FAIL, exit 1)              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_private_key@film-mf-form.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_jwt@real-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_jwt@real-mf-hook.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_jwt@real-mf-recovery.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_jwt@real-mf-sub-crm-mail.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_jwt@film-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_url_password@real-mf-form.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_url_password@real-mf-hook.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_url_password@real-mf-recovery.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_url_password@real-mf-sub-crm-mail.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_url_password@film-mf-form.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_bearer@real-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_bearer@real-mf-hook.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_bearer@real-mf-recovery.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_bearer@real-mf-sub-crm-mail.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_bearer@film-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key@real-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key@real-mf-hook.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key@real-mf-recovery.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key@real-mf-sub-crm-mail.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key@film-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key_all_caps@real-mf-form.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key_all_caps@real-mf-hook.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key_all_caps@real-mf-recovery.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key_all_caps@real-mf-sub-crm-mail.json (FAIL, exit 1)       NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_under_key_all_caps@film-mf-form.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_in_sticky_note@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_in_sticky_note@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_in_sticky_note@real-mf-recovery.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_in_sticky_note@real-mf-sub-crm-mail.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_in_sticky_note@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_value@real-mf-form.json (FAIL, exit 1)                  NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_value@real-mf-hook.json (FAIL, exit 1)                  NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_value@real-mf-recovery.json (FAIL, exit 1)              NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_value@real-mf-sub-crm-mail.json (FAIL, exit 1)          NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_value@film-mf-form.json (FAIL, exit 1)                  NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_key@real-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_key@real-mf-hook.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_key@real-mf-recovery.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_key@real-mf-sub-crm-mail.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_top_level_key@film-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_block_missing@real-mf-form.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_block_missing@real-mf-hook.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_block_missing@real-mf-recovery.json (FAIL, exit 1)                  NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_block_missing@real-mf-sub-crm-mail.json (FAIL, exit 1)              NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_block_missing@film-mf-form.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_name_empty@real-mf-form.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_name_empty@real-mf-hook.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_name_empty@real-mf-recovery.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_name_empty@real-mf-sub-crm-mail.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_name_empty@film-mf-form.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_id_missing@real-mf-form.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_id_missing@real-mf-hook.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_id_missing@real-mf-recovery.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_id_missing@real-mf-sub-crm-mail.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-cred_id_missing@film-mf-form.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-httprequest_auth_no_credentials@real-mf-form.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-httprequest_auth_no_credentials@real-mf-hook.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-httprequest_auth_no_credentials@real-mf-recovery.json (FAIL, exit 1)     NOT AS EXPECTED rc=2 named=0 stray=[]
-httprequest_auth_no_credentials@real-mf-sub-crm-mail.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-httprequest_auth_no_credentials@film-mf-form.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_position@real-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_position@real-mf-hook.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_position@real-mf-recovery.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_position@real-mf-sub-crm-mail.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_position@film-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_typeversion@real-mf-form.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_typeversion@real-mf-hook.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_typeversion@real-mf-recovery.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_typeversion@real-mf-sub-crm-mail.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_typeversion@film-mf-form.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-no_trigger@real-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-no_trigger@real-mf-hook.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-no_trigger@real-mf-recovery.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-no_trigger@real-mf-sub-crm-mail.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-no_trigger@film-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_retry_type@real-mf-form.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_retry_type@real-mf-hook.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_retry_type@real-mf-recovery.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_retry_type@real-mf-sub-crm-mail.json (FAIL, exit 1)                  NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_retry_type@film-mf-form.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_alwaysoutput_type@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_alwaysoutput_type@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_alwaysoutput_type@real-mf-recovery.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_alwaysoutput_type@real-mf-sub-crm-mail.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_alwaysoutput_type@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_ref@real-mf-form.json (FAIL, exit 1)                                 NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_ref@real-mf-hook.json (FAIL, exit 1)                                 NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_ref@real-mf-recovery.json (FAIL, exit 1)                             NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_ref@real-mf-sub-crm-mail.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_ref@film-mf-form.json (FAIL, exit 1)                                 NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_items_ref@real-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_items_ref@real-mf-hook.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_items_ref@real-mf-recovery.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_items_ref@real-mf-sub-crm-mail.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_items_ref@film-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_node_dot_ref@real-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_node_dot_ref@real-mf-hook.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_node_dot_ref@real-mf-recovery.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_node_dot_ref@real-mf-sub-crm-mail.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-bad_node_dot_ref@film-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_connection_not_object@real-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_connection_not_object@real-mf-hook.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_connection_not_object@real-mf-recovery.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_connection_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)     NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_connection_not_object@film-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_without_node@real-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_without_node@real-mf-hook.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_without_node@real-mf-recovery.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_without_node@real-mf-sub-crm-mail.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_without_node@film-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_not_object@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_not_object@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_not_object@real-mf-recovery.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_not_object@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_parameters_not_object@real-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_parameters_not_object@real-mf-hook.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_parameters_not_object@real-mf-recovery.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_parameters_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)     NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_parameters_not_object@film-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_top_level_list@real-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_top_level_list@real-mf-hook.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_top_level_list@real-mf-recovery.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_top_level_list@real-mf-sub-crm-mail.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_top_level_list@film-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_nodes_not_list@real-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_nodes_not_list@real-mf-hook.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_nodes_not_list@real-mf-recovery.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_nodes_not_list@real-mf-sub-crm-mail.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_nodes_not_list@film-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_without_name@real-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_without_name@real-mf-hook.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_without_name@real-mf-recovery.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_without_name@real-mf-sub-crm-mail.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_node_without_name@film-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_index_text@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_index_text@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_index_text@real-mf-recovery.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_index_text@real-mf-sub-crm-mail.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-shape_link_index_text@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_only_file@real-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_only_file@real-mf-hook.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_only_file@real-mf-recovery.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_only_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-sticky_only_file@film-mf-form.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_plus_notes_only@real-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_plus_notes_only@real-mf-hook.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_plus_notes_only@real-mf-recovery.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_plus_notes_only@real-mf-sub-crm-mail.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-trigger_plus_notes_only@film-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-parse_fail@real-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-parse_fail@real-mf-hook.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-parse_fail@real-mf-recovery.json (FAIL, exit 1)                          NOT AS EXPECTED rc=2 named=0 stray=[]
-parse_fail@real-mf-sub-crm-mail.json (FAIL, exit 1)                      NOT AS EXPECTED rc=2 named=0 stray=[]
-parse_fail@film-mf-form.json (FAIL, exit 1)                              NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_file@real-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_file@real-mf-hook.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_file@real-mf-recovery.json (FAIL, exit 1)                        NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-missing_file@film-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_path_reused_in_other_file@real-mf-form.json (FAIL, exit 1)       NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_path_reused_in_other_file@real-mf-hook.json (FAIL, exit 1)       NOT AS EXPECTED rc=2 named=0 stray=[]
+orphan_node@real-mf-form.json (FAIL, exit 1)                             as expected
+orphan_node@real-mf-hook.json (FAIL, exit 1)                             as expected
+orphan_node@real-mf-recovery.json (FAIL, exit 1)                         as expected
+orphan_node@real-mf-sub-crm-mail.json (FAIL, exit 1)                     as expected
+orphan_node@film-mf-form.json (FAIL, exit 1)                             as expected
+cycle_only@real-mf-form.json (FAIL, exit 1)                              as expected
+cycle_only@real-mf-hook.json (FAIL, exit 1)                              as expected
+cycle_only@real-mf-recovery.json (FAIL, exit 1)                          as expected
+cycle_only@real-mf-sub-crm-mail.json (FAIL, exit 1)                      as expected
+cycle_only@film-mf-form.json (FAIL, exit 1)                              as expected
+dangling@real-mf-form.json (FAIL, exit 1)                                as expected
+dangling@real-mf-hook.json (FAIL, exit 1)                                as expected
+dangling@real-mf-recovery.json (FAIL, exit 1)                            as expected
+dangling@real-mf-sub-crm-mail.json (FAIL, exit 1)                        as expected
+dangling@film-mf-form.json (FAIL, exit 1)                                as expected
+duplicate_name@real-mf-form.json (FAIL, exit 1)                          as expected
+duplicate_name@real-mf-hook.json (FAIL, exit 1)                          as expected
+duplicate_name@real-mf-recovery.json (FAIL, exit 1)                      as expected
+duplicate_name@real-mf-sub-crm-mail.json (FAIL, exit 1)                  as expected
+duplicate_name@film-mf-form.json (FAIL, exit 1)                          as expected
+name_case_dup@real-mf-form.json (FAIL, exit 1)                           as expected
+name_case_dup@real-mf-hook.json (FAIL, exit 1)                           as expected
+name_case_dup@real-mf-recovery.json (FAIL, exit 1)                       as expected
+name_case_dup@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+name_case_dup@film-mf-form.json (FAIL, exit 1)                           as expected
+duplicate_id@real-mf-form.json (FAIL, exit 1)                            as expected
+duplicate_id@real-mf-hook.json (FAIL, exit 1)                            as expected
+duplicate_id@real-mf-recovery.json (FAIL, exit 1)                        as expected
+duplicate_id@real-mf-sub-crm-mail.json (FAIL, exit 1)                    as expected
+duplicate_id@film-mf-form.json (FAIL, exit 1)                            as expected
+trigger_has_input@real-mf-form.json (FAIL, exit 1)                       as expected
+trigger_has_input@real-mf-hook.json (FAIL, exit 1)                       as expected
+trigger_has_input@real-mf-recovery.json (FAIL, exit 1)                   as expected
+trigger_has_input@real-mf-sub-crm-mail.json (FAIL, exit 1)               as expected
+trigger_has_input@film-mf-form.json (FAIL, exit 1)                       as expected
+sticky_with_link@real-mf-form.json (FAIL, exit 1)                        as expected
+sticky_with_link@real-mf-hook.json (FAIL, exit 1)                        as expected
+sticky_with_link@real-mf-recovery.json (FAIL, exit 1)                    as expected
+sticky_with_link@real-mf-sub-crm-mail.json (FAIL, exit 1)                as expected
+sticky_with_link@film-mf-form.json (FAIL, exit 1)                        as expected
+secret_sk@real-mf-form.json (FAIL, exit 1)                               as expected
+secret_sk@real-mf-hook.json (FAIL, exit 1)                               as expected
+secret_sk@real-mf-recovery.json (FAIL, exit 1)                           as expected
+secret_sk@real-mf-sub-crm-mail.json (FAIL, exit 1)                       as expected
+secret_sk@film-mf-form.json (FAIL, exit 1)                               as expected
+secret_aws@real-mf-form.json (FAIL, exit 1)                              as expected
+secret_aws@real-mf-hook.json (FAIL, exit 1)                              as expected
+secret_aws@real-mf-recovery.json (FAIL, exit 1)                          as expected
+secret_aws@real-mf-sub-crm-mail.json (FAIL, exit 1)                      as expected
+secret_aws@film-mf-form.json (FAIL, exit 1)                              as expected
+secret_github@real-mf-form.json (FAIL, exit 1)                           as expected
+secret_github@real-mf-hook.json (FAIL, exit 1)                           as expected
+secret_github@real-mf-recovery.json (FAIL, exit 1)                       as expected
+secret_github@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+secret_github@film-mf-form.json (FAIL, exit 1)                           as expected
+secret_slack@real-mf-form.json (FAIL, exit 1)                            as expected
+secret_slack@real-mf-hook.json (FAIL, exit 1)                            as expected
+secret_slack@real-mf-recovery.json (FAIL, exit 1)                        as expected
+secret_slack@real-mf-sub-crm-mail.json (FAIL, exit 1)                    as expected
+secret_slack@film-mf-form.json (FAIL, exit 1)                            as expected
+secret_private_key@real-mf-form.json (FAIL, exit 1)                      as expected
+secret_private_key@real-mf-hook.json (FAIL, exit 1)                      as expected
+secret_private_key@real-mf-recovery.json (FAIL, exit 1)                  as expected
+secret_private_key@real-mf-sub-crm-mail.json (FAIL, exit 1)              as expected
+secret_private_key@film-mf-form.json (FAIL, exit 1)                      as expected
+secret_jwt@real-mf-form.json (FAIL, exit 1)                              as expected
+secret_jwt@real-mf-hook.json (FAIL, exit 1)                              as expected
+secret_jwt@real-mf-recovery.json (FAIL, exit 1)                          as expected
+secret_jwt@real-mf-sub-crm-mail.json (FAIL, exit 1)                      as expected
+secret_jwt@film-mf-form.json (FAIL, exit 1)                              as expected
+secret_url_password@real-mf-form.json (FAIL, exit 1)                     as expected
+secret_url_password@real-mf-hook.json (FAIL, exit 1)                     as expected
+secret_url_password@real-mf-recovery.json (FAIL, exit 1)                 as expected
+secret_url_password@real-mf-sub-crm-mail.json (FAIL, exit 1)             as expected
+secret_url_password@film-mf-form.json (FAIL, exit 1)                     as expected
+secret_bearer@real-mf-form.json (FAIL, exit 1)                           as expected
+secret_bearer@real-mf-hook.json (FAIL, exit 1)                           as expected
+secret_bearer@real-mf-recovery.json (FAIL, exit 1)                       as expected
+secret_bearer@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+secret_bearer@film-mf-form.json (FAIL, exit 1)                           as expected
+secret_under_key@real-mf-form.json (FAIL, exit 1)                        as expected
+secret_under_key@real-mf-hook.json (FAIL, exit 1)                        as expected
+secret_under_key@real-mf-recovery.json (FAIL, exit 1)                    as expected
+secret_under_key@real-mf-sub-crm-mail.json (FAIL, exit 1)                as expected
+secret_under_key@film-mf-form.json (FAIL, exit 1)                        as expected
+secret_under_key_all_caps@real-mf-form.json (FAIL, exit 1)               as expected
+secret_under_key_all_caps@real-mf-hook.json (FAIL, exit 1)               as expected
+secret_under_key_all_caps@real-mf-recovery.json (FAIL, exit 1)           as expected
+secret_under_key_all_caps@real-mf-sub-crm-mail.json (FAIL, exit 1)       as expected
+secret_under_key_all_caps@film-mf-form.json (FAIL, exit 1)               as expected
+secret_in_sticky_note@real-mf-form.json (FAIL, exit 1)                   as expected
+secret_in_sticky_note@real-mf-hook.json (FAIL, exit 1)                   as expected
+secret_in_sticky_note@real-mf-recovery.json (FAIL, exit 1)               as expected
+secret_in_sticky_note@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+secret_in_sticky_note@film-mf-form.json (FAIL, exit 1)                   as expected
+secret_top_level_value@real-mf-form.json (FAIL, exit 1)                  as expected
+secret_top_level_value@real-mf-hook.json (FAIL, exit 1)                  as expected
+secret_top_level_value@real-mf-recovery.json (FAIL, exit 1)              as expected
+secret_top_level_value@real-mf-sub-crm-mail.json (FAIL, exit 1)          as expected
+secret_top_level_value@film-mf-form.json (FAIL, exit 1)                  as expected
+secret_top_level_key@real-mf-form.json (FAIL, exit 1)                    as expected
+secret_top_level_key@real-mf-hook.json (FAIL, exit 1)                    as expected
+secret_top_level_key@real-mf-recovery.json (FAIL, exit 1)                as expected
+secret_top_level_key@real-mf-sub-crm-mail.json (FAIL, exit 1)            as expected
+secret_top_level_key@film-mf-form.json (FAIL, exit 1)                    as expected
+cred_block_missing@real-mf-form.json (FAIL, exit 1)                      as expected
+cred_block_missing@real-mf-hook.json (FAIL, exit 1)                      as expected
+cred_block_missing@real-mf-recovery.json (FAIL, exit 1)                  as expected
+cred_block_missing@real-mf-sub-crm-mail.json (FAIL, exit 1)              as expected
+cred_block_missing@film-mf-form.json (FAIL, exit 1)                      as expected
+cred_name_empty@real-mf-form.json (FAIL, exit 1)                         as expected
+cred_name_empty@real-mf-hook.json (FAIL, exit 1)                         as expected
+cred_name_empty@real-mf-recovery.json (FAIL, exit 1)                     as expected
+cred_name_empty@real-mf-sub-crm-mail.json (FAIL, exit 1)                 as expected
+cred_name_empty@film-mf-form.json (FAIL, exit 1)                         as expected
+cred_id_missing@real-mf-form.json (FAIL, exit 1)                         as expected
+cred_id_missing@real-mf-hook.json (FAIL, exit 1)                         as expected
+cred_id_missing@real-mf-recovery.json (FAIL, exit 1)                     as expected
+cred_id_missing@real-mf-sub-crm-mail.json (FAIL, exit 1)                 as expected
+cred_id_missing@film-mf-form.json (FAIL, exit 1)                         as expected
+httprequest_auth_no_credentials@real-mf-form.json (FAIL, exit 1)         as expected
+httprequest_auth_no_credentials@real-mf-hook.json (FAIL, exit 1)         as expected
+httprequest_auth_no_credentials@real-mf-recovery.json (FAIL, exit 1)     as expected
+httprequest_auth_no_credentials@real-mf-sub-crm-mail.json (FAIL, exit 1) as expected
+httprequest_auth_no_credentials@film-mf-form.json (FAIL, exit 1)         as expected
+missing_position@real-mf-form.json (FAIL, exit 1)                        as expected
+missing_position@real-mf-hook.json (FAIL, exit 1)                        as expected
+missing_position@real-mf-recovery.json (FAIL, exit 1)                    as expected
+missing_position@real-mf-sub-crm-mail.json (FAIL, exit 1)                as expected
+missing_position@film-mf-form.json (FAIL, exit 1)                        as expected
+missing_typeversion@real-mf-form.json (FAIL, exit 1)                     as expected
+missing_typeversion@real-mf-hook.json (FAIL, exit 1)                     as expected
+missing_typeversion@real-mf-recovery.json (FAIL, exit 1)                 as expected
+missing_typeversion@real-mf-sub-crm-mail.json (FAIL, exit 1)             as expected
+missing_typeversion@film-mf-form.json (FAIL, exit 1)                     as expected
+no_trigger@real-mf-form.json (FAIL, exit 1)                              as expected
+no_trigger@real-mf-hook.json (FAIL, exit 1)                              as expected
+no_trigger@real-mf-recovery.json (FAIL, exit 1)                          as expected
+no_trigger@real-mf-sub-crm-mail.json (FAIL, exit 1)                      as expected
+no_trigger@film-mf-form.json (FAIL, exit 1)                              as expected
+bad_retry_type@real-mf-form.json (FAIL, exit 1)                          as expected
+bad_retry_type@real-mf-hook.json (FAIL, exit 1)                          as expected
+bad_retry_type@real-mf-recovery.json (FAIL, exit 1)                      as expected
+bad_retry_type@real-mf-sub-crm-mail.json (FAIL, exit 1)                  as expected
+bad_retry_type@film-mf-form.json (FAIL, exit 1)                          as expected
+bad_alwaysoutput_type@real-mf-form.json (FAIL, exit 1)                   as expected
+bad_alwaysoutput_type@real-mf-hook.json (FAIL, exit 1)                   as expected
+bad_alwaysoutput_type@real-mf-recovery.json (FAIL, exit 1)               as expected
+bad_alwaysoutput_type@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+bad_alwaysoutput_type@film-mf-form.json (FAIL, exit 1)                   as expected
+bad_ref@real-mf-form.json (FAIL, exit 1)                                 as expected
+bad_ref@real-mf-hook.json (FAIL, exit 1)                                 as expected
+bad_ref@real-mf-recovery.json (FAIL, exit 1)                             as expected
+bad_ref@real-mf-sub-crm-mail.json (FAIL, exit 1)                         as expected
+bad_ref@film-mf-form.json (FAIL, exit 1)                                 as expected
+bad_items_ref@real-mf-form.json (FAIL, exit 1)                           as expected
+bad_items_ref@real-mf-hook.json (FAIL, exit 1)                           as expected
+bad_items_ref@real-mf-recovery.json (FAIL, exit 1)                       as expected
+bad_items_ref@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+bad_items_ref@film-mf-form.json (FAIL, exit 1)                           as expected
+bad_node_dot_ref@real-mf-form.json (FAIL, exit 1)                        as expected
+bad_node_dot_ref@real-mf-hook.json (FAIL, exit 1)                        as expected
+bad_node_dot_ref@real-mf-recovery.json (FAIL, exit 1)                    as expected
+bad_node_dot_ref@real-mf-sub-crm-mail.json (FAIL, exit 1)                as expected
+bad_node_dot_ref@film-mf-form.json (FAIL, exit 1)                        as expected
+shape_connection_not_object@real-mf-form.json (FAIL, exit 1)             as expected
+shape_connection_not_object@real-mf-hook.json (FAIL, exit 1)             as expected
+shape_connection_not_object@real-mf-recovery.json (FAIL, exit 1)         as expected
+shape_connection_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected
+shape_connection_not_object@film-mf-form.json (FAIL, exit 1)             as expected
+shape_link_without_node@real-mf-form.json (FAIL, exit 1)                 as expected
+shape_link_without_node@real-mf-hook.json (FAIL, exit 1)                 as expected
+shape_link_without_node@real-mf-recovery.json (FAIL, exit 1)             as expected
+shape_link_without_node@real-mf-sub-crm-mail.json (FAIL, exit 1)         as expected
+shape_link_without_node@film-mf-form.json (FAIL, exit 1)                 as expected
+shape_node_not_object@real-mf-form.json (FAIL, exit 1)                   as expected
+shape_node_not_object@real-mf-hook.json (FAIL, exit 1)                   as expected
+shape_node_not_object@real-mf-recovery.json (FAIL, exit 1)               as expected
+shape_node_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+shape_node_not_object@film-mf-form.json (FAIL, exit 1)                   as expected
+shape_parameters_not_object@real-mf-form.json (FAIL, exit 1)             as expected
+shape_parameters_not_object@real-mf-hook.json (FAIL, exit 1)             as expected
+shape_parameters_not_object@real-mf-recovery.json (FAIL, exit 1)         as expected
+shape_parameters_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected
+shape_parameters_not_object@film-mf-form.json (FAIL, exit 1)             as expected
+shape_top_level_list@real-mf-form.json (FAIL, exit 1)                    as expected
+shape_top_level_list@real-mf-hook.json (FAIL, exit 1)                    as expected
+shape_top_level_list@real-mf-recovery.json (FAIL, exit 1)                as expected
+shape_top_level_list@real-mf-sub-crm-mail.json (FAIL, exit 1)            as expected
+shape_top_level_list@film-mf-form.json (FAIL, exit 1)                    as expected
+shape_nodes_not_list@real-mf-form.json (FAIL, exit 1)                    as expected
+shape_nodes_not_list@real-mf-hook.json (FAIL, exit 1)                    as expected
+shape_nodes_not_list@real-mf-recovery.json (FAIL, exit 1)                as expected
+shape_nodes_not_list@real-mf-sub-crm-mail.json (FAIL, exit 1)            as expected
+shape_nodes_not_list@film-mf-form.json (FAIL, exit 1)                    as expected
+shape_node_without_name@real-mf-form.json (FAIL, exit 1)                 as expected
+shape_node_without_name@real-mf-hook.json (FAIL, exit 1)                 as expected
+shape_node_without_name@real-mf-recovery.json (FAIL, exit 1)             as expected
+shape_node_without_name@real-mf-sub-crm-mail.json (FAIL, exit 1)         as expected
+shape_node_without_name@film-mf-form.json (FAIL, exit 1)                 as expected
+shape_link_index_text@real-mf-form.json (FAIL, exit 1)                   as expected
+shape_link_index_text@real-mf-hook.json (FAIL, exit 1)                   as expected
+shape_link_index_text@real-mf-recovery.json (FAIL, exit 1)               as expected
+shape_link_index_text@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+shape_link_index_text@film-mf-form.json (FAIL, exit 1)                   as expected
+sticky_only_file@real-mf-form.json (FAIL, exit 1)                        as expected
+sticky_only_file@real-mf-hook.json (FAIL, exit 1)                        as expected
+sticky_only_file@real-mf-recovery.json (FAIL, exit 1)                    as expected
+sticky_only_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                as expected
+sticky_only_file@film-mf-form.json (FAIL, exit 1)                        as expected
+trigger_plus_notes_only@real-mf-form.json (FAIL, exit 1)                 as expected
+trigger_plus_notes_only@real-mf-hook.json (FAIL, exit 1)                 as expected
+trigger_plus_notes_only@real-mf-recovery.json (FAIL, exit 1)             as expected
+trigger_plus_notes_only@real-mf-sub-crm-mail.json (FAIL, exit 1)         as expected
+trigger_plus_notes_only@film-mf-form.json (FAIL, exit 1)                 as expected
+parse_fail@real-mf-form.json (FAIL, exit 1)                              as expected
+parse_fail@real-mf-hook.json (FAIL, exit 1)                              as expected
+parse_fail@real-mf-recovery.json (FAIL, exit 1)                          as expected
+parse_fail@real-mf-sub-crm-mail.json (FAIL, exit 1)                      as expected
+parse_fail@film-mf-form.json (FAIL, exit 1)                              as expected
+missing_file@real-mf-form.json (FAIL, exit 1)                            as expected
+missing_file@real-mf-hook.json (FAIL, exit 1)                            as expected
+missing_file@real-mf-recovery.json (FAIL, exit 1)                        as expected
+missing_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                    as expected
+missing_file@film-mf-form.json (FAIL, exit 1)                            as expected
+webhook_path_reused_in_other_file@real-mf-form.json (FAIL, exit 1)       as expected
+webhook_path_reused_in_other_file@real-mf-hook.json (FAIL, exit 1)       as expected
 webhook_path_reused_in_other_file@real-mf-recovery.json                  skipped (not applicable to this file)
 webhook_path_reused_in_other_file@real-mf-sub-crm-mail.json              skipped (not applicable to this file)
-webhook_path_reused_in_other_file@film-mf-form.json (FAIL, exit 1)       NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_id_reused_in_other_file@real-mf-form.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_id_reused_in_other_file@real-mf-hook.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_path_reused_in_other_file@film-mf-form.json (FAIL, exit 1)       as expected
+webhook_id_reused_in_other_file@real-mf-form.json (FAIL, exit 1)         as expected
+webhook_id_reused_in_other_file@real-mf-hook.json (FAIL, exit 1)         as expected
 webhook_id_reused_in_other_file@real-mf-recovery.json                    skipped (not applicable to this file)
 webhook_id_reused_in_other_file@real-mf-sub-crm-mail.json                skipped (not applicable to this file)
-webhook_id_reused_in_other_file@film-mf-form.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_no_reply_node@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_no_reply_node@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_id_reused_in_other_file@film-mf-form.json (FAIL, exit 1)         as expected
+webhook_no_reply_node@real-mf-form.json (FAIL, exit 1)                   as expected
+webhook_no_reply_node@real-mf-hook.json (FAIL, exit 1)                   as expected
 webhook_no_reply_node@real-mf-recovery.json                              skipped (not applicable to this file)
 webhook_no_reply_node@real-mf-sub-crm-mail.json                          skipped (not applicable to this file)
-webhook_no_reply_node@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_reply_node_disabled@real-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_reply_node_disabled@real-mf-hook.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_no_reply_node@film-mf-form.json (FAIL, exit 1)                   as expected
+webhook_reply_node_disabled@real-mf-form.json (FAIL, exit 1)             as expected
+webhook_reply_node_disabled@real-mf-hook.json (FAIL, exit 1)             as expected
 webhook_reply_node_disabled@real-mf-recovery.json                        skipped (not applicable to this file)
 webhook_reply_node_disabled@real-mf-sub-crm-mail.json                    skipped (not applicable to this file)
-webhook_reply_node_disabled@film-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_disabled_no_trigger@real-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_disabled_no_trigger@real-mf-hook.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_reply_node_disabled@film-mf-form.json (FAIL, exit 1)             as expected
+webhook_disabled_no_trigger@real-mf-form.json (FAIL, exit 1)             as expected
+webhook_disabled_no_trigger@real-mf-hook.json (FAIL, exit 1)             as expected
 webhook_disabled_no_trigger@real-mf-recovery.json                        skipped (not applicable to this file)
 webhook_disabled_no_trigger@real-mf-sub-crm-mail.json                    skipped (not applicable to this file)
-webhook_disabled_no_trigger@film-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_dead_branch@real-mf-form.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_dead_branch@real-mf-hook.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_disabled_no_trigger@film-mf-form.json (FAIL, exit 1)             as expected
+webhook_dead_branch@real-mf-form.json (FAIL, exit 1)                     as expected
+webhook_dead_branch@real-mf-hook.json (FAIL, exit 1)                     as expected
 webhook_dead_branch@real-mf-recovery.json                                skipped (not applicable to this file)
 webhook_dead_branch@real-mf-sub-crm-mail.json                            skipped (not applicable to this file)
-webhook_dead_branch@film-mf-form.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_without_auth_strict@real-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_without_auth_strict@real-mf-hook.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_without_auth_strict@real-mf-recovery.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_without_auth_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)     NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_without_auth_strict@film-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-form_trigger_without_auth_strict@real-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-form_trigger_without_auth_strict@real-mf-hook.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_dead_branch@film-mf-form.json (FAIL, exit 1)                     as expected
+webhook_without_auth_strict@real-mf-form.json (FAIL, exit 1)             as expected
+webhook_without_auth_strict@real-mf-hook.json (FAIL, exit 1)             as expected
+webhook_without_auth_strict@real-mf-recovery.json (FAIL, exit 1)         as expected
+webhook_without_auth_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected
+webhook_without_auth_strict@film-mf-form.json (FAIL, exit 1)             as expected
+form_trigger_without_auth_strict@real-mf-form.json (FAIL, exit 1)        as expected
+form_trigger_without_auth_strict@real-mf-hook.json (FAIL, exit 1)        as expected
 form_trigger_without_auth_strict@real-mf-recovery.json                   skipped (not applicable to this file)
 form_trigger_without_auth_strict@real-mf-sub-crm-mail.json               skipped (not applicable to this file)
-form_trigger_without_auth_strict@film-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-connection_source_not_a_node@real-mf-form.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-connection_source_not_a_node@real-mf-hook.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-connection_source_not_a_node@real-mf-recovery.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-connection_source_not_a_node@real-mf-sub-crm-mail.json (FAIL, exit 1)    NOT AS EXPECTED rc=2 named=0 stray=[]
-connection_source_not_a_node@film-mf-form.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_blocked_strict@real-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_blocked_strict@real-mf-hook.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_blocked_strict@real-mf-recovery.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_blocked_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_blocked_strict@film-mf-form.json (FAIL, exit 1)                 NOT AS EXPECTED rc=2 named=0 stray=[]
-wrong_count@real-mf-form.json (FAIL, exit 1)                             NOT AS EXPECTED rc=2 named=0 stray=[]
-wrong_count@real-mf-hook.json (FAIL, exit 1)                             NOT AS EXPECTED rc=2 named=0 stray=[]
-wrong_count@real-mf-recovery.json (FAIL, exit 1)                         NOT AS EXPECTED rc=2 named=0 stray=[]
-wrong_count@real-mf-sub-crm-mail.json (FAIL, exit 1)                     NOT AS EXPECTED rc=2 named=0 stray=[]
-wrong_count@film-mf-form.json (FAIL, exit 1)                             NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_null@real-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_null@real-mf-hook.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_null@real-mf-recovery.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_null@real-mf-sub-crm-mail.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_null@film-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_list@real-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_list@real-mf-hook.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_list@real-mf-recovery.json (FAIL, exit 1)                       NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_list@real-mf-sub-crm-mail.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-settings_list@film-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_parameters_list_no_crash@real-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_parameters_list_no_crash@real-mf-hook.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
+form_trigger_without_auth_strict@film-mf-form.json (FAIL, exit 1)        as expected
+connection_source_not_a_node@real-mf-form.json (FAIL, exit 1)            as expected
+connection_source_not_a_node@real-mf-hook.json (FAIL, exit 1)            as expected
+connection_source_not_a_node@real-mf-recovery.json (FAIL, exit 1)        as expected
+connection_source_not_a_node@real-mf-sub-crm-mail.json (FAIL, exit 1)    as expected
+connection_source_not_a_node@film-mf-form.json (FAIL, exit 1)            as expected
+env_read_blocked_strict@real-mf-form.json (FAIL, exit 1)                 as expected
+env_read_blocked_strict@real-mf-hook.json (FAIL, exit 1)                 as expected
+env_read_blocked_strict@real-mf-recovery.json (FAIL, exit 1)             as expected
+env_read_blocked_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)         as expected
+env_read_blocked_strict@film-mf-form.json (FAIL, exit 1)                 as expected
+wrong_count@real-mf-form.json (FAIL, exit 1)                             as expected
+wrong_count@real-mf-hook.json (FAIL, exit 1)                             as expected
+wrong_count@real-mf-recovery.json (FAIL, exit 1)                         as expected
+wrong_count@real-mf-sub-crm-mail.json (FAIL, exit 1)                     as expected
+wrong_count@film-mf-form.json (FAIL, exit 1)                             as expected
+settings_null@real-mf-form.json (FAIL, exit 1)                           as expected
+settings_null@real-mf-hook.json (FAIL, exit 1)                           as expected
+settings_null@real-mf-recovery.json (FAIL, exit 1)                       as expected
+settings_null@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+settings_null@film-mf-form.json (FAIL, exit 1)                           as expected
+settings_list@real-mf-form.json (FAIL, exit 1)                           as expected
+settings_list@real-mf-hook.json (FAIL, exit 1)                           as expected
+settings_list@real-mf-recovery.json (FAIL, exit 1)                       as expected
+settings_list@real-mf-sub-crm-mail.json (FAIL, exit 1)                   as expected
+settings_list@film-mf-form.json (FAIL, exit 1)                           as expected
+webhook_parameters_list_no_crash@real-mf-form.json (FAIL, exit 1)        as expected
+webhook_parameters_list_no_crash@real-mf-hook.json (FAIL, exit 1)        as expected
 webhook_parameters_list_no_crash@real-mf-recovery.json                   skipped (not applicable to this file)
 webhook_parameters_list_no_crash@real-mf-sub-crm-mail.json               skipped (not applicable to this file)
-webhook_parameters_list_no_crash@film-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_parameters_text_no_crash@real-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_parameters_text_no_crash@real-mf-hook.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_parameters_list_no_crash@film-mf-form.json (FAIL, exit 1)        as expected
+webhook_parameters_text_no_crash@real-mf-form.json (FAIL, exit 1)        as expected
+webhook_parameters_text_no_crash@real-mf-hook.json (FAIL, exit 1)        as expected
 webhook_parameters_text_no_crash@real-mf-recovery.json                   skipped (not applicable to this file)
 webhook_parameters_text_no_crash@real-mf-sub-crm-mail.json               skipped (not applicable to this file)
-webhook_parameters_text_no_crash@film-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_id_dict_no_crash@real-mf-form.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_id_dict_no_crash@real-mf-hook.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_parameters_text_no_crash@film-mf-form.json (FAIL, exit 1)        as expected
+webhook_id_dict_no_crash@real-mf-form.json (FAIL, exit 1)                as expected
+webhook_id_dict_no_crash@real-mf-hook.json (FAIL, exit 1)                as expected
 webhook_id_dict_no_crash@real-mf-recovery.json                           skipped (not applicable to this file)
 webhook_id_dict_no_crash@real-mf-sub-crm-mail.json                       skipped (not applicable to this file)
-webhook_id_dict_no_crash@film-mf-form.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_id_list_no_crash@real-mf-form.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_id_list_no_crash@real-mf-hook.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_id_dict_no_crash@film-mf-form.json (FAIL, exit 1)                as expected
+webhook_id_list_no_crash@real-mf-form.json (FAIL, exit 1)                as expected
+webhook_id_list_no_crash@real-mf-hook.json (FAIL, exit 1)                as expected
 webhook_id_list_no_crash@real-mf-recovery.json                           skipped (not applicable to this file)
 webhook_id_list_no_crash@real-mf-sub-crm-mail.json                       skipped (not applicable to this file)
-webhook_id_list_no_crash@film-mf-form.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_inside_json_expression@real-mf-form.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_inside_json_expression@real-mf-hook.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_inside_json_expression@real-mf-recovery.json (FAIL, exit 1)       NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_inside_json_expression@real-mf-sub-crm-mail.json (FAIL, exit 1)   NOT AS EXPECTED rc=2 named=0 stray=[]
-secret_inside_json_expression@film-mf-form.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bracket_form_strict@real-mf-form.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bracket_form_strict@real-mf-hook.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bracket_form_strict@real-mf-recovery.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bracket_form_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)    NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bracket_form_strict@film-mf-form.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_process_env_strict@real-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_process_env_strict@real-mf-hook.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_process_env_strict@real-mf-recovery.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_process_env_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)     NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_process_env_strict@film-mf-form.json (FAIL, exit 1)             NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_auth_without_credentials@real-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_auth_without_credentials@real-mf-hook.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_id_list_no_crash@film-mf-form.json (FAIL, exit 1)                as expected
+secret_inside_json_expression@real-mf-form.json (FAIL, exit 1)           as expected
+secret_inside_json_expression@real-mf-hook.json (FAIL, exit 1)           as expected
+secret_inside_json_expression@real-mf-recovery.json (FAIL, exit 1)       as expected
+secret_inside_json_expression@real-mf-sub-crm-mail.json (FAIL, exit 1)   as expected
+secret_inside_json_expression@film-mf-form.json (FAIL, exit 1)           as expected
+env_read_bracket_form_strict@real-mf-form.json (FAIL, exit 1)            as expected
+env_read_bracket_form_strict@real-mf-hook.json (FAIL, exit 1)            as expected
+env_read_bracket_form_strict@real-mf-recovery.json (FAIL, exit 1)        as expected
+env_read_bracket_form_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)    as expected
+env_read_bracket_form_strict@film-mf-form.json (FAIL, exit 1)            as expected
+env_read_process_env_strict@real-mf-form.json (FAIL, exit 1)             as expected
+env_read_process_env_strict@real-mf-hook.json (FAIL, exit 1)             as expected
+env_read_process_env_strict@real-mf-recovery.json (FAIL, exit 1)         as expected
+env_read_process_env_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected
+env_read_process_env_strict@film-mf-form.json (FAIL, exit 1)             as expected
+webhook_auth_without_credentials@real-mf-form.json (FAIL, exit 1)        as expected
+webhook_auth_without_credentials@real-mf-hook.json (FAIL, exit 1)        as expected
 webhook_auth_without_credentials@real-mf-recovery.json                   skipped (not applicable to this file)
 webhook_auth_without_credentials@real-mf-sub-crm-mail.json               skipped (not applicable to this file)
-webhook_auth_without_credentials@film-mf-form.json (FAIL, exit 1)        NOT AS EXPECTED rc=2 named=0 stray=[]
-form_trigger_auth_without_credentials@real-mf-form.json (FAIL, exit 1)   NOT AS EXPECTED rc=2 named=0 stray=[]
-form_trigger_auth_without_credentials@real-mf-hook.json (FAIL, exit 1)   NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_auth_without_credentials@film-mf-form.json (FAIL, exit 1)        as expected
+form_trigger_auth_without_credentials@real-mf-form.json (FAIL, exit 1)   as expected
+form_trigger_auth_without_credentials@real-mf-hook.json (FAIL, exit 1)   as expected
 form_trigger_auth_without_credentials@real-mf-recovery.json              skipped (not applicable to this file)
 form_trigger_auth_without_credentials@real-mf-sub-crm-mail.json          skipped (not applicable to this file)
-form_trigger_auth_without_credentials@film-mf-form.json (FAIL, exit 1)   NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_kind_wrong@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_kind_wrong@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_kind_wrong@real-mf-recovery.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_kind_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_kind_wrong@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_name_wrong@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_name_wrong@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_name_wrong@real-mf-recovery.json (FAIL, exit 1)               NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_name_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-credential_name_wrong@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
+form_trigger_auth_without_credentials@film-mf-form.json (FAIL, exit 1)   as expected
+credential_kind_wrong@real-mf-form.json (FAIL, exit 1)                   as expected
+credential_kind_wrong@real-mf-hook.json (FAIL, exit 1)                   as expected
+credential_kind_wrong@real-mf-recovery.json (FAIL, exit 1)               as expected
+credential_kind_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+credential_kind_wrong@film-mf-form.json (FAIL, exit 1)                   as expected
+credential_name_wrong@real-mf-form.json (FAIL, exit 1)                   as expected
+credential_name_wrong@real-mf-hook.json (FAIL, exit 1)                   as expected
+credential_name_wrong@real-mf-recovery.json (FAIL, exit 1)               as expected
+credential_name_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+credential_name_wrong@film-mf-form.json (FAIL, exit 1)                   as expected
 new_external_call_without_retry_is_warn@real-mf-form.json (WARN, exit 0) as expected
 new_external_call_without_retry_is_warn@real-mf-hook.json (WARN, exit 0) as expected
 new_external_call_without_retry_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
@@ -430,11 +430,11 @@ write_node_continues_on_error@real-mf-hook.json                          skipped
 write_node_continues_on_error@real-mf-recovery.json (WARN, exit 0)       as expected
 write_node_continues_on_error@real-mf-sub-crm-mail.json (WARN, exit 0)   as expected
 write_node_continues_on_error@film-mf-form.json                          skipped (not applicable to this file)
-always_output_with_error_output_is_fail@real-mf-form.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-always_output_with_error_output_is_fail@real-mf-hook.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-always_output_with_error_output_is_fail@real-mf-recovery.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-always_output_with_error_output_is_fail@real-mf-sub-crm-mail.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-always_output_with_error_output_is_fail@film-mf-form.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
+always_output_with_error_output_is_fail@real-mf-form.json (FAIL, exit 1) as expected
+always_output_with_error_output_is_fail@real-mf-hook.json (FAIL, exit 1) as expected
+always_output_with_error_output_is_fail@real-mf-recovery.json (FAIL, exit 1) as expected
+always_output_with_error_output_is_fail@real-mf-sub-crm-mail.json (FAIL, exit 1) as expected
+always_output_with_error_output_is_fail@film-mf-form.json (FAIL, exit 1) as expected
 webhook_without_auth_is_a_lead_decision_line@real-mf-form.json (LEAD, exit 0) as expected
 webhook_without_auth_is_a_lead_decision_line@real-mf-hook.json (LEAD, exit 0) as expected
 webhook_without_auth_is_a_lead_decision_line@real-mf-recovery.json (LEAD, exit 0) as expected
@@ -445,71 +445,71 @@ env_read_is_a_lead_decision_line@real-mf-hook.json (LEAD, exit 0)        as expe
 env_read_is_a_lead_decision_line@real-mf-recovery.json (LEAD, exit 0)    as expected
 env_read_is_a_lead_decision_line@real-mf-sub-crm-mail.json (LEAD, exit 0) as expected
 env_read_is_a_lead_decision_line@film-mf-form.json (LEAD, exit 0)        as expected
-webhook_auth_value_not_accepted@real-mf-form.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_auth_value_not_accepted@real-mf-hook.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_auth_value_not_accepted@real-mf-form.json (FAIL, exit 1)         as expected
+webhook_auth_value_not_accepted@real-mf-hook.json (FAIL, exit 1)         as expected
 webhook_auth_value_not_accepted@real-mf-recovery.json                    skipped (not applicable to this file)
 webhook_auth_value_not_accepted@real-mf-sub-crm-mail.json                skipped (not applicable to this file)
-webhook_auth_value_not_accepted@film-mf-form.json (FAIL, exit 1)         NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_auth_wrong_credential_kind@real-mf-form.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_auth_wrong_credential_kind@real-mf-hook.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_auth_value_not_accepted@film-mf-form.json (FAIL, exit 1)         as expected
+webhook_auth_wrong_credential_kind@real-mf-form.json (FAIL, exit 1)      as expected
+webhook_auth_wrong_credential_kind@real-mf-hook.json (FAIL, exit 1)      as expected
 webhook_auth_wrong_credential_kind@real-mf-recovery.json                 skipped (not applicable to this file)
 webhook_auth_wrong_credential_kind@real-mf-sub-crm-mail.json             skipped (not applicable to this file)
-webhook_auth_wrong_credential_kind@film-mf-form.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
-form_trigger_auth_value_not_accepted@real-mf-form.json (FAIL, exit 1)    NOT AS EXPECTED rc=2 named=0 stray=[]
-form_trigger_auth_value_not_accepted@real-mf-hook.json (FAIL, exit 1)    NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_auth_wrong_credential_kind@film-mf-form.json (FAIL, exit 1)      as expected
+form_trigger_auth_value_not_accepted@real-mf-form.json (FAIL, exit 1)    as expected
+form_trigger_auth_value_not_accepted@real-mf-hook.json (FAIL, exit 1)    as expected
 form_trigger_auth_value_not_accepted@real-mf-recovery.json               skipped (not applicable to this file)
 form_trigger_auth_value_not_accepted@real-mf-sub-crm-mail.json           skipped (not applicable to this file)
-form_trigger_auth_value_not_accepted@film-mf-form.json (FAIL, exit 1)    NOT AS EXPECTED rc=2 named=0 stray=[]
+form_trigger_auth_value_not_accepted@film-mf-form.json (FAIL, exit 1)    as expected
 hubspot_credential_kind_wrong@real-mf-form.json                          skipped (not applicable to this file)
 hubspot_credential_kind_wrong@real-mf-hook.json                          skipped (not applicable to this file)
 hubspot_credential_kind_wrong@real-mf-recovery.json                      skipped (not applicable to this file)
-hubspot_credential_kind_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)   NOT AS EXPECTED rc=2 named=0 stray=[]
+hubspot_credential_kind_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)   as expected
 hubspot_credential_kind_wrong@film-mf-form.json                          skipped (not applicable to this file)
 hubspot_credential_name_wrong@real-mf-form.json                          skipped (not applicable to this file)
 hubspot_credential_name_wrong@real-mf-hook.json                          skipped (not applicable to this file)
 hubspot_credential_name_wrong@real-mf-recovery.json                      skipped (not applicable to this file)
-hubspot_credential_name_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)   NOT AS EXPECTED rc=2 named=0 stray=[]
+hubspot_credential_name_wrong@real-mf-sub-crm-mail.json (FAIL, exit 1)   as expected
 hubspot_credential_name_wrong@film-mf-form.json                          skipped (not applicable to this file)
 hubspot_credential_missing@real-mf-form.json                             skipped (not applicable to this file)
 hubspot_credential_missing@real-mf-hook.json                             skipped (not applicable to this file)
 hubspot_credential_missing@real-mf-recovery.json                         skipped (not applicable to this file)
-hubspot_credential_missing@real-mf-sub-crm-mail.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
+hubspot_credential_missing@real-mf-sub-crm-mail.json (FAIL, exit 1)      as expected
 hubspot_credential_missing@film-mf-form.json                             skipped (not applicable to this file)
 placeholder_ids_are_warn_even_when_quiet@real-mf-form.json (WARN, exit 0) as expected
 placeholder_ids_are_warn_even_when_quiet@real-mf-hook.json (WARN, exit 0) as expected
 placeholder_ids_are_warn_even_when_quiet@real-mf-recovery.json (WARN, exit 0) as expected
 placeholder_ids_are_warn_even_when_quiet@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
 placeholder_ids_are_warn_even_when_quiet@film-mf-form.json (WARN, exit 0) as expected
-placeholder_ids_fail_when_required@real-mf-form.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
-placeholder_ids_fail_when_required@real-mf-hook.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
-placeholder_ids_fail_when_required@real-mf-recovery.json (FAIL, exit 1)  NOT AS EXPECTED rc=2 named=0 stray=[]
-placeholder_ids_fail_when_required@real-mf-sub-crm-mail.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-placeholder_ids_fail_when_required@film-mf-form.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_optional_chain_strict@real-mf-form.json (FAIL, exit 1)          NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_optional_chain_strict@real-mf-hook.json (FAIL, exit 1)          NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_optional_chain_strict@real-mf-recovery.json (FAIL, exit 1)      NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_optional_chain_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)  NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_optional_chain_strict@film-mf-form.json (FAIL, exit 1)          NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bare_strict@real-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bare_strict@real-mf-hook.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bare_strict@real-mf-recovery.json (FAIL, exit 1)                NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bare_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)            NOT AS EXPECTED rc=2 named=0 stray=[]
-env_read_bare_strict@film-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-expression_names_missing_node_in_backticks@real-mf-form.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-expression_names_missing_node_in_backticks@real-mf-hook.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-expression_names_missing_node_in_backticks@real-mf-recovery.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-expression_names_missing_node_in_backticks@real-mf-sub-crm-mail.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-expression_names_missing_node_in_backticks@film-mf-form.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
+placeholder_ids_fail_when_required@real-mf-form.json (FAIL, exit 1)      as expected
+placeholder_ids_fail_when_required@real-mf-hook.json (FAIL, exit 1)      as expected
+placeholder_ids_fail_when_required@real-mf-recovery.json (FAIL, exit 1)  as expected
+placeholder_ids_fail_when_required@real-mf-sub-crm-mail.json (FAIL, exit 1) as expected
+placeholder_ids_fail_when_required@film-mf-form.json (FAIL, exit 1)      as expected
+env_read_optional_chain_strict@real-mf-form.json (FAIL, exit 1)          as expected
+env_read_optional_chain_strict@real-mf-hook.json (FAIL, exit 1)          as expected
+env_read_optional_chain_strict@real-mf-recovery.json (FAIL, exit 1)      as expected
+env_read_optional_chain_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)  as expected
+env_read_optional_chain_strict@film-mf-form.json (FAIL, exit 1)          as expected
+env_read_bare_strict@real-mf-form.json (FAIL, exit 1)                    as expected
+env_read_bare_strict@real-mf-hook.json (FAIL, exit 1)                    as expected
+env_read_bare_strict@real-mf-recovery.json (FAIL, exit 1)                as expected
+env_read_bare_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)            as expected
+env_read_bare_strict@film-mf-form.json (FAIL, exit 1)                    as expected
+expression_names_missing_node_in_backticks@real-mf-form.json (FAIL, exit 1) as expected
+expression_names_missing_node_in_backticks@real-mf-hook.json (FAIL, exit 1) as expected
+expression_names_missing_node_in_backticks@real-mf-recovery.json (FAIL, exit 1) as expected
+expression_names_missing_node_in_backticks@real-mf-sub-crm-mail.json (FAIL, exit 1) as expected
+expression_names_missing_node_in_backticks@film-mf-form.json (FAIL, exit 1) as expected
 expression_computed_node_name_is_warn@real-mf-form.json (WARN, exit 0)   as expected
 expression_computed_node_name_is_warn@real-mf-hook.json (WARN, exit 0)   as expected
 expression_computed_node_name_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
 expression_computed_node_name_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
 expression_computed_node_name_is_warn@film-mf-form.json (WARN, exit 0)   as expected
-webhook_path_reused_with_slash_and_case@real-mf-form.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
-webhook_path_reused_with_slash_and_case@real-mf-hook.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_path_reused_with_slash_and_case@real-mf-form.json (FAIL, exit 1) as expected
+webhook_path_reused_with_slash_and_case@real-mf-hook.json (FAIL, exit 1) as expected
 webhook_path_reused_with_slash_and_case@real-mf-recovery.json            skipped (not applicable to this file)
 webhook_path_reused_with_slash_and_case@real-mf-sub-crm-mail.json        skipped (not applicable to this file)
-webhook_path_reused_with_slash_and_case@film-mf-form.json (FAIL, exit 1) NOT AS EXPECTED rc=2 named=0 stray=[]
+webhook_path_reused_with_slash_and_case@film-mf-form.json (FAIL, exit 1) as expected
 switch_unwired_output_is_warn@real-mf-form.json (WARN, exit 0)           as expected
 switch_unwired_output_is_warn@real-mf-hook.json (WARN, exit 0)           as expected
 switch_unwired_output_is_warn@real-mf-recovery.json (WARN, exit 0)       as expected
@@ -525,31 +525,31 @@ switch_output_count_cannot_be_told_is_warn@real-mf-hook.json (WARN, exit 0) as e
 switch_output_count_cannot_be_told_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
 switch_output_count_cannot_be_told_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
 switch_output_count_cannot_be_told_is_warn@film-mf-form.json (WARN, exit 0) as expected
-webhook_auth_value_not_accepted_default_is_warn@real-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_value_not_accepted_default_is_warn@real-mf-for'] new_named_warn=0
-webhook_auth_value_not_accepted_default_is_warn@real-mf-hook.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_value_not_accepted_default_is_warn@real-mf-hoo'] new_named_warn=0
+webhook_auth_value_not_accepted_default_is_warn@real-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_value_not_accepted_default_is_warn@real-mf-for'] new_named_warn=0
+webhook_auth_value_not_accepted_default_is_warn@real-mf-hook.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_value_not_accepted_default_is_warn@real-mf-hoo'] new_named_warn=0
 webhook_auth_value_not_accepted_default_is_warn@real-mf-recovery.json    skipped (not applicable to this file)
 webhook_auth_value_not_accepted_default_is_warn@real-mf-sub-crm-mail.json skipped (not applicable to this file)
-webhook_auth_value_not_accepted_default_is_warn@film-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_value_not_accepted_default_is_warn@film-mf-for'] new_named_warn=0
-webhook_auth_wrong_credential_kind_default_is_warn@real-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_wrong_credential_kind_default_is_warn@real-mf-'] new_named_warn=0
-webhook_auth_wrong_credential_kind_default_is_warn@real-mf-hook.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_wrong_credential_kind_default_is_warn@real-mf-'] new_named_warn=0
+webhook_auth_value_not_accepted_default_is_warn@film-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_value_not_accepted_default_is_warn@film-mf-for'] new_named_warn=0
+webhook_auth_wrong_credential_kind_default_is_warn@real-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_wrong_credential_kind_default_is_warn@real-mf-'] new_named_warn=0
+webhook_auth_wrong_credential_kind_default_is_warn@real-mf-hook.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_wrong_credential_kind_default_is_warn@real-mf-'] new_named_warn=0
 webhook_auth_wrong_credential_kind_default_is_warn@real-mf-recovery.json skipped (not applicable to this file)
 webhook_auth_wrong_credential_kind_default_is_warn@real-mf-sub-crm-mail.json skipped (not applicable to this file)
-webhook_auth_wrong_credential_kind_default_is_warn@film-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_wrong_credential_kind_default_is_warn@film-mf-'] new_named_warn=0
-webhook_auth_without_credentials_default_is_warn@real-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_without_credentials_default_is_warn@real-mf-fo'] new_named_warn=0
-webhook_auth_without_credentials_default_is_warn@real-mf-hook.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_without_credentials_default_is_warn@real-mf-ho'] new_named_warn=0
+webhook_auth_wrong_credential_kind_default_is_warn@film-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_wrong_credential_kind_default_is_warn@film-mf-'] new_named_warn=0
+webhook_auth_without_credentials_default_is_warn@real-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_without_credentials_default_is_warn@real-mf-fo'] new_named_warn=0
+webhook_auth_without_credentials_default_is_warn@real-mf-hook.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_without_credentials_default_is_warn@real-mf-ho'] new_named_warn=0
 webhook_auth_without_credentials_default_is_warn@real-mf-recovery.json   skipped (not applicable to this file)
 webhook_auth_without_credentials_default_is_warn@real-mf-sub-crm-mail.json skipped (not applicable to this file)
-webhook_auth_without_credentials_default_is_warn@film-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/webhook_auth_without_credentials_default_is_warn@film-mf-fo'] new_named_warn=0
-credential_kind_wrong_default_is_warn@real-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/credential_kind_wrong_default_is_warn@real-mf-form.json/mf-'] new_named_warn=0
-credential_kind_wrong_default_is_warn@real-mf-hook.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/credential_kind_wrong_default_is_warn@real-mf-hook.json/mf-'] new_named_warn=0
-credential_kind_wrong_default_is_warn@real-mf-recovery.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/credential_kind_wrong_default_is_warn@real-mf-recovery.json'] new_named_warn=0
-credential_kind_wrong_default_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/credential_kind_wrong_default_is_warn@real-mf-sub-crm-mail.'] new_named_warn=0
-credential_kind_wrong_default_is_warn@film-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/credential_kind_wrong_default_is_warn@film-mf-form.json/mf-'] new_named_warn=0
-error_output_position_default_is_warn@real-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/error_output_position_default_is_warn@real-mf-form.json/mf-'] new_named_warn=0
-error_output_position_default_is_warn@real-mf-hook.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/error_output_position_default_is_warn@real-mf-hook.json/mf-'] new_named_warn=0
-error_output_position_default_is_warn@real-mf-recovery.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/error_output_position_default_is_warn@real-mf-recovery.json'] new_named_warn=0
-error_output_position_default_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/error_output_position_default_is_warn@real-mf-sub-crm-mail.'] new_named_warn=0
-error_output_position_default_is_warn@film-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-e2a16ysq/error_output_position_default_is_warn@film-mf-form.json/mf-'] new_named_warn=0
+webhook_auth_without_credentials_default_is_warn@film-mf-form.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/webhook_auth_without_credentials_default_is_warn@film-mf-fo'] new_named_warn=0
+credential_kind_wrong_default_is_warn@real-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/credential_kind_wrong_default_is_warn@real-mf-form.json/mf-'] new_named_warn=0
+credential_kind_wrong_default_is_warn@real-mf-hook.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/credential_kind_wrong_default_is_warn@real-mf-hook.json/mf-'] new_named_warn=0
+credential_kind_wrong_default_is_warn@real-mf-recovery.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/credential_kind_wrong_default_is_warn@real-mf-recovery.json'] new_named_warn=0
+credential_kind_wrong_default_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/credential_kind_wrong_default_is_warn@real-mf-sub-crm-mail.'] new_named_warn=0
+credential_kind_wrong_default_is_warn@film-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/credential_kind_wrong_default_is_warn@film-mf-form.json/mf-'] new_named_warn=0
+error_output_position_default_is_warn@real-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/error_output_position_default_is_warn@real-mf-form.json/mf-'] new_named_warn=0
+error_output_position_default_is_warn@real-mf-hook.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/error_output_position_default_is_warn@real-mf-hook.json/mf-'] new_named_warn=0
+error_output_position_default_is_warn@real-mf-recovery.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/error_output_position_default_is_warn@real-mf-recovery.json'] new_named_warn=0
+error_output_position_default_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/error_output_position_default_is_warn@real-mf-sub-crm-mail.'] new_named_warn=0
+error_output_position_default_is_warn@film-mf-form.json (WARN, exit 0)   NOT AS EXPECTED rc=1 stray_fails=['FAIL /tmp/fc-selftest-f61edl7b/error_output_position_default_is_warn@film-mf-form.json/mf-'] new_named_warn=0
 env_read_default_is_warn@real-mf-form.json (WARN, exit 0)                as expected
 env_read_default_is_warn@real-mf-hook.json (WARN, exit 0)                as expected
 env_read_default_is_warn@real-mf-recovery.json (WARN, exit 0)            as expected
@@ -565,41 +565,41 @@ form_trigger_without_auth_default@real-mf-hook.json (WARN, exit 0)       as expe
 form_trigger_without_auth_default@real-mf-recovery.json                  skipped (not applicable to this file)
 form_trigger_without_auth_default@real-mf-sub-crm-mail.json              skipped (not applicable to this file)
 form_trigger_without_auth_default@film-mf-form.json (WARN, exit 0)       as expected
-error_output_unwired@real-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-error_output_unwired@real-mf-hook.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-error_output_unwired@film-mf-form.json (FAIL, exit 1)                    NOT AS EXPECTED rc=2 named=0 stray=[]
-if_one_branch@real-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-if_one_branch@real-mf-hook.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-if_one_branch@film-mf-form.json (FAIL, exit 1)                           NOT AS EXPECTED rc=2 named=0 stray=[]
-if_error_output_is_last_output@real-mf-form.json (FAIL, exit 1)          NOT AS EXPECTED rc=2 named=0 stray=[]
-if_error_output_is_last_output@real-mf-hook.json (FAIL, exit 1)          NOT AS EXPECTED rc=2 named=0 stray=[]
-if_error_output_is_last_output@film-mf-form.json (FAIL, exit 1)          NOT AS EXPECTED rc=2 named=0 stray=[]
-reply_after_store_cut@real-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-reply_after_store_cut@real-mf-hook.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-reply_after_store_cut@film-mf-form.json (FAIL, exit 1)                   NOT AS EXPECTED rc=2 named=0 stray=[]
-reply_body_names_missing_node@real-mf-form.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-reply_body_names_missing_node@real-mf-hook.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-reply_body_names_missing_node@film-mf-form.json (FAIL, exit 1)           NOT AS EXPECTED rc=2 named=0 stray=[]
-patched_control (exit 0)                                                 NOT AS EXPECTED rc=2 fails=[]
-patched_wrong_code (exit 1)                                              NOT AS EXPECTED rc=2 fails=[]
-patched_failreply_cut (exit 1)                                           NOT AS EXPECTED rc=2 fails=[]
-patched_errlink_cut (exit 1)                                             NOT AS EXPECTED rc=2 fails=[]
-patched_badkey_reply_cut (exit 1)                                        NOT AS EXPECTED rc=2 fails=[]
-patched_storefail_code_500 (exit 1)                                      NOT AS EXPECTED rc=2 fails=[]
-patched_storefail_body_without_valid_ref (exit 1)                        NOT AS EXPECTED rc=2 fails=[]
-patched_keyok_condition_changed (exit 1)                                 NOT AS EXPECTED rc=2 fails=[]
-patched_claim_onerror_changed (exit 1)                                   NOT AS EXPECTED rc=2 fails=[]
-patched_f002_node_in_recovery_flow (exit 1)                              NOT AS EXPECTED rc=2 fails=[]
-patched_f008_wrong_value_form (exit 1)                                   NOT AS EXPECTED rc=2 fails=[]
-patched_f008_wrong_value_recovery (exit 1)                               NOT AS EXPECTED rc=2 fails=[]
-patchonly_f002_node_missing (exit 1)                                     NOT AS EXPECTED rc=2 fails=[]
-patchonly_link_swapped (exit 1)                                          NOT AS EXPECTED rc=2 fails=[]
-patchonly_connection_structure_changed (exit 1)                          NOT AS EXPECTED rc=2 fails=[]
-diff_unexplained_added_node (exit 1)                                     NOT AS EXPECTED rc=2 fails=[]
-diff_unexplained_removed_node (exit 1)                                   NOT AS EXPECTED rc=2 fails=[]
-diff_unexplained_changed_node (exit 1)                                   NOT AS EXPECTED rc=2 fails=[]
-diff_unexplained_settings_change (exit 1)                                NOT AS EXPECTED rc=2 fails=[]
-diff_unexplained_top_level_change (exit 1)                               NOT AS EXPECTED rc=2 fails=[]
+error_output_unwired@real-mf-form.json (FAIL, exit 1)                    as expected
+error_output_unwired@real-mf-hook.json (FAIL, exit 1)                    as expected
+error_output_unwired@film-mf-form.json (FAIL, exit 1)                    as expected
+if_one_branch@real-mf-form.json (FAIL, exit 1)                           as expected
+if_one_branch@real-mf-hook.json (FAIL, exit 1)                           as expected
+if_one_branch@film-mf-form.json (FAIL, exit 1)                           as expected
+if_error_output_is_last_output@real-mf-form.json (FAIL, exit 1)          as expected
+if_error_output_is_last_output@real-mf-hook.json (FAIL, exit 1)          as expected
+if_error_output_is_last_output@film-mf-form.json (FAIL, exit 1)          as expected
+reply_after_store_cut@real-mf-form.json (FAIL, exit 1)                   as expected
+reply_after_store_cut@real-mf-hook.json (FAIL, exit 1)                   as expected
+reply_after_store_cut@film-mf-form.json (FAIL, exit 1)                   as expected
+reply_body_names_missing_node@real-mf-form.json (FAIL, exit 1)           as expected
+reply_body_names_missing_node@real-mf-hook.json (FAIL, exit 1)           as expected
+reply_body_names_missing_node@film-mf-form.json (FAIL, exit 1)           as expected
+patched_control (exit 0)                                                 as expected
+patched_wrong_code (exit 1)                                              as expected
+patched_failreply_cut (exit 1)                                           as expected
+patched_errlink_cut (exit 1)                                             as expected
+patched_badkey_reply_cut (exit 1)                                        as expected
+patched_storefail_code_500 (exit 1)                                      as expected
+patched_storefail_body_without_valid_ref (exit 1)                        as expected
+patched_keyok_condition_changed (exit 1)                                 as expected
+patched_claim_onerror_changed (exit 1)                                   as expected
+patched_f002_node_in_recovery_flow (exit 1)                              as expected
+patched_f008_wrong_value_form (exit 1)                                   as expected
+patched_f008_wrong_value_recovery (exit 1)                               as expected
+patchonly_f002_node_missing (exit 1)                                     as expected
+patchonly_link_swapped (exit 1)                                          as expected
+patchonly_connection_structure_changed (exit 1)                          as expected
+diff_unexplained_added_node (exit 1)                                     as expected
+diff_unexplained_removed_node (exit 1)                                   as expected
+diff_unexplained_changed_node (exit 1)                                   as expected
+diff_unexplained_settings_change (exit 1)                                as expected
+diff_unexplained_top_level_change (exit 1)                               as expected
 args_unknown_patch_name (exit 2)                                         as expected
 args_allow_unknown_patch_name (exit 2)                                   as expected
 args_allow_without_patch_checks (exit 2)                                 as expected
@@ -616,13 +616,13 @@ files_all_on_empty_folder_is_fail (exit 1)                               as expe
 not_a_directory_is_fail (exit 1)                                         as expected
 duplicate_json_key_is_fail (exit 1)                                      as expected
 multi_dir_same_webhook_path_default_is_warn (exit 0)                     NOT AS EXPECTED rc=0 missing=[('WARN', 'two webhooks share method+path')] unexpected=[]
-multi_dir_same_webhook_path_fail_unverified (exit 1)                     NOT AS EXPECTED rc=2 missing=[('FAIL', 'two webhooks share method+path')] unexpected=[]
-multi_dir_single_folder_has_no_clash (exit 0)                            NOT AS EXPECTED rc=2 missing=[] unexpected=[]
-multi_dir_same_webhook_id_different_paths (exit 1)                       NOT AS EXPECTED rc=2 missing=[('FAIL', "share webhookId 'wid-shared-9'")] unexpected=[]
-multi_dir_same_form_trigger_path (exit 1)                                NOT AS EXPECTED rc=2 missing=[('FAIL', 'two form triggers share path')] unexpected=[]
-multi_dir_form_path_and_webhook_path_are_different_addresses (exit 0)    NOT AS EXPECTED rc=2 missing=[] unexpected=[]
+multi_dir_same_webhook_path_fail_unverified (exit 1)                     NOT AS EXPECTED rc=0 missing=[('FAIL', 'two webhooks share method+path')] unexpected=[]
+multi_dir_single_folder_has_no_clash (exit 0)                            as expected
+multi_dir_same_webhook_id_different_paths (exit 1)                       NOT AS EXPECTED rc=0 missing=[('FAIL', "share webhookId 'wid-shared-9'")] unexpected=[]
+multi_dir_same_form_trigger_path (exit 1)                                NOT AS EXPECTED rc=0 missing=[('FAIL', 'two form triggers share path')] unexpected=[]
+multi_dir_form_path_and_webhook_path_are_different_addresses (exit 0)    as expected
 webhook_without_path_default_is_warn (exit 0)                            NOT AS EXPECTED rc=0 missing=[('WARN', 'has no usable path')] unexpected=[]
-webhook_without_path_fail_unverified (exit 1)                            NOT AS EXPECTED rc=2 missing=[('FAIL', 'has no usable path')] unexpected=[]
+webhook_without_path_fail_unverified (exit 1)                            NOT AS EXPECTED rc=0 missing=[('FAIL', 'has no usable path')] unexpected=[]
 info_line_says_none_when_no_placeholder_and_no_env (exit 0)              as expected
 info_line_lists_placeholders_when_there_are_some (exit 0)                as expected
 accept_if_both_recorded_is_warn_and_counted (exit 0)                     NOT AS EXPECTED rc=2 missing=[('WARN', 'IF node StuckRow lacks output(s) [1] (accepted by a recorded decision'), ('IF branches accepted by a recorded decision (--accept-if): 2', '')] unexpected=[]
@@ -634,4 +634,4 @@ accept_if_bad_value (exit 2)                                             NOT AS 
 diff_text_exact_line (the change is one readable line, on screen and in the --diff-out file) as expected
 diff_out_unwritable_is_exit_3 (a broken output file is never exit 1)     NOT AS EXPECTED rc=70
 SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): form_trigger_auth_value_not_accepted=2, form_trigger_auth_without_credentials=2, form_trigger_without_auth_default=2, form_trigger_without_auth_strict=2, hubspot_credential_kind_wrong=4, hubspot_credential_missing=4, hubspot_credential_name_wrong=4, silent_error_external_call=1, webhook_auth_value_not_accepted=2, webhook_auth_value_not_accepted_default_is_warn=2, webhook_auth_without_credentials=2, webhook_auth_without_credentials_default_is_warn=2, webhook_auth_wrong_credential_kind=2, webhook_auth_wrong_credential_kind_default_is_warn=2, webhook_dead_branch=2, webhook_disabled_no_trigger=2, webhook_id_dict_no_crash=2, webhook_id_list_no_crash=2, webhook_id_reused_in_other_file=2, webhook_no_reply_node=2, webhook_parameters_list_no_crash=2, webhook_parameters_text_no_crash=2, webhook_path_reused_in_other_file=2, webhook_path_reused_with_slash_and_case=2, webhook_reply_node_disabled=2, write_node_continues_on_error=3
-SELFTEST: 150 as expected, 427 not as expected, 58 skipped (not applicable)
+SELFTEST: 546 as expected, 31 not as expected, 58 skipped (not applicable)
