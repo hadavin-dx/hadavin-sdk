@@ -6,7 +6,7 @@ Numbers from a patch set that is not the kept scope are listed so nobody mistake
 ## What was NOT run or not checked (read first)
 - **The 455 Postgres tests were never run.** They are skipped in every full run (no Postgres in the build container): `v5/README.md:16`, `v5/raw/full-suite-c01min.txt:140`.
 - **The real head `de6b574` was never tested.** All runs are on base `b4cce5b` (`v3/handback-c7b-fix4.md:3`, "Not done" list). Re-check the patches apply at the real head before use.
-- **n8n was never run** for these patches. No test, run or log in this folder touches n8n. No file here claims it; the claim is only that none exists.
+- **n8n was never run** for these patches. No test, run or log in this folder touches n8n. No file here shows an n8n run of these patches. (`review/necessity-r1.md:2,4` says the take claim is carried by n8n plus `scripts/run_real_check_n8n.py`, which that reviewer did not read.)
 - Also never run: the dead-man query (`v5/README.md:16`), any check that the audit database identity cannot UPDATE or DELETE `audit_entries` (same line, `v5/README.md:16`), any live model, cloud or network call for the patch tests.
 - The repo guard tests ran on a git-initialised copy with `handover/` removed, not on the real repository (`v5/README.md:16-18`).
 - The `200_000` `max_tokens` ceiling in C-01-MINIMAL is a typo guard, not a provider limit; no provider page was looked up (`v5/README.md:23`). The studio head must confirm the number.
@@ -51,7 +51,7 @@ All are `pytest` on a scratch copy of base `b4cce5b`. Only the v5 row is the kep
 | 9491 passed, 455 skipped, 0 failed | base + G5 + full C-01 + A-01 (v3) | no, includes cut C-01 extras and deferred A-01 | `v3/raw/full-suite.txt:141`; `v3/README.md:182` |
 | 9514 passed, 455 skipped, 0 failed | v3 tree + the C7b id fix (full C-01, A-01, G5 and fix) | no, same reason; only evidence for the C7b fix | `v3/raw-c7b-fix3/full-run.log:145`; `v3/REPORT-c7b-fix3.md:13` |
 | 9391 passed, 455 skipped, 0 failed | pristine base, git-initialised copy, `handover/` removed (the baseline for the v3 to v5 counts) | baseline | `v3/raw/pristine-full-suite.txt:139`; `v3/README.md:181` |
-| 2 failed, 9389 passed, 455 skipped | pristine base WITH `handover/` present; the same two repo-guard tests fail with and without patches | baseline, a branch artefact (Q16.2, `ORDERS.md:140`) | `patch-test-runs/raw/base-pytest.log:255`; `v3/raw-c7b/base-pytest.log:181` |
+| 2 failed, 9389 passed, 455 skipped | pristine base WITH `handover/` present; the same two repo-guard tests fail with and without patches | baseline, a branch artefact (Q16.2, `ORDERS.md:140`) | `../patch-test-runs/raw/base-pytest.log:255`; `v3/raw-c7b/base-pytest.log:181` |
 | 2 failed, 9451 passed, 455 skipped (v2) | v2 tree | no, superseded | `v2/README.md:109` |
 
 Reading the arithmetic: v5 9418 = 9391 + 27 new tests (23 in the new file + 4 replay cases) (`v5/README.md:66`, `:56`). The 9391 figure was quoted from v3, not re-run in v5 (`v5/README.md:66`).
@@ -63,8 +63,8 @@ The kept-scope result of the 23 new tests on the unpatched tree: 19 failed, 4 pa
 - Status: **describe-only** per lead answer Q16.1 (`ORDERS.md:139`, 10:42Z): accept the flake, do not edit `src/` or `tests/`, write it up for a later core branch. It is not part of the take and is not applied.
 - sha256 of the patch: `12e4be6f42e2f47ae254276cdcf27b1cb31b50d5fa40a1adcedde4acfeb6b9ce`. I re-ran `sha256sum` on `v6-extra/FIX-id-vs-command-withheld.patch` and it matches `v6-extra/FIX-id-vs-command-withheld.patch.sha256`.
 - Evidence: old code 11 failed, 12 passed; new code 23 passed (`v3/REPORT-c7b-fix3.md`, g4 section); full run 9514 (table above, not kept scope).
-- Review: round 5 design review of the evidence, 0 blockers, 0 majors, recommendation accept (`review/design-c7b-fix4-r5.md:2-6`). This is a review of the evidence files, not a result review by the lead. The patch is a security path and still needs the lead's independent result review (`v6-extra/README.md:14`).
-- Open, described only: the cloud-cmdlet rule may not match `Remove-EC2*`, `gcm Remove-EC2*` or a bare `Remove-EC2`; whether another rule still catches them is unchecked (`v6-extra/DESCRIBE-ONLY-flaky-id-test.md:8-9`). Next step for the lead: a test feeding those three strings to the gate and a decision on a fix in `src/`.
+- Review: round 5 design review of the evidence, 0 blockers, 0 majors, recommendation accept (`review/design-c7b-fix4-r5.md:2-5`). This is a review of the evidence files, not a result review by the lead. The patch is a security path and still needs the lead's independent result review (`v6-extra/README.md:14`).
+- Open, described only: the cloud-cmdlet rule may not match `Remove-EC2*`, `gcm Remove-EC2*` or a bare `Remove-EC2`; whether another rule still catches them is unchecked (`v6-extra/DESCRIBE-ONLY-flaky-id-test.md:8`). Next step for the lead: a test feeding those three strings to the gate and a decision on a fix in `src/`.
 - The "no network" claim of an earlier pass was withdrawn (`v3/REPORT-c7b-fix3.md:4`).
 
 ## Other things the lead must decide (from v5)
