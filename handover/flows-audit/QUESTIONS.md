@@ -57,3 +57,10 @@ A fresh reviewer says about a third of the effort serves no take claim. I have N
 
 ## Q18 (flows-audit, 2026-11-16 UTC): take_check.sh exit code for a missing alert column
 F8 round 6 made take_check.sh exit 4 (not 0) when the table file is missing, zero queries were read, or any column or table WARN exists, because a missing alert column means alerts fail on every run. Keep exit 4, or go back to exit 0 with a loud line? My recommendation: keep exit 4. Also: the F-008 patch still leaves manual-run saving off and the recovery flow at "none"; the checker WARNs on each patched run. Change the patch, or accept the WARNs?
+
+## Q19 (flows-audit, 2026-11-16 UTC): five wording choices the claims sweep found (reviews/sweep-one-place-per-job.md). CLAIMS-TABLE and RUNSHEET-WORDING give different paste text for the same sentence; I do not pick for you. Reply with a, b, c each.
+1 Saved n8n runs: may the video say the saved runs are deleted afterwards (RUNSHEET-WORDING A-007 says yes; CLAIMS-TABLE row 6 says no owner step deletes them)? a) do not say it, b) say it and add an owner step that deletes them.
+2 Scene 3 caption and card line: keep "a lead sent twice with the same id is processed once" (your ORDER 017 and Q15 wording), or use "one CRM row and one e-mail message in this recording" (RUNSHEET-WORDING A-016c/e)? My recommendation: your sentence for the card, the narrower one nowhere else.
+3 The words "normally one" alert: CLAIMS-TABLE rows 24, 27, 30, 62, 71 use them, RUNSHEET-WORDING rule 7 forbids them. a) forbid, b) allow.
+4 The sentence for a lead with an invalid e-mail address (Q7): three candidates (CLAIMS-TABLE row 78, RUNSHEET-WORDING N-3, A-057). Which one is the run-sheet sentence? My recommendation: row 78.
+5 Retention text for scene 1 to 4: hard statement (CLAIMS-TABLE row 16) or hedged (RUNSHEET-WORDING A-053, on the card)? Your Q15 says no numbers on the card; my recommendation: hedged, in notes only.
