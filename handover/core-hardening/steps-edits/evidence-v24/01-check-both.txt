@@ -1,0 +1,4 @@
+check-v24: 2 failure(s)
+FAIL C07 OWNER-SHEET-v24-A.md has 7797 words (limit 6500)
+FAIL C07 OWNER-SHEET-v24-B.md has 7730 words (limit 6500)
+exit 1

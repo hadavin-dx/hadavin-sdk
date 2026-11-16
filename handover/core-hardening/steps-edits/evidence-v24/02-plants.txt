@@ -1,0 +1,44 @@
+baseline failures: 2
+P01 CAUGHT call ceiling changed | FAIL C03 facts money differs
+P02 CAUGHT ledger changed (limit 13.21 to 13.31) | FAIL C03 facts money differs
+P03 CAUGHT 860 s changed | FAIL C03 860 s is not 14.33 min
+P04 CAUGHT deadline minute | FAIL C03 deadline pairs
+P05 CAUGHT IST offset | FAIL C03 deadline pairs
+P06 CAUGHT weekday of deadline | FAIL C04 OWNER-SHEET-v24-A.md wrong weekday Tue 23 Nov 2026
+P07 CAUGHT post-by pair | FAIL C03 post-by
+P09 CAUGHT card (g) exception removed | FAIL C14a A lacks "the key's own one-time display at 6.3 and the paste at 6.4"
+P10 CAUGHT recording stop by voice | FAIL C14b A lacks 'switch it OFF yourself at once'
+P11 CAUGHT third alarm removed | FAIL C14c A lacks 'Three phone alarms'
+P12 CAUGHT backtick sentence removed | FAIL C14d A lacks 'Text between backticks is typed without the backticks'
+P13 CAUGHT paste condition removed | FAIL C14e A lacks "only if the window's last line is `paste key, Enter:`"
+P14 CAUGHT window labels removed | FAIL C14f A lacks '"READ" and "TEST"'
+P15 CAUGHT .used rule removed | FAIL C14g A lacks 'ignore a `.used` ending'
+P16 CAUGHT A older key cancelled early | FAIL C14w A older key cancel not after earliest key time
+P17 CAUGHT lead may reverse order | FAIL C14h A lacks 'reverses the order of `end` and the card'
+P18 CAUGHT no clock for the notice window | FAIL C14i A lacks 'minutes of the time `date -u` shows'
+P19 CAUGHT run that never started | FAIL C14j A lacks 'if 7.4 never happened, tell "none"'
+P20 CAUGHT SAMPLE label removed | FAIL C14k A lacks 'SAMPLE (made-up values'
+P21 CAUGHT HubSpot rotate allowed | FAIL C14m A lacks 'never use rotate'
+P22 MISSED set phrase differs
+P23 CAUGHT full date check weakened | FAIL C14q A lacks 'weekday, month, day and year must equal the run day'
+P24 CAUGHT balance re-check weakened | FAIL C14r A lacks 'balance and auto-reload equal your yes'
+P25 CAUGHT last-resort step out of the yes | FAIL C14o A lacks 'last-resort step <step>'
+P26 CAUGHT one-line warning removed | FAIL C14p A lacks 'one line only'
+P27 MISSED cancel rule is copied on top of the card
+P29 CAUGHT pointer to missing step | FAIL C11 A pointer to missing step 8.9
+P30 MISSED card term renamed
+P31 CAUGHT delete guard removed | FAIL C14s A lacks 'Never "Select all", never empty Trash'
+P32 MISSED STOP RULE renamed
+P33 MISSED noop on yes charset (expected MISSED if yes unchanged)
+P34 CAUGHT yes pattern gets a bracket char | FAIL C13 A yes pattern has characters {')', '(', ';'}
+P35 CAUGHT key-save line loses exit report | FAIL C15 A key-save line not found
+P36 CAUGHT key-save line breaks bash -n | FAIL C15 A key-save line not found
+P37 CAUGHT stale word back in note | FAIL C05 LEAD-RELEASE-NOTE-v8.md stale text 're-pin'
+P38 CAUGHT old minutes figure in note | FAIL C04 LEAD-RELEASE-NOTE-v8.md says 14.4 (the figure is 14.33)
+P39 CAUGHT wrong pair in note | FAIL C04 LEAD-RELEASE-NOTE-v8.md bad pair 18:19:00 UTC = 23:59 IST
+P40 CAUGHT wrong weekday in open list | FAIL C04 v24-OPEN-FOR-LEAD.md wrong weekday Tue 16 Nov 2026
+P41 CAUGHT Part 2 back in open list | FAIL C05 v24-OPEN-FOR-LEAD.md stale text 'Part 2'
+P43 CAUGHT sheet date weekday | FAIL C04 OWNER-SHEET-v24-A.md wrong weekday Mon 17 Nov 2026
+P44 CAUGHT A yes sentence changed | FAIL C08 A yes sentence wrong
+P45 CAUGHT B older key fate removed | FAIL C08 B older key route missing
+TOTAL plants 42: caught 37, missed 5, anchor-not-found 0

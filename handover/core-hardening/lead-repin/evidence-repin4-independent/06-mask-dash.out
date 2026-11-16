@@ -1,0 +1,65 @@
+curl -s -H "X-Api-Token: <masked>" https://example.invalid/a
+curl -u <masked> https://example.invalid/b
+curl --header 'Cookie: session=<masked-blob>' https://example.invalid
+ENV APP_SECRET <masked>
+ENV DB_PASSWORD <masked>
+mysql -u root -pMoonfern56% -h localhost
+sshpass -p 'Moonmint20#' ssh host
+git clone https://bob:<masked>@example.invalid/r.git
+redis://:<email-masked>:6379/0
+cat <<EOF > /etc/app.conf
+password=<masked>
+EOF
+cat <<'EOT'
+db_secret: <masked>
+EOT
+base: &base
+  api_key: <masked>
+other:
+  <<: *base
+  note: use *k
+config = '''
+line with <masked-token> inside
+more 378c19cd5840f1aec544
+'''
+{"data": {"credentials": {<masked>
+<masked>
+<masked>
+<masked>}}}
+-----BEGIN RSA PRIVATE KEY-----<masked>
+<masked>
+<masked>
+-----END RSA PRIVATE KEY-----
+Authorization: <masked>
+jwt token is <masked> for later
+the build used key=<masked>
+status ok user=ann pass=<masked>
+locale café token=<masked>
+nul?line password=<masked>
+crlf line secret=<masked>
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ...[CUT: this line has 3015 characters; the rest is not shown]
+yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyySecret_Val ...[CUT: this line has 251 characters; the rest is not shown]
+bare blob <masked-blob> end
+bare hex <masked-blob> end
+access_token	<masked-blob>
+export GITHUB_TOKEN=<masked>; run
+AWS_SECRET_ACCESS_KEY = <masked>
+x-amz-security-token: <masked>
+{"Name":"DB_PASS",<masked>:"<masked>"}
+<password><masked-token></password>
+<add key=<masked> value="ADpNjEcTEKpJTd"/>
+PGPASSWORD=<masked>
+["--password", <masked>]
+--client-secret <masked> --other
+openssl enc -pass <masked> -in f
+machine ex.invalid login bob password Suncask87!
+password: |
+<masked>
+<masked>
+next_key: <masked>
+Passw0rd list: alice=Reeffern66!, bob=Reefcask66#
+user:<masked-token>@host
+secret = <masked>
+SECRET=<masked>
+my_sig = hmac("<masked-token>")
+email <email-masked> wrote password: <masked>

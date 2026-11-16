@@ -1,0 +1,9 @@
+bash -n ok
+normal | ['exit 0'] | file size 29 0o600 | stderr lines 0
+empty | ['exit 1'] | file size None None | stderr lines 0
+existing | ['exit 1'] | file size 3 0o644 | stderr lines 1
+spaces | ['exit 0'] | file size 29 0o600 | stderr lines 0
+two_lines | ['exit 0'] | file size 29 0o600 | stderr lines 0
+second line ran: False
+ctrl_d_after_text | ['exit 1'] | file size None None | stderr lines 0
+NOTE: bash -c does not read later stdin lines as commands, so 'second line ran: False' does NOT prove an interactive shell would not run it; the sheet's one-line paste rule stays UNVERIFIED for that case. Ctrl-D case: exit 1 here (the sheet says UNVERIFIED in a real window). The fake key was built from parts and never printed.

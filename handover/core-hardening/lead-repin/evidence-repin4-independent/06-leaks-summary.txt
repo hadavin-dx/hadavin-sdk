@@ -1,0 +1,9 @@
+Probe: 65 input lines (gen/probe.txt, fake secrets built from random parts, kept outside this folder).
+Full fake-secret fragments still visible in --mask output, dash and bash identical: 6 input lines
+  6  mysql -u root -pVALUE -h host        (glued -p flag, word-with-punctuation password)
+  7  sshpass -p 'VALUE' ssh host           (-p flag, quoted)
+  23 'more VALUE' = 2nd body line of a triple-quote block whose name (config) is not secret-looking; value 20 hex chars (< 24 blob threshold)
+  50 <add key="ApiKey" value="VALUE"/>     (XML attribute form; the name got masked, the value did not)
+  55 machine host login bob password VALUE (netrc form, no = or :)
+  60 Passw0rd list: alice=VALUE, bob=VALUE (list of name=value where names are not secret-looking)
+Partial-leak check (first/last 10 chars of any fragment): 0 extra lines.

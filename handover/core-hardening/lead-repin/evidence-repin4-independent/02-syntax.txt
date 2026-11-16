@@ -1,0 +1,5 @@
+bash -n rc=0
+dash -n rc=0
+sh -n rc=0
+GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu)
+ii  dash           0.5.12-6ubuntu5 amd64        POSIX-compliant shell

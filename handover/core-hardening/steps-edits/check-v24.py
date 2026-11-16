@@ -94,6 +94,7 @@ for n, t in (('A', A), ('B', B)):
     for m in re.finditer(r'\*\*([A-Z][A-Za-z -]+)\*\* =', t[i:j]):
         term = m[1].lower(); pos = t.lower().find(term, i)
         if pos != i + m.start() + 2: fail('C10', '%s card term %r used before its definition' % (n, m[1]))
+        if t[i:t.find("### The rules")].lower().count(term) < 2: fail('C10', '%s card term %r defined but not used again in the card' % (n, m[1]))
 # C11 pointers: every "x.y" step reference exists and points at the right topic
 for n, t in (('A', A), ('B', B)):
     steps = {}

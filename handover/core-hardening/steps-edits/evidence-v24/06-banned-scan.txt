@@ -1,0 +1,2 @@
+banned-word scan: check-v24 C06 reads the BANNED tuple of tests/test_no_reference_material.py by ast and scans all 5 text files; no C06 line in 01-check-both.txt. Scripts written by me (facts, build, check, mut24) not scanned by C06; scanning now:
+words checked 10 hits 0
