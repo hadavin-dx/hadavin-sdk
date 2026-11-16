@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:50:56Z
-PUSHED_UTC: 2026-11-16T14:50:56Z
+UPDATED_UTC: 2026-11-16T14:51:22Z
+PUSHED_UTC: 2026-11-16T14:51:22Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 of 8 (second batch started 2026-11-16T14:50:56Z)
+AGENTS_RUNNING: 8 of 8 (replacements started 2026-11-16T14:51:22Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1555. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1560. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,20 +43,16 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:50:56Z | PUSHED_UTC: 2026-11-16T14:50:56Z
+UPDATED_UTC: 2026-11-16T14:51:22Z | PUSHED_UTC: 2026-11-16T14:51:22Z
 | id | purpose | started | state |
 |---|---|---|---|
-| a21567bb2e44f86c3 | cold read work/L6.md 1-60 | 14:50Z | running; check at +8 min |
-| adad55dc493c6aa47 | cold read work/L1c.md 1-60 | 14:50Z | running; check at +8 min |
-| a600217bcb14c220b | cold read work/L3c.md 1-60 | 14:50Z | running; check at +8 min |
-| aa153f9726cb3aa28 | cold read work/L5b.md 1-60 | 14:50Z | running; check at +8 min |
-| a2574b5f384d95e2e | cold read work/merged-findings.md 1-60 | 14:50Z | running; check at +8 min |
-| a7834e31037810582 | cold read decisions/v5-edits-for-M17.md | 14:50Z | running; check at +8 min |
-| acec3305bfcfe29da | cold read work/decision-list-for-lead.md 1-60 | 14:50Z | running; check at +8 min |
-| (id in session list) | cold read work/L4c.md 1-60 | 14:50Z | running; check at +8 min |
-(closed this turn, digested 1548-1555: a860fa2e934e28ead, ab8dfe657472d665b, a5a365e053a875703, ada39d352233df8fe, a695a0851cf0a6799, a8ee6a7dd1617ee31, aff6b291ad96657e8, a996449028b475c96)
+| a21567bb2e44f86c3 | cold read work/L6.md 1-60 | earlier batch | running |
+| acec3305bfcfe29da | cold read work/decision-list-for-lead.md 1-60 | earlier batch | running |
+| aa41c863f7d7398b4 | cold read work/L4c.md 1-60 | earlier batch | running |
+| (ids in session list) x5 | cold reads of end-delete-cases, critical-path-r1, row-dm-plain, t19-gap-facts, t19-and-stored-data-steps | 14:51Z | running |
+(closed and digested 1556-1560: a7834e31037810582, aa153f9726cb3aa28, a600217bcb14c220b, adad55dc493c6aa47, a2574b5f384d95e2e)
 CAPACITY: 8 of 8. No missing slots.
-NEXT 5: fix M17 (digest 1548); fix not-checked-r2 (1551); fix t19-terms line 2 (1552); fix LEAD-NOTICE reply formats (1550); fix banned-claims-clean terms (1555).
+NEXT 5: fix M17 (1548); fix not-checked-r2 (1551); fix t19-terms line 2 (1552); fix LEAD-NOTICE reply formats (1550); fix banned-claims-clean terms (1555).
 
 
 ## Details (long text moved from the FAILED line)
