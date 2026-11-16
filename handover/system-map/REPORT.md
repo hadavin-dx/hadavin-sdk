@@ -36,10 +36,10 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | closed (reported: 8 of 8 READ, 13 findings, 0 Blocker) |
 | LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | closed 07:17 UTC (PARTIAL: 18 NOT-READ) |
 | EVIDENCE-1 | EVIDENCE RUNNER: runs partition.py, check_citations.py on lanes and 3 outputs, scan_outputs.py, unit tests; saves raw output to work/evidence-1.md; never judges | 07:26 | +15 min | closed 07:40 UTC (all 8 commands rc=0) |
-| RESULT-CODEBASE | egm:egm-codebase-details result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
-| RESULT-ZOOM | egm:egm-zoom-out result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
-| RESULT-COMPREHENSION | egm:egm-comprehension result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
-| RESULT-DESIGN | egm:egm-design result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
+| RESULT-CODEBASE | egm:egm-codebase-details result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | closed 07:55 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
+| RESULT-ZOOM | egm:egm-zoom-out result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | closed 07:55 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
+| RESULT-COMPREHENSION | egm:egm-comprehension result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | closed 07:55 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
+| RESULT-DESIGN | egm:egm-design result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | closed 07:55 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
 | LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | closed 07:25 UTC (PARTIAL, SKIMMED) |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
