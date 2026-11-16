@@ -102,7 +102,7 @@ L6. First send: the lead sends the first made-up person only after L1 to L5 are 
 Lead-only note on the older sheet: line 103 of inputs/OWNER-STEPS-realrun-v3.md says the script archives contacts when `end` is typed (line 104 adds that leftover contacts are deleted by the owner by hand). Decision 2 of 2026-11-16 (inputs/DECISIONS-2026-11-16.md line 3) replaces them: the take is read-only, deletes and archives no contacts, and the owner deletes leftover made-up contacts by hand (Step D). The lead verifies at the re-check that the take scripts match decision 2. The owner does not read this note.
 
 ## Take-day lead list (lead's answer Q22, ORDERS.md lines 134 and 135)
-This list is for the take day. Row 4 (the section after this list) happens earlier, at position 10 of the order. One list. The "Owner" column says "lead" on every row: it means who does the step. The owner has no row here. The owner's part stays Step A and Step D only. Nothing here ran; every check is a plan the lead carries out. "Scene" = one numbered scene of the video run sheet (handover/demo/VIDEO-RUNSHEET.md): scene 2 = one made-up person goes in; scene 4 = n8n is stopped in the middle of a made-up person and started again (the takeover).
+This list is for the take day. Row 4 (the section after this list) happens earlier, at position 10 of the order. One list. The "Owner" column says "lead" on every row: it means who does the step. The owner has no row here. The owner's part stays Step D only. Nothing here ran; every check is a plan the lead carries out. "Scene" = one numbered scene of the video run sheet (handover/demo/VIDEO-RUNSHEET.md): scene 2 = one made-up person goes in; scene 4 = n8n is stopped in the middle of a made-up person and started again (the takeover).
 
 | # | Owner | When | Step |
 |---|-------|------|------|
@@ -117,7 +117,7 @@ This list is for the take day. Row 4 (the section after this list) happens earli
 | T9 | lead | after filming | The lead watches the whole recording once, start to end, before anything is published. |
 | T10 | lead | during and after each take | Any extra mail in the mailbox means: stop and retake. It is not explained away. |
 | T11 | lead | any time a check fails | Abort-and-retake rule: the lead calls the abort. Clean check with new keys (a new made-up person's id and a new e-mail address), then film again. |
-| T12 | lead | at re-pin | The lead applies the A-016f caption change in RUNSHEET-WORDING.md at re-pin: the caption becomes the words one mail sent, one row in state done (lead answer Q24-5, ORDERS.md line 141). The same step is noted in the A-016f row of RUNSHEET-WORDING.md. |
+| T12 | lead | at re-pin | SUPERSEDED by T13 (lead answer Q25-2, ORDERS.md line 143: the scoped caption replaces both earlier captions). The lead applies the T13 caption in RUNSHEET-WORDING.md A-016f at re-pin; the earlier words one mail sent, one row in state done (Q24-5) are no longer used. The same step is noted in the A-016f row of RUNSHEET-WORDING.md. |
 | T13 | lead | take prep and film | The caption on the screen and on the card is exactly: In this recording, the same lead ID sent twice gave one e-mail message. (Scoped on purpose: the broad sentence is not proven; lead answer Q25-2, ORDERS.md line 143.) |
 | T14 | lead | film | The closing card is one line only and holds no numbers. |
 
