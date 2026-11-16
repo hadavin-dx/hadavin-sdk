@@ -171,18 +171,20 @@ reap_children() {
   wait 2>/dev/null
   return 0
 }
+# f8-r12 (M2): a signal can arrive while a step runs with its output sent to a file (lim ... > file 2>&1); the handler would then write into that file. Descriptors 5 and 6 keep the real stdout and stderr, and the messages of the handlers and of cleanup use them.
+exec 5>&1 6>&2
 cleanup() {
   reap_children
   [ -z "$MADE_W" ] || rm -rf -- "$W"   # only a folder this script made itself (mktemp below)
   # keep the scratch raw folder when --keep, or when a run that had started its work ended with a status other than 0 (never in the nested test runs, which fail on purpose)
   if [ -n "${RAW:-}" ] && [ -d "$RAW" ]; then
-    if [ -z "$KEEP" ] && { [ -n "${RUN_ALL_NESTED:-}" ] || [ -z "$WORKSTARTED" ] || [ "${RUN_ALL_RC:-1}" = 0 ]; }; then rm -rf -- "$RAW"; else echo "raw output of this run is kept in: $RAW   (it is not removed later by this script; delete it with rm -rf when it is no longer needed)"; fi
+    if [ -z "$KEEP" ] && { [ -n "${RUN_ALL_NESTED:-}" ] || [ -z "$WORKSTARTED" ] || [ "${RUN_ALL_RC:-1}" = 0 ]; }; then rm -rf -- "$RAW"; else echo "raw output of this run is kept in: $RAW   (it is not removed later by this script; delete it with rm -rf when it is no longer needed)" >&5; fi
   fi
 }
 trap cleanup EXIT
-trap 'echo "INTERRUPTED (INT): stopping every process this run started" >&2; exit 130' INT
-trap 'echo "INTERRUPTED (TERM): stopping every process this run started" >&2; exit 143' TERM
-trap 'echo "INTERRUPTED (HUP): stopping every process this run started" >&2; exit 129' HUP
+trap 'echo "INTERRUPTED (INT): stopping every process this run started" >&6; exit 130' INT
+trap 'echo "INTERRUPTED (TERM): stopping every process this run started" >&6; exit 143' TERM
+trap 'echo "INTERRUPTED (HUP): stopping every process this run started" >&6; exit 129' HUP
 if [ -n "${ARGS[0]:-}" ]; then
   W=$(realpath -m -- "${ARGS[0]}") || { echo "REFUSED: cannot resolve the work folder ${ARGS[0]}"; exit 2; }   # f8-r12 (m5): absolute, so a later change of folder cannot move it
   if [ -e "$W" ] && [ -n "$(ls -A -- "$W" 2>/dev/null)" ]; then echo "REFUSED: $W exists and is not empty; this script never deletes a folder it did not make"; exit 2; fi
