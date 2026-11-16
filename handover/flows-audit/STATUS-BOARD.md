@@ -1,17 +1,21 @@
-UPDATED_UTC: 2026-11-16T09:41:28Z
+UPDATED_UTC: 2026-11-16T09:43:06Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 12
+ITEMS_OPEN: 7
 PERCENT: 72
-AGENTS_RUNNING: 8
-CAPACITY: 2.67 load of 4 cores, mem 0/15 GB, disk free 28G, agents 8 (light+heavy per list)
+AGENTS_RUNNING: 6
+CAPACITY: 4.79 load of 4 cores, mem 0/15 GB, disk free 28G, agents 6 (light+heavy per list)
 INTERRUPTED: none
-FAILED: F8 checker: 4 nodes read $env, 2 webhooks lack auth (lead decides); F8 false-pass review found 7 Majors incl crashes (fixer running); F3 mutants + security Majors (fixer running); ROLES coverage script had 5 surviving mutants (fixed, independent rerun running); ROLES r2 security review running; claims table reader Blockers (fixer running), 167 citation quotes still unmatched by naive script; F5 round 3 Blocker false T8 wording (fixer running); F6b re-take path Majors (fixer running)
-NEXT: collect fixers; final checks; REPORT.md entries
-PUSHED_UTC: 2026-11-16T09:41:28Z
+FAILED: F8: $env nodes, 2 webhooks without auth, 7 false-pass Majors (fixer running)
+F3: 3 surviving mutants + 3 security Majors (fixer running)
+ROLES script: 5 mutants survive (SQL in Code/MySQL/postgresTool/Set; fixer running)
+claims: no fresh review of r3 yet (2 reviewers running); F-01 unreadable; 'the lead' wording left in pasted text
+F5: T8 Blocker (final fixer running)
+NEXT: collect F3, F8, F5, ROLES r3 reviewer and survivor fixer, 2 claims reviewers; then evidence reruns
+PUSHED_UTC: 2026-11-16T09:43:06Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -21,7 +25,7 @@ PUSHED_UTC: 2026-11-16T09:41:28Z
 | F3 | fill_flows tool | running | 95 | fill_flows/ | round 2 fixed (68 tests); delta evidence running |
 | F4 | patch apply check | done | 100 | patch-apply/REPORT.md | F-002 needs T19 on the laptop |
 | F5 | run-sheet wording | running | 85 | RUNSHEET-WORDING.md | final fixer running |
-| F6 | idle fallback audit | done | 100 | F6-AUDIT.md | 2 review rounds + reader pass; n8n facts unverified |
+| F6 | idle fallback + recovery audit | done | 100 | F6-AUDIT.md, F6B-AUDIT.md | n8n facts unverified; F6b SQL untested |
 | F7 | facts already done | done | 100 | inputs/FACTS-ALREADY-DONE.md | applied |
 | F8 | stronger JSON flow checker | running | 88 | flow-check/ | 3 reviews in; fixer running |
 | F9 | scene to flow map | done | 100 | SCENE-FLOW-MAP.md | 2 review rounds; static |
@@ -35,8 +39,10 @@ PUSHED_UTC: 2026-11-16T09:41:28Z
 | (roles sec r3) | reviewer ROLES security r3 | sonnet | fresh security design | 09:57 | 10:05 | 30 | running | - |
 | a95683a64bf2e3ca8 | fixer F5 final | sonnet | Blockers and Majors from r3 reader and facts | 10:03 | 10:13 | 20 | running | RUNSHEET-WORDING.md |
 | (claims r3 fixer) | fixer claims table reader fixes | sonnet | Blockers/Majors from reader | 10:04 | 10:15 | 30 | running | CLAIMS-TABLE.md |
-| (F6b r4 fixer) | fixer F6b re-take path | sonnet | 2 Majors + nits | 10:06 | 10:14 | 20 | running | F6B-AUDIT.md |
 | (roles rerun) | evidence ROLES script rerun | sonnet | 18 own mutants | 10:08 | 10:16 | 30 | running | roles-coverage-check/evidence-rerun.md |
+| a643eeae | ROLES survivors fixer | sonnet | fix 5 surviving mutants in coverage script | 09:44 | 09:55 | 5 | running | roles-coverage-check/fix-roles-r4.md |
+| ae5d88f1 | claims reader r3 | egm-comprehension | naive read of CLAIMS-TABLE | 09:44 | 09:52 | 5 | running | inline |
+| aa4dd7eb | claims facts r3 | egm-codebase-details | cites and totals check | 09:44 | 09:55 | 5 | running | inline |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
