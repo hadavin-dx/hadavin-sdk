@@ -4,10 +4,11 @@
 For ONE mutant (or a JSON list of them) in a SCRATCH copy of the code, never the real repo:
   1. read the target file, check `old` occurs exactly once, write the mutated text;
   2. run the test command with a clean environment (only PATH, HOME, PYTHONDONTWRITEBYTECODE and, if
-     asked, PYTHONPATH), one process, NO -x (so every killing test is listed);
+     `--pythonpath` is given, PYTHONPATH; the raw files list the names actually used), one process, NO -x (so every killing test is listed);
   3. restore the original bytes and byte-compare with the saved copy and with the git-archive
      reference; abort if they differ. The saved copy lives in a state folder OUTSIDE any repository
-     (`$TMPDIR/hadavin-mutation-lane/`), not in the lane folder, and is deleted after each mutant;
+     (`$TMPDIR/hadavin-mutation-lane-<uid>/`: one folder per user, refused unless it is a real folder
+     owned by the user with mode 700; files in it are written atomically, read without following links), not in the lane folder, and is deleted after each mutant;
   4. write raw/<prefix>-<id>.txt with: rc, exact command, base commit sha, root, file, old text, new
      text, restore check, pytest summary line, first failing test id, all failing test ids, and the
      full pytest output.
@@ -27,6 +28,14 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
   * A marker (with the process group of the test run) is written before each planting and removed
     after the restore. If a run is killed with SIGKILL the marker stays: the next run refuses and
     prints how to restore (`run.py --root R --restore`), which also stops the orphaned test group.
+  * Before the loop, for every target file the module is imported in the same environment and folder the
+    tests use, and the imported file must be the one under `--root` (review 4 M5); `--skip-import-check`
+    turns this off and says so in every raw file. TESTS arguments that move the root, the config or the
+    import base (--basetemp, --rootdir, --junitxml, --confcutdir, -c, -o, ...) are refused.
+  * While a mutant is planted a signal unwinds the run only while the tests are awaited; a signal at any other
+    moment is remembered and delivered after the restore, and only the first signal ever acts (review 4 M3).
+    No remaining window is known, but none is proven absent: T20 is a probabilistic burst test, T21 proves
+    only the handler logic (not the timing).
   * SIGTERM, SIGINT and SIGHUP restore the file, stop the test process group, remove the marker and
     exit with 128 + the signal number (143, 130, 129).
   * After the loop `raw/<prefix>-tree-diff.txt` records the differences between the scratch tree and

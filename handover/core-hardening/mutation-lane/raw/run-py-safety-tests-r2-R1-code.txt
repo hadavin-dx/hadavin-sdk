@@ -120,3 +120,89 @@ safety-tests.sh: line 89: kill: (28296) - No such process
   FAIL: T20.3 exit 129/130/143 (got 2)
   PASS: T20.3 file restored
   FAIL: T20.3 state empty
+safety-tests.sh: line 89: kill: (1254) - No such process
+safety-tests.sh: line 89: kill: (1254) - No such process
+safety-tests.sh: line 89: kill: (1254) - No such process
+safety-tests.sh: line 89: kill: (1254) - No such process
+  FAIL: T20.4 exit 129/130/143 (got 2)
+  PASS: T20.4 file restored
+  FAIL: T20.4 state empty
+safety-tests.sh: line 89: kill: (3926) - No such process
+safety-tests.sh: line 89: kill: (3926) - No such process
+safety-tests.sh: line 89: kill: (3926) - No such process
+safety-tests.sh: line 89: kill: (3926) - No such process
+  FAIL: T20.5 exit 129/130/143 (got 2)
+  PASS: T20.5 file restored
+  FAIL: T20.5 state empty
+== T21 signal handler logic (deterministic): a signal while planted is only remembered, then delivered once
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+AttributeError: module 'runmod' has no attribute 'SIG'
+  FAIL: T21 handler logic
+== T22 state folder checks: wrong mode, a link, another owner are refused (exit 2)
+m1 KILLED tests/test_fast.py::test_f
+tree diff: 0 difference(s)
+  FAIL: T22a mode 755 refused (got 0)
+m1 KILLED tests/test_fast.py::test_f
+tree diff: 0 difference(s)
+  FAIL: T22b symlinked state folder refused (got 0)
+  FAIL: T22b nothing written through the link
+m1 KILLED tests/test_fast.py::test_f
+tree diff: 0 difference(s)
+  FAIL: T22c other owner refused (got 0)
+== T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
+safety-tests.sh: line 145:  5465 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 5473 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r
+  FAIL: T23a hash mismatch refused (got 3)
+  FAIL: T23a file not written
+process 5473 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r
+  FAIL: T23b marker as a link refused (got 0)
+  FAIL: T23b file not written
+rm: cannot remove '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2r1/tmpstate/hadavin-mutation-lane/97be2ad0c499c967.planted.json': No such file or directory
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run-R1.py", line 568, in <module>
+    main()
+    ~~~~^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run-R1.py", line 502, in main
+    ok, text = restore_from_marker(root)
+               ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run-R1.py", line 245, in restore_from_marker
+    target.write_bytes(bk.read_bytes())
+                       ~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/pathlib/_abc.py", line 625, in read_bytes
+    with self.open(mode='rb') as f:
+         ~~~~~~~~~^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/pathlib/_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2r1/tmpstate/hadavin-mutation-lane/97be2ad0c499c967.backup'
+  PASS: T23 genuine restore still works
+no marker: nothing to restore
+  FAIL: T23c --restore in the real repository refused (got 0)
+== T24 import check: the tests would load the target from another tree (exit 2); the right tree passes and is recorded
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run-R1.py --root /tmp/claude-0/-
+  PASS: T24a refused (got 2)
+  PASS: T24a file unchanged
+grep: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2r1/rawT/X-m1.txt: No such file or directory
+  FAIL: T24b recorded in the raw file
+grep: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2r1/rawT/X-m1.txt: No such file or directory
+  FAIL: T24b raw file lists 4 environment names
+== T25 pytest options that move the root, config or import base are refused after --
+  PASS: T25 --basetemp=/x refused (got 2)
+  PASS: T25 --rootdir=/x refused (got 2)
+  PASS: T25 --junitxml=/x/y.xml refused (got 2)
+  PASS: T25 --confcutdir=/x refused (got 2)
+  PASS: T25 --override-ini=addopts=-x refused (got 2)
+  PASS: T25 -cfoo.ini refused (got 2)
+  PASS: T25 -oaddopts=-x refused (got 2)
+  PASS: T25 --import-mode=append refused (got 2)
+  FAIL: T25 file unchanged, state empty
+== T26 the start hook fails after the tests were started: the test group is still stopped (review 4 M2)
+RuntimeError as expected: start hook failed
+  FAIL: T26 no orphan pytest left
+== T27 a mutant whose new text equals the old text is refused (exit 2)
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4
+  PASS: T27 exit 2 (got 2)
+== T28 a clean run leaves no temporary file in the state folder
+  FAIL: T28 state empty (ls -A)
+FAILED CHECKS: 25

@@ -1,0 +1,11 @@
+ruff 0.16.9 (r2)
+$ ruff check run.py make_mutants_v2.py --no-cache --output-format concise
+run.py:206:12: S603 `subprocess` call: check for execution of untrusted input
+run.py:477:12: S603 `subprocess` call: check for execution of untrusted input
+Found 2 errors.
+exit 1
+$ ruff format --check run.py make_mutants_v2.py
+2 files already formatted
+exit 0
+$ bash -n safety-tests.sh
+exit 0
