@@ -1,3 +1,4 @@
+STATE: STOPPED (owner stop order 20:41Z); see STOP-REPORT.md
 UPDATED_UTC: 2026-11-16T20:43:04Z
 SESSION: core-hardening
 ORDER: 021 + decisions; 024; 027-029, 031, 032, 034-040 and 14:00Z (8 running, 8 met); Q22-Q34 applied; 15:45Z block and 16:06Z lead answers read
