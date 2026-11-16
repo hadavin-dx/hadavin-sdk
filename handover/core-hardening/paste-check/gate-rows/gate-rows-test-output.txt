@@ -1,4 +1,3 @@
-# Gate rows re-test, third version (fix pass 3). Blocks are extracted from the patched plan (fixes, repin-v6, gate-rows). Stand-in env.sh and pgq; made-up data. rc= is the paste's exit code; the verdict is the printed line.
 ######## SHELL: bash
 -- [bash] G1 pass RI=3 RIOK=yes
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
@@ -8,13 +7,13 @@ GATE1-B PASS
 GATE1 ROW: PASS
 rc=0
 -- [bash] G1 RIOK empty
-GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the PROGRESS line LEAD-GO RIOK <UTC time> after reading drive.py and the runner then copies RIOK=yes: STOP
 rc=0
 -- [bash] G1 RIOK=no
-GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the PROGRESS line LEAD-GO RIOK <UTC time> after reading drive.py and the runner then copies RIOK=yes: STOP
 rc=0
 -- [bash] G1 RI empty
-GATE1 RI= (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+GATE1 RI= (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the PROGRESS line LEAD-GO RIOK <UTC time> after reading drive.py and the runner then copies RIOK=yes: STOP
 rc=0
 -- [bash] G1 RI=abc (not a number, inside the guard)
 GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
@@ -190,6 +189,19 @@ rc=0
 GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=id'b
 GATE2 key has an unexpected character: STOP
 rc=0
+-- [bash] G2 glob character as key (no expansion, STOP on character)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=*
+GATE2 key has an unexpected character: STOP
+rc=0
+-- [bash] G2 dot in key (STOP, outside A-Za-z0-9_-)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb.1
+GATE2 key has an unexpected character: STOP
+rc=0
+-- [bash] G2 last line without final newline (still counted, PASS)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
+rc=0
 -- [bash] G2 baseline file missing
 GATE2 keys-before-s10.txt missing or not a number: STOP
 rc=0
@@ -238,6 +250,7 @@ rc=0
 -- [bash] baseline command as pasted in S10 (missing and present keys.txt)
 missing keys.txt -> '0'
 3-line keys.txt -> '3'
+3 lines, no final newline -> '3' (expect 3)
 ######## SHELL: dash
 -- [dash] G1 pass RI=3 RIOK=yes
 GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False n8n_error_true=0
@@ -247,13 +260,13 @@ GATE1-B PASS
 GATE1 ROW: PASS
 rc=0
 -- [dash] G1 RIOK empty
-GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the PROGRESS line LEAD-GO RIOK <UTC time> after reading drive.py and the runner then copies RIOK=yes: STOP
 rc=0
 -- [dash] G1 RIOK=no
-GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+GATE1 RI=3 (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the PROGRESS line LEAD-GO RIOK <UTC time> after reading drive.py and the runner then copies RIOK=yes: STOP
 rc=0
 -- [dash] G1 RI empty
-GATE1 RI= (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP
+GATE1 RI= (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the PROGRESS line LEAD-GO RIOK <UTC time> after reading drive.py and the runner then copies RIOK=yes: STOP
 rc=0
 -- [dash] G1 RI=abc (not a number, inside the guard)
 GATE1-A FAIL: output shape not as expected (RI not a number 0 or more and not 4, no replies list, repeat flag or n8n_error not true/false): STOP
@@ -429,6 +442,19 @@ rc=0
 GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=id'b
 GATE2 key has an unexpected character: STOP
 rc=0
+-- [dash] G2 glob character as key (no expansion, STOP on character)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=*
+GATE2 key has an unexpected character: STOP
+rc=0
+-- [dash] G2 dot in key (STOP, outside A-Za-z0-9_-)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb.1
+GATE2 key has an unexpected character: STOP
+rc=0
+-- [dash] G2 last line without final newline (still counted, PASS)
+GATE2 keys.txt lines before S10: 3; after: A lines=1 A ids=1 B lines=1 B ids=1 KA=ida1 KB=idb1
+GATE2 count: 2
+GATE2 PASS
+rc=0
 -- [dash] G2 baseline file missing
 GATE2 keys-before-s10.txt missing or not a number: STOP
 rc=0
@@ -477,3 +503,4 @@ rc=0
 -- [dash] baseline command as pasted in S10 (missing and present keys.txt)
 missing keys.txt -> '0'
 3-line keys.txt -> '3'
+3 lines, no final newline -> '3' (expect 3)

@@ -1,26 +1,20 @@
-input sha256 starts 67a0a195537de875 (real inputs/ file, read only)
+input sha256 starts 67a0a195537de875 (real inputs/ file, read only; scratch copy used)
 1 plan-v5-fixes.patch rc=0
-2 plan-v5-repin-v6.patch (the current one; the checklist and LEAD-FILL-list v5 name it) rc=0
+2 plan-v5-repin-v6.patch rc=0
 --- gate-rows dry run
 checking file inputs/plan-wp6-resmoke-v5.md
 3 gate-rows dry-run rc=0
 patching file inputs/plan-wp6-resmoke-v5.md
 3 gate-rows apply (scratch copy) rc=0
-applied result equals the prepared Gnew.md: identical
+applied result equals the prepared copy: identical
 --- apply a second time must fail (no double apply)
 second dry-run rc=1 (non-zero expected)
---- git apply --check on a fresh chain
-git apply --check rc=0
---- order check: gate-rows BEFORE the others must fail
+--- wrong order: gate-rows BEFORE the others must fail
 Hunk #7 FAILED at 483.
-Hunk #8 succeeded at 471 (offset -23 lines).
 7 out of 8 hunks FAILED
-wrong-order dry-run rc=0
+wrong-order dry-run rc (patch itself, no pipe)=1 (non-zero expected)
 --- repin-v5 instead of v6 (older): does gate-rows still apply?
-Hunk #5 succeeded at 472 (offset -2 lines).
-Hunk #6 succeeded at 487 (offset -2 lines).
-Hunk #7 succeeded at 514 (offset -2 lines).
-Hunk #8 succeeded at 525 (offset -2 lines).
 dry-run rc after v5 repin=0
 real input after: 67a0a195537de875
-wrong-order dry-run rc (patch itself, not tail)=1
+--- git apply --check on a fresh chain (scratch)
+git apply chain+check rc=0

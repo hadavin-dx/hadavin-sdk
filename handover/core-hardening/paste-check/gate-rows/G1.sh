@@ -1,4 +1,4 @@
-. $HOME/hadavin-smoke/env.sh; RI=3; RIOK=; BAD=0; if [ -z "$RI" ] || [ "$RIOK" != yes ]; then echo "GATE1 RI=$RI (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the line that sets RIOK=yes after reading drive.py: STOP"; else for X in A B; do python3 -I -c "
+. $HOME/hadavin-smoke/env.sh; RI=3; RIOK=; BAD=0; if [ -z "$RI" ] || [ "$RIOK" != yes ]; then echo "GATE1 RI=$RI (from plan line 353 of v5, UNVERIFIED) not confirmed: the lead writes the PROGRESS line LEAD-GO RIOK <UTC time> after reading drive.py and the runner then copies RIOK=yes: STOP"; else for X in A B; do python3 -I -c "
 import json, sys
 f, x = sys.argv[1], sys.argv[2]
 try:

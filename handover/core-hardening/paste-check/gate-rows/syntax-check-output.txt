@@ -1,4 +1,3 @@
-blocks found in the patched plan (fixes, repin-v6, gate-rows): 2 + the S10 line
 blk1 bash -n rc=0
 blk1 dash -n rc=0
 blk2 bash -n rc=0
@@ -7,5 +6,5 @@ blk3 bash -n rc=0
 blk3 dash -n rc=0
 block 1 identical to G1.sh
 block 2 identical to G2.sh
-embedded python of G1 parses (ast): ok
-LC_ALL exported in G2: 1  (blk1 = G1 block, blk2 = G2 block, blk3 = S10 line)
+blk1 = G1 block, blk2 = G2 block, blk3 = S10 line (patched plan: fixes, repin-v6, gate-rows)
+embedded python of G1 parses: see above run; G2 LC_ALL exported: 1
