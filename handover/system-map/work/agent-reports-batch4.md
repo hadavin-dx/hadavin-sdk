@@ -743,3 +743,12 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 528 t19 r2: no command anywhere; C2-4 contradiction; decision 2 cited for mf_leads (wrong); F8 vs mf_leads. FIXED by CORRECTION; commands remain blank (lead must write).
 - 529 review-r460-tools (cold read): no status, owner or UTC/IST date per finding B1-B4, M1-M6; no paths or line numbers; M4, M5 give no impact; M2 'commit sha' has no target; 'R460' and 'condensed' undefined; 'Not checked' not tied to findings. Not fixed here: file is not on my page list (tools/tests are held); passed to the lead via the board.
 - 530 egm-dryrun (cold read): no link to inputs/DECISIONS-2026-11-16.md; no next step, owner or finish time; terms ORDER 001, Skill tool, direct dispatch undefined; finding ids not matched to rows; no pass criterion. Not fixed here: passed to the lead via the board.
+
+- 531 cleanup-3a r3: step 3, e-mail X, match rule, N of M, Chrome profile, decision 2 cite. FIXED by ADDED paragraph.
+- 532 premortem r2: terms late, owners not per risk, risk 1 tests unmarked. FIXED by ADDED table text.
+- 533 decision-list r2: run (a) two meanings, deadline inconsistency, no plain top lines, A11, A9/E9. FIXED by ADDED paragraph (rows not split in place yet).
+- 534 row1-builder-brief r2: roles reversed, deadline garbled, seven values, fallback. FIXED.
+- 535 banned-claims r3: line 49/50 contradiction, circular item 2, session cannot approve, paths. FIXED by fifth pass.
+- 536 not-checked-r2: no opener, re-smoke failure path, row 7 and 5 times, terms. FIXED.
+- 537 t19 r3: two pass rules, undefined terms, steps not runnable. FIXED (one pass rule, glossary); commands still blank, lead must write.
+- 538 FINAL-CROSSCHECK r3: decisions cited without source; stale open rows; two databases unnamed; role names. FIXED by ADDED paragraph; database names remain open for the lead.
