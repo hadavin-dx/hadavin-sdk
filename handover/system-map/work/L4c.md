@@ -4,7 +4,7 @@ Key (added 16 Nov): finding id prefixes S-, X-, J-, K-, D-, T-, F- label the kin
 ## Status 16 Nov 2026 (the only status block)
 - Counts: 26 findings (L4c-FD-001 to FD-026). Blocker outside the quarantine: FD-002 only. FD-001 and FD-003 are also security Blockers but are QUARANTINED (see below), so nothing is done with them.
 - Quarantined rows (do not act on them; these rows touch the earlier real-run folder, which this lane must not reopen): S-003 to S-006, X-001 to X-003, J-003, J-004, J-008, K-001 to K-004, D-002, T-001, T-004, F-001, FD-001, FD-003, FD-007, FD-008, FD-019, FD-020, FD-022 to FD-024. The list came from a reader and is UNVERIFIED.
-- Who rules: only the studio head (the human who runs the studio) rules on the real-run quarantine; no date is set. Until then FD-001 and FD-003 have owner studio head and next step "rule on real-run".
+- Who rules: the owner (the only person; "studio head" is closed, lead answer 2, 16 Nov 16:23Z) rules on the real-run quarantine, asked through the lead; no date is set. work/OWNER-ONLY.txt now lists the two real-run paths (answer 2). Until then FD-001 and FD-003 have owner owner and next step "rule on real-run".
 - The claim "none describes the take stores" sits in the Stores section and cites FD-013 (not FD-014).
 - Coverage: 38 of 137 files READ; 99 NOT-READ (list in Checkpoint).
 
@@ -283,3 +283,5 @@ Severity by the PLAN table. Several Blockers are fixed only in pending patches (
 Done: 38 of 137 files READ (coverage 3, fixes 2, gitleaks 2, hang 2, layout 2, real-run 7, semgrep 6, skips 2, sonar 3, triage 9). Rows: 7 components, 6 stores, 1 workflow, 1 walk row, 6 scripts, 8 jobs, 6 credentials, 7 doc/test/folder rows,  26 findings (3 labelled Blocker: FD-001, FD-002, FD-003; FD-001 and FD-003 quarantined; 18 Major, 5 Nit).
 Next (for a further continuation lane): 99 NOT-READ files, in this order: real-run REVIEW-core-hunks-v6-fresh, REVIEW-start-prompt-fresh (and a md5 check of REVIEW-v4-fresh-copy); semgrep REVIEW-1, REVIEW-6, v7 to v9 pr-body and claims files (look for numbers in claims); skips CRLF notes and reviews; fixes REVIEW-2; layout REVIEW-1; triage REVIEW-codeant-A..C and codeant2-sec; sonar NOTES and REVIEW series (p1, p2, p3, nodemo, probe).
 Blockers: none beyond the Status block. No file was changed except this one. No secret, key, token or personal e-mail value was copied; credentials are listed by name.
+
+Key-shape check of the seven files (lead answer 1b): could not run, because all seven lie under OWNER-ONLY paths (see work/L4c-key-shape-check.md); the lead asks the owner; until then treat as no change.

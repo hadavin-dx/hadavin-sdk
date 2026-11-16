@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T16:27Z
+UPDATED_UTC: 2026-11-16T16:28Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -19,7 +19,7 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 6
+AGENTS_RUNNING: 5
 CAPACITY nproc=4 load=0.17 disk: 18G free
 NEXT: digest hand-backs; readers on patch and timing pages; v4.3 against final wording r37-r39
 INTERRUPTED: none
@@ -49,13 +49,12 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- a3e9a28faf34f79c2 TIMING2: v4.2 second timing check (item 13); running; next: work/timing-check-v42-part3.md
 - a07e3a4f8e7705fb2 REMARK: re-mark patch rows against lead answers (overlay); running; next: overlay table
-- ad9a5b6308c74fcd0 RECORD: record lead answers in my pages; running; next: edits
-- a82d9a1d607ec807a READ-M17: cold read of decisions/M17-end-never-deletes.md; running; next: report
-- a608cd64560f237d4 READ-EDC: cold read of work/end-delete-cases.md; running; next: report
-- a7eb2a785a63fefb3 D04D05: fix store claim and "studio head" in decisions/D04-D05.md; running; next: edit
-EMPTY SLOTS: 2. Reason: the patch reader waits for the REMARK overlay; open-items-table fixes from the store note wait for RECORD (same file); lane readers have no new work (partition 4470 of 4470); v4.3 final wording of rounds 36/34/35 (r37-r39) is not yet final.
+- af2ef855cfd0e1651 FIX-M17: fix M17 page and end-delete-cases after reader round 1 (last fix round); running; next: edits
+- a6fd1c9832e937a2a READ-T3: cold read of work/timing-check-v42-part3.md; running; next: report
+- a2d3b7b55c2ed19a8 LEAD-NOTICE-2: write work/LEAD-NOTICE-batch-2.md (open questions for the lead); running; next: file
+- ad4e0366c7b35e8ff FIX-OI: store-claim fixes in open-items-table and L4c-key-shape-check; running; next: edits
+EMPTY SLOTS: 3. Reason: the patch reader waits for the REMARK overlay; v4.3 against the final wording of rounds 36/34/35 (r37-r39) is not final; lane readers have no new work (partition 4470 of 4470, 0 problems).
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.

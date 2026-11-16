@@ -19,7 +19,7 @@ Short names used below (each explained once):
 | lead session | the Claude session that gives the system-map session its orders (through ORDERS.md) | "the lead" in older pages (UNVERIFIED which session each old use meant); "laptop lead" (UNVERIFIED: the glossary says the meaning is not confirmed; it matches the lead session by the glossary's reading only) |
 | studio lead | the Claude session that does the technical steps on the take, and the only session that messages the owner | "operator" in the first version of this file, and "the lead" in the input files (UNVERIFIED: that the input files' "the lead" is this session and not the lead session) |
 | owner | the human at the laptop who gives the written yes | none |
-| studio head | not used in new text | an older word for a human who runs the studio; UNVERIFIED whether this is the owner; never treated as the owner |
+| studio head | CLOSED, not used | there is no such person: the studio is one person, the owner (lead answer 2, 16 Nov 16:23Z); questions go to the lead or the owner |
 | core-hardening session | the Claude session that owns the owner steps V5 | "V5 author" |
 
 In this file the word "operator" has been replaced by "studio lead" (done 16 Nov 2026); where an old quotation or a cell still says "the lead" alone, read it as UNVERIFIED between lead session and studio lead.
@@ -204,7 +204,7 @@ Structural review round 1 said sections 8 to 10 were not a usable work list. Thi
 | S9-3 | Blocker | DECIDED in principle 09:36 UTC / 15:06 IST; CANNOT be applied until the studio lead answers 7 open questions (APPLIED-S9.md last paragraph, QUESTIONS.md item 6) | see APPLIED-S9.md | exact old and new text is in drift/APPLIED-S9.md row S9-3 (this older text is superseded) | SL decided | before first rehearsal: PLACEHOLDER |
 | S9-4 | Blocker | DECIDED in principle 09:36 UTC / 15:06 IST; CANNOT be applied until the studio lead answers 7 open questions (APPLIED-S9.md last paragraph, QUESTIONS.md item 6) | see APPLIED-S9.md | exact old and new text is in drift/APPLIED-S9.md row S9-4 (this older text is superseded) | SL decided | before first rehearsal: PLACEHOLDER |
 | R8-1 | Blocker | partly done | README.md, LEAD-PAGE.md (stale v3 cites) | README re-pointed; LEAD-PAGE.md still cites v3 lines: re-point its rows to v5 steps A to J | SL | before first rehearsal |
-| R8-2 / DT-3 | Blocker | open | v5:46 | "Target take: Wed 18 Nov 2026; exact start time in UTC and IST sent by the studio lead at least 3 hours ahead; fallback any day until Mon 23 Nov before 18:14:40 UTC / 23:44:40 IST" | SL | before the owner is told a date |
+| R8-2 / DT-3 | Blocker | ANSWERED in part (lead answer 25: v4.2 section 3 is current: re-pin Tue 17 Nov, GO/NO-GO Tue 17 Nov 14:00 UTC, take and post Wed 18 Nov, post 15:00 UTC = 20:30 IST; the Mon 23 Nov window is last resort only); v5 text still to be edited | v5:46 | "Target take: Wed 18 Nov 2026; exact start time in UTC and IST sent by the studio lead at least 3 hours ahead; fallback any day until Mon 23 Nov before 18:14:40 UTC / 23:44:40 IST" | SL | before the owner is told a date |
 | R8-3 | Blocker | done in OWNER-VIEW; v5 unchanged | v5:46, v5:149 | v5 already says clean-up has its own deadline from the studio lead; owner view fixed | n/a | n/a |
 | R8-4 | Blocker | open | v5:22, PL:48, QUESTIONS.md item 1 | name one person or session who starts Docker and runs the first rehearsal; studio rule: never touch Docker Desktop settings | SL | Tue 17 Nov 12:29 UTC / 17:59 IST (suggested decide-by) |
 | R8-5 | Major | open | v5:130, v5 E.1 | say whether the HubSpot key can delete contacts; if not, the owner deletes by hand (v5:130) | SL | before first rehearsal |
@@ -213,7 +213,7 @@ Structural review round 1 said sections 8 to 10 were not a usable work list. Thi
 | R8-9 | Major | open | v5:213 | change "one database" to "one Postgres server with a separate database for n8n and one for the claim rows; stage.journal is the one exception" | V5 | before first rehearsal |
 | R8-10 | Major | open | v5:164, v5:171 | one list of allowed and forbidden post words in step J (owner view already carries it) | V5 | before the post: Wed 25 Nov 15:00 UTC / 20:30 IST |
 | R8-11 | Major | open | v5:26, README.md:3,8 | one name for each role: "studio lead" and "rehearsal"; README says "laptop lead" | SL | before first rehearsal |
-| R8-12 / TW-5 | Nit | open | v5:17, v4 difflist:49 | use v5 wording; mark the difflist v4-only | SL | none |
+| R8-12 / TW-5 | Nit | ANSWERED (lead answers 7, 16: latest start 17:40 UTC / 23:10 IST HARD, 18:15 and 18:14:40 replaced everywhere) | v5:17, v4 difflist:49 | use v5 wording; mark the difflist v4-only | SL | none |
 | S9-6 | Major | open | n8n env template, PL:505 | add the n8n listen address set to loopback; Postgres bound to 127.0.0.1; `ss -ltn` check before C.3 | SL | before C.3 |
 | S9-7 | Major | open | v5:11 vs v5:120 | masked list of every recipient setting before step A; rehearsal checks all equal the receiver address | SL | before the first written yes |
 | S9-8 | Major | open | v5:15, 90, 159 | owner rule: run only `cat <file>` and `shred -u <file>` on paths in the take-secrets folder | SL | before first rehearsal |
@@ -232,3 +232,8 @@ Structural review round 1 said sections 8 to 10 were not a usable work list. Thi
 | TW-1 to TW-4, TW-6 to TW-8 | Major, Nit | open | see section 12 | see section 12 | V5 | before first rehearsal |
 Counts (counted from the 30 table rows above on 16 Nov, replaces every older count in this file): 14 rows carry the severity Blocker (R8-3 among them, which is done in the owner view; a row that lists two severities, such as DT-1/DT-2, counts under both), 17 rows carry Major, 2 rows carry Nit. Grouped rows (S-03 and L-01; FS-A to FS-D; DT-1 and DT-2; TW-1 to TW-8) hold several ids each.
 Open here: the exact "old text" cell for rows other than S9-1 to S9-5 is not copied in (S9 rows: see APPLIED-S9.md); the studio lead or the v5 author must read the cited line before editing.
+
+## Lead answers applied (lead answers of 16 Nov 2026 16:23Z (work/LEAD-ANSWERS.md))
+- Closed: "studio head" (answer 2). Latest start: 17:40 UTC / 23:10 IST HARD, 12:00 UTC planning target; the 14-minute figure and the 18:15 / 18:14:40 values are obsolete (answers 7, 16). The "not checked" note about the program's 14-minute limit is moot (answer 7). A13 = no same-day rerun (answer 9).
+- D-03: the take never deletes (answer 3). Two copies of DECISION-one-store.md: keep the newer by commit date (answer 26; differences in work/decision-one-store-diff.md).
+- Rows D-01, D-02, D-04 to D-10 are NOT answered by the lead's file and stay open.
