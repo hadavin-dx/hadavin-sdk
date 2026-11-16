@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T13:54:16Z
+UPDATED_UTC: 2026-11-16T13:59:21Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 30
-PERCENT: 85
+PERCENT: 70
 AGENTS_RUNNING: 6
-CAPACITY: 5.49 load of 4 cores, mem 0/15 GB, RAM 998/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 6 (light+heavy per list)
+CAPACITY: 0.39 load of 4 cores, mem 0/15 GB, RAM 980/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: REVIEW r16 fixer, F8 evidence+review, TC/FP/RUNBOOK fixer, claims r7 reviews
-PUSHED_UTC: 2026-11-16T13:54:16Z
+NEXT: 4 fixers, runsheet read, citation check
+PUSHED_UTC: 2026-11-16T13:59:21Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,20 +30,20 @@ PUSHED_UTC: 2026-11-16T13:54:16Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a367f46 | fixer | sonnet | REVIEW.md round 16 (uncapped) | 13:46Z | 14:20Z | running | log fix-review12.md |
-| aab40a2 | evidence | sonnet | F8 r8 evidence runner | 13:47Z | 14:10Z | running | flow-check/evidence-f8-r8.md |
-| a91df71 | reviewer | sonnet | F8 r8 fresh code review (uncapped) | 13:47Z | 14:05Z | running | findings inline |
 | a8c98de | fixer | sonnet | RUNBOOK/TC/FP r13 Blockers+Majors | 13:52Z | 14:32Z | running | log fix-tcfp9.md |
-| a3aa4e0 | reviewer | sonnet | CLAIMS-TABLE r7 facts review | 13:53Z | 14:10Z | running | findings inline |
-| a36aa5c | reviewer | sonnet | CLAIMS-TABLE r7 stranger read | 13:53Z | 14:10Z | running | findings inline |
+| a0e711c | fixer | sonnet | CLAIMS-TABLE round 7 (reader+facts) | 13:57Z | 14:37Z | running | log fix-claims7.md |
+| a50b314 | fixer | sonnet | REVIEW.md round 17 (uncapped) | 13:58Z | 14:43Z | running | log fix-review12.md |
+| abfcd0a | fixer | sonnet | F8 round 9 (uncapped) + check_secrets raw fix | 13:58Z | 14:48Z | running | log flow-check/fix-f8-r9.md |
+| a502aa4 | reviewer | sonnet | RUNSHEET-WORDING stranger read | 14:00Z | 14:20Z | running | findings inline |
+| a344961 | citation | sonnet | citation checker rerun (FINDINGS, QUESTIONS, REPORT, etc.) | 14:00Z | 14:30Z | running | reviews/citation-r9.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. RUNSHEET-WORDING.md fixer: counts 119/70/61/29/48 and rows for A-015, A-024, A-049, B-102, A-039 (can start now; check_runsheet_paste FAILS)
-2. Fixer for CLAIMS-TABLE r7 Blockers/Majors (waits on a3aa4e0, a36aa5c)
-3. Fresh round 17 review of REVIEW.md (waits on a367f46)
-4. F8 r9 fixer (waits on aab40a2, a91df71)
+1. Evidence runner for F8 round 9 final head (waits on abfcd0a)
+2. Fresh uncapped F8 round 9 review (waits on abfcd0a and evidence)
+3. Fresh REVIEW.md round 18 review, uncapped (waits on a50b314)
+4. Claims round 8 facts + stranger reviews, Blockers/Majors only (waits on a0e711c)
 5. Post-twice script review (waits on lead, Q29-4)
-Missing lanes (2 of 8): rows 2-4 wait on running agents' reports; row 5 waits on lead answer Q29-4. Lead answers needed: claims items (a)-(f) in the claims r6 hand-back (R:41 delete, n of 13-minute delay, loopback line 153, names of adversarial read r2/REVIEW r1, five OVERSTATED rows, check_secrets raw file).
+Missing lanes (2 of 8): rows 1-4 wait on running fixers (editing the same files, so reviewing now would read stale text); row 5 waits on lead answer Q29-4. Lead answers needed: claims r6 items (a)-(f); RUNBOOK commands (n8n start, sub-workflow id, values loop, import, export); who types end/y/challenge number; F8 refused-name remedy.
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

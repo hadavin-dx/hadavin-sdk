@@ -17,7 +17,7 @@
 |---|---|---|---|
 | 1 to 4 (git check, patch, regenerate, commit) | 04:00 | 09:30 | 16 |
 | 4a (text decisions) | 04:16 | 09:46 | 10 |
-| 4b (pin 1: a named person reads the WARN lines) | 04:26 | 09:56 | 25 |
+| 4b (pin 1: a named person reads the warning lines) | 04:26 | 09:56 | 25 |
 | 5 (take_check on the unfilled copy) | 04:51 | 10:21 | 3 |
 | 6 to 8 (copy the take scripts, start n8n, database) | 04:54 | 10:24 | 60 |
 | 9 to 12 (fill, greps, import, export) | 05:54 | 11:24 | 80 |
@@ -32,25 +32,25 @@ The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 
 |---|---|---|
 | 05:45 (latest 06:00) | 11:15 | F-031 and F-007 text fixes re-read |
 | 06:00 to 07:00 | 11:30 to 12:30 | practice run; T19 to T21 at its end |
-| 07:00 to 07:30 | 12:30 to 13:00 | Row 4; the take-prep message (HubSpot token scopes, retake yes) goes out at its start |
+| 07:00 to 07:30 | 12:30 to 13:00 | Row 4; the take-prep message (what the HubSpot key may do, and whether a retake is allowed) goes out at its start |
 | 07:30 | 13:00 | F-002 rule check |
-| 07:30 to 07:40 | 13:00 to 13:10 | positive control; Step D message 1 is sent after the two sends of RUNBOOK step 19a, during its mailbox wait |
+| 07:30 to 07:40 | 13:00 to 13:10 | positive control; Step D message 1 (Step D: the owner deletes the made-up test contacts in HubSpot by hand) is sent after the two sends of RUNBOOK step 19a, during its mailbox wait |
 | 07:40 to 08:25 | 13:10 to 13:55 | rehearsal 1 (45 min) |
 | 08:25 to 08:40 | 13:55 to 14:10 | the lead sets the numbers (10) and the recording test (5) |
 | 08:40 to 09:25 | 14:10 to 14:55 | rehearsal 2 (45 min) |
-| 09:25 to 09:50 | 14:55 to 15:20 | start-state gate and sign-off; S9-2 message by 09:15, reply by 09:45 (a take gate, RUNBOOK step 24 (g)) |
+| 09:25 to 09:50 | 14:55 to 15:20 | start-state gate and sign-off; owner settings comparison (RUNBOOK step 24 (g) calls it S9-2): message by 09:15, reply by 09:45 (the take does not start without the reply) |
 | 09:50 to 09:55 | 15:20 to 15:25 | GO check |
 | 10:00 to 11:00 | 15:30 to 16:30 | the take; Step D message 2 at its end |
 | about 11:20 | about 16:50 | whole raw recording watched; recording-ready message (planned by 12:00Z) |
-| about 13:30 | about 19:00 | "clean-up starts"; the owner revokes the model key by 17:00Z (22:30 IST), S9-3 |
+| about 13:30 | about 19:00 | "clean-up starts"; the owner switches off the model key by 17:00Z (22:30 IST) (RUNBOOK calls it S9-3) |
 | 15:00 | 20:30 | the owner posts |
 The Wednesday times above are the dated times: no start-state gates and no change in RUNBOOK step 22. With the gates (RUNBOOK section 6): Case A (nothing to change in step 22) the rehearsal block ends 09:37, the take is 10:07 to 11:07 and the recording-ready message is about 11:27; Case B (recovery switched off only in step 22 (ii)) the take is 11:02 to 12:02 and the recording-ready message is about 12:22. RUNBOOK section 6 wins.
 
 **Who is needed when (people other than the lead):**
 | Who | What | When (UTC) |
 |---|---|---|
-| the named WARN reader | a real person, never a program, who reads the list of warnings (WARN lines) that Block P1a (pin 1) and Block P2a (pin 2) write, and tells the lead the line `NAME, YYYY-MM-DD` for the pin (the date must not be older than the pin's own `# date (UTC)` line) | Tue 04:26Z to 04:51Z (09:56 to 10:21 IST) for pin 1 (RUNBOOK step 4b; P1a runs first inside it) and Tue 07:14Z to 07:44Z (12:44 to 13:14 IST) for pin 2 (step 13; P2a runs after the export); never "about 08:00Z" |
-| the owner | tells the lead which permissions the HubSpot trial-account key has (one short answer; the key is the secret code that lets our flows write to HubSpot) | asked Wed about 07:00Z (12:30 IST); reply wanted by 08:00Z (13:30 IST); no reply by 08:30Z (14:00 IST) means no recording that day; this Wednesday-only row may be moved to Tue 05:54Z (11:24 IST); lead decides (QUESTIONS Q31 items 27 and 30) |
+| the named WARN reader | a real person, never a program, who reads the list of warnings (the lines that start with WARN) that Block P1a (pin 1) and Block P2a (pin 2) write, and tells the lead the line `NAME, YYYY-MM-DD` for the pin (the date must not be older than the pin's own `# date (UTC)` line) | Tue 04:26Z to 04:51Z (09:56 to 10:21 IST) for pin 1 (RUNBOOK step 4b; P1a runs first inside it) and Tue 07:14Z to 07:44Z (12:44 to 13:14 IST) for pin 2 (step 13; P2a runs after the export); never "about 08:00Z" |
+| the owner | tells the lead which permissions the HubSpot trial-account key has (one short answer; the key is the secret code that lets our flows write to HubSpot) | asked Wed about 07:00Z (12:30 IST); reply wanted by 08:00Z (13:30 IST); no reply by 08:30Z (14:00 IST) means no recording that day; the lead decides by Mon 16 Nov 22:00Z (Tue 03:30 IST) whether this Wednesday-only row moves to Tue 05:54Z (11:24 IST); with no decision it stays on Wednesday (QUESTIONS Q31 items 27 and 30) |
 | the owner | first message: deletes by hand, in HubSpot, the made-up test contacts the message lists (RUNBOOK step 20 calls this Step D; 7 contacts with the hook leg, 6 without; lead to confirm) | sent Wed about 07:30Z (13:00 IST), after the two test sends of RUNBOOK step 19a |
 | the owner | compares the take's settings file with the figures the lead lists, and replies (RUNBOOK step 24 (g) calls this S9-2) | message by 09:15Z (14:45 IST), reply by 09:45Z (15:15 IST) Wed |
 | the owner | on camera: types `y`, the challenge and `end` | Wed 10:00Z to 11:00Z (15:30 to 16:30 IST) |
