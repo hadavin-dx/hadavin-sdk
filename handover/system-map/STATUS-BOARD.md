@@ -18,9 +18,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 of 8, counted at 2026-11-16T15:41:00Z
+AGENTS_RUNNING: 0 of 8, counted at 2026-11-16T15:41:00Z (all 8 re-readers handed back and are digested 1845-1847)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: digested through 1844; read the 8 re-reads of the fixed lane pages; then fix L3 what-is-wrong column and DECISION text via LEAD-NOTICE
+NEXT: fix my own pages from the board reader's findings (licence question wording, NEEDS_YOU 4 and 5 subjects), GLOSSARY lines 67-68, M17, T19 inline glossary; then 8 fresh readers, one per fixed page
 INTERRUPTED: none
 
 ## ITEMS
@@ -48,17 +48,7 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-| id | role | model | what it does | started UTC | expected end UTC | % | state |
-|---|---|---|---|---|---|---|---|
-| aea426bd4e98bb2d0 | cold re-reader | sonnet | reads the fixed head of work/L1.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-| a31b177414c54034b | cold re-reader | sonnet | reads the fixed head of work/L2.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-| a74278349de5f85a4 | cold re-reader | sonnet | reads the fixed head of work/L3.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-| a3a86bd1b02855061 | cold re-reader | sonnet | reads the fixed head of work/L4.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-| a03032e0d300e9947 | cold re-reader | sonnet | reads the fixed head of work/L5a.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-| a0abe4b2dfafa93c4 | cold re-reader | sonnet | reads the fixed head of work/L5b.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-| a3449bd243588eb4d | cold re-reader | sonnet | reads the fixed head of work/L1c.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-| a01cb3c65149ae25e | cold re-reader | sonnet | reads the fixed head of work/L5ac.md 1-80 and lists what it cannot follow | 15:41 | +10 min | 0 | running |
-What changed on the lane pages: one status key with three words (READ, SKIMMED, NOT-READ; the scanner and a held test allow only these), repeated key blocks removed. Not changed: DECISION line texts (only the studio lead has them), scene-1-to-4 link, bare-quote findings (next).
+No agent is running at this beat. Reason: the 8 re-readers of the fixed lane-page heads (aea426bd4e98bb2d0, a31b177414c54034b, a74278349de5f85a4, a3a86bd1b02855061, a03032e0d300e9947, a0abe4b2dfafa93c4, a3449bd243588eb4d, a01cb3c65149ae25e) handed back and are digested (1845-1847). The lane-page heads have now had 2 cold reads each, so the cap rule applies; what remains there needs facts only the studio lead has (LEAD-NOTICE-batch-1.md). The only unread-after-fix pages are my own, which I am fixing now; 8 readers launch on them as each is fixed.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.

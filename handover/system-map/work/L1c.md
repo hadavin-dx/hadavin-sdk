@@ -9,6 +9,8 @@ Stale cells corrected below: "all three bodies" rests on pr3-body.md only (the P
 
 # Lane L1c
 
+SUMMARY (counted from the coverage table by a script on 16 Nov 2026): this page lists 86 files that lane L1c looked at. READ (opened whole): 37. SKIMMED (only part, or only a listing, looked at): 31. NOT-READ (nothing of the contents looked at): 18. Treat everything marked SKIMMED or NOT-READ as unchecked. Findings are in the findings table further down the page and in merged-findings.md, cited by id. Which of these files lie on the scenes 1 to 4 path is NOT established by this lane: the lane listed what the brief gave it; the studio lead decides which findings matter for the take.
+
 <!-- LANE-KEY -->
 > KEY (inline, added 16 Nov 2026, so this page can be read alone)
 > - take = the one recorded run of the lead-intake demo (made-up data, run through n8n), planned for 23 Nov 2026.
