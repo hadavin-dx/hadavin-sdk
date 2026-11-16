@@ -1,0 +1,41 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py
+Read-only structural check of generated n8n flow JSON files. Nothing is run in n8n. Standard library only.
+
+Usage:
+  check_flows.py DIR [DIR ...] [options]
+Options:
+  --expect FILE=NODES:CONNS     expected node and connection count of one flow file (repeatable), e.g. mf-form.json=12:11
+  --expect-json PATH            same as JSON {"mf-form.json": {"nodes": 12, "connections": 11}, ...}
+  --files a.json,b.json,...     exact list of *.json files each DIR must hold (default: the four mf-*.json flow files)
+  --baseline DIR                directory of the unpatched flows: an IF node that already lacks the SAME branch there is only a WARN, else FAIL. CAUTION: pointing it at the folder being checked excuses EVERY IF gap in it, so do not do that for the take; use --accept-if
+  --accept-if FILE=NODE:OUT[,OUT]  recorded decision (repeatable): this IF node of this file is accepted to lack exactly these outputs (0 or 1); it is a WARN and a known open problem. Any other missing branch, or a different one, is a FAIL
+  --patch-checks F002,F008      assert the F-002 and/or F-008 patch content (names, links, settings) in the given DIRs
+  --diff-base DIR --allow F002,F008 (--allow requires --patch-checks naming at least the same patches) [--diff-out FILE]
+                                node-level diff DIR vs DIR (patched vs unpatched); FAIL on any change the allowed patches do not explain
+  --quiet-info                  do not print the type table and the placeholder list (the credential list per flow is always printed)
+  --require-webhook-auth        a webhook or form trigger without authentication is a FAIL (default: WARN-LEAD-DECISION line, exit stays 0, counted as a known open problem)
+  --expect-credential KIND=NAME a node credential of this kind (for example postgres, smtp) must have exactly this name, else FAIL (repeatable)
+  --block-env-access            a node that reads $env.X is a FAIL (default: WARN-LEAD-DECISION): use when the take switches off env access inside nodes
+  --require-real-credential-ids a credential id or sub-workflow id that is still a placeholder is a FAIL (default: always printed as WARN, even with --quiet-info)
+  --ddl FILE                    SQL file with the CREATE TABLE of the lead table: every column used in a postgres query string of the flows must exist in it, else WARN naming the missing columns. Without it the columns are NOT checked and the run says so loudly
+  --fail-unverified             rules that come from memory of n8n (marked 'n8n rule UNVERIFIED') are WARN by default; this makes them FAIL
+Needs Python 3.10 or newer (the script says so and exits 3 on an older one).
+
+F8 EXTENSION (flow-check/): started from patch-apply/check_flows.py (F4 round 3), nothing removed. New checks are listed in
+flow-check/REPORT.md. New options: --require-webhook-auth (webhook without authentication = FAIL, default WARN), --table (print
+the error-settings table per file), --files all (every *.json in each DIR). Nothing is run in n8n.
+
+Checks per file (FAIL = exit code 1): JSON parses; every node has name and type; no duplicate names; every connection
+source and target exists; at least one trigger; every node reachable from a trigger (reachability walk over all output
+types, so a node whose only incoming link comes from an orphan or from itself is unreachable); node/connection counts
+equal the expected ones; onError=continueErrorOutput nodes have a non-empty main[1]; IF nodes have both branch outputs;
+every $('Name') and $node["Name"] inside an expression names a node of the same file.
+Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, n8n-nodes-base.cron, or a type
+ending in 'Trigger'. respondToWebhook is NOT a trigger.
+F-002 Claim is printed with a WARN (UNPROVEN until a test run in n8n): exit 0 does NOT clear F-002. A node with alwaysOutputData AND onError=continueErrorOutput is a FAIL (round 3).
+WARN-LEAD-DECISION lines (webhook or form without authentication, nodes that read $env) keep exit 0 on purpose, but the closing block always prints 'OPEN LEAD DECISIONS: n webhook(s) without auth, m $env node(s)'.
+Rules that come from MEMORY of n8n, not from a source in this repo (tag 'n8n rule UNVERIFIED'; WARN only unless --fail-unverified): webhook authentication values (none, basicAuth, headerAuth, jwtAuth;
+form trigger: none, basicAuth), the credential kind each of them needs (httpBasicAuth, httpHeaderAuth, jwtAuth), the credential kinds of postgres, smtp and hubspot nodes, the position of the error output,
+the default responseMode, and the rule that two webhooks may not share method+path or webhookId (checked across ALL folders given in one run, form triggers included).
+Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error (unknown option, missing value, unknown patch name, bad --expect); 3 when the checker itself broke or could not write its --diff-out file (never a FAIL verdict about the flows).
+exit=2
