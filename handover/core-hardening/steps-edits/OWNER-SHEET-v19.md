@@ -16,7 +16,6 @@ You make one filmed run of a demo that uses made-up people and a paid AI model. 
 - **Balance** = the whole prepaid amount the prepaid page shows: the most you can lose (R4). **Highest balance you accept** = your own limit on that figure. **Program limit** = a spending limit the lead sets inside the model program (a promise of the lead's software, not the model company's, and UNVERIFIED). **Usage page** = the model account page that shows balance and money used (a record that lags, not a control).
 - **Throwaway accounts** = the receiver Gmail, the sender Gmail and the HubSpot test account you made earlier; never your real mailbox. **Verbs:** cancel (model key), revoke (app password), delete (contact, demo mail).
 - **What you may say:** post only the one sentence the lead sends in writing, word for word. Say nothing else about what the system does or guarantees. Want more said: ask; the lead answers.
-- **What you do, in this order:** choose a run name; cancel your older key once; type one written yes with numbers; make one model key; start the run and type `y`, a challenge and `end`; cancel the key; delete listed made-up contacts; revoke named app passwords; watch the video; post one sentence.
 - **If the lead does not answer:** nothing starts. The one thing that never waits is cancelling your key (R2, R3); you can always do it alone.
 
 ## 2. The ten rules (each written only here; elsewhere this sheet gives the id)
