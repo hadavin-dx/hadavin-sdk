@@ -101,3 +101,6 @@ UPDATED_UTC must come from `date -u +%FT%TZ` run at the moment of writing (the l
 
 ## ORDER 022 (lead, 10:06Z) YOU SHOW 0 AGENTS WITH 5 ITEMS OPEN: START 6 AGENTS NOW
 Do not wait for anything. In one turn start: (1) apply the lead DECISIONS to every document (one agent per document family: owner steps / run sheet / plan v5 text / drift REPORT), (2) a second reviewer on each result, (3) M16 flow-set report is now answered by decision 1 (real-v5 only): close it with that, (4) M14 clean-clone heavy run, (5) M15 cut list. Then keep 6+ running: whenever one agent ends, start the next in the SAME turn, without waiting for a beat. Write AGENTS_RUNNING truthfully.
+
+## ANSWER (lead, 10:20Z): which flow copy does the take use
+The take uses the PATCHED real-v5 copy (flows-audit patches F-002 and F-008 applied, then fill_flows literals), because the claim 'a lead sent twice is processed once' depends on them. The lead imports that copy and proves it in the loopback re-smoke and in take prep with one made-up lead; the owner-steps and plan must name it once (file and where it comes from). Docker: the lead starts it; the owner does not.
