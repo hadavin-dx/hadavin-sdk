@@ -112,6 +112,53 @@ def sub(old, new, count=None):
     text = text.replace(old, new)
 
 
+# ---- item (j): the v19 history folded into one live paragraph ----
+def cut(old_start, old_end, new, include_end=True):
+    global text
+    a = text.index(old_start)
+    b = text.index(old_end, a)
+    if include_end:
+        b += len(old_end)
+    text = text[:a] + new + text[b:]
+
+
+cut("   **(j) A guard test over every SQL file (security major 6 of v15;", "*Class:* a check that lists the bad shapes",
+    "   **(j) A guard test over every SQL file (the rules and their tests are in 5.6c item 1, one place; this item keeps the allow-list shapes).** ", include_end=False)
+sub("**Rules inside a function, kept from v18:**", "**Rules inside a function:**", 1)
+sub("**New in v19 (MA1 and MA2 of the v18 review):** **N1**", "**N1**", 1)
+cut("**Run on 16.15 (`evidence-handoff-v19/raw/raw-secdef-mutants-v19.txt`)", "(`raw/raw-spell30-guard-v19.txt`).",
+    "**Rules added after S1 to S7 and N1 to N3 (bodies, calls, triggers, ASCII case folding, carriage-return comments, alias lists and the rest) are in 5.6c item 1.** **Run on 16.15 (section 0 item 5; raw files in section 8):** `secdef_mutants_v21.py` 226 checks, 0 failed (mutants of every earlier round, controls that must not be flagged, the independent runner's spellings, unit checks P3 to P11, the five held files and five product migrations clean); the v20 guard misses 12 of the 16 new v21 mutants; `spell30_guard_v21.py` flags 30 of 30 of the independent runner's spellings (`raw/raw-spell30-v21.txt`); `chk.py` finds no problem in the five held files and the five product migrations (`raw/raw-chk-v21.txt`). ")
+cut("**there is still no independent run of v19:", "until a runner finds none.**",
+    "**no independent run of v21 exists: earlier rounds each had spellings and bypasses the author did not think of, so expect more until a runner finds none.**")
+sub("**v19 adds** the function", "It also holds the function", 1)
+sub("v19 adds `SET LOCAL statement_timeout", "the file also sets `SET LOCAL statement_timeout", 1)
+sub(" (v19 count; v18 said two functions and four triggers, which was stale since v16)", "", 1)
+sub("**or the audit-reader role exists (v20, L19)**", "**or the audit-reader role exists (L19)**", 1)
+sub("**v19 (security minor m1): a second trigger function", "**Second trigger function (security minor m1):** a second trigger function", 1)
+sub("(all five of v17)", "(all five)", 1)
+sub("`raw/raw-secrets-v19.txt` M3a to M3l (12 of 12; v19 adds a pre-check line", "`raw/raw-secrets-v21-run1.txt` M3a to M3l (12 of 12; the script has a pre-check line", 1)
+sub("; v18 added the folder-mode test M3h", "; it also holds the folder-mode test M3h", 1)
+# commands and names in the Postgres question (L18) and the gate paragraph
+for old, new in [
+    ("run_pg_v20.sh", "run_pg_v21.sh"),
+    ("raw-pg-v20-run1.txt", "raw-pg-v21-run1.txt"),
+    ("raw-pg-v16-regress-on-v20-run1.txt", "raw-pg-v16-regress-on-v21-run1.txt"),
+    ("(the 177 checks;", "(the 210 checks;"),
+    ("(the 175 v16 checks on the v20 files)", "(the 175 v16 checks on the v21 files)"),
+    ("run_secrets_v20.sh", "run_secrets_v21.sh"),
+    ("agent_probe_v20.py", "agent_probe_v21.py"),
+    ("agent_probe_v19.py", "agent_probe_v21.py"),
+    ("/opt/hv20", "/opt/hv21"),
+    ("raw/raw-gate4-compare-v19.txt", "raw/raw-gate4-compare-v21.txt"),
+    ("raw/raw-chk-v19.txt", "raw/raw-chk-v21.txt"),
+]:
+    text = text.replace(old, new)
+sub("`gate4_v19.sh` itself has NOT been run; its first run is its first test;", "`gate4_v21.sh` was run once as one script in v21 on the unchanged tree (section 0 item 1);")
+sub("a copy; v19 has `gate4_v19.sh`, not run)", "a copy; v21 has `gate4_v21.sh`)")
+sub("it was syntax-checked with `sh -n` (v19) and its five commands", "its five commands")
+sub("not re-compared in v19)", "not re-compared since)")
+sub("written in v19, tested on four cases in", "tested on four cases in")
+
 # current-folder names in the carried text
 for old, new in [
     ("evidence-handoff-v20/gate4_v20.sh", "evidence-handoff-v21/gate4_v21.sh"),

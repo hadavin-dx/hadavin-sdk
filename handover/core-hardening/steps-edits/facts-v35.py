@@ -79,3 +79,7 @@ MARGIN_END = ENTER + dt.timedelta(minutes=Y + RL + FP)                         #
 assert MARGIN_END < LF and (LF - MARGIN_END) == dt.timedelta(minutes=5)
 F.update({'bm_chain': 'Mon 23 Nov 2026 ' + pair(BM_CHAIN), 'rv22': 'Sun 22 Nov 2026 ' + pair(RV22), 'sun_cb': 'Sun 22 Nov 2026 ' + pair(SUN_CB), 'sun_ls': 'Sun 22 Nov 2026 ' + pair(SUN_LS),
           'enter': pair(ENTER), 'margin_end': pair(MARGIN_END)})
+
+# ---- v35 additions (round 7): Sunday reminder time for check 2
+F.update({'bs_pair': pair(BS)})
+assert F['bs_pair'] == '18:09 UTC = 23:39 IST' and F['enter'] == '11:25 UTC = 16:55 IST'
