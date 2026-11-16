@@ -1,0 +1,26 @@
+# Pre-mortem of the take (independent design read, 16 Nov 2026)
+Facts about the program are UNVERIFIED: the program (scripts/run_real_check_n8n.py), the flows and the settings file were not read. Older paragraphs r1-r14 are in work/premortem-history.md and this page's previous layout is in work/premortem-r1-history-2.md (ignore both). Live text = the sections below.
+
+## Terms
+- take = the filmed run of the demo on made-up data. studio lead = the Claude session that does the technical steps. studio head = the human who runs the studio (not named). owner = the human at the laptop. lane = one helper Claude session that reads a slice of the review.
+- V5 = inputs/OWNER-STEPS-realrun-v5-core-hardening.md (the owner's step list). M17 = decisions/M17-end-never-deletes.md (the proposal that the program's `end` command deletes nothing). `end` = what the owner types to stop the program after the filming pause.
+- T19 = the test that sends one made-up lead twice and counts mails and contact writes (not run). journal = the program's file that records each paid call (meaning beyond that NOT RECORDED); hook door, Step I, retire check, take-prep: meaning not recorded here (see PLAN-002.md and work/t19-and-stored-data-steps.md).
+- On HOLD = the studio lead has not ruled on M17; it unblocks when the lead rules. UNVERIFIED = stated, not checked against a file or command output.
+- Gate A (blocks the lanes from reading files; five steps, 0 to 4, listed in STATE) is FAIL. Gate B (blocks the take; name used elsewhere: M17) is blocked: program text and V5 both say `end` deletes nothing: UNVERIFIED.
+- Cut list: unknown; treat all ten fixes below as live until the studio lead confirms each cut. Decisions 2, 4 and 5 and C-01 are explained in PLAN-002.md and LEAD-NOTICE-batch-1.md.
+
+## Risks, ranked by harm
+1. V5 and the program disagree on whether `end` deletes (M17 not applied; V5 lines 31, 114, 124, 127-130 (V5 line numbers as of 16 Nov, UNVERIFIED) still say it deletes; program unchanged). Fix: make "program text and V5 match M17" a go/no-go gate; rehearsal tests: `end` makes zero HubSpot delete calls and prints the leftover list; a read-only token never attempts a delete.
+2. "Processed once" rests on T19, never run. Fix: ten concurrent posts of one lead id against real Postgres unique key, pass = mails 3 and contacts 3; run on real-v5 in the first laptop rehearsal; post wording tied to what was counted.
+3. Spend is not enforced (V5:52); the one-call guard is a journal file. Fix: provider-side key limit equal to 3 times the worst case plus margin, test: kill between journal write and call, restart, at most 1 call per person; refuse to start if journal unreadable.
+4. Real addresses on film (sender column, n8n mail-step detail, tab titles). Fix: dry film, OCR or grep the frames for "@" other than take-<run>-[abc]@example.com; name the post checker (open).
+5. Typed-answer safeguards: lock file left after a hard stop; start-deadline arithmetic may differ from V5's rounded 18:15. Fix: print the lock path; tests with a fake clock at 18:14:39, 18:14:41, 18:15:00.
+6. One owner, one laptop, no fallback (Docker, WSL, n8n, sleep). Fix: program preflight (Postgres, n8n, hook door, disk, power) exits 2 before the notice; state how many reruns fit.
+7. Step I ordering: HubSpot private-app delete cannot be undone and the owner cannot tell which app the program used (V5:152, number UNVERIFIED); the retire check does not cover the model key. Fix: one list (app name, created at, used by program yes/no) before any delete; add the model key to the check.
+8. Step J claims ("caps the spend", "separate check") are not true as built; the checker is not named. Fix: grep the final post text against the banned list (work/banned-claims.md); name the checker.
+9. Gmail label timing and routing unproven (V5:207, number UNVERIFIED). Fix: one trial mail a day before, record the delay; poll with a timeout.
+10. Leftover contacts: V5:138/G.2 say "name or address carries this run name" (looser than M17's exact address); closed terminal leaves contacts never listed; take-prep contact is separate. Fix: one rule everywhere (exact address only); program writes the leftover list to a file BEFORE the pause; add the take-prep contact to the list.
+Cross-cutting: use one HubSpot private app per function (n8n writes, program reads) with scopes written in V5 and a negative test that the read app cannot write (scope of the n8n HubSpot key UNVERIFIED).
+
+## STATE r15 (16 Nov 2026; this section wins over any older text)
+Owners: risks 1-6 and 9-10 the studio lead, due Tue 17 Nov 04:30 UTC / 10:00 IST (proposal); risks 7-8 the studio head, no date. Gate A = the launch gate of handover/system-map/PLAN-002.md RULINGS r21 and r22: (0) the studio head names the owner-only paths and the studio lead writes work/OWNER-ONLY.txt; (1) the code that removes owner-only paths before any lane reads files is written; (2) four new tests are written (item 2 of those rulings); (3) unittest exits 0; (4) output saved to work/evidence-0.md. Status FAIL. For risk 1 (what `end` deletes) nothing guards it now: see decisions/M17-end-never-deletes.md (on HOLD). Decision 4 (C-01 extras cut) is second-hand, UNVERIFIED; decisions 2 and 5 cuts are unverified. OWNER-CLEANUP-CARD.md is in handover/system-map/.
