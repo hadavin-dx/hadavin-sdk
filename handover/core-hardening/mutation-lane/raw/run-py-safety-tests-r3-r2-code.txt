@@ -4,18 +4,18 @@ REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/sc
   PASS: T1 exit 2
 == T2 SIGKILL while a mutant is planted
   file now: return2
-./safety-tests.sh: line 39: 12299 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+./safety-tests.sh: line 39: 14859 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T2 file stays planted
 == T3 the next run refuses and says how to restore
 REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardenin
   exit code 2
   PASS: T3 exit 2
 == T4 marker lost: the tree check against a fresh git archive still refuses
-REFUSED: scratch tree differs from git archive 8369b61da1afac55ab9b051deb09236482b6d145 + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+REFUSED: scratch tree differs from git archive bd628cea747995a528c869c687b8afeaae16ff5c + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
   exit code 2
   PASS: T4 exit 2
 == T5 --restore puts the saved original back
-process 12308 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0/9d3739a1f2d77e8e.backup; hash matches saved original: True
+process 14868 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0/9d3739a1f2d77e8e.backup; hash matches saved original: True
   PASS: T5 file restored
   PASS: T5 state folder empty
 == T6 SIGTERM during a run restores the file and removes the marker
@@ -54,11 +54,11 @@ REFUSED: mutant m1 file: must be relative to the root and contain no '..': '../r
   PASS: T11 exit 2
   PASS: T11 file unchanged
 == T12 symlinked folders inside the scratch root
-REFUSED: scratch tree differs from git archive 8369b61da1afac55ab9b051deb09236482b6d145 + patches in 1 file(s), first: ['evil/']: it may hold a planted change; rebuild it from the archive
+REFUSED: scratch tree differs from git archive bd628cea747995a528c869c687b8afeaae16ff5c + patches in 1 file(s), first: ['evil/']: it may hold a planted change; rebuild it from the archive
   (extra symlinked folder 'evil') exit code 2
   PASS: T12b exit 2
   PASS: T12b real repo file unchanged
-REFUSED: scratch tree differs from git archive 8369b61da1afac55ab9b051deb09236482b6d145 + patches in 2 file(s), first: ['src/', 'src/mod.py']: it may hold a planted change; rebuild it from the archive
+REFUSED: scratch tree differs from git archive bd628cea747995a528c869c687b8afeaae16ff5c + patches in 2 file(s), first: ['src/', 'src/mod.py']: it may hold a planted change; rebuild it from the archive
   (src itself is a link to the real repo) exit code 2
   PASS: T12a exit 2
   PASS: T12a real repo file unchanged
@@ -75,147 +75,3 @@ REFUSED: git rev-parse failed for --repo /tmp/claude-0/-home-user/957f9d59-4d7f-
   declared --extra: exit code 0
   PASS: T14b exit 0
 == T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
-./safety-tests.sh: line 77: 13106 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-  PASS: T15 orphan pytest alive
-stopped orphaned test group 13115; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0/9d3739a1f2d77e8e.backup; hash matches saved original: True
-  PASS: T15 orphan stopped
-  PASS: T15 file restored
-== T16 SIGHUP restores too (exit 129)
-  exit code 129
-  PASS: T16 exit 129
-  PASS: T16 file restored
-== T17 --restore while a run is live is refused (lock)
-REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2
-  exit code 2
-  PASS: T17 exit 2
-  PASS: T17 run still planted
-== T18 a mutant id that climbs out of --raw is refused
-REFUSED: mutant id is not a plain unique name: '../escape'
-  exit code 2
-  PASS: T18 exit 2
-  PASS: T18 no file outside raw
-== T19 an error while the tests start (no .venv python) still removes the marker
-REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/toy/root/.venv/bin/python does not exist: the scratch root needs its o
-  exit code 2
-  PASS: T19 exit 2
-  PASS: T19 file unchanged
-  PASS: T19 state empty
-== T20 four signals in a row while a mutant is planted (5 times): file restored, marker gone, exit 129/130/143
-  (probabilistic: it cannot force the second signal into the exact window; see T21 for the deterministic part)
-  PASS: T20.1 exit 129/130/143 (got 129)
-  PASS: T20.1 file restored
-  PASS: T20.1 state empty
-  PASS: T20.2 exit 129/130/143 (got 129)
-  PASS: T20.2 file restored
-  PASS: T20.2 state empty
-  PASS: T20.3 exit 129/130/143 (got 129)
-  PASS: T20.3 file restored
-  PASS: T20.3 state empty
-  PASS: T20.4 exit 129/130/143 (got 129)
-  PASS: T20.4 file restored
-  PASS: T20.4 state empty
-  PASS: T20.5 exit 129/130/143 (got 129)
-  PASS: T20.5 file restored
-  PASS: T20.5 state empty
-== T21 signal handler logic (deterministic): a signal while planted is only remembered, then delivered once
-handler logic ok
-  PASS: T21 handler logic
-== T22 state folder checks: wrong mode, a link, another owner are refused (exit 2)
-REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0 is not a plain
-  PASS: T22a mode 755 refused (got 2)
-REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0 is not a plain
-  PASS: T22b symlinked state folder refused (got 2)
-  PASS: T22b nothing written through the link
-REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0 is not a plain
-  PASS: T22c other owner refused (got 2)
-== T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
-./safety-tests.sh: line 222: 14523 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-REFUSED: the saved backup does not match the hash recorded in the marker: refused
-  PASS: T23a hash mismatch refused (got 2)
-  PASS: T23a file not written
-REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0/9d3739a1f2d77e8e
-  PASS: T23b marker as a link refused (got 2)
-  PASS: T23b file not written
-process 14532 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0/9d3739a1f2d77e8e.backup; hash matches saved original: True
-  PASS: T23 genuine restore still works
-REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/toy/repo is, contains or lies inside the real reposit
-  PASS: T23c --restore in the real repository refused for that reason (got 2, reason hits 1)
-== T24 import check: the tests would load the target from another tree (exit 2); the right tree passes and is recorded
-REFUSED: import check: `import mod` loads '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/toy/repo/src/mod.py', not /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchp
-  PASS: T24a refused (got 2)
-  PASS: T24a file unchanged
-  PASS: T24b recorded in the raw file
-  PASS: T24b raw file lists 4 environment names
-== T25 TESTS is an allowlist: every bypass named in review r2 is refused by the argument check (exit 2, message 'TESTS argument'), one check each
-  FAIL: T25 @argsfile refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -k @argsfile refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -qc (clustered c) refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -qo (clustered o) refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -qp (clustered p) refused by the argument check (rc 2, hits 0)
-  PASS: T25 -c refused by the argument check (rc 2, hits 1)
-  PASS: T25 -cfoo.ini refused by the argument check (rc 2, hits 1)
-  PASS: T25 -oaddopts=-x refused by the argument check (rc 2, hits 1)
-  FAIL: T25 --collect-only refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --co refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --setup-plan refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --setup-only refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --help refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -h refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --version refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -V refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --noconftest refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --ignore=tests refused by the argument check (rc 2, hits 0)
-  FAIL: T25 --ignore tests refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -p other refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -pother refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -p (no value) refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -k (no value) refused by the argument check (rc 2, hits 0)
-  PASS: T25 --basetemp refused by the argument check (rc 2, hits 1)
-  PASS: T25 --rootdir refused by the argument check (rc 2, hits 1)
-  PASS: T25 --junitxml refused by the argument check (rc 2, hits 1)
-  PASS: T25 --confcutdir refused by the argument check (rc 2, hits 1)
-  PASS: T25 --override-ini refused by the argument check (rc 2, hits 1)
-  PASS: T25 --import-mode refused by the argument check (rc 2, hits 1)
-  FAIL: T25 path ../ outside root refused by the argument check (rc 2, hits 0)
-  FAIL: T25 absolute path outside root refused by the argument check (rc 2, hits 0)
-  FAIL: T25 path through a link out of the root refused by the argument check (rc 2, hits 0)
-  FAIL: T25 -- terminator refused by the argument check (rc 2, hits 0)
-  PASS: T25 file unchanged, state empty
-  PASS: T25 the allowed forms still run (-q -x -p no:NAME -k -m path::node) (got 0)
-== T26 the start hook fails after the tests were started: the test group is still stopped (review 4 M2)
-RuntimeError as expected: start hook failed
-  PASS: T26 no orphan pytest left
-== T27 a mutant whose new text equals the old text is refused (exit 2)
-REFUSED: mutant m1: old text is empty or equal to new text (a no-op)
-  PASS: T27 exit 2 (got 2)
-== T28 a clean run leaves no temporary file in the state folder
-  PASS: T28 state empty (ls -A)
-== T29 stopping the test group fails (no permission): the leader is still stopped and signals stay disarmed (review r2 nit)
-raised as expected: PermissionError
-SIG.allow after: False
-  PASS: T29 SIG.allow is False afterwards
-  FAIL: T29 no orphan pytest left although stop_group failed
-== T30 import check fails closed: a target that is not a .py module is refused unless --skip-import-check (recorded)
-m1 SURVIVED 
-tree diff: 0 difference(s)
-  FAIL: T30a refused (rc 0, 'import check' hits 0)
-  PASS: T30a file unchanged
-  PASS: T30b with --skip-import-check it runs (rc 0) and the raw file says so
-== T31 a timeout keeps the output printed before it
-  FAIL: T31 raw file says TIMEOUT and holds the early output
-  PASS: T31 file restored
-== T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang
-  FAIL: T32a FIFO in the tree refused, no hang (got 124; 124 = hung)
-  FAIL: T32b FIFO as marker refused, no hang (got 124; 124 = hung)
-== T33 a .venv folder deeper than the top is compared like any other folder (exit 2)
-  FAIL: T33 nested .venv refused (got 0)
-== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)
-  FAIL: T34 run ends normally (rc 1) with verdict KILLED in the raw file
-  PASS: T34 file restored
-== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted
-./safety-tests.sh: line 222: 18059 Killed                  ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0: nothing to restore (a run that used another TMPDIR keeps its marker there)
-  FAIL: T35a exit 3 (got 0) and the file is still planted
-  PASS: T35b restoring with the right TMPDIR works
-  PASS: T35c nothing planted anywhere: exit 0 (got 0)
-FAILED CHECKS: 32
