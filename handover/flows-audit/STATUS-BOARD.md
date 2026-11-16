@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:22:31Z
+UPDATED_UTC: 2026-11-16T09:22:54Z
 SESSION: flows-audit
 ORDER: 015 queue (and 008 board)
 STATE: WORKING
@@ -6,11 +6,11 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 4
 PERCENT: 78
-AGENTS_RUNNING: 4
-CAPACITY: 0.71 load of 4 cores, mem 0/15 GB, disk free 29G, agents 4 (light+heavy per list)
+AGENTS_RUNNING: 6
+CAPACITY: 0.59 load of 4 cores, mem 0/15 GB, disk free 29G, agents 6 (light+heavy per list)
 INTERRUPTED: none
-NEXT: F1/F3 fixers land; F8 fixer after code review; F5 fix after F1
-PUSHED_UTC: 2026-11-16T09:22:31Z
+NEXT: F1/F3 fixers land; F8 fixer after reviews; F5 fix after F1
+PUSHED_UTC: 2026-11-16T09:22:54Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -29,10 +29,12 @@ PUSHED_UTC: 2026-11-16T09:22:31Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| af1f6cd392311e4c2 | fixer F3 final | sonnet | fill_flows round 2 fixes | 09:10 | 09:30 | 09:30 | running | fill_flows/ |
-| ad7e698a4ee4826f8 | fixer F1 | sonnet | claims table batch | 09:15 | 09:35 | 09:30 | running | CLAIMS-TABLE.md |
-| af4ac36f3c711b43c | egm-codebase F8 | sonnet | review flow checker | 09:21 | 09:35 | 09:30 | running | none |
-| a200d51037af2b6f1 | egm-codebase F9 r2 | sonnet | scene map round 2 | 09:27 | 09:40 | 09:30 | running | none |
+| af1f6cd392311e4c2 | fixer F3 final | sonnet | fill_flows round 2 fixes | 09:16 | 09:32 | 09:22 | running | fill_flows/ |
+| ad7e698a4ee4826f8 | fixer F1 | sonnet | claims table batch | 09:14 | 09:35 | 09:22 | running | CLAIMS-TABLE.md |
+| af4ac36f3c711b43c | egm-codebase F8 | sonnet | review flow checker | 09:20 | 09:30 | 09:22 | running | none |
+| a200d51037af2b6f1 | egm-codebase F9 r2 | sonnet | scene map round 2 | 09:21 | 09:32 | 09:22 | running | none |
+| aa80892a76c43292d | egm-comprehension F6 | sonnet | naive read F6 audit | 09:22 | 09:30 | 09:22 | running | none |
+| a4815b7f201ae10b4 | egm-comprehension F8 | sonnet | naive read F8 report | 09:22 | 09:30 | 09:22 | running | none |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

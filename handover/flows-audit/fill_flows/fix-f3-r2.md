@@ -1,0 +1,21 @@
+# F3 fix, review round 2 (fixer, 2026-11-16). Files changed: fill_flows.py, test_fill_flows.py, README.md (all in fill_flows/). Not committed.
+
+Final counts: `python3 -I -m unittest` -> Ran 68 tests, OK (before: 50). From /home/user/hadavin-sdk: `ruff check handover/flows-audit/fill_flows` -> All checks passed; `ruff format --check` -> already formatted (repo pyproject, line length 100). Not run: bandit, a live n8n import (take-day step).
+
+## Per finding
+- M1 = F3: `delete --no-manifest` now needs the tool's signature (folder 0700, files 0600, owned by the current user, plain .json, parses as JSON, no `$env` text); `--force-hash` skips only the JSON/`$env` reading (a kill can leave a cut file). Moved in README to "If the run was killed". Tests: Hardening.test_no_manifest_refuses_a_plain_input_folder, ..._wrong_file_mode_folder_mode_and_owner (0644, folder 0500, owner patched), ..._non_json_and_env_text.
+- M2: written-but-incomplete returns exit 3 (EXIT_INCOMPLETE), "NOT READY TO IMPORT" goes to stderr; placeholders inside longer strings are counted (fill and check). README exit-code table updated. Tests: exit 3 in the Positive tests, Hardening.test_placeholder_inside_longer_string_counts, test_exit_0_only_when_nothing_is_left, test_exit_codes_are_literal. Evidence expectation change: evidence-f3-r2.md section 4 says exit 0 and NOT READY on stdout; a re-run must expect exit 3 and the line on stderr (I did not edit the raw evidence file).
+- M3: README numbered walk-through (7 steps) naming mf-sub-crm-mail.json as the sub-flow and the three files that call it. Where n8n shows ids is NOT in the flows' own docs: marked "check on your n8n". I deviated from the brief on one point: "delete the first sub-flow import" would break the other flows (they call the id of the first import). README says: import only the three other files at the second fill; if the sub-flow was imported twice, delete the copy whose id is NOT the typed SUB_WORKFLOW_ID. Walk-through run with the film flows: fill exit 3, delete, fill exit 0, check 0 problems, delete OK.
+- M4: README states Linux/macOS/WSL (Linux home, not /mnt/c), copy-paste block (`REPO=`, `mkdir -p -m 700`, `install -m 600`), full paths, key list per flow set. Startup check (HAS_NOFOLLOW) refuses plainly. Test: Hardening.test_platform_check_refuses_plainly.
+- F1: _write_new unlinks its own file on BaseException. Test: test_write_cut_in_the_middle_leaves_nothing_and_rerun_works (a write cut after 10 bytes; re-run exits 3 with 4 files).
+- F2: test_symlinked_out_dir_with_no_manifest_and_with_copied_manifest (files survive).
+- F4: Base.cli and Base.inproc check every value written by write_values (length 4 or more) plus fixed values; PATH value now `/opt/pathv-q9k`; all former run() and ff.main calls go through them.
+- F5: tests for `$env . X`, comment before token (block and line), `"$" + "env."` untouched, \x85, mode 0604, half-filled folder delete. F6: README tests paragraph reworded to match what the helper does. F7: check on an empty folder exits 1. F8: --out equal to or inside --in refused (tests for two depths). F9: README says delete needs --force-hash after a changed or cut file. F10: a '/' outside a string next to a token (regex or division) is refused. F11: value starting with '=' refused.
+- N2: nearest code key carried down nested dicts/lists. N3: README "Known limits" names bare repos. N4: *_MS keys digits only (6 bad forms tested); trailing '/' on *_URL warns. N5: mutants below.
+- N1 (scope surface): not in the assigned list and the review text gives no concrete change; not done.
+
+## Mutants (copies, full suite each; all caught)
+leftover scan removed: 2 failing tests; missing key ignored: 4; mode 0644: 6; value printed in refusal texts: 6; '{{' check dropped: 1; manifest after files: 1; no-manifest signature dropped: 5; _write_new cleanup dropped: 1. Extra: check other-$env scan off 1; exit 3 -> 0: 12; slash check off 1; nested code key lost 1; platform check off 1; placeholder substring count off 1. The 60-mutant sample was not run.
+
+## Not fixed
+Nothing open from M1-M4, F1-F11, N2-N5. Still declined (resolve-f3-r1): TOCTOU, bare-repo detection (now documented). Take-day n8n import and loopback smoke remain lead/owner steps.
