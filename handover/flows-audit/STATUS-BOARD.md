@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T13:12:46Z
+UPDATED_UTC: 2026-11-16T13:12:59Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
 PERCENT: 95
 AGENTS_RUNNING: 8
-CAPACITY: 0.26 load of 4 cores, mem 0/15 GB, RAM 937/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.22 load of 4 cores, mem 0/15 GB, RAM 947/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
 NEXT: collect fixers and reviewers; fresh reviews of fixed files; citation fix pass; drift-007; ORDER 037 file list
-PUSHED_UTC: 2026-11-16T13:12:46Z
+PUSHED_UTC: 2026-11-16T13:12:59Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
