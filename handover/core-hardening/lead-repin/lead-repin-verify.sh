@@ -1270,6 +1270,8 @@ self_test_meta() {
   if ! grep -a -q -F -- "${base}_63_" "$WORK/st-x.err" "$WORK/st-x.out"; then mt_ok "sh -x does not print a value (the script turns the trace off)"; else mt_bad "sh -x printed a value"; fi
   rm -f "$WORK/st-x.out" "$WORK/st-x.err"
   # signals in the MAIN phase (a fake git that sleeps keeps the checklist busy), and in --mask with an open input
+  # st_alive PID: the program is running (a finished program that nobody has collected yet, state Z, is not running)
+  st_alive() { st_s=$(ps -p "$1" -o stat= 2>/dev/null); case $st_s in ''|Z*) return 1 ;; esac; return 0; }
   st_fake=$WORK/st-fakebin; mkdir -p "$st_fake"; printf '#!/bin/sh\necho $$ > "%s/git.pid"\nexec sleep 31\n' "$st_fake" > "$st_fake/git"; chmod +x "$st_fake/git"
   for st_sig in TERM:143 HUP:129; do   # INT and QUIT cannot be tested from a shell: a program started with & by a non-interactive shell ignores them (see evidence-repin5, python launcher)
     st_sn=${st_sig%%:*}; st_se=${st_sig##*:}
@@ -1280,7 +1282,7 @@ self_test_meta() {
     st_gp=$(cat "$st_fake/git.pid" 2>/dev/null)
     kill -s "$st_sn" "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?
     sleep 1
-    st_stray=0; if [ -n "$st_gp" ] && kill -0 "$st_gp" 2>/dev/null; then st_stray=1; fi; st_left=$(ls "$st_child" | wc -l | tr -d ' ')
+    st_stray=0; if [ -n "$st_gp" ] && st_alive "$st_gp"; then st_stray=1; fi; st_left=$(ls "$st_child" | wc -l | tr -d ' ')
     if [ "$st_r" -eq "$st_se" ] && [ "$st_stray" -eq 0 ] && [ "$st_left" -eq 0 ]; then mt_ok "signal $st_sn in the main phase: exit $st_se, no program of the run left running, no folder left"
     else mt_bad "signal $st_sn in the main phase (exit=$st_r wanted $st_se, programs left=$st_stray, folders left=$st_left)"; fi
     [ "$st_stray" -gt 0 ] && kill "$st_gp" 2>/dev/null   # only the process this check itself started (its recorded PID)

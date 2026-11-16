@@ -15,7 +15,7 @@ stale phrase 'archive|delete' in new texts of rows: none
 stale phrase "studio lead's made" in new texts of rows: none
 stale phrase 'studio lead table' in new texts of rows: none
 banned strings in report: none
-secret-like or e-mail strings in report: ['ghp_abcdefghijklmnopqrst']
+secret-like or e-mail strings in report: ['<FAKE-KEY-SHAPED-STRING-REDACTED>']
 C-4a mf-form.json [1, 1, 1] PASS
 C-4a mf-hook.json [1, 1, 1] PASS
 C-4a mf-recovery.json [1, 1, 1] PASS
