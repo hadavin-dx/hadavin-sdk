@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:33:17Z
+UPDATED_UTC: 2026-11-16T20:33:56Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 8
-CAPACITY: 3.84 load of 4 cores, mem 1/15 GB, RAM 1128/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 8 (light+heavy per list)
+AGENTS_RUNNING: 10
+CAPACITY: 2.68 load of 4 cores, mem 1/15 GB, RAM 1116/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 10 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:33:17Z
+PUSHED_UTC: 2026-11-16T20:33:56Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,7 +30,6 @@ PUSHED_UTC: 2026-11-16T20:33:17Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a7636841 | F8 fixer r12 | sonnet | F8 fixes (may run tests, HEAVY) | 20:07Z | 21:00Z | running | no report yet |
 | ac364a63 | QUESTIONS Q31 fixer | sonnet | text fixes | 20:48Z | 21:05Z | running | none yet |
 | a5d36f17 | RUNBOOK fixer r67 | sonnet | fix r66+r67 reports | 20:27Z | 21:30Z | running | none yet |
 | affbdc9a | TAKE-CHECKLIST fixer r68 | sonnet | fix 9 Majors | 20:28Z | 21:30Z | running | none yet |
@@ -38,6 +37,9 @@ PUSHED_UTC: 2026-11-16T20:33:17Z
 | a100ef4d | REVIEW.md design reviewer r56 | sonnet | security, uncapped | 20:31Z | 21:10Z | running | none yet |
 | abab8ee2 | FIX-PLAN stranger read r65 | sonnet | read all but clock block | 20:32Z | 21:05Z | running | none yet |
 | ac14474e | patch-copies fresh re-read pass 27 | sonnet | README 36-275, 290-344, 525-end | 20:33Z | 21:10Z | running | none yet |
+| a3e1970f | F8 EVIDENCE RUNNER r13 (HEAVY, 1 run at a time) | sonnet | run_all.sh + stop test, raw output | 20:33Z | 21:00Z | running | none yet |
+| af9239e4 | F8 design reviewer r13 | sonnet | uncapped review of flow-check | 20:33Z | 21:10Z | running | none yet |
+| a4b5d2d7 | F8 codebase reviewer r13 | sonnet | uncapped review of flow-check | 20:33Z | 21:10Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
