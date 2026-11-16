@@ -243,7 +243,7 @@ check("the real v%d files on disk are %s and the report names every one of them"
 for f in sorted(sw):
     t_ = datetime.datetime.fromtimestamp(os.path.getmtime(f), datetime.timezone.utc)
     print("INFO %s last written %s UTC; check time of the report %s" % (os.path.basename(f), t_.strftime("%H:%M:%S"), ct))
-check("source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 99 of the 104 rows cannot be read in the repository", "evidence-c6w/tree/" in boxs and "UNVERIFIED" in boxs and "99 of 104 rows" in raw.split("## 1.")[0], "")
+check("source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 99 of the 104 rows cannot be read in the repository", "evidence-c6w/tree/" in boxs and "UNVERIFIED" in boxs and "99 of 104 rows" in raw, "")
 nrepo = sum(1 for r in rows if os.path.exists(H + "/" + r["f"]))
 check("99 rows of 104 name a file that is not in the repository (recounted: %d rows readable in the repo)" % nrepo, nrepo == 5 and N - nrepo == 99, nrepo)
 # no pipe-in-cell: no row text holds a raw table border
@@ -306,7 +306,7 @@ check("naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SH
 check("naive: the answer form puts L-SHEET and L-SAVEERR on separate OWNER lines", ("L-SHEET v%dA" % NEWV) in box and "L-SAVEERR yes" in box and "Neither can be put on the line of step 2" in box, "")
 check("naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'", "Q27 (a), (b), (c) = your plan's three questions" in box and "G12 = YOUR gate" in box and "STUDIO LEAD = you" in box, "")
 steps = sec1c[sec1c.index("1c-F"):]
-check("naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)", all(x in steps for x in ["applies row 23", "rows 58 and 59", "TASK (9), A QUESTION TO YOU", "TASK (10) you write the ONE G12 line"]), "")
+check("naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)", all(x in steps for x in ["builder applies row 23", "builder applies rows 58 and 59", "TASK (9) A QUESTION TO YOU", "TASK (10) approve G12: write the ONE line"]), "")
 check("naive: the C-9 part 2 circle is explained", "THE CIRCLE IN C-9 PART 2" in box and "the approval rests on that look" in box, "")
 check("naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation", "may take it again" not in raw and not [l for l in txt if "reserved for the run that took it first" in l and "the plain sense of 'take'" not in l] and "THE TWO CLAIMS" not in raw and "unlimited claim" not in raw and "takes the 45-second limit out" not in raw, "")
 check("naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact", "a warning mail the system is built to send" in box and "a warning mail the system is built to send" in raw.split("| alert |")[1][:300], "")

@@ -74,6 +74,14 @@ def secdef_problems(db, *, roles: dict[str, str], policy: dict | None = None, ow
         if atomic and set(dep_schemas) - {nsp}: problems.append(f"{where}: bound to relations in schema {sorted(set(dep_schemas) - {nsp})}, not only {nsp}")
     # a listed function that is missing is a problem only when its file is applied: the caller passes `policy` limited to the applied files
     for sig in sorted(set(policy) - seen): problems.append(f"{schema}.{sig}: listed but not installed as SECURITY DEFINER")
+    # v21 (security review of v19 M2, v20 note): the audit triggers must exist and be ENABLED (tgenabled = 'O'); an owner can run ALTER TABLE ... DISABLE TRIGGER at run time and no file check sees it
+    tnames = sorted({sig.split("(")[0] for sig, (_k, who) in policy.items() if not who})
+    if tnames:
+        trig = db.execute("SELECT p.proname, t.tgname, c.relname, t.tgenabled FROM pg_trigger t JOIN pg_proc p ON p.oid = t.tgfoid JOIN pg_class c ON c.oid = t.tgrelid WHERE NOT t.tgisinternal AND p.proname = ANY(%s)", (tnames,)).fetchall()
+        for fn, tg, rel, en in trig:
+            if en != "O": problems.append(f"trigger {tg} on {rel} (function {fn}) is not enabled (state {en!r}; 'D' = disabled, 'R'/'A' = fires only for some sessions)")
+        for fn in tnames:
+            if f"{fn}()" in seen and not any(x[0] == fn for x in trig): problems.append(f"{fn}() is installed but no trigger uses it")
     if roles.get("operator") and db.execute("SELECT pg_has_role(%s, %s, 'MEMBER')", (roles["runtime"], roles["operator"])).fetchone()[0]:
         problems.append(f"{roles['runtime']} is a member of {roles['operator']}: it would hold kill_switch_release")
     return problems

@@ -1849,7 +1849,7 @@ def restore_from_marker(
 
 LIMIT_D_NOTE = (
     " (limit d: a plain --restore still writes the execute bits and the read bits a possibly forged marker names; only "
-    "--restore --sha compares the mode with git's own)"
+    "--restore --sha compares the mode with the one git records)"
 )
 
 

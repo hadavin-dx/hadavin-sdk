@@ -55,3 +55,5 @@ Run 19:0x to 19:18 UTC, all heavy runs through heavy-slot.sh (slot wait: mut34 r
 - Banned-string and secret-shape scans: part of check C06 and C05 (the list is read at run time): 0 hits.
 - A final mut34 re-run on the final head follows in the lead report if it finished before hand-back.
 Commands: build-v34.py, check-v34.py, v34-fail-proof.py, mut34.py, gap-proof-v34.py (all in this folder).
+
+Table pointer kept for plant M48: a failed key save skips 6.7 and 7.11 still cancels in A.

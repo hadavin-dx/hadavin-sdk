@@ -116,7 +116,7 @@ def build(words):
     # ---- 8. the card words: one default, one question (design M4, naive M7)
     lq = "| L-CARDLEASE | Card line 4 says 'other lease settings' and no viewer is told what a lease is (release note v18 line 150 says nothing about a lease). Keep the three words 'other lease settings', held under G12, or drop them (a builder re-issues row 14 and the lengths: line 4 of 19 words, the card 87 words, about 34.8 s)? | Keep, held under G12. If you do not mean to approve G12, answer 'drop' (needs a further round). |"
     t = sub(t, "| L-POST | Does 'public post'", lq + "\n| L-POST | Does 'public post'", 1)
-    lq3 = ("| L-CARDLEASE (new in c6w) | studio lead | Card line 4 (row 14) says 'other lease settings'. Keep these three words, held under G12 (they are filmed only after your written G12 line), or drop them? Facts: no viewer is told what a lease is; release note v18 line 150 says nothing about a lease; a card line 4 without them reads 'Not tested: other mailboxes, other customer-record systems, alerts sent as chat messages. One machine, made-up people, our own runs.' (19 words; the card 87 words, about 34.8 s, budget 40 s). | Keep, held under G12. | No | If drop: a builder re-issues row 14 and the card lengths (a further round); the words 'other lease settings' are then in no row. | 14 |")
+    lq3 = ("| L-CARDLEASE (new in c6w) | studio lead | Card line 4 (row 14) says 'other lease settings'. Keep these three words, held under G12 (they are filmed only after your written G12 line), or drop them? Facts: no viewer is told what a lease is; release note v18 line 150 says nothing about a lease; a card line 4 without them is the same line minus those three words (the card then holds 87 words, about 34.8 s, budget 40 s). | Keep, held under G12. | No | If drop: a builder re-issues row 14 and the card lengths (a further round); the words 'other lease settings' are then in no row. | 14 |")
     t = sub(t, "| L-KILL (was Q2) | studio lead |", lq3 + "\n| L-KILL (was Q2) | studio lead |", 1)
     t = sub(t, "The card wording ('lead' versus 'contact', 'other lease settings') is decided in L-CARD", "The card wording ('lead' versus 'contact', 'other lease settings') is decided in L-CARD", 0) if False else t
 
@@ -305,6 +305,30 @@ def extra3b(t):
 
     t = rsub(t, r" \(shorter cases: Table B, section 1c; each needs a hand edit and a further round\)", " (shorter cases: Table B, section 1c; each needs a hand edit)", 1)
     t = rsub(t, r"; ask the builder for hours per task\.", "; ask the builder.", 1)
+
+    t = sub(t, "| 14 | NOT APPLIED; on the default of L-CARD, L-CARDCUT, L-CARDLEN, L-CARDTEXT |", "| 14 | NOT APPLIED; on the default of L-CARD, L-CARDCUT, L-CARDLEASE, L-CARDLEN, L-CARDTEXT |", 1)
+    t = sub(t, "a second person tests it with a fake key", "a second person (someone who did not write the scan) tests it with a fake key", 1)
+
+    t = sub(t, "| L-CARDLEN | 11, 13, 14, 86, 96 | 5 | 0 (none) | 5 (11, 13, 14, 86, 96) |", "| L-CARDLEASE | 14 | 1 | 0 (none) | 1 (14) |\n| L-CARDLEN | 11, 13, 14, 86, 96 | 5 | 0 (none) | 5 (11, 13, 14, 86, 96) |", 1)
+
+    t = t.replace("The identical written time 18:46:25 UTC of v30", "The identical written time 18:46:25 UTC = 00:16:25 IST of v30")
+
+    # seventh trim pass: the WHAT TO TYPE block must fit one screen (under 2,400 characters)
+    _k = t.index("## Start here, part 2")
+    _h, _tl = t[:_k], t[_k:]
+    for _a, _b in (("in short : (1)", "in short: (1)"),
+                   (" (capital-letter words and labels here are explained in the lists below and in section 1c):", " (capitalised words are explained in the lists below and in section 1c):"),
+                   (" (defined below) to the demo files", " to the demo files"),
+                   (" there (folder handover/core-hardening/c6-skip-audit/), one commit per branch.", " there, one commit per branch."),
+                   (" (its scope is unconfirmed);", ";"),
+                   (" The names are labels no program reads; the reviewers are review agents", " The reviewers are review agents"),
+                   (" (shorter cases: Table B, section 1c; each needs a hand edit).", " (shorter cases: Table B, section 1c)."),
+                   (" (the check script compares them with the file name)", " (a script compares them with the file name)")):
+        assert _h.count(_a) == 1, _a
+        _h = _h.replace(_a, _b)
+    t = _h + _tl
+
+    t = sub(t, "| 1 | run sheet, line 90 | Scene 4 shows no test result in seconds; the live stopwatch, the label 'sped up, real wait' and the label 'setting: lease 45 s' stay. |", "| 1 | run sheet, line 90 | Scene 4 shows no test result in seconds; the live stopwatch and the label 'sped up, real wait' stay; the label 'setting: lease 45 s' stays only after G12 is approved. |", 1)
     # real written times of the newest sheet and release note (read from the files; the c6v text carried older times)
     import os as _os, datetime as _dt
     _st = _os.environ.get("C6V_STEPS") or _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), "steps-edits")

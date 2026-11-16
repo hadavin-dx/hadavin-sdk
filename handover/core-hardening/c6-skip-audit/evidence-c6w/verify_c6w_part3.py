@@ -48,7 +48,8 @@ _a5l = _a5.split("\n")
 for _l in _a5l[[k for k, x in enumerate(_a5l) if x.startswith("| Row |")][0] + 2:]:
     if not _l.startswith("| "): break
     _a5n += 1
-_allowed = {N, len(ready), len(onlyq), len(ready) + len(onlyq), N - nrepo, _a5n, len(withc) + len(waits) + len(nofilm) if False else 3, 3 + 6}
+_w1demo = sum(1 for r in rows if "after check" not in r["st"] and "waits for the answer of L-SAVEERR" not in r["st"] and "DECISION-one-store" not in r["f"])
+_allowed = {N, len(ready), len(onlyq), len(ready) + len(onlyq), N - nrepo, _w1demo, _a5n, len(withc) + len(waits) + len(nofilm) if False else 3, 3 + 6}
 _stale = []
 for _m in re.finditer(r"(?<![:\w])(\d+) (?:wave 1 |ready |default )?(?:rows|edits|proposed text changes)\b", raw):
     _v = int(_m.group(1))
@@ -83,7 +84,7 @@ for _qi, _q in enumerate(Q):
             _cl_bad.append((_qi + 1, raw[:_m.start()].count("\n") + 1))
 check("class 4: every place that quotes a card line (from its first eight words; the shorter option (b) of L-CARDLEN differs earlier and is a different text on purpose) quotes it whole and equal to the line in rows 13 and 14 (%d lines)" % len(Q), len(Q) == 4 and not _cl_bad, _cl_bad[:6])
 # class 5: the safe-default sentence 'no row edits the owner sheet or release note' is in both the box and 1c
-check("class 1: 'changes no running n8n' appears in the box and in section 1c", boxs.count("changes no running n8n") >= 1 and sec1c.count("changes no running n8n") >= 1, (boxs.count("changes no running n8n"), sec1c.count("changes no running n8n")))
+check("class 1: 'imports nothing into n8n' appears in the box and 'changes no running n8n' in section 1c", boxs.count("imports nothing into n8n") >= 1 and sec1c.count("changes no running n8n") >= 1, (boxs.count("changes no running n8n"), sec1c.count("changes no running n8n")))
 
 # class 6: a short old text (under 40 characters) must occur once in the WHOLE file, not only on its line (a builder who applies a row by text would hit the other places)
 _short = []

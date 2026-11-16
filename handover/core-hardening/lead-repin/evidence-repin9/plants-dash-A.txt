@@ -1,0 +1,5 @@
+heavy-slot: slot 2 taken at 2026-11-16T19:25:06Z
+BASE-SHA256 94ecb20fb96aa2184c2841e8e23a0a7f3207ca01ab7fb7f75792458b8e26d70e
+m01 [dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1979 failed=3 (the made-up input and output files were deleted) (3s)
+m02 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1976 failed=6 (the made-up input and output files were deleted) (3s)
+m03 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1976 failed=6 (the made-up input and output files were deleted) (3s)

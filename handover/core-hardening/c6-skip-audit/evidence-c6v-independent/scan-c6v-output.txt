@@ -1,1 +1,25 @@
-SCANNED 45 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v16.md: banned 0, secret-shaped 0, other e-mail-shaped 4
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v18.md: banned 0, secret-shaped 0, other e-mail-shaped 2
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v19.md: banned 0, secret-shaped 0, other e-mail-shaped 2
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v20.md: banned 0, secret-shaped 0, other e-mail-shaped 2
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v21.md: banned 0, secret-shaped 0, other e-mail-shaped 2
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v22.md: banned 0, secret-shaped 0, other e-mail-shaped 2
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v23.md: banned 0, secret-shaped 0, other e-mail-shaped 2
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v24-A.md: banned 0, secret-shaped 0, other e-mail-shaped 3
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v24-B.md: banned 0, secret-shaped 0, other e-mail-shaped 3
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v24-SOURCE.md: banned 0, secret-shaped 0, other e-mail-shaped 3
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v25-A.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v25-B.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v25-SOURCE.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v26-A.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v26-B.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v26-SOURCE.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v27-A.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v27-B.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v27-SOURCE.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v28-A.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v28-B.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v28-SOURCE.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v29-SOURCE.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+HIT handover/core-hardening/c6-skip-audit/evidence-c6v-independent/steps-snapshot/OWNER-SHEET-v30-SOURCE.md: banned 0, secret-shaped 0, other e-mail-shaped 1
+SCANNED 416 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 39}

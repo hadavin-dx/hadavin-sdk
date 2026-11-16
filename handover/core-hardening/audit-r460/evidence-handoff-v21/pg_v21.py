@@ -299,6 +299,9 @@ cases = [
  ("search_path of spend_settle set to public by ALTER FUNCTION SET", "ALTER FUNCTION spend_settle(text,date,numeric,numeric) SET search_path = public", "ALTER FUNCTION spend_settle(text,date,numeric,numeric) SET search_path = pg_catalog, pg_temp", "not exactly search_path"),
  ("a SECURITY DEFINER function with a listed name in another schema", "CREATE SCHEMA other17; CREATE FUNCTION other17.kill_switch_release() RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS 'SELECT 1'", "DROP SCHEMA other17 CASCADE", "unexpected SECURITY DEFINER function other17.kill_switch_release"),
  ("the runtime role made a member of the operator role", "GRANT op17 TO rt17", "REVOKE op17 FROM rt17", "member of op17"),
+ ("an audit trigger switched off by the table owner (v21)", "ALTER TABLE spend DISABLE TRIGGER spend_log_decrease", "ALTER TABLE spend ENABLE TRIGGER spend_log_decrease", "is not enabled"),
+ ("an audit trigger switched to replica-only (v21)", "ALTER TABLE kill_switch ENABLE REPLICA TRIGGER kill_switch_log_change", "ALTER TABLE kill_switch ENABLE TRIGGER kill_switch_log_change", "is not enabled"),
+ ("an audit trigger dropped while its function stays (v21)", "DROP TRIGGER kill_switch_log_insert ON kill_switch", "CREATE TRIGGER kill_switch_log_insert AFTER INSERT ON kill_switch FOR EACH ROW EXECUTE FUNCTION kill_switch_log_insert()", "no trigger uses it"),
 ]
 exp_tables = lambda g: g.runtime if g else ""
 for name, bad, fix, want in cases:

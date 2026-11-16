@@ -3,12 +3,14 @@ changes| exist (5.1, 5.6, 5.9, 7.6, |7.9
 changes| on the near-deadline line; |7.11
 changes| that exist (5.1, 5.6, 5.9, |7.6
 changes|, 5.6, 5.9, 7.6, 7.9, 7.11, |R8
+changes|48: a failed key save skips |6.7
 changes|B13, AB14 | | Stranger M7 | |5.3
 changes|eading load | no net words (|section 2
 changes|eats, five sentences of the |5.1
 changes|er completed by phone after |5.9
 changes|ey changed (re-pointed, see |section 3
 changes|ges are lower than v33 (see |section 2
+changes|iled key save skips 6.7 and |7.11
 changes|ntence (lead answer Q22c)", |G12
 changes|rt step (or none); card and |7.11
 changes|rules that exist (5.1, 5.6, |5.9
