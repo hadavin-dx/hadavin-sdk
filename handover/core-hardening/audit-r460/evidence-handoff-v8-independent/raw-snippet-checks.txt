@@ -1,0 +1,11 @@
+blk0: CREATE OR REPLACE FUNCTION spend_lock_key(k text) RETURNS bi
+blk1: CREATE OR REPLACE FUNCTION spend_op_guard() RETURNS trigger 
+blk2: Store.reserve_spend(res_id: str, agent_id: str, run_id: str 
+blk3: SpendMeter(store: Store, spend: SpendSettings, *, clock: Cal
+blk4: class CallGate:
+blk5: def one_attempt():
+SyntaxError: invalid syntax
+SyntaxError: invalid syntax
+IndentationError: expected an indented block after function definition on line 3
+blk5 python parse: OK
+bash blocks in document: 0 (bash -n not applicable)

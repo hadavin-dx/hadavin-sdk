@@ -1,0 +1,317 @@
+19|store/postgres.py:191-197|n is stated**: the Postgres store is one connection behind one threading lock (`=> ¦ class PostgresStore: ¦ # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when through
+26|app.py:152-160|and 4 partly right cites; **all six are fixed in v8**: the purge connection is `=>if purge_name := getattr(b.store, "purge_dsn_secret_name", None): ¦ # The purge step deletes evidence; the runtime identity cannot. A second connection, a sec ¦ purge_store = make(
+26|config.py:45|**: the purge connection is `app.py:152-160` (4.1); `Money` is a type alias at `=>
+26|tests/test_p6_detectors.py:351|; `tests/warden_port/test_providers.py` also has `make("llm"` at `:198` (4.2); `=>from hadavin_sdk.guard import bedrock_guardrail
+26|runmap.py:298|ort line and the `make("detector"` call is `:355` (4.2); `redact_untrusted` is `=>def redact_untrusted(text: str, mapping: dict[str, str]) -> str:
+30|llm/common.py:59-62|t (once):** token and dollar figures use the 3-characters-per-token estimator (`=>def estimate_tokens(text: str) -> int: ¦ """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never  ¦ zeros never fires."""
+30|tests/fixtures/config/config.yaml:6-8|e fixture route 3.00 / 15.00 US dollars per million tokens, `max_tokens` 1024 (`=>input_usd_per_mtok: "3.00" ¦ output_usd_per_mtok: "15.00" ¦ max_tokens: 1024
+30|tests/test_s4_llm_guard.py:39|config.yaml:6-8`). The only measured figure I read is `0.00225` per fake call (`=>assert reply.cost_usd == Decimal("0.00225")
+30|tests/test_s5_runtime.py:76|red figure I read is `0.00225` per fake call (`tests/test_s4_llm_guard.py:39`, `=>assert rt.store.get_run(run.run_id).cost_usd == Decimal("0.00225")
+40|approvals/gate.py:681-698| text for `[command withheld (G4)]`; it does not decide whether a tool runs. | `=>def withhold_commands(text: str) -> str: ¦ """G4 over one piece of model-derived text: each command not positively recognised as read ¦ from its program name to the end of its line, so what is left cannot be pasted and run."""
+41|gate.py:647-678|ase; SQL words are upper-case only; only some alternatives carry `(?i:...)`. | `=>_WRITE_SHAPES = re.compile( ¦ r"\bpg_(?:cancel|terminate)_backend\s*\(" ¦ r"|\bALTER\s+(?:DATABASE|INDEX|ROLE|SCHEMA|TABLE|USER|VIEW)\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s
+42|runtime/agent_loop.py:440-441|, charge after, two separate writes: `limits.charge` then `store.add_cost`, at `=>self.limits.charge(agent_id, reply.cost_usd) ¦ self.store.add_cost(run.run_id, reply.cost_usd)
+43|store/memory.py:196-204|G`. Tables `spend` and `spend_month`: `usd NUMERIC NOT NULL`, no sign check. | `=>def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: ¦ with self._lock: ¦ self._spend[(agent_id, day)] += usd
+43|store/postgres.py:416-431|nd_month`: `usd NUMERIC NOT NULL`, no sign check. | `store/memory.py:196-204`, `=>def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: ¦ """Day and month counters, each one atomic upsert, in one transaction: exact under concurr ¦ month = day.replace(day=1)
+43|store/migrations/0001_core.sql:87-92|ULL`, no sign check. | `store/memory.py:196-204`, `store/postgres.py:416-431`, `=>CREATE TABLE spend ( ¦ agent_id TEXT NOT NULL, ¦ day      DATE NOT NULL,
+43|store/migrations/0003_approvals_tick.sql:15-20|196-204`, `store/postgres.py:416-431`, `store/migrations/0001_core.sql:87-92`, `=>CREATE TABLE spend_month ( ¦ agent_id TEXT NOT NULL, ¦ month    DATE NOT NULL CHECK (EXTRACT(DAY FROM month) = 1),
+43|store/protocol.py:107-111|ations/0001_core.sql:87-92`, `store/migrations/0003_approvals_tick.sql:15-20`, `=>def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: .. ¦ def spend_totals(self, agent_id: str, day: date) -> tuple[Decimal, Decimal]: ¦ """(day, month) totals; a read with no write."""
+44|models.py:19-20| `>=`. `Limits(store, audit, registry)` has no clock: it calls `models.now()` (`=>def now() -> datetime: ¦ return datetime.now(UTC)
+44|app.py:73|time.now(UTC)`). The `clock` argument of `app.build` reaches only `Approvals` (`=>clock: Callable[[], datetime] = now,
+44|limits.py:13-30| argument of `app.build` reaches only `Approvals` (`app.py:73`, `:176-184`). | `=>class Limits: ¦ def __init__(self, store: Store, audit: AuditSink, registry: Registry) -> None: ¦ self.store, self.audit, self.registry = store, audit, registry
+45|llm/retry.py:83-108|| F6 | Retries live in `with_retry` (`=>def with_retry[T]( ¦ call: Callable[[], T], ¦ *,
+45|llm/anthropic.py:122|r is also a `ProviderError`: the kind's `_parse` runs inside the retried call (`=>got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+45|llm/bedrock.py:156|or`: the kind's `_parse` runs inside the retried call (`llm/anthropic.py:122`, `=>got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+45|retry.py:55-63|py:122`, `llm/bedrock.py:156`), a `KeyError` or `ValueError` is not transient (`=>def transient(exc: BaseException, retryable: Retryable | None = None) -> bool: ¦ if any(isinstance(e, ssl.SSLError) and not isinstance(e, _TLS_DROPS) for e in _chain(exc)) ¦ return False  # a certificate or protocol problem fails the same way every time
+45|llm/common.py:193-196|tus or an `OSError` is), so it lands at `:97-99`. The class docstring says so (`=>class NetworkLLM: ¦ """The ``chat`` every network kind shares: the route, the tool list and bounded retries ar ¦ and the parse of its answer, so a malformed answer is a ``ProviderError``, never a stray K
+45|anthropic.py:122|says so (`llm/common.py:193-196`). All four network kinds call `self._retry(` (`=>got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+45|bedrock.py:156|.py:193-196`). All four network kinds call `self._retry(` (`anthropic.py:122`, `=>got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+45|gemini.py:86| four network kinds call `self._retry(` (`anthropic.py:122`, `bedrock.py:156`, `=>got = self._retry(
+45|openai_compat.py:119|nds call `self._retry(` (`anthropic.py:122`, `bedrock.py:156`, `gemini.py:86`, `=>got = self._retry(
+45|llm/common.py:233-241|y:122`, `bedrock.py:156`, `gemini.py:86`, `openai_compat.py:119`); `_retry` is `=>def _retry(self, call: Callable[[], Answer]) -> Answer: ¦ return with_retry( ¦ call,
+45|llm/openai_compat.py:117-129|41`. **The OpenAI-compatible kind runs two `_retry` loops inside one `chat`** (`=>started, used = time.monotonic(), [0, 0] ¦ for _ in range(2):  # the forced answer missing: one more request (design 4.3) ¦ got = self._retry(
+45|retry.py:31-36|`2 x max_attempts` attempts. The status of an error is read by `retry.status` (`=>def status(exc: BaseException) -> int | None: ¦ """The HTTP status an error carries as an int: ``status_code`` (most SDKs) or ``code`` (ur ¦ for value in (getattr(exc, "status_code", None), getattr(exc, "code", None)):
+45|bedrock.py:93-101| its status in `response["ResponseMetadata"]["HTTPStatusCode"]` (`detail()` at `=>def detail(exc: BaseException) -> str: ¦ """The HTTP status and the error code (botocore keeps both in `response`), for the log lin ¦ response = getattr(exc, "response", None)
+46|extract.py:47|| F7 | `.chat(` call sites in `src/`: `=>reply = llm.chat(
+46|evals.py:73|| F7 | `.chat(` call sites in `src/`: `extract.py:47`, `=>reply = llm.chat(
+46|guard/judge.py:72|| F7 | `.chat(` call sites in `src/`: `extract.py:47`, `evals.py:73`, `=>reply = self.llm.chat(
+46|runtime/agent_loop.py:425|t(` call sites in `src/`: `extract.py:47`, `evals.py:73`, `guard/judge.py:72`, `=>reply = self.llm.chat(
+46|k1b/loop.py:94|tract.py:47`, `evals.py:73`, `guard/judge.py:72`, `runtime/agent_loop.py:425`, `=>box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+46|demos/ask-your-data/askdata/pipeline.py:155|/agent_loop.py:425`, `k1b/loop.py:94` (daemon thread, `:104`). Outside `src/`: `=>reply = self.llm.chat(
+46|guard/bedrock_guardrail.py:101|ta/pipeline.py:155` (own meter, `meter.py`). Paid calls that are not `.chat(`: `=>resp = self._client.apply_guardrail(
+47|runtime/agent_loop.py:184-194|, llm, detector, limits, agents, hooks)` receives `llm` and `Limits` directly (`=>def __init__( ¦ self, ¦ registry: Registry,
+47|tests/k5_support.py:160-211|ooks)` receives `llm` and `Limits` directly (`runtime/agent_loop.py:184-194`); `=>def build_runtime( ¦ cfg_dir: Path, ¦ llm,
+47|app.py:162|time`; the `Runtime(` call is `:200-209`) builds a `Runtime` without `app.py`. `=>llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+47|app.py:90-98|` gives the judge member that same `llm`, `:171` builds `Limits` (after both). `=>if sources and live: ¦ # A source handed in as an object would replace a configured, probed one; live deployments ¦ raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
+48|cli.py:146-153|| F9 | The CLI `gate` branch builds only an `llm` (`=>if args.cmd == "gate": ¦ b = cfg.backends ¦ run = evals.gate(
+48|cli.py:221-222| no store, no limits. The replay branch builds `llm` and the judge detector at `=>llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes) ¦ detector = combine([make("detector", d, secrets, llm=llm) for d in cfg.backends.detector])
+48|cli.py:183-190|i.py:221-222`. Store-using branches build secrets, probe them, then the store (`=>try: ¦ secrets = make("secrets", b.secrets) ¦ # Same start-up probe as app.build: a missing DSN is a clean ConfigError, not a KeyError m
+48|cli.py:173-182|, then the store (`cli.py:183-190`; `limits` shares them with `audit verify`). `=>if b.store.kind == "memory": ¦ # The memory store lives inside one running process; a separate CLI process cannot reach i ¦ # claiming "stopped" here would be a lie. Use App.limits.stop() in-process until Postgres 
+48|evals.py:101-110|mory store for them. `evals.gate` also runs `judge.qualify` on the same `llm` (`=># An llm_judge is qualified by its own golden set on the same model client, at its own rat ¦ # the agent's passes never hide a judge's failures, and an empty judge set qualifies nothi ¦ judges_green = True
+49|llm/fake.py:39-40| when documents exist, else on `sha256(json.dumps(messages, sort_keys=True))` (`=>doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") ¦ digest = hashlib.sha256(doc).hexdigest()
+49|tests/k5_support.py:124|erything_sent`; `everything_sent()` is a method of the test class `ScriptLLM` (`=>class ScriptLLM:
+49|llm/fake.py:21|s/k5_support.py:124`, method `:156`). `FakeLLM` is a plain class with no base (`=>class FakeLLM:
+50|audit/chain.py:134-149|igned_through, problems, unreadable`; `ok` and `unsigned_tail` are properties (`=>@dataclass ¦ class Verification: ¦ rows: int = 0
+50|chain.py:363-383|4-149`). `verify_rows(rows, checkpoints, public_key, anchors, alg, row_algs)` (`=>def verify_rows( ¦ rows: list, ¦ checkpoints: list,
+50|chain.py:171|_algs)` (`chain.py:363-383`) has no `checkpoint_every`; `ChainAudit` holds it (`=>self.checkpoint_every = checkpoint_every
+50|anchor_s3.py:70|y:171`). `anchor.all()` returns `{seq: (head, signature)}` with no time stamp (`=>def all(self) -> dict[int, tuple[str, str]]:
+50|cli.py:349-363|70`). `audit_verify` prints rows, signed-through and `intact` or `NOT intact` (`=>def audit_verify(audit) -> int: ¦ """Recompute the chain, every checkpoint signature and every anchor. Exit 0 intact, 1 not  ¦ 3 when the audit or its anchors cannot be read (an outage is not evidence of tampering).""
+51|audit/signer.py:104-108| read allowed); the permission test is skipped on Windows (`os.name != "nt"`). `=>else: ¦ path = Path(settings.private_key_path) ¦ if not path.is_file():
+51|actions/secrets_file.py:34-64|t"`). `audit/signer.py:104-108` does `is_file()` + `read_bytes()`, no check. | `=># ConfigError on `..`, absolute names or links out of the folder. The result is the real p ¦ # O_NOFOLLOW below refuses a link swapped in after this check. ¦ path = confined(self.root, name)
+52|agent_loop.py:83|| F13 | `GUARD_STOP_REASONS` (`=>GUARD_STOP_REASONS = frozenset(
+53|config.py:317|| F14 | `Config.environment: Literal["dev","pilot","prod"]` (`=>environment: Literal["dev", "pilot", "prod"]
+53|deferred.py:33|demo" exists only after the rename (R449). `deferred.LIVE = ("pilot","prod")` (`=>LIVE = ("pilot", "prod")
+53|backends/table.py:593-602|IVE = ("pilot","prod")` (`deferred.py:33`). `("llm","fake")` is in `DEV_ONLY` (`=>DEV_ONLY: frozenset[tuple[str, str]] = frozenset( ¦ { ¦ ("llm", "fake"),
+53|config.py:366-370|(`backends/table.py:593-602`), so pilot and prod already refuse the fake kind (`=>if self.environment != "dev": ¦ refused = [ ¦ f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEV_ONLY
+53|config.py:451-454|ig.py:366-370`). `load_config` wraps a pydantic `ValueError` as `ConfigError` (`=>except ConfigError: ¦ raise ¦ except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
+53|config.py:400-415|or` as `ConfigError` (`config.py:451-454`). YAML is read by `yaml.SafeLoader` (`=>class _UniqueKeyLoader(yaml.SafeLoader): ¦ """A duplicate mapping key is an error: safe_load would keep the last value, silently chan ¦ 
+54|config.py:45|| F15 | `Money` is a type alias (`=>
+54|config.py:57-58|lidator `_money` (`:38-42`) rejects floats only; it is used by `Route` prices (`=>input_usd_per_mtok: Money ¦ output_usd_per_mtok: Money
+54|registry.py:33-37|jects floats only; it is used by `Route` prices (`config.py:57-58`), `Budget` (`=>class Budget(BaseModel): ¦ model_config = ConfigDict(extra="forbid", frozen=True) ¦ daily: Money
+54|registry.py:53| prices (`config.py:57-58`), `Budget` (`registry.py:33-37`) and `max_run_usd` (`=>max_run_usd: Money | None = (
+54|models.py:294|`). `Budget` has no sign or order check. `Reply.cost_usd` is a bare `Decimal` (`=>cost_usd: Decimal = Decimal(0)
+54|models.py:305|.cost_usd` is a bare `Decimal` (`models.py:294`); `Verdict.cost_usd` the same (`=>cost_usd: Decimal = Decimal(
+54|models.py:98|odels.py:294`); `Verdict.cost_usd` the same (`models.py:305`); `Run.cost_usd` (`=>cost_usd: Decimal = Decimal(0)
+55|models.py:218-222|| F16 | `DeadLetter(run_id, reason, errors)`: `errors` is required (`=>class DeadLetter(Shape): ¦ run_id: str ¦ reason: str
+55|extract.py:18-25|(`models.py:218-222`). `Valid` is a plain dataclass with `data` and `replies` (`=>@dataclass ¦ class Valid: ¦ data: BaseModel
+55|guard/runmap.py:218-227|mapping, kinds)` keeps only allowlist kinds whose originals fit their grammar (`=>def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> dict[str, st ¦ """The part of a run's map that may be stored and restored: identifier kinds whose origina ¦ allowlist grammar and hold no secret-shaped text."""
+55|runmap.py:560-568|guard/runmap.py:218-227`); `restore_value` handles `str`, `dict`, `list` only (`=>def restore_value(value: Any, mapping: dict[str, str], kinds: frozenset[str] | None = None ¦ if isinstance(value, str): ¦ return restore_text(value, mapping, kinds)
+55|defaults.py:108-122|one` restores every stored kind including `NAME`, `ADDRESS`, `PHONE`, `EMAIL` (`=>STORED_KINDS = ( ¦ "ACCOUNTID", ¦ "ADDRESS",
+55|runmap.py:275|` (`defaults.py:108-122`); `IBAN` is not a stored kind. `escape_placeholders` (`=>def escape_placeholders(text: str) -> str:
+55|evals.py:63|does not. Runtime and evals decode documents with `decode("utf-8","replace")` (`=>doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+56|guard/injection.py:85-101|` catches every `Exception` and returns a flagged `guard_unavailable` verdict (`=>def injection_check(detector: Detector, text: str, source: str) -> Verdict: ¦ """Any detector error is a flag (guard_unavailable), never a pass.""" ¦ try:
+56|judge.py:100-109|verdict (`guard/injection.py:85-101`); `qualify` counts that as a failed case (`=>def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]: ¦ """``(passed, n)`` over ``{"text": ..., "injection": bool}`` lines; a judge error fails it ¦ cases = [
+56|retry.py:97-99| exception raised inside the retried call would be wrapped as `ProviderError` (`=>except Exception as exc:  # every failure is classified below, never swallowed ¦ if not transient(exc, retryable): ¦ raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
+57|backends/factory.py:17-54|er, anchor, llm)` and passes only the fields that `ALLOWED[capability]` lists (`=>@dataclass(frozen=True) ¦ class Deps: ¦ """What a factory receives besides its settings. Fields its capability may not use stay No
+57|backends/table.py:570-579|ry.py:17-54`); `ALLOWED["llm"] = {"routes"}`, `ALLOWED["detector"] = {"llm"}` (`=>ALLOWED: dict[str, frozenset[str]] = { ¦ "secrets": frozenset(), ¦ "signer": frozenset(),
+57|llm/anthropic.py:80-88|-579`). A kind factory is `make(settings, deps)` and builds its class by hand (`=>def make(settings: Any, deps: Any) -> AnthropicLLM: ¦ name = settings.api_key_secret_name if settings.platform != "vertex" else None ¦ key = (lambda: deps.resolve(name)) if name else None
+57|llm/common.py:200-206| max_attempts, key=...)`). `NetworkLLM.__init__(routes, max_attempts, sleep)` (`=>def __init__( ¦ self, ¦ routes: dict[str, Any],
+59|store/protocol.py:151-160|otocol`; `missing_methods` lists every public method of it that a store lacks (`=>def missing_methods(store: object) -> list[str]: ¦ """The methods of `Store` that `store` does not have. A custom store written for an earlie ¦ evidence methods (`add_tool_call`, `list_tool_calls`, `purge_tool_calls`, `put_redaction_m
+59|app.py:147-150|a store lacks (`store/protocol.py:151-160`); `app.build` refuses such a store (`=>if lacking := missing_methods(store): ¦ raise ConfigError( ¦ f"the store backend lacks {', '.join(lacking)}: added to the Store protocol in this versio
+59|tests/test_k5_round6_contracts.py:14-16|es such a store (`app.py:147-150`). Two test doubles are affected: `OldStore` (`=>class OldStore: ¦ def create_run(self, run): ... ¦ def get_run(self, run_id): ...
+59|tests/contracts/kinds/store_postgres.py:59-71|:14-16`; only checks the names it lacks, so it stays valid) and `_SplitStore` (`=>class _SplitStore: ¦ """The runtime role for everything, the purge role for the two purges: as `app.build` wire ¦ (`purge_dsn_secret_name`), so the suite runs with each identity holding only its own right
+60|store/migrate.py:46-67|| F21 | `GRANTS` (`=>GRANTS: dict[str, Grant] = { ¦ "runs": Grant("table", _RW, portal=True, purge_cols=("run_id", "state", "updated_at")), ¦ "plans": Grant("table", _RW, portal=True),
+61|cli.py:115-117| own `worst_case_usd` (`:115-122`, `:170`). `cli replay` requires `--max-usd` (`=>rep.add_argument( ¦ "--max-usd", required=True, type=_money, help="total cost cap for this invocation" ¦ )
+62|openai_compat.py:122,131|.cost_usd` is the combined price of the OpenAI-compatible kind's two requests (`=>used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+62|llm/common.py:59-62|patible kind's two requests (`openai_compat.py:122,131`); `estimate_tokens` is `=>def estimate_tokens(text: str) -> int: ¦ """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never  ¦ zeros never fires."""
+62|common.py:164-165|common.py:59-62`; `reply()` falls back to the estimator when usage is missing (`=>tokens_in = tokens[0] or estimate_tokens(sent) ¦ tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
+62|tests/k5_support.py:156|utes` and `.calls` (`llm/fake.py`); `ScriptLLM.everything_sent()` is a method (`=>def everything_sent(self) -> str:
+62|store/postgres.py:146|helpers use `self._db.transaction()` on a connection opened `autocommit=True` (`=>conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
+63|llm/common.py:208-220|| F24 | **`NetworkLLM.chat` already exists** (`=>def chat( ¦ self, ¦ messages: list[dict[str, Any]],
+63|anthropic.py:106|ble` and `detail` are class attributes. All four kinds already define `_chat` (`=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+63|bedrock.py:128|e class attributes. All four kinds already define `_chat` (`anthropic.py:106`, `=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+63|gemini.py:54|. All four kinds already define `_chat` (`anthropic.py:106`, `bedrock.py:128`, `=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+63|openai_compat.py:94| already define `_chat` (`anthropic.py:106`, `bedrock.py:128`, `gemini.py:54`, `=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+64|store/postgres.py:191-197|stgresStore.__init__(conn)` holds **one connection and one `threading.Lock`** (`=> ¦ class PostgresStore: ¦ # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when through
+66|tests/test_p5p6_followups.py:101|classes. Tests that assign `.detector =` or `.llm =` after building a runtime: `=>rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
+66|tests/test_p6_detectors.py:183-194,264,364|r =` or `.llm =` after building a runtime: `tests/test_p5p6_followups.py:101`, `=>def test_the_judge_charge_is_visible_in_limits(cfg_dir): ¦ plain, cfg = build(cfg_dir) ¦ with_judge, _ = build(cfg_dir)
+66|tests/test_k5_tools.py:608|sts/test_p5p6_followups.py:101`, `tests/test_p6_detectors.py:183-194,264,364`, `=>rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}])
+93|tests/test_s5_runtime.py:107-111|builder rewrite tests that pin the overshoot | Exactly one named test changes: `=>def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): ¦ rt, cfg = build(cfg_dir) ¦ rt.limits.charge("test-agent", Decimal("0.999"))  # the call costs 0.00225 and crosses 1.0
+93|tests/test_k5_tools.py:723-731|DENIED at the gate becomes NEEDS_PERSON `limits.daily_budget`, no model call). `=>def test_k5_run_budget_stops_run(tmp_path): ¦ k5_tools.RESULTS["app"] = "ERROR 10.0.0.5" ¦ llm = CostLLM([{"tool": "app"}, {"tool": "app"}, {"tool": "app"}, {"noaction": True}])
+93|agent_loop.py:245-249|udget`) is expected to pass unchanged: the existing after-the-fact `>=` check (`=>cap = self.registry.agents[run.agent_id].max_run_usd ¦ if cap is not None and self.store.get_run(run.run_id).cost_usd >= cap: ¦ # A run is bounded by its own cost, not only by the daily and monthly budgets (K5, A8).
+95|k1b/replay.py:85-91|ed` in `config.py` serves the `Config` validator, the registry cross-check and `=>def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None: ¦ route = registry.config.routes[registry.agents[agent_id].model_route] ¦ zero = route.input_usd_per_mtok == 0 or route.output_usd_per_mtok == 0
+102|anchor_s3.py:1-12| | Deferred. The S3 module docstring does not today state the identity rights (`=>"""Checkpoint anchors in an S3 bucket under Object Lock (`pip install hadavin-sdk[aws]`). ¦  ¦ Ported from WARDEN `audit.py` `S3Anchor` (main c78d7709). Edits: the lock mode comes from 
+128|retry.py:92-107|pt.** `with_retry` can send up to `max_attempts` requests for one `chat` call (`=>for attempt in range(1, max_attempts + 1): ¦ try: ¦ return call()
+128|backends/table.py:40| to `max_attempts` requests for one `chat` call (`retry.py:92-107`, default 3, `=>max_attempts: int = Field(default=3, ge=1, le=10)
+128|llm/openai_compat.py:117-129|d the OpenAI-compatible kind can run **two** `_retry` loops inside one `chat` (`=>started, used = time.monotonic(), [0, 0] ¦ for _ in range(2):  # the forced answer missing: one more request (design 4.3) ¦ got = self._retry(
+128|models.py:23|1`, `<call_id>:2`, ... with no collision. `call_id` is `models.new_id("res")` (`=>def new_id(prefix: str) -> str:
+132|store/migrate.py:71|ion** `src/hadavin_sdk/store/migrations/0006_spend_op.sql` (name fits `_FILE`, `=>_FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql")
+182|migrate.py:71-86|x names and `INCLUDE` are **specified, unverified**; the guard `_SAFE_CREATE` (`=>_FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql") ¦ _CREATE = re.compile( ¦ r"CREATE\s+(?:OR\s+REPLACE\s+)?(?:MATERIALIZED\s+)?(TABLE|VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)
+250|store/migrate.py:46-67|**Grants** (`=>GRANTS: dict[str, Grant] = { ¦ "runs": Grant("table", _RW, portal=True, purge_cols=("run_id", "state", "updated_at")), ¦ "plans": Grant("table", _RW, portal=True),
+251|cli.py:99-103| `adjust_role` on `migrate()` and `--adjust-role` on the CLI `migrate` parser (`=>mig.add_argument( ¦ "--purge-role", ¦ help="grant this database role the evidence purge (DELETE on tool_calls and redaction_maps
+251|app.py:152-160|able.py`, next to `purge_dsn_secret_name`, about `:116-125`) names its secret; `=>if purge_name := getattr(b.store, "purge_dsn_secret_name", None): ¦ # The purge step deletes evidence; the runtime identity cannot. A second connection, a sec ¦ purge_store = make(
+256|store/postgres.py:191-197|y (M-G).** `PostgresStore` has **one connection behind one `threading.Lock`** (`=> ¦ class PostgresStore: ¦ # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when through
+283|tests/test_p7_store.py:184|e store** (it would break `direct` rows with past dates, used by tests such as `=>s.add_spend("a", day, Decimal("0.01"))
+283|tests/test_s1_foundation.py:161-164|` rows with past dates, used by tests such as `tests/test_p7_store.py:184` and `=>store.add_spend("a", today, Decimal("0.40")) ¦ day, month = store.add_spend("a", today, Decimal("0.10")) ¦ assert day == Decimal("0.50")
+284|migrate.py:47|r reserved USD> WHERE run_id = ?` (the runtime already holds UPDATE on `runs`, `=>"runs": Grant("table", _RW, portal=True, purge_cols=("run_id", "state", "updated_at")),
+288|tests/test_p7_store.py:184|fuses the rest); it returns the totals as `Decimal` dollars. Existing callers: `=>s.add_spend("a", day, Decimal("0.01"))
+288|tests/test_s1_foundation.py:161-164|e totals as `Decimal` dollars. Existing callers: `tests/test_p7_store.py:184`, `=>store.add_spend("a", today, Decimal("0.40")) ¦ day, month = store.add_spend("a", today, Decimal("0.10")) ¦ assert day == Decimal("0.50")
+288|tests/contracts/test_store.py:179-189| callers: `tests/test_p7_store.py:184`, `tests/test_s1_foundation.py:161-164`, `=>store.add_spend("a", today, Decimal("0.40")) ¦ assert store.add_spend("a", today, Decimal("0.10")) == (Decimal("0.50"), Decimal("0.50")) ¦ _, month = store.add_spend("a", today - timedelta(days=40), Decimal(5))
+289|tests/contracts/kinds/store_postgres.py:59-71|- The test double `_SplitStore` (`=>class _SplitStore: ¦ """The runtime role for everything, the purge role for the two purges: as `app.build` wire ¦ (`purge_dsn_secret_name`), so the suite runs with each identity holding only its own right
+313|llm/openai_compat.py:122,131|otal is their sum. The call's `Reply.cost_usd` is the existing combined price (`=>used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+315|bedrock.py:115-116|etryable` (a class attribute set with `staticmethod` in the kinds, for example `=>retryable = staticmethod(retryable) ¦ detail = staticmethod(detail)
+315|anthropic.py:93|ute set with `staticmethod` in the kinds, for example `bedrock.py:115-116` and `=>retryable = staticmethod(retryable)
+315|bedrock.py:93-101|at reads `response["ResponseMetadata"]["HTTPStatusCode"]` (where `detail()` at `=>def detail(exc: BaseException) -> str: ¦ """The HTTP status and the error code (botocore keeps both in `response`), for the log lin ¦ response = getattr(exc, "response", None)
+317|common.py:164-165| This is the same condition under which `reply()` falls back to its estimator (`=>tokens_in = tokens[0] or estimate_tokens(sent) ¦ tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
+317|tests/test_k5_tools.py:723-731|LLM` (demo stage, 4.2) books its own `reply.cost_usd` with floor 0 (this keeps `=>def test_k5_run_budget_stops_run(tmp_path): ¦ k5_tools.RESULTS["app"] = "ERROR 10.0.0.5" ¦ llm = CostLLM([{"tool": "app"}, {"tool": "app"}, {"tool": "app"}, {"noaction": True}])
+317|anthropic.py:107-120|nded by `max_tokens` for the Anthropic and Bedrock kinds (request bodies read, `=>request: dict[str, Any] = { ¦ "model": route.model_id, ¦ "max_tokens": route.max_tokens,
+317|bedrock.py:132-154| the Anthropic and Bedrock kinds (request bodies read, `anthropic.py:107-120`, `=>request: dict[str, Any] = { ¦ "modelId": route.model_id, ¦ "messages": [
+317|gemini.py:54-83|132-154`); for Gemini the body sets `maxOutputTokens` and no thinking setting (`=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply: ¦ body: dict[str, Any] = { ¦ "contents": [
+317|gemini.py:97-100|ting (`gemini.py:54-83`) and `_parse` adds `thoughtsTokenCount` to the output (`=>usage = resp.get("usageMetadata") or {} ¦ # Thinking is billed as output; candidatesTokenCount leaves it out. ¦ out = (usage.get("candidatesTokenCount") or 0) + (usage.get("thoughtsTokenCount") or 0)
+317|openai_compat.py:94-116|max_tokens` or `max_completion_tokens` (`cap_field`) and no reasoning setting (`=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply: ¦ if forced:  # also in the prompt, for a server that ignores tool_choice ¦ system = schema_hint(system, output_schema)
+319|config.py:55-60|**Prices: tiers, a size limit and a cache price (M-B, D26).** `Route` (`=>class Route(_Strict): ¦ model_id: str ¦ input_usd_per_mtok: Money
+321|k1b/replay.py:85-91|**Self-hosted models in live stages (M-H, D11).** The zero-price refusal (`=>def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None: ¦ route = registry.config.routes[registry.agents[agent_id].model_route] ¦ zero = route.input_usd_per_mtok == 0 or route.output_usd_per_mtok == 0
+321|backends/table.py:66-85| `http` on loopback (`127.0.0.1`, `localhost` or `::1`, the set `_LOOPBACK` in `=> ¦  ¦ _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
+325|k1b/loop.py:115|loor_in_usd, input_tokens_est, route)` (named so it does not share a name with `=>def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal:
+325|common.py:86-100|+ the JSON of `turns` (which already holds the documents decoded by `turns()`, `=>def turns( ¦ messages: list[dict[str, Any]], documents: list[bytes] | None ¦ ) -> list[tuple[str, list[str]]]:
+325|common.py:65-83| decoded by `turns()`, `common.py:86-100`) + the JSON of `specs` (`tools_for`, `=>def tools_for( ¦ tools: list[dict[str, Any]] | None, output_schema: dict[str, Any] | None ¦ ) -> tuple[list[dict[str, Any]], str | None]:
+328|backends/table.py:34-40|600 seconds; the socket timeout is 60 s per operation and `max_attempts` is 3, `=> ¦  ¦ class _LLMSettings(KindSettings):
+329|limits.py:48-51|- `Limits.correct(res_id, by, reason)` mirrors `Limits.reset` (`=>def reset(self, by: str) -> None: ¦ """Removing a safety control is audited first; if that fails, the switch stays on.""" ¦ self.audit.write_intent(self._event(False, by, "reset"))
+329|app.py:152-160|from `adjust_dsn_secret_name` with `model_copy`, as it builds the purge store (`=>if purge_name := getattr(b.store, "purge_dsn_secret_name", None): ¦ # The purge step deletes evidence; the runtime identity cannot. A second connection, a sec ¦ purge_store = make(
+357|llm/common.py:208-220|e, readiness major 1, security nit 3).** `NetworkLLM.chat` **already exists** (`=>def chat( ¦ self, ¦ messages: list[dict[str, Any]],
+357|anthropic.py:106| kind writes `_chat`" (`:196`), and **all four kinds already define `_chat`** (`=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+357|bedrock.py:128|" (`:196`), and **all four kinds already define `_chat`** (`anthropic.py:106`, `=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+357|gemini.py:54|all four kinds already define `_chat`** (`anthropic.py:106`, `bedrock.py:128`, `=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+357|openai_compat.py:94|lready define `_chat`** (`anthropic.py:106`, `bedrock.py:128`, `gemini.py:54`, `=>def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+386|retry.py:97-99|rError` exception raised inside the retried function as a failure to classify (`=>except Exception as exc:  # every failure is classified below, never swallowed ¦ if not transient(exc, retryable): ¦ raise ProviderError(f"{label}: {describe(exc, detail)}") from exc
+409|retry.py:95-96|SpendRefused("meter_unavailable")`, and `with_retry` gets a one-line change at `=>except ProviderError: ¦ raise
+409|openai_compat.py:117-129|three requests. The OpenAI-compatible kind calls `_retry` twice in one `chat` (`=>started, used = time.monotonic(), [0, 0] ¦ for _ in range(2):  # the forced answer missing: one more request (design 4.3) ¦ got = self._retry(
+414|backends/factory.py:17-26|**How the gate reaches a kind.** `Deps` gets `gate: Any = None` (`=>@dataclass(frozen=True) ¦ class Deps: ¦ """What a factory receives besides its settings. Fields its capability may not use stay No
+414|backends/table.py:570-579|ALLOWED["llm"] = {"routes", "gate"}`, `ALLOWED["detector"] = {"llm", "gate"}` (`=>ALLOWED: dict[str, frozenset[str]] = { ¦ "secrets": frozenset(), ¦ "signer": frozenset(),
+414|backends/builtin.py:39-40|, call_timeout_s, max_attempts, sleep, cap_field)`); the fake kind ignores it (`=>def fake_llm(settings, deps) -> FakeLLM: ¦ return FakeLLM(settings.recorded_dir, dict(deps.routes))
+414|common.py:200-206|mpts, sleep=time.sleep, *, gate=None)` (today `(routes, max_attempts, sleep)`, `=>def __init__( ¦ self, ¦ routes: dict[str, Any],
+421|agent_loop.py:184-216|ntime.__init__(registry, store, audit, llm, detector, limits, agents, hooks)`, `=>def __init__( ¦ self, ¦ registry: Registry,
+421|tests/test_k5_fixes1.py:73|e_proposal` `ValueError` loop (`:207-216`), so `limits=None` and `llm=None` in `=>Runtime(reg, MemoryStore(), None, None, None, None, ["test-agent"], Hooks())
+421|tests/test_k5_tools.py:608|eeps working, F10), the setter re-runs `classify_llm` and re-wraps (readiness: `=>rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}])
+422|app.py:165| `llm=` once and passes the wrapped object to both the judge detector members (`=>members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+422|app.py:90-98|.build` refuses a supplied `detector=` in live stages (next to the refusals at `=>if sources and live: ¦ # A source handed in as an object would replace a configured, probed one; live deployments ¦ raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
+423|tests/test_p6_detectors.py:183-194|- **The judge test in `=>def test_the_judge_charge_is_visible_in_limits(cfg_dir): ¦ plain, cfg = build(cfg_dir) ¦ with_judge, _ = build(cfg_dir)
+423|tests/test_p5p6_followups.py:101|7). The other places that assign `.detector =` or `.llm =` after construction (`=>rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
+423|tests/test_p6_detectors.py:264,364|etector =` or `.llm =` after construction (`tests/test_p5p6_followups.py:101`, `=>rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
+423|tests/test_k5_tools.py:608|ion (`tests/test_p5p6_followups.py:101`, `tests/test_p6_detectors.py:264,364`, `=>rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}])
+423|tests/test_p5p6_followups.py:101|tectors.py:264,364`, `tests/test_k5_tools.py:608`) are listed for the builder; `=>rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
+424|tests/test_k5_tools.py:723-731|- *Why `test_k5_run_budget_stops_run` still passes (`=>def test_k5_run_budget_stops_run(tmp_path): ¦ k5_tools.RESULTS["app"] = "ERROR 10.0.0.5" ¦ llm = CostLLM([{"tool": "app"}, {"tool": "app"}, {"tool": "app"}, {"noaction": True}])
+424|agent_loop.py:245-249|ch call settles at its own 0.30, and the existing after-the-fact `>=` check at `=>cap = self.registry.agents[run.agent_id].max_run_usd ¦ if cap is not None and self.store.get_run(run.run_id).cost_usd >= cap: ¦ # A run is bounded by its own cost, not only by the daily and monthly budgets (K5, A8).
+430|app.py:152-160|gets `clock` and `adjust_store` (built with `model_copy` like the purge store, `=>if purge_name := getattr(b.store, "purge_dsn_secret_name", None): ¦ # The purge step deletes evidence; the runtime identity cannot. A second connection, a sec ¦ purge_store = make(
+430|app.py:171|just_store` (built with `model_copy` like the purge store, `app.py:152-160`) | `=>limits = Limits(store, audit, reg)
+430|app.py:73|purge store, `app.py:152-160`) | `app.py:171` moved above `:162`; `clock` from `=>clock: Callable[[], datetime] = now,
+431|app.py:162|build_llm(cfg, secrets, limits.meter.gate)` replaces `llm or make("llm"...)` | `=>llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+432|app.py:165|| Every `make("detector"...)` passes `gate=` (census: AST) | `=>members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+433|app.py:90-98|| Live-stage refusal of `detector=` and of a non-conforming `llm=` | `=>if sources and live: ¦ # A source handed in as an object would replace a configured, probed one; live deployments ¦ raise ConfigError("sources= is for tests; configure Config.sources in pilot and prod")
+434|cli.py:221-222|build_gate(window_end, now, margin)` (no store), window-only scope in `_k1b` | `=>llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes) ¦ detector = combine([make("detector", d, secrets, llm=llm) for d in cfg.backends.detector])
+435|cli.py:146-153|| CLI `gate` branch (eval ledger) | `=>if args.cmd == "gate": ¦ b = cfg.backends ¦ run = evals.gate(
+437|guard/injection.py:85-101|| `injection_check` re-raise | `=>def injection_check(detector: Detector, text: str, source: str) -> Verdict: ¦ """Any detector error is a flag (guard_unavailable), never a pass.""" ¦ try:
+438|llm/retry.py:95-96|| `SpendRefused` pass-through in `with_retry` | `=>except ProviderError: ¦ raise
+441|k1b/loop.py:104| the context has no scope and is refused (`unmetered`). The deliberate thread, `=>t = threading.Thread(target=work, daemon=True, name="k1b-llm-call")
+447|guard/judge.py:72|| `=>reply = self.llm.chat(
+447|injection.py:85-101|_check` re-raises (`except SpendRefused: raise` before its `except Exception`, `=>def injection_check(detector: Detector, text: str, source: str) -> Verdict: ¦ """Any detector error is a flag (guard_unavailable), never a pass.""" ¦ try:
+448|k1b/loop.py:94|| `=>box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+448|k1b/replay.py:175|r"`, `stop_reason = exc.code`, `halt = "aborted"` (the existing field, used at `=>stop = o.halt
+449|extract.py:47|| `=>reply = llm.chat(
+450|evals.py:73|| `=>reply = llm.chat(
+451|tests/test_p6_detectors.py:351|ly if** `deps.gate` is given; a live stage without it raises `ConfigError` (so `=>from hadavin_sdk.guard import bedrock_guardrail
+456|agent_loop.py:425|| `=>reply = self.llm.chat(
+456|guard/judge.py:72|| `agent_loop.py:425` and the judge `=>reply = self.llm.chat(
+457|evals.py:73|| `=>reply = llm.chat(
+457|evals.py:109|| `evals.py:73` and `judge.qualify` (`=>ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path)
+458|extract.py:47|| `=>reply = llm.chat(
+459|k1b/loop.py:94|| `=>box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+459|k1b/loop.py:179|dow-only scope** (D25); k1b's `Budget` stays the one place its cost is booked (`=>budget.charge(reply.cost_usd)
+460|bedrock_guardrail.py:101|| `=>resp = self._client.apply_guardrail(
+461|demos/ask-your-data/askdata/pipeline.py:155|| `=>reply = self.llm.chat(
+465|agent_loop.py:440-441|booking):** delete `self.limits.charge(...)` and `self.store.add_cost(...)` at `=>self.limits.charge(agent_id, reply.cost_usd) ¦ self.store.add_cost(run.run_id, reply.cost_usd)
+467|guard/producers.py:5| (1) every `src/**/*.py` real `.chat(` call (docstrings and comments excluded: `=>that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is c
+469|tests/contracts/kinds/llm_wire.py:66,91,119,192|t network-kind constructions* that gain `gate=` and run inside `metered(...)`: `=>return AnthropicLLM(client, routes, 3, sleep=lambda s: None)
+469|tests/test_p5_llm.py:248|s/llm_wire.py:66,91,119,192` (this is the helper file, not "four test files"), `=>llm = GeminiLLM(lambda: keys[-1], ROUTES, 5.0, 1)
+469|tests/warden_port/test_providers.py:65,123,148,172,198|ind built by hand). *`make("llm"...)` sites* that gain `gate=` through `Deps`: `=>llm = make("llm", settings, routes=ROUTES)
+469|tests/warden_port/test_bedrock_provider_r16.py:74,79,90|te=` through `Deps`: `tests/warden_port/test_providers.py:65,123,148,172,198`, `=>make("llm", BedrockSettings(kind="bedrock", region="contract-region-1"), routes=routes)
+469|tests/test_p5p6_followups.py:300,302,417|5,123,148,172,198`, `tests/warden_port/test_bedrock_provider_r16.py:74,79,90`, `=>make("llm", settings, provider, routes=_route(moving))
+469|tests/test_p5_llm.py:230,301|bedrock_provider_r16.py:74,79,90`, `tests/test_p5p6_followups.py:300,302,417`, `=>llm = make("llm", settings, routes=ROUTES)
+469|tests/contracts/kinds/builtin.py:53|`, `tests/test_p5p6_followups.py:300,302,417`, `tests/test_p5_llm.py:230,301`. `=>llm = make("llm", FakeLLMSettings(kind="fake", recorded_dir=tmp_path), routes=ROUTES)
+469|tests/test_k1b_replay.py:391|30,301`. `tests/contracts/kinds/builtin.py:53` uses the fake kind (no change). `=>env.run(ScriptedLLM([]), reg=reg, llm_kind="anthropic")
+469|tests/test_p1a_fixes.py:117|t_k1b_replay.py:391` builds no network kind (v6 listed it wrongly; no change). `=>update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})}
+469|tests/test_p6_detectors.py:351|del_copy` with a bedrock kind (the builder checks whether it builds a client). `=>from hadavin_sdk.guard import bedrock_guardrail
+469|tests/test_p6_detectors.py:183-194| is the import line; the `make("detector"` call is `:355`; it needs no change. `=>def test_the_judge_charge_is_visible_in_limits(cfg_dir): ¦ plain, cfg = build(cfg_dir) ¦ with_judge, _ = build(cfg_dir)
+469|tests/test_k5_fixes1.py:73|` call is `:355`; it needs no change. `tests/test_p6_detectors.py:183-194` and `=>Runtime(reg, MemoryStore(), None, None, None, None, ["test-agent"], Hooks())
+469|tests/test_s5_runtime.py:107-111|; the `ValueError` test stays valid). The `Limits(` callers are listed in 4.5. `=>def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): ¦ rt, cfg = build(cfg_dir) ¦ rt.limits.charge("test-agent", Decimal("0.999"))  # the call costs 0.00225 and crosses 1.0
+469|tests/k5_support.py:160-211|eft, the run ends NEEDS_PERSON `limits.daily_budget` and `rt.llm.calls == []`. `=>def build_runtime( ¦ cfg_dir: Path, ¦ llm,
+484|tests/test_k5_tools.py:608|15. `rt.llm = ScriptLLM(...)` re-classifies and re-wraps (`=>rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}])
+489|registry.py:20| the others). Exact fields, chosen so `config.py` never imports `registry.py` (`=>from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
+502|config.py:45|  `Money` is a type alias (`=>
+503|cli.py:146-153|- **CLI `gate` branch** (`=>if args.cmd == "gate": ¦ b = cfg.backends ¦ run = evals.gate(
+503|cli.py:183-190|rwise: build secrets and probe them, build the store as the audit branch does (`=>try: ¦ secrets = make("secrets", b.secrets) ¦ # Same start-up probe as app.build: a missing DSN is a clean ConfigError, not a KeyError m
+503|evals.py:109|val_daily_usd (now 0)")`, exit 2. The same llm serves the judge qualification (`=>ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path)
+504|cli.py:221-222|- **CLI `replay` branch** (`=>llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes) ¦ detector = combine([make("detector", d, secrets, llm=llm) for d in cfg.backends.detector])
+505|cli.py:93-95|oday: positional `action` with choices `stop` / `reset` and a required `--by`, `=>lim = sub.add_parser("limits", help="kill switch") ¦ lim.add_argument("action", choices=["stop", "reset"]) ¦ lim.add_argument("--by", required=True)
+505|cli.py:173-182|` it exits 2 with a message naming the setting. The memory-store refusal text (`=>if b.store.kind == "memory": ¦ # The memory store lives inside one running process; a separate CLI process cannot reach i ¦ # claiming "stopped" here would be a lie. Use App.limits.stop() in-process until Postgres 
+505|cli.py:173-182|`orphans`, `correct` and `report`. The two messages that name the kill switch (`=>if b.store.kind == "memory": ¦ # The memory store lives inside one running process; a separate CLI process cannot reach i ¦ # claiming "stopped" here would be a lie. Use App.limits.stop() in-process until Postgres 
+509|registry.py:33-37|  2. `Budget` (`=>class Budget(BaseModel): ¦ model_config = ConfigDict(extra="forbid", frozen=True) ¦ daily: Money
+510|models.py:294|  3. `Reply.cost_usd` and `Verdict.cost_usd` (`=>cost_usd: Decimal = Decimal(0)
+519|agent_loop.py:325-541|tes that can raise `SpendRefused` are all inside one method, `Runtime.handle` (`=>def handle( ¦ self, ¦ agent_id: str,
+519|agent_loop.py:432-434|`:520`). v5 named a handler beside `except ProviderError` only (that clause is `=>except ( ¦ ProviderError ¦ ) as exc:  # a refused key or request must not strand the run in WORKING
+521|agent_loop.py:318-322|ngs below are the `reason_code` of the run, written to the audit row by `_to`, `=>def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run: ¦ cur = self.store.get_run(run.run_id) ¦ run = advance(self.store, run.run_id, cur.state, new, reason)
+532|agent_loop.py:245-249|reserve` is reached; `run_budget` (no suffix) stays the after-the-fact code of `=>cap = self.registry.agents[run.agent_id].max_run_usd ¦ if cap is not None and self.store.get_run(run.run_id).cost_usd >= cap: ¦ # A run is bounded by its own cost, not only by the daily and monthly budgets (K5, A8).
+536|agent_loop.py:239-250|**The silent stop of v5 is fixed (readiness M4).** `_limits_stop` (`=>def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: ¦ blocked = self.limits.blocked(run.agent_id) ¦ if "kill_switch" in blocked:
+538|agent_loop.py:569-597|ere `_abstain` gets one optional callback that runs only in its `d.ok` branch (`=>def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run: ¦ """End a run that proposed nothing and post the abstain card (every level), so a miss can  ¦ run = self._to(run, new, reason)
+542|app.py:161|en in `app.build` right after the audit backend is built (`audit = make(...)`, `=>audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
+542|config.py:349-375|d. `Config` gets a `model_validator` (the same place as the environment table, `=>@model_validator(mode="after") ¦ def _cross_checks(self) -> Config: ¦ for source, ref in self.scope_inventory.items():
+542|config.py:451-454|lus a valid owner label); a `ValueError` becomes `ConfigError` (the wrapper at `=>except ConfigError: ¦ raise ¦ except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
+544|app.py:171|y `Limits(store, audit, registry)` is built with three positional arguments at `=>limits = Limits(store, audit, reg)
+544|cli.py:209|e, audit, registry)` is built with three positional arguments at `app.py:171`, `=>return kill_switch(Limits(store, audit, reg), args.action, args.by)
+544|tests/test_s5_runtime.py:28|lt with three positional arguments at `app.py:171`, `cli.py:209` and in tests (`=>limits = Limits(store, audit, reg)
+544|tests/k5_support.py:206|nts at `app.py:171`, `cli.py:209` and in tests (`tests/test_s5_runtime.py:28`, `=>Limits(store, audit, reg),
+544|tests/test_k3_pilot.py:104|y:209` and in tests (`tests/test_s5_runtime.py:28`, `tests/k5_support.py:206`, `=>Limits(store, audit, reg),
+544|tests/test_k5_postgres.py:58|st_s5_runtime.py:28`, `tests/k5_support.py:206`, `tests/test_k3_pilot.py:104`, `=>Limits(pg_store, audit, reg),
+544|tests/test_k5_round5.py:241|support.py:206`, `tests/test_k3_pilot.py:104`, `tests/test_k5_postgres.py:58`, `=>reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+544|tests/test_k5_tools.py:1133|_pilot.py:104`, `tests/test_k5_postgres.py:58`, `tests/test_k5_round5.py:241`, `=>reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+544|limits.py:18|s.blocked` and `Limits.charge` use `self.clock()` instead of the bare `now()` (`=>return self.store.add_spend(agent_id, now().date(), usd)
+544|app.py:73|of 0 is never refused for being too large. `app.build` passes its own `clock` (`=>clock: Callable[[], datetime] = now,
+546|tests/test_k3_pilot_env.py:61|or `Config(...)` with a non-fake llm kind: the one dict config that I found is `=>"llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+548|registry.py:338|ant); the fake kind with a past date still runs. D11: `registry._cross_check` (`=>def _cross_check(config, agents, chains, contracts) -> list[str]:
+548|k1b/replay.py:85-91|ays yes (the fake kind, or a self-hosted loopback route, 4.1; logic moved from `=>def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None: ¦ route = registry.config.routes[registry.agents[agent_id].model_route] ¦ zero = route.input_usd_per_mtok == 0 or route.output_usd_per_mtok == 0
+548|judge.py:3-4|ero_price`, which calls the same function; its test is kept); the judge route (`=>The only cloud-agnostic model detector: it runs on any configured llm route and kind (Clau ¦ or a local open-weights model on `openai_compat`), so regex + llm_judge is a production de
+554|chain.py:161|_MAX_UNSIGNED_TAIL` (value 100, equal to today's `checkpoint_every` default at `=>checkpoint_every: int = 100,
+554|backends/table.py:193|checkpoint_every` default at `chain.py:161` (`ChainSettings.checkpoint_every`, `=>checkpoint_every: int = Field(default=100, ge=1)
+554|backends/table.py:192-193|ing` where the chain settings are read (the settings class is `ChainSettings`, `=>class ChainSettings(KindSettings): ¦ checkpoint_every: int = Field(default=100, ge=1)
+556|anchor_gcs.py:69-85| true only when the anchor kind's start-up probe ran and passed (GCS `probed`, `=>def probed(bucket: Any, settings) -> GcsAnchor: ¦ try: ¦ bucket.reload(**_BOUNDED)
+556|anchor_azure.py:83-96|-up probe ran and passed (GCS `probed`, `anchor_gcs.py:69-85`; Azure `probed`, `=>def probed(container: Any, settings) -> AzureBlobAnchor: ¦ try: ¦ props = container.get_container_properties()
+558|cli.py:349-363|`cli.audit_verify` (`=>def audit_verify(audit) -> int: ¦ """Recompute the chain, every checkpoint signature and every anchor. Exit 0 intact, 1 not  ¦ 3 when the audit or its anchors cannot be read (an outage is not evidence of tampering).""
+558|chain.py:171|exit codes stay 0 / 1 / 3. `ChainAudit.verify` passes `self.checkpoint_every` (`=>self.checkpoint_every = checkpoint_every
+558|chain.py:203| ceiling because the inline checkpoint signs at `seq % checkpoint_every == 0` (`=>if self.signer is not None and seq % self.checkpoint_every == 0:
+562|evals.py:63|decode **strict UTF-8** (intended difference from the runtime's `"replace"` at `=>doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+562|models.py:221|xt"])` with a fixed string and no content (`errors` is a required `list[str]`, `=>errors: list[str]
+562|evals.py:63|s `<EMAIL_1>` next to a real e-mail must not forge a placeholder; same call as `=>doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+562|extract.py:58|try text uses `safe_head(str(exc), 300, mapping)` with the same mapping (today `=>errors.append(f"{exc.__class__.__name__}: {safe_head(str(exc), 300)}")
+570|llm/fake.py:39-40|d fake replies are keyed on `sha256(documents[0])` (only when documents exist, `=>doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") ¦ digest = hashlib.sha256(doc).hexdigest()
+574|actions/secrets_file.py:49-64|Extract, do not copy: move the opened-file checks of `secrets_file._fetch` (`=>with os.fdopen(fd, "rb") as f: ¦ mode = os.fstat(f.fileno()).st_mode ¦ if not stat.S_ISREG(mode):
+576|signer.py:104-108|- `audit/signer.build_local` (`=>else: ¦ path = Path(settings.private_key_path) ¦ if not path.is_file():
+576|secrets_file.py:54|ad=False`; the refusal mask there includes `S_IRGRP` (the mounted-file mask at `=>if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
+577|secrets_file.py:54|ule:** group and other bits do not exist there, so the check is skipped (as at `=>if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
+577|config.py:395-396|nd the docs; and in prod `ed25519_local` with a key file is already refused (**`=>if b.signer.kind == "ed25519_local" and b.signer.private_key_path is not None: ¦ refused.append("signer ed25519_local with a key file (use private_key_secret_name)")
+577|signer.py:182|, corrected from v5's `393-394`). Tests that write keys must create them 0600 (`=>_create(private_real, pem, 0o600)
+578|audit/signer.py:197|- **Siblings (S1 also covers):** `=>return _private_key(path.read_bytes(), passphrase, str(path))
+578|audit/signer.py:209|:197` (`load_private_key`, `read_bytes`) goes through `read_private_file` too; `=>key = serialization.load_pem_public_key(path.read_bytes())
+579|tests/test_lockin_guard.py:68-75|- Imports: `=>LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their layer ¦ "psycopg": {f"{PKG}.store.postgres", f"{PKG}.store.migrate"}, ¦ "cryptography": {
+585|tests/test_g4_parity.py:98,221-222|r.** The pinned shown lines and the lines to withhold share one lexical shape (`=>"update its set of rules",
+608|gate.py:4|| G1 | docstrings `=>(`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral 
+608|gate.py:366-377|| G1 | docstrings `gate.py:4`, `=> ¦ # G4: no command a person could paste to change a system reaches them. A change goes only  ¦ # contract, the gate and a signed approval, which the executor runs itself. Model-derived 
+608|channel.py:19-21|| G1 | docstrings `gate.py:4`, `gate.py:366-377`, `=>"""WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control cha ¦ markdown structure survives in text a person acts on; then G4 (`gate.withhold_commands`):  ¦ paste to change a system, on any platform; then ONE redaction, last."""
+609|gate.py:546|wline, `^`+newline, backtick+newline (the `_TOKEN` pattern stops at a newline, `=>_TOKEN = re.compile(r"[^\S\n]+([^\s]+)")
+609|gate.py:695|holds to the end of the joined line, which can swallow the next physical line (`=>end = text.find("\n", m.end())
+610|gate.py:608-615|| G2b | `_story` (`=>def _story(text: str, prog: str, s: int, e: int, toks: list[str]) -> bool: ¦ before = text[max(0, s - 40) : s] ¦ before = before[before.rfind("\n") + 1 :]
+612|gate.py:674|| G4a | `rm` shape (`=>r"|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)"
+612|gate.py:540|`, `rm --force x`; shows `rm the file` and `rm -v x`. `rm` is not in `_NAMES` (`=>_NAMES = ["aws", *_VERB_FIRST, *_WORD_RUN]
+613|gate.py:404|| G5a | `_AWS_READ_PREFIXES` use (`=>_AWS_READ_PREFIXES = ("describe-", "get-", "list-", "head-", "batch-get-", "lookup-", "sea
+618|gate.py:573-589|ation runs before the `_OWN` lookup; `_subcommands` already lower-cases words (`=>def _subcommands(toks: list[str]) -> list[str]: ¦ """The subcommand words, lower-cased. A flag with no `=` takes the next token as its value ¦ of the few flags known to take none: misreading the other way could make a flag's value (`
+623|guard/redact.py:472|- `PHONE` (`=>"PHONE",
+625|tests/warden_port/privacy_corpus.py:42|6-5 grouping, 17-19 digits, dot separator. The value `4111...` also appears in `=>"card 4111 1111 1111 1111",
+625|tests/warden_port/test_redaction.py:309,356|e value `4111...` also appears in `tests/warden_port/privacy_corpus.py:42` and `=>for pan in ("4111 1111 1111 1111", "4111-1111-1111-1111"):
+627|k1b/redaction.py:103|odelled on the HAR cookie pair near `:513`; share the credential-key test with `=>def _pair(key: str, value: str, f: Callable[[str], str]) -> str:
+633|config.py:451-454|to 'demo'; change it in your config")`; `load_config` returns a `ConfigError` (`=>except ConfigError: ¦ raise ¦ except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
+633|config.py:317|d_config` returns a `ConfigError` (`config.py:451-454`). Value or logic sites: `=>environment: Literal["dev", "pilot", "prod"]
+633|backends/table.py:593|config.py:451-454`). Value or logic sites: `config.py:317`, `:366-367`, `:19`, `=>DEV_ONLY: frozenset[tuple[str, str]] = frozenset(
+633|tests/test_lockin_guard.py:18,430|:317`, `:366-367`, `:19`, `backends/table.py:593` (`DEV_ONLY` to `DEMO_ONLY`), `=>from hadavin_sdk.backends.table import DEV_ONLY, NOT_PROD, TABLE
+633|tests/fixtures/config/config.yaml:2|able.py:593` (`DEV_ONLY` to `DEMO_ONLY`), `tests/test_lockin_guard.py:18,430`, `=>environment: dev
+633|tests/test_p4_secrets.py:106|), `tests/test_lockin_guard.py:18,430`, `tests/fixtures/config/config.yaml:2`, `=>def _config(tmp_path, secrets, environment="dev"):
+633|tests/warden_port/test_audit_chain.py:568|8,430`, `tests/fixtures/config/config.yaml:2`, `tests/test_p4_secrets.py:106`, `=>found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local))
+633|tests/test_p1b_backends.py:89-91|, `tests/test_p4_secrets.py:106`, `tests/warden_port/test_audit_chain.py:568`, `=>@pytest.mark.parametrize("env", ["pilot", "prod"]) ¦ def test_dev_only_kinds_refused_outside_dev(cfg_dir, env): ¦ _edit(cfg_dir, lambda d: d.update(environment=env))
+633|actions/secrets_env.py:1|t/test_audit_chain.py:568`, `tests/test_p1b_backends.py:89-91`. Wording sites: `=>"""`env` secrets: read from environment variables (`dev` only, by the environment table).
+633|audit/signer.py:64,98|`tests/test_p1b_backends.py:89-91`. Wording sites: `actions/secrets_env.py:1`, `=>"""An Ed25519 key in a PEM file (dev and pilot; refused in prod by the environment table).
+633|table.py:126,214,254,591|py:89-91`. Wording sites: `actions/secrets_env.py:1`, `audit/signer.py:64,98`, `=># (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth.
+633|config.py:346|ctions/secrets_env.py:1`, `audit/signer.py:64,98`, `table.py:126,214,254,591`, `=>)  # dev executor only
+633|defaults.py:100|v.py:1`, `audit/signer.py:64,98`, `table.py:126,214,254,591`, `config.py:346`, `=>EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_
+633|registry.py:50|ner.py:64,98`, `table.py:126,214,254,591`, `config.py:346`, `defaults.py:100`, `=># Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash: 
+633|tools.py:361|ble.py:126,214,254,591`, `config.py:346`, `defaults.py:100`, `registry.py:50`, `=>Without a pin (dev only; pilot and prod require one) it is an ordinary import."""
+633|agent_loop.py:179,553,572|54,591`, `config.py:346`, `defaults.py:100`, `registry.py:50`, `tools.py:361`, `=># Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev 
+633|actions/contract.py:34|faults.py:100`, `registry.py:50`, `tools.py:361`, `agent_loop.py:179,553,572`, `=>"""Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1
+633|store/postgres.py:75,90|py:50`, `tools.py:361`, `agent_loop.py:179,553,572`, `actions/contract.py:34`, `=>captured by an impostor); an explicit weaker `sslmode` is an opt-down for dev. With iam_au
+633|guard/redact.py:1162|op.py:179,553,572`, `actions/contract.py:34`, `store/postgres.py:75,90`. Leave `=>"dev",
+634|backends/table.py:155| S3 probe:** the floor is **new** (the existing default of `retain_days` is 1, `=>retain_days: int = Field(default=1, ge=1)
+634|config.py:377-398|. One place covers all three anchor kinds: `_anchor_refusals(environment, b)` (`=>def _anchor_refusals(environment: str, b: Backends) -> list[str]: ¦ """Environment table (design 4.6). Prod needs a signer and an anchor whose retention the c ¦ (`retention_ack`); COMPLIANCE mode (undeletable even by the account root) only then. `ed25
+634|table.py:150-157|d, so no per-kind build site changes (the settings class is `_AnchorSettings`, `=>class _AnchorSettings(KindSettings): ¦ """Every anchor kind: COMPLIANCE only in prod with `retention_ack` (the client agreed rete ¦ writing); prod also needs the ack for GOVERNANCE (config.py, environment table)."""
+634|anchor_gcs.py:69-85|ttings)` in `anchor_s3.py` (the S3 kind module only) modelled on GCS `probed` (`=>def probed(bucket: Any, settings) -> GcsAnchor: ¦ try: ¦ bucket.reload(**_BOUNDED)
+634|anchor_azure.py:83-96|ule only) modelled on GCS `probed` (`anchor_gcs.py:69-85`) and Azure `probed` (`=>def probed(container: Any, settings) -> AzureBlobAnchor: ¦ try: ¦ props = container.get_container_properties()
+644|cli.py:183-190|  | **operator CLI, ordinary commands** (own store connection, `=>try: ¦ secrets = make("secrets", b.secrets) ¦ # Same start-up probe as app.build: a missing DSN is a clean ConfigError, not a KeyError m
+666|tests/test_s5_runtime.py:107-111|per-day set, `POLICY_STOP_REASONS` (owned here), `_REASON_TEXT`, census tests, `=>def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): ¦ rt, cfg = build(cfg_dir) ¦ rt.limits.charge("test-agent", Decimal("0.999"))  # the call costs 0.00225 and crosses 1.0
+686|tests/k5_support.py:160-211|ts calling `add_spend` with a negative amount; `test_k5_run_budget_stops_run`; `=>def build_runtime( ¦ cfg_dir: Path, ¦ llm,
+693|tests/test_k3_pilot_env.py:61|d prints those with a non-fake llm kind and no `spend.window_end`. Known site: `=>"llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+720|test_s5_runtime.py:107-111|g, cited)` are my reading of the first 345 lines); whether any test other than `=>def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): ¦ rt, cfg = build(cfg_dir) ¦ rt.limits.charge("test-agent", Decimal("0.999"))  # the call costs 0.00225 and crosses 1.0
