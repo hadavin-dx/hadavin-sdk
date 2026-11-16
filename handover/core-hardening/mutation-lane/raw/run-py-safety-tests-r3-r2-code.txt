@@ -206,9 +206,9 @@ tree diff: 0 difference(s)
   PASS: T31 file restored
 == T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang
 ./safety-tests.sh: line 222: 16913 Killed                  timeout -s KILL 30 python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py > /dev/null 2>&1
-  FAIL: T32a FIFO in the tree refused, no hang (got 137; 124 or 137 = hung)
+  FAIL: T32a FIFO in the tree refused, no hang (got 137; 124 = hung)
 ./safety-tests.sh: line 222: 18066 Killed                  timeout -s KILL 30 python3 "$RUN" --root "$T/root" --restore > /dev/null 2>&1
-  FAIL: T32b FIFO as marker refused, no hang (got 137; 124 or 137 = hung)
+  FAIL: T32b FIFO as marker refused, no hang (got 137; 124 = hung)
 == T33 a .venv folder deeper than the top is compared like any other folder (exit 2)
   FAIL: T33 nested .venv refused (got 0)
 == T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)
