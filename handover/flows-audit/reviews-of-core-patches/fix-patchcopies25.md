@@ -11,9 +11,9 @@ Written 2026-11-16. Files edited: `patch-copies/README.md` and `patch-copies/DEA
 
 ## Evidence
 - Patch fingerprints before and after are identical (sha256sum):
-  - A-01.patch 64fdf315221fb9d653fe8defc844aa438c39c56bc32c5a86c70d8aab67892095
-  - C-01-price-only.patch e7ff677e70d0c1fd61e9c4e2f1024c58fd35b83bc715abd3d0449202038dae01
-  - C-01.patch ca4982ebb9daef2d5c96e1538d2cdde5291d2d9a948c70553b5661a0a17fded0
+  - A-01.patch 64fdf315221fb9d6…
+  - C-01-price-only.patch e7ff677e70d0c1fd…
+  - C-01.patch ca4982ebb9daef2d…
 - `bash -n` on fenced blocks: README.md fenced 12, bad 0; DEAD-MAN-CHECK.md fenced 12, bad 4 (baseline 4).
 - `ruff format --check .` (handover/flows-audit): "1098 files already formatted".
 - tools: check_refs PASS 5190; check_names PASS 655; check_secrets PASS 0 hits in 2973 files; check_counts PASS 52 files / 655 nodes.
