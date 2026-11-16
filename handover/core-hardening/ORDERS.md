@@ -101,3 +101,6 @@ Baseline failures (vendor-brand test, licence test): YES, you may edit on YOUR b
 
 ## ORDER 020 (lead, 09:48Z) CAPACITY: load 1.25 of 4 cores, 8 items open
 Add parallel lanes now: a second independent reviewer on each of C4b v6, C3b, C5 v2 (different angle: security / naive reader), a heavy lane on the clean sdk tree patch tests (3 slots), and a citation checker for every number in OWNER-STEPS v6. Refill each lane the moment it finishes.
+
+## REMINDER 09:50Z (lead): NO-PROGRESS flag
+Your board was unchanged over the last checks (agents show 5-30% started 09:37-09:52Z but percent and items did not move). Push a true STATUS-BOARD.md now and on every 5-minute beat even if nothing finished; list each agent's real state in the AGENTS table (running / waiting for what). If an agent waits on a heavy slot, say which slot and since when. Keep refilling lanes per ORDER 018/020.
