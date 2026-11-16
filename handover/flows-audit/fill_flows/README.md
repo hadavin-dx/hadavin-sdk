@@ -64,12 +64,20 @@ Keep it OUTSIDE any git folder, NOT under `/mnt`, and make it readable by you on
        python3 -I "$TOOL" fill --in "$REPO/handover/demo/n8n-flows-real-v5" \
          --values "$HOME/keep/flow-values.env" --out "$HOME/keep/filled"
 
+   Always join the next step to this one with `&&` (for example `fill ... && import ...`), never
+   with `;`. When a placeholder is still in the copy, `fill` ends with a non-zero code (3), so the
+   `&&` stops and nothing is imported. The copy is also marked: the folder then holds a file
+   `NOT-READY-DO-NOT-IMPORT.txt`, and `check` reports it as a problem. (Limit: a program that
+   imports every file of a folder without being asked by a `&&` still sees the flow files; the
+   note file and the exit code are the guards, not the file format.)
+
 2. Check (read-only; run it on the filled folder). It must say `0 problem(s)` before you import.
    `--tokens-only` ignores placeholders. A folder with no `.json` file is an error.
 
        python3 -I "$TOOL" check "$HOME/keep/filled"
 
-3. Delete when the take is over:
+3. Delete when the take is over (running it a second time, or on a name with nothing there, is
+   not an error: it says "nothing to delete" and ends with 0):
 
        python3 -I "$TOOL" delete --out "$HOME/keep/filled"
 
@@ -92,7 +100,8 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
    `SUB_WORKFLOW_ID` out for now.
 3. Fill into `"$HOME/keep/filled-1"`. It ends with exit code 3 and
    `NOT READY TO IMPORT: ... placeholders left` on the error screen. That is expected here (only
-   `SUB_WORKFLOW_ID` is left).
+   `SUB_WORKFLOW_ID` is left; the folder holds the `NOT-READY-DO-NOT-IMPORT.txt` note, and you
+   import only the one file named in step 4).
 4. In n8n, import ONLY `filled-1/mf-sub-crm-mail.json`. Open the imported workflow and read its id
    (check on your n8n: usually the address bar of the open workflow ends in the id).
 5. Add `SUB_WORKFLOW_ID=<that id>` to the values file. Run `delete --out "$HOME/keep/filled-1"`.
@@ -106,10 +115,10 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 ## Exit codes (what the number means)
 | Code | Meaning |
 |---|---|
-| 0 | Done: for `fill`, the copy is written and no placeholder is left; for `check`, nothing wrong. |
+| 0 | Done: for `fill`, the copy is written and no placeholder is left; for `check`, nothing wrong; for `delete`, deleted or nothing was there. |
 | 1 | Refused, or `check` found problems (for example a placeholder is still there: `check` ends with 1 until every one is filled) (or the folder holds no `.json`). The message names the key, file or line, never a value. |
 | 2 | The command was typed wrongly (missing option). |
-| 3 | `fill` wrote the copy, but placeholders are left. `NOT READY TO IMPORT: N placeholders left` is printed on the error screen. Do not import this copy. |
+| 3 | `fill` wrote the copy, but placeholders are left. `NOT READY TO IMPORT: N placeholders left` is printed on the error screen and the folder holds `NOT-READY-DO-NOT-IMPORT.txt`. Do not import this copy. |
 | 4 | Nothing to fill: the input has no marker and no placeholder you gave a value for (probably already filled, or the wrong folder). Nothing is written. |
 
 ## What a refusal means and what to do
@@ -117,6 +126,15 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
   pythonCode field", "with a '/' outside a string", "holds a // or /* comment": a marker is in a
   place where a plain replacement could change the meaning or break the code. Edit that flow so
   the marker stands alone inside `{{ ... }}`, then fill again.
+- "a backtick or '${' (a template string)": a marker sits in an expression that holds a template
+  string (text between backticks); a plain replacement could end up inside it. Edit the flow.
+- "a plain text ... plain fields are filled only in: url, toEmail, ...": a marker sits in a text
+  that does not start with `=` and is not one of the listed address fields (n8n does not read such
+  a text as an expression, so the marker would stay literal text). The real v5 flows have no
+  such marker (the test `test_real_flows_hold_no_plain_token` counts them); every marker there is
+  inside an `={{ }}` expression.
+- "the name holds a path or control character": an input file name (or the output folder name)
+  has a backslash, a control character or another look-alike character; rename it.
 - "cannot fill these names": a key is missing or empty in the values file, or the name is not
   `DESK_*` / `MF_*`. Add it, or fix the flow.
 - "values file ...": follow the message (chmod, move out of git or /mnt, remove quotes, etc.).
@@ -125,12 +143,21 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 
 ## If the run was killed or the fingerprint file is lost
 - If a fill stopped half way (power cut, disk full), run `delete --out DIR` for that folder. A fill
-  that fails by itself removes what it made (including a file cut in the middle).
+  that fails by itself removes what it made (including a file cut in the middle). A Ctrl-C during
+  a fill is held back while a file or the folder is being made and noted, so it leaves nothing
+  behind either. A kill that cannot be caught (power cut, `kill -9`) can leave the manifest cut
+  short with no folder: the next `fill` then says the manifest exists; run
+  `delete --out DIR --force-hash` (it removes a cut or empty manifest when no folder exists; it
+  still refuses a link, and a manifest that is not yours).
 - `delete` refuses a file whose content changed since it was written (you edited it, or a kill left
   it cut short). If you are sure, add `--force-hash`.
-- If the fingerprint file is lost: `delete --out DIR --no-manifest`. It deletes only a folder that
+- If the fingerprint file is lost: `delete --out DIR --no-manifest`. It does not touch a
+  fingerprint file that sits next to the folder unless that file is a valid manifest (then it is
+  removed with the folder); an invalid one makes it refuse, nothing deleted, and with
+  `--force-hash` it is removed too. It deletes only a folder that
   looks exactly like this program's output: the folder holds the small marker file
-  `.fill_flows-output` that `fill` writes first (right format and this folder's name), the folder
+  `.fill_flows-output` (and, when placeholders were left, the note `NOT-READY-DO-NOT-IMPORT.txt`
+  with its exact text) that `fill` writes first (right format and this folder's name), the folder
   is mode 0700 and the files are mode 0600, all owned by you; every file is a plain `.json` file that reads as JSON and holds no `$env`
   text. Anything else is refused and nothing is deleted. A file cut short by a kill is not valid
   JSON: add `--force-hash` to skip the JSON and `$env` reading (the mode, owner and name
@@ -149,7 +176,13 @@ reads and deletes everything through that open folder, so swapping the folder na
 while it runs changes nothing. It also reads the mode back from each new file and folder and
 refuses (removing what it made) if the disk did not keep it private, instead of guessing from
 the path. The first folder in the output path is looked up by name once; a link there is accepted
-only when you or root made it.
+only when you or root made it. The git and `/mnt` checks are made on the typed path first and
+then again on the place the OPEN folder (and the open values file) really is in, asked of the
+open handle (Linux: `/proc/self/fd`; macOS: `F_GETPATH`), so a link swapped in between the check
+and the open is caught. On another system the second check falls back to the typed path.
+A plain text is filled only in the address fields `url`, `toEmail`, `fromEmail`, `ccEmail` and
+`bccEmail` (the list `PLAIN_KEYS` in the program); a number that is too large for JSON (such as
+`1e999`) is refused instead of being written as `Infinity`; the output files are flushed to disk.
 
 ## Clean-up checklist (after the take)
 1. `delete --out DIR` (removes the filled files, the folder and the fingerprint file).
@@ -189,5 +222,7 @@ you named. Use the normal `delete` (with the fingerprint file) when you have it.
 `python3 -I -m unittest` in this folder. They copy the real flows into a fresh temporary folder
 (`FF_TEST_BASE` chooses where; `FF_DEMO_DIR` points at the flows). Values are made up and built
 from parts. Every run of the program in the tests goes through one helper that fails the test if
-any made-up value written by the tests appears in the screen output; the few tests that write a
-values file by hand add their value to that list.
+any made-up value written by the tests appears in the screen output, also in its escaped forms
+(JSON, Python literal); every test that writes a values file by hand does it through `write_raw`,
+which adds the value to that list. One test needs `node` (a JavaScript engine) and is skipped when
+it is not installed.

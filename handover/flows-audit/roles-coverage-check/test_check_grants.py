@@ -673,17 +673,18 @@ class Round5(Base):
                 seen_internal = seen_internal or "internal error" in out
         self.assertTrue(seen_internal, "no depth reached the safety net on this interpreter")
 
-    def test_literal_starting_with_escaped_quote_is_one_literal(self):
-        # The text after SET state= is ONE literal that holds: 'drop table
-        # A parser that ignores the doubled quote sees an empty literal, a bare DROP and a lone quote.
+    def test_escaped_quote_keeps_one_literal(self):
+        # 'drop ''drop ' is ONE literal (the doubled quote is an escaped quote inside it), so the
+        # forbidden word is reported once per literal. A parser that ignores the doubled quote sees
+        # two literals and reports it twice.
         self.set_query(
             "mf-sub-crm-mail",
             "MarkDone",
-            lambda q: "UPDATE mf_leads SET state='''drop table' WHERE lead_key=$1;",
+            lambda q: "UPDATE mf_leads SET state='drop ''drop ' WHERE lead_key=$1;",
         )
         rc, out = self.check()
         self.assertEqual(rc, 1, out)
-        self.assertIn("forbidden keyword DROP inside a string literal", out)
+        self.assertEqual(out.count("forbidden keyword DROP inside a string literal"), 1, out)
         self.assertNotIn("unbalanced", out)
         self.assertNotIn("Traceback", out)
 
@@ -693,7 +694,7 @@ class Round5(Base):
             "MarkDone",
             lambda q: "UPDATE mf_leads SET state='''ok' WHERE lead_key=$1;",
         )
-        rc, out = self.check()
+        _, out = self.check()
         self.assertNotIn("unbalanced", out)
         self.assertNotIn("inside a string literal", out)
         self.assertNotIn("Traceback", out)
@@ -727,8 +728,8 @@ class Round5(Base):
             "mf-form", "Stored", lambda q: "SELECT state FROM MF_LEADS WHERE lead_key=$1;"
         )
         rc, out = self.check()
-        self.assertNotIn("touches table", out)
-        self.assertNotIn("Traceback", out)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("mf-form Stored -> mf_door: covered", out)
         self.set_query(
             "mf-form", "Stored", lambda q: 'SELECT state FROM "MF_LEADS" WHERE lead_key=$1;'
         )

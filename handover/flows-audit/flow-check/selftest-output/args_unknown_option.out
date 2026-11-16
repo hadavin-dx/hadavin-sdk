@@ -1,3 +1,3 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --nope
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py ../../demo/n8n-flows-real-v5 --nope
 usage error: unknown option --nope
 exit=2
