@@ -2107,5 +2107,9 @@ python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t99
 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 git -C "$T/repo" config --unset tar.umask
 chk "T99i m5 the refusal text names the bit that was refused: mode 0666 -> 'writable by others' (exit $rc1); mode 0664 with a git file 0644 -> 'writable by the group' and the git mode (exit $rc2) (r11: both said 'git has neither')" "[ $rc1 -eq 3 ] && grep -q 'writable by others' '$S/t99i1.out' && ! grep -q 'has neither' '$S/t99i1.out' && [ $rc2 -eq 3 ] && grep -q 'writable by the group' '$S/t99i2.out' && grep -q '0o644' '$S/t99i2.out'"
+kill_planted; setmarker97 mode=511
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t100i.out" 2>&1; rci=$?
+python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+chk "T100i independent r11 item 5: the 0777 refusal with --sha names the git HEADER mode 0o664 (git archive default), not the extracted 0o644 (exit $rci; r11: printed 0o644)" "[ $rci -eq 3 ] && grep -q 'execute bits' '$S/t100i.out' && grep -q '(0o664)' '$S/t100i.out'"
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"

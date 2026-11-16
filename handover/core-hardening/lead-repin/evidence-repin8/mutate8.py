@@ -19,7 +19,7 @@ M = [
 ("m06", "(AKIA|ASIA)[0-9A-Z]{16}/<masked>", "(AKIA|ASIA)[0-9A-Z]{17}/<masked>"),
 ("m07", "eyJ[A-Za-z0-9_-]{8,}", "eyJ[A-Za-z0-9_-]{80,}"),
 ("m08", "([A-Za-z0-9-]+\\.)+[A-Za-z]{2,}/<email-masked>", "([A-Za-z0-9-]+\\.)+[A-Za-z]{20,}/<email-masked>"),
-("m09", "|credential|token|apikey|", "|credential|apikey|"),
+("m09", "STRONG='(secret|passw[o0]?r?d|passphrase|credential|token|apikey|", "STRONG='(secret|passw[o0]?r?d|passphrase|credential|apikey|"),
 ("m10", "PRE=\"[\\\"']?[]]?[[:space:]]*=\"", "PRE=\"[\\\"']?[]]?[[:space:]]*==\""),
 ("m11", "[[:space:]]*:=[[:space:]]*)(${STR}", "[[:space:]]*:==[[:space:]]*)(${STR}"),
 ("m12", "if (n < 24) return (tok ~", "if (n < 240) return (tok ~"),
@@ -51,7 +51,7 @@ M = [
 ("n13", "|remmina'\nPWCMDS_A=\"$PWCMDS|http|https|xh\"", "|remmina'\nPWCMDS_A=\"$PWCMDS\""),
 ("n14", "unset -f sed awk grep tr find git ps head sort wc cat kill sleep date mktemp rm ls cut tee id uname mkdir cp mv chmod basename dirname env printf test 2>/dev/null", ":"),
 ("n15", "  gsub(/\\002/, \"<\", line)", "  gsub(/\\002/, \"\", line)"),
-("n16", "EBD='\\\\\\\\\"'", "EBD=''"),
+("n16", "EBD='\\\\\"'", "EBD=''"),
 ]
 os.makedirs(outdir + "/mut", exist_ok=True)
 for ent in M:

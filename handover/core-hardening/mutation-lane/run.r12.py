@@ -1652,7 +1652,6 @@ def restore_from_marker(
         # 0664 (tar.umask default 002), so a genuine file may carry the group bit; a bit beyond what git gives is refused, and
         # a write bit for others is always refused (found by T95d3 in the first full run of r11: refusing every group bit
         # made the restore of a genuine 0664 file impossible)
-        git_mode = REF_MODES.get(str(expected_ref), {}).get(m["file"], ref_mode)
         # r12 m5: the text names the bit that was refused (r11 said "git has neither" even when git has the group bit)
         if mm is not None and mm & 0o002:
             raise Refused(
