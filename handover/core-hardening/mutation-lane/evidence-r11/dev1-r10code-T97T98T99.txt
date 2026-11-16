@@ -134,3 +134,13 @@ Traceback (most recent call last):
   FAIL: T99d m2 4095 and 4096-byte roots end in a refusal (exit 2, no traceback, 4096 named too long): 0 wrong; a root of ~3900 bytes plus a 245-byte relative file (got exit 2), a 300-byte --prefix (got 2) and a 300-byte --id (got 2) are refused with exit 2, no traceback, no INTERNAL ERROR
 REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/dev1old/other-tmp/hadavin-mutation-lane-0/rawfolder99/X-baseline.txt lies in the state folder /tmp/cla
   FAIL: T99e m3 --raw inside the state folder of TMP: exit 2 (got 2) and the folder was NOT created (r10: created, then refused)
+/tmp/safety-only.lrMUmU.sh: line 70: 11937 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/dev1old/tmpstate/hadavin-mutation-lane-0/72eb58220fa51224.backup; hash 
+  FAIL: T99f m6 marker mode 664 with --sha: exit 3 (got 0), nothing written (still planted) (r10: exit 0, mode written)
+/tmp/safety-only.lrMUmU.sh: line 70: 12337 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/dev1old/tmpstate/hadavin-mutation-lane-0/72eb58220fa51224.backup; hash 
+  FAIL: T99f m6 marker mode 660 with --sha: exit 3 (got 0), nothing written (still planted) (r10: exit 0, mode written)
+/tmp/safety-only.lrMUmU.sh: line 70: 12637 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o632) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T99f m6 marker mode 632 with --sha: exit 3 (got 3), nothing written (still planted) (r10: exit 0, mode written)
+FAILED CHECKS: 14 (of 40 checks run; skipped: none)

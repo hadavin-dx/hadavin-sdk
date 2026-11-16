@@ -147,3 +147,11 @@ REFUSED: --raw /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scr
   PASS: T99e m3 --raw inside the state folder of TMP: exit 2 (got 2) and the folder was NOT created (r10: created, then refused)
 /tmp/safety-only.m5LIrJ.sh: line 70: 11768 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 RESTORE FAILED: the mode in the marker (0o664) has a special bit (setuid, setgid, sticky) or is writable by group or others: git has neither, so the marker may be forged; nothing written (r10 m2); the
+  PASS: T99f m6 marker mode 664 with --sha: exit 3 (got 3), nothing written (still planted) (r10: exit 0, mode written)
+/tmp/safety-only.m5LIrJ.sh: line 70: 12254 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o660) has a special bit (setuid, setgid, sticky) or is writable by group or others: git has neither, so the marker may be forged; nothing written (r10 m2); the
+  PASS: T99f m6 marker mode 660 with --sha: exit 3 (got 3), nothing written (still planted) (r10: exit 0, mode written)
+/tmp/safety-only.m5LIrJ.sh: line 70: 12515 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o632) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T99f m6 marker mode 632 with --sha: exit 3 (got 3), nothing written (still planted) (r10: exit 0, mode written)
+FAILED CHECKS: 2 (of 40 checks run; skipped: none)
