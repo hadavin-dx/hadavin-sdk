@@ -331,7 +331,7 @@ _dflt = sum(1 for r in rows if "on the default of" in r["st"] and "after check" 
 _chk = sum(1 for r in rows if "after check" in r["st"])
 _own = sum(1 for r in rows if "waits for the answer of L-SAVEERR" in r["st"])
 _w1 = N - _chk - _own
-_pats = [(r"holds (\d+) proposed text changes", N), (r"READY \((\d+):", _ready), (r"ON DEFAULT \((\d+):", _dflt), (r"WAITS FOR A CHECK \((\d+):", _chk), (r"WAITS FOR THE OWNER \((\d+):", _own), (r"READY \+ ON DEFAULT = (\d+) of the", _w1), (r"of the (\d+) rows\.", N), (r"applies the (\d+) wave 1 rows", _w1), (r"leaves unapplied the (\d+) rows that wait for a check", _chk), (r"and the (\d+) that wait for the owner", _own)]
+_pats = [(r"holds (\d+) proposed text changes", N), (r"READY \((\d+):", _ready), (r"ON DEFAULT \((\d+):", _dflt), (r"WAITS FOR A CHECK \((\d+):", _chk), (r"WAITS FOR THE OWNER \((\d+):", _own), (r"READY \+ ON DEFAULT = (\d+) of the", _w1), (r"of the (\d+) rows\.", N), (r"applies the (\d+) rows of WAVE 1", _w1), (r"leaves unapplied the (\d+) rows that wait for a check", _chk), (r"and the (\d+) that wait for the owner", _own)]
 _bad = [(p_, [int(x) for x in re.findall(p_, boxs)], want) for p_, want in _pats if not re.findall(p_, boxs) or any(int(x) != want for x in re.findall(p_, boxs))]
 check("E-numbers: every row count in the start box (all %d, ready %d, default %d, check %d, owner %d, wave 1 %d) equals the recount from the table, in every place it is printed" % (N, _ready, _dflt, _chk, _own, _w1), not _bad and N == _ready + _dflt + _chk + _own, _bad)
 # E-defaults: the default of each question in the start box equals the default in section 3
@@ -442,8 +442,8 @@ check("N6: option (b) of L-CARDLEN is printed in the start box (74 words) with t
 check("m6: every 'second person' says who (someone who did not write the scan)", raw.count("a second person") == raw.count("a second person (someone who did not write the scan)"), raw.count("a second person"))
 
 # E-defs: each definition the start box and section 1c rely on is present where it is used (the c6s checks looked at box and 1c together, so one copy could vanish unseen)
-_need_box = ["G12 = YOUR gate", "MY ASSUMPTION", "LRN14:33", "this report's own reading", "STUDIO LEAD = you"]
-_need_1c = ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", "KEY = a secret code", "a warning mail the system is built to send to a person", "this report's own reading"]
+_need_box = ["G12 = YOUR approval", "LRN14:33", "STUDIO LEAD = you"]
+_need_1c = ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", "KEY = a secret code", "a warning mail the system is built to send to a person", "this report's own reading", "MY ASSUMPTION"]
 check("E-defs: the start box itself holds %s and section 1c holds %s" % (_need_box, _need_1c), all(x in boxs for x in _need_box) and all(x in sec1c for x in _need_1c) and "the one warning mail the system sends" not in raw, [x for x in _need_box if x not in boxs] + [x for x in _need_1c if x not in sec1c])
 _r6 = bylead[6]["new"] if 6 in bylead else ""
 check("E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key", "second person" in sec1c and "tested with a fake key before it touches a real key" in raw and "(someone who did not write the scan) and tested with a fake key before it touches a real key" in raw and raw.count("tested with a fake key before it touches a real key") >= 2, "")

@@ -272,7 +272,7 @@ def extra3b(t):
     t = rsub(t, r"the builder cannot apply it from this text; a builder re-issues the rows it touches and a reviewer reads them again\. ", "a builder re-issues the rows it touches and a reviewer reads them again. ", 1)
     t = rsub(t, r"\(a builder applies rows 23, 58 and 59 as in step 1 and adds the row numbers to c6w-APPLIED-ROWS\.md\): ", "(a builder applies rows 23, 58, 59 and lists them in c6w-APPLIED-ROWS.md): ", 1)
     t = rsub(t, r"\(5\) you run the loopback re-smoke, which also runs and writes the three G12 checks \(table rule seen; a repeat send more than 45 seconds after the first; a crash followed by a repeat\) and provokes", "(5) you run the loopback re-smoke, which also runs and writes the three G12 checks (section 1c-I) and provokes", 1)
-    t = rsub(t, r" Answer with one version and one rendering, for example 'v34 rendering A' \(RENDERING A and B = the two files OWNER-SHEET-vN-A\.md and -B\.md of one checklist; KEY ROUTE A and B are something else, the two ways of handling the older key; section 3\)\.", " Answer with one version and one rendering, for example 'v34 rendering A' (RENDERING A and B = the two files -A.md and -B.md of one checklist; not the KEY ROUTES A and B, section 3).", 1)
+    t = rsub(t, r" Answer with one version and one rendering, for example 'v34 rendering A' \(RENDERING A and B = the two files OWNER-SHEET-vN-A\.md and -B\.md of one checklist; KEY ROUTE A and B are something else, the two ways of handling the older key; section 3\)\.", " Answer with one version and one rendering, for example 'v34 rendering A' (RENDERING A and B = the A file and the B file of one checklist; not the KEY ROUTES A and B, section 3).", 1)
     t = rsub(t, r"The old texts were checked only against a scratchpad copy \(shipped in evidence-c6w/tree/\); equality with the real files is UNVERIFIED, so the builder first confirms that each old text occurs once in the real file and stops at any row where it does not\.", "The old texts were checked only against a scratchpad copy (evidence-c6w/tree/): equality with the real files is UNVERIFIED, so the builder confirms each old text occurs once in the real file first and stops at any row where it does not.", 1)
     t = rsub(t, r"the label 'setting: lease 45 s' and the words 'other lease settings' on card line 4\. THE ONE FORM", "the label 'setting: lease 45 s' and the words 'other lease settings'. THE ONE FORM", 1)
 
@@ -281,6 +281,40 @@ def extra3b(t):
              "(a builder applies rows 23, 58, 59 and lists them in c6w-APPLIED-ROWS.md): (1) you write the answer line; (2) the builder applies wave 1; (3) two reviewers read the CHANGED FILES (not this report); (4) you import the edited flows into n8n and run C-4, then a builder applies row 23; (5) you run the loopback re-smoke (it also writes the three G12 checks, section 1c-I, and provokes an alert mail, crash test K3), then a builder applies rows 58 and 59; (6) a builder writes the leak scan C-6, a second person tests it with a fake key; it runs after every rehearsal with real accounts and after the take, BEFORE any deletion; (7) at the re-pin you read the take script; (8) you ask the owner L-SHEET, his HubSpot key scope and L-SAVEERR.", 1)
     t = rsub(t, r" KEY = a secret code that lets a program use an account \(the owner's HubSpot key; a second, separate probe key\)\.", " KEY = a secret code that lets a program use an account.", 1)
     t = rsub(t, r"Five items are OPEN and 'apply all defaults' answers none: the two OWNER ONLY questions of the table; G12 \(yours\); two owner items about the take script \(section 1c\)\. ", "Five items are OPEN and 'apply all defaults' answers none: the two OWNER ONLY questions; G12 (yours); two owner items about the take script (section 1c). ", 1)
+
+
+    # fourth trim pass
+    t = rsub(t, r"Your line starts the builder\. The G12 approval is ONE line in ORDERS\.md \(form in the WORDS list, item G12\), written only after the loopback re-smoke of TASK \(5\) has put its results on the run sheet\.", "Your line starts the builder.", 1)
+    t = rsub(t, r"Answer forms: L-CARD, L-CARDCUT, L-CARDTEXT, L-CARDLEASE \(keep or drop\), L-POST, L-APPROX, L-SAVE, L-PAGE, L-ONEDB, L-CUT yes or no; L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply\.", "Answer forms: yes or no, except L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply; L-CARDLEASE keep or drop.", 1)
+    t = rsub(t, r"The defaults cut nothing by hand: rows 11 to 14 write the whole card \(90 words, about 36 s, budget 40 s\), row 96 sets the card's Time cell to the same 40 s, and a gate keeps the held lines off the film \(shorter cases: Table B, section 1c; each a hand edit and a further round\)\.", "Rows 11 to 14 write the whole card (90 words, about 36 s, budget 40 s); row 96 sets its Time cell to 40 s; a gate keeps the held lines off the film (shorter cases: Table B, section 1c; each needs a hand edit and a further round).", 1)
+    t = rsub(t, r"\(a builder applies rows 23, 58, 59 and lists them in c6w-APPLIED-ROWS\.md\): \(1\)", ": (1)", 1)
+
+    # fifth trim pass
+    t = rsub(t, r"\(TASK \(7\) happens after the take; TASK \(9\) is done when you have answered it, yes or no\)", "(TASK (7) comes after the take; TASK (9) is done once answered)", 1)
+    t = rsub(t, r" so I cannot say whether Wed 18 Nov 2026 \(ORD:150, not fixed\) can be reached; ask the builder for hours per task first\.", " so whether Wed 18 Nov 2026 (ORD:150, not fixed) can be reached is unknown; ask the builder for hours per task.", 1)
+    t = rsub(t, r"spends nothing; imports nothing into n8n; does not start the filmed run; writes no card line", "spends nothing; imports nothing into n8n; writes no card line", 1)
+    t = rsub(t, r" \(the files call it a 'lead'; card line 1 says 'lead', your decided sentence, lines 2 to 4 say 'contact'\)", " (the files say 'lead'; card line 1 keeps your decided word 'lead', lines 2 to 4 say 'contact')", 1)
+    t = rsub(t, r" THE CUT NUMBER = the 60\.1 to 61\.9 s recovery time of 18 stand-in crash runs that your decision 1 removes\.", " THE CUT NUMBER = the 60.1 to 61.9 s recovery time of 18 stand-in runs, removed by your decision 1.", 1)
+
+    # sixth trim pass
+    _k = t.index("## Start here, part 2")
+    _h, _tl = t[:_k], t[_k:]
+    _h = _h.replace(" It changes no running n8n; rows 23, 58, 59 and the 6 of L-SAVEERR are NOT applied; no row edits the owner sheet or release note.", " No row edits the owner sheet or release note.", 1)
+    t = _h + _tl
+    t = rsub(t, r" More words \(MONEY STOP, FINAL, RUN, CHECK\): section 1c\.", "", 1)
+
+    t = rsub(t, r" \(shorter cases: Table B, section 1c; each needs a hand edit and a further round\)", " (shorter cases: Table B, section 1c; each needs a hand edit)", 1)
+    t = rsub(t, r"; ask the builder for hours per task\.", "; ask the builder.", 1)
+    # real written times of the newest sheet and release note (read from the files; the c6v text carried older times)
+    import os as _os, datetime as _dt
+    _st = _os.environ.get("C6V_STEPS") or _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), "steps-edits")
+    def _wt(n):
+        d = _dt.datetime.fromtimestamp(_os.path.getmtime(_os.path.join(_st, n)), _dt.timezone.utc)
+        return d.strftime("%H:%M:%S"), (d + _dt.timedelta(hours=5, minutes=30)).strftime("%H:%M:%S")
+    t = t.replace("v34 A, B and SOURCE and release note v18 at 18:56:55 UTC = 00:26:55 IST", "v34 A, B and release note v18 again at 19:14:05 UTC = 00:44:05 IST")
+    for _old, _fn in (("18:56:54 UTC = 00:26:54 IST", "OWNER-SHEET-v34-A.md"), ("18:56:55 UTC = 00:26:55 IST", "LEAD-RELEASE-NOTE-v18.md")):
+        _u, _i = _wt(_fn)
+        t = t.replace(_old, "%s UTC = %s IST" % (_u, _i))
     return t
 
 

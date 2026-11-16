@@ -188,10 +188,11 @@ check("G4 settle again with nothing open is refused 23514 (the 0.4 already settl
 check("G4 the total is still 0.4 after the refusal", rt.execute("SELECT usd FROM spend WHERE agent_id='a'").fetchone()[0] == Decimal("0.4"))
 rt.execute("SELECT * FROM spend_reserve('a', %s, %s)", (D, Decimal("2")))
 check("G5 settle of a worst case larger than what is open (3 > 2) refused 23514", st(lambda: rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("3"), Decimal("0")))) == "23514")
+_g6 = rt.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone()
 r = rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("-1"), Decimal("0"))).fetchone()
 check("G6 a negative worst case returns no row (v21: a rejected settle must not look like a success)", r is None, str(r))
 check("G6 a negative actual cost returns no row", rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("1"), Decimal("-5"))).fetchone() is None)
-check("G6 after both rejections the totals are still 2.4 and 2.4", rt.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone() == (Decimal("2.4"), Decimal("2.4")))
+check("G6 after both rejections the stored total and open amount are unchanged", rt.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone() == _g6, str(_g6))
 for v in ("NaN", "Infinity"):
     check(f"G7 reserve of {v} refused 23514", st(lambda: rt.execute("SELECT * FROM spend_reserve('a', %s, %s)", (D, Decimal(v)))) == "23514")
 _ua = mg.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone()
