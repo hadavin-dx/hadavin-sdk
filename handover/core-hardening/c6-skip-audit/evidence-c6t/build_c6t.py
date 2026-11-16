@@ -33,10 +33,17 @@ cs = open(E + "static-checks-output.txt", encoding="utf-8").read()
 CTFULL = re.search(r"check time \(UTC\): (\S+)", cs).group(1)
 CT = CTFULL[11:19]
 CTI = ist(CT)
-TM = {n: t for t, n in re.findall(r"^\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z (OWNER-SHEET-v30-[A-Z]+\.md)$", cs, re.M)}
-assert set(TM) == {"OWNER-SHEET-v30-A.md", "OWNER-SHEET-v30-B.md", "OWNER-SHEET-v30-SOURCE.md"}, TM
-RN = {n: t for t, n in re.findall(r"^\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z (LEAD-RELEASE-NOTE-v14(?:-SOURCE)?\.md)$", cs, re.M)}
-assert "LEAD-RELEASE-NOTE-v14.md" in RN and "LEAD-RELEASE-NOTE-v14-SOURCE.md" in RN, RN
+ALLT = {n: t for t, n in re.findall(r"^\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z (OWNER-SHEET-v\d+-[A-Z]+\.md)$", cs, re.M)}
+NEWV = max(int(re.search(r"-v(\d+)-", n).group(1)) for n in ALLT)
+assert NEWV >= 30
+TM = {n: t for n, t in ALLT.items() if "-v%d-" % NEWV in n}
+assert set(TM) == {"OWNER-SHEET-v%d-%s.md" % (NEWV, x) for x in ("A", "B", "SOURCE")}, TM
+INTER = list(range(30, NEWV))          # versions after the c6s text was written, older than the newest
+RN = {n: t for t, n in re.findall(r"^\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z (LEAD-RELEASE-NOTE-v\d+(?:-SOURCE)?\.md)$", cs, re.M)}
+RNV = max(int(re.search(r"-v(\d+)", n).group(1)) for n in RN if "SOURCE" not in n)
+assert RNV >= 14
+RNN, RNS = "LEAD-RELEASE-NOTE-v%d.md" % RNV, "LEAD-RELEASE-NOTE-v%d-SOURCE.md" % RNV
+assert cs.count("the whole line is the same in v14 and in") == 4 and "DIFFERS" not in cs, "release note lines 8, 33, 149, 150 differ between v14 and the newest"
 OLDCT, OLDCTI, OLDT, OLDTI = "17:13:05", "22:43:05", "17:12:09", "22:42:09"
 
 box_tpl = open(E + "c6t_box.txt", encoding="utf-8").read().rstrip("\n").split("\n")
@@ -49,8 +56,12 @@ def oldl(prefix):
     return c[0]
 
 
-V30 = ("At %s the folder holds OWNER-SHEET-v30-A.md (written %s) and OWNER-SHEET-v30-B.md (written %s), both rendered sheets, and "
-       "OWNER-SHEET-v30-SOURCE.md (the template; written %s)." % (hh(CT), hh(TM["OWNER-SHEET-v30-A.md"]), hh(TM["OWNER-SHEET-v30-B.md"]), hh(TM["OWNER-SHEET-v30-SOURCE.md"])))
+def tn(x, v=None):
+    return TM["OWNER-SHEET-v%d-%s.md" % (v or NEWV, x)] if (v or NEWV) == NEWV else ALLT["OWNER-SHEET-v%d-%s.md" % (v, x)]
+
+
+V30 = ("At %s the folder holds OWNER-SHEET-v%d-A.md (written %s) and OWNER-SHEET-v%d-B.md (written %s), both rendered sheets, and "
+       "OWNER-SHEET-v%d-SOURCE.md (the template; written %s)." % (hh(CT), NEWV, hh(tn("A")), NEWV, hh(tn("B")), NEWV, hh(tn("SOURCE"))))
 LSHEET_SHORT = "| L-SHEET | OWNER ONLY: which ONE owner sheet (the checklist the owner reads) is final? %s | None: only the owner can answer it. NOT covered by 'apply all defaults'. |" % V30
 LLEASE_SHORT = ("| L-LEASE | Which sentence about the 45-second setting goes on the card (line 1) and in the scene 3 caption? It counts only if L-POST is 'no', and any answer other than none needs the G12 approval first. "
                 "none = the plain statement only; 1 = the 25-word limit sentence of your earlier answer; 2 = the 40-word explanation (the full words of 1 and 2 are in section 1c). "
@@ -75,7 +86,7 @@ def make_box(words):
             l = CARD_SHORT
         elif l == "{{ANSWERFORM}}":
             l = ANSWER_SHORT
-        out.append(l.replace("{BOXWORDS}", str(words)))
+        out.append(l.replace("{BOXWORDS}", str(words)).replace("{SHEETA}", "OWNER-SHEET-v%d-A.md" % NEWV).replace("{SHEETB}", "OWNER-SHEET-v%d-B.md" % NEWV).replace("{RNN}", RNN))
     return out
 
 
@@ -107,7 +118,7 @@ def sec1c():
     ll = sub(ll, "The 45-second limit then lives in the owner sheet and the release note only (step 9).", "No row puts the 45-second limit sentence in any document; whether you want it in the owner sheet and the release note is your question TASK (9).")
     A(ll)
     A("")
-    A("L-SHEET in full: OWNER ONLY: confirm the ONE final owner sheet (the checklist the owner reads). " + V30 + " v29 A and B were written 16:46:37 UTC = 22:16:37 IST, v29 SOURCE 16:41:12 UTC = 22:11:12 IST, v28 A and B 16:09:58 UTC = 21:39:58 IST. Name the one sheet that is final (for example 'v30A'); if the studio lead renders a later version, name that one. The sheets change while I work (another session rewrites them): the check time, the written times and the newest-version rule are in section 0, and verify-c6t.py fails when any owner sheet or release note is newer than the ones named.")
+    A("L-SHEET in full: OWNER ONLY: confirm the ONE final owner sheet (the checklist the owner reads). " + V30 + " " + "".join("v%d A and B were written %s, v%d SOURCE %s. " % (v, hh(tn("A", v)), v, hh(tn("SOURCE", v))) for v in reversed(INTER)) + "v29 A and B were written 16:46:37 UTC = 22:16:37 IST, v29 SOURCE 16:41:12 UTC = 22:11:12 IST, v28 A and B 16:09:58 UTC = 21:39:58 IST. Name the one sheet that is final (for example 'v30A'); if the studio lead renders a later version, name that one. The sheets change while I work (another session rewrites them): the check time, the written times and the newest-version rule are in section 0, and verify-c6t.py fails when any owner sheet or release note is newer than the ones named.")
     A("")
     A("1c-C. THE CLOSING CARD, THE TABLE OF LENGTHS AND THE CUT CASES")
     A("")
@@ -149,7 +160,7 @@ def sec1c():
     t = sub(t, "set saving of successful runs to all and of failed runs to none in the environment that starts n8n;",
             "set saving of successful runs to all and of failed runs to none in the environment that starts n8n; provoke an ALERT MAIL on the edited flows (the test K3: switch n8n off after the test mailbox has stored the mail and before the contact record is updated, as in the stand-in tests, MF:159; the exact command of the test program is not in the audited files: UNVERIFIED) and write the mail with its date and time in UTC and IST and a name under risks list item 12, or card line 2 is cut;")
     t = sub(t, "TASK (9) you (or a builder you name) add the 45-second limit sentence to the one final owner sheet and the release note, because they must carry it when the card and caption do not (default 'yes' of L-POST); no row of this report does it;",
-            "TASK (9) A QUESTION TO YOU, not an instruction: OWNER-SHEET-v30-A.md, OWNER-SHEET-v30-B.md and LEAD-RELEASE-NOTE-v14.md do not carry the 45-second limit sentence, and your release note strikes the lease sentence from the public post (LRN14:150) and bars any lease sentence unless approved in writing (LRN14:149, item 11). Do you want the sentence added to the one final owner sheet and the release note? Yes: you or a builder you name adds it (no row does). No: no document carries it;")
+            "TASK (9) A QUESTION TO YOU, not an instruction: OWNER-SHEET-v%d-A.md, OWNER-SHEET-v%d-B.md and %s do not carry the 45-second limit sentence, and your release note strikes the lease sentence from the public post (LRN14:150) and bars any lease sentence unless approved in writing (LRN14:149, item 11). Do you want the sentence added to the one final owner sheet and the release note? Yes: you or a builder you name adds it (no row does). No: no document carries it;" % (NEWV, NEWV, RNN))
     A(t)
     A("")
     A("1c-G. THE WORD COUNT OF THE BOX. The c6s box held about 3,488 words by my own count (the c6s report said 3,490) and the c6s check script never compared a stated count with the real one. The c6t box states its real count in its second paragraph and verify-c6t.py recounts it.")
@@ -179,11 +190,24 @@ def build(words):
 
     # ---- stale times: every time of a file or of the check comes from the check output
     txt = "\n".join(L)
+    # the sentence of c6s about the newest sheets (v30 there) is rewritten for the newest version on disk
     for nm in ("A", "B"):
         old = "OWNER-SHEET-v30-%s.md (written %s UTC = %s IST)" % (nm, OLDT, OLDTI)
-        txt = sub(txt, old, "OWNER-SHEET-v30-%s.md (written %s)" % (nm, hh(TM["OWNER-SHEET-v30-%s.md" % nm])), txt.count(old))
+        txt = sub(txt, old, "OWNER-SHEET-v%d-%s.md (written %s)" % (NEWV, nm, hh(tn(nm))), txt.count(old))
     old = "OWNER-SHEET-v30-SOURCE.md (the template; written %s UTC = %s IST)" % (OLDT, OLDTI)
-    txt = sub(txt, old, "OWNER-SHEET-v30-SOURCE.md (the template; written %s)" % hh(TM["OWNER-SHEET-v30-SOURCE.md"]), txt.count(old))
+    txt = sub(txt, old, "OWNER-SHEET-v%d-SOURCE.md (the template; written %s)" % (NEWV, hh(tn("SOURCE"))), txt.count(old))
+    if NEWV > 30:
+        older = "".join("v%d A and B (written %s) and v%d SOURCE (written %s), " % (v, hh(tn("A", v)), v, hh(tn("SOURCE", v))) for v in reversed(INTER))
+        old = "; v29 A, B and SOURCE are older"
+        txt = sub(txt, old, "; " + older + "v29 A, B and SOURCE are older", txt.count(old))
+        for old, new in (("NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v30", "NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v%d" % NEWV),
+                         ("), v29 and v30: OWNER-SHEET", "), v29, %s and v%d: OWNER-SHEET" % (", ".join("v%d" % v for v in INTER), NEWV)),
+                         ("v19 to v30 (all variants", "v19 to v%d (all variants" % NEWV),
+                         ("v29-B, v30-A, v30-B; two mentions in v29-SOURCE, v30-SOURCE", "v29-B, " + ", ".join("v%d-A, v%d-B" % (v, v) for v in INTER + [NEWV]) + "; two mentions in v29-SOURCE, " + ", ".join("v%d-SOURCE" % v for v in INTER + [NEWV])),
+                         ("v30-A and v30-B are the newest rendered sheets at", "v%d-A and v%d-B are the newest rendered sheets at" % (NEWV, NEWV)),
+                         ("17:13:05 UTC = 22:43:05 IST are v30-A and v30-B)", "17:13:05 UTC = 22:43:05 IST are v30-A and v30-B)")):
+            c = txt.count(old)
+            txt = sub(txt, old, new, c) if c else (FAILS.append("no match: " + old[:60]) or txt)
     for old, new in (("%s UTC = %s IST" % (OLDCT, OLDCTI), "%s UTC = %s IST" % (CT, CTI)), ("2026-11-16T%sZ = %s IST" % (OLDCT, OLDCTI), "%s = %s IST" % (CTFULL, CTI))):
         txt = sub(txt, old, new, txt.count(old))
     L[:] = txt.split("\n")
@@ -195,14 +219,14 @@ def build(words):
     i0 = find("## 0. Failures")
     L.insert(i0 + 1,
              "- FAILURES FIRST IN c6t (my own, still open when I wrote this): (1) the EGM review of REPORT-c6t.md is not run: no reviewer has read it, so every statement here is a builder statement until the studio lead's reviewers have read it; "
-             "(2) another session rewrote OWNER-SHEET-v30-A.md and OWNER-SHEET-v30-B.md (%s) and LEAD-RELEASE-NOTE-v14.md (%s) after the c6s check time of %s UTC, so the c6s report named a stale time; this report names the times that the check script read at %s UTC = %s IST, and verify-c6t.py fails if any owner sheet or release note is newer than the ones named; they can change again at any minute, so the check must be run last and again before you rely on it; "
+             "(2) another session rewrote the owner sheets and the release note after the c6s check time of %s UTC (v30 A and B and release note v14 at 17:22:10 UTC = 22:52:10 IST, then v%d A, B and SOURCE and release note v%d at %s), so the c6s report named a stale time and an older newest version; release note v%d has lines 8, 33, 149 and 150 equal to v14 (the check script compares the whole lines), so every LRN14 cite stays valid; this report names the times that the check script read at %s UTC = %s IST, and verify-c6t.py fails if any owner sheet or release note is newer than the ones named; they can change again at any minute, so the check must be run last and again before you rely on it; "
              "(3) the alert mail: nobody has shown how to provoke an alert on the take's flows (TASK (5) names the test K3 of the stand-in tests; its command is not in the audited files: UNVERIFIED); "
              "(4) the 45-second limit sentence is in no owner sheet and no release note (searched at the check time); whether it should be is your question TASK (9); "
              "(5) NOT FIXED, rows 53 and 54 (N8N-START.md lines 24 and 23): after row 54 is applied, line 24 'SAVE_ON_ERROR=none: the same for runs that fail' reads as if failed runs were stored; the clean fix is one more row (row 95); I did not add it because it changes the row count in about 30 places and in the checks' counts; next step: the studio lead tells a builder to add row 95 (text proposed in section 9); "
              "(6) not run: n8n, any flow, the harness, any real key scan, the stopwatch."
-             % (hh(TM["OWNER-SHEET-v30-A.md"]), hh(RN["LEAD-RELEASE-NOTE-v14.md"]), OLDCT, CT, CTI))
+             % (OLDCT, NEWV, RNV, hh(RN[RNN]), RNV, CT, CTI))
     patch("- THE NEWEST OWNER SHEET, RECHECKED AGAIN IN c6s:", "RECHECKED AGAIN IN c6s:", "RECHECKED AGAIN IN c6t:")
-    patch("- THE NEWEST OWNER SHEET", "NEWEST RELEASE NOTE NAMED: v14.", "NEWEST RELEASE NOTE NAMED: v14 (LEAD-RELEASE-NOTE-v14.md written %s; LEAD-RELEASE-NOTE-v14-SOURCE.md written %s)." % (hh(RN["LEAD-RELEASE-NOTE-v14.md"]), hh(RN["LEAD-RELEASE-NOTE-v14-SOURCE.md"])))
+    patch("- THE NEWEST OWNER SHEET", "NEWEST RELEASE NOTE NAMED: v14.", "NEWEST RELEASE NOTE NAMED: v%d. %s was written %s and %s %s." % (RNV, RNN, hh(RN[RNN]), RNS, hh(RN[RNS])))
     patch("- NOT DONE, NOT VERIFIED IN c6s (first):", "NOT DONE, NOT VERIFIED IN c6s (first):", "NOT DONE, NOT VERIFIED IN c6t (first):")
 
     # ---- L-POST, L-LEASE and the sentence (design M1, M2)

@@ -2,6 +2,11 @@
 rsub('E-23', '(at the time of writing fix round 3 on `take/nlite-int-r3`, fix round 4 on `take/nlite-int-r4`, fix round 5 being built on `take/nlite-int-r5`; source: the plan\'s own header notes of 2026-11-16)', '(at the time of writing the plan is at its fifth fix round; the names of the code branches are in the plan\'s header notes of 2026-11-16 and are not needed by you)')
 why_add('E-23', 'Round 16 (stranger minor): branch names are out of the owner text.')
 
+rsub('E-09', 'as a new message in the chat (step 22 item 3, key step C)', 'as a new message in the chat (step 22 item 3, key step B)')
+rsub('E-52', 'step 22 item 3, key step C)', 'step 22 item 3, key step B)', 1)
+why_add('E-09', 'Round 16 (stranger M1): the typed-message rule is key step B, not key step C.')
+why_add('E-52', 'Round 16 (stranger M1): the typed-message rule is key step B, not key step C.')
+
 # E-56 plain words, no codes
 set_new('E-56', '''- UNVERIFIED: two statements later in this line (the clause that says the end of the take makes a delete request, and the note at the end of the MAY part of this line; the word "archive" in the next line of this file means the same) say that the end of the take removes the take's HubSpot contacts. That is an earlier reading of the code. A later independent review found no delete or archive path, and the decision of 16 Nov 2026 says the take never deletes contacts. Which reading is right is NOT SETTLED; the studio lead shows a search of the final code when the code version is fixed. Until then do not rely on either statement, and do not widen the HubSpot key.
 - MAY: post this take's own generated lead keys (L plus hex);''')

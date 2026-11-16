@@ -1,15 +1,15 @@
 #!/bin/sh
-# lead-repin-verify.sh (version 7): checklist printer for the lead at re-pin.
+# lead-repin-verify.sh (version 8): checklist printer for the lead at re-pin.
 #
 # WHAT IT DOES TO YOUR MACHINE (exact):
 #   - reads files: grep, sed, awk, tr, wc, find, sha256sum, git rev-parse / log / status
 #     (git runs with --no-optional-locks, so it does not rewrite the git index to refresh it, with
 #     core.fsmonitor=false, so the folder's file-system-monitor program is not started, with log.showSignature=false
 #     and gpg.program=/bin/false, so no signature program of the folder's settings runs for "git log", and with
-#     core.hooksPath=/dev/null, so no hook runs. That does NOT stop
-#     every program the folder's own git settings can name (a clean or smudge filter, for example for large
-#     files, can still run during "git status"): if you do not trust the folder, run with
-#     LEAD_REPIN_NO_STATUS=1 and git status is skipped);
+#     core.hooksPath=/dev/null, so no hook runs. v8: "git status" does NOT run by default, because it can still start
+#     programs the folder's own git settings name (a clean or smudge filter, for example for large files); set
+#     LEAD_REPIN_GIT_STATUS=1 only for a folder you trust. Every GIT_* variable of the caller is removed at the start,
+#     and the system and user git configuration files are not read);
 #   - reads the list of listening ports (ss, or netstat, or /proc/net/tcp);
 #   - writes ONLY into one private work folder it makes with mktemp (permissions 700, files 600 because of
 #     umask 077; on a Windows-mounted drive under WSL these modes may NOT be enforced, so set TMPDIR to a
@@ -53,6 +53,8 @@
 # have at most 3 folders between the test-program folder and the file, preferring a scripts/ folder below the test-program folder
 # folder) and prints which one it used.
 #   TAKE_PY CRM_PY DRIVE_PY N8N_PY FLOWS_DIR MODEL_DIR MODEL_SETTINGS ONE_STORE END_RE MODEL_RE DELETE_RE LEAD_REPIN_NO_STATUS
+# v8: a shell function inherited from the caller (bash: export -f sed) would replace the real program; remove them first
+unset -f sed awk grep tr find git ps head sort wc cat kill sleep date mktemp rm ls cut tee id uname mkdir cp mv chmod basename dirname env printf test 2>/dev/null
 set +x +v 2>/dev/null          # a trace option from the caller (sh -x, sh -v) would print every line, secret values included
 # PATH: keep only absolute folders. An empty or relative entry (a dot, for example) would let a program planted
 # in the current folder run instead of the real sed, awk, grep or git.
@@ -60,7 +62,12 @@ SAVE_IFS=$IFS; NEWPATH=; IFS=:
 for pth_d in ${PATH:-}; do case $pth_d in /*) NEWPATH=${NEWPATH:+$NEWPATH:}$pth_d ;; esac; done
 IFS=$SAVE_IFS; PATH=${NEWPATH:-/usr/bin:/bin}; export PATH
 # (ENV and BASH_ENV are read by a shell when it STARTS, before this line: unsetting them here protects only the programs started below, not this shell itself)
-unset ENV BASH_ENV CDPATH GREP_OPTIONS GREP_COLOR GREP_COLORS SED_OPTIONS
+unset ENV BASH_ENV CDPATH GREP_OPTIONS GREP_COLOR GREP_COLORS SED_OPTIONS AWKPATH AWKLIBPATH POSIXLY_CORRECT SHELLOPTS BASHOPTS BASH_XTRACEFD PS4 LOCPATH NLSPATH MALLOC_CONF
+# v8: every GIT_*, LD_* and DYLD_* variable of the caller is removed (GIT_DIR or GIT_WORK_TREE would point git at another
+# folder; LD_PRELOAD would load a library into every program below), and git gets a fixed, safe setting set of its own
+for env_v in $(env 2>/dev/null | sed -n 's/^\(\(GIT\|LD\|DYLD\)_[A-Za-z0-9_]*\)=.*/\1/p'); do unset "$env_v" 2>/dev/null; done
+GIT_CONFIG_NOSYSTEM=1; GIT_CONFIG_GLOBAL=/dev/null; GIT_TERMINAL_PROMPT=0; GIT_OPTIONAL_LOCKS=0; export GIT_CONFIG_NOSYSTEM GIT_CONFIG_GLOBAL GIT_TERMINAL_PROMPT GIT_OPTIONAL_LOCKS
+IFS=$(printf ' \t\n_'); IFS=${IFS%_}   # v8: the word-splitting characters are reset (a caller's IFS would change every unquoted expansion below)
 LC_ALL=C; export LC_ALL        # byte-wise matching: a byte that is not valid text cannot make a tool skip a line
 set -u
 umask 077
@@ -107,6 +114,7 @@ MAINPID=$$; WDPID=
 start_watchdog() { # ends the whole run (as a TERM signal) after LEAD_REPIN_MAX_SECONDS (default 1200); stopped again by cleanup
   MAXSEC=${LEAD_REPIN_MAX_SECONDS:-1200}
   case $MAXSEC in ''|*[!0-9]*) MAXSEC=1200 ;; esac   # not a whole number: the default
+  case ${#MAXSEC} in [1-6]) ;; *) MAXSEC=1200 ;; esac   # v8: more than 6 digits (an absurd limit, or a number the shell cannot compare): the default
   ( wd_i=0; while [ "$wd_i" -lt "$MAXSEC" ]; do kill -0 "$MAINPID" 2>/dev/null || exit 0; sleep 1; wd_i=$((wd_i + 1)); done; : > "$WORK/timeout.flag"; kill -TERM "$MAINPID" 2>/dev/null ) &
   WDPID=$!
 }
@@ -156,7 +164,7 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
 CANARY_PLANNED=1372
 SELFTEST_PLANNED=1398
-SOH=$(printf '\001')
+SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\005')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
   #  (a) a STRONG word is anywhere inside it (secretValue, tokenString, passwordHash, authTokenValue, secretdata),
@@ -180,7 +188,8 @@ write_mask_sed() {
   DQ='"([^"\\]|\\.)*"'                         # a double-quoted string that may hold \" inside
   SQ="'([^'\\\\]|\\\\.)*'"                     # the same with single quotes
   STR="(${DQ}|${SQ})([[:space:]]*\\+?[[:space:]]*(${DQ}|${SQ}))*"   # one or more strings in a row ("a" "b", 'a' + "b")
-  BQ='\\["'"'"']'                           # a backslash followed by a quote character (a quote escaped inside JSON that sits inside a string)
+  BQ='\\+["'"'"']'
+  BQD='\\+"'; BQS="\\\\+'"; EBD='\\"'; EBS="\\\\'"    # escaped double or single quote (one or more backslashes); EBD/EBS: what the replacement puts back so the closing quote stays                           # a backslash followed by a quote character (a quote escaped inside JSON that sits inside a string)
   UNQ='[^][{},[:space:]<"'"'"'][^,}[:space:]]*'  # an unquoted value (does not start a container or a mask mark)
   {
     cat <<EOF
@@ -238,6 +247,10 @@ b
 }
 }
 EOF
+    xml_rules
+    # v8: from here on every raw < of the input is the private byte STX; the only < left are the marks this filter made itself
+    # (<masked>, <email-masked>). So a value that starts with < can no longer pass as "already hidden" (MIN-2).
+    printf 's/<masked>/%s/g\ns/<email-masked>/%s/g\ns/</%s/g\ns/%s/<masked>/g\ns/%s/<email-masked>/g\n' "$ETX" "$ENQ" "$STX" "$ETX" "$ENQ"
     line_rules
   } > "$MASKSED"
   line_rules > "$MASKLINE"
@@ -245,6 +258,7 @@ EOF
 # PWCMDS: commands that take a password as a short flag (-p -P -a -w -k or -pVALUE). THIS IS A LIST: a command that is not on it
 # is only covered by the shape rule (a line that starts like a command and has -p, -P or -w and a value that is not a number).
 PWCMDS='docker|podman|nerdctl|skopeo|buildah|helm|redis-cli|ldapsearch|ldapmodify|ldapadd|ldapdelete|ldappasswd|ldapwhoami|zip|zipcloak|unzip|7z|7za|7zr|rar|unrar|arj|htpasswd|smbclient|smbget|rpcclient|mount|psql|pg_dump|pg_restore|mongo|mongosh|mongoexport|mongoimport|sqlcmd|bcp|ftp|lftp|ncftp|rclone|openconnect|openssl|ccrypt|gpg|gpg2|mysql|mysqldump|mysqladmin|mariadb|mongodump|mongorestore|sshpass|cqlsh|beeline|impala-shell|influx|svn|hg|az|cryptsetup|ansible|ansible-playbook|vncpasswd|xfreerdp|rdesktop|remmina'
+PWCMDS_A="$PWCMDS|http|https|xh"   # v8: the -a (user:password) flag of httpie style programs; only for the -a, -w, -k forms
 line_rules() {
   cat <<EOF
 s/(^|[^A-Za-z0-9])(((max|num|n|total|prompt|completion|input|output|cached?|reserved)[_.-]?)+)(tok)(ens)/\1\2\5${SOH}\6/Ig
@@ -257,7 +271,8 @@ s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
 /(${ID})${PRE}[[:space:]]*'''.*'''/I!s/((${ID})${PRE}[[:space:]]*''').*/\1<masked>/I
 s/(-----BEGIN [A-Z ]*(PRIVATE|SECRET|ENCRYPTED)[A-Z ]*-----).*/\1<masked>/
 s/(["'](${IDQ})["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
-s/(${BQ}(${IDQ})${BQ}[[:space:]]*:[[:space:]]*${BQ})([^\\\\]|\\\\[^"'])*${BQ}/\1<masked>/Ig
+s/(${BQD}(${IDQ})${BQD}[[:space:]]*:[[:space:]]*${BQD})([^\\\\]|\\\\[^"'])*${BQD}/\1<masked>${EBD}/Ig
+s/(${BQS}(${IDQ})${BQS}[[:space:]]*:[[:space:]]*${BQS})([^\\\\]|\\\\[^"'])*${BQS}/\1<masked>${EBS}/Ig
 s/(${BQ}(${IDQ})${BQ}[[:space:]]*:[[:space:]]*)[^\\\\[:space:],}<][^,}[:space:]]*/\1<masked>/Ig
 s/(["'][^"']*\\\\u[0-9A-Fa-f]{4}[^"']*["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/g
 s/(["'](name|key|var|variable|env)["'][[:space:]]*:[[:space:]]*["'](${IDQ})["'][[:space:]]*,[[:space:]]*["'][A-Za-z_]*["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
@@ -297,7 +312,7 @@ s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw[o0]?r?d|pa
 s/((^|[[:space:]])(machine|default)([[:space:]].*)?[[:space:]](password|passwd|passw0rd|account)[[:space:]]+)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
 :pwl
 s/(((^|[^A-Za-z0-9_])(${PWCMDS})[^|;&]*[[:space:]]-(p|P))[[:space:]]*)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
-s/(((^|[^A-Za-z0-9_])(${PWCMDS})[^|;&]*[[:space:]]-(a|w|k|pw|pass))[[:space:]]+)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
+s/(((^|[^A-Za-z0-9_])(${PWCMDS_A})[^|;&]*[[:space:]]-(a|w|k|pw|pass))[[:space:]]+)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
 tpwl
 s@(((^${PFX0}[[:space:]]*([\$]|#|>|RUN|CMD|run:|-)?|[;&|(]|\\\$\\()[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*([^[:space:]|;&]*/)?[a-z][a-z0-9._-]*[[:space:]]([^|;&]*[[:space:]])?-(p|P|w)[[:space:]]+))(${STR}|[0-9:.]*[^0-9:.[:space:]<~/-][^[:space:]]{2,})@\1<masked>@I
 s@(^${PFX0}[[:space:]]+-(p|P|w)[[:space:]]+)(${STR}|[0-9:.]*[^0-9:.[:space:]<~/-][^[:space:]]{2,})@\1<masked>@I
@@ -306,11 +321,23 @@ s/((^|[^A-Za-z0-9_])htpasswd[^|;&]*[[:space:]]-[A-Za-z]*b[A-Za-z]*([[:space:]]+[
 s/((^|[^A-Za-z0-9_])(echo|printf)([[:space:]]+-[A-Za-z]+)*[[:space:]]+)[^[:space:]<|;&-][^[:space:]|;&]*([[:space:]]*\|[^|].*(stdin|passwd|password|login|chpasswd|sudo[[:space:]]+-S|kinit|ssh-add|passphrase-fd|cryptsetup))/\1<masked>\5/I
 s/((${ID})([[:space:]]+[A-Za-z0-9_]+){1,2}[[:space:]]*:[[:space:]]*)[^[:space:]<"'].*/\1<masked>/Ig
 s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<\//\1<masked><\//Ig
-s/((^|[^A-Za-z0-9])[A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|apikey)[A-Za-z0-9_.-]*[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
+s/((^|[^A-Za-z0-9])[A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|api[_.-]?key)[A-Za-z0-9_.-]*[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
 s/(<masked>[[:space:]]*(\|\||\?\?|or|:-)[[:space:]]*)(${STR})/\1<masked>/Ig
 s/(IDENTIFIED[[:space:]]+(WITH[[:space:]]+[A-Za-z_]+[[:space:]]+)?BY[[:space:]]+)(${STR}|[^[:space:];<][^[:space:];]*)/\1<masked>/Ig
 s/(^${PFX0}[[:space:]]*(requirepass|masterauth|auth-pass|bindpw|rootpw)[[:space:]]+)[^[:space:]<=].*/\1<masked>/I
+s/(<(${IDB})([[:space:]][^>]*)?>)<!\[CDATA\[([^]]|\][^]]|\]\][^>])*\]\]>/\1<masked>/Ig
+s/(^${PFX0}[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]*${STRONG}[A-Za-z0-9_.-]*["']?[[:space:]]+)[^][:space:]<"'=:;,(){}][^[:space:]]*/\1<masked>/I
+s/((login|authenticate|authorize|sign_?in|basic_?auth|set_?pass(word)?|add_?user)[[:space:]]*\(([^(),]*,)[[:space:]]*)(${STR})/\1<masked>/Ig
+s/((set_?pass(word)?|set_?secret|set_?token|set_?api_?key)[[:space:]]*\([[:space:]]*)(${STR})/\1<masked>/Ig
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
+EOF
+}
+# xml_rules: the rules that need a raw < (XML and HTML forms). They run BEFORE the step that turns every raw < into a private byte.
+xml_rules() {
+  cat <<EOF
+s/(<[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=["'](${IDQ})["'][[:space:]]+(value|val|data|content)=)(${STR}|[^[:space:]>/<"'][^[:space:]>/]*)/\1"<masked>"/Ig
+s/(<(${IDB})([[:space:]][^>]*)?>)<!\[CDATA\[([^]]|\][^]]|\]\][^>])*\]\]>/\1<masked>/Ig
+s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<\//\1<masked><\//Ig
 EOF
 }
 # Stage 2 of the filter: an awk program written to the work folder. It needs only POSIX awk (mawk, gawk, busybox).
@@ -601,10 +628,36 @@ function ml_start(b,   m, nm, rest, sec, t, tk) {
   }
   if (!sec) { ML_D = 0; ML_Q = "" }
 }
-function pre_line(   t, pfx, body, hid) {
+# ctl_strip (v8, MAJ-1 / MIN-1): control bytes can hide text on a terminal (ESC sequences, a bare CR that returns to the start of the
+# line, backspace) and can split a secret name (pass<byte>word). Removed: a CR at the end of the line (a CRLF file), every other byte
+# 0x01-0x08, 0x0B-0x1F and 0x7F (a TAB stays), and the bidirectional controls (UTF-8 of U+200E, U+200F, U+202A-U+202E, U+2066-U+2069,
+# U+061C), which can reorder what is shown. CTLN = how many were removed (a CRLF line end is not counted).
+function ctl_strip(s,   t, n) {
+  CTLN = 0
+  sub(/\015+$/, "", s)
+  if (s ~ /[\001-\010\013-\037\177]/) { t = s; CTLN = gsub(/[\001-\010\013-\037\177]/, "", t); s = t }
+  if (s ~ /\342[\200\201]|\330\234/) { t = s; n = gsub(/\342\200[\216\217\252-\256]|\342\201[\246-\251]|\330\234/, "", t); if (n > 0) { CTLN += n; s = t } }
+  return s
+}
+# decode_forms (v8, MIN-5): HTML entities and URL escapes for the quote, equals, less-than and greater-than signs are turned into the
+# plain character BEFORE the sed stage, so the name rules see the same text a reader would. (The printed line shows the plain character.)
+function decode_forms(t) {
+  if (index(t, "&") > 0) {
+    gsub(/&[Qq][Uu][Oo][Tt];|&#0*34;|&#[xX]0*22;/, "\"", t)
+    gsub(/&[Aa][Pp][Oo][Ss];|&#0*39;|&#[xX]0*27;/, "'", t)
+    gsub(/&[Ll][Tt];|&#0*60;|&#[xX]0*3[Cc];/, "<", t)
+    gsub(/&[Gg][Tt];|&#0*62;|&#[xX]0*3[Ee];/, ">", t)
+  }
+  if (index(t, "%") > 0) {
+    gsub(/%3[Dd]/, "=", t); gsub(/%22/, "\"", t); gsub(/%27/, "'", t)
+  }
+  return t
+}
+function pre_line(   t, pfx, body, hid, cn, tag) {
   PRE_N++
-  n0 = length($0)
-  t = $0
+  t = ctl_strip($0); cn = CTLN
+  t = decode_forms(t)
+  n0 = length(t)
   if (n0 > MAXL) { t = substr(t, 1, MAXL); if (CF != "") { print n0 >> CF; close(CF) } }
   pfx = ""; body = t
   if (match(t, /^(([^:]+[:-])?[0-9]+[-:])/)) { pfx = substr(t, 1, RLENGTH); body = substr(t, RLENGTH + 1) }
@@ -617,7 +670,9 @@ function pre_line(   t, pfx, body, hid) {
     if (body ~ /[\200-\377]/) body = nonascii_names(body)
     ml_start(body)
   }
-  t = pfx body
+  tag = ""
+  if (cn > 0) tag = " [control bytes removed: " cn "]"
+  t = pfx body tag
   if (n0 > MAXL) t = t "\005" n0 "\005"
   print t
 }
@@ -642,8 +697,10 @@ MODE == "pre" { pre_line(); next }
 {
   line = $0
   gsub(/\001/, "", line)
+  gsub(/\002/, "<", line)          # v8: the sed stage turned every raw < into STX (see write_mask_sed); it is turned back here
   nmark = 0
   if (match(line, /\005[0-9]+\005$/)) { nmark = substr(line, RSTART + 1, RLENGTH - 2) + 0; line = substr(line, 1, RSTART - 1) }
+  line = ctl_strip(line)             # v8: the same control-byte removal in the final stage (also the final belt over the whole output)
   n0 = length(line); atl = 0
   if (nmark > n0) n0 = nmark
   else if (MAXL > 0 && n0 >= MAXL) atl = 1
@@ -701,11 +758,14 @@ filter_ready() {
 # mask: hide secrets FIRST (name rules, on the whole line), then the awk stage (opaque strings, containers),
 # which also cuts long lines and SAYS that the line was cut. A NUL byte would make some tools stop reading a
 # line, so it is shown as ? first.
+# v8: every stage of the filter reports a failure (not killed by a closed pipe) in $WORK/mask.fail, so a failing stage is not silent
+# (the filter then prints less, never more); the end of a run and --mask read that file and stop with exit 4.
+mstage() { "$@"; ms_rc=$?; case $ms_rc in 0|141) ;; *) printf '%s %s\n' "$1" "$ms_rc" >> "$WORK/mask.fail" 2>/dev/null ;; esac; return 0; }
 mask() {
-  tr '\000' '?' | awk -v MODE=pre -v MAXL=20000 -v CF="$LENCUT" -f "$MASKAWK" | sed -E -f "$MASKSED" | awk -v CUT=240 -v MAXL=20000 -f "$MASKAWK"
+  mstage tr '\000' '\001' | mstage awk -v MODE=pre -v MAXL=20000 -v CF="$LENCUT" -f "$MASKAWK" | mstage sed -E -f "$MASKSED" | mstage awk -v CUT=240 -v MAXL=20000 -f "$MASKAWK"
 }
 # mask_line: the line rules only plus the awk stage: the final belt over the whole output
-mask_line() { sed -E -f "$MASKLINE" | awk -v CUT=1000 -v OKF="$SHAOK" -f "$MASKAWK"; }
+mask_line() { mstage sed -E -f "$MASKLINE" | mstage awk -v CUT=1000 -v OKF="$SHAOK" -f "$MASKAWK"; }
 # ---------------------------------------------------------------- self-test (also the canary that runs first in every run)
 # Four views of every case: (full) the whole filter = what a search prints; (L) the line rules plus awk = the
 # final belt over the whole output; (S) the sed stage alone, so a rule of the sed stage cannot hide behind the awk
@@ -1491,6 +1551,7 @@ MODEL_DIR=${MODEL_DIR:-}
 MODEL_SETTINGS=${MODEL_SETTINGS:-}
 ONE_STORE=${ONE_STORE:-}
 LEAD_REPIN_NO_STATUS=${LEAD_REPIN_NO_STATUS:-}
+LEAD_REPIN_GIT_STATUS=${LEAD_REPIN_GIT_STATUS:-}   # v8: git status runs ONLY when this is set to 1 (it can start programs named by the folder's own git settings)
 
 END_RE=${END_RE:-"[\"']end[\"']|(^|[^A-Za-z_])END[A-Z_]*[[:space:]]*=|[=!]=[[:space:]]*end([^A-Za-z_]|\$)"}
 MODEL_RE=${MODEL_RE:-'anthropic|messages\.create|/v1/messages|model_program|call_model|post_model|post_lead|llm|complete\(|burst|/qualify|/control|n8n_drive|urlopen|requests\.(get|post)|httpx|subprocess|Popen|webhook|127\.0\.0\.1|localhost'}
@@ -1707,6 +1768,7 @@ main() {
     # of a program to run, so git status is skipped there
     gv=$(git --version 2>/dev/null | awk '{ split($3, a, "."); print a[1] * 1000 + a[2] }')
     if [ -n "$LEAD_REPIN_NO_STATUS" ]; then printf 'changed or untracked files (count): NOT READ (LEAD_REPIN_NO_STATUS is set)\n'
+    elif [ "$LEAD_REPIN_GIT_STATUS" != 1 ]; then printf 'changed or untracked files (count): NOT READ (git status can start programs named by the folder'"'"'s own git settings, so it is off unless you set LEAD_REPIN_GIT_STATUS=1 for a folder you trust)\n'
     elif [ "${gv:-0}" -lt 2036 ]; then printf 'changed or untracked files (count): NOT READ (git version %s is older than 2.36: the switch core.fsmonitor=false could be read as a program name)\n' "$(git --version 2>&1)"
     else printf 'changed or untracked files (count): %s\n' "$(g status --porcelain 2>&1 | wc -l | tr -d ' ')"; fi
     g log -1 --format='last commit: %h %ci' 2>&1

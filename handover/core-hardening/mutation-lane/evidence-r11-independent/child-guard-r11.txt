@@ -1,0 +1,29 @@
+has check_child_call: True has Child: True
+ROW|ok (control)|check_child_call|ACCEPTED (no refusal)
+ROW|ok (control)|Child|STARTED (rc=0)
+ROW|ok env allowed (control)|check_child_call|ACCEPTED (no refusal)
+ROW|ok env allowed (control)|Child|STARTED (rc=0)
+ROW|shell=True with string|check_child_call|REFUSED: program start refused: the arguments must be a non-empty list of text (never one shell str
+ROW|shell=True with string|Child|REFUSED: program start refused: the arguments must be a non-empty list of text (never one shell str
+ROW|shell=True with list|check_child_call|REFUSED: program start refused: a shell is never used
+ROW|shell=True with list|Child|REFUSED: program start refused: a shell is never used
+ROW|relative argv0|check_child_call|REFUSED: program start refused: the program must be an absolute path, got "true"
+ROW|relative argv0|Child|REFUSED: program start refused: the program must be an absolute path, got "true"
+ROW|relative ./true|check_child_call|REFUSED: program start refused: the program must be an absolute path, got "./true"
+ROW|relative ./true|Child|REFUSED: program start refused: the program must be an absolute path, got "./true"
+ROW|executable=|check_child_call|REFUSED: program start refused: executable= is not allowed
+ROW|executable=|Child|REFUSED: program start refused: executable= is not allowed
+ROW|preexec_fn=|check_child_call|REFUSED: program start refused: preexec_fn= is not allowed
+ROW|preexec_fn=|Child|REFUSED: program start refused: preexec_fn= is not allowed
+ROW|extra env LD_PRELOAD|check_child_call|REFUSED: program start refused: environment variable(s) not allowed: ['LD_PRELOAD']
+ROW|extra env LD_PRELOAD|Child|REFUSED: program start refused: environment variable(s) not allowed: ['LD_PRELOAD']
+ROW|extra env FOO|check_child_call|REFUSED: program start refused: environment variable(s) not allowed: ['FOO']
+ROW|extra env FOO|Child|REFUSED: program start refused: environment variable(s) not allowed: ['FOO']
+ROW|extra env BASH_ENV|check_child_call|REFUSED: program start refused: environment variable(s) not allowed: ['BASH_ENV']
+ROW|extra env BASH_ENV|Child|REFUSED: program start refused: environment variable(s) not allowed: ['BASH_ENV']
+ROW|NUL in arg|check_child_call|REFUSED: program start refused: an argument holds a NUL character
+ROW|NUL in arg|Child|REFUSED: program start refused: an argument holds a NUL character
+ROW|tuple args|check_child_call|REFUSED: program start refused: the arguments must be a non-empty list of text (never one shell str
+ROW|tuple args|Child|REFUSED: program start refused: the arguments must be a non-empty list of text (never one shell str
+ROW|pass_fds|check_child_call|REFUSED: program start refused: pass_fds= is not allowed
+ROW|pass_fds|Child|REFUSED: program start refused: pass_fds= is not allowed
