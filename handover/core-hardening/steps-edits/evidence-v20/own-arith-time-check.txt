@@ -1,0 +1,52 @@
+price 0.27 x3 0.81 sum 13.21
+OWNER-SHEET-v20.md       found 18:29 UTC = 23:59 IST  recomputed 23:59:00  OK
+OWNER-SHEET-v20.md       found 18:19 UTC = 23:49 IST  recomputed 23:49:00  OK
+OWNER-SHEET-v20.md       found 11:30 UTC = 17:00 IST  recomputed 17:00:00  OK
+OWNER-SHEET-v20.md       found 11:55 UTC = 17:25 IST  recomputed 17:25:00  OK
+OWNER-SHEET-v20.md       found 12:05 UTC = 17:35 IST  recomputed 17:35:00  OK
+OWNER-SHEET-v20.md       found 18:14:40 UTC = 23:44:40 IST  recomputed 23:44:40  OK
+OWNER-SHEET-v20.md       found 18:29 UTC = 23:59 IST  recomputed 23:59:00  OK
+OWNER-SHEET-v20.md       found 15:00 UTC = 20:30 IST  recomputed 20:30:00  OK
+LEAD-RELEASE-NOTE-v4.md  found 15:00 UTC = 20:30 IST  recomputed 20:30:00  OK
+LEAD-RELEASE-NOTE-v4.md  found 18:14:40 UTC = 23:44:40 IST  recomputed 23:44:40  OK
+LEAD-RELEASE-NOTE-v4.md  found 11:30 UTC = 17:00 IST  recomputed 17:00:00  OK
+LEAD-RELEASE-NOTE-v4.md  found 11:55 UTC = 17:25 IST  recomputed 17:25:00  OK
+LEAD-RELEASE-NOTE-v4.md  found 12:05 UTC = 17:35 IST  recomputed 17:35:00  OK
+LEAD-RELEASE-NOTE-v4.md  found 17:44:00 UTC = 23:14 IST  recomputed 23:14:00  OK
+LEAD-RELEASE-NOTE-v4.md  found 18:09:00 UTC = 23:39 IST  recomputed 23:39:00  OK
+LEAD-RELEASE-NOTE-v4.md  found 18:19:00 UTC = 23:49 IST  recomputed 23:49:00  OK
+pairs 16
+OWNER-SHEET-v20.md       found Mon 16 Nov  recomputed Mon OK
+OWNER-SHEET-v20.md       found Mon 23 Nov  recomputed Mon OK
+OWNER-SHEET-v20.md       found Wed 18 Nov  recomputed Wed OK
+OWNER-SHEET-v20.md       found Mon 23 Nov  recomputed Mon OK
+OWNER-SHEET-v20.md       found Wed 18 Nov  recomputed Wed OK
+OWNER-SHEET-v20.md       found Mon 23 Nov  recomputed Mon OK
+OWNER-SHEET-v20.md       found Mon 23 Nov  recomputed Mon OK
+OWNER-SHEET-v20.md       found Mon 23 Nov  recomputed Mon OK
+OWNER-SHEET-v20.md       found Wed 25 Nov  recomputed Wed OK
+LEAD-RELEASE-NOTE-v4.md  found Mon 16 Nov  recomputed Mon OK
+LEAD-RELEASE-NOTE-v4.md  found Mon 23 Nov  recomputed Mon OK
+LEAD-RELEASE-NOTE-v4.md  found Mon 23 Nov  recomputed Mon OK
+LEAD-RELEASE-NOTE-v4.md  found Mon 23 Nov  recomputed Mon OK
+LEAD-RELEASE-NOTE-v4.md  found Mon 23 Nov  recomputed Mon OK
+LEAD-RELEASE-NOTE-v4.md  found Wed 25 Nov  recomputed Wed OK
+LEAD-RELEASE-NOTE-v4.md  found Wed 18 Nov  recomputed Wed OK
+LEAD-RELEASE-NOTE-v4.md  found Mon 23 Nov  recomputed Mon OK
+LEAD-RELEASE-NOTE-v4.md  found Wed 18 Nov  recomputed Wed OK
+LEAD-RELEASE-NOTE-v4.md  found Mon 23 Nov  recomputed Mon OK
+v20-MAP.md               found Mon 16 Nov  recomputed Mon OK
+v20-MAP.md               found Mon 23 Nov  recomputed Mon OK
+v20-MAP.md               found Mon 23 Nov  recomputed Mon OK
+v20-MAP.md               found Mon 23 Nov  recomputed Mon OK
+v20-OPEN-FOR-LEAD.md     found Mon 16 Nov  recomputed Mon OK
+v20-OPEN-FOR-LEAD.md     found Mon 23 Nov  recomputed Mon OK
+v20-OPEN-FOR-LEAD.md     found Wed 25 Nov  recomputed Wed OK
+v20-OPEN-FOR-LEAD.md     found Mon 23 Nov  recomputed Mon OK
+weekday mentions 27 Nov16 Monday
+latest start (program last start) 18:14:40 IST 23:44:40
+sample alarm 11:55:00 cancel-by 12:05:00
+latest start at window end 17:44:00 alarm 18:09:00 cancel-by 18:19:00 buffer to window end (min) 10.0
+cancel-by IST 23:49:00 alarm IST 23:39:00
+window IST 23:59:00 post-by 15:00 UTC IST 20:30:00 Wed
+cents: 3.00*100 300 15*100 1500 program limit 13.21 -> cents 1321 per call cents calc 0.27

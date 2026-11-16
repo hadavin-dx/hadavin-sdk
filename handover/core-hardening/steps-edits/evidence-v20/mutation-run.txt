@@ -1,0 +1,22 @@
+### MUTATION 1 wrong IST pair
+PROBLEM: OWNER-SHEET-v20.md: 11:55 UTC is not 17:35 IST
+TOTAL PROBLEMS 1
+exit=1
+### MUTATION 2 dollar sign in yes line
+PROBLEM: dollar sign outside code in the sheet
+PROBLEM: yes sentence holds a character outside the second charset: ['$']
+PROBLEM: yes sentence money form
+TOTAL PROBLEMS 3
+exit=1
+### MUTATION 3 missing glossary term (rename 'key alive' definition)
+PROBLEM: term 'key alive' never used in the glossary
+TOTAL PROBLEMS 1
+exit=1
+### MUTATION 4 wrong cancel-by
+PROBLEM: sample: cancel-by time is not alarm time + margin
+TOTAL PROBLEMS 1
+exit=1
+### MUTATION 5 dangling pointer
+PROBLEM: OWNER-SHEET-v20.md refers to R11
+TOTAL PROBLEMS 1
+exit=1

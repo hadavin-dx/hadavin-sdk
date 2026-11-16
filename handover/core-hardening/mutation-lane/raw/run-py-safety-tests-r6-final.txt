@@ -549,3 +549,33 @@ control run: no test group recorded; the control marker /tmp/claude-0/-home-user
 control run: test group already gone; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/scF/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted,
   PASS: T69c guard: a control marker whose group is provably gone is removed, exit 0 (got 0)
 == T70 (review r5 nit 5) the import check is repeated before EACH mutant
+m2 COULD-NOT-PLANT (import check failed just before this mutant: import check: `import mod` loads '/elsewhere/mod.py', not /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6bu
+SUMMARY: 2 mutant(s) planned, 2 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; INCOMPLETE (exit 5 unless the tree is not clean: then exit 4)
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T70 after the first mutant's tests changed what the tests import, the second mutant is NOT planted: COULD-NOT-PLANT (import check), exit 5 (got 5)
+  PASS: T70 the first mutant ran normally and records the repeated check
+== T71 (review r5 nit 6) a change to the tree made BEFORE the first mutant (control tests, the import check) stops the run before it is planted
+baseline 0 1 passed in 0.00s
+STOPPED before the first mutant: the control run changed the scratch tree: ['junk.txt']
+  PASS: T71a the control run's tests wrote a file: exit 4 (got 4) BEFORE mutant m1 (no X-m1.txt), 'STOPPED before the first mutant'
+STOPPED before the first mutant: the import check changed the scratch tree: ['sidefx.txt']
+  PASS: T71b importing the target module wrote a file (import check): exit 4 (got 4) before the mutant is planted (no X-m1.txt)
+== T72 (review r5 nit 7) mutant ids that name other raw files are refused
+  PASS: T72 id 'baseline' refused, exit 2 (got 2), nothing planted, no raw file named after it
+  PASS: T72 id 'tree-diff' refused, exit 2 (got 2), nothing planted, no raw file named after it
+  PASS: T72 id 'summary' refused, exit 2 (got 2), nothing planted, no raw file named after it
+== T73 (review r5 nit 8) an old Python (version and tomllib simulated) is refused at the start with a message, also for --restore
+REFUSED: this tool needs Python 3.11.4 or newer (tomllib, tarfile filters); this is 3.10.12
+  PASS: T73 exit 2 (got 2) with a message naming Python 3.11.4, no traceback
+== T74 (review r5 nit 9) --sha is pinned: the full id of a COMMIT is recorded; an id that is no commit is refused
+  PASS: T74a a short id works (rc 0) and the raw file records the FULL id (and how it was given)
+REFUSED: --sha '949672092bddabc85413291cfcc98c5c65ea69dd' does not name exactly one commit in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/scF/toy/repo (unknown, am
+  PASS: T74b the id of a TREE (git archive would accept it) is refused, exit 2 (got 2), nothing planted
+  PASS: T74c guard: an unknown id is refused, exit 2 (got 2)
+== T75 (review r5 smaller point) git and patch run with a clean environment: GIT_DIR and GIT_WORK_TREE of the caller do not reach them
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (every mutant has a clean KILLED or SURVIVED verdict)
+tree diff: 0 difference(s)
+  PASS: T75 with a bogus GIT_DIR and GIT_WORK_TREE in the caller's environment the run still works (exit 0, got 0)
+FAILED CHECKS: 1 (of 317 checks run; skipped: none)
+exit 0

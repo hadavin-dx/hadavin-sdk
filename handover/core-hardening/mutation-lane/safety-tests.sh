@@ -404,7 +404,7 @@ root, sha, repo, raw = sys.argv[2:6]
 skip = {int(getattr(signal, n)) for n in ("SIGKILL", "SIGSTOP", "SIGCHLD", "SIGCONT", "SIGWINCH", "SIGURG", "SIGTSTP", "SIGTTIN", "SIGTTOU", "SIGPIPE", "SIGXFSZ") if hasattr(signal, n)}
 want = sorted(int(x) for x in signal.valid_signals() if int(x) not in skip)
 print("set equals valid_signals minus the six-plus-five excluded:", sorted(r.HANDLED_SIGNALS) == want, "(%d signals)" % len(want), flush=True)
-orig = r.write_target
+orig = r.write_target; orig_rt = getattr(r, "restore_target", None)
 bad = []
 for window in ("plant", "restore"):
     for sg in want:
@@ -418,7 +418,7 @@ for window in ("plant", "restore"):
             if window == "restore" and _n["c"] == 1: os.kill(os.getpid(), sg)          # r6 code: the restore is restore_target
             return orig_rt(*a, **k)
         if hasattr(r, "restore_target"):
-            orig_rt = r.restore_target; r.restore_target = rt
+            r.restore_target = rt
             def wt2(path, data, *a, _n=n, **k):
                 if window == "plant" and _n["c"] == 0: _n["c"] += 1; os.kill(os.getpid(), sg)
                 return orig(path, data, *a, **k)
