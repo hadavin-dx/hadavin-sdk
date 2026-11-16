@@ -6,7 +6,7 @@ BOOT_ID: 3dcae981
 ITEMS_TOTAL: 13
 ITEMS_OPEN: 8
 PERCENT: 93
-AGENTS_RUNNING: 9
+AGENTS_RUNNING: 10
 CAPACITY: load 1.1 of 4 cores, mem 1.0 of 15.7 GB used, disk 9.0 GB free (77% used, limit 90%), 7 light + 0 heavy agents
 INTERRUPTED: none
 FAILED: run.py round 2 reviews: 2 majors (pytest-args denylist bypassable: @file, clustered flags, --collect-only; round-1 comparison run contaminated from T23 so M5 tests unproven on old code) plus stale lint evidence and MUTANTS-V2-PLAN aimed at v2 patches not v5 -> r3 fix running. C3b v5 round 2: no blocker, 3 majors (P-4b stand-in recipe and uid filter unproven, 7000-word lead paragraph, no patched-plan how-to) -> fix running. v10 owner sheet: security 11 majors, naive 3 blockers 12 majors -> v11 built (not fully clean: 209 lines/44.5 KB misses target; n8n stop/start commands and key-saving method are guesses; go condition 5 depends on whether the program deletes contacts); 3 reviewers running (money/secret path, uncapped). C7b evidence: 5 majors (real id-vs-command-withheld bug at gate.py:671) -> fix running. Real-v5 edit list v6 built, not yet independently reviewed (2 reviewers running). C3b v5 facts review: 4 majors (acceptance rule proves text only, R2 checks leader pid only, LEAD-GO is procedural not a control, positive control narrower than claimed) -> sent to C3b fix. C14 claims check: no numeric mismatch; E repeat "8 min" vs 5 min in plan, 153/173 only in v6, OWNER-STEPS v3 line 75 still says port 5678. Nothing run with n8n, pwsh, shellcheck, WSL.
@@ -30,11 +30,10 @@ PUSHED_UTC: 2026-11-16T10:31:00Z
 | C10 | who-types-what table | in v9 | 80 | steps-edits/OWNER-STEPS-realrun-v9.md | being reviewed |
 | C11 | HubSpot probe step | in v9 (step 0 kept as 7-call probe) | 80 | steps-edits/OWNER-STEPS-realrun-v9.md | |
 
-## AGENTS (9 running; lanes per ORDER 021 menu)
+## AGENTS (10 running; lanes per ORDER 021 menu)
 | id | role / lane | model | what it does | started UTC | expected end UTC | state |
 |---|---|---|---|---|---|---|
 | ad55bf1459157f7b6 | builder C7b evidence fix | sonnet | M1-M4, W1-W5, flake fix patch | 10:23Z | 11:25Z | running |
-| ad99f5923a31656c5 | C13 re-smoke gate rows | sonnet | 2 gate rows plus psql count | 10:28Z | 11:10Z | running |
 | a935be1660a498231 | builder run.py r3 | sonnet | args allowlist, clean R1 evidence, lint | 10:29Z | 11:30Z | running |
 | a3f5e0e1cfd50c6be | (a) v6 edit list reviewer A | sonnet | followable | 10:29Z | 10:55Z | running |
 | a2c560752aadd80b3 | (a) v6 edit list reviewer B | sonnet | facts | 10:29Z | 10:55Z | running |
@@ -42,3 +41,5 @@ PUSHED_UTC: 2026-11-16T10:31:00Z
 | a42ba39f590ead558 | (a) v11 security reviewer | sonnet | money and secret path | 10:33Z | 11:00Z | running |
 | ac4cee0a04a0f4221 | (c) C12 v11 stranger read | sonnet | 10-minute test | 10:33Z | 11:00Z | running |
 | a7ae91170e178daba | (b) v11 citation checker | sonnet | cites and fixed claims | 10:33Z | 11:00Z | running |
+| a84c42092f5c2339e | (a) C13 gate rows reviewer A | sonnet | followable, PASS meaning | 10:36Z | 11:00Z | running |
+| a568d316e0d945155 | (a) C13 gate rows reviewer B | sonnet | facts and shell | 10:36Z | 11:00Z | running |
