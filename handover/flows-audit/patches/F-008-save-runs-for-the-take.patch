@@ -1,0 +1,12 @@
+--- a/handover/demo/n8n-mainframe/build_mainframe.py
++++ b/handover/demo/n8n-mainframe/build_mainframe.py
+@@ -41,7 +41,8 @@
+     con.setdefault(a, {"main": []}); m = con[a]["main"]
+     while len(m) <= out: m.append([])
+     m[out].append({"node": b, "type": "main", "index": 0})
+-ST = {"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": False}
++# Owner 2026-11-16 (ORDER 004): runs are saved for the take only (made-up data) and deleted at clean-up (delete the executions and run n8n execution pruning off the take database).
++ST = {"executionOrder": "v1", "saveDataSuccessExecution": "all", "saveDataErrorExecution": "all", "saveManualExecutions": False}
+ KEY = "$('SubIn').first().json.lead_key"; TOK = "$('SubIn').first().json.claim_token"
+ def sub():
+     n = [N("SubIn", "n8n-nodes-base.executeWorkflowTrigger", 1.1, {"inputSource": "passthrough"}, [0, 0]),

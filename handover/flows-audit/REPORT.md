@@ -1,5 +1,12 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## FINAL 2026-11-16 07:43 UTC / 13:13 IST: ORDER 004 applied (Reading A), waiting for the lead
+Agents running: 0 (I started none for this order). No helper shells left.
+Applied: Q2 answered Reading A. F-011 kept at full size and rewritten (n8n's own state moves into the take's Postgres with its own role; no script under handover/demo sets DB_TYPE or DB_POSTGRESDB_*, grep 0 hits; fix is a laptop change plus re-smoke, not patched). The owner's "save runs ON for the take only, delete at clean-up" is now patch F-008-save-runs-for-the-take.patch (build_mainframe.py:44, no node changes). EXCEPTIONS.md, QUESTIONS.md (Q2 answered), FIX-PLAN.md step 6 and FINDINGS short answer item 4 updated. Counts unchanged: 34 findings = 2 Blocker, 23 Major, 9 Nit.
+Checks after the edits: check_counts PASS 52/655, check_names PASS 655, check_refs PASS 5118, check_secrets PASS 0 hits in 174 files, test_dump_nodes PASS 8/8, check_patches PASS 5 patches, `git apply --check` ok for each of the 5. Rebuild with patches F-002 and F-008 together (real-v5 build into a scratch folder): mf-form 15, mf-hook 15, mf-recovery 10, mf-sub-crm-mail 20 nodes, all four with saveDataSuccessExecution and saveDataErrorExecution "all". I did this check myself in a scratch folder (no separate evidence runner and no new review round, as ORDER 004 says: bounded to the changed rows).
+Not verified: nothing was run in n8n, so that n8n 2.x starts on DB_POSTGRESDB_* with a separate role, and that the T7b scan still passes on Postgres, are UNVERIFIED (re-smoke). The clean-up step (delete the take's executions) is not written into any script yet; it is listed in F-008 and FIX-PLAN. evidence-1.md and evidence-2.md describe the earlier four-patch state and are not rewritten.
+Next: the lead applies the patches and the n8n Postgres switch on the laptop. I stop here.
+
 ## FINAL 2026-11-16 07:34 UTC / 13:04 IST: ORDER 002 (with ORDER 003) finished, waiting for the lead
 Agents running: 0. All register rows are CLOSED (EV1, EV2, RV-cb, RV-d, RV-z, RV2-d, RV2-cb, six builder lanes). No helper shells or background processes are left. Only tools/scratch/ is untracked on purpose (scripts and scratch builds, never committed).
 
