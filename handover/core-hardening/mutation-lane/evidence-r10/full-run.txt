@@ -331,3 +331,13 @@ process 4370 is not this run's pytest (or cannot be verified): left alone; resto
 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1752: 10230 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 stopped orphaned test group 10398; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup
   PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1752: 19035 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 19184 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavi
+  PASS: T43c a marker with a group and NO identity and NO command at all: file restored (rc 3), nothing stopped on a guess, exit 3 because the group is unsettled (r8 N2)
+== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1752: 25412 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
+  PASS: T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs
+stopped orphaned test group 25425; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash matches saved
+  PASS: T44 restore exit 0, file back (rc 0)
+  PASS: T44 the surviving member was stopped
+== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)
