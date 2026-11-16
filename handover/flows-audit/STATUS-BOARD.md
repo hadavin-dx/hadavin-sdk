@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:39:52Z
+UPDATED_UTC: 2026-11-16T20:41:15Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 3
-CAPACITY: 2.41 load of 4 cores, mem 1/15 GB, RAM 1136/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 3 (light+heavy per list)
+AGENTS_RUNNING: 2
+CAPACITY: 1.37 load of 4 cores, mem 1/15 GB, RAM 1071/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 2 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: after F8 evidence runner ends: ONE F8 fixer for the Major (swallowed stop in --refresh), video path
-PUSHED_UTC: 2026-11-16T20:39:52Z
+NEXT: waiting on F8 evidence runner and FIX-PLAN fixer; then one F8 fixer
+PUSHED_UTC: 2026-11-16T20:41:15Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -32,7 +32,6 @@ PUSHED_UTC: 2026-11-16T20:39:52Z
 |---|---|---|---|---|---|---|---|
 | a3e1970f | F8 EVIDENCE RUNNER r13 (HEAVY) | sonnet | flow-check run_all + stop test; video path: YES (take check) | 20:33Z | 21:00Z | running | raw output pending |
 | ad0e03dc | FIX-PLAN fixer r65 | sonnet | fix plan; video path: YES (Tue re-pin), finishing only | 20:35Z | 21:20Z | running | none yet |
-| a26f78a9 | RUNSHEET-WORDING fixer r42 | sonnet | run sheet wording; video path: YES, finishing only | 20:35Z | 21:20Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
