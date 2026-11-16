@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T12:23:21Z
+UPDATED_UTC: 2026-11-16T12:26:34Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 9
-PERCENT: 87
+ITEMS_OPEN: 8
+PERCENT: 90
 AGENTS_RUNNING: 7
-CAPACITY: 1.95 load of 4 cores, mem 0/15 GB, RAM 964/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.6G /tmp/claude-0 , agents 7 (light+heavy per list)
+CAPACITY: 1.39 load of 4 cores, mem 1/15 GB, RAM 1028/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.8G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
@@ -20,8 +20,8 @@ core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason,
 TAKE-CHECKLIST/FIX-PLAN: step 4 pass grep never matches; GO rows 1,2,3,5 have no runnable command; IST pair wrong in FIX-PLAN L70
 F8 evidence: run_all exit 0 twice (57 s), but root cannot test chmod 000; bandit -ll flags tools/scratch (B602, B608); ruff format fails only on lead file
 F8: take_check passes a changed flow with same counts (no enforced sha); pin reviewer line accepts any text; TAKE_CHECK_TEST leak exit 0; run_all.sh shared raw dir
-NEXT: collect; F8 evidence after fixer
-PUSHED_UTC: 2026-11-16T12:23:21Z
+NEXT: collect 7 agents (F8 evidence+review, QUESTIONS/owner reads, RUNBOOK, TAKE-CHECKLIST, REVIEW fixers); then citation lane, drift refresh
+PUSHED_UTC: 2026-11-16T12:26:34Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -40,19 +40,19 @@ PUSHED_UTC: 2026-11-16T12:23:21Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| ae1e348 | fixer | sonnet | F8 flow-check Majors | 11:50 | 12:40 | running | fix-f8-r10d.md |
 | a35711f | fixer | sonnet | RUNBOOK round 5 (2 Blockers, 9 Majors) | 12:16 | 12:50 | running | - |
-| a19ea5c | reviewer | sonnet | stranger read owner part r11 | 12:21 | 12:40 | running | - |
-| a099aef | reviewer | sonnet | cross-file contradiction check | 12:22 | 12:45 | running | - |
 | a4b86b6 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN round 5 (B1, M1-M8) | 12:23 | 12:50 | running | - |
-| a7710f3 | reviewer | sonnet | codebase review REVIEW.md r7 (X-5) | 12:23 | 12:45 | running | - |
-| aefa2a7 | fixer | sonnet | QUESTIONS.md round 6 (6 Majors) | 12:23 | 12:50 | running | - |
+| a695d07 | evidence runner | sonnet | F8 flow-check final head (tests, lint, run_all) | 12:26 | 12:50 | running | - |
+| a3bc6d8 | reviewer | sonnet | egm codebase review F8 scripts r3 | 12:26 | 12:45 | running | - |
+| a2a0d5c | reviewer | sonnet | stranger read QUESTIONS r7 | 12:26 | 12:45 | running | - |
+| a1343ee | reviewer | sonnet | stranger read owner part r12 | 12:26 | 12:45 | running | - |
+| a6d6267 | fixer | sonnet | REVIEW.md round 8 (X-5 Majors) | 12:27 | 12:55 | running | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. Citation lane on F-003 r4 patch + new RW/CT (after fixers settle)
-2. Fresh egm review + evidence runner on F8 final head (waits: F8 fixer ae1e348)
+1. Citation lane on new RW/CT and F-003 patch after fixers settle
+2. Round-6 re-reads of RUNBOOK and TAKE-CHECKLIST/FIX-PLAN after fixers (Blockers/Majors only)
 3. Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
-4. Re-read RUNBOOK and TAKE-CHECKLIST after fixers (round 6, only Blockers/Majors)
+4. Second reviewer on FINDINGS/LEDGER after the contradiction fixes (waits: fixer results)
 5. Drift report refresh reviews/drift-007.md before FINAL
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
