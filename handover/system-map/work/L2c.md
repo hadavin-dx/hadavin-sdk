@@ -1,10 +1,12 @@
 Older text: work/L2c-history.md and work/L2c-history-2.md (ignore).
 
 ## Status (the only status block)
+- Terms first: FD-001 = finding 1 of this lane (FD = finding). register.md = the append-only log of agents and jobs this lane inventories (path NOT RECORDED on this page; find it with `ls handover/*/register.md`).
+- Step 1 of the fix (not done): in register.md find the two rows whose text says the shell had AWS_* or ANTHROPIC_* settings; copy each row's commit id and its passed, failed and skipped counts into this block. Without those numbers a rerun cannot be compared. Row fields required in the new register row: run id, commit id, the three counts, log path, pass or fail.
 - Open blocker: FD-001 (finding 1 of this lane): two full test runs listed in register.md ran with cloud settings present in the shell. Fix: rerun each from a fresh checkout of its commit; first `env | grep -E '^(AWS_|ANTHROPIC_)'` must print nothing; a rerun passes if its pass counts equal the original row; append the result as a new register row.
 - Which runs: E9 and B6c are the names of two test runs in register.md (rows near lines 205 and 217 when this was written; not rechecked, so UNVERIFIED).
 - Read status of register.md (an append-only log of agents and jobs): this lane says it read all 403 lines; a later lane says it did not open the file. Treat as UNVERIFIED.
-- Owner and due date: NOT SET. Proposal: the studio lead (the Claude session doing the technical steps), Tue 17 Nov 2026 12:00 UTC / 17:30 IST.
+- Owner and due date: NOT SET (proposal below; the studio head confirms or changes it). Proposal: the studio lead (the Claude session doing the technical steps), Tue 17 Nov 2026 12:00 UTC / 17:30 IST.
 - Terms: studio head = the human who runs the studio; studio lead = that Claude session. L2-D-007 = a finding id from the earlier lane page L2 (not defined here).
 
 # Lane L2c

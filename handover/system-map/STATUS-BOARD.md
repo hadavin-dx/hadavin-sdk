@@ -42,14 +42,14 @@ INTERRUPTED: none
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (UPDATED_UTC 2026-11-16T14:29:17Z; PUSHED_UTC 2026-11-16T14:29:17Z)
+## AGENTS (UPDATED_UTC 2026-11-16T14:29:36Z; PUSHED_UTC 2026-11-16T14:29:36Z)
 | id | task | state |
 |---|---|---|
-| a9284715d375aa80e | cold read L4c | running |
-| a8eafda4a253b52fd | re-read L2c | running |
+| a873275113d41f320 | re-read M17 page | running |
+| (new) | cold read L5ac | running |
 
-CAPACITY: 2 of 8 slots used. Missing 6: the pages left to read (L3c, M17 page, v5-edits-for-M17, decision list) are being edited by me right now and a read of a page mid-edit is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
-NEXT 5: fix L3c; fix v5-edits-for-M17; re-read M17 page; fix L4c; fix decision-list rows.
+CAPACITY: 2 of 8 slots used. Missing 6: the open pages (L3c, L4c, v5-edits-for-M17, decision list) are waiting for my edits and a read of a page mid-edit is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
+NEXT 5: fix L4c header; fix L3c header and severity cells; fix v5-edits-for-M17; fix decision-list rows; read L5b.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
