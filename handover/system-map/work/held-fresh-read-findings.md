@@ -64,3 +64,14 @@ Blocker L1-9, 36: terms undefined (take, real-v5, film-v5, N-lite, board, board 
 Blocker L6: "Decisions in force" run-on: numbered lines, who decided what.
 Blocker L1 vs L11-39: status brackets unreadable (M3, M14): one fixed order State | date | owner | due | percent | open items, detail on a line below.
 Major L41: percent legend to the top. Major L13,14,20,28: explain drift/REPORT.md row 101, "B3 row-number keying", "licence files". Major L2, 41: UTC and IST throughout (no bare Z). Major L23-40: REFILL headings repeat: add the REFILL time in IST.
+
+## SWEEP.md
+Blocker L135-158 and L303-326 (L3-FD-001..042, L3c rows): rows hold only citations; L157 admits "claim sentence missing". Rewrite each as "<one-sentence defect>; evidence: <cites>" (read the cited files to write the sentence; if a row cannot be stated, mark it NOT-READ with the reason).
+Major L44 (L1-FD-021): counts contradict ("two files", "2 files", 79 lines in 9 files vs 72 in 5): restate as "Full name on 1 line in each of 2 files (list); login name on 7 lines in 3 files (list)" after re-checking (never print the personal name).
+Major: undefined ORDER 007 (5, 491), ONE-PLACE-TABLE.md (5, 390), ARCHITECTURE-AUDIT-CHECKLIST.md (452, 474), mf-form/mf-hook/mf-recovery (47+), GREP, Fc, GO-1, WP6 P11, "ARCHIVE BLOCKED" (380, 390), ids L6-J-028, L6-J-058, L1-J-004, L5a-C-015: add to glossary at L36.
+Major L5, L11-17: 797 map rows vs per-job totals of 49 not reconciled: add one reconciling sentence.
+Major: "Re-smoke" used from L373, defined L400: move into glossary.
+Major L403-404: owner's dollar limit and agent-day estimate blank "___": mark "[lead fills]" with who and by when (decision due 17 Nov); do not invent.
+Major L34 severity rule vs L100 and L192 ("Blocker by the table" but rated Major): make consistent.
+Major L491: "3 merged rows" vs 4 Blockers removed: reconcile.
+Major L455 vs fix plan row 5: second alert channel responsible person: make consistent.

@@ -1,5 +1,5 @@
 # TAKE-BLOCKERS: the one to-do list for the studio lead (round 3, 16 Nov 2026, after the lead's decisions in inputs/DECISIONS-2026-11-16.md)
-Next action: start with row 1 (fill the `$env` values in a local copy of the patched real-v5 flows). Rows 1 and 3 and run (a) of row 2 start now, in parallel; run (b) of row 2 waits for row 1; then row 4 and row 5.
+Next action (studio lead, today): name the builder for row 1 and give a finish date in UTC and IST that leaves room for rows 2 and 4. [lead fills: builder name and finish date, UTC and IST.] Until a builder is named, the studio lead does row 1. Then row 1 starts: fill the `$env` values in a local copy of the patched real-v5 flows. Rows 1 and 3 and run (a) of row 2 start in parallel; run (b) of row 2 waits for row 1; then row 4 and row 5.
 Made-up data only: the demo uses invented people and a test mailbox. The owner reads OWNER-VIEW.md and the two cards (OWNER-RUN-DAY-CARD.md, OWNER-CLEANUP-CARD.md), not this page. Everything else in this folder is a record.
 
 ## Words, one per line, in the order they first appear
@@ -23,6 +23,13 @@ Made-up data only: the demo uses invented people and a test mailbox. The owner r
 - Take prep = ONE made-up lead sent through real-v5 just before the take (decision 8).
 - "The plan" = inputs/plan-wp6-resmoke-v5.md; every "plan line" below cites that file.
 - Decisions of 16 Nov = inputs/DECISIONS-2026-11-16.md, numbered 1 to 12; they are in force.
+- F-002 = a patch (a saved text change) to the flow generator: take-key check and error path on a claim. F-008 = a patch to the same generator that turns on saving of n8n's run records (the run list). Both are listed in work/evidence-patches-2.md.
+- QUESTIONS.md item 7 = the lead's answer of 16 Nov 10:20Z: the take imports the patched real-v5 copy, not the unpatched files.
+- MASTER-MAP L8-X-005 = the line in MASTER-MAP.md that lists the second copy of `fill_flows.py` (on branch cloud/flows-audit).
+- stage = the model program step that answers `/qualify` (see Scope sheet above). It is not a project stage name.
+- flowcheck = the checker that reads the flow files and reports problems. sha = the code that names one exact version of a file set (a commit id). T19 = the test "one sales lead posted twice gives one mail and one CRM write" (a name from this work, not from the plan).
+- n8n run list = the screen in n8n that lists every finished flow run; with F-008 it stores each run's data.
+- The plan's check labels (section 7 of the plan, 20 rows): H1 = the scripts under test are the pinned version. K1, K2, K5 = start refused over a live n8n, dead-pid handling, every kill confirmed. T1 = restart timing gaps. B1 = the same lead sent in a burst gives at most one first-time verdict. C1 = the driver survives the kill and retries. C3 = after that, one mail, one model call, one CRM create. X1, X2 = test of whether secrets can leak out of n8n. E1 = the allowed modules and settings are as expected. E3 = no unexpected outside network contact. E5 = n8n saves its run records. D1, L1, L4 = database and roles are as designed (L4 = roles in use and password login). Z1 = final clean-up check. DM, NC, E, E2 = the crash test and its not-tested list (see below).
 
 ## Dates
 The take must happen by Mon 23 Nov 18:29 UTC / 23:59 IST; latest start in the plan: 17:30 UTC / 23:00 IST (the program still accepts a start up to 17:40 UTC; lead order 16 Nov, 16:41Z, replaces the earlier 18:14:40 UTC figure; v5 may still say "about 18:15 UTC / 23:45 IST" and needs the same fix); the studio lead's notice ("take starts at ...") must come at least 3 hours before the start, so on the last day before about 14:30 UTC / 20:00 IST (computed from 17:30 UTC). The film pause is limited to 10 minutes by the owner's own clock alarm; the program does not enforce it (after the verdict it waits for the typed word end: 2 tries, end of input also ends it, no timer, it never types end itself). In v5, steps A to D are the owner's steps before the start; "Step D" in v4.2 is the clean-up after the take (a different list). The post is Wed 25 Nov 15:00 UTC / 20:30 IST. Target take Wed 18 Nov is NOT confirmed.
