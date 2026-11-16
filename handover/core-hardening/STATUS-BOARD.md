@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T17:03:06Z
+UPDATED_UTC: 2026-11-16T17:07:46Z
 SESSION: core-hardening
 ORDER: 021 + decisions; 024; 027-029, 031, 032, 034-040 and 14:00Z (8 running, 8 met); Q22-Q34 applied; 15:45Z block and 16:06Z lead answers read
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 14
 ITEMS_OPEN: 8
 PERCENT: 96
 AGENTS_RUNNING: 6
-CAPACITY: cores 4, load 0.7 of 4, RAM 1.1 of 15.7 GB used, DISK 11 GB free (72% used, above the 6 GB floor); 0 MB freed this beat; top 3 of mine: /tmp/c8b 2108 MB, /tmp/c8 1534 MB, /tmp/c7clone 1141 MB (kept until their agents close)
+CAPACITY: cores 4, load 1.5 of 4, RAM 1.5 of 15.7 GB used, DISK 11 GB free (73% used, above the 6 GB floor); 0 MB freed this beat; top 3 of mine: /tmp/c8b 2108 MB, /tmp/c8 1534 MB, /tmp/c7clone 1141 MB (kept until their agents close)
 INTERRUPTED: none
 FAILED: (1) c6q FAILED design review (0 blockers, 6 majors: default card claim has no gate, "one alert" stated as fact, Q27 meaning decided silently, real-key scan handling, failed-run saving not owner-approved, length table) and naive review (6 majors); independent evidence found the builder checker misses 8 of 32 mutations and its source copy is a scratchpad copy; c6r building. (2) Hand-off v15 FAILED security (6 majors) and readiness (5 majors); v16 building. (3) EDITS r13 FAILED security (0 blockers, 8 majors: forced revoke vs no more takes, key kept by unsure, one-alarm guarantee, shred rules, consent sentence reach, clipboard history, 40 s margin unescalated, delete path) and naive (1 blocker: clean-up vs key shred order; 5 majors); r14 building; independent evidence found the builder checker misses 7 of 37 mutations (key end 18:29 in 3h, weekdays, Q-numbers in owner text); relayed to r14 (ND15 route conflict is the lead's). (4) Owner sheet v28 FAILED security and stranger; v29 building. (5) run.py r10: full run 3 passed 0 of 442 failed, but the lead-approved pointer file was NOT built (my relay never reached the builder; needs file name, contents, finding closed); FAILED security review (0 blockers, 2 majors: plain restore writes setuid bits, 3 of 7 new T98 tests are guards not fail-on-old; Child subclass hides S603 without a check); r11 building; evidence runner still running. (6) Re-pin v6 FAILED; v7 building. | v29 owner sheet FAILED security (3 majors: stale lead text, A escape hatch on the older key, no deadline-day stop) and stranger reader (1 blocker: film rules contradict, 9 majors); v7 re-pin FAILED stranger reader (2 blockers: guide names the v6 file, NOT TESTED not covered); run.py r10 independent evidence: signals 0-0.2 s after start end unexpectedly, forged marker mode 4755 not masked (relayed to r11) | NEW this beat: EDITS r14 FAILED security (3 majors: trigger words from assistant text, shred targets named by the assistant, 40 s margin), stranger (9 majors: alarms contradict route B and 3e/3g, CRM key app 1 vs 2, shred done scope and silence, no are-you-sure, 14-slot reply, item 3 too long) and evidence (2 bare times, verify14 hard-coded path); r15 building | re-pin v7 FAILED security (1 major: control bytes and escape codes print raw; 9 minors) | hand-off v15 evidence: all 35 mutants caught on Postgres 16.15 only, 3 weak cites; v16 built, reviews running | c6r FAILED design (4 majors), stranger (8 majors), evidence (v30 sheets make builder verify fail); c6s building | NEW: hand-off v16 FAILED security (3 majors: kill switch and totals still open, SECURITY DEFINER guard bypassed by other spellings, audit-reader secret only by convention) and readiness (8 majors: breaker unowned, gate seam, pass rule cannot be met, stale timing, upgrade file unowned); v17 held for evidence
 NEXT: on each hand-back start the next agents in the same turn: v16 -> reviews done then resolve+v17 builder; r15 -> security (uncapped), naive, evidence; c6s -> design, naive, evidence; v30 -> security (uncapped), stranger, evidence; run.py r11 -> security (uncapped), evidence; re-pin v7 evidence -> v8 builder
-PUSHED_UTC: 2026-11-16T17:03:06Z
+PUSHED_UTC: 2026-11-16T17:07:46Z
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
 |---|---|---|---|---|---|
@@ -31,7 +31,7 @@ PUSHED_UTC: 2026-11-16T17:03:06Z
 | core audits | v15 FAILED security (6 majors) and readiness (5 majors); v16 building; v15 evidence running | v16 build | 95 | audit-r460/review-handoff-v15-security.md | core PRs are the lead's; Postgres lowest version question to lead |
 | lead re-pin list | v6 FAILED security, naive, signals; v7 building | v7 build | 92 | lead-repin/evidence-repin3/ | search words are guesses |
 
-## AGENTS (6 running, counted from the real agent list at 2026-11-16T17:03:06Z)
+## AGENTS (6 running, counted from the real agent list at 2026-11-16T17:07:46Z)
 | agent id | purpose | started UTC | expected end UTC | state | next action |
 |---|---|---|---|---|---|
 | a26ec4165f0f8a7fe | builder: run.py r11 batched fix | 16:40Z | 17:40Z | running | hand-back, then security (uncapped), evidence |
