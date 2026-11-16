@@ -1,8 +1,24 @@
 #!/bin/bash
-# Safety tests T1-T88 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T94 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
 # Round 7: run.py now runs the baseline BY DEFAULT; the helper base()/mut() adds --no-control (the old behaviour) unless NCF is set: `NCF= mut ...` runs with the real default. Against the r6 copy of run.py (no --no-control option) export NCF= (empty).
-# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T88 (rounds 4 to 7) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
+# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T94 (rounds 4 to 8) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
+# Round 8: ONLY="T76 T87" runs just those blocks. The shorter script is cut out of THIS file's own text at run time (the
+# header, the chosen blocks, the closing lines), so a block that runs is byte-for-byte the shipped block; there is no separate
+# copy to keep in step. A block that needs a helper defined inside another block must be listed together with it.
+# Round 8: NOBASE_OPT=<empty> against the r6 copy of run.py (it has no --no-control option and runs without a baseline by default).
+if [ -n "${ONLY:-}" ] && [ -z "${ONLY_CHILD:-}" ]; then
+  SELF=$(readlink -f "$0"); DER=$(mktemp "${TMPDIR:-/tmp}/safety-only.XXXXXX.sh")
+  awk -v only=" $ONLY " -v total="$(wc -l < "$SELF")" '
+    NR >= total - 1 { next }
+    !started && /^echo "== T1 / { started = 1; print "{" }
+    started && /^echo "== T[0-9]+ / { match($0, /T[0-9]+/); tag = substr($0, RSTART, RLENGTH); keep = (index(only, " " tag " ") > 0) }
+    started && $0 == "[ \"$NEWTESTS\" = 1 ] && {" { next }
+    !started || keep { print }
+    END { print "}"; print "echo \"FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})\"" }
+  ' "$SELF" > "$DER"
+  ONLY_CHILD=1 bash "$DER"; rc=$?; rm -f "$DER"; exit $rc
+fi
 RUN=${RUN:-$(dirname "$(readlink -f "$0")")/run.py}
 S=${SCRATCH:?set SCRATCH to a scratch folder outside every repository}
 VENV=${VENV:?set VENV to a folder with bin/python that has pytest}
@@ -27,6 +43,8 @@ printf 'import pytest\n@pytest.mark.skip(reason="all skipped")\ndef test_s():\n 
 printf 'X = 1\nopen("sidefx.txt", "w").write("x")\n' > src/sideeffect.py
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    open("'"$S"'/flipflag", "w").write("x")\n    assert f() == 1\n' > tests/test_flip.py
 printf 'import os\ndef test_c():\n    os.chmod("src/mod.py", 0o600)\n' > tests/test_chmod.py
+printf 'import os\ndef test_c():\n    os.chmod("src/mod.py", 0o444)\n' > tests/test_chmod_ro.py
+printf 'import subprocess\ndef test_bg():\n    subprocess.Popen(["setsid", "'"$SL"'", "3143"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n' > tests/test_setsid.py
 git add -A; git -c user.email=a@b -c user.name=n commit -qm init; SHA=$(git rev-parse HEAD); REALREPO=$T/repo   # the toy repository stands in for "the real repository" (this folder is not inside a git repository)
 reset_state() { pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null; rm -rf "$STATE"; }
 # every scenario starts from a fresh state folder, so a crash in one cannot make the next ones fail (review r2 safety M2)
@@ -47,6 +65,8 @@ orphan_alive() { pgrep -f "$T/root/.venv/bin/python -m pytest" >/dev/null; }
 waitplant() { for _ in $(seq 120); do ls "$STATE"/*.planted.json >/dev/null 2>&1 && [ "$(last)" = return2 ] && { sleep 3; return 0; }; sleep 0.5; done; return 1; }
 # exec: $RP must be the python process itself, not a subshell around it
 bg() { ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!; }
+kill_planted() { fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null; }
+keptstate() { [ -n "$(ls "$STATE"/*.planted.json 2>/dev/null)" ] && [ -n "$(ls "$STATE"/*.backup 2>/dev/null)" ]; }
 echo "== T1 the real repository as --root is refused (exit 2)"
 mut --root "$REALREPO" -- tests/test_fast.py 2>&1 | cut -c1-200; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T1 exit 2" "[ $rc -eq 2 ]"
 echo "== T2 SIGKILL while a mutant is planted"
@@ -93,9 +113,9 @@ python3 "$RUN" --root "$T/root" --restore; sleep 1; chk "T15 orphan stopped" "! 
 pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
 echo "== T16 SIGHUP restores too (exit 129)"
 fresh_root; bg; waitplant; kill -HUP $RP; wait $RP; rc=$?; echo "  exit code $rc"; chk "T16 exit 129" "[ $rc -eq 129 ]"; chk "T16 file restored" "[ '$(last)' = return1 ]"
-echo "== T17 --restore while a run is live is refused (lock)"
+echo "== T17 --restore while a run is live is refused (lock): exit 3, because that run's mutant is planted (r7 review M1; r7 code: 2)"
 fresh_root; bg; waitplant; python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-120; rc=${PIPESTATUS[0]}; echo "  exit code $rc"
-chk "T17 exit 2" "[ $rc -eq 2 ]"; chk "T17 run still planted" "[ '$(last)' = return2 ]"; kill -TERM $RP; wait $RP 2>/dev/null
+chk "T17 exit 3 (got $rc)" "[ $rc -eq 3 ]"; chk "T17 run still planted" "[ '$(last)' = return2 ]"; kill -TERM $RP; wait $RP 2>/dev/null
 echo "== T18 a mutant id that climbs out of --raw is refused"
 fresh_root; base --id ../escape --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py 2>&1 | cut -c1-160; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T18 exit 2" "[ $rc -eq 2 ]"; chk "T18 no file outside raw" "[ ! -e '$S/escape.txt' ]"
 echo "== T19 an error while the tests start (no .venv python) still removes the marker"
@@ -881,7 +901,7 @@ chk "T68 text says 'CANNOT TELL' and no longer 'nothing to restore' (exit $rc, s
 echo "== T69 (review r5 nit 4) a control marker: invalid JSON is a refusal; a group that cannot be settled keeps the marker"
 fresh_root; KEY=$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16); mkdir -m 700 -p "$STATE"; printf 'this is not json' > "$STATE/$KEY.control.json"
 out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200
-chk "T69a invalid JSON in the control marker: exit 2 (got $rc), 'REFUSED', no traceback" "[ $rc -eq 2 ] && printf %s '$out' | grep -q REFUSED && ! printf %s '$out' | grep -q Traceback"
+chk "T69a invalid JSON in the control marker (its test group cannot be settled): exit 3 (got $rc; r7: 2), 'RESTORE FAILED', control marker KEPT, no traceback" "[ $rc -eq 3 ] && printf %s '$out' | grep -q 'RESTORE FAILED' && [ -e '$STATE/$KEY.control.json' ] && ! printf %s '$out' | grep -q Traceback"
 RT=$(readlink -f "$T/root"); printf '{"root": "%s"}' "$RT" > "$STATE/$KEY.control.json"
 out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-240
 chk "T69b control marker with no test group recorded (cannot be verified): marker KEPT, exit 3 (got $rc), text says KEPT" "[ $rc -eq 3 ] && [ -e '$STATE/$KEY.control.json' ] && printf %s '$out' | grep -q KEPT"
@@ -930,9 +950,6 @@ echo "== T75 (review r5 smaller point) git and patch run with a clean environmen
 fresh_root; GIT_DIR=/nonexistent/gitdir GIT_WORK_TREE=/nonexistent/tree NCF= mut -- tests/test_fast.py >"$S/t75.out" 2>&1; rc=$?; cut -c1-200 "$S/t75.out" | tail -2
 chk "T75 with a bogus GIT_DIR and GIT_WORK_TREE in the caller's environment the run still works (exit 0, got $rc)" "[ $rc -eq 0 ]"
 
-kill_planted() { fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null; }
-keptstate() { [ -n "$(ls "$STATE"/*.planted.json 2>/dev/null)" ] && [ -n "$(ls "$STATE"/*.backup 2>/dev/null)" ]; }
-
 echo "== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker"
 kill_planted; mv "$T/root/src" "$T/root/src.moved"; mkdir -p "$S/decoy76/src"; ln -s "$S/decoy76/src" "$T/root/src"
 python3 "$RUN" --root "$T/root" --restore >"$S/t76b.out" 2>&1; rc=$?; cut -c1-200 "$S/t76b.out"
@@ -955,7 +972,7 @@ rc=$?; cut -c1-200 "$S/t76d.out"
 chk "T76c unwritable target (restore_target raises PermissionError): exit 3 (got $rc), file still planted, marker and backup kept" "[ $rc -eq 3 ] && keptstate && [ '$(last)' = return2 ]"
 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; chk "T76c genuine restore afterwards" "[ '$(last)' = return1 -a -z '$(state_files)' ]"
 kill_planted; BK=$(ls "$STATE"/*.backup); printf 'def f():\n    return 99\n' > "$BK"
-python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; rc=$?; chk "T76d guard: a forged backup (hash differs) is still exit 2 and nothing is written (got $rc)" "[ $rc -eq 2 ] && [ '$(last)' = return2 ]"
+python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; rc=$?; chk "T76d a damaged backup (hash differs from the marker): nothing is written, but the mutant is still planted, so exit 3 (got $rc; r7 pinned 2), marker kept" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && keptstate"
 git -C "$T/repo" show "$SHA:src/mod.py" > "$BK"; python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 
 echo "== T77 (review r6 M2) the baseline is the DEFAULT; --no-control gives exit 5 and never says COMPLETE"
@@ -963,8 +980,8 @@ fresh_root; NCF= mut -- tests/test_fail.py >"$S/t77a.out" 2>&1; rc=$?; cut -c1-2
 chk "T77a no option at all, tree already failing: the baseline refuses the mutants, exit 2 (got $rc), baseline file says NO, no mutant raw file, file unchanged (r6: ran every mutant as KILLED)" "[ $rc -eq 2 ] && grep -q 'baseline usable: NO' '$S/rawT/X-baseline.txt' && [ ! -e '$S/rawT/X-m1.txt' ] && [ '$(last)' = return1 ]"
 fresh_root; NCF= mut -- tests/test_fast.py >"$S/t77b.out" 2>&1; rc=$?
 chk "T77b no option at all, healthy tree: baseline recorded and used, exit 0 (got $rc), 'baseline: rc 0, 1 passed' in the raw file, SUMMARY says COMPLETE" "[ $rc -eq 0 ] && grep -q 'baseline: rc 0, 1 passed' '$S/rawT/X-m1.txt' && grep -q 'baseline usable: yes' '$S/rawT/X-baseline.txt' && grep -qE '(^|[^N])COMPLETE \(a baseline ran' '$S/t77b.out'"
-fresh_root; NCF= mut --no-control -- tests/test_fast.py >"$S/t77c.out" 2>&1; rc=$?
-chk "T77c --no-control, every verdict clean: exit 5 (got $rc), SUMMARY says NO BASELINE and INCOMPLETE and never the word COMPLETE on its own, raw file says baseline NOT RUN, no baseline file" "[ $rc -eq 5 ] && grep -q 'NO BASELINE' '$S/t77c.out' && grep -q 'INCOMPLETE' '$S/t77c.out' && ! grep -qE '(^|[^N])COMPLETE' '$S/t77c.out' && grep -q 'baseline: NOT RUN' '$S/rawT/X-m1.txt' && [ ! -e '$S/rawT/X-baseline.txt' ]"
+fresh_root; NCF= mut ${NOBASE_OPT---no-control} -- tests/test_fast.py >"$S/t77c.out" 2>&1; rc=$?
+chk "T77c a run WITHOUT a baseline (the option --no-control; on the r6 copy NOBASE_OPT= is empty: r6 runs without one by default, this is the behaviour itself), every verdict clean: exit 5 (got $rc), SUMMARY says NO BASELINE and INCOMPLETE and never the word COMPLETE on its own, raw file says baseline NOT RUN, no baseline file" "[ $rc -eq 5 ] && grep -q 'NO BASELINE' '$S/t77c.out' && grep -q 'INCOMPLETE' '$S/t77c.out' && ! grep -qE '(^|[^N])COMPLETE' '$S/t77c.out' && grep -q 'baseline: NOT RUN' '$S/rawT/X-m1.txt' && [ ! -e '$S/rawT/X-baseline.txt' ]"
 fresh_root; NCF= mut --no-control --control -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T77d the last of --no-control/--control wins: --control after --no-control runs the baseline, exit 0 (got $rc)" "[ $rc -eq 0 ] && [ -e '$S/rawT/X-baseline.txt' ]"
 fresh_root; NCF= mut --control --no-control -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T77e --no-control after --control: no baseline, exit 5 (got $rc)" "[ $rc -eq 5 ] && [ ! -e '$S/rawT/X-baseline.txt' ]"
 fresh_root; NCF= mut --no-control -- tests/test_junk.py >/dev/null 2>&1; rc=$?; chk "T77f guard: exit 4 (tree not clean) still wins over the no-baseline exit 5 (got $rc)" "[ $rc -eq 4 ]"
@@ -1010,9 +1027,11 @@ before = r.boot_ticks()
 time.sleep(0.2)
 p = subprocess.Popen([sys.argv[2], "3150"], start_new_session=True)     # a stranger: its own session and group, started AFTER `before`
 time.sleep(0.3)
-note = r.sweep_group(p.pid, before - 1000, before)    # the test group "ended" at `before`: the stranger started later
+import inspect
+three = len(inspect.signature(r.sweep_group).parameters) >= 3      # r6 had only (pgid): the stranger case is then run the old way and the stranger is killed
+note = r.sweep_group(p.pid, before - 1000, before) if three else r.sweep_group(p.pid)    # the test group "ended" at `before`: the stranger started later
 print("stranger case:", note, "| alive:", p.poll() is None, flush=True)
-note2 = r.sweep_group(p.pid, before - 1000, r.boot_ticks())   # control: it started inside the window: ours, stopped
+note2 = r.sweep_group(p.pid, before - 1000, r.boot_ticks()) if three else r.sweep_group(p.pid)   # control: it started inside the window: ours, stopped
 time.sleep(0.5)
 print("control case:", note2[:60], "| alive:", p.poll() is None, flush=True)
 p.kill(); p.wait()

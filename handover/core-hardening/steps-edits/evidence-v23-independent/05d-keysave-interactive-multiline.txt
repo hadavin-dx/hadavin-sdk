@@ -1,0 +1,4 @@
+after typing the line: 'ind/ks/keys/i1" ); echo "exit $?"\n\x1b[?2004lpaste key, Enter: '
+after pasting key + second line: 'exit 0\n\x1b[?2004hbash-5.2# echo LEFTOVER_LINE_RAN\n\x1b[?2004lLEFTOVER_LINE_RAN\n\x1b[?2004hbash-5.2# '
+key echoed: False | second line reached the shell and ran: True
+exists=True mode=0o600 size=26
