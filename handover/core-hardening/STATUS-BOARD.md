@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T14:57:21Z
+UPDATED_UTC: 2026-11-16T15:01:44Z
 SESSION: core-hardening
-ORDER: 021 + decisions; 024; 027-029, 031, 032, 034-036, 038-040 and 14:00Z (10 running, above the 8); Q22-Q34 applied
+ORDER: 021 + decisions; 024; 027-029, 031, 032, 034-036, 038-040 and 14:00Z (6 running, below the 8, reasons listed); Q22-Q34 applied
 STATE: WORKING
 BOOT_ID: 3dcae981
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 8
 PERCENT: 96
-AGENTS_RUNNING: 10
-CAPACITY: cores 4, load 1.75 of 4, RAM 1.1 of 15.7 GB used (15.0 GB available), DISK 8.3 GB free of about 39 GB allowance (79% used); top 3 disk users I created: /tmp/c8b, /tmp/c5v2, /tmp/c5v3 (not re-measured); MB freed this beat: 0 (free above 6 GB)
+AGENTS_RUNNING: 6
+CAPACITY: cores 4, load 1.23 of 4, RAM 1.1 of 15.7 GB used (15.0 GB available), DISK 8.3 GB free of about 39 GB allowance (79% used); no scratch cleaned this beat (free is above 6 GB)
 INTERRUPTED: none
-FAILED: (1) Owner sheet v25 built (A 6495 / B 6467 words, limit 6500) but NOT releasable: independent evidence run says check-v25 caught only 9 of 15 new planted mistakes; missed: IST offset changed to 4:30, R5 'deleted or deleted', warning before Enter removed in 7.3, post-by date shifted a day, R7 turned passive, 'date -u' shortened to 'date'; security and stranger reviews RUNNING; A/B older-key choice is the lead/owner. (2) Hand-off v11 built, NEVER run (no tests, no Postgres, gate4.sh never executed; two import-graph programs disagree); security (uncapped), readiness and citation reviews RUNNING; MY ERROR (fixed): I once told a builder 0006 was vetoed, Q34 says keep it, owner yes to apply. (3) EDITS round 7 FAILED design (3 majors: E-11 test enquiry can make a paid call with no scope row and no control; ND8 option A looks infeasible; E-11 states unproven things) and naive (8 majors); round-8 fixer RUNNING. (4) run.py r8: frozen files pass 395 of 395 checks and new tests fail on r7 code, but ruff check shows 2 S603 (Q29 keeps them); r9 builder RUNNING to fix the r8 security finding (--restore can exit 0 with a mutant planted). (5) c6l built, nothing applied (72 rows: 33 ready, 35 wait on answers, 4 need n8n); L-DEL has no default so the contact gate stays closed; design and naive reviews RUNNING. (6) Re-pin v5 builder RUNNING (v4 failed 4 checks). (7) My slip found and fixed this beat: two c6 verify scripts had the banned vendor list written out in full (repo test would fail); now read from the test file, scan 0 hits. (8) Never run on Windows, WSL, PowerShell, n8n, Postgres; every vendor page/button UNVERIFIED. (9) User must run: rm /home/user/hadavin-sdk/e /home/user/hadavin-sdk/o /home/user/hadavin-sdk/*.whl
-NEXT: on hand-back start replacement the same turn: v25 security+stranger then one fix pass (v26, include the 6 missed plants); r9 then security (uncapped), evidence; v11 reviews then fix pass; c6l reviews then fix pass; EDITS r8 then 2 reviews; re-pin v5 then security, evidence, naive, citation
-PUSHED_UTC: 2026-11-16T14:57:21Z
+FAILED: (1) Owner sheet v25 FAILED all three independent checks: stranger blocker (A cancels the older key before the last go/no-go checks), security majors (card row-count off by one, B older-key cancel buried), checker caught 9 of 15 new plants; v26 building. (2) Hand-off v11 FAILED readiness (7 majors) and security (5 majors); v12 building. (3) c6l skip audit FAILED design (1 blocker: rows 6 and 8 contradict Q23) and naive read (1 blocker, 9 majors); c6m building. (4) EDITS round 7 FAILED design (3 majors) and naive (8 majors); round-8 resolver running. (5) run.py r8 security finding (--restore can exit 0 with a mutant planted); r9 building. (6) Never run: n8n, Postgres, PowerShell, take scripts. User cleanup: rm /home/user/hadavin-sdk/e /home/user/hadavin-sdk/o /home/user/hadavin-sdk/*.whl
+NEXT: on hand-back start reviewers the same turn: r8 resolver then design+naive; v26 then security (uncapped), stranger, evidence; v12 then security (uncapped), readiness, citation; c6m then design+naive; r9 then security (uncapped), evidence; re-pin v5 then security, evidence, naive, citation
+PUSHED_UTC: 2026-11-16T15:01:44Z
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
 |---|---|---|---|---|---|
@@ -20,7 +20,7 @@ PUSHED_UTC: 2026-11-16T14:57:21Z
 | C3 | paste check of re-smoke plan | done | 100 | paste-check/REPORT.md | nothing run with pwsh or n8n |
 | C3b | checklist rev 14 | done | 99 | paste-check/evidence-c13-independent.md | non-security cap reached |
 | C4 | EDITS.md round 3: 0 blockers | done | 100 | steps-edits/EDITS.md | CODE-CHANGE-NEEDED is the lead's |
-| C4b | v23 built; 3 fresh reviews running | v23 reviews + evidence done; v24 building | 94 | steps-edits/OWNER-SHEET-v22.md | money/secret path, uncapped |
+| C4b | v25 failed 3 checks; v26 building | v26 build | 94 | steps-edits/OWNER-SHEET-v22.md | money/secret path, uncapped |
 | C5 | core patches | v5 done | 100 | patches-ready/review/design-r5-c5v5.md | scope cut by decision 4 |
 | C6 | C6h done; round 2 clean | done | 100 | c6-skip-audit/REPORT-c6h.md | Q1/Q2/Q9/Q10/Q11 wait for lead |
 | C7 | heavy lane tests per patch | C7b fix 4 round 5 clean | 97 | patches-ready/review/design-c7b-fix4-r5.md | flake describe-only |
@@ -28,23 +28,19 @@ PUSHED_UTC: 2026-11-16T14:57:21Z
 | C9 | apply S9 decisions into owner steps | in v22 | 92 | steps-edits/ | |
 | C10 | who-types-what table | in v22 | 90 | steps-edits/ | |
 | C11 | HubSpot probe step | in v22 | 90 | steps-edits/ | |
-| core audits | v7 failed security + readiness (9 majors each); v8 fix building | v8 build | 94 | audit-r460/review-handoff-v6-readiness.md | core PRs are the lead's |
+| core audits | v11 failed security + readiness; v12 building | v12 build | 94 | audit-r460/review-handoff-v6-readiness.md | core PRs are the lead's |
 | lead re-pin list | v3 failed both reviews; v4 fix building | v4 build | 92 | lead-repin/evidence-repin3/ | search words are guesses |
 
-## AGENTS (10 running, counted from the real agent list at 2026-11-16T14:57:21Z)
+## AGENTS (6 running, counted from the real agent list at 2026-11-16T15:01:44Z)
 | agent id | purpose | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|
 | ad99c4296ad5e1eee | builder: re-pin v5 batched fix | 14:13Z | 15:13Z | running | partial files |
-| acf2afb38678f4011 | builder: run.py r9 fix pass | 14:30Z | 15:30Z | running | partial files |
+| acf2afb38678f4011 | builder: run.py r9 fix pass | 14:30Z | 15:30Z | running | evidence-r9 partial |
 | a659b24d5aa3ed770 | builder: EDITS round-8 batched fix | 14:54Z | 15:54Z | running | started |
-| a732f89d3e4e0a852 | egm-design security review owner sheet v25 (uncapped) | 14:54Z | 15:24Z | running | started |
-| af537bf0a35eb3a45 | egm-comprehension stranger read owner sheet v25 | 14:54Z | 15:24Z | running | started |
-| a4bef6bf83063d9f4 | egm-design security review hand-off v11 (uncapped) | 14:55Z | 15:25Z | running | started |
-| ade209653e5f5d7f7 | egm-implementation-readiness review hand-off v11 | 14:55Z | 15:25Z | running | started |
-| a7dfb3e2f66da344f | EVIDENCE RUNNER: citation check hand-off v11 | 14:55Z | 15:25Z | running | started |
-| a6d7df7a27413470b | egm-design review c6l (filming safety) | 14:56Z | 15:26Z | running | started |
-| a3722516bae8f3e2c | egm-comprehension naive read c6l | 14:56Z | 15:26Z | running | started |
+| a57e4a0bb6cdcc06a | builder: hand-off v12 batched fix | 14:58Z | 15:58Z | running | started |
+| afe082bec323d47d2 | builder: owner sheet v26 batched fix | 14:59Z | 15:59Z | running | v26 source, build and check scripts |
+| a4e44e09ea59bdca3 | builder: c6m skip-audit batched fix | 15:00Z | 16:00Z | running | started |
 
-Missing from 8: none (10 running, above the lead's 8; CPU load 1.75 of 4, so OK).
-Closed since last board: ab76cbac22529110b (v25 builder), a591b27ce7a15275b (v11 builder), aba4b8ad88579efe2 (c6l builder), a0267a41f46574cb8 (r8 evidence), af3c90eb4f980c6a3 and aee8cada468a1b52c (EDITS r7 reviews), a70137ec8251bdb63 (v25 evidence).
-NEXT 5 independent tasks: (1) v26 sheet fix pass once v25 security and stranger land, with the 6 missed plants; (2) r9 reviews (security uncapped, evidence); (3) v11 fix pass after its three reviews; (4) c6l fix pass after its two reviews; (5) re-pin v5 reviews and EDITS r8 reviews.
+Missing from 8 (2): no free independent job exists. The reviews of v25, v11 and c6l are finished and each is waiting on its fix builder (v26, v12, c6m). Reviews of r8 EDITS, r9, v26, v12, c6m and re-pin v5 cannot start until those builders hand back. No lead answer needed to start them. CPU load 1.23 of 4.
+Closed since last board: a732f89d3e4e0a852 and af537bf0a35eb3a45 (v25 security and stranger reviews), a4bef6bf83063d9f4, ade209653e5f5d7f7 and a7dfb3e2f66da344f (v11 reviews and citation check), a6d7df7a27413470b and a3722516bae8f3e2c (c6l reviews).
+NEXT 5 independent tasks: (1) r8 resolver design and naive reviews; (2) v26 security, stranger and evidence reviews; (3) v12 security, readiness and citation reviews; (4) c6m design and naive reviews; (5) r9 security and evidence reviews.
