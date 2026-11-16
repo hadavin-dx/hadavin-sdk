@@ -40,13 +40,13 @@ What the owner does during the run: nothing the plan names. The lead starts Dock
 
 1. **evidence-final passed on the merged head.** [LEAD FILLS: the plan gives no command] (the plan says only that the run follows evidence-final, LEAD-ANSWERS line 87). Write the merged head sha and the evidence file name in the run log.
 2. **Owner said yes with a slot** (section 1). Write the quoted yes and time in PROGRESS.
-3. **Folder owner.** Plan line 231 and 275: `$HOME/hadavin-smoke` must be absent at the start (P-1 prints `absent`), and 1.5 expects every file mode 600, directories 700, owned by the runner (the Linux user that runs the lead's commands). My reading of "folder owner": the run folder belongs to the runner only. UNVERIFIED reading; P-1 and 1.5 are the plan's checks.
+3. **Run folder absent (P-1).** Plan line 231 and 275: `$HOME/hadavin-smoke` must be absent at the start (P-1 prints `absent`), and 1.5 expects every file mode 600, directories 700, owned by the runner (the Linux user that runs the lead's commands). My reading: the run folder belongs to the runner only. UNVERIFIED reading; P-1 and 1.5 are the plan's checks.
 4. **Ports.** Rehearsal n8n uses 5690 (broker 5691) and the control n8n 5692 (5693); stage 8765; fake model 48767; stub CRM 8771; mail catcher 2526; Postgres 55433 (plan line 121). The owner's own n8n on 5678 and 5679 is recorded in P-1 and 13.7 and is never touched (plan lines 121, 231, 421, 489). P-1 prints a count of listeners on the rehearsal ports; the expected value is `0`.
 5. **Docker Desktop running** and the image `postgres:16` already local (P-4 expects image count `1`; no pull, ever; plan line 240).
 
 ## 3. Steps, in order
 
-How every WSL step runs (plan line 112, R5): the lead writes the step's paste file with the Write tool, then runs it from the PowerShell tool as shown. The verdict is the `exit=<n>` line in the output, never the tool status (`wsl.exe` returns `tee`'s exit code). Never call `wsl.exe` from the Git Bash tool. Each paste body is the code span after the step id in the plan, verbatim, at the plan line given; this file does not copy the bodies so they cannot drift from the plan. A STOP stops the run: write PROGRESS and INDEX, go to section 4 (plan line 108, R1). If a result differs from "expected", the plan's classes are STOP (end the run), GO (finding, carry on) and REC (record only) (plan line 111); the class is named per step in the plan.
+How every WSL step runs (plan line 112, R5): the lead writes the step's paste file with the Write tool, then runs it from the PowerShell tool as shown. The verdict is the `exit=<n>` line in the output, never the tool status (`wsl.exe` returns `tee`'s exit code). Never call `wsl.exe` from the Git Bash tool. Each paste body is the code span after the step id in the plan, verbatim, at the plan line given; this file does not copy the bodies so they cannot drift from the plan. **PowerShell blocks are wrapped so that the evidence is saved (plan line 112, R5).** Every PowerShell block below (P-2, P-5, 9.0k, 11.0k, 13.5k and the tail of 13.9) is run as `& { <block> } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\<log>.log`, with the log name of its section: `p` for P-2 and P-5, `s9` for 9.0k, `s11` for 11.0k, `s13` for 13.5k and the 13.9 tail. The blocks below are already written in this wrapped form. The folder `evidence-2\` is made by `run.sh` (plan line 112), so it exists once P-1 has run; that it exists at P-2 is UNVERIFIED. A STOP stops the run: write PROGRESS and INDEX, go to section 4 (plan line 108, R1). If a result differs from "expected", the plan's classes are STOP (end the run), GO (finding, carry on) and REC (record only) (plan line 111); the class is named per step in the plan.
 
 Set once (PowerShell). The path is the plan's `run.sh` location (plan lines 112, 212):
 
@@ -68,10 +68,23 @@ $RS = '/mnt/c/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/run.sh'
 wsl.exe -d Ubuntu -e bash $RS P-1 p
 ```
 
-**3. P-2** PowerShell block, body at plan lines 233-237. Before running, the lead re-pins the four values on its first line to the merged head (RE-PIN line, plan line 3; also change the header HEAD_PIN and the section 2 `code` row, plan lines 2, 120). Expected (plan line 238): `full=` the expected sha; `ancestor exit=0`; the tar commit id equals it. Differs: STOP.
+**3. P-2** PowerShell block, body at plan lines 233-237. Before running, the lead re-pins the four values on its first line to the merged head (RE-PIN line, plan line 3). The re-pin is an edit of the LEAD'S OWN working copy of the plan, in three places that must change together: the header HEAD_PIN line (plan line 2), the section 2 `code` row (plan line 120) and the first line of P-2 (plan line 3, item 3). It touches no steps v5 file, no core-hardening file and no file outside the lead's plan copy. Plan line 3 then asks for two more things at the final head `<F>` (worktree `<WT>`), both copied in full below with the owner's user-folder name written `<USER>`: (a) regenerate the section 11 part A line column in Git Bash after P-3a wrote `strings.txt` (an empty column = the string is gone: edit the plan before the run); (b) read the changed output wording of the two scripts, and check that the new exit 3 cannot be returned on a real kill (`gone` needs `kill exit=0` and `confirmed gone`). UNVERIFIED: whether plan lines 233-237 already contain every value to re-pin. Expected (plan line 238): `full=` the expected sha; `ancestor exit=0`; the tar commit id equals it. Differs: STOP.
 
 ```powershell
+# Wrapped form, log `p`: & { <P-2 body, plan lines 233-237, re-pinned> } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\p.log
 [LEAD FILLS: re-pin values (HEAD_PIN, FULL_EXPECTED, BR, WT) for the merged head; body is plan lines 234-236]
+```
+
+Plan line 3, command (a), Git Bash, copied in full:
+
+```bash
+while IFS=$'\\t' read -r id f s; do printf '%s %s %s\\n' "$id" "$f" "$(git -C <WT> grep -n -F -e "$s" <F> -- "scripts/$f" | cut -d: -f3 | paste -sd, -)"; done < C:/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/strings.txt
+```
+
+Plan line 3, command (b), copied in full (the plan's first commit in it is `eec6ba4`, the provisional pin):
+
+```bash
+git -C <WT> diff eec6ba4 <F> -- scripts/n8n_start.sh scripts/n8n_kill.py | grep -E '^[-+].*(echo|print|die|refused|confirmed|exit)'
 ```
 
 **4. P-3b** scan the written files (plan line 239; body at line 239). Expected: grep prints nothing and `scan exit=1`; `compile exit=0`; no `syntax:` line; no `bad strings line`; `20`. Differs: a carriage return found = run the `sed -i 's/\r$//'` fix in plan line 239 per listed file, then P-3b again; another non-ASCII byte = rewrite that file, then P-3b again.
@@ -89,7 +102,7 @@ wsl.exe -d Ubuntu -e bash $RS P-4 p
 **6. P-5** WSL keep-alive, PowerShell block, NOT through `run.sh` (plan line 241). First add the register row in `_local\agents-register.md`. Expected: one line `keepalive pid=<n>`; write `<n>` into the register and into 9.0k, 11.0k and 13.5k (the only value the runner fills in). Differs: no pid line = STOP.
 
 ```powershell
-$k = Start-Process -WindowStyle Hidden -PassThru -FilePath wsl.exe -ArgumentList '-d','Ubuntu','-e','bash','/mnt/c/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/pastes/P-5.sh'; "keepalive pid=$($k.Id)"
+& { $k = Start-Process -WindowStyle Hidden -PassThru -FilePath wsl.exe -ArgumentList '-d','Ubuntu','-e','bash','/mnt/c/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/pastes/P-5.sh'; "keepalive pid=$($k.Id)" } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\p.log
 ```
 
 ### 3.2 S0 setup, sampler, parser control (plan lines 243-257; log `s0`; STOP class)
@@ -126,7 +139,7 @@ wsl.exe -d Ubuntu -e bash $RS 0c.1 s0c
 wsl.exe -d Ubuntu -e bash $RS 0c.2 s0c
 ```
 
-**12. 0c.3** (line 262-266). Expected: readiness under 120 s, `registry=0 unknown=0`, then run `0c.3a` (line 263). The control reads `env_canary`, `env_path`, `expr_path` as `READABLE`. Differs: run `0c.3r` (line 264) once and repeat 0c.2-0c.3; a second refusal = STOP; a field not `READABLE` = STOP; a file read not `READABLE` = label, not STOP; any `ours` egress line = STOP.
+**12. 0c.3** (line 262-266). Expected: readiness under 120 s, `registry=0 unknown=0`, then run `0c.3a` (line 263). The control reads `env_canary`, `env_path`, `expr_path` as `READABLE`. Differs: run `0c.3r` (line 264) once, as `wsl.exe -d Ubuntu -e bash $RS 0c.3r s0c`, and repeat 0c.2-0c.3; a second refusal = STOP; a field not `READABLE` = STOP; a file read not `READABLE` = label, not STOP; any `ours` egress line = STOP.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS 0c.3 s0c
@@ -144,7 +157,7 @@ wsl.exe -d Ubuntu -e bash $RS 0c.4 s0c
 
 ### 3.4 S1 secrets and value files (plan lines 269-275; log `s1`; STOP class)
 
-**14-19.** Run in order. Expected per step: 1.1 prints `8`; 1.2 prints `0`; 1.2b prints `6`; 1.3 prints `grep exit=0` with every count at least 1 (rule for a 0 and for `exit=124` at plan line 273); 1.4 prints `0`; 1.5 shows files 600 and directories 700. Differs: per plan lines 270-275, STOP unless the plan says GO or record only.
+**14-19.** Run in order. Expected per step: 1.1 prints `8`; 1.2 prints `0`; 1.2b prints `6`; 1.3 prints `grep exit=0` with every count at least 1 (rule for a 0 and for `exit=124` at plan line 273). Conditional step when plan line 273 says to remove a name from the env file: `wsl.exe -d Ubuntu -e bash $RS 1.3d s1 <NAME>` (plan line 273; `pastes/1.3d.sh` removes that name from the take's env file and prints a count that must be `0`; `<NAME>` is the variable name the plan names; an `EXECUTIONS_*` removal makes E5 UNVERIFIED). UNVERIFIED: the exact condition is at plan line 273, not copied here; 1.4 prints `0`; 1.5 shows files 600 and directories 700. Differs: per plan lines 270-275, STOP unless the plan says GO or record only.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS 1.1 s1
@@ -188,7 +201,7 @@ wsl.exe -d Ubuntu -e bash $RS 1b.3 s1b
 
 ### 3.6 S2 fill and import (plan lines 295-304; log `s2`; STOP class; n8n not running)
 
-**23-30.** Expected: 2.0 `config-absent` and `probe-absent`; 2.1 `filled film 4 object`; 2.2 all `0`; 2.3 `creds written array`, `exit=0`; 2.4 five `exit=0`; 2.5 six workflow ids, three credentials each `True`; 2.6 five `exit=0` (exec line record only); 2.7 `0`; above 0; exactly `smk_n8n`; `3`. Differs: STOP on the first non-zero exit in 2.3-2.6; run `2.err` (line 296) and tell the lead; there is no second form in this run.
+**23-30.** Expected: 2.0 `config-absent` and `probe-absent`; 2.1 `filled film 4 object`; 2.2 all `0`; 2.3 `creds written array`, `exit=0`; 2.4 five `exit=0`; 2.5 six workflow ids, three credentials each `True`; 2.6 five `exit=0` (exec line record only); 2.7 `0`; above 0; exactly `smk_n8n`; `3`. Differs: STOP on the first non-zero exit in 2.3-2.6; run `2.err` (line 296), as `wsl.exe -d Ubuntu -e bash $RS 2.err s2`, and tell the lead; there is no second form in this run.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS 2.0 s2
@@ -271,7 +284,7 @@ wsl.exe -d Ubuntu -e bash $RS 8.4 s8
 **40. 9.0k** keep-alive alive check, PowerShell block at plan line 332 with `<n>` from step 6. Expected: `keepalive alive`. Differs: STOP.
 
 ```powershell
-try { $q = Get-Process -Id <n> -ErrorAction Stop; if ($q.ProcessName -eq 'wsl') { 'keepalive alive' } else { 'KEEPALIVE-DEAD (pid reused): STOP' } } catch { 'KEEPALIVE-DEAD: STOP' }
+& { try { $q = Get-Process -Id <n> -ErrorAction Stop; if ($q.ProcessName -eq 'wsl') { 'keepalive alive' } else { 'KEEPALIVE-DEAD (pid reused): STOP' } } catch { 'KEEPALIVE-DEAD: STOP' } } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\s9.log
 ```
 
 **41-43.** 9.1 round 1 (line 334), 9.4 burst B2 killed in flight then restart (line 335), 9.5 wait for the B2 driver (line 336). Expected: two rounds with `h`, `r`, `w` set and pid equal pgid; `GONE-OK`; one JSON line with 10 replies. Differs: `NOT-UP` or `w` empty in a round whose line says 0 published workflows = STOP; a positive `webhook-ready` in round 1 = GO finding.
@@ -298,7 +311,11 @@ wsl.exe -d Ubuntu -e bash $RS 10 s10
 
 ### 3.11 S11 in-flight crashes C and E (plan lines 343-399; log `s11`)
 
-**45. 11.0k** keep-alive check: the 9.0k block again with the same `<n>` (line 344). Expected `keepalive alive`.
+**45. 11.0k** keep-alive check: the same check as 9.0k with the same `<n>` (plan line 344), run wrapped with log `s11`. Expected `keepalive alive`; anything else = STOP.
+
+```powershell
+& { try { $q = Get-Process -Id <n> -ErrorAction Stop; if ($q.ProcessName -eq 'wsl') { 'keepalive alive' } else { 'KEEPALIVE-DEAD (pid reused): STOP' } } catch { 'KEEPALIVE-DEAD: STOP' } } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\s11.log
+```
 
 **46. 11.1** (line 345). Expected: the listener count equals the printed expected number; every line `"ok": true`; the control answer shows 8000. Differs: a not-ok line = STOP, except the B2 rule: when the B2 line is the only not-ok line, run 11.1b (line 346-353); `B2 GO rule met` = run 9.4 and 9.5 once more, then 11.1 again; `B2 GO rule not met` = STOP.
 
@@ -310,7 +327,7 @@ wsl.exe -d Ubuntu -e bash $RS 11.1 s11
 wsl.exe -d Ubuntu -e bash $RS 11.1b s11
 ```
 
-**47-51. Case C** (default case; plan lines 354-376). Expected: 11.2 the key, `GONE-OK`, readiness under 120 s; 11.3 `HIT`; 11.4 driver alive or ended with a JSON line, status 200, `tries >= 2`; 11.5 `final=done` (or `unknown` with an alert); 11.6 `created true 1`, `mails == 1`, `model_calls == 1`, `"ok": true`. Differs: MISSED or `tries == 1` = run 11.7 (line 377) then repeat 11.2-11.6 with `D`; mails, model calls or ok wrong = STOP.
+**47-51. Case C** (default case; plan lines 354-376). Expected: 11.2 the key, `GONE-OK`, readiness under 120 s; 11.3 `HIT`; 11.4 driver alive or ended with a JSON line, status 200, `tries >= 2`; 11.5 `final=done` (or `unknown` with an alert); 11.6 `created true 1`, `mails == 1`, `model_calls == 1`, `"ok": true`. Differs: MISSED or `tries == 1` = run 11.7 (line 377), as `wsl.exe -d Ubuntu -e bash $RS 11.7 s11`, then repeat 11.2-11.6 once with argument `D`, for example `wsl.exe -d Ubuntu -e bash $RS 11.2 s11 D` and `... 11.6 s11 D` (plan line 226: a paste that takes the case reads it as `$1`); mails, model calls or ok wrong = STOP.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS 11.2 s11 C
@@ -332,7 +349,7 @@ wsl.exe -d Ubuntu -e bash $RS 11.5 s11 C
 wsl.exe -d Ubuntu -e bash $RS 11.6 s11 C
 ```
 
-**52-58. Case E** double-mail window (plan lines 378-399). Expected: E.0 `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C. Differs: E MISSED = one repeat as `E2` (E.0, E.1 and E.2 with argument `E2`, then 11.4 and 11.5 with `E2`; line 398); a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2 or C line = STOP.
+**52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 397) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C. Differs: E MISSED = one repeat as `E2`: run E.0 again WITHOUT an argument, then `run.sh E.1 s11 E2` and `run.sh E.2 s11 E2`, then 11.4 and 11.5 with `E2` (plan lines 397-398); a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2 or C line = STOP.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS E.0 s11
@@ -360,7 +377,7 @@ wsl.exe -d Ubuntu -e bash $RS 11.8 s11
 
 ### 3.12 S12 leaks, key, one store, egress (plan lines 401-406; log `s12`; run order 12.2, 12.5, 12.5b, 12.3, 12.4)
 
-**59-62.** Expected: 12.2 `marker-files.txt` lists only the nine files named at plan line 402, `n8n.out` `0`, per database `dump exit=0` size above 0 count `0`, Postgres log count equal to the 1b.2 count; 12.5 `600 <user>` and `1`; 12.5b `0` SQLite files, exactly two prefixes `postgres:app` (1 table) and `n8n:public`, owners as at line 404, execution status total above 0; 12.3 `EGRESS-OK` and the unattributed list recorded. 12.4 has no paste: the runner writes the verdict wording at plan line 406. Differs: STOP, except the GO and record-only items the plan names at lines 404-406.
+**58-61.** Expected: 12.2 `marker-files.txt` lists only the nine files named at plan line 402, `n8n.out` `0`, per database `dump exit=0` size above 0 count `0`, Postgres log count equal to the 1b.2 count; 12.5 `600 <user>` and `1`; 12.5b `0` SQLite files, exactly two prefixes `postgres:app` (1 table) and `n8n:public`, owners as at line 404, execution status total above 0; 12.3 `EGRESS-OK` and the unattributed list recorded. 12.4 has no paste: the runner writes the verdict wording at plan line 406. Differs: STOP, except the GO and record-only items the plan names at lines 404-406.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS 12.2 s12
@@ -417,7 +434,7 @@ wsl.exe -d Ubuntu -e bash $RS 13.5 s13
 **S13-5k (13.5k)** keep-alive gone, PowerShell block at plan line 419 with the same `<n>`. Expected `keepalive-gone`; then close the register row.
 
 ```powershell
-try { $q = Get-Process -Id <n> -ErrorAction Stop; if ($q.ProcessName -eq 'wsl') { 'keepalive still running: listed, not killed (lead decides)' } else { 'keepalive-gone (pid reused by another program)' } } catch { 'keepalive-gone' }
+& { try { $q = Get-Process -Id <n> -ErrorAction Stop; if ($q.ProcessName -eq 'wsl') { 'keepalive still running: listed, not killed (lead decides)' } else { 'keepalive-gone (pid reused by another program)' } } catch { 'keepalive-gone' } } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\s13.log
 ```
 
 **S13-6 (13.6)** Postgres container removal, which also deletes the saved executions (line 420). Expected `hadavin-smoke-pg` or `no container: skip`, then `docker-baseline-equal`.
@@ -438,7 +455,13 @@ wsl.exe -d Ubuntu -e bash $RS 13.7 s13
 wsl.exe -d Ubuntu -e bash $RS 13.8 s13
 ```
 
-**S13-9 (13.9)** delete the run folder. Run ONLY after INDEX.md, PROGRESS.md and ENV.md exist (line 423). Expected: `ev-marker-scan-clean`, then `removed`. A marker hit refuses the delete: redact, then re-run. Then delete the two tar files with the PowerShell command in plan line 423 (the paths there include the owner's user folder; copy from the plan).
+**S13-9 (13.9)** delete the run folder. Run ONLY after INDEX.md, PROGRESS.md and ENV.md exist (line 423). Expected: `ev-marker-scan-clean`, then `removed`. A marker hit refuses the delete: redact, then re-run. Then delete the two tar files with the PowerShell command of plan line 423, copied in full (wrapped, log `s13`; `<USER>` stands for the user-folder name the plan spells out):
+
+```powershell
+& { Remove-Item -Confirm:$false C:\Users\<USER>\Downloads\Hadavin\_local\scratch\wp6-smoke\nlite.tar, C:\Users\<USER>\Downloads\Hadavin\_local\scratch\wp6-smoke\demo.tar } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\s13.log
+```
+
+What this deletes, and nothing more: the PowerShell command removes only two named files, `nlite.tar` and `demo.tar` (the two `git archive` copies, plan lines 120, 423). Everything else the run deletes is inside the run folder `$HOME/hadavin-smoke` (removed by `13.9` only after the realpath check in plan line 423 passes and the evidence scan found no marker) or is the run's own Postgres container `hadavin-smoke-pg` (removed by `13.6`). The plan's own `13.9` bash body is at plan line 423; it is run through `run.sh` as shown above and not copied here, so it cannot drift.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS 13.9 s13
@@ -454,13 +477,14 @@ Part A: the five facts the lead named. The plan itself runs stand-in programs an
 |---|---|---|---|---|---|
 | A1 | The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list (search `take-<tag>-a`, `-b`, `-c`, example.com). The take program has no create, update, delete or archive call; its HubSpot key is read-only. | LEAD-ANSWERS lines 73, 79 | none in the plan | [LEAD FILLS: the plan gives no command] | |
 | A2 | The program's own time need is computed as 2630 s + 6 x lease seconds, rounded up: 49 minutes at lease 45. The program refuses a start that leaves less than 49 minutes before the stop time (stop time Mon 23 Nov 18:29 UTC = 23:59 IST). HARD latest start accepted by the program: 17:40 UTC = 23:10 IST. Safe latest start: 17:30 UTC = 23:00 IST, because the program re-checks the window after the `y` prompt and the confirmation line (UNVERIFIED: RUNBOOK-V4.3-PATCH row P45, line 149, says this check is added after r28) and the 10-minute film pause lies outside the 49 minutes (RUNBOOK-V4.3-PATCH.md line 88): 17:30 + 49 min = 18:19, + 10 min pause = 18:29. The planning target stays 12:00 UTC = 17:30 IST (start by noon so a failed run still has the afternoon). The old figure "about 14 minutes" and the old latest start "about 18:15 UTC = 23:45 IST" are OBSOLETE (lead answer 7: the 14-minute figure was the old r28 number). | LEAD-ANSWERS.md table rows 6, 7, 14, 16 (lines 19, 20, 27, 29) and line 43 (17:30Z rule); `work/decision-list-for-lead.md` bottom block; RUNBOOK-V4.3-PATCH.md lines 44, 88; `work/open-items-table-history-9.md` line 38 | none in the plan | [LEAD FILLS: the plan gives no command] | |
-| A3 | The start-time check: the program refuses to start when too close to the stop time, and exits with code 2 (steps v5 lines 189-201). | steps v5 lines 17, 189-202 | none in the plan | [LEAD FILLS: the plan gives no command] | |
-| A4 | The notice wording items: steps v5 line 115 now reads "3 test people, up to 3 model calls and the worst case, up to 3 contacts created and left in HubSpot for you to delete by a filtered list" (reworded 16 Nov; it used to say the contacts are deleted at the end, which contradicted A1); the printed notice itself must say the take never deletes and lists leftovers (check at the re-smoke). Items to read off the printed notice: the confirmation number line, "Type y to start", the confirmation line, the money figures, the contact line. | steps v5 lines 109-115; LEAD-ANSWERS lines 70, 73, 79 | none in the plan | [LEAD FILLS: the plan gives no command] | |
-| A5 | REAL-check refusals: a bad login stops before any typed answer; piped or scripted `y` refused; closed input ends with exit code 2; an answer typed in under 2 seconds refused; a wrong confirmation line ends the run with nothing sent; a used run name, an existing lock file, or a too-late start are refused with exit code 2; the retire check ends with exit code 0 only when both logins are refused, 3 if one still works, 2 otherwise. | steps v5 lines 109-118, 154-157, 188-201 | none in the plan | [LEAD FILLS: the plan gives no command] | |
+| A3 | The start-time check: the program refuses to start when too close to the stop time, and exits with code 2 (steps v5 lines 21, 229-230; re-grepped 16 Nov). | steps v5 lines 21, 229-230 | none in the plan | [LEAD FILLS: the plan gives no command] | |
+| A4 | The notice wording items: steps v5 line 122 now reads "3 test people, up to 3 model calls and the worst case, up to 3 contacts created and left behind in HubSpot for you to delete by a filtered list (step F2)" (reworded 16 Nov; it used to say the contacts are deleted at the end, which contradicted A1); the printed notice itself must say the take never deletes and lists leftovers (check at the re-smoke). Items to read off the printed notice: the confirmation number line, "Type y to start", the confirmation line, the money figures, the contact line. | steps v5 lines 117-124 (notice at 122); LEAD-ANSWERS lines 70, 73, 79 | none in the plan | [LEAD FILLS: the plan gives no command] | |
+| A5 | REAL-check refusals: a bad login stops before any typed answer; piped or scripted `y` refused; closed input ends with exit code 2; an answer typed in under 2 seconds refused; a wrong confirmation line ends the run with nothing sent; a used run name, an existing lock file, or a too-late start are refused with exit code 2; the retire check ends with exit code 0 only when both logins are refused, 3 if one still works, 2 otherwise. | steps v5 lines 117-124, 173-175, 220, 229-230 (re-grepped 16 Nov) | none in the plan | [LEAD FILLS: the plan gives no command] | |
 
-Also found, FLAG FOR THE LEAD, steps v5 is still out of line with the lead's answers in these places (I did not edit steps v5: a reader is on it now; edit pending after a reader finishes, by the lead's order):
-- **Time figure (answers 7, 16; check by grep on 16 Nov, current line numbers):** steps v5 line 17 (Words box, "Stop time") still says the program "needs about 14 minutes" and "the latest start is before about 18:15 UTC = 23:45 IST", and line 202 (Start deadline; earlier versions of this note said line 201, the line moved by one) says "about 14 minutes ... about 18:15 UTC (23:45 IST)". The lead's answers 9, 16, 17 and 7 (`work/LEAD-ANSWERS.md` table, lines 20 and 29; `work/decision-list-for-lead.md` bottom block) say: the 14-minute figure is obsolete; the program refuses a start with less than 49 minutes left; 17:40 UTC = 23:10 IST is the HARD latest start; 12:00 UTC is the planning target. The patch notes say the program checks the window twice (before the prompts and again after the `y` prompt and the confirmation line; RUNBOOK-V4.3-PATCH.md row P45), so 17:30 UTC = 23:00 IST is the safe latest start (UNVERIFIED). To be corrected by the lead's order: steps v5 lines 17 and 202: edit pending after a reader finishes. (The old text "18:14:40" the answers mention was not found in steps v5 by grep.)
-- **Deleting contacts (answer D-03, master sentence "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list"):** the lines 114 and 124-129 of the earlier steps v5 were reworded on 16 Nov by the Batch 4 agents. Re-checked by grep today: line 115 (the notice) now says "up to 3 contacts created and left in HubSpot for you to delete by a filtered list"; line 125 warning says "The contacts stay in HubSpot (the program never deletes them)"; line 129 says the program prints "the list of contacts it left behind (the program does not delete them)"; line 130 says "nothing is deleted by the program"; line 131 says the HubSpot key is read-only and the program never deletes contacts (UNVERIFIED until the lead's loopback re-smoke on the merged head). The old text "The program then deletes this run's contacts" and "cannot delete" no longer appears (grep finds none). One place still contradicts the master sentence: line 32 (Words box, "Delete") still says 'The program's own screens say "archive" for the contact deletion; it means delete.' That line also falls under the lead's order above (edit pending after a reader finishes). Item A4 above: the notice wording is now the reworded one at line 115; the printed notice and the film-pause words are still to be checked at the re-smoke, not here.
+Re-check of steps v5 against the lead's answers (second pass, 16 Nov 2026; replaces the earlier flag, which cited line numbers that have since moved; I did NOT edit steps v5). Re-grepped today, current lines of `inputs/OWNER-STEPS-realrun-v5-core-hardening.md`:
+- **Time figure:** line 21 (Words box, "Stop time") says the program's run takes about 49 minutes (2630 seconds plus 6 times the 45-second lease; UNVERIFIED), the hard latest start is 17:40 UTC = 23:10 IST, and the safe latest start is 17:30 UTC = 23:00 IST (UNVERIFIED); line 230 (Start deadline) says the same. The old "14 minutes" and "18:15 UTC" no longer appear in steps v5 (grep finds none). Consistent with the lead's answers 7 and 16. No flag remains.
+- **Deleting contacts:** line 13 (Left behind) and line 36 (Delete) say the program never deletes contacts; line 36 says "Archive" is only Gmail's own button and that the sheet never uses it; line 122 (the notice) says contacts are "left behind in HubSpot for you to delete by a filtered list (step F2)"; lines 132-138 say the contacts stay, the program lists those it left behind, nothing is deleted by the program, and its HubSpot key is read-only (UNVERIFIED until the lead's loopback re-smoke on the merged head); line 156 carries the master sentence verbatim. The earlier "archive" contradiction at the old line 32 is gone. No flag remains.
+- What stays open for this re-smoke: the printed notice and the film-pause words are checked at the re-smoke on the merged head, not here (A4, A5). Lines in rows A3 to A5 were re-pointed to the current steps v5 lines on 16 Nov; they move whenever steps v5 changes, so re-grep before use.
 
 Part B: the plan's own 20 pass/fail rows (plan section 7, lines 464-486). Fill in `evidence-2\INDEX.md` with the plan's columns; the table below only carries the id, class and the step, with an empty result.
 
@@ -494,6 +518,7 @@ Part B: the plan's own 20 pass/fail rows (plan section 7, lines 464-486). Fill i
 ## 7. What I did not do or could not check
 
 - Nothing here was run; every line is UNVERIFIED.
+- Second pass (reader findings C-1 to C-7): the PowerShell blocks are wrapped with their log names; both plan line 3 commands and the plan line 423 tar-file command are pasted in full (`<USER>` for the user folder); the P-2 body (plan lines 233-237) and the P-3a Write step are still [LEAD FILLS]; the run.sh forms for 0c.3r, 1.3d, 2.err, 11.7 and the repeat as `D` are my reading of plan lines 226, 264, 273, 296, 377 and are UNVERIFIED as exact conditions. I did not read plan lines 130-225, 268-305, 315-375 or 447-486 in this pass, and the plan's Linux user name in the realpath check (plan lines 264, 423) is not copied.
 - The plan's paste bodies are cited by line, not copied, to avoid drift (the plan itself says each paste file is "the code span ... verbatim").
 - I assumed the step-to-run.sh mapping for steps with no explicit paste file name (for example `10`, `6`, `7` in plan line 226 are named; `1.3d`, `0c.3r`, `2.err`, `11.7` are conditional pastes I referenced by line, not by a command here).
 - The 49-minute figure and the notice wording come from the lead's answers and the old open-items page, not from the two input files; the plan has no step for them (Part A).

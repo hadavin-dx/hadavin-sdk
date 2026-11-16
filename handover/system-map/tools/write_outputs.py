@@ -1,4 +1,4 @@
-"""Writes SWEEP.md and ONE-PLACE-TABLE.md from work/merged-findings.md and work/L6.md (PLAN-002 5.2, 5.3), version 4 (batch 4: row names pinned, see PIN)
+"""Writes SWEEP.md and ONE-PLACE-TABLE.md from work/merged-findings.md and work/L6.md (PLAN-002 5.2, 5.3), version 5 (batch 4: row names pinned, see PIN; finding texts pinned, see FINGERPRINT)
 (result review round 1 and round 2 applied, see work/result-resolve-r1.md and work/result-resolve-r2.md).
 Usage: python3 tools/write_outputs.py <dir>"""
 import re, sys, os
@@ -59,6 +59,29 @@ EXTRA = [
  ["L6-FD-026", "ops", "Blocker", "The recovery sweep, the only RETRY owner, swallows database errors (onError continueRegularOutput), so a Postgres hiccup can stop recovery with no notice. `handover/demo3/kill/flows-go1/mf-recovery.json:43 \"continueRegularOutput\"`", "DECISION line 7", "RETRY"],
  ["L6-FD-027", "ops", "Major", "One Postgres holds intake, claim state, recovery, n8n data and the execution log: if it is down everything stops. Backup, restore test, volume persistence, retention, start/stop/kill and egress answers are in no file seen (UNVERIFIED for the take). `handover/system-map/DECISION-one-store.md:14 \"ONE database for everything we own\"`", "DECISION line 14", "STORE"],
  ["L6-FD-028", "unverified", "Major", "Tenant isolation: the take serves one client, so N/A if the studio head confirms; the table has no source or tenant column. `handover/demo3/kill/flows-go1/mf_leads.sql:4 \"CREATE TABLE mf_leads(\"`", "DECISION line 14", "STORE"]]
+# FINGERPRINT: the first 40 characters of the evidence cell (the claim text) of every finding that RERATE, NOTE, RETYPE or DEDUP names.
+# Those four tables are keyed by finding id; if lane pages are renumbered and tools/merge.py is run again, an id can point at a different finding.
+# The tool stops and names the id when the text under an id no longer starts with its fingerprint (same idea as PIN for job rows).
+FINGERPRINT = {
+ 'L1-FD-021': "Personal data: the owner's full name app",
+ 'L1c-FD-001': "The SonarQube job runs the repository's ",
+ 'L2-FD-001': 'ALL kill-test numbers were taken with n8',
+ 'L2-FD-007': 'State review (invalid e-mail) parks a le',
+ 'L2-FD-008': 'When the mail server is slow, a lead end',
+ 'L2-FD-024': 'Idle logs: crm.log, smtp.log and stage.l',
+ 'L2c-FD-001': 'Two full-suite evidence runs were made w',
+ 'L2c-FD-010': 'n8n 2.46.6 for the kill rig is installed',
+ 'L3-FD-040': '`handover/demo3/evidence/review-lane3-fi',
+ 'L4-FD-004': 'Dry-run case count is stated as 224 but ',
+ 'L4c-FD-011': 'Extends L4-FD-003: more unreconciled tes',
+ 'L4c-FD-012': 'Extends L4-FD-005: one builder places th',
+ 'L6-FD-001': 'The take engine for n8n data: DECISION s',
+ 'L6-FD-002': 'The one execution log (n8n history in Po',
+ 'L6-FD-005': 'The notice channel fails with the thing ',
+ 'L6-FD-016': 'A retry engine and a dead-letter store w',
+ 'L6-FD-017': 'A lead in state review (invalid e-mail) ',
+ 'L6-FD-023': 'Three log files per run folder (crm.log,',
+}
 _ids_all = [c[0] for c in fl + EXTRA]
 _dup = sorted({i for i in _ids_all if _ids_all.count(i) > 1})
 if _dup:
@@ -68,6 +91,18 @@ for _nm, _ids in (("RERATE", RERATE), ("NOTE", NOTE), ("DEDUP", DEDUP), ("RETYPE
     _miss = sorted(set(_ids) - _known)
     if _miss:
         sys.exit("%s names finding ids that are not in the data: %s" % (_nm, _miss))
+_keyed = set(RERATE) | set(NOTE) | set(DEDUP) | set(RETYPE)
+if _keyed != set(FINGERPRINT):
+    sys.exit("tools/write_outputs.py: FINGERPRINT and the RERATE/NOTE/RETYPE/DEDUP keys differ; no fingerprint for %s; fingerprint without a key: %s"
+             % (sorted(_keyed - set(FINGERPRINT)), sorted(set(FINGERPRINT) - _keyed)))
+_text_of = {c[0]: c[3] for c in fl + EXTRA}
+for _id in sorted(FINGERPRINT):
+    if not _text_of[_id].startswith(FINGERPRINT[_id]):
+        _got, _want = _text_of[_id], FINGERPRINT[_id]
+        _pos = next((k for k in range(len(_want)) if k >= len(_got) or _got[k] != _want[k]), len(_want))
+        sys.exit("tools/write_outputs.py: finding %s no longer starts with the text its re-rating, note, type change or duplicate mark was written for "
+                 "(finding renumbered or reworded? first difference at character %d); pinned %r, work/merged-findings.md has %r"
+                 % (_id, _pos, _want, _got[:len(_want)]))
 LANE_SCOPE = [("L2", "take-rig"), ("L3", "take-rig"), ("L5", "core or demo"), ("L1", "build-process"), ("L4", "desk (retired from the take)"), ("L6", "cross-lane")]
 def scope(i):
     for p, s in LANE_SCOPE:
@@ -190,7 +225,10 @@ if _missing:
 _unlisted = sorted(k for k in rows if k not in PIN and k not in PLAIN)
 if _unlisted:
     sys.exit("tools/write_outputs.py: job rows in no registered set (new row? add it to PIN or PLAIN with its name): " + ", ".join(_unlisted))
-_renamed = ["%s: pinned %r, work/L6.md has %r" % (k, n[:50], rows[k][1][:50]) for k, n in sorted({**PIN, **PLAIN}.items()) if rows[k][1] != n]
+def _firstdiff(a, b):
+    return next((k for k in range(min(len(a), len(b))) if a[k] != b[k]), min(len(a), len(b)))
+_renamed = ["%s: pinned %r, work/L6.md has %r (first difference at character %d)" % (k, n, rows[k][1], _firstdiff(n, rows[k][1]))
+            for k, n in sorted({**PIN, **PLAIN}.items()) if rows[k][1] != n]
 if _renamed:
     sys.exit("tools/write_outputs.py: job row name differs from the pinned name (row renamed, moved or renumbered; check the verdict tables for it): " + "; ".join(_renamed))
 _have = sorted(int(k.rsplit("-", 1)[1]) for k in rows)
