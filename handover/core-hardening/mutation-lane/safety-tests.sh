@@ -166,9 +166,9 @@ rm -rf "$STATE" "$S/elsewhere"
 echo "== T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written"
 fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
 BK=$(ls "$STATE"/*.backup); printf 'def f():\n    return 99\n' > "$BK"
-python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]}; chk "T23a hash mismatch refused (got $rc)" "[ $rc -eq 2 ]"; chk "T23a file not written" "[ '$(last)' = return2 ]"
+python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]}; chk "T23a hash mismatch refused, exit 3 because a marker exists and the mutant may still be planted (got $rc)" "[ $rc -eq 3 ]"; chk "T23a file not written" "[ '$(last)' = return2 ]"
 git -C "$T/repo" show "$SHA:src/mod.py" > "$BK"; MK=$(ls "$STATE"/*.planted.json); mv "$MK" "$S/marker.real"; ln -s "$S/marker.real" "$MK"
-python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]}; chk "T23b marker as a link refused (got $rc)" "[ $rc -eq 2 ]"; chk "T23b file not written" "[ '$(last)' = return2 ]"
+python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-150; rc=${PIPESTATUS[0]}; chk "T23b marker as a link refused, exit 3 (got $rc)" "[ $rc -eq 3 ]"; chk "T23b file not written" "[ '$(last)' = return2 ]"
 rm "$MK"; mv "$S/marker.real" "$MK"; python3 "$RUN" --root "$T/root" --restore; chk "T23 genuine restore still works" "[ '$(last)' = return1 ]"
 out=$(python3 "$RUN" --root "$T/repo" --repo "$T/repo" --restore 2>&1); rc=$?; echo "$out" | cut -c1-150; hit=$(printf %s "$out" | grep -c 'real repository'); chk "T23c --restore in the real repository refused for that reason (got $rc, reason hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"
 echo "== T24 import check: the tests would load the target from another tree (exit 2); the right tree passes and is recorded"
@@ -253,7 +253,7 @@ fresh_root; base --timeout 6 --id m1 --file src/mod.py --old 'return 1' --new 'r
 chk "T31 file restored" "[ '$(last)' = return1 ]"
 echo "== T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang"
 fresh_root; mkfifo "$T/root/fifo"; timeout -s KILL 30 python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T32a FIFO in the tree refused, no hang (got $rc; 124 or 137 = hung)" "[ $rc -eq 2 ]"
-fresh_root; KEY=$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16); mkdir -m 700 -p "$STATE"; mkfifo "$STATE/$KEY.planted.json"; timeout -s KILL 30 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; rc=$?; chk "T32b FIFO as marker refused, no hang (got $rc; 124 or 137 = hung)" "[ $rc -eq 2 ]"
+fresh_root; KEY=$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16); mkdir -m 700 -p "$STATE"; mkfifo "$STATE/$KEY.planted.json"; timeout -s KILL 30 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; rc=$?; chk "T32b FIFO as marker refused, no hang, exit 3 (got $rc; 124 or 137 = hung)" "[ $rc -eq 3 ]"
 echo "== T33 a .venv folder deeper than the top is compared like any other folder (exit 2)"
 fresh_root; mkdir -p "$T/root/src/.venv"; echo x > "$T/root/src/.venv/hidden.py"; mut -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T33 nested .venv refused (got $rc)" "[ $rc -eq 2 ]"
 echo "== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)"
@@ -317,7 +317,7 @@ ok, text = r.restore_from_marker(pathlib.Path(sys.argv[2]).resolve()); print(ok,
 sys.exit(0 if ok else 1)
 PY
 ); rc=$?; echo "$out" | cut -c1-260 | tail -3
-chk "T39 restore finished although stop_group raised PermissionError (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ]"; chk "T39 the report says the orphan was not stopped" "printf %s '$out' | grep -q 'could NOT stop'"
+chk "T39 file restored although stop_group raised PermissionError, and the result is NOT ok (the orphan may still run; r8 N2) (rc $rc)" "[ $rc -eq 1 -a '$(last)' = return1 ]"; chk "T39 the report says the orphan was not stopped" "printf %s '$out' | grep -q 'could NOT stop'"
 pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
 echo "== T40 a signal right after the leader was reaped must not signal its (maybe reused) number (review r3 minor)"
 fresh_root; python3 - "$RUN" "$T/root" <<'PY'
@@ -387,7 +387,7 @@ pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
 fresh_root; bg; waitplant; kill -9 $RP; sleep 1; wait $RP 2>/dev/null
 setmarker start_ticks= argv= cmd_argv= cmd_head= run_start_ticks=
 out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200
-chk "T43c a marker with a group and NO identity and NO command at all: file restored (rc $rc), nothing stopped on a guess" "[ $rc -eq 0 -a '$(last)' = return1 ] && orphan_alive"
+chk "T43c a marker with a group and NO identity and NO command at all: file restored (rc $rc), nothing stopped on a guess, exit 3 because the group is unsettled (r8 N2)" "[ $rc -eq 3 -a '$(last)' = return1 ] && orphan_alive"
 pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
 echo "== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)"
 fresh_root; ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) >/dev/null 2>&1 & RP=$!
