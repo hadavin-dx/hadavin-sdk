@@ -420,7 +420,8 @@ def restore_target(
     finally:
         os.close(pfd)
     st = os.fstat(fd)
-    if not stat.S_ISREG(st.st_mode):  # checked BEFORE a buffered file object is built (a FIFO is not seekable)
+    # checked BEFORE a buffered file object is built (a FIFO is not seekable)
+    if not stat.S_ISREG(st.st_mode):
         os.close(fd)
         raise Refused(f"{path} is not a regular file: not written")
     with os.fdopen(fd, "r+b" if writable else "rb") as fh:

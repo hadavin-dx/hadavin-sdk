@@ -14,7 +14,7 @@ Written Mon 16 Nov 2026. **Sheet** = OWNER-SHEET-v20.md (section number such as 
 | RG1 film cue and the lead's n8n timing | LEAD | the printed line and the offsets come from the rehearsal | Open 36; Note G36; no cue, no run |
 | CC dedicated funding | NOT FORCED | adopted as the recommended option, not as a rule: it needs new money and a new owner yes with numbers, a new account or workspace (UNVERIFIED), and the owner decided on 2026-11-15 to use the existing credits (FACTS line 3) | Open 32; sheet R4 and the "Funding" slot |
 | Sheet length (brief: aim shorter than v19 if quality allows) | NOT SHORTER | quality did not allow: about 6,500 words and 109 lines against v19 5,246 words and 102 lines; about 100 findings added definitions, rules and sample slots; no safety rule dropped | Open 30 |
-| SB2, SW "second way" from v18, XM-E lead reach beyond the key file | PARTLY | the second way is the lead's to name (Open 26, G31); the yes sentence now names the clipboard and the screen, but nothing technical stops the lead | Open 22, 26 |
+| Second way (the v18 stranger blocker SB2, still open) and XM-E lead reach beyond the key file | PARTLY | the second way is the lead's to name (Open 26, G31); the yes sentence now names the clipboard and the screen, but nothing technical stops the lead | Open 22, 26 |
 | Everything marked UNVERIFIED | UNCHANGED | take scripts, flows, model program, page words are not in this checkout | Note section 0 item 2 |
 
 ## 1. Security review (review-v19-security.md)

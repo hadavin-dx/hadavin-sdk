@@ -1,0 +1,6 @@
+# Checklist rev 14 (one-line fix), 2026-11-16
+Cause: rev 13 independent evidence (evidence-c13-independent.md, gap 1): the C4 fill block deleted proof-6.txt only in its last branch, so after one good C4 a later STOP (stale rows, string mismatch) left the old proof and `accept 6` and C9 still passed on a repeat run.
+Fix: `rm -f "$W/proof-6.txt"` now runs first in the C4 fill block (right after `hbok &&`), and the later copy is removed. One line changed (diff of rev13 vs rev14: 1 insertion, 1 deletion; backup LEAD-CHECKLIST-v5.rev13.md).
+Checked: bash -n and dash -n on all 45 fenced blocks: 0 failures; a three-line stand-in test (old proof present, pfok fails) leaves 0 files in the folder. NOT run: the full evidence harness against rev 14 (not re-run; one-line delta, non-security path, no new review round per the round cap), real WSL, Git Bash, PowerShell.
+sha256 rev 14 LEAD-CHECKLIST-v5.md: d75c0546420de1770731a928424f631119f66d2acd67beb4697d7fc488803e25
+Other observations from the evidence run, not changed: (2) C3b exits 0 on a PROGRESS.md symlink (it only reads; write blocks refuse); (3) positive flow used hand-written stand-ins for WSL-2/3/4 (runner is root); (4) empty folder /z left by the runner (user: `rmdir /z`); (5) A9 plan-folder counts print 0 outside the real laptop; CHAIN 2 and 3, Git Bash, PowerShell not run.
