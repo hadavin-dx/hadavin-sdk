@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:10:28Z
-PUSHED_UTC: 2026-11-16T13:10:28Z
+UPDATED_UTC: 2026-11-16T13:11:36Z
+PUSHED_UTC: 2026-11-16T13:11:36Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -11,11 +11,11 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
   4. Answer the 8 open Blockers in drift/REPORT.md (row M3). Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
   5. Answer D-04 and D-05 in work/decision-list-for-lead.md (the questions are written there). Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
-PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
+PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 at this beat (the agent list shows all helpers finished); 8 new helpers start right after this push.
-CAPACITY nproc=4 load=0.20 0.19 0.18 disk: 19G free, MB freed 0
-NEXT: hand-backs digested through 942 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+AGENTS_RUNNING: 8 at this beat (8 helpers started at this beat; the 10 before them have all finished).
+CAPACITY nproc=4 load=0.15 disk: 20G free, MB freed 0
+NEXT: hand-backs digested through 953 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,14 +45,14 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| ad34d77ae87219f07 | read critical-path-r1 (r4) | 13:12 | 13:15 | running | nothing yet |
-| a3bc89651fa42d77b | read LEAD-NOTICE (r5) | 13:12 | 13:15 | running | nothing yet |
-| ad2ccc49f5e1428eb | read banned-claims-clean | 13:12 | 13:15 | running | nothing yet |
-| a0d7f96826fb83671 | read README-old | 13:12 | 13:15 | running | nothing yet |
-| a480329cb5bce6327 | read STATUS-BOARD | 13:12 | 13:15 | running | nothing yet |
-| aa000b41ed1295d80 | read L5b | 13:12 | 13:15 | running | nothing yet |
-| ae56744789b72ce35 | read egm-dryrun | 13:12 | 13:15 | running | nothing yet |
-| a4ff9ae2085f54451 | read row1-builder-brief | 13:12 | 13:15 | running | nothing yet |
+| ab6a9822cc6227df8 | read critical-path-r1 (r5) | 13:11 | +3 min | running | nothing yet |
+| a5b8d4ee68b0619cb | read LEAD-NOTICE (r6) | 13:11 | +3 min | running | nothing yet |
+| a9e47668679feb876 | read banned-claims-clean (r2) | 13:11 | +3 min | running | nothing yet |
+| a893bec48fd4a1169 | read L5b (r2) | 13:11 | +3 min | running | nothing yet |
+| a01ead9321dd953fd | read row1-builder-brief (r2) | 13:11 | +3 min | running | nothing yet |
+| a1003ff858409cd66 | read rehearsal-passed-limits-draft | 13:11 | +3 min | running | nothing yet |
+| ad38fa6014b9d5df7 | read L4c | 13:11 | +3 min | running | nothing yet |
+| a8b88af0c37fd512e | read rehearsal-trim-notes | 13:11 | +3 min | running | nothing yet |
 
 AGENTS_RUNNING: 8 of 8
 
