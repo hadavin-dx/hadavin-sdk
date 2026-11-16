@@ -1,7 +1,7 @@
 # Mutant plan for the v2 patches (C8c prep). NOT RUN.
 
-**Status (read first).** Nothing in this file has been run on a test suite. The v2 patches are still being built; this plan is based on `patches-ready/v2/C-01.patch` and `A-01.patch` as they were on 2026-11-16 (sha256 below). If a patch changes, regenerate with `python3 make_mutants_v2.py <fresh archive + patches tree> mutants-v2.json` (it re-checks every `old` text and prints the count of problems).
-What WAS checked: a fresh `git archive b4cce5b` extract, `patch -p1` of `C-01.patch`, `A-01.patch` and `G5-wording.patch` in that order (all three applied without error), and for each of the 104 mutants the `old` text occurs exactly once in the named file of that extract (script output: `104 mutants; 0 problems`; the raw line is in `raw/mutants-v2-dry-check.txt`). What was NOT checked: that any mutant is killed or survives; the "expected killer" column is my reading of the v2 tests, not a result. A mutant marked `SURVIVE?` is my guess that no v2 test kills it; the run decides.
+**Status (read first).** The original 104 mutants have not been run on a test suite; only the 8 added after review 3 (C2-16, C2-52, C2-53, A2-54..A2-58) were run once, in a scratch copy, to settle their classification (results in their sections; `raw/V2C-*`, `raw/V2A-*`). The full C8c run is still the lead's. The v2 patches are still being built; this plan is based on `patches-ready/v2/C-01.patch` and `A-01.patch` as they were on 2026-11-16 (sha256 below). If a patch changes, regenerate with `python3 make_mutants_v2.py <fresh archive + patches tree> mutants-v2.json` (it re-checks every `old` text and prints the count of problems).
+What WAS checked: a fresh `git archive b4cce5b` extract, `patch -p1` of `C-01.patch`, `A-01.patch` and `G5-wording.patch` in that order (all three applied without error), and for each of the 111 mutants the `old` text occurs exactly once in the named file of that extract (script output: `111 mutants; 0 problems`; the raw line is in `raw/mutants-v2-dry-check.txt`). What was NOT checked: that any mutant is killed or survives; the "expected killer" column is my reading of the v2 tests, not a result. A mutant marked `SURVIVE?` is my guess that no v2 test kills it; the run decides.
 
 ```
 4bf200518a205445c3417b4fb9dda47ed3aec73891eed319914ed3d920478256  ../patches-ready/v2/C-01.patch
@@ -9,20 +9,21 @@ What WAS checked: a fresh `git archive b4cce5b` extract, `patch -p1` of `C-01.pa
 ```
 
 ## Why these mutants (answers review-2 M1)
-The v1 lane tested the v1 patches. v2 changed the code (new `_price_ok`, `_finite`, `_route_refusals`, `keyless_loopback`, `max_route_tokens`, `audit_drain`, `backlog`, `last_corrupt`), so the v1 mutants no longer apply as written. This list covers every gap review 2 named: NaN/Infinity price (C2-01..05), `_finite` / `is_finite` flip (C2-02, 03, 05), `>` vs `>=` (C2-06, 29), `zero_ok` and/or (C2-08, 09, 11, 15, 16), `local_free` inverted (C2-12..14), `keyless_loopback` terms (C2-46..51), price boundaries: negative zero, tiny positive, one field zero (C2-07, 10, 19..21), `max_tokens` literals 1 / 0 / -1 / 200_001 / 199_999 / 2_000_000 (C2-40..45), last-route-only and first-route-only (C2-24..26), drain `ORDER BY` removed and swapped (A2-20, 21), `except` reorder (A2-31) and removal (A2-29, 30, 44), failed `DELETE` after the append (A2-22..24), `DuplicateEvent` swallowed or not (A2-25, 29..31, 44, 48), the failing-step rule (A2-04..08), backlog exception swallowed (A2-07), `last_corrupt` not reset (A2-13, 14) and the corrupt-row `continue` removed (A2-15). It also carries over the v1 survivors (memory-only drain, logging level, leak of error text) because v2 may have fixed them or not.
+The v1 lane tested the v1 patches. v2 changed the code (new `_price_ok`, `_finite`, `_route_refusals`, `keyless_loopback`, `max_route_tokens`, `audit_drain`, `backlog`, `last_corrupt`), so the v1 mutants no longer apply as written. This list covers every gap review 2 named: NaN/Infinity price (C2-01..05), `_finite` / `is_finite` flip (C2-02, 03, 05), `>` vs `>=` (C2-06, 29), `zero_ok` and/or (C2-08, 09, 11, 15, 16), `local_free` inverted (C2-12..14), `keyless_loopback` terms (C2-46..51), price boundaries: negative zero (C2-52 killed by the `-0` cases; C2-53 under the flag), tiny positive, one field zero (C2-07, 10, 19..21), `max_tokens` literals 1 / 0 / -1 / 200_001 / 199_999 / 2_000_000 (C2-40..45), last-route-only and first-route-only (C2-24..26), drain `ORDER BY` removed and swapped (A2-20, 21), `except` reorder (A2-31) and removal (A2-29, 30, 44), failed `DELETE` after the append (A2-22..24), `DuplicateEvent` swallowed or not (A2-25, 29..31, 44, 48), the failing-step rule (A2-04..08), backlog exception swallowed (A2-07), `last_corrupt` not reset (A2-13, 14) and the corrupt-row `continue` removed (A2-15). It also carries over the v1 survivors (memory-only drain, logging level, leak of error text) because v2 may have fixed them or not.
 
 ## Expected outcome (my prediction, to be checked by the run)
-- 86 of 104 expected KILLED by the patch's own tests.
-- 18 expected to SURVIVE (or equivalent). Each is a candidate gap in the v2 tests; a survivor gets a proposed test, proven failing on the mutant and passing on the clean tree (as in section 4 of REPORT.md).
+- 87 of 111 expected KILLED by the patch's own tests (86 + C2-52).
+- 24 expected to SURVIVE (or equivalent): the 18 earlier ones, C2-53 and the five except-widening mutants A2-54..A2-58. Each is a candidate gap in the v2 tests; a survivor gets a proposed test, proven failing on the mutant and passing on the clean tree (as in section 4 of REPORT.md).
 
 | id | expected | one-line description |
 |---|---|---|
 | C2-01 | SURVIVE (double cover: README says pydantic's Money already  | Route._finite validator removed (NaN/Infinity price accepted by the route itself) |
-| C2-16 | SURVIVE? (flag-refused tests use a positive price, and the f | zero_ok: loopback term dropped (flag alone lets price 0 pass on any live kind) |
+| C2-16 | SURVIVE (equivalent: see its section) | zero_ok: loopback term dropped (the flag alone decides whether price 0 is allowed) |
 | C2-24 | SURVIVE? (the second route in the at-once test has a good pr | price check only on the route named default (route-position gap) |
 | C2-27 | SURVIVE (equivalent) | routes not sorted (message order only) |
 | C2-34 | SURVIVE? (only 0 is tested) | ceiling field gt=0 -> gt=1 (a ceiling of 1 refused) |
 | C2-51 | SURVIVE? (no test uses a remote host in the set) | loopback set widened by one remote host (also widens the existing http check at line ~80: only the new route-price use is the target here) |
+| C2-53 | SURVIVE? (no test sets the flag with a price of -0) | negative zero refused even when the flag allows a zero price (0 passes, -0 does not) |
 | A2-13 | SURVIVE? (no test reconciles twice, first with a bad row, th | chain: last_corrupt not reset at the start of reconcile |
 | A2-14 | SURVIVE? (same gap) | local_dir: last_corrupt not reset at the start of reconcile |
 | A2-20 | SURVIVE? (tests do not assert the drain order of two or more | drain: ORDER BY removed |
@@ -35,6 +36,11 @@ The v1 lane tested the v1 patches. v2 changed the code (new `_price_ok`, `_finit
 | A2-48 | SURVIVE? (no test puts an already-written event in the outbo | local_dir reconcile: DuplicateEvent on an outbox file no longer absorbed (file stays forever) |
 | A2-49 | SURVIVE? (no local_dir test holds events only in memory) | local_dir backlog: memory events not counted |
 | A2-52 | SURVIVE? (the test uses caplog at INFO and asserts the count | local_dir: corrupt-file ERROR downgraded to DEBUG |
+| A2-54 | SURVIVE? (a write that raises BaseException is not tested) | chain write_outcome: except widened to BaseException (a Ctrl-C or exit during the write is swallowed and sent to the outbox) |
+| A2-55 | SURVIVE? (a write that raises BaseException is not tested) | chain _drain: except widened to BaseException (an interrupt during a drain is swallowed and the event stays queued) |
+| A2-56 | SURVIVE? (a write that raises BaseException is not tested) | local_dir write_outcome: except widened to BaseException |
+| A2-57 | SURVIVE? (a write that raises BaseException is not tested) | local_dir reconcile (memory events): except widened to BaseException |
+| A2-58 | SURVIVE? (a write that raises BaseException is not tested) | local_dir reconcile (outbox files): except widened to BaseException |
 
 ## How to run (when the v2 patches are final)
 1. Build two scratch trees: `git archive <sha> | tar -x` into a new folder, then `patch -p1 -i patches-ready/v2/C-01.patch` (tree C) and `A-01.patch` (tree A); symlink or create the `.venv` there. Do not use the real repository.
@@ -257,10 +263,11 @@ new:
             zero_ok = r.price_is_zero_by_design or local_free
 ```
 
-### C2-16 - zero_ok: loopback term dropped (flag alone lets price 0 pass on any live kind)
+### C2-16 - zero_ok: loopback term dropped (the flag alone decides whether price 0 is allowed)
 - file: `src/hadavin_sdk/config.py`
-- expected: SURVIVE? (flag-refused tests use a positive price, and the flag message is still emitted; a test with price 0 + flag on a remote kind must also assert 'needs a price above 0')
-- expected killer: none known; proposed: price 0 + flag on LIVE_LLM expects BOTH refusal texts
+- expected: SURVIVE (equivalent). Classification settled in one place (`C2_16_WHY` in `make_mutants_v2.py`, also in `mutants-v2.json`): earlier text called it a gap; that was wrong.
+- why equivalent: with the flag on a live model that is not keyless loopback, the check right above (`price_is_zero_by_design needs a keyless loopback model`) always adds a refusal, so the load fails with or without the loopback term. The mutant only drops the second message line (`a live model needs a price above 0`) for that one input. No config is accepted that the clean code refuses. A test for the missing line would pin message wording, not behaviour.
+- evidence: scratch run `raw/V2C-C2-16.txt`: SURVIVED with the 43 route tests (baseline 43 passed). A survivor that is equivalent gets no new test.
 
 old:
 ```text
@@ -1654,6 +1661,106 @@ new:
                 _LOG.debug(
                     "audit outbox row not readable
 ```
+
+### C2-52 - negative zero accepted as a price without the flag (only -0 passes; 0 and -1 still refused)
+- file: `src/hadavin_sdk/config.py`
+- expected: KILLED
+- expected killer: tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[-0-input_usd_per_mtok] and [-0-output_usd_per_mtok]
+
+old:
+```text
+price > 0 or (zero_ok and price == 0))
+```
+new:
+```text
+price > 0 or (price.is_zero() and price.is_signed()) or (zero_ok and price == 0))
+```
+
+### C2-53 - negative zero refused even when the flag allows a zero price (0 passes, -0 does not)
+- file: `src/hadavin_sdk/config.py`
+- expected: SURVIVE? (no test sets the flag with a price of -0)
+- expected killer: none known; proposed: LOCAL_LLM + price_is_zero_by_design + price '-0' loads (decimal -0 equals 0, so the flag allows it)
+
+old:
+```text
+price > 0 or (zero_ok and price == 0))
+```
+new:
+```text
+price > 0 or (zero_ok and price == 0 and not price.is_signed()))
+```
+
+### A2-54 - chain write_outcome: except widened to BaseException (a Ctrl-C or exit during the write is swallowed and sent to the outbox)
+- file: `src/hadavin_sdk/audit/chain.py`
+- expected: SURVIVE? (no test makes the write raise something other than Exception, so widening to BaseException is not seen)
+- expected killer: none known; proposed: a fake table or folder whose write raises KeyboardInterrupt; the call must propagate it and nothing may reach the outbox
+
+old:
+```text
+        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"
+```
+new:
+```text
+        except BaseException as exc:  # noqa: BLE001 - the contract is "never raises"
+```
+
+### A2-55 - chain _drain: except widened to BaseException (an interrupt during a drain is swallowed and the event stays queued)
+- file: `src/hadavin_sdk/audit/chain.py`
+- expected: SURVIVE? (no test makes the write raise something other than Exception, so widening to BaseException is not seen)
+- expected killer: none known; proposed: a fake table or folder whose write raises KeyboardInterrupt; the call must propagate it and nothing may reach the outbox
+
+old:
+```text
+        except Exception:  # noqa: BLE001 - stays queued, retried next time
+```
+new:
+```text
+        except BaseException:  # noqa: BLE001 - stays queued, retried next time
+```
+
+### A2-56 - local_dir write_outcome: except widened to BaseException
+- file: `src/hadavin_sdk/audit/local_dir.py`
+- expected: SURVIVE? (no test makes the write raise something other than Exception, so widening to BaseException is not seen)
+- expected killer: none known; proposed: a fake table or folder whose write raises KeyboardInterrupt; the call must propagate it and nothing may reach the outbox
+
+old:
+```text
+        except Exception as exc:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
+```
+new:
+```text
+        except BaseException as exc:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
+```
+
+### A2-57 - local_dir reconcile (memory events): except widened to BaseException
+- file: `src/hadavin_sdk/audit/local_dir.py`
+- expected: SURVIVE? (no test makes the write raise something other than Exception, so widening to BaseException is not seen)
+- expected killer: none known; proposed: a fake table or folder whose write raises KeyboardInterrupt; the call must propagate it and nothing may reach the outbox
+
+old:
+```text
+            except Exception:  # noqa: BLE001, S112 - safe to swallow: the event is still in memory
+```
+new:
+```text
+            except BaseException:  # noqa: BLE001, S112 - safe to swallow: the event is still in memory
+```
+
+### A2-58 - local_dir reconcile (outbox files): except widened to BaseException
+- file: `src/hadavin_sdk/audit/local_dir.py`
+- expected: SURVIVE? (no test makes the write raise something other than Exception, so widening to BaseException is not seen)
+- expected killer: none known; proposed: a fake table or folder whose write raises KeyboardInterrupt; the call must propagate it and nothing may reach the outbox
+
+old:
+```text
+            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked
+```
+new:
+```text
+            except BaseException:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked
+```
+
+Except-widening (review 3 M-F): A2-54..A2-58 change `except Exception` to `except BaseException` at the four places the review named (chain write_outcome, chain _drain, local_dir write_outcome, local_dir reconcile twice). Scratch run result: all five SURVIVED (`raw/V2A-A2-54.txt` .. `V2A-A2-58.txt`), so this is a real test gap, now listed for the lead; the proposed test is in each section.
 
 ## Not covered by this list (honest gaps of the plan itself)
 - Mutants of the test files, of `reprobe_sources`, `K1bAudit` (no `reconcile`: the step logs one line) and of the Postgres path (the dead-man query was never run; Postgres tests are skipped here).

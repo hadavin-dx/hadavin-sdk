@@ -1,5 +1,14 @@
 # Ready-to-apply core patches, v3 (C5 v3, 2026-11-16)
 
+## SCOPE CUT by the lead, 10:02Z (read before anything else)
+- **`A-01.patch` is DEFERRED.** Finished and tested as described below, but not to be applied or extended now.
+- **C-01 extras are CUT** (do not apply): `price_is_zero_by_design`, `keyless_loopback`, `max_route_tokens`, the NaN handling, and
+  the shared `price_problems` rule. Only the minimal "price above 0 and `max_tokens` ceiling" check remains of interest, and only
+  if the take's model program loads `Route` config (unverified, not in the video path). `C-01.patch` here still contains the
+  extras; a minimal version was NOT cut (no time, and the lead said no new work). The blocker fix (`refused +=`) is the part
+  that matters if any of C-01 is used.
+- **`G5-wording.patch` stays** (text only).
+
 v3 replaces v2. It fixes every finding in `review/design-r2.md` and `review/codebase-r2.md` (and the open items of round 1).
 Three patches: `C-01.patch` (price and token limits), `A-01.patch` (audit events waiting in the outbox), `G5-wording.patch`
 (text only). `DEAD-MAN-CHECK.md` is a note, not code. Nothing was committed or pushed; the real repository only got this folder.
@@ -20,7 +29,7 @@ Three patches: `C-01.patch` (price and token limits), `A-01.patch` (audit events
   came from the scratch folder (no git repository for the licence test; vendor-name hits inside `handover/` notes), not from the
   patches. Whether the real repository passes those two guard tests today was NOT run here (the hygiene commit `7e3e7aa1`
   suggests the head fixed the notes).
-- **Mutation lane is hand-made, not exhaustive:** 54 mutants (list in `raw/mutation-v3.txt`). Two survived the first run
+- **Mutation lane is hand-made, not exhaustive:** 54 mutants plus re-runs (list in `raw/mutation-v3.txt`). Two survived the first run
   (C01-07, SP-08); each got a killing test and was re-run and killed. Failing test NAMES are recorded, not log lines.
 - **Dead code decision:** the v2 `Route` validator for NaN and Infinity was unreachable (see finding 5). It is deleted, so
   there is no longer an equivalent surviving mutant.
@@ -126,6 +135,9 @@ included. Files changed: 17 (list: the three `Files` cells below).
   error type and event id only, never the body), and never lets one bad row block the rows behind it (audit A-22).
   `last_corrupt` is the number of damaged items now present, per pass (a test shows it does not grow on every tick).
 - `K1bAudit` passes `reconcile`, `backlog` and `last_corrupt` to the sink it wraps.
+- A failing `DELETE` of an outbox row after its event reached the chain is NOT caught any more (v2 caught it with a blind
+  `except`): the step fails loudly, nothing is lost, the next tick absorbs the duplicate (tested). This keeps the patch free of
+  new suppressions.
 - Both kinds log a WARNING (error type and event id only) when an outcome goes to the outbox; the chain kind logs an ERROR
   naming where the event ended up (spill folder or memory only).
 
@@ -154,23 +166,32 @@ memory only (A-07).
   `AKIA<ZWSP>` passing G5 (eighth review) is left as it is: it describes the original project.
 - `tests/warden_port/test_gate.py` docstring says the G5 leak block is not ported.
 
+## Which new C-01 tests fail on old code, and which only guard (run on `b4cce5b`, `raw/c01-tests-on-pristine.txt`)
+The coordinator's check agrees with mine: on `b4cce5b` with pydantic 2.14.1 a NaN or Infinity price is already refused by
+`Route`. Running the new C-01 test file against the old tree (new names stubbed): **32 fail, 29 pass**. The 29 that pass are
+GUARDS ONLY, they do not prove a fix: all 16 NaN/Infinity cases, the 4 pydantic-behaviour pins, the tiny-price test, the
+priced-route-still-loads test, boundary tests that old code already satisfies (ceiling field, `max_tokens` 1/0/-1, fake model
+may cost nothing, route frozen), and the 2 pilot/prod control tests. The failing ones are the zero or negative price rules,
+the `max_tokens` ceiling, the flag, and the pilot/prod tests (those also fail on the real v2 code, 9 of 9). Old code accepts
+price 0, -0, -1 and 1E-12. A-22 (a damaged outbox row blocks the rows behind it) is confirmed on old code by the coordinator.
+
 ## What I ran (final tree = `b4cce5b` + the three v3 patches, git-initialised scratch copy; raw output in `raw/`)
 | Command | Result |
 |---|---|
 | pristine `b4cce5b` extract, git init, `handover/` removed: `uv run --all-extras --group test pytest tests -p no:cacheprovider -q` | 9391 passed, 455 skipped, 0 failed, 238 s (`raw/pristine-full-suite.txt`) |
-| FINAL tree, same command, one run | FULL_SUITE_PLACEHOLDER (`raw/full-suite.txt`) |
-| `ruff check src tests`, `ruff format --check src tests` | RUFF_PLACEHOLDER (`raw/ruff.log`) |
-| `bandit -ll -q -r src` (via `uvx`; not in the test group) | BANDIT_PLACEHOLDER (`raw/bandit.log`) |
+| FINAL tree, same command, one run | **9491 passed, 455 skipped, 0 failed, 235 s** (an earlier run of the same tree found 1 failure, a hardcoded-host-literal guard hit on a docstring I wrote; fixed, and that run was repeated in full) (`raw/full-suite.txt`) |
+| `ruff check src tests`, `ruff format --check src tests` | clean, `ruff check` and `ruff format --check` rc 0 (version line in the log) (`raw/ruff.log`) |
+| `bandit -ll -q -r src` (via `uvx`; not in the test group) | rc 0, no findings (bandit 1.9.4) (`raw/bandit.log`) |
 | new test files collected | `test_c01_route_limits.py`: 61 test cases from 26 functions (parametrized); `test_a01_audit_reconcile.py`: 34; 5 new replay tests in `test_k1b_replay.py`; 2 added lines in `test_p7_tick.py` |
 | hand-made mutation lane, 54 mutants on a copy of the final tree | `raw/mutation-v3.txt`; all killed after two survivors got killing tests (C01-07, SP-08) |
 | new pilot/prod tests against the real v2 code | 9 fail, 2 control pass (`raw/v2-fails-pilot-prod-tests.txt`) |
-| `patch --dry-run -p1` and real apply on fresh extracts of `b4cce5b`, alone and in order | DRYRUN_PLACEHOLDER (`raw/dry-run.txt`) |
+| `patch --dry-run -p1` and real apply on fresh extracts of `b4cce5b`, alone and in order | all 9 steps rc 0; applied tree equals the work tree for `src` and `tests` (only a `.orig` file from a 5-line offset on `table.py`) (`raw/dry-run.txt`) |
 
-No suppressions were added: no `noqa`, no `nosec`, no skipped or weakened test. (The `# noqa` comments that were already in
-`chain.py`, `local_dir.py` and `k1b/audit_sink.py` at `b4cce5b` were not touched except where a line moved.)
+No suppressions were added: no new `noqa` or `nosec`, no skipped or weakened test. Four `# noqa: BLE001` comments that already
+existed at `b4cce5b` sit on lines that now read `except Exception as exc:` (the marker was there before; one v2 marker was removed).
 Old-code evidence for the rest: a test file that imports a new name cannot even load on `b4cce5b`, so for A-01 and the spill
 folder the proof that the tests bite is the mutation lane, not a run on old code.
 
 ## Files in `patches-ready/v3/`
 `C-01.patch`, `A-01.patch`, `G5-wording.patch`, `DEAD-MAN-CHECK.md`, `README.md`, `checkpoint.md`, `raw/`. SHA256 of the three
-patches: see `SHA256SUMS.txt`.
+patches: see `SHA256SUMS.txt` (fddf8a15..., 092d673a..., 0815212a...).
