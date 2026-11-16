@@ -1,0 +1,8 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c7b/base
+      Built hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c7b/base
+Installed 76 packages in 183ms
+error: Failed to spawn: `bandit`
+  Caused by: No such file or directory (os error 2)
