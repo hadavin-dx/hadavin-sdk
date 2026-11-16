@@ -1120,3 +1120,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 815 L1c r12: Blocker count, reaper, cells. PARTLY FIXED by CURRENT r13; cells TO DO.
 - 816 M17 r11: no single current state, release word, terms. FIXED by FOLDING: page rewritten short; history in decisions/M17-history.md.
+
+- 817 ARCHIVE-CUT-LIST r14: not standalone, steps missing. FIXED by FOLDING: short page VERDICT r15, history file.
+- 818 row1-builder-brief r11: base folder, exit meaning. FIXED by CURRENT ONLY r12.
+- 819 premortem r14: owners and gate not complete. FIXED by STATE r15.
+- 820 critical-path r22: single time, conflicts. FIXED by FOLDING: short page r23, history file.
