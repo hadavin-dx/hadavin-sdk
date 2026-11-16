@@ -374,22 +374,30 @@ CHILD_PROGRAMS = (
 # r13 (review r12 M1): the programs this run may start are the ONES IT FOUND AT START, not any file with the right name.
 # `git` and `patch`: the real path (and file identity) of what `tool()` found first; the interpreter: exactly
 # <resolved --root>/.venv/bin/python (set once by `set_child_root`, called by main after --root is checked).
-_TRUSTED: dict[str, tuple[str, int, int]] = {}
+_TRUSTED: dict[str, tuple] = {}
 _FOUND: dict[str, str] = {}  # the path text `shutil.which` gave (what tool() returns)
+_MISSING: set[str] = set()  # r14 m2: programs that were NOT installed when `seal_tools` ran: never trusted later
+_SEALED = False
 _CHILD_PYTHON: str | None = None
+_CHILD_PYTHON_ID: tuple | None = None  # r14 m1: what the interpreter file was when `set_child_root` named it
 IMPORT_PROBE_CODE = "import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '')"
 PYTEST_FIXED_TAIL = ("--tb=line", "-rfp")
 
 
-def _identity(path: str) -> tuple[str, int, int]:
+def _identity(path: str) -> tuple:
+    """r14 m1: real path, device, inode AND size, modification time and change time (nanoseconds): a file that was replaced or
+    edited in place after the start (same inode, new bytes) no longer matches."""
     real = os.path.realpath(path)
     st = os.stat(real)
-    return real, st.st_dev, st.st_ino
+    return real, st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns
 
 
 def trust_tool(name: str) -> str | None:
     """Remember what `shutil.which(name)` finds the FIRST time (real path, device and inode); every later call returns the
-    same path. None when the program is not installed (nothing is recorded)."""
+    same path. None when the program is not installed (nothing is recorded). r14 m2: after `seal_tools` (main calls it at the
+    start) a program that was not found then stays untrusted: a `patch` that appears later is never accepted."""
+    if name in _MISSING:
+        return None
     if name not in _TRUSTED:
         found = shutil.which(name)
         if found is None:
@@ -402,11 +410,28 @@ def trust_tool(name: str) -> str | None:
     return _FOUND[name]
 
 
+def seal_tools() -> list[str]:
+    """r14 m2 (class: a program trusted at its FIRST find, which may be later than the start): record `git` and `patch` NOW; one
+    that is not installed is remembered as missing and is refused for the rest of the run. Returns the names that are missing."""
+    global _SEALED
+    for name in CHILD_PROGRAMS:
+        if name not in _TRUSTED and trust_tool(name) is None:
+            _MISSING.add(name)
+    _SEALED = True
+    return sorted(_MISSING)
+
+
 def set_child_root(root: pathlib.Path | str | None) -> None:
     """Name the one interpreter a program start may use: exactly `<root>/.venv/bin/python` (no normalising, no symlink
     resolving: the same text the caller builds). None clears it (every interpreter start is then refused)."""
-    global _CHILD_PYTHON
+    global _CHILD_PYTHON, _CHILD_PYTHON_ID
     _CHILD_PYTHON = None if root is None else os.path.join(os.fspath(root), ".venv/bin/python")
+    # r14 m1: the interpreter file is pinned too (real path, device, inode, size, times); a missing file is pinned as None
+    # and every interpreter start is then refused
+    try:
+        _CHILD_PYTHON_ID = None if _CHILD_PYTHON is None else _identity(_CHILD_PYTHON)
+    except OSError:
+        _CHILD_PYTHON_ID = None
 
 
 def _is_trusted(prog: str, name: str) -> bool:
@@ -429,8 +454,12 @@ def child_program_ok(prog: str) -> str | None:
     for name in CHILD_PROGRAMS:
         if _is_trusted(prog, name):
             return name
-    if _CHILD_PYTHON is not None and prog == _CHILD_PYTHON:
-        return "python"
+    if _CHILD_PYTHON is not None and prog == _CHILD_PYTHON and _CHILD_PYTHON_ID is not None:
+        try:
+            if _identity(prog) == _CHILD_PYTHON_ID:
+                return "python"
+        except OSError:
+            return None
     return None
 
 
@@ -521,7 +550,7 @@ def check_child_call(args, kwargs: dict) -> None:
         raise Refused(
             "program start refused: env= is required (None would give the child the caller's whole environment)"
         )
-    if not isinstance(env, dict) or not all(
+    if type(env) is not dict or not all(
         type(k) is str and type(v) is str for k, v in env.items()
     ):
         raise Refused("program start refused: the environment must be a dict of text")
@@ -3001,8 +3030,7 @@ def main():
         sys.exit(EXIT_REFUSED)
     a.root = str(root)
     set_child_root(root)  # r13 M1: the one interpreter a program start may use
-    for _name in CHILD_PROGRAMS:
-        trust_tool(_name)  # r13 M1: remember what is found now; later starts must be that very file
+    seal_tools()  # r13 M1, r14 m2: remember what is found NOW (a program not installed now is refused for the whole run)
     global ROOT_IDENT
     rst = os.stat(root)
     ROOT_IDENT = (

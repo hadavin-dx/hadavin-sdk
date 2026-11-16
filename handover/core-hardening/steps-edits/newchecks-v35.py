@@ -765,5 +765,54 @@ _pin('C272', 'sleep Never; screen off Never; lid close action', 1, 1)
 # C273 (reading load) no net words: the five pages are lower than v33 (15722), the sheet is no longer than v33 (6286 on A)
 for _k in 'AB':
     _w = {p % _k if '%s' in p else p: len(rd(p % _k if '%s' in p else p).split()) for p in ('OWNER-SHEET-' + _V9 + '-%s.md', 'OWNER-CARD-' + _V9 + '-%s.md', 'OWNER-APPENDIX-' + _V9 + '-%s.md', 'OWNER-FILM-PERSON-' + _V9 + '.md', 'OWNER-HELPER-' + _V9 + '.md')}
-    if sum(_w.values()) >= 15722: fail('C273', 'sheet %s: five pages hold %d words, not lower than v33 (15722)' % (_k, sum(_w.values())))
+    if sum(_w.values()) >= 15715: fail('C273', 'sheet %s: five pages hold %d words, not lower than 15715 (round 7 cap; v33 was 15722)' % (_k, sum(_w.values())))
     if _w['OWNER-SHEET-%s-%s.md' % (_V9, _k)] > 6286: fail('C273', 'sheet %s page has %d words: more than v33 (6286)' % (_k, _w['OWNER-SHEET-%s-%s.md' % (_V9, _k)]))
+# ---------------------------------------------------------------------------------------------------------------------
+# Part 10 (round 7): meaning checks, not exact-sentence pins. Each reads the facts or the structure, so a reworded sentence
+# that keeps its meaning still passes and a changed meaning fails. v34 had none of these (review-v34-evidence.md).
+def _min(p): _h, _m = re.match(r'(\d\d):(\d\d)', p).groups(); return int(_h) * 60 + int(_m)
+# C274 (stranger B1, evidence): one boundary rule at exactly 5 minutes before the latest start
+if _min(_FF['ls']) - _min(_FF['enter']) != 5 or _FF['enter'] != '11:25 UTC = 16:55 IST': fail('C274', 'facts: the Enter-by time is not the latest start minus 5 minutes (11:25 UTC = 16:55 IST)')
+for _n, _t in (('A', A), ('B', B)):
+    for _m in re.finditer(r'(?i)(?:from|at least|within|less than|fewer than) 5 minutes (?:before|of|away from|from) the latest start|5 minutes away|before the latest start[^.\n]{0,30}press Enter', _t): fail('C274', '%s: a second wording of the 5-minute boundary: %r' % (_n, _m[0]))
+    if _CARD[_n].count('**Enter-by time** = the latest start minus 5 minutes') != 1: fail('C274', 'card %s does not define the Enter-by time exactly once' % _n)
+    if SHEETS_DISK[_n].count('Enter-by time') < 3 or SHEETS_DISK[_n].count('at or before the Enter-by time') < 2 or 'no "restarted" by the Enter-by time' not in SHEETS_DISK[_n]: fail('C274', 'sheet %s: 6.6 ("restarted" by the Enter-by time) and 7.3 (Enter at or before it) do not both use the one rule' % _n)
+# C275 (security M2, evidence): the Sunday timeline of check 2 is consistent with the facts
+for _n in 'AB':
+    _m = re.search(r'on Sun 22 Nov: before (\d\d:\d\d UTC = \d\d:\d\d IST)', SHEETS_DISK[_n].replace('\n', ' ') + _APP9[_n].replace('\n', ' '))
+    if not _m or _m[1] != _FF['bs_pair']: fail('C275', 'sheet %s: check 2 does not name the Sunday older-key bound %s' % (_n, _FF['bs_pair']))
+_sc = re.search(r'(\d\d:\d\d) UTC', _FF['sun_cb']); _bsm = _min(_FF['bs_pair'])
+if not _sc or _min(_sc[1]) >= _bsm: fail('C275', 'facts: the Sunday cancel-by time %s is not before alarm 5 (%s)' % (_FF['sun_cb'], _FF['bs_pair']))
+if _min(_FF['rv22'][-30:].split(' UTC')[0][-5:]) - _bsm != 10 or _min(_FF['rv23']) - _min(_FF['bm'][-30:].split(' UTC')[0][-5:]) != 10: fail('C275', 'facts: the backstop time is not alarm 5 or alarm 6 plus 10 minutes')
+# C276 (stranger B2, evidence): labels: P1 and P2 planned moments, W3 to W9 danger signs, no W1 or W2, every reference defined
+for _n in 'AB':
+    for _p in ('P1', 'P2'):
+        if len(re.findall(r'(?:^|\*\* |; )%s you typed' % _p, _CARD[_n], re.M)) != 1: fail('C276', 'card %s: %s is not defined exactly once' % (_n, _p))
+    if set(re.findall(r'\bP(\d+)\b', (A if _n == 'A' else B))) - {'1', '2'}: fail('C276', 'sheet %s names a P label that does not exist' % _n)
+    if re.search(r'(?m)^W[12] ', _CARD[_n]): fail('C276', 'card %s defines W1 or W2' % _n)
+    if 'no W1 or W2' not in _CARD[_n]: fail('C276', 'card %s does not say that W1 and W2 are not missing' % _n)
+# C277 (stranger majors): one word, one meaning
+for _n, _t in (('A', A), ('B', B), ('note', NOTE), ('open list', OPEN)):
+    for _m in re.finditer(r'(?i)deadline reminders?|\blive word\b', _t): fail('C277', '%s: the old word %r is back (alarm 5, alarm 6, current state word)' % (_n, _m[0]))
+for _n, _t in (('A', A), ('B', B)):
+    if _t.count('**None** = "there is no such thing" in every slot') != 1: fail('C277', '%s: none/never/unknown is not defined exactly once' % _n)
+# C278 (security M1, M9, M10): the cancel helper has no standing access, calls back, is limited to its role, and is removed
+if _HELP:
+    for _s in ('call the owner yourself on the phone number on your paper', 'only if your cancel-only role can do it', 'VOID'):
+        if _s not in _HELP: fail('C278', 'helper page lacks %r' % _s)
+for _n in 'AB':
+    if 'the paper is void (the helper writes VOID on it)' not in SHEETS_DISK[_n]: fail('C278', 'sheet %s: 8.7 does not void the helper paper' % _n)
+    if 'cancel-only role' not in SHEETS_DISK[_n]: fail('C278', 'sheet %s does not name the cancel-only role' % _n)
+# C279 (stranger major, security M3): the film page defines what it cites and does not send the film person to labels
+if _FILM9:
+    if re.search(r'\b[WLPR]\d\b', _FILM9): fail('C279', 'the film page cites a label (W, L, P or R number) it does not define')
+    for _s in ('microphone', 'the **editor** is a different person'):
+        if _s not in _FILM9: fail('C279', 'the film page lacks %r' % _s)
+for _n in 'AB':
+    _s9 = SHEETS_DISK[_n]; _i = _s9.find('## 9. Posting')
+    if _i < 0 or 'after the lead\'s word "post"' not in _s9[_i:_i + 3500]: fail('C279', 'sheet %s: section 9 does not carry the posting rule itself' % _n)
+    if re.search(r'post(?:ing)? sentences?[^.\n]{0,40}\(section 10\)', _s9): fail('C279', 'sheet %s: the post sentences are pointed to section 10 again (loop)' % _n)
+# C280 (evidence): the Open rows the sheet cites exist and the lead decisions are rows with a recommendation, not picks
+for _r in (121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131):
+    if not re.search(r'(?m)^\| %d \|' % _r, OPEN): fail('C280', 'open list row %d is missing' % _r)
+if not re.search(r'(?m)^\| 123 \|[^\n]*no pick', OPEN): fail('C280', 'open list row 123 (film person exposure) must say it does not pick')

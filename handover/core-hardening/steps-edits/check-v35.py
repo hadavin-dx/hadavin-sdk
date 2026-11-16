@@ -91,7 +91,7 @@ for k in 'AB':
     tot[k] = sum(cnt.values())
     sh = cnt['OWNER-SHEET-v35-%s.md' % k]
     if sh >= 6300: fail('C07', 'sheet %s has %d words (target under 6300; v28 had 7473 with the card inside)' % (k, sh))
-    if tot[k] >= 15722: fail('C07', 'sheet %s with its card, appendix, film and helper pages has %d words: not lower than the v33 figure of 15722 (owner order for v35: every new sentence is paid for by cutting; no cap raised)' % (k, tot[k]))
+    if tot[k] >= 15715: fail('C07', 'sheet %s with its card, appendix, film and helper pages has %d words: not lower than 15715 (round 7 cap, lower than the v33 figure of 15722; no cap raised)' % (k, tot[k]))
     print('C07 info: %s' % ', '.join('%s %d' % (p, c) for p, c in cnt.items()), 'total', tot[k])
 # C08 variant checks and no marker
 for n, t in (('A', A), ('B', B)):
