@@ -6,7 +6,8 @@
 #   1 = the checker found at least one FAIL (a definite fault in a file).
 #   2 = the checker was started wrongly (bad command line, for example the table file cannot be read).
 #   3 = the checker itself broke.
-#   4 = the checker found no FAIL, but a check this take depends on did not happen or found a mismatch: the table file demo/n8n-flows-v4/mf_leads.sql is missing, OR 0 query strings were read, OR a query uses a column or table that file does not define, OR a postgres step has no query text (its columns were not compared).
+#   4 = the checker found no FAIL, but a check this take depends on did not happen or found a mismatch: the table file demo/n8n-flows-v4/mf_leads.sql is missing, OR 0 query strings were read, OR a query uses a column or table that file does not define, OR a postgres step has no query text (its columns were not compared), OR a flow other than the recovery flow still has run saving off (the take shows the run list, so run saving must be ON: that is the case on the committed real-v5 folder until patch F-008 is applied; the take runs on the patched copy, decision Q17-4/Q18), OR the recorded accept for the recovery flow excused nothing.
+# The recovery flow (exact file name mf-recovery.json, nothing else) keeps run saving off on purpose: it fires every 30 s and the one video makes no recovery claim (decision 4). It is printed as an ACCEPTED line, not a WARN. No blanket accept exists in this script.
 # film-v5 is NOT FOR THE TAKE and is not checked here.
 # The table definition the take needs is demo/n8n-flows-v4/mf_leads.sql (lead decision, order Q16). It is looked up at that exact path only (no search for a file of the same name elsewhere).
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -15,10 +16,12 @@ D="${TAKE_CHECK_FLOWS:-demo/n8n-flows-real-v5}"   # TAKE_CHECK_FLOWS and TAKE_CH
 OUT=$(mktemp /tmp/take-check.XXXXXX) || exit 3
 trap 'rm -f -- "$OUT"' EXIT
 DDL="${TAKE_CHECK_DDL:-demo/n8n-flows-v4/mf_leads.sql}"
+FORMCNT="${TAKE_CHECK_FORM_EXPECT:-12:11}"   # node:connection count of mf-form and mf-hook; run_all.sh sets 15:14 for the patched copy (F-002 adds 3 nodes); the take uses the default only for the unpatched files
 DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
 python3 -I "$HERE/check_flows.py" "$D" "${DDLOPT[@]}" \
   --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 \
-  --expect mf-form.json=12:11 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 \
+  --accept-no-save mf-recovery.json \
+  --expect mf-form.json="$FORMCNT" --expect mf-hook.json="$FORMCNT" --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 \
   --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token \
   --quiet-info > "$OUT" 2>&1
 RC=$?
@@ -55,6 +58,12 @@ echo "GATE BEFORE THE FIRST SEND (a person's step; this script cannot see your d
 echo "--- (2) Is saving of past runs off? One line per file (a run list in n8n stays empty when it is off) ---"
 grep -h -E '^mf-[a-z-]+\.json nodes=' "$OUT"
 grep -h -E "^WARN .*run-saving settings" "$OUT" | cut -c1-260
+grep -h -E "^WARN accept-no-save" "$OUT" | cut -c1-260
+grep -h -E "^ACCEPTED: " "$OUT" | cut -c1-300
+if grep -q -E "^WARN .*run-saving settings|^WARN accept-no-save" "$OUT"; then
+  echo "!!! A FLOW THAT THE TAKE USES HAS RUN SAVING OFF (or the recorded accept for the recovery flow excused nothing): the run list in n8n stays empty for it. Apply patch F-008 to the flows first. This script exits 4."
+  PROBLEMS+=("run saving off")
+fi
 echo "--- (3) Values that must be filled in before import: mail addresses and credential ids ---"
 awk '/^(PLACEHOLDERS IN NODE SETTINGS|CREDENTIAL IDS STILL PLACEHOLDERS)/ {p=1; print; next} p && /^  - / {print; next} {p=0}' "$OUT"
 echo "--- (4) Does each of the two entry flows contain the F-002 key check (a node named KeyOk)? ---"

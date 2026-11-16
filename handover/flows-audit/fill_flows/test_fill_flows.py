@@ -12,6 +12,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import types
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
@@ -452,7 +453,8 @@ class Positive(Base):
         self.assertIn("token $env DESK_URL", so)
         self.assertIn("token $env DESK_TIMEOUT_MS", so)
         self.assertIn("1 other $env use", so)
-        self.assertIn("3 problem(s)", so)
+        self.assertIn("no marker file and no fingerprint file", so)  # an input folder is no copy
+        self.assertIn("4 problem(s)", so)
 
     def test_check_bad_json_and_nan(self):
         d = self.flow_dir({})
@@ -1249,16 +1251,22 @@ class Hardening(Base):
         shutil.copytree(out, decoy)
         before = tree_hash(decoy)
         real_listdir = os.listdir
+        swapped = []
 
         def swap(arg):
             res = real_listdir(arg)
-            if isinstance(arg, int):  # the folder was opened once; now swap the path
+            if isinstance(arg, int) and not swapped:  # the folder was opened once; swap the path
                 os.rename(out, out + ".moved")
                 os.symlink(decoy, out)
+                swapped.append(True)
             return res
 
         with mock.patch.object(ff.os, "listdir", swap):
-            self.inproc("delete", "--out", out)
+            code, _, _ = self.inproc("delete", "--out", out)
+        self.assertEqual(swapped, [True])  # the swap really ran
+        self.assertTrue(os.path.islink(out))  # and the name now points at the decoy
+        self.assertEqual(code, 0)  # the delete removed what it had opened, by that handle
+        self.assertFalse(os.path.exists(out + ".moved"))
         self.assertEqual(tree_hash(decoy), before)
 
     # ---- security review M3: --no-manifest needs the marker file
@@ -1352,11 +1360,13 @@ class Hardening(Base):
 
     # ---- round 6: tests that kill the mutants that survived evidence round 5
     def test_check_refuses_a_not_ready_note_even_with_no_placeholders(self):
-        d = os.path.join(self.t, "clean")
-        os.mkdir(d)
-        jdump({"name": "t", "nodes": [{"name": "n1", "parameters": {}}]}, os.path.join(d, "a.json"))
+        self.full_vals()
+        d = self.out("clean")
+        self.assertEqual(self.fill(src=self.two_flows(), out=d)[0], 0)
         self.assertEqual(self.cli("check", d)[0], 0)
-        wtext(os.path.join(d, NOT_READY), "not ready")
+        note = os.path.join(d, NOT_READY)
+        wtext(note, ff._not_ready_bytes().decode())  # exactly the note fill writes
+        os.chmod(note, 0o600)
         code, so, _ = self.cli("check", d)
         self.assertEqual(code, 1, so)
         self.assertIn(f"{NOT_READY} is in the folder", so)
@@ -1525,7 +1535,14 @@ class Hardening(Base):
                     fh.write(b" ")
             code, so, _ = self.cli("check", out)
             self.assertEqual(code, 1, (damage, so))
-            self.assertIn("manifest", so, damage)
+            want = {
+                "missing": "mf-y.json: listed in the manifest but missing",
+                "extra": "z.json: not in the manifest",
+                "changed": "mf-y.json: differs from the manifest",
+                "non-json": "notes.txt: not in the manifest",
+            }[damage]
+            self.assertIn(want, so, damage)
+            self.assertIn("manifest compare: ran against out", so, damage)
 
     def test_fill_refuses_by_default_when_a_placeholder_value_is_missing(self):
         self.strict = True
@@ -2116,13 +2133,13 @@ class Round7(Base):
 
     # ---- M2: --tokens-only still refuses a not-ready copy and says what it did not look at
     def test_tokens_only_refuses_a_not_ready_copy_and_says_placeholders_were_skipped(self):
-        d = os.path.join(self.t, "clean")
-        os.mkdir(d)
-        jdump({"name": "t", "nodes": [{"name": "n", "parameters": {}}]}, os.path.join(d, "a.json"))
+        d = self.done_copy("clean")
         code, so, _ = self.cli("check", d, "--tokens-only")
         self.assertEqual(code, 0, so)
         self.assertIn("placeholders: not checked (--tokens-only)", so)
-        wtext(os.path.join(d, NOT_READY), "x")
+        note = os.path.join(d, NOT_READY)
+        wtext(note, ff._not_ready_bytes().decode())  # exactly the note fill writes
+        os.chmod(note, 0o600)
         code, so, _ = self.cli("check", d, "--tokens-only")
         self.assertEqual(code, 1, so)
         self.assertIn(f"{NOT_READY} is in the folder", so)
@@ -2535,6 +2552,214 @@ class Round7(Base):
             )
         self.assertEqual((code, "values file is larger than 10 bytes" in se), (1, True), se)
         self.assertFalse(os.path.exists(self.out()))
+
+
+class Round8(Base):
+    """Security review round 5 (fix round 8, last batch): one test or more per finding."""
+
+    def full_vals(self):
+        write_values(self.vf, {**VALS, **PH_VALS})
+
+    def two_flows(self):
+        d = self.flow_dir({"u": "={{ $env.DESK_URL }}"})
+        shutil.copy(os.path.join(d, "mf-x.json"), os.path.join(d, "mf-y.json"))
+        return d
+
+    def done_copy(self, name="out", src=None):
+        self.full_vals()
+        out = self.out(name)
+        self.assertEqual(self.fill(src=src or self.two_flows(), out=out)[0], 0)
+        return out
+
+    def not_ready_copy(self, name="out"):
+        out = self.out(name)
+        code, _, se = self.fill(src=self.copy_flows("real"), out=out)
+        self.assertEqual(code, 3, se)
+        return out
+
+    def moved_with_manifest(self, out, parent):
+        """The folder fill made, copied with its manifest beside it into `parent`."""
+        os.makedirs(parent, exist_ok=True)
+        dst = os.path.join(parent, os.path.basename(out))
+        shutil.copytree(out, dst)
+        shutil.copy(out + ".manifest.json", dst + ".manifest.json")
+        os.chmod(dst, 0o700)
+        return dst
+
+    # ---- F1: a folder with no marker, no manifest and no tokens is a problem
+    def test_check_refuses_a_folder_with_no_marker_no_manifest_and_no_tokens(self):
+        d = os.path.join(self.t, "clean")
+        os.mkdir(d)
+        jdump({"name": "t", "nodes": [{"name": "n1", "parameters": {}}]}, os.path.join(d, "a.json"))
+        code, so, _ = self.cli("check", d)
+        self.assertEqual(code, 1, so)
+        self.assertIn("no marker file and no fingerprint file", so)
+        self.assertIn("1 problem(s)", so)
+        code, so, _ = self.cli("check", d, "--tokens-only")
+        self.assertEqual(code, 1, so)
+
+    def test_check_refuses_a_glob_copy_that_leaves_out_the_hidden_marker(self):
+        import glob
+
+        out = self.done_copy()
+        self.assertEqual(self.cli("check", out)[0], 0)  # the real folder passes
+        new = self.out("glob-copy")
+        os.mkdir(new)
+        for src in glob.glob(os.path.join(out, "*")):  # what `cp -r filled/* new/` matches
+            shutil.copy(src, new)
+        self.assertNotIn(ff.MARKER_NAME, os.listdir(new))
+        for extra in ((), ("--tokens-only",)):
+            code, so, _ = self.cli("check", new, *extra)
+            self.assertEqual(code, 1, so)
+            self.assertIn("no marker file and no fingerprint file", so)
+
+    def test_check_refuses_a_zip_or_rsync_style_copy_without_hidden_files(self):
+        import zipfile
+
+        out = self.done_copy()
+        zpath = os.path.join(self.t, "copy.zip")
+        with zipfile.ZipFile(zpath, "w") as zf:
+            for n in sorted(os.listdir(out)):
+                if not n.startswith("."):  # a tool told to skip hidden files
+                    zf.write(os.path.join(out, n), n)
+        new = self.out("unzipped")
+        os.mkdir(new)
+        with zipfile.ZipFile(zpath) as zf:
+            zf.extractall(new)
+        os.chmod(new, 0o700)
+        for n in os.listdir(new):
+            os.chmod(os.path.join(new, n), 0o600)
+        code, so, _ = self.cli("check", new)
+        self.assertEqual(code, 1, so)
+        self.assertIn("no marker file and no fingerprint file", so)
+        # the same copy with the fingerprint file beside it still fails: the marker is missing
+        shutil.copy(out + ".manifest.json", new + ".manifest.json")
+        code, so, _ = self.cli("check", new)
+        self.assertEqual(code, 1, so)
+        self.assertIn(f"{ff.MARKER_NAME}: listed in the manifest but missing", so)
+
+    # ---- F2: where the folder is, and hard links
+    def test_check_refuses_a_copy_inside_a_git_repository_or_a_synced_folder(self):
+        out = self.done_copy()
+        repo = os.path.join(self.t, "repo")
+        os.makedirs(os.path.join(repo, ".git"))
+        dst = self.moved_with_manifest(out, os.path.join(repo, "sub"))
+        code, so, _ = self.cli("check", dst)
+        self.assertEqual((code, "inside a git repository" in so), (1, True), so)
+        dst = self.moved_with_manifest(out, os.path.join(self.t, "Dropbox", "sub"))
+        code, so, _ = self.cli("check", dst)
+        self.assertEqual((code, "cloud-synced" in so), (1, True), so)
+        self.assertEqual(self.cli("check", out)[0], 0)  # the real place passes
+
+    def test_check_refuses_a_copy_on_a_windows_drive(self):
+        out = self.done_copy()
+        with mock.patch.object(ff, "under_mnt", return_value=True):
+            code, so, _ = self.inproc("check", out)
+        self.assertEqual((code, "under /mnt" in so), (1, True), so)
+
+    def test_check_flags_a_file_with_a_second_name_and_delete_warns(self):
+        out = self.done_copy()
+        os.link(os.path.join(out, "mf-x.json"), os.path.join(self.t, "other-name.json"))
+        code, so, _ = self.cli("check", out)
+        self.assertEqual(code, 1, so)
+        self.assertIn("mf-x.json: has 2 names (a hard link)", so)
+        code, _, se = self.cli("delete", "--out", out)
+        self.assertEqual(code, 0, se)
+        self.assertIn("warning: mf-x.json has 2 names", se)
+        self.assertFalse(os.path.exists(out))
+
+    def test_delete_warns_about_a_copy_in_a_git_repository_and_still_removes_it(self):
+        out = self.done_copy()
+        repo = os.path.join(self.t, "repo")
+        os.makedirs(os.path.join(repo, ".git"))
+        dst = self.moved_with_manifest(out, os.path.join(repo, "sub"))
+        code, _, se = self.cli("delete", "--out", dst)
+        self.assertEqual(code, 0, se)
+        self.assertIn("inside a git repository", se)
+        self.assertIn("other copies of it may exist", se)
+        self.assertFalse(os.path.exists(dst))
+
+    # ---- F3: the manifest records whether the copy was ready
+    def test_manifest_records_ready_and_check_tokens_only_cannot_pass_a_deleted_note(self):
+        done = self.done_copy("done")
+        self.assertIs(jload(done + ".manifest.json")["ready"], True)
+        out = self.not_ready_copy("notready")
+        self.assertIs(jload(out + ".manifest.json")["ready"], False)
+        os.unlink(os.path.join(out, NOT_READY))  # someone deletes the note to get a pass
+        for extra in ((), ("--tokens-only",)):
+            code, so, _ = self.cli("check", out, *extra)
+            self.assertEqual(code, 1, so)
+            self.assertIn("does not say this copy is ready", so)
+
+    def test_a_manifest_without_the_ready_flag_does_not_pass(self):
+        out = self.done_copy()
+        man = out + ".manifest.json"
+        doc = jload(man)
+        del doc["ready"]
+        wtext(man, json.dumps(doc))
+        os.chmod(man, 0o600)
+        code, so, _ = self.cli("check", out)
+        self.assertEqual((code, "does not say this copy is ready" in so), (1, True), so)
+        self.assertEqual(self.cli("delete", "--out", out)[0], 0)  # delete still reads it
+
+    # ---- F4: the README says exactly which signals are handled
+    def test_readme_names_the_signals_that_are_and_are_not_handled(self):
+        text = rtext(os.path.join(HERE, "README.md"))
+        for word in ("SIGINT", "SIGTERM", "SIGHUP", "SIGQUIT", "SIGUSR1", "SIGALRM", "SIGXCPU"):
+            self.assertIn(word, text)
+        self.assertNotIn("Only a kill that\n  cannot be caught", text)
+        handled = {s for s in ff._STOP_SIGNALS}
+        import signal
+
+        self.assertEqual(handled, {signal.SIGINT, signal.SIGTERM, signal.SIGHUP})
+
+    # ---- F5: delete refuses a folder name that is empty or not clean
+    def test_delete_refuses_an_empty_or_unclean_folder_name(self):
+        code, _, se = self.cli("delete", "--out", "/")
+        self.assertEqual((code, "not a plain file name" in se), (1, True), se)
+        bad = os.path.join(self.t, "bad\x01name")
+        os.mkdir(bad)
+        code, _, se = self.cli("delete", "--out", bad)
+        self.assertEqual((code, "not a plain file name" in se), (1, True), se)
+        self.assertTrue(os.path.isdir(bad))
+
+    # ---- F6: no abbreviated option names
+    def test_abbreviated_option_names_are_refused(self):
+        out = self.done_copy()
+        for args in (
+            ("delete", "--out", out, "--force"),
+            ("delete", "--out", out, "--remove"),
+            ("check", out, "--tokens"),
+            ("fill", "--in", self.two_flows(), "--val", self.vf, "--out", self.out("x")),
+        ):
+            code, _, se = self.cli(*args)
+            self.assertEqual(
+                (code, "unrecognized arguments" in se or "required" in se), (2, True), (args, se)
+            )
+        self.assertTrue(os.path.isdir(out))
+        code, so, _ = self.cli("check", "-h")
+        self.assertEqual((code, "--tokens-only" in so), (0, True), so)
+
+    # ---- F9: a system that cannot say where an open folder is gets a warning
+    def test_a_system_without_proc_or_getpath_says_so_once(self):
+        out = self.done_copy()
+        real_readlink = os.readlink
+
+        def no_proc(p, *a, **k):
+            if str(p).startswith("/proc/self/fd"):
+                raise OSError
+            return real_readlink(p, *a, **k)
+
+        with (
+            mock.patch.object(ff, "_WARNED_NO_HANDLE_PATH", False),
+            mock.patch.object(ff.os, "readlink", no_proc),
+            mock.patch.dict(sys.modules, {"fcntl": types.SimpleNamespace()}),
+        ):
+            code, so, se = self.inproc("check", out)
+        self.assertEqual(code, 0, so)
+        self.assertEqual(se.count("cannot say where an open folder really is"), 1, se)
+        code, _, se = self.inproc("check", out)  # with /proc the warning is absent
+        self.assertNotIn("cannot say where", se)
 
 
 if __name__ == "__main__":
