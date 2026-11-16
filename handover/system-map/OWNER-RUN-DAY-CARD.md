@@ -1,5 +1,5 @@
 # Run-day card (owner): v2, replaces the earlier card. Made-up data only. Source: inputs/OWNER-STEPS-realrun-v5-core-hardening.md steps C to H ("v5").
-Status: APPLIED 16 Nov 2026 after the studio lead's answer 10:23Z (the film pause stays; `end` stops the run and lists leftover contacts, it never deletes). Not run yet. The program's own notice and prompt text may still say "delete" or "archive": see step 12. "[studio lead fills: ...]" marks a fact this page does not have. Previous card kept in work/OWNER-RUN-DAY-CARD-before-v2.md.
+Status: APPLIED 16 Nov 2026 after the studio lead's answer 10:23Z (the film pause stays; `end` stops the run and lists leftover contacts, it never deletes). Not run yet. The program's own notice and prompt text may still say "delete" or "archive": see steps 12 and 21. "[studio lead fills: ...]" marks a fact this page does not have. Previous card kept in work/OWNER-RUN-DAY-CARD-before-v2.md.
 
 ## Page 1: ten words
 1. Studio lead: the Claude session that works with you. Software. n8n = the tool on the laptop that carries the contacts and mails; HubSpot = the contact list website; a model call = one paid question to the AI service; masked = with addresses and names hidden. It never sees your screen and never posts.
@@ -56,7 +56,7 @@ Lines ending "(card addition, not in v5)" add a check that v5 does not have.
 ## If the run failed (v5 step G) and for the by-hand deletes
 23. WARNING: emptying Gmail Trash cannot be undone; deleting HubSpot contacts cannot be undone either (HubSpot may keep a recoverable copy, not checked). Do nothing here until the studio lead writes "demo mails may be deleted" (card addition).
 24. Delete the demo mails from the Inbox and label `demo`, then empty Trash. If anything there is not a demo mail, stop and tell the studio lead.
-25. Check you are in the demo HubSpot account [studio lead fills: how it looks]. Delete only contacts whose email is exactly one of the three test addresses the studio lead names; a contact that merely contains the run name is not enough (stricter than v5 on purpose). If you cannot find them or the count differs, delete nothing and tell the studio lead. Never delete `~/.hadavin-take-tags/<run name>.used`. Reply "demo mails deleted" plus the number of contacts. Then pick a new run name and give a new written yes.
+25. Check you are in the demo HubSpot account [studio lead fills: how it looks]. Delete only contacts whose email is exactly one of the three test addresses the studio lead names; a contact that merely contains the run name is not enough (stricter than v5 on purpose). If you cannot find them or the count differs, delete nothing and tell the studio lead. Never delete `~/.hadavin-take-tags/<run name>.used`. Reply "contacts deleted" and the number. Then pick a new run name and give a new written yes.
 
 ## After the cut (v5 step H)
 26. WARNING: saying "accepted" ends all runs. Clean-up starts only after "accepted" AND the studio lead saying the last run is done; after clean-up starts no further run happens. Say it only if you will never need another run.
