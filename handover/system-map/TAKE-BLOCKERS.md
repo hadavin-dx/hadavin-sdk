@@ -20,6 +20,7 @@ Made-up data only: the demo uses invented people and a test mailbox. The owner r
 - Row DM = the plan's crash-test row. Crash-safe = no double send after a power cut. (Not the same as "DM" used elsewhere for a delivery message: that old use is dropped.)
 - Rehearsal = a test run with stand-in programs and no real account. Loopback re-smoke = the rehearsal in inputs/plan-wp6-resmoke-v5.md; by its section 9 it does not prove real-v5 at run time.
 - Take prep = ONE made-up lead sent through real-v5 just before the take (decision 8).
+- "The plan" = inputs/plan-wp6-resmoke-v5.md; every "plan line" below cites that file.
 - Decisions of 16 Nov = inputs/DECISIONS-2026-11-16.md, numbered 1 to 12; they are in force.
 
 ## Dates
@@ -32,7 +33,7 @@ The take must happen by Mon 23 Nov 18:29 UTC / 23:59 IST; latest start before 18
 | 2 | The flows changed by the five proposed patches have never run in n8n (the patches are proposals, not applied to the files n8n imports; only patches touching real-v5 matter). First laptop rehearsal: the studio lead runs it (decision 12) right after the loopback re-smoke passes, target tonight or tomorrow morning IST. Nobody touches Docker Desktop settings. Still open: who starts Docker Desktop | studio lead | a rehearsal result file, then the "rehearsal passed" rule below |
 | 3 | Security edits as TEXT (decision 5): S9-5, S9-12, S9-3, S9-2 (the owner compares the settings-file figures; v5 says the program does not print them). DEFERRED, describe-only: S9-1, S9-4. The fallback "the lead activates flows after the owner's typed y" is NOT accepted. v5 must not say nothing can spend before the typed answers. Runs in parallel with rows 1 and 2 | core-hardening edits; studio lead confirms | v5 and the scope sheet carry the four edits, tests pass, no page claims a closed gate |
 | 4 | Take date and start time, chosen after rows 1 and 2; state how many reruns fit before the latest start | studio lead, written to the owner in UTC and IST | the owner has a written date |
-| 5 | HubSpot account-check text and the login-key choice (OWNER-VIEW row 7). The HubSpot delete-rights check (R8-5) is MOOT: the take identity is read-only (decision 2); leftover contacts are listed by request id and contact id and the owner deletes them by hand | studio lead writes the lines or removes the row | the owner has exact lines, or the row is gone |
+| 5 | PENDING QUESTIONS item 1 (does `end` delete?). HubSpot account-check text and the login-key choice (OWNER-VIEW row 7). The HubSpot delete-rights check (R8-5) is MOOT: the take identity is read-only (decision 2); leftover contacts are listed by lead key and contact id (decision 2's words) and the owner deletes them by hand | studio lead writes the lines or removes the row | the owner has exact lines, or the row is gone |
 
 DECIDED, nothing to do: scope is real-v5 only (decision 1); film-v5 mail-credential risk and the flow-set switch are gone; roles proposal parked (decision 3). START WITH ROW 1. This is the only to-do list; QUESTIONS.md holds the decisions.
 
