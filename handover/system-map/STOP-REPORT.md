@@ -15,3 +15,8 @@ All findings below are static text work. Nothing about the take was run or verif
 
 ## Not committed
 Nothing left out. Scratch scripts are outside the repo (scratchpad).
+
+## Clean stop check (2026-11-16 20:46 UTC, lead order 20:46Z)
+- ps: no process of mine runs (only the environment manager and the session's own claude process remain, which I did not start and do not stop).
+- Untracked or uncommitted files left out: none (git status clean before this commit).
+- Board reduced to one state (STATE: STOPPED, AGENTS_RUNNING: 0); the old board is saved in work/board-before-stop-2026-11-16.md.
