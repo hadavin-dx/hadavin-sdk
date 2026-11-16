@@ -340,7 +340,7 @@ while IFS='|' read -r want line why pd envx; do
   # shellcheck disable=SC2086
   rvout=$(env -u TAKE_CHECK_WARN_PIN TAKE_CHECK_TEST=1 TAKE_CHECK_TODAY="$TODAY" $envx bash "$TAKE" --check-reviewer-line "$line" ${pd:+"$pd"} 2>&1); rvrc=$?
   if [ "$want" = ok ]; then [ "$rvrc" = 0 ] && [ "$rvout" = ok ]; else [ "$rvrc" = 1 ] && case "$rvout" in *"$why"*) true;; *) false;; esac; fi
-  ok $? "reviewer line [$want] '$(printf '%s' "${line:0:70}" | tr -d '\000-\037')'$([ ${#line} -gt 70 ] && printf ' [input is %s characters; first 70 shown]' "${#line}") ${why:+reason has '$why'} (got exit $rvrc: ${rvout:0:90})"
+  ok $? "reviewer line [$want] '$(printf '%s' "${line:0:70}" | tr -d '\000-\037' | sed 's/[^ ]\{16\}/& /g')'$([ ${#line} -gt 70 ] && printf ' [input is %s characters; first 70 shown]' "${#line}") ${why:+reason has '$why'} (got exit $rvrc: ${rvout:0:90})"
 done <<< "$RV_CASES"
 [ -n "${RV_DUMP:-}" ] && exit 0
 # f8-r8: the number of word-check cases is pinned EXACTLY (a floor let 16 cases be deleted without a sound). Change RV_EXPECT together with the case list, and say so in the fix log.
