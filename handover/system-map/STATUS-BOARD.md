@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:43:47Z
+UPDATED_UTC: 2026-11-16T11:44:07Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 15 (rows below 100 percent: M2-M10, M14, M15, M17-M20; 5 rows are at 100). CORRECTION: my earlier "14" and "6 at 100" were wrong; recounted by script at 11:36Z over the 20 rows. PERCENT mean of the table is 83.1 (sum 1662 over 20 rows), not 83.6. M3, M4, M6 queue tags now match the board (checked 11:26Z, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
 PERCENT: 83.1 (script recount: 1662 / 20; the earlier 83.6 was wrong)
-AGENTS_RUNNING: 8 running (ORDER 028), named: a1262b40dd205cb43 (QUESTIONS round 4), a5a1519b1ab5457b2 (README cold read), a0fbf2b20ada046c8 (SWEEP 200-end), af0161fa6d736134f (MASTER-MAP 1-200), a8293be9892920b50 (TAKE-BLOCKERS round 3), acb05092929e31c9b (decision list round 4), plus two new: ORDERS 135-end and OWNER-VIEW round 3
+AGENTS_RUNNING: 8 running (ORDER 028), named: a5a1519b1ab5457b2 (README cold read), a0fbf2b20ada046c8 (SWEEP 200-end), af0161fa6d736134f (MASTER-MAP 1-200), acb05092929e31c9b (decision list round 4), ad44de7dd9b9195df (ORDERS 135-end), a9a62d2cdef08520f (OWNER-VIEW round 3), plus two new: v5 steps 1-130 and REPORT.md round 2
 INTERRUPTED: none
-NEXT: digested through 328. Collect hand-backs as 308 on, refill to 8 in the same turn one ends. Then: open-items-table fixes, decision-list rows still lacking names, CORRECTIONS item 7, end-delete-cases case B closed by decision 2.
+NEXT: digested through 330. Collect hand-backs as 308 on, refill to 8 in the same turn one ends. Then: open-items-table fixes, decision-list rows still lacking names, CORRECTIONS item 7, end-delete-cases case B closed by decision 2.
 CAPACITY: nproc 4, load 0.25, RAM 906/16087 MB used, disk / 44% used (22G free); top disk users: /tmp/claude-0 about 1.3 GB, /root about 1.6 GB (claude config), /home/user/hadavin-sdk about 312 MB
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:43:47Z
+PUSHED_UTC: 2026-11-16T11:44:07Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
