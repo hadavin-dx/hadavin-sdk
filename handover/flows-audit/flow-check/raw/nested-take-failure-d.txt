@@ -1,6 +1,6 @@
 applied F-002-take-key-check-and-claim-error-path
 applied F-008-save-runs-for-the-take
-checker runs wall time: 0 s; self-test wall time: 6 s
+checker runs wall time: 0 s; self-test wall time: 10 s
 ==== real-v5 (THE TAKE) ====
 ---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----
 [pristine]
@@ -48,7 +48,7 @@ RESULT: 4 FAIL, 16 WARN
 Known open problems: 10
 exit=1
 [selftest exit=0] SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)
-[take_check.sh exit=5] missing lines: [test_take_check.sh exit 1 (see raw/test-take-check.txt)] [take_check planted: exit 4 but the text 'NOTHING RAN IN n8n' is not on a !!! or FAIL line; first FAIL or !!! line: !!! A FLOW THAT THE TAKE USES HAS RUN SAVING OFF (or the recorded accept for the recovery flow excused nothing): the run list in n8n stays empty for it. Apply patch F-008 to the flows first. This script exits 4.]
+[take_check.sh exit=5] missing lines: [take_check planted: exit 4 but the text 'NOTHING RAN IN n8n' is not on a !!! or FAIL line; first FAIL or !!! line: !!! A FLOW THAT THE TAKE USES HAS RUN SAVING OFF (or the recorded accept for the recovery flow excused nothing): the run list in n8n stays empty for it. Apply patch F-008 to the flows first. This script exits 4.]
 run_all exit status (real-v5 default runs + self-test): 1
 real-v5 placeholder ids: 12 file(s) warn in the committed flows (pass --strict to make that a failure)
 COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: take_check.sh refuses it (REFUSED (rule: listed word session): the line contains the whole word 'session'), so a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass).
