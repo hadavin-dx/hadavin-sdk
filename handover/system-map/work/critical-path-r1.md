@@ -1,3 +1,5 @@
+SUPERSEDED by work/critical-path-r2.md (the table below was built on a missed 14:00 start)
+
 # CRITICAL PATH: when can the first filmed take happen? (current answer, 16 Nov 2026)
 
 ## Answer
