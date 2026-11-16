@@ -1614,14 +1614,21 @@ def main():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     # f8-r12 (M2): a stop signal (time limit, Ctrl-C, closed terminal) must not leave the work folder behind: turn the signals into a normal exit so the clean-up below runs.
-    # f8-r13: bug class = a clean-up that a second signal can cut short. run_all.sh and the time-limit command can each send SIGTERM, so a second one arrived while the first was inside shutil.rmtree and its SystemExit left the folder behind (seen in test_run_all_stop.sh case A). Now: (1) the clean-up is registered BEFORE the folder exists, (2) the first signal switches all three signals to "ignore" before it exits, (3) the signals are blocked while the folder is made, so none can arrive between the mkdir and the assignment.
+    # f8-r13: bug class = a clean-up that a second signal can cut short. run_all.sh and the time-limit command can each send SIGTERM, so a second one arrived while the first was inside shutil.rmtree and its SystemExit left the folder behind (seen in test_run_all_stop.sh case A). Now: (1) the clean-up is registered BEFORE the folder exists, (2) the first signal switches all three signals to "ignore", removes the folder itself and ends the process with os._exit (SystemExit would be swallowed by run()), (3) the signals are blocked while the folder is made, so none can arrive between the mkdir and the assignment.
     held = []
     atexit.register(lambda: [shutil.rmtree(h, ignore_errors=True) for h in held])
 
     def _stop(n, _f):
+        # the handler cleans up and ends the process itself (os._exit): raising SystemExit from here is NOT enough, because run() below catches SystemExit (it runs the checker in this process), so a signal that arrived inside a checker run was swallowed and the self-test went on (seen by case H of test_run_all_stop.sh)
         for _s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
             signal.signal(_s, signal.SIG_IGN)
-        sys.exit(128 + n)
+        for h in held:
+            shutil.rmtree(h, ignore_errors=True)
+        try:
+            sys.stdout.flush()
+        except Exception:
+            pass
+        os._exit(128 + n)
 
     for _sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
         signal.signal(_sig, _stop)
