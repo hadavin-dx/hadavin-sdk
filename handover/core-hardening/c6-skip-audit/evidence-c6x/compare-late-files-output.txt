@@ -1,0 +1,15 @@
+== OWNER-SHEET-v34-A.md -> OWNER-SHEET-v35-A.md: DIFFERENT after the version number is made equal
+   changed passages: 79 deleted/replaced, 83 inserted/replaced; words deleted 410, inserted 407
+   report topics found inside the changed words: ['hubspot', 'n8n']
+   TOPIC PASSAGE: The receiver Gmail, the sender Gmail (with its app passwords) and the HubSpot test account (with its private apps) must be ones you made earlier and can sign in to; one missing: no run.
+== OWNER-SHEET-v34-B.md -> OWNER-SHEET-v35-B.md: DIFFERENT after the version number is made equal
+   changed passages: 76 deleted/replaced, 79 inserted/replaced; words deleted 405, inserted 398
+   report topics found inside the changed words: ['hubspot', 'n8n']
+   TOPIC PASSAGE: The receiver Gmail, the sender Gmail (with its app passwords) and the HubSpot test account (with its private apps) must be ones you made earlier and can sign in to; one missing: no run.
+== LEAD-RELEASE-NOTE-v18.md -> LEAD-RELEASE-NOTE-v19.md: DIFFERENT after the version number is made equal
+   changed passages: 28 deleted/replaced, 32 inserted/replaced; words deleted 37, inserted 391
+   report topics found inside the changed words: none
+RELEASE NOTE LINE 8: v14 equals v18: False; v18 equals v19: True; v14 equals v19: False
+RELEASE NOTE LINE 33: v14 equals v18: True; v18 equals v19: True; v14 equals v19: True
+RELEASE NOTE LINE 149: v14 equals v18: False; v18 equals v19: True; v14 equals v19: False
+RELEASE NOTE LINE 150: v14 equals v18: True; v18 equals v19: True; v14 equals v19: True

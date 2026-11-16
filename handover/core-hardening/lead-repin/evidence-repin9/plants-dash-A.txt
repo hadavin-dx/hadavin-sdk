@@ -1,0 +1,9 @@
+heavy-slot: slot 3 taken at 2026-11-16T20:07:07Z
+BASE-SHA256 09258d05fb8172699038eda0ce5ecc9e4fa2e1158d26eada1bdf827ced97f8b8
+m01 [dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=2051 failed=3 (the made-up input and output files were deleted) (3s)
+m02 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
+m03 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
+m04 [dash]: SURVIVED exit=0 SELF-TEST: passed=2094 failed=0 (the made-up input and output files were deleted) first_fail=[] (119s)
+m05 [dash]: KILLED-phase1 exit=1 fail_lines=1 SELF-TEST: passed=2053 failed=1 (the made-up input and output files were deleted) (3s)
+m06 [dash]: KILLED-phase1 exit=1 fail_lines=3 SELF-TEST: passed=2051 failed=3 (the made-up input and output files were deleted) (3s)
+m07 [dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=2051 failed=3 (the made-up input and output files were deleted) (3s)

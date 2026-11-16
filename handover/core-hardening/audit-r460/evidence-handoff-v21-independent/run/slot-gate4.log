@@ -1,1 +1,24 @@
 heavy-slot: slot 1 taken at 2026-11-16T20:05:20Z
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v21-independent/ind-gate4-ruff.txt <==
+rc=0
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v21-independent/ind-gate4-format.txt <==
+rc=0
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v21-independent/ind-gate4-pytest.txt <==
+rc=1
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v21-independent/ind-gate4-perf.txt <==
+rc=0
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v21-independent/ind-gate4-bandit.txt <==
+rc=0
+ruff: rc=0
+format: rc=0
+perf: rc=0
+bandit: rc=0
+pytest failing names in baseline: 2; in this run: 2; new ones: 0
+pytest last line: rc=1
+pytest summary (this run): 2 failed, 9364 passed, 454 skipped, 26 deselected in 188.32s (0:03:08)
+pytest summary (baseline): 2 failed, 9364 passed, 454 skipped, 26 deselected in 196.26s (0:03:16)
+heavy-slot: slot 1 freed, exit 0
