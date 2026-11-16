@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:10:34Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:11:31Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-021; lead DECISIONS 10:02Z (video is real-v5 only) read, being applied
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 6 (README/LEAD-PAGE cite check; minimal rehearsal rows; naive read of run-day card; naive read of cleanup card; LEAD-PAGE/README stale hunt; tool fix spec) plus 1 detached pytest (M14). 11 finished and read since 10:06Z.
+AGENTS_RUNNING: 6 (rehearsal-rule trim check; cleanup order read; flow-file choice facts; tool fix spec; README structure read; TAKE-BLOCKERS style read) plus 1 detached pytest (M14).
 INTERRUPTED: none
-NEXT: applied: OWNER-VIEW stage.env wording, cleanup card deadline (v5:145 release word kept) and retire-check wording, rehearsal-passed rule (7 rules), banned-claims draft (work/banned-claims.md), end-delete text for both cases (work/end-delete-cases.md, not applied), zoom-out path (work/zoom-out-fastest-path.md). Next: tool fixes from the spec, card one-action-per-line split, LEAD-PAGE stale rows. HELD for the lead: does `end` delete (QUESTIONS 1; the program was not read); who edits v5 step J; D-04/D-05 apply; trim of the rehearsal to a few STOP rows (zoom-out item 10). Zoom-out says three items can end the take: the `$env` fill not built, which flow files are imported (QUESTIONS 7), and no real-v5 run in n8n yet.
+NEXT: ORDER 023 NOT DONE: the sed on ~/.claude/plugins (6 files: egm-brainstorm, egm-draft, egm-resolve, cache and marketplace copy) was DENIED by the session's permission check (reason: destructive or unwanted action). Before the command: 6 opus, 64 sonnet; unchanged. Nothing worked around; EGM planning skills keep their current model. The lead or owner must allow that one command or run it. Other lanes continue: README, LEAD-PAGE, cleanup card fixed; reports from 17 read agents applied or saved in work/. HELD for the lead: does `end` delete (QUESTIONS 1); who edits v5 step J; D-04/D-05 apply; trim of the rehearsal.
 CAPACITY: 4 cores, load 0.97, memory 1 of 15 GB used, disk 40 percent used; heavy slots 1 of 3 (pytest M14)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:10:34Z
+PUSHED_UTC: 2026-11-16T10:11:31Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
