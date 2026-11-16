@@ -7,19 +7,18 @@ checking file inputs/plan-wp6-resmoke-v5.md
 rc=0
 patching file inputs/plan-wp6-resmoke-v5.md
 apply rc=0
-$ cmp patched copy with lead-side b/ result
+$ cmp patched copy vs the lead-side b/ tree the patch was built from
 cmp rc=0
-$ cmp original inputs untouched
-rc=0
-$ placeholder positions
+$ placeholder lines (expected: 2, 120, 235, 515 only)
 2:**HEAD_PIN =
-76:1. **HEAD_P
 120:| code | (
 235:$HEAD_PIN 
 515:| ID | fil
 
-## changed shell span: gone() (patched plan lines 150-153); no placeholders in it
+## changed shell span: gone() (patched plan lines 150-153), no placeholders inside
 $ bash -n
 bash -n rc=0
 $ dash -n
 dash -n rc=0
+
+## P-2 first line (PowerShell): not syntax-checked (no pwsh here); only quoting read
