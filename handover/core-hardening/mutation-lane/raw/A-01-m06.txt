@@ -1,0 +1,27 @@
+MUTANT A-01-m06  VERDICT: KILLED
+description: logged count off by one
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wA   file: src/hadavin_sdk/runtime/tick.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/c8/wA)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 1 failed, 103 passed in 17.79s
+first failing test: tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_count
+all failing tests (1): tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_count
+--- OLD TEXT (full) ---
+"audit_reconcile drained=%d", fn())
+--- NEW TEXT (full) ---
+"audit_reconcile drained=%d", fn() + 1)
+--- PYTEST OUTPUT (full) ---
+.F...................................................................... [ 69%]
+................................                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 'audit_reconcile drained=1' in 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event evt-b112d894b6ac4146a91ec0c29047c241 goes to the outbox\nINFO     hadavin_sdk.tick:tick.py:191 audit_reconcile drained=2\n'
+     +  where 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event evt-b112d894b6ac4146a91ec0c29047c241 goes to the outbox\nINFO     hadavin_sdk.tick:tick.py:191 audit_reconcile drained=2\n' = <_pytest.logging.LogCaptureFixture object at 0x7f60d8b5fb60>.text
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event evt-b112d894b6ac4146a91ec0c29047c241 goes to the outbox
+INFO     hadavin_sdk.tick:tick.py:191 audit_reconcile drained=2
+/tmp/c8/wA/tests/test_a01_audit_reconcile.py:44: AssertionError: assert 'audit_reconcile drained=1' in 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event evt-b112d894b6ac4146a91ec0c29047c241 goes to the outbox\nINFO     hadavin_sdk.tick:tick.py:191 audit_reconcile drained=2\n'
+=========================== short test summary info ============================
+FAILED tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_count
+1 failed, 103 passed in 17.79s
+
