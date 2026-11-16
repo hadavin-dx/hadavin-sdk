@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:15:54Z
+UPDATED_UTC: 2026-11-16 15:19Z
 PUSHED_UTC: 2026-11-16T15:14:28Z (this push)
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1786. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1827. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,10 +43,8 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-9 cold readers (egm-comprehension, sonnet, none editing), running at 2026-11-16T15:15:54Z: aa8f1537b70e0dd87 (t19-terms), a5ad0a5c196e3cd2e (row-dm-plain), abc3ea9869353f824 (end-delete-cases), abd727ef97b8c7615 (L2 1-120), ac6963723096be029 (L5b 1-120), a3bb745267f9eaf2f (merged-findings 1-120), ac505ddf7827f8c3b (L5ac 1-120), ab6f2ded0abb985b6 (L3c 1-120), ad8b82e90ed8f59a1 (L1 330-420). Finished this stretch: 8 readers, digests 1779 to 1786.
-Missing slots: none.
-Next 5 tasks: (1) fix my own pages from digests 1779-1786 (LEAD-NOTICE row numbers, owner-timeline row numbers, banned-claims, not-checked-r2 paragraph split, board terms); (2) lane pages: one status table per page, delete repeated keys; (3) checkable items: L2 FD-024, L1 line 345, merged-findings line 21; (4) write work/OWNER-ONLY.txt when the lead answers LEAD-NOTICE item 2; (5) rerun evidence-1 and evidence-2 after that.
-Nothing about the take is verified: rehearsal and T19 have not run.
+Running readers: 0 of 8. Reason for the 8 empty slots: every hand-back so far is digested, and the only pages not yet read cold are my own pages that are still unfixed and would repeat known findings (class note 1800). Next action: the per-page fix of the lane pages (one status table, repeated keys removed, header legend, rows relabelled), then fresh readers on each fixed page in parallel.
+Hand-backs with text not yet arrived: a7f09c594f5bd80cd (t19-gaps-r2), a466b026073d984bb (t19-row-and-steps-r3).
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
