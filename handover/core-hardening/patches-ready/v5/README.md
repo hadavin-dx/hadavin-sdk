@@ -60,13 +60,14 @@ Done as ONE shared predicate: the function is 2 lines, `replay.py` already impor
 ### Evidence (scratch copy: `git archive b4cce5b`, git init, `handover/` removed; raw files in `raw/`)
 | Check | Result |
 |---|---|
-| New tests on the PRISTINE tree (`raw/c01min-tests-on-pristine.txt`) | **18 failed, 4 passed.** The 4 that pass are guards only (loads at the ceiling, good prod route, dev unchanged, pydantic NaN). |
-| New tests on the patched tree | 22 passed |
-| Full suite on the patched tree, one run (`raw/full-suite-c01min.txt`) | **9413 passed, 455 skipped, 0 failed, 236 s, rc 0** (pristine 9391 + 22 new; pristine figure is v3's `../v3/raw/pristine-full-suite.txt`, same command) |
-| `ruff check`, `ruff format --check` on the 3 touched files (`raw/lint-c01min.txt`) | clean, rc 0 |
-| `bandit -ll` on the 2 touched source files | rc 0, no findings (two parser warnings about comment text only) |
-| 8 hand-made mutants (`raw/mutation-c01min.txt`, first failing test named): price `>0` to `>=0` on each field, ceiling `>` to `>=`, fake-exempt turned off and inverted, route refusals dropped, `refused +=` turned into `=`, default ceiling 2 000 000 | all 8 killed, on the final tree of this patch |
-| Apply checks (`raw/apply-check.txt`) | `patch -p1` and `git apply` both rc 0 on fresh extracts, files identical to the work tree |
+| New tests on the PRISTINE tree (`raw/c01min-tests-on-pristine.txt`) | **19 failed, 4 passed** (23 tests). The 4 that pass are guards only (loads at the ceiling, good prod route, dev unchanged, pydantic NaN). **Of the 19, 11 are pilot-side or rule-level and show the rule is missing; 8 are prod cases that fail on the old tree for the unrelated key-file refusal, so they prove nothing about the rule by themselves** (the patched tree passes them because the route text joins that refusal). |
+| Replay cases on the PRISTINE tree (`raw/replay-tests-on-pristine.txt`) | 4 failed. The two `-1` cases fail on behaviour (a negative price was accepted); the two `0` cases fail only because the new error text says "zero or negative". |
+| New tests on the patched tree | 23 + 4 replay cases + the rest of `test_k1b_replay.py`: 76 passed in the two files |
+| Full suite on the FINAL tree (G5 then MINIMAL), one run, cloud variables unset (`raw/full-suite-c01min.txt`) | **9418 passed, 455 skipped, 0 failed, 231 s, rc 0** (pristine 9391 from v3's `../v3/raw/pristine-full-suite.txt`, not re-run, plus 27 new) |
+| `ruff check`, `ruff format --check` on the 8 touched files (`raw/lint-c01min.txt`) | clean, rc 0 |
+| `bandit -ll` on the 5 touched source files | rc 0, 0 issues (bandit is not in the test group; run with `uv run --with bandit`) |
+| 12 hand-made mutants (`raw/mutate-c01min.py` holds the exact edits, `raw/mutation-c01min.txt` the first failing test): price `>0` to `>=0` on each field (M1, M2), ceiling `>=` (M3), `!= 0` instead of `> 0` so only the -1 case kills (M4), route refusals dropped (M5), `+=` turned into `=` (M6), default ceiling 2 000 000 (M7), rule also applied in dev (M8), ceiling read from the constant (M9), replay back to a private zero-only rule (M10), replay `fake` exemption inverted (M11), predicate checks input price only (M12) | all 12 killed; the file was restored and the baseline re-run passed (rc 0) |
+| Apply checks (`raw/apply-check.txt`, absolute paths, fresh `b4cce5b` extracts) | `patch --dry-run` and `patch -p1`, `git apply --check` and apply, G5 then MINIMAL, MINIMAL then G5: all rc 0; both orders give identical whole trees; the 5 changed files equal the work tree |
 No suppressions added (no `noqa`, `nosec`, skip or weakened test).
 
 ## Mutation count (v3's lane, corrected)
