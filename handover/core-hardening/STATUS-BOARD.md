@@ -10,7 +10,7 @@ AGENTS_RUNNING: 9
 CAPACITY: load low of 4 cores, mem 1.5 of 15 GB used, disk 15 GB free, 9 light + 0 heavy agents (C7b/run.py may run tests)
 INTERRUPTED: none
 FAILED: C4b v8 NOT SAFE; v9 built, 3 reviewers running (not yet reviewed). C3b re-pin v4 NOT ready (2 blockers, 8 majors) -> v5 building. C5 v3: C-01.patch still has the cut extras, README has 4 unsupported claims (mutant count 53 not 54, bandit version, tree-equal, noqa) -> v4 building. run.py: 5 majors (old-code proof weak for T15-T17, signal windows, state dir, import path) -> fix pass running. C6d: 5 majors -> C6e fix running. Static pass: re-smoke plan runs film-v5 not real-v5; no claim-table clean-up step found (Q15). Nothing run with n8n, PowerShell, WSL.
-NEXT: save v9 reviews, fix pass if majors; C3b v5 + C5 v4 + C6e + run.py fix hand-backs then one reviewer each; verifier of static pass; REPORT.md refresh; Q15 to lead
+NEXT: ORDER 023 NOT applied: sed on ~/.claude/plugins denied by the permission classifier (nothing changed; needs a Bash permission rule or the lead to run it; details top of REPORT.md); meanwhile save v9 reviews, C3b v5, C5 v4, C6e, run.py fix hand-backs
 PUSHED_UTC: 2026-11-16T10:11:00Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
