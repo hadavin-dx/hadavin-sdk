@@ -1,5 +1,8 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 2026-11-16 08:25 UTC / 13:55 IST - result round 1 resolved and applied; round 2 started
+Agents running: 5 sonnet (EVIDENCE-2 plus 4 fresh egm reviewers, round 2 of max 2). Round 1: 4 reviewers NOT CLEAN (about 14 Blocker and 30 Major items); egm-resolve (opus) accepted 31 fixes, contested 2, escalated 3, declined 4 (work/result-resolve-r1.md); applied in tools/write_outputs.py v2: key text, KEEP-CORE verdict (no core file is proposed for archive), counter split into proof count and money cap, fix plan in three bands with a row per Blocker, deduplicated counts (raw 314, deduplicated 308; Blockers raw 20, deduplicated 17), appendix of 10 build-process rows. Own checks: scan no defects, 21 unit tests OK, 1004 of 1004 output citations FOUND. Open for the laptop lead (not fixable here): second alert channel owner, dollar-cap owner for the take, what the take proof counter reads, key rotation and history decision (studio head).
+
 ## Status 2026-11-16 07:41 UTC / 13:11 IST - evidence-1 done; 4 result reviewers running
 Agents running: 4 sonnet egm reviewers (codebase-details, zoom-out, comprehension, design) reading outputs plus work/evidence-1.md. Evidence-1: partition 4470 of 4470, 21 tests OK, scan no defects, 1879 lane and 2006 output citations all FOUND (raw output only; the runner judged nothing). Next: egm-resolve, fixes, evidence-2, drift report, FINAL.
 
@@ -40,6 +43,11 @@ Agent register (id, purpose, start, expected end, state):
 | RESULT-ZOOM | egm:egm-zoom-out result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | closed 07:55 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
 | RESULT-COMPREHENSION | egm:egm-comprehension result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | closed 07:55 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
 | RESULT-DESIGN | egm:egm-design result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | closed 07:55 UTC (NOT CLEAN; findings in work/result-review-r1.md) |
+| EVIDENCE-2 | EVIDENCE RUNNER: reruns the 8 commands on the regenerated outputs; raw output to work/evidence-2.md | 08:25 | +15 min | running |
+| RESULT2-CODEBASE | round 2 fresh reviewer CODEBASE (Blocker and Major only) | 08:25 | +20 min | running |
+| RESULT2-ZOOM | round 2 fresh reviewer ZOOM (Blocker and Major only) | 08:25 | +20 min | running |
+| RESULT2-COMPREHENSION | round 2 fresh reviewer COMPREHENSION (Blocker and Major only) | 08:25 | +20 min | running |
+| RESULT2-DESIGN | round 2 fresh reviewer DESIGN (Blocker and Major only) | 08:25 | +20 min | running |
 | LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | closed 07:25 UTC (PARTIAL, SKIMMED) |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
