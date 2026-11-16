@@ -1,0 +1,10 @@
+START 2026-11-16T10:50:03Z
+gate.py sha256 BEFORE: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+tests/test_g4 sha256 BEFORE: a27dc6e60b4387308c888b458779fbc258a0f9af2fe73c96fb6271475114ccf7  tests/test_g4_ids_not_withheld.py
+CMD: env -i PATH=$PATH HOME=$HOME uv run --all-extras --group test pytest -q -p no:cacheprovider
+PYTEST_START 2026-11-16T10:50:03Z
+.......s..s............................................................. [  0%]
+..............s......................................................... [  1%]
+.....................s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s [  2%]
+........................................................................ [  2%]
+............................................
