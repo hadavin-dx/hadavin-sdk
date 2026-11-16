@@ -27,3 +27,9 @@
 | F-026 | FINDINGS.md F-026 | Nit | older version / not in take | Many flow versions kept side by side: 11 older flow folders and 40 older flow files hold 525 of 655 nodes | OPEN | none yet (see FINDINGS.md) | not yet verified | 2026-11-16 |
 | F-027 | FINDINGS.md F-027 | Nit | older version / not in take | Small unverified or unclear details | OPEN | none yet (see FINDINGS.md) | not yet verified | 2026-11-16 |
 | F-028 | FINDINGS.md F-028 | Nit | take claim | Stale numbers and cross references in the page statements and the run sheet | OPEN | none yet (see FINDINGS.md) | not yet verified | 2026-11-16 |
+| F-029 | FINDINGS.md F-029 (result review round 1) | Major | take ops | Take flows still contain placeholder values (addresses, credential id, sub-flow id) | OPEN | take-day gate in FIX-PLAN step 4 | not yet verified | 2026-11-16 |
+| F-030 | FINDINGS.md F-030 (result review round 1) | Major | take security | Alert mail and lead mail share one mail server: one outage stops both | OPEN | OWNER: second alert channel | not yet verified | 2026-11-16 |
+| F-031 | FINDINGS.md F-031 (result review round 1) | Major | take ops | Invalid-e-mail lead ends in state review: no alert, never read again | OPEN | decide stop condition | not yet verified | 2026-11-16 |
+| F-032 | FINDINGS.md F-032 (result review round 1) | Nit | take store | Lead table keeps name and e-mail with no expiry | OPEN | OWNER: purge or retention line | not yet verified | 2026-11-16 |
+| F-033 | FINDINGS.md F-033 (result review round 1) | Nit | take store | HubSpot wired directly with no interface (single dependency) | OPEN | OWNER: options line | not yet verified | 2026-11-16 |
+| F-034 | FINDINGS.md F-034 (result review round 1) | Nit | other ops | Test helper dn1_common.py deletes all files under DN1_DESK_REPO/data without a throwaway check | OPEN | CUT-LIST chain | not yet verified | 2026-11-16 |

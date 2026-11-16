@@ -1,5 +1,6 @@
 # FLOWS-AUDIT (ORDER 002): every node of every n8n flow file, plus master map, scripts, stores, claims
-Static review by the cloud session flows-audit, 2026-11-16. Nothing was run: no n8n, no network, no desk repo (it is not in this repository). Anything that needs a runtime is tagged `UNVERIFIED`. Start sha 3bf5ae299cebac78963780895af5c585cab8473c. Findings are in FINDINGS.md (28 merged, from 98 lane findings), fixes as patches in patches/, the cut list in CUT-LIST.md.
+Static review by the cloud session flows-audit, 2026-11-16. Nothing was run: no n8n, no network, no desk repo (it is not in this repository). Anything that needs a runtime is tagged `UNVERIFIED`. Start sha 3bf5ae299cebac78963780895af5c585cab8473c. Findings are in FINDINGS.md (34 after result review round 1: 28 merged from 98 lane findings plus 6 added), fixes as patches in patches/, the cut list in CUT-LIST.md. Start with the short answer at the top of FINDINGS.md.
+Which file is which: THIS file is the one complete copy of the audit (map, scripts, node tables, claims and stores). The files in lanes/ are the builders' sources for it: lanes/<lane>.md is a lane as written; .header.md, .judge.jsonl and checkpoint-*.md are working parts of the same lane; .findings.md holds the raw lane findings that FINDINGS.md merges. lanes/README.md says the same. Edit the lanes/ files, then this file is rebuilt from them.
 Per the lead (ORDER 003): the take uses real-v5 and film-v5 only, so section 3 (take flows) comes first and its findings outrank the older versions.
 
 ## 1. Master map
@@ -65,7 +66,7 @@ TOTAL nodes 655
 - mf-sub-crm-mail (20 nodes, sub-workflow entry executeWorkflowTrigger): Qualify (stage call), CRM upsert (real: HubSpot node, film: HTTP stand-in), SetCrmId, CrmIdOk, claim checks, MailClaim then SendMail, outcomes done / unknown / failed.
 - mf-recovery (10 nodes, schedule every 30 s, the only loop): ClaimStuck re-runs stuck leads, MarkFailed ends leads out of tries, AlertClaim / AlertSend / AlertMark / AlertBackoff send one alert mail per failed or unknown lead. The loop stops when no row matches; there is no cap on alert attempts (F-014).
 - n8n-table-screen-v2 (4 nodes): read-only page of six safe columns, NOT RUN in n8n. desk-* doors (18 nodes): older path to the desk store (F-019).
-### 1.3 Stores and logs: see lanes/L3-stores.md (13 rows, 10 two-store problems) and section 4 below. Decision text (order only; DECISION-one-store.md is absent): one database = n8n Postgres + mf_leads; desk SQLite and portal retired; stage.journal the exception. Found: n8n itself runs on SQLite (N8N-START.md:4), a second database (F-011); stage journal exception has no owner or removal trigger (F-020).
+### 1.3 Stores and logs: see lanes/L3-stores.md (14 rows, 10 two-store problems) and section 4 below. Decision text (order only; DECISION-one-store.md is absent): one database = n8n Postgres + mf_leads; desk SQLite and portal retired; stage.journal the exception. Found: n8n itself runs on SQLite (N8N-START.md:4), a second database (F-011); stage journal exception has no owner or removal trigger (F-020).
 ### 1.4 Credentials (names only): n8n-publish-pg (Postgres), mf-mail-smtp (SMTP), hubspot-app-token (real flow only), desk-alert-smtp (desk error notifier). Environment names: DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO (real); MF_STAGE_URL, MF_STAGE_TIMEOUT_MS, MF_CRM_URL (film). Placeholder ids only in the files (PG_CREDENTIAL_ID, SMTP_CREDENTIAL_ID, SUB_WORKFLOW_ID, HS_CRED_PLACEHOLDER). check_secrets.py found no secret value.
 ### 1.5 External systems and hosts: HubSpot (real CRM, UNVERIFIED), an SMTP server and an intake mailbox, a stage (model) service at DESK_URL / MF_STAGE_URL, the desk app (lead_desk, not in this repository), Postgres. Ports and scripts: section 2.
 ### 1.6 Docs and specs read: PAGE-STATEMENTS-V4.md, VIDEO-RUNSHEET.md, V3/V4/V5 READMEs, FILM-README, N8N-START.md, DESIGN-A-README.md, mf_leads.sql copies, PLAN-4-NLITE-FROM-LEAD.md (lines cited). Tests: n8n-tests/*.py and n8n-mainframe/mf.py (inventory in section 2). Identities: every Postgres node uses one credential, every mail node one SMTP credential (F-010); owner of each job: the lead (no named owner in any file; F-020).
@@ -163,14 +164,6 @@ rc=0
 ## 3. Node tables (every node a row; machine columns are script output, judgement columns by the lane; ORDER of lanes: current take first)
 
 ### Lane L1-mf-v5
-# Lane L1 (real-v5 and film-v5, 8 files, 108 nodes)
-Inputs read: the 8 json files (settings, node extras, connections via tools/out tables), tools/out/n8n-flows-real-v5__*.md and n8n-flows-film-v5__*.md, the four tools/out/diff__n8n-flows-real-v5__*__TO__n8n-flows-film-v5__*.txt, handover/demo/n8n-flows/mf_leads.sql, n8n-flows-v4/mf_leads.sql (for the alert columns), n8n-flows-real-v5/V5-README.md, n8n-mainframe/stage_server.py (first lines and /qualify handler, to understand the stage journal) and grep of n8n-mainframe/build_mainframe.py and mf.py for alert columns.
-Absent or not read: V5-NODE-DIFF.txt (not compared, see below), crm_stub.py, any running n8n, any real HubSpot/SMTP/stage service (everything that needs them is UNVERIFIED).
-Flow settings (all 8 files equal): executionOrder v1, saveDataSuccessExecution none, saveDataErrorExecution none, saveManualExecutions false. settings.errorWorkflow: NOT SET in any of the 8 files, so no error flow runs and no execution record is kept (L1-1).
-Film nodes identical to real (machine diff prints no line) use "same as real-v5"; film nodes judged in full: mf-recovery AlertSend, mf-sub-crm-mail Qualify, CrmUpsert, SendMail (these are the only 4 lines in the diffs).
-Placeholders in the files: SUB_WORKFLOW_ID (form, hook, recovery), PG_CREDENTIAL_ID / SMTP_CREDENTIAL_ID, HS_CRED_PLACEHOLDER, FROM_ADDRESS_PLACEHOLDER, INTAKE_ADDRESS_PLACEHOLDER (real only). No secret values found or copied.
--- DONE UP TO n8n-flows-film-v5/mf-sub-crm-mail.json:20 (all 108 rows) --
-
 # Lane L1 (real-v5 and film-v5, 8 files, 108 nodes)
 Inputs read: the 8 json files (settings, node extras, connections via tools/out tables), tools/out/n8n-flows-real-v5__*.md and n8n-flows-film-v5__*.md, the four tools/out/diff__n8n-flows-real-v5__*__TO__n8n-flows-film-v5__*.txt, handover/demo/n8n-flows/mf_leads.sql, n8n-flows-v4/mf_leads.sql (for the alert columns), n8n-flows-real-v5/V5-README.md, n8n-mainframe/stage_server.py (first lines and /qualify handler, to understand the stage journal) and grep of n8n-mainframe/build_mainframe.py and mf.py for alert columns.
 Absent or not read: V5-NODE-DIFF.txt (not compared, see below), crm_stub.py, any running n8n, any real HubSpot/SMTP/stage service (everything that needs them is UNVERIFIED).
@@ -346,14 +339,6 @@ Files of this lane: L2a.judge.jsonl (22 rows), L2a.findings.md (findings L2a-1 .
 Rebuild of the three desk files by `n8n-tests/build_flows.py` (no argument) into tools/scratch/desk-rebuilt: `dump_nodes.py diff` printed only `settings equal: True` for all three, so the saved desk-*.json are exactly what build_flows.py makes without an error workflow id (the generator is their source).
 Stores seen in this lane (feeds the one-store decision; full list in L2a.findings.md): n8n Postgres table mf_leads (read by the table screen) = KEEP-ONE; desk SQLite (tables leads, followups, receipts; written by the desk, reached by the two doors) = RETIRED per the order text, with the desk code outside this repository; n8n's own SQLite (execution data) = holds lead name and e-mail even with saving off (N8N-START.md); stage journal file (stage-journal.jsonl from stage_server.py) = the named EXCEPTION, owner and removal trigger MISSING.
 
-# Lane L2a: Tier A extras (4 flow files, 22 nodes), script inventory, generator check, second-path hunt
-Built 2026-11-16 (UTC clock of the machine; IST = UTC+5:30). Static reading only: nothing was run except `build_mainframe.py`, `build_flows.py` (both into tools/scratch/) and the audit scripts. Every cell that needs a running n8n or a real service says `UNVERIFIED: ...`.
-Inputs read: n8n-table-screen-v2/mf-table-screen-v2.json and README.md; n8n-flows/desk-webhook-door.json, desk-form-door.json, desk-error-notifier.json, N8N-START.md, DESIGN-A-README.md, mf_leads.sql; n8n-flows-v3/mf_leads.sql and n8n-flows-v4/mf_leads.sql (diff only); tools/out/*.md for the 4 files; n8n-tests/build_flows.py, dn1_common.py (stores and deploy order); n8n-owns-vs-desk-owns.md (store text only). Inputs listed in plan section 1 as 'if present' and absent: none for this lane.
-Settings note: none of the 4 files has `settings.errorWorkflow` (a workflow id would be noted here; there is none). Table screen settings: saveDataSuccessExecution none, saveDataErrorExecution none, saveManualExecutions false. Doors: same three. Notifier: first two only.
-Files of this lane: L2a.judge.jsonl (22 rows), L2a.findings.md (findings L2a-1 ...), L2a-scripts.md (script inventory), L2a-generator.md (generator check, raw), checkpoint-L2a.md.
-Rebuild of the three desk files by `n8n-tests/build_flows.py` (no argument) into tools/scratch/desk-rebuilt: `dump_nodes.py diff` printed only `settings equal: True` for all three, so the saved desk-*.json are exactly what build_flows.py makes without an error workflow id (the generator is their source).
-Stores seen in this lane (feeds the one-store decision; full list in L2a.findings.md): n8n Postgres table mf_leads (read by the table screen) = KEEP-ONE; desk SQLite (tables leads, followups, receipts; written by the desk, reached by the two doors) = RETIRED per the order text, with the desk code outside this repository; n8n's own SQLite (execution data) = holds lead name and e-mail even with saving off (N8N-START.md); stage journal file (stage-journal.jsonl from stage_server.py) = the named EXCEPTION, owner and removal trigger MISSING.
-
 ### n8n-table-screen-v2/mf-table-screen-v2.json (4 nodes)  workflow='mf-table-screen-v2' settings={"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": false}
 | # | node | type | parameters (masked) | downstream (out,node) | onError | retry/tries/wait | disabled | credential | reachable | purpose | trigger or upstream | inputs | outputs | error path | idempotency key | writes (store, table or file) | secrets (names only) | identity it runs as | logs to | what a person sees | stop condition | finding id |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -403,39 +388,6 @@ dangling edges: []; node names unique: True
 
 
 ### Lane L2b-1 real family
-# Lane L2b-1: n8n-flows-real, n8n-flows-real-v3, n8n-flows-real-v4 (Tier B, 12 files, 156 nodes)
-Written by builder L2b-1, 2026-11-16. Static reading only: nothing ran. Tier B rule of PLAN-002 section 1: full judgement only where the diff file names the node (REMOVED, ADDED, CHANGED, or an edge from or to it); every other row says `same as <successor>:<node> (machine diff identical)`. Successor chain: n8n-flows-real -> n8n-flows-real-v3 -> n8n-flows-real-v4 -> n8n-flows-real-v5.
-
-## Inputs read
-- handover/demo/n8n-flows-real/{mf-form,mf-hook,mf-recovery,mf-sub-crm-mail}.json (51 nodes), n8n-flows-real-v3/ (52), n8n-flows-real-v4/ (53).
-- Diff files tools/out/diff__<folder>__<file>__TO__<successor>__<file>.txt, 12 files (real->v3, v3->v4, v4->v5).
-- Docs: handover/demo/n8n-flows-real/README.md, NODE-DIFF-vs-film.txt, n8n-flows-v3/V3-README.md, n8n-flows-v4/V4-README.md, n8n-flows-v3/mf_leads.sql, n8n-flows/mf_leads.sql, REPORT.md lines 34 and 334, PLAN-4-NLITE-FROM-LEAD.md. All treated as unverified claims; checked against the diff (results below).
-## Absent files
-- n8n-flows-real-v3/ and n8n-flows-real-v4/ contain only the 4 json files: no README, V3-README.md or V4-README.md there. Those two files live in n8n-flows-v3/ and n8n-flows-v4/ and describe the real-v3/real-v4 folders in one sentence each (Nit L2b1-9). n8n-flows-real/ has README.md and NODE-DIFF-vs-film.txt (present).
-- DECISION-one-store.md absent (PLAN-002); not needed here.
-## README claims against the diff
-- V3-README "form and hook flows identical": diff real->v3 mf-form and mf-hook print no node line, settings equal True. CONFIRMED.
-- V3-README node list (REMOVED AlertUnknown, FailedRow, AlertFailed; CHANGED MarkFailed; ADDED AlertClaim, AlertRow, AlertSend, AlertMark; unknown paths go straight to OutUnknown): matches diff lines one for one. CONFIRMED.
-- V4-README (AlertClaim window 720 s; ADDED AlertBackoff on the error output of AlertSend; everything else as v3): matches diff real-v3->real-v4 (CHANGED AlertClaim.parameters, ADDED node AlertBackoff, ADDED edge AlertSend 1 -> AlertBackoff). CONFIRMED. The 720 s basis (nodemailer timeouts) is a reading of a library, not measured (V4-README says so): UNVERIFIED.
-- README real "Nothing else differs ... same 20 / 12 / 12 / 7 nodes": node counts 20, 12, 12, 7 CONFIRMED by the json; the claim "no stand-in names in these files (grep for MF_, loopback, example.test: 0)": my grep over the three folders gives 0 hits. CONFIRMED.
-- Not in any of the three folders' docs, found by the diff: v4->v5 (CrmIdOk, SetCrmId change, credential id rename) is described in V5-README, which this lane did not read (belongs to L1).
-## Per-folder summary
-| folder | files | nodes | what it is | successor change (diff) |
-|---|---|---|---|---|
-| n8n-flows-real | 4 | 51 (12, 12, 7, 20) | first HubSpot-node variant; in-run alert mails (AlertUnknown, AlertFailed), fire and forget | v3: alert as state: AlertUnknown, AlertFailed, FailedRow REMOVED; AlertClaim, AlertRow, AlertSend, AlertMark ADDED; MarkFailed sets unknown when mail_sent; 14 rows judged: 8 here |
-| n8n-flows-real-v3 | 4 | 52 (12, 12, 9, 19) | alert sweep with 60 s x (1+attempts) claim window | v4: AlertClaim window 720 s, AlertBackoff ADDED; 2 rows judged |
-| n8n-flows-real-v4 | 4 | 53 (12, 12, 10, 19) | 720 s window plus backoff on send failure | v5: CrmIdOk ADDED, SetCrmId stores id safely, credential id placeholder renamed; 4 rows judged |
-mf-form and mf-hook: machine diff identical in all three steps (settings equal True), so 72 of their rows (24 nodes x 3) are same_as. Dangling edges and duplicate node names: none in the 12 files (`dump_nodes.py check`). No node has reachable NO-INCOMING or UNREACHED-FROM-TRIGGER (checked from the machine table): no dead node by the script's rule.
-Counts: 156 rows, 14 full judgement, 142 same_as.
-## Secrets and personal data
-No secret value and no personal data in the 12 json files. Credential ids are placeholders only: PG_CREDENTIAL_ID (38 uses), SMTP_CREDENTIAL_ID (7), HUBSPOT_CREDENTIAL_ID (3, in the three older folders; v5 uses HS_CRED_PLACEHOLDER). Credential names (n8n-publish-pg, mf-mail-smtp, hubspot-app-token) are names only. E-mail address pattern grep in the three folders: 0 hits (addresses are the constants FROM_ADDRESS_PLACEHOLDER and INTAKE_ADDRESS_PLACEHOLDER; recipient of alerts is the environment name DESK_ALERT_TO). tools/check_secrets.py: `PASS 0 hits in 120 files` (whole-audit scope).
-## LIVE-REFERENCE verdict
-Command (repo root parent handover/): `grep -rIPn --exclude-dir=flows-audit "(?<![\w-])NAME(?![\w-])" .` for NAME in the three folder names. Only md files hit; no .py, .sh, .json, .txt hit and no Execute Workflow or errorWorkflow reference (settings carry no errorWorkflow; RunSub uses the placeholder SUB_WORKFLOW_ID).
-- n8n-flows-real: LIVE-REFERENCE (doc references only): demo/DECISION-INPUTS.md:24, demo/ORDERS.md:652, demo/REPORT.md:34, demo/REPORT.md:334.
-- n8n-flows-real-v3: LIVE-REFERENCE (doc references only): demo/n8n-flows-v4/mf_leads.sql:1 (a comment line in an sql file, so the table file names this folder), demo/n8n-flows/PAGE-STATEMENTS-DRAFT.md:4, demo/n8n-flows-v3/V3-README.md:3, demo/n8n-flows-v3/mf_leads.sql:1, demo/REPORT.md:227.
-- n8n-flows-real-v4: LIVE-REFERENCE: demo/n8n-flows-v4/V4-README.md:6, demo/PLAN-4-NLITE-FROM-LEAD.md:3 (frozen plan names real-v4 as the flows of the real take, while v5 is the current fixed version: Nit L2b1-8).
-By the plan's rule all three are LIVE-REFERENCE, not SUPERSEDED, although the successor is named in PLAN-002 section 1. Honest reading: every hit is a document or a comment, none is code or a flow; REPORT.md:34 says "Do not edit v3/v4". An archive move needs the owner's yes (CUT-LIST), and the docs above would then need their path updated. UNVERIFIED: whether the generator (n8n-mainframe/build_mainframe.py, tests) writes into these folder names at run time: the grep over .py found no folder name, the output folder is an argument.
-
 # Lane L2b-1: n8n-flows-real, n8n-flows-real-v3, n8n-flows-real-v4 (Tier B, 12 files, 156 nodes)
 Written by builder L2b-1, 2026-11-16. Static reading only: nothing ran. Tier B rule of PLAN-002 section 1: full judgement only where the diff file names the node (REMOVED, ADDED, CHANGED, or an edge from or to it); every other row says `same as <successor>:<node> (machine diff identical)`. Successor chain: n8n-flows-real -> n8n-flows-real-v3 -> n8n-flows-real-v4 -> n8n-flows-real-v5.
 
@@ -730,36 +682,6 @@ None found. Only credential NAMES (n8n-publish-pg, mf-mail-smtp), placeholder id
 ## Not checked
 Everything that needs a running n8n or Postgres (branch order of the fan-out from Every30s, paired-item lookups, SMTP timeouts, what the CRM stub returns) is marked UNVERIFIED in the cells or findings.
 
-# Lane L2b-2 (Tier B): older versions of the "film" flows. Written 2026-11-16 (UTC), static reading only; nothing was run.
-Chain: n8n-flows-film -> n8n-flows-film-v3 -> n8n-flows-film-v4 -> n8n-flows-film-v5 (v5 is in lane L1). "Full judgement" rows = nodes named by any REMOVED, ADDED or CHANGED line or edge line of the diff file; every other row says `same as <successor>/<file>:<node> (machine diff identical)`. The set was computed by script and compared with my hand-written rows (equal).
-## Inputs read (paths under handover/demo)
-- 12 flow files: n8n-flows-film/, n8n-flows-film-v3/, n8n-flows-film-v4/ x (mf-form, mf-hook, mf-recovery, mf-sub-crm-mail). Node counts: 51 + 52 + 53 = 156 (matches PLAN-002 section 1).
-- 12 diff files handover/flows-audit/tools/out/diff__<folder>__<file>__TO__<successor>__<file>.txt and the 12 table files in tools/out.
-- READMEs as unverified claims: n8n-flows-film/FILM-README.md, n8n-flows-v3/V3-README.md, n8n-flows-v4/V4-README.md. Also n8n-flows-v3/mf_leads.sql and n8n-flows-v4/mf_leads.sql (identical, checked with diff) and n8n-flows/mf_leads.sql (no alert_ columns).
-- Absent: n8n-flows-film-v3 and n8n-flows-film-v4 have NO README and NO mf_leads.sql of their own (their README text sits in n8n-flows-v3 and n8n-flows-v4). Absent file DECISION-one-store.md (PLAN-002 section 1). Not read on purpose: earlier audits.
-## README claims checked against the diff
-- V3-README "form and hook flows identical": CONFIRMED (diff film -> film-v3 for mf-form and mf-hook is only `settings equal: True`; the same for v3 -> v4 and v4 -> v5).
-- V3-README "REMOVED AlertUnknown, the two IF nodes kept, both outputs lead to OutUnknown": CONFIRMED (diff lines REMOVED node AlertUnknown, ADDED edges UnknownNew/UnknownNewA -> OutUnknown).
-- V3-README "REMOVED FailedRow and AlertFailed, MarkFailed state unknown when mail_sent, ADDED AlertClaim, AlertRow, AlertSend, AlertMark": CONFIRMED.
-- V3-README "AlertClaim backoff 60 s x (1+min(attempts,4))": CONFIRMED in film-v3/mf-recovery.json:AlertClaim. "AlertSend error output goes nowhere": CONFIRMED (no connection from output 1 in v3).
-- V4-README "AlertClaim 720 s, NEW AlertBackoff on the error output of AlertSend, everything else as v3": CONFIRMED by the v3 -> v4 diff (one CHANGED, one ADDED node, one ADDED edge). The 12 minute basis (nodemailer timeouts) and "AlertMark pairing with $('AlertRow').item" are UNVERIFIED: need a runtime.
-- FILM-README "Edits against the design flows: 2 tries, 10 s, lease 45; nothing else": CONFIRMED by a read-only run of dump_nodes.py diff n8n-flows/<file> against n8n-flows-film/<file> (only Claim, ClaimStuck, Qualify, CrmUpsert parameters and maxTries changed). FILM-README measures nothing; its worst-case arithmetic is marked "NOT measured" and is UNVERIFIED.
-- Flow settings equal in every pair (settings equal: True). No settings.errorWorkflow is set in any of the 12 files.
-## Per-folder summary
-- n8n-flows-film (51 nodes, v1 of the film build, lease 45 s): alerts for failed and unknown leads are sent by fire-and-forget mail nodes (AlertFailed, AlertUnknown) AFTER the state is final; a failed send loses the alert; MarkFailed writes state failed even when the mail may have been sent. 8 full rows (Every30s, MarkFailed, FailedRow, AlertFailed in mf-recovery; UnknownNewA, UnknownNew, AlertUnknown, OutUnknown in mf-sub-crm-mail).
-- n8n-flows-film-v3 (52 nodes): alert as stored state (alert_sent, alert_token, alert_until, alert_attempts) with a sweep (AlertClaim, AlertRow, AlertSend, AlertMark); MarkFailed gives unknown when mail_sent. Needs the v3 table (n8n-flows-v3/mf_leads.sql). 2 full rows (AlertClaim, AlertSend).
-- n8n-flows-film-v4 (53 nodes): AlertClaim lease 720 s plus AlertBackoff on the send error output (fixes the duplicate alert the V4-README reproduced). SetCrmId still stores String($json.id). 3 full rows (SetCrmId, OwnsClaim1, OutStage).
-- Totals: 156 rows, 13 full-judgement rows, 143 same-as rows.
-## LIVE-REFERENCE verdict (regex (?<![\w-])NAME(?![\w-]) over *.md *.txt *.py *.sh *.json under handover/, excluding handover/flows-audit/)
-- n8n-flows-film: LIVE-REFERENCE. Hits: demo/n8n-flows-real/README.md:2 and :5 (built from it, diff against it); demo/ORDERS.md:652; demo/REPORT.md:34, :334, :348. All hits are prose; no script, Execute Workflow node or errorWorkflow value points at the folder.
-- n8n-flows-film-v3: LIVE-REFERENCE. Hits: demo/n8n-flows-v3/V3-README.md:3; demo/REPORT.md:227 ("reference copies of what the builder writes"); demo/REPORT.md:34 names it as "n8n-flows-film/-v3/-v4/-v5" (a shorthand that the regex matches only for the first name; counted by me as a reading of REPORT.md:34).
-- n8n-flows-film-v4: LIVE-REFERENCE. Hits: demo/n8n-flows-v4/V4-README.md:6 (and the REPORT.md:34 shorthand).
-- Note for the lead: the hits are documents only. No script reads the three folders; build_mainframe.py regenerates the flows at test time (REPORT.md:227 says the tests do not import the pushed json). So "LIVE-REFERENCE" here means named in documents, not used by code. SUPERSEDED in function by film-v5 (successor named in PLAN-002 section 1); the lead decides on archiving (owner yes first, move, never delete). See finding L2b2-9.
-## Secrets and personal data in the 12 json
-None found. Only credential NAMES (n8n-publish-pg, mf-mail-smtp), placeholder ids (PG_CREDENTIAL_ID, SMTP_CREDENTIAL_ID, SUB_WORKFLOW_ID), made-up addresses on example.test (desk@, alerts@, intake@) and environment variable NAMES (MF_STAGE_URL, MF_STAGE_TIMEOUT_MS, MF_CRM_URL). A grep for token, secret, password, apikey, authorization, Bearer and connection strings found no hit in the film, film-v3 and film-v4 files.
-## Not checked
-Everything that needs a running n8n or Postgres (branch order of the fan-out from Every30s, paired-item lookups, SMTP timeouts, what the CRM stub returns) is marked UNVERIFIED in the cells or findings.
-
 ### n8n-flows-film/mf-form.json (12 nodes)  workflow='Lead desk main frame: form entry' settings={"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": false}
 | # | node | type | parameters (masked) | downstream (out,node) | onError | retry/tries/wait | disabled | credential | reachable | purpose | trigger or upstream | inputs | outputs | error path | idempotency key | writes (store, table or file) | secrets (names only) | identity it runs as | logs to | what a person sees | stop condition | finding id |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -991,52 +913,6 @@ dangling edges: []; node names unique: True
 
 
 ### Lane L2b-3 plain family
-# Lane L2b-3-plain: older "plain" flows and table screen v1 (Tier B)
-Written 2026-11-16 by builder L2b-3 (static reading only; nothing was run; UNVERIFIED = needs a running n8n, database, mail or CRM stand-in). Paths are relative to handover/demo/.
-
-## Real counts (the brief said 14 files; the real number is 16)
-16 files, 213 nodes: n8n-flows/v1-superseded 3 files (19+19+15 = 53), n8n-flows mf-* 4 files (12+12+7+20 = 51), n8n-flows-v3 4 files (12+12+9+19 = 52), n8n-flows-v4 4 files (12+12+10+19 = 53), n8n-table-screen 1 file (4). Source: tools/out/counts.txt. Rows: 213; full-judgement rows 74; `same as` rows 139; TODO rows 0 (see assemble output in the lane report).
-Full-judgement rows per file: v1-superseded mf-form 18, mf-hook 18, mf-recovery 15 (all 15: structurally different from v2); n8n-flows mf-recovery 4, mf-sub-crm-mail 4, mf-form 0, mf-hook 0; v3 mf-recovery 2 (rest 0); v4 mf-form 1, mf-hook 1, mf-recovery 2, mf-sub-crm-mail 6; table-screen 3.
-Rule used (PLAN-002 section 1, mechanical): a node gets full judgement when the diff file to its successor names it (REMOVED, ADDED, CHANGED line, or an edge line from or to it); everything else is `same as`. Diff partner of each file: v1-superseded -> n8n-flows (mf-*) -> n8n-flows-v3 -> n8n-flows-v4 -> n8n-flows-real-v5; n8n-table-screen -> n8n-table-screen-v2. Note: the nodes of v1-superseded that the diff names as REMOVED are v1 nodes, so v1 gets full rows; the `same as` rows point at the successor file where the node exists. n8n-flows/mf-sub-crm-mail.json has no counterpart in v1-superseded but does have one in v3, so it follows the v3 diff.
-Generator side note: I did not run the generator (not my lane). build_mainframe_v1.py looks like the generator of v1-superseded (its text builds SaveLabel, SetCrm=crm_done, StoredState); only REPORT.md:526 and no script mentions it (UNVERIFIED that its output equals the saved v1 json).
-
-## Inputs read and absent files
-Read: the 16 json files; tools/out diff files (16 pairs, plus a duplicate table-screen diff file with the same content); n8n-flows/v1-superseded/README.txt; n8n-flows/mf_leads.sql, n8n-flows-v3/mf_leads.sql, n8n-flows-v4/mf_leads.sql; n8n-flows-v3/V3-README.md and n8n-flows-v4/V4-README.md only for their folder and generator statements (not as facts); n8n-table-screen/README.md and the first lines of n8n-table-screen-v2/README.md; build_mainframe_v1.py and mf.py (DDL lines only).
-Absent: no v1 table DDL file (README.txt and mf_leads.sql both say v1 needs "the same DDL plus: label text" but no such file exists anywhere under handover/demo); DECISION-one-store.md (searched by the plan, absent); n8n-flows-v4/V4-README.md and n8n-flows-v3/V3-README.md exist (not absent). Everything else the brief listed is present.
-Not read on purpose: AUDIT-*.md, claims-audit.md, claims-audit/, claims-code-bugs.md. A grep hit line that sat inside HYGIENE-FINDINGS.md or PAGE-STATEMENTS-V4-DRAFT.md was shown only as a one-line hit.
-
-## mf_leads.sql: three copies compared with diff and md5sum
-- n8n-flows/mf_leads.sql  md5 starts bd257c8e (11 columns, no alert columns).
-- n8n-flows-v3/mf_leads.sql md5 starts 6cc7cf2d.
-- n8n-flows-v4/mf_leads.sql md5 starts 6cc7cf2d (byte-identical to the v3 copy; `diff` printed nothing).
-- `diff n8n-flows/mf_leads.sql n8n-flows-v3/mf_leads.sql` shows: a new first comment line and four new columns alert_sent, alert_token, alert_until, alert_attempts. So the schema of the one store exists in TWO versions, plus a fourth copy written inline in n8n-mainframe/mf.py lines 44-47 (same columns as v3, plus `DROP TABLE IF EXISTS mf_leads` before it). Findings L2b3-1 and L2b3-2.
-- No v1 DDL (the label column and the state crm_done are needed by v1 flows): L2b3-3.
-
-## LIVE-REFERENCE verdicts (regex (?<![\w-])NAME(?![\w-]) with grep -P over md, txt, py, sh, json, sql under handover/ excluding handover/flows-audit/; hits inside the folder itself are not counted)
-- v1-superseded: LIVE-REFERENCE by the rule. Hits (7): n8n-flows/DESIGN-A-README.md:3; n8n-flows/mf_leads.sql:1; n8n-flows-v3/mf_leads.sql:2; n8n-flows-v4/mf_leads.sql:2; REPORT.md:33, 526, 528. All are descriptions; no script, workflow or test runs the folder. Successor n8n-flows (mf-*). Archive candidate, owner yes first (L2b3-14).
-- n8n-flows (mf-* files only; the desk-* doors are lane L2a): LIVE-REFERENCE. File names mf-form 23 files, mf-hook 21, mf-recovery 8, mf-sub-crm-mail 10 hit; scripts build_mainframe.py, build_mainframe_v1.py, mf.py and (sub only) n8n-tests/test_crmid_regex.py name them. DESIGN-A-README.md:3 calls v2 "current version" while its own line 38 says v3 alert text supersedes it. Folder name hits: REPORT.md 13, ORDERS.md 3, RUN-ON-LAPTOP.md 2, FILM-README.md 1, PLAN-4-NLITE-FROM-LEAD.md 1, HYGIENE-FINDINGS.md 1.
-- n8n-flows-v3: LIVE-REFERENCE. Hits outside the folder: REPORT.md:227, 238, 240, 241; DESIGN-A-README.md:38, 40; RUN-ON-LAPTOP.md:82; HYGIENE-FINDINGS.md:3; n8n-flows-v4/mf_leads.sql:1. No script reads the saved json: RUN-ON-LAPTOP.md:82 and REPORT.md:227 say tests rebuild flows with build_mainframe.py at test time (L2b3-15).
-- n8n-flows-v4: LIVE-REFERENCE. Hits: REPORT.md:157, 160; PAGE-STATEMENTS-V4-DRAFT.md:3; DESIGN-A-README.md:45; n8n-table-screen/README.md:17; n8n-table-screen-v2/README.md:27; HYGIENE-FINDINGS.md:3. The table DDL that table-screen points to lives in this folder. Successor n8n-flows-real-v5 (L2b3-15).
-- n8n-table-screen: LIVE-REFERENCE. Hits: n8n-table-screen-v2/README.md:3; DOUBTFUL-SCENE.md:13; REPORT.md:37, 111; HYGIENE-FINDINGS.md:3, 92. Successor n8n-table-screen-v2 (different webhook path demo-table-v2). Conflicting run claims: L2b3-13.
-
-## Per-folder summary
-- v1-superseded (3 files, 53 nodes): full v1 process: webhook -> Insert (claim by primary key) -> Qualify -> SaveLabel -> CRM search then create -> state crm_done -> mail_sent flag -> mail to the lead -> done; recovery every 30 s re-runs the whole chain for rows untouched 20 s. No lease token, no attempts cap, no alert mail. No dead node by the machine rule (all Y or ENTRY).
-- n8n-flows mf-* (v2, 4 files, 51 nodes): claim with token and lease, sub-workflow for CRM and mail, recovery with attempts cap. Alerts are fire-and-forget.
-- n8n-flows-v3 (52): alert as state (alert_sent, alert_token, alert_until). n8n-flows-v4 (53): AlertClaim lease 720 s and AlertBackoff node on a send failure. Form, hook and sub-workflow are identical between v3 and v4 (machine diff: no node line).
-- n8n-table-screen (4): GET page of mf_leads, 7 columns, 5 s reload.
-All 16 files: reachable column is Y or ENTRY on every row (no NO-INCOMING, no UNREACHED-FROM-TRIGGER); settings.errorWorkflow is absent in every file (flow settings are executionOrder v1 and no saved execution data); no disabled node. Semantic dead branches are listed in L2b3-6 and L2b3-9.
-
-## What v1-superseded did that later versions dropped (all from the machine diff and the v1 nodes)
-1. Label stored on the row (SaveLabel, RSaveLabel; column label) and returned to the caller (ReplyDone, StoredState). Later: label travels only inside the run.
-2. CRM search-then-create through HTTP /search and /create (CrmSearch, CrmCreate). Later: single /upsert keyed hadavin_lead_id (v2 sub: CrmUpsert).
-3. Progress state crm_done. Later: states are only new, processing, done, review, unknown, failed.
-4. Thank-you mail sent to the lead address (SendMail: toEmail from the request). Later: fixed intake address (L2b3-17).
-5. Reply text: v1 verdict new or needs_person and repeat flag with label; later: verdicts done, processing, review, unknown, failed.
-What v1 lacked and later versions added: field check of email (Valid), review state, lease and claim_token, attempts cap with MarkFailed, sub-workflow, alerts.
-
-## Secrets and personal data
-No secret value in any of the 16 files. Credential names only: n8n-publish-pg (Postgres), mf-mail-smtp (SMTP); credential ids are the placeholders PG_CREDENTIAL_ID, SMTP_CREDENTIAL_ID, SUB_WORKFLOW_ID. Environment variable names read: MF_STAGE_URL, MF_CRM_URL, MF_STAGE_TIMEOUT_MS (values not in files). Mail addresses in the files are made-up .test addresses (desk@, alerts@, intake@example.test). Personal data in the design: mf_leads stores email and name as plain text (made-up in the demo); the table screen reads neither.
-
 # Lane L2b-3-plain: older "plain" flows and table screen v1 (Tier B)
 Written 2026-11-16 by builder L2b-3 (static reading only; nothing was run; UNVERIFIED = needs a running n8n, database, mail or CRM stand-in). Paths are relative to handover/demo/.
 
@@ -1395,6 +1271,8 @@ dangling edges: []; node names unique: True
 
 
 ## 4. Claims and stores (lane L3)
+(Single copy. Source files: lanes/L3-claims.md and lanes/L3-stores.md; edit those, not this section.)
+
 # L3 claims audit (lane L3, static review, UTC 2026-11-16)
 
 Written by builder lane L3. Method: each statement read in the claims file, then checked against the CURRENT flows (n8n-flows-real-v5, n8n-flows-film-v5, n8n-table-screen-v2, n8n-flows/desk-*.json, n8n-flows/mf_leads.sql) and the scripts. Nothing was run. I did not read the earlier audits. I did read handover/demo/V7-NUMBERS-lead-read.md, because the claims files name it as their number source; it is the lead's relay of laptop results, not a raw result file, so a number that agrees with it is still UNVERIFIED (the raw files mf_result_*.json are not in the repo: `find handover -name "mf_result*"` printed nothing; lane3 reports HB180, HB186, HB189, HB194 are not in the repo either).
@@ -1457,10 +1335,10 @@ rows: S1, S2, S3, S4, S5, S6, S7a, S7b, S7c, S7d, S8, S9, S10, S11, S12, S13, S1
 | S2 | VIDEO-RUNSHEET.md:4 | "real mail service and real CRM service in scenes 1 to 5 (made-up people only)" | INCONSISTENT | VIDEO-RUNSHEET.md:12 and :34 say scene 5 uses a stand-in CRM | Line 4 says real services in scenes 1 to 5; line 12 says "Scene 5 ... filmed on a stand-in CRM". |
 | S3 | VIDEO-RUNSHEET.md:4 | "the n8n execution list IS filmed ... it is not shown as proof of privacy" | UNVERIFIED | needs n8n runtime. Flows set `saveDataSuccessExecution none` and `saveDataErrorExecution none` (n8n-flows-real-v5/mf-form.json, mf-hook.json, mf-recovery.json, mf-sub-crm-mail.json settings) | With both save settings "none" a normal run leaves no execution row to show, so scene 1 "(status and time columns)" and risk 3 "prune old ones first" may show an empty list. See finding L3-6. |
 | S4 | VIDEO-RUNSHEET.md:4 | "claim is only 'a lead sent twice with the same id is processed once'" | BACKED | n8n-flows-real-v5/mf-form.json:Claim (`ON CONFLICT (lead_key) DO NOTHING`), n8n-flows-real-v5/mf-form.json:Stored, n8n-flows-real-v5/mf-form.json:ReplyStored (repeat true) | Not claimed for two doors: keys differ per door (n8n-flows-real-v5/mf-form.json:Item uses submission_id; n8n-flows-real-v5/mf-hook.json:Item uses message_id). |
-| S5 | VIDEO-RUNSHEET.md:5 | "the 'lease plus 25 to 30 s' caption is DROPPED; no recovery number in any caption until lane3 lease-45 runs land" | BACKED | the same lease statements hold in the flows (45 s); the decision is the lead's | As a statement of the lead's decision it is not checkable in code. Conflicts with scene 4 and scene 12 text: see S29, S47. |
+| S5 | VIDEO-RUNSHEET.md:5 | "the 'lease plus 25 to 30 s' caption is DROPPED; no recovery number in any caption until lane3 lease-45 runs land" | UNVERIFIED | the same lease statements hold in the flows (45 s); the decision is the lead's | As a statement of the lead's decision it is not checkable in code. Conflicts with scene 4 and scene 12 text: see S29, S47. Result review round 1: a statement of the lead's decision, not checkable in code, so UNVERIFIED rather than BACKED. |
 | S6 | VIDEO-RUNSHEET.md:6 | "EST total re-done: 355 s core, 380 s with scene 11" | BACKED | arithmetic at VIDEO-RUNSHEET.md:44: 25+40+25+60+45+20+30+10+40+30+30 = 355; plus 25 = 380 | Correct. |
 | S7 | VIDEO-RUNSHEET.md:11 | "Scenes 1 to 4: real mail ... real CRM service, the n8n main frame (flows real-v4, v5 changes only the CRM id step), lease 45 s." | BACKED | tools/out diff real-v4 to real-v5: only node CrmIdOk added, SetCrmId changed, credential id changed (flows-audit/tools/out/diff__n8n-flows-real-v4__mf-sub-crm-mail__TO__n8n-flows-real-v5__mf-sub-crm-mail.txt; the other three diffs show only "settings equal: True"); real CRM = n8n-flows-real-v5/mf-sub-crm-mail.json:CrmUpsert (HubSpot node) | Real runs are UNVERIFIED (WP6 smoke not run: VIDEO-RUNSHEET.md:58). |
-| S8 | VIDEO-RUNSHEET.md:12 | "Scene 5 (CRM refuses) needs a switch a real CRM does not have: filmed on a stand-in CRM" | NOT BACKED | n8n-flows-real-v5/mf-sub-crm-mail.json:CrmUpsert is the HubSpot node (no URL parameter, credential hubspot-app-token); the refuse switch exists only in the stand-in n8n-mainframe/crm_stub.py:2 (fail_status) which is reached only by n8n-flows-film-v5/mf-sub-crm-mail.json:CrmUpsert (HTTP call to MF_CRM_URL) | So scene 5 can only run on the FILM flows. The sheet never says that the flow set changes between scene 4 (real) and scene 5. See finding L3-3. |
+| S8 | VIDEO-RUNSHEET.md:12 | "Scene 5 (CRM refuses) needs a switch a real CRM does not have: filmed on a stand-in CRM" | BACKED | n8n-flows-real-v5/mf-sub-crm-mail.json:CrmUpsert is the HubSpot node (no URL parameter, credential hubspot-app-token); the refuse switch exists only in the stand-in n8n-mainframe/crm_stub.py:2 (fail_status) which is reached only by n8n-flows-film-v5/mf-sub-crm-mail.json:CrmUpsert (HTTP call to MF_CRM_URL) | So scene 5 can only run on the FILM flows. The sheet never says that the flow set changes between scene 4 (real) and scene 5. See finding L3-3. Result review round 1: the sentence is true (real-v5 CrmUpsert is the HubSpot node and has no refuse switch). The defect is the omission in S2, which stays INCONSISTENT; the row was relabelled from NOT BACKED. |
 | S9 | VIDEO-RUNSHEET.md:13 | "Scenes 6 to 10 (doubtful case): film flows, a stage with a loopback fake model, the SMTP stand-in with .drop = 1, the table screen. Scene 11 on the stand-in too." | UNVERIFIED | film flows exist (n8n-flows-film-v5/mf-form.json:Claim); .drop exists (n8n-tests/smtp_catcher.py:44 to :47); table screen exists (n8n-table-screen-v2/mf-table-screen-v2.json:ReadLeads) | "Loopback fake model": n8n-mainframe/stage_server.py:16 builds the LiveQualifier from the environment; whether that points at a fake model server depends on the run settings (n8n-mainframe/mf.py:37 starts demo_only.fake_model_server for tests). UNVERIFIED which model the take uses. Table screen is not run. |
 | S10 | VIDEO-RUNSHEET.md:14 | "every V7 number was measured on v3 flows, stand-ins, lease 20 s. The take runs other flows at lease 45 s." | UNVERIFIED | V7-NUMBERS-lead-read.md:1 says "v3 flows commit 6ebb7f62e, lease 20 s, made-up data"; raw absent | Take lease 45 s backed (S1). |
 | S11 | VIDEO-RUNSHEET.md:22 | "The 45 s lease is UNMEASURED. Never write 'within 60 s' and never 'alert within 30 s'." | INCONSISTENT | VIDEO-RUNSHEET.md:90 (caption "measured at lease 45 s: 18 kill runs, 60.1 to 61.9 s") and VIDEO-RUNSHEET.md:85 | Stale text: lines 22, 23, 47, 51 (risk 2) still say 45 s is unmeasured and "recovery wording NONE", while the 17:08Z update (line 85 to 90) adds a measured caption (relayed). A reader following the top of the sheet writes a different caption from the bottom. |
@@ -1469,7 +1347,7 @@ rows: S1, S2, S3, S4, S5, S6, S7a, S7b, S7c, S7d, S8, S9, S10, S11, S12, S13, S1
 | S14 | VIDEO-RUNSHEET.md:30 | Scene 1 history: "T14 (one idle run, 120 s, v3 on stand-ins): 0 stage, 0 model, 0 CRM, 0 SMTP, 0 table rows." | UNVERIFIED | needs laptop; raw absent | Agrees with V7-NUMBERS-lead-read.md:7. |
 | S15 | VIDEO-RUNSHEET.md:30 | Scene 1: "Caption card: 'made-up people, real mail and CRM services'" | UNVERIFIED | needs real services (WP6 smoke not run, VIDEO-RUNSHEET.md:58) | Real nodes exist: n8n-flows-real-v5/mf-sub-crm-mail.json:CrmUpsert, n8n-flows-real-v5/mf-sub-crm-mail.json:SendMail. Mail addresses are the placeholders FROM_ADDRESS_PLACEHOLDER and INTAKE_ADDRESS_PLACEHOLDER (not yet real). |
 | S16 | VIDEO-RUNSHEET.md:30 | Scene 1 / risk: "the request body stays in n8n data until pruned" | UNVERIFIED | needs n8n runtime; REPORT.md:373 (older flows, SQLite write-ahead file) | See page S18. |
-| S17 | VIDEO-RUNSHEET.md:31 | Scene 2: "posts one made-up lead (... key L plus 16 hex, the key is the door id) to the form entry ..., path mf-form." | NOT BACKED | the key is the door id: BACKED (n8n-flows-real-v5/mf-form.json:Item, lead_key = body.submission_id); path mf-form: BACKED (n8n-flows-real-v5/mf-form.json:Receive); the format "L plus 16 hex" is NOT checked by any flow node (n8n-flows-real-v5/mf-form.json:Valid tests only the e-mail pattern) | The format rule is in take scripts that are not in this tree (PLAN-4-NLITE-FROM-LEAD.md:64 and :69 name `^L[0-9a-f]{16}$` in scripts/n8n_drive.py). UNVERIFIED there. |
+| S17 | VIDEO-RUNSHEET.md:31 | Scene 2: "posts one made-up lead (... key L plus 16 hex, the key is the door id) to the form entry ..., path mf-form." | UNVERIFIED | the key is the door id: BACKED (n8n-flows-real-v5/mf-form.json:Item, lead_key = body.submission_id); path mf-form: BACKED (n8n-flows-real-v5/mf-form.json:Receive); the format "L plus 16 hex" is NOT checked by any flow node (n8n-flows-real-v5/mf-form.json:Valid tests only the e-mail pattern) | The format rule is in take scripts that are not in this tree (PLAN-4-NLITE-FROM-LEAD.md:64 and :69 name `^L[0-9a-f]{16}$` in scripts/n8n_drive.py). UNVERIFIED there. Result review round 1: the "L plus 16 hex" rule lives in a take script that is not in this tree, so it is UNVERIFIED, not NOT BACKED. |
 | S18 | VIDEO-RUNSHEET.md:31 | Scene 2: "Reply with a verdict (new or done). Then: table row state done, mail_sent true; CRM list shows 1 row; intake mailbox shows 1 mail with subject starting '[demo] lead'" | BACKED | n8n-flows-real-v5/mf-form.json:ReplyRan (outcome done gives verdict new), n8n-flows-real-v5/mf-sub-crm-mail.json:MarkDone, n8n-flows-real-v5/mf-sub-crm-mail.json:MailClaim, n8n-flows-real-v5/mf-sub-crm-mail.json:CrmUpsert, n8n-flows-real-v5/mf-sub-crm-mail.json:SendMail (subject `'[demo] lead ' + lead_key`) | On the first request the verdict is "new"; "done" appears only for the repeat (S19). Runtime UNVERIFIED. |
 | S19 | VIDEO-RUNSHEET.md:32 | Scene 3: "The reply gives the stored state, not a new run. CRM list still 1 row, intake still 1 mail." | BACKED | n8n-flows-real-v5/mf-form.json:Claim (DO NOTHING on conflict, so no row returned), n8n-flows-real-v5/mf-form.json:Claimed (false branch to Stored), n8n-flows-real-v5/mf-form.json:Stored, n8n-flows-real-v5/mf-form.json:ReplyStored | Claim and Stored have alwaysOutputData true (checked in the json), so the false branch is reached. Runtime UNVERIFIED. |
 | S20 | VIDEO-RUNSHEET.md:32 | Scene 3: "T13 (n=13, 3 at once plus a database kill, runner report, raw NOT re-read) is not a resend test" | UNVERIFIED | needs laptop; V7-NUMBERS-lead-read.md:19 gives n=13 | Raw absent. |
@@ -1507,15 +1385,15 @@ rows: S1, S2, S3, S4, S5, S6, S7a, S7b, S7c, S7d, S8, S9, S10, S11, S12, S13, S1
 | S52 | VIDEO-RUNSHEET.md:90 | Scene 4 final caption: "About a minute after the crash (measured at lease 45 s: 18 kill runs, 60.1 to 61.9 s)" ... "Alert after a crash during the alert send: up to 13 min late (n=2)." | UNVERIFIED | needs lane3 harness; HB194 and HB189 absent | "(n=2)" here, but "n and raw file not given to me" at VIDEO-RUNSHEET.md:82 and n8n-flows/PAGE-STATEMENTS-V4.md:134: the n differs between three places (n8n-flows/PAGE-STATEMENTS-V4.md:156 says KS n=2). |
 
 Counts for file 2 (52 rows, S1 to S52):
-- BACKED = S1, S4, S5, S6, S7, S18, S19, S21, S22, S27, S31, S38, S39, S40, S41, S49, S50, S51 = 18
-- NOT BACKED = S8, S17, S44 = 3
+- BACKED = S1, S4, S6, S7, S8, S18, S19, S21, S22, S27, S31, S38, S39, S40, S41, S49, S50, S51 = 18
+- NOT BACKED = S44 = 1
 - INCONSISTENT = S2, S11, S12, S23, S26, S28, S30, S34, S37, S43, S47, S48 = 12
-- UNVERIFIED = S3, S9, S10, S13, S14, S15, S16, S20, S24, S25, S29, S32, S33, S35, S36, S42, S45, S46, S52 = 19
-- Sum 18 + 3 + 12 + 19 = 52.
+- UNVERIFIED = S3, S5, S9, S10, S13, S14, S15, S16, S17, S20, S24, S25, S29, S32, S33, S35, S36, S42, S45, S46, S52 = 21
+- Sum 18 + 1 + 12 + 21 = 52.
 
-Combined totals (83 rows): BACKED 28, NOT BACKED 6, INCONSISTENT 15, UNVERIFIED 34.
+Combined totals (83 rows, corrected after result review round 1; before: BACKED 28, NOT BACKED 6, INCONSISTENT 15, UNVERIFIED 34): BACKED 28, NOT BACKED 4, INCONSISTENT 15, UNVERIFIED 36. Check: 28 + 4 + 15 + 36 = 83.
 
-Note on S5 (run sheet): it is the lead's decision, "BACKED" there means only that no flow contradicts it; its sibling rows S23 and S43 are the conflicts.
+Note on S5 (run sheet): it is the lead's decision and cannot be checked in code, so it is UNVERIFIED; its sibling rows S23 and S43 are the conflicts.
 
 Not checked (honest list): (a) the pages "Honest limits" bullets of file 1 (lines 136 to 146) except S24; they repeat statements 7 to 19. (b) Procedural rehearsal steps of the run sheet (lines 61 to 71) are tasks, not claims; only the "seven columns" item is counted (S37). (c) Anything about real HubSpot or Gmail behaviour: needs the real services. (d) No flow, script or stand-in was executed.
 
@@ -1561,14 +1439,30 @@ Gaps first: (1) the desk repository and the take scripts (scripts/n8n_drive.py, 
 | T9 | journal file name | `stage.journal` (PLAN-4-NLITE-FROM-LEAD.md:64) | `stage-journal.jsonl` (n8n-mainframe/mf.py:12) | same store, two names | finding L3-15 |
 | T10 | where lead name and e-mail are kept | mf_leads columns name and email (no retention) | n8n's SQLite write-ahead file (REPORT.md:373) and the request mail in the mailbox | the closing card line 5 names only the n8n data (VIDEO-RUNSHEET.md:41) | finding L3-16 |
 
-## Counts
+## Counts (corrected after result review round 1)
 
-Stores found: 13 rows (11 stores plus 2 external systems; the portal row is a "none found" row).
-By classification: KEEP-ONE 1 (mf_leads); EXCEPTION 1 named in the order (stage journal; reason found, owner MISSING, removal trigger MISSING); RETIRED 1 named in the order (desk SQLite) plus 5 proposed RETIRED test-only stores; NOT IN ORDER TEXT 6 (n8n SQLite, spend ledger, take folder files, plus the two external systems, plus the mail/CRM/model stand-in group counted above as proposed RETIRED); portal none found.
-(Exact row-by-row: KEEP-ONE: lead table. EXCEPTION: stage journal. RETIRED named: desk database. NOT IN ORDER TEXT with proposal: n8n database (EXCEPTION proposed), spend ledger (EXCEPTION proposed), CRM stand-in log, mail stand-in files, model-call log, leads_skip, harness secret files (all RETIRED proposed), take folder files (unclassified), CRM contact and intake mailbox (external). Portal: none found.)
-Two-store problems listed: 10.
+Stores found: 14 rows in the store table: 11 stores, 2 outside services (CRM contact, intake mailbox) and 1 row "portal: none found".
+By classification, row by row:
+- KEEP-ONE (1): lead table mf_leads (n8n Postgres).
+- EXCEPTION named by the order (1): stage journal. Reason found at PLAN-4-NLITE-FROM-LEAD.md:78; owner MISSING; removal trigger MISSING.
+- RETIRED named by the order (1): desk database. The portal is named by the order too; nothing in the searched tree refers to it (see portal note below).
+- Not named by the order, proposed EXCEPTION (2): n8n's own SQLite database (F-011), spend ledger (the stage service writes it during the take, so it is a second record of the model-call fact; if the take makes no live model call it can be RETIRED instead). Both need an owner and a removal trigger: both MISSING. EXCEPTIONS.md carries the same classification.
+- Not named by the order, proposed RETIRED from the take (5): CRM stand-in log, mail stand-in files, model-call log, test table leads_skip, harness secret files (names only).
+- Not named by the order, unclassified (1): take folder files (scripts absent, UNVERIFIED).
+- Outside services, not our store (2): CRM contact, intake mailbox.
+- Portal (1 row): none found.
+Total 1 + 1 + 1 + 2 + 5 + 1 + 2 + 1 = 14.
+Two-store problems listed: 10 (T1 to T10).
 Missing for the exception: owner MISSING, removal trigger MISSING (stage journal); reason found at PLAN-4-NLITE-FROM-LEAD.md:78.
 
+## Added by result review round 1 (small stores the first pass missed; all test-only, proposed RETIRED from the take)
+- n8n-tests/dn1.py:37 and :88 write `crash.flag` into the desk data folder (a marker that tells the desk to crash at a point).
+- n8n-tests/desk_proxy.py:9 appends a log line for every request it forwards.
+- n8n-mainframe/mf.py:365 writes mf_result_<tests>.json; n8n-mainframe/run_mf.py:5 and :141 write smoke_readiness.json.
+- n8n-rerun/ holds driver copies (desk-kill, desk-p1 folders, skipd.py.txt) that wrote rows jsonl files; evidence text only.
+- DESTRUCTIVE PATH: n8n-tests/dn1_common.py:59-61 deletes every file under DN1_DESK_REPO/data (default /tmp/rr/t3exp) with no check that the folder is a throwaway one (F-034).
+- The portal row rests on a search of the flows, the scripts and the claims files, plus the 7 top-level n8n notes, REPORT.md and PLAN-4-NLITE-FROM-LEAD.md. The only mentions are in n8n-owns-vs-desk-owns.md:26 (the portal is part of the desk program, whose repository is absent) and PLAN-4-NLITE-FROM-LEAD.md:54 (portal views cut). So the portal is retired together with the desk; handover/ was not searched beyond those files.
+- Journal naming split (T9): the take scripts say `stage.journal`, the test harness says `stage-journal.jsonl`; the order and the exception text need one name (F-020).
 
 ## 5. Agreement with earlier audits (written by the lead AFTER the lane verdicts; the lanes did not read them)
 Earlier audits read: handover/demo/AUDIT-VIDEO-RUNSHEET.md and AUDIT-PAGE-STATEMENTS-V4.md.

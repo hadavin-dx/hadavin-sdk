@@ -40,10 +40,27 @@ Gaps first: (1) the desk repository and the take scripts (scripts/n8n_drive.py, 
 | T9 | journal file name | `stage.journal` (PLAN-4-NLITE-FROM-LEAD.md:64) | `stage-journal.jsonl` (n8n-mainframe/mf.py:12) | same store, two names | finding L3-15 |
 | T10 | where lead name and e-mail are kept | mf_leads columns name and email (no retention) | n8n's SQLite write-ahead file (REPORT.md:373) and the request mail in the mailbox | the closing card line 5 names only the n8n data (VIDEO-RUNSHEET.md:41) | finding L3-16 |
 
-## Counts
+## Counts (corrected after result review round 1)
 
-Stores found: 13 rows (11 stores plus 2 external systems; the portal row is a "none found" row).
-By classification: KEEP-ONE 1 (mf_leads); EXCEPTION 1 named in the order (stage journal; reason found, owner MISSING, removal trigger MISSING); RETIRED 1 named in the order (desk SQLite) plus 5 proposed RETIRED test-only stores; NOT IN ORDER TEXT 6 (n8n SQLite, spend ledger, take folder files, plus the two external systems, plus the mail/CRM/model stand-in group counted above as proposed RETIRED); portal none found.
-(Exact row-by-row: KEEP-ONE: lead table. EXCEPTION: stage journal. RETIRED named: desk database. NOT IN ORDER TEXT with proposal: n8n database (EXCEPTION proposed), spend ledger (EXCEPTION proposed), CRM stand-in log, mail stand-in files, model-call log, leads_skip, harness secret files (all RETIRED proposed), take folder files (unclassified), CRM contact and intake mailbox (external). Portal: none found.)
-Two-store problems listed: 10.
+Stores found: 14 rows in the store table: 11 stores, 2 outside services (CRM contact, intake mailbox) and 1 row "portal: none found".
+By classification, row by row:
+- KEEP-ONE (1): lead table mf_leads (n8n Postgres).
+- EXCEPTION named by the order (1): stage journal. Reason found at PLAN-4-NLITE-FROM-LEAD.md:78; owner MISSING; removal trigger MISSING.
+- RETIRED named by the order (1): desk database. The portal is named by the order too; nothing in the searched tree refers to it (see portal note below).
+- Not named by the order, proposed EXCEPTION (2): n8n's own SQLite database (F-011), spend ledger (the stage service writes it during the take, so it is a second record of the model-call fact; if the take makes no live model call it can be RETIRED instead). Both need an owner and a removal trigger: both MISSING. EXCEPTIONS.md carries the same classification.
+- Not named by the order, proposed RETIRED from the take (5): CRM stand-in log, mail stand-in files, model-call log, test table leads_skip, harness secret files (names only).
+- Not named by the order, unclassified (1): take folder files (scripts absent, UNVERIFIED).
+- Outside services, not our store (2): CRM contact, intake mailbox.
+- Portal (1 row): none found.
+Total 1 + 1 + 1 + 2 + 5 + 1 + 2 + 1 = 14.
+Two-store problems listed: 10 (T1 to T10).
 Missing for the exception: owner MISSING, removal trigger MISSING (stage journal); reason found at PLAN-4-NLITE-FROM-LEAD.md:78.
+
+## Added by result review round 1 (small stores the first pass missed; all test-only, proposed RETIRED from the take)
+- n8n-tests/dn1.py:37 and :88 write `crash.flag` into the desk data folder (a marker that tells the desk to crash at a point).
+- n8n-tests/desk_proxy.py:9 appends a log line for every request it forwards.
+- n8n-mainframe/mf.py:365 writes mf_result_<tests>.json; n8n-mainframe/run_mf.py:5 and :141 write smoke_readiness.json.
+- n8n-rerun/ holds driver copies (desk-kill, desk-p1 folders, skipd.py.txt) that wrote rows jsonl files; evidence text only.
+- DESTRUCTIVE PATH: n8n-tests/dn1_common.py:59-61 deletes every file under DN1_DESK_REPO/data (default /tmp/rr/t3exp) with no check that the folder is a throwaway one (F-034).
+- The portal row rests on a search of the flows, the scripts and the claims files, plus the 7 top-level n8n notes, REPORT.md and PLAN-4-NLITE-FROM-LEAD.md. The only mentions are in n8n-owns-vs-desk-owns.md:26 (the portal is part of the desk program, whose repository is absent) and PLAN-4-NLITE-FROM-LEAD.md:54 (portal views cut). So the portal is retired together with the desk; handover/ was not searched beyond those files.
+- Journal naming split (T9): the take scripts say `stage.journal`, the test harness says `stage-journal.jsonl`; the order and the exception text need one name (F-020).

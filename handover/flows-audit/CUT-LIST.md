@@ -3,7 +3,7 @@ The take uses only n8n-flows-real-v5 and n8n-flows-film-v5 (ORDER 003). The owne
 | folder | files / nodes | successor | one-line reason it is superseded | live-reference hits (prose only) |
 |---|---|---|---|---|
 | n8n-flows/v1-superseded | 3 / 53 | n8n-flows (mf-*) | first design: no attempts cap, no alert, recovery can double-mail (F-025); README says "kept for the compare only" | 7 docs |
-| n8n-flows (mf-* four files) | 4 / 51 | n8n-flows-v3 | v2: alert mail lost if SMTP fails, state failed even when mail sent (F-024) | docs and scripts text |
+| n8n-flows: ONLY the 4 files mf-form.json, mf-hook.json, mf-recovery.json, mf-sub-crm-mail.json (the folder itself STAYS: it also holds N8N-START.md, DESIGN-A-README.md, PAGE-STATEMENTS-V4.md, mf_leads.sql and the desk entry flows, which the take documents use) | 4 / 51 | n8n-flows-v3 | v2: alert mail lost if SMTP fails, state failed even when mail sent (F-024) | documents only |
 | n8n-flows-v3 | 4 / 52 | n8n-flows-v4 | 60 s alert lease shorter than a slow send, duplicate alerts (F-024) | 9 |
 | n8n-flows-v4 | 4 / 53 | real-v5 / film-v5 | before CrmIdOk: can store the text "undefined" as crm_id (F-016) | 7 |
 | n8n-flows-real | 4 / 51 | n8n-flows-real-v3 | same defects as the plain v2 for the real-node variant | 4 |
@@ -13,5 +13,16 @@ The take uses only n8n-flows-real-v5 and n8n-flows-film-v5 (ORDER 003). The owne
 | n8n-flows-film-v3 | 4 / 52 | n8n-flows-film-v4 | 60 s alert lease | 2 |
 | n8n-flows-film-v4 | 4 / 53 | n8n-flows-film-v5 | no CrmIdOk | 2 |
 | n8n-table-screen | 1 / 4 | n8n-table-screen-v2 | v1 reads seven columns (v2 reads six) | 6 |
-Also candidates (owner yes): n8n-flows desk-form-door, desk-webhook-door, desk-error-notifier (write the retired desk store, F-019; retire from the take); n8n-mainframe/build_mainframe_v1.py (only generates v1-superseded); n8n-tests/run_dn1.py (23 of 239 lines differ from run_mf.py, F-027); n8n-rerun/*.py.txt driver copies. Three copies of mf_leads.sql collapse to one with patch F-001 (then mf.py reads that file).
-Before any move: update the prose that names these folders (PLAN-4-NLITE-FROM-LEAD.md:3 still names real-v4 as the take; REPORT.md lines named by the lane headers).
+Also candidates (owner yes):
+- Desk entry flows n8n-flows/desk-form-door.json, desk-webhook-door.json, desk-error-notifier.json (write the retired desk store, F-019; retire from the take). Move only these 3 files.
+- Door-test chain, to move together or not at all: n8n-tests/run_dn1.py, dn1.py, dn1_common.py (it deletes files, F-034), desk_proxy.py, build_flows.py (the 3 desk flows only) and n8n-tests/results/. mf.py imports dn1_common.py: change that import first, otherwise the take harness breaks.
+- n8n-mainframe/build_mainframe_v1.py (only generates v1-superseded); n8n-rerun/*.py.txt driver copies; n8n-mainframe/examples/docker-native-pg-shim.py (L2a-14 says it is not part of the repo but it sits in it); sandbox-scratch-logs/ (idle logs).
+- Draft and duplicate documents, kept only as history: n8n-flows/PAGE-STATEMENTS-DRAFT.md and PAGE-STATEMENTS-V4-DRAFT.md (draft copies of PAGE-STATEMENTS-V4.md; not diffed line by line, so "duplicate" is the audit's reading of the file names and the first lines, UNVERIFIED), AUDIT-PAGE-STATEMENTS-V4.md and AUDIT-VIDEO-RUNSHEET.md (earlier audits of the same two files), and the 7 top-level notes n8n-a-cause-1.md, n8n-diag-1.md, n8n-kill-between-steps.md, n8n-owns-vs-desk-owns.md, n8n-published-numbers.md, n8n-skip-on-conflict.md, n8n-vs-desk-kill-compare.md (overlap on the kill and skip results; the lead decides which one is kept as the single note).
+- Per-folder files that move WITH their folder (so nothing is left behind): V3-README.md, V4-README.md, FILM-README.md, NODE-DIFF-vs-film.txt, V5-NODE-DIFF.txt stays with the v5 folders (not archived).
+Four copies of the lead table definition exist: three mf_leads.sql files (n8n-flows, n8n-flows-v3, n8n-flows-v4) and the inline text in n8n-mainframe/mf.py:44-47. Patch F-001 makes one file correct; then mf.py reads that file.
+ORDER OF WORK (the order matters, because v3 and v4 hold the only copies of the table definition that has the alert columns and the table-screen READMEs point at them):
+1. Apply patch F-001 (n8n-flows/mf_leads.sql gets the alert columns) and make mf.py read that one file.
+2. Copy that mf_leads.sql beside the v5 folders (or point the two table-screen READMEs, V5-README and FILM-README at n8n-flows/mf_leads.sql).
+3. Update the prose that names the old folders: PLAN-4-NLITE-FROM-LEAD.md:3 (still names real-v4 as the take), n8n-table-screen/README.md:17, n8n-table-screen-v2/README.md:27 ("DDL in n8n-flows-v4"), V5-README line 1 ("v3 and v4 folders untouched"), FILM-README, mf.py, and the REPORT.md lines named by the lane headers.
+4. Only then move the old folders to the archive. After the move run: grep -rn "n8n-flows-v3\|n8n-flows-v4" on the take documents and require no hit that is a path a person must open.
+Nothing in this list removes a v5 flow, build_mainframe.py, stage_server.py, crm_stub.py or the mail stand-in.
