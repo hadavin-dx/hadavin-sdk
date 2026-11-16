@@ -2,7 +2,7 @@
 
 **STATUS: UNVERIFIED AS A WHOLE. Nothing in this file was run. Every command, expected line and time below is copied from the two input files and has never been executed. Written Mon 16 Nov 2026 (UTC). Static text edit, made-up data only.**
 
-Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "the plan"; line numbers are its own) and `inputs/OWNER-STEPS-realrun-v5-core-hardening.md` (called "steps v5"). Where the plan gives no command, this file says `[LEAD FILLS: the plan gives no command]` and invents nothing. The user-folder name in Windows paths is written `<USER>`: take it from plan line 112 (the plan spells it out; this file does not copy the owner's name).
+Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "the plan"; line numbers are its own) and `inputs/OWNER-STEPS-realrun-v5-core-hardening.md` (called "steps v5"). **The plan is required reading: this list holds the order of the steps, the run form (the exact line the lead types) and the expected lines. The paste bodies (the code of each step) stay in the plan and are not copied here, so they cannot drift.** Where the plan gives no command for a step of this run, this file says `[LEAD FILLS: the plan gives no command]` and invents nothing. For P-2 and P-3a the plan does give bodies (P-2: plan lines 233-237, the code is on lines 234-236; P-3a: the Write step at plan line 229 with glue text at plan lines 132-223), so the only thing the lead fills there is the re-pin values. The user-folder name in Windows paths is written `<USER>`: take it from plan line 112 (the plan spells it out; this file does not copy the owner's name).
 
 ## Words box
 
@@ -13,6 +13,22 @@ Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "t
 - **merged head**: the newest commit of the combined code after the fix branches were merged.
 - **lead**: the Claude session that runs the studio's work. It is software and runs this list. It is not the owner.
 - **owner**: the studio's owner, the one person who decides; he must say yes before the lead starts.
+- **runner**: whoever carries out the plan's steps; here the lead. Its Linux user (the user account inside WSL that the lead's commands run as) is the "runner user"; the plan writes it as `<runner>` in checks 1.5 and 4.2.
+- **WSL**: Windows Subsystem for Linux, the Linux (Ubuntu) that runs inside this Windows laptop. Every `wsl.exe` command below runs there.
+- **HEAD_PIN**: the plan's name for the one code version (a short commit id) the run tests; the lead re-pins it to the merged head (step 3).
+- **PROGRESS**, **INDEX**, **ENV**: three evidence files in the run's evidence folder `evidence-2\` (section 6). `PROGRESS.md` gets one line per step, with the time in UTC and IST. `INDEX.md` holds the pass/fail table (Part B, plus Part A filled). `ENV.md` records the environment (versions, addresses, ports).
+- **evidence-2**: the plan's evidence folder for this run (plan line 112; section 6 gives the path). The plan calls it `evidence-2` because an earlier smoke run made `evidence-1`.
+- **register**: the file `agents-register.md` in the folder `_local` under the Windows root `C:\Users\<USER>\Downloads\Hadavin\` (plan line 241 writes it as `_local\agents-register.md`; the root prefix is my reading, UNVERIFIED). One row per started program, written BEFORE each start (see the rules box).
+- **board item 1**: item 1 of the lead's answers in `work/LEAD-ANSWERS.md` (line 87): the first rehearsal of the changed flows, which is this re-smoke.
+- **R1, R2, R4, R5**: the plan's own rule names (plan section 1, lines 108-112). R1 = no fallback kill for n8n, a failure is a STOP; R2 = the labelled clean-up kill after a STOP; R4 = the step classes and the time limit; R5 = how a paste reaches WSL and how evidence is saved. The rules box below restates the ones the lead needs.
+
+## Rules box (plan section 1; applies to every step)
+
+- **Stop rule (R1).** A STOP stops the run: write PROGRESS and INDEX, then do section 4. Nothing after a STOP counts as evidence (plan line 108).
+- **Step classes (R4).** STOP = the run ends; GO = a finding, the run goes on; REC = record only. Time limit per step = 2 x the minutes the plan gives for that step; a step that runs longer is a STOP (plan line 111).
+- **Register (plan line 241).** Write a row in the register BEFORE each start: keep-alive, sampler, control n8n, take n8n, the Postgres container, the 4 stub services, and each detached driver (B2, C, D, E). Row fields: id, purpose, started, expected end, last checked, state, next action. Close each row when the item ends (section 4).
+- **PROGRESS (plan line 112).** After every step the runner writes ONE line in `evidence-2\PROGRESS.md`: step id, result, time in UTC and IST (IST = UTC + 5 h 30 min), written with the Write or Edit tool.
+- **PowerShell variable.** Every step below that uses `$RS` is a PowerShell call, and the variable does not survive between calls: set `$RS` (section 3) at the start of EVERY PowerShell call (plan line 112 gives the path inline).
 
 ## 0. Cost and limits (plan)
 
@@ -25,7 +41,7 @@ Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "t
 
 Wording for the lead to send, plain words:
 
-> I want to run a practice test of the changed flows on this laptop. It uses stand-in programs and made-up people only: no real mailbox, no HubSpot, no model call, no money (US$0). I start it only after the final test run on the merged code has passed. It takes about 3.5 to 4.5 hours of my work (2 h 51 min if nothing goes wrong). I will not touch your own n8n (the ones on ports 5678 and 5679). Do you say yes or no, and which start time?
+> I want to run a practice test of the changed flows on this laptop. It uses stand-in programs and made-up people only: no real mailbox, no HubSpot, no model call, no money (US$0). I start it only after the final test run on the merged code (the newest combined version of the code, after the fixes were put together) has passed. It takes about 3.5 to 4.5 hours of my work (2 h 51 min if nothing goes wrong). I will not touch your own n8n (the copies that may be running on this laptop and listen on the network port numbers 5678 and 5679, the usual numbers for n8n; a port number is like a numbered door of the laptop that a program listens at). Do you say yes or no, and which start time?
 >
 > - Slot 1: Tue 17 Nov, start 09:00 UTC = 14:30 IST (earliest possible); realistic end by 13:30 UTC = 19:00 IST.
 > - Slot 2: Tue 17 Nov, start 13:00 UTC = 18:30 IST; realistic end by 17:30 UTC = 23:00 IST.
