@@ -65,8 +65,8 @@ owner NEW texts containing Re-checked: []
 owner NEW texts containing WP6: []
 owner NEW texts containing UNVERIFIED: ['E-01', 'E-24']
 owner NEW texts containing "the lead" used: ['E-01', 'E-52']
-owner NEW texts containing rehearsal (not flow rehearsal): ['E-11']
-owner NEW texts containing bare key (not secret/lead/encryption/Code-node key): ['E-04', 'E-11', 'E-12', 'E-15', 'E-42', 'E-48', 'E-52']
+owner NEW texts containing rehearsal (not flow rehearsal): []
+owner NEW texts containing bare key (not secret/lead/encryption/Code-node key): ['E-04', 'E-12', 'E-15', 'E-42', 'E-48', 'E-52']
 owner NEW texts containing token: ['E-52']
 owner NEW texts containing E-nn code: []
 owner NEW texts containing ND code: []
@@ -88,30 +88,18 @@ E-nn named but not rows: []
 ND numbers named [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 scratch 'Then comes the preparation' apply-now False all True
 scratch 'a fifth fact' apply-now False all True
-scratch 'Why no paid call can happen' apply-now False all False
-FAIL scratch presence Why no paid call can happen
 scratch 'does not print these two values' apply-now True all True
 scratch 'Words used (read once)' apply-now True all True
 scratch '**A secret key**' apply-now True all True
 scratch '**A database user**' apply-now True all True
 4b in apply-now False in all True
-FAIL E-52 word not once: The preparation
 scratch apply-now OWNER-STEPS lines 252
 scratch all OWNER-STEPS lines 259
 fence lines 210
-FAIL delete stated as fact: still removes
-FAIL delete stated as fact: no longer removes
-FAIL delete stated as fact: today's code removes
-UTC time without IST pairing (check): 18:14 UTC
-UTC time without IST pairing (check): 18:14 UTC
-FAIL apply-now id list
-apply-now ids 37
-FAIL E-12 may offer to show secret file: n8n.env
-FAIL E-12 may offer to show secret file: key file
-FAIL E-12 lacks on screen
+apply-now ids 40
 older word lead key context: aive A5, five meanings of "lead"): the older words "lead", "lead key" and "table of leads" are named in this
 older word lead key context:  the take program gives to an enquiry (the older text says "lead key" or "lead id"). **The table of enquirie
 older word table of leads context: so call an enquiry a "lead" and the table of enquiries the "table of leads". The other new words are explained
 older word table of leads context: eanings of "lead"): the older words "lead", "lead key" and "table of leads" are named in this line so that the
 older word table of leads context: take's table with one row per enquiry (the older text says "table of leads"). - **A secret key**: a long text 
-FAILURES 9
+FAILURES 0

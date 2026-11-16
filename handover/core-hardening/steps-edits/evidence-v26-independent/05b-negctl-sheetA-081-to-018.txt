@@ -1,0 +1,7 @@
+check-v26: 5 failure(s)
+FAIL C01 OWNER-SHEET-v26-A.md differs from what its source and facts build
+FAIL C04 OWNER-SHEET-v26-A.md unexpected amount USD 0.18
+FAIL C17 sheetA: 'Expected total: USD 0.18' says 0.18, expected 0.81
+FAIL C48 A holds amount 0.18 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 A price or total stated less than twice
+exit=1

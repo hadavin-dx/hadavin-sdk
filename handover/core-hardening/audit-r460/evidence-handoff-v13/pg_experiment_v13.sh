@@ -20,4 +20,8 @@ for n in b1 m1 m3; do
   P exp "$D/pg_$n.sql" > "$OUT/raw-pg-$n-v13.txt" 2>&1
   runuser -u postgres -- psql -X -h $D -d postgres -c "drop database exp" -c "create database exp" >/dev/null
 done
+if [ -n "${V13_PY:-}" ] && [ -n "${V13_SRC:-}" ]; then
+  runuser -u postgres -- psql -X -h $D -d postgres -c "select 1" >/dev/null
+  "$V13_PY" "$HERE/pg_real_code_v13.py" "$D" "$V13_SRC" > "$OUT/raw-pg-real-code-v13.txt" 2>&1; echo "real-code rc=$?" >> "$OUT/raw-pg-real-code-v13.txt"
+fi
 echo done

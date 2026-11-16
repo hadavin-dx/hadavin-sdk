@@ -61,7 +61,7 @@ ALTER TABLE
 RESET
 SET
 psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:52: ERROR:  23514: new row for relation "spend_decrease_log" violates check constraint "full_disk_stand_in"
-DETAIL:  Failing row contains (2, a, 2026-11-16, spend, 4, 3, 2026-11-16 15:21:33.927081+00, postgres).
+DETAIL:  Failing row contains (2, a, 2026-11-16, spend, 4, 3, 2026-11-16 15:23:29.473906+00, postgres).
 CONTEXT:  SQL statement "INSERT INTO spend_decrease_log (agent_id, day, scope, old_usd, new_usd) VALUES (OLD.agent_id, OLD.day, TG_TABLE_NAME, OLD.usd, NEW.usd)"
 PL/pgSQL function spend_log_decrease() line 3 at SQL statement
 SCHEMA NAME:  public
@@ -79,17 +79,3 @@ ALTER TABLE
 RESET
 --- cost of the trigger: 20000 lowering UPDATEs inside one DO block, with and without the trigger (local, indicative only)
 SET
-psql:/var/lib/postgresql/hadavin_v13_exp/pg_m3.sql:71: NOTICE:  00000: without trigger: 2187 ms; with trigger: 7215 ms (20000 updates each)
-LOCATION:  exec_stmt_raise, pl_exec.c:3897
-DO
-RESET
-   ?column?    | count 
----------------+-------
- log rows now: | 20001
-(1 row)
-
-                    ?column?                    | pg_total_relation_size 
-------------------------------------------------+------------------------
- log table + index size (bytes) for those rows: |                3350528
-(1 row)
-

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v13/pg_real_code_v13.py", line 25, in <module>
+    admin.execute(f"CREATE ROLE {r} LOGIN")
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/v13venv/lib/python3.13/site-packages/psycopg/connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.DuplicateObject: role "mig_v13" already exists
+real-code rc=1

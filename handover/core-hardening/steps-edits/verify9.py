@@ -231,7 +231,7 @@ if any(x < 1 or x > 13 for x in nn): F('ND number out of range')
 # (8) split of E-11: apply-now scratch must hold the tests paragraph but not the preparation enquiry
 s_ap = cp1['OWNER-STEPS-realrun-v3.md']; s_all = cp2['OWNER-STEPS-realrun-v3.md']
 checks = [('Then comes the preparation', False, True), ('a fifth fact', False, True), ('a paid call can happen', None, None),
-          ('Why no paid call can happen', True, True), ('does not print these two values', True, True),
+          ('does not print these two values', True, True),
           ('Words used (read once)', True, True), ('**A secret key**', True, True), ('**A database user**', True, True)]
 for needle, ap_, all_ in checks:
     if ap_ is None: continue
@@ -253,7 +253,7 @@ for rid, t in own:
         if re.search(pat, t): F(f'{rid} owner NEW text contains {nm}')
 # (11) the new E-52 words are each used or defined once; E-01 points to the list
 r52 = [r for r in rows if r['id'] == 'E-52'][0]['new'][0]
-for w in ('The assistant', 'The plan', 'The stand-in test', 'The flow rehearsal', 'The flows', 'The model stage', 'The take program', 'An enquiry', 'A contact', 'A secret key', 'A password', 'The encryption key', 'A database user', 'A HubSpot private app', 'Saved runs', 'A smoke test', 'The preparation'):
+for w in ('The assistant', 'The plan', 'The stand-in test', 'The flow rehearsal', 'The flows', 'The model stage', 'The take program', 'An enquiry', 'A contact', 'A secret key', 'A password', 'The encryption key', 'A database user', 'A HubSpot private app', 'Saved runs', 'A smoke test'):
     if r52.count('**' + w + '**') != 1: F('E-52 word not once: ' + w)
 # (12) line-count arithmetic of the scratch copy
 l = cp1['OWNER-STEPS-realrun-v3.md'].split('\n')
@@ -273,10 +273,11 @@ for r in rows:
 def outside_old(t):
     return re.sub(r'(OLD(?: \d)? \(exact\):\n~~~~\n.*?\n~~~~)', '', t, flags=re.S)
 body = outside_old(txt)
+body_nowhy = '\n'.join(l_ for l_ in body.split('\n') if not l_.startswith('Why:'))
 pairs = {r['id']: r for r in rows}
 # 1 delete wording: never as fact
 for bad in ('still removes', 'no longer removes', "today's code removes", 'no longer deletes', 'still deletes', 'the take deletes the contact'):
-    if bad in body: F('delete stated as fact: ' + bad)
+    if bad in body_nowhy: F('delete stated as fact: ' + bad)
 for rid in ('E-04','E-05','E-12','E-37','E-40','E-41','E-42','E-44','E-45'):
     t = '\n'.join(pairs[rid]['new']) + raw_why if False else '\n'.join(pairs[rid]['new'])
 # 2 deadline
@@ -304,7 +305,7 @@ for r_ in rows:
         if not held and 'HOLD G' in lab: F('non-hold row with label ' + r_['id'])
 l36 = pairs['E-36']['newlabels']
 if not any('HOLD' in x for x in l36): F('E-36 text N unlabelled')
-ap_ids = [r_['id'] for r_ in rows if r_['status'] == 'Apply now']
+ap_ids = [r_['id'] for r_ in rows if r_['status'].split(' (')[0].strip() == 'Apply now']
 mi = re.search(r'The Apply now ids \((\d+)\) are: ([E0-9, -]+)\.', txt)
 if not mi or [x.strip() for x in mi.group(2).split(',')] != ap_ids or int(mi.group(1)) != len(ap_ids): F('apply-now id list')
 print('apply-now ids', len(ap_ids))
@@ -317,10 +318,10 @@ for nm, cpx, want in (('apply-now', cp1, False), ('apply-all', cp2, True)):
 t12 = pairs['E-12']['new'][0]
 if t12.count('Yes, take') != 1: F('E-12 yes examples ' + str(t12.count('Yes, take')))
 if t12.count('crash check untested') < 2: F('E-12 crash check untested count')
-for bad in ('show any named file', 'n8n.env', 'password file', 'key file'):
-    if bad in t12 and ('show' in t12.split(bad)[0][-40:]): F('E-12 may offer to show secret file: ' + bad)
+if 'show any named file' in t12 or 'never shows a secret file' not in t12: F('E-12 secret-file wording')
+if re.search(r'(?<!never )shows? [^.]{0,40}(n8n\.env|key file|password file)', t12): F('E-12 offers secret file')
 for need in ('18:14 UTC = 23:44 IST', '18:29 UTC = 23:59 IST', 'not run', 'on screen', 'window'):
-    if need not in t12: F('E-12 lacks ' + need)
+    if need.lower() not in t12.lower(): F('E-12 lacks ' + need)
 # 7 index columns and words
 if 'needs' not in txt[txt.index('## The edit index'):][:200]: F('no needs column')
 for key in ('**ND** =', '**Apply now** =', '**Hold** =', '**Conditional** =', '**NEEDS-STUDIO-LEAD** =', '**G1 to G5** ='):

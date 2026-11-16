@@ -1,0 +1,5 @@
+check-v26: 3 failure(s)
+FAIL C01 LEAD-RELEASE-NOTE-v10.md differs from what its source and facts build
+FAIL C58 note lacks the program limit sum
+FAIL C58 note or open list holds 13.12 (only 13.21; 13.00 and 13.50 are the pass/fail examples)
+exit=1
