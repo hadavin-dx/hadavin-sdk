@@ -1387,3 +1387,5 @@ PASS (machinery): the left-out report counts one name with a line break and one 
 FAIL (machinery): a file name with # & and a backslash must be printed as file:line:word (exit=3)
 PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
 PASS (machinery): sh -x does not print a value (the script turns the trace off)
+FAIL (machinery): signal TERM in the main phase (exit=3 wanted 143, programs left=0, folders left=0)
+PASS (machinery): signal HUP in the main phase: NOT TESTED (the program that started this self-test ignores HUP, for example nohup; start it without nohup to test this case)

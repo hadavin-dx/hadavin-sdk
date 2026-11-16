@@ -279,3 +279,5 @@ False could NOT stop test group 4199 (Operation not permitted): file restored an
 stop_group calls: []
   PASS: T40 no signal was sent to the reaped leader's number
 == T41 control run: a signal right after the fork, before the handle is stored, must not leak the test group (review r3 minor)
+  PASS: T41 no orphan pytest left
+== T42 signals that used to kill run.py with the file still planted (review r3 minor): QUIT ABRT USR1 USR2 ALRM XCPU VTALRM PROF IO PWR
