@@ -1,21 +1,18 @@
 # START HERE (system-map folder)
-STATE AS OF Mon 16 Nov 2026 09:35 UTC / 15:05 IST. Goal: a safe filmed take on Wed 18 Nov 2026, made-up data only. Wed 18 Nov is NOT yet confirmed.
+STATE AS OF Mon 16 Nov 2026 09:35 UTC / 15:05 IST. Goal: one safe filmed take, made-up data only, by Mon 23 Nov 18:29 UTC / 23:59 IST (the stop time). Wed 18 Nov is only a target and is NOT confirmed. Dates: TAKE-BLOCKERS.md (Dates paragraph) is the one source.
 WARNING: the CURRENT owner steps are inputs/OWNER-STEPS-realrun-v5-core-hardening.md (letters A to J, written Mon 16 Nov); the older inputs/OWNER-STEPS-realrun-v3.md (OS) is superseded and stale at steps 7 and 8 (wrong n8n port, database password model, HubSpot key rights; drift/REPORT.md D-01, D-02, D-03) and in its schedule (D-10, 'Wed to Sun'). Steps 1 to 9 are already done by the studio head (inputs/FACTS-ALREADY-DONE.md). Follow only the owner steps the studio lead re-issues in the chat.
 
-## BEFORE THE TAKE: the one open list (16 Nov 2026, about 12:00 UTC / 17:30 IST; every item blocks the take)
-1. Take date and start time (v5 gives none; target Wed 18 Nov, not confirmed).
-2. A named person to start Docker and run the first rehearsal (the five changed flows have never run in n8n).
-3. Security edits S9-1 to S9-5 and S9-12 applied in v5 and the scope sheet by core-hardening (list: drift/APPLIED-S9.md).
-4. Flow-set decision A, B, C and D (flowset/REPORT.md); default: two separate sessions, no live switch. Two gaps behind it: the take-time substitution of the `$env` values is not built (BL-wp6-G1), so neither flow set can run yet; and the mail credential `mf-mail-smtp` holds the real sender password, with no written way to point it at the stand-in mail program. Dates: the TAKE must happen by Mon 23 Nov 18:29 UTC / 23:59 IST (the stop time); Wed 25 Nov 15:00 UTC / 20:30 IST is only the POST date. The run sheet, `scripts/n8n_api.py` and the flow JSON are not in this checkout, so the scene list is rebuilt from the proposed patch F-003.
-5. HubSpot key must be able to delete contacts (drift R8-5), plus the HubSpot check and login-key choice (OWNER-VIEW row 7; the exact lines do not exist yet: the studio lead writes them or removes the row).
-6. The failing licence guard test on core-hardening (one test, 10 problems found; not a take blocker; blocks a pull request; QUESTIONS.md item 7).
-Short version for the studio lead: TAKE-BLOCKERS.md (one page, same list plus the scope question). Owner pages: OWNER-VIEW.md, then the two cards. Everything else here is for the studio lead.
+## BEFORE THE TAKE: where each job lives (one place per job)
+- What to DO next: TAKE-BLOCKERS.md (the only to-do list; seven rows, with the work order under the table).
+- What to DECIDE: QUESTIONS.md (the only decision list; one deadline per item).
+- Where things STAND: STATUS-BOARD.md (agents, failures, session work).
+- Owner pages: OWNER-VIEW.md, then the two cards. Everything else in this folder is for the studio lead.
 
 ## If you are the studio head
-Read OWNER-VIEW.md (one page, owner-only items). The lead brings you any decision as a single yes or no; the decision list is in LEAD-PAGE.md section 3. For the lead: decide by Tue 17 Nov 12:29 UTC / 17:59 IST (a suggested time; if you cannot, the take moves, latest Mon 23 Nov 18:29 UTC / 23:59 IST): item 1 name the test owner and a start time; items 5 and 6a as written there (D-05 and L-01 are your decisions too). Item 3 (archive of extract.py) is a clean-up choice and can wait until after the take. The take time on Wed 18 is set by the lead at least 3 hours ahead.
+Read OWNER-VIEW.md (one page, owner-only items). The lead brings you any decision as a single yes or no; the decision list is in LEAD-PAGE.md section 3. The decisions and their deadlines are in QUESTIONS.md; the studio lead sets the take time at least 3 hours ahead.
 
 ## If you are the studio lead (the Claude session that does the technical steps)
-1. FIRST: TAKE-BLOCKERS.md is your to-do list and WINS over the numbered list above if they differ (the numbers differ: the list above is the older six items; TAKE-BLOCKERS has seven rows). Its order: decide the scope question (row 3), then rows 1 and 2 in parallel, then the date (row 5), HubSpot delete rights and exact lines (row 7), the security edits (row 6), and row 4 only if film-v5 stays. You name the person with a laptop who starts Docker and n8n; if you know nobody, you ask the studio head (the owner) once. The cloud session has no Docker.
+1. FIRST: TAKE-BLOCKERS.md is your to-do list. Its order: decide the scope question (row 3), then rows 1 and 2 in parallel, then the date (row 5), HubSpot delete rights and exact lines (row 7), the security edits (row 6), and row 4 only if film-v5 stays. You name the person with a laptop who starts Docker and n8n; if you know nobody, you ask the studio head (the owner) once. The cloud session has no Docker.
 2. drift/REPORT.md: apply or reject the replacement texts for D-01 to D-05, D-10, S-03 and L-01 (Blockers).
 3. FINAL-CROSSCHECK.md sections 2, 4 and 5: ratings that disagree and fixes that collide.
 4. QUESTIONS.md: open questions to you.
@@ -28,5 +25,5 @@ Role of this folder: cloud session system-map writes only here, on branch cloud/
 *Studio head* = the owner. *Studio lead* = the Claude session that does the technical steps (called "lead"; older pages say "laptop lead"). *Rehearsal* = a test run with stand-in programs and no real account (older pages: "laptop trial", "re-smoke"). *Take* = the one recorded real run. *Stop time* = last allowed minute, Mon 23 Nov 18:29 UTC / 23:59 IST (older pages: "window end"). *v5* = inputs/OWNER-STEPS-realrun-v5-core-hardening.md; *v3* = the stale older file. *core-hardening*, *flows-audit*, *system-map* = other Claude sessions, each on its own branch. *S9-n* = security item n of drift/REPORT.md section 9; the edit texts are in drift/APPLIED-S9.md. *Flow set* = a folder of n8n flows (real-v5 or film-v5, see flowset/REPORT.md).
 
 ## Which page wins, and which to skip
-Owner steps: OWNER-VIEW.md and the two cards win over LEAD-PAGE.md section 2 (stale, v3-based). If two pages disagree on a number, v5 wins, then drift/APPLIED-S9.md once applied. Skip: work/, reviews-of-core-hardening/, flowcheck/in, egm-dryrun*, inputs/OWNER-STEPS-realrun-v3.md and the v4 difflist, and the Reference list above.
+Owner steps: OWNER-VIEW.md and the two cards win over LEAD-PAGE.md section 2 (stale, v3-based). Precedence, one rule: the owner steps the studio lead re-issues in the chat win; otherwise v5 wins, then drift/APPLIED-S9.md once applied; TAKE-BLOCKERS.md wins over any other to-do list. Skip: work/, reviews-of-core-hardening/, flowcheck/in, egm-dryrun*, inputs/OWNER-STEPS-realrun-v3.md and the v4 difflist, and the Reference list above.
 LEAD-PAGE.md section 2 was replaced on 16 Nov by a table of pointers to the cards (the old v3 rows are gone). The clean-up deadline is the studio lead's own and is NOT the stop time (v5 line 46).
