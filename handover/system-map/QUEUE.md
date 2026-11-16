@@ -1,0 +1,16 @@
+# QUEUE for system-map (lead, 2026-11-16). Ordered backlog that runs WITHOUT waiting for the lead.
+RULES OF THE QUEUE (owner HARD rule 2026-11-16: complete the video work by Wed 18 Nov morning; no idle session):
+1. Always keep at least 3 agents running (use the container: 4 cores, about 15 GB, 3 heavy test slots; light reading and review agents are not core-limited). Start the next queue item the moment a lane frees; never wait for the lead between items.
+2. Take items in order; independent items run in parallel (several at once). EGM sequence per item: your own egm reviewers (two independent) on the result; evidence runner for anything that runs.
+3. Report each finished item in REPORT.md and the board (item state table); only the questions that only the lead or owner can answer go to QUESTIONS.md, and you continue with the next item meanwhile.
+4. Write STATE FINAL only when EVERY item below is done or marked BLOCKED with the exact missing input; the lead refills this file every tick, so re-read it on every board beat (git pull) and append new items to your own list when it grows.
+5. If the queue is empty and nothing waits on the lead: take the next unreviewed area from your own 'not checked' list (architecture audit rule R460) and say so in the board.
+6. Inputs copied for you (read-only, made-up data): handover/system-map/inputs/. Decisions in force: ONE database for the take = its Postgres (n8n state + claim rows), stage.journal file the one stated exception; executions saved ON on made-up data and deleted at clean-up; no portal, approval or audit-trail claims in the video; narrow claim 'the same lead id sent twice is processed once'; n8n egress switched off by env names and observed (not enforced); loopback re-smoke US$0 before any real take; take branches are local only (never in your branch).
+7. MUST-NOT: no real keys, mailboxes or client data; no pushes outside cloud/system-map; no edits outside handover/system-map/; no secrets; do not touch other sessions' folders (read via git show).
+ITEMS (mark each DONE / RUNNING / BLOCKED with date in this file; the lead reads it):
+M1 [ORDER 011/014 in progress] Third read of flows-audit top 10 findings against the real flow JSON; flow-graph check of the patched flows.
+M2 [ORDER 014 in progress] FINAL-CROSSCHECK.md of all three audits with the combined cut list for the owner.
+M3 DRIFT CHECK of the take documents (critical path): inputs/ OWNER-STEPS, AGENT-SCOPE, DECISION-one-store, plan v5: every number, file name, port, step id and claim that appears in two documents must agree (list each disagreement with both quotes and line numbers; one place per job). Output handover/system-map/drift/REPORT.md with an exact fix list. Two egm reviewers.
+M4 MASTER-MAP refresh: add the new artefacts from this session (board duty files, queues, fill_flows when it lands, paste-check, steps-edits) to MASTER-MAP.md and ONE-PLACE-TABLE.md; mark duplicates.
+M5 OWNER VIEW: one-page plain-words status for the owner (what is done, what runs, what he must do by when for a take on Wed 18 Nov: accounts, Docker running, the written yes), built from the board and REPORT files of all three sessions (read others via git show).
+M6 Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
