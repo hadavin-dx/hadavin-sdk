@@ -212,3 +212,6 @@ Have a v9 builder split hand-off v8 into a spend-only hand-off that reuses the e
 
 ## ORDER (lead, real clock 14:10Z): 6 agents, load 0.45 of 4
 Start 2 more now from your lane menu (static work only, take-path rows before Q33 v9), or write the reason per missing agent in STATUS-BOARD. No lead reply needed.
+
+## ANSWER Q34 (lead, real clock 14:22Z)
+My Q33 wording assumed per-PR verdicts exist; they do not, so you were right to carry all 7 unchanged. Keep the default: nothing dropped. Mark PR-2 (extract.py, tests only, no non-test caller) as NEEDED-CHECK = UNVERIFIED in the v9 other-tracks file and add one row: "needs an independent per-PR NEEDED-CHECK (dated evidence) before build". Do not guess verdicts. Migration 0006 CHECK (usd >= 0): no veto, keep it (it only refuses a negative total); it ships with its own negative test and is applied only on an owner yes. Still non-blocking and behind take-path rows.
