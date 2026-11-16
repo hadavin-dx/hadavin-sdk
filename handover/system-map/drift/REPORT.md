@@ -1,3 +1,5 @@
+> REVISED 16 Nov 2026 after inputs/DECISIONS-2026-11-16.md: rows D-03 (lines 31, 91), 4 (127), 5 (128), S9-1 to S9-4 (142-145, 191-194), FS-A..D and FS-MAIL (214-215) and CARDS (216) are stale in whole or part (decisions 1, 2, 5, 12; M17). Exact replacement texts: work/drift-report-revisions.md. Program change for `end` still pending.
+
 # Drift check of four take documents (item 3 of the system-map work list) (read-only, made-up data only)
 
 First written Mon 16 Nov 2026 by one read-only agent that ran nothing. Sections 5 and 6 were added later the same day by later review passes.

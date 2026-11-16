@@ -18,7 +18,7 @@ Read OWNER-VIEW.md (one page, owner-only items). The lead brings you any decisio
 1. FIRST: TAKE-BLOCKERS.md is your to-do list. Its order: START WITH ROW 1 (patched real-v5 copy, then fill the `$env` values); rows 1, 2 and 3 run in parallel (row 2 = the first rehearsal, which the studio lead runs, decision 12; row 3 = the four security text edits); then row 4 (take date); then row 5 (apply decisions/M17-end-never-deletes.md, then the HubSpot lines). Scope is decided: real-v5 only (decision 1). The studio lead starts Docker Desktop (plan-wp6-resmoke-v5.md:489; decided, lead 10:13Z item 3). The cloud session has no Docker.
 2. drift/REPORT.md: APPLY D-01 to D-03, D-10, S-03, L-01 as text edits (lead 10:13Z). D-04 and D-05: decisions/D04-D05.md, the lead decides; post only, not a take blocker.
 3. FINAL-CROSSCHECK.md sections 2, 4 and 5: ratings that disagree and fixes that collide.
-4. QUESTIONS.md: only item 2 (D-04, D-05) and item 8 (film pause) are open.
+4. QUESTIONS.md: only item 2 (D-04, D-05) is open; item 8 (film pause) is answered (lead 10:23Z).
 
 ## Reference (not needed for the take)
 SWEEP.md (findings and fix plan), ONE-PLACE-TABLE.md (one place per job), MASTER-MAP.md (every component), ARCHIVE-CUT-LIST.md (what to archive after the take, never delete), REPORT.md and QUEUE.md (this session's logs), work/ (evidence).
