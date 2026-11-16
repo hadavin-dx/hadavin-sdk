@@ -1164,3 +1164,4 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 857 BRIEF-LANE r17: r15 revived and dropped lines. FIXED by control block.
 - 858 BRIEF-LANE r17 and t19 r3, PLAN-002 r26, open-items r19, premortem r18, L1c r18, decision-list r16: same finding (stacked history). premortem FOLDED for real (history in work/premortem-history.md); the others still carry history; fold TO DO.
 - 859 L3c r12: glossary stack. FOLDED for real (history in work/L3c-history.md); severity cells TO DO.
+- 860 L2c r16: nine stacked. FOLDED for real (history in work/L2c-history.md).
