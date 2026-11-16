@@ -1,0 +1,16 @@
+# Real-v5 edit list v10 (round 6, builder), 2026-11-16
+Not done / not verified (first):
+- PowerShell half of the film-file recipe was not run (no PowerShell here); `$S` = `$W/_local/scratch/wp6-smoke` unverified (UNVERIFIED 14). The take's send line, alert address and take names are still the lead's to fill (UNVERIFIED 15). Nothing ran in n8n. The plan's step 4 paste and sections a to n of the clean-start test were not re-run this round (unchanged since v9).
+- The mock `psql` proves the snippets' own shell logic and the arguments they pass (key as `-v k=`, never in the SQL text); it does not prove the SQL against a real server (that was section l of `clean-start-test-output-v9.txt`).
+- Lead decision 6 (which claim wording) is still open; both texts are carried.
+- My slip: my first draft of the new 4b line printed `copy ok: 0 files` after a failed folder creation (a stale variable); found by test case 4, fixed (`COPY_OK=0` first, `if mkdir`), re-tested before the plan was written.
+
+Done, with evidence (all in `handover/core-hardening/paste-check/`):
+- `plan-v10-real-v5-edits.md` (29 edits, same order; changed: header, edit 27, edit 29), `apply-v10.py`, `dryrun-v10.txt`: rc 0, header 29 = parsed 29, 29 of 29 OLD texts occur once, in order, 0 FAIL, 558 -> 716 lines; input sha256 prefix `67a0a195537de875` before and after; plan list sha256 `ec922309d8e937507f69ed9b2e6fc4da006b30f13f865df98dc0444a35e0f8db` printed in the file.
+- Major (Text B departure from Q21.2): new paragraph in section 10b states the departure and that Text B is the order-compliant text; Text B's sentence now ends "a gap longer than the lease is not claimed". Flow facts checked in the plan's own read evidence (not run): the insert is `ON CONFLICT (lead_key) DO NOTHING` and never reads `claimed_until`, so a duplicate is skipped while the earlier record exists; recovery takes `claimed_until < now() AND attempts < 3`. So the added words are supported, and the text says why.
+- Nit a: `snippet-run-v10.sh` cuts the snippets of steps 2a, 2c, 4b, 6 out of the v10 list by text and runs them unchanged against a mock psql; output `snippet-run-output-v10.txt` (2a fresh `before=[]`, used key `before=[done]`, login failure `rc=2`; 2c processing/done/empty; no key text in any SQL line; step 6: 6 lines then refusal, OUT-only 1; 4b: `copy ok: 3 files`, second run refuses; plan 4b text equals the tested line).
+- Nit b: `swap-test/recipe-check-v10.sh` says 7 failing cases; output `swap-test-recipe-check-v10.txt` (1 PASS, 7 STOP; identical to v9 output).
+- Nit c: UNVERIFIED 14 now says `git archive`.
+- Nit d: step 4b now makes a new folder and copies `OUT` and every `OUT.attemptN`, comparing each; `clean-start-test/copy-test-v10.sh`, output `clean-start-test/copy-test-output-v10.txt` (3 files; 1 file; missing parent and failing copy both `COPY FAILED: STOP`; second run refuses). Step 6 and the OUT_COPY description in the fill-in list updated to match.
+- Banned-vendor strings (6 from tests/test_no_reference_material.py): 0 hits in all new files. Not committed, not pushed; `inputs/` untouched. No processes started; none left.
+R-numbers: plan-local; bible not re-read. Tokens: not measured. EGM: the lead runs the result review.
