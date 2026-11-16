@@ -1409,7 +1409,18 @@ class Hardening(Base):
         )
         out = self.out()
         p = subprocess.run(  # noqa: S603
-            [sys.executable, "-I", "-c", driver, HERE, str(kill_at), sig, self.two_flows(), self.vf, out],
+            [
+                sys.executable,
+                "-I",
+                "-c",
+                driver,
+                HERE,
+                str(kill_at),
+                sig,
+                self.two_flows(),
+                self.vf,
+                out,
+            ],
             capture_output=True,
             text=True,
             timeout=60,
@@ -1448,7 +1459,10 @@ class Hardening(Base):
 
         out = self.out()
         with mock.patch.object(ff, "_write_new", spy):
-            self.assertEqual(self.inproc("fill", "--in", self.two_flows(), "--values", self.vf, "--out", out)[0], 0)
+            self.assertEqual(
+                self.inproc("fill", "--in", self.two_flows(), "--values", self.vf, "--out", out)[0],
+                0,
+            )
         self.assertEqual(order[1:3], [NOT_READY, ff.MARKER_NAME])  # manifest, note, marker, files
         self.assertNotIn(NOT_READY, os.listdir(out))  # a complete copy has no note
         self.assertEqual(self.cli("check", out)[0], 0)
@@ -1548,13 +1562,21 @@ class Hardening(Base):
         self.assertFalse(os.path.exists(out))
 
     def test_escaped_spellings_of_the_env_name_are_refused(self):
-        for esc in ("\\u0024env.DESK_URL", "$\\u0065nv.DESK_URL", "\\x24env.DESK_URL", "\\u{24}env.DESK_URL"):
+        for esc in (
+            "\\u0024env.DESK_URL",
+            "$\\u0065nv.DESK_URL",
+            "\\x24env.DESK_URL",
+            "\\u{24}env.DESK_URL",
+        ):
             se = self.refuse({"u": "={{ " + esc + " }}"}, "escape")
             self.assertIn("written with an escape", se)
         self.refuse({"jsCode": "return \\u0024env.DESK_URL"}, "escape")
         d = os.path.join(self.t, "chk")
         os.mkdir(d)
-        jdump({"nodes": [{"name": "n", "parameters": {"u": "={{ \\u0024env.DESK_URL }}"}}]}, os.path.join(d, "a.json"))
+        jdump(
+            {"nodes": [{"name": "n", "parameters": {"u": "={{ \\u0024env.DESK_URL }}"}}]},
+            os.path.join(d, "a.json"),
+        )
         self.assertEqual(self.cli("check", d, "--tokens-only")[0], 1)
 
     # ---- security review minor 4: the expression lexer against a real JavaScript engine
@@ -1905,7 +1927,7 @@ class Round5(Base):
 
     # ---- 12: a copy that still holds placeholders is loud and marked
     def test_incomplete_copy_is_marked_not_ready(self):
-        out = self._made_real()
+        out = self.made("real")
         self.assertIn(NOT_READY, os.listdir(out))
         self.assertIn("NOT READY TO IMPORT", rtext(os.path.join(out, NOT_READY)))
         self.assertEqual(oct(os.stat(os.path.join(out, NOT_READY)).st_mode & 0o777), "0o600")
@@ -1943,10 +1965,10 @@ class Round5(Base):
         self.assertIn("NOT READY TO IMPORT", p.stderr)
 
     def test_delete_handles_the_not_ready_note(self):
-        out = self._made_real()
+        out = self.made("real")
         self.assertEqual(self.cli("delete", "--out", out)[0], 0)
         self.assertFalse(os.path.exists(out))
-        out = self._made_real()
+        out = self.made("real")
         os.unlink(out + ".manifest.json")
         note = os.path.join(out, NOT_READY)
         os.unlink(note)

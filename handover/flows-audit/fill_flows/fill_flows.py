@@ -199,7 +199,9 @@ def read_values(path: str) -> dict[str, str]:
         if inside_git(os.path.dirname(real)):
             raise Refused("values file is inside a git repository (move it out; it holds secrets)")
         if st.st_uid != os.getuid():
-            raise Refused("values file is not owned by you (a file of another user cannot be trusted)")
+            raise Refused(
+                "values file is not owned by you (a file of another user cannot be trusted)"
+            )
         if st.st_mode & 0o077:
             raise Refused("values file can be read by other users (run: chmod 600 on it)")
         with os.fdopen(fd, "rb") as fh:
@@ -1020,7 +1022,10 @@ def main(argv=None) -> int:
                 return do_check(a.dir, a.tokens_only)
             return do_delete(a.out, a.force_hash, a.no_manifest)
     except _Stopped:
-        print("refused: stopped by a signal; the run's own clean-up was done (run the same command again if a folder is left)", file=sys.stderr)
+        print(
+            "refused: stopped by a signal; the run's own clean-up was done (run the same command again if a folder is left)",
+            file=sys.stderr,
+        )
         return EXIT_REFUSED
     except Refused as e:
         print(f"refused: {e}", file=sys.stderr)
