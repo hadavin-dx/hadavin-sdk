@@ -107,7 +107,11 @@ Counts (rechecked by a reader of the severity cells): Blockers 8 (D-01 to D-05, 
 |---|---|
 | v3 / OS | inputs/OWNER-STEPS-realrun-v3.md (stale) |
 | v4 difflist | inputs/OWNER-STEPS-v4-difflist-core-hardening.md (historical list of edits) |
-| v5 / OS5 (use OS5 from here on) | inputs/OWNER-STEPS-realrun-v5-core-hardening.md (current owner steps, steps lettered A to J) |
+| v5 / OS5 (use OS5 from here on) | inputs/OWNER-STEPS-realrun-v5-core-hardening.md (current owner steps, steps lettered A to J; same text as core-hardening's own copy at head 60338533, a different path from handover/core-hardening/steps-edits/ which is an older edit list) |
+| APPLIED-S9 | drift/APPLIED-S9.md (exact old and new text for S9-1 to S9-5 and S9-12) |
+| flowset | flowset/REPORT.md (which n8n flow set each scene needs; open items A to D) |
+| cards | OWNER-RUN-DAY-CARD.md and OWNER-CLEANUP-CARD.md |
+| ORDERS | handover/system-map/ORDERS.md unless a path is given (demo/ORDERS.md is another session's file) |
 | SC | inputs/AGENT-SCOPE-DO-AND-DONT.md |
 | DE | inputs/DECISION-one-store.md |
 | PL | inputs/plan-wp6-resmoke-v5.md (558 lines) |
@@ -205,6 +209,11 @@ Structural review round 1 said sections 8 to 10 were not a usable work list. Thi
 | S9-9 | Major | open | SC:9, PL:125, v5:158 | rehearsal with a canary token; delete executions before the run folder | SL | rehearsal |
 | S9-10 | Major | open | v5:5, SC:23 | scan published workflow files; substituted copy stays gitignored in the take folder; removed in step I | SL | before the first take |
 | S9-11 | Major | open | v5:153, SC:27 | crop before saving; put screenshots in a subfolder on the agent deny list | SL | before step I |
+| S9-12 | Major | DECIDED, not applied | see APPLIED-S9.md row S9-12 | studio-lead MUST NOT list for the scope sheet (exact text in APPLIED-S9.md) | SL decided; core-hardening edits | before first rehearsal |
+| S-03, L-01 | Blocker | open (section 9 and the lead page) | see those rows | not copied here; read the row | SL | before first rehearsal |
+| FS-A to FS-D | Blocker | open | flowset/REPORT.md decisions A to D | choose the flow set for scenes 1 to 4 and 5 to 11; BL-wp6-G1 (take-time value substitution) is not built | SL | before first rehearsal |
+| FS-MAIL | Blocker | open | flowset/REPORT.md, credential `mf-mail-smtp` | credential holds the real sender password in the real take, so a stand-in scene could send a real mail; no written fix | SL | before first rehearsal |
+| CARDS | Major | open after S9-1..5 are applied in v5 | OWNER-RUN-DAY-CARD.md, OWNER-CLEANUP-CARD.md | add masked account marks, backstop and money spent so far, closed-gate sentence, S9-5 exception, model-key revoke line | SL (system-map session edits the cards once v5 changes) | same day v5 changes |
 | DT-1, DT-2 | Blocker, Major | open | QUEUE.md:26, ORDERS.md:74, demo/ORDERS.md:356, demo/REPORT.md:58 | see section 11 | lead, owner | now |
 | DN-1, DN-2 | Blocker, Major | open | inputs v3 line 1, lines 27-83, 136, 144 | see section 11 | SL | now |
 | TW-1 to TW-4, TW-6 to TW-8 | Major, Nit | open | see section 12 | see section 12 | V5 | before first rehearsal |
