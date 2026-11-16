@@ -46,16 +46,18 @@ PASS runtime role denied on the log: UPDATE -> 42501  [InsufficientPrivilege/425
 PASS runtime role denied on the log: DELETE -> 42501  [InsufficientPrivilege/42501]
 PASS runtime role denied on the log: TRUNCATE -> 42501  [InsufficientPrivilege/42501]
 PASS log: the who column holds the login role (session_user) of the runtime connection  [('rtr_v14',)]
-PASS B1 attack set-up: the runtime role CAN create a temporary table (PUBLIC default) before the REVOKE
+PASS B1 attack set-up: the runtime role CAN create a temporary table (PUBLIC default) and grant on it before the REVOKE
 PASS B1 fix: with the temporary table present, the REAL log still gets both rows (day and month) and the temporary table none  [real=2 temp=0]
+PASS B1 negative control: on the v13 function the same test FAILS (real log 0 rows, temporary table 2 rows: the bypass works)  [real=0 temp=2]
+PASS B1 restored: the v14 function is back and the real log gets the rows again
 PASS TEMP check (prototype of the DB-2 check): the runtime role can create temporary tables before the REVOKE
 PASS TEMP check: after REVOKE ... FROM PUBLIC the runtime role has no TEMP and the migration role keeps it
 PASS B1 defence in depth: the runtime role creating the temporary table is now refused (42501)  [InsufficientPrivilege/42501]
 PASS portal role: migrate(runtime, portal) accepts Grant('table', '', portal=True) for the log  [[]]
-PASS portal role can read the log (the status line's figures)  [[(2, Decimal('1.0'))]]
+PASS portal role can read the log (the status line's figures)  [[(2, Decimal('0.50'))]]
 PASS portal role can read the size of the log (alarm figure)  [32768]
 PASS portal role cannot delete from the log (42501)  [InsufficientPrivilege/42501]
 PASS runtime role still cannot read the log (42501)  [InsufficientPrivilege/42501]
 PASS second migrate() applies nothing
-INFO 59 of 59 checks passed
+INFO 61 of 61 checks passed
 real-code rc=0

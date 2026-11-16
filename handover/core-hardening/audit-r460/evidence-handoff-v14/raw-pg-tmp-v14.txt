@@ -18,13 +18,22 @@ SET
 INSERT 0 1
 runtime role creates a temporary table of the same name as the log (PUBLIC may create temporary tables by default):
 CREATE TABLE
-psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:25: ERROR:  42501: permission denied for table spend_decrease_log
+T0a without a GRANT on its temporary table the attack FAILS CLOSED: the function runs as the migration role, which may not write the attacker table (expect 42501 and the total unchanged):
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:26: ERROR:  42501: permission denied for table spend_decrease_log
 CONTEXT:  SQL statement "INSERT INTO spend_decrease_log (agent_id, period, scope, old_usd, new_usd) VALUES (OLD.agent_id, OLD.day, TG_TABLE_NAME, OLD.usd, NEW.usd)"
 PL/pgSQL function spend_log_decrease() line 2 at SQL statement
 LOCATION:  aclcheck_error, aclchk.c:2812
+T0b the owner of a temporary table may grant on it; with one GRANT the function (running as the migration role) writes there:
+GRANT
+ usd 
+-----
+   2
+(1 row)
+
+UPDATE 1
                      ?column?                      | count 
 ---------------------------------------------------+-------
- temp table rows (the attacker sees the row here): |     0
+ temp table rows (the attacker sees the row here): |     1
 (1 row)
 
 DROP TABLE
@@ -34,6 +43,8 @@ RESET
  REAL log rows after the lowering (v13 function; expect 0 = the bypass works): |     0
 (1 row)
 
+DROP TRIGGER
+DROP FUNCTION
 DROP TABLE
 === T1 the v14 held file 2 (schema-qualified through TG_TABLE_SCHEMA, search_path pg_catalog, pg_temp) with the same attack
 SET
@@ -44,16 +55,16 @@ CREATE TABLE
 CREATE INDEX
 CREATE FUNCTION
 REVOKE
-psql:spend_decrease_log.sql:58: ERROR:  42710: trigger "spend_log_decrease" for relation "spend" already exists
-LOCATION:  CreateTriggerFiringOn, trigger.c:768
+CREATE TRIGGER
 CREATE TRIGGER
 RESET
 REVOKE
 SET
 CREATE TABLE
+GRANT
  usd 
 -----
-   4
+   1
 (1 row)
 
 UPDATE 1
@@ -82,7 +93,7 @@ REVOKE
 (1 row)
 
 SET
-psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:48: ERROR:  42501: permission denied for schema pg_temp_3
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:55: ERROR:  42501: permission denied for schema pg_temp_3
 LINE 1: CREATE TEMP TABLE spend_decrease_log (agent_id text);
                           ^
 LOCATION:  aclcheck_error, aclchk.c:2812
@@ -144,11 +155,13 @@ UPDATE 1
 UPDATE 1
 UPDATE 1
 RESET
- old_usd | new_usd 
----------+---------
-       5 |       4
-     NaN |       5
-(2 rows)
+ old_usd | new_usd  
+---------+----------
+       5 |        4
+       6 |      NaN
+     NaN |        5
+       5 | Infinity
+(4 rows)
 
 the formula suggested by the review, NOT (NEW > OLD), is false for a NaN new value because NaN sorts above every number:
  nan_gt_5 | review_formula_for_nan_new | nan_ge_inf 
@@ -165,11 +178,11 @@ ALTER TABLE
  after NOT VALID, lock mode: | AccessExclusiveLock
 (1 row)
 
-psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:90: ERROR:  23514: check constraint "t7_ok" of relation "spend" is violated by some row
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:97: ERROR:  23514: check constraint "t7_ok" of relation "spend" is violated by some row
 SCHEMA NAME:  public
 TABLE NAME:  spend
 CONSTRAINT NAME:  t7_ok
 LOCATION:  ATRewriteTable, tablecmds.c:6137
-psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:91: ERROR:  25P02: current transaction is aborted, commands ignored until end of transaction block
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_tmp.sql:98: ERROR:  25P02: current transaction is aborted, commands ignored until end of transaction block
 LOCATION:  exec_simple_query, postgres.c:1138
 ROLLBACK

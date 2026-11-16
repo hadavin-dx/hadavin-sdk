@@ -18,7 +18,7 @@ def pair(d, secs=False):
     f = '%H:%M:%S' if secs else '%H:%M'
     return '%s UTC = %s IST' % (d.strftime(f), (d + IST).strftime(f))
 LS = dt.datetime.combine(DAY, dt.time(11, 30)); LF = LS + dt.timedelta(minutes=Y + RL + FP); CB = LF + dt.timedelta(minutes=MG)
-EK = dt.datetime.combine(DAY, dt.time(11, 0))
+EK = dt.datetime.combine(DAY, dt.time(10, 30))
 OKB = dt.datetime.combine(DAY, dt.time(16, 0))                # latest time to cancel the older key in B (run day); must be well before 18:14 UTC
 assert OKB.time() < dt.time(18, 14)
 assert CB < OKB, 'B: the older-key time must come after cancel-by'  # the run is over before the B cancel time

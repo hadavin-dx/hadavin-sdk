@@ -6,3 +6,6 @@ Design fixed: build_c6o.py reads REPORT-c6n.md (not c6m), patches rows (split 1,
 
 ## note 3 (15:53Z by the machine clock; 19 min in)
 Done: build_c6o.py + sections_c6o.py build REPORT-c6o.md (94 rows; ready 49, defaults 40, check 3, NOT FILMABLE 2); verify-c6o.py (59 checks, exit 1 on any FAIL, 0 on the report); neg_controls_c6o.py: 24 copies (1 control + 23 changed), all 23 changed exit non-zero, control exits 0. Next: read the built report once for sense, CHANGES file, sha256, banned scan counts, final report.
+
+## Note 4 (final)
+Done: build, verify (60 checks, rc 0), 24 negative-control copies (0 wrong), CHANGES file. Fixed a stale wave-1 count in the glossary. Next: report via handback. Blockers: items labelled in the report (L-LEASE, n8n checks, HubSpot scope).

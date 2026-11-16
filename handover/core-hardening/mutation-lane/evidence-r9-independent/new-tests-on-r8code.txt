@@ -130,3 +130,11 @@ Traceback (most recent call last):
   File "<stdin>", line 8, in <module>
 AttributeError: module 'runmod' has no attribute 'unlink_state'
   FAIL: T96k write_state syncs the state FOLDER once, unlink_state removes and syncs it again (exit 1; r8: no folder sync, no unlink_state)
+/tmp/safety-only.daw34B.sh: line 70: 17489 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/r8cmp/tmpstate/hadavin-mutation-lane-0/1b9385e3f253eff5.backup; hash matches saved original: True
+  FAIL: T96l marker mode 0777 (git has no execute bit for this file) with --restore --sha: exit 3 (got 0; r8: restored and wrote 0777), 'execute bits', file still planted
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+IndexError: list index out of range
+  PASS: T96l2 guard: the genuine mode with --sha restores: exit 0 (got 0), state empty
+FAILED CHECKS: 16 (of 70 checks run; skipped: none)

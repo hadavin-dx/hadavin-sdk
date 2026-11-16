@@ -12,7 +12,7 @@ Seven things you need before you read the table (each is explained again in the 
 - The LEASE is a setting of 45 seconds: for that long the system keeps a contact reserved for the run that took it first. An ALERT is the one warning mail the system sends to a person when it cannot tell what happened to a contact.
 - The STUDIO LEAD and the OWNER are two roles with different jobs (WORDS says which). The files call the studio lead 'the lead'.
 - RE-PIN is the moment when the studio lead puts together the final version of the files for the take and reads them again (the orders say 'at re-pin' or 'at the final head' for it). The audit cannot see when that is.
-- WAVE 1 is the first batch of rows a builder applies: the 69 rows that need no check (35 ready rows and 34 rows that wait only for a question). Wave 2 is the 3 rows that wait for a check.
+- WAVE 1 is the first batch of rows a builder applies: the 89 rows that need no check (49 ready rows and 40 rows that wait only for a question). Wave 2 is the 3 rows that wait for a check. 2 more rows are NOT FILMABLE until L-LEASE is answered.
 
 | Label | Plain meaning (one sentence) | Default if you say 'apply all defaults' | Who answers |
 |---|---|---|---|

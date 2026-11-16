@@ -1,0 +1,71 @@
+n	doc_line	cite	line_text_read	verdict	note
+0	12	handover/core-hardening/ORDERS.md:216-217	## ANSWER Q34 (lead, real clock 14:22Z) | My Q33 wording assumed per-PR verdicts exist; they do not, so you we	MATCH	
+1	19	src/hadavin_sdk/approvals/cards.py:79-79	and injection_check(detector, diagnosis, "shadow_card").flagged	MATCH	
+2	23	src/hadavin_sdk/llm/openai_compat.py:117-129	started, used = time.monotonic(), [0, 0] | for _ in range(2):  # the forced answer missing: one more request (	MATCH	
+3	31	src/hadavin_sdk/models.py:98-98	cost_usd: Decimal = Decimal(0)	MATCH	
+4	40	demos/ask-your-data/askdata/pipeline.py:147-147	self.meter.reserve(worst, live=self.s.live)	MATCH	
+5	40	demos/ask-your-data/askdata/pipeline.py:232-236	"""Replace the reservation with the real cost. False (and the question ends over budget) if the meter | cannot	MATCH	
+6	40	tests/demo_askdata/test_meter.py:30-170	def test_worst_case_is_input_estimate_plus_max_tokens_at_the_output_rate(): | # 300 chars -> 100 tokens at $2/	MATCH	
+7	42	src/hadavin_sdk/store/postgres.py:416-431	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | """Day and month cou	MATCH	
+8	42	src/hadavin_sdk/store/memory.py:196-204	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | with self._lock: | s	MATCH	
+9	42	src/hadavin_sdk/store/migrations/0001_core.sql:87-92	CREATE TABLE spend ( | agent_id TEXT NOT NULL, | day      DATE NOT NULL,	MATCH	
+10	43	src/hadavin_sdk/limits.py:18-18	return self.store.add_spend(agent_id, now().date(), usd)	MATCH	
+11	43	src/hadavin_sdk/cli.py:209-209	return kill_switch(Limits(store, audit, reg), args.action, args.by)	MATCH	
+12	45	src/hadavin_sdk/runtime/agent_loop.py:425-425	reply = self.llm.chat(	MATCH	
+13	45	src/hadavin_sdk/runtime/agent_loop.py:574-574	label = _REASON_TEXT.get(reason or "", reason or "no proposal")	MATCH	
+14	45	src/hadavin_sdk/runtime/agent_loop.py:520-520	verdict = self._screen(run, out.text, f"tool:{call.name}")	MATCH	
+15	46	demos/ask-your-data/askdata/pipeline.py:155-155	reply = self.llm.chat(	MATCH	
+16	49	src/hadavin_sdk/config.py:349-349	@model_validator(mode="after")	MATCH	
+17	50	src/hadavin_sdk/store/migrate.py:87-90	_UNREAD = re.compile( | r"\bALTER\s+TABLE\b[^;]*\b(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b|\bAS\s+IDENTITY\b|\bC	MATCH	
+18	50	src/hadavin_sdk/store/migrate.py:93-94	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | return sorted(folder.glob("*.sql"))	MATCH	
+19	50	src/hadavin_sdk/store/migrate.py:97-97	def check_ledger(paths: list[Path]) -> list[str]:	MATCH	
+20	53	src/hadavin_sdk/llm/gemini.py:98-100	# Thinking is billed as output; candidatesTokenCount leaves it out. | out = (usage.get("candidatesTokenCount")	MATCH	
+21	53	src/hadavin_sdk/llm/gemini.py:96-100	def _parse(resp: dict[str, Any]) -> Answer: | usage = resp.get("usageMetadata") or {} | # Thinking is billed a	MATCH	
+22	58	src/hadavin_sdk/k1b/loop.py:115-122	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | """Upper estimate 	MATCH	
+23	65	src/hadavin_sdk/runtime/agent_loop.py:440-440	self.limits.charge(agent_id, reply.cost_usd)	MATCH	
+24	79	src/hadavin_sdk/cli.py:115-117	rep.add_argument( | "--max-usd", required=True, type=_money, help="total cost cap for this invocation" | )	MATCH	
+25	95	src/hadavin_sdk/app.py:166-169	detector = combine(members) | # The approval summary screen has no agent to charge, so it runs the unmetered m	MATCH	
+26	104	tests/test_p1a_fixes.py:117-117	update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})}	MATCH	
+27	105	tests/contracts/kinds/llm_wire.py:66-66	return AnthropicLLM(client, routes, 3, sleep=lambda s: None)	MATCH	
+28	109	src/hadavin_sdk/models.py:19-20	def now() -> datetime: | return datetime.now(UTC)	MATCH	
+29	112	src/hadavin_sdk/k1b/loop.py:176-176	except ProviderError:	MATCH	
+30	122	src/hadavin_sdk/runtime/agent_loop.py:425-425	reply = self.llm.chat(	MATCH	
+31	122	src/hadavin_sdk/runtime/agent_loop.py:432-432	except (	MATCH	
+32	122	src/hadavin_sdk/runtime/agent_loop.py:359-359	if (stopped := self._limits_stop(run, cited)) is not None:	MATCH	
+33	177	tests/test_s5_runtime.py:114-119	def test_budget_already_spent_stops_before_the_model(cfg_dir): | rt, cfg = build(cfg_dir) | rt.limits.charge("	MATCH	
+34	177	src/hadavin_sdk/runtime/agent_loop.py:572-572	if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or audit	MATCH	
+35	179	src/hadavin_sdk/llm/openai_compat.py:117-129	started, used = time.monotonic(), [0, 0] | for _ in range(2):  # the forced answer missing: one more request (	MATCH	
+36	206	src/hadavin_sdk/llm/anthropic.py:67-67	def retryable(exc: BaseException) -> bool | None:	MATCH	
+37	206	src/hadavin_sdk/llm/retry.py:31-36	def status(exc: BaseException) -> int | None: | """The HTTP status an error carries as an int: ``status_code``	MATCH	
+38	227	src/hadavin_sdk/llm/common.py:164-172	tokens_in = tokens[0] or estimate_tokens(sent) | tokens_out = tokens[1] or estimate_tokens(text + json.dumps([	MATCH	
+39	227	src/hadavin_sdk/llm/openai_compat.py:131-131	got.tokens = (used[0] or None, used[1] or None)	MATCH	
+40	227	src/hadavin_sdk/llm/openai_compat.py:117-129	started, used = time.monotonic(), [0, 0] | for _ in range(2):  # the forced answer missing: one more request (	MATCH	
+41	240	src/hadavin_sdk/approvals/cards.py:79-79	and injection_check(detector, diagnosis, "shadow_card").flagged	MATCH	
+42	240	src/hadavin_sdk/approvals/cards.py:79-79	and injection_check(detector, diagnosis, "shadow_card").flagged	MATCH	
+43	240	src/hadavin_sdk/tools.py:1122-1122	worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")	MATCH	
+44	243	src/hadavin_sdk/runtime/agent_loop.py:432-433	except ( | ProviderError	MATCH	
+45	243	src/hadavin_sdk/guard/injection.py:85-85	def injection_check(detector: Detector, text: str, source: str) -> Verdict:	MATCH	line is the current 3-arg signature; the doc text names a planned spend= keyword (planned change, not present)
+46	244	src/hadavin_sdk/k1b/loop.py:205-205	verdict = injection_check(detector, shown, "k1b-tool-result")	MATCH	
+47	247	src/hadavin_sdk/runtime/agent_loop.py:318-322	def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run: | cur = self.store.get_run(run.run_i	MATCH	
+48	248	src/hadavin_sdk/runtime/agent_loop.py:460-460	if (stopped := self._limits_stop(run, cited)) is not None:	MATCH	
+49	248	tests/test_s5_runtime.py:107-111	def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): | rt, cfg = build(cfg_dir) | rt.limits.ch	MATCH	
+50	260	src/hadavin_sdk/runtime/agent_loop.py:574-574	label = _REASON_TEXT.get(reason or "", reason or "no proposal")	MATCH	
+51	273	.github/workflows/ci.yml:40-40	image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317	MATCH	
+52	273	src/hadavin_sdk/store/migrate.py:55-55	"kill_switch": Grant("table", _RW),	MATCH	
+53	273	src/hadavin_sdk/store/migrate.py:304-304	files = _migration_files()	MATCH	
+54	273	src/hadavin_sdk/store/migrate.py:93-93	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:	MATCH	
+55	274	src/hadavin_sdk/store/postgres.py:192-197	class PostgresStore: | # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when thro	MATCH	
+56	274	src/hadavin_sdk/store/postgres.py:146-146	conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)	MATCH	
+57	282	src/hadavin_sdk/guard/bedrock_guardrail.py:28-28	def _client(service: str, region: str) -> Any:	MATCH	
+58	286	src/hadavin_sdk/k1b/loop.py:94-94	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]	MATCH	
+59	286	src/hadavin_sdk/cli.py:90-92	g = sub.add_parser("gate", help="run an agent's golden set") | g.add_argument("agent") | g.add_argument("--k",	MATCH	
+60	321	src/hadavin_sdk/runtime/agent_loop.py:425-425	reply = self.llm.chat(	MATCH	
+61	323	src/hadavin_sdk/guard/bedrock_guardrail.py:101-101	resp = self._client.apply_guardrail(	MATCH	
+62	324	src/hadavin_sdk/evals.py:73-73	reply = llm.chat(	MATCH	
+63	325	src/hadavin_sdk/extract.py:47-47	reply = llm.chat(	MATCH	
+64	326	src/hadavin_sdk/k1b/loop.py:94-94	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]	MATCH	
+65	379	.github/workflows/ci.yml:79-79	run: ruff check src tests demos	MATCH	
+66	379	.github/workflows/ci.yml:119-119	run: bandit -q -r src demos -ll	MATCH	
+67	379	.github/workflows/ci.yml:86-87	HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres | HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1	MATCH	
+68	379	.github/workflows/ci.yml:83-83	run: psql --version	MATCH	
+69	443	src/hadavin_sdk/guard/judge.py:107-107	v = injection_check(judge, case["text"], "golden")	MATCH	
