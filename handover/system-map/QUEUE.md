@@ -15,7 +15,7 @@ M4 [REVIEWED round 1, fixes applied, round 2 running 2026-11-16] MASTER-MAP refr
 M5 [round 2 applied; rewrite for M7 running] OWNER VIEW: one-page plain-words status for the owner (what is done, what runs, what he must do by when for a take on Wed 18 Nov: accounts, Docker running, the written yes), built from the board and REPORT files of all three sessions (read others via git show).
 M6 [RUNNING 2026-11-16] Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
 
-M7 [UPDATE 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: M3 drift check must flag every document that still lists a done item as an open owner step (OWNER-STEPS v3, handoff, orders); M5 OWNER VIEW lists only the still-owner-only items.
+M7 [APPLIED 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: M3 drift check must flag every document that still lists a done item as an open owner step (OWNER-STEPS v3, handoff, orders); M5 OWNER VIEW lists only the still-owner-only items.
 
-M8 [ORDER 016] Lane: structure and size audit of the whole studio repo from your checkout (largest folders, duplicated documents, stale handoff-like files, files over 1 MB tracked in git) with an archive cut list (archive, never delete).
-M9 [ORDER 016] Re-check every finding of FACTS-DIGEST (read via git show origin/main is not available: use inputs/ files): flag which of your own documents still contain an owner-open item that is already done.
+M8 [RUNNING 2026-11-16] Lane: structure and size audit of the whole studio repo from your checkout (largest folders, duplicated documents, stale handoff-like files, files over 1 MB tracked in git) with an archive cut list (archive, never delete).
+M9 [DONE via M7 section 6, 2026-11-16] Re-check every finding of FACTS-DIGEST (read via git show origin/main is not available: use inputs/ files): flag which of your own documents still contain an owner-open item that is already done.
