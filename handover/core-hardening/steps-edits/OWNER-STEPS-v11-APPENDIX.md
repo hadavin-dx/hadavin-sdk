@@ -47,7 +47,7 @@ A go message is valid only with all 17 rows filled. A card with a row missing is
 
 ## 3. How the studio lead's messages fit
 
-The studio lead may send only values: a date, a path, a number, a list of names, or a command line in exactly the form printed in the sheet. A message never changes rules 1 to 12, steps A, E, F and I, the money rule, the go conditions, the boxed warnings, or the rule that you never erase the marker file. No one can type `y` for you, start without your written yes with numbers, use another account, or remove secret files before the retire check. If a message asks for that, answer no. A command line not in a printed form is not run.
+The studio lead may send only values: a date, a path, a number, a list of names, or a command line in exactly the form printed in the sheet. A message never changes rules 1 to 12, steps A, E, F and I, the money rule, the go conditions, the boxed warnings, or the rule that you never erase the marker file. You never let anyone type `y` for you, you give no paid-run yes without numbers, and you never use another account or erase secret files before the retire check. If a message asks for any of that, answer no. (This does not claim that nothing can start before your typed answers: the studio lead may already have started the model program and the n8n flows.) A command line not in a printed form is not run.
 The studio lead works in the same Linux login as you, so the laptop itself would let it read your files. It promises not to: it reads only masked outputs (the lines you send and the masked result file) and never your secret files. That is its own working rule, not something the laptop enforces; this is why you make and cancel the model key yourself.
 
 ## 4. Rule 10 in full
