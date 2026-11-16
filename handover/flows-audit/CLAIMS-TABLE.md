@@ -542,7 +542,7 @@ Facts used for verdicts (all read in the files):
 | id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
 |---|---|---|---|---|---|---|
 | B-121 | START:4 | "SQLite inside n8n ... Postgres 16 for the lead table (separate from n8n's own SQLite)." | no DB_TYPE or DB_POSTGRESDB name anywhere under handover/demo (grep, 0 hits) | F-011, F-041 | SUPPORTED | Accurate today. Becomes false once n8n is moved into Postgres (DECISION-one-store). Default video wording: "n8n keeps its own records". |
-| B-122 | START:13 | "The three environment variables (the only ones the real-node flows read)" DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO | RV5 `$env` reads: exactly these three | F-037 | SUPPORTED | - |
+| B-122 | START:7, :9-11 | "The three environment variables (the only ones the real-node flows read)" DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO | RV5 `$env` reads: exactly these three | F-037 | SUPPORTED | - |
 | B-123 | START:13 | "n8n 2.46.6 default blocks $env in nodes" | none (n8n source absent) | F-037 | UNTRACED | - |
 | B-124 | START:13 | "The mail recipient for new leads is a constant inside the SendMail node (replace INTAKE_ADDRESS_PLACEHOLDER), not an environment variable." | RV5 SendMail toEmail "INTAKE_ADDRESS_PLACEHOLDER" | - | SUPPORTED | - |
 | B-125 | START:23-26 | "SAVE_ON_SUCCESS=none: n8n stores no run data ... for runs that succeed." (and the three like it) | none (n8n source absent) | F-008, F-011 | UNTRACED | The file itself says "effect as I understand it, not each measured". |

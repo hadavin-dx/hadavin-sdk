@@ -1,0 +1,22 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-vl7vaxho/does-not-exist
+# ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
+# What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
+# Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
+#   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
+# Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line.
+# FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
+# "Known open problems" (closing block) counts WARN lines that are real defects we already know: no password on a web address,
+#   a step whose failure leaves the caller with no answer (reply gap), $env reads, and F-002 (repeat lead key, unproven).
+#   Unpatched flows ("pristine") give 6; patched flows give 8 because patch F-002 adds 2 lines (one per flow file mf-form and mf-hook) saying F-002 is unproven.
+# Three decisions are open (details in REPORT.md, box "Start here"):
+#   1. Web addresses (webhooks) of mf-form and mf-hook have no password: accept for the take, or add one (run with --require-webhook-auth to see the effect).
+#   2. Four steps read environment variables ($env): allow that in the take, or change the steps (run with --block-env-access to see the effect).
+#   3. Two yes/no steps (StuckRow, AlertRow in mf-recovery) lack a second branch: project rule says FAIL; --baseline excuses them as WARN only because the unpatched flows already had it.
+# =============================================================================
+### /tmp/fc-selftest-vl7vaxho/does-not-exist
+FAIL /tmp/fc-selftest-vl7vaxho/does-not-exist not a directory
+RESULT: 1 FAIL, 0 WARN
+Known open problems: 0
+Not proven: that n8n accepts these files on import; what n8n really does when a step fails (F-002, tests T19 and T20); the SQL inside the postgres nodes; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (retry limits, onError values, position of the error output).
+Passing this check does NOT mean the flows are ready to film.
+exit=1
