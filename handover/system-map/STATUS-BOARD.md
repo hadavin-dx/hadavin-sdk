@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:57:53Z
-PUSHED_UTC: 2026-11-16T13:57:53Z
+UPDATED_UTC: 2026-11-16T14:01:02Z
+PUSHED_UTC: 2026-11-16T14:01:02Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -46,9 +46,16 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| none running | (a4bf9ca735902acc0 handed back and is closed) | - | - | - | - |
+| a6a3c5ad532251496 | cold read rehearsal-passed-limits-draft.md (re-read after fixes) | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| a66c496b4bceffa05 | cold read GLOSSARY.md (re-read after fixes) | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| a689cc210024fbdb2 | cold read L1.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| a9db5027b1b69097b | cold read L2.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| a24ea727735dff343 | cold read L3.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| acf07757dc89a4f4c | cold read L4.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| a26e709c3da418c55 | cold read L5a.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
+| a27778aba30110f19 | cold read L6.md | 2026-11-16T14:01:02Z | +5 min | running | nothing yet |
 
-CAPACITY: 0 agents running, 8 below the 8 of ORDER 040. Reason: no unread independent file is left; I am editing pages I own (stacked paragraphs next) and will start one cold re-read per edited page.
+CAPACITY: 8 agents running (ORDER of 14:00Z met; started before reading any report).
 
 Next 5 independent tasks: collapse stacked paragraphs in t19-history, premortem, critical-path, open-items; Read-this-first blocks on L1c/L3c/L4c/L5b/L6; purpose headers on the evidence files; fix BRIEF-EVIDENCE-1/2 and LEAD-NOTICE-batch-1 tables; owner-timeline-draft row 9.
 
