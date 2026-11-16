@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T12:35:23Z
+UPDATED_UTC: 2026-11-16T12:35:52Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 2.88 load of 4 cores, mem 0/15 GB, RAM 945/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.0G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 2.87 load of 4 cores, mem 0/15 GB, RAM 979/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: none now. ruff format --check rc 0 (504 files), ruff check rc 0 on 12:33Z head; the one file was lead-owned inputs/plan-wp6-resmoke-v5.md (ORDER 037 asked for the run; code-fence reformat only, listed in REPORT.md).
-NEXT: collect 6 fixers; evidence runner + egm review per file; refresh drift-007
-PUSHED_UTC: 2026-11-16T12:35:23Z
+NEXT: collect 6 fixers; evidence + egm review per file; refresh drift-007
+PUSHED_UTC: 2026-11-16T12:35:52Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
