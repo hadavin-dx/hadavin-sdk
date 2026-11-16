@@ -111,7 +111,7 @@ and 32 with `C-01.patch`. (`git apply` writes the files; nothing is committed. A
 ### The four gate commands (run in the same terminal, so `$W` and `$C` are still set; `ruff check`, `ruff format --check` and `bandit` here, `pytest` in the next section)
 Gate on the exit code of the command itself, never on a `| tail` pipe. `E` runs a command with no cloud settings in the environment, as `.claude/rules/verify-tests-and-evals.md` asks. Each line stores the command's own exit code in `rc` and appends it to `$W/gates.txt`. The folders are `$W/unpatched` (a clone at `b4cce5b`, nothing applied) and `$W/patched` (the same with the patches applied).
 ```
-E() { env -i PATH="$PATH" HOME="$HOME" "$@"; }   # add HTTPS_PROXY="$HTTPS_PROXY" after HOME="$HOME" if the network needs a proxy
+E() { env -i PATH="$PATH" HOME="$HOME" "$@"; }   # add HTTPS_PROXY="$HTTPS_PROXY" after HOME="$HOME" if the network needs a proxy; add UV_OFFLINE=1 there if there is no network and the uv cache is warm
 : > "$W/gates.txt"
 for t in unpatched patched; do
   cd "$W/$t" || break
