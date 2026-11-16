@@ -2,7 +2,7 @@
 
 **STATUS OF THE PATCH THIS NOTE DEPENDS ON (read first).** `../REVIEW.md:5` says: "A-01 is DEFERRED, the C-01 extras (the token ceiling) are CUT, the G5 wording patch is KEPT (text only)",
 and `REVIEW.md` item 3 of its list (`../REVIEW.md:67`) says C-01 is "DO NOT APPLY NOW". These are the lead's defaults of 2026-11-16; the studio head may veto them. So today
-`A-01.patch` is NOT applied, and **the query below ships in its four-name form, ready to copy as it stands**. The fifth name `audit_reconcile` exists only after A-01 is applied; it is one separate line to
+`A-01.patch` is NOT applied, and **the query below ships in its four-name form, ready to copy (but the output of this four-name form has never been seen: see "STATUS OF THE TESTS", part 2)**. The fifth name `audit_reconcile` exists only after A-01 is applied; it is one separate line to
 add after A-01 (see "Which names to check"). Words (tick, step, outbox, audit kind, reconcile, studio head, lead, database administrator, migrations login, scheduler operator, live): see the box in `README.md` of this folder.
 All line cites are at commit `b4cce5b`, unless marked "newest commit" (`bbfbeee19`; `README.md` says which). This folder is for a copy, never the live code; this note adds no core code.
 
@@ -46,7 +46,7 @@ succeeded recently. Steps that run every tick: `sweep`, `reconcile`, `stuck`, `c
 Save it as `dead-man-check.sql` on the machine that runs the scheduler (T1), in a folder only the scheduler's user can write. Placeholder rule: `:limit_s` is a `psql` variable, set on the command line
 with `-v limit_s=<seconds>`; it must be a plain number (no quotes). Without it `psql` stops with a syntax error and exit code 3, which counts as "cannot check" (rule 4 below). An
 unreachable store gives exit code 2. Suggested value (D2): 3 times the SLOWEST tick period (a tick runs every 30 to 60 seconds), so `180`; if the scheduler runs the tick every 30 seconds
-only, `90` is enough. The query assumes the table is the unqualified `tick_state` and that the login's search path finds it; the migration creates it in the schema that is current when it runs (`store/migrate.py:172-173`, `current_schema()`), which is `public` unless the store setting says otherwise. If it is in another schema, write the schema name in front of `tick_state` in the query and in the `GRANT` lines.
+only, `90` is enough. The query assumes the table is the unqualified `tick_state` and that the login's search path finds it; the migration file creates it with an unqualified name (`store/migrations/0003_approvals_tick.sql:29`, `CREATE TABLE tick_state`), so it lands in the first schema of the search path of the login that runs the migrations, which is `public` unless the store setting says otherwise (the migration code names the same schema when it grants rights: `store/migrate.py:172-173` reads `current_schema()`; those two lines show the grant, they do not show the creation, so "the creation lands in `public`" is an inference, UNVERIFIED on a real store). If it is in another schema, write the schema name in front of `tick_state` in the query and in the `GRANT` lines.
 Clock note: `now()` is the database server's clock and `last_ok_at` is written with the clock of the machine that ran the tick; keep both on network time, or a skew of more than the
 margin gives false alarms or hides a stop.
 
@@ -75,7 +75,7 @@ Run (T2), as ONE line; the two settings before `psql` apply to that one command 
   scheduler at job start from the secret `deadman_reader_password` read through the secrets kind (a named lookup), removed at job end; the one line in it has the form `<host>:<port>:<database>:deadman_reader:<password>`); the `psql` manual calls it the safer form. Second choice, only where a password file is
   impossible: the environment variable `PGPASSWORD` set on that single command (a process environment can be read by the same user on some systems). If the client's database supports short-lived tokens or client certificates, use those instead.
 - Connection (UNVERIFIED against the real store): the password must not cross the network in clear text. Set `PGSSLMODE=verify-full` and `PGSSLROOTCERT` to the CA file of the database's certificate for that one command, so the check refuses a server it cannot verify. If the database cannot offer TLS (for example a socket on the same machine), the studio head accepts that in writing.
-- Alert when the output has any line, OR when `psql` exits non-zero. A database outage also makes `psql` exit non-zero (exit 2), so an outage of the store alarms too; that is wanted. Exit codes of `psql` (its manual): 2 = it could not connect (store unreachable or login refused); 3 = the script failed
+- Alert when the standard output (stdout) has any line, OR when `psql` exits non-zero. Only stdout is watched for lines: `psql` writes errors and notices to the error stream (stderr), so the alert rule must not depend on stderr being empty or non-empty; the exit code carries failures. A database outage also makes `psql` exit non-zero (exit 2), so an outage of the store alarms too; that is wanted. Exit codes of `psql` (its manual): 2 = it could not connect (store unreachable or login refused); 3 = the script failed
   (with `ON_ERROR_STOP`), for example a missing `-v limit_s` or `permission denied`; 1 = another fatal error of `psql` itself.
 - The scheduler and the alert are not part of core and no `alert` kind exists in `src` (at `b4cce5b`); the scheduler operator (D6) wires the alert (D4).
 The query reads only `step`, `last_ok_at` and `last_run_at`. It does not read `last_error`, so error text can never reach the alert channel.
@@ -115,25 +115,27 @@ If the login you hold is not the name printed (and is not a superuser), ask the 
 ### The statements (run once, in this order, by the database administrator, each with the login named in the table above)
 | # | Statement | Reason | Rollback |
 |---|---|---|---|
-| 1 | `CREATE ROLE deadman_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;` | its own identity; no password text in this file or in any command line | `DROP ROLE deadman_reader;` (after the rows below are revoked) |
+| 1 | `CREATE ROLE deadman_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;` (the three attributes added in the tenth pass are the Postgres defaults, written out so a reader sees them; NOT run) | its own identity; no password text in this file or in any command line | `DROP ROLE deadman_reader;` (after the rows below are revoked) |
 | 2 | Password procedure (below the table): generate a random secret with `openssl rand -base64 24`, keep it off the screen, set it with `\password deadman_reader` at the hidden prompt, and store the same secret for the scheduler | the role cannot log in without a credential; this keeps it out of the repository and the logs | `ALTER ROLE deadman_reader PASSWORD NULL;` |
 | 3 | `GRANT CONNECT ON DATABASE <database> TO deadman_reader;` | to open a connection (do NOT revoke `CONNECT` from `PUBLIC` here: that would lock out other logins) | `REVOKE CONNECT ON DATABASE <database> FROM deadman_reader;` |
 | 4 | `GRANT USAGE ON SCHEMA public TO deadman_reader;` | to see the table's schema | `REVOKE USAGE ON SCHEMA public FROM deadman_reader;` |
 | 5 | `GRANT SELECT (step, last_ok_at, last_run_at) ON tick_state TO deadman_reader;` | to read the sign of life; not `last_error` | `REVOKE SELECT ON tick_state FROM deadman_reader;` |
 | 6 | `ALTER ROLE deadman_reader SET default_transaction_read_only = on;` | every session of this login starts read-only. This is a soft lock only (the login could switch it back for its own session); the hard lock is the missing write grants | `ALTER ROLE deadman_reader RESET default_transaction_read_only;` |
 | 7 | `ALTER ROLE deadman_reader CONNECTION LIMIT 2;` | a stuck or abused check cannot use up the database's connections (the connection cap) | `ALTER ROLE deadman_reader CONNECTION LIMIT -1;` |
-| 8 | `ALTER ROLE deadman_reader SET statement_timeout = '5s';` | a slow query is cancelled; the check then exits non-zero and alerts | `ALTER ROLE deadman_reader RESET statement_timeout;` |
+| 8 | `ALTER ROLE deadman_reader SET statement_timeout = '5s';` | a slow query is cancelled; the check then exits non-zero and alerts. Soft lock like row 6: a login can raise its own `statement_timeout` for its own session; only row 7 (`CONNECTION LIMIT`) is enforced by the server and cannot be changed by this login | `ALTER ROLE deadman_reader RESET statement_timeout;` |
 
 **Password procedure (row 2), typeable.** Nobody types or sees the secret on the screen, and it is never put in a command line, a chat or a shell history. On the database administrator's machine, in `bash`:
 ```
-umask 077                                                                  # the next file is readable by you only
-openssl rand -base64 24 | tr -d '\n' > "$HOME/deadman_reader.secret"       # 24 random bytes = 32 characters, written to a file, not shown
-# copy the file's content to the clipboard without showing it: Linux `xclip -selection clipboard < "$HOME/deadman_reader.secret"`, macOS `pbcopy < ...`
-DBHOST=...; DBNAME=...; ADMIN_LOGIN=...                                 # fill in the three values (see "Run (T2)" for host and database; the login is the one chosen above)
-psql -h "$DBHOST" -d "$DBNAME" -U "$ADMIN_LOGIN"                           # then inside psql:  \password deadman_reader   (paste at the hidden prompt, twice)
-# store the same file content in the place the scheduler reads `deadman_reader_password` from (below), then delete the local copy:
-shred -u "$HOME/deadman_reader.secret"                                     # where `shred` is not available: `rm` it and clear the clipboard
+F="$HOME/deadman_reader.secret"
+( set -o pipefail; umask 077; openssl rand -base64 24 | tr -d '\n' > "$F" ) && [ -s "$F" ] || echo "STOP: no secret was written; do not go on"   # the brackets keep `umask 077` (file readable by you only) and `pipefail` (a failed `openssl` counts) inside; `-s` = the file is not empty. 24 random bytes = 32 characters, written to a file, not shown
+# copy the file's content to the clipboard without showing it: Linux `xclip -selection clipboard < "$F"`, macOS `pbcopy < "$F"`; after pasting, ALWAYS overwrite the clipboard with something harmless (for example copy the word `x`)
+DBHOST=...; DBNAME=...; ADMIN_LOGIN=...                                    # CHANGE THIS: fill in the three values (see "Run (T2)" for host and database; the login is the one chosen above)
+PGSSLMODE=verify-full PGSSLROOTCERT=<path of the CA file> psql -h "$DBHOST" -d "$DBNAME" -U "$ADMIN_LOGIN"   # then inside psql:  \password deadman_reader   (paste at the hidden prompt, twice); CHANGE THIS: the CA file path, as in "Run (T2)"
+# store the same file content in the place the scheduler reads `deadman_reader_password` from (see below). That place is UNANSWERED, so DO NOT run the next line yet:
+# shred -u "$F"      # run it only AFTER the stored copy is read back and works. Where `shred` is not available, `rm "$F"`.
 ```
+Plain limits of this block (written in the tenth pass from the manuals, NOT run): `shred` and `rm` cannot promise that the bytes are gone on a solid-state disk or a copy-on-write file system, so the real protection is that the secret can be replaced at any time: if the local file was deleted before the secret was stored, or its safety is in doubt, the recovery is to repeat the whole procedure with a new secret (the old one stops working at once). The block needs `bash` (`set -o pipefail`).
+
 `\password` hashes the secret on the client before sending it (with the default `password_encryption = scram-sha-256` of Postgres 14 and later; UNVERIFIED here), so the plain value is not written to the server log by that command. **Where the scheduler stores it: UNANSWERED lead item; it blocks T2 and the negative test below until it is answered.** Which secrets-kind backend the scheduler machine reads `deadman_reader_password` from (a file the scheduler writes, a vault of the client's cloud, an environment of the job) is chosen by the scheduler operator (D6) and is not named anywhere in this folder or in `REVIEW.md`; the lead asks the studio head. Rotation: repeat this procedure with a new secret and replace the stored one (the old one stops working at once); no interval is set here (`REVIEW.md` Decision 21).
 
 Seen once on the throwaway Postgres, as a superuser (rows 1, 3, 4 and 5 only: the first pass, five-name query): with this identity the query above returns the unhealthy rows. Refused (each `permission denied`):
@@ -143,6 +145,39 @@ same list, plus `SHOW default_transaction_read_only;` and `SHOW statement_timeou
 "too many connections for role"), and `SELECT pg_sleep(10);` (expect "canceling statement due to statement timeout").
 UNVERIFIED: Postgres 16.15 only; other versions, a managed database service, and the interaction with the repository's own grant map (`store/migrate.py:46-68`, not changed here)
 were not checked. The `PUBLIC` default rights of the client's database may differ.
+
+### Checks on a real store (written in the tenth pass from the Postgres manual; NOT run: no database was started; run by the database administrator, D3, once the identity exists)
+These close three gaps of the first-pass run, which was made on a server that let every local connection in without a password and checked only one table: (1) is a password really required, (2) does the login have more rights than intended, however it got them (directly, through `PUBLIC`, a role it belongs to, a default right, a function that runs with its owner's rights), (3) does the password ever expire.
+**1. A password is required.** As a superuser or a login allowed to read the view: `SELECT line_number, type, database, user_name, address, auth_method FROM pg_hba_file_rules WHERE error IS NULL ORDER BY line_number;` (the file `pg_hba.conf` decides how each login must prove itself; the first line that matches wins). Expect: no line that can match `deadman_reader` (the database name or `all`, the user name or `all`) says `trust`, and the first line that matches says `scram-sha-256` (`md5` is weaker; `peer` or `ident` do not apply over the network). A managed database service may not show this view: then the provider's own page decides and the answer is written down. Then the negative test with no password: `env -u PGPASSWORD PGPASSFILE=/dev/null PGSSLMODE=verify-full PGSSLROOTCERT=<path of the CA file> psql -w -h <host> -U deadman_reader -d <database> -c 'SELECT 1'` (`-w` = never ask for a password). Expect exit code 2 and a message such as `no password supplied` or `password authentication failed`; if it prints `1`, the server lets the login in without a password and nothing below counts until that is fixed.
+**2. Expiry.** `SELECT rolname, rolvaliduntil FROM pg_roles WHERE rolname = 'deadman_reader';` A date means the password stops working then (the check then exits 2 and alarms, which is a wanted reminder); empty means it never expires. The studio head states in writing which of the two is meant (Decision 21 in `../REVIEW.md` is the open question of rotation); if a date is wanted: `ALTER ROLE deadman_reader VALID UNTIL '<date>';` (rollback `... VALID UNTIL 'infinity';`).
+**3. Nothing but the three columns, from the catalog, as an administrator.** All are read-only queries. The repository already has the same kind of check for the runtime login, `effective_problems` in `store/migrate.py:192` (it asks what a login can REALLY do, however it got it, against the grant map); the queries below are the by-hand form for this one login and were not run.
+```
+-- a. every table, view and sequence outside the system schemas on which the login can read a column, change anything or use a sequence (by any route, PUBLIC included); expect exactly ONE row: tick_state
+SELECT n.nspname, c.relname, c.relkind
+FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast') AND n.nspname !~ '^pg_temp'
+  AND ( (c.relkind IN ('r','v','m','p','f') AND (has_any_column_privilege('deadman_reader', c.oid, 'SELECT,INSERT,UPDATE,REFERENCES')
+                                                OR has_table_privilege('deadman_reader', c.oid, 'DELETE,TRUNCATE,TRIGGER')))
+     OR (c.relkind = 'S' AND has_sequence_privilege('deadman_reader', c.oid, 'USAGE,SELECT,UPDATE')) )
+ORDER BY 1, 2;
+-- b. the columns of tick_state it can read; expect exactly: last_ok_at, last_run_at, step (write the schema in front of tick_state if it is not in the search path)
+SELECT a.attname FROM pg_attribute a
+WHERE a.attrelid = 'tick_state'::regclass AND a.attnum > 0 AND NOT a.attisdropped
+  AND has_column_privilege('deadman_reader', a.attrelid, a.attnum, 'SELECT') ORDER BY 1;
+-- c. functions it may run outside the server's own schemas; expect no row. A row with prosecdef = t runs with the rights of its owner: stop and ask the studio head. Functions of an installed extension (for example one in public) may show here with prosecdef = f because PUBLIC may run them: each is named and judged by the administrator
+SELECT p.oid::regprocedure, p.prosecdef FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname NOT IN ('pg_catalog', 'information_schema') AND has_function_privilege('deadman_reader', p.oid, 'EXECUTE');
+-- d. default rights that will give a login or PUBLIC rights on objects made LATER; expect no row that names deadman_reader or an empty grantee (PUBLIC, written "=r/owner")
+SELECT defaclrole::regrole, defaclnamespace::regnamespace, defaclobjtype, defaclacl FROM pg_default_acl;
+-- e. roles it belongs to (expect no row) and its own attributes (expect rolsuper f, rolinherit f, rolcreaterole f, rolcreatedb f, rolcanlogin t, rolreplication f, rolbypassrls f, rolconnlimit 2)
+SELECT roleid::regrole FROM pg_auth_members WHERE member = 'deadman_reader'::regrole;
+SELECT rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, rolreplication, rolbypassrls, rolconnlimit FROM pg_roles WHERE rolname = 'deadman_reader';
+-- f. schemas it can use or create in; expect only public, with usage t and create f. database TEMPORARY: expect t until D5 is done (see D5 below)
+SELECT nspname, has_schema_privilege('deadman_reader', oid, 'USAGE') AS usage, has_schema_privilege('deadman_reader', oid, 'CREATE') AS can_create
+FROM pg_namespace WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' AND has_schema_privilege('deadman_reader', oid, 'USAGE,CREATE');
+SELECT has_database_privilege('deadman_reader', current_database(), 'TEMPORARY') AS temporary_tables;
+```
+`pg_catalog` and `information_schema` are left out on purpose: every login can read them (they describe the server, not the data).
 
 **Separate decision D5 (not part of this identity).** Earlier text had a row that ran `REVOKE CREATE ON SCHEMA public FROM PUBLIC;` and `REVOKE TEMPORARY ON DATABASE <database> FROM PUBLIC;` as part of creating the read-only login. That was wrong in kind:
 those two statements change the rights of every role that relies on the group `PUBLIC` (they can break the app, the tick or the migrations), so they are a hardening of the whole database, not a statement about one read-only identity. What it means for this login: on the tested Postgres 16 `PUBLIC` has no right to create tables in `public`, so the login has none (the second statement of D5, `REVOKE TEMPORARY`, concerns another default: `PUBLIC` also holds the right to make TEMPORARY tables in a database, so this login can make tables that exist only inside its own session and vanish when it disconnects; that right is NOT removed by anything in rows 1 to 8, even in a read-only session, and only D5 removes it; UNVERIFIED, from the manual); on Postgres 14 and older it does have the right to create tables in `public` through `PUBLIC`
@@ -169,5 +204,5 @@ an earlier version of the patch skipped quietly and recorded a success, which wo
 
 ## Negative test (to run when it is set up; who: the lead asks the database administrator of D3 to apply the grants, and the scheduler operator of D6 to stop and restart the tick; the alert it fires goes to the channel of D4, so the test cannot be completed until D4, D6 and the password place (UNANSWERED, see the Password procedure) are answered)
 Stop the tick for longer than the age limit and confirm the query returns the names (four, or five after A-01) and the alert fires; start it again and confirm the result is empty. Then revoke the
-identity's SELECT (row 5 rollback) and confirm the check alerts "cannot read" instead of staying silent (seen once, in the first pass, on the throwaway database; the version with a real tick and the real store was not
+identity's SELECT (row 5 rollback) and confirm the check alerts "cannot read" instead of staying silent (what the first pass saw on the throwaway database: after the revoke the query exited 3 with `permission denied`; no alert channel existed, so that an ALERT fires was never seen; the version with a real tick and the real store was not
 run: needs the lead, see STATUS OF THE TESTS). The grant and revoke need the logins named in "Which login runs each statement" (the table-owning login for row 5), held by the database administrator (the named human, D3), not by this check and not by an agent session.

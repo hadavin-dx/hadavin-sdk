@@ -852,7 +852,8 @@ mrun() { local nm=$1 fl=$2; shift 2
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" "$@" -- --flows "$fl"; }
 pyedit() { python3 -I - "$@"; }
 # F12 / M2: the pinned case counts (expected-counts.pin) are checked by run_all.sh --check-counts
-RAS="$HERE/run_all.sh"; printf 'SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)\n' > "$S/cc-st.txt"; printf 'test_take_check: 496 of 496 cases as expected, 0 not as expected\n' > "$S/cc-tt.txt"
+RAS="$HERE/run_all.sh"; RAENV=(env -u RUN_ALL_NESTED -u RUN_ALL_PARENT_PID -u RUN_ALL_RAW -u RUN_ALL_TAKE_FLOWS -u RUN_ALL_DROP_LEAD -u RUN_ALL_PLANT_TCFAIL_FLOWS -u RUN_ALL_PLANT_TCFAIL_WANT -u FC_OUT)   # this suite can itself run inside a nested run_all.sh, which sets these; every run_all.sh call below starts clean
+ printf 'SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)\n' > "$S/cc-st.txt"; printf 'test_take_check: 496 of 496 cases as expected, 0 not as expected\n' > "$S/cc-tt.txt"
 printf 'selftest_as_expected=682\nselftest_not_as_expected=0\nselftest_skipped=62\ntake_suite_cases=496\ntake_suite_not_as_expected=0\n' > "$S/cc.pin"
 bash "$RAS" --check-counts "$S/cc-st.txt" "$S/cc-tt.txt" "$S/cc.pin" > "$S/cc-ok.txt" 2>&1; ok $? "F12: run_all.sh --check-counts accepts the pinned numbers ($(cut -c1-60 "$S/cc-ok.txt"))"
 cc_bad() { local nm=$1 st=$2 tt=$3 pin=$4 want=$5; bash "$RAS" --check-counts "$st" "$tt" "$pin" > "$S/cc-$nm.txt" 2>&1; local x=$?; [ "$x" = 1 ] && grep -q -F "$want" "$S/cc-$nm.txt"; ok $? "F12: count drift '$nm' is exit 1 with '$want' (got exit $x)"; }
@@ -868,19 +869,19 @@ cc_bad pin-missing "$S/cc-st.txt" "$S/cc-tt.txt" "$S/no-such-counts.pin" "the pi
 # F12 / M2: stray hook variables are refused by run_all.sh (exit 2, the name is printed, the value never)
 FAKEVAL="zq""wv""-hook-""val"
 for v in FC_CK TEST_TAKE_DEV TEST_TAKE_SCRIPT RV_DUMP RV_ONLY FC_OUT; do
-  ( cd "$S" && env "$v=$FAKEVAL" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  ( cd "$S" && "${RAENV[@]}" "$v=$FAKEVAL" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
   [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is " "$S/hook-$v.txt" && ! grep -q -F "$FAKEVAL" "$S/hook-$v.txt"; ok $? "F12: run_all.sh with $v set is refused, exit 2, the value is not printed (got exit $(cat "$S/hook-$v.rc"))"
 done
 for v in RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT; do
-  ( cd "$S" && env -u RUN_ALL_NESTED "$v=x" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  ( cd "$S" && "${RAENV[@]}" "$v=x" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
   [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is a test hook" "$S/hook-$v.txt"; ok $? "F12 (minor): run_all.sh with $v and without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook-$v.rc"))"
 done
-( cd "$S" && env RUN_ALL_NESTED=1 RUN_ALL_RAW="$S/raw-nested-stray" timeout 30 bash "$RAS" > "$S/nested-stray.txt" 2>&1; echo $? > "$S/nested-stray.rc" )
+( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_RAW="$S/raw-nested-stray" timeout 30 bash "$RAS" > "$S/nested-stray.txt" 2>&1; echo $? > "$S/nested-stray.rc" )
 [ "$(cat "$S/nested-stray.rc")" = 2 ] && grep -q "RUN_ALL_PARENT_PID does not name a running run_all.sh" "$S/nested-stray.txt"; ok $? "F12(c): a stray RUN_ALL_NESTED=1 (no live parent run_all.sh) is refused, exit 2, not a silent skip of the nested tests (got exit $(cat "$S/nested-stray.rc"))"
-( cd "$S" && env RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=1 RUN_ALL_RAW="$S/raw-nested-stray2" timeout 30 bash "$RAS" > "$S/nested-stray2.txt" 2>&1; echo $? > "$S/nested-stray2.rc" )
+( cd "$S" && "${RAENV[@]}" RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=1 RUN_ALL_RAW="$S/raw-nested-stray2" timeout 30 bash "$RAS" > "$S/nested-stray2.txt" 2>&1; echo $? > "$S/nested-stray2.rc" )
 [ "$(cat "$S/nested-stray2.rc")" = 2 ] && grep -q "RUN_ALL_PARENT_PID does not name a running run_all.sh" "$S/nested-stray2.txt"; ok $? "F12(c): RUN_ALL_NESTED=1 with a parent pid that is not a run_all.sh is refused, exit 2 (got exit $(cat "$S/nested-stray2.rc"))"
 # the environment scrub prints names only (a fake value built from parts)
-( cd "$S" && env AWS_R11_PROBE="$FAKEVAL" PYTHONPATH="$FAKEVAL" RUN_ALL_RAW="$S/raw-scrub" timeout 30 bash "$RAS" --lock-only > "$S/scrub.txt" 2>&1; echo $? > "$S/scrub.rc" )
+( cd "$S" && "${RAENV[@]}" AWS_R11_PROBE="$FAKEVAL" PYTHONPATH="$FAKEVAL" RUN_ALL_RAW="$S/raw-scrub" timeout 30 bash "$RAS" --lock-only > "$S/scrub.txt" 2>&1; echo $? > "$S/scrub.rc" )
 [ "$(cat "$S/scrub.rc")" = 0 ] && grep -q "environment variables removed for this run (names only):.*AWS_R11_PROBE" "$S/scrub.txt" && grep -q "PYTHONPATH" "$S/scrub.txt" && ! grep -q -F "$FAKEVAL" "$S/scrub.txt"; ok $? "F12: run_all.sh removes stray cloud and interpreter variables and prints their names, never their values"
 # raw output goes to a scratch folder; the tracked raw folder is published only on request, each file under a temporary name
 mkdir -p "$S/pub-src" "$S/pub-dst"; echo new > "$S/pub-src/a.txt"; echo keep > "$S/pub-dst/other.txt"; echo old > "$S/pub-dst/a.txt"
