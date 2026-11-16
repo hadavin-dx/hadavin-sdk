@@ -1877,12 +1877,20 @@ cut -c1-200 "$S/t99e.out" | tail -1
 chk "T99e m3 --raw inside the state folder of TMP: exit 2 (got $rc) and the folder was NOT created (r10: created, then refused)" "[ $rc -eq 2 ] && [ ! -e '$OTHER' ] && [ '$(last)' = return1 ]"
 rm -rf "$S/other-tmp"
 # f) minor 6: --sha refuses a marker mode with a write bit for the group
+# git archive gives 0664 by default (tar.umask 002), so the git file here has the group bit: the genuine 0664 must be accepted (T95d3)
+# and the refusal is for a group bit BEYOND git's: the repository is set to tar.umask 022 (git file 0644) for this check
+git -C "$T/repo" config tar.umask 022
 for MODEV in 436 432 410; do   # 0664 0660 0632
   kill_planted; setmarker97 mode=$MODEV
   python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t99f.out" 2>&1; rc=$?; cut -c1-200 "$S/t99f.out" | tail -1
-  chk "T99f m6 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc), nothing written (still planted) (r10: exit 0, mode written)" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && keptstate"
+  chk "T99f m6 marker mode $(printf '%o' $MODEV) with --sha, git file 0644: exit 3 (got $rc), nothing written (still planted) (r10: exit 0 for 0664, mode written)" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && keptstate"
   python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 done
+git -C "$T/repo" config --unset tar.umask
+kill_planted; setmarker97 mode=438
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t99f2.out" 2>&1; rc=$?
+chk "T99f2 GUARD m6 with the default git archive (file 0664) a marker mode 0666 is still refused (write for others), exit 3 (got $rc)" "[ $rc -eq 3 ] && [ '$(last)' = return2 ]"
+python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 # g) independent r10 run D1/D2: the signal handlers are installed before the other standard modules are loaded
 python3 -B -I - "$RUN" <<'PY' >"$S/t99g.out" 2>&1; rc=$?
 import os, runpy, signal, sys

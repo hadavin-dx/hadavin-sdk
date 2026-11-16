@@ -3,17 +3,17 @@ PASS naive M5: the claim table is named in the box and every code word of the bo
 PASS naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list
 PASS every '23:30' example time in the box has 'IST' within 40 characters (1 places) :: 1
 PASS the real v30 files on disk are ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-B.md', 'OWNER-SHEET-v30-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-B.md', 'OWNER-SHEET-v30-SOURCE.md']
-INFO OWNER-SHEET-v30-A.md last written 17:10:52 UTC; check time of the report 2026-11-16T17:12:00Z
-INFO OWNER-SHEET-v30-B.md last written 17:10:52 UTC; check time of the report 2026-11-16T17:12:00Z
-INFO OWNER-SHEET-v30-SOURCE.md last written 17:10:52 UTC; check time of the report 2026-11-16T17:12:00Z
+INFO OWNER-SHEET-v30-A.md last written 17:12:09 UTC; check time of the report 2026-11-16T17:13:05Z
+INFO OWNER-SHEET-v30-B.md last written 17:12:09 UTC; check time of the report 2026-11-16T17:13:05Z
+INFO OWNER-SHEET-v30-SOURCE.md last written 17:12:09 UTC; check time of the report 2026-11-16T17:13:05Z
 PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository
 PASS 89 rows of 94 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
 PASS no row old or new text holds a raw '|' (it would break its table cell) :: []
 PASS REPORT-c6q.md was not changed by this run (it is older than the build of REPORT-c6s.md and holds its own title line)
 PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6s.md and holds its own title line)
 PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
-PASS the box line of L-SHEET and the section 0 bullet each print every real v30 file with its real written time (UTC): [('OWNER-SHEET-v30-A.md', '17:10:52'), ('OWNER-SHEET-v30-B.md', '17:10:52'), ('OWNER-SHEET-v30-SOURCE.md', '17:10:52')] :: [('OWNER-SHEET-v30-A.md', '17:10:52'), ('OWNER-SHEET-v30-B.md', '17:10:52'), ('OWNER-SHEET-v30-SOURCE.md', '17:10:52')]
-PASS F4 the report names the newest owner sheet version (v30) and release note (v14) on disk, and the check time :: (('30', '17:12:00', '22:42:00', '14'), 30, 14)
+PASS the box line of L-SHEET and the section 0 bullet each print every real v30 file with its real written time (UTC): [('OWNER-SHEET-v30-A.md', '17:12:09'), ('OWNER-SHEET-v30-B.md', '17:12:09'), ('OWNER-SHEET-v30-SOURCE.md', '17:12:09')] :: [('OWNER-SHEET-v30-A.md', '17:12:09'), ('OWNER-SHEET-v30-B.md', '17:12:09'), ('OWNER-SHEET-v30-SOURCE.md', '17:12:09')]
+PASS F4 the report names the newest owner sheet version (v30) and release note (v14) on disk, and the check time :: (('30', '17:13:05', '22:43:05', '14'), 30, 14)
 PASS F4 no owner sheet or release note has a version higher than the one named :: []
 PASS F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is defined
 PASS F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumption in the box, row 8 and section 9
@@ -36,7 +36,7 @@ PASS F3 row 6 reason says items 11 to 16
 PASS m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
 FAIL m2 row 13 says 'expected to be true until C-9 part 2'
 PASS m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer :: 4
-PASS m4 every example answer time in the box is later than the check time 2026-11-16T17:12:00Z (and has its IST) :: ['2026-11-16T18:00:00Z', '2026-11-16T18:05:00Z', '2026-11-16T18:05:00Z']
+PASS m4 every example answer time in the box is later than the check time 2026-11-16T17:13:05Z (and has its IST) :: ['2026-11-16T18:00:00Z', '2026-11-16T18:05:00Z', '2026-11-16T18:05:00Z']
 PASS naive: the order of the reviewer names is explained
 PASS naive: the 'does not do' list comes before the answer line
 PASS naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers

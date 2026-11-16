@@ -7,7 +7,7 @@ FAILURES AND GAPS FIRST (what c6s does not do or has not proven)
 - The leak scan program (check C-6) does not exist; the real-key scan has never run. Needs a builder the studio lead names, a second reader and a fake-key test.
 - Card line 2 is backed only by stand-in tests; gated in c6s on a loopback re-smoke alert mail (needs-lead, needs n8n).
 - Gate G12 (lease wording) is OPEN with the studio lead (release note v14, LRN14:33 and LRN14:8, does not close it). Cut case and the plan-versus-owner conflict on PLAN:125 are open with the studio lead (needs-lead).
-- The box is 3,4xx words by the verifier's count: shorter than c6r only by a few words, because the stranger-reader review asked for more explanation (steps, G12, Q27, the C-9 circle). Not reduced further without dropping what the review asked for; the studio lead decides.
+- The box is 3,488 words by the verifier's count (c6r: 3,490): barely shorter, because the stranger-reader review asked for more explanation (steps, G12, Q27, the C-9 circle). Not reduced further without dropping what the review asked for; the studio lead decides.
 - Seconds in the card tables are estimates; the owner sheets v30 were still being written at the check time (the verifier fails if one changes after it).
 
 MAP: finding id -> fix (where it is in REPORT-c6s.md)

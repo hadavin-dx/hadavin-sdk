@@ -1,0 +1,8 @@
+== T95 (lead's four findings from the independent r7 run) (a) output that cannot be written, (b) a 200000-deep JSON, (c) a link left in place of the file, (d) forged marker with a swapped backup
+  PASS: T95a standard output is /dev/full (every write fails): the run ends with the tool's own code 0 (got 0; r7: 1), file restored, state empty, raw summary written
+  PASS: T95a2 standard output AND error closed: exit 0 (got 0), file restored, state empty
+REFUSED: --list /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/d3/deep.json cannot be read as a JSON list (ValueError: nested too deeply): refused
+  PASS: T95b a mutants file nested 200000 deep: clean refusal exit 2 (got 2), REFUSED text, no INTERNAL ERROR, no Traceback, short output (1 lines; r7: INTERNAL ERROR with a traceback)
+/tmp/safety-only.gLU5p3.sh: line 70:  4803 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/d3/tmpstate/hadavin-mutation-lane-0/582486dd9a8ac323.planted.json is not valid JSON: refused; the mu
+  PASS: T95b2 a marker nested 200000 deep: exit 3 (got 3; r7: 2 with INTERNAL ERROR), no Traceback, file still planted

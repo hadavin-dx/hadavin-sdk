@@ -18,13 +18,13 @@ N2-row11-says-103-words                          exit 1  OK  failed checks: 1; f
 N3-row-N-reference-in-new-text                   exit 1  OK  failed checks: 1; first: FAIL no 'row N' reference in any new text :: [(21, 'row 13')]
 N4-accepted-exit-in-row8                         exit 1  OK  failed checks: 2; first: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no 
 N5-5a-page-row-missing                           exit 1  OK  failed checks: 2; first: FAIL 5a lists exactly the 37 viewer-visible run-sheet and page rows :: (36, 37)
-N6-newest-sheet-claim-stale-v27                  exit 1  OK  failed checks: 6; first: FAIL report names the check time 2026-11-16T17:12:00Z and the newest sheet version on disk (v30) :: [30, 30, 3
+N6-newest-sheet-claim-stale-v27                  exit 1  OK  failed checks: 6; first: FAIL report names the check time 2026-11-16T17:13:05Z and the newest sheet version on disk (v30) :: [30, 30, 3
 N7-row90-broken-sentence-and-third-place         exit 1  OK  failed checks: 1; first: FAIL row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: aba
 N8-row6-claims-deletion-erases                   exit 1  OK  failed checks: 1; first: FAIL row 6 item 16 does not claim that deleting erases the data
 N9-row8-latest-start-missing                     exit 1  OK  failed checks: 1; first: FAIL row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP
 N10-144.3-unlabelled-row47                       exit 1  OK  failed checks: 1; first: FAIL every new text with 144.3 labels it as from n8n coming back up :: [47]
 N11-lease-none-meaning-missing                   exit 1  OK  failed checks: 1; first: FAIL section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, repla
-N13-box-too-long                                 exit 1  OK  failed checks: 1; first: FAIL whole box is at most 3,500 words (6788 words; c6p 3027; it is LONGER than c6p because the naive review as
+N13-box-too-long                                 exit 1  OK  failed checks: 1; first: FAIL whole box is under 3,490 words (the c6r box was 3,490; 6788 words now; the naive review asked for more ex
 N14-L-SCENES-question-back                       exit 1  OK  failed checks: 3; first: FAIL section 3 'rows tied to it' column equals the recount
 N15-row13-NOT-FILMABLE-back                      exit 1  OK  failed checks: 8; first: FAIL recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 
 N16-stale-103-words-line                         exit 1  OK  failed checks: 1; first: FAIL no stale card word count (103, 75, 71) outside history lines :: [762]
@@ -38,7 +38,7 @@ C4-this-report-in-row21-view                     exit 1  OK  failed checks: 2; f
 C5-L-SCENES-back-in-3e                           exit 1  OK  failed checks: 1; first: FAIL L-SCENES appears only in coverage lines (section 8), never in a live table or row
 C6-length-table-number-wrong                     exit 1  OK  failed checks: 1; first: FAIL table of lengths in the box (6 rows) equals the recomputation from the quoted card lines and lease senten
 C8-C10b-pass-cell-says-only-b                    exit 1  OK  failed checks: 1; first: FAIL C-10b: pass and fail cells agree (all of (a), (b) and (c) shown / any not shown)
-C9-Q27-reading-sentence-twice-in-box             exit 1  OK  failed checks: 1; first: FAIL the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in the box once, with 18:04 UTC = 23:34 IST o
+C9-Q27-reading-sentence-twice-in-box             exit 1  OK  failed checks: 2; first: FAIL the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in the box once, with 18:04 UTC = 23:34 IST o
 C10-row90-ends-with-own-state                    exit 1  OK  failed checks: 1; first: FAIL row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: ase
 C11-section9-duplicate-bullet                    exit 1  OK  failed checks: 1; first: FAIL section 9 has no duplicate bullet (30 bullets) :: ['- [needs-lead] Gate G12, the approval of the lease wo
 C12-G12-gone-from-L-LEASE                        exit 1  OK  failed checks: 1; first: FAIL section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, repla
@@ -46,7 +46,7 @@ C13-ORD147-departure-gone-from-section0          exit 1  OK  failed checks: 1; f
 C14-item15-without-real-value                    exit 1  OK  failed checks: 1; first: FAIL row 6 item 15 says what the second scan searches for (real key values read from the key file, not printed
 C15-L-POST-gone-from-box                         exit 1  OK  failed checks: 2; first: FAIL table 3b equals the recount (13 lines) :: (13, 14)
 C16-1051-line-without-UNVERIFIED                 exit 1  OK  failed checks: 1; first: FAIL every line that names plan line 1051 says it is UNVERIFIED :: [762]
-C18-check-time-not-in-report                     exit 1  OK  failed checks: 1; first: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (61 pairs) :: [('10', '00', '22', '42'), ('10', '00', '22', 
+C18-check-time-not-in-report                     exit 1  OK  failed checks: 1; first: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (61 pairs) :: [('10', '00', '22', '43'), ('10', '00', '22', 
 C19-row11-total-wrong                            exit 1  OK  failed checks: 1; first: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
 C20-add-16-wording-back                          exit 1  OK  failed checks: 1; first: FAIL answer 2 replaces answer 1: net +15 words and no 'add 16' wording
 C21-tied-column-lacks-L-POST                     exit 1  OK  failed checks: 1; first: FAIL section 3 'rows tied to it' column equals the recount
@@ -56,7 +56,7 @@ E2-lease-sentence-on-caption-row21               exit 1  OK  failed checks: 3; f
 E3-capital-The-lease-question-in-row13           exit 1  OK  failed checks: 1; first: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no 
 E4-wrong-count-42-apply                          exit 1  OK  failed checks: 2; first: FAIL every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (36 default
 E5-wrong-wave1-91-rows                           exit 1  OK  failed checks: 3; first: FAIL box wave 1 count equals ready + defaults (85) :: 85
-E6-stale-58-s-in-box                             exit 1  OK  failed checks: 1; first: FAIL the box does not carry the old '58 s' card length
+E6-stale-58-s-in-box                             exit 1  OK  failed checks: 2; first: FAIL whole box is under 3,490 words (the c6r box was 3,490; 3494 words now; the naive review asked for more ex
 E7-within-45-seconds-row14                       exit 1  OK  failed checks: 1; first: FAIL row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'
 R1-M-A-gate-removed-row8                         exit 1  OK  failed checks: 1; first: FAIL M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and ma
 R2-M-B-one-alert-fact-row14                      exit 1  OK  failed checks: 2; first: FAIL box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 
@@ -73,7 +73,7 @@ R12-L-SAVEERR-default-yes                        exit 1  OK  failed checks: 1; f
 R13-item12-made-up-domain-check-gone             exit 1  OK  failed checks: 1; first: FAIL row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 
 R14-IST-missing-next-to-22-10-example            exit 1  OK  failed checks: 3; first: FAIL every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: [(9, 'lead, 2026-11-16T18:00
 O-REPORT-c6q-itself-must-fail                    exit 1  OK  failed checks: 75; first: FAIL F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (4
-O-REPORT-c6r-itself-must-fail                    exit 1  OK  failed checks: 54; first: FAIL part 2 statement at line 6 could not run on this report (ValueError: substring not found)
+O-REPORT-c6r-itself-must-fail                    exit 1  OK  failed checks: 55; first: FAIL part 2 statement at line 6 could not run on this report (ValueError: substring not found)
 S-F1a-C4a-says-failed-all                        exit 1  OK  failed checks: 1; first: FAIL F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes
 S-F1b-C11-no-override                            exit 1  OK  failed checks: 1; first: FAIL F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none
 S-F1c-C4-row-list-old                            exit 1  OK  failed checks: 1; first: FAIL F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68)
@@ -102,8 +102,8 @@ S-F4b-release-note-v13-named                     exit 1  OK  failed checks: 1; f
 S-F4c-LRN14-cite-gone-from-box                   exit 1  OK  failed checks: 1; first: FAIL F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is define
 S-F4d-own-reading-label-gone                     exit 1  OK  failed checks: 1; first: FAIL F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumpti
 S-F4e-v30-file-unnamed                           exit 1  OK  failed checks: 1; first: FAIL the box line of L-SHEET and the section 0 bullet each print every real v30 file with its real written tim
-S-F4f-v30-time-wrong                             exit 1  OK  failed checks: 2; first: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (61 pairs) :: [('10', '00', '22', '40')]
-S-F4g-sheet-v31-exists                           exit 1  OK  failed checks: 5; first: FAIL report names the check time 2026-11-16T17:12:00Z and the newest sheet version on disk (v31) :: [30, 30, 3
+S-F4f-v30-time-wrong                             exit 1  OK  failed checks: 2; first: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (61 pairs) :: [('10', '00', '22', '42')]
+S-F4g-sheet-v31-exists                           exit 1  OK  failed checks: 5; first: FAIL report names the check time 2026-11-16T17:13:05Z and the newest sheet version on disk (v31) :: [30, 30, 3
 S-F4h-release-note-v15-exists                    exit 1  OK  failed checks: 1; first: FAIL F4 the report names the newest owner sheet version (v30) and release note (v15) on disk, and the check ti
 S-F4i-v30-sheet-newer-than-check-time            exit 1  OK  failed checks: 2; first: FAIL no owner sheet changed after the stated check time (C-10c is current) :: ['OWNER-SHEET-v30-A.md']
 S-F4j-v30-B-file-missing                         exit 1  OK  failed checks: 1; first: FAIL the real v30 files on disk are ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-SOURCE.md'] and the report names
@@ -114,7 +114,7 @@ S-m3a-cut-totals-again-in-sec9                   exit 1  OK  failed checks: 1; f
 S-m3b-time-cell-gone                             exit 1  OK  failed checks: 1; first: FAIL m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; 
 S-m4-example-time-before-check                   exit 1  OK  failed checks: 3; first: FAIL box has one answer line with seconds, three free names, the exception form and L-SHEET apart
 S-N1-reviewer-order-gone                         exit 1  OK  failed checks: 1; first: FAIL naive: the order of the reviewer names is explained
-S-N2-does-not-list-after-answer                  exit 1  OK  failed checks: 1; first: FAIL naive: the 'does not do' list comes before the answer line
+S-N2-does-not-list-after-answer                  exit 1  OK  failed checks: 2; first: FAIL whole box is under 3,490 words (the c6r box was 3,490; 3492 words now; the naive review asked for more ex
 S-N3-lead-may-answer-for-him                     exit 1  OK  failed checks: 1; first: FAIL naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only 
 S-N3b-sheet-no-owner-only                        exit 1  OK  failed checks: 1; first: FAIL naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only 
 S-N4-circle-gone                                 exit 1  OK  failed checks: 1; first: FAIL naive: the C-9 part 2 circle is explained
@@ -129,7 +129,7 @@ S-N12-G12-explanation-gone                       exit 1  OK  failed checks: 1; f
 S-N13-Q27-explanation-gone                       exit 1  OK  failed checks: 1; first: FAIL naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'
 S-N14-step9-gone                                 exit 1  OK  failed checks: 1; first: FAIL naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)
 S-N15-step-row23-gone                            exit 1  OK  failed checks: 1; first: FAIL naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)
-S-N16-box-too-long                               exit 1  OK  failed checks: 1; first: FAIL whole box is at most 3,500 words (3548 words; c6p 3027; it is LONGER than c6p because the naive review as
+S-N16-box-too-long                               exit 1  OK  failed checks: 1; first: FAIL whole box is under 3,490 words (the c6r box was 3,490; 3548 words now; the naive review asked for more ex
 S-N17-sec9-stale-box-bullet                      exit 1  OK  failed checks: 1; first: FAIL section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
 S-N18-coverage-block-gone                        exit 1  OK  failed checks: 1; first: FAIL section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
 S-N19-c6r-name-in-glossary                       exit 1  OK  failed checks: 1; first: FAIL naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')

@@ -1,0 +1,21 @@
+INFO OLD blocks 60
+INFO UTC=IST pairs 127
+INFO weekday/date pairs 61
+INFO banned found (count only) 0 of 10
+FAILS 15
+{'rowcount': 1, 'ids-order': 1, 'counts': 2, 'label': 7, 'typing': 1, 'order': 1, 'route': 1, 'rowcontent': 1}
+FAIL rowcount | 59 rows, expected 56
+FAIL ids-order | ids differ/order: ['E-59', 'E-60', 'E-61']
+FAIL counts | computed {'Apply now': 47, 'Hold': 12} want Apply now 44 Hold 12 only
+FAIL counts | "56 rows in total" missing
+FAIL label | 18:14:40 without "program refusal limit" within 260 chars before: 9Z the last start is about 18:14Z (the refusal is now + 860 s >= end, so before 
+FAIL label | 18:14:40 without "program refusal limit" within 260 chars before: ts is about 18:14 UTC = 23:44 IST (the refusal is now + 860 s >= end, so before 
+FAIL label | latest start we plan paired with 18:04
+FAIL label | latest start we plan paired with 18:04
+FAIL label | latest start we plan paired with 18:04
+FAIL label | latest start we plan paired with 18:04
+FAIL label | latest start we plan paired with 18:04
+FAIL typing | E-48 3g lacks not looking / you may look again
+FAIL order | E-59 sentence names `shred done` as a gate without `key revoked`: Only after the check passed, and after your `shred done` or `shred not done` of item 3 (key step G): delete the two secret files in the Linu
+FAIL route | E-48 lacks 3j
+FAIL rowcontent | E-16 NEW lacks (clean-up trigger): 'only after you have written `no more takes`'

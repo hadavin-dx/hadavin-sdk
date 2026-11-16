@@ -133,8 +133,8 @@ written back (r7 N7; as root a mode bit never blocks a write, so this path is on
 file that ALREADY holds the original text is left as it is, mode included (nothing is written, T88d); if it cannot be opened for
 writing the added owner permission is taken away again (r10 m6). The recorded mode is restored exactly: mode 0 stays 0, and the mode is CHECKED after the write (r11). A plain `--restore` never
 writes a setuid, setgid or sticky bit: a marker mode with such a bit is cut to its lowest 9 bits and the text says so (r11 MAJ-1;
-a forged marker cannot make a setuid file); with --sha a marker mode with such a bit, or with a write bit for the group or for others,
-is refused (r10 m2, r11 m6).
+a forged marker cannot make a setuid file); with --sha a marker mode with such a bit, or with a special bit, a write bit for others or a write bit for the group that the git file does not have
+(git archive itself gives 0664), is refused (r10 m2, r11 m6).
 `--out-json` may not be run.py itself, the `--list` file, a `--patch` file or the same path as a raw file (r7 N4), may not lie in any
 state folder that is searched (ours, /tmp, /var/tmp, /dev/shm, TMP, TEMP), and an existing file is overwritten only when it is a
 result file of this tool (a JSON list of objects with id and verdict; r10 m3). Helper programs (git, patch, the import probe) run
@@ -1599,7 +1599,11 @@ def restore_from_marker(
                 f"the mode in the marker ({oct(mm)}) has other execute bits than {shown(m['file'])} in the git archive given "
                 f"with --sha ({oct(ref_mode)}): the marker may be forged; nothing written"
             )
-        if mm is not None and mm & 0o022:  # r11 m6: any group or other write bit, not only "other"
+        # r11 m6: a write bit for the group or for others that the git archive file does NOT have. `git archive` itself gives
+        # 0664 (tar.umask default 002), so a genuine file may carry the group bit; a bit beyond what git gives is refused, and
+        # a write bit for others is always refused (found by T95d3 in the first full run of r11: refusing every group bit
+        # made the restore of a genuine 0664 file impossible)
+        if mm is not None and (mm & 0o002 or mm & 0o020 & ~ref_mode):
             raise Refused(special)
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write

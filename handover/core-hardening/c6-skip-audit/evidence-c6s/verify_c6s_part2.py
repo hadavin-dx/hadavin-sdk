@@ -140,7 +140,7 @@ pw = None
 if os.path.exists(p):
     pr = rd(p)
     pw = len(pr[pr.index("## Start here"):pr.index("## 0. Failures")].split())
-check("whole box is at most 3,500 words (%d words; c6p %s; it is LONGER than c6p because the naive review asked for the what-to-type block and for every internal word to be explained: a lead question)" % (bw, pw), bw <= 3500, bw)
+check("whole box is under 3,490 words (the c6r box was 3,490; %d words now; the naive review asked for more explanation, so a lead question is whether it may grow)" % bw, bw < 3490, bw)
 sets = re.findall(r"saveDataSuccessExecution|saveManualExecutions|EXECUTIONS_DATA_SAVE", box)
 check("box names no n8n setting", not sets, sets)
 check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", "2026-11-16T18:00:00Z = 23:30:00 IST" in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "Neither can be put on the line of step 2" in box and box.count("## ANSWER (studio lead,") == 1)
