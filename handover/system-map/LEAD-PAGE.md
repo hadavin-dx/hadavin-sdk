@@ -22,7 +22,7 @@ The old rows 16 to 23 here were written from the stale v3 steps file and contrad
 | owner task | where it is now |
 |---|---|
 | written yes with numbers (v5 step A) | OWNER-VIEW.md row 1 (six items: calls, worst case per call, 3 times that, money spent so far, backstop and stop time as in `stage.env`, rehearsal passed with its result file) |
-| laptop settings (v5 B); label, profile, n8n sign-in (v5 C) | OWNER-RUN-DAY-CARD.md steps 1 to 5; restore at OWNER-CLEANUP-CARD.md step 7 |
+| laptop settings (v5 B); label, profile (v5 C) | OWNER-RUN-DAY-CARD.md steps 1 to 4; restore at OWNER-CLEANUP-CARD.md step 7. The n8n sign-in is no longer an owner step (decision 7): first-visit setup is done (inputs/FACTS-ALREADY-DONE.md); the lead imports and activates the flows with scripts\n8n_api.py. |
 | the run, the pause, `end`, failed run (v5 E, F, G) | OWNER-RUN-DAY-CARD.md steps 6 to 17 (run exit codes: 0 pass, 1 wrong answer, 2 refused to start or go on, 3 count or verdict failed; v5 lines 188 to 192) |
 | watch the cut (v5 H) | OWNER-RUN-DAY-CARD.md step 18 |
 | clean-up (v5 I); the deadline is the lead's own and is NOT the stop time | OWNER-CLEANUP-CARD.md and its release words |
