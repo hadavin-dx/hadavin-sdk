@@ -26,6 +26,10 @@ has() { grep -q -F -- "$2" "$S/$1.txt"; }
 cmp_pins() { cmp -s <(grep -v '^#' "$1") <(grep -v '^#' "$2"); }
 PIN="$HERE/take-warns.pin"
 PINSUM=$(sha256sum < "$PIN" | cut -d' ' -f1)
+# f8-r8: "the output never says a person read the pin" was tested with phrases that appear nowhere (the test could not fail). Now one regex for the claim, and it is first shown to match four sample sentences that make the claim.
+SAYS_PERSON_RE='(a|the) person (has |have |had )?(read|reviewed|approved|confirmed|signed)|(read|reviewed|approved|confirmed|signed|checked) by (a|the) person'
+says_person() { grep -q -i -E "$SAYS_PERSON_RE" "$1"; }
+for s in "a person read the pin" "the person has confirmed these lines" "approved by a person" "Reviewed by the person"; do printf '%s\n' "$s" > "$S/sp.txt"; says_person "$S/sp.txt"; ok $? "negative-claim check: the pattern matches the sample sentence '$s'"; done
 PD=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN" | head -n 1)   # f8-r6: the date used in every reviewer line below is the pin's own date line (never older than the pin, never in the future while the pin is not), so no test breaks when the calendar moves on
 TODAY=$(date -u +%Y-%m-%d); YESTERDAY=$(date -u -d "$TODAY -1 day" +%Y-%m-%d); TOMORROW=$(date -u -d "$TODAY +1 day" +%Y-%m-%d); IN2DAYS=$(date -u -d "$TODAY +2 days" +%Y-%m-%d)   # computed ONCE here; the word-check cases below give TODAY to the helper as its fixed today, so none of them can race UTC midnight
 OLDDATE=$(date -u -d "$TODAY -400 days" +%Y-%m-%d)   # dates for the old-date cases are computed, never typed
@@ -307,13 +311,28 @@ while IFS='|' read -r want line why pd envx; do
   ok $? "reviewer line [$want] '$(printf '%s' "$line" | tr -d '\000-\037')' ${why:+reason has '$why'} (got exit $rvrc: ${rvout:0:90})"
 done <<< "$RV_CASES"
 [ -n "${RV_DUMP:-}" ] && exit 0
-[ "$rv_n" -ge 130 ]; ok $? "reviewer line: at least 130 word-check cases ran (ran $rv_n)"
+# f8-r8: the number of word-check cases is pinned EXACTLY (a floor let 16 cases be deleted without a sound). Change RV_EXPECT together with the case list, and say so in the fix log.
+RV_EXPECT=@@RVN@@
+RV_LISTED=$(grep -c -E '^(ok|no)\|' <<< "$RV_CASES")
+[ "$rv_n" -eq "$RV_EXPECT" ] && [ "$RV_LISTED" -eq "$RV_EXPECT" ]; ok $? "reviewer line: exactly $RV_EXPECT word-check cases ran (ran $rv_n, listed $RV_LISTED)"
 # the word list lives in take_check.sh only; the README must print exactly the same two lines
 RVW=$(bash "$TAKE" --reviewer-words); RVWRC=$?
-[ "$RVWRC" = 0 ] && [ "$(printf '%s\n' "$RVW" | wc -l)" = 2 ]; ok $? "word list: take_check.sh --reviewer-words prints two lines and exits 0 (got exit $RVWRC)"
+[ "$RVWRC" = 0 ] && [ "$(printf '%s\n' "$RVW" | wc -l)" = 3 ]; ok $? "word list: take_check.sh --reviewer-words prints three lines and exits 0 (got exit $RVWRC)"
 while IFS= read -r l; do grep -q -x -F -- "$l" "$HERE/README.md"; ok $? "word list: README has this line exactly as take_check.sh prints it: ${l:0:60}..."; done <<< "$RVW"
-# the other scripts that call take_check.sh must not hold a copy of the list: no listed tool name in run_all.sh outside comments about what a test does
-! grep -q -E 'REVIEWER_(WORDS|STANDINS)' "$HERE/run_all.sh"; ok $? "word list: run_all.sh does not keep its own copy of the list"
+# the other scripts that call take_check.sh must not hold a copy of the list or of its rules. f8-r8: (a) no variable of the list, (b) the script's own test name appears nowhere, (c) no line holds three or more different listed words (a copy such as grep -E "session|lead to confirm|PLACEHOLDER" holds three), (d) the stand-in name and the pin line check come from take_check.sh
+no_list_copy() { # $1 = the script file to look at; prints the offending lines; status 1 when there is a copy
+  local f=$1 w; w=$(printf '%s\n' "$RVW" | sed -n '1,2p' | sed 's/^[^:]*: //' | tr ' ' '\n' | tr 'A-Z' 'a-z' | grep . | sort -u | tr '\n' ' ')
+  awk -v words="$w" 'BEGIN { n = split(words, a, " "); for (i = 1; i <= n; i++) L[a[i]] = 1 }
+    { line = tolower($0); gsub(/[^a-z]+/, " ", line); m = split(line, tok, " "); delete seen; c = 0
+      for (i = 1; i <= m; i++) if (tok[i] in L && !(tok[i] in seen)) { seen[tok[i]] = 1; c++ }
+      if (c >= 3 || index(tolower($0), "testonly") > 0 || $0 ~ /REVIEWER_(WORDS|STANDINS)/) { print FILENAME ":" NR ": " substr($0, 1, 120); bad = 1 } }
+    END { exit bad }' "$f"
+}
+NLC=$(no_list_copy "$HERE/run_all.sh" 2>&1); ok $? "word list: run_all.sh holds no copy of the list or of its rules (no line with three listed words, no stand-in test name, no REVIEWER_ variable) ${NLC:0:150}"
+printf 'x=1\nif printf "%%s" "$PINREV" | grep -q -i -E "session|lead to confirm|PLACEHOLDER"; then :; fi\n' > "$S/copy-a.sh"; no_list_copy "$S/copy-a.sh" > /dev/null 2>&1; [ $? -ne 0 ]; ok $? "word list: the copy detector flags the old run_all.sh line (so the check above can fail)"
+printf '# reviewed by: Testonly Runall, 1\n' > "$S/copy-b.sh"; no_list_copy "$S/copy-b.sh" > /dev/null 2>&1; [ $? -ne 0 ]; ok $? "word list: the copy detector flags the old stand-in name line"
+SIN=$(bash "$TAKE" --standin-name); [ "$SIN" = "Testonly Runall" ] && grep -q -F -- '--standin-name' "$HERE/run_all.sh"; ok $? "word list: take_check.sh --standin-name prints the stand-in name and run_all.sh asks for it (got '$SIN')"
+grep -q -F -- '--check-reviewer-line' "$HERE/run_all.sh" && grep -q -F -- '--safe-text' "$HERE/run_all.sh"; ok $? "word list: run_all.sh asks take_check.sh for the pin line check and for the printable text"
 if [ -n "${RV_ONLY:-}" ]; then echo "test_take_check (RV_ONLY: the word check only): $((N-BAD)) of $N cases as expected, $BAD not as expected"; [ "$BAD" = 0 ]; exit; fi   # a quick way to run just the word-check cases while editing the word list
 
 
@@ -323,9 +342,9 @@ CRL=$(sed -n 's/^# reviewed by: //p' "$PIN" | head -n 1)
 { [ "$RC" = 0 ] || { [ "$RC" = 4 ] && has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
 # Q1: with a person's reviewer line the same take is exit 0, and the output never says a person read the pin
 tk q1ok TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
-[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, $PD" && ! has q1ok "a person read"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
+[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, $PD" && has q1ok "The reviewer line is text; not verified." && ! says_person "$S/q1ok.txt"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
 tk q1a TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/sess.pin" -- --flows "$P"
-[ "$RC" = 4 ] && has q1a "pin not yet confirmed by the lead" && has q1a "as written: flows-audit session" && ! has q1a "a person read and accepted"; ok $? "Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit $RC)"
+[ "$RC" = 4 ] && has q1a "pin not yet confirmed by the lead" && has q1a "as written: flows-audit session" && ! says_person "$S/q1a.txt"; ok $? "Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit $RC)"
 for pair in "only-session:# reviewed by: Audit Session B, $PD" "only-confirm:# reviewed by: A. Person, $PD, Lead To Confirm"; do
   nm=q1-${pair%%:*}; { echo "${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
@@ -494,10 +513,12 @@ grep -v '^# flows sha256' "$LEADPIN" > "$S/noflowsha.pin"
 tk b1nosha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/noflowsha.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has b1nosha "THE PIN HEADER HAS NO '# flows sha256 ...' LINE"; ok $? "B1: a pin without the flows sha256 line is exit 4 (got exit $RC)"
 # B2: the reviewer line must read NAME, YYYY-MM-DD (optional note); stand-ins are exit 4
-for pair in "b2-agent:claude agent, $PD" "b2-tbd:TBD" "b2-x:x, $PD" "b2-nodate:Testonly Reviewer" "b2-baddate:Testonly Reviewer, 2026-13-45" "b2-future:Testonly Reviewer, 2999-01-01" "b2-empty-name:, $PD" "b2-digits:R2D2 4, $PD" "b2-ai:Some Assistant, $PD" "b2-placeholder-word:Name Placeholder, $PD"; do
-  nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+# f8-r8: each case names the ONE message and rule it must give (the old test accepted any of three messages)
+for pair in "b2-agent:claude agent, $PD|NOT A PERSON|rule: listed word agent" "b2-tbd:TBD|NOT A PERSON|rule: shape" "b2-x:x, $PD|NOT A PERSON|rule: name too short" "b2-nodate:Testonly Reviewer|NOT A PERSON|rule: shape" "b2-baddate:Testonly Reviewer, 2026-13-45|NOT A PERSON|rule: bad date" "b2-future:Testonly Reviewer, 2999-01-01|NOT A PERSON|rule: future date" "b2-empty-name:, $PD|NOT A PERSON|rule: name characters" "b2-digits:R2D2 4, $PD|NOT A PERSON|rule: name characters" "b2-ai:Some Assistant, $PD|NOT A PERSON|rule: listed word assistant" "b2-placeholder-word:Name Placeholder, $PD|STILL HAS THE PLACEHOLDER|" "b2-sessions:Pat Sessions, $PD|pin not yet confirmed by the lead|" "b2-lead-confirm:Pat Smith, $PD, lead to confirm|pin not yet confirmed by the lead|"; do
+  nm=${pair%%:*}; spec=${pair#*:}; line=${spec%%|*}; r2=${spec#*|}; msg=${r2%%|*}; rule=${r2#*|}
+  { echo "# reviewed by: $line"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
-  [ "$RC" = 4 ] && grep -q -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed|THE PIN HEADER STILL HAS THE PLACEHOLDER)" "$S/$nm.txt"; ok $? "B2: reviewer line '${pair#*:}' is exit 4 (got exit $RC)"
+  [ "$RC" = 4 ] && has "$nm" "$msg" && { [ -z "$rule" ] || has "$nm" "$rule"; } && [ "$(grep -c -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed|THE PIN HEADER STILL HAS THE PLACEHOLDER)" "$S/$nm.txt")" = 1 ]; ok $? "B2: reviewer line '$line' is exit 4 with exactly the message '$msg' ${rule:+and '$rule'} (got exit $RC)"
 done
 { echo "# reviewed by: Jane Q. Roe-Smith, $PD, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
 tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
@@ -550,7 +571,7 @@ tk e7-crlf TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-crlf.pin" -- --flows "$P
 { printf '# reviewed by: Pat \033[31mSmith, %s\n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc.pin"
 tk e7-esc TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-esc.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has e7-esc "rule: hidden character" && ! grep -q -a "$(printf '\033')" "$S/e7-esc.txt"; ok $? "f8-r7: a reviewer line with an escape character is exit 4 and the output holds no escape character (got exit $RC)"
-{ printf '# reviewed by: Audit \033[31mSession, %s\n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc2.pin"
+{ printf '# reviewed by: Audit Session \033[31m, %s\n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc2.pin"
 tk e7-esc2 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-esc2.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has e7-esc2 "pin not yet confirmed by the lead" && ! grep -q -a "$(printf '\033')" "$S/e7-esc2.txt"; ok $? "f8-r7: the session message also prints the line without control characters (got exit $RC)"
 # the FINAL line says that the reviewer line is only text
@@ -560,8 +581,9 @@ grep '^FINAL:' "$S/control.txt" | grep -q -F "The reviewer line is text; not ver
 tk m1-allow TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/m1-allow.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has m1-allow "NOT A PERSON"; ok $? "M1: with the test flag AND a pin override, a 'Testonly ...' name is accepted and the run is exit 5, never 0 (got exit $RC)"
 # the real bypass: the script's own stand-in pin copied in as THE pin (no override, no test flag) must not give exit 0. A mirror folder holds copies of the scripts, the real checker and the pin; demo/ is a link to the real demo folder
-MIR="$S/mirror"; mkdir -p "$MIR/flows-audit/flow-check" "$MIR/flows-audit/patches" && ln -s "$HERE/../../demo" "$MIR/demo" && cp -- "$HERE/take_check.sh" "$HERE/check_flows.py" "$PIN" "$MIR/flows-audit/flow-check/"
-mir() { local nm=$1; shift; env -u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT bash "$MIR/flows-audit/flow-check/take_check.sh" --flows "$P" > "$S/$nm.txt" 2>&1; RC=$?; }
+MIR="$S/mirror"; mkdir -p "$MIR/flows-audit/flow-check" "$MIR/flows-audit/patches" && ln -s "$HERE/../../demo" "$MIR/demo" && cp -- "$TAKE" "$MIR/flows-audit/flow-check/take_check.sh" && cp -- "$HERE/check_flows.py" "$PIN" "$MIR/flows-audit/flow-check/"
+MIRENV=""   # extra variables for one mirror run (a plain shell variable that a person could have exported)
+mir() { local nm=$1; shift; env -u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT $MIRENV bash "$MIR/flows-audit/flow-check/take_check.sh" --flows "$P" > "$S/$nm.txt" 2>&1; RC=$?; }
 mir mirbase
 MIRSHA=$(sed -n 's/^  combined: \([0-9a-f]\{64\}\)$/\1/p' "$S/mirbase.txt" | head -n 1)
 [ -n "$MIRSHA" ]; ok $? "M1: the mirror run printed the combined flows sha256 (needed to build the stand-in pins below)"
