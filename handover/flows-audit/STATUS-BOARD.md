@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:00:11Z
+UPDATED_UTC: 2026-11-16T11:01:54Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 3
-PERCENT: 93
-AGENTS_RUNNING: 8
-CAPACITY: 2.12 load of 4 cores, mem 0/15 GB, RAM 975/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 733M /tmp/claude-0 , agents 8 (light+heavy per list)
+ITEMS_OPEN: 4
+PERCENT: 94
+AGENTS_RUNNING: 5
+CAPACITY: 1.98 load of 4 cores, mem 0/15 GB, RAM 1017/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 733M /tmp/claude-0 , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -50,8 +50,9 @@ Q19 and Q20 answered 11:20Z: fixers launched; the lead asked for stranger read o
 Q20 applied to q16 rows (6 places); every fact is 'the lead verifies', none confirmed by me
 Q18 applied; I reproduced run_all rc 0 (659/0/62) and check_patches PASS 4. NOTE: take_check.sh on the committed UNPATCHED real-v5 now exits 4 by design: the take must run on the patched copy. n8n saving of manual runs unverified. No independent evidence run on the final F8 head yet.
 ORDER 027: started 4 lanes (stranger+adversarial read of owner sheet, citation checker of new counts, one-place sweep of own outputs, contradiction re-read vs DECISIONS)
-NEXT: ORDER 027: 8 agents: Q19 fixer, F3 last fix + r7 evidence, F8 final evidence, owner-sheet read, citation check, one-place sweep, contradiction re-read
-PUSHED_UTC: 2026-11-16T11:00:11Z
+F3 r7 evidence: mutants 9,12,17 survived (tokens-only list, owner check, 32MiB cap untested); --out via symlinked parent writes into target (unjudged): give to r8 fixer after a54491a8 reports
+NEXT: Collect F3 r8 + F8 evidence + cite/sweep/contra reads; then fix owner-sheet Blockers 1-2 and F3 survivors
+PUSHED_UTC: 2026-11-16T11:01:54Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -75,7 +76,6 @@ PUSHED_UTC: 2026-11-16T11:00:11Z
 | f3fix8 | F3 last fix batch (frozen) | sonnet | F1 F2 Majors + small nits, no new round | 11:10 | 11:35 | 5 | running | fill_flows/fix-f3-r8.md |
 | q19fix | Q19 wording decisions fixer | sonnet | 5 answers applied to CT and RW | 11:00 | 11:20 | 5 | running | fix-q19.md |
 | f8ev7 | F8 final-head evidence (take_check) | sonnet | delta evidence after Q18 | 11:05 | 11:25 | 5 | running | flow-check/evidence-q18.md |
-| strng3 | stranger + adversarial read, owner sheet | sonnet | newest OWNER-STEPS rows | 11:08 | 11:20 | 5 | running | (inline) |
 | cite2 | citation checker, new counts and dates | sonnet | FINDINGS/FIX-PLAN/LEDGER/REPORT vs sources | 11:08 | 11:25 | 5 | running | (inline) |
 | sweep2 | one-place sweep of own outputs | sonnet | FINDINGS..README | 11:08 | 11:25 | 5 | running | (inline) |
 | contra | contradiction re-read vs DECISIONS | sonnet | all outputs vs 12 decisions + Q13-Q20 | 11:08 | 11:25 | 5 | running | (inline) |
