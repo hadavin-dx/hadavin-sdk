@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:02:03Z
-PUSHED_UTC: 2026-11-16T12:02:03Z
+UPDATED_UTC: 2026-11-16T12:02:42Z
+PUSHED_UTC: 2026-11-16T12:02:42Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 15 of 20 table items not done (table below; M3, M14, M20 are rows in it); mean 83.1 percent (1662 / 20). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 running (ORDER 035 minimum met): cold reads of OWNER-CLEANUP-CARD, QUEUE, PLAN-002, CORRECTIONS, OWNER-RUN-DAY-CARD, premortem-r1, LEAD-PAGE, critical-path-r1. 0 missing. 5 reads finished since last beat.
+AGENTS_RUNNING: 8 running (ORDER 035 minimum met): cold reads of PLAN-002, LEAD-PAGE, critical-path-r1 (r5), banned-claims (r2), t19 steps (r2), merged-findings, MASTER-MAP, egm-dryrun. 0 missing. 12 reads finished since the last full table.
 CAPACITY: nproc 4, load 0.11, RAM 889 MB used of 16087 MB, disk 45% used (22 GB free of 252 GB, `df -h .`); my disk users: work 2.3 MB, reviews-of-core-hardening 0.4 MB; freed 0 MB (ORDER 031).
-NEXT: digested through 438. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
+NEXT: digested through 445. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,14 +45,14 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| af19e141 | critical-path-r1 r4 cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
-| a1dd28c6 | OWNER-CLEANUP-CARD cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
-| a03e237d | QUEUE cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
 | a73adc98 | PLAN-002 cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
-| a0f46551 | reviews-of-core-hardening/CORRECTIONS cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
-| a844361d | OWNER-RUN-DAY-CARD cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
-| a5df92a5 | premortem-r1 cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
 | a891622d | LEAD-PAGE cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
+| a20c3ec4 | critical-path-r1 r5 cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
+| a6473a49 | banned-claims r2 cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
+| ae516297 | t19 steps r2 cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
+| a8d71455 | merged-findings cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
+| a3a2c884 | MASTER-MAP cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
+| a943c1a5 | egm-dryrun cold read (read-only) | before 12:02 | about +10 min | running | nothing yet |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

@@ -26,3 +26,9 @@ Treat every phrase below as NOT allowed in the post, the caption or the video, u
 - Anything from scenes 5 to 11 (decision 1: not in this video).
 If a phrase is not on any list, ask the studio lead before you use it.
 Open: mirror this list into OWNER-VIEW row 6 and run-day step 27 once the studio lead says "D-04 apply"; v5 step J (lines 163 to 172) still allows wider claims (spending cap, separate count) and is owned by core-hardening.
+
+## Added 16 Nov 2026 (system-map session, after a cold read)
+- Checker: NOT NAMED yet. If no name is given by Tue 17 Nov 12:00 UTC / 17:30 IST, the owner does not post.
+- Where v5 step J (the owner steps file) disagrees with this list, this list wins.
+- "Nothing can spend before both typed answers" stays banned. It is lifted only when the studio lead names a result file that proves a closed gate exists; no such file exists today.
+- "Take" = the one filmed run. "Closed gate" = a check that stops a paid call before the owner types both answers (not built).

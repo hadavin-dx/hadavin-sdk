@@ -633,3 +633,12 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 436 STATUS-BOARD r5: item 1 bundles Docker, self-check and rehearsal; item 5 repeats the self-check and has two actions; items 2 and 4 lack IST deadline; terms line comes after first use; 15 of 20 beside 83.1 percent confuses.
 - 437 t19 steps: F8 pass rule contradicts itself on mf_leads; C2-4 has no clean-up command; T1-0 to T1-9 run-on, skips T1-8, no actor/command/port 5690; no clock times or per-step log; terms undefined; no CONFIRMED/PROPOSED label per step.
 - 438 OWNER-VIEW (lead-owned, held): line 14 is one paragraph of about 25 actions; line 12 glossary mixes policy; "closed lock" jargon; line 6 date block contradicts; rules A/E/F/I, T19, S9 undefined; row 1 cell has about 10 actions; row 6 prohibitions list.
+
+## Digests 439-445 (16 Nov 2026)
+- 439 critical-path r4: row 2b start/end and IST wrong; "earliest start" in notice row was the latest notice plus 3 h; "rehearsal passed" meant two things; row 2b/2c owner and 2c source (not decision 12) missing. Fixed in the next version (re-timed, 2b 17:30 to 18:30 UTC, notice 19:30 to 20:30 UTC, earliest start 22:30 to 23:30 UTC).
+- 440 OWNER-CLEANUP-CARD (lead-owned, held): line 7 deadline lets step 1 run without the release word; decision 2 (hand deletes) has no step; release-word lines 4, step 3 and step 2 contradict; step 5 n8n removal is irreversible and not in the irreversible list, may remove the secret-files folder; steps 1, 4, 6 pack 8 to 20 actions; no UTC/IST.
+- 441 QUEUE: line 2 vs 26 dates; decisions 2 and 5 missing from the in-force list; M5 cites decision 2 wrongly; M1-M4, M6-M15 no owner or due date; M17 NOT STARTED at 70 percent; M8 and M15 duplicate; many undefined terms.
+- 442 premortem-r1: items 1, 7, 10 and the HubSpot scope line stale after decision 2; no owner or date on any item; T19, step I, step J, hook door undefined.
+- 443 CORRECTIONS (core-hardening review file): items 2 and 3 still specify C-01 full fix and A-01 text although decision 4 cut/deferred them; no dates; dead_letters wording conflicts with REVIEW.md:52; missing file:line on items 3, 5-8; cite 213-231 vs 213 and 223.
+- 444 OWNER-RUN-DAY-CARD (lead-owned, held): step 11 packs about 8 actions; step 13 `y` has no STOP and its warning conflicts with decision 5; steps 17, 21 and 22 pack actions and lack STOP; steps 22 and 25 duplicate the delete; no UTC/IST anywhere.
+- 445 STATUS-BOARD, banned-claims, TAKE-BLOCKERS, OWNER-VIEW, t19: see 434-438 (already recorded).

@@ -9,14 +9,14 @@ Hard limits (from the lead's orders, not from the decisions file): latest start 
 |---|---|---|---|---|
 | 1 | studio lead | build and import the filled patched flow copy with scripts\n8n_api.py (decision 7) | 12:00 UTC / 17:30 IST | 14:30 UTC / 20:00 IST (2.5 h) |
 | 2a | studio lead | loopback self-check on the lead's own machine (decision 12), not a film scene | 12:00 UTC / 17:30 IST | 16:00 to 17:00 UTC / 21:30 to 22:30 IST (4 to 5 h by the plan) |
-| 2b | studio lead | first laptop rehearsal: T19 and the stored-data check; needs rows 1 and 2a | 16:00 to 17:00 UTC | 18:30 UTC / 00:00 IST Tue (1.5 h) |
-| 2c | a named independent reviewer (NOT NAMED: the studio lead names one) | up to 2 review rounds of 1 h each | 18:30 UTC | 19:30 to 20:30 UTC / 01:00 to 02:00 IST Tue |
-| notice | studio lead | after "rehearsal passed" sends the owner date and start, at least 3 h ahead | 20:30 UTC at the latest | earliest start 23:30 UTC Mon / 05:00 IST Tue |
+| 2b | studio lead (the owner is not needed; the rehearsal uses stand-in programs) | first laptop rehearsal: T19 and the stored-data check; needs rows 1 and 2a | 16:00 to 17:00 UTC / 21:30 to 22:30 IST | 17:30 to 18:30 UTC / 23:00 to 00:00 IST (1.5 h) |
+| 2c | a named independent reviewer (NOT NAMED: the studio lead names one; the lead's own plan, not decision 12, asks for review rounds) | up to 2 review rounds of 1 h each | 17:30 to 18:30 UTC / 23:00 to 00:00 IST | 19:30 to 20:30 UTC / 01:00 to 02:00 IST Tue |
+| notice | studio lead | after "rehearsal passed" (here = end of row 2c) sends the owner date and start, at least 3 h ahead | 19:30 to 20:30 UTC / 01:00 to 02:00 IST Tue | the earliest start is the notice time plus 3 h: 22:30 to 23:30 UTC Mon / 04:00 to 05:00 IST Tue |
 | take | owner at the laptop | setup 0.5 h; the filmed run has no sourced length | not set | not set |
 | cut and check | NOT NAMED (no person in any file I hold) | about 4 to 6 h (EST) | after the take | not set |
 | clean-up | owner | delete leftover made-up contacts by hand (decision 2); revoke the model key | after "last run done" | not set |
 
-If row 2a only starts at 14:00 UTC / 19:30 IST (decision A4 as proposed), every row moves 2 h later: rehearsal passed by 22:30 UTC / 04:00 IST Tue, earliest start 01:30 UTC Tue / 07:00 IST Tue. That is still Tuesday, so the A4 time does not by itself make Tue 17 Nov fail; the real limit is when the owner is awake, which no file states (assumption: Tue 17 Nov about 04:30 UTC / 10:00 IST).
+If row 2a only starts at 14:00 UTC / 19:30 IST (decision A4 as proposed), rows 2a, 2b, 2c and the notice move 2 h later (row 1 does not move, it starts independently): rehearsal passed by 22:30 UTC / 04:00 IST Tue, earliest start 01:30 UTC Tue / 07:00 IST Tue. That is still Tuesday, so the A4 time does not by itself make Tue 17 Nov fail; the real limit is when the owner is awake, which no file states (assumption: Tue 17 Nov about 04:30 UTC / 10:00 IST).
 Row 1 "done" at 14:30 UTC is my estimate; the lead's own "row 1 done" message time is not set and may differ.
 TAKE-BLOCKERS row 3 (core-hardening's edits) has no estimate in any file I hold, so whether Wed 18 Nov is reachable is UNKNOWN until core-hardening gives one.
 TAKE-BLOCKERS has 3 rows: its row 1 = row 1 here; its row 2 = rows 2a to 2c here; its row 3 is not scheduled here. Rows run in parallel only where files differ; row 1 and row 2a can start together, and row 2b waits for both.
