@@ -1160,3 +1160,4 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 853 FINAL-CROSSCHECK r17: stacked, terms. PARTLY FIXED by terms block.
 - 854 L5ac r10: glossary gaps. FIXED by terms; FD-001 table NOT BUILT.
 - 855 merged-findings r14: DECISION source conflict. UNRESOLVED; needs the lead.
+- 856 L4c r12: line cites, quarantine list, terms. FIXED by block; row markers TO DO.
