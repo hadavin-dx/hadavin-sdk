@@ -1,0 +1,49 @@
+named line 49: 'sys.exit(3)'->'sys.exit(4)' rc=1 KILLED 'SELFTEST: 627 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_python_older_than_3_10_exits_3_with_message
+named line 119: 'FAILS.append('->'FAILS.extend(' rc=1 KILLED 'SELFTEST: 627 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_result_line_counts_each_fail_once
+named line 491: '{10,}'->'{11,}' rc=1 KILLED 'SELFTEST: 623 as expected, 5 not as expected, 62 skipped (not applicable)'
+    first: secret_slack_exactly_10_chars@real-mf-form.json (FAIL, exit 1)
+named line 682: 'or not c.get("type")'->'and not c.get("type")' rc=1 KILLED 'SELFTEST: 623 as expected, 5 not as expected, 62 skipped (not applicable)'
+    first: shape_link_without_type@real-mf-form.json (FAIL, exit 1)
+named line 1263: '(a or b)'->'(a and b)' rc=1 KILLED 'SELFTEST: 627 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_deep_diff_added_to_empty_list_and_removed_to_empty_list
+named line 1407: 'out.append('->'out.extend(' rc=1 KILLED 'SELFTEST: 627 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: diff_text_header_line_exact (one header line per file, on screen and in the --diff-out file) NOT AS 
+random line 349: ' and '->' or ' rc=1 KILLED 'SELFTEST: 626 as expected, 2 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_v4_table_has_every_column (exit 0)
+random line 313: 'lstrip'->'rstrip' rc=0 SURVIVED 'SELFTEST: 628 as expected, 0 not as expected, 62 skipped (not applicable)'
+random line 832: '.append('->'.extend(' rc=1 KILLED 'SELFTEST: 627 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_placeholder_in_any_setting_string (exit 0)
+random line 323: 'not '->'' rc=1 KILLED 'SELFTEST: 625 as expected, 3 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_v4_table_has_every_column (exit 0)
+random line 908: 'True'->'False' rc=0 SURVIVED 'SELFTEST: 628 as expected, 0 not as expected, 62 skipped (not applicable)'
+random line 829: ' != '->' == ' rc=1 KILLED 'SELFTEST: 626 as expected, 2 not as expected, 62 skipped (not applicable)'
+    first: r5_placeholder_in_node_setting_is_listed_even_quiet (exit 0)
+random line 1117: 'True'->'False' rc=0 SURVIVED 'SELFTEST: 628 as expected, 0 not as expected, 62 skipped (not applicable)'
+random line 353: 'True'->'False' rc=0 SURVIVED 'SELFTEST: 628 as expected, 0 not as expected, 62 skipped (not applicable)'
+random line 341: 'not '->'' rc=1 KILLED 'SELFTEST: 626 as expected, 2 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_v4_table_has_every_column (exit 0)
+random line 61: 'not '->'' rc=0 SURVIVED 'SELFTEST: 628 as expected, 0 not as expected, 62 skipped (not applicable)'
+random line 337: ' in '->' not in ' rc=1 KILLED ''
+random line 298: 'not '->'' rc=1 KILLED 'SELFTEST: 625 as expected, 3 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_v4_table_has_every_column (exit 0)
+random line 908: 'known=True'->'known=False' rc=0 SURVIVED 'SELFTEST: 628 as expected, 0 not as expected, 62 skipped (not applicable)'
+random line 163: ' in '->' not in ' rc=1 KILLED ''
+random line 289: '.append('->'.extend(' rc=1 KILLED 'SELFTEST: 625 as expected, 3 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_v4_table_has_every_column (exit 0)
+random line 287: ' == '->' != ' rc=1 KILLED 'SELFTEST: 625 as expected, 3 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_v4_table_has_every_column (exit 0)
+random line 325: ' != '->' == ' rc=1 KILLED 'SELFTEST: 625 as expected, 3 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_v4_table_has_every_column (exit 0)
+random line 337: ' or '->' and ' rc=1 KILLED 'SELFTEST: 626 as expected, 2 not as expected, 62 skipped (not applicable)'
+    first: r5_ddl_old_table_lacks_alert_columns (exit 0)
+random line 1105: ' and '->' or ' rc=1 KILLED 'SELFTEST: 627 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_saved_runs_warn_only_for_the_two_entry_flows
+random line 325: ' and '->' or ' rc=1 KILLED ''
+rerun line 908: 'known=True'->'known=False' rc=1 KILLED 'SELFTEST: 628 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_new_warns_are_counted_as_known_open_problems (exit 0)
+rerun line 1117: 'known=True'->'known=False' rc=1 KILLED 'SELFTEST: 628 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_new_warns_are_counted_as_known_open_problems (exit 0)
+rerun line 353: 'known=True'->'known=False' rc=1 KILLED 'SELFTEST: 628 as expected, 1 not as expected, 62 skipped (not applicable)'
+    first: r5_new_warns_are_counted_as_known_open_problems (exit 0)

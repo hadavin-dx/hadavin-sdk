@@ -32,6 +32,7 @@ EXIT_OK = 0
 EXIT_REFUSED = 1  # any refusal; usage errors from argparse are 2
 EXIT_INCOMPLETE = 3  # fill wrote the copy, but placeholders are left: NOT READY TO IMPORT
 EXIT_NOTHING = 4  # fill found no token at all (already filled, or the wrong folder)
+EXIT_INTERRUPTED = 130  # Ctrl-C (the usual shell code: 128 + SIGINT)
 HAS_NOFOLLOW = hasattr(os, "O_NOFOLLOW") and hasattr(os, "getuid")
 MIN_PYTHON = (3, 11)
 # Size limits: a flow file or manifest larger than this is refused instead of read into memory.
@@ -232,7 +233,9 @@ def read_values(path: str) -> dict[str, str]:
     if inside_git(os.path.dirname(rp)):
         raise Refused("values file is inside a git repository (move it out; it holds secrets)")
     if in_synced_folder(rp):
-        raise Refused("values file is inside a cloud-synced or backed-up folder (it would be copied)")
+        raise Refused(
+            "values file is inside a cloud-synced or backed-up folder (it would be copied)"
+        )
     try:
         # O_NONBLOCK: opening a pipe must not wait for a writer
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -652,7 +655,9 @@ def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: boo
     if inside_git(os.path.dirname(out_dir)):
         raise Refused("output path is inside a git repository (a parent folder has .git)")
     if in_synced_folder(os.path.dirname(out_dir)):
-        raise Refused("output path is inside a cloud-synced or backed-up folder (it would be copied)")
+        raise Refused(
+            "output path is inside a cloud-synced or backed-up folder (it would be copied)"
+        )
     if os.path.lexists(out_dir) or os.path.lexists(manifest_path):
         raise Refused(
             "output folder or its manifest already exists (run delete --out on it first; add "
@@ -823,10 +828,10 @@ def _marked_folder_problems(dfd: int, folder_name: str, present: set) -> int:
         bad += 1
     for n in sorted(present):
         ls = _lstat_or_none(n, dfd)
-        if ls is not None and stat.S_ISREG(ls.st_mode):
-            if ls.st_uid != me or stat.S_IMODE(ls.st_mode) != 0o600:
-                _say(f"{_a(n)}: not mode 0600 and yours (a copy can loosen it; run chmod 600)")
-                bad += 1
+        loose = ls is not None and stat.S_ISREG(ls.st_mode)
+        if loose and (ls.st_uid != me or stat.S_IMODE(ls.st_mode) != 0o600):
+            _say(f"{_a(n)}: not mode 0600 and yours (a copy can loosen it; run chmod 600)")
+            bad += 1
     return bad
 
 
@@ -1025,7 +1030,47 @@ def _signature_ok(dfd: int, folder_name: str, present: set, force_hash: bool) ->
             raise Refused(f"{_a(n)}: holds $env text (looks like an input folder); nothing deleted")
 
 
-def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
+def _stray_files(dfd: int, extra: list, me: int, remove_others: bool, why: str) -> list:
+    """Files in the folder that the manifest does not list. Without --remove-others they stop
+    the delete (named, so a person can look). With it, a plain file that is yours is taken
+    along (a .DS_Store or an editor's .swp file); anything else still stops the delete."""
+    if not extra:
+        return []
+    if not remove_others:
+        raise Refused(
+            f"folder holds files {why}: {', '.join(_a(e) for e in extra)}; nothing deleted "
+            "(stray plain files of yours, such as .DS_Store, go with --remove-others)"
+        )
+    for n in extra:
+        ls = os.lstat(n, dir_fd=dfd)
+        if not stat.S_ISREG(ls.st_mode) or ls.st_uid != me:
+            raise Refused(
+                f"{_a(n)}: not a plain file of yours, so --remove-others does not remove it; "
+                "nothing deleted"
+            )
+    return list(extra)
+
+
+def _folder_left_behind(dfd: int, folder_name: str, has_man: bool) -> Refused:
+    """The message when the folder could not be removed at the end (a file appeared)."""
+    try:
+        names = ", ".join(_a(x) for x in sorted(os.listdir(dfd))) or "nothing I can see"
+    except OSError:
+        names = "unknown"
+    hint = (
+        "run delete again (add --remove-others for stray files of yours)"
+        if has_man
+        else "look at it and remove it by hand"
+    )
+    return Refused(
+        f"folder left behind: {_a(folder_name)} (it holds: {names}); the files this tool "
+        f"listed were removed; {hint}"
+    )
+
+
+def do_delete(
+    out_dir: str, force_hash: bool, no_manifest: bool = False, remove_others: bool = False
+) -> int:
     out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
     parent = os.path.dirname(out_dir)
     folder_name = os.path.basename(out_dir)
@@ -1046,7 +1091,7 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
         if has_man and not stat.S_ISREG(mst.st_mode):
             raise Refused("manifest is a symlink or not a file; nothing deleted")
         if not has_dir and not has_man:
-            print("nothing to delete: the output folder and its manifest are both missing")
+            _say("nothing to delete: the output folder and its manifest are both missing")
             return EXIT_OK
         files: dict = {}
         if not no_manifest and not has_man:
@@ -1072,7 +1117,7 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
                 manifest_loaded = True
         if not has_dir:  # a fill was stopped after the manifest and before the folder
             os.unlink(manifest_name, dir_fd=pfd)
-            print("deleted the manifest (the folder was not there)")
+            _say("deleted the manifest (the folder was not there)")
             return EXIT_OK
         try:
             dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
@@ -1080,25 +1125,24 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
             raise Refused("output folder is a symlink or not a folder; nothing deleted") from None
         present = set(os.listdir(dfd))
         todo: list[str] = []
+        others: list[str] = []
         if no_manifest:
             if manifest_loaded:  # a good manifest exists: the folder must hold nothing beyond it
-                extra = sorted(present - set(files))
-                if extra:
-                    raise Refused(
-                        f"folder holds files not in the manifest: "
-                        f"{', '.join(_a(e) for e in extra)}; nothing deleted"
-                    )
-            _signature_ok(dfd, folder_name, present, force_hash)
-            todo = sorted(present)
+                others = _stray_files(
+                    dfd, sorted(present - set(files)), me, remove_others, "not in the manifest"
+                )
+            elif remove_others:  # no list to keep to: every plain file that is not ours goes
+                own = (MARKER_NAME, NOT_READY_NAME)
+                stray = sorted(n for n in present if n not in own and not n.endswith(".json"))
+                others = _stray_files(dfd, stray, me, True, "")
+            _signature_ok(dfd, folder_name, present - set(others), force_hash)
+            todo = sorted(present - set(others))
         else:
             if os.fstat(dfd).st_uid != me:
                 raise Refused("output folder is not owned by you; nothing deleted")
-            extra = sorted(present - set(files))
-            if extra:
-                raise Refused(
-                    f"folder holds files not in the manifest: {', '.join(_a(e) for e in extra)}; "
-                    "nothing deleted"
-                )
+            others = _stray_files(
+                dfd, sorted(present - set(files)), me, remove_others, "not in the manifest"
+            )
             for n, h in sorted(files.items()):
                 ls = _lstat_or_none(n, dfd)
                 if ls is None:
@@ -1116,15 +1160,35 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
         # the not-ready note and the marker go last: a delete that is cut short leaves a folder
         # that is still marked, so a re-run finds it and `check` still refuses it
         last = (NOT_READY_NAME, MARKER_NAME)
-        todo = [n for n in todo if n not in last] + [n for n in last if n in todo]
-        with _sigint_blocked():
-            for n in todo:
-                os.unlink(n, dir_fd=dfd)
-            os.rmdir(folder_name, dir_fd=pfd)
-            if has_man:
-                os.unlink(manifest_name, dir_fd=pfd)
-        count = len([n for n in todo if n not in (MARKER_NAME, NOT_READY_NAME)])
-        print(f"deleted {count} files, the folder and the manifest")
+        todo = others + [n for n in todo if n not in last] + [n for n in last if n in todo]
+        done = False
+        held = False
+        try:
+            with _sigint_blocked():
+                for n in todo:
+                    os.unlink(n, dir_fd=dfd)
+                try:
+                    os.rmdir(folder_name, dir_fd=pfd)
+                except OSError:
+                    raise _folder_left_behind(dfd, folder_name, has_man) from None
+                if has_man:
+                    os.unlink(manifest_name, dir_fd=pfd)
+                done = True
+        except (_Stopped, KeyboardInterrupt):
+            # a stop that came in while the removal was shielded is delivered right after it;
+            # if the removal had finished, say so instead of reporting a refusal
+            if not done:
+                raise
+            held = True
+        count = len([n for n in todo if n not in (MARKER_NAME, NOT_READY_NAME, *others)])
+        _say(f"deleted {count} files, the folder and the manifest")
+        if others:
+            _say(f"also removed {len(others)} other file(s): {', '.join(_a(o) for o in others)}")
+        if held:
+            _say(
+                "a stop signal came in while the removal ran; it was held until the removal was "
+                "finished, so nothing is left"
+            )
         return EXIT_OK
     finally:
         if dfd >= 0:
@@ -1133,11 +1197,18 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
 
 
 def main(argv=None) -> int:
+    if sys.version_info < MIN_PYTHON:
+        _say(
+            f"refused: this needs Python {MIN_PYTHON[0]}.{MIN_PYTHON[1]} or newer (the oldest "
+            "version the tests were run on); nothing was done",
+            err=True,
+        )
+        return EXIT_REFUSED
     if not HAS_NOFOLLOW:
-        print(
+        _say(
             "refused: this needs Linux, macOS or WSL (it must open files without following "
             "symlinks, which this system cannot do); nothing was done",
-            file=sys.stderr,
+            err=True,
         )
         return EXIT_REFUSED
     ap = argparse.ArgumentParser(prog="fill_flows", description=__doc__.split("\n")[0])
@@ -1158,6 +1229,11 @@ def main(argv=None) -> int:
     d.add_argument("--out", required=True)
     d.add_argument("--force-hash", action="store_true")
     d.add_argument("--no-manifest", action="store_true", help="folder has no usable manifest")
+    d.add_argument(
+        "--remove-others",
+        action="store_true",
+        help="also remove stray plain files of yours that the manifest does not list",
+    )
     a = ap.parse_args(argv)
     try:
         with _stop_signals():
@@ -1165,20 +1241,45 @@ def main(argv=None) -> int:
                 return do_fill(a.in_dir, a.values, a.out, a.allow_placeholders)
             if a.mode == "check":
                 return do_check(a.dir, a.tokens_only)
-            return do_delete(a.out, a.force_hash, a.no_manifest)
+            return do_delete(a.out, a.force_hash, a.no_manifest, a.remove_others)
     except _Stopped:
-        print(
-            "refused: stopped by a signal; the run's own clean-up was done (run the same command again if a folder is left)",
-            file=sys.stderr,
+        _say(
+            "refused: stopped by a signal; if a line above says something was left behind, "
+            "run delete --out on that folder",
+            err=True,
         )
         return EXIT_REFUSED
     except Refused as e:
-        print(f"refused: {e}", file=sys.stderr)
+        _say(f"refused: {e}", err=True)
         return EXIT_REFUSED
-    except Exception as e:  # noqa: BLE001  never print the exception text: it could carry a path or value
-        print(f"failed: {type(e).__name__}", file=sys.stderr)
+    except RecursionError:
+        _say("refused: a file is nested too deeply to read; nothing was written", err=True)
         return EXIT_REFUSED
+
+    # Any other error is not caught here: the command-line entry (run) reports it by its type
+    # name only, because the text of an unexpected error could carry a path or a value.
+
+
+def _quiet_hook(exc_type, _exc, _tb) -> None:
+    """Report an unexpected error by its type name only (never the text or a traceback: they
+    could carry a path or a value). Python then exits with code 1."""
+    _say(f"failed: {exc_type.__name__}", err=True)
+
+
+def run() -> int:
+    """The command-line entry: like main, but an unexpected error is reported by type name
+    only, and Ctrl-C ends with one plain line and the usual exit code 130 (no traceback)."""
+    sys.excepthook = _quiet_hook
+    try:
+        return main()
+    except KeyboardInterrupt:
+        _say(
+            "refused: stopped by Ctrl-C; if a line above says something was left behind, "
+            "run delete --out on that folder",
+            err=True,
+        )
+        return EXIT_INTERRUPTED
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())
