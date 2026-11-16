@@ -256,6 +256,7 @@ patch("| L-DEL (ANSWERED; part still open)", "Until then the run sheet says 'UNV
 patch("| L-SAVE | studio lead", "Yes (PLAN:125). Checks: C-11 (static, done) and C-4 (import check, not run).", "Yes (the plan of the re-smoke already says all for both settings, PLAN:125). Checks: C-11 (static, done) and C-4 (import check, not run). Why failed runs matter: with saving of failed runs on, a failed run keeps the contact's name and e-mail address in n8n's database, which is why the leak scan and the deletion after the take exist (rows 6 and 49).")
 patch("| L-CARD (was Q1, part 1)", "3, 4, 11, 12, 13, 14, 15, 20, 29, 31, 81, 86 |", "3, 4, 11, 12, 13, 14, 15, 20, 29, 31, 81, 86 |")
 
+exec(open(E + "c6r_rows.py", encoding="utf-8").read())
 # ---------------------------------------------------------------- tables 3b / section 3 tied columns are regenerated from the statuses below
 TOK = re.compile(r"L-[A-Z]+|C-\d+[a-d]?")
 cnt = {}

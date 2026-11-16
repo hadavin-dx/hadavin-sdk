@@ -269,24 +269,25 @@ need('C172', 'Four phone alarms')                                               
 need('C172', 'Older key point (cannot be undone; every way the run ends passes here before 8.1)')                       # 7.11 in both routes
 need('C172', 'a FREEZE does not stop this')                                                                              # S B2: B 7.11 and FREEZE: the older key ends even after FREEZE
 for nm in 'AB':                                                                                                          # S M: the letter is in the heading and footer of every page (the sheet page is read from SHEETS_DISK)
-    _h = '\n'.join(SHEETS_DISK[nm].split('\n')[:3])
+    _h = SHEETS_DISK[nm].split('\n')[0]
     if 'sheet %s' % nm not in _h or 'End of sheet %s' % nm not in SHEETS_DISK[nm]: fail('C173', 'sheet %s lacks the letter in its heading or its footer' % nm)
     for pg, foot in (('OWNER-CARD-v29-', 'End of the card, sheet %s' % nm), ('OWNER-APPENDIX-v29-', 'End of the appendix, sheet %s' % nm)):
         try: _t = open(D + pg + nm + '.md', encoding='utf-8').read()
         except OSError: fail('C173', pg + nm + '.md missing'); continue
-        if 'sheet %s' % nm not in '\n'.join(_t.split('\n')[:3]) or foot not in _t: fail('C173', '%s%s.md lacks the letter in its heading or its footer' % (pg, nm))
+        if 'sheet %s' % nm not in _t.split('\n')[0] or foot not in _t: fail('C173', '%s%s.md lacks the letter in its heading or its footer' % (pg, nm))
 need('C174', 'n8n credentials: exactly the three, by name')                                                              # S: numbers page slot
 need('C175', 'alone (R1), with the narrowest scopes the create form offers')                                            # S: look key clauses
 need('C175', 'cancel is proven')
 need('C176', 'if used less than 7 days ago take B'); need('C176', '7 days (168 hours) or more', (('A', A),))                          # S: the 7-day rule at exactly 7 days, route A/B condition (L-A/B)
 for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):                                                                          # L-23NOV: 18:14 only with the refusal-limit label and its IST pair
     for _m in re.finditer(r'18:14', _t):
-        _w = _t[max(0, _m.start() - 160):_m.end() + 80]
+        _w = _t[max(0, _m.start() - 120):_m.start()]
         if 'refusal limit' not in _w: fail('C177', '%s holds 18:14 without the label "refusal limit" near it: %r' % (_n, _t[_m.start() - 30:_m.end() + 20]))
 for _n, _t in (('A', A), ('B', B)):
     for _m in re.finditer(r'18:14', _t): fail('C177', '%s sheet holds 18:14 (the owner pages never need the refusal limit)' % _n)
 if 'A gap longer than the lease' in NOTE or 'lease sentence of section 5 decided' in NOTE: fail('C178', 'N: the lease sentence is not struck from the public post (lead answer Q22c)')   # L-Q22c
 if 'start margin' not in NOTE: fail('C178', 'N: 860 s is not called the start margin')
+if F.get('ls23') != '18:04 UTC = 23:34 IST' or F.get('rv23') != '18:19 UTC = 23:49 IST': fail('C179', 'facts: latest start or key-revoked time of 23 Nov is not the lead\'s (L-23NOV)')
 for _s in ('18:04 UTC = 23:34 IST', '18:19 UTC = 23:49 IST'):
     if _s not in NOTE or _s not in OPEN: fail('C179', 'note or open list lacks %r (L-23NOV)' % _s)
 need('C180', '[OWNER FILLS:'); need('C180', '[LEAD FILLS at re-pin:')                                                      # L-FACTS: visibly different placeholder rows
