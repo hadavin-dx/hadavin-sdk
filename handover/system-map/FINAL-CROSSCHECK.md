@@ -105,4 +105,4 @@ Studio head: where the archive lives; yes to every move; keep or archive extract
 | evidence (two read-only agents) | done: work/crosscheck-ratings-agent.md, work/crosscheck-cutlist-agent.md |
 | result review round 1: egm-design (5 Majors, 5 Nits) and egm-codebase-details (2 Majors, 8 Nits; no Blocker) | done; fixes applied here, saved as work/review-crosscheck-*-r1.md |
 | egm-resolve through the Skill tool | done: work/resolve-crosscheck-1.md; Majors and Nits applied here |
-| round 2 (only Blockers and Majors) | not run: no Blocker or Major open after the fixes above |
+| round 2 (only Blockers and Majors) | NOT run. Design Major M3 was fixed as a sources paragraph under the section 2 table, not as a table column, and no reviewer has re-read it; treat M3 as fixed-unverified |
