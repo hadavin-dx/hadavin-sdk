@@ -466,3 +466,35 @@ INTERRUPTED (signal 64): no mutant planted, no marker
   PASS: T47b SEGV exit 139 (got 139), file restored, state empty, no orphan
   PASS: T47b BUS exit 135 (got 135), file restored, state empty, no orphan
   PASS: T47b FPE exit 136 (got 136), file restored, state empty, no orphan
+  PASS: T47b ILL exit 132 (got 132), file restored, state empty, no orphan
+== T48 (review r4 M2) pytest cannot take its root, settings or conftest from above --root
+  PASS: T48a the command carries --rootdir and --confcutdir (both = root)
+  PASS: T48 setup.py above the root refused (rc 2, hits 1)
+  PASS: T48 conftest.py above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml WITHOUT a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml with a dotted-key pytest setting above the root refused (rc 2, hits 1)
+  PASS: T48 tox.ini with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 setup.cfg with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 an ini file INSIDE the root is accepted (rc 0) and the raw file records a normal verdict
+pyproject cases wrong: []
+  PASS: T48 pyproject.toml is parsed: dotted keys, inline tables, native table found; no section and look-alike table not; invalid TOML counted (fail closed)
+== T49 (review r4 M3) a mutant's tests that change the tree stop the loop before the next mutant
+SUMMARY: 2 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 1 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['conftest.py']
+  PASS: T49 test_writeconf.py: exit 4 (got 4), the loop stopped after m1 (no X-m2.txt), m1's raw file records the changed file
+  PASS: T49 test_writeconf.py: target file restored, state empty
+SUMMARY: 2 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 1 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['data.bin']
+  PASS: T49 test_writedata.py: exit 4 (got 4), the loop stopped after m1 (no X-m2.txt), m1's raw file records the changed file
+  PASS: T49 test_writedata.py: target file restored, state empty
+  PASS: T49 a clean two-mutant run: exit 0 (got 0), both raw files record 'differing files (0; 0 = clean): []' and a digest
+== T50 (review r4 evidence) unreaped_child and the reaped-leader guard, tested directly
+running: True zombie: True reaped: False
+returncode still None, leader reaped: stop_group calls: []
+  PASS: T50 unreaped_child true while running and as a zombie, false once reaped; no stop_group call for a reaped leader whose returncode is None
+== T51 (review r4 evidence) --restore identity checks: start time, dead leader, works_in
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 557: 10267 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 15076 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/
+  PASS: T51a identical command line, other start time: stranger left alone, file restored (rc 0)
