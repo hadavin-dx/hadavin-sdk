@@ -59,7 +59,9 @@ OPTS = {
     "ddl": None,  # table name -> set of column names, from --ddl FILE
 }
 PARAM_PH = []  # placeholders found in node settings (not credential ids): they must be filled before import
-SQL_DONE = {"checked": 0}  # queries compared with the --ddl table definition
+SQL_DONE = {"checked": 0, "col_warn": 0, "tbl_warn": 0, "no_query": 0}  # queries compared with the --ddl table definition, and what that comparison found
+CRED_PH = []  # credential ids and sub-workflow ids that are still placeholders (they must be replaced before import)
+ENV_USE = []  # steps that read environment variables: "file node: tokens"
 LEAD = {
     "webhook": 0,
     "env": 0,
@@ -79,7 +81,12 @@ PLACEHOLDERS = [
     "SUB_WORKFLOW_ID",
     "HS_CRED",
     "HUBSPOT_CREDENTIAL_ID",
+    "CHANGE_ME",
+    "CHANGEME",
+    "REPLACE_ME",
+    "TODO",
 ]
+MAIL_KEYS = ("fromEmail", "toEmail", "ccEmail", "bccEmail", "replyTo")  # settings that must hold one e-mail address
 REF = re.compile(
     r"""\$\(\s*['"`]([^'"`]+)['"`]\s*\)|\$node\[\s*['"`]([^'"`]+)['"`]\s*\]|\$items\(\s*['"`]([^'"`]+)['"`]|\$node\.([A-Za-z_][A-Za-z0-9_]*)"""
 )
@@ -162,6 +169,16 @@ def final_block():
         )
         for k in PARAM_PH:
             print("  - " + k)
+    if CRED_PH:
+        print(
+            f"CREDENTIAL IDS STILL PLACEHOLDERS ({len(CRED_PH)}): these must be replaced in n8n before import (the id that n8n gives each credential and each sub-workflow):"
+        )
+        for k in CRED_PH:
+            print("  - " + k)
+    if ENV_USE:
+        print(f"STEPS THAT READ ENVIRONMENT VARIABLES ({len(ENV_USE)}):")
+        for k in ENV_USE:
+            print("  - " + k)
     if OPTS["ddl"] is None:
         print(
             "SQL COLUMNS NOT CHECKED: no --ddl file was given (the take needs demo/n8n-flows-v4/mf_leads.sql)."
@@ -170,6 +187,13 @@ def final_block():
         print(
             f"SQL columns compared with the --ddl file: {SQL_DONE['checked']} query string(s) read."
         )
+        print(
+            f"SQL WARNS: column WARNs={SQL_DONE['col_warn']} table WARNs={SQL_DONE['tbl_warn']} postgres steps with no query text (not compared)={SQL_DONE['no_query']}"
+        )
+        if SQL_DONE["checked"] == 0:
+            print(
+                "SQL COLUMNS NOT CHECKED: a --ddl file was given but 0 query strings were read, so NO column was compared (the checker reads only the 'query' setting of postgres steps)."
+            )
     print(f"Known open problems: {len(KNOWN)}")
     for k in KNOWN:
         print("  - " + k)
@@ -267,6 +291,7 @@ SQL_WORDS = {
     "json",
 }
 TABLE_AFTER = {"from", "update", "into", "join"}
+MAIL_SHAPE = re.compile(r"[^@\s,;]+@[^@\s,;]+\.[A-Za-z]{2,}")  # one plain e-mail address; the shape only, a filled-in wrong address still passes
 PH_WORD = re.compile(
     r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*"
 )
@@ -334,19 +359,29 @@ def sql_check(n, tag):
     if ddl is None:
         return
     prm = n.get("parameters")
-    for q in [x for k, x in (prm or {}).items() if k == "query" and isinstance(x, str)]:
+    qs = [x for k, x in (prm or {}).items() if k == "query" and isinstance(x, str)]
+    if not qs:
+        SQL_DONE["no_query"] += 1
+        warn(
+            tag,
+            f"node {n['name']}: this postgres step has no query text (table or column mode?), so its columns were NOT compared with the --ddl file",
+            known=True,
+        )
+    for q in qs:
         SQL_DONE["checked"] += 1
         tables, words = sql_use(q)
         known = set().union(*[ddl[t] for t in tables if t in ddl]) if tables else set()
         absent = sorted(t for t in tables if t not in ddl)
         miss = sorted(w for w in words if w not in known and w not in tables)
         if absent:
+            SQL_DONE["tbl_warn"] += 1
             warn(
                 tag,
                 f"node {n['name']}: the query uses table(s) {absent} that the --ddl file does not define",
                 known=True,
             )
         if miss and not absent:
+            SQL_DONE["col_warn"] += 1
             warn(
                 tag,
                 f"node {n['name']}: the query uses column(s) {miss} that the --ddl file does not define; in n8n this step would fail on every run",
@@ -390,8 +425,11 @@ def load(path, tag):
             f"parse failure: duplicate JSON key {str(e)!r} (n8n keeps only the last one, so the file says two different things)",
         )
         return None
+    except UnicodeDecodeError:
+        fail(tag, "parse failure UnicodeDecodeError: the file is unreadable (it is not valid UTF-8 text)")
+        return None
     except (OSError, ValueError, RecursionError) as e:
-        fail(tag, f"parse failure {type(e).__name__}")
+        fail(tag, f"parse failure {type(e).__name__}: the file is unreadable or not valid JSON")
         return None
 
 
@@ -814,6 +852,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             idv = str((v or {}).get("id") or "") if isinstance(v, dict) else ""
             if idv and any(p in idv for p in PLACEHOLDERS):
                 phs.append(f"{nm} credential {k} id {idv}")
+                CRED_PH.append(f"{tag} node {nm} credential {k} id: {idv}")
         wf = (
             (n.get("parameters") or {}).get("workflowId")
             if isinstance(n.get("parameters"), dict)
@@ -822,6 +861,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         for wv in list(strings(wf)) if wf is not None else []:
             if any(p in wv for p in PLACEHOLDERS):
                 phs.append(f"{nm} sub-workflow id {wv}")
+                CRED_PH.append(f"{tag} node {nm} sub-workflow id: {wv}")
         secret_scan(n, tag)
         prm_ = n.get("parameters")
         if isinstance(prm_, dict):
@@ -831,10 +871,15 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                         for w_ in PH_WORD.findall(s_):
                             PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {w_}")
                             pph.append(f"{nm} {k_}: {w_}")
+                if k_ in MAIL_KEYS and isinstance(v_, str) and not v_.startswith("="):
+                    if not MAIL_SHAPE.fullmatch(v_.strip()):
+                        PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {v_!r} is not an e-mail address")
+                        pph.append(f"{nm} {k_}: {v_!r} is not an e-mail address")
         if short == "postgres":
             sql_check(n, tag)
         envs = sorted({e for s_ in strings(n.get("parameters", {})) for e in ENVTOK.findall(s_)})
         if envs:
+            ENV_USE.append(f"{tag} node {nm}: {', '.join(envs)}")
             msg = "node {} reads {}; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: {}) this node stops working".format(
                 nm, ", ".join(envs), UNV
             )
@@ -1102,18 +1147,14 @@ def check_flow(d, tag, expect, baseline_d):
             fail(tag, f"connection count {ncon} != expected {expect['connections']}")
     extra_checks(d, tag, nodes, adj, trig_all, sticky)
     st_ = d.get("settings")
-    if isinstance(st_, dict) and any(
-        n["type"] in ("n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger") for n in nodes
-    ):
-        off = [
-            k
-            for k in ("saveDataSuccessExecution", "saveDataErrorExecution")
-            if st_.get(k) == "none"
-        ]
+    if isinstance(st_, dict):
+        off = [k for k in ("saveDataSuccessExecution", "saveDataErrorExecution") if st_.get(k) == "none"]
+        if st_.get("saveManualExecutions") is False:
+            off.append("saveManualExecutions")
         if off:
             warn(
                 tag,
-                f"this flow starts from a web address or form and its settings {off} are 'none': n8n keeps no run list for it, so a person cannot open a past run to see what happened",
+                f"this flow's run-saving settings {off} are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened",
                 known=True,
             )
     base_nodes = {n.get("name"): n for n in (baseline_d or {}).get("nodes", [])}
@@ -1520,8 +1561,8 @@ def main(argv):
                 try:
                     with open(val(), encoding="utf-8") as fh:
                         OPTS["ddl"] = parse_ddl(fh.read())
-                except OSError:
-                    print("usage error: --ddl file cannot be read")
+                except (OSError, ValueError):
+                    print("usage error: --ddl file cannot be read (missing, or not valid UTF-8 text)")
                     return 2
                 if not OPTS["ddl"]:
                     print("usage error: --ddl file holds no CREATE TABLE definition")
@@ -1622,7 +1663,7 @@ def main(argv):
                 st = d.get("settings", {})
                 print(
                     f"{fn} nodes={r['nodes']} connections={r['connections']} triggers={r['triggers']} "
-                    f"saveDataSuccess={st.get('saveDataSuccessExecution')} saveDataError={st.get('saveDataErrorExecution')}"
+                    f"saveDataSuccess={st.get('saveDataSuccessExecution')} saveDataError={st.get('saveDataErrorExecution')} saveManual={st.get('saveManualExecutions')}"
                 )
             if not r:
                 continue
