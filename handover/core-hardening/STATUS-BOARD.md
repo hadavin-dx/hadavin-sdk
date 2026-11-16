@@ -31,12 +31,16 @@ PUSHED_UTC: 2026-11-16T11:42:29Z
 | C11 | HubSpot probe step | in v14 (separate secrets procedure) | 86 | steps-edits/ | |
 | edit list v10 | real-v5 edits | round 6 clean; primary-source git show check done: all claims confirmed, no table file in real-v5 | 99 | paste-check/review-v10-r6.md | decision 6 is the lead's |
 
-## AGENTS (4 running; ORDER 029: 4 short of 8, reason per agent below)
+## AGENTS (8 running, counted from the real agent list at 2026-11-16T11:42:40Z; ORDER 029 met)
 | id | role / lane | model | what it does | started UTC | expected end UTC | state |
 |---|---|---|---|---|---|---|
-| aef0705ce0b5968af | builder owner sheet v16 | sonnet | OWNER-SHEET-v16 + check-v16.py (fixes v15 findings) | 11:36Z | 12:20Z | running |
-| a085bc3af41f32926 | EVIDENCE RUNNER run.py r4 | sonnet | re-runs 220-check script, r3 code, hostile inputs | 11:32Z | 11:55Z | running |
-| ad38a5720a8797d65 | builder lead checklist rev 10 | sonnet | fixes all findings of 3 reviews + evidence-chain-r2 | 11:38Z | 12:40Z | running |
-| a6643c89816d0149e | builder chain fix pass 3 | sonnet | apply script guards, tests, flake arithmetic, stale shas | 11:39Z | 12:20Z | running |
-Finished since last board: checklist v9 stranger, adversarial, citation; run.py r4 security review; chain round 2 reviewer and evidence runner; chain fix round 2 builder.
-ORDER 029 reasons for 4 not 8, per missing agent: (a) run.py r5 fix builder: waits for the r4 evidence runner (one writer per file, finishes about 11:55Z). (b) second reviewer for rev 10: waits for the rev 10 builder. (c) second reviewer for v16 plus citation checker: wait for the v16 builder. (d) evidence runner for chain pass 3: waits for the chain fix builder. No other open item has independent work: C3b, C8 new work, C5, C7 are stopped by Q18 or wait on lead answers. Waiting on the lead: lease wording A/B, exit-code rule, blanks B1-B29, take port, whether gate-rows-v3 and v10 edits are in the run, S603 decision, Q18 approval of run.py r3/r4, CHAIN choice.
+| ad38a5720a8797d65 | builder lead checklist rev 10 | sonnet | fixes all findings of 3 reviews + chain evidence | 11:38Z | 12:40Z | running |
+| a0112918e044959da | builder run.py r5 (security, uncapped) | sonnet | 3 majors + nits of r4 security review | 11:46Z | 13:00Z | running |
+| ac37642d20bdf1036 | EVIDENCE RUNNER chain pass 3 | sonnet | repeats Part G, 17 cases, own hostile inputs | 11:49Z | 12:10Z | running |
+| afe6d4e9d73120ac2 | reviewer v16 security (egm-codebase-details) | sonnet | owner sheet v16, uncapped | 11:52Z | 12:15Z | running |
+| a6d0b1bb7e03c428c | reviewer v16 stranger (egm-comprehension) | sonnet | cold read of OWNER-SHEET-v16 | 11:52Z | 12:15Z | running |
+| a3d9aeda3858a3895 | reviewer v16 adversarial (egm-implementation-readiness) | sonnet | break the sheet, sample 25 FIXED rows | 11:52Z | 12:15Z | running |
+| abb464155574c378b | reviewer v16 contradiction (egm-design) | sonnet | sheet vs decisions, times, cross-refs | 11:52Z | 12:15Z | running |
+| aa6d3c877ad0bea95 | citation checker v16 | sonnet | ids, counts, sizes, times, check-v16.py | 11:52Z | 12:15Z | running |
+Finished since last board: v16 builder, chain fix pass 3 builder, run.py r4 evidence runner and security reviewer.
+Waiting on the lead: lease wording A/B, exit-code rule, OI-1 to OI-38 (v16 blanks), take port, CHAIN choice, S603 decision, Q18 approval of run.py r3/r4.
