@@ -1,0 +1,5 @@
+== T1 the real repository as --root is refused (exit 2)
+REFUSED: --root /home/user/hadavin-sdk is inside a git work tree: use a plain scratch copy (git archive + patch)
+  exit code 2
+  PASS: T1 exit 2
+== T2 SIGKILL while a mutant is planted

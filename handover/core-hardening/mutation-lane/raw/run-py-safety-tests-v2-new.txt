@@ -78,3 +78,26 @@ REFUSED: git rev-parse failed for --repo /tmp/claude-0/-home-user/957f9d59-4d7f-
 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 70: 14029 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T15 orphan pytest alive
 stopped orphaned test group 14037; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/tmpstate/hadavin-mutation-lane/bd5cb1ebaf938cea.backup; hash matches saved original: True
+  PASS: T15 orphan stopped
+  PASS: T15 file restored
+== T16 SIGHUP restores too (exit 129)
+  exit code 129
+  PASS: T16 exit 129
+  PASS: T16 file restored
+== T17 --restore while a run is live is refused (lock)
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/
+  exit code 2
+  PASS: T17 exit 2
+  PASS: T17 run still planted
+== T18 a mutant id that climbs out of --raw is refused
+REFUSED: mutant id is not a plain unique name: '../escape'
+  exit code 2
+  PASS: T18 exit 2
+  PASS: T18 no file outside raw
+== T19 an error while the tests start (no .venv python) still removes the marker
+REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root/.venv/bin/python does not exist: the scratch root needs its ow
+  exit code 2
+  PASS: T19 exit 2
+  PASS: T19 file unchanged
+  PASS: T19 state empty
+FAILED CHECKS: 0
