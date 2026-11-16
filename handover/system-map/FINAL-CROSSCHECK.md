@@ -31,6 +31,7 @@ Only the clearest. The rating "in force" for CH is its section 2a (item2-reratin
 | Stage name "dev" (X-01 and four duplicates) | Nit | | review Major | Major until the owner decides; the preamble rule 21 forbids the word. |
 | Banned-words test | X-15 Major and D3-01 Nit inside CH | | | one item rated two ways inside one audit; treat as one. |
 | Keys pushed to git | | | L2-FD-018 Blocker | the values are made up, so Major is better supported. |
+**Where each rating is written** (confirmed by the fact reviewer, not by me): FA = flows-audit FINDINGS.md (F-031 line 93, F-037 94, F-008 96, F-011 97, F-009 105, F-010 106, F-015 109, F-030 121, F-036 126, F-039 128, F-044 129); SM = SWEEP.md (L2-FD-001 to -003 lines 47-49, L2-FD-007 50, L2-FD-008 51, L2-FD-018 52, L6-FD-003 58, L6-FD-005 60, L6-FD-006 61, L6-FD-026 63, L5a-FD-002 226, L5b-FD-003 251, L7-FD-005 362, L7-FD-006 363); CH = core-hardening item2-rerating.md lines 3-12. FA's CUT-LIST.md was not opened by me (section 1).
 Same topic, rubric only (no new fact): duplicate flows and dead IF steps (SM Major, FA Nit), single dependency on one vendor (SM Major, FA Nit), two file stores and audit event kinds (CH Nit, SM Major), extract.py unused (CH Nit, SM Major).
 
 ## 3. Duplicates (same problem under several ids)
@@ -66,7 +67,7 @@ Not a real contradiction: SWEEP L4c-FD-001 says a patch "touches core src"; it e
 - No overlap by file path between CH patches (core source), FA patches (demo flows) and the desk patch (desk source).
 
 ## 6. Combined cut list for the owner (archive only, nothing deleted)
-**In one minute.** 39 rows. Safe now: 2 (rows 20-21, and only with an archive place outside the repository). Not yet: 28 (each needs one named edit first, or has to wait until after the video). No: 9 (a caller or a live check uses it, or you must choose). Your yes is needed before any move. The design question: do not put the archive inside the repository. A test (`tests/test_no_reference_material.py`) reads every file in the repository, archive folder included, and fails on banned vendor words, so moving a file there does not clear it. I read that test: it exists here (scans the whole tree except .git, .venv, node_modules and caches).
+**In one minute.** 39 rows. Safe now: 2 (rows 20-21, and only with an archive place outside the repository). Not yet: 28 (each needs one named edit first, or has to wait until after the video). No: 9 (a caller or a live check uses it, or you must choose). Your yes is needed before any move; the laptop lead moves the files after your yes. The design question: do not put the archive inside the repository. A test (`tests/test_no_reference_material.py`) reads every file in the repository, archive folder included, and fails on banned vendor words, so moving a file there does not clear it. I read that test: it exists here (scans the whole tree except .git, .venv, node_modules and caches).
 **Caller checks.** I did not grep rows 1-19 and 33-39 (those paths are not in this branch); the agent repeated the audits' own citations for them. Rows 20-26 rest on our review's counts. Rows 27-32 were grepped in src, tests, CI and pyproject by the agent; I did not repeat the greps.
 | # | what to archive | why, in plain words | safe now? |
 |---|---|---|---|
@@ -92,15 +93,16 @@ Must stay (proof above): dn1_common.py (mf.py:8 imports it), desk-error-notifier
 
 ## 7. What I found that the audits do not say
 - The F-002 patch was reworked after my first read; my own report had the old test name. Fixed (flowcheck/REPORT.md, third-read.md).
+- Rows 1-19 and 33-39 of the cut list rest on the audits' own citations (section 6, caller checks).
 - Our rule "archive outside handover" and the CH list "a folder" conflict until the owner names one place (section 4 row 10).
 
 ## 8. Open for the studio head (owner) and the laptop lead
-Studio head: where the archive lives; yes to every move; keep or archive extract.py; the number and kinds in the C-01 patch; whether the webhook gets a password before Wed 18 Nov. Laptop lead: the environment-setting decision (section 4 row 1), the order of the saving and Postgres fixes, running the patched flows in n8n and test T19 (flowcheck/REPORT.md).
+Studio head: where the archive lives; yes to every move; keep or archive extract.py; the number and kinds in the C-01 patch; whether the webhook gets a password before Wed 18 Nov 2026 (the files I read give no hour for the take; the laptop lead states it in UTC and IST; IST = UTC + 5:30). Laptop lead: the environment-setting decision (section 4 row 1), the order of the saving and Postgres fixes, running the patched flows in n8n and test T19 (flowcheck/REPORT.md).
 
 ## 9. Process
 | step | state |
 |---|---|
 | evidence (two read-only agents) | done: work/crosscheck-ratings-agent.md, work/crosscheck-cutlist-agent.md |
 | result review round 1: egm-design (5 Majors, 5 Nits) and egm-codebase-details (2 Majors, 8 Nits; no Blocker) | done; fixes applied here, saved as work/review-crosscheck-*-r1.md |
-| egm-resolve through the Skill tool | pending |
-| round 2 (only Blockers and Majors) | pending |
+| egm-resolve through the Skill tool | done: work/resolve-crosscheck-1.md; Majors and Nits applied here |
+| round 2 (only Blockers and Majors) | not run: no Blocker or Major open after the fixes above |
