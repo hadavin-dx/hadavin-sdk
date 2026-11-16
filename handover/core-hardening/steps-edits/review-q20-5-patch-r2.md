@@ -1,0 +1,4 @@
+# Q20.5 patch text, round 2 (last non-security round), codebase-details, condensed copy, 2026-11-16
+0 Blockers, 0 Majors. B1 (three tries in total), M1 (Q21.2 deviation listed for the lead), M2 (slow run also re-claimed, no lease renewal found, UNVERIFIED), M3 (stale archive in S:23) and nits fixed in text. No contradiction with ORDERS Q19-Q21. Hunk headers consistent by counting (S -2,25 +2,32; X -1,12 +1,12).
+Not checked: byte equality of long old lines (S:9, S:20, S:23); real patch run and hashes (author evidence only); flow JSON (relied on .md and CLAIM-EVIDENCE); v11 line 36 and run card row 8.
+Nits: S:13 "NOT the take folder" and S:5 rest on v11 line 36 (hedged lead-verifies); the DEVIATION wording inside X:2 must be removed by the lead after approval. Open: OWNER-STEPS v11 and appendix still say the code archives by DELETE (v12 fixes this; lead aligns old files).
