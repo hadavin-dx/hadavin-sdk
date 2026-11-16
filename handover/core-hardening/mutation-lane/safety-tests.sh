@@ -1,7 +1,8 @@
 #!/bin/bash
-# Safety tests T1-T75 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T88 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
-# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T75 (rounds 4 to 6) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
+# Round 7: run.py now runs the baseline BY DEFAULT; the helper base()/mut() adds --no-control (the old behaviour) unless NCF is set: `NCF= mut ...` runs with the real default. Against the r6 copy of run.py (no --no-control option) export NCF= (empty).
+# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T88 (rounds 4 to 7) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
 RUN=${RUN:-$(dirname "$(readlink -f "$0")")/run.py}
 S=${SCRATCH:?set SCRATCH to a scratch folder outside every repository}
 VENV=${VENV:?set VENV to a folder with bin/python that has pytest}
@@ -25,6 +26,7 @@ printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\
 printf 'import pytest\n@pytest.mark.skip(reason="all skipped")\ndef test_s():\n    assert False\n' > tests/test_skip.py
 printf 'X = 1\nopen("sidefx.txt", "w").write("x")\n' > src/sideeffect.py
 printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\n    open("'"$S"'/flipflag", "w").write("x")\n    assert f() == 1\n' > tests/test_flip.py
+printf 'import os\ndef test_c():\n    os.chmod("src/mod.py", 0o600)\n' > tests/test_chmod.py
 git add -A; git -c user.email=a@b -c user.name=n commit -qm init; SHA=$(git rev-parse HEAD); REALREPO=$T/repo   # the toy repository stands in for "the real repository" (this folder is not inside a git repository)
 reset_state() { pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null; rm -rf "$STATE"; }
 # every scenario starts from a fresh state folder, so a crash in one cannot make the next ones fail (review r2 safety M2)
@@ -66,7 +68,7 @@ bg; waitplant; mut -- tests/test_fast.py 2>&1 | cut -c1-120; rc=${PIPESTATUS[0]}
 chk "T8 second refused (2)" "[ $rc -eq 2 ]"; chk "T8 first run still alive" "kill -0 $RP"; chk "T8 file still planted by the first" "[ '$(last)' = return2 ]"
 kill -TERM $RP; wait $RP 2>/dev/null; chk "T8 file restored after" "[ '$(last)' = return1 ]"
 echo "== T9 a clean run to the end: KILLED, backup gone, tree diff clean, exit 0"
-mut -- tests/test_fast.py; rc=$?; echo "  exit code $rc"; chk "T9 exit 0" "[ $rc -eq 0 ]"; chk "T9 state empty" "[ -z '$(state_files)' ]"; grep -E "differing files|rc:" "$S/rawT/X-tree-diff.txt" | head -2
+NCF= mut -- tests/test_fast.py; rc=$?; echo "  exit code $rc"; chk "T9 exit 0" "[ $rc -eq 0 ]"; chk "T9 state empty" "[ -z '$(state_files)' ]"; grep -E "differing files|rc:" "$S/rawT/X-tree-diff.txt" | head -2
 echo "== T10 absolute path as the mutant file is refused (exit 2), nothing planted"
 FILE="$T/root/src/mod.py" mut -- tests/test_fast.py 2>&1 | cut -c1-200; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T10 exit 2" "[ $rc -eq 2 ]"; chk "T10 file unchanged" "[ '$(last)' = return1 ]"; chk "T10 state empty" "[ -z '$(state_files)' ]"
 echo "== T11 '..' in the mutant file is refused (exit 2)"
@@ -84,7 +86,7 @@ fresh_root; PATH="$S/wrap:$PATH" mut -- tests/test_fast.py 2>&1 | cut -c1-200; r
 rm -f "$S/wrap/git"
 echo "== T14 a leftover file after the loop gives a non-zero exit; a declared --extra does not"
 fresh_root; mut -- tests/test_junk.py >/dev/null 2>&1; rc=$?; echo "  undeclared leftover: exit code $rc"; chk "T14a exit 4" "[ $rc -eq 4 ]"
-fresh_root; mut --extra junk.txt -- tests/test_junk.py >/dev/null 2>&1; rc=$?; echo "  declared --extra: exit code $rc"; chk "T14b exit 0" "[ $rc -eq 0 ]"
+fresh_root; NCF= mut --extra junk.txt -- tests/test_junk.py >/dev/null 2>&1; rc=$?; echo "  declared --extra: exit code $rc"; chk "T14b exit 0" "[ $rc -eq 0 ]"
 echo "== T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores"
 fresh_root; bg; waitplant; kill -9 $RP; sleep 1; chk "T15 orphan pytest alive" "orphan_alive"
 python3 "$RUN" --root "$T/root" --restore; sleep 1; chk "T15 orphan stopped" "! orphan_alive"; chk "T15 file restored" "[ '$(last)' = return1 ]"
@@ -183,7 +185,7 @@ refuse "absolute path outside root" /etc
 refuse "path through a link out of the root" linkout
 refuse "-- terminator" --
 chk "T25 file unchanged, state empty" "[ '$(last)' = return1 -a -z '$(state_files)' ]"
-fresh_root; mut -- -q -x -p no:randomly -k test_f -m "not slow" tests/test_fast.py::test_f >/dev/null 2>&1; rc=$?; chk "T25 the allowed forms still run (-q -x -p no:NAME -k -m path::node) (got $rc)" "[ $rc -eq 0 ]"
+fresh_root; NCF= mut -- -q -x -p no:randomly -k test_f -m "not slow" tests/test_fast.py::test_f >/dev/null 2>&1; rc=$?; chk "T25 the allowed forms still run (-q -x -p no:NAME -k -m path::node) (got $rc)" "[ $rc -eq 0 ]"
 echo "== T26 the start hook fails after the tests were started: the test group is still stopped (review 4 M2)"
 fresh_root; python3 - "$RUN" "$T/root" <<'PY'
 import importlib.util, pathlib, sys
@@ -214,7 +216,7 @@ chk "T29 SIG.allow is False afterwards" "[ $? -eq 0 ]"
 sleep 1; chk "T29 no orphan pytest left although stop_group failed" "! orphan_alive"; pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
 echo "== T30 import check fails closed: a target that is not a .py module is refused unless --skip-import-check (recorded)"
 fresh_root; out=$(base --id m1 --file docs/note.txt --old alpha --new beta -- tests/test_fast.py 2>&1); rc=$?; echo "$out" | cut -c1-200; hit=$(printf %s "$out" | grep -c 'import check'); chk "T30a refused (rc $rc, 'import check' hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"; chk "T30a file unchanged" "[ \"\$(cat $T/root/docs/note.txt)\" = alpha ]"
-fresh_root; base --skip-import-check --id m1 --file docs/note.txt --old alpha --new beta -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T30b with --skip-import-check it runs (rc $rc) and the raw file says so" "[ $rc -eq 0 ] && grep -q 'SKIPPED by --skip-import-check' '$S/rawT/X-m1.txt'"
+fresh_root; NCF= base --skip-import-check --id m1 --file docs/note.txt --old alpha --new beta -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T30b with --skip-import-check it runs (rc $rc) and the raw file says so" "[ $rc -eq 0 ] && grep -q 'SKIPPED by --skip-import-check' '$S/rawT/X-m1.txt'"
 echo "== T31 a timeout keeps the output printed before it"
 fresh_root; base --timeout 6 --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_partial.py >/dev/null 2>&1; chk "T31 raw file says TIMEOUT and holds the early output" "grep -q 'VERDICT: TIMEOUT' '$S/rawT/X-m1.txt' && grep -q 'before-timeout-marker\\|^\\.' '$S/rawT/X-m1.txt'"; grep -A3 'output printed before' "$S/rawT/X-m1.txt" | head -5
 chk "T31 file restored" "[ '$(last)' = return1 ]"
@@ -225,7 +227,7 @@ echo "== T33 a .venv folder deeper than the top is compared like any other folde
 fresh_root; mkdir -p "$T/root/src/.venv"; echo x > "$T/root/src/.venv/hidden.py"; mut -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T33 nested .venv refused (got $rc)" "[ $rc -eq 2 ]"
 echo "== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)"
 fresh_root; rm "$T/root/.venv"; mkdir -p "$S/fakevenv/bin"; printf '#!/bin/sh\nprintf "\\377\\n"\nexit 1\n' > "$S/fakevenv/bin/python"; chmod +x "$S/fakevenv/bin/python"; ln -s "$S/fakevenv" "$T/root/.venv"
-mut --skip-import-check -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T34 run ends normally (rc $rc) with verdict KILLED in the raw file" "[ $rc -eq 0 ] && grep -q 'VERDICT: KILLED' '$S/rawT/X-m1.txt'"; chk "T34 file restored" "[ '$(last)' = return1 ]"
+mut --skip-import-check -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T34 run ends normally (rc $rc: 5 = INCOMPLETE because of --no-control, r7) with verdict KILLED in the raw file" "[ $rc -eq 5 ] && grep -q 'VERDICT: KILLED' '$S/rawT/X-m1.txt'"; chk "T34 file restored" "[ '$(last)' = return1 ]"
 echo "== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted"
 if [ "${SKIP_T35:-0}" = 1 ]; then echo "  (T35 skipped on request: an older copy would write into a shared /tmp folder)"; SKIPPED="$SKIPPED T35"; elif [ -e "/tmp/hadavin-mutation-lane-$(id -u)" ]; then echo "  (skipped: /tmp/hadavin-mutation-lane-$(id -u) already exists and is not ours to touch)"; SKIPPED="$SKIPPED T35"; else
 fresh_root; ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!
@@ -268,7 +270,7 @@ chk "T37a pytest.ini above the root refused (rc $rc, hits $hit)" "[ $rc -eq 2 -a
 rm -f "$T/pytest.ini"; fresh_root; printf '[tool.pytest.ini_options]\naddopts = "--collect-only"\n' > "$T/pyproject.toml"
 out=$(mut -- tests/test_fast.py 2>&1); rc=$?; hit=$(printf %s "$out" | grep -c 'outside --root'); chk "T37b pyproject.toml with a pytest section above the root refused (rc $rc, hits $hit)" "[ $rc -eq 2 -a $hit -ge 1 ]"
 rm -f "$T/pyproject.toml"; fresh_root; printf '[metadata]\nname = x\n' > "$T/setup.cfg"
-mut -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T37c a setup.cfg above WITHOUT a pytest section is no setting: the run goes ahead (rc $rc)" "[ $rc -eq 0 ]"; rm -f "$T/setup.cfg"
+NCF= mut -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T37c a setup.cfg above WITHOUT a pytest section is no setting: the run goes ahead (rc $rc)" "[ $rc -eq 0 ]"; rm -f "$T/setup.cfg"
 echo "== T38 --restore re-creates a deleted target with its recorded mode (review r3 minor)"
 fresh_root; chmod 640 "$T/root/src/mod.py"; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
 rm "$T/root/src/mod.py"; out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200
@@ -451,7 +453,7 @@ refuse_above "pyproject.toml WITHOUT a pytest section" "printf '[project]\nname 
 refuse_above "pyproject.toml with a dotted-key pytest setting" "printf 'tool.pytest.ini_options.addopts = \"--collect-only\"\n' > '$T/pyproject.toml'"
 refuse_above "tox.ini with a pytest section" "printf '[pytest]\naddopts = --collect-only\n' > '$T/tox.ini'"
 refuse_above "setup.cfg with a pytest section" "printf '[tool:pytest]\naddopts = --collect-only\n' > '$T/setup.cfg'"
-fresh_root; printf '[pytest]\naddopts = -q\n' > "$T/root/pytest.ini"; mut --extra pytest.ini -- tests/test_fast.py >/dev/null 2>&1; rc=$?
+fresh_root; printf '[pytest]\naddopts = -q\n' > "$T/root/pytest.ini"; NCF= mut --extra pytest.ini -- tests/test_fast.py >/dev/null 2>&1; rc=$?
 chk "T48 an ini file INSIDE the root is accepted (rc $rc) and the raw file records a normal verdict" "[ $rc -eq 0 ] && grep -q 'VERDICT: KILLED' '$S/rawT/X-m1.txt'"
 python3 - "$RUN" "$S" <<'PY'
 import importlib.util, pathlib, sys
@@ -482,7 +484,7 @@ for tf in test_writeconf.py test_writedata.py; do
   chk "T49 $tf: exit 4 (got $rc), the loop stopped after m1 (no X-m2.txt), m1's raw file records the changed file" "[ $rc -eq 4 ] && [ ! -e '$S/rawT/X-m2.txt' ] && grep -q 'tree integrity after this mutant: .*differing files (1; 0 = clean)' '$S/rawT/X-m1.txt'"
   chk "T49 $tf: target file restored, state empty" "[ '$(last)' = return1 -a -z '$(state_files)' ]"
 done
-fresh_root; base --list "$S/two.json" -- tests/test_fast.py >/dev/null 2>&1; rc=$?
+fresh_root; NCF= base --list "$S/two.json" -- tests/test_fast.py >/dev/null 2>&1; rc=$?
 chk "T49 a clean two-mutant run: exit 0 (got $rc), both raw files record 'differing files (0; 0 = clean): []' and a digest" "[ $rc -eq 0 ] && grep -q 'digest [0-9a-f]\{16\}; differing files (0; 0 = clean): \[\]' '$S/rawT/X-m1.txt' && grep -q 'differing files (0; 0 = clean): \[\]' '$S/rawT/X-m2.txt'"
 echo "== T50 (review r4 evidence) unreaped_child and the reaped-leader guard, tested directly"
 fresh_root; python3 - "$RUN" "$T/root" <<'PY'
@@ -578,7 +580,7 @@ chk "T52b file already equals the backup (two names): --restore exit 0 (got $rc)
 echo "== T53 (review r4 nit 2) a FIFO in place of the target: --restore refuses instead of hanging"
 fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
 rm "$T/root/src/mod.py"; mkfifo "$T/root/src/mod.py"; timeout -s KILL 30 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; rc=$?
-chk "T53 FIFO as the target at --restore: refused, no hang (got $rc; 124 or 137 = hung)" "[ $rc -eq 2 -o $rc -eq 3 ]"
+chk "T53 FIFO as the target at --restore (valid marker): exit 3 (restore failed, r6 review M1; r6 code: 2), no hang (got $rc; 124 or 137 = hung), marker and backup kept" "[ $rc -eq 3 ] && [ -n \"\$(ls $STATE/*.planted.json 2>/dev/null)\" ] && [ -n \"\$(ls $STATE/*.backup 2>/dev/null)\" ]"
 rm -f "$T/root/src/mod.py"; python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; chk "T53 and the genuine restore works afterwards" "[ '$(last)' = return1 ]"
 echo "== T54 (review r4 nit 4) ANY file in the tree with two names is refused, not only the target"
 fresh_root; echo alpha > "$S/outside-note.txt"; rm "$T/root/docs/note.txt"; ln "$S/outside-note.txt" "$T/root/docs/note.txt"
@@ -684,7 +686,7 @@ sys.exit(0 if ok else 1)
 PY
 chk "T62b refuse_mounts logic: a mount inside is refused; the root, .venv and a sibling prefix are not" "[ $? -eq 0 ]"
 echo "== T61 (review r4 evidence) PYTEST_ADDOPTS, PYTEST_PLUGINS and other steering variables of the caller never reach the tests"
-fresh_root; PYTEST_ADDOPTS="--collect-only" PYTEST_PLUGINS="no_such_plugin_xyz" PYTHONSTARTUP=/nonexistent PYTEST_DEBUG=1 mut -- tests/test_env.py >/dev/null 2>&1; rc=$?
+fresh_root; PYTEST_ADDOPTS="--collect-only" PYTEST_PLUGINS="no_such_plugin_xyz" PYTHONSTARTUP=/nonexistent PYTEST_DEBUG=1 NCF= mut -- tests/test_env.py >/dev/null 2>&1; rc=$?
 chk "T61 with those set in the caller's environment the tests run and see none of them (rc $rc, verdict SURVIVED, '1 passed')" "[ $rc -eq 0 ] && grep -q 'VERDICT: SURVIVED' '$S/rawT/X-m1.txt' && grep -q 'pytest summary line: 1 passed' '$S/rawT/X-m1.txt'"
 
 echo "== T63 (review r5 M3) a decoy folder that holds the ORIGINAL bytes: the restore must not report success on the decoy"
@@ -805,7 +807,7 @@ print("returned from the fault (unexpected)", flush=True)
 PY
 FP=$!; sleep 4; kill -0 $FP 2>/dev/null; alive=$?; kill -9 $FP 2>/dev/null; wait $FP 2>/dev/null
 chk "T64a the process with run.py's handlers is still alive 4 s after a real memory fault (hung, handler never ran): 'acts like SIGKILL' would be wrong (alive=$alive, 0 = alive)" "[ $alive -eq 0 ] && grep -q armed '$S/t64.out' && ! grep -q 'returned from the fault' '$S/t64.out'"
-chk "T64b the text in run.py no longer says a real fault 'acts like SIGKILL' and says it spins" "! grep -q 'acts like SIGKILL' '$RUN' && grep -q 'spins at full speed' '$RUN'"
+chk "T64b the text in run.py no longer says a real fault 'acts like SIGKILL' or calls it 'the SIGKILL case' (r6 comment, review r6 nit 1), says it spins, and names kill -9" "! grep -q 'acts like SIGKILL' '$RUN' && ! grep -q 'SIGKILL case' '$RUN' && grep -q 'spins at full speed' '$RUN' && grep -q 'kill -9' '$RUN'"
 
 echo "== T65 (review r5 nit 2) a failure that is no signal, then a signal in the first moment of the cleanup: the test group is still stopped"
 for variant in planted control; do
@@ -855,7 +857,7 @@ mut --control --skip-import-check -- tests/test_fast.py >"$S/t66d.out" 2>&1; rc=
 chk "T66d a KILLED whose failing tests equal the baseline's (none named) is FLAGGED: exit 5 (got $rc), 'flags:' line in the raw file, '1 flagged' in the summary" "[ $rc -eq 5 ] && grep -q 'flags: the failing tests are the same as the baseline' '$S/rawT/X-m1.txt' && grep -q '1 flagged' '$S/t66d.out'"
 fresh_root; mut --control -- tests/test_fast.py >"$S/t66e.out" 2>&1; rc=$?
 chk "T66e guard: a normal kill with --control (a named failing test) is not flagged: exit 0 (got $rc), 'flags: none', baseline recorded" "[ $rc -eq 0 ] && grep -q 'flags: none' '$S/rawT/X-m1.txt' && grep -q 'baseline: rc 0, 1 passed' '$S/rawT/X-m1.txt' && grep -q 'baseline usable: yes' '$S/rawT/X-baseline.txt'"
-fresh_root; mut -- tests/test_fast.py >/dev/null 2>&1; chk "T66f no --control: every raw file says 'baseline: NOT RUN'" "grep -q 'baseline: NOT RUN' '$S/rawT/X-m1.txt'"
+fresh_root; mut --no-control -- tests/test_fast.py >"$S/t66f.out" 2>&1; rc=$?; chk "T66f --no-control: every raw file says 'baseline: NOT RUN', the SUMMARY says NO BASELINE and not COMPLETE, exit 5 (got $rc)" "[ $rc -eq 5 ] && grep -q 'baseline: NOT RUN' '$S/rawT/X-m1.txt' && grep -q 'NO BASELINE' '$S/t66f.out' && ! grep -q 'COMPLETE (' '$S/t66f.out'"
 
 echo "== T67 (review r5 M2) exit 0 means every mutant ran: COULD-NOT-PLANT, TIMEOUT and ERROR give exit 5 and a SUMMARY line"
 fresh_root; out=$(base --id m1 --file src/mod.py --old 'return 77' --new 'return 2' -- tests/test_fast.py 2>&1); rc=$?; printf '%s\n' "$out" | grep -E "SUMMARY|INCOMPLETE" | cut -c1-230
@@ -867,9 +869,9 @@ chk "T67c ERROR (pytest exit 5, no test selected): exit 5 (got $rc), SUMMARY cou
 fresh_root; printf '[{"id":"m1","file":"src/mod.py","old":"return 1","new":"return 2"},{"id":"m2","file":"src/mod.py","old":"return 55","new":"return 3"}]' > "$S/mixed.json"
 base --list "$S/mixed.json" -- tests/test_fast.py >"$S/t67d.out" 2>&1; rc=$?; grep SUMMARY "$S/t67d.out" | cut -c1-230
 chk "T67d two mutants, one killed and one that could not be planted: exit 5 (got $rc), both raw files, counts '1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT', summary file written" "[ $rc -eq 5 ] && [ -e '$S/rawT/X-m1.txt' -a -e '$S/rawT/X-m2.txt' ] && grep -q '1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT' '$S/t67d.out' && grep -q 'SUMMARY' '$S/rawT/X-summary.txt'"
-fresh_root; mut -- tests/test_fast.py >"$S/t67e.out" 2>&1; rc=$?
+fresh_root; NCF= mut -- tests/test_fast.py >"$S/t67e.out" 2>&1; rc=$?
 chk "T67e guard: every mutant killed: exit 0 (got $rc), summary says COMPLETE" "[ $rc -eq 0 ] && grep -q 'COMPLETE' '$S/t67e.out' && ! grep -q INCOMPLETE '$S/t67e.out'"
-fresh_root; mut --extra junk.txt -- tests/test_junk.py >/dev/null 2>&1; rc=$?; chk "T67f guard: a clean verdict with a declared --extra file keeps exit 0 (got $rc)" "[ $rc -eq 0 ]"
+fresh_root; NCF= mut --extra junk.txt -- tests/test_junk.py >/dev/null 2>&1; rc=$?; chk "T67f guard: a clean verdict with a declared --extra file keeps exit 0 (got $rc)" "[ $rc -eq 0 ]"
 fresh_root; base --list "$S/two.json" -- tests/test_junk.py >/dev/null 2>&1; rc=$?; chk "T67g exit 4 (tree not clean) still wins over exit 5 (got $rc)" "[ $rc -eq 4 ]"
 
 echo "== T68 (review r5 nit 3) --restore with no marker anywhere says it CANNOT TELL, not 'nothing to restore'"
@@ -918,14 +920,14 @@ rc=$?; cut -c1-200 "$S/t73.out" | tail -2
 chk "T73 exit 2 (got $rc) with a message naming Python 3.11.4, no traceback" "[ $rc -eq 2 ] && grep -q '3.11.4' '$S/t73.out' && ! grep -q Traceback '$S/t73.out'"
 
 echo "== T74 (review r5 nit 9) --sha is pinned: the full id of a COMMIT is recorded; an id that is no commit is refused"
-fresh_root; mut --sha "${SHA:0:7}" -- tests/test_fast.py >/dev/null 2>&1; rc=$?
+fresh_root; NCF= mut --sha "${SHA:0:7}" -- tests/test_fast.py >/dev/null 2>&1; rc=$?
 chk "T74a a short id works (rc $rc) and the raw file records the FULL id (and how it was given)" "[ $rc -eq 0 ] && grep -q 'base commit: $SHA (given as ${SHA:0:7})' '$S/rawT/X-m1.txt' && grep -q 'compared: <fresh git archive $SHA' '$S/rawT/X-tree-diff.txt'"
 TREEID=$(git -C "$T/repo" rev-parse 'HEAD^{tree}'); fresh_root; mut --sha "$TREEID" -- tests/test_fast.py >"$S/t74b.out" 2>&1; rc=$?; cut -c1-200 "$S/t74b.out"
 chk "T74b the id of a TREE (git archive would accept it) is refused, exit 2 (got $rc), nothing planted" "[ $rc -eq 2 ] && [ '$(last)' = return1 ]"
 fresh_root; mut --sha 1234567890abcdef -- tests/test_fast.py >/dev/null 2>&1; rc=$?; chk "T74c guard: an unknown id is refused, exit 2 (got $rc)" "[ $rc -eq 2 ]"
 
 echo "== T75 (review r5 smaller point) git and patch run with a clean environment: GIT_DIR and GIT_WORK_TREE of the caller do not reach them"
-fresh_root; GIT_DIR=/nonexistent/gitdir GIT_WORK_TREE=/nonexistent/tree mut -- tests/test_fast.py >"$S/t75.out" 2>&1; rc=$?; cut -c1-200 "$S/t75.out" | tail -2
+fresh_root; GIT_DIR=/nonexistent/gitdir GIT_WORK_TREE=/nonexistent/tree NCF= mut -- tests/test_fast.py >"$S/t75.out" 2>&1; rc=$?; cut -c1-200 "$S/t75.out" | tail -2
 chk "T75 with a bogus GIT_DIR and GIT_WORK_TREE in the caller's environment the run still works (exit 0, got $rc)" "[ $rc -eq 0 ]"
 
 }

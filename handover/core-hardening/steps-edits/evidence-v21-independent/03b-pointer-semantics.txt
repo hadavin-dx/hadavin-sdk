@@ -1,0 +1,46 @@
+== Open n refs in note/open/sheet
+LEAD-RELEASE-NOTE-v5.md:119:roof screen from the rehearsal). The take terminal is never recorded (Open 9 asks you to confirm), and only the fixe
+== R6 text re echo
+0
+== R10 'as R6 says'
+== G refs in OPEN with row number
+Open 2 Older key and fresh key per run (FACTS says the key was -> [('G32', 'Older key: its exact name and creation d')]
+Open 4 Take port | G7: 5678 and 5679 are the owner's; 5690 to  -> [('G7', 'Ports: rehearsal uses 5690 with its brok')]
+Open 5 Which HubSpot identity is the take key, and is it read- -> [('G21', 'HubSpot identities: for each (the key n8')]
+Open 6 US$180 against US$189 | FACTS line 3: "US$180 of 189 in -> [('G14', 'Money figures: model name; tokens in and')]
+Open 9 Film content: the earlier shot list filmed the take win -> [('G24', 'Places and tools: message place; recordi')]
+Open 11 Numbers for the time formula (Note section 2) | no sour -> [('G36', "Film cue and the lead's n8n timing: the ")]
+Open 12 Helpers | Sheet 5.2, G11 | Default: two humans besides  -> [('G11', 'Helpers named (roles in section 7): each')]
+Open 13 n8n access and the model credential in n8n's store | G3 -> [('G3', 'n8n holds only the connection values the')]
+Open 15 End-date refusal (deadline setting) at the final head | -> [('G16', 'Model program started after the last cha')]
+Open 19 Places and tools (G24), page button words, key list "ca -> [('G24', 'Places and tools: message place; recordi')]
+Open 21 DECISION-one-store line 14 still says ONE database | co -> [('G20', 'DECISION-one-store line 14 ("ONE databas')]
+Open 23 Independent reader for G1 and G2 | v17 reviews: the lea -> [('G1', 'Re-pin: one commit id for the take progr'), ('G2', 'Flow checksum compare (the lead and the ')]
+Open 24 Decision 7 lists only `y`, the challenge and `end`, yet -> [('G22', "The owner's roles confirmed: decision 7 ")]
+Open 25 What the take program does when the owner cancels the k -> [('G18', 'What the take program does on a wrong li')]
+Open 26 Other channel to reach the lead (stranger blocker 2: no -> [('G31', 'Other channel to reach the lead (owner s')]
+Open 28 What the take program does after the owner cancels the  -> [('G18', 'What the take program does on a wrong li')]
+Open 31 The older key: statement that nothing uses it (G32) | R -> [('G32', 'Older key: its exact name and creation d')]
+Open 33 Spend lock (contradiction M1): the model program makes  -> [('G33', 'Spend lock: the model program makes no p')]
+Open 34 Take program never calls the model after `end` (contrad -> [('G34', 'Cancel race: the take program never call')]
+Open 35 Does the take program ask the owner to type a figure (A -> [('G35', 'Typed figure: whether the take program, ')]
+Open 36 Film cue and the lead's n8n timing (readiness blocker 1 -> [('G36', "Film cue and the lead's n8n timing: the ")]
+Open 37 Key file per run (stranger blocker 1): `set -C` refuses -> [('G37', 'Key file per run: the path contains the ')]
+Open 38 Demo mail subject start, label filter, the prep contact -> [('G38', 'Demo mail and prep contact: the subject ')]
+Open 40 Does the take program print its version id (contradicti -> [('G1', 'Re-pin: one commit id for the take progr')]
+Open 45 Film person at the owner's logged-in session (security  -> [('G24', 'Places and tools: message place; recordi')]
+== as R6 says:
+42:cept `n` at "Type y to start", and `echo $?` once as R6 says); in
+== R6 row mentions of echo: 0
+== Open refs:
+LEAD-RELEASE-NOTE-v5.md:11:Open 1 and 2
+LEAD-RELEASE-NOTE-v5.md:119:Open 9
+LEAD-RELEASE-NOTE-v5.md:122:Open 10
+LEAD-RELEASE-NOTE-v5.md:125:Open 12
+v21-OPEN-FOR-LEAD.md:16:Open 15
+== Open 1 row:
+7:| 1 | ANSWERED by Q23: removed | see Note and sheet | none |
+== Note section 0 numbering:
+1. **Decision
+8. **Which
+7. **D
