@@ -8,7 +8,7 @@ Use "lead id and contact id", not "lead key" (v5 line 20 says key means a secret
 | 44 | new step F2 "you delete the 3 leftover test contacts by hand in HubSpot from the studio lead's list"; renumber old item 7 as 8 |
 | 63 | "Words you type that end the film pause or delete things ..." |
 | 114 | "up to 3 contacts deleted at the end" becomes "up to 3 contacts left in HubSpot for you to delete by hand" |
-| 124 | warning: `end` ends the pause, deletes nothing; closing the terminal, Ctrl-C or two wrong words also end the pause and delete nothing. Add "the pause cannot be reopened" only after the program is checked (not in v5 or M17). |
+| 124 | warning: `end` ends the pause, deletes nothing; closing the terminal, Ctrl-C or two wrong words also end the pause and delete nothing. Do not add "the pause cannot be reopened" to v5 until the program is checked; M17 does not say it either. |
 | 127 | prompt text: the studio lead gives the exact words after the program is changed; after `end` the program prints leftover contacts by lead id and contact id. Also replace "The program then deletes this run's contacts." with "The program deletes nothing."; replace "also ends the pause and deletes the contacts" with "also ends the pause; nothing is deleted"; drop "(it means delete)" |
 | 128 | "HubSpot still shows the 3 contacts of this run, and the program prints the leftover list" |
 | 129 | "are deleted by hand" becomes "are always deleted by hand" |
