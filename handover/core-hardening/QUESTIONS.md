@@ -43,3 +43,10 @@ The zoom-out lane suggests: (1) stop C8 (mutation lane, run.py) and the C5 v5/C7
 4. Real n8n stop and start commands, and whether the program prints cue lines. Does the model program re-read its settings file after it starts?
 5. Default for old model keys: cancel all except the run key unless the owner writes a reason and an end date. OK?
 Source: steps-edits/review-v11-security.md; builder questions Q1-Q11 in steps-edits/v11-NOTES-FOR-LEAD.md.
+
+## Q20 (from the contradiction re-read, steps-edits/review-contradictions-r1.md)
+1. Which cue line does the take program print to tell the owner to stop n8n (O:135 lists only y, challenge, end)? Or is there none and the owner stops n8n on a card cue?
+2. Which database role empties mf_leads for the clean start, and which database does the real take use after the rehearsal container is removed?
+3. How many HubSpot private apps exist and which scope has each (probe: create/change; n8n: write; take: read-only)? One line for the card.
+4. After re-pin: which exit code does the code give when case C ends done/unknown?
+5. Inputs S (AGENT-SCOPE) lines 5, 9, 13, 20 and X (DECISIONS) lines 2 and 9 are stale against your answers; I cannot edit inputs. Do you want a patch text for them?
