@@ -637,3 +637,23 @@ D2 (M5): the awk command on a log with blocks `== P-3b`, `== P-4b` (two HIT line
 ### 13.5 not tested (honest list)
 The D2 steps in a real WSL shell (`/proc` there), a real hit, the stand-in under WSL, `cygpath -w` in Git for Windows, `less` in A-C2b, the Git Bash `tail -c 1` behaviour with CRLF files (a PROGRESS.md with CRLF line ends would pass the line-end guard, because its last byte is LF; the added LEAD line has LF only), `patch` in Git Bash. The checklist is still a text for a person; no single run from A1 to D2 was made.
 ### 13.6 banned-word scan (list read from tests/test_no_reference_material.py; words not printed): LEAD-CHECKLIST-v5.md 0, LEAD-FILL-list-v5.md 0, plan-v5-repin-v6.patch 0; no CR, no non-ASCII byte in the checklist
+
+## 14 Round-5 fix pass (2026-11-16; findings review-c3b-v7-readiness-r5.md R5-M1, R5-M2, nits). Linux container only, plain bash and dash, stand-in folders. Nothing ran in Git Bash, WSL or PowerShell; `cygpath` replaced by a shell function that prints a fixed Windows path.
+### 14.1 apply chain on a fresh scratch copy (patch file NOT changed)
+input plan sha256 prefix 67a0a195537de875; patch -p1 plan-v5-fixes.patch rc=0; patch -p1 plan-v5-repin-v6.patch rc=0; counts 24 10 2 1; marker lines (real grep -n -o): 2 3 3 3 3 4 4 125 258 258 258 258 275 433 434 585 586 (17 markers on the same 10 lines as 12.6); patch sha256 still 8a83abaa5c10db10ec84adabc82a855b087ff67286a44cec1611b812c90011d2.
+### 14.2 syntax: all 27 bash blocks of LEAD-CHECKLIST-v5.md (24 before, 3 new): bash -n and dash -n rc 0 for every block. No CR, no non-ASCII byte; banned-word scan (list from tests/test_no_reference_material.py, words not printed): 0 hits.
+### 14.3 R5-M1, A9 flip block (new)
+- PF at the plan's guessed path, stub cygpath = the guess: prints `marker 9 flipped; left:` and `(end of list)` with nothing between; `LEAD-FILL 9` count 0, `LEAD-DECIDED 9` count 1 (guess-right case flips too). dash: same.
+- stub cygpath = a different path, PF unedited: counts are not 1 and 2, prints STOP, file byte-identical to the original (cmp).
+- PF with line 3 edited to another path (D:/x/plan.md), stub = same: flips.
+- C7 simulation: all markers except 9 flipped to LEAD-DECIDED, then the A9 block: `LEAD-FILL [0-9]` count before 1, after 0. Without the A9 flip the count stays 1 (the R5-M1 defect).
+### 14.4 R5-M2, C2b stand-in pid note (new ready block); C9 and D1 now say their EV line is the same as in C2b
+- `SP=` empty or `12x`: `SP must be digits: STOP`, nothing written.
+- no folder yet, `SP=4242`: folder and file made, one line `NOTE lead stand-in pid=4242 <UTC>` ending in LF (od).
+- file whose last line has no line end: line end added first, then the note (od); dash run: same line written.
+- the note starts with NOTE: `grep -c -E '^(LEAD-GO|LEAD-YES)'` on the files = 0; C9 run after the note writes its LEAD-GO line and the second run prints `a LEAD-GO line is already there: STOP` (the note does not trip it).
+- D2: new read command `grep -E '^NOTE lead stand-in pid=[0-9]+' PROGRESS.md | tail -n 1` prints the note line; prints nothing when there is none.
+### 14.5 nit: D1 regex now `NEED-LEAD R2 pid=$PID([[:space:]]|$)`
+CRLF PROGRESS.md (`NEED-LEAD R2 pid=4321` + CR LF): accepted in bash and dash; LEAD-YES line appended with LF (od); line with trailing text accepted; pid 432 against 4321 refused; empty and `12x` refused; LF file without final line end still gets the line end first. The plan itself holds no grep for NEED-LEAD (only text that names the line), so there was no plan regex to compare; the shape `NEED-LEAD R2 pid=<digits>` is what the plan tells the runner to write.
+### 14.6 nit: checklist line 4 (variables) now says PC is set at A2 (it said A3).
+### 14.7 not tested: Git Bash, WSL /proc, cygpath -w, patch in Git Bash, a real CRLF PROGRESS.md written by a Windows runner (only simulated with printf).
