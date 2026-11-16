@@ -322,3 +322,28 @@ interrupted as expected (<Signals.SIGTERM: 15>,)
   PASS: T42 PWR state empty
   PASS: T42 PWR no orphan pytest
 == T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)
+./safety-tests.sh: line 1332: 24216 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T43 setup: the stranger (a pytest of its own that names the root) is its own group leader
+process 27126 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full2/tmpstate/hadav
+  PASS: T43a restore exit 0 and the file is back (rc 0)
+  PASS: T43a the stranger was left alone
+./safety-tests.sh: line 1332: 27126 Killed                  ( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py > /dev/null 2>&1 )
+./safety-tests.sh: line 1332: 28553 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 28683; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full2/tmpstate/hadavin-mutation-lane-0/c85913c1528da982.backu
+  PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
+./safety-tests.sh: line 1332: 29103 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 29115 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full2/tmpstate/hadav
+  PASS: T43c a marker with a group and NO identity and NO command at all: file restored (rc 3), nothing stopped on a guess, exit 3 because the group is unsettled (r8 N2)
+== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
+./safety-tests.sh: line 1332: 29150 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
+  PASS: T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs
+stopped orphaned test group 29162; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full2/tmpstate/hadavin-mutation-lane-0/c85913c1528da982.backup; hash matches save
+  PASS: T44 restore exit 0, file back (rc 0)
+  PASS: T44 the surviving member was stopped
+== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)
+./safety-tests.sh: line 1332: 29294 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T45 setup: the orphan runs
+stopped orphaned test group 29306; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full2/tmpstate/hadavin-mutation-lane-0/c85913c1528da982.backu
+  PASS: T45 restore exit 0, file back (rc 0)
+  PASS: T45 the orphan was stopped
+== T46 timeout branch with stop_group failing: signals disarmed BEFORE stop_group is called, the leader still stopped, and the result is a TIMEOUT verdict, not a traceback (review r4 evidence)

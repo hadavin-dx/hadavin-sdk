@@ -35,3 +35,19 @@
   PASS: T42 IO file restored
   PASS: T42 IO state empty
   PASS: T42 IO no orphan pytest
+  PASS: T42 PWR exit 158 (got 158)
+  PASS: T42 PWR file restored
+  PASS: T42 PWR state empty
+  PASS: T42 PWR no orphan pytest
+== T51 (review r4 evidence) --restore identity checks: start time, dead leader, works_in
+/tmp/safety-only.zzdK3x.sh: line 110: 26209 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 28401 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/dev3/tmpstate/hadavin-m
+  PASS: T51a identical command line, other start time: stranger left alone, file restored (rc 0)
+/tmp/safety-only.zzdK3x.sh: line 110: 29064 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 29129; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/dev3/tmpstate/hadavin-mutation-lane-0/df54a0e5b6601742.backup; h
+/tmp/safety-only.zzdK3x.sh: line 110: 29129 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
+  PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
+/tmp/safety-only.zzdK3x.sh: line 123: 29217 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b outside-root setup: the member of the dead leader's group runs
+process 29309 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/dev3/tmpstate/hadavin-m
+  PASS: T51b outside-root: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
