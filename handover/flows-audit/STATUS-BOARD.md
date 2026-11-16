@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T16:51:25Z
+UPDATED_UTC: 2026-11-16T16:56:14Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 7
-CAPACITY: 5.96 load of 4 cores, mem 1/15 GB, RAM 1453/16087 MB, disk 11G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 5.70 load of 4 cores, mem 1/15 GB, RAM 1363/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: 7 running (8th slot empty: load 6.0 of 4 cores); disk 11G free (72%), memory 9%; BOOT_ID e78580c0 unchanged; percent stays 70 (no independent close since 13:59Z)
-PUSHED_UTC: 2026-11-16T16:51:25Z
+NEXT: 8 running (load 5.9 of 4 cores, above target; disk 12G free 72%, memory 8%); BOOT_ID e78580c0 unchanged; verified plan-files r26, RW/CT r21, REVIEW r33, FINDINGS r12, patch-copies r11; percent stays 70 (no independent close since 13:59Z)
+PUSHED_UTC: 2026-11-16T16:56:14Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,18 +31,19 @@ PUSHED_UTC: 2026-11-16T16:51:25Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | F8 flow-check round 11 fixer (uncapped) | sonnet | fix run_all.sh intermittency and review findings | 15:49Z | about 17:05Z | running | edits in flow-check/ |
-| a6f19722 | patch-copies round 11 fixer (uncapped) | sonnet | fix 9 Majors README/DEAD-MAN-CHECK + secrets-checker hits | 16:43Z | about 17:10Z | running | edits in progress |
-| a26c1f8a | Q31 round 18 reader | sonnet | stranger read of Q31 | 16:45Z | about 17:00Z | running | pending |
-| a1c708d3 | REVIEW.md round 34 reader (uncapped) | sonnet | stranger read of REVIEW.md | 16:48Z | about 17:03Z | running | pending (design r34 saved: 1 Blocker, 8 Majors) |
 | a02fd9cc | plan-files round 27 reader | sonnet | stranger read RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 16:49Z | about 17:03Z | running | pending |
-| a477e500 | FINDINGS/LEDGER round 12 fixer | sonnet | fix 5 Majors from reader r12 | 16:51Z | about 17:05Z | running | edits in progress |
-| ab2ca265 | RW/CT round 22 reader | sonnet | stranger read of unread RW/CT parts | 16:51Z | about 17:05Z | running | pending |
+| a9b78c66 | Q31 round 19 fixer | sonnet | fix 14 Majors from reader r18 + plan-files Q31 edits | 16:53Z | about 17:10Z | running | edits in progress |
+| ae59e2df | REVIEW.md round 35 fixer (uncapped) | sonnet | fix design r34 (1 Blocker, 8 Majors) + reader r34 (6 Majors) | 16:53Z | about 17:15Z | running | edits in progress |
+| af860e6b | patch-copies round 12 reader (uncapped) | sonnet | stranger read README/DEAD-MAN-CHECK | 16:53Z | about 17:08Z | running | pending |
+| a7aa6e3a | patch-copies round 12 code review (uncapped) | sonnet | technical review of shell/SQL/cites | 16:53Z | about 17:08Z | running | pending |
+| a5ee5a38 | FINDINGS/LEDGER round 13 reader | sonnet | stranger read of unread cells | 16:55Z | about 17:08Z | running | pending |
+| a2067e2d | RW/CT round 23 fixer | sonnet | fix 9 Majors + lower items from reader r22 | 16:56Z | about 17:10Z | running | edits in progress |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. Q31 round 18: save reader, launch Q31 fixer (also apply plan-files NEEDS Q31 EDIT: item 51(c), item 15 time)
-2. REVIEW.md round 35 fixer after reader r34 reports (one fixer, design r34 + reader r34)
-3. Plan-files round 27: save reader, launch fixer
-4. Patch-copies: verify fixer, then reader + code + citation (uncapped); secrets checker must PASS
+1. Plan-files round 27: save reader, launch fixer (also align fix A for F-011 in TAKE-CHECKLIST/FIX-PLAN)
+2. Q31 round 19: verify label counts, launch fresh Q31 reader
+3. REVIEW.md round 35: verify counts, launch design + reader + citation (uncapped)
+4. Patch-copies: save two reviews, launch one fixer, then citation checker
 5. F8: evidence runner alone, then fresh uncapped reviews
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
