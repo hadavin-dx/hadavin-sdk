@@ -441,3 +441,22 @@ INTERRUPTED (signal 48): no mutant planted, no marker
 INTERRUPTED (signal 49): no mutant planted, no marker
 INTERRUPTED (signal 50): no mutant planted, no marker
 INTERRUPTED (signal 51): no mutant planted, no marker
+INTERRUPTED (signal 52): no mutant planted, no marker
+INTERRUPTED (signal 53): no mutant planted, no marker
+INTERRUPTED (signal 54): no mutant planted, no marker
+INTERRUPTED (signal 55): no mutant planted, no marker
+INTERRUPTED (signal 56): no mutant planted, no marker
+INTERRUPTED (signal 57): no mutant planted, no marker
+INTERRUPTED (signal 58): no mutant planted, no marker
+INTERRUPTED (signal 59): no mutant planted, no marker
+INTERRUPTED (signal 60): no mutant planted, no marker
+INTERRUPTED (signal 61): no mutant planted, no marker
+INTERRUPTED (signal 62): no mutant planted, no marker
+INTERRUPTED (signal 63): no mutant planted, no marker
+INTERRUPTED (signal 64): no mutant planted, no marker
+102 cases (signal x window); 0 bad: []
+  PASS: T47a all handled signals in the plant window and the restore window: exit 128+N, file restored, state empty
+  T47b real signals sent from outside while the tests are awaited: TRAP RTMIN RTMAX SYS STKFLT(16) SEGV BUS FPE ILL
+  PASS: T47b TRAP exit 133 (got 133), file restored, state empty, no orphan
+  PASS: T47b RTMIN exit 162 (got 162), file restored, state empty, no orphan
+  PASS: T47b RTMAX exit 192 (got 192), file restored, state empty, no orphan
