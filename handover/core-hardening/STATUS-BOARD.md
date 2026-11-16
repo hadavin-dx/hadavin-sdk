@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:41:32Z
+UPDATED_UTC: 2026-11-16T09:42:56Z
 SESSION: core-hardening
 ORDER: 020
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 13
 ITEMS_OPEN: 8
 PERCENT: 80
 AGENTS_RUNNING: 5
-CAPACITY: load 0.1 of 4 cores (idle; heavy C5 v3 suite run about to start), mem 0 of 15 GB used, disk 20 GB free, 5 light + 0 heavy agents
+CAPACITY: load 1.9 of 4 cores (about 48%, below 70-85% target: C5 v3 full-suite run will add 1 heavy), mem 1 of 15 GB used, disk 20 GB free, 5 light + 0 heavy agents
 INTERRUPTED: none
 FAILED: C5 v2 rated NOT READY: BLOCKER route refusals dropped in pilot and prod (zero price loads), 4 majors (replay rule clash, corrupt-folder green, K1b false green, memory-only audit gap needs owner decision); fix lane C5 v3 running. C3b v2 naive: P-4b has no command (lead-fill) plus 9 majors; v3 running with LEAD-FILL list. C4b v6: 5 majors, v7 running. C8b not merge evidence (v1 only); run.py hardening running. Hygiene: vendor guard passes in fresh clone, licence test fails as BRANCH ARTEFACT (10 problems in promotion-inputs, untouched)
 NEXT: C5 v3 then 2 fresh reviewers then C7b/C8c on v3; C3b v3 then reviewers; v7 then naive+security reviewers; C9 blocked on APPLIED-S9.md
-PUSHED_UTC: 2026-11-16T09:41:32Z
+PUSHED_UTC: 2026-11-16T09:42:56Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
