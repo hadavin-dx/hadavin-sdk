@@ -7,7 +7,7 @@ CPU/memory: load 0.00, 15 GB free (checked 07:59). Critical path: R5-M1 report -
 ## Status 2026-11-16 07:58 UTC / 13:28 IST - ORDER 006 read (parallel by default); ORDER 005 lanes running
 Container: 4 cores, load 0.02, 15 GB free of 16 GB (checked before launch). Agents running: 5 sonnet: R5-M1 and R5-M2 (Major sample vs source), R5-D (table owners, 4 decisions, bands), R5-Z (missed items, cut list), R5-C (naive reader: wording, counts, can the studio head decide). Closed: R5-B (20 of 20 Blocker facts CONFIRMED; severity: 5 distinct Blockers AGREE, 11 DISAGREE (Major), 1 Nit; saved in reviews-of-system-map/lane-R5-B.md), EV5, plan reviewers.
 Critical path: R5-M1/M2/D/Z reports -> egm-resolve (opus) -> REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md -> one fresh reviewer on my drafts -> FINAL. Independent work started this turn: R5-C. Next independent step when a lane returns: start the draft review of the finished lanes while the others run.
-| R5-C | comprehension: wording/counts/decidability of table and fix plan | 07:57 | 08:30 | - | running | save report |
+| R5-C | comprehension: wording/counts/decidability of table and fix plan | 07:57 | 08:30 | - | CLOSED (reported; lane-R5-C.md) | merge, resolve |
 | R5-B | closed 07:57 (reported) | | | | CLOSED | none |
 
 ## Status 2026-11-16 07:57 UTC / 13:27 IST - ORDER 005: plan v2 done, 5 review lanes running
@@ -19,7 +19,7 @@ Agent register for ORDER 005 (id | purpose | started UTC/IST | expected end | la
 | EV5 | EVIDENCE RUNNER: citation + caller checks, raw output | 07:53 / 13:23 | 08:00 | 07:54 | CLOSED (reported; evidence-5.md) | read by lanes |
 | PR5-design, PR5-impl | plan review r1 | 07:53 | | 07:54 | CLOSED (reported; NOT READY, fixed in PLAN-005 v2) | none |
 | R5-B | codebase-details: 20 Blockers vs source | 07:56 / 13:26 | 08:36 | - | running | save report |
-| R5-M1, R5-M2 | codebase-details: Major sample halves | 07:56 | 08:36 | - | running | save reports |
+| R5-M1, R5-M2 | codebase-details: Major sample halves | 07:56 | 08:36 | 08:00 | CLOSED both (reported; lane-R5-M1.md, lane-R5-M2.md) | merge |
 | R5-D | design: table owners, 4 decisions, bands | 07:56 | 08:36 | 07:59 | CLOSED (reported; lane-R5-D.md) | merge |
 | R5-Z | zoom-out: missed items, cut list | 07:56 | 08:36 | 07:59 | CLOSED (reported; lane-R5-Z.md) | merge |
 
