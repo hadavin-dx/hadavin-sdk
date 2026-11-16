@@ -142,3 +142,10 @@ Failure first: a fresh reader says the lead could not run the plan today without
 8. Q25 item 8: the decision number for 'recovery is not part of the take' (DECISIONS file names decision 1; ORDERS says decisions 1 and 4).
 9. (from the contradiction check) Does the Tue 17 Nov 14:00Z GO/NO-GO count T19-T21 (the real-n8n tests that lift F-002 from Blocker) as part of the Tuesday re-smoke, and are F-011 and F-041 (Major, rated 'never downgraded') part of the 'take path'? By the files' own ratings the answer today is an automatic NO-GO.
 10. (same check) The decisions file says the owner revokes the model key at clean-up (S9-3) and compares the settings-file figures (S9-2), and says the owner types y, the challenge and end (decision 7); Q25 item 7 says the owner does Step D only. Who does these three, and when?
+
+## Q28 (flows-audit, 2026-11-16 12:25Z) — answers only the lead can give; after Q27
+1. RWQ-8 (RUNSHEET-WORDING.md section 4): should the scoped caption (A-016f) say where the one message was found ("in the intake mailbox")? A viewer can read it as "one e-mail in total". My recommendation: yes, add "in the intake mailbox", or always show A-016g beside it.
+2. RWQ-9: the post-wait mailbox count and the mf_leads row prove "once" but are read by the lead, not shown on screen (decision 9 says rehearsal screenshot or Postgres node preview). Do you want them in frame in the take, or keep the caption limited to what is on screen?
+3. Step A: Q25 item 7 removed it (owner steps = Step D only); Q27 item 10 says "Step A (if kept)". Please confirm it stays removed.
+4. Q27 item 10 says the owner types y, the challenge and end on camera (decision 7) and does S9-2 and S9-3, but Q25 item 7 says owner steps are Step D only. Please confirm which list is current; the owner sheet will follow your answer.
+5. inputs/DECISIONS-2026-11-16.md items 1 and 7 still say "processed once" and the old owner typing; lead corrects (not my file). Also VIDEO-RUNSHEET.md rows N-9, N-10, N-11 (R:6, R:21, R:33 stopwatch phrases) are applied by the lead at re-pin.
