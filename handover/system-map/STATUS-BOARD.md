@@ -1,16 +1,16 @@
-UPDATED_UTC: 2026-11-16T09:22:06Z (14:52 IST)
+UPDATED_UTC: 2026-11-16T09:26:00Z (14:56 IST)
 SESSION: system-map
 ORDER: 016 (refill and capacity; 015 queue mode inside it)
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 9
 ITEMS_OPEN: 5
-PERCENT: 82
-AGENTS_RUNNING: 3
+PERCENT: 85
+AGENTS_RUNNING: 2
 INTERRUPTED: none
-NEXT: collect consistency check, section 7 fact check and zoom-out review; patches A-02 and B-01 and baseline run 2 results; start C-01, D2-01, D2-11-12; fix write_outputs.py (R460 B1, B3)
-CAPACITY: cores about 2.6 of 4 busy (load 2.56; 65 percent, close to the 70 percent target), memory 1 of 15 GB, disk free 28 GB, 3 light + 3 heavy agents (09:22 UTC / 14:52 IST)
-PUSHED_UTC: 2026-11-16T09:22:06Z
+NEXT: R460 reviewer result (write_outputs, partition); heavy results A-02, B-01, baseline 2, then C-01, D2-01, D2-11-12; fix remaining R460 items; refill lanes
+CAPACITY: cores about 1.9 of 4 busy (load 1.88; 47 percent, below the 70 percent target, lanes being refilled), memory 1 of 15 GB, disk free 27 GB, 1 light + 2 heavy agents (09:25 UTC / 14:55 IST)
+PUSHED_UTC: 2026-11-16T09:26:00Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -28,12 +28,11 @@ PUSHED_UTC: 2026-11-16T09:22:06Z
 ## AGENTS
 | id | role | model | what it does | started UTC / IST | expected end UTC / IST | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a62acbb8 | egm-codebase-details | sonnet | SWEEP vs ONE-PLACE-TABLE consistency | 09:22 / 14:52 | 09:32 / 15:02 | 10 | running | none |
-| aa3a5218 | egm-codebase-details | sonnet | fact check of drift section 7 and owner view decision 6a | 09:22 / 14:52 | 09:32 / 15:02 | 10 | running | none |
-| afc46c71 | egm-zoom-out | sonnet | is the document set the right shape for the take | 09:22 / 14:52 | 09:32 / 15:02 | 10 | running | none |
-| (shell) | heavy test | none | baseline run 2 (no -x), /tmp/sm-heavy-baseline2.log | 09:19 / 14:49 | 09:35 / 15:05 | 20 | running | in progress |
-| (shell) | heavy test | none | patch A-02 on scratch copy, /tmp/sm-heavy-A-02.pytest.log | 09:17 / 14:47 | 09:40 / 15:10 | 85 | running | in progress |
-| (shell) | heavy test | none | patch B-01 on scratch copy, /tmp/sm-heavy-B-01.pytest.log | 09:19 / 14:49 | 09:45 / 15:15 | 60 | running | in progress |
+| a2fb6c8e | egm-codebase-details | sonnet | R460 review of write_outputs, partition, safe_write | 09:24 / 14:54 | 09:34 / 15:04 | 20 | running | none |
+| (shell) | heavy test | none | baseline run 2 (no -x), /tmp/sm-heavy-baseline2.log | 09:19 / 14:49 | 09:30 / 15:00 | 92 | running | 92 percent |
+| (shell) | heavy test | none | patch C-01 on scratch copy, /tmp/sm-heavy-C-01.pytest.log | 09:24 / 14:54 | 09:35 / 15:05 | 10 | running | in progress |
+| (done) | heavy test A-02, B-01 | none | both: 2 failed, 9389 passed, 455 skipped; the same 2 tests fail in the baseline copy (vendor-word test, licence test), so not caused by the patches | 09:17 / 14:47 | 09:23 / 14:53 | 100 | done | evidence file to write |
+| a62acbb8, aa3a5218, afc46c71, a3da1748 | reviewers | sonnet | SWEEP vs ONE-PLACE, drift section 7 fact check, zoom-out, naive reader round 2 | | | 100 | done | fixes applied (counts line, 6a model key, L-05, ONE-PLACE rows, START HERE page); condensed notes in work/ |
 | a1847813, aace80d6, a55c4619, ad308a60, a8dc4694, a1bd396a, a23712892, afd7b543 | reviewers | sonnet | owner view round 2 and 3, cut list fact check, R460 tools, drift readiness, M8, lens, wording | | | 100 | done | reports saved in work/, fixes applied |
 
 ## LOST OR INTERRUPTED
