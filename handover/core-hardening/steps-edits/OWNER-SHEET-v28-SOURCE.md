@@ -58,6 +58,7 @@ CARD>>
 
 **Set phrases (send each exactly, `<...>` filled; anything else is a description; "none" only at 8.1):** "{{ph_dec}}"; "{{ph_req}}"; "{{ph_older}}"; "{{ph_mkc}}"; "{{ph_nokey}}"; "{{ph_tp}}"; "{{ph_cf}}"; "{{ph_ksf}}"; "{{ph_rs}}"; "{{ph_cd}}"; "{{ph_apr}}"; "{{ph_hsr}}"; "{{ph_dmd}}"; "{{ph_acc}}"; "{{ph_posted}}"; "{{ph_msg}}" (R8, other channel); the yes (5.8). Spoken only to the film person: "stop".
 
+<<NUMBERS
 ## 3. The numbers message (sample, made-up values) and your checks
 SAMPLE (made-up values, never real):
 ```
@@ -84,6 +85,7 @@ If you cancel the key during the run or right after `end`, the test program: <le
 2. The run day is before {{dl_day}} (otherwise no run, no "go"). The earliest key time, latest start, alarm time and cancel-by time are on the run day, and the cancel-by time is at least 10 minutes before the deadline.
 3. The account names are ones you know, and so is the older key, and the other channel is the one you named at 5.1; the backup person is a human you can call. The balance is at least the expected total.
 4. The last-resort step only stops spending (it never closes the account or removes other keys) and says whether it can be undone; you cannot judge it: ask on the other channel before the yes. [[B:The cancel-by time is before the older-key time.]] The model key outside the model program line says none: otherwise no run (a model key stored in n8n would spend without the spend lock).
+NUMBERS>>
 
 ## 5. Before the yes (UNVERIFIED)
 1. **Run name and key-list facts.** The lead gives you a run name or confirms yours (no earlier run used it or begins like it). In your model account (the lead names the model company when it confirms the run name) find only the page that lists keys (not found: describe what the account menu shows and wait; nothing is alive; check the account name). Send the lead: that page's host name only (the part before the first `/`; type it by hand); the words on its create button; the older key's name, creation date, last-used time and state word, or "none"; your other channel and your backup person. Then send "{{ph_req}}"; the lead answers with the numbers message. Any difference from it: no run. Put the read terminal left and the test terminal right, with paper notes "READ" and "TEST".

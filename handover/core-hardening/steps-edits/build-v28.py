@@ -25,9 +25,7 @@ POINTER = ("### THE CARD (the separate printed page OWNER-CARD-v28-%s.md)\nPrint
 def split(o):
     """returns (sheet text with the card and film blocks cut out, card text, film text)"""
     c0 = o.index('<<CARD\n'); c1 = o.index('CARD>>\n'); f0 = o.index('<<FILM\n'); f1 = o.index('FILM>>')
-    card = o[c0 + 7:c1]; film = o[f0 + 7:f1]
-    sheet = o[:c0] + '@@POINTER@@' + o[c1 + 7:f0].rstrip('\n') + '\n'
-    return sheet, card.strip('\n') + '\n', film.strip('\n') + '\n'
+XX
 def combine(sheet, card, film):
     """the whole text a check reads: the card put back in place, the film page appended"""
     i = sheet.index('### THE CARD'); j = sheet.index('### The rules')
