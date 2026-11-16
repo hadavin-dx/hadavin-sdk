@@ -107,3 +107,6 @@ M["W-C7-roles-sentence-deleted"] = _nth("; if you are also the owner, the two ro
 M["W-C7-labels-bullet-PRIMARY-KEY-deleted"] = _nth("PRIMARY KEY =", "PRIMARY =", 0)
 M["W-C7-run-count-deleted"] = _nth("I ran the full pipeline run_all.sh", "I ran the pipeline", 0)
 M["W-C7-L-LEASE-reversal-sentence-deleted"] = _nth("THE DEFAULT REVERSES YOUR ANSWER Q22 (c) (ORD:186)", "THE DEFAULT FOLLOWS ORD:230", 0)
+
+M["W-C7-late-file-unnamed"] = _nth("LEAD-RELEASE-NOTE-v19.md was written", "LEAD-RELEASE-NOTE-v19.md was seen", 0)
+M["W-C7-late-file-time-deleted"] = _nth("OWNER-SHEET-v35-A.md was written", "OWNER-SHEET-v35-A.md exists", 0)

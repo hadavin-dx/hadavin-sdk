@@ -155,3 +155,10 @@ NEG nd14 caught | FAIL ND14 missing
 NEG e17lease caught | FAIL E-17 lease sentence added
 NEG e22 caught | FAIL crash check untested missing in E-22
 NEG e43 caught | FAIL E-43 lacks stage.journal
+NEG e49 caught | FAIL E-49 consent not tied to message (a) to (d)
+NEG e49day caught | FAIL E-49 lacks day format example
+NEG e53 caught | FAIL E-53 lacks override of line 27
+NEG e51 caught | FAIL E-51 wording
+NEG e52 caught | FAIL E-52 new word not once: A mail address
+NEG e04 caught | FAIL E-04 no final full stop
+NEG e07 caught | FAIL E-07 lacks "nobody on this branch"

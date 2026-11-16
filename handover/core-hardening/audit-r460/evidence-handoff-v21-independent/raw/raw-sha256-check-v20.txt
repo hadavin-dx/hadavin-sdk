@@ -1,0 +1,2 @@
+./spellings2.json: OK
+97

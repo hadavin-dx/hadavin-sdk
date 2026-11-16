@@ -1,0 +1,1 @@
+`gate4_v21.sh` was run once in v21 on the unchanged tree: ruff, format, timing tests and bandit rc=0; pytest rc=1 with the two baseline failures only; `compare_gate4.py` rc=0 (`raw/raw-gate4-compare-v21.txt`); it was not run on a changed tree because none exists

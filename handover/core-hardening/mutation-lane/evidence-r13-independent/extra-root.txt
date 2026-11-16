@@ -1,0 +1,18 @@
+ROW|X-outjson-symlink|uid=0|exit=2|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/oj is a symbolic link or not a regular file: refused
+ROW|X-old-59000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-new-59000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-old-60000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-new-60000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-old-61000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-new-61000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-old-100000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-new-100000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-old-120000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-new-120000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-old-130000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-new-130000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-k-59000|uid=0|exit=5|tb=0|file_last=return1|state=78e3828a7f7dc0c7.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|X-k-59990|uid=0|exit=2|tb=0|file_last=return1|state=|run.py: error: the test arguments together are 60037 bytes (counted with 9 per word); the limit is 60000
+ROW|X-k-60000|uid=0|exit=2|tb=0|file_last=return1|state=|run.py: error: the test arguments together are 60047 bytes (counted with 9 per word); the limit is 60000
+ROW|X-k-60100|uid=0|exit=2|tb=0|file_last=return1|state=|run.py: error: the test arguments together are 60147 bytes (counted with 9 per word); the limit is 60000
+DONE

@@ -73,7 +73,7 @@ PASS no 'accepted' exit slip in any new text :: []
 PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
 PASS 5a lists exactly the 37 viewer-visible run-sheet and page rows :: (37, 37)
 PASS 5a text equals each row's own 'what the viewer sees' cell
-PASS report names the check time 2026-11-16T19:41:14Z and the newest sheet version on disk (v34) :: [33, 34, 34]
+PASS report names the check time 2026-11-16T19:44:12Z and the newest sheet version on disk (v34) :: [33, 34, 34]
 PASS no owner sheet changed (content hash) after the stated check time (C-10c is current); a file written again with identical content does not count :: []
 PASS no claim that v25 or v26 is the newest
 PASS L-SHEET reads 'confirm the one final sheet' and names the newest version (v34) A, B and SOURCE
@@ -115,9 +115,9 @@ PASS naive M5: the claim table is named in the box and every code word of the bo
 PASS naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list
 PASS every example time of day (the IST of the first example)  in the box has 'IST' within 40 characters (1 places) :: 1
 PASS the real v34 files on disk are ['OWNER-SHEET-v34-A.md', 'OWNER-SHEET-v34-B.md', 'OWNER-SHEET-v34-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v34-A.md', 'OWNER-SHEET-v34-B.md', 'OWNER-SHEET-v34-SOURCE.md']
-INFO OWNER-SHEET-v34-A.md last written 19:27:29 UTC; check time of the report 2026-11-16T19:41:14Z
-INFO OWNER-SHEET-v34-B.md last written 19:27:29 UTC; check time of the report 2026-11-16T19:41:14Z
-INFO OWNER-SHEET-v34-SOURCE.md last written 18:54:55 UTC; check time of the report 2026-11-16T19:41:14Z
+INFO OWNER-SHEET-v34-A.md last written 19:27:29 UTC; check time of the report 2026-11-16T19:44:12Z
+INFO OWNER-SHEET-v34-B.md last written 19:27:29 UTC; check time of the report 2026-11-16T19:44:12Z
+INFO OWNER-SHEET-v34-SOURCE.md last written 18:54:55 UTC; check time of the report 2026-11-16T19:44:12Z
 PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 99 of the 104 rows cannot be read in the repository
 PASS 99 rows of 104 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
 PASS no row old or new text holds an unescaped '|' (it would break its table cell; a pipe is written \|) :: []
@@ -125,7 +125,7 @@ PASS REPORT-c6q.md was not changed by this run (it is older than the build of RE
 PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6w.md and holds its own title line)
 PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
 PASS the box line of L-SHEET and the section 0 bullet each print every real v34 file with its real written time (UTC): [('OWNER-SHEET-v34-A.md', '19:27:29'), ('OWNER-SHEET-v34-B.md', '19:27:29'), ('OWNER-SHEET-v34-SOURCE.md', '18:54:55')] :: [('OWNER-SHEET-v34-A.md', '19:27:29'), ('OWNER-SHEET-v34-B.md', '19:27:29'), ('OWNER-SHEET-v34-SOURCE.md', '18:54:55')]
-PASS F4 the report names the newest owner sheet version (v34) and release note (v18) on disk, and the check time :: (('34', '19:41:14', '01:11:14', '18'), 34, 18)
+PASS F4 the report names the newest owner sheet version (v34) and release note (v18) on disk, and the check time :: (('34', '19:44:12', '01:14:12', '18'), 34, 18)
 PASS F4 no owner sheet or release note has a version higher than the one named :: []
 PASS F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is defined
 PASS F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumption in the box, row 8 and section 9
@@ -148,7 +148,7 @@ PASS F3 row 6 reason says items 11 to 16
 PASS m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
 PASS m2 row 13 says 'expected to be true until C-9 part 2'
 PASS m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer :: 7
-PASS m4 every example answer time in the box is later than the check time 2026-11-16T19:41:14Z (and has its IST) :: ['2026-11-16T20:00:00Z', '2026-11-16T20:10:00Z', '2026-11-16T20:10:00Z']
+PASS m4 every example answer time in the box is later than the check time 2026-11-16T19:44:12Z (and has its IST) :: ['2026-11-16T20:00:00Z', '2026-11-16T20:10:00Z', '2026-11-16T20:10:00Z']
 PASS naive: the order of the reviewer names is explained
 PASS naive: the 'does not do' list comes before the answer line
 PASS naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers
@@ -179,7 +179,7 @@ PASS E-files: every file name in the start box is a real file (or the one this w
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
 PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T19:41:14Z (read from the files at run time) :: []
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T19:44:12Z (read from the files at run time) :: []
 PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v18.md and its real written time 19:27:29 UTC
 PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 18:52:25
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6V_TREE) :: []
@@ -233,7 +233,7 @@ PASS class 2: every count of 'N rows/edits' with N of 30 or more equals one of t
 PASS class 2: every 'vN-A and vN-B are the newest' names the newest sheet on disk (v34) :: {'34'}
 PASS class 2: no text names evidence-c6u/contact-grep-output.txt or c6u-APPLIED-ROWS.md as this work's file
 PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v34) :: {'34'}
-PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['19:41:14']) :: {'19:41:14'}
+PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['19:44:12']) :: {'19:44:12'}
 PASS class 2: 'to N files' is 10 everywhere (found ['10']) and the number of TASKS is twelve everywhere (found ['twelve']) :: (['10'], ['twelve'])
 PASS class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')]) :: ([('five', ' items'), ('two', ' (OWNER ONLY) questions')], 2)
 PASS class 2: no TASK number above twelve (the list has 12 tasks) :: 12
@@ -269,8 +269,8 @@ PASS C7-1 every owner sheet file named in the start box and in section 1c is the
 PASS C7-2 the release note file named in the start box and every 'newest' release note statement is the newest version v18 (box [14, 18]; statements [18]) :: ([14, 18], [18])
 PASS C7-3 every statement that ties G12 to a line of release note v14 says line 33, and line 33 of the real v14 holds the words 'in writing' (found ['33']) :: (['33', '33', '33'], ['33'])
 PASS C7-4 'N items are OPEN' says Five in every place (found ['Five']) :: ['Five', 'Five']
-PASS C7-5 every place that names the check time names 19:41:14 (found ['19:41:14']) :: ['19:41:14', '19:41:14', '19:41:14', '19:41:14', '19:41:14']
+PASS C7-5 every place that names the check time names 19:44:12 (found ['19:44:12']) :: ['19:44:12', '19:44:12', '19:44:12', '19:44:12', '19:44:12']
 PASS C7-6 every question line of L-LEASE (3) carries the G12 hold :: 3
 PASS C7-7 no sentence says that anything held under G12 can be filmed while G12 is open; 'cannot be filmed' stays in the box (1 times) :: []
-FAIL V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: [('full runs of run_all.sh', None, 2), ('negative changed copies', 311, 312), ('negative wrong copies', 0, 4), ('scanned files', 336, 338)]) :: [('full runs of run_all.sh', None, 2), ('negative changed copies', 311, 312), ('negative wrong copies', 0, 4), ('scanned files', 336, 338)]
-SUMMARY: 272 checks, 2 FAILED: D-late: every sheet or release note file written after the freeze (5 found in the live folder) is named in the report with its real written time (UTC), and the folder read by the checks holds none of them; V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: [('full runs of run_all.sh', None, 2), ('negative changed copies', 311, 312), ('negative wrong copies', 0, 4), ('scanned files', 336, 338)])
+FAIL V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: [('negative changed copies', 311, 314), ('scanned files', 336, 347)]) :: [('negative changed copies', 311, 314), ('scanned files', 336, 347)]
+SUMMARY: 272 checks, 2 FAILED: D-late: every sheet or release note file written after the freeze (5 found in the live folder) is named in the report with its real written time (UTC), and the folder read by the checks holds none of them; V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: [('negative changed copies', 311, 314), ('scanned files', 336, 347)])

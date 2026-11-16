@@ -1,0 +1,281 @@
+INFO server PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+PASS L DB-1 default spend_nonneg: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 default spend_nonneg: nothing was applied (constraints, functions, triggers, columns and ledger rows all unchanged)  [(29, 1, 4, 105, 5) -> (29, 1, 4, 105, 5)]
+PASS L DB-1 default spend_nonneg: the same file without the lock DOES change that fingerprint (so the check above is not vacuous)  [(29, 1, 4, 105, 5) -> (31, 1, 4, 105, 6)]
+PASS L DB-1 variant spend_nonneg_finite: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 variant spend_nonneg_finite: nothing was applied (constraints, functions, triggers, columns and ledger rows all unchanged)  [(29, 1, 4, 105, 5) -> (29, 1, 4, 105, 5)]
+PASS L DB-1 variant spend_nonneg_finite: the same file without the lock DOES change that fingerprint (so the check above is not vacuous)  [(29, 1, 4, 105, 5) -> (31, 1, 4, 105, 6)]
+PASS L DB-1 upgrade spend_nonneg_upgrade (default applied first): with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-1 upgrade spend_nonneg_upgrade (default applied first): nothing was applied (constraints, functions, triggers, columns and ledger rows all unchanged)  [(31, 1, 4, 105, 6) -> (31, 1, 4, 105, 6)]
+PASS L DB-1 upgrade spend_nonneg_upgrade (default applied first): the same file without the lock DOES change that fingerprint (so the check above is not vacuous)  [(31, 1, 4, 105, 6) -> (31, 1, 4, 105, 7)]
+PASS L DB-2 v19 spend_decrease_log: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-2 v19 spend_decrease_log: nothing was applied (constraints, functions, triggers, columns and ledger rows all unchanged)  [(29, 1, 4, 105, 5) -> (29, 1, 4, 105, 5)]
+PASS L DB-2 v19 spend_decrease_log: the same file without the lock DOES change that fingerprint (so the check above is not vacuous)  [(29, 1, 4, 105, 5) -> (29, 6, 14, 118, 6)]
+PASS L DB-3 v19 spend_guarded_writes: with another session holding the table, migrate() fails 55P03 in 4 to 9 s  [55P03 after 5.0s]
+PASS L DB-3 v19 spend_guarded_writes: nothing was applied (constraints, functions, triggers, columns and ledger rows all unchanged)  [(29, 1, 4, 105, 5) -> (29, 1, 4, 105, 5)]
+PASS L DB-3 v19 spend_guarded_writes: the same file without the lock DOES change that fingerprint (so the check above is not vacuous)  [(29, 1, 4, 105, 5) -> (37, 5, 4, 107, 6)]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) L v16 DB-2 file under the same lock: no 55P03  [57014 after 12.0s (waits until the 12s statement cap)]
+INFO L: every file in held-sql/ has a lock check above; the lead's gate is `grep -c lock_timeout` plus this run (PR DB-1 test)
+PASS L text: the FIRST statement of spend_decrease_log.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_guarded_writes.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_nonneg.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_nonneg_finite.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the FIRST statement of spend_nonneg_upgrade.sql is SET LOCAL lock_timeout (position, not only presence)  [SET LOCAL lock_timeout = '5s';]
+PASS L text: the position check itself refuses a file that sets the timeout AFTER an ALTER
+PASS K m5: with the record unwritable, switching ON still works  [err=None]
+PASS K m5: with the record unwritable, switching OFF is refused (fail closed) and the switch stays ON  [err=42P01]
+PASS K m5: with the record writable again a switch OFF is recorded (1 row)  [1]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) K m5: v16 file: switching ON with the record unwritable  [err=42P01]
+PASS H1 (a fact about Postgres, NOT a test of the code fix; that is a Python PR test): with no held file, a positive reserve (INSERT ... ON CONFLICT branch) on a NaN row RETURNS NaN, so the code check after RETURNING is needed in the INSERT branch too  [NaN]
+PASS K2 m4: record table locked by another session and a 1.5 s statement_timeout: switching ON still works  [err=None]
+PASS K2 m4: the same lock and timeout while switching OFF: refused (fail closed) and the switch stays ON  [err=57014]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) K2 m4: the v17 file (`WHEN OTHERS` only) with the same lock and timeout: switching ON is cancelled with 57014  [err=57014 state_on=False]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA3 grant map unchanged (_RW): migrate(runtime_role=) leaves the runtime role able to INSERT into spend and UPDATE kill_switch directly (so G1 holds only in a hand-granted test)  [insert err=None, update err=None]
+PASS MA3 after DB-3 and migrate(runtime_role=) run FOUR times (twice with _RW, twice select-only) the function grants are still exactly as set  [[]]
+PASS MA4 runtime role: EXECUTE on spend_reserve and spend_settle ONLY (v21 default of L22b)  [[True, True, False, False]]
+PASS MA4 operator role: EXECUTE on kill_switch_engage and kill_switch_release only  [[False, False, True, True]]
+PASS MA4 audit-reader and migration-unrelated login (ar17) and PUBLIC hold no EXECUTE
+PASS MA4 runtime role: SELECT on the three tables; operator role: SELECT on none of them (m6: it only runs the release function)  [[True, True, True] [False, False, False]]
+PASS G1 runtime role: direct INSERT into spend refused 42501
+PASS G1 runtime role: direct UPDATE of spend refused 42501
+PASS G1 runtime role: direct UPDATE of spend_month refused 42501
+PASS G1 runtime role: direct UPDATE of kill_switch refused 42501
+PASS G1 runtime role: DELETE of kill_switch refused 42501
+PASS G1 runtime role: DELETE FROM spend refused 42501
+PASS G1 runtime role: TRUNCATE spend refused 42501
+PASS G1 runtime role: DELETE FROM spend_month refused 42501
+PASS G1 runtime role: TRUNCATE spend_month refused 42501
+PASS G1 runtime role: DELETE FROM kill_switch refused 42501
+PASS G1 runtime role: TRUNCATE kill_switch refused 42501
+PASS G2 reserve 1.5 returns day and month totals (1.5, 1.5)  [(Decimal('1.5'), Decimal('1.5'))]
+PASS G2 the month row is derived from the day (2026-11-01), the caller passes no month
+PASS G3 settle (worst 1.5, actual 0.4) leaves 0.4 on both  [(Decimal('0.4'), Decimal('0.4'))]
+PASS G4 settle again with nothing open is refused 23514 (the 0.4 already settled cannot be erased)
+PASS G4 the total is still 0.4 after the refusal
+PASS G5 settle of a worst case larger than what is open (3 > 2) refused 23514
+PASS G6 a negative worst case returns no row (v21: a rejected settle must not look like a success)  [None]
+PASS G6 a negative actual cost returns no row
+PASS G6 after both rejections the stored total and open amount are unchanged  [(Decimal('2.4'), Decimal('2.0'))]
+PASS G7 reserve of NaN refused 23514
+PASS G7 reserve of Infinity refused 23514
+PASS G7 reserve of -1: v19 refuses it by writing nothing (the function returns the unchanged totals, v18 raised 23514): total and open amount of the agent unchanged
+PASS G7 a settle with actual NaN refused 23514 and the total is unchanged
+PASS G12 a reserve of 1000000000000 (the ceiling) refused 23514, 999999999999 accepted
+PASS G12 an agent_id of length 0 or 201 refused 23514
+PASS G12 a settle for an agent that has no row returns no row and writes no row in spend or spend_month (v18 passed this check through an `or True` for a no-op; v19 checks the rows)  [[]]
+STATED-SHOWN (an exploit that is NOT closed works as described; this line is not a pass of a safety check) G12 the runtime login can settle (give back) a reservation it made under ANY agent_id name, e.g. 'victim' (the control is per-agent logins, L-4, and the invoice comparison)
+PASS G12 m2 a settle for another day of the same month that has no day row returns no row and leaves the month row (usd and open) unchanged  [before (Decimal('5'), Decimal('5')) after (Decimal('5'), Decimal('5'))]
+PASS G12 m2 the honest settle of the real day still works afterwards (month back to 0 and open 0)
+PASS G12 a reserve for the day infinity is refused 23514
+PASS G12 a reserve for the day -infinity is refused 23514
+PASS G12 a reserve for the day 1999-01-01 is refused 23514
+PASS G12 a reserve for the day 0001-01-01 is refused 23514
+PASS G12 a reserve for the day 2100-01-01 is refused 23514
+PASS G12 a reserve of 0 writes no row and returns no row
+PASS G12 the agent id NFD cafe + combining accent is refused 23514
+PASS G12 the agent id whitespace only is refused 23514
+PASS G12 the agent id leading blank is refused 23514
+PASS G12 the agent id newline is refused 23514
+PASS G12 the agent id tab and quote is refused 23514
+PASS G12 v21 the agent id NFC cafe (non-ASCII) is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id fullwidth A is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id zero-width space is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id NBSP at the start is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id right-to-left override is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id NEL control U+0085 is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id a space inside is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id DEL is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id 201 characters is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id empty is refused 23514 (ASCII allow-list; v19 accepted the first six as separate budgets)
+PASS G12 v21 the agent id 'a' (1 characters) is accepted
+PASS G12 v21 the agent id 'Agent_1.x:y@z/q+w-1' (19 characters) is accepted
+PASS G12 v21 the agent id 'aaaaaaaaaaaaaaaaaaaa' (200 characters) is accepted
+STATED-SHOWN (an exploit that is NOT closed works as described; this line is not a pass of a safety check) G12 agent ids that differ only in letter case ('Case' and 'case') are two budgets (names come from configuration in our code; a hostile login can pick any name anyway)
+STATED-SHOWN (an exploit that is NOT closed works as described; this line is not a pass of a safety check) G12 a settle with worst 0 and actual 5 RAISES a total with no reservation (it can only over-report spend, never hide it; ceiling 1e12 still holds)
+PASS G8 fuzz, 400 random calls by the runtime role: settled money (total minus open reservation) never fell; a refused call changed nothing  [violations=0]
+PASS G8 after the fuzz no row has a negative total, a negative open amount, open above the total, or a total at the ceiling
+PASS G9 v21 runtime role cannot engage the kill switch (42501): the default of L22b is operator only
+PASS G9 operator role engages the kill switch; `by` is its own login (op17), not a value it chose  [(True, 'op17')]
+PASS G9 m2 engage when already ON changes nothing (`by` and `ts` of the first engage stay)  [first-person]
+PASS G9 runtime role cannot release it: 42501
+PASS G9 operator role releases it; `by` is the operator login (op17)  [(False, 'op17')]
+PASS G9 m2 release when already OFF changes nothing (`by` and `ts` stay)
+PASS G9 with DB-2 also applied the record has the changes with the invoking login in `who`  [[(False, True, 'op17'), (True, False, 'op17')]]
+PASS G9 m2 engage with the row missing creates it and switches ON (a missing row was a silent no-op)
+PASS G9 m1 the INSERT of a missing switch row is recorded (old state read as ON, new ON, who = op17)  [(True, True, None, 'op17', 'op17')]
+PASS G10 temporary tables named spend, spend_month, kill_switch plus search_path = pg_temp first: the real total moved (+1) and the temporary tables are empty  [3.4->4.4]
+PASS G11 DB-1 default, DB-2 and DB-3 apply together through the real migrate() (names do not clash)  [['0006_nn', '0007_dec', '0008_guard']]
+PASS MA2 clean database: the query run on the RUNTIME login (no table rights needed) finds no problem
+PASS MA2 a hand-made SECURITY DEFINER function that is on no list: the start-up query reports it  [['unexpected SECURITY DEFINER function public.evil() (owner postgres)']]
+PASS MA2 a hand-made SECURITY DEFINER function that is on no list: after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 a hand-made SECURITY DEFINER function that is on no list: the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 EXECUTE on spend_reserve granted to PUBLIC: the start-up query reports it  [["public.spend_reserve(text,date,numeric): EXECUTE is held by ['PUBLIC'] (PUBLIC means everyone), expected only ['rt17']"]]
+PASS MA2 EXECUTE on spend_reserve granted to PUBLIC: after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 EXECUTE on spend_reserve granted to PUBLIC: the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 kill_switch_release granted to the runtime role: the start-up query reports it  [["public.kill_switch_release(): EXECUTE is held by ['rt17'] (PUBLIC means everyone), expected only ['op17']"]]
+PASS MA2 kill_switch_release granted to the runtime role: after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 kill_switch_release granted to the runtime role: the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 kill_switch_engage granted to the runtime role (the owner-open alternative of L22b, reported as a deviation from the default): the start-up query reports it  [["public.kill_switch_engage(): EXECUTE is held by ['rt17'] (PUBLIC means everyone), expected only ['op17']"]]
+PASS MA2 kill_switch_engage granted to the runtime role (the owner-open alternative of L22b, reported as a deviation from the default): after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 kill_switch_engage granted to the runtime role (the owner-open alternative of L22b, reported as a deviation from the default): the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 a second overload of a listed name, created with the default (PUBLIC) EXECUTE: the start-up query reports it  [['unexpected SECURITY DEFINER function public.spend_reserve(text,date,numeric,numeric) (owner postgres)']]
+PASS MA2 a second overload of a listed name, created with the default (PUBLIC) EXECUTE: after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 a second overload of a listed name, created with the default (PUBLIC) EXECUTE: the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 kill_switch_release owner changed to another role: the start-up query reports it  [['public.kill_switch_release(): owned by op17, expected the migration role migr17']]
+PASS MA2 kill_switch_release owner changed to another role: after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 kill_switch_release owner changed to another role: the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 search_path of spend_settle reset (ALTER FUNCTION ... RESET): the start-up query reports it  [['public.spend_settle(text,date,numeric,numeric): settings None are not exactly search_path=pg_catalog, pg_temp']]
+PASS MA2 search_path of spend_settle reset (ALTER FUNCTION ... RESET): after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 search_path of spend_settle reset (ALTER FUNCTION ... RESET): the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 search_path of spend_settle set to public by ALTER FUNCTION SET: the start-up query reports it  [["public.spend_settle(text,date,numeric,numeric): settings ['search_path=public'] are not exactly search_path=pg_catalog, pg_temp"]]
+PASS MA2 search_path of spend_settle set to public by ALTER FUNCTION SET: after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 search_path of spend_settle set to public by ALTER FUNCTION SET: the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 a SECURITY DEFINER function with a listed name in another schema: the start-up query reports it  [['unexpected SECURITY DEFINER function other17.kill_switch_release() (owner postgres)']]
+PASS MA2 a SECURITY DEFINER function with a listed name in another schema: after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 a SECURITY DEFINER function with a listed name in another schema: the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 the runtime role made a member of the operator role: the start-up query reports it  [['rt17 is a member of op17: it would hold kill_switch_release']]
+PASS MA2 the runtime role made a member of the operator role: after the repair the query is clean again  [[]]
+PASS MA2 an audit trigger switched off by the table owner (v21): the start-up query reports it  [["trigger spend_log_decrease on spend (function spend_log_decrease) is not enabled (state 'D'; 'D' = disabled, 'R'/'A' = fires only for some sessions)"]]
+PASS MA2 an audit trigger switched off by the table owner (v21): after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 an audit trigger switched off by the table owner (v21): the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 an audit trigger switched to replica-only (v21): the start-up query reports it  [["trigger kill_switch_log_change on kill_switch (function kill_switch_log_change) is not enabled (state 'R'; 'D' = disabled, 'R'/'A' = fires only for some sessions)"]]
+PASS MA2 an audit trigger switched to replica-only (v21): after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 an audit trigger switched to replica-only (v21): the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 an audit trigger dropped while its function stays (v21): the start-up query reports it  [['kill_switch_log_insert() is installed but no trigger uses it']]
+PASS MA2 an audit trigger dropped while its function stays (v21): after the repair the query is clean again  [[]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) MA2 an audit trigger dropped while its function stays (v21): the v17-era audit (migrate.effective_problems: tables and columns only) reports nothing  [[]]
+PASS MA2 a listed function that was dropped is reported
+PASS m7 a non-default schema (app17): the functions are created there, bound only to app17 tables, and the query is clean  [[]]
+PASS m7 the runtime role can reserve through the function in app17
+PASS m7 a function bound (by the creating session's search_path) to a lookalike table in schema public is reported  [["app17.spend_reserve(text,date,numeric): bound to relations in schema ['public'], not only app17"]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) m7 every OTHER check of the query (owner, settings, grants, name list) passes for that function, so only the binding check catches it (the v17 text had no query at all)  [1 problem(s)]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G12 v17 DB-3 file: a reserve of 1000000000000 with a month that is not the month of the day is accepted (no ceiling, caller-chosen month)  [err=None]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G9 m2 v17 DB-3 file: engage with the row missing does nothing and says nothing
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G9 m2 v17 DB-3 file: engage when already ON rewrites `by`
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G1/G4 v16 design: the runtime role zeroes a settled total of 10 by direct UPDATE  [total is 0 (the exposure of security major M1)]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G9 v16 design: the runtime role switches the kill switch OFF and picks the `by` text  [(False, 'chosen-by-caller')]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G12 m2 v18 DB-3 file: a settle for a day without a row LOWERS the month row (usd 5 -> 0) while the day row stays 5
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G12 v18 DB-3 file: a reserve for the day 'infinity' is accepted
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G12 v18 DB-3 file: a reserve of 0 creates a row
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G12 v18 DB-3 file: an NFD agent id and a newline agent id are accepted
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) G9 m1 v18 DB-2 file: the INSERT of a missing switch row writes no record
+PASS K m1 with the record unwritable, an INSERT of a switch row that is ON still works  [err=None]
+PASS K m1 with the record unwritable, an INSERT of a switch row that is OFF is refused (fail closed) and no row exists  [err=42P01]
+PASS K m1 with the record writable, an INSERT of a switch row that is OFF is recorded as old ON, new OFF
+PASS L m7 SET LOCAL statement_timeout = '60s' holds inside the transaction and is gone after it (so it cannot leak to the next file or the runtime)  [1min then 0]
+PASS L m7 text: the DB-3 file has SET LOCAL statement_timeout as its second statement, after the lock_timeout line
+PASS MA1 real server: SET "role" TO rt17 (quoted name) changes the session identity on 16.15 (current_user, session_user = ('rt17', 'postgres')); v18 guard flags it = False; v19 guard flags it = True
+PASS MA1 real server: SET session_authorization TO rt17 (one underscore word) changes the session identity on 16.15 (current_user, session_user = ('rt17', 'rt17')); v18 guard flags it = False; v19 guard flags it = True
+PASS MA1 real server: SELECT set_config('role','rt17',false) changes the session identity on 16.15 (current_user, session_user = ('rt17', 'rt17')); v18 guard flags it = False; v19 guard flags it = True
+PASS MA1d real server: the runtime role cannot read secret_t directly (42501) but a definer function calling query_to_xml hands it the row; v18 guard flags the function = False; v19 guard flags it = True
+PASS MA1a real server: after REVOKE, DROP, CREATE OR REPLACE the runtime role may run the function (before False, after True); v18 guard flags the text = False; v19 guard flags it = True
+PASS MA2 real server: a definer function in another schema with the listed name has default PUBLIC execute and the runtime role runs it (1); v18 guard flags the text = False; v19 guard flags it = True
+INFO ---- B1 RETURN-form definer (security B1): the v19 guard passes it, the server runs it as the owner
+PASS B1 real server: a RETURN-form definer hands the runtime role a row it cannot read (42501 direct); v19 guard flags it = False; v21 guard flags it = True
+PASS B1 the reviewer's exact case (RETURN query_to_xml(p_agent, ...) as spend_reserve in the DB-3 file): v19 guard flags it = False; v21 guard flags it = True
+INFO ---- M1 %I.name( in an EXECUTE string (security M1)
+PASS M1 real server: a definer trigger runs the hidden call `%I.evil_fn` with the owner's rights (the runtime role cannot insert into secret_t: 42501; one row written by the trigger: 1); v19 guard flags it = False; v21 guard flags it = True
+INFO ---- M2 trigger drop and neutering (security M2)
+PASS M2 real server: before the DROP a lowering writes a record row (1); after `DROP TRIGGER IF EXISTS` (clean in v19) the next lowering writes none (1); v19 guard flags the file = False; v21 guard flags it = True
+PASS M2 real server: CREATE OR REPLACE TRIGGER ... WHEN (false) neuters the month record (rows 0 then 0 after a lowering); v19 guard flags the file = False; v21 guard flags it = True
+INFO ---- M3 MERGE INTO / DELETE USING / TABLE in an atomic body (security M3)
+INFO M3 MERGE INTO secret_t USING kill_switch: the server accepts it; v19 guard flags it = False; v21 guard flags it = True
+PASS M3 MERGE INTO secret_t USING kill_switch: v21 guard flags it, and the v19 guard did not (server verdict above)
+INFO M3 DELETE FROM kill_switch USING secret_t: the server accepts it; v19 guard flags it = False; v21 guard flags it = True
+PASS M3 DELETE FROM kill_switch USING secret_t: v21 guard flags it, and the v19 guard did not (server verdict above)
+INFO M3 TABLE secret_t: the server accepts it; v19 guard flags it = False; v21 guard flags it = True
+PASS M3 TABLE secret_t: v21 guard flags it, and the v19 guard did not (server verdict above)
+INFO ---- M4 / F1 a replacement body of a listed definer (independent runner of v19)
+PASS F1 real server: R01 DELETE FROM spend as the body of kill_switch_release is accepted and the OPERATOR role's call leaves 0 rows in spend; v19 guard flags it = False; v21 guard flags it = True
+PASS F1 real server: R14 WITH d AS (DELETE ...) SELECT 1 as the body of kill_switch_release is accepted and the OPERATOR role's call leaves 0 rows in spend; v19 guard flags it = False; v21 guard flags it = True
+PASS M4 a release without its `AND on = true` (same tables, other behaviour): v19 guard flags it = False; v21 guard flags it (head/body fingerprint) = True
+INFO ---- m1 / F2 expressions inside allowed shapes
+PASS m1 DEFAULT current_setting(..): v19 guard flags it = False; v21 guard flags it = True
+PASS m1 CHECK (pg_read_file(..)): v19 guard flags it = False; v21 guard flags it = True
+PASS m1 index on evil(a): v19 guard flags it = False; v21 guard flags it = True
+PASS m1 GENERATED ALWAYS AS (evil()): v19 guard flags it = False; v21 guard flags it = True
+INFO m1 the server accepted DEFAULT current_setting('server_version') as the migration role and stored '16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)'
+INFO ---- m3 tokenizer against the server
+PASS m3 NBSP inside a word: the server (which lower-cases the word) reads 'as\xa0x'; v21 tokenizer reads 'AS\xa0x'; v19 read 'AS\xa0x': v19 differs only for the astral case (it split the word, which is the m3 fix)
+PASS m3 U+3000 inside a word: the server (which lower-cases the word) reads 'as\u3000x'; v21 tokenizer reads 'AS\u3000x'; v19 read 'AS\u3000x': v19 differs only for the astral case (it split the word, which is the m3 fix)
+PASS m3 U+0085 inside a word: the server (which lower-cases the word) reads 'as\x85x'; v21 tokenizer reads 'AS\x85x'; v19 read 'AS\x85x': v19 differs only for the astral case (it split the word, which is the m3 fix)
+PASS m3 U+2028 inside a word: the server (which lower-cases the word) reads 'as\u2028x'; v21 tokenizer reads 'AS\u2028x'; v19 read 'AS\u2028x': v19 differs only for the astral case (it split the word, which is the m3 fix)
+PASS m3 astral character starts a word: the server (which lower-cases the word) reads '😀y'; v21 tokenizer reads '😀y'; v19 read 'y': v19 differs only for the astral case (it split the word, which is the m3 fix)
+PASS m3 astral dollar tag: the server reads 'a;b'; v21 tokenizer reads 'a;b'; v19 tokenizer read None
+PASS m3 form feed: the server accepts it as a separator; v21 tokenizer: 2 tokens
+PASS m3 vertical tab: the server refuses it (ERR 42601); v21 tokenizer: 2 tokens
+INFO ---- m4 agent-id rule: locale and encoding
+PASS m4 a SQL_ASCII database: the product migrate() itself fails there (TypeError: psycopg returns bytes for names), before any held file; so the agent-id rule is needed for UTF8 and LATIN1 only; a client on SQL_ASCII must be told
+INFO m4 v19 database LATIN1 / LC_COLLATE 'C' LC_CTYPE 'C': ordinary id 'plain1' -> 42601; id with U+0085 (or 'a' in a one-byte database) -> 42601
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) m4 v19 file in a LATIN1 database: even a plain agent id fails (42601)
+INFO m4 v21 database LATIN1 / LC_COLLATE 'C' LC_CTYPE 'C': ordinary id 'plain1' -> None; id with U+0085 (or 'a' in a one-byte database) -> None
+PASS m4 v21 file in a LATIN1 / LC_COLLATE 'C' LC_CTYPE 'C' database: a plain id works and the U+0085 id is refused
+INFO m4 v19 database UTF8 / LC_COLLATE 'C.utf8' LC_CTYPE 'C.utf8': ordinary id 'plain1' -> None; id with U+0085 (or 'a' in a one-byte database) -> 23514
+INFO m4 v19 U+0085 result in LC_COLLATE 'C.utf8' LC_CTYPE 'C.utf8': 23514 (locale dependence shows when the two UTF8 lines differ)
+INFO m4 v21 database UTF8 / LC_COLLATE 'C.utf8' LC_CTYPE 'C.utf8': ordinary id 'plain1' -> None; id with U+0085 (or 'a' in a one-byte database) -> 23514
+PASS m4 v21 file in a UTF8 / LC_COLLATE 'C.utf8' LC_CTYPE 'C.utf8' database: a plain id works and the U+0085 id is refused
+INFO m4 v19 database UTF8 / LC_COLLATE 'C' LC_CTYPE 'C': ordinary id 'plain1' -> None; id with U+0085 (or 'a' in a one-byte database) -> 23514
+INFO m4 v19 U+0085 result in LC_COLLATE 'C' LC_CTYPE 'C': 23514 (locale dependence shows when the two UTF8 lines differ)
+INFO m4 v21 database UTF8 / LC_COLLATE 'C' LC_CTYPE 'C': ordinary id 'plain1' -> None; id with U+0085 (or 'a' in a one-byte database) -> 23514
+PASS m4 v21 file in a UTF8 / LC_COLLATE 'C' LC_CTYPE 'C' database: a plain id works and the U+0085 id is refused
+INFO ---- m6 cutover: open reservations, apply-time refusal, rollback, month row, timeouts
+PASS m6 cutover: a row that held a reservation of 5 before the file gets open_usd = 0; the later settle of that reservation is refused (23514) and the total stays 5 (safe direction)
+PASS m6 cutover with nothing in flight (the drain procedure): a NEW reserve and settle on the old row work and the total is 5 + 1 = 6
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) m6 v19 file with an old row ' bad': the file APPLIES (error None); the row can no longer be changed at all (settling it fails 23514) because NOT VALID checks every new row version
+PASS m6 v21 file with an old row ' bad': migrate refuses at apply time (23514), nothing is applied (open_usd column 0, function 0, ledger rows 0): the whole transaction rolled back
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) m6 v19 file: a settle for a day row WITHOUT a month row changes the day row ((Decimal('0'), Decimal('0'))) and returns no row ([]) and commits
+PASS m6 v21 file: the same settle changes neither table (day row (Decimal('5'), Decimal('5'))) and returns no row
+PASS m6 SET LOCAL outside a transaction does nothing (lock_timeout stays '0'; server notice ['SET LOCAL can only be used in transaction blocks']): the runner MUST run each file in one transaction; migrate() does (db.transaction())
+PASS m6 inside migrate() the 5 s lock_timeout of the file works: a held lock makes the apply fail with 55P03 after 5.0 s and nothing is applied
+INFO ---- m5 volume of the decrease record
+INFO m5 1000 reserve+settle pairs with actual below worst wrote 2000 rows to spend_decrease_log (270336 bytes, 135 bytes per row, 0.9 s)
+PASS m5 every ordinary settle below its reservation writes one row per table (2 per settle): the record is NOT a signal of tampering any more once DB-3 is applied; it is volume, STATED in the text with this number
+INFO ---- F4 / F5 observations of the independent runner of v19, as checks
+PASS F5 a reserve of 0 returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of -0.01 returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of -1e30 returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of -Infinity returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of NULL returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a settle with worst -1 on an agent-day that HAS an open reservation of 5 returns no row, no error, and changes neither table: rows=[] error=None unchanged=True
+PASS F5 a settle with actual -1 on an agent-day that HAS an open reservation of 5 returns no row, no error, and changes neither table: rows=[] error=None unchanged=True
+PASS F5 a settle with worst -Infinity on an agent-day that HAS an open reservation of 5 returns no row, no error, and changes neither table: rows=[] error=None unchanged=True
+PASS F5 a settle with worst NULL on an agent-day that HAS an open reservation of 5 returns no row, no error, and changes neither table: rows=[] error=None unchanged=True
+PASS F5 a settle with actual NULL on an agent-day that HAS an open reservation of 5 returns no row, no error, and changes neither table: rows=[] error=None unchanged=True
+PASS F5 a settle with actual -Infinity on an agent-day that HAS an open reservation of 5 returns no row, no error, and changes neither table: rows=[] error=None unchanged=True
+PASS F4 a runtime login can create a TEMP table named spend (and, in the same session, a trigger on it), but the DB-3 function still writes the real table (pg_catalog first, pg_temp last in its search_path)
+INFO ---- v21 M2 (security): a settle that the guard rejects returns NO row even when the agent-day has rows
+PASS M2 v21 file: settle with worst NULL on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: settle with worst -1 on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: settle with actual NULL on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: settle with actual -1 on an open reservation returns [] (must be []), tables unchanged = True
+PASS M2 v21 file: the honest settle (worst 5, actual 1) still returns the row (1, 1)  [[(Decimal('1'), Decimal('1'))]]
+CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) M2 v20 DB-3 file: settle(NULL) on an open reservation returns one row ([(Decimal('5'), Decimal('5'))]), so 'an empty result means error' passed vacuously
+INFO ---- v21 M1 (security): pseudo agent ids -cli and -unattributed:<agent> under DB-3
+PASS M1 with DB-3 applied a reserve under '-cli' is refused 23514 (fails closed); default of L26b: the store does not call the DB-3 functions for a pseudo id
+PASS M1 with DB-3 applied a reserve under '-unattributed:agent1' is refused 23514 (fails closed); default of L26b: the store does not call the DB-3 functions for a pseudo id
+PASS M1 an existing spend row with the agent id '-cli' makes the DB-3 file refuse at apply time (23514); pre-check before the cutover: SELECT count(*) FROM spend WHERE agent_id !~ the rule must be 0
+INFO ---- v21 m4 alias column list and TABLESAMPLE: the server accepts both forms, the v21 relation scan names the second relation
+PASS m4 alias column list: the server parses it (state 42501, not 42601 syntax error); v21 relation scan names pg_authid = True
+PASS m4 TABLESAMPLE: the server parses it (state 42501, not 42601 syntax error); v21 relation scan names pg_authid = True
+PASS m4 TABLESAMPLE REPEATABLE: the server parses it (state 42501, not 42601 syntax error); v21 relation scan names pg_authid = True
+INFO ---- v21 m5 ASCII-only folding: the server does not fold the Kelvin sign or the long s
+PASS m5 Kelvin sign inside clock_timestamp: the server says state 42883 (42883 = no such function, so it is NOT the keyword or the allowed call); v21 reads 'clocK_timestamp'; the v20 fold reads 'clock_timestamp'
+PASS m5 long s starting select: the server says state 42883 (42883 = no such function, so it is NOT the keyword or the allowed call); v21 reads 'ſELECT'; the v20 fold reads 'SELECT'
+PASS m5 a column named with the Kelvin sign keeps it on the server ('Ka'), v21 'Ka', the v20 fold 'ka'
+INFO ---- v21 m6 search_path item folding
+PASS m6 the server keeps the quoted name as typed (SHOW says "PG_CATALOG", pg_temp) and the v21 guard flags the function = True (the v20 guard also flags this sample = True, for another reason, so this is NOT a control)
+INFO ---- v21 m7 a -- comment ends at a carriage return
+PASS m7 the server returns 2 columns (the comment ended at the carriage return); v21 tokenizer reads ['SELECT', '1', ',', '2']; v20 read ['SELECT', '1']
+PASS m7 the guard flags a file that hides DROP TABLE behind a comment that ends at a carriage return (v20 passes it)
+INFO ---- v21 m9 fingerprint: operators and prefixes that differ only by a space
+PASS m9 server: `@-1` is state 42883 (no operator @-), `@ - 1` is 1; v21 fingerprints differ = True, v20 fingerprints equal = True
+PASS m9 server: `E'x'` is 'x', `E 'x'` is state 42704; v21 fingerprints differ = True
+INFO ---- v21 m11 zero timeouts and the m10 start-up dependency check
+PASS m11 the server accepts `SET LOCAL lock_timeout = 0` and it means NO timeout (SHOW says 0); v21 guard flags it, v20 does not
+PASS m10 a body bound to a function of another schema is reported by the start-up query: ["public.kill_switch_engage(): bound to functions or operators in schema ['ev21'], not pg_catalog (they bind at "]
+PASS m10 control: the real DB-3 functions are bound to pg_catalog operators and functions only (clean database: no problem)
+INFO ---- v21 readiness M1 start-up query: one signature; an unset operator role is a problem, not a KeyError; the applied files are read from the database
+PASS M1r operator role unset: reported, no crash (['public.kill_switch_release(): the operator role is not configured, so EXECUTE cannot be ch', "public.kill_switch_release(): EXECUTE is held by ['op17'] (PUBLIC means everyone), expecte"])
+PASS M1r a database with neither DB-2 nor DB-3 applied: policy_for_applied is empty and the query is clean
+SUMMARY safety checks 210 of 210 passed; controls 31 of 31 showed the old behaviour; stated exploits shown 3 of 3
+rc=0

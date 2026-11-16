@@ -342,7 +342,7 @@ NOT YET VERIFIED (do not read the numbers above as "ready"):
 5. HubSpot scope names for the private apps.
 6. Whether the n8n HubSpot flow needs properties beyond `hadavin_label` and `hadavin_lead_id`.
 7. SMTP host and port for the n8n credential.
-8. Whether the Windows browser can open the web address that the assistant gives for n8n. n8n runs inside the Linux part of the laptop (called WSL). The plan says an earlier trial (the first smoke) showed it, and nobody on this branch has read that evidence yet.
+8. Whether the Windows browser can open the web address that the assistant gives for n8n. n8n runs inside the Linux part of the laptop (called WSL). The plan says an earlier trial (the first smoke) showed it, and nobody has read that evidence yet.
 9. The per-call worst-case dollar figure (the lead types it from the stage settings; the program only checks it is a finite number above 0 that can be shown).
 10. (Removed: the typed 6-digit challenge plus take id now exists in the code; still not run against a real keyboard session.)
 11. Exact take command line and config path (the lead gives them).
