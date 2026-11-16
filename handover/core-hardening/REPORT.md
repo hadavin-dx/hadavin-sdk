@@ -1,5 +1,11 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 06:52 UTC / 12:22 IST: ORDER 002, plan review round 3 of max 3 (last)
+Failed/open: round 2 found 2 Blocker and 15 Major (plan-review-2.md); all valid and fixed in plan v3 (plan-resolve-1b.md). Not yet known whether v3 is clean. Still no audit finding exists; build has not started (about 30 min spent on plan rounds so far; plan rounds are slower than expected).
+Agents running: 2 language-model (round 3 reviewers), 0 script lanes.
+Register: egm:egm-implementation-readiness (sonnet), egm:egm-design (sonnet) | round 3 review of plan v3 | 06:52Z | +10 min | running | read, resolve, then start evidence runner. Closed: round 2 readiness and zoom-out (reported).
+Next block: 07:02 UTC.
+
 ## STATUS 06:50 UTC / 12:20 IST: ORDER 002, plan review round 2 of max 3
 Done: round 1 found 6 Blocker and 15 Major (two reviewers, overlapping; plan-review-1.md); all valid; AUDIT-PLAN.md rewritten to v2 (plan-resolve-1.md). Nothing built yet, no audit finding exists yet.
 Agents running: 2 language-model (round 2 reviewers), 0 script lanes.
