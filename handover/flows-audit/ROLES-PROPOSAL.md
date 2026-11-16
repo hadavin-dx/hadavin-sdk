@@ -2,6 +2,8 @@
 
 **STATUS 2026-11-16 09:53 UTC: CLIENT BUILD / AFTER THE VIDEO. Do not run any SQL in this file before the video. See QUESTIONS.md Q11 (coordinator decides whether to park it).**
 
+**KNOWN BLOCKER (security review 09:56 UTC, reviews-roles/review-r5-security.md B1): Part C below has NO guard and can lock out the only administrator if the old login is a superuser. Do not run Part C under any circumstance until it is fixed and reviewed.**
+
 **DANGER, READ FIRST: if one of these database rights is wrong, the flows stop saving new leads, and the recorded video take would fail. Nothing in this file has been run against a database, so no right in it is proven. Do nothing from this file to the video take's database or flows before the video is recorded.**
 
 STATUS: PROPOSAL ONLY. Written, never run. Version 4 (round-3 fixes M1 to M8 and N1 to N10, see `reviews-roles/fix-roles-r3.md`). It has not passed a fourth review. The section 4 SQL changed a lot in this version (three guarded parts, one transaction each), so it is again completely untested. Decisions only the lead or owner can make are listed as questions in section 11.
