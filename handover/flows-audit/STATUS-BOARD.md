@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:14:23Z
+UPDATED_UTC: 2026-11-16T10:14:51Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 30
+PERCENT: 35
 AGENTS_RUNNING: 6
-CAPACITY: 1.65 load of 4 cores, mem 0/15 GB, disk free 27G, agents 6 (light+heavy per list)
+CAPACITY: 2.74 load of 4 cores, mem 0/15 GB, disk free 27G, agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: r3 fixer reports ruff+format+bandit rc 0, self-test 538/0/52, 3 mutants killed (its own, not independent; evidence rerun running); n8n authentication values and credential kinds come from memory, UNVERIFIED; $env block (N8N_BLOCK_ENV_ACCESS_IN_NODE) unverified: 2 real-v5 nodes may fail; 2 real-v5 webhooks without auth (lead decision); raw/pristine-no-baseline.txt not regenerated
 F3: evidence r5: 113 OK, gates rc 0, 8 of 20 mutants survive; security review r3 (read only, nothing run): 3 Medium + 3 Low in clean-up, partial copies, check, delete (no value leak found); r6 fixer running; py3.9/3.10, macOS, real n8n not run
@@ -21,8 +21,9 @@ ORDER023 cancelled by ORDER 024: sed never ran (denied); 6 opus 64 sonnet 0 fabl
 claims cite lane A+rest of B: 200 rows, 198 OK, 2 WRONG (A-097 trace sentence reversed v1/v2 README; A-068 off by one); desk repo IS on this machine (/home/user/duplicate-proof-lead-desk-n8n head f3c39cf) so several UNTRACED rows can be traced: tracer running
 F5 evidence r5: checker check_runsheet_paste.py FAILS vs the new CLAIMS-TABLE (73 ids marked, B-219 has no row); 20 CLAIMS-TABLE line cites no longer hit the claimed text (valid in r4 layout only); checker crashes with no args; 23 of 44 changed rows not named in fix log; fixer will batch with facts review
 claims stranger read of lines 1-260: 3 Blockers 16 Majors (gating of row 33 on a check that runs after the take, scope box contradicts itself, scenes 1-4 never described); r6 fixer running
-NEXT: Lanes: F3 r6, F5 facts review, claims r6 fix, desk tracer, F8 ev+review
-PUSHED_UTC: 2026-11-16T10:14:23Z
+F5 facts review r5: 0 Blocker 6 Major (about 25 wrong CLAIMS-TABLE line cites; A-084 example.test vs example.com; deleting saved runs may not remove n8n copy; decision 2 pasted as fact; B-215 cite; B-010 three vs two leads); r6 fixer running
+NEXT: Lanes: F3 r6, F5 r6 fix, claims r6 fix, desk tracer, F8 ev+review
+PUSHED_UTC: 2026-11-16T10:14:51Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -42,11 +43,11 @@ PUSHED_UTC: 2026-11-16T10:14:23Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | a7f3r6 | f3-fix6 | sonnet | F3 round 6: kill 8 surviving mutants | 10:10 | 10:40 | 5 | running | fill_flows/fix-f3-r6.md |
-| f5rv5 | F5 r5 facts reviewer | sonnet | facts on real-v5 rows | 10:14 | 10:34 | 5 | running | (inline) |
 | trdesk | desk-repo tracer for UNTRACED rows | sonnet | trace B-067.. in the public desk repo | 10:21 | 10:46 | 5 | running | reviews-f1/trace-desk-repo.md |
 | f8ev3 | F8 r3 evidence runner | sonnet | rerun gates, mutants | 10:25 | 10:50 | 5 | running | flow-check/evidence-r3.md |
 | f8rv3 | F8 r3 second reviewer (design angle) | sonnet | take-breaker coverage, false confidence | 10:25 | 10:45 | 5 | running | (inline) |
 | clfix6 | claims r6 fixer | sonnet | tags, gating, counts, desk traces, cites | 10:24 | 10:54 | 5 | running | reviews-f1/fix-f1-r6.md |
+| f5fix6 | F5 r6 fixer | sonnet | cites by id, A-084, B-219, checker | 10:27 | 10:57 | 5 | running | fix-f5-r6.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
