@@ -268,11 +268,13 @@ if not _os.path.exists(D + 'OWNER-APPENDIX-v29-A.md') or not _os.path.exists(D +
 need('C172', 'Four phone alarms')                                                                                        # S B1: A has the owner-side older-key end and the fourth alarm
 need('C172', 'Older key point (cannot be undone; every way the run ends passes here before 8.1)')                       # 7.11 in both routes
 need('C172', 'a FREEZE does not stop this')                                                                              # S B2: B 7.11 and FREEZE: the older key ends even after FREEZE
-for nm in 'AB':                                                                                                          # S M: the letter is in the heading and footer of every page
-    for pg, foot in (('OWNER-SHEET-v29-', 'End of sheet %s' % nm), ('OWNER-CARD-v29-', 'End of the card, sheet %s' % nm), ('OWNER-APPENDIX-v29-', 'End of the appendix, sheet %s' % nm)):
+for nm in 'AB':                                                                                                          # S M: the letter is in the heading and footer of every page (the sheet page is read from SHEETS_DISK)
+    _h = '\n'.join(SHEETS_DISK[nm].split('\n')[:3])
+    if 'sheet %s' % nm not in _h or 'End of sheet %s' % nm not in SHEETS_DISK[nm]: fail('C173', 'sheet %s lacks the letter in its heading or its footer' % nm)
+    for pg, foot in (('OWNER-CARD-v29-', 'End of the card, sheet %s' % nm), ('OWNER-APPENDIX-v29-', 'End of the appendix, sheet %s' % nm)):
         try: _t = open(D + pg + nm + '.md', encoding='utf-8').read()
         except OSError: fail('C173', pg + nm + '.md missing'); continue
-        if 'sheet %s' % nm not in _t.split('\n', 3)[0] + _t.split('\n', 3)[1] + _t.split('\n', 3)[2] or foot not in _t: fail('C173', '%s%s.md lacks the letter in its heading or its footer' % (pg, nm))
+        if 'sheet %s' % nm not in '\n'.join(_t.split('\n')[:3]) or foot not in _t: fail('C173', '%s%s.md lacks the letter in its heading or its footer' % (pg, nm))
 need('C174', 'n8n credentials: exactly the three, by name')                                                              # S: numbers page slot
 need('C175', 'alone (R1), with the narrowest scopes the create form offers')                                            # S: look key clauses
 need('C175', 'cancel is proven')
