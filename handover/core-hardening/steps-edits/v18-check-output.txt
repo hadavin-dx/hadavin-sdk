@@ -214,3 +214,20 @@ NEG r14forced caught | FAIL r14 3c lacks `key revoked` is never a confirmation
 NEG r14real caught | FAIL r14 3f lacks realpath
 NEG r14link caught | FAIL r14 3f lacks the number `1` in its second column
 NEG r14slash caught | FAIL r14 3f lacks followed by `/`
+NEG r14wild caught | FAIL r14 3f lacks none of the signs `*`
+NEG r14star caught | FAIL r14 E-48 item 6 star rule
+FAIL negative control anchor missing: r14alarm2
+NEG r14promise caught | FAIL r14 3a honest label
+NEG r14default caught | FAIL r14 3h default when unsure
+NEG r14unless caught | FAIL r14 3j override sentence
+FAIL negative control anchor missing: r14e16
+NEG r14e55 caught | FAIL r14 E-55 lacks your items 2, 3, 4, 5 and 6
+NEG r14e37 caught | FAIL r14 E-37 note
+NEG r14consent caught | FAIL r14 E-12 consent reach
+NEG r14testitem caught | FAIL r14 E-12 test item
+NEG r14margin caught | FAIL r14 E-12 margin
+NEG r14fallback caught | FAIL r13 E-12 lacks The time of day is not yet chosen
+NEG r14conf caught | FAIL confirmation letters
+NEG r14count caught | FAIL r14 counting check word
+NEG r14line30 caught | FAIL r14 18:14:40 pair missing
+NEG r14clip caught | FAIL r14 E-09 clipboard history

@@ -1,0 +1,17 @@
+FAIL (secret still visible): bare Bearer value
+FAIL (secret still visible in the line-only final filter): bare Bearer value
+FAIL (secret still visible after the sed stage alone): bare Bearer value
+FAIL (secret still visible): Bearer value with a hash sign (first 6 characters)
+FAIL (secret still visible in the line-only final filter): Bearer value with a hash sign (first 6 characters)
+FAIL (secret still visible after the sed stage alone): Bearer value with a hash sign (first 6 characters)
+FAIL (secret still visible): Bearer value with a hash sign (last 6 characters)
+FAIL (secret still visible in the line-only final filter): Bearer value with a hash sign (last 6 characters)
+FAIL (secret still visible after the sed stage alone): Bearer value with a hash sign (last 6 characters)
+FAIL (secret still visible): Bearer value of 5 characters (first 6 characters)
+FAIL (secret still visible in the line-only final filter): Bearer value of 5 characters (first 6 characters)
+FAIL (secret still visible after the sed stage alone): Bearer value of 5 characters (first 6 characters)
+FAIL (secret still visible): Bearer value of 5 characters (last 6 characters)
+FAIL (secret still visible in the line-only final filter): Bearer value of 5 characters (last 6 characters)
+FAIL (secret still visible after the sed stage alone): Bearer value of 5 characters (last 6 characters)
+FAIL (secret still visible): Bearer <e...> (first 6 characters)
+FAIL (secret still visible): Bearer <e...> (last 6 characters)

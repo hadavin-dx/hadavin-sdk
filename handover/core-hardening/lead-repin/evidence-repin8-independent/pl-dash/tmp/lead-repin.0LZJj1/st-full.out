@@ -1620,14 +1620,3 @@ PASS (machinery): the left-out report counts one name with a line break and one 
 PASS (machinery): a file name with # & and a backslash is printed as file:line:word (no sed expression is built from names)
 PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
 PASS (machinery): sh -x does not print a value (the script turns the trace off)
-PASS (machinery): signal TERM in the main phase: exit 143, no program of the run left running, no folder left
-PASS (machinery): signal HUP in the main phase: NOT TESTED (the program that started this self-test ignores HUP, for example nohup; start it without nohup to test this case)
-PASS (machinery): signal TERM while the file lists are made: exit 143 within 5 seconds, no program left
-PASS (machinery): the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left
-PASS (machinery): every git call carries all four safety settings and --no-optional-locks, GIT_DIR and GIT_WORK_TREE of the caller are not passed on, and git status runs only with LEAD_REPIN_GIT_STATUS=1
-PASS (machinery): the clean-up refuses to delete a folder that is not a lead-repin work folder
-PASS (machinery): a failing stage of the masking filter is recorded, and --mask then stops with exit 4 and says so
-FAIL (machinery): a time limit of 26 digits must not end the run (exit=143)
-PASS (machinery): ten hostile lines of 20000 characters are masked in under 60 seconds (took 5)
-PASS (machinery): an exported bash function named sed does not replace the real sed
-PASS (machinery): a relative TMPDIR is refused with exit 2

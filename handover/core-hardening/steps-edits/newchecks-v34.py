@@ -705,3 +705,66 @@ _floor = {'FREEZE': 10, 'STOP RULE': 4, 'R6 shape check first': 3, 'touch nothin
 for _k, _v in _floor.items():
     if len(_occ(_S10, _k)) < _v: fail('C262', 'the safe default %r appears %d times in the source (need %d or more)' % (_k, len(_occ(_S10, _k)), _v))
 for _m in re.finditer(r'(?i)\b(?:skip|omit|ignore|no need for|without) (?:the )?(?:R6|shape check|STOP RULE|name and creation date|7-day rule)', _S10): fail('C262', 'a safe default reversed: %r' % _m[0])
+# ---- v34 (round 6): every protected sentence is pinned at EVERY occurrence in the SOURCE and in each BUILT page (A and B), so a silent edit of one copy cannot pass on a generator-compare alone
+_HELP = rd('OWNER-HELPER-v34.md'); _FILM = rd('OWNER-FILM-PERSON-v34.md')
+_PAGES34 = {'A': A, 'B': B}
+def _pin(code, phrase, src_n=1, page_n=1, exact=True):
+    """phrase must occur src_n times in the source and (exactly or at least) page_n times in each built sheet text A and B"""
+    n = len(_occ(_S10, phrase))
+    if n < src_n or (exact and n != src_n): fail(code, 'source holds %r %d times (need %d)' % (phrase[:60], n, src_n))
+    for _k, _t in _PAGES34.items():
+        m = len(_occ(_t, phrase.replace('{{ph_cf}}', 'cancel failed')))
+        if m < page_n or (exact and m != page_n): fail(code, 'sheet %s pages hold %r %d times (need %d)' % (_k, phrase[:60], m, page_n))
+def _ban(code, rx, texts):
+    for _n, _t in texts.items():
+        for _m in re.finditer(rx, _t): fail(code, '%s: forbidden wording %r' % (_n, _m[0][:80]))
+_ALLTXT = {'source': _S10, 'A': A, 'B': B, 'helper': _HELP}
+# C263 (X03) auto-reload must be off: the money rule, every place
+_pin('C263', 'auto-reload** = the account tops itself up when low (must be off)', 1, 1)
+_pin('C263', 'Auto-reload not off, a valid key other than the older key', 1, 1)
+_pin('C263', 'prepaid, auto-reload off, balance at least the expected total', 1, 1)
+_ban('C263', r'(?i)auto-reload[^.;|]{0,60}(must be on|stay on|is on\b|on is fine)', _ALLTXT)
+# C264 (X07) contact deleting is exact: one address, exactly one result, then delete
+_pin('C264', 'search the exact address, see exactly one result whose page shows it, then delete')
+_ban('C264', r'(?i)search the (start|beginning|first part|part|domain)|delete all (the )?(results|matches|contacts found)|delete every (result|match)|(start|beginning) of the address', _ALLTXT)
+# C265 (X08) the ordinary waiting chain ends at the owner's own last-resort step
+_pin('C265', 'if nobody answers within 10 more minutes, do the last-resort step yourself, only in the model account')
+_ban('C265', r'(?i)(wait|waiting) (as long as|until) (you like|someone|the lead)[^.]{0,40}last[- ]resort', _ALLTXT)
+# C266 (X10) the public post: only the lead's exact sentences, only after "post" and the post checker's written match; nothing else, and no lease or recovery text in the owner pages
+_pin('C266', 'Post only the video and the lead\'s exact sentences, after the lead\'s word "post" and the post checker\'s written "matches the sentences"')
+_pin('C266', 'the only words you may post', 1, 1)
+_pin('C266', 'no other words may be posted', 1, 1)
+_ban('C266', r'(?i)\b(?:lease|crash recovery|recovery after a crash)\b', {'A': A, 'B': B, 'helper': _HELP, 'film': _FILM})
+_ban('C266', r'(?i)post (?:also|as well|any other|extra|additional)\b[^.]{0,30}(?:text|words|sentence|line|caption)', {'A': A, 'B': B})
+# C267 (security M1) a failed helper cancel ends at a last-resort step (on the helper paper or none) and the typed yes names the case
+for _p in ('do at once the last-resort step on your paper', "the last-resort step in the owner's words (or none)"):
+    if _p not in _HELP or len(_occ(_S10, _p)) != 1: fail('C267', 'helper page or source lacks %r' % _p)
+_pin('C267', 'the helper does the last-resort step on its paper (none: only yours is left); call the backup person at once')
+_pin('C267', 'a helper whose cancel fails does only the last-resort step on its paper or none', 1, 1)
+_pin('C267', 'A helper path that fails also ends at a last-resort step: the helper does the one on its paper (none: only yours is left).', 1, 1)
+_ban('C267', r'(?i)the helper has (?:none|no last-resort)|you have none, so if your cancel fails and the owner', {'A': A, 'B': B, 'helper': _HELP.replace('Paper says none: you have none, so if the owner cannot be reached', 'X')})
+# C268 (security M2 and minor 7) the lead pages: one claim sentence, no open lease wording, one 7-day wording
+for _n, _t in (('note', NOTE), ('open list', OPEN)):
+    _ban('C268', r'(?i)two sentences|unless approved in writing|lease wording \(G12\)|(?:less|more) than 7 days|\bover 7 days|\bunder 7 days|B is worse than A for money', {_n: _t})
+if 'one sentence (lead answer Q22c)' not in NOTE: fail('C268', 'the note does not say the claim wording is one sentence (lead answer Q22c)')
+# C269 (stranger B2) the helper paper is completed after step 5.9, and the helper does little until then
+if 'Two blanks are allowed at hand-over, the cancel button word and the cancelled word: the owner phones them after step 5.9 on the run day' not in _HELP: fail('C269', 'the helper page does not say when the helper paper is completed')
+if "until both are written you act only on the owner's call or at a backstop time" not in _HELP: fail('C269', 'the helper page does not say what the helper does until the paper is complete')
+_pin('C269', 'then phone your cancel helper the button word and the cancelled word', 1, 1)
+_pin('C269', 'give your cancel helper (if any) their page and paper, the two words of 5.9 still blank', 1, 1)
+# C270 (stranger B3) one exit for a missing Recall page
+_pin('C270', 'no such page: describe that there is no Recall page, then go on')
+_ban('C270', r'Recall[^.]{0,260}(?:this is a STOP|written answer)', {'source': _S10, 'A': A, 'B': B})
+# C271 (security minors 1, 2, 4, 5) reminders, backstop times, phone fallback, mismatch exit, 22 minutes
+_ban('C271', r'a reminder never cancels a live run key|up to 20 minutes', _ALLTXT)
+if len(_occ(_S10, '**Backstop time** = {{rv22}} or {{dl_day}} {{rv23}}')) != 2: fail('C271', 'the two backstop time definitions do not both name the Sunday and Monday times')
+_pin('C271', '(retry 2 minutes, phone fallback, send "{{ph_cf}}", then the step)', 1, 1)
+_pin('C271', '(they differ: cancel nothing, send "{{ph_cf}}", call the backup person at once)', 1, 1)
+_pin('C271', 'In those up to 22 minutes (2 of retry, then 10 and 10)', 1, 1)
+# C272 (stranger M7) the screen turn-off is set with sleep and lid
+_pin('C272', 'sleep Never; screen off Never; lid close action', 1, 1)
+# C273 (reading load) no net words: the five pages are lower than v33 (15722), the sheet is no longer than v33 (6286 on A)
+for _k in 'AB':
+    _w = {p % _k if '%s' in p else p: len(rd(p % _k if '%s' in p else p).split()) for p in ('OWNER-SHEET-v34-%s.md', 'OWNER-CARD-v34-%s.md', 'OWNER-APPENDIX-v34-%s.md', 'OWNER-FILM-PERSON-v34.md', 'OWNER-HELPER-v34.md')}
+    if sum(_w.values()) >= 15722: fail('C273', 'sheet %s: five pages hold %d words, not lower than v33 (15722)' % (_k, sum(_w.values())))
+    if _w['OWNER-SHEET-v34-%s.md' % _k] > 6286: fail('C273', 'sheet %s page has %d words: more than v33 (6286)' % (_k, _w['OWNER-SHEET-v34-%s.md' % _k]))

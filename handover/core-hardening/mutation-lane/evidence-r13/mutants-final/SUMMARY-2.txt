@@ -1,2 +1,3 @@
 no-cwd-real: FAILED CHECKS: 1 (of 11 checks run; skipped: none) :: T100a M1 Child c 
 raw-no-dots: FAILED CHECKS: 2 (of 5 checks run; skipped: none) :: T101a2 relay ite T101a m2 --raw w 
+clamp-others-only: FAILED CHECKS: 0 (of 28 checks run; skipped: none) :: 

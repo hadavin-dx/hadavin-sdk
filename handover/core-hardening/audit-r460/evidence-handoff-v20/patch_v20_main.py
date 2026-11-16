@@ -67,6 +67,20 @@ rep("| E0-DB-1 | (scheduled, DB-1;", "| E0-L13 | `limits status --check` against
     "| E0-L19 | `REVOKE TEMPORARY ON DATABASE ... FROM PUBLIC` test in `pg_v20.py` (checks P1 to P7) and the start-up check test `tests/test_startup_secdef.py` (written by S-2b, 5.6c item 4): three cases, audit-reader exists and PUBLIC holds TEMPORARY in `prod`, in `pilot`, in `demo` (config literal `dev`) | `E0-L19.txt` | `prod` refuses to start, `pilot` starts and prints one warning line, `demo` starts and prints nothing | S-2b |\n"
     "| E0-DB-1 | (scheduled, DB-1;")
 
+
+# ---------------------------------------------------------------- section 8 (evidence, hashes)
+rep("**New in v19.** `sha256-v19.txt` hashes every file of the folder except itself (it cannot hash itself) and includes `INVENTORY.md`, which names `sha256-v19.txt` (readiness minor 6 of the v18 review: v18 did not say this). Run `sha256sum -c sha256-v19.txt` in `evidence-handoff-v19/`; not run on a Windows checkout.",
+    "**New in v20.** `sha256-v20.txt` hashes every file of `evidence-handoff-v20/` except itself and includes `INVENTORY.md`, which names it; run `sha256sum -c sha256-v20.txt` inside that folder (not run on a Windows checkout; the result of my run is in `raw/raw-sha256-check-v20.txt`). The v19 folder stays unchanged beside it. DB-2 did not change in v20; DB-3 did.")
+rep("| Held file (`evidence-handoff-v19/held-sql/`) | sha256 | Same as v18? |", "| Held file (`evidence-handoff-v20/held-sql/`) | sha256 | Same as v19? |")
+rep("`c0c4913eede84ead97a33b1e1d2c3f055987f7e12854936ba27ef0b3585cdaf2` | **no** (v18:", "`c0c4913eede84ead97a33b1e1d2c3f055987f7e12854936ba27ef0b3585cdaf2` | yes (v19 changed it from v18:")
+rep("| `40d8b345a0a807cb38d168b18779c88c281be61914b42e4181861a8fc48eaaa3` | **no** (v18:", "| `" + hs["spend_guarded_writes.sql"] + "` | **no** (v19: `40d8b345a0a807cb38d168b18779c88c281be61914b42e4181861a8fc48eaaa3`; v18:")
+for n_, k_ in (("spend_nonneg.sql", "5d765255bd1c7477d0bab11c281171b2bb331f0ac4dd08c2151403ba47cc1093"), ("spend_nonneg_finite.sql", "bd0409c9bde0ef91dc71f1b28eb960caad4818e01312a669b12e260949d9fe84"), ("spend_nonneg_upgrade.sql", "fafa71faa08df60423276e4235714e9772f47256d64321f7e7f189691bbf041f"), ("spend_decrease_log.sql", "c0c4913eede84ead97a33b1e1d2c3f055987f7e12854936ba27ef0b3585cdaf2")):
+    assert hs[n_] == k_, n_ + " changed against v19: the table above must say so"
+rep("`run_pg_v19.sh` (private throwaway cluster, password logins only, one cluster at a time), `pg_v19.py` (120 safety checks, 24 controls, 3 stated exploits), `pg_v16_regress.py` (the 175 v16 checks against the v19 files; one `ALLOWED` set edited), `secdef_guard_v19.py`, `allow_v19.py`, `chk.py`, `secdef_mutants_v19.py` (152 checks; needs two folder arguments), `spell30_guard_v19.py`",
+    "`run_pg_v20.sh` (private throwaway cluster, password logins only, one cluster at a time), `pg_v20.py` (177 safety checks, 27 controls, 3 stated exploits; the section headed `v20` holds the real-server proofs of round 6), `pg_v16_regress.py` (the 175 v16 checks against the v20 files; the v19 edit of its `ALLOWED` set stands, no further edit), `secdef_guard_v20.py`, `allow_v20.py` (allow-lists and the three pin tables), `chk.py`, `secdef_mutants_v20.py` (197 checks; needs two folder arguments: `python3 -I -B secdef_mutants_v20.py held-sql <src>/hadavin_sdk/store/migrations`), `spell30_guard_v20.py`")
+rep("`secdef_audit_v19.py` (the start-up query and the function-grant prototype), `run_secrets_v19.sh`", "`secdef_audit_v20.py` (the start-up query and the function-grant prototype), `run_secrets_v20.sh`")
+rep("`gate4_v19.sh` (only its comparator `compare_gate4.py` ran, on four cases, `raw/raw-gate4-compare-v19.txt`)", "`gate4_v20.sh` as one script (its five commands were run one by one in v20, `raw/raw-gate4-v20-*.txt`; the comparator `compare_gate4.py` ran on them, `raw/raw-gate4-compare-v20.txt`)")
+
 # ---------------------------------------------------------------- the new subsection 5.6c, before 5.7
 five_six_c = f"""### 5.6c What v20 changed in the guard and in DB-3, and the specs the v19 review found missing (round 6)
 

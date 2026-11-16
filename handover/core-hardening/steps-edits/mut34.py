@@ -503,6 +503,28 @@ V33 = [
 ]
 P = P + V33
 EXPECT.update({'AA01': ['C255'], 'AA02': ['C256'], 'AA03': ['C257'], 'AA04': ['C258'], 'AA05': ['C259'], 'AA06': ['C259'], 'AA07': ['C260'], 'AA08': ['C260'], 'AA09': ['C260'], 'AA10': ['C261'], 'AA11': ['C261'], 'AA12': ['C257'], 'AA13': ['C262'], 'AA14': ['C246'], 'AA15': ['C247'], 'AA16': ['C247'], 'AA17': ['C248'], 'AA18': ['C249'], 'AA19': ['C249'], 'AA20': ['C249'], 'AA21': ['C250'], 'AA22': ['C250'], 'AA23': ['C257', 'C262']})
+LN = 'LEAD-RELEASE-NOTE-v18-SOURCE.md'; OP = 'v34-OPEN-FOR-LEAD-SOURCE.md'
+V34 = [
+('AB01', S, 'tops itself up when low (must be off)', 'tops itself up when low (must be on)', 'X03: auto-reload rule reversed in the appendices'),
+('AB02', S, 'search the exact address, see exactly one result whose page shows it, then delete', 'search the start of the address, then delete all results', 'X07: contact delete rule widened'),
+('AB03', S, 'if nobody answers within 10 more minutes, do the last-resort step yourself, only in the model account', 'if nobody answers within 10 more minutes, wait', 'X08: ordinary waiting chain loses the last-resort step'),
+('AB04', S, "Post only the video and the lead's exact sentences, after", "Post the video, the lead's exact sentences and a lease line, after", 'X10: public post allows extra text'),
+('AB05', S, ', and a helper whose cancel fails does only the last-resort step on its paper or none,', ',', 'M1: the yes no longer names the failed helper case'),
+('AB06', S, 'do at once the last-resort step on your paper', 'call the owner and wait', 'M1: failed helper cancel ends with no step'),
+('AB07', LN, 'one sentence (lead answer Q22c)', 'two sentences', 'M2: lead note claim wording back to two sentences'),
+('AB08', OP, 'Q22c is one sentence and it names no person', 'Q22 (c) is two sentences and neither names a person', 'M2: open list row 7 back to two sentences'),
+('AB09', S, 'the owner phones them after step 5.9 on the run day', 'the owner gives them on the run day', 'B2: helper paper completion time removed'),
+('AB10', S, 'no such page: describe that there is no Recall page, then go on', 'no such page: this is a STOP, wait for the lead\'s written answer', 'B3: Recall page missing is a stop again'),
+('AB11', S, '(retry 2 minutes, phone fallback, send', '(retry 2 minutes, send', 'minor 4: near-deadline line drops the phone fallback'),
+('AB12', S, 'sleep Never; screen off Never; lid close action', 'sleep Never; lid close action', 'M7: screen turn-off not set'),
+('AB13', S, 'In those up to 22 minutes (2 of retry, then 10 and 10)', 'In those up to 20 minutes', 'M4: card says 20 minutes for a 22-minute chain'),
+('AB14', S, 'so that no reminder or backstop time meets a live run key.', 'so that no reminder or backstop time meets a live run key; a reminder never cancels a live run key.', 'minor 1: the reminder contradiction back'),
+('AB15', S, '(they differ: cancel nothing, send "{{ph_cf}}", call the backup person at once)', '', 'minor 5: 7.11 mismatch dead end back'),
+('AB16', S, 'End of the numbers message part, sheet', ' '.join(['filler'] * 400) + ' End of the numbers message part, sheet', 'reading load: 400 words added'),
+('AB17', S, '**Backstop time** = {{rv22}} or {{dl_day}} {{rv23}} (after the reminder that rang)', '**Backstop time** = {{dl_day}} {{rv23}} (after the reminder that rang)', 'minor 2: card backstop time loses the Sunday time'),
+]
+P = P + V34
+EXPECT.update({'AB01': ['C263'], 'AB02': ['C264'], 'AB03': ['C265'], 'AB04': ['C266'], 'AB05': ['C267'], 'AB06': ['C267'], 'AB07': ['C268'], 'AB08': ['C268'], 'AB09': ['C269'], 'AB10': ['C270'], 'AB11': ['C271'], 'AB12': ['C272'], 'AB13': ['C271'], 'AB14': ['C271'], 'AB15': ['C271'], 'AB16': ['C273', 'C07'], 'AB17': ['C271']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'
