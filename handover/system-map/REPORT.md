@@ -1,5 +1,8 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 2026-11-16 07:18 UTC / 12:48 IST - L1c closed (PARTIAL, 18 NOT-READ, 1 Blocker + 21 Major candidates); L6 running
+Agents running: 1 (sonnet LANE-L6: one-place job pass over all lane files). L2c, L3c, L4c, L5ac closed earlier. Next: L6 hand-back, merge, write SWEEP and ONE-PLACE-TABLE, evidence runner, result reviewers.
+
 ## Status 2026-11-16 07:04 UTC / 12:34 IST - first pass of all 6 lanes done; 5 continuation lanes running
 Agents running: 5 language-model agents (sonnet): L1c (86 unread files of L1), L2c (demo3/register.md), L3c (158 unread/partly read evidence files), L4c (137 unread reports), L5ac (8 files). 0 script lanes. Next: when they close, L6 job pass, merge, evidence runner, result reviewers.
 First-pass numbers (lane files in work/): findings L1 38, L2 25 (5 Blocker candidates), L3 42 (1), L4 22 (1), L5a 25, L5b 11; all lanes PARTIAL except L2 (1 file) and L5a (8 files): NOT-READ files are being read by the continuation lanes.
@@ -25,7 +28,7 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L2c | continuation of L2: read demo3/register.md fully (1 file) | 07:01 | +30 min | closed (reported: register.md read fully, 15 findings, 1 Blocker candidate) |
 | LANE-L3c | continuation of L3: READ 158 review/resolve/lint reports and partly-read scripts | 07:01 | +45 min | closed (reported: PARTIAL, 92 READ, 66 NOT-READ (62 review reports + 4), 37 findings, 0 Blocker; no 2nd continuation, listed for the lead) |
 | LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | closed (reported: 8 of 8 READ, 13 findings, 0 Blocker) |
-| LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | running |
+| LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | closed 07:17 UTC (PARTIAL: 18 NOT-READ) |
 | LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | running |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
