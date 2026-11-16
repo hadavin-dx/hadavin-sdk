@@ -1,3 +1,5 @@
+Current text: CURRENT r9, with these repairs. Old limit 4 (the count) is dropped; old limit 5 (real accounts) becomes limit 4. Lines 13 and 29 (crash-test cases a-d) and line 25 (late start) stay valid; limit 1 is line 11 with 'decision 2' removed; limit 4 is line 18 with 'decision 8' removed. Use 'lead id'. Who decides: the studio lead proposes, the studio head decides (unsettled). Pass rule: NOT SET.
+
 # Limit sentences for the studio lead's "rehearsal passed" message (draft, saved 2026-11-16 11:57 UTC / 17:27 IST by the system-map session)
 Status: DRAFT. Not checked against any rehearsal result file, because no rehearsal has run (decision 12: the studio lead runs the first laptop rehearsal, target "tonight or tomorrow morning IST"). Scope is real-v5 scenes 1 to 4 only (decision 1). Recipient: the owner (the person who types the answers). Words, one per line:
 - Take = the recorded video run.

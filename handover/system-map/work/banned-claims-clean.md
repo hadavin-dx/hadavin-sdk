@@ -1,3 +1,5 @@
+Status: r8 (the last paragraph) is the only current one; all earlier passes are SUPERSEDED BY r8. Until the studio head answers, assume the studio head and the owner are separate people. Nobody posts until a checker is named. n8n = the workflow tool that runs the demo; portal = a web page where clients approve things (not part of this video). Second allowed sentence: the exact string in r8; if two wordings exist, use neither until the lead picks one.
+
 # Banned claims: ONE CLEAN PAGE (written 16 Nov 2026; replaces the seven stacked passes in work/banned-claims.md, which stays only as history)
 Made-up data only. Status: PROPOSAL from the system-map session; nothing here is approved. All dates are my proposals.
 

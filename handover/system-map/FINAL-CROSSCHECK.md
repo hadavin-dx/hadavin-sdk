@@ -1,3 +1,5 @@
+Status: r15 (the last paragraph) is the only current one; lines 113-135 are history. Decisions 1, 4, 10 and 12 are proposed, not confirmed. Rows 1-19 and 33-39 rest on 86 broken cites: UNVERIFIED. ORDER 014, flowcheck, T19, lease, planted-data check, laptop lead: meaning not recorded; rows using them are unreadable until defined.
+
 # FINAL-CROSSCHECK (ORDER 014): the three audits against each other
 Written by system-map, 2026-11-16. STATUS: round 1 review applied; round 2 NOT run (section 9; no round 2 report exists in work/); no third review; not final until the studio head and the laptop lead have read section 8.
 

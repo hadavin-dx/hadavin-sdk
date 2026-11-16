@@ -1145,3 +1145,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 838 L1c r17: conflicting counts. FIXED by single rule block; cells TO DO.
 - 839 row1-brief r14: guardrails only in history. FIXED by binding block.
 - 840 merged-findings r13: nine legends, undefined terms. PARTLY FIXED by LEGEND r13; cells TO DO.
+- 841 end-delete-cases r14: stacked, terms. FIXED by current-text block.
+- 842 rehearsal-limits r10: no sendable text. PARTLY FIXED by repairs block; pass rule NOT SET.
+- 843 FINAL-CROSSCHECK r16: nine stacked. PARTLY FIXED by status block.
+- 844 banned-claims r9: five winners. FIXED by status block.
+- 845 L5ac r9: eight glossaries. FIXED by single glossary; FD-001 table TO DO.

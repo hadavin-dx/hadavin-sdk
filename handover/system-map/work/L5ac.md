@@ -1,3 +1,5 @@
+Glossary (the only one; lines 107-121 are history). Id kinds: C component, S store, W workflow, WK workflow step, X script, K credential, D document, T test, F folder, FD finding. Job keys: LOG written record, RETRY repeat after failure, COUNTER count of outcomes, STORE saved data, NOTICE text shown to a person, FILTER blocks bad input, OTHER none. UNVERIFIED = not checked by running or reading. A plant = a made-up database row holding hostile text. FD-001: whether the registry holds 'delete all orders' is NOT CHECKED. L6, P0t, heavy-slot rule, demo ledger, stage rename: meaning not recorded.
+
 # Lane L5ac
 
 Continuation of PARTIAL lane L5a for its NOT-READ list. Static read only; nothing was run. Ids L5ac-<kind>-<nnn>. All eight files below were read in full (the two JSONL files by Read of every line, 1-30 and 1-70). This lane is NOT PARTIAL: no NOT-READ row remains. Tests, design 12.2 and design 11 of the demo are not in this lane (NOT VISIBLE: design 12.2, design 11).
