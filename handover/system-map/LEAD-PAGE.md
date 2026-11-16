@@ -1,5 +1,5 @@
 # LEAD PAGE (moved out of OWNER-VIEW.md on 2026-11-16 by ORDER 017; nothing deleted)
-For the laptop lead. Everything the studio head does NOT have to read: accounts, keys, Docker, engineering status, drift items and decisions that the lead brings to the owner as a single written yes. The text below is the former OWNER-VIEW.md unchanged, except that its title is replaced by this note; its steps cite owner steps v3, which are stale (see README.md and drift/REPORT.md).
+For the studio lead (the Claude session that does the technical steps). Everything the studio head does NOT have to read: accounts, keys, Docker, engineering status, drift items and decisions that the lead brings to the owner as a single written yes. The text below is the former OWNER-VIEW.md unchanged, except that its title is replaced by this note; its steps cite owner steps v3, which are stale (see README.md and drift/REPORT.md).
 
 Written Mon 16 Nov 2026, about 09:15 UTC / 14:45 IST, by the system-map session from the other sessions' files; updated about 09:45 UTC / 15:15 IST. Made-up data only. A number or claim taken from another file shows its source as file:line or section.
 
@@ -14,7 +14,7 @@ Words (each used in one meaning only): **OS** = the owner-steps file `inputs/OWN
 **Still working (boards of 09:00 to 09:05 UTC / 14:30 to 14:35 IST):** the sessions that wrote two of the audit reports (core-hardening, flows-audit) are doing follow-up jobs, for example a tool that fills the flows with the real values. This session is checking this page. None of this changes the verdict or anything you must do.
 **Blocked:** nothing waits on you except the take-day steps in section 2 and the decisions in section 3. One gap is real: **no one has run the changed flows in n8n.** The cloud session has no running Docker (the program that starts throw-away containers), so every n8n behaviour is untested (flowcheck/REPORT.md:9, flowcheck/evidence/n8n-try.txt). A laptop run is the only fix.
 
-## 2. What is still yours to do for the take (steps from OS; click paths were never checked, OS:7; steps 1 to 9 of OS are already done, see row 1 to 9)
+## 2. STALE, OWNER: DO NOT READ THIS SECTION; use OWNER-VIEW.md and the two cards. (v3-based list with wrong ports, a wrong password model and read-only HubSpot rights, drift D-01 to D-03.) What is still yours to do for the take (steps from OS; click paths were never checked, OS:7; steps 1 to 9 of OS are already done, see row 1 to 9)
 Who: you, unless it says "lead". Stay reachable during the laptop trial (3.5 to 4.5 hours); the lead gives the start time (OS:87). The take time on Wed 18 is not set in any file I read; the lead gives it in UTC and IST at least 3 hours ahead. Rule for the whole take (OS:25): laptop on mains power, sleep set to Never, lid action set to Do nothing. "Worked" = what you should see.
 | # | what | by when | how you know it worked | source |
 |---|---|---|---|---|
