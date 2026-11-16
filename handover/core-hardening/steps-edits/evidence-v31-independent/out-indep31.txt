@@ -1,0 +1,20 @@
+FINDING I02 LEAD-RELEASE-NOTE-v15.md: seconds on one side only: 17:39:00 UTC = 23:09 IST
+FINDING I02 LEAD-RELEASE-NOTE-v15.md: seconds on one side only: 18:09:00 UTC = 23:39 IST
+FINDING I02 LEAD-RELEASE-NOTE-v15.md: seconds on one side only: 18:19:00 UTC = 23:49 IST
+FINDING I09 OWNER-APPENDIX-v31-A.md: email-shaped text -x@xxxxxxx.xxx
+FINDING I09 OWNER-APPENDIX-v31-A.md: email-shaped text -x@xxxxxxx.xxx
+FINDING I09 OWNER-APPENDIX-v31-B.md: email-shaped text -x@xxxxxxx.xxx
+FINDING I09 OWNER-APPENDIX-v31-B.md: email-shaped text -x@xxxxxxx.xxx
+FINDING I09 OWNER-FILM-PERSON-v31.md: email-shaped text -x@xxxxxxx.xxx
+FINDING I09 LEAD-RELEASE-NOTE-v15.md: email-shaped text -x@xxxxxxx.xxx
+FINDING I10 odd LEAD FILLS spelling: '[LEAD FILLS ...'
+FINDING I10 odd LEAD FILLS spelling: '[LEAD FILLS` row (the `[OWNER FILLS` rows are yours to fill and are not an empty slot), a missing last-resort step, price or settings row, or think time, or "unknown" in any slot (only the can
+FINDING I10 odd LEAD FILLS spelling: '[LEAD FILLS ...'
+FINDING I10 odd LEAD FILLS spelling: '[LEAD FILLS` row (the `[OWNER FILLS` rows are yours to fill and are not an empty slot), a missing last-resort step, price or settings row, or think time, or "unknown" in any slot (only the can
+FINDING I11 sheet A lacks the number 13.21
+FINDING I11 sheet A lacks the number 14.33
+FINDING I11 sheet A lacks the number 860 s
+FINDING I11 sheet B lacks the number 13.21
+FINDING I11 sheet B lacks the number 14.33
+FINDING I11 sheet B lacks the number 860 s
+indep31: 19 finding(s)

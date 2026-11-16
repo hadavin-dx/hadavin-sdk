@@ -1,8 +1,4 @@
- 2)
-PASS naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box
-PASS section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
-PASS section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only)
-PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+d box, history order)
 PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
 PASS E-count: the start box states its own word count once and it equals the real count of the box (2495) :: (['2495'], 2495)
 PASS N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 2495
@@ -17,8 +13,8 @@ PASS E-files: every file name in the start box is a real file (or the one this w
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
 PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:45:52Z (read from the files at run time) :: []
-PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:48:20Z (read from the files at run time) :: []
+PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:46:03 UTC
 PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
 PASS E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold
@@ -37,6 +33,7 @@ PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the
 PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
 PASS E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own reading", 'You are the STUDIO LEAD'] and section 1c holds ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", 'KEY = a secret code', 'a warning mail the system is built to send to a person', "this report's own reading"] :: []
 PASS E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key
-SUMMARY: 198 checks, 1 FAILED: m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer
+FAIL E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (3, 2), none of them reworded
+SUMMARY: 199 checks, 2 FAILED: m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer; E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (3, 2), none of them reworded
 
 EXIT CODE 1

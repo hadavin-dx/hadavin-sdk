@@ -1,8 +1,4 @@
- by stand-in tests only)
-PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
-PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
-FAIL E-count: the start box states its own word count once and it equals the real count of the box (2418) :: (['2495'], 2418)
-PASS N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 2418
+ists before section 2 and holds the full lists (nothing deleted) :: 2418
 PASS E-title: the title line says IST = UTC + 5:30 :: # REPORT-c6t: video audit fix pass, supersedes REPORT-c6s.md (2026-11-16, UTC; IST = UTC + 5:30)
 PASS E-numbers: every row count in the start box (all 94, ready 49, default 36, check 3, owner 6, wave 1 85) equals the recount from the table, in every place it is printed :: []
 PASS E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (14 labels compared; L-SHEET has none and L-DEL is 'as answered') :: []
@@ -14,8 +10,8 @@ PASS E-files: every file name in the start box is a real file (or the one this w
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
 PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:45:52Z (read from the files at run time) :: []
-PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:33:09 UTC
+PASS E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:48:20Z (read from the files at run time) :: []
+PASS E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v15.md and its real written time 17:46:03 UTC
 PASS E-mtime: the report names the SOURCE file of the newest release note with its real written time :: 17:29:45
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
 PASS E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold
@@ -34,6 +30,7 @@ PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the
 PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
 PASS E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own reading", 'You are the STUDIO LEAD'] and section 1c holds ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", 'KEY = a secret code', 'a warning mail the system is built to send to a person', "this report's own reading"] :: []
 PASS E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key
-SUMMARY: 198 checks, 5 FAILED: table 3b equals the recount (13 lines); L-POST exists in the box table and in section 3, with a default; c6t N5: the start box is under 2,500 words (c6s: 3,488; 2418 words now) and states its own real count; E-count: the start box states its own word count once and it equals the real count of the box (2418); M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2418
+FAIL E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (3, 2), none of them reworded
+SUMMARY: 199 checks, 6 FAILED: table 3b equals the recount (13 lines); L-POST exists in the box table and in section 3, with a default; c6t N5: the start box is under 2,500 words (c6s: 3,488; 2418 words now) and states its own real count; E-count: the start box states its own word count once and it equals the real count of the box (2418); M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2418; E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (3, 2), none of them reworded
 
 EXIT CODE 1

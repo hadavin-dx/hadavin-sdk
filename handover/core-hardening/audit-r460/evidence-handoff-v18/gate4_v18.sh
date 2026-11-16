@@ -1,7 +1,7 @@
 #!/bin/sh
-# gate4.sh v17 copy (differs from the v16 copy only in the output folder; NOT re-run in v17).
+# gate4.sh v18 copy (differs from the v16 copy only in the output folder; NOT run in v18).
 # usage: sh gate4.sh <prefix>      (start it from any folder; it finds the repository root itself)
-# Repository root = four folders above this script's own folder (evidence-handoff-v17 -> audit-r460 -> core-hardening -> handover -> root).
+# Repository root = four folders above this script's own folder (evidence-handoff-v18 -> audit-r460 -> core-hardening -> handover -> root).
 # Outputs go into THIS script's folder (the evidence folder) as <prefix>-<name>.txt; each file ends with its own rc=<exit code>.
 # The gate is each command's own exit code, never a pipe. Nothing here changes a source file. The timing step runs alone, last but one.
 #

@@ -1,0 +1,12 @@
+C07 info: OWNER-SHEET-v31-A.md 6287, OWNER-CARD-v31-A.md 1959, OWNER-APPENDIX-v31-A.md 4458, OWNER-FILM-PERSON-v31.md 519 total 13223
+C07 info: OWNER-SHEET-v31-B.md 6087, OWNER-CARD-v31-B.md 1876, OWNER-APPENDIX-v31-B.md 4389, OWNER-FILM-PERSON-v31.md 519 total 12871
+check-v31: 9 failure(s)
+FAIL C19 pointer not in the verified list: changes| 23:34 IST) is still asked. |Open 102
+FAIL C19 pointer not in the verified list: changes| key when the owner cannot (|Open 107
+FAIL C19 pointer not in the verified list: changes| the delete-path criterion, |Q27
+FAIL C19 pointer not in the verified list: changes| the yes binds the owner to |7.11
+FAIL C19 pointer not in the verified list: changes|). - Stranger M-A1 to M-A4: |5.1
+FAIL C19 pointer not in the verified list: changes|00 words) is still asked. - |Open 71
+FAIL C19 pointer not in the verified list: changes|06), B warning (C215, Y07), |card step 5
+FAIL C19 pointer not in the verified list: changes|31, round 3, builder Sonnet |5.5
+FAIL C19 pointer not in the verified list: changes|ine, or when time passes. - |Open 103

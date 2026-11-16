@@ -1,0 +1,22 @@
+checks in Part 8: 18 (C210 to C227)
+fail on built v30: 17
+  v30 fails C210 (18 line(s)); first: A lacks 'Mon 23 Nov 2026 18:09 UTC = 23:39 IST'
+  v30 fails C211 (9 line(s)); first: A lacks 'cancel helper: a person who may cancel any of your keys'
+  v30 fails C212 (5 line(s)); first: NOTE holds old wording on the older key, the alarm count or the default
+  v30 fails C213 (1 line(s)); first: NOTE: a sentence lets a lead message release the older-key cancel: 'four in B), model key (sheet sec
+  v30 fails C214 (4 line(s)); first: A keeps the run-name rule for revoke names
+  v30 fails C215 (2 line(s)); first: A lacks the B warning of 5.1 (m2)
+  v30 fails C216 (2 line(s)); first: A: card step 5 lacks the older-key sentence (m3)
+  v30 fails C217 (2 line(s)); first: A: yes binding or the no-older-key wording missing (m4, N m8)
+  v30 fails C218 (2 line(s)); first: A lacks the film-person guard honesty sentence (m5)
+  v30 fails C219 (6 line(s)); first: sheet A: 5.1 is not split into a), b), c)
+  v30 fails C220 (6 line(s)); first: A lacks the last-5-minutes rule
+  v30 fails C221 (1 line(s)); first: film page lacks how to show only the page area (F11, region, preview) or the sheet does not point to
+  v30 fails C222 (23 line(s)); first: A: 7.6 does not tell the film person about the From column (m1)
+  v30 fails C223 (1 line(s)); first: open list: the 40-minute minimum is said to be checked by the sheet (v29 m7)
+  v30 fails C225 (1 line(s)); first: facts used by no source (dead): cap_x, cb_t, dl_sp, key_t, last_label, ledger, lf_t, ls_t, need_s, p
+  v30 fails C226 (2 line(s)); first: A holds an email-shaped text 'de…1@gmail.com'
+  v30 fails C227 (1 line(s)); first: check-v30.py holds a hard-coded absolute path
+do NOT fail on built v30 (cannot prove a change; reason in v31-CHANGES.md): ['C224']
+fail on built v31: none
+v31-fail-proof: 0 problem(s)

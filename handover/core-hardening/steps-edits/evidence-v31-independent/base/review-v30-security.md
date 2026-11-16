@@ -1,0 +1,23 @@
+# Owner sheet v30 security review, round 2 (egm-design, condensed copy of the inline report), 2026-11-16
+Target: OWNER-SHEET-v30-A/B, CARD-A/B, APPENDIX-A/B, FILM-PERSON-v30, LEAD-RELEASE-NOTE-v14, v30-OPEN-FOR-LEAD. Read-only, nothing run. Verdict: 0 blockers, 3 majors, 5 minors. v29 M2 (FREEZE escape) really fixed; M1 (lead-message wording) only partly; M3 (deadline-day stop, unreachable owner) only partly and on the wrong day.
+
+## MAJOR
+- M1 No owner-side stop on Mon 23 Nov; the backstop is a day early. Only deadline-day action is a phone reminder on Sun 22 Nov 18:09 UTC = 23:39 IST; the deadline is Mon 23 Nov 18:29 UTC = 23:59 IST and L-23NOV wants the key revoked by 18:19 UTC = 23:49 IST. Grep for 18:19, 18:04, 18:14, 23:49, 23:34 in owner pages = 0 (lead pages only). A missed 7.11 plus a missed Sunday reminder leaves the older key valid past the deadline; part 10 calls a valid key after the deadline "a danger sign: describe it at once", card L2 gives no permission to cancel it. Part 10 keeps a "If your run day is Mon 23 Nov" paragraph that check 2 forbids (dead text). Fix: reminder on Mon 23 Nov 18:09 UTC = 23:39 IST with cancel-by 18:19 UTC = 23:49 IST in the owner pages (keep Sunday as extra); add to L2 that cancelling a key found valid after the deadline is allowed.
+- M2 Nobody can cancel the run key if the owner is unreachable while it is alive (between create 6.3 and card step 5). The delegate blank covers the older key only and is OWNER-OPEN (Open 107); the lead shuts the model program only after "model key cancelled". Fix: widen the delegate to any of the owner's L1 keys; if "none", add an explicit accepted-risk sentence to the yes pattern (A line 102, B line 98); or name a lead-side technical stop and say it is not a control. A delegate holds a credential-level privilege: limit the role to key cancel on the blank (least privilege).
+- M3 LEAD-RELEASE-NOTE-v14 still carries the old A design: line 144 "left valid and handled at 7.11 on your message" (v29 M1 not closed; note line 11 says the opposite); lines 64 (G30) and 226 say three alarms / "sheet B has a fourth alarm" but both sheets have four (alarm 4 is A's only owner-side end for the older key). Open-for-lead row 71 says "Money-safe default: A" and "Safe default if you do not answer: A" with no warning beside it (warning only in row 78, note line 103); L-A/B says do not pick for him. Fix: strike "on your message", correct alarm counts (lines 64, 144, 226), put the line beside the default: "A will probably fail on Wed 18 Nov (FACTS puts the key's use at 11 to 13 Nov); the owner reads the last-used time first and takes B if used less than 7 days ago."
+
+## MINOR
+- m1 Name rule for 8.3/8.4 (line 90): app passwords and CRM apps are made earlier, so names almost never contain the run name; fallback "confirm on the other channel" reaches the same lead. Require the lead to put exact entry names in the numbers message before the yes; the owner compares on screen.
+- m2 B (used less than 7 days ago) always makes an irreversible cancel of a recently used key at 7.11; add to 5.1: "B cancels the older key at 7.11 even if it was used a day ago."
+- m3 Card A step 5 lacks B's sentence "It does not mean no valid key remains: the older key may still spend until 7.11".
+- m4 Yes (5.8) then no "go" or a decline: say whether the older-key cancel still binds.
+- m5 Film person sits in the owner's logged-in session while the key is alive; only an instruction, disclosed in the yes (Open 45); no guard claimed.
+
+## v29 findings
+M1 partly fixed; M2 fixed; M3 partly fixed; m1 fixed; m2 fixed (note line 77, Open 103); m3 fixed; m4 fixed; m5 fixed; m6 only nominally (see m1); m7 fixed (check 2 caps gap at 60 min; Open 100 says 40-minute minimum the sheet does not check: lead-side wording slip).
+
+## Checked, no finding
+All weekdays and UTC/IST pairs (10:30=16:00, 11:30=17:00, 12:00=17:30, 12:10=17:40, 16:00=21:30, 18:09=23:39, 18:19=23:49, 18:29=23:59, 18:14:40=23:44:40, 17:39=23:09, 18:34=00:04 next day, 15:00=20:30). 7-day threshold Wed 11 Nov 10:30 UTC = 16:00 IST. Key never typed into the shell (`read -rs`, umask 077, set -C); clipboard handling; key file removed only after proven cancel; contact delete (exact address, count must match) and mail (label demo, Trash only); lease sentence out of post; A/B consistent apart from m3.
+
+## Not checked
+Vendor pages and behaviour; test and model programs; build/check/mutation scripts and whether built pages equal SOURCE; v30-CHANGES.md; word counts (Open 75 figure of about 6,285 not recounted); B card/appendix differences only; gate tables G1-G42 skimmed.

@@ -3,7 +3,7 @@
 # Phase 1: filter cases only (LEAD_REPIN_NO_META=1, fast). If the copy survives phase 1, phase 2 runs the FULL self-test (machinery cases too).
 # Verdicts: KILLED-phase1, KILLED-phase2, SURVIVED (a survivor is NOT proved equivalent by this script).
 import sys, os, subprocess, time
-script, outdir, shell = sys.argv[1], sys.argv[2], sys.argv[3]
+script, outdir, shell = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2]), sys.argv[3]
 only = sys.argv[4:]
 src = open(script, encoding="utf-8").read()
 def L(prefix):
@@ -73,8 +73,10 @@ for ent in M:
     except subprocess.TimeoutExpired:
         out = "TIMEOUT"; rc = "timeout"
     last = [l for l in out.splitlines() if l.startswith("SELF-TEST") or l.startswith("STOP")][-1:] or [out[-100:].replace("\n", " ")]
+    nf = sum(1 for l in out.splitlines() if l.startswith("FAIL"))
+    if rc != 0 and nf == 0:
+        print(f"{name} [{shell}]: INVALID-RUN exit={rc} (no FAIL line; not counted as killed) {last[0][:100]}", flush=True); continue
     if rc != 0:
-        nf = sum(1 for l in out.splitlines() if l.startswith("FAIL"))
         print(f"{name} [{shell}]: KILLED-phase1 exit={rc} fail_lines={nf} {last[0][:100]} ({time.time()-t:.0f}s)", flush=True); continue
     try:
         r = subprocess.run([shell, f, "--self-test"], capture_output=True, text=True, env=env, timeout=900, errors="replace")
@@ -82,5 +84,7 @@ for ent in M:
     except subprocess.TimeoutExpired:
         out = "TIMEOUT"; rc = "timeout"
     fl = [l for l in out.splitlines() if l.startswith("FAIL")][:2]
+    if rc != 0 and not fl:
+        print(f"{name} [{shell}]: INVALID-RUN-phase2 exit={rc} {out[-120:]!r}", flush=True); continue
     last = [l for l in out.splitlines() if l.startswith("SELF-TEST")][-1:] or [out[-100:].replace("\n", " ")]
     print(f"{name} [{shell}]: {'KILLED-phase2' if rc != 0 else 'SURVIVED'} exit={rc} {last[0][:90]} first_fail={fl[:1]} ({time.time()-t:.0f}s)", flush=True)
