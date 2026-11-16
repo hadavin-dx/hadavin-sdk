@@ -84,3 +84,25 @@ INTERRUPTED (signal 43): no mutant planted, no marker
 INTERRUPTED (signal 44): no mutant planted, no marker
 INTERRUPTED (signal 45): no mutant planted, no marker
 INTERRUPTED (signal 46): no mutant planted, no marker
+INTERRUPTED (signal 47): no mutant planted, no marker
+INTERRUPTED (signal 48): no mutant planted, no marker
+INTERRUPTED (signal 49): no mutant planted, no marker
+INTERRUPTED (signal 50): no mutant planted, no marker
+INTERRUPTED (signal 51): no mutant planted, no marker
+INTERRUPTED (signal 52): no mutant planted, no marker
+INTERRUPTED (signal 53): no mutant planted, no marker
+INTERRUPTED (signal 54): no mutant planted, no marker
+INTERRUPTED (signal 55): no mutant planted, no marker
+INTERRUPTED (signal 56): no mutant planted, no marker
+INTERRUPTED (signal 57): no mutant planted, no marker
+INTERRUPTED (signal 58): no mutant planted, no marker
+INTERRUPTED (signal 59): no mutant planted, no marker
+INTERRUPTED (signal 60): no mutant planted, no marker
+INTERRUPTED (signal 61): no mutant planted, no marker
+INTERRUPTED (signal 62): no mutant planted, no marker
+INTERRUPTED (signal 63): no mutant planted, no marker
+INTERRUPTED (signal 64): no mutant planted, no marker
+102 cases (signal x window); 0 bad: []
+  PASS: T47a all handled signals in the plant window and the restore window: exit 128+N, file restored, state empty
+FAILED CHECKS: 0 (of 1)
+rc=0
