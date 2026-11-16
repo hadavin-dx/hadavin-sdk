@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:14:28Z
+UPDATED_UTC: 2026-11-16T15:15:54Z
 PUSHED_UTC: 2026-11-16T15:14:28Z (this push)
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1778. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1786. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,9 +43,9 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-8 cold readers of agent type egm-comprehension (model sonnet), each reading one page range, none editing. Running at 2026-11-16T15:14:28Z: af6c33c2d49dd4a36 (LEAD-NOTICE-batch-1), a819d0fffd1d1b888 (open-items-table), a91ad82cf795c1223 (decision-list-for-lead), a5175f9049d1dd73f (owner-timeline-draft), a67809c6bad4aa458 (L1c 200-end), plus three launched in the same turn as this push: STATUS-BOARD, not-checked-r2, banned-claims-clean. Finished this stretch: 36 readers, digests 1733 to 1778 in work/agent-reports-batch4.md.
+9 cold readers (egm-comprehension, sonnet, none editing), running at 2026-11-16T15:15:54Z: aa8f1537b70e0dd87 (t19-terms), a5ad0a5c196e3cd2e (row-dm-plain), abc3ea9869353f824 (end-delete-cases), abd727ef97b8c7615 (L2 1-120), ac6963723096be029 (L5b 1-120), a3bb745267f9eaf2f (merged-findings 1-120), ac505ddf7827f8c3b (L5ac 1-120), ab6f2ded0abb985b6 (L3c 1-120), ad8b82e90ed8f59a1 (L1 330-420). Finished this stretch: 8 readers, digests 1779 to 1786.
 Missing slots: none.
-Next 5 tasks: (1) fix lane pages: one status table per page, delete the repeated key blocks, relabel rows (class found in digests 1741-1773); (2) fix my own pages: GLOSSARY, M17, ARCHITECTURE-AUDIT-CHECKLIST, t19-terms, STATUS-BOARD; (3) fix checkable items: L2 FD-024 and line 993, L3 blank line, L1 blank line 345, merged-findings line 21 wording, L6 FD-009 and FD-011; (4) write work/OWNER-ONLY.txt when the lead answers LEAD-NOTICE item 2; (5) rerun evidence-1 and evidence-2 after that.
+Next 5 tasks: (1) fix my own pages from digests 1779-1786 (LEAD-NOTICE row numbers, owner-timeline row numbers, banned-claims, not-checked-r2 paragraph split, board terms); (2) lane pages: one status table per page, delete repeated keys; (3) checkable items: L2 FD-024, L1 line 345, merged-findings line 21; (4) write work/OWNER-ONLY.txt when the lead answers LEAD-NOTICE item 2; (5) rerun evidence-1 and evidence-2 after that.
 Nothing about the take is verified: rehearsal and T19 have not run.
 
 ## Details (long text moved from the FAILED line)
