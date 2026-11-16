@@ -325,7 +325,6 @@ def one(a, tests, m, results, ref):
         verdict, out, cmd, rc = f"COULD-NOT-PLANT (old text occurs {n} times)", "", [], None
         restore = "no change made"
     else:
-        backup.write_bytes(orig)
         info = {
             "root": str(root),
             "file": m["file"],
@@ -333,18 +332,21 @@ def one(a, tests, m, results, ref):
             "orig_sha256": sha256(orig),
             "mutant": f"{a.prefix}-{m['id']}",
         }
-        marker.write_text(json.dumps(info))
 
         def note_group(pgid: int) -> None:
             marker.write_text(json.dumps({**info, "pgid": pgid}))
 
         try:
+            backup.write_bytes(orig)
+            marker.write_text(json.dumps(info))
             p.write_bytes(orig.decode().replace(m["old"], m["new"], 1).encode())
             cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
         finally:
+            # a second signal must not cut the restore short: hold signals until it is verified
+            signal.pthread_sigmask(signal.SIG_BLOCK, HANDLED_SIGNALS)
             p.write_bytes(orig)
             back = p.read_bytes()
-            same_hash = sha256(back) == sha256(ref_bytes) and back == backup.read_bytes()
+            same_hash = back == orig and back == ref_bytes
             if not same_hash:
                 print(
                     "RESTORE FAILED",
@@ -355,8 +357,9 @@ def one(a, tests, m, results, ref):
                 sys.exit(EXIT_RESTORE_FAILED)
             marker.unlink(
                 missing_ok=True
-            )  # the file is verified identical: no marker may stay, even on an error
+            )  # verified identical: no marker may stay, even on an error
             backup.unlink(missing_ok=True)
+            signal.pthread_sigmask(signal.SIG_UNBLOCK, HANDLED_SIGNALS)
         restore = f"saved original == file after restore (byte compare): True; sha256 equals git-archive reference: {same_hash}"
         verdict = (
             "TIMEOUT"

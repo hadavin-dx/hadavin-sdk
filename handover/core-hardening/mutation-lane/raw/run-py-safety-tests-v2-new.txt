@@ -4,18 +4,22 @@ REFUSED: --root /home/user/hadavin-sdk is, contains or lies inside the real repo
   PASS: T1 exit 2
 == T2 SIGKILL while a mutant is planted
   file now: return2
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 29:  9292 Killed                  mut "$@" -- tests/test_slow.py > /dev/null 2>&1
-  PASS: T2 file stays planted
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 31: 13078 Killed                  mut "$@" -- tests/test_slow.py > /dev/null 2>&1
+  FAIL: T2 file stays planted
 == T3 the next run refuses and says how to restore
-REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardenin
-  exit code 2
-  PASS: T3 exit 2
+m1 KILLED tests/test_fast.py::test_f
+tree diff: 0 difference(s)
+  exit code 0
+  FAIL: T3 exit 2
 == T4 marker lost: the tree check against a fresh git archive still refuses
-REFUSED: scratch tree differs from git archive 706baccb2e661cc938bb6429405d632d4485f568 + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
-  exit code 2
-  PASS: T4 exit 2
+mv: cannot stat '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/tmpstate/hadavin-mutation-lane/*.planted.json': No such file or directory
+m1 KILLED tests/test_fast.py::test_f
+tree diff: 0 difference(s)
+  exit code 0
+  FAIL: T4 exit 2
+mv: cannot stat '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/mk/*.planted.json': No such file or directory
 == T5 --restore puts the saved original back
-process 9299 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/tmpstate/hadavin-mutation-lane/bd5cb1ebaf938cea.backup; hash matches saved original: True
+no marker: nothing to restore
   PASS: T5 file restored
   PASS: T5 state folder empty
 == T6 SIGTERM during a run restores the file and removes the marker
@@ -24,7 +28,6 @@ process 9299 is not this run's pytest: left alone; restored src/mod.py from /tmp
   FAIL: T6 file restored
   FAIL: T6 state empty
 == T7 SIGINT likewise, exit code read directly from $?
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 41: kill: (9474) - No such process
   exit code 2
   FAIL: T7 exit 130
   FAIL: T7 file restored
@@ -33,17 +36,15 @@ process 9299 is not this run's pytest: left alone; restored src/mod.py from /tmp
 REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/
   second run exit code 2
   PASS: T8 second refused (2)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 23: kill: (9646) - No such process
-  FAIL: T8 first run still alive
+  PASS: T8 first run still alive
   PASS: T8 file still planted by the first
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 45: kill: (9646) - No such process
   FAIL: T8 file restored after
 == T9 a clean run to the end: KILLED, backup gone, tree diff clean, exit 0
 REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
   exit code 2
   FAIL: T9 exit 0
   FAIL: T9 state empty
-grep: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/rawT/X-tree-diff.txt: No such file or directory
+differing files (0; 0 = clean): []
 == T10 absolute path as the mutant file is refused (exit 2), nothing planted
 REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
   exit code 2
@@ -77,31 +78,6 @@ REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-5
   declared --extra: exit code 2
   FAIL: T14b exit 0
 == T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 67: kill: (10088) - No such process
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 69: 13265 Killed                  mut "$@" -- tests/test_slow.py > /dev/null 2>&1
   PASS: T15 orphan pytest alive
 REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
-  FAIL: T15 orphan stopped
-  PASS: T15 file restored
-== T16 SIGHUP restores too (exit 129)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 71: kill: (10474) - No such process
-  exit code 2
-  FAIL: T16 exit 129
-  PASS: T16 file restored
-== T17 --restore while a run is live is refused (lock)
-test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchp
-  exit code 0
-  FAIL: T17 exit 2
-  FAIL: T17 run still planted
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 74: kill: (10601) - No such process
-== T18 a mutant id that climbs out of --raw is refused
-REFUSED: mutant id is not a plain unique name: '../escape'
-  exit code 2
-  PASS: T18 exit 2
-  PASS: T18 no file outside raw
-== T19 an error while the tests start (no .venv python) still removes the marker
-REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root/.venv/bin/python does not exist: the scratch root needs its ow
-  exit code 2
-  PASS: T19 exit 2
-  PASS: T19 file unchanged
-  PASS: T19 state empty
-FAILED CHECKS: 18

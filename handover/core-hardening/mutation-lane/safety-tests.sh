@@ -22,11 +22,13 @@ real_last() { tail -1 "$T/repo/src/mod.py" | tr -d ' '; }
 state_files() { ls "$STATE" 2>/dev/null | grep -v lock | tr '\n' ' '; }
 chk() { if eval "$2"; then echo "  PASS: $1"; else echo "  FAIL: $1"; FAILS=$((FAILS+1)); fi; }
 FAILS=0
+orphan_alive() { pgrep -f "$T/root/.venv/bin/python -m pytest" >/dev/null; }
+waitplant() { for _ in $(seq 120); do grep -qs pgid "$STATE"/*.planted.json && return 0; sleep 0.5; done; return 1; }
 bg() { mut "$@" -- tests/test_slow.py >/dev/null 2>&1 & RP=$!; }
 echo "== T1 the real repository as --root is refused (exit 2)"
 mut --root /home/user/hadavin-sdk -- tests/test_fast.py 2>&1 | cut -c1-200; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T1 exit 2" "[ $rc -eq 2 ]"
 echo "== T2 SIGKILL while a mutant is planted"
-bg; sleep 4; echo "  file now: $(last)"; kill -9 $RP; sleep 1; pkill -9 -f "tests/test_slow.py"; wait $RP 2>/dev/null
+bg; waitplant; echo "  file now: $(last)"; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
 chk "T2 file stays planted" "[ '$(last)' = return2 ]"
 echo "== T3 the next run refuses and says how to restore"
 mut -- tests/test_fast.py 2>&1 | cut -c1-160; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T3 exit 2" "[ $rc -eq 2 ]"
@@ -36,11 +38,11 @@ mv "$S/mk"/*.planted.json "$STATE/"
 echo "== T5 --restore puts the saved original back"
 python3 "$RUN" --root "$T/root" --restore; chk "T5 file restored" "[ '$(last)' = return1 ]"; chk "T5 state folder empty" "[ -z '$(state_files)' ]"
 echo "== T6 SIGTERM during a run restores the file and removes the marker"
-bg; sleep 4; kill -TERM $RP; wait $RP; rc=$?; echo "  exit code $rc"; chk "T6 exit 143" "[ $rc -eq 143 ]"; chk "T6 file restored" "[ '$(last)' = return1 ]"; chk "T6 state empty" "[ -z '$(state_files)' ]"
+bg; waitplant; kill -TERM $RP; wait $RP; rc=$?; echo "  exit code $rc"; chk "T6 exit 143" "[ $rc -eq 143 ]"; chk "T6 file restored" "[ '$(last)' = return1 ]"; chk "T6 state empty" "[ -z '$(state_files)' ]"
 echo "== T7 SIGINT likewise, exit code read directly from \$?"
-bg; sleep 4; kill -INT $RP; wait $RP; rc=$?; echo "  exit code $rc"; chk "T7 exit 130" "[ $rc -eq 130 ]"; chk "T7 file restored" "[ '$(last)' = return1 ]"; chk "T7 state empty" "[ -z '$(state_files)' ]"
+bg; waitplant; kill -INT $RP; wait $RP; rc=$?; echo "  exit code $rc"; chk "T7 exit 130" "[ $rc -eq 130 ]"; chk "T7 file restored" "[ '$(last)' = return1 ]"; chk "T7 state empty" "[ -z '$(state_files)' ]"
 echo "== T8 two runs at once: the second is refused by the lock, and the first is still alive"
-bg; sleep 4; mut -- tests/test_fast.py 2>&1 | cut -c1-120; rc=${PIPESTATUS[0]}; echo "  second run exit code $rc"
+bg; waitplant; mut -- tests/test_fast.py 2>&1 | cut -c1-120; rc=${PIPESTATUS[0]}; echo "  second run exit code $rc"
 chk "T8 second refused (2)" "[ $rc -eq 2 ]"; chk "T8 first run still alive" "kill -0 $RP"; chk "T8 file still planted by the first" "[ '$(last)' = return2 ]"
 kill -TERM $RP; wait $RP 2>/dev/null; chk "T8 file restored after" "[ '$(last)' = return1 ]"
 echo "== T9 a clean run to the end: KILLED, backup gone, tree diff clean, exit 0"
@@ -64,13 +66,13 @@ echo "== T14 a leftover file after the loop gives a non-zero exit; a declared --
 fresh_root; mut -- tests/test_junk.py >/dev/null 2>&1; rc=$?; echo "  undeclared leftover: exit code $rc"; chk "T14a exit 4" "[ $rc -eq 4 ]"
 fresh_root; mut --extra junk.txt -- tests/test_junk.py >/dev/null 2>&1; rc=$?; echo "  declared --extra: exit code $rc"; chk "T14b exit 0" "[ $rc -eq 0 ]"
 echo "== T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores"
-fresh_root; bg; sleep 4; kill -9 $RP; sleep 1; chk "T15 orphan pytest alive" "pgrep -f 'pytest.*test_slow' >/dev/null"
-python3 "$RUN" --root "$T/root" --restore; sleep 1; chk "T15 orphan stopped" "! pgrep -f 'pytest.*test_slow' >/dev/null"; chk "T15 file restored" "[ '$(last)' = return1 ]"
-pkill -9 -f "pytest.*test_slow" 2>/dev/null
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; chk "T15 orphan pytest alive" "orphan_alive"
+python3 "$RUN" --root "$T/root" --restore; sleep 1; chk "T15 orphan stopped" "! orphan_alive"; chk "T15 file restored" "[ '$(last)' = return1 ]"
+pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
 echo "== T16 SIGHUP restores too (exit 129)"
-fresh_root; bg; sleep 4; kill -HUP $RP; wait $RP; rc=$?; echo "  exit code $rc"; chk "T16 exit 129" "[ $rc -eq 129 ]"; chk "T16 file restored" "[ '$(last)' = return1 ]"
+fresh_root; bg; waitplant; kill -HUP $RP; wait $RP; rc=$?; echo "  exit code $rc"; chk "T16 exit 129" "[ $rc -eq 129 ]"; chk "T16 file restored" "[ '$(last)' = return1 ]"
 echo "== T17 --restore while a run is live is refused (lock)"
-fresh_root; bg; sleep 4; python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-120; rc=${PIPESTATUS[0]}; echo "  exit code $rc"
+fresh_root; bg; waitplant; python3 "$RUN" --root "$T/root" --restore 2>&1 | cut -c1-120; rc=${PIPESTATUS[0]}; echo "  exit code $rc"
 chk "T17 exit 2" "[ $rc -eq 2 ]"; chk "T17 run still planted" "[ '$(last)' = return2 ]"; kill -TERM $RP; wait $RP 2>/dev/null
 echo "== T18 a mutant id that climbs out of --raw is refused"
 fresh_root; base --id ../escape --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py 2>&1 | cut -c1-160; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T18 exit 2" "[ $rc -eq 2 ]"; chk "T18 no file outside raw" "[ ! -e '$S/escape.txt' ]"
