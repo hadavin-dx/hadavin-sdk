@@ -1,0 +1,18 @@
+# fix-runbook54c: third fixer pass on RUNBOOK.md (static; guard, wording, consistency; nothing run in n8n, Postgres or HubSpot; made-up data only)
+
+## Gaps first (unverified or not done)
+- No reader has judged these edits. The new sentences in the last column of I13, I25, I26, I27, I32, I47, I51 and I53 are my reading of ORDERS.md (Q27 items 1, 3, 6; Q28 item 2; Q29 item 1; Q30 item 3) and of QUESTIONS.md Q31 (items 60, 87, 88, all OPEN). Q27 item 6 does not say "one or two rehearsals"; I wrote it as open.
+- Round-label removal is mechanical (a script, then a read of what was left). About 45 lines still contain "round N" in plain history sentences that carry a number or a fact, for example "Round 4 gave 09:06 and 08:36 because it left out ...", "round 6 had 150 min", "round 5 moved it from Tuesday step 15", and the status line "newest fix round 54". Removing them changes meaning, so I left them. They need the lead's call (keep as history or move to the changelog).
+- Not done, for lead: (a) the I9, I27, I42, I46 answer-by times and I4/I9/I10/I17/I41/I43/I45 decisions stay LEAD DECIDES lines; I made no decision. (b) r52 #14/#15, r54 M11 and the TAKE-CHECKLIST.md times are in files I do not own (TAKE-CHECKLIST.md, FIX-PLAN.md, QUESTIONS.md).
+- The I8 split makes the input table 59 rows (I1 to I58, with I8a and I8b in place of I8). I did not check other files that may say "58 inputs"; a grep of the folder for "I1 to I58" and "58 input" found nothing.
+
+## Fixed
+- r62 M12: the last column of I13, I25, I26, I27, I32, I47, I51, I53 now starts with a plain sentence (decision, closed or open), then the code. No lead decision invented: where ORDERS.md is silent the cell says "Open: ORDERS.md has no lead answer on this".
+- r62 M2: the due-time cell of I5, I7, I12, I14, I16, I17, I18, I19, I20, I25, I26, I31, I32, I33, I34, I39, I41, I42, I44, I47, I48, I49, I51, I53, I55, I57 is written as "Answer-by: ...", "First use: ...", "Last change: ... (not a due time)". No time value changed; I5 got the IST times 09:46 and 09:56 for 04:16Z and 04:26Z (UTC plus 5:30). The old "(round 6 said 09:25)" in I19 and the old 05:50 note in I51 were dropped (history).
+- r62 M8: I8 split into I8a (five non-credential values, answer-by Tue 05:00Z (10:30 IST)) and I8b (three credential ids, after step 7 starts n8n, not before 05:54Z (11:24 IST)). Step 9 row now says BLOCKED-by-I8b (credential ids). check_refs, check_names, check_counts passed after the split, so it stays.
+- Labels: about 280 round or finding labels (for example "(round 22, finding 2)", "Round 5:", "; round 32,") were removed from cells and paragraphs outside code fences, with backtick text untouched. The removed text is listed in reviews/runbook-changelog.md (section "fix-runbook54c", 90 lines, old line numbers).
+- r52 #21: NOT copied. Blocks R1 to R8 and their repeat variants in TAKE-CHECKLIST.md are about 34,000 characters; a second copy would drift from the one place. Row 17.0a now says so.
+
+## Checks (python3 -I tools/<script>, from handover/flows-audit)
+check_refs PASS 5190 references; check_names PASS 655 rows; check_secrets PASS 0 hits in 2985 files; check_counts PASS 52 files / 655 nodes; `ruff format --check .`: 1110 files already formatted.
+Comparison with the backup (scratchpad RUNBOOK.bak): every backtick span is identical on every line except I48 and I53 (same set of spans, reordered inside rewritten cells); every table row has the same number of bars; code fences unchanged; section 5 has 37 step rows, all with the same 10 columns as before. Backup: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/RUNBOOK.bak. Not committed, not pushed.

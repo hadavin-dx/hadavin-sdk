@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:13:37Z
+UPDATED_UTC: 2026-11-16T20:14:52Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 0.44 load of 4 cores, mem 1/15 GB, RAM 1190/16087 MB, disk 15G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.0G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 1.55 load of 4 cores, mem 1/15 GB, RAM 1168/16087 MB, disk 15G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:13:37Z
+PUSHED_UTC: 2026-11-16T20:14:52Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,14 +30,14 @@ PUSHED_UTC: 2026-11-16T20:13:37Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a7636841 | F8 fixer | sonnet | F8 r12 fixes (HEAVY only while it runs tests) | 19:20Z | 20:25Z | running | evidence-f8-r13-fixer.md pending |
-| a860fa1c | TAKE-CHECKLIST fixer r63 | sonnet | fix M1-M15 (clock block frozen) | 20:13Z | 20:35Z | running | fix-takechecklist63.md pending |
-| a76c3617 | FINDINGS/LEDGER fixer r33 | sonnet | fix M1-M8 | 20:14Z | 20:35Z | running | fix-findings-ledger33.md pending |
+| a7636841 | F8 fixer | sonnet | F8 r12 fixes (HEAVY only while it runs tests) | 19:20Z | 20:30Z | running | evidence-f8-r13-fixer.md pending |
 | ab2d6ddc | patch-copies reader r26 | sonnet | security-path read README+DMC | 20:17Z | 20:32Z | running | report pending |
-| add6db6a | FIX-PLAN reader r64 | sonnet | fresh read lines 85-end | 20:19Z | 20:33Z | running | report pending |
-| a0fc3951 | CLAIMS cite checker 3 | sonnet | cites B-141..B-226 + X rows | 20:15Z | 20:30Z | running | report pending |
 | a82bc64d | RUNBOOK fixer 3 | sonnet | leftovers (I-table cells, labels) | 20:20Z | 20:45Z | running | fix-runbook54c.md pending |
-| a1525dba | REVIEW.md design reviewer r54 | sonnet | uncapped security-path review | 20:20Z | 20:35Z | running | report pending |
+| a860fa1c | TAKE-CHECKLIST fixer r63 | sonnet | fix M1-M15 (clock block frozen) | 20:13Z | 20:35Z | running | fix-takechecklist63.md pending |
+| a0fc3951 | CLAIMS cite checker 3 | sonnet | cites B-141..B-226 + X rows | 20:15Z | 20:30Z | running | report pending |
+| a43b9d90 | FINDINGS zoom-out reviewer | sonnet | second angle: smallest closing steps | 20:16Z | 20:30Z | running | report pending |
+| a831d233 | FIX-PLAN fixer r64 | sonnet | fix B1,B2,M3-M17 (clock block frozen) | 20:17Z | 20:40Z | running | fix-fixplan64.md pending |
+| a28dff0a | REVIEW.md fixer r54 | sonnet | uncapped security-path fixes M1,m1-m8 | 20:18Z | 20:40Z | running | fix-review54.md pending |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
