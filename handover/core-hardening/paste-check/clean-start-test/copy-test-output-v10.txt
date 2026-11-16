@@ -1,0 +1,19 @@
+=== 1 OUT plus two attempt files: all three copied (expected: copy ok: 3 files)
+copy ok: 3 files
+list.tsv
+list.tsv.attempt1
+list.tsv.attempt2
+same: list.tsv
+same: list.tsv.attempt1
+same: list.tsv.attempt2
+=== 2 second run refuses
+OUT_COPY exists: STOP, nothing copied
+=== 3 OUT only, no attempt files (expected: copy ok: 1 files)
+copy ok: 1 files
+=== 4 copy folder cannot be made (parent missing): must not print copy ok
+mkdir: cannot create directory '/tmp/tmp.pz0B15lYIb/nope/dir': No such file or directory
+COPY FAILED: STOP
+=== 5 a copy fails half way (a fake cp that fails for the attempt file): must print COPY FAILED
+COPY FAILED: STOP
+=== 6 after the failure the same line refuses (copy folder exists): the lead removes the half copy by hand and reruns
+OUT_COPY exists: STOP, nothing copied

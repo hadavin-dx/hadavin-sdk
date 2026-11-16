@@ -490,7 +490,7 @@ acc5.sh 0 hits
 REPORT-repin-v5.md 0 hits
 REPORT-repin-v6.md 0 hits
 checkpoint-v6.md 0 hits
-evidence-c7g.md: scanned separately below (the file is produced by this command)
+evidence-c7g.md: see section 12 (scan of the file before that section was added)
 ## 11 git apply fallback and checklist steps A1 to A6 (pristine copy, outside any git repository)
 $ sha256 first 16 / CR count
 67a0a195537de875
@@ -515,3 +515,100 @@ $ A6 counts on the patched copy (expect 24 10 2 1) and the marker list length (1
 2
 1
 17
+## 12 round-3 fix pass (2026-11-16): apply chain, R2 re-test, acc5 cases, checklist commands, scan
+### 12.1 apply chain on a scratch copy (patch -p1; real inputs untouched)
+# apply chain on a scratch copy, 2026-11-16T10:50:47Z
+67a0a195537de875
+/home/user/hadavin-sdk/handover/core-hardening/paste-check/plan-v5-fixes.patch:0
+/home/user/hadavin-sdk/handover/core-hardening/paste-check/plan-v5-repin-v6.patch:0
+inputs/plan-wp6-resmoke-v5.md:0
+checking file inputs/plan-wp6-resmoke-v5.md
+rc=0
+patching file inputs/plan-wp6-resmoke-v5.md
+rc=0
+checking file inputs/plan-wp6-resmoke-v5.md
+rc=0
+patching file inputs/plan-wp6-resmoke-v5.md
+rc=0
+counts
+24
+10
+2
+1
+markers
+2:LEAD-FILL 7 3:LEAD-FILL 5 3:LEAD-FILL 6 3:LEAD-FILL 9 3:LEAD-FILL 7 4:LEAD-FILL 8 4:LEAD-FILL 3 125:LEAD-FILL 4 258:LEAD-FILL 1 258:LEAD-FILL 1b 258:LEAD-FILL 2 258:LEAD-FILL 1b 275:LEAD-FILL 6 433:LEAD-FILL 4 434:LEAD-FILL 4 585:LEAD-FILL 7 586:LEAD-FILL 1 
+17
+8a83abaa5c10db10ec84adabc82a855b087ff67286a44cec1611b812c90011d2  /home/user/hadavin-sdk/handover/core-hardening/paste-check/plan-v5-repin-v6.patch
+39af84aec78b650f287d20013cdfa2d45dde8b75632e6d6729660bbc21ce3f5b  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c/w/inputs/plan-wp6-resmoke-v5.md
+real inputs untouched:
+67a0a195537de875
+### 12.2 R2 block extracted from the patched plan (the paste between the sh fences), bash -n and dash -n rc 0; stand-ins are python processes in their own session with N8N_USER_FOLDER in their environment, HOME swapped to a scratch folder; term_ok = leader ends at TERM and is collected; term_ok_unreaped = ends at TERM but nobody collects it (zombie after TERM); term_ignored = ignores TERM; leader_dies_child_stays = leader ends at TERM, a child ignores TERM and stays; zombie_leader = leader already a zombie at the start
+=== case term_ok pid 6826
+R2 end: alive=no group=0
+
+exit=0 after 1s
+=== case term_ok_unreaped pid 6903
+R2: before KILL the environ of pid 6903 no longer names HOME/hadavin-smoke/take-smoke-1/n8n (leader gone or pid reused): STOP, KILL not sent, tell the lead
+
+exit=1 after 30s
+=== case term_ignored pid 7605
+R2: KILL sent after 30s
+R2 end: alive=no group=0
+
+exit=0 after 31s
+=== case leader_dies_child_stays pid 8293
+R2: before KILL the environ of pid 8293 no longer names HOME/hadavin-smoke/take-smoke-1/n8n (leader gone or pid reused): STOP, KILL not sent, tell the lead
+
+exit=1 after 30s
+=== case zombie_leader pid 8982
+R2: environ of pid 8982 does not name HOME/hadavin-smoke/take-smoke-1/n8n: STOP, nothing sent
+
+exit=1 after 0s
+(bad-argument and dead-pid cases of the first run, same block:)
+abc -> R2: bad pid: STOP exit=1; 1 -> R2: bad pid: STOP exit=1; 999999 -> R2: pid 999999 is not alive and its process group is empty: nothing sent exit=0; 12345 foo -> R2: which must be take or ctl: STOP exit=1
+After the runs: pgrep for the stand-in command line printed nothing (all stand-ins were started by the test and ended by it).
+Honest note: in the first run the harness did not collect the ended leader (zombie), so term_ok showed the zombie-after-TERM stop; the harness was fixed to collect it for term_ok and term_ignored, and the zombie cases are kept as their own cases.
+### 12.3 acc5.sh, 18 cases (acc5-cases.sh)
+case: good -> ACCEPT
+case: good with comment tail -> ACCEPT
+case: exit 30 only -> STOP (other exit text: +sys.exit(30)|)
+case: exit 3x -> STOP (other exit text: +sys.exit(3x)|)
+case: upper case Exit(3) -> ACCEPT
+case: main() plus exit 3 -> ACCEPT
+case: main() plus return 3 -> ACCEPT
+case: main() alone -> STOP (no exit 3 or return 3 in kill block)
+case: return 31 -> STOP (no exit 3 or return 3 in kill block)
+case: exit 3 only in the start.sh block -> STOP (no exit 3 or return 3 in kill block)
+case: no exit 3 -> STOP (no exit 3 or return 3 in kill block)
+case: exit 4 with 3 -> STOP (other exit text: +sys.exit(4)|)
+case: named constant -> STOP (other exit text: +EXIT_CODE = 3|)
+case: exit 20 in start -> STOP (other exit text: + exit 20|)
+case: print("exit 3") text only (ACCEPT, documented) -> ACCEPT
+case: comment line only -> STOP (no exit 3 or return 3 in kill block)
+case: comment line plus exit 3 -> ACCEPT
+case: comment return 3 only -> STOP (no exit 3 or return 3 in kill block)
+cases ok=18 bad=0
+STOP (block missing)
+(above: no == end line, expect STOP (block missing))
+### 12.4 checklist commands (A2, A8, C9 with swapped paths) and bash -n of all 18 bash blocks of LEAD-CHECKLIST-v5.md (no output = rc 0 for every block)
+--- A2
+/home/user/hadavin-sdk/handover/core-hardening/paste-check/plan-v5-fixes.patch:0
+/home/user/hadavin-sdk/handover/core-hardening/paste-check/plan-v5-repin-v6.patch:0
+--- A8 (path swapped to scratch)
+copied
+already there: STOP, look at it first
+--- C9 first run, second run (EV swapped)
+LEAD-GO RE-PIN 2026-11-16T10:54Z
+a LEAD-GO line is already there: STOP
+### 12.5 final patch checksum
+8a83abaa5c10db10ec84adabc82a855b087ff67286a44cec1611b812c90011d2  plan-v5-repin-v6.patch
+### 12.6 marker lines in the patched plan (real grep): 2,3,4,125,258,275,433,434,585,586; LEAD-FILL-list-v5.md column now matches (125 R2 exit 3; 258 P-4b; 275 (0.1); 433 and 434 (13.1, 13.3); 585 UNVERIFIED 14; 586 UNVERIFIED 15)
+### 12.7 banned-word scan after all edits (list read from tests/test_no_reference_material.py; words not printed)
+plan-v5-repin-v6.patch 0 hits
+LEAD-FILL-list-v5.md 0 hits
+LEAD-CHECKLIST-v5.md 0 hits
+acc5.sh 0 hits
+acc5-cases.sh 0 hits
+REPORT-repin-v6.md 0 hits
+checkpoint-v6.md 0 hits
+evidence-c7g.md 0 hits
