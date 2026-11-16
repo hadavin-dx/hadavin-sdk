@@ -3,7 +3,7 @@
 ## Status 08:03 UTC - ORDER 005: deliverables v1 written; result review round 1 starting (3 fresh egm reviewers)
 Failed or not checked: the 65 Nits; the MASTER-MAP rows one by one; no runtime; verifier Major lines were not re-sampled by me (only the 5 Blockers). Verdict so far: RELIABLE WITH CORRECTIONS (85 of 85 Blockers+Majors checked, 0 WRONG as whole findings; 3 of 5 Blockers and 24 of 80 Majors rated too high; 15 cites past end of file).
 Closed (10): V1, V2, V3, V4, V5a, V5b, V6, H1, H2, RUN (all sonnet, read only; outputs in reviews-of-core-hardening/work/). 0 left running.
-RV3 reported 08:10 UTC, CLOSED (4 Blocker, 5 Major, 12 Nit; saved work/result-review-1c.md). Still running: RV1 and RV2. Registered (sonnet, read only, expected end +20 min): RV1 egm-codebase-details | RV2 egm-zoom-out | RV3 egm-comprehension, reading REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md, patches/, work/ files and the snapshot.
+RV3 reported 08:10 UTC, CLOSED (4 Blocker, 5 Major, 12 Nit; saved work/result-review-1c.md). RV2 reported 08:13 UTC, CLOSED (5 Major, 5 Nit; work/result-review-1b.md). Still running: RV1. Registered (sonnet, read only, expected end +20 min): RV1 egm-codebase-details | RV2 egm-zoom-out | RV3 egm-comprehension, reading REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md, patches/, work/ files and the snapshot.
 Critical path: 3 reviewers -> egm-resolve -> fixes -> (round 2 only if Blocker/Major open) -> drift report -> FINAL.
 
 ## Status 07:57 UTC / IST +5:30 - ORDER 005 running; ORDER 006 (parallel by default) received and followed
