@@ -1,2 +1,2 @@
-SCANNED (own output only; folders tree/, steps-snapshot/, steps-frozen/, steps-pinned/ and late-pinned/ are skipped: copies of the studio's own sheets): c6-skip-audit/, evidence-c6x/
-SCANNED 36 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
+SCANNED (own output only; folders tree/, steps-snapshot/, steps-frozen/, steps-pinned/ and late-pinned/ are skipped: copies of the studio's own sheets): c6-skip-audit/, evidence-c6x/, neg/, run1-neg-kept/
+SCANNED 410 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}

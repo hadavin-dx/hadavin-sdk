@@ -76,11 +76,11 @@ FAILURES AND OPEN ITEMS FIRST (all mine, none hidden):
 
 ## Counts (compared by the check script with the output files; a wrong number here fails V13)
 
-COUNT verify checks: 287
-COUNT full runs of run_all.sh: 1
-COUNT negative changed copies: 330
+COUNT verify checks: 288
+COUNT full runs of run_all.sh: 2
+COUNT negative changed copies: 367
 COUNT negative wrong copies: 0
-COUNT scanned files: 0
+COUNT scanned files: 410
 
 ## Which branch holds what, and who read what
 - The report, this file, the scripts and the outputs are in handover/core-hardening/c6-skip-audit/ and its evidence-c6x/ folder (branch cloud/core-hardening). Nothing is committed by me. The 99 demo-file rows concern branch cloud/flows-audit; the 5 rows 70, 71, 72, 90 and 91 concern branch cloud/core-hardening.

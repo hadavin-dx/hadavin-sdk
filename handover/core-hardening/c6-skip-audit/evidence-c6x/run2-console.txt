@@ -1,0 +1,6 @@
+static-checks exit 0
+box words (counted without the heading line): stated 2466, counted 2466; part 2 401
+built; sizes in bytes: {'REPORT-c6x.md': 189024, 'REPORT-c6x-TABLE.md': 113604, 'REPORT-c6x-COVERAGE.md': 39084}
+census written: 58 phrases
+scan exit 0
+SCANNED 410 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}

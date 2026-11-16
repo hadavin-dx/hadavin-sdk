@@ -1,7 +1,2 @@
-live folder vs the pin, at 2026-11-16T20:23:50Z (information only):
-NOT IN THE PIN: LEAD-RELEASE-NOTE-v20-SOURCE.md
-NOT IN THE PIN: LEAD-RELEASE-NOTE-v20.md
-NOT IN THE PIN: OWNER-SHEET-v36-A.md
-NOT IN THE PIN: OWNER-SHEET-v36-B.md
-NOT IN THE PIN: OWNER-SHEET-v36-SOURCE.md
+live folder vs the pin, at 2026-11-16T20:37:33Z (information only):
 (end)

@@ -23,7 +23,8 @@ M = [('X03', 'tops itself up when low (must be off)', 'tops itself up when low (
  ('H20', 'time or key state is never tolerated.', 'time or key state is tolerated.'), ('H23', "then cancel the older key by the card's L2, steps 2 to 4, only if its name and creation date equal the blanks", "then cancel the older key by the card's L2, steps 2 to 4"),
  ('H35', 'if key text appears, close it and tell the owner it appeared', 'if key text appears, keep it and tell the owner it appeared'), ('H38', 'even if a run was in progress (no run is planned on that day)', 'unless a run was in progress (no run is planned on that day)')]
 # round 7: the helper sentence was reworded (tell -> call) so the v36 anchor differs; the mutation idea is the same
-ALT = {'v36': {'H35': ('if key text appears, close it and call the owner: it appeared', 'if key text appears, keep it and call the owner: it appeared')}}
+ALT = {'v36': {'H35': ('if key text appears, close it and call the owner: it appeared', 'if key text appears, keep it and call the owner: it appeared'),
+ 'H05': ('both after the deadline', 'both before the deadline'), 'H38': ('even if a run was in progress', 'unless a run was in progress')}}
 def trial(v, ln, tmp):
     base = tmp + '/' + v + '/'; os.mkdir(base)
     for f in files(v, ln, None):
