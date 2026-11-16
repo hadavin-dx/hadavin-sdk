@@ -428,3 +428,5 @@ ok   f8-r7: a reviewer line with an escape character is exit 4 and the output ho
 ok   f8-r7: the session message also prints the line without control characters (got exit 4)
 ok   f8-r7: the FINAL line says 'The reviewer line is text; not verified.'
 ok   M1: with the test flag AND a pin override, a 'Testonly ...' name is accepted and the run is exit 5, never 0 (got exit 5)
+ok   M1: the mirror run printed the combined flows sha256 (needed to build the stand-in pins below)
+ok   M1: 'Testonly Reviewer, 2026-11-16, pin sha256 378e1121' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
