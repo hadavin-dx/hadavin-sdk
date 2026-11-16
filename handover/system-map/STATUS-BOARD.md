@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 16:09Z
+UPDATED_UTC: 16:10Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -50,14 +50,14 @@ INTERRUPTED: none
 
 ## AGENTS
 - a3798a0064132a398 | RUNBOOK PATCH A: edits forced by the 12 decisions -> work/RUNBOOK-V4.3-PATCH-part1.md | running | next: merge into RUNBOOK-V4.3-PATCH.md
-- (patch C) | RUNBOOK PATCH C: timing rows from timing-check-a -> work/RUNBOOK-V4.3-PATCH-part3-timing.md | started 16:09Z | running | next: merge
-- a8a3c12ebafe89663 | TIMING B: critical path backward from 17:40Z -> work/critical-path-r2.md | running | next: replace critical-path-r1
-- a854e133c993b4ab5 | FIXER-1 GLOSSARY + banned-claims-clean (round 2) | running | next: scan, no third read (cap)
-- a3ff59d42b60909ea | FIXER-2 end-delete-cases + M17 (round 2) | running | next: same
-- a28ae6e0050f8542e | FIXER-3 decision-list rows D-01..D-04 | running | next: fold D-05..D-08 evidence
-- (LEGEND fixer) | FIXER-4 LEGEND-review-pages (round 2) | started 16:09Z | running | next: scan
-- EMPTY SLOT (1 of 8): reason: the next independent work (D-05..D-08 into the decision list) edits the same file as FIXER-3; it starts when FIXER-3 hands back
-Finished since last push: timing A (a81d81119ca940bea, timing-check-a.md), evidence D-05..D-08 (a239cf8ed4e3bb635), LEGEND reader a6feb873fafdc399d.
+- a0e8520fb4404f483 | RUNBOOK PATCH C: timing rows -> work/RUNBOOK-V4.3-PATCH-part3-timing.md | running | next: merge
+- a854e133c993b4ab5 | FIXER GLOSSARY + banned-claims-clean (round 2) | running | next: scan, no third read (cap)
+- ac07d973db542821b | FIXER LEGEND-review-pages (round 2) | running | next: scan
+- NEW-1 | FIXER decision list D-05..D-08 | started 16:10Z | running | next: scan
+- NEW-2 | FIXER owner-timeline-draft, open-items-table, critical-path-r1 to the 17:40Z start | started 16:10Z | running | next: one fresh reader
+- NEW-3 | WRITER LEAD-NOTICE timing items (a to h) | started 16:10Z | running | next: digest
+- EMPTY SLOT (1 of 8): reason: the next independent work (merging patch parts into RUNBOOK-V4.3-PATCH.md) waits for patch A and C; no other open row has independent work not already covered
+Finished since last push: timing B (a8a3c12ebafe89663, critical-path-r2.md), fixers a28ae6e0050f8542e and a3ff59d42b60909ea.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
