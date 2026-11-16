@@ -13,7 +13,7 @@ Written by system-map, 2026-11-16. STATUS: round 1 of review fixed; round 2 pend
 What passed: all five patches apply without a rejected hunk and none leaves a broken graph (evidence/dry-run.txt); the unpatched generator reproduces the committed v5 folders byte for byte (evidence/repro.txt); parse, duplicate names, connection targets, orphans, unreachable steps and `$('Name')` references show no failure in any of the 32 built files (the only failure line is item 1).
 
 ## 2. Rung table (rule 20, CODE-LAST)
-Evidence for the linter rows is ONE web search on 2026-11-16 read from its result summaries; no linter was opened, installed or run, no licence read. Repository search for rung 1: `grep -ril "n8n.*lint\|workflow.*lint" handover` found nothing relevant (command not saved as evidence).
+Evidence for the linter rows is ONE web search on 2026-11-16 read from its result summaries; no linter was opened, installed or run, no licence read. Repository search for rung 1: `grep -ril "n8n.*lint\|workflow.*lint" handover` matched only handover/demo3/ORDERS.md and nine .patch files there; the one matched line I read (ORDERS.md:37) is not about an n8n linter and the patch files were not opened (output not saved as evidence).
 | component | need | rung tried | evidence (source, date) | what only our code gives | verdict |
 |---|---|---|---|---|---|
 | orphan, dead node, open webhook, missing retry | list failures | rung 1 (this repository): nothing found. Rung 3/4: third-party linters lorenzespinosa/n8n-lint, Waqas-Ai-Engineer/n8n-workflow-doctor, SMillerDev/n8n-workflow-linter, vladosskins178/n8n-workflow-lint, tachyurgy/n8n-workflow-lint, ubie-oss/n8n-cli | UNVERIFIED: search summary 2026-11-16, not run | nothing proven | CUT-TO-CONFIG+GLUE once one of them is run offline on the 32 files and passes; until then our script does it |
@@ -164,7 +164,7 @@ None. See "What passed" in section 1, and item 2 for what is not tested.
 | review 2 egm-design | done: work/review-design-r1.md |
 | egm-resolve round 1 | done: work/resolve-1.md; 8 Majors and 8 Nits accepted, 0 contested |
 | fixes of round 1 | applied: this file, tools/flowcheck.py (crash fix, two WARN checks, self-test), run_all.sh |
-| round 2 (fresh reviewers) | pending |
+| round 2 (fresh reviewers) | running |
 
 ## 8. Round 1 fixes: what changed
 Crash on `{}` and on a step without a `type` fixed (now failure lines; two self-test cases); rung table added; two WARN checks added; the counts (six recovery steps, 2/2/5/5 postgres steps, hunk offsets) corrected; section 1 reordered and reworded.
