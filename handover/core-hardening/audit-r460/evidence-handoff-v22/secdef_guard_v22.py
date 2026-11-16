@@ -463,7 +463,7 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
     for idx, st in enumerate(split_statements(tokenize(text))):
         lead, flat = _lead(st), _flat(st)
         short = flat[:70]
-        if fingerprint(st) in extra_statements: continue
+        if fingerprint(st) in extra_statements: seen_ddl.add(fingerprint(st)); continue
         if lead[:1] in (["ALTER"], ["CREATE"]) and any(w in lead for w in ("TABLE", "INDEX", "TRIGGER")) and "FUNCTION" not in lead:
             problems += [pre + x for x in _call_problems(st, "DDL expression", ddl=True, ok=EXPR_CALLS_OK)]   # v20 m1 / runner F2
         if any(_is(a, "OWNER") and _is(b, "TO") for a, b in zip(st, st[1:])):

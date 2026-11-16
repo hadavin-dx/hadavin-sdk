@@ -1,0 +1,30 @@
+v22 FLAG v21 MISS spend_decrease_log.sql delete statement 1: '-- the trigger function is SECURITY DEFINER and is owned by '
+v22 FLAG v21 MISS spend_decrease_log.sql delete statement 11: 'CREATE TABLE spend_decrease_log ( agent_id text NOT NULL, pe'
+v22 FLAG v21 MISS spend_decrease_log.sql delete statement 12: 'CREATE INDEX spend_decrease_log_by_agent ON spend_decrease_l'
+v22 FLAG v21 MISS spend_decrease_log.sql delete statement 21: '-- (c) v16, security major 5: every change of the kill switc'
+v22 FLAG v21 MISS spend_decrease_log.sql delete statement 22: 'CREATE INDEX kill_switch_log_by_time ON kill_switch_log (at)'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 5: '-- (e) names that differ only in case or by an inner charact'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 6: "SET LOCAL statement_timeout = '60s'"
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 7: 'ALTER TABLE spend ADD COLUMN open_usd numeric NOT NULL DEFAU'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 8: 'ALTER TABLE spend ADD CONSTRAINT spend_open_ok CHECK (open_u'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 9: 'ALTER TABLE spend ADD CONSTRAINT spend_guarded_ok CHECK (usd'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 10: 'ALTER TABLE spend ADD CONSTRAINT spend_agent_len CHECK (agen'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 11: 'ALTER TABLE spend ADD CONSTRAINT spend_day_window CHECK (day'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 12: 'ALTER TABLE spend_month ADD COLUMN open_usd numeric NOT NULL'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 13: 'ALTER TABLE spend_month ADD CONSTRAINT spend_month_open_ok C'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 14: 'ALTER TABLE spend_month ADD CONSTRAINT spend_month_guarded_o'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 15: 'ALTER TABLE spend_month ADD CONSTRAINT spend_month_agent_len'
+v22 FLAG v21 flag spend_guarded_writes.sql delete statement 16: 'ALTER TABLE spend_month ADD CONSTRAINT spend_month_window CH'
+v22 FLAG v21 flag spend_nonneg.sql delete statement 0: '-- HELD FILE 1a of DB-1 = THE DEFAULT (lead\'s answer Q34, "m'
+v22 FLAG v21 MISS spend_nonneg.sql delete statement 1: 'ALTER TABLE spend ADD CONSTRAINT spend_usd_ok CHECK (usd >= '
+v22 FLAG v21 MISS spend_nonneg.sql delete statement 2: 'ALTER TABLE spend_month ADD CONSTRAINT spend_month_usd_ok CH'
+v22 FLAG v21 flag spend_nonneg_finite.sql delete statement 0: "-- HELD FILE 1b of DB-1 = THE VARIANT (needs the OWNER's own"
+v22 FLAG v21 MISS spend_nonneg_finite.sql delete statement 1: 'ALTER TABLE spend ADD CONSTRAINT spend_usd_ok CHECK (usd >= '
+v22 FLAG v21 MISS spend_nonneg_finite.sql delete statement 2: 'ALTER TABLE spend_month ADD CONSTRAINT spend_month_usd_ok CH'
+v22 FLAG v21 flag spend_nonneg_upgrade.sql delete statement 0: '-- HELD FILE 1c of DB-1 = THE UPGRADE from the default (spen'
+v22 FLAG v21 MISS spend_nonneg_upgrade.sql delete statement 1: 'ALTER TABLE spend DROP CONSTRAINT spend_usd_ok, ADD CONSTRAI'
+v22 FLAG v21 MISS spend_nonneg_upgrade.sql delete statement 2: 'ALTER TABLE spend_month DROP CONSTRAINT spend_month_usd_ok, '
+v22 FLAG v21 MISS DB-2 appended ADD CONSTRAINT
+v22 FLAG v21 MISS DB-2 lock_timeout line removed
+deletion mutants 28; v22 flags 28; v21 misses 13; v22 misses []
+rc=0
