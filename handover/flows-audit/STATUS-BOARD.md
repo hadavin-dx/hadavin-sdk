@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T16:20:27Z
+UPDATED_UTC: 2026-11-16T16:25:34Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 6.09 load of 4 cores, mem 1/15 GB, RAM 1467/16087 MB, disk 17G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 7.6G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 3.75 load of 4 cores, mem 1/15 GB, RAM 1535/16087 MB, disk 16G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 8.4G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: next5 in /tmp/gen7/next5.txt; disk 17G free 57%; percent basis 70 = 7 of 10 independently verified, none closed since 13:59Z
-PUSHED_UTC: 2026-11-16T16:20:27Z
+NEXT: next5 in /tmp/gen7/next5.txt; disk 16G free 60%; percent basis 70 = 7 of 10 independently verified, none closed since 13:59Z
+PUSHED_UTC: 2026-11-16T16:25:34Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,16 +31,16 @@ PUSHED_UTC: 2026-11-16T16:20:27Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | fixer | sonnet | F8 flow-check round 11 (uncapped) | 15:48Z | 16:40Z | running | edits in flow-check/ |
-| a81f425a | fixer | sonnet | REVIEW.md round 29 (uncapped) | 16:13Z | 16:35Z | running | edits in REVIEW.md |
-| a61a8f40 | citation | sonnet | Q31 citation check r14 | 16:15Z | 16:30Z | running | reviews/citation-q31-r14.md |
 | a18f1c8d | fixer | sonnet | plan files round 24 | 16:18Z | 16:40Z | running | edits in RUNBOOK/FIX-PLAN/TAKE-CHECKLIST |
 | a026f1e0 | fixer | sonnet | FINDINGS/LEDGER round 10 | 16:18Z | 16:40Z | running | edits in FINDINGS/LEDGER-ROWS |
-| ae51eddb | fixer | sonnet | Q31 round 14 | 16:19Z | 16:40Z | running | edits in QUESTIONS.md |
-| a8632c07 | reviewer | sonnet | patch-copies r9 code review (uncapped) | 16:20Z | 16:35Z | running | findings inline |
-| a03734e9 | citation | sonnet | patch-copies r9 citation check | 16:20Z | 16:35Z | running | reviews/citation-patchcopies-r9.md |
+| a3917020 | reader | sonnet | RW/CT round 16 stranger read | 16:23Z | 16:35Z | running | findings inline |
+| a13847b9 | reader | sonnet | REVIEW.md r30 stranger read (uncapped) | 16:23Z | 16:40Z | running | findings inline |
+| a075caf1 | reviewer | sonnet | REVIEW.md r30 design review (uncapped) | 16:23Z | 16:40Z | running | findings inline |
+| ad24e61d | reader | sonnet | Q31 round 15 stranger read | 16:25Z | 16:40Z | running | findings inline |
+| aae2f4ca | fixer | sonnet | patch-copies round 10 (uncapped) | 16:25Z | 16:45Z | running | edits in patch-copies/ |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 RW/CT round 16 reader; 2 patch-copies fixer (after r9 reviews); 3 REVIEW.md round 30 readers; 4 F8 evidence runner then reviews; 5 Q31 round 15 reader
+1 REVIEW.md r30 citation checker; 2 RW/CT round 16 fixer (incl. row (t) cite line 268); 3 F8 evidence runner then reviews; 4 FINDINGS/LEDGER round 10 reader; 5 patch-copies round 10 readers
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
