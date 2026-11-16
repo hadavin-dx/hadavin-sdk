@@ -6,6 +6,8 @@
 # is still wired (no orphan); round 10b adds M-1 (no deletion promise), M-2 (sha256 of the four flow files), M-3 (pin header must be read by a person; no pin is written when the run has other problems). Round 10d adds A1 (pin comment), B1 (enforced flows sha256), B2 (reviewer line grammar), B3 (exit 5, both folder sources, printed source), B4 (run_all.sh lock), a snapshot-order case, a sha256sum failure case and the refusal of the run_all.sh test hooks. Made-up data only. Exit 0 = every case behaved as expected; exit 1 = at least one did not (each is listed).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
+# f8-r11: when this suite runs inside a nested run_all.sh (the failure tests) that run left its own hook variables in the environment; none of them is an input of this suite (every case that needs one sets it itself), and run_all.sh now refuses FC_OUT without RUN_ALL_NESTED, so they are removed here, once.
+unset FC_OUT RUN_ALL_NESTED RUN_ALL_PARENT_PID RUN_ALL_RAW RUN_ALL_TAKE_FLOWS RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT
 # f8-r9 (M4): TEST_TAKE_SCRIPT points the whole suite at ANOTHER script, so a leaked variable would test (and pass) the wrong file. It is honoured only with TEST_TAKE_DEV=1, and the path under test is always printed.
 if [ -n "${TEST_TAKE_SCRIPT:-}" ] && [ "${TEST_TAKE_DEV:-}" != 1 ]; then echo "REFUSED: TEST_TAKE_SCRIPT is accepted only with TEST_TAKE_DEV=1 (it would test another script than the one in this folder). Unset it for a real run."; exit 2; fi
 TAKE="${TEST_TAKE_SCRIPT:-$HERE/take_check.sh}"; echo "script under test: $TAKE"
