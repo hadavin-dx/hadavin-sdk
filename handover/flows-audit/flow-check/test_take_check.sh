@@ -3,7 +3,7 @@
 # Usage: bash test_take_check.sh PATCHED_REAL_DIR [SCRATCH_DIR]    (SCRATCH_DIR must not exist yet; without it a temporary folder is made and removed again)
 # Covers: B1 (writing a pin: never the pin in use, never over an existing file, only on a clean run, never a pass), M1 (environment overrides are exit 4 without the test flag and
 # are printed), M3 (a listed flow that is a folder or a dangling link is a FAIL), M4 (the pin header date and sha256 are checked), and a flow whose node count changed while everything
-# is still wired (no orphan); round 10b adds M-1 (no deletion promise), M-2 (sha256 of the four flow files), M-3 (pin header must be read by a person; no pin is written when the run has other problems). Made-up data only. Exit 0 = every case behaved as expected; exit 1 = at least one did not (each is listed).
+# is still wired (no orphan); round 10b adds M-1 (no deletion promise), M-2 (sha256 of the four flow files), M-3 (pin header must be read by a person; no pin is written when the run has other problems). Round 10d adds A1 (pin comment), B1 (enforced flows sha256), B2 (reviewer line grammar), B3 (exit 5, both folder sources, printed source), B4 (run_all.sh lock), a snapshot-order case, a sha256sum failure case and the refusal of the run_all.sh test hooks. Made-up data only. Exit 0 = every case behaved as expected; exit 1 = at least one did not (each is listed).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); TAKE="$HERE/take_check.sh"
 P=${1:-}; [ -d "$P" ] || { echo "usage: bash test_take_check.sh PATCHED_REAL_DIR [SCRATCH_DIR]"; exit 2; }
@@ -34,7 +34,7 @@ CRL=$(sed -n 's/^# reviewed by: //p' "$PIN" | head -n 1)
 { [ "$RC" = 0 ] || { [ "$RC" = 4 ] && has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
 # Q1: with a person's reviewer line the same take is exit 0, and the output never says a person read the pin
 tk q1ok TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
-[ "$RC" = 0 ] && has q1ok "reviewed by (as written in the pin): Test Reviewer, 2026-11-16" && ! has q1ok "a person read"; ok $? "Q1: a pin with a person's reviewer line gives exit 0; the line is printed as written; the output does not say a person read the pin (got exit $RC)"
+[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Test Reviewer, 2026-11-16" && ! has q1ok "a person read"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
 tk q1a TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/sess.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has q1a "pin not yet confirmed by the lead" && has q1a "as written: flows-audit session" && ! has q1a "a person read and accepted"; ok $? "Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit $RC)"
 for pair in "only-session:# reviewed by: Audit Session B, 2026-11-16" "only-confirm:# reviewed by: A. Person, 2026-11-16, Lead To Confirm"; do
@@ -51,6 +51,7 @@ tk b1a TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/inuse.pin" -- --flows "$P" --wr
 tk b1b -- --flows "$P" --write-warn-pin "$S/new.pin"
 [ "$RC" = 4 ] && [ -f "$S/new.pin" ] && has b1b "NEW PIN WRITTEN" && has b1b "never a pass" && grep -q '^# date (UTC): ' "$S/new.pin" && grep -q '^# sha256 of the WARN lines below' "$S/new.pin" && cmp_pins "$S/new.pin" "$PIN"; ok $? "B1b: a clean run writes a NEW pin with date and sha256 and exits 4, not 0 (got exit $RC)"
 # a pin written by the script is NOT valid until a person replaces the placeholder in its header (round 10b, M-3); reviewed.pin stands for that person's edit
+grep -q '^# flows sha256 (the four flow files, combined, as printed in the top block of take_check.sh): [0-9a-f]\{64\}$' "$S/new.pin"; ok $? "B1: the written pin carries the '# flows sha256' line"
 grep -q 'PLACEHOLDER' "$S/new.pin" && grep -q 'NOT YET READ BY A PERSON' "$S/new.pin"; ok $? "M-3: the written pin says it is not yet read and holds the placeholder line"
 sed 's/^# reviewed by: .*/# reviewed by: Test Reviewer, 2026-11-16/' "$S/new.pin" > "$S/reviewed.pin"
 tk m3p1 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/new.pin" -- --flows "$P"
@@ -60,7 +61,7 @@ tk m3p2 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/norev.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has m3p2 "NO '# reviewed by: NAME, DATE' LINE"; ok $? "M-3: a pin with no 'reviewed by' line is exit 4 (got exit $RC)"
 # round trip: the written pin, installed by hand, makes the plain take pass
 tk b1b2 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/reviewed.pin" -- --flows "$P"
-[ "$RC" = 0 ] && has b1b2 "WARN set equals the pinned set"; ok $? "B1b: the written pin, used as the pin, gives exit 0 (got exit $RC)"
+[ "$RC" = 5 ] && has b1b2 "WARN set equals the pinned set"; ok $? "B1b: the written pin, used as the pin, gives exit 5 (would-be pass with the pin override) (got exit $RC)"
 # B1c: an existing file is never overwritten
 echo "keep me" > "$S/exists.pin"
 tk b1c -- --flows "$P" --write-warn-pin "$S/exists.pin"
@@ -124,7 +125,7 @@ tk w4 -- --flows "$S/nokey" --write-warn-pin "$S/w4.pin"
 # M-1 and M-2: the run-saving INFO line promises no deletion; the top block and the FINAL line carry the sha256 of the four flow files
 tk sha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
 EXPECT=$(for f in mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; do printf '%s  %s\n' "$(sha256sum < "$P/$f" | cut -d' ' -f1)" "$f"; done | sha256sum | cut -d' ' -f1)
-[ "$RC" = 0 ] && has sha "  combined: $EXPECT" && grep -q "^FINAL: .*Flow files sha256 (four files, combined): $EXPECT\." "$S/sha.txt" && has sha "  $(sha256sum < "$P/mf-form.json" | cut -d' ' -f1)  mf-form.json"; ok $? "M-2: the top block and the FINAL line print the combined sha256 of the four flow files (and one per file) (got exit $RC)"
+[ "$RC" = 5 ] && has sha "  combined: $EXPECT" && grep -q "^FINAL: .*Flow files sha256 (four files, combined): $EXPECT\." "$S/sha.txt" && has sha "  $(sha256sum < "$P/mf-form.json" | cut -d' ' -f1)  mf-form.json"; ok $? "M-2: the top block and the FINAL line print the combined sha256 of the four flow files (and one per file); exit 5 = would-be pass with the pin override (got exit $RC)"
 ! has sha "deleted at clean-up" && has sha "This script never deletes them"; ok $? "M-1: the output does not say 'deleted at clean-up'"
 
 # M1: an environment override is printed and is exit 4 without the test flag; with the test flag it is printed and allowed
@@ -132,13 +133,15 @@ cp -- "$HERE/check_flows.py" "$S/ck-copy.py"
 cp -- "$HERE/../../demo/n8n-flows-v4/mf_leads.sql" "$S/ddl-copy.sql"
 tk m1a TAKE_CHECK_WARN_PIN="$S/reviewed.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has m1a "ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_WARN_PIN=$S/reviewed.pin" && grep -q '^FINAL: .*ACTIVE ENVIRONMENT OVERRIDES' "$S/m1a.txt"; ok $? "M1: TAKE_CHECK_WARN_PIN without the test flag is exit 4 and is named in the top block and the FINAL line (got exit $RC)"
-for pair in "TAKE_CHECK_FLOWS=$P" "TAKE_CHECK_DDL=$S/ddl-copy.sql" "TAKE_CHECK_CK=$S/ck-copy.py" "TAKE_CHECK_FORM_EXPECT=15:14"; do
+tk m1-TAKE_CHECK_FLOWS "TAKE_CHECK_FLOWS=$P" --
+[ "$RC" = 4 ] && has m1-TAKE_CHECK_FLOWS "ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_FLOWS=$P"; ok $? "M1: TAKE_CHECK_FLOWS without the test flag (and without --flows) is exit 4 and is printed (got exit $RC)"
+for pair in "TAKE_CHECK_DDL=$S/ddl-copy.sql" "TAKE_CHECK_CK=$S/ck-copy.py" "TAKE_CHECK_FORM_EXPECT=15:14"; do
   nm=m1-${pair%%=*}
   tk "$nm" "$pair" -- --flows "$P"
   [ "$RC" = 4 ] && has "$nm" "ACTIVE ENVIRONMENT OVERRIDES: $pair"; ok $? "M1: ${pair%%=*} without the test flag is exit 4 and is printed (got exit $RC)"
 done
 tk m1b TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/reviewed.pin" -- --flows "$P"
-[ "$RC" = 0 ] && has m1b "test flag TAKE_CHECK_TEST=1 is set"; ok $? "M1: with the test flag the override is allowed but still printed (got exit $RC)"
+[ "$RC" = 5 ] && has m1b "test flag TAKE_CHECK_TEST=1 is set"; ok $? "M1/B3: with the test flag the override is allowed, still printed, and a would-be pass is exit 5 (got exit $RC)"
 
 # M3: a listed flow that is a folder, or a dangling link, is a FAIL (the checker used to skip it silently)
 cp -r -- "$P" "$S/dircopy"; rm -f -- "$S/dircopy/mf-hook.json"; mkdir "$S/dircopy/mf-hook.json"
@@ -184,6 +187,62 @@ tk q2c TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$S/extra-ok"
 mkdir "$S/stub"; REALSHA=$(command -v sha256sum); printf '#!/bin/bash\ncase "$*" in *mf-hook.json*) exit 1;; esac\nexec %s "$@"\n' "$REALSHA" > "$S/stub/sha256sum"; chmod +x "$S/stub/sha256sum"
 tk q2d TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stub:$PATH" -- --flows "$P"
 [ "$RC" = 4 ] && has q2d "MISSING  mf-hook.json" && has q2d "MISSING or unreadable"; ok $? "Q2: a flow file that sha256sum cannot read is printed as MISSING and is exit 4, never an empty hash (got exit $RC)"
+# ---- round 10d ----
+# A1: the first line of the committed pin no longer says that a person read each line (only the WARN lines are hashed)
+! head -n 1 "$PIN" | grep -q -i "a person read"; ok $? "A1: line 1 of take-warns.pin does not claim that a person read each line"
+# B1: a flow file changed in a way the checker does not see (a node position), same counts, same WARN lines: exit 4 because of the enforced flows sha256
+cp -r -- "$P" "$S/b1flow"
+python3 -I - "$S/b1flow/mf-sub-crm-mail.json" <<'PYEOF'
+import json, sys
+p = sys.argv[1]
+j = json.load(open(p, encoding="utf-8"))
+j["nodes"][0]["position"] = [12345, 6789]
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+tk b1sha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$S/b1flow"
+[ "$RC" = 4 ] && has b1sha "THE FLOW FILES DO NOT MATCH THE SHA-256 WRITTEN IN THE PIN" && has b1sha "WARN set equals the pinned set"; ok $? "B1: a changed flow file with the same counts and the same WARN lines is exit 4 (got exit $RC)"
+grep -v '^# flows sha256' "$LEADPIN" > "$S/noflowsha.pin"
+tk b1nosha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/noflowsha.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has b1nosha "THE PIN HEADER HAS NO '# flows sha256 ...' LINE"; ok $? "B1: a pin without the flows sha256 line is exit 4 (got exit $RC)"
+# B2: the reviewer line must read NAME, YYYY-MM-DD (optional note); stand-ins are exit 4
+for pair in "b2-agent:claude agent, 2026-11-16" "b2-tbd:TBD" "b2-x:x, 2026-11-16" "b2-nodate:Test Reviewer" "b2-baddate:Test Reviewer, 2026-13-45" "b2-future:Test Reviewer, 2999-01-01" "b2-empty-name:, 2026-11-16" "b2-digits:R2D2 4, 2026-11-16" "b2-ai:Some Assistant, 2026-11-16" "b2-placeholder-word:Name Placeholder, 2026-11-16"; do
+  nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
+  [ "$RC" = 4 ] && grep -q -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed)" "$S/$nm.txt"; ok $? "B2: reviewer line '${pair#*:}' is exit 4 (got exit $RC)"
+done
+{ echo "# reviewed by: Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
+tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
+[ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
+# B3: a would-be pass with a leaked override and the test flag is exit 5, never 0; a copy of the real checker given by TAKE_CHECK_CK is shown
+tk b3ck TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/ck-copy.py" -- --flows "$P"
+[ "$RC" = 5 ] && has b3ck "ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_CK=$S/ck-copy.py" && has b3ck "a run that would pass exits 5, never 0" && grep -q '^FINAL: take_check exit status 5\.' "$S/b3ck.txt"; ok $? "B3: test flag plus a leaked TAKE_CHECK_CK (and the pin override) is exit 5 with the FINAL line saying 5, not exit 0 (got exit $RC)"
+# B3: TAKE_CHECK_FLOWS together with --flows is refused (exit 2) in every mode
+tk b3both TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_FLOWS="$S/b1flow" -- --flows "$P"
+[ "$RC" = 2 ] && has b3both "REFUSED: the environment variable TAKE_CHECK_FLOWS and the option --flows are both set"; ok $? "B3: TAKE_CHECK_FLOWS and --flows both set is exit 2 (got exit $RC)"
+# B3: the real source of the folder name is printed
+tk b3src1 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_FLOWS="$P" --
+has b3src1 "Flows folder checked: $P (taken from the environment variable TAKE_CHECK_FLOWS, a test override)" && [ "$RC" = 5 ]; ok $? "B3: a folder taken from TAKE_CHECK_FLOWS is printed as coming from the variable (got exit $RC)"
+tk b3src2 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
+has b3src2 "Flows folder checked: $P (given with --flows)"; ok $? "B3: a folder given with --flows is printed as given with --flows"
+# snapshot order (minor): the first read of a flow file (has_keyok, python3) must come AFTER the sha256 snapshot, so a write made by that very first read is seen
+cp -r -- "$P" "$S/snapord"; mkdir "$S/stubpy"; REALPY=$(command -v python3)
+printf '#!/bin/bash\nif [ ! -e "%s/stubpy/done" ]; then : > "%s/stubpy/done"; printf "\\n" >> "%s/snapord/mf-form.json"; fi\nexec %s "$@"\n' "$S" "$S" "$S" "$REALPY" > "$S/stubpy/python3"; chmod +x "$S/stubpy/python3"
+tk snapord TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stubpy:$PATH" -- --flows "$S/snapord"
+[ "$RC" = 4 ] && has snapord "A FLOW FILE CHANGED WHILE THIS CHECK RAN"; ok $? "snapshot order: a flow file written by the first python3 read is caught (got exit $RC)"
+# sha256sum failure (minor): a sha256sum that fails when it reads standard input is a loud problem, exit 4, never an empty hash
+mkdir "$S/stub3"; printf '#!/bin/bash\n[ $# -eq 0 ] && exit 1\nexec %s "$@"\n' "$(command -v sha256sum)" > "$S/stub3/sha256sum"; chmod +x "$S/stub3/sha256sum"
+tk shafail TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stub3:$PATH" -- --flows "$P"
+[ "$RC" = 4 ] && has shafail "UNAVAILABLE (sha256sum failed)" && grep -q '^!!! sha256sum FAILED' "$S/shafail.txt"; ok $? "sha256sum failure: exit 4 with a loud line, no empty hash (got exit $RC)"
+# B4: run_all.sh holds a lock per raw folder; a second run on the same raw folder is refused (exit 2). --lock-only takes the lock and stops. RUN_ALL_LOCKFILE is the test hook for the lock file name
+RA="$HERE/run_all.sh"; LK="$S/rl.lock"; mkdir "$S/rl-cwd"
+( cd "$S/rl-cwd" && exec 9>"$LK" && flock -n 9 && RUN_ALL_NESTED=1 RUN_ALL_LOCKFILE="$LK" RUN_ALL_RAW="$S/rl-raw" timeout 20 bash "$RA" --lock-only > "$S/b4held.txt" 2>&1; echo $? > "$S/b4held.rc" )
+[ "$(cat "$S/b4held.rc" 2>/dev/null)" = 2 ] && grep -q "REFUSED: another run_all.sh holds the lock" "$S/b4held.txt"; ok $? "B4: a second run_all.sh on a locked raw folder is refused, exit 2 (got exit $(cat "$S/b4held.rc" 2>/dev/null))"
+( cd "$S/rl-cwd" && RUN_ALL_NESTED=1 RUN_ALL_LOCKFILE="$LK" RUN_ALL_RAW="$S/rl-raw" timeout 20 bash "$RA" --lock-only > "$S/b4free.txt" 2>&1; echo $? > "$S/b4free.rc" )
+[ "$(cat "$S/b4free.rc" 2>/dev/null)" = 0 ] && grep -q "lock acquired" "$S/b4free.txt"; ok $? "B4: with nobody holding the lock, run_all.sh --lock-only takes it and exits 0 (got exit $(cat "$S/b4free.rc" 2>/dev/null))"
+# minor: the run_all.sh test hooks are refused without RUN_ALL_NESTED
+( cd "$S/rl-cwd" && env -u RUN_ALL_NESTED RUN_ALL_TAKE_FLOWS="$S/b1flow" RUN_ALL_RAW="$S/rl-raw2" timeout 20 bash "$RA" --lock-only > "$S/hook.txt" 2>&1; echo $? > "$S/hook.rc" )
+[ "$(cat "$S/hook.rc" 2>/dev/null)" = 2 ] && grep -q "REFUSED: RUN_ALL_TAKE_FLOWS is a test hook" "$S/hook.txt"; ok $? "RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook.rc" 2>/dev/null))"
+
 # Q5 (round 10c): a checker exit status above 3 is shown and returned as 3 (also with --write-warn-pin); the real codes of --write-warn-pin are 4 (written), 1 (FAIL), 2 (refused), 3 (checker broke)
 for n in 3 4 127 137; do
   printf 'import sys\nsys.exit(%s)\n' "$n" > "$S/exit$n.py"

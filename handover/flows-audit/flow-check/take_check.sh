@@ -97,7 +97,7 @@ fi
 FLOWSTXT="Flows folder checked: $D"
 if [ -n "$FLOWSARG" ]; then FLOWSTXT="$FLOWSTXT (given with --flows)"; elif [ -n "${TAKE_CHECK_FLOWS:-}" ]; then FLOWSTXT="$FLOWSTXT (taken from the environment variable TAKE_CHECK_FLOWS, a test override)"; else FLOWSTXT="$FLOWSTXT (the built-in default folder)"; fi
 # round 10b (M-2): a sha256 of the four checked flow files, so a person can compare it with the sha written down at re-pin (a different file with the same name gives a different sha); round 10c: taken before the checker ran (see flow_snapshot above)
-if FLOWSHA=$(printf '%s' "$FLOWSHA_LINES" | sha_stdin); then FLOWSHA_HEX=$FLOWSHA; else FLOWSHA="UNAVAILABLE (sha256sum failed)"; FLOWSHA_HEX=""; PROBLEMS+=("sha256sum failed (flow files)"); fi
+if FLOWSHA=$(printf '%s' "$FLOWSHA_LINES" | sha_stdin); then FLOWSHA_HEX=$FLOWSHA; else FLOWSHA="UNAVAILABLE (sha256sum failed)"; FLOWSHA_HEX=""; PROBLEMS+=("sha256sum failed (flow files)"); echo "!!! sha256sum FAILED on the flow file list: the combined sha256 of the flow files is unavailable. This script exits 4." >&2; fi
 [ "$FLOWSHA_MISSING" = 1 ] && FLOWSHA="$FLOWSHA (at least one *.json file in the folder is MISSING or unreadable)"
 [ "$FLOWSHA_MISSING" = 1 ] && PROBLEMS+=("a flow file is missing or unreadable")
 echo "=== NOTHING RAN IN n8n. Import of these files into n8n was never tried. ==="

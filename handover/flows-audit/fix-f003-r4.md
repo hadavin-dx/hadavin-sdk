@@ -1,0 +1,9 @@
+# fix-f003-r4 (fixer, 2026-11-16): F-003 patch review r4 (a79c4f3)
+Backup: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/bak-f003r4/ (patch, FINDINGS.md, LEDGER-ROWS.md).
+Confirmed M1-M3 against the patch (line numbers of the patch before edit) and ORDERS.md Q28-2 (owner decides crop/blur/cover/not needed).
+M1: scene 4 voice no longer says "at least 45 seconds"; now "only after a waiting period that is a setting we chose. How long it takes is not claimed here." Grep: no other "at least 45" or "lease: " spoken number in the + lines.
+M2: "lead" meaning the agent renamed to "studio lead": tag "lead-read" is now "studio-lead-read" (definition line, was context, now a -/+ pair; two tags in moved rows; the file name V7-NUMBERS-lead-read is a real file and is kept); heading "Open decisions for the studio lead" (was context, now -/+ pair). Rehearsal item 7 "no key" is now "no password or access key". FINDINGS.md row F-003 and LEDGER-ROWS.md row 4: "the lead, not the owner, stops and starts n8n" is now "the studio lead, ...".
+M3: risk 6, rehearsal item 7 and the crop-list paragraph no longer say the scan "must find no e-mail address except the made-up take addresses"; they say any other address is listed for the owner, who decides crop, blur, cover or not needed.
+Hunk header: awk recount old 90 new 108, matches @@ -1,90 +1,108 @@ (the two context lines turned into -/+ pairs keep both counts).
+Commands: sh handover/flows-audit/tools/check_patches.sh PASS 4 patches rc=0; check_refs.py PASS 5146 references rc=0; python3 -I check_secrets.py PASS 0 hits in 1769 files rc=0; check_counts.py PASS 52 files / 655 nodes rc=0; ruff check . All checks passed rc=0.
+Not checked: patched sheet not read end to end by a second person; no n8n run; minus (removed) lines still contain old "lead-read" wording by design (they are deleted text). Not committed.
