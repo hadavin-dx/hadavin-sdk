@@ -1,0 +1,17 @@
+baseline FAIL lines: 0
+X01 CAUGHT by C176,C185,C62 (4 line(s)) | 7-day rule shortened in the sheet
+X02 CAUGHT by C176,C219 (4 line(s)) | A/B choice reversed
+X03 MISSED (no new FAIL line) | auto-reload safe default reversed
+X04 CAUGHT by C239 (2 line(s)) | cancel-by on 23 Nov moved to the deadline
+X05 CAUGHT by C239 (4 line(s)) | backstop time set equal to the deadline
+X06 CAUGHT by C74 (2 line(s)) | R7 delete rule widened
+X07 MISSED (no new FAIL line) | contact delete widened to many results
+X08 MISSED (no new FAIL line) | last-resort step after failed cancel removed (waiting chain)
+X09 CAUGHT by C246 (4 line(s)) | near-deadline last-resort replaced by waiting
+X10 MISSED (no new FAIL line) | extra internal sentence allowed in the public post
+X11 CAUGHT by C03,C19,C195,C238,C73 (17 line(s)) | post-by IST half dropped
+X12 CAUGHT by C03,C195 (18 line(s)) | deadline IST half dropped everywhere
+X13 CAUGHT by C03,C04,C238,C73 (13 line(s)) | post-by weekday changed
+X14 CAUGHT by C04,C210 (9 line(s)) | reminder weekday changed
+X15 CAUGHT by C04,C212 (2 line(s)) | run-day weekday changed in the lead note
+TOTAL 15: caught by checker 11, caught by build stop 0, MISSED 4, anchor absent 0

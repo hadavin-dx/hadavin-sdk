@@ -501,7 +501,7 @@ try:
         toks = g20.tokenize(q); t19 = g19.tokenize(q)
         if how == "colname": mine = [t[1] for t in toks if t[0] == "word"][-1]; old = [t[1] for t in t19 if t[0] == "word"][-1]
         else: mine = (g20._body_source(toks[1]) if len(toks) > 1 and toks[1][0] == "dollar" else None); old = (g19._body_source(t19[1]) if len(t19) > 1 and t19[1][0] == "dollar" else None)
-        if how == "colname": check(f"m3 {lbl}: the server (which lower-cases the word) reads {sv!r}; v20 tokenizer reads {mine!r}; v19 read {old!r}: all one word, no difference to fix here", sv == mine.lower() and mine == old)
+        if how == "colname": check(f"m3 {lbl}: the server (which lower-cases the word) reads {sv!r}; v20 tokenizer reads {mine!r}; v19 read {old!r}: v19 differs only for the astral case (it split the word, which is the m3 fix)", sv == mine.lower() and ((mine != old) if "astral" in lbl else (mine == old)))
         else: check(f"m3 {lbl}: the server reads {sv!r}; v20 tokenizer reads {mine!r}; v19 tokenizer read {old!r}", sv == mine and sv != old)
     for lbl, q in (("form feed", "SELECT\f1"), ("vertical tab", "SELECT\v1")):
         try: admin.execute(q).fetchone(); sv = "accepted"

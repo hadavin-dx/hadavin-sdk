@@ -31,4 +31,5 @@ python3 -B -I build_c6v.py || exit 1
 C6V_MAKE_CENSUS=1 python3 -B -I verify-c6v.py | tail -n 1
 python3 -B -I verify-c6v.py > verify-c6v-output.txt 2>&1; vrc=$?; echo "verify exit $vrc"; tail -n 1 verify-c6v-output.txt | cut -c1-200
 C6V_SNAPSHOT="$E/steps-snapshot" C6V_STEPS="$E/steps-snapshot" python3 -B -I neg_controls_c6v.py > /dev/null 2>&1; nrc=$?; echo "neg exit $nrc"; tail -n 1 neg-output.txt
-[ "$vrc" -eq 0 ] && [ "$nrc" -eq 0 ]
+python3 -B -I scan_c6v.py > /dev/null 2>&1; scrc=$?; echo "scan exit $scrc"; tail -n 1 scan-c6v-output.txt
+[ "$vrc" -eq 0 ] && [ "$nrc" -eq 0 ] && [ "$scrc" -eq 0 ]

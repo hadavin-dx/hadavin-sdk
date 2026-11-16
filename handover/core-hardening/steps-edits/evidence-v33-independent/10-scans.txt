@@ -1,0 +1,4 @@
+banned list length read at run time: 10
+files scanned 25 banned hits total 0
+secret-shaped hits (excluding AKIAIOSFODNN7EXAMPLE): 0
+AKIAIOSFODNN7EXAMPLE occurrences: 0

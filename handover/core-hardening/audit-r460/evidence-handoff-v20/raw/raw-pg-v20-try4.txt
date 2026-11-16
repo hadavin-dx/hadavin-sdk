@@ -215,3 +215,21 @@ PASS m6 v20 file with an old row ' bad': migrate refuses at apply time (23514), 
 CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) m6 v19 file: a settle for a day row WITHOUT a month row changes the day row ((Decimal('0'), Decimal('0'))) and returns no row ([]) and commits
 PASS m6 v20 file: the same settle changes neither table (day row (Decimal('5'), Decimal('5'))) and returns no row
 PASS m6 SET LOCAL outside a transaction does nothing (lock_timeout stays '0'; server notice ['SET LOCAL can only be used in transaction blocks']): the runner MUST run each file in one transaction; migrate() does (db.transaction())
+PASS m6 inside migrate() the 5 s lock_timeout of the file works: a held lock makes the apply fail with 55P03 after 5.0 s and nothing is applied
+INFO ---- m5 volume of the decrease record
+INFO m5 1000 reserve+settle pairs with actual below worst wrote 2000 rows to spend_decrease_log (270336 bytes, 135 bytes per row, 1.2 s)
+PASS m5 every ordinary settle below its reservation writes one row per table (2 per settle): the record is NOT a signal of tampering any more once DB-3 is applied; it is volume, STATED in the text with this number
+INFO ---- F4 / F5 observations of the independent runner of v19, as checks
+PASS F5 a reserve of 0 returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of -0.01 returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of -1e30 returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of -Infinity returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a reserve of NULL returns no row and no error (the store code must treat an empty result as an error): rows=[] error=None
+PASS F5 a settle with worst -1 returns no row and no error: rows=[] error=None
+PASS F5 a settle with actual -1 returns no row and no error: rows=[] error=None
+PASS F5 a settle with worst -Infinity returns no row and no error: rows=[] error=None
+PASS F5 a settle with worst NULL returns no row and no error: rows=[] error=None
+PASS F5 a settle with actual NULL returns no row and no error: rows=[] error=None
+PASS F4 a runtime login can create a TEMP table named spend (and, in the same session, a trigger on it), but the DB-3 function still writes the real table (pg_catalog first, pg_temp last in its search_path)
+SUMMARY safety checks 176 of 177 passed; controls 27 of 27 showed the old behaviour; stated exploits shown 3 of 3
+rc=1

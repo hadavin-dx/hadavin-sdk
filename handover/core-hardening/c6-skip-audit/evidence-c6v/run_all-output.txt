@@ -1,0 +1,8 @@
+static-checks exit 0
+box words: stated 2381, counted 2381
+wrote evidence-c6v/REPORT-c6u-base.md (850 lines)
+box words (counted without the heading line): stated 2478, counted 2478
+wrote REPORT-c6v.md (884 lines)
+census written: 25 phrases
+verify exit 1
+SUMMARY: 236 checks, 2 FAILED: m4 every example answer time in the box is later than the check time 2026-11-16T18:48:05Z (and has its IST); c6v names: every evidence-c6v file the report names exists i
