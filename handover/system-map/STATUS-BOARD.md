@@ -1,18 +1,18 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:11:39Z
+UPDATED_UTC: 2026-11-16T11:13:13Z
 SESSION: system-map
-ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
+ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags still contradict QUEUE.md (digest 117), lead to decide
 PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
-AGENTS_RUNNING: 8 (running: tests dir run-through, LEAD-PAGE number recount, cut-list row sizes, OWNER-VIEW vs LEAD-PAGE overlap, TAKE-BLOCKERS count check, ORDER 028 search; started now: SWEEP.md middle rows 87-366 read, v5 vs card step J wording check); digested through batch 128
+AGENTS_RUNNING: 8 (ORDER 028). Still running 5: cut-list row sizes, OWNER-VIEW vs LEAD-PAGE overlap, TAKE-BLOCKERS count check, SWEEP.md rows 87-366 read, v5 step J vs banned-claims. Started now, 3: fresh-reader re-read of my newest digests (batches 120-131), one-place sweep of my own files (README, STATUS-BOARD, REPORT, QUEUE), contradiction check of DECISIONS-2026-11-16.md against D04-D05 and M17 pages. Digested through batch 131.
 INTERRUPTED: none
 NEXT: collect and digest the 6 new hand-backs (stranger reads of run-day card steps 15-28, OWNER-VIEW rows 4-7, TAKE-BLOCKERS rows 6-9, LEAD-PAGE, README; cite check of batches 91-98); send the lead the decision list (work/open-items-table.md, digest batches 26 and 65-98); find the arguments for tools/check_citations.py
 CAPACITY: nproc 4, load 0.16 0.27 0.20, RAM 864/16087 MB used, disk / 42% used, 23G free, top3: work 2.1MB, flowcheck 0.5MB, reviews-of-core-hardening 0.4MB
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:11:39Z
+PUSHED_UTC: 2026-11-16T11:13:13Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
