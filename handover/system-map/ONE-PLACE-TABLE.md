@@ -163,3 +163,14 @@ These rows keep job keys because the keys sort every part of the repository (see
 | copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |
 |---|---|---|---|---|---|---|---|---|
 | TAKE-REPO | duplicate-proof-lead-desk | N/A: not visible | none | N/A: not visible | no | N/A: not visible | not visible, the laptop lead covers it locally; content not guessed | NOT VISIBLE: duplicate-proof-lead-desk |
+
+## Appendix B: files added on 2026-11-16 (ORDER 015 item M4, added by hand)
+Same rules as above. Job keys as defined at the top. "Owner:" = the one place that does the job.
+
+| job | owner place | copy | verdict | proposal | studio head yes needed | reason | evidence |
+|---|---|---|---|---|---|---|---|
+| STORE (the decision text) | handover/system-map/inputs/DECISION-one-store.md (28 lines, has the 2026-11-16 corrections) | handover/system-map/DECISION-one-store.md (20 lines) | DUPLICATE | CHANGE: replace the root copy by the inputs copy, or a one-line pointer to it; rows above that cite "DECISION line N" for N above 20 or for the corrections must cite the inputs copy | no (this folder only; the laptop lead decides) | the root copy lacks the executions decision and the corrections; a reader of the root copy would act on old text | diff of the two files, 2026-11-16 |
+| LOG (board) | each session's own STATUS-BOARD.md | the two other sessions' boards | NEEDED | keep | no | one board per session by design; each session writes only its own | git ls-tree of the three branches |
+| OTHER (inputs copies) | handover/system-map/inputs/ | copies in flows-audit/inputs/ and core-hardening/inputs/ | NEEDED until the take | keep; delete the copies after Wed 18 Nov | no | read-only copies so each session works without touching the others | cmp, 2026-11-16 |
+| OTHER (audit checklist) | handover/flows-audit/ARCHITECTURE-AUDIT-CHECKLIST.md | handover/system-map/ARCHITECTURE-AUDIT-CHECKLIST.md | DUPLICATE | MERGE-INTO one place after the take; the copies are byte-identical today | no | same file in two folders | cmp, 2026-11-16 |
+| OTHER (fill values into flow copies) | handover/flows-audit/fill_flows/fill_flows.py | none | NEEDED (under review, F3) | keep; the laptop lead copies it into the take repository after review | no | no n8n node does this per queue item F3 (UNVERIFIED by this session) | flows-audit/QUEUE.md F3 |

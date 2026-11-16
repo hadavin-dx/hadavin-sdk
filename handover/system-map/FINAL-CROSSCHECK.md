@@ -1,13 +1,17 @@
 # FINAL-CROSSCHECK (ORDER 014): the three audits against each other
-Written by system-map, 2026-11-16. STATUS: DRAFT until the two reviewers have read it (section 9).
+Written by system-map, 2026-11-16. STATUS: round 1 reviews applied (section 9); not final until the studio head and the laptop lead have read section 8.
+
+**In one minute.** Three audits looked at the same system and rated the same faults differently (section 2); 11 statements contradict each other (section 4); several fixes would collide (section 5). Nothing here was run. The combined cut list (section 6) has 39 rows: 2 can move once you name an archive place outside the repository, 28 not yet, 9 no. Your yes is needed before any file moves. Open decisions are in section 8.
+Id key: F-nnn = flows audit finding; X-, A-, B-, C-, D1- to D3- = core-hardening finding; L2- to L7- with FD = our sweep finding (the first part names the reading lane); rows in section 6 are numbered 1 to 39.
 Words: **CH** = the core-hardening audit (cloud/core-hardening, FINAL); **FA** = the flows audit (cloud/flows-audit, FINAL at d1097db3); **SM** = our own sweep and reviews on this branch (SWEEP.md, ONE-PLACE-TABLE.md, reviews-of-core-hardening/). **Take** = the n8n lead-intake demo that is filmed on Wed 18 Nov. **Blocker / Major / Nit** = most serious / serious / small; each audit defines them a little differently, so a different word is often a different rule, not a different fact.
 
 ## 1. What I could not check, and who read what (read this first)
 - Two background agents did the comparing. Their reports are model output. I re-read the lines marked "checked by me" below; everything else is the agent's reading, not mine.
 - The flows-audit files (n8n-flows*, n8n-tests, n8n-mainframe, the run sheet) are not in this branch. I read them through `git show origin/cloud/flows-audit`. The core code `src/hadavin_sdk` of the audited branch is not read by me; no source-line claim in this file is verified by me except where marked.
-- The agent quoted some of our own earlier review files (`reviews-of-system-map/CORRECTIONS.md`, `reviews-of-system-map-2/REVIEW.md`) that are not in this checkout. I could not open them. Two statements rest only on them: the correction that tells the take to set `N8N_BLOCK_ENV_ACCESS_IN_NODE` to true (section 4, row 1, other side), and the claim that SWEEP.md's "2013 of 2013 citations found" disagrees with a reviewer who could not open 85 of 154 sampled cites. SWEEP.md line 5 itself says "2013 of 2013 citations FOUND proves the quoted lines exist, not that they support the claim". I have not confirmed the 85 of 154 figure.
+- The agent quoted two reviews of our sweep that other lanes wrote: flows-audit `reviews-of-system-map/CORRECTIONS.md` (C-23, ledger XR-23, Major, OWNER-ONLY) and core-hardening `reviews-of-system-map-2/REVIEW.md` (item 6, ledger SM2-06). They are not in this checkout; the fact reviewer read them in exported copies under /tmp/xc and confirmed the quotes (I did not open them). Cites in ONE-PLACE-TABLE, DECISION-one-store and SWEEP lines 367-455: 154 were checked there; 85 point at files that exist in neither tree, 1 is out of range, 68 resolved (REVIEW.md:12 of that review; second-hand, NOT CHECKED by me). SWEEP.md line 5 says its own "2013 of 2013 citations FOUND" proves only that the quoted lines exist, not that they support the claim.
+- The flows-audit CUT-LIST.md was read by the cut-list agent; the fact reviewer compared sections 6 rows 1-32 with it. I did not open it myself.
 - Nothing was run: no tests, no n8n, no patch on a real tree (my own flowcheck dry runs of the five flows-audit patches are in flowcheck/evidence/).
-- I did not re-judge severity. Where two audits differ I say which side has the better written evidence.
+- I did not decide how serious each finding is; I list who rated it what. Where two audits differ I say which side has the better written evidence.
 
 ## 2. Findings rated differently (one row per topic)
 Only the clearest. The rating "in force" for CH is its section 2a (item2-rerating.md), not the old lane rows.
@@ -22,7 +26,7 @@ Only the clearest. The rating "in force" for CH is its section 2a (item2-reratin
 | Recovery flow swallows errors | | F-008 Major, F-039 and F-044 Nit | L6-FD-026 Blocker | FA's patch leaves recovery saving at none, so SM's point stays partly open (checked by me: patch result "recovery stays none"). |
 | Setting `$env` blocked by n8n | | F-037 Blocker | (review) Major | see section 4 row 1. |
 | Money counters in several places | X-02 Blocker | | L6-FD-003 Blocker (SM calls it "arguable"), L5b-FD-003 Major | not settled. |
-| Leak check comment in the approval gate (A-02) | lane row Blocker, in force Nit | | review Major | converged: it is a wrong comment, not a missing control. |
+| Leak check comment in the approval gate (A-02) | lane row Blocker, in force Nit | | review Major | converged on not Blocker: the text is a false comment, but both audits agree no independent leak check exists today. |
 | Demo command `ask` (D2-01) | lane Blocker, in force Nit | | L5a-FD-002 Major | low side is supported by the README calling `ask` a spike. |
 | Stage name "dev" (X-01 and four duplicates) | Nit | | review Major | Major until the owner decides; the preamble rule 21 forbids the word. |
 | Banned-words test | X-15 Major and D3-01 Nit inside CH | | | one item rated two ways inside one audit; treat as one. |
@@ -31,15 +35,15 @@ Same topic, rubric only (no new fact): duplicate flows and dead IF steps (SM Maj
 
 ## 3. Duplicates (same problem under several ids)
 - Inside CH: X-01 = B-11 = D1-01 = D3-08 = C-09 (stage "dev"); X-05 = A-02; B-05 = X-02 = C-02; X-15 = D3-01; D3-09 = C-10; D2-07 = X-12 = B-15.
-- Inside SM: L6-FD-001 = L2-FD-001 + L2-FD-002; L6-FD-002 = L2-FD-003; L6-FD-017 = L2-FD-007; L6-FD-005 = L2-FD-008 = L7-FD-006; L5b-FD-005 = L6-FD-015; L5b-FD-001 = L6-FD-016; L5a-FD-004 = L6-FD-014 = L5b-FD-003.
-- Inside FA: F-009 = F-036; F-010 = F-030; F-008 + F-039 + F-044 (swallowed errors).
+- Inside SM: L6-FD-001 = L2-FD-001 and L6-FD-002 = L2-FD-003 + L2-FD-002 (SWEEP.md:56-57; the flows-audit review reads L6-FD-001 as L2-FD-001 + L2-FD-002); L6-FD-017 = L2-FD-007; L6-FD-005 = L2-FD-008 = L7-FD-006; L5b-FD-005 = L6-FD-015; L5b-FD-001 = L6-FD-016; L5a-FD-004 = L6-FD-014 = L5b-FD-003.
+- Inside FA: F-009 = F-036; F-010 and F-030 overlap only on the shared mail login (F-030 adds the shared mail channel, F-010 adds the Postgres roles; FINDINGS.md:121); F-008 + F-039 + F-044 (swallowed errors).
 - Across: CH D2-01 = L5a-FD-002; CH D2-05 = L5a-FD-004; CH X-07 = L5b-FD-005; CH C-20 and B-09 = L5b-FD-001; FA F-017 = L2-FD-004; F-015 = L2-FD-006; F-031 = L2-FD-007; F-011 = L2-FD-001 + L2-FD-002; F-008 = L2-FD-003; F-009 = L7-FD-005.
 The pairs came from the agent reading ids and text; I did not re-open each pair.
 
 ## 4. Contradictions (cannot both be true)
 | # | side A | side B | what to do |
 |---|---|---|---|
-| 1 | FA FIX-PLAN.md:6 (checked by me): "F-037: N8N_BLOCK_ENV_ACCESS_IN_NODE=false is set" (the setting that lets flow steps read environment values) | an SM correction (cited by the agent, file not in this checkout, not checked by me) says set it to true in the take if no flow needs it; flows do read `$env` (flowcheck/REPORT.md lists them: DESK_URL, DESK_ALERT_TO, MF_CRM_URL ...) | the lead decides; one safe route is to write the values into the flows as constants so the setting can stay true. Not tested. |
+| 1 | FA FIX-PLAN.md:6 (checked by me): "F-037: N8N_BLOCK_ENV_ACCESS_IN_NODE=false is set" (the setting that lets flow steps read environment values) | a flows-audit review of our sweep (CORRECTIONS.md C-23, rated Major; NOT CHECKED by me) says set it to true in the take if no flow needs it; flows do read `$env` (flowcheck/REPORT.md lists them: DESK_URL, DESK_ALERT_TO, MF_CRM_URL ...) | the lead decides; one safe route is to write the values into the flows as constants so the setting can stay true. Not tested. |
 | 2 | SWEEP fix row 1: n8n on Postgres first, planted-data check, then saving on, before Wed 18 Nov | FA FIX-PLAN item 8: Postgres only "if the video says one database"; saving on early | the lead decides the order and the condition. |
 | 3 | SWEEP fix row 19: password-like header on the webhooks before Wed 18 Nov | FA FIX-PLAN.md:16: header authentication in the AFTER list, F-009 Nit | timing differs; same decision as the webhook row in section 2. |
 | 4 | FA F-009: "Nit for a local demo, Major for any shared host" | FA F-036: "not in take (loopback)" | same two steps read two ways inside FA. |
@@ -53,7 +57,7 @@ The pairs came from the agent reading ids and text; I did not re-open each pair.
 Not a real contradiction: SWEEP L4c-FD-001 says a patch "touches core src"; it edits the desk code, not the shared core.
 
 ## 5. Fixes that would collide
-- CH has two copies of the same patch: `patches/C-01-and-A-02.patch` (old) and `patches-ready/C-01.patch` plus `G5-wording.patch` (new). Same hunks, cannot both apply; remove the old file.
+- CH has two copies of the same patch: `patches/C-01-and-A-02.patch` (old) and `patches-ready/C-01.patch` plus `G5-wording.patch` (new). Overlapping hunks (the config.py price check is the same; the new files add the max_tokens bound, tests and the G5 wording), so they cannot both apply; remove the old file.
 - The C-01 hunk in `config.py` has the line `if self.environment != "dev":` as context; the stage rename (X-01) changes that line, so apply one, then redo the other.
 - Our two review patches A-02 and D2-01 write "Major" into CH's lane rows, while CH's section 2a says Nit. They apply cleanly (the agent dry-ran all five on a scratch copy; I did not repeat it); the ratings would disagree in one file.
 - SWEEP row 19 (hand-add a header to the flow JSON) would be lost when FA's patches F-002 and F-008 rebuild the flows from `build_mainframe.py`; put the header into the generator.
@@ -62,24 +66,24 @@ Not a real contradiction: SWEEP L4c-FD-001 says a patch "touches core src"; it e
 - No overlap by file path between CH patches (core source), FA patches (demo flows) and the desk patch (desk source).
 
 ## 6. Combined cut list for the owner (archive only, nothing deleted)
-**In one minute.** 39 rows. Safe now: 2. Not yet: 28 (each needs one named edit first, or has to wait until after the video). No: 9 (a caller or a live check uses it, or you must choose). Your yes is needed before any move. The design question: do not put the archive inside the repository. A test (`tests/test_no_reference_material.py`) reads every file in the repository, archive folder included, and fails on banned vendor words, so moving a file there does not clear it. I read that test: it exists here (scans the whole tree except .git, .venv, node_modules and caches).
+**In one minute.** 39 rows. Safe now: 2 (rows 20-21, and only with an archive place outside the repository). Not yet: 28 (each needs one named edit first, or has to wait until after the video). No: 9 (a caller or a live check uses it, or you must choose). Your yes is needed before any move. The design question: do not put the archive inside the repository. A test (`tests/test_no_reference_material.py`) reads every file in the repository, archive folder included, and fails on banned vendor words, so moving a file there does not clear it. I read that test: it exists here (scans the whole tree except .git, .venv, node_modules and caches).
 **Caller checks.** I did not grep rows 1-19 and 33-39 (those paths are not in this branch); the agent repeated the audits' own citations for them. Rows 20-26 rest on our review's counts. Rows 27-32 were grepped in src, tests, CI and pyproject by the agent; I did not repeat the greps.
 | # | what to archive | why, in plain words | safe now? |
 |---|---|---|---|
-| 1-11 | older flow folders: n8n-flows (4 old files, folder stays), n8n-flows-v3, -v4, n8n-flows-real, -real-v3, -real-v4, n8n-flows-film, -film-v3, -film-v4, the first table screen | replaced by the v5 flows and the second table screen; each has known faults | NOT YET: first apply the table patch F-001 and reword the documents that still name them (RUN-ON-LAPTOP, PLAN-4 line 3, table-screen README line 17); after the video |
+| 1-11 | older flow folders: n8n-flows/v1-superseded (3 files), n8n-flows (4 old files, folder stays), n8n-flows-v3, -v4, n8n-flows-real, -real-v3, -real-v4, n8n-flows-film, -film-v3, -film-v4, the first table screen | replaced by the v5 flows and the second table screen; each has known faults | NOT YET: first apply the table patch F-001 and reword the documents that still name them (RUN-ON-LAPTOP, PLAN-4 line 3, table-screen README line 17); after the video |
 | 12 | two old desk door flows (not the error notifier) | write to the retired desk store | NOT YET: after the video and after the desk security patches |
 | 13 | door test scripts (run_dn1.py, dn1.py, desk_proxy.py, build_flows.py) | tests for retired flows | NOT YET: helper scripts still called by dn1_common.py |
 | 14 | n8n-tests/results | old raw results | NO: may be the only copy of the evidence |
-| 15-17 | build_mainframe_v1.py, n8n-rerun copies, sandbox-scratch-logs | superseded or idle | NOT YET: after the video |
-| 16 | docker-native-pg-shim.py | not part of the repo, but RUN-ON-LAPTOP.md:45-51 tells readers to copy it | NOT YET: change that document first |
+| 15, 17 | build_mainframe_v1.py, n8n-rerun copies, sandbox-scratch-logs | superseded or idle | NOT YET: after the video |
+| 16 | docker-native-pg-shim.py | not part of the repo, but RUN-ON-LAPTOP.md:51 tells readers to copy it | NOT YET: change that document first |
 | 18 | four draft or earlier-audit copies of page statements and run sheet audits | "duplicate" is only the audit's reading of names and first lines | NOT YET: update the referring files first |
 | 19 | seven overlapping top-level n8n history notes | overlapping | NOT YET: one is cited by the findings table |
-| 20-21 | BRIEF-PREAMBLE-studio-2026-11-06.md, CLOUD-RESUME-2026-11-06.md | old copies | YES per our review (no caller found); the first holds a banned word, so the archive must be outside the repo |
+| 20-21 | BRIEF-PREAMBLE-studio-2026-11-06.md, CLOUD-RESUME-2026-11-06.md | old copies | YES only after you name an archive place outside the repository (no live caller; one history line names the first; it holds a banned word) |
 | 22 | CLOUD-RESUME.md | old note | NOT YET: one reference in questions-for-lead.md:1127 |
 | 23-25 | CLOUD-RESUME-2026-11-07, -09, CLOUD-PROMPT.md | the CH list wanted them archived | NO: 4, 10 and 8 lines name them |
 | 26 | one of the two identical bible-extract files | duplicates | NOT YET: add a redirect first |
 | 27 | setting min_redaction_window | nothing reads it | NOT YET: a code edit (3 tests use it); owner chooses |
-| 28-30, 32 | field trigger_ref, replay_records, dead_letters, the `live` test marker | CH called them unused | NO: trigger_ref is read at agent_loop.py:346, replay_records at deferred.py:95, a CI line selects on `live`, dead_letters is an applied database migration |
+| 28-30, 32 | field trigger_ref, replay_records, dead_letters, the `live` test marker | CH called them unused | NO: trigger_ref is read at agent_loop.py:346 in this checkout (the audited b4cce5b only wrote it) and is a NOT NULL column (0001_core.sql:11), replay_records at deferred.py:95, a CI line selects on `live`, dead_letters is an applied database migration |
 | 31 | src/hadavin_sdk/extract.py | no source code calls it | NO until you choose: keep and wrap (CH fix plan) or archive (CH cut list); two tests import it |
 | 33 | desk repository parts (second store, counters, retry loop, follow-up mail) | the desk is retired from the take | NOT YET: desk security patches first (sweep rows 15-17) |
 | 34-35 | demo3 evidence of replaced rounds (about 90 reports), demo patch and PR-text version chains | only the final round is needed | NOT YET: a recorded decision which round is final; after Wed 18 Nov |
@@ -97,4 +101,6 @@ Studio head: where the archive lives; yes to every move; keep or archive extract
 | step | state |
 |---|---|
 | evidence (two read-only agents) | done: work/crosscheck-ratings-agent.md, work/crosscheck-cutlist-agent.md |
-| result review by two egm reviewers | pending |
+| result review round 1: egm-design (5 Majors, 5 Nits) and egm-codebase-details (2 Majors, 8 Nits; no Blocker) | done; fixes applied here, saved as work/review-crosscheck-*-r1.md |
+| egm-resolve through the Skill tool | pending |
+| round 2 (only Blockers and Majors) | pending |
