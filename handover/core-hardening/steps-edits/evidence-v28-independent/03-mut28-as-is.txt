@@ -15,3 +15,160 @@ P14 CAUGHT by C14f,C23 | window labels removed
 P15 CAUGHT by C102 | run-name reuse rule removed
 P16 CAUGHT by C89 | A older key cancelled before the key is saved
 P17 CAUGHT by C14h | lead may reverse order
+P18 CAUGHT by C14i | no clock for the notice window
+P19 CAUGHT by C14j,C46 | run that never started
+P20 CAUGHT by BUILD | SAMPLE label removed
+P21 CAUGHT by C14m,C44 | HubSpot rotate allowed
+P22 CAUGHT by C21 | set phrase differs
+P23 CAUGHT by C14q | full date check weakened
+P24 CAUGHT by C14r | balance re-check weakened
+P25 CAUGHT by C14o | last-resort step out of the yes
+P26 CAUGHT by C14p | one-line warning removed
+P27 CAUGHT by C52 | card step 3 gets a new pointer
+P29 CAUGHT by C11 | pointer to missing step
+P30 CAUGHT by C10 | card term renamed
+P31 CAUGHT by C14s,C23 | delete guard removed
+P32 CAUGHT by C23 | STOP RULE renamed
+P33 CAUGHT by C23 | R8 character list gets a character
+P34 CAUGHT by C13,C24 | yes pattern gets a bracket char
+P35 CAUGHT by C15 | key-save line loses exit report
+P36 CAUGHT by C15 | key-save line breaks bash -n
+P37 CAUGHT by C05 | stale word back in note
+P38 CAUGHT by C04,C17 | old minutes figure in note
+P39 CAUGHT by C04 | wrong pair in note
+P40 CAUGHT by C04 | wrong weekday in open list
+P41 CAUGHT by C05 | Part 2 back in open list
+P43 CAUGHT by C04 | sheet date weekday
+P44 CAUGHT by C08 | A yes sentence changed
+P45 CAUGHT by C27,C61 | B older key fate removed
+V01 CAUGHT by C105 | silence rule exemptions removed (stranger BL1)
+V02 CAUGHT by C106 | look key step removed (stranger BL2)
+V03 CAUGHT by C107 | differing cancel word rule removed
+V04 CAUGHT by C108 | cancelled word no longer seen by the owner
+V05 CAUGHT by C137 | B 7.11 not reachable from every route (security B1)
+V06 CAUGHT by C138 | B fourth alarm removed
+V07 CAUGHT by C139 | cancel-by before older-key time no longer checked
+V08 CAUGHT by C140 | minimum think time back to 10 seconds
+V09 CAUGHT by C111 | key-save line no longer typed before create
+V10 CAUGHT by C141 | typed-figure line changed
+V11 CAUGHT by C142 | B 7.11 last-used time dropped
+V12 CAUGHT by C143 | n8n model key reason removed
+V13 CAUGHT by C149 | open list names B as default
+V14 CAUGHT by C151 | note G30 loses the fourth alarm
+V15 CAUGHT by C154 | A 7-day failure handling removed from open list
+V16 CAUGHT by C155 | open list says word target met
+V17 CAUGHT by C126 | A older key: what happens after an early end no longer said
+V18 CAUGHT by C124 | no shell prompt: no action
+V19 CAUGHT by C125 | posting without the lead word
+V20 CAUGHT by C122 | film counts no longer read aloud
+V21 CAUGHT by C121 | phone clock check removed
+NEG1 NEGATIVE CONTROL ok: printed MISSED as it must (other checks fired: C106)
+M01 CAUGHT by C04,C17,C48 | price line 0.27 to 0.28
+M02 CAUGHT by C04,C17,C48 | expected total line 0.81 to 0.82
+M03 CAUGHT by C04,C17,C48 | sample notice price line
+M04 CAUGHT by C04,C17,C48 | yes pattern total
+M05 CAUGHT by C19 | after-the-card pointer 7.9 to 7.5
+M06 CAUGHT by C19 | pointer back on in 8.7 to 8.5
+M07 CAUGHT by C19 | note pointer sheet 8.4 to 8.3
+M08 CAUGHT by C19 | note pointer sheet 7.8 to 7.6
+M09 CAUGHT by C19 | note R8 to R7
+M10 CAUGHT by C19 | note R7 to R9
+M11 CAUGHT by C04 | weekday of the sheet date
+M12 CAUGHT by C04 | weekday in note
+M13 CAUGHT by C04 | IST pair cancel-by in sheet
+M14 CAUGHT by C04 | IST pair in note
+M15 CAUGHT by C04 | IST pair in open list
+M16 CAUGHT by C20 | placeholder renamed (one place)
+M17 CAUGHT by C20 | yes placeholder spelled differently
+M18 CAUGHT by C16 | list-form pointer Open 199 (no such row)
+M19 CAUGHT by C22 | cancel rule paraphrased outside the card (7.6)
+M20 CAUGHT by C21 | wrong set phrase at 8.4
+M21 CAUGHT by C19 | R7 to R9 in 5.4
+M22 CAUGHT by C23 | check 3 changed
+M23 CAUGHT by C03,C18 | margin changed in facts (sums)
+M24 CAUGHT by BUILD | nested marker left
+M25 CAUGHT by BUILD | stray marker left
+M26 CAUGHT by C06 | banned word in note
+M27 CAUGHT by C16 | open list numbering gap
+M28 CAUGHT by C19 | note G pointer G12 to G32
+M29 CAUGHT by C19 | note Open 51 to 15
+M30 CAUGHT by C19 | note section 4 to 3
+M31 CAUGHT by BUILD | run length 15 to 14 (below 860 s)
+M32 CAUGHT by C03 | need minutes 14.33 to 14.4
+M33 CAUGHT by C04 | deadline weekday in glossary
+M34 CAUGHT by C23 | R8 loses "A key alive: the card first"
+M35 CAUGHT by C23 | tolerated item dropped from note
+M36 CAUGHT by C22 | cancel rule paraphrased in note
+M37 CAUGHT by C03 | program limit 13.22 in facts
+M38 CAUGHT by C17,C49,C77 | settings TOKENS_OUT 12000
+M39 CAUGHT by C21 | card step 5 phrase spelled differently
+M40 CAUGHT by C17,C23 | B submitted 12 times
+M41 CAUGHT by C17 | IST definition in note
+M42 CAUGHT by C17 | open list minutes figure
+M43 CAUGHT by C19 | note G33 to G38
+M44 CAUGHT by C19 | R8 pointer go (5.8) to 5.7
+M45 CAUGHT by C11 | R4 pointer 6.7 to 6.8
+M46 CAUGHT by C19 | 8.1 card step 3 to 5
+M47 CAUGHT by C04,C73 | post-by IST in sheet
+M48 CAUGHT by C19 | CHANGES table pointer 8.5 to 8.9
+M49 CAUGHT by C19 | open row pointer 7.8 to 7.7
+M50 CAUGHT by C17 | note worked price
+M51 CAUGHT by C12,C21 | unlisted set phrase sent in 8.5
+M52 CAUGHT by C16 | Open 199 in a list form (no such row)
+M53 CAUGHT by C17 | expected total in note
+M54 CAUGHT by C04,C79 | yes deadline IST pair
+Q01 CAUGHT by C48 | wrong price per call hardcoded
+Q02 CAUGHT by C48 | wrong total hardcoded
+Q03 CAUGHT by C49,C77 | wrong output tokens in the sample
+Q08 CAUGHT by C50 | STOP RULE step 1 deleted
+Q09 CAUGHT by C51 | stray backtick in card gate W1
+Q10 CAUGHT by C52 | card cancel step changed
+Q11 CAUGHT by C53 | card gate W6 deleted
+Q12 CAUGHT by C54 | R4 auto-reload flipped to on
+Q13 CAUGHT by C55 | secret-shaped string (built from parts) in the sheet
+Q15 CAUGHT by C56 | sample give-up minutes changed
+Q16 CAUGHT by C56 | sample silence minutes changed
+Q18 CAUGHT by C57 | one delete-domain guard changed
+Q20 CAUGHT by C58 | lead note limit wrong
+Q22 CAUGHT by C59 | accepted exit codes widened
+Q24 CAUGHT by C60 | R8 word count changed
+N01 CAUGHT by C70 | IST offset label wrong (v25 plant N01)
+N05 CAUGHT by C71 | R5 archived turned into deleted (N05)
+N10 CAUGHT by C72 | warning before the start-line step removed (N10)
+N11 CAUGHT by C73 | post-by date moved with a consistent weekday (N11)
+N12 CAUGHT by C74 | R7 second person turned passive (N12)
+N14 CAUGHT by C75 | shortened command date -u to date (N14)
+M4a CAUGHT by C76 | price line swap (security M4)
+M4b CAUGHT by C77 | tokens swap in the sample (security M4)
+M4c CAUGHT by C78 | DEADLINE line wrong (security M4)
+M4d CAUGHT by C79 | yes-line deadline pair changed to another valid pair (security M4)
+M4e CAUGHT by C55 | secret-shaped text with a slash, 47 characters (C55 slash gap)
+R01 CAUGHT by C27,C86 | B older-key cancel time after 18:14 UTC
+R02 CAUGHT by C88 | B 7.11 title loses the irreversible warning
+R03 CAUGHT by C28,C87 | card proof uses N minus K again
+R04 CAUGHT by C89 | A older-key cancel before the key is saved
+R05 CAUGHT by C81 | one of the seven setting names dropped
+R06 CAUGHT by C83 | R7 prep prefix dropped
+R07 CAUGHT by C84 | 8.1 proof of the deleted key file weakened
+R08 CAUGHT by C60,C85 | R8 loses the restarted word (and its count stays six)
+R09 CAUGHT by C92 | backup person no longer a human you can call
+R10 CAUGHT by C93 | post checker valid answer removed
+R11 CAUGHT by C96 | deadline definition changed
+R12 CAUGHT by C94 | 7.10 mismatch action changed
+R13 CAUGHT by C97 | 8.7 profile removal widened
+R14 CAUGHT by C99 | sample numbers message loses the gap slot
+R15 CAUGHT by C100 | create-form scopes widened
+R16 CAUGHT by C28 | W9 older key exposure trigger weakened
+R17 CAUGHT by C101 | laptop sleep value dropped
+R18 CAUGHT by C91 | FREEZE is called a cancel
+R19 CAUGHT by C98 | word key given a second meaning
+R20 CAUGHT by C103 | profile name differs between steps
+R21 CAUGHT by C95 | Chrome profile how-to and ask-the-lead removed
+R22 CAUGHT by C104 | entry to revoke guessed
+TOTAL plants 166 (negative controls ok 1, not counted below):
+TOTAL plants 166: caught by the meant check 165, missed 0 (of them caught only by another check 0), anchor-not-found 0
+
+real	0m52.948s
+user	0m49.035s
+sys	0m3.164s
+rc=0

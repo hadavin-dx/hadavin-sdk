@@ -518,6 +518,43 @@ if 'ANSWERED by the studio lead: (a)' not in ndsec: F('ND14 answer')
 if 'CONFIRMED by the studio lead' not in csec: F('confirmation h')
 print('round 11 checks done')
 
+# ================= round 12 checks =================
+t12 = pairs['E-12']['new'][0]
+for need in ('exactly one of these four labels', '"result file", "reviewers\' report", "search file" and "test output file"', 'stand-in test <N1> pass, 0 failed, 0 missed, 0 not run', 'A retake (step 20) needs a new take id', 'delete request', 'a finding is one problem', '"Failed" means', '"Not run" means', 'For "failed" and "not run" you answer no', '`<X>` is the dollar figure'):
+    if need not in t12: F('r12 E-12 lacks ' + need)
+if 'delete call' in t12: F('r12 E-12 delete call')
+t09 = pairs['E-09']['new'][0]
+for need in ('Who can see the password', 'part of their settings', 'throwaway database of this take only', 'Never type a password inside a command line', 'press Ctrl+X to close nano without changing anything', 'field called "Password"', 'Its first action is `chmod 600 n8n.env`', 'copy any made-up word'):
+    if need not in t09: F('r12 E-09 lacks ' + need)
+if 'if a message asks you that, answer no' not in t09: F('r12 E-09 fallback forbidden')
+t48 = pairs['E-48']['new'][0]
+for need in ('`no more takes`', '`more takes`', '`same key`', '`different key`', 'shred -u <path>', 'Shredding does not revoke', 'not reliable on every disk', 'inside the take folder', 'its name and at the date it was last used', 'the one on port 5678', 'right after the last take that you accept', 'In its next message after your `no more takes`', 'no screenshot of the key list'):
+    if need not in t48: F('r12 E-48 lacks ' + need)
+t37 = pairs['E-37']['new'][0]
+for need in ('port 5678', 'delete request', 'asks HubSpot to delete a contact', 'whether archiving a contact in HubSpot is the same as deleting it is not settled'):
+    if need not in t37: F('r12 E-37 lacks ' + need)
+if 'delete call' in t37: F('r12 E-37 delete call')
+t16 = pairs['E-16']['new'][0]
+for need in ('A Docker volume is a storage area', 'The container is the closed package', 'Whether a volume is used is UNVERIFIED', 'Yes, remove the container only', 'the answer is No'):
+    if need not in t16: F('r12 E-16 lacks ' + need)
+if t16.rstrip().endswith('.'): F('r12 E-16 ends with a full stop')
+t52 = pairs['E-52']['new'][0] + pairs['E-52']['new'][1] if len(pairs['E-52']['new']) > 1 else pairs['E-52']['new'][0]
+t52 = rowtext('E-52')
+for need in ('**The last take that you accept**', '**How you reply**', '**The studio lead**', '**To shred**', '**A take**', 'UNVERIFIED. What would settle it'):
+    if need not in t52: F('r12 E-52 lacks ' + need)
+t57 = rowtext('E-57'); t55 = rowtext('E-55'); t58 = rowtext('E-58')
+for need in ('reply `cut accepted`', '`no more takes`', 'no further take is possible with that key'):
+    if need not in t57: F('r12 E-57 lacks ' + need)
+if '`no more takes`' not in t55 or '18:19 UTC = 23:49 IST' not in t55: F('r12 E-55 trigger')
+if '`key kept`' not in t58: F('r12 E-58 conditional row')
+t49 = rowtext('E-49')
+if 'no paid model call is planned' not in t49: F('r12 E-49 planned')
+if not re.search(r'(?m)^15\. \*\*When the owner writes `no more takes`', ndsec): F('r12 ND15 missing')
+if 'ND7a2' not in ndsec: F('r12 ND7a2')
+if 'R10 (' not in txt: F('r12 rule R10')
+if 'HubSpot app 2' not in csec and 'app 2' not in csec: F('r12 L-APP2 not noted')
+print('round 12 checks done')
+
 # ================= negative controls (each check must fail on a planted defect) =================
 import subprocess
 def neg(name, old, new, expect, count=1):
@@ -563,6 +600,15 @@ if not os.environ.get('NO_NEG'):
     neg('line14', 'search path = the list of schemas', 'search path is a list of schemas', 'line 14 lacks')
     neg('e14', '(rule 5 of this sheet: you are the one who publishes)', '(rule 5: you post)', 'E-14 post meaning')
     # negative controls for older checks (selected: row count, old text, ND range, confirmation letters, UTC pairing, banned scan not tested)
+    neg('r12nd15', '15. **When the owner writes `no more takes`', '15. **Something else', 'r12 ND15 missing')
+    neg('r12shred', 'Shredding does not revoke the key, and it is not reliable on every disk', 'Shredding revokes the key', 'r12 E-48 lacks')
+    neg('r12key2', 'the one on port 5678? If it is, revoking it breaks that n8n." Reply', 'the one in your n8n? If it is, revoking it breaks that n8n." Reply', 'r12 E-48 lacks the one on port 5678')
+    neg('r12slot', 'exactly one of these four labels', 'exactly one of these labels', 'r12 E-12 lacks exactly one of these four labels')
+    neg('r12call', 'The last step of the take program sends no delete request to HubSpot', 'The last step of the take program makes no delete call to HubSpot', 'delete call')
+    neg('r12pw', 'Never type a password inside a command line, even if', 'Type the password on the command line if', 'r12 E-09 lacks')
+    neg('r12vol', 'Whether a volume is used is UNVERIFIED.', 'A volume is used.', 'r12 E-16 lacks')
+    neg('r12cut', 'Watch the cut from the first second to the last; reply `cut accepted`', 'Watch the cut from the first second to the last; reply `accepted`', 'r12 E-57 lacks')
+    neg('r12conf', '\nl. E-12 gives the request', '\nm. E-12 gives the request', 'confirmation letters')
     neg('rowcount', '### E-58: OWNER-STEPS', '### E-59: OWNER-STEPS', 'ids differ')
     neg('conf', '\nj. E-56 puts', '\nk. E-56 puts', 'confirmation letters')
 print('FAILURES', fail)
