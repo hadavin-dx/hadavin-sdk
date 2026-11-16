@@ -930,3 +930,10 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 670 PLAN-002 r13: remainder text. FIXED by CURRENT RULINGS r13.
 - 671 t19 r8: F8 rule not set. FIXED by CURRENT r8.
 - 672 owner-timeline r6: row 9 words, fill-ins. FIXED by CURRENT r6.
+
+- 673 open-items r9 (already digested as 669).
+- 673 critical-path r15: pointer to wrong paragraph. FIXED by CURRENT r15.
+- 674 rehearsal-limits r5: crash sentences missing. FIXED by CRASH-TEST SENTENCES r5.
+- 675 banned-claims-clean r4: roles contradict. FIXED by ROLES r4.
+- 676 owner-timeline r6: same as 672 (already fixed).
+- 677 BRIEF-LANE r9: layered rule set. FIXED by BINDING r9.
