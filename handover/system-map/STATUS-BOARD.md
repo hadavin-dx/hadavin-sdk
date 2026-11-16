@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:20:35Z
+UPDATED_UTC: 2026-11-16T11:22:04Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags now match the board (checked 11:2xZ, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
 PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
-AGENTS_RUNNING: 8 (ORDER 028): all 8 started this beat, listed in the table below. Digested through batch 179.
+AGENTS_RUNNING: 8 at the beat (ORDER 028): 7 running now (table), a 8th is started in the same turn this beat is pushed. Digested through batch 189.
 INTERRUPTED: none
 NEXT: collect and digest the 8 new hand-backs; build the decision list for the lead (open-items-table fixes first); next board beat in 5 minutes.
 CAPACITY: nproc 4, load 0.15 0.25 0.21, RAM 872/16087 MB used, disk / 43% used (23G free), my folder 4.4 MB. Top disk users: /tmp/claude-0 1.3 GB (session scratch, not mine to clear), my folder 4.4 MB, none else measured.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:20:35Z
+PUSHED_UTC: 2026-11-16T11:22:04Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -38,14 +38,14 @@ PUSHED_UTC: 2026-11-16T11:20:35Z
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (from the real agent list at the beat above; ORDER 028 started these 8 now)
+## AGENTS (ORDER 028: 4 still running, 4 started at the beat)
 | id | role | what it does | state |
 |---|---|---|---|
-| aa0db1bf3ca568f78 | comprehension | OWNER-CLEANUP-CARD cold read | running |
-| a6534128b772c3f48 | comprehension | SWEEP lines 87-200 cold read | running |
-| a731672bd2148103a | codebase-details | DECISIONS vs OWNER-VIEW and run-day card | running |
-| ae53c59a01e8d2de9 | comprehension | decisions/ files cold read | running |
-| a429f3a715154942e | codebase-details | README names and counts | running |
-| a420c25b413fd5e94 | comprehension | MASTER-MAP lines 60-120 cold read | running |
-| a5776df9e72d113b1 | codebase-details | ONE-PLACE-TABLE every 5th cite | running |
-| a8acd94bfe395b47b | comprehension | QUEUE and board wording | running |
+| a4e797e9b2112ba74 | comprehension | TAKE-BLOCKERS cold read | done, digested (189) |
+| ae09277987c94d5ed | codebase-details | own digest cites 143-179 | running |
+| a445b9141f0750e39 | comprehension | run-day card steps 15-end | running |
+| ad4998b855df35f88 | comprehension | SWEEP lines 1-86 | running |
+| a586158cb7f3441f9 | comprehension | FINAL-CROSSCHECK lines 1-80 | running |
+| a6fa6e802d0290b79 | codebase-details | OWNER-VIEW cites | running |
+| aada9d786aabf938f | comprehension | inputs/AGENT-SCOPE-DO-AND-DONT | running |
+| a623a9c43344f64e6 | codebase-details | QUESTIONS vs DECISIONS | running |
