@@ -6,4 +6,5 @@ Decisions only; actions are in TAKE-BLOCKERS.md. Decisions made on 16 Nov are in
 4. Where is the SENDER app password file stored? (Unknown to the system-map session.)
 5. After the take: yes or no per row of ARCHIVE-CUT-LIST.md.
 6. Take prep (decision 8): does it use a fake model or a paid call inside the written yes? Who removes its contact and mail before step 1?
+7. Which flow files does the take import: the committed (unpatched) real-v5 JSON, or a regenerated copy with patches F-002 and F-008 applied? The "processed once" claim depends on it (work/not-checked-r2.md item 2). Decide before the first rehearsal.
 Answered by the 16 Nov decisions: scope (1), HubSpot delete scope (2, but see item 1), security items (5), licence test (11), who runs the first rehearsal (12; item 3 asks only who starts Docker).
