@@ -25,7 +25,7 @@ Lines that depend on the answer: 94 and 218 (take about 1 h), 484, 107, 223, 236
 
 ## One rule: which rows are safe to apply
 
-A row is safe to apply now only if neither its Old text, its New text nor its reason uses a 49-minute figure or the 17:40Z latest start. Any row that does use one is marked "DO NOT APPLY until H-1 is answered" in its heading. Safe rows (not using any 49-minute figure): PH-10, PH-11, PH-12, PH-13, PH-16, and the second change of PH-09 (the repeat of T-06 to T-10 at 04:12Z). Unsafe rows (use 49 or 17:40Z): PH-01, PH-02, PH-03, PH-04, PH-05, PH-06, PH-07, PH-08, PH-09 (first change), PH-14, PH-15, PH-17. All Section B rows are HELD. "Safe" means only that it does not wait for H-1; the lead still reviews every row before it is applied.
+A row is safe to apply now only if neither its Old text nor its New text uses a 49-minute figure or the 17:40Z latest start (a note that only points to H-3, as in PH-16, is not a use). Any row that does use one is marked "DO NOT APPLY until H-1 is answered" in its heading. Safe rows (not using any 49-minute figure): PH-10, PH-11, PH-12, PH-13, PH-16, and the second change of PH-09 (the repeat of T-06 to T-10 at 04:12Z). Unsafe rows (use 49 or 17:40Z): PH-01, PH-02, PH-03, PH-04, PH-05, PH-06, PH-07, PH-08, PH-09 (first change), PH-14, PH-15, PH-17. All Section B rows are HELD. "Safe" means only that it does not wait for H-1; the lead still reviews every row before it is applied.
 
 ## What the cited check-page rows say (one line each)
 
