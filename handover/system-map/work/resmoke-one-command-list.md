@@ -16,7 +16,7 @@ Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "t
 
 ## 0. Cost and limits (plan)
 
-- Cost US$0: loopback only, stand-in programs, made-up data, no real mailbox, HubSpot, Gmail, model call, DNS or reverse lookup (plan line 5: "US$0 ... inside the owner's WP6 smoke yes of 2026-11-15"; plan section 2 and line 105).
+- Cost US$0: loopback only, stand-in programs, made-up data, no real mailbox, HubSpot, Gmail, model call, DNS or reverse lookup (plan line 5: "US$0 ... inside the owner's WP6 smoke yes of 2026-11-15"; plan section 2 and lines 38 and 73).
 - Time: a floor of 171 min (2 h 51 min) when nothing goes wrong; quote the owner 3.5 to 4.5 hours (plan lines 443-445). The plan says a floor, not a promise.
 - The plan's own HEAD_PIN is PROVISIONAL (`eec6ba4`, branch `take/nlite-int-r3`) and a later head is being built (plan lines 2-3). The lead re-pins before the run (step 3 below).
 - Nothing is committed, pushed or merged by this run (plan line 489).
@@ -78,7 +78,7 @@ wsl.exe -d Ubuntu -e bash $RS P-1 p
 Plan line 3, command (a), Git Bash, copied in full:
 
 ```bash
-while IFS=$'\\t' read -r id f s; do printf '%s %s %s\\n' "$id" "$f" "$(git -C <WT> grep -n -F -e "$s" <F> -- "scripts/$f" | cut -d: -f3 | paste -sd, -)"; done < C:/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/strings.txt
+while IFS=$'\t' read -r id f s; do printf '%s %s %s\n' "$id" "$f" "$(git -C <WT> grep -n -F -e "$s" <F> -- "scripts/$f" | cut -d: -f3 | paste -sd, -)"; done < C:/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/strings.txt
 ```
 
 Plan line 3, command (b), copied in full (the plan's first commit in it is `eec6ba4`, the provisional pin):
@@ -349,7 +349,7 @@ wsl.exe -d Ubuntu -e bash $RS 11.5 s11 C
 wsl.exe -d Ubuntu -e bash $RS 11.6 s11 C
 ```
 
-**52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 397) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C. Differs: E MISSED = one repeat as `E2`: run E.0 again WITHOUT an argument, then `run.sh E.1 s11 E2` and `run.sh E.2 s11 E2`, then 11.4 and 11.5 with `E2` (plan lines 397-398); a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2 or C line = STOP.
+**52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 378; the E2 repeat is plan line 397) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C. Differs: E MISSED = one repeat as `E2`: run E.0 again WITHOUT an argument, then `run.sh E.1 s11 E2` and `run.sh E.2 s11 E2`, then 11.4 and 11.5 with `E2` (plan lines 397-398); a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2 or C line = STOP.
 
 ```bash
 wsl.exe -d Ubuntu -e bash $RS E.0 s11
@@ -455,7 +455,11 @@ wsl.exe -d Ubuntu -e bash $RS 13.7 s13
 wsl.exe -d Ubuntu -e bash $RS 13.8 s13
 ```
 
-**S13-9 (13.9)** delete the run folder. Run ONLY after INDEX.md, PROGRESS.md and ENV.md exist (line 423). Expected: `ev-marker-scan-clean`, then `removed`. A marker hit refuses the delete: redact, then re-run. Then delete the two tar files with the PowerShell command of plan line 423, copied in full (wrapped, log `s13`; `<USER>` stands for the user-folder name the plan spells out):
+**S13-9 (13.9)** delete the run folder. Run ONLY after INDEX.md, PROGRESS.md and ENV.md exist (line 423). Expected: `ev-marker-scan-clean`, then `removed`. A marker hit refuses the delete: redact, then re-run. After the run folder is gone, delete the two tar files with the PowerShell command of plan line 423, copied in full (wrapped, log `s13`; `<USER>` stands for the user-folder name the plan spells out):
+
+```bash
+wsl.exe -d Ubuntu -e bash $RS 13.9 s13
+```
 
 ```powershell
 & { Remove-Item -Confirm:$false C:\Users\<USER>\Downloads\Hadavin\_local\scratch\wp6-smoke\nlite.tar, C:\Users\<USER>\Downloads\Hadavin\_local\scratch\wp6-smoke\demo.tar } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\s13.log
@@ -463,9 +467,6 @@ wsl.exe -d Ubuntu -e bash $RS 13.8 s13
 
 What this deletes, and nothing more: the PowerShell command removes only two named files, `nlite.tar` and `demo.tar` (the two `git archive` copies, plan lines 120, 423). Everything else the run deletes is inside the run folder `$HOME/hadavin-smoke` (removed by `13.9` only after the realpath check in plan line 423 passes and the evidence scan found no marker) or is the run's own Postgres container `hadavin-smoke-pg` (removed by `13.6`). The plan's own `13.9` bash body is at plan line 423; it is run through `run.sh` as shown above and not copied here, so it cannot drift.
 
-```bash
-wsl.exe -d Ubuntu -e bash $RS 13.9 s13
-```
 
 Do not kill the keep-alive by hand; 13.0 ends it (plan line 489). Docker Desktop stays as found. Close every register row and list the agents and shells started, with counts (CLAUDE.md supervision rule).
 
@@ -477,7 +478,7 @@ Part A: the five facts the lead named. The plan itself runs stand-in programs an
 |---|---|---|---|---|---|
 | A1 | The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list (search `take-<tag>-a`, `-b`, `-c`, example.com). The take program has no create, update, delete or archive call; its HubSpot key is read-only. | LEAD-ANSWERS lines 73, 79 | none in the plan | [LEAD FILLS: the plan gives no command] | |
 | A2 | The program's own time need is computed as 2630 s + 6 x lease seconds, rounded up: 49 minutes at lease 45. The program refuses a start that leaves less than 49 minutes before the stop time (stop time Mon 23 Nov 18:29 UTC = 23:59 IST). HARD latest start accepted by the program: 17:40 UTC = 23:10 IST. Safe latest start: 17:30 UTC = 23:00 IST, because the program re-checks the window after the `y` prompt and the confirmation line (UNVERIFIED: RUNBOOK-V4.3-PATCH row P45, line 149, says this check is added after r28) and the 10-minute film pause lies outside the 49 minutes (RUNBOOK-V4.3-PATCH.md line 88): 17:30 + 49 min = 18:19, + 10 min pause = 18:29. The planning target stays 12:00 UTC = 17:30 IST (start by noon so a failed run still has the afternoon). The old figure "about 14 minutes" and the old latest start "about 18:15 UTC = 23:45 IST" are OBSOLETE (lead answer 7: the 14-minute figure was the old r28 number). | LEAD-ANSWERS.md table rows 6, 7, 14, 16 (lines 19, 20, 27, 29) and line 43 (17:30Z rule); `work/decision-list-for-lead.md` bottom block; RUNBOOK-V4.3-PATCH.md lines 44, 88; `work/open-items-table-history-9.md` line 38 | none in the plan | [LEAD FILLS: the plan gives no command] | |
-| A3 | The start-time check: the program refuses to start when too close to the stop time, and exits with code 2 (steps v5 lines 21, 229-230; re-grepped 16 Nov). | steps v5 lines 21, 229-230 | none in the plan | [LEAD FILLS: the plan gives no command] | |
+| A3 | The start-time check: the program refuses to start when too close to the stop time, and exits with code 2 (steps v5 lines 21, 220, 230; re-grepped 16 Nov). | steps v5 lines 21, 220, 230 | none in the plan | [LEAD FILLS: the plan gives no command] | |
 | A4 | The notice wording items: steps v5 line 122 now reads "3 test people, up to 3 model calls and the worst case, up to 3 contacts created and left behind in HubSpot for you to delete by a filtered list (step F2)" (reworded 16 Nov; it used to say the contacts are deleted at the end, which contradicted A1); the printed notice itself must say the take never deletes and lists leftovers (check at the re-smoke). Items to read off the printed notice: the confirmation number line, "Type y to start", the confirmation line, the money figures, the contact line. | steps v5 lines 117-124 (notice at 122); LEAD-ANSWERS lines 70, 73, 79 | none in the plan | [LEAD FILLS: the plan gives no command] | |
 | A5 | REAL-check refusals: a bad login stops before any typed answer; piped or scripted `y` refused; closed input ends with exit code 2; an answer typed in under 2 seconds refused; a wrong confirmation line ends the run with nothing sent; a used run name, an existing lock file, or a too-late start are refused with exit code 2; the retire check ends with exit code 0 only when both logins are refused, 3 if one still works, 2 otherwise. | steps v5 lines 117-124, 173-175, 220, 229-230 (re-grepped 16 Nov) | none in the plan | [LEAD FILLS: the plan gives no command] | |
 
