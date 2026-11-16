@@ -1,4 +1,5 @@
 Older notes: work/L4c-history.md and work/L4c-history-2.md (ignore). Cite finding ids, not line numbers.
+Key (added 16 Nov): finding id prefixes S-, X-, J-, K-, D-, T-, F- label the kind of row and FD- is a finding; the meaning of each letter is NOT RECORDED, so read an id as a name only. The findings are in the table further down this file (search the heading Findings). The one-store decision copies are handover/system-map/DECISION-one-store.md (20 lines) and handover/system-map/inputs/DECISION-one-store.md (28 lines). Mode A and the Stores section: meaning NOT RECORDED. Questions in this file go to the lead session, which passes studio questions to the studio lead.
 
 ## Status 16 Nov 2026 (the only status block)
 - Counts: 26 findings (L4c-FD-001 to FD-026). Blocker outside the quarantine: FD-002 only. FD-001 and FD-003 are also security Blockers but are QUARANTINED (see below), so nothing is done with them.
