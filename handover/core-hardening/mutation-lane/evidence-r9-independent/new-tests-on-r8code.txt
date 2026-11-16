@@ -114,3 +114,19 @@ REFUSED: mutant m1 reference file: 'src/__pycache__/m2.py' is not a regular file
 REFUSED: marker is for another root ('/nowhere/else'): refused
   FAIL: T96h3 a marker that names another root (forged): exit 2 (got 2), and the text says that exit 2 does NOT mean nothing is planted and names --sha (r8: no such warning)
   FAIL: T96i --out-json or --raw inside the state folder: exit 2 (got 5, 5; r8 wrote there), no file created, nothing planted
+/tmp/safety-only.daw34B.sh: line 70: 14944 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/tmp/safety-only.daw34B.sh: line 304: 15526 Killed                  ( PATH="$S/wrap:$PATH" exec python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" ) > "$S/t96k1.out" 2>&1
+  FAIL: T96j1 SIGTERM while 'git archive' stalls inside --restore --sha: ends at once with 143 (got 999; r8: the signal was only remembered and the run hung), the file is still planted and marker and backup are kept (nothing was written)
+usage: run.r8.py [-h] --root ROOT [--sha SHA] [--prefix PREFIX] [--raw RAW]
+                 [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+                 [--desc DESC] [--control] [--no-control]
+                 [--out-json OUT_JSON] [--timeout TIMEOUT]
+                 [--pythonpath PYTHONPATH] [--repo REPO]
+                 [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                 [--skip-import-check] [--restore]
+run.r8.py: error: unrecognized arguments: --helper-timeout 2
+  FAIL: T96j2 a stalled 'git archive' with --helper-timeout 2: stopped, exit 3 (got 2; r8: unknown option), text 'did not finish within 2 s', marker kept, file still planted
+Traceback (most recent call last):
+  File "<stdin>", line 8, in <module>
+AttributeError: module 'runmod' has no attribute 'unlink_state'
+  FAIL: T96k write_state syncs the state FOLDER once, unlink_state removes and syncs it again (exit 1; r8: no folder sync, no unlink_state)

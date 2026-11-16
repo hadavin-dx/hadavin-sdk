@@ -714,3 +714,37 @@ REFUSED: mutant m1: new holds a character that is not valid text (a lone surroga
   PASS: T81c a lone surrogate in a mutant text: refused, exit 2 (got 2), no traceback, file unchanged, state empty
   PASS: T81d a mutant list that is not JSON: refused, exit 2 (got 2), no traceback
   PASS: T81e a mutant list that does not exist: refused, exit 2 (got 2), no traceback
+RuntimeError: simulated bug after the loop
+INTERNAL ERROR (RuntimeError: simulated bug after the loop); no marker: nothing is planted by this run
+  PASS: T81f an internal bug (exception that is no refusal): INTERNAL ERROR text, exit 2 (got 2; r6: Python's own exit 1), file restored, state empty
+== T82 (review r6 nit 6) patch runs with --batch, --forward, --no-backup-if-mismatch and stdin from /dev/null; a reversed patch is refused, never applied reversed
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T82a the patch call carries --batch, --forward and --no-backup-if-mismatch (args: -p1 -s --batch --forward --no-backup-if-mismatch -d /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611)
+  PASS: T82b the patch call's standard input is /dev/null (got: /dev/null)
+1 out of 1 hunk ignored -- saving rejects to file docs/note.txt.rej
+  PASS: T82c a patch that looks reversed, with 'y' answers waiting on the input: refused as 'does not apply' (got 2), never applied reversed (r6: asked its question on the caller's input)
+== T83 (review r6 nit 7) a short --sha that is also the NAME of a branch is refused, the id must start with the typed hex
+REFUSED: --sha 'cafe' does not name exactly one commit in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/repo (unknown, ambiguous, not a commit, or the name of a branch or tag): 3a78449d4f536306bd23c3b
+  PASS: T83 --sha cafe (a branch name made of hex digits, pointing at HEAD) is refused, exit 2 (got 2), no mutant run (r6: resolved the branch)
+== T84 (review r6 nit 8) --root renamed away and replaced by a decoy folder during the run: the run's restore must not report success on the decoy
+  exit code 3
+  PASS: T84a exit 3 (got 3), marker and backup kept, the planted file in the renamed folder is still planted (r6: restored on the decoy, exit 143, marker cleared)
+RESTORE FAILED: cannot write "src/mod.py" back: the folder now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/root is not the folder the mutant was planted in
+  PASS: T84b --restore at the path that now holds the decoy: exit 3 (got 3), text names the renamed folder problem, marker kept
+  PASS: T84c renamed back: --restore works and the file is back
+== T85 (review r6 nit 8) a test that changes the mode of the file under test: the mode is set back
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T85 mode 640 before, a test chmods the file to 600: it is 640 again after the run (got 640), content restored
+== T86 (found while testing r7) a -q from the caller on top of the tool's own -q must not drop pytest's summary line (then no passed test is counted: a survivor became NO-TEST-PASSED and a baseline became 'no test passed')
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+  PASS: T86 a surviving mutant with the caller's -q: verdict SURVIVED, 'pytest summary line: 1 passed', exit 0 (got 0); the baseline counts the passed test too
+== T87 (review r7 M1, class: an exit code that says nothing is planted while the mutant is planted) --restore with a marker for this root: every failure exits 3, only a marker naming another root or backup path exits 2
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 17176 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup cannot be opened safely (No such f
+  PASS: T87a the backup file is missing: exit 3 (got 3; r7: 2), file still planted, marker kept, text says RESTORE FAILED
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 17354 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup cannot be opened safely (Too many 
+  PASS: T87b the backup is a symbolic link (to a file with the right content): exit 3 (got 3; r7: 2), nothing written (file still planted), marker kept
