@@ -25,15 +25,17 @@ M = [
  ('H02', 'OWNER-SHEET-v30-SOURCE.md', 'OWNER FILLS: cancelled word', 'OWNER FILL: cancelled word', True, 'one [OWNER FILLS: ...] placeholder misspelled'),
  ('H03', 'OWNER-SHEET-v30-SOURCE.md', '{{dl_day}} {{dl}}: after it nothing', 'Tue 23 Nov 2026 {{dl}}: after it nothing', True, 'wrong weekday for deadline day in sheet'),
  ('H04', 'OWNER-SHEET-v30-A.md', '(appendix 7)', '(appendix 11)', False, 'built sheet A pointer to non-existent appendix part (built file edited, no rebuild)'),
- ('H05', 'OWNER-SHEET-v30-SOURCE.md', 'Dated {{day}}.', 'Dated {{day}}. key ' + SECRET + '.', True, 'secret-shaped key (built from parts) in the sheet'),
+ ('H05', 'OWNER-SHEET-v30-SOURCE.md', 'Dated Mon 16 Nov 2026.', 'Dated Mon 16 Nov 2026. key ' + SECRET + '.', True, 'secret-shaped key (built from parts) in the sheet'),
  ('H06', 'LEAD-RELEASE-NOTE-v14-SOURCE.md', 'Mon 23 Nov 2026', 'Mon 23 Nov 2026 (the lead sends the owner the words "cancel the older key now")', True, 'lead page tells owner by message to cancel the older key'),
- ('H07', 'OWNER-SHEET-v30-A.md', '18:29 UTC = 23:59 IST', '18:29 UTC = 23:39 IST', False, 'built sheet A: wrong IST pair for the deadline (built file edited)'),
+ ('H07', 'OWNER-APPENDIX-v30-A.md', '18:29 UTC = 23:59 IST', '18:29 UTC = 23:39 IST', False, 'built appendix A: wrong IST pair for the deadline (built file edited)'),
  ('H08', 'LEAD-RELEASE-NOTE-v14-SOURCE.md', '{{ls23}}', '18:04 UTC = 23:44 IST', True, 'lead note: wrong IST pair literal for 18:04'),
  ('H09', 'OWNER-SHEET-v30-SOURCE.md', 'LEAD FILLS at re-pin: last-resort step', 'LEAD FILLS: last-resort step', True, 'second placeholder spelling changed'),
- ('H10', 'OWNER-SHEET-v30-SOURCE.md', 'Dated {{day}}.', 'Dated {{day}}. See ' + BAN + '.', True, 'banned vendor string added to sheet source (string not printed)'),
+ ('H10', 'OWNER-SHEET-v30-SOURCE.md', 'Dated Mon 16 Nov 2026.', 'Dated Mon 16 Nov 2026. See ' + BAN + '.', True, 'banned vendor string added to sheet source (string not printed)'),
  ('H11', 'OWNER-CARD-v30-B.md', None, None, False, 'built card B truncated: last 15 lines removed'),
  ('H12', 'facts-v30.py', "'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST'", "'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:00 IST'", True, 'post-by IST pair wrong in facts'),
- ('H13', 'OWNER-SHEET-v30-SOURCE.md', 'Dated {{day}}.', 'Dated Mon 16 Nov 2026 ({{day}}).', True, 'harmless rewording control (should be CAUGHT only if pointer/wordcount list pins text)'),
+ ('H13', 'LEAD-RELEASE-NOTE-v14-SOURCE.md', 'Mon 23 Nov 2026', 'Mon 23 Nov 2026 (the lead sends: waits for your message "cancel the older key now")', True, 'lead page with the exact old wording the checker knows (C188 spelling)'),
+ ('H14', 'OWNER-SHEET-v30-SOURCE.md', 'Dated Mon 16 Nov 2026.', 'Dated Mon 17 Nov 2026.', True, 'sheet date changed to Mon 17 (wrong weekday)'),
+ ('H15', 'facts-v30.py', "'ls_t': t(LS)", "'ls_t': '11:31'", True, 'latest-start time literal differs from computed'),
 ]
 res = []
 for mid, f, old, new, rb, what in M:

@@ -191,9 +191,9 @@ for rid, t in own:
 # ---------- (h) typing steps wait for "not looking"
 for rid, t in [(r['id'], t) for r in rows for t, _ in r['new']]:
     for m in re.finditer(r'please stop looking', t):
-        win = t[m.end():m.end() + 260]
-        if 'not looking' not in win and 'typing rule' not in t[max(0, m.start() - 200):m.end() + 260]:
-            F('notlooking', f'{rid}: stop-looking without wait for not looking: {win[:70]!r}')
+        win = t[m.end():m.end() + 70]
+        if 'not looking' not in win and not win.startswith('` and `you may look again`'):
+            F('notlooking', f'{rid}: stop-looking not followed by the wait for not looking within 70 chars: {win[:70]!r}')
 # sub-step a of E-09 must list the sub-steps that type a secret, and f,g,h must call the rule
 r09 = next((r for r in rows if r['id'] == 'E-09'), None)
 t09 = '\n'.join(t for t, _ in r09['new']) if r09 else ''
@@ -238,12 +238,13 @@ if re.search(r'\bcancel', t48):
 if re.search(r'Alarm 2: a repeating alarm', t48) is None:
     F('alarm2', 'Alarm 2 repeating text missing')
 # alarm names attach to the right alarm
-am = re.search(r'Alarm 1:[^.]*?named `([^`]+)`', t48)
-if am and 'revoke' not in am.group(1):
-    F('alarmswap', 'alarm 1 named ' + am.group(1))
-am2 = re.search(r'Alarm 2:[^.]*?named `([^`]+)`', t48)
-if am2 and 'alive' not in am2.group(1):
-    F('alarmswap', 'alarm 2 named ' + am2.group(1))
+for rid, fn, t in newall:
+    for m in re.finditer(r'[Aa]larm 1[^`\n]*?named `([^`]+)`', t):
+        if 'revoke' not in m.group(1):
+            F('alarmswap', f'{rid} alarm 1 named {m.group(1)}')
+    for m in re.finditer(r'[Aa]larm 2[^`\n]*?named `([^`]+)`', t):
+        if 'alive' not in m.group(1):
+            F('alarmswap', f'{rid} alarm 2 named {m.group(1)}')
 # other shred places: any 'shred -u ~' or wildcard in NEW text
 for rid, fn, t in newall:
     if re.search(r'shred -u [^\n]*[~*]', t):

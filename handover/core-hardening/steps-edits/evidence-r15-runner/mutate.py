@@ -13,7 +13,7 @@ def rep(old, new, n=1):
         return t.replace(old, new, n)
     return f
 def block_of(t, rid):
-    i = t.index('### %s:' % rid); j = t.index('\n### ', i + 5); return i, j
+    i = t.index('### %s:' % rid); j = min(x for x in (t.find('\n### ', i + 5), t.find('\n## Lines checked', i + 5)) if x != -1); return i, j
 def delrow(rid):
     def f(t):
         i, j = block_of(t, rid); return t[:i] + t[j + 1:]
@@ -25,7 +25,7 @@ def alter_old(rid):
         return t[:i] + seg[:k + 3] + 'Z' + seg[k + 4:] + t[j:]
     return f
 def drop_holdlabel(t):
-    return t.replace('NEW [HOLD G', 'NEW [hold g', 1)
+    k = t.index('## The row blocks'); return t[:k] + t[k:].replace('NEW [HOLD G', 'NEW [hold g', 1)
 def addwhy(s):
     def f(t):
         i = t.index('\nWhy:', t.index('### E-02:')); return t[:i] + '\nWhy: ' + s + t[i + 1 + 4 + 1:]  # replaces first chars
@@ -71,7 +71,8 @@ M = [
  ('yes, no more takes whole confirmation line removed', lambda t: re.sub(r'(?m)^   The confirmation\. .*\n', '', t, count=1)),
  ('anything-else-counts-as-more-takes removed', rep('Anything else, or no reply, counts as `more takes`. ', '')),
  ('shred done scope (a) only', rep('`shred done` means that EVERY file of (a), (b) and (c) is shredded', '`shred done` means that the file of (a) is shredded')),
- ('alarm text swapped names', lambda t: t.replace('named `revoke the secret key for the model`', 'named @@A', 1).replace('named `is the secret key for the model still alive?`', 'named `revoke the secret key for the model`', 1).replace('named @@A', 'named `is the secret key for the model still alive?`', 1)),
+ ('alarm names swapped (key step C line)', lambda t: re.sub(r'(?m)^(   Key step C\..*)$', lambda mo: mo.group(1).replace('named `revoke the secret key for the model`', 'named @@A', 1).replace('named `is the secret key for the model still alive?`', 'named `revoke the secret key for the model`', 1).replace('named @@A', 'named `is the secret key for the model still alive?`', 1), t, count=1)),
+ ('alarm names swapped (E-12 request line)', lambda t: t.replace('named `revoke the secret key for the model`', 'named @@A', 1).replace('named `is the secret key for the model still alive?`', 'named `revoke the secret key for the model`', 1).replace('named @@A', 'named `is the secret key for the model still alive?`', 1)),
  ('alarm 1 time moved 17:49 -> 18:49', rep('Alarm 1: Mon 23 Nov 2026 17:49 UTC = 23:19 IST', 'Alarm 1: Mon 23 Nov 2026 18:49 UTC = 00:19 IST')),
  ('row deleted (E-61)', delrow('E-61')),
  ('row deleted (E-30)', delrow('E-30')),
@@ -84,7 +85,7 @@ M = [
  ('count rows in total 59 -> 58', rep('59 rows in total', '58 rows in total')),
  ('count OWNER-STEPS 40 -> 39', rep('OWNER-STEPS 40 rows', 'OWNER-STEPS 39 rows')),
  ('Hold label removed (first Hold NEW)', drop_holdlabel),
- ('Hold gate removed from header (E-04)', rep('status Hold (', 'status Hold (')) if False else (lambda t: re.sub(r'(### E-04: [^\n]*?status Hold)[^\n]*?(, type)', r'\1\2', t, count=1)),
+ ('Hold gate removed from header (E-04)', lambda t: re.sub(r'(### E-04: [^\n]*?status Hold)[^\n]*?(, type)', r'\1\2', t, count=1)),
  ('index status flipped (E-01 -> Hold)', rep('| E-01 | OWNER-STEPS-realrun-v3.md | 3 | Apply now', '| E-01 | OWNER-STEPS-realrun-v3.md | 3 | Hold')),
  ('index line changed (E-03)', rep('| E-03 | OWNER-STEPS-realrun-v3.md | 5 |', '| E-03 | OWNER-STEPS-realrun-v3.md | 6 |')),
  ('E-nn code in owner text', newonly('E-48', 'Key step A. The fixed rule.', 'Key step A. The fixed rule (see E-12).')),
