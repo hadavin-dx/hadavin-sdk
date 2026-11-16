@@ -1,5 +1,14 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:45 UTC / 13:15 IST: round 1 of result review applied; round 2 running
+Failed or weak first: (1) Round 1 reviewers read only parts of the documents (design and zoom-out did not read Parts II to VI; codebase-details read about half). (2) Round 1 found one wrong finding (D1-03, narrowed), 5 wrong line numbers, 7 missing items and wording that a non-engineer could not follow; all applied except two: no hygiene bucket column, and the section 9b items are not judged by a builder. (3) Reviewers proposed 5 severity re-ratings; I did NOT change any lane severity: they are in AUDIT-FINDINGS.md section 2b for the lead. (4) Part IV text for D1-03 is still the builder's original; section 9d overrides it. (5) Plan v4 not re-reviewed.
+Delivered so far: MASTER-MAP.md (800 lines), AUDIT-FINDINGS.md (571 lines), patches/C-01-and-A-02.patch (applies with git apply --check; ruff check and format pass on the two files; tests NOT run, so a test fixture with a zero price route could break: UNVERIFIED), patches/ledger-rows.md, result-review-1a..1d.md, result-resolve-1.md.
+Register (sonnet, read-only egm reviewers, started 07:40 UTC, expected end 07:55):
+- a6b1ec9d26c8cfa2f egm-codebase-details round 2: 16 more findings at file:line | running
+- a1ffa3792b4edc893 egm-zoom-out round 2: reads ALL parts, misses and over-claims | running
+- a43eefe25fb9f16f9 egm-comprehension round 2: fresh naive read of the top | running
+Next: collect, resolve, FINAL block. Hard stop part 1: 09:15 UTC.
+
 ## STATUS 07:35 UTC / 13:05 IST: MASTER-MAP.md and AUDIT-FINDINGS.md merged; result review running
 Failed or weak first: (1) the seeded sampler returned finding pool=0 (it does not parse the merged AUDIT-FINDINGS format), only the map sample worked (173 ids; picked M-A-13, M-A-19, M-A-25, M-A-39, M-B-17, M-B-28, M-B-36, M-D2-17, M-D2-34, M-D2-89); I chose 14 findings by hand for the reviewer, which is not a seeded random sample. (2) Merged files are concatenations of builder text; lane D1 and D2 are condensed. (3) Still no verdict from any reviewer. (4) Plan v4 not re-reviewed.
 Register (all sonnet, read-only egm reviewers, started about 07:34 UTC, expected end about 07:50 UTC):
