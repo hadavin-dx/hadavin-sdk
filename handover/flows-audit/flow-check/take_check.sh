@@ -18,18 +18,31 @@
 # Round 10d (review f8-r10c): (A1) the pin comment no longer claims a person read each line (only the WARN lines are hashed; comment lines are not protected); (B1) the pin header carries '# flows sha256 ...' (the combined sha256 of the four flow files, as printed in the top block); a different sha is exit 4, a pin without that line is exit 4, so a changed flow with the same counts and WARNs no longer passes; (B2) the reviewer line must be 'NAME, YYYY-MM-DD' (optionally ', note'), a real date not in the future, and a name that is not a stand-in (TBD, x, claude agent, ...); (B3) with the test flag and an override a run that would pass is exit 5 (not 0), TAKE_CHECK_FLOWS together with --flows is exit 2, and the top block says where the folder name came from; (B4 is in run_all.sh); the flow_snapshot (sha256 of the flow files) is taken before any other read of them; a sha256sum failure is a problem (exit 4), never an empty hash.
 # Round f8-r7 (reviews f8-r6, codebase and design angle): the reviewer-line check is now ONE rule set run by a small python helper (REVIEWER_PY below): the line must read NAME, YYYY-MM-DD[, note] with exactly one comma and one space before the date (a comma inside the name or text between the name and the date is refused); the date is real, not more than one day ahead of today (UTC) and not older than the pin's own date line; the name has at least 3 letters (any alphabet; digits and signs other than space, dot, apostrophe and hyphen are refused); a whole word of the name or the note on the list REVIEWER_WORDS_ALL (tool and model names, bot and agent words, tbd/todo/none/unknown/placeholder/session) is refused; a whole word of the name on REVIEWER_WORDS_NAME (generic stand-ins) is refused; letters of two alphabets mixed in one word (look-alike letters) are refused; a note that says the lines were not read, or will be read later, is refused. Digits are read as the letters they imitate (4 as a, 3 as e, 1 as i or l, 0 as o, 5 as s, 7 as t) and single letters joined by dots (L.L.M.) are one word. There is no search inside longer words and no joining of words: Claudette, Robotham, Bo Ta and A. I. Walker pass. The words live ONLY in this file (bash take_check.sh --reviewer-words prints them; the tests and the README are compared with that output).
 # Round f8-r8 (review f8-r7, fixes per class): (M1) the reviewer-line check reads no variable of its own: "today" is an argument that only --check-reviewer-line passes (and only with the test flag); (M2/M3) ONE normalisation: hidden characters (category C, Zl, Zp, Default_Ignorable_Code_Point, combining marks not on a letter) are refused by the check and removed by safe_text with the same function; every name word needs 2 letters (an initial needs its dot); each piece between spaces is read split at non-letters AND squeezed (Cl-aude, Bo.t, Cl@ude); (M4) a look-alike table (Cyrillic, Greek, ł đ ɑ and others) is applied before matching; (M5/M6) longer lists (placeholders, roles, more bots and tools, two-word stand-ins) and s/es endings of listed bot and tool words; (m1) the digit 1 is tried as i and as l (up to 8 ones); (m2) session is a whole word like the others; (m3) more 'not read' phrases; (m4) the printed line is cut at 300 characters and says its length; (n1) dead line removed. The line goes to the helper through its input (no size limit of a command line) and is refused above 1000 characters.
-# Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script). Helpers that run nothing else: --reviewer-words (prints the word lists), --check-reviewer-line 'LINE' [PINDATE] (prints ok or the rule that refused, exit 0 or 1), --standin-name (the stand-in name run_all.sh uses) and --safe-text 'TEXT' (prints TEXT without hidden characters, cut at 300).
+# Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script). Helpers that run nothing else: --reviewer-words (prints the word lists), --check-reviewer-line 'LINE' [PINDATE [RECEIPT]] (prints ok or the rule that refused, exit 0 or 1, 3 when the helper itself broke; without RECEIPT no receipt is asked), --standin-name (the stand-in name run_all.sh uses) and --safe-text 'TEXT' (prints TEXT without hidden characters, cut at 300).
 LC_ALL=C; export LC_ALL
+# round f8-r9 (nit): ${X^} below needs bash 4; say so instead of failing with "bad substitution"
+if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then echo "REFUSED: this script needs bash 4 or newer (found bash ${BASH_VERSION:-unknown}); it uses the \${X^} form"; exit 2; fi
+# round f8-r9 (m8): what a shell inherits from the caller and can change what this script runs. Read FIRST, before this script defines a function of its own: a function that python3, sha256sum or another command used below has been given by the caller (export -f) shows up in this list; so do the variables that make bash, the loader or python read other code.
+ENVHAZ=""
+for v in BASH_ENV ENV LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT PYTHONHOME PYTHONPATH PYTHONSTARTUP; do [ -n "${!v:-}" ] && ENVHAZ="$ENVHAZ variable $v;"; done
+IMPORTED_FUNCS=$(declare -F 2>/dev/null | sed -e 's/^declare -[a-zA-Z-]* //' | tr '\n' ' ')
+[ -n "${IMPORTED_FUNCS// /}" ] && ENVHAZ="$ENVHAZ shell function(s) from the caller: ${IMPORTED_FUNCS% };"
 HERE=$(cd "$(dirname "$0")" && pwd)
 # THE ONE PLACE THAT HOLDS THE REVIEWER WORD LISTS (round f8-r8). run_all.sh, the tests and the README ask this file (--reviewer-words, --standin-name, --check-reviewer-line, --safe-text); none keeps a copy.
 REVIEWER_TESTONLY="testonly"      # the script's own test name: accepted only with the test flag AND a pin override (such a run is exit 5, never 0)
 REVIEWER_STANDIN_SECOND="runall"  # second word of the stand-in name run_all.sh uses (printed by --standin-name)
 REVIEWER_STANDIN_NAME="${REVIEWER_TESTONLY^} ${REVIEWER_STANDIN_SECOND^}"
-REVIEWER_WORDS_ALL="claude claudebot anthropic opus sonnet haiku fable gpt gpts chatgpt gptbot chatbot openai codex gemini copilot llama mistral grok qwen kimi devin cursor deepseek agent agents assistant assistants bot bots robot robots ai ais aibot llm llms dependabot renovate jenkins github bard perplexity siri alexa cortana jarvis windsurf aider manus bing tbd todo none unknown placeholder session sessions"
-REVIEWER_WORDS_NAME="name nobody someone anonymous model models person xxx abc standin stand test reviewer $REVIEWER_STANDIN_SECOND dummy example sample fake code user admin lead $REVIEWER_TESTONLY firstname lastname lorem ipsum asdf qwerty xxxx noone tba tbc pending unspecified owner approver operator maintainer author team system service support root"
+# round f8-r9: ai llm llms ais moved to REVIEWER_WORDS_NEG; none todo unknown moved to the name-only list (honest notes such as "none missing" or "to-do list checked" must pass); jenkins devin sessions are in REVIEWER_WORDS_WEAK
+REVIEWER_WORDS_ALL="claude claudebot anthropic opus sonnet haiku fable gpt gpts chatgpt gptbot chatbot openai codex gemini copilot llama mistral grok qwen kimi cursor deepseek agent agents assistant assistants bot bots robot robots aibot dependabot renovate github bard perplexity siri alexa cortana jarvis windsurf aider manus bing tbd placeholder session"
+REVIEWER_WORDS_NAME="name nobody someone anonymous model models person xxx abc standin stand test reviewer $REVIEWER_STANDIN_SECOND dummy example sample fake code user admin lead $REVIEWER_TESTONLY firstname lastname lorem ipsum asdf qwerty xxxx noone tba tbc pending unspecified owner approver operator maintainer author team system service support root none todo unknown audit"
 REVIEWER_PHRASES_NAME="john_doe jane_doe foo_bar joe_bloggs"
+REVIEWER_WORDS_WEAK="jenkins devin sessions"
+REVIEWER_WORDS_NEG="ai ais llm llms"
+REVIEWER_NEGATORS="no not without never zero"
+REVIEWER_PARTICLES="y e i o a"
+REVIEWER_NOTREAD='\bnot\s+(?:yet\s+|fully\s+|all\s+|really\s+|been\s+)*(?:read|reviewed|checked|looked|opened|seen|verified)\b|\bunread\b|\bunreviewed\b|\bunchecked\b|\bwill\s+(?:read|review|check)\b|\b(?:read|review|reviewed|check|checked|look|looked)\s+(?:it\s+|them\s+|these\s+|this\s+)?(?:again\s+)?later\b|^later$|\bto\s+be\s+(?:read|reviewed|checked)\b|\b(?:did|do|does|have|has|had)n'"'"'?t\s+(?:yet\s+|fully\s+|really\s+)?(?:read|review|reviewed|check|checked|look|looked|open|opened)\b|\bskimmed\s+only\b|\bonly\s+skimmed\b|\bjust\s+skimmed\b|\bwithout\s+(?:reading|reviewing|checking|looking)\b|\bno\s+time\s+to\s+(?:read|review|check)\b|\bsigning\s+only\b'
 # The note may use the name-only words in normal speech (a sample, the code, the lead), so they are checked in the name only.
-# Shared python code (also used by safe_text): which characters are never allowed. Refused: every control, format, unassigned, private-use and surrogate character (category C), line and paragraph separators (Zl, Zp), every Default_Ignorable_Code_Point (the Unicode list is written out below because python has no property for it), and every combining mark (Mn, Mc, Me) that does not sit on a letter.
+# Shared python code (also used by safe_text): which characters are never allowed. Refused: every control, format, unassigned, private-use and surrogate character (category C), line and paragraph separators (Zl, Zp), every Default_Ignorable_Code_Point (the Unicode list is written out below because python has no property for it), and every combining mark (Mn, Mc, Me) that does not sit on a letter. Round f8-r9 (m7): U+200C and U+200D (the zero width non-joiner and joiner that Persian, Indic and other scripts use inside real names) are accepted when they sit between two letters of a script that has no look-alike letters in Latin (so they cannot hide a Latin word); they are removed from what is shown.
 IFS= read -r -d '' REVIEWER_NORM_PY <<'PYEOF' || true
 import re
 import sys
@@ -41,6 +54,16 @@ DICP = (
     (0xFE00, 0xFE0F), (0xFEFF, 0xFEFF), (0xFFA0, 0xFFA0), (0xFFF0, 0xFFF8), (0x1BCA0, 0x1BCA3),
     (0x1D173, 0x1D17A), (0xE0000, 0xE0FFF),
 )
+LOOKALIKE_SCRIPTS = {"LATIN", "CYRILLIC", "GREEK", "ARMENIAN", "CHEROKEE", "COPTIC", "MODIFIER"}
+
+
+def script_of(ch):
+    """The script of a letter: the first word of its Unicode name (LATIN, CYRILLIC, ARMENIAN, ...). Han, Hiragana, Katakana, Bopomofo and Hangul are ONE family (CJK): Japanese and Korean names mix them. A modifier letter is MODIFIER."""
+    nm = unicodedata.name(ch, "?")
+    w = nm.split()[0] if nm != "?" else "?"
+    if w in ("CJK", "HIRAGANA", "KATAKANA", "BOPOMOFO", "HANGUL", "IDEOGRAPHIC") or w.startswith("KATAKANA") or w.startswith("HIRAGANA"):
+        return "CJK"
+    return w
 
 
 def never_allowed(ch):
@@ -54,9 +77,14 @@ def scan(t):
     out = []
     bad = None
     attached = False
-    for ch in t:
+    for i, ch in enumerate(t):
         cat = unicodedata.category(ch)
         is_mark = cat in ("Mn", "Mc", "Me")
+        if ord(ch) in (0x200C, 0x200D):
+            prev = out[-1] if out else ""
+            nxt = t[i + 1] if i + 1 < len(t) else ""
+            if prev and nxt and unicodedata.category(prev)[0] == "L" and unicodedata.category(nxt)[0] == "L" and script_of(prev) not in LOOKALIKE_SCRIPTS and script_of(nxt) not in LOOKALIKE_SCRIPTS:
+                continue   # a joiner inside a word of a script without Latin look-alikes: accepted, not shown
         if never_allowed(ch) or (is_mark and not attached):
             if bad is None:
                 bad = ch
@@ -73,18 +101,23 @@ def read_stdin():
 PYEOF
 IFS= read -r -d '' REVIEWER_PY <<'PYEOF' || true
 try:
-    pindate, testallow, words_all, words_name, phrases_name, today_s, testword = sys.argv[1:8]
+    pindate, testallow, words_all, words_name, phrases_name, today_s, testword, receipt, words_weak, words_neg, negators, particles, notread = sys.argv[1:14]
 except ValueError:
     print("HELPER ERROR: wrong number of arguments")
     sys.exit(3)
 ALL = set(words_all.split())
 NAME = set(words_name.split())
+WEAK = set(words_weak.split())
+NEG = set(words_neg.split())
+NEGATORS = set(negators.split())
+PARTICLES = set(particles.split())
 PHRASES = [tuple(p.split("_")) for p in phrases_name.split()]
 STEMS = {w for w in ALL if len(w) >= 4}   # s / es endings are read as the listed word (Claudes, Opuses); words under 4 letters have their plural on the list themselves
 LETTER = r"[^\W\d_]"
 MAXLEN = 1000
+APOSTROPHES = {0x2019: "'", 0x2018: "'", 0x02BC: "'", 0x02BB: "'", 0x02BD: "'", 0x02B9: "'"}   # curly and modifier apostrophes are read as the plain apostrophe (a real name such as O’Neil or Kamaʻaina must not be refused for its typography; Claʼude is then read as Cla'ude)
 
-# look-alike letters (Cyrillic, Greek and Latin letters that do not break down into a plain letter) read as the plain Latin letter, lower case
+# look-alike letters (Cyrillic, Greek, Armenian, Cherokee and Latin letters that do not break down into a plain letter) read as the plain Latin letter, lower case
 CONF = {
     "а": "a", "в": "b", "с": "c", "е": "e", "н": "h", "і": "i", "ј": "j", "к": "k",
     "м": "m", "о": "o", "р": "p", "ѕ": "s", "т": "t", "у": "y", "х": "x", "ԁ": "d",
@@ -98,8 +131,17 @@ CONF = {
     "ᴢ": "z", "ɦ": "h", "ɱ": "m", "ƙ": "k", "ƚ": "l", "ɫ": "l", "ʈ": "t", "ƭ": "t",
     "ŧ": "t", "ɨ": "i", "ʉ": "u", "ɍ": "r", "ɇ": "e", "ꜱ": "s", "ƶ": "z", "ᵽ": "p",
     "ƀ": "b", "ɓ": "b", "ɗ": "d", "ƈ": "c", "ɠ": "g", "ƴ": "y", "ʋ": "v",
-    "æ": "ae", "œ": "oe", "ß": "ss",
+    "ĸ": "k", "æ": "ae", "œ": "oe", "ß": "ss",
+    # Armenian look-alikes (f8-r9: U+057D and others)
+    "ս": "u", "օ": "o", "ո": "n", "ց": "g", "հ": "h", "ք": "q",
 }
+# Cherokee capital letters that look like Latin capitals (written as their lower case forms, which is what fold() produces)
+for _k, _v in {0x13AA: "a", 0x13F4: "b", 0x13DF: "c", 0x13A0: "d", 0x13AC: "e", 0x13C0: "g", 0x13BB: "h", 0x13A5: "i", 0x13AB: "j", 0x13E6: "k", 0x13DE: "l", 0x13B7: "m", 0x13E2: "p", 0x13DA: "s", 0x13A2: "t", 0x13D9: "v", 0x13B3: "w", 0x13C3: "z", 0x13A1: "r"}.items():
+    CONF[chr(_k).lower()] = _v
+_LAT = re.compile(r"LATIN (?:SMALL|CAPITAL) LETTER ([A-Z])(?: WITH [A-Z ]+)?$")
+_LATSC = re.compile(r"LATIN LETTER SMALL CAPITAL ([A-Z])$")
+LEET = str.maketrans({"4": "a", "3": "e", "0": "o", "5": "s", "7": "t", "8": "b", "9": "g", "6": "g"})
+AT = str.maketrans({"@": "a", "$": "s", "!": "i"})
 
 
 def refuse(rule, text):
@@ -112,21 +154,44 @@ def fold(t):
     return "".join(c for c in t if unicodedata.category(c)[0] != "M").lower()
 
 
+def lat_base(c):
+    """A Latin letter that does not break down by NFKD (k with a hook, small capitals, ...) read by its Unicode name as the plain letter: the class, not a hand-made list."""
+    m = _LAT.match(unicodedata.name(c, "")) or _LATSC.match(unicodedata.name(c, ""))
+    return m.group(1).lower() if m else None
+
+
 def skel(t):
-    return "".join(CONF.get(c, c) for c in fold(t))
+    out = []
+    for c in fold(t):
+        if c in CONF:
+            out.append(CONF[c])
+        elif ord(c) > 127 and lat_base(c):
+            out.append(lat_base(c))
+        else:
+            out.append(c)
+    return "".join(out)
 
 
-def leet(base):
-    """Digits read as the letters they imitate; the digit 1 is read both ways (i and l): every reading of the first 8 ones, the rest all i or all l."""
-    b = base.translate(str.maketrans({"4": "a", "3": "e", "0": "o", "5": "s", "7": "t"}))
-    idx = [i for i, c in enumerate(b) if c == "1"]
+def camel(t):
+    """Insert a space at each lower-to-upper letter change (ClaudeCode -> Claude Code), so a joined compound is read as its parts too."""
+    out = []
+    for i, c in enumerate(t):
+        if i and c.isupper() and t[i - 1].islower():
+            out.append(" ")
+        out.append(c)
+    return "".join(out)
+
+
+def ones_readings(s, cap=8):
+    """The digit 1 is read both ways (i and l): every reading of the first 8 ones in this piece; the rest all i or all l (a listed word has at most 4 such letters, so more cannot match)."""
+    idx = [i for i, c in enumerate(s) if c == "1"]
     if not idx:
-        return [b]
-    head, tail = idx[:8], idx[8:]
+        return [s]
+    head, tail = idx[:cap], idx[cap:]
     out = []
     for rest in (("i", "l") if tail else ("i",)):
         for mask in range(1 << len(head)):
-            chars = list(b)
+            chars = list(s)
             for k, i in enumerate(head):
                 chars[i] = "l" if (mask >> k) & 1 else "i"
             for i in tail:
@@ -144,31 +209,36 @@ def dotted(x):
 
 
 def cands(t):
-    """Every word a text can be read as: split at each non-letter (with single letters joined by dots), plus each space-separated piece with its non-letters squeezed out (Cl-aude, Bo.t, Cl@ude)."""
+    """Every word a text can be read as: each space-separated piece is read split at every non-letter (single letters joined by dots; each run of letters and digits read on its own, so ones elsewhere in the text cannot change it) and squeezed (Cl-aude, Bo.t, Cl@ude); the text is read as written and with a space inserted at each lower-to-upper change (ClaudeCode)."""
     out = set()
-    base = skel(t)
-    for x in leet(base) + leet(base.translate(str.maketrans({"@": "a", "$": "s", "!": "i"}))):   # the second reading: @ as a, $ as s, ! as i
-        out.update(re.findall(r"%s+" % LETTER, dotted(x)))
-        for piece in x.split():
-            sq = "".join(re.findall(LETTER, piece))
-            if sq:
-                out.add(sq)
+    for variant in (t, camel(t)):
+        for piece in skel(variant).split():
+            for form in (piece, piece.translate(AT)):
+                for tok in re.findall(r"[^\W_]+", dotted(form)):
+                    for r in ones_readings(tok.translate(LEET)):
+                        out.update(re.findall(r"%s+" % LETTER, r))
+                for r in ones_readings(form.translate(LEET)):
+                    sq = "".join(re.findall(LETTER, r))
+                    if sq:
+                        out.add(sq)
     return out
 
 
 def ordered(t):
-    return re.findall(r"%s+" % LETTER, dotted(leet(skel(t))[0]))
+    return re.findall(r"%s+" % LETTER, dotted(skel(t).translate(LEET).replace("1", "i")))
 
 
-def find(words, listed, stem=False):
+def find_all(words, listed, stem=False):
+    hits = []
     for w in sorted(words):
         if w in listed:
-            return w, w
-        if stem:
+            hits.append((w, w))
+        elif stem:
             for suf in ("s", "es"):
                 if w.endswith(suf) and w[: -len(suf)] in STEMS:
-                    return w, w[: -len(suf)]
-    return None
+                    hits.append((w, w[: -len(suf)]))
+                    break
+    return hits
 
 
 def refuse_listed(hit, where, kind):
@@ -179,35 +249,37 @@ def refuse_listed(hit, where, kind):
 
 
 def mixed(t):
+    """One word whose letters come from two scripts (Latin with Cyrillic, Greek, Armenian, Cherokee, a modifier letter, ...) is refused, whatever the scripts are. Han, Hiragana, Katakana and Hangul count as one script (Japanese and Korean names mix them)."""
     for w in re.findall(r"[^\W\d_]+", unicodedata.normalize("NFKD", t)):
-        scripts = {unicodedata.name(c, "?").split()[0] for c in w}
-        if len(scripts & {"LATIN", "CYRILLIC", "GREEK"}) > 1:
+        if len({script_of(c) for c in w}) > 1:
             return True
     return False
 
 
-NOTREAD = (
-    r"\bnot\s+(?:yet\s+|fully\s+|all\s+)?(?:been\s+)?(?:read|reviewed|checked)\b|\bunread\b|\blater\b|\bwill\s+(?:read|review)\b"
-    r"|\bto\s+be\s+(?:read|reviewed|checked)\b|\b(?:did|do|does|have|has|had)n['’]?t\s+(?:yet\s+|fully\s+)?(?:read|review|reviewed|check|checked)\b"
-    r"|\bskimmed\s+only\b|\bonly\s+skimmed\b|\bpending\b"
-)
+NOTREAD = notread
 
 try:
     line = read_stdin().strip(" \t\r\n")
     if len(line) > MAXLEN:
         refuse("too long", "the line is longer than %d characters" % MAXLEN)
+    line = line.translate(APOSTROPHES)
     # first the two stand-in classes that have their own message in take_check.sh (a placeholder, a session or 'lead to confirm'); read on the text WITHOUT its hidden characters, so a hidden character cannot hide them
     shown, bad = scan(line)
     shown_words = cands(shown)
     if "placeholder" in shown_words:
         refuse("listed word placeholder", "the line contains the whole word 'placeholder'")
-    for sw in ("session", "sessions"):
-        if sw in shown_words:
-            refuse("listed word %s" % sw, "the line contains the whole word '%s'" % sw)
+    if "session" in shown_words:
+        refuse("listed word session", "the line contains the whole word 'session'")
     if re.search(r"\blead\s+to\s+confirm\b", skel(shown)):
         refuse("lead to confirm", "the line says the lead still has to confirm it")
     if bad is not None:
         refuse("hidden character", "the line holds a control, invisible or detached combining character (U+%04X)" % ord(bad))
+    line = shown   # only accepted joiners were removed
+    if pindate:
+        try:
+            date.fromisoformat(pindate)
+        except ValueError:
+            refuse("bad pin date", "the pin's own '# date (UTC)' line (%s) is not a real calendar date: the fault is in the pin, not in the reviewer line" % pindate)
     i = line.find(",")
     if i < 0:
         refuse("shape", "there is no comma; the line must read NAME, YYYY-MM-DD or NAME, YYYY-MM-DD, a note")
@@ -221,38 +293,67 @@ try:
             "(write 'Jane Roe', not 'Roe, Jane'; write 'John Smith Jr.' with no comma)",
         )
     ds, note = m.group(1), (m.group(2) or "")
+    rm = None
+    if receipt != "-":
+        rm = re.fullmatch(r"pin sha256 ([0-9a-f]{8})(?:, (\S.*))?", note, re.ASCII)
+        note_scan = (rm.group(2) or "") if rm else note
+    else:
+        note_scan = note
     if not name or not (unicodedata.category(name[0])[0] == "L"):
         refuse("name characters", "the name must start with a letter")
     for ch in name:
+        if unicodedata.category(ch) == "Lm" and script_of(ch) != "CJK":
+            refuse("modifier letter", "the name holds the modifier letter U+%04X; write plain letters and the plain apostrophe '" % ord(ch))
         if ch not in " .'-" and unicodedata.category(ch)[0] not in "LM":
             refuse("name characters", "the name may hold only letters, spaces, dots, apostrophes and hyphens (no digits or other signs)")
-    if sum(1 for ch in name if unicodedata.category(ch)[0] == "L") < 3:
-        refuse("name too short", "the name has fewer than 3 letters")
-    for piece in name.split():
+    letters = [ch for ch in name if unicodedata.category(ch)[0] == "L"]
+    need = 2 if letters and all(script_of(ch) == "CJK" for ch in letters) else 3   # a name in Han, Kana or Hangul letters is often 2 characters
+    if len(letters) < need:
+        refuse("name too short", "the name has fewer than %d letters" % need)
+    pieces = name.split()
+    for k, piece in enumerate(pieces):
         n_letters = sum(1 for ch in piece if unicodedata.category(ch)[0] == "L")
         if n_letters < 2 and not re.fullmatch(r"[^\W\d_]\.", fold(piece)):
-            refuse("name word too short", "every word of the name needs at least 2 letters (a single initial must be written with a dot, as in 'Q.')")
-    if mixed(name) or mixed(note):
-        refuse("mixed alphabets", "one word mixes Latin letters with Cyrillic or Greek letters (look-alike letters)")
+            if piece in PARTICLES and 0 < k < len(pieces) - 1 and len(pieces) >= 3:
+                continue   # a lower-case particle between two name words (Ortega y Gasset, Maria e Silva)
+            refuse("name word too short", "every word of the name needs at least 2 letters (a single initial must be written with a dot, as in 'Q.'; a small joining word such as y or e is accepted only between two other name words)")
+    if mixed(name) or mixed(note_scan):
+        refuse("mixed alphabets", "one word mixes letters of two alphabets (for example Latin letters with Cyrillic, Greek or Armenian look-alike letters)")
     nwords = cands(name)
-    nwords.add("".join(re.findall(LETTER, leet(skel(name))[0])))   # the whole name squeezed (letters only)
+    nwords.add("".join(re.findall(LETTER, skel(name).translate(LEET).replace("1", "i"))))   # the whole name squeezed (letters only)
+    nwords.update(cands(re.sub(r"[ .'-]", "", name)))   # camelCase compounds written without spaces are read in parts too
     first = (re.findall(r"%s+" % LETTER, fold(name)) or [""])[0]
-    hit = find(nwords, ALL, stem=True)
-    if hit:
-        refuse_listed(hit, "name", "words")
+    seq = ordered(name)
+    listed_all = ALL | NEG | WEAK | NAME
+    others = [w for w in seq if len(w) >= 2 and w not in listed_all]   # name words that are not on any list
+    hits = [h for h in find_all(nwords, ALL, stem=True)]
+    if hits:
+        refuse_listed(hits[0], "name", "words")
+    for h in find_all(nwords, NEG):
+        if h[0] == "ai" and seq[:1] == ["ai"] and others:
+            continue   # Ai Nguyen, Ai Weiwei: ai as the FIRST word of a name that has another name word
+        refuse_listed(h, "name", "words")
+    for h in find_all(nwords, WEAK):
+        if not others:
+            refuse_listed(h, "name", "words that are tool names and also real names (accepted only when another name word stands with them)")
     if not (testallow == "1" and first == testword):
-        hit = find(nwords, NAME)
+        hit = find_all(nwords, NAME)
         if hit:
-            refuse_listed(hit, "name", "name words")
-        seq = ordered(name)
+            refuse_listed(hit[0], "name", "name words")
         for ph in PHRASES:
             for k in range(len(seq) - len(ph) + 1):
                 if tuple(seq[k : k + len(ph)]) == ph:
                     refuse("listed words %s" % " ".join(ph), "the name contains the words '%s' in a row, which are on the list of refused name phrases" % " ".join(ph))
-    hit = find(cands(note), ALL, stem=True)
-    if hit:
-        refuse_listed(hit, "note", "words")
-    if re.search(NOTREAD, skel(note)):
+    nw = cands(note_scan)
+    nseq = ordered(note_scan)
+    for h in find_all(nw, ALL | WEAK, stem=True):
+        refuse_listed(h, "note", "words")
+    for h in find_all(nw, NEG):
+        # a note may say that a tool was NOT used (no AI used): every plain occurrence must follow a negating word, and the word must be there as a plain word
+        ks = [k for k, w in enumerate(nseq) if w == h[0]]
+        if not ks or any(k == 0 or nseq[k - 1] not in NEGATORS for k in ks):
+            refuse_listed(h, "note", "words (allowed only right after one of: %s)" % " ".join(sorted(NEGATORS)))
+    if re.search(NOTREAD, skel(note_scan)):
         refuse("note says not read", "the note says the lines were not read, not checked or only skimmed (or will be read, reviewed or checked later)")
     try:
         d = date.fromisoformat(ds)
@@ -260,10 +361,15 @@ try:
         refuse("bad date", "%s is not a real calendar date" % ds)
     today = date.fromisoformat(today_s) if today_s else datetime.now(timezone.utc).date()
     if d > today + timedelta(days=1):
-        refuse("future date", "%s is more than one day ahead of today (UTC)" % ds)
+        refuse("future date", "%s is more than one day ahead of today (UTC date today: %s; a person west of UTC may still be on the day before: write the UTC date)" % (ds, today.isoformat()))
     if pindate:
         if d < date.fromisoformat(pindate):
             refuse("old date", "%s is older than the pin's own '# date (UTC)' line (%s)" % (ds, pindate))
+    if receipt != "-":
+        if rm is None:
+            refuse("receipt missing", "after the date the line must say ', pin sha256 XXXXXXXX' (the first 8 characters of the sha256 that this script prints for the WARN lines of the pin it is judging)")
+        if rm.group(1) != receipt:
+            refuse("receipt wrong", "the 8 characters after 'pin sha256' are not the first 8 of the sha256 of the WARN lines of THIS pin: the pin changed after the line was written, or the line was written for another pin")
 except SystemExit:
     raise
 except Exception as e:  # a helper fault is never a pass
@@ -282,11 +388,11 @@ REVIEWER_PY_FULL="from datetime import date, datetime, timedelta, timezone
 $REVIEWER_NORM_PY
 $REVIEWER_PY"
 standin_allowed() { if [ "${TAKE_CHECK_TEST:-}" = 1 ] && [ -n "${TAKE_CHECK_WARN_PIN:-}" ]; then echo 1; else echo 0; fi; }   # the one place that decides whether the test stand-in name may pass: test flag AND a pin override
-reviewer_ok() { # $1 = the reviewer line as written, $2 = the pin's own date, $3 = the fixed "today" (a test only; the normal take passes "" and so always uses the real UTC date), $4 = 1 when the test stand-in name is allowed; sets REV_REASON; returns 0 for a line that passes the word check, 1 otherwise. It reads NO variable of its own: only its four arguments (round f8-r8, M1).
-  local out rc
-  out=$(printf '%s' "$1" | python3 -I -c "$REVIEWER_PY_FULL" "${2:-}" "${4:-0}" "$REVIEWER_WORDS_ALL" "$REVIEWER_WORDS_NAME" "$REVIEWER_PHRASES_NAME" "${3:-}" "$REVIEWER_TESTONLY" 2>&1); rc=$?
+reviewer_ok() { # $1 = the reviewer line as written, $2 = the pin's own date, $3 = the fixed "today" (a test only; the normal take passes "" and so always uses the real UTC date), $4 = 1 when the test stand-in name is allowed, $5 = the receipt (first 8 hex of the sha256 of the pin's WARN lines) or "-" when no receipt is asked (only the helper option --check-reviewer-line without a third argument does that); sets REV_REASON and REV_RC; returns 0 for a line that passes the word check, 1 otherwise. It reads NO variable of its own: only its five arguments (round f8-r8, M1).
+  local out
+  out=$(printf '%s' "$1" | python3 -I -c "$REVIEWER_PY_FULL" "${2:-}" "${4:-0}" "$REVIEWER_WORDS_ALL" "$REVIEWER_WORDS_NAME" "$REVIEWER_PHRASES_NAME" "${3:-}" "$REVIEWER_TESTONLY" "${5:--}" "$REVIEWER_WORDS_WEAK" "$REVIEWER_WORDS_NEG" "$REVIEWER_NEGATORS" "$REVIEWER_PARTICLES" "$REVIEWER_NOTREAD" 2>&1); REV_RC=$?
   REV_REASON=$out
-  [ "$rc" -eq 0 ]
+  [ "$REV_RC" -eq 0 ]
 }
 safe_text() { printf '%s' "$1" | python3 -I -c "$REVIEWER_NORM_PY
 $SAFE_PY" 2>/dev/null || printf '(text not shown)'; }   # hidden characters removed by the same function as the check; cut at 300 characters with the length said
@@ -297,13 +403,13 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --write-warn-pin) [ -n "${2:-}" ] || { echo "$USAGE"; exit 2; }; WRITEPIN=$(abspath "$2"); shift 2;;
     --flows) [ -n "${2:-}" ] || { echo "$USAGE"; exit 2; }; FLOWSARG=$(abspath "$2"); shift 2;;
-    --reviewer-words) echo "Words refused in the name and in the note: $REVIEWER_WORDS_ALL"; echo "Words refused in the name only: $REVIEWER_WORDS_NAME"; echo "Word pairs refused in the name only (two words in a row, an underscore stands for the space): $REVIEWER_PHRASES_NAME"; exit 0;;
+    --reviewer-words) echo "Words refused in the name and in the note: $REVIEWER_WORDS_ALL"; echo "Words refused in the name only: $REVIEWER_WORDS_NAME"; echo "Word pairs refused in the name only (two words in a row, an underscore stands for the space): $REVIEWER_PHRASES_NAME"; echo "Tool names that are also real names: refused in the note, and in the name unless another name word stands with them: $REVIEWER_WORDS_WEAK"; echo "Words refused in the name and in the note, except that the note may say a tool was not used (the word right before must be one of: $REVIEWER_NEGATORS): $REVIEWER_WORDS_NEG"; echo "Phrases in the note that say the lines were not read (regular expression, applied to the note in its normal form): $REVIEWER_NOTREAD"; exit 0;;
     --standin-name) echo "$REVIEWER_STANDIN_NAME"; exit 0;;   # the name run_all.sh puts in its stand-in pin (accepted only with the test flag and a pin override)
     --safe-text) safe_text "${2-}"; exit 0;;   # prints a text with the hidden characters removed and cut at 300 characters (run_all.sh uses it for the committed pin's line)
     --check-reviewer-line) [ $# -ge 2 ] || { echo "$USAGE"; exit 2; }
       # test helper: only the reviewer-line word check, nothing else runs. TAKE_CHECK_TODAY (a fixed date) is read here only, and only with the test flag, so a test cannot race UTC midnight
       today=""; [ "${TAKE_CHECK_TEST:-}" = 1 ] && today=${TAKE_CHECK_TODAY:-}
-      if reviewer_ok "$2" "${3:-}" "$today" "$(standin_allowed)"; then echo "$REV_REASON"; exit 0; else echo "$REV_REASON"; exit 1; fi;;
+      if reviewer_ok "$2" "${3:-}" "$today" "$(standin_allowed)" "${4:--}"; then echo "$REV_REASON"; exit 0; else echo "$REV_REASON"; exit "$([ "${REV_RC:-1}" -eq 3 ] && echo 3 || echo 1)"; fi;;
     *) echo "$USAGE"; exit 2;;
   esac
 done
