@@ -1,0 +1,21 @@
+# REVIEW.md round 17 stranger read (egm comprehension, agent a2b3bef), saved condensed by flows-audit
+Reviewer words unverified. Read REVIEW.md (221 lines) fully; opened no other file; did not check source cites; could not follow X-5 (line 143) and old X-6 text (line 220) beyond the gist.
+Blockers
+B-1. Choices (4) and (5) (line 194) not decidable: run-on paragraphs with sub-choices (i)-(iii), (a)-(g), "ALLOW-class sub-choice", "ROUND 14 point 3"; inner labels exist only inside unsplit text; sub-choices (b),(c),(d),(e),(g) have no stated cost of accepting; "nine choices" is about 20 decisions.
+B-2. X-5 (line 143, about 28,000 chars) cannot be paraphrased; no split like X-6; labels (a)-(j), ROUND 7..15, reviewer ids, counter-corrections; sub-letters collide with choice letters.
+Majors
+1 DEAD-MAN-CHECK missing from summary (8-17) and index header (19); edit list line refs mean DEAD-MAN-CHECK.md lines; edit item 2 (line 130) points to "identity table in X-6.6" which is prose (table only in old text line 220).
+2 X-4 live Major but no studio-head choice (un-defer A-01 or reconcile at exit not among the nine); lines 17/79 say only X-5, X-6 matter vs line 12 "three serious problems"; ignores choices (6), (7).
+3 Choice (2) mislabelled (lines 105, 194): A-2 says K1bAudit docstring promise false today; index A-2 entry (line 32) omits K1bAudit.
+4 Summary item 9 / status line (2, 16) say "no test, lint ... was run" but line 83 evidence runner ran tests/ruff/bandit and lines 196-204 heavy lane ran full repo (9,404 passes), NOT green, 2 guard-test failures block a PR; summary omits.
+5 Summary never says nothing was applied; does not say deferring A-01 leaves X-4 live; index vs X-4 row contradict on whether A-01 fixes it ("would fix" vs "does not close DB-down case").
+6 "Blocker" three scales, undefined; Blocker/Minor/Nit not defined (only Major, line 64); summary says Blocker 2 while index lists X-5, X-6 as Major; "the proposal", "pilot" undefined.
+7 Rating rule applied inconsistently (lines 64, 94, 98): C-3 Major though "NOT shown: live route price 0"; C-7 Minor; X-6 Major though "NOT shown: any deployment uses one login".
+8 Decider has three names (lead, studio head, owner); line 5 lead already decided A-01 deferred etc. yet choices (7), (2), (3) re-ask; "main session", "flows-audit", "I" unclear.
+9 "The take", "the video path" undefined; C-3 condition changes whether C-01 instruction applies; line 9 omits C-01 rebase (line 71 shows apply exit 1).
+10 C-3 decision not framed (options only inside 9,000-char row); "choke point" undefined.
+11 Same word two meanings: live, fake, guard, check, step, reconcile, operator, ceiling/cap/limit/bound, cut, login/role/identity/DSN, G5/G2 (gate rules vs reviewer ids), C-01/A-01 vs rows C-1/A-1.
+12 Round numbers and reviewer ids leak into rows (lines 92-99, 104-109, 117-118, 93, 94, 98, 140, 143, 220); line 104 cites "ORDER 009 Q-X1" in no source.
+13 X-6.1-X-6.7 vs old X-6 text (220): no mapping; numbering clash ("see X-6 (4)" is self-approval = part X-6.3 but reader goes to X-6.4); header says unchanged but carries later notes; content only in old text (audit-writer function, spend options A/B, identity table, build profiles, migrations 0006-0009); "up to seven logins" vs eight names.
+14 Line 83 history paragraph in a live section; counts 15/13/15/10/5 confusing; line 202 says 70 tests (5+10+41+14) vs line 187 41 and 14 not verified; lines 86, 187 admit evidence may describe other test-file versions.
+Minors: 15 undefined project terms (tick, outbox, drain, sink, kind, kill switch, runtime role, receiver, signer, anchor, checkpoint, K1b, WARDEN, hooks, ALLOW-class, heavy lane, notional price, hard rule 11, Route, Config, "audit waiting list" vs "outbox", CONTEST/ESCALATE); 16 wrong/stale pointers ("see Patch bases", bases A/B/C vs (a)(b)(c), "a round-4 review will follow" line 191, line 3 round-1 inputs only, "hard rule 11"); 17 index incomplete (no Blocker line, omits "Update: full-repository run" and "Not checked", "Choices at the end" not the end); 18 recommended defaults only for choices (7), (8); 19 PROPOSE FIX vs index "fix", C-4 called fix but only records duplication; 20 summary line 14 carries round language.
