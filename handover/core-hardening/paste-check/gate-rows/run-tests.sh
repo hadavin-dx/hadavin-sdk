@@ -50,7 +50,7 @@ not json at all"; G1 "B pass with trailing non-JSON lines (ignored)" 3 yes
 mk gate1-B.out "$(J "$B_OK" "[False]*10")
 {broken"; G1 "B last line starts with { but is broken" 3 yes
 mk gate1-B.out 'plain text only'; G1 "B no JSON" 3 yes
-rm -f $T/gate1-B.out $W/T/gate1-B.out; G1 "B file missing" 3 yes
+rm -f $W/T/gate1-B.out; G1 "B file missing" 3 yes
 mk gate1-B.out '{"replies":"x"}'; G1 "B replies not a list" 3 yes
 ok_set
 # ---- G2
@@ -68,6 +68,9 @@ kk 'x\ny\nz\nA ida1\nA ida2\nB idb1\n'; G2 "two different A ids after baseline"
 kk 'x\ny\nz\nA ida1\nA ida1\nB idb1\nB idb1\n'; G2 "same A id twice and same B id twice (counts shown)"
 kk 'x\ny\nz\nA same\nB same\n'; G2 "A and B same key"
 kk "x\ny\nz\nA ida1\nB id'b\n"; G2 "quote in key"
+kk 'x\ny\nz\nA ida1\nB *\n'; G2 "glob character as key (no expansion, STOP on character)"
+kk 'x\ny\nz\nA ida1\nB idb.1\n'; G2 "dot in key (STOP, outside A-Za-z0-9_-)"
+kk 'x\ny\nz\nA ida1\nB idb1'; G2 "last line without final newline (still counted, PASS)"
 kk 'x\ny\nz\nA ida1\nB idb1\n'
 rm -f $W/T/keys-before-s10.txt; G2 "baseline file missing"
 echo "" > $W/T/keys-before-s10.txt; G2 "baseline file empty"
@@ -81,7 +84,8 @@ echo "-- [$SH] baseline command as pasted in S10 (missing and present keys.txt)"
 python3 -I - "$PLAN" > $W/base.cmd <<'PY'
 import sys,re
 t=open(sys.argv[1]).read()
-m=re.search(r'(\{ wc -l < \$T/keys.txt \|\| echo 0; \} 2>/dev/null \| tr -d \' \' > \$T/keys-before-s10.txt;)',t); print(m.group(1))
+m=re.search(r"(\{ awk 'END\{print NR\}' \$T/keys.txt \|\| echo 0; \} 2>/dev/null \| tr -d ' ' > \$T/keys-before-s10.txt;)",t); print(m.group(1))
 PY
 rm -f $W/T/keys.txt $W/T/keys-before-s10.txt; T=$W/T $SH $W/base.cmd; echo "missing keys.txt -> '$(cat $W/T/keys-before-s10.txt)'"
 printf 'a\nb\nc\n' > $W/T/keys.txt; T=$W/T $SH $W/base.cmd; echo "3-line keys.txt -> '$(cat $W/T/keys-before-s10.txt)'"
+printf 'a\nb\nc' > $W/T/keys.txt; T=$W/T $SH $W/base.cmd; echo "3 lines, no final newline -> '$(cat $W/T/keys-before-s10.txt)' (expect 3)"
