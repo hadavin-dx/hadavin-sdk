@@ -1,0 +1,78 @@
+diff --git a/src/hadavin_sdk/config.py b/src/hadavin_sdk/config.py
+index dfa135b..3aa21ac 100644
+--- a/src/hadavin_sdk/config.py
++++ b/src/hadavin_sdk/config.py
+@@ -362,6 +362,16 @@ class Config(_Strict):
+                     f"system {name}: base_url must be https "
+                     f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
+                 )
++        if self.backends.llm.kind != "fake":
++            # A zero or negative price makes every reply cost 0, so no spend limit could ever fire (audit C-01).
++            # NaN and Infinity never reach here: pydantic refuses a non-finite Decimal field first (tests/test_c01_route_limits.py).
++            free = sorted(
++                n
++                for n, r in self.routes.items()
++                if min(r.input_usd_per_mtok, r.output_usd_per_mtok) <= 0
++            )
++            if free:
++                raise ValueError(f"routes with a zero or negative price: {free}")
+         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
+         if self.environment != "dev":
+             refused = [
+diff --git a/tests/test_c01_route_limits.py b/tests/test_c01_route_limits.py
+new file mode 100644
+index 0000000..73dd55c
+--- /dev/null
++++ b/tests/test_c01_route_limits.py
+@@ -0,0 +1,51 @@
++"""Audit C-01: a route with a zero or negative price is refused when the config loads.
++
++A price of 0 makes every reply cost 0, so no spend limit (per run, per day, per month) could ever fire. Each test
++loads the fixture config with one change and expects the load to fail with a ConfigError that names the problem."""
++
++import pytest
++import yaml
++
++from hadavin_sdk.config import ConfigError, load_config
++
++LIVE_LLM = {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"}
++
++
++def _load(cfg_dir, *, llm=None, **route):
++    path = cfg_dir / "config.yaml"
++    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
++    if llm is not None:
++        raw["backends"]["llm"] = llm
++    raw["routes"]["default"].update(route)
++    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
++    return load_config(cfg_dir)
++
++
++@pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
++@pytest.mark.parametrize("price", ["0", "0.00", "-1"])
++def test_a_zero_or_negative_price_is_refused_for_a_live_model(cfg_dir, field, price):
++    with pytest.raises(ConfigError, match="zero or negative price"):
++        _load(cfg_dir, llm=LIVE_LLM, **{field: price})
++
++
++def test_a_priced_live_route_still_loads(cfg_dir):
++    # Guard: the live settings above are valid (kind anthropic, platform api, a secret name), so the refusals in the
++    # tests above come from the price rule and not from a mistake in LIVE_LLM; the fixture environment is "dev".
++    cfg = _load(cfg_dir, llm=LIVE_LLM)
++    assert cfg.backends.llm.kind == "anthropic" and cfg.backends.llm.platform == "api"
++    assert cfg.routes["default"].input_usd_per_mtok > 0
++
++
++@pytest.mark.parametrize("llm", [LIVE_LLM, None], ids=["live", "fake"])
++@pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
++@pytest.mark.parametrize("price", ["NaN", "sNaN", "Infinity", "-Infinity"])
++def test_a_non_finite_price_is_a_clean_config_error(cfg_dir, llm, field, price):
++    # pydantic refuses these before the price rule runs; the test pins that it stays a ConfigError, never InvalidOperation.
++    with pytest.raises(ConfigError, match="finite"):
++        _load(cfg_dir, llm=llm, **{field: price})
++
++
++def test_the_fake_model_may_cost_nothing(cfg_dir):
++    # kind "fake" never spends: the recorded replies need no price, so the check does not apply to it.
++    cfg = _load(cfg_dir, input_usd_per_mtok="0", output_usd_per_mtok="0")
++    assert cfg.routes["default"].output_usd_per_mtok == 0
