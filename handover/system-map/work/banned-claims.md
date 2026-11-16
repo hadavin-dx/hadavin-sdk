@@ -1,3 +1,5 @@
+SUPERSEDED. Use work/banned-claims-clean.md. Everything below is history; passes that say "wins" no longer do.
+
 # Post and video check-list (draft, from an independent read; made-up data only)
 Status: draft; the lead's "D-04 apply" is still pending, so the narrow wording is used. Sources in brackets are files in this folder.
 
