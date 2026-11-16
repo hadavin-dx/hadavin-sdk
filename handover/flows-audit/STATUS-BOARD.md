@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T12:04:43Z
+UPDATED_UTC: 2026-11-16T12:05:22Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 10
 PERCENT: 96
 AGENTS_RUNNING: 8
-CAPACITY: 2.45 load of 4 cores, mem 0/15 GB, RAM 977/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 1.58 load of 4 cores, mem 0/15 GB, RAM 935/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
@@ -17,8 +17,9 @@ RW/CT: B-003c vs B-219 overlap, B-101 old quote, B-010 note, A-016f id in public
 FINDINGS/patches: F-003 patch contradicts Q25/Q28 (caption, CRM row, stopwatch, owner stops n8n) - drift B1,M1-M7
 QUESTIONS: F-011/F-041 gate text conflict (Q27-9 vs Q21)
 core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason, Major count (round 3, 4 Majors)
-NEXT: 8 lanes running; evidence runner a565b6b checks run_all.sh exit (lead: earlier exit 1)
-PUSHED_UTC: 2026-11-16T12:04:43Z
+TAKE-CHECKLIST/FIX-PLAN: step 4 pass grep never matches; GO rows 1,2,3,5 have no runnable command; IST pair wrong in FIX-PLAN L70
+NEXT: 8 lanes running
+PUSHED_UTC: 2026-11-16T12:05:22Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -42,9 +43,9 @@ PUSHED_UTC: 2026-11-16T12:04:43Z
 | a565b6b | EVIDENCE RUNNER | sonnet | F8 run_all/test_take_check/ruff/bandit | 12:02 | 12:30 | running | flow-check/evidence-r10c.md |
 | a86555d | fixer | sonnet | QUESTIONS.md 7 findings + Q31 | 12:02 | 12:30 | running | fix-questions2.md |
 | ad97fb2 | fixer | sonnet | drift B1,M1-M7 (F-003 patch etc) | 12:02 | 12:35 | running | fix-drift2.md |
-| ae8642b | egm-impl-readiness | sonnet | TAKE-CHECKLIST/FIX-PLAN review | 12:02 | 12:20 | running | read-only review |
-| ad99e22 | egm-comprehension | sonnet | OWNER-STEPS stranger read r7 | 12:03 | 12:20 | running | read-only |
 | a20c2e0 | fixer | sonnet | core patches REVIEW round 4 | 12:04 | 12:30 | running | fix-review3.md |
+| abe419b | fixer | sonnet | OWNER-STEPS r7 Majors | 12:05 | 12:30 | running | fix-ownersteps9.md |
+| a08e0d6 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r2 B1,B2,M1-M5 | 12:05 | 12:40 | running | fix-tcfp3.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
