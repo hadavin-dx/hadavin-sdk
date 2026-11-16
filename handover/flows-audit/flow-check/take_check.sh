@@ -228,8 +228,8 @@ else
   if [ -z "$HDRDATE" ]; then echo "!!! THE PIN HEADER HAS NO DATE ('# date (UTC): YYYY-MM-DD'): nobody can tell when a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no date"); fi
   if [ -z "$HDRHASH" ]; then echo "!!! THE PIN HEADER HAS NO SHA-256 LINE: a hand edit of the pin cannot be seen. This script exits 4."; PROBLEMS+=("pin has no hash")
   elif [ "$HDRHASH" != "$PINHASH" ]; then echo "!!! THE PIN FILE DOES NOT MATCH ITS OWN SHA-256 (header $HDRHASH, lines $PINHASH): it was edited after a person read it. This script exits 4."; PROBLEMS+=("pin hash differs"); fi
-  echo "Pinned WARN lines: $PINNED (pin dated ${HDRDATE:-unknown}, sha256 ${PINHASH:0:16}...). Reviewer line of the pin, printed exactly as written in the file (this script cannot tell who really read the lines): ${HDRREV:-nobody named}"
-  echo "The pinned lines stand for KNOWN DEFECTS and open decisions (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them. Only the reviewer line above says whether a person read them."
+  echo "Pinned WARN lines: $PINNED (pin dated ${HDRDATE:-unknown}, sha256 ${PINHASH:0:16}...). (this script cannot tell who really read the lines; the reviewer line is printed exactly as written in the pin file) reviewed by (as written in the pin): ${HDRREV:-nobody named}"
+  echo "The pinned lines stand for KNOWN DEFECTS and open decisions (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them. Only the reviewer line above says who, if anyone, read them."
   if cmp -s "$NORM.pin" "$NORM.now"; then
     echo "WARN set equals the pinned set ($(grep -c . "$NORM.now") lines in take-warns.pin): no new and no vanished WARN."
   else

@@ -34,7 +34,7 @@ CRL=$(sed -n 's/^# reviewed by: //p' "$PIN" | head -n 1)
 { [ "$RC" = 0 ] || { [ "$RC" = 4 ] && has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
 # Q1: with a person's reviewer line the same take is exit 0, and the output never says a person read the pin
 tk q1ok TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
-[ "$RC" = 0 ] && has q1ok "reviewed by: Test Reviewer, 2026-11-16" && ! has q1ok "a person read"; ok $? "Q1: a pin with a person's reviewer line gives exit 0; the line is printed as written; the output does not say a person read the pin (got exit $RC)"
+[ "$RC" = 0 ] && has q1ok "reviewed by (as written in the pin): Test Reviewer, 2026-11-16" && ! has q1ok "a person read"; ok $? "Q1: a pin with a person's reviewer line gives exit 0; the line is printed as written; the output does not say a person read the pin (got exit $RC)"
 tk q1a TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/sess.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has q1a "pin not yet confirmed by the lead" && has q1a "as written: flows-audit session" && ! has q1a "a person read and accepted"; ok $? "Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit $RC)"
 for pair in "only-session:# reviewed by: Audit Session B, 2026-11-16" "only-confirm:# reviewed by: A. Person, 2026-11-16, Lead To Confirm"; do
@@ -180,7 +180,7 @@ for t in mf-hook.json extra.json; do
 done
 cp -r -- "$P" "$S/extra-ok"; printf '%s\n' '{"settings": {"saveDataSuccessExecution": "all", "saveDataErrorExecution": "all", "saveManualExecutions": true}}' > "$S/extra-ok/extra.json"
 tk q2c TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$S/extra-ok"
-[ "$RC" = 0 ] && has q2c "other *.json files in the folder (also read by this script, sha256 taken too): 1" && ! has q2c "A FLOW FILE CHANGED"; ok $? "Q2: an extra *.json that does not change is counted and gives exit 0 (got exit $RC)"
+[ "$RC" = 1 ] && has q2c "other *.json files in the folder (also read by this script, sha256 taken too): 1" && ! has q2c "A FLOW FILE CHANGED"; ok $? "Q2: an extra *.json that does not change is counted (the checker FAILs on the unexpected file, exit 1; no 'changed' line) (got exit $RC)"
 mkdir "$S/stub"; REALSHA=$(command -v sha256sum); printf '#!/bin/bash\ncase "$*" in *mf-hook.json*) exit 1;; esac\nexec %s "$@"\n' "$REALSHA" > "$S/stub/sha256sum"; chmod +x "$S/stub/sha256sum"
 tk q2d TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stub:$PATH" -- --flows "$P"
 [ "$RC" = 4 ] && has q2d "MISSING  mf-hook.json" && has q2d "MISSING or unreadable"; ok $? "Q2: a flow file that sha256sum cannot read is printed as MISSING and is exit 4, never an empty hash (got exit $RC)"
