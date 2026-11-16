@@ -45,7 +45,7 @@ M["W-two-OPEN-to-three-2"] = _nth("two OPEN", "three OPEN", 1)
 M["W-wave1-95-to-96-one-place"] = _nth("95 wave 1 rows", "96 wave 1 rows", 0)
 M["W-ready-57-to-56-one-place"] = _nth("57 ready", "56 ready", 0)
 M["W-rows-104-to-105-one-place"] = _nth("104 rows", "105 rows", 0)
-M["W-sheet-version-v33-to-v32-one-place"] = _nth("holds OWNER-SHEET-v33", "holds OWNER-SHEET-v32", 0)
+M["W-sheet-version-v33-to-v32-one-place"] = _nth("holds OWNER-SHEET-v"+re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1), "holds OWNER-SHEET-v0"+re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1), 0)
 M["W-check-time-one-second-off"] = _nth("At 18:29:49 UTC", "At 18:29:50 UTC", 0) if "At 18:29:49 UTC" in rep else _nth("check time", "check time (changed)", 0)
 # card line 3 (retention): edit ONE copy
 _q3 = "The made-up name and e-mail address sent to n8n may stay in n8n's own database; we did not measure for how long."

@@ -29,7 +29,7 @@ reg1 = last("raw-pg-v16-regress-on-v20-run1.txt", r"checks passed")
 mut = last("raw-secdef-mutants-v20.txt", r"checks passed")
 sp = last("raw-spell30-v20.txt", r"^SUMMARY")
 sec = last("raw-secrets-v20-run1.txt", r"^SUMMARY")
-pyt = last("raw-gate4-v20-pytest.txt", r"passed|failed|rc=") if (raw / "raw-gate4-v20-pytest.txt").exists() else "not run"
+pyt = last("raw-gate4-v20-pytest.txt", r"\d+ passed") if (raw / "raw-gate4-v20-pytest.txt").exists() else "not run"
 hs = {p.name: __import__("hashlib").sha256(p.read_bytes()).hexdigest() for p in sorted((ev / "held-sql").glob("*.sql"))}
 
 # ---------------------------------------------------------------- title, intro, headings

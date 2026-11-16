@@ -1,5 +1,4 @@
-total words, seconds, budget (recomputed from the four quoted lines): every copy (3 found) equals the source value 90/36/40 :: []
-PASS c6v TIE card total words 'spoken card holds': every copy (1 found) equals the source value 90 :: []
+ls the source value 90 :: []
 PASS c6v TIE card seconds 'at 150 words a minute': every copy (4 found) equals the source value 36 :: []
 PASS c6v TIE option (b) words (recomputed from its four quoted lines): every copy (2 found) equals the source value 74 :: []
 PASS c6v TIE option (b) title words: every copy (1 found) equals the source value 74 :: []
@@ -27,14 +26,16 @@ PASS class 1: the fixed safe-default sentences each appear at least once in the 
 PASS class 1: the L-LEASE row of section 3 shows 'No' in the Confirmed? column and the G12 hold :: ["| L-LEASE | studio lead (his answers: ORD:151, Q21.2; ORD:186, Q22 (c) of 12:50 UTC = 18:20 IST; ORD:230, L-Q22c, the newest) | Which sentence about the 45-second setting goes on the closing card (line 1) and in the scene 3 caption? 1 and 2 count only if L-POST is answered 'no'. NONE (the default)
 PASS class 1: every line that quotes the G12 approval answer quotes 'I do not approve it' and never 'I approve it' (3 lines) :: 3
 PASS class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57, 95, 99, 104] (history lines excepted) :: []
+PASS class 2: every 'vN-A and vN-B are the newest' names the newest sheet on disk (v34) :: {'34'}
+PASS class 2: no text names evidence-c6u/contact-grep-output.txt or c6u-APPLIED-ROWS.md as this work's file
 PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v34) :: {'34'}
-PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:57:08']) :: {'18:57:08'}
+PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:59:38']) :: {'18:59:38'}
 PASS class 2: 'to N files' is 10 everywhere (found ['10']) and the number of TASKS is twelve everywhere (found ['twelve']) :: (['10'], ['twelve'])
 PASS class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')]) :: ([('five', ' items'), ('two', ' (OWNER ONLY) questions')], 2)
 PASS class 2: no TASK number above twelve (the list has 12 tasks) :: 12
 PASS class 4: every place that quotes a card line (from its first eight words; the shorter option (b) of L-CARDLEN differs earlier and is a different text on purpose) quotes it whole and equal to the line in rows 13 and 14 (4 lines) :: []
 PASS class 1: 'changes no running n8n' appears in the box and in section 1c :: (1, 1)
 PASS class 6: every old text shorter than 40 characters occurs exactly once in the whole file (chained rows excepted) :: []
-SUMMARY: 236 checks, 4 FAILED: c6v N5: the start box is under 2,500 words (c6s: 3,488; 2471 words now) and states its own real count; E-count: the start box states its own word count once and it equals the real count of the box without its heading line (2471); M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2471; m6: every 'second person' says who (someone who did not write the scan)
+SUMMARY: 238 checks, 4 FAILED: c6v N5: the start box is under 2,500 words (c6s: 3,488; 2471 words now) and states its own real count; E-count: the start box states its own word count once and it equals the real count of the box without its heading line (2471); M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2471; m6: every 'second person' says who (someone who did not write the scan)
 
 EXIT CODE 1

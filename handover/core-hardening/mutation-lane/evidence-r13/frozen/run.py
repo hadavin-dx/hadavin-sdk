@@ -412,6 +412,10 @@ def set_child_root(root: pathlib.Path | str | None) -> None:
 def _is_trusted(prog: str, name: str) -> bool:
     if trust_tool(name) is None:
         return False
+    if (
+        prog != _FOUND[name]
+    ):  # the very text tool() returned: `/usr/../usr/bin/git` or a link to git is refused
+        return False
     try:
         return _identity(prog) == _TRUSTED[name]
     except OSError:
@@ -419,8 +423,8 @@ def _is_trusted(prog: str, name: str) -> bool:
 
 
 def child_program_ok(prog: str) -> str | None:
-    """r13: which program this is: "git" or "patch" when the file at `prog` is the very file `tool()` found at start (same real
-    path, same device and inode, so a copy, a script or another folder's `git` is refused whatever it is named), "python" when
+    """r13: which program this is: "git" or "patch" when `prog` is exactly the path text `tool()` returned and that file is still the very file found at
+    start (same real path, device and inode: a copy, a script, a link or another folder's `git` is refused whatever it is named), "python" when
     `prog` is exactly the scratch tree's `.venv/bin/python`; None for anything else (`/bin/sh` and `/usr/bin/env` included)."""
     for name in CHILD_PROGRAMS:
         if _is_trusted(prog, name):
@@ -529,6 +533,10 @@ def check_child_call(args, kwargs: dict) -> None:
         not isinstance(cwd, (str, os.PathLike)) or not os.path.isabs(os.fspath(cwd))
     ):
         raise Refused("program start refused: cwd must be None or an absolute path")
+    if cwd is not None and os.path.realpath(os.fspath(cwd)) != os.fspath(cwd):
+        raise Refused(
+            "program start refused: cwd must be the real path (no symbolic link, `..` or `//` in it)"
+        )
     if "start_new_session" in kwargs and kwargs["start_new_session"] is not True:
         raise Refused("program start refused: start_new_session must be True")
     shape = {"git": _git_shape_ok, "patch": _patch_shape_ok, "python": _python_shape_ok}[kind]
@@ -1800,14 +1808,15 @@ def restore_from_marker(
                 f"{LIMIT_D_NOTE}"
             )
             mode &= 0o777
-        if mode & 0o002:
-            # r12 m5: a plain --restore never writes a file that every user may change, whatever a (possibly forged) marker
-            # says; git never gives that bit. The content is still restored; the text says so
+        if mode & 0o022:
+            # r12 m5, r13: a plain --restore never writes a file that the group or every user may change, whatever a (possibly
+            # forged) marker says; git never gives those bits. The content is still restored; the text says so
             mode_note += (
-                f"; NOTE the marker mode {oct(mode)} was writable by others: --restore never writes that, the file got "
-                f"{oct(mode & ~0o002)}{LIMIT_D_NOTE}"
+                f"; NOTE the marker mode {oct(mode)} was writable by the group or by others: --restore never writes that, "
+                f"the file got {oct(mode & ~0o022)} (a file that really was group-writable must be changed back by hand)"
+                f"{LIMIT_D_NOTE}"
             )
-            mode &= ~0o002
+            mode &= ~0o022
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)
             if (now.st_dev, now.st_ino) != (m["root_dev"], m["root_ino"]):
@@ -1839,7 +1848,7 @@ def restore_from_marker(
 
 
 LIMIT_D_NOTE = (
-    " (limit d: a plain --restore still writes the group-write and execute bits a possibly forged marker names; only "
+    " (limit d: a plain --restore still writes the execute bits and the read bits a possibly forged marker names; only "
     "--restore --sha compares the mode with git's own)"
 )
 
@@ -3003,11 +3012,14 @@ def main():
     )  # every later open of the root must find this very folder
     if not a.restore and not (a.prefix and a.raw and a.sha):
         ap.error("--sha, --prefix and --raw are required")
-    if a.raw and ".." in a.raw.split("/"):
+    if a.raw and (
+        set(a.raw.split("/")) & {"..", "."}
+        or len([x for x in os.path.abspath(a.raw).split("/") if x]) < 2
+    ):
         # r13 m2 (class: a path whose `..` is resolved by the operating system only after a folder on the way was created):
         # a `..` in --raw is refused BEFORE any check or any folder is made
         print(
-            f"REFUSED: --raw {shown(a.raw)} holds a `..` part: give the folder without it",
+            f"REFUSED: --raw {shown(a.raw)} holds a `.` or `..` part, or is the filesystem root or a top-level folder: give a folder at least two levels deep, written without . or ..",
             file=sys.stderr,
         )
         sys.exit(EXIT_REFUSED)

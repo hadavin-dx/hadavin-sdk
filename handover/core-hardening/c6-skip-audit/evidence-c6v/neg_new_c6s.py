@@ -34,11 +34,11 @@ M["S-F3g-item16-after-deletion-only"] = i15("BEFORE anything is deleted", "after
 M["S-F3h-3e-scan-row-old"] = line_sub("| Real-key scan", "after EVERY rehearsal", "after the first rehearsal")
 M["S-F3i-C6-no-second-person"] = rep.replace("(someone who did not write the scan)", "(someone)")
 M["S-F3j-row6-reason-11-to-14"] = mut_row(rep, 6, "why", lambda s: s.replace("items 11 to 16", "items 11 to 14", 1))
-M["S-F4a-newest-line-says-v29"] = rep_once("NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v33", "NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v32")
-M["S-F4b-release-note-v13-named"] = rep_once("NEWEST RELEASE NOTE NAMED: v17", "NEWEST RELEASE NOTE NAMED: v16")
+M["S-F4a-newest-line-says-v29"] = rep_once("NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v"+re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1), "NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v27")
+M["S-F4b-release-note-v13-named"] = rep_once("NEWEST RELEASE NOTE NAMED: v"+re.search(r"NEWEST RELEASE NOTE NAMED: v(\d+)", rep).group(1), "NEWEST RELEASE NOTE NAMED: v11")
 M["S-F4c-LRN14-cite-gone-from-box"] = rep_once("LRN14:33", "LRN:33")
 M["S-F4d-own-reading-label-gone"] = rep_once("that G12 is about 'processed once' beside a crash scene is this report's own reading", "G12 is about processed once")
-M["S-F4e-v30-file-unnamed"] = rep_once("OWNER-SHEET-v33-SOURCE.md (the template", "OWNER-SHEET-v33-X.md (the template")
+M["S-F4e-v30-file-unnamed"] = rep_once("OWNER-SHEET-v%s-SOURCE.md (the template" % re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1), "OWNER-SHEET-v%s-X.md (the template" % re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1))
 # environment copies of the steps-edits folder: a higher version, a newer release note, a sheet written after the check time
 SNAP = os.environ.get("C6U_SNAPSHOT") or (D + "../steps-edits")
 def env_variant(name, fn):

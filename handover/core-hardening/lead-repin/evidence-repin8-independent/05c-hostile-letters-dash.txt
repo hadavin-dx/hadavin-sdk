@@ -71,3 +71,17 @@ php-array                    exit=0 hidden vlen=24 outlen=21
 python-dict                  exit=0 hidden vlen=24 outlen=23
 python-kw                    exit=0 hidden vlen=24 outlen=27
 go-struct                    exit=0 hidden vlen=24 outlen=20
+sql-ident                    exit=0 hidden vlen=24 outlen=40
+sql-pwd                      exit=0 hidden vlen=24 outlen=39
+cli-redis-auth               exit=0 hidden vlen=24 outlen=27
+log-kv                       exit=0 hidden vlen=24 outlen=41
+log-space-kv                 exit=0 SHOWN vlen=24 outlen=43
+basic-b64                    exit=0 hidden vlen=24 outlen=24
+tab-sep                      exit=0 hidden vlen=24 outlen=18
+crlf                         exit=0 hidden vlen=24 outlen=18
+tilde-url                    exit=0 hidden vlen=24 outlen=36
+email                        exit=0 hidden vlen=5 outlen=23
+two-on-line                  exit=0 hidden vlen=24 outlen=18
+trailing-json-comma          exit=0 hidden vlen=24 outlen=20
+keyword-in-value-after       exit=0 hidden vlen=24 outlen=25
+TOTAL 86 shown 6 partial 0 nonzero-exit 0

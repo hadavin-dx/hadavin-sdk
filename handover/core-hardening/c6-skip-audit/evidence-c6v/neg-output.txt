@@ -18,7 +18,7 @@ N2-row11-says-103-words                          exit 1  OK  failed checks: 1 (n
 N3-row-N-reference-in-new-text                   exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL no 'row N' reference in any new text :: [(21, 'row 13')]
 N4-accepted-exit-in-row8                         exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 104 rows, no
 N5-5a-page-row-missing                           exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL 5a lists exactly the 37 viewer-visible run-sheet and page rows :: (36, 37)
-N6-newest-sheet-claim-stale-v27                  exit 0  WRONG  failed checks: 0 (new vs unchanged: 0); first new: none
+N6-newest-sheet-claim-stale-v27                  exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL class 2: every 'vN-A and vN-B are the newest' names the newest sheet on disk (v34) :: {'27'}
 N7-row90-broken-sentence-and-third-place         exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: aba
 N8-row6-claims-deletion-erases                   exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 6 item 16 does not claim that deleting erases the data
 N9-row8-latest-start-missing                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP
@@ -47,7 +47,7 @@ C14-item15-without-real-value                    exit 1  OK  failed checks: 1 (n
 C15-L-POST-gone-from-box                         exit 1  OK  failed checks: 5 (new vs unchanged: 5); first new: FAIL table 3b equals the recount (13 lines) :: (13, 14)
 C16-1051-line-without-UNVERIFIED                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every line that names plan line 1051 says it is UNVERIFIED :: [885]
 C17-ready-used-before-defined-in-box-intro       exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2479 words now) and states its own real count :: 
-C18-check-time-not-in-report                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (107 pairs) :: [('10', '00', '00', '27'), ('10', '00', '00',
+C18-check-time-not-in-report                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (107 pairs) :: [('10', '00', '00', '29'), ('10', '00', '00',
 C19-row11-total-wrong                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
 C20-add-16-wording-back                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL answer 2 replaces answer 1: net +15 words and no 'add 16' wording
 C21-tied-column-lacks-L-POST                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL section 3 'rows tied to it' column equals the recount
@@ -73,8 +73,8 @@ R11-source-copy-statement-gone                   exit 1  OK  failed checks: 4 (n
 R12-L-SAVEERR-default-yes                        exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL M-E: L-SAVEERR is in the box and in section 3 with default No
 R13-item12-made-up-domain-check-gone             exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 
 R14-IST-missing-next-to-22-10-example            exit 1  OK  failed checks: 6 (new vs unchanged: 6); first new: FAIL every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: [(9, 'lead, 2026-11-16T19:20
-O-REPORT-c6q-itself-must-fail                    exit 1  OK  failed checks: 166 (new vs unchanged: 166); first new: FAIL F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (4
-O-REPORT-c6r-itself-must-fail                    exit 1  OK  failed checks: 154 (new vs unchanged: 154); first new: FAIL recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 
+O-REPORT-c6q-itself-must-fail                    exit 1  OK  failed checks: 167 (new vs unchanged: 167); first new: FAIL F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (4
+O-REPORT-c6r-itself-must-fail                    exit 1  OK  failed checks: 155 (new vs unchanged: 155); first new: FAIL recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 
 S-F1a-C4a-says-failed-all                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes
 S-F1b-C11-no-override                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none
 S-F1c-C4-row-list-old                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68)
@@ -212,8 +212,8 @@ U-L-SHEET-v32-time-missing                       exit 1  OK  failed checks: 1 (n
 U-steps-5-to-9-back                              exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6v naive: no text says 'steps 5 to 9' for the list TASKS (5) to (9) (the old words appear only quoted) :
 U-example-time-before-check                      exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL box has one answer line with seconds, three free names, the exception form and L-SHEET apart
 U-row96-old-text-not-once                        exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL C-1 old text occurs once on its stated line (104 rows) :: [96]
-U-stale-evidence-c6t-name                        exit 0  WRONG  failed checks: 0 (new vs unchanged: 0); first new: none
-U-applied-rows-c6t-name                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-files: every file name in the start box is a real file (or the one this work writes, c6v-APPLIED-ROWS.m
+U-stale-evidence-c6t-name                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL class 2: no text names evidence-c6u/contact-grep-output.txt or c6u-APPLIED-ROWS.md as this work's file
+U-applied-rows-c6t-name                          exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL E-files: every file name in the start box is a real file (or the one this work writes, c6v-APPLIED-ROWS.m
 U-evidence-file-missing                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6v names: every evidence-c6v file the report names exists in this folder (neg-output.txt is written afte
 W-G12-gate-flipped-copy0                         exit 1  OK  failed checks: 6 (new vs unchanged: 6); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2476 words now) and states its own real count :: 
 W-G12-gate-flipped-copy1                         exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL class 1: every safe-default phrase, every UNVERIFIED/VERIFIED/CHECKED count and every 'Confirmed?' cell e
@@ -265,4 +265,4 @@ PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule 
 PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 37: AssertionError NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v33
 PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 38: AssertionError NEWEST RELEASE NOTE NAMED: v17
 PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 41: AssertionError OWNER-SHEET-v33-SOURCE.md (the template
-SUMMARY: 263 copies, 3 wrong
+SUMMARY: 263 copies, 1 wrong
