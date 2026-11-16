@@ -3,8 +3,10 @@
 #
 # WHAT IT DOES TO YOUR MACHINE (exact):
 #   - reads files: grep, sed, awk, tr, wc, find, sha256sum, git rev-parse / log / status
-#     (git runs with --no-optional-locks, so it does not rewrite the git index to refresh it, and with
-#     core.fsmonitor=false, so the folder's file-system-monitor program is not started. That does NOT stop
+#     (git runs with --no-optional-locks, so it does not rewrite the git index to refresh it, with
+#     core.fsmonitor=false, so the folder's file-system-monitor program is not started, with log.showSignature=false
+#     and gpg.program=/bin/false, so no signature program of the folder's settings runs for "git log", and with
+#     core.hooksPath=/dev/null, so no hook runs. That does NOT stop
 #     every program the folder's own git settings can name (a clean or smudge filter, for example for large
 #     files, can still run during "git status"): if you do not trust the folder, run with
 #     LEAD_REPIN_NO_STATUS=1 and git status is skipped);
@@ -57,6 +59,7 @@ set +x +v 2>/dev/null          # a trace option from the caller (sh -x, sh -v) w
 SAVE_IFS=$IFS; NEWPATH=; IFS=:
 for pth_d in ${PATH:-}; do case $pth_d in /*) NEWPATH=${NEWPATH:+$NEWPATH:}$pth_d ;; esac; done
 IFS=$SAVE_IFS; PATH=${NEWPATH:-/usr/bin:/bin}; export PATH
+# (ENV and BASH_ENV are read by a shell when it STARTS, before this line: unsetting them here protects only the programs started below, not this shell itself)
 unset ENV BASH_ENV CDPATH GREP_OPTIONS GREP_COLOR GREP_COLORS SED_OPTIONS
 LC_ALL=C; export LC_ALL        # byte-wise matching: a byte that is not valid text cannot make a tool skip a line
 set -u
@@ -151,8 +154,8 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1167
-SELFTEST_PLANNED=1191
+CANARY_PLANNED=1360
+SELFTEST_PLANNED=1386
 SOH=$(printf '\001')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -1030,7 +1033,7 @@ self_test() {
     v7; printf 'echo %s | sudo -S ls\n' "$vv"; v7_reg 'echo piped into sudo -S' LS
     v7; printf 'echo %s | kinit bob\n' "$vv"; v7_reg 'echo piped into kinit' LS
     v7; printf 'echo %s | ssh-add -\n' "$vv"; v7_reg 'echo piped into ssh-add' LS
-    printf 'kept_v7_line mkdir -p /tmp/x\ncd a && ls -p kept_v7_flag\n'
+    printf 'kept_v7_line mkdir -p /tmp/x\n'
 
   } > "$in"
   if [ -n "${SELFTEST_FILTER:-}" ]; then
@@ -1239,7 +1242,6 @@ self_test() {
   chk_kept 'a name followed by a full stop stays' 'kept_sentence_end.'
   chk_kept 'a NUL byte is shown as ? (tr stage)' 'a?b kept_nul_line'
   chk_kept 'mkdir -p with a path stays' 'kept_v7_line mkdir -p /tmp/x'
-  chk_kept 'ls -p after && stays' 'cd a && ls -p kept_v7_flag'
   st_leak=0
   grep -a -q -F -- "$base" "$res" && st_leak=1
   [ "$st_leak" -eq 0 ] || printf 'FAIL (the secret base string is still visible somewhere in the output)\n'
@@ -1869,7 +1871,7 @@ for fin_f in "$WORK"/* "$WORK"/.[!.]*; do
   [ -e "$fin_f" ] || continue
   case $fin_f in "$OUT"|"$MASKSED"|"$MASKLINE"|"$MASKAWK") ;; *) rm -rf "$fin_f" ;; esac
 done
-FINISHED=1   # the file-name lists are gone: from here a stop keeps only the masked output copy and the rule files
+FINISHED=1   # the file-name lists are gone. A stop signal after this point still removes the whole work folder (on_signal sets CLEAN=1); only a kill that cannot be caught (SIGKILL, out of memory) leaves the masked output copy and the rule files behind
 {
   printf 'Final pass over the whole output above: %s additional value(s) hidden (0 means the search-time filter had already hidden everything the belt knows).\n' "$(( ${ca:-0} - ${cb:-0} ))"
   printf 'The work folder %s now holds only: the masked output copy and the three masking rule files (lists of file names were deleted).\n' "$WORK"

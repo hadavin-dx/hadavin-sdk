@@ -14,7 +14,7 @@ def ban(code, pat, which=SH, flags=0):
 need('C26', 'the start line is exactly `python3 -I scripts/run_real_check_n8n.py --take ` and one file name')            # S Major 1 shape check
 need('C26', 'a path starts with `/home/`'); need('C26', 'a backtick')
 need('C27', 'a missed 7.11 can mean spending after the deadline', (('B', B),))                                         # S Major 2 B truthful
-need('C27', '7.11, always, by ' + F['okb'], (('B', B),))
+need('C27', '7.11, always, by the older-key time of the message', (('B', B),))
 need('C27', 'Until then the older key stays valid and can spend', (('B', B),))
 need('C28', 'W9 the text of the older key appeared on your screen')                                                   # S Major 3 older key exposure trigger
 need('C28', 'exactly the rows you wrote minus K'); ban('C28', r'N minus K')
@@ -30,7 +30,7 @@ need('C37', 'send the numbers message for run <run name>')  # T B1 + other chann
 need('C38', 'the receiver Gmail (gets the demo mails)'); need('C38', 'the sender Gmail (sends them)')                                                      # T minor roles
 need('C39', 'People: film person <name>, editor <name>, post checker <name>')                                           # T B1 who
 need('C39', 'Model settings file: <model settings file>'); need('C39', 'Posting place: <place>')
-need('C40', 'A run whose key was alive ends after the card: no word resumes it.')                                      # T FREEZE resume
+need('C40', 'a run whose key was alive ends after the card: no word resumes it.')                                      # T FREEZE resume
 need('C41', 'the Windows page shows those values')                                                       # T 5.3 pass test
 need('C42', '**tolerated**'); need('C42', 'A difference in a number, name, count, account, time or key state is never tolerated.')  # T UNVERIFIED rule
 need('C43', 'Send exactly: ')                                                                                           # card step 5
@@ -58,7 +58,7 @@ for n, t in SH:                                                                 
         if line.count('`') % 2 and not line.startswith('```'): fail('C51', '%s line %d has an odd number of backticks' % (n, i))
 need('C52', '3. For each of your keys: press the cancel button; if a box asks, press the confirmation word.')           # Q10
 for n, t in SH:                                                                                                         # Q11: card gates (a) to (i) all present, in order, (f) text exact
-    i = t.find('**When (any one'); j = t.find('**What you may cancel'); w = t[i:j]; w = w[w.find('):**') + 4:]
+    i = t.find('**Danger signs'); j = t.find('**Not danger signs'); w = t[i:j]; w = w[w.find('):**') + 4:]
     pos = [w.find('W%d ' % c) for c in range(1, 10)]
     if min(pos) < 0 or pos != sorted(pos): fail('C53', n + ' card triggers W1 to W9 missing or out of order')
 need('C53', 'W6 the test terminal shows a shell prompt before you typed `end`')
@@ -80,7 +80,7 @@ for m in re.finditer(r'(?<![\d.])13\.\d\d\b', NOTE + OPEN):
 need('C59', 'Exit codes accepted: 0 only')                                                                              # Q22
 NUM = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7}
 for n, t in SH:                                                                                                         # Q24: R8 count equals the listed words
-    m = re.search(r'Only (\w+) words in a lead message start or end a step: (.*?)\. No message changes', t, re.S)
+    m = re.search(r'Only (\w+) words in a lead message start or end a step \(besides[^)]*\): (.*?)\. No message changes', t, re.S)
     if not m or m[1] not in NUM: fail('C60', n + ' R8 word count sentence not found'); continue
     k = len(re.findall(r'"[^"]+"', m[2]))
     if NUM[m[1]] != k: fail('C60', '%s R8 says %s words but lists %d' % (n, m[1], k))
@@ -114,16 +114,16 @@ need('C82', 'has no `..` and no part starting with `.`'); need('C82', 'the key f
 need('C83', 'addresses `take-<run name>-a@example.com`, `-b@` and `-c@` or `prep-<run name>@example.com`')
 need('C84', 'type `rm -- "<key file>"`'); need('C84', 'then `ls -l "<key file>"` in the read terminal must say no such file')
 need('C85', '"restarted" (6.6)'); need('C85', '"restarted" came after 6.6')
-need('C86', '7.11, always, by 16:00 UTC = 21:30 IST', (('B', B),)); need('C86', 'Not done by 16:00 UTC = 21:30 IST', (('B', B),))
+need('C86', '7.11, always, by the older-key time of the message', (('B', B),)); need('C86', 'Not done by the older-key time', (('B', B),))
 if '16:00 UTC' in A: fail('C86', 'A holds the B-only time')
 need('C87', 'exactly the rows you wrote minus K'); need('C87', 'rows now, own key ______ | rows now, older key ______')
-need('C88', 'This cancel cannot be undone.'); need('C88', '**Older key (cannot be undone).**', (('B', B),))
+need('C88', 'this cancel cannot be undone'); need('C88', '**Older key point (cannot be undone;', (('B', B),))
 need('C89', 'only at 6.7, after 6.6 passed (new key saved, size checked)', (('A', A),))                                    # stranger blocker: older key cancel last, after the key is saved
 s6 = A.find('## 6. The model key'); s7 = A.find('## 7. The run')
 i6 = A.find('\n7. **Last checks, then the older key.**', s6, s7); i66 = A.find('\n6. ', s6, s7)
 if i6 < 0 or i66 < 0 or i66 > i6: fail('C89', 'A: the older-key step is not after step 6.6 inside section 6')
-need('C90', '**Filled after you press create of the run key (6.3), not before:**'); need('C90', '**Filled during the card, just before each cancel (step 2):**')
-need('C91', '**FREEZE** (a key alive: the card first)')
+need('C90', '**Filled after you press create (6.3):**'); need('C90', '**Filled in step 2:**')
+need('C91', 'FREEZE is not a cancel: a live key is cancelled only by a danger sign')
 need('C92', 'the **backup person** (a human you can call'); need('C92', 'none named: no run')
 need('C93', 'the only valid answer is their own written words "matches the sentences"')
 need('C94', 'A differing printed count: send the counts, do not post, FREEZE.')

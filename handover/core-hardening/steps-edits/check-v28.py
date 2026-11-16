@@ -94,7 +94,7 @@ for n, t in (('A', A), ('B', B)):
     if '[[' in t or ']]' in t or '{{' in t: fail('C08', n + ' has a marker')
 if 'I will cancel the older key myself' not in A or 'stays valid during the run and I understand' in A: fail('C08', 'A yes sentence wrong')
 if 'stays valid during the run and I understand' not in B or 'I will cancel the older key myself' in B: fail('C08', 'B yes sentence wrong')
-if 'cancel the older key <its name>' not in B or '7.11, always, by ' + F['okb'] not in B: fail('C08', 'B older key route missing')
+if 'cancel the older key <its name>' not in B or '7.11, always, by the older-key time of the message' not in B: fail('C08', 'B older key route missing')
 # C09 the cancel rule lives only on the card
 for n, t in (('A', A), ('B', B)):
     i = t.find('### THE CARD'); j = t.find('### The rules')
@@ -104,8 +104,8 @@ for n, t in (('A', A), ('B', B)):
         if re.search(p, out): fail('C09', '%s cancel rule text %r outside the card' % (n, p))
 # C10 words used in the card are defined inside the card first
 for n, t in (('A', A), ('B', B)):
-    i = t.find('**Words on this card'); j = t.find('**Blanks, filled before')
-    k = t.find('**When (any one')
+    i = t.find('**Words on this card'); j = t.find('### The rules')
+    k = t.find('**Danger signs')
     if i < 0 or j < 0 or k < 0: fail('C10', n + ' card parts'); continue
     for m in re.finditer(r'\*\*([A-Z][A-Za-z -]+)\*\* =', t[i:j]):
         term = m[1].lower(); pos = t.lower().find(term, i)
@@ -147,9 +147,9 @@ for n, t in (('A', A), ('B', B)):
     if bad: fail('C13', '%s yes pattern has characters %r' % (n, bad))
     if 'Deadline 2026-11-23' not in y and 'Deadline' not in y: fail('C13', n + ' yes lacks deadline')
 # C14 adversarial and stranger invariants
-INV = [('C14a', 'the key\'s own one-time display at 6.3 and the paste at 6.4'), ('C14b', 'switch it OFF yourself at once'), 
+INV = [('C14a', 'the key\'s own one-time display at 5.9 and 6.3 and the paste at 6.4'), ('C14b', 'switch it OFF yourself at once'), 
        ('C14d', 'Text between backticks is typed without the backticks'), ('C14e', 'only if the window\'s last line is `paste key, Enter:`'),
-       ('C14f', '"READ" and "TEST"'), ('C14g', 'A **run name** is 4 to 12 lowercase letters and digits'), ('C14h', 'reverses `end` and the card'), ('C14i', 'minutes of the time `date -u` shows'),
+       ('C14f', '"READ" and "TEST"'), ('C14g', 'A **run name** is 4 to 12 lowercase letters and digits'), ('C14h', 'reverses `end` and the card'), ('C14i', 'counted from the time `date -u` shows when the notice appeared'),
        ('C14j', 'if 7.4 never happened, send "none"'), ('C14k', 'SAMPLE (made-up values'), ('C14l', 'no key was made'), ('C14m', 'never use rotate'),
        ('C14n', 'set -C; umask 077; read -rs'), ('C14o', 'last-resort step <step>'), ('C14p', 'one line only'), ('C14q', 'weekday, month, day and year must equal the run day'),
        ('C14r', 'balance and auto-reload equal your yes'), ('C14s', 'Never "Select all", never empty Trash'.replace('Never "Select all", never empty Trash', 'Never "Select all", never empty Trash')),
@@ -208,7 +208,7 @@ for n, t in TEXTS.items():
     for m in re.finditer(r'\b14\.\d+\b', t):
         if m[0] != '14.33': fail('C17', '%s: figure %s (the only figure is 14.33)' % (n, m[0]))
 # C18 independent time literals (not read from facts-v28.py)
-LIT = {'ek': '11:00 UTC = 16:30 IST', 'ls': '11:30 UTC = 17:00 IST', 'lf': '12:00 UTC = 17:30 IST', 'cb': '12:10 UTC = 17:40 IST', 'sum': '30', 'y': '5', 'rl': '15', 'fp': '10', 'mg': '10'}
+LIT = {'ek': '10:30 UTC = 16:00 IST', 'ls': '11:30 UTC = 17:00 IST', 'lf': '12:00 UTC = 17:30 IST', 'cb': '12:10 UTC = 17:40 IST', 'sum': '30', 'y': '5', 'rl': '15', 'fp': '10', 'mg': '10'}
 for k, v in LIT.items():
     if F[k] != v: fail('C18', 'fact %s is %r, expected %r' % (k, F[k], v))
 if int(F['y']) + int(F['rl']) + int(F['fp']) != int(F['sum']): fail('C18', 'Y + RL + FP is not the sum')
@@ -268,7 +268,7 @@ for n in ('note', 'open'):
 # C23 fixed sentences that must stay (each one is a rule the reviews asked for)
 KEEP = ['**STOP RULE.**', 'A key alive: the card first', 'The balance is at least the expected total.', 'If two rules disagree: the card first, then R1, then R10', 'Never "Select all", never empty Trash',
         'letters, digits, single spaces and `. _ / - : = @ + , \'` only', 'A submitted 2 times with the same person id, 1 contact, 1 mail; B submitted 10 times, 1 contact, 1 mail',
-        'paper notes "READ" and "TEST"', 'No word of the lead resumes a run whose key was alive', 'a wait never delays the card'.capitalize()]
+        'paper notes "READ" and "TEST"', 'No word of the lead resumes a run whose key was alive', 'A wait is a pause: never a card or FREEZE, and it never delays the card']
 for n, t in (('A', A), ('B', B)):
     for s_ in KEEP:
         if s_ not in t: fail('C23', '%s lacks the fixed sentence %r' % (n, s_))
