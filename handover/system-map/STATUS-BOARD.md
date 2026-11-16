@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:18:55Z (14:49 IST)
+UPDATED_UTC: 2026-11-16T09:22:06Z (14:52 IST)
 SESSION: system-map
 ORDER: 016 (refill and capacity; 015 queue mode inside it)
 STATE: WORKING
@@ -8,9 +8,9 @@ ITEMS_OPEN: 5
 PERCENT: 82
 AGENTS_RUNNING: 3
 INTERRUPTED: none
-NEXT: collect round 2 of OWNER-VIEW, M8 fact review and R460 of tools; run each core-hardening patch on a scratch copy (A-02 and B-01 running, C-01, D2-01, D2-11-12 next); apply L-01 to L-06 into OWNER-VIEW decisions
-CAPACITY: cores about 1.5 of 4 busy (load 1.2, target 70 to 85 percent not reached: three heavy test runs just started), memory 1 of 15 GB, disk free 28 GB, 3 light + 3 heavy agents (09:19 UTC / 14:49 IST)
-PUSHED_UTC: 2026-11-16T09:18:55Z
+NEXT: collect consistency check, section 7 fact check and zoom-out review; patches A-02 and B-01 and baseline run 2 results; start C-01, D2-01, D2-11-12; fix write_outputs.py (R460 B1, B3)
+CAPACITY: cores about 2.6 of 4 busy (load 2.56; 65 percent, close to the 70 percent target), memory 1 of 15 GB, disk free 28 GB, 3 light + 3 heavy agents (09:22 UTC / 14:52 IST)
+PUSHED_UTC: 2026-11-16T09:22:06Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -28,13 +28,13 @@ PUSHED_UTC: 2026-11-16T09:18:55Z
 ## AGENTS
 | id | role | model | what it does | started UTC / IST | expected end UTC / IST | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a1847813 | egm-comprehension | sonnet | OWNER-VIEW round 2 naive reader | 09:17 / 14:47 | 09:27 / 14:57 | 20 | running | none |
-| aace80d6 | egm-codebase-details | sonnet | fact check of ARCHIVE-CUT-LIST.md | 09:17 / 14:47 | 09:27 / 14:57 | 20 | running | none |
-| a55c4619 | egm-codebase-details | sonnet | R460 audit of tools/ and tests/ | 09:17 / 14:47 | 09:27 / 14:57 | 20 | running | none |
-| (shell) | heavy test | none | baseline pytest of hadavin-sdk b4cce5b, scratch copy, /tmp/sm-heavy-baseline.log | 09:13 / 14:43 | 09:40 / 15:10 | 85 | running | in progress |
-| (shell) | heavy test | none | patch A-02 applied to a scratch copy, pytest, /tmp/sm-heavy-A-02.pytest.log | 09:17 / 14:47 | 09:45 / 15:15 | 10 | running | in progress |
-| (shell) | heavy test | none | patch B-01 applied to a scratch copy, pytest, /tmp/sm-heavy-B-01.pytest.log | 09:19 / 14:49 | 09:47 / 15:17 | 5 | running | in progress |
-| a2844435, a01cb06b, a1bd396a, ad308a60, a8dc4694, a23712892, afd7b543 | reviewers | sonnet | M6, crosscheck round 2, M8, owner view round 3, drift readiness, least-privilege lens, wording | | | 100 | done | reports saved in work/ and applied |
+| a62acbb8 | egm-codebase-details | sonnet | SWEEP vs ONE-PLACE-TABLE consistency | 09:22 / 14:52 | 09:32 / 15:02 | 10 | running | none |
+| aa3a5218 | egm-codebase-details | sonnet | fact check of drift section 7 and owner view decision 6a | 09:22 / 14:52 | 09:32 / 15:02 | 10 | running | none |
+| afc46c71 | egm-zoom-out | sonnet | is the document set the right shape for the take | 09:22 / 14:52 | 09:32 / 15:02 | 10 | running | none |
+| (shell) | heavy test | none | baseline run 2 (no -x), /tmp/sm-heavy-baseline2.log | 09:19 / 14:49 | 09:35 / 15:05 | 20 | running | in progress |
+| (shell) | heavy test | none | patch A-02 on scratch copy, /tmp/sm-heavy-A-02.pytest.log | 09:17 / 14:47 | 09:40 / 15:10 | 85 | running | in progress |
+| (shell) | heavy test | none | patch B-01 on scratch copy, /tmp/sm-heavy-B-01.pytest.log | 09:19 / 14:49 | 09:45 / 15:15 | 60 | running | in progress |
+| a1847813, aace80d6, a55c4619, ad308a60, a8dc4694, a1bd396a, a23712892, afd7b543 | reviewers | sonnet | owner view round 2 and 3, cut list fact check, R460 tools, drift readiness, M8, lens, wording | | | 100 | done | reports saved in work/, fixes applied |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

@@ -1,5 +1,14 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## 09:22 UTC / 14:52 IST - queue items M3, M5, M6, M8 reviewed and fixed; own tools audited (ORDER 015/016)
+Failed, not checked or open (first):
+- NOT run: the five changed flows in n8n (no Docker here). Verdict in OWNER-VIEW.md stays "Wed 18 Nov NOT yet confirmed".
+- Heavy lane: baseline pytest of b4cce5b on a scratch copy (not a git repository): run 1 stopped at the first failure (-x): 8400 passed, 1 failed, 443 skipped; the failing test is test_no_vendor_brand_string_is_tracked, caused by files under handover/ copied into the scratch (a vendor word, a non-UTF-8 file); NOT confirmed in a real clone. Run 2 without -x, and patches A-02 and B-01 on scratch copies, are still running; C-01, D2-01, D2-11-12 not started (work/evidence-heavy-baseline-1.md).
+- Round caps: OWNER-VIEW had 3 rounds (applied Blockers and Majors; items 9 of round 2 partly: lines 25 to 27 are now labelled "for the lead"); ARCHIVE-CUT-LIST had 1 round (applied, round 2 not run); drift/REPORT.md section 7 and decision 6a are being fact-checked.
+- R460 audit of my own tools found 4 Blockers and 6 Majors (work/review-r460-tools.md). FIXED and tested: check_citations (zero citations fails, path confinement), scan_outputs (all text files, sk-ant keys, github_pat_, JWT, Bearer, reserved example domains; the tools folder skipped by exact path), merge.py (reads every lane file, reports dropped rows, exit 1). 10 new tests fail on the old code and pass now (32 tests OK). STILL OPEN: write_outputs.py overwrites SWEEP.md and ONE-PLACE-TABLE.md without a hand-kept path and has verdicts keyed to row numbers (R460 B1, B3, M4 to M6); the scan reports one real defect: ONE-PLACE job OTHER has no owner (Decision D, studio head).
+Done (evidence in files): M6 findings applied to SWEEP.md (Decisions A to E have owner, who does it, decide-by placeholder, words); OWNER-VIEW.md rewritten after naive-reader rounds (verdict, one decision today by 12:29 UTC / 17:59 IST as a suggestion, decision 6a: the lead can technically read secrets); drift/REPORT.md wording fixed, 7 open Blockers listed, new section 7 (least-privilege gaps L-01 to L-06, readiness of the fix list); ARCHIVE-CUT-LIST.md written and fact-checked (13 rows, archive never delete, rows A and C corrected: no round is declared final).
+Questions for the lead: see STATUS-BOARD.md "LEAD ACTIONS NEEDED".
+
 ## FINAL 08:30 UTC / 14:00 IST - ORDER 007 (backlog items 1-6) done
 Failed, not checked or open (first):
 - Round 2 fixes (about 17 edits from R3 and R4) were NOT re-reviewed: the round cap is 2. Own checks after them: citations 1020 of 1020 FOUND; FD rows 322 = 18 Blocker, 218 Major, 86 Nit (matches the Counts table, dedup 315); 0 hits of the old counter gate text.
