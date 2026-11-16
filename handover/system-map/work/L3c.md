@@ -1,14 +1,12 @@
 Older notes: work/L3c-history.md and work/L3c-history-2.md (ignore). Cite finding ids (FD-nnn), not line numbers.
 
 ## Status 16 Nov 2026 (the only status block)
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 - Coverage: 158 evidence files listed; 92 READ, 66 NOT-READ (48 of those only had header counts taken by search; they stay NOT-READ). A NOT-READ file is never "nothing found".
 - Severity: the lane's own labels. Five findings (FD-001, FD-009, FD-010, FD-014, FD-032) depend on terms nobody has defined (below), so their severity cells read Unrated, not Major. No one has confirmed any severity.
 - Claim types (the "type" column): inconsistent = two files disagree; unverified = not checked; ops = an operating problem; idle, duplicate and security are also used and their meanings are NOT RECORDED. NOT VISIBLE = the lane could not see it.
 - Owner of the open terms in the Terms block: the studio lead (the Claude session doing the technical steps); due Tue 17 Nov 12:00 UTC / 17:30 IST (proposal of the system-map session).
 
 ## Terms (defined once; "UNVERIFIED" = the lane did not check it)
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 - take = the filmed run of the lead-intake demo on made-up data. lane = one read-only audit slice. job keys = STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (what a store or job is for).
 - desk = a retired earlier demo front end (UNVERIFIED; this lane's cells "desk (retired from take)" rest on it). FD-009 and FD-030 are conditional on that premise. DECISION line 15 = line 15 of DECISION-one-store.md (root copy 20 lines or inputs/ copy 28 lines; source unknown); its sentence was not quoted by this lane, so every row citing it is a premise UNVERIFIED.
 - NOT RECORDED (ask the studio lead): main, head, 56 F, E marks, stage.journal, egm, rung table, code-last rule, stack builder, "fix-N rM" (probably patch number N, review round M).

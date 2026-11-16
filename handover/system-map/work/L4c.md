@@ -2,7 +2,6 @@ Older notes: work/L4c-history.md and work/L4c-history-2.md (ignore). Cite findin
 Key (added 16 Nov): finding id prefixes S-, X-, J-, K-, D-, T-, F- label the kind of row and FD- is a finding; the meaning of each letter is NOT RECORDED, so read an id as a name only. The findings are in the table further down this file (search the heading Findings). The one-store decision copies are handover/system-map/DECISION-one-store.md (20 lines) and handover/system-map/inputs/DECISION-one-store.md (28 lines). Mode A and the Stores section: meaning NOT RECORDED. Questions in this file go to the lead session, which passes studio questions to the studio lead.
 
 ## Status 16 Nov 2026 (the only status block)
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 - Counts: 26 findings (L4c-FD-001 to FD-026). Blocker outside the quarantine: FD-002 only. FD-001 and FD-003 are also security Blockers but are QUARANTINED (see below), so nothing is done with them.
 - Quarantined rows (do not act on them; these rows touch the earlier real-run folder, which this lane must not reopen): S-003 to S-006, X-001 to X-003, J-003, J-004, J-008, K-001 to K-004, D-002, T-001, T-004, F-001, FD-001, FD-003, FD-007, FD-008, FD-019, FD-020, FD-022 to FD-024. The list came from a reader and is UNVERIFIED.
 - Who rules: only the studio head (the human who runs the studio) rules on the real-run quarantine; no date is set. Until then FD-001 and FD-003 have owner studio head and next step "rule on real-run".
@@ -10,7 +9,6 @@ Key (added 16 Nov): finding id prefixes S-, X-, J-, K-, D-, T-, F- label the kin
 - Coverage: 38 of 137 files READ; 99 NOT-READ (list in Checkpoint).
 
 ## Terms
-> REMINDER (full KEY at page top): job keys COUNTER counts, FILTER refuses, RETRY repeats, LOG records, STORE holds, NOTICE alerts, OTHER none; UNVERIFIED = nobody checked; NOT VISIBLE = file not in this checkout; NOT FOUND = searched, absent; take = demo run planned 23 Nov 2026; DECISION line N = line N of DECISION-one-store.md (text not recorded).
 take = the filmed run of the lead-intake demo on made-up data. desk = the earlier lead-handling demo product; "retired from the take" = the studio lead's decision that its store is not used in the take, resting on lines 7 and 15 of DECISION-one-store.md (root copy 20 lines or inputs/ copy 28 lines; source unknown), which this lane never opened: UNVERIFIED, so rows FD-013 and FD-014 carry "premise unverified". lane = one read-only audit slice. job key = a label for what a store or job is for: LOG, RETRY, COUNTER, STORE, NOTICE, FILTER, OTHER. studio lead = the Claude session doing the technical steps. PLAN table = the severity table of PLAN-002.md. Mode A = NOT RECORDED.
 
 # Lane L4c
