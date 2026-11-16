@@ -1,3 +1,17 @@
+# REPORT block 2026-11-16 10:35Z (core-hardening; newest on top; failures first)
+## FAILED / NOT RUN / UNVERIFIED (read first)
+- Nothing has been run with n8n, Postgres, HubSpot, mail, PowerShell, shellcheck or WSL. The narrow claim ("a lead sent twice with the same id inside the lease is processed once") rests on reading mf-form.json:97 (INSERT ... ON CONFLICT DO NOTHING) only. First real evidence will be the lead's rehearsal. Glue files fill_flows.py and drive.py are not on this branch.
+- C4b owner sheet: v9 NOT SAFE; v10 reviewed: security 11 majors (older model key may still be live = conditional blocker; backstop unit undefined; program-deletes-contacts contradicted by scope sheet F-01; decision 5 wording leaks; secret display section; step 0 key-like file left), naive 3 blockers and 12 majors (no key-file how-to, n8n stop cue, F.1 wait, money rule numbers, order of day, 240 lines). v11 building. Citations in v10: 0 wrong dates/times.
+- C7b evidence: 5 majors (+100 vs 95 tests unreconciled; flaky test = real bug: random id pln-ec2<a-f>.. matched by gate.py:671 command-withheld rule; env scrub not literal env -i; first run logs deleted; pytest logs redacted in place; no base no-handover run). Fix pass running. Two repo-guard tests fail on both trees when handover/ is present (Q16).
+- C6: C6e had 2 blockers 6 majors; C6f fixed; round 2 found 4 majors, lead fixed them in REPORT-c6f.md. Questions Q1/Q2 wait for the lead.
+- C3b re-pin: v4 had 2 blockers 8 majors; v5 patch built (15 hunks, stub-tested only, P-4b is a proposal); two reviewers running.
+- Real-v5 edit list: 4 majors; v6 building. Static-pass report v2 written; citation check: all openable cites MATCH, flow-file cites unchecked, label precision and plain wording to fix.
+- C8 run.py: 5 majors fixed (85 PASS safety run), second-signal window not proven closed, 2 ruff S603 unresolved, round 2 reviewers running.
+- C5 v5 built (minimal C-01 only if take loads Route config, unknown; 200_000 ceiling unverified; 8 of 19 new prod tests fail on key-file refusal). Final blockers-only review pending.
+- Lane c "not checked": 3 blockers; suggests stopping C8/C5/C7 (Q18 asked; default: finish running rounds only).
+## Hygiene
+Banned-word scans of saved files: 0 hits. No secrets, no spend, no pushes outside cloud/core-hardening.
+
 # ORDER 024 (2026-11-16): ORDER 023 cancelled, nothing to undo
 ORDER 023's sed was never run (the permission classifier denied it and I did not work around it). Checked: the skill files show 6 claude-opus-5-5, 8 claude-sonnet-5-5, 0 fable. Nothing undone, nothing changed. Continuing lanes.
 
