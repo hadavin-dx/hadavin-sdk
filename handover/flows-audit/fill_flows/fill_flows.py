@@ -217,12 +217,22 @@ def _sigint_blocked():
         mask(signal.SIG_SETMASK, old)
 
 
+def _read_capped(fh, cap: int, what: str) -> bytes:
+    """Read a whole open file, but refuse one larger than `cap` bytes."""
+    raw = fh.read(cap + 1)
+    if len(raw) > cap:
+        raise Refused(f"{what} is larger than {cap} bytes; nothing was done")
+    return raw
+
+
 def read_values(path: str) -> dict[str, str]:
     rp = os.path.realpath(path)
     if under_mnt(path):
         raise Refused("values file is under /mnt (Windows drive): file modes do not protect it")
     if inside_git(os.path.dirname(rp)):
         raise Refused("values file is inside a git repository (move it out; it holds secrets)")
+    if in_synced_folder(rp):
+        raise Refused("values file is inside a cloud-synced or backed-up folder (it would be copied)")
     try:
         # O_NONBLOCK: opening a pipe must not wait for a writer
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -237,6 +247,10 @@ def read_values(path: str) -> dict[str, str]:
             raise Refused("values file is under /mnt (Windows drive): file modes do not protect it")
         if inside_git(os.path.dirname(real)):
             raise Refused("values file is inside a git repository (move it out; it holds secrets)")
+        if in_synced_folder(os.path.dirname(real)):
+            raise Refused(
+                "values file is inside a cloud-synced or backed-up folder (it would be copied)"
+            )
         if st.st_uid != os.getuid():
             raise Refused(
                 "values file is not owned by you (a file of another user cannot be trusted)"
@@ -245,7 +259,7 @@ def read_values(path: str) -> dict[str, str]:
             raise Refused("values file can be read by other users (run: chmod 600 on it)")
         with os.fdopen(fd, "rb") as fh:
             fd = -1
-            raw = fh.read()
+            raw = _read_capped(fh, MAX_VALUES_BYTES, "values file")
     except OSError:
         raise Refused("values file: cannot open it (missing, a symlink, or not readable)") from None
     finally:
@@ -292,16 +306,16 @@ def read_values(path: str) -> dict[str, str]:
                 "(write the value without quotes; quotes are not removed)"
             )
         if " #" in value:
-            print(
+            _say(
                 f"warning: values file line {no}: value of {key} contains ' #'; it is kept as "
                 "part of the value (there are no inline comments)",
-                file=sys.stderr,
+                err=True,
             )
         if key.endswith("_URL") and value.endswith("/"):
-            print(
+            _say(
                 f"warning: values file line {no}: value of {key} ends with '/'; the flows add "
                 "their own '/path', so the address would get a double slash",
-                file=sys.stderr,
+                err=True,
             )
         values[key] = value
     return values
@@ -346,6 +360,7 @@ class Subst:
         self.used: set[str] = set()
         self.ph_used: set[str] = set()
         self.bad: set[str] = set()  # names we cannot fill (not DESK_/MF_, missing, empty)
+        self.empty_ph: set[str] = set()  # placeholder names whose value is empty: left as they are
 
     def _name(self, m: re.Match) -> str:
         return m.group(1) or m.group(3)
@@ -368,6 +383,12 @@ class Subst:
             if m:
                 if quote is not None:
                     raise Refused(QUOTED)
+                before = part[:i].rstrip()[-1:]
+                if before and (before.isalnum() or before in "_$."):
+                    raise Refused(
+                        "a $env token follows a name character or a dot (a different name such "
+                        "as a$env or x.$env, not the n8n one; not filled)"
+                    )
                 hit = True
                 out.append(self._repl(m, True))
                 i = m.end()
@@ -419,8 +440,8 @@ class Subst:
                 raise Refused(
                     f"a placeholder name sits in a {ctx} field (program code; not filled)"
                 )
-            if not self.values[s]:
-                self.bad.add(s)
+            if not self.values[s]:  # an empty value is the same as no value: the name stays
+                self.empty_ph.add(s)
                 return s
             self.ph_used.add(s)
             return self.values[s]
@@ -498,9 +519,12 @@ def shape(obj) -> tuple[int, dict]:
 
 
 def sha256_at(name: str, dir_fd: int) -> str:
-    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=dir_fd)
+    # O_NONBLOCK: opening a pipe (FIFO) put in the place of a file must not wait for a writer
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
     h = hashlib.sha256()
     with os.fdopen(fd, "rb") as fh:
+        if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
+            raise OSError("not a regular file")
         for chunk in iter(lambda: fh.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()
@@ -513,9 +537,9 @@ def list_json(directory: str) -> list[str]:
     for n in names:
         p = os.path.join(directory, n)
         if not n.endswith(".json"):
-            raise Refused(f"input file {n}: the ending must be lower case .json")
+            raise Refused(f"input file {_a(n)}: the ending must be lower case .json")
         if os.path.islink(p) or not os.path.isfile(p):
-            raise Refused(f"input file {n}: symlink or not a regular file")
+            raise Refused(f"input file {_a(n)}: symlink or not a regular file")
     return names
 
 
@@ -523,9 +547,9 @@ def read_json_file(directory: str, n: str):
     try:
         fd = os.open(os.path.join(directory, n), os.O_RDONLY | os.O_NOFOLLOW)
         with os.fdopen(fd, "rb") as fh:
-            return load_json(fh.read())
-    except (OSError, ValueError) as e:
-        raise Refused(f"{n}: not valid JSON ({type(e).__name__})") from None
+            return load_json(_read_capped(fh, MAX_JSON_BYTES, _a(n)))
+    except (OSError, ValueError, RecursionError) as e:
+        raise Refused(f"{_a(n)}: not valid JSON ({type(e).__name__})") from None
 
 
 def inside_git(path: str) -> bool:
@@ -571,9 +595,10 @@ def _write_new(name: str, data: bytes, dir_fd: int, created: list | None = None)
         try:
             os.unlink(name, dir_fd=dir_fd)
         except OSError:
-            pass
-        if created is not None and (dir_fd, name) in created:
-            created.remove((dir_fd, name))
+            pass  # the entry stays in `created`: the clean-up retries and reports it
+        else:
+            if created is not None and (dir_fd, name) in created:
+                created.remove((dir_fd, name))
         raise
 
 
@@ -626,6 +651,8 @@ def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: boo
     _check_parent_links(os.path.dirname(out_dir))
     if inside_git(os.path.dirname(out_dir)):
         raise Refused("output path is inside a git repository (a parent folder has .git)")
+    if in_synced_folder(os.path.dirname(out_dir)):
+        raise Refused("output path is inside a cloud-synced or backed-up folder (it would be copied)")
     if os.path.lexists(out_dir) or os.path.lexists(manifest_path):
         raise Refused(
             "output folder or its manifest already exists (run delete --out on it first; add "
@@ -670,9 +697,9 @@ def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: boo
         ph_left += sum(len(PH_RE.findall(t)) for t in iter_strings(new))
         outputs[n] = data
     if not found_any and not sub.ph_used:
-        print(
+        _say(
             "nothing to fill: no $env token in the input (already filled, or wrong folder)",
-            file=sys.stderr,
+            err=True,
         )
         return EXIT_NOTHING
     if ph_left and not allow_placeholders:
@@ -681,8 +708,10 @@ def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: boo
             "has no value for them; add the values, or add --allow-placeholders to write a "
             "copy that is marked NOT READY (for the credential walk-through); nothing written"
         )
-    for k in sorted(set(values) - sub.used - sub.ph_used):
-        print(f"warning: key {k} in the values file is not used by any node", file=sys.stderr)
+    for k in sorted(sub.empty_ph):
+        _say(f"warning: key {k} is empty in the values file; the placeholder stays", err=True)
+    for k in sorted(set(values) - sub.used - sub.ph_used - sub.empty_ph):
+        _say(f"warning: key {k} in the values file is not used by any node", err=True)
 
     folder_name = os.path.basename(out_dir)
     marker = _marker_bytes(folder_name)
@@ -726,32 +755,44 @@ def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: boo
                 os.unlink(NOT_READY_NAME, dir_fd=dfd)
                 created.remove((dfd, NOT_READY_NAME))
     except BaseException:
+        left: list[str] = []  # what the clean-up could not remove
         with _sigint_blocked():  # a second Ctrl-C must not cut the clean-up short
             for fd, nm in reversed(created):
                 try:
                     os.unlink(nm, dir_fd=fd)
-                except OSError:
+                except FileNotFoundError:
                     pass
+                except OSError:
+                    left.append(nm)
             if made_dir:
                 try:
                     os.rmdir(folder_name, dir_fd=pfd)
-                except OSError:
+                except FileNotFoundError:
                     pass
+                except OSError:
+                    left.append(folder_name + "/")
+        if left:
+            _say(
+                "clean-up did not finish; left behind: "
+                + ", ".join(_a(x) for x in left)
+                + "; run delete --out on the output folder (add --force-hash if needed)",
+                err=True,
+            )
         raise
     finally:
         if dfd >= 0:
             os.close(dfd)
         os.close(pfd)
-    print(f"filled {len(outputs)} files, {len(sub.used)} names and {len(sub.ph_used)} placeholders")
+    _say(f"filled {len(outputs)} files, {len(sub.used)} names and {len(sub.ph_used)} placeholders")
     if ph_left:
-        print(
+        _say(
             f"NOT READY TO IMPORT: {ph_left} placeholders left "
             f"(the folder holds {NOT_READY_NAME}; create the credentials, import the sub-flow, "
             "fill again, then run check)",
-            file=sys.stderr,
+            err=True,
         )
         return EXIT_INCOMPLETE
-    print("no placeholders left; run check before importing")
+    _say("no placeholders left; run check before importing")
     return EXIT_OK
 
 
