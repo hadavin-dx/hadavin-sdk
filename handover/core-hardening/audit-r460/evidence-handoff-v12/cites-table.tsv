@@ -1,0 +1,356 @@
+doc	doc_line	file	from	to	result	status	source_text
+CORE-PR-HANDOFF-v12.md	5	src/hadavin_sdk/tools.py	2	2	ANCHOR-OK	AMBIGUOUS	
+CORE-PR-HANDOFF-v12.md	19	src/hadavin_sdk/approvals/requests.py	37	37	ANCHOR-OK	OK	flagged = detector is not None and injection_check(detector, inputs, "approval_summary").flagged
+CORE-PR-HANDOFF-v12.md	19	src/hadavin_sdk/approvals/cards.py	79	79	ANCHOR-MISS[Carried,Opened,files,words]	OK	and injection_check(detector, diagnosis, "shadow_card").flagged
+CORE-PR-HANDOFF-v12.md	23	src/hadavin_sdk/llm/retry.py	83	108	ANCHOR-OK	OK	def with_retry[T]( | call: Callable[[], T],
+CORE-PR-HANDOFF-v12.md	23	src/hadavin_sdk/llm/openai_compat.py	117	129	ANCHOR-MISS[OpenAI]	OK	started, used = time.monotonic(), [0, 0] | for _ in range(2):  # the forced answer missing: one more request (
+CORE-PR-HANDOFF-v12.md	24	src/hadavin_sdk/store/protocol.py	107	107	ANCHOR-OK	OK	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: ...
+CORE-PR-HANDOFF-v12.md	31	src/hadavin_sdk/models.py	294	294	ANCHOR-OK	OK	cost_usd: Decimal = Decimal(0)
+CORE-PR-HANDOFF-v12.md	31	src/hadavin_sdk/models.py	305	305	RANGE-OK/NO-ANCHOR	OK	cost_usd: Decimal = Decimal(
+CORE-PR-HANDOFF-v12.md	31	src/hadavin_sdk/config.py	57	58	RANGE-OK/NO-ANCHOR	OK	input_usd_per_mtok: Money | output_usd_per_mtok: Money
+CORE-PR-HANDOFF-v12.md	31	src/hadavin_sdk/registry.py	33	36	RANGE-OK/NO-ANCHOR	OK	class Budget(BaseModel): | model_config = ConfigDict(extra="forbid", frozen=True)
+CORE-PR-HANDOFF-v12.md	31	src/hadavin_sdk/store/migrations/0001_core.sql	87	92	RANGE-OK/NO-ANCHOR	OK	CREATE TABLE spend ( | agent_id TEXT NOT NULL,
+CORE-PR-HANDOFF-v12.md	31	src/hadavin_sdk/store/migrations/0003_approvals_tick.sql	15	20	RANGE-OK/NO-ANCHOR	OK	CREATE TABLE spend_month ( | agent_id TEXT NOT NULL,
+CORE-PR-HANDOFF-v12.md	31	src/hadavin_sdk/models.py	98	98	RANGE-OK/NO-ANCHOR	OK	cost_usd: Decimal = Decimal(0)
+CORE-PR-HANDOFF-v12.md	39	demos/ask-your-data/askdata/meter.py	1	17	RANGE-OK/NO-ANCHOR	OK	"""The cost meter (design 13, amendments A-03): one JSON file shared with the Replay Check, a worst-case pre-c
+CORE-PR-HANDOFF-v12.md	39	demos/ask-your-data/askdata/meter.py	211	229	RANGE-OK/NO-ANCHOR	OK	def reserve(self, worst_case: Decimal, *, live: bool = True) -> None: | """Check AND book `worst_case` as spen
+CORE-PR-HANDOFF-v12.md	40	demos/ask-your-data/askdata/pipeline.py	147	147	ANCHOR-MISS[chat]	OK	self.meter.reserve(worst, live=self.s.live)
+CORE-PR-HANDOFF-v12.md	40	demos/ask-your-data/askdata/pipeline.py	155	155	RANGE-OK/NO-ANCHOR	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	40	demos/ask-your-data/askdata/pipeline.py	232	236	ANCHOR-MISS[call]	OK	"""Replace the reservation with the real cost. False (and the question ends over budget) if the meter | cannot
+CORE-PR-HANDOFF-v12.md	40	tests/demo_askdata/test_meter.py	30	170	ANCHOR-MISS[call]	OK	def test_worst_case_is_input_estimate_plus_max_tokens_at_the_output_rate(): | # 300 chars -> 100 tokens at $2/
+CORE-PR-HANDOFF-v12.md	40	tests/demo_askdata/test_meter.py	121	170	RANGE-OK/NO-ANCHOR	OK	def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | m = make(tmp_path
+CORE-PR-HANDOFF-v12.md	41	demos/ask-your-data/askdata/meter.py	48	55	RANGE-OK/NO-ANCHOR	OK	def worst_case_usd(route: Route, prompt_chars: int) -> Decimal: | """Input estimate (the core's pessimistic 3 
+CORE-PR-HANDOFF-v12.md	41	src/hadavin_sdk/k1b/loop.py	115	122	RANGE-OK/NO-ANCHOR	OK	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | """Upper estimate 
+CORE-PR-HANDOFF-v12.md	41	src/hadavin_sdk/k1b/loop.py	170	170	RANGE-OK/NO-ANCHOR	OK	budget.charge(worst_case_usd(route_prices, system, messages))
+CORE-PR-HANDOFF-v12.md	41	src/hadavin_sdk/k1b/loop.py	179	179	RANGE-OK/NO-ANCHOR	OK	budget.charge(reply.cost_usd)
+CORE-PR-HANDOFF-v12.md	41	src/hadavin_sdk/k1b/loop.py	206	206	RANGE-OK/NO-ANCHOR	OK	budget.charge(verdict.cost_usd)
+CORE-PR-HANDOFF-v12.md	41	src/hadavin_sdk/llm/common.py	164	172	RANGE-OK/NO-ANCHOR	OK	tokens_in = tokens[0] or estimate_tokens(sent) | tokens_out = tokens[1] or estimate_tokens(text + json.dumps([
+CORE-PR-HANDOFF-v12.md	41	src/hadavin_sdk/llm/common.py	59	62	RANGE-OK/NO-ANCHOR	OK	def estimate_tokens(text: str) -> int: | """For a provider that reports no usage. Deliberately pessimistic (3 
+CORE-PR-HANDOFF-v12.md	42	src/hadavin_sdk/store/postgres.py	416	431	ANCHOR-MISS[Memory]	OK	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | """Day and month cou
+CORE-PR-HANDOFF-v12.md	42	src/hadavin_sdk/store/memory.py	196	204	ANCHOR-MISS[Memory,Tables]	OK	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | with self._lock:
+CORE-PR-HANDOFF-v12.md	42	src/hadavin_sdk/store/migrations/0001_core.sql	87	92	ANCHOR-MISS[Tables]	OK	CREATE TABLE spend ( | agent_id TEXT NOT NULL,
+CORE-PR-HANDOFF-v12.md	43	src/hadavin_sdk/limits.py	18	18	ANCHOR-MISS[Limits,models]	OK	return self.store.add_spend(agent_id, now().date(), usd)
+CORE-PR-HANDOFF-v12.md	43	src/hadavin_sdk/limits.py	24	24	RANGE-OK/NO-ANCHOR	OK	day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write
+CORE-PR-HANDOFF-v12.md	43	src/hadavin_sdk/models.py	19	20	RANGE-OK/NO-ANCHOR	OK	def now() -> datetime: | return datetime.now(UTC)
+CORE-PR-HANDOFF-v12.md	43	src/hadavin_sdk/limits.py	23	35	RANGE-OK/NO-ANCHOR	OK	reasons.append("kill_switch") | day, month = self.store.spend_totals(agent_id, now().date())  # a read, no wri
+CORE-PR-HANDOFF-v12.md	43	src/hadavin_sdk/app.py	171	171	RANGE-OK/NO-ANCHOR	OK	limits = Limits(store, audit, reg)
+CORE-PR-HANDOFF-v12.md	43	src/hadavin_sdk/cli.py	209	209	ANCHOR-MISS[arguments]	OK	return kill_switch(Limits(store, audit, reg), args.action, args.by)
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/retry.py	95	96	ANCHOR-OK	OK	except ProviderError: | raise
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/retry.py	97	99	RANGE-OK/NO-ANCHOR	OK	except Exception as exc:  # every failure is classified below, never swallowed | if not transient(exc, retryab
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/retry.py	100	103	RANGE-OK/NO-ANCHOR	OK	if attempt == max_attempts: | raise ProviderExhausted(
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/common.py	233	241	RANGE-OK/NO-ANCHOR	OK	def _retry(self, call: Callable[[], Answer]) -> Answer: | return with_retry(
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/anthropic.py	122	122	RANGE-OK/NO-ANCHOR	OK	got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/bedrock.py	156	156	RANGE-OK/NO-ANCHOR	OK	got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/gemini.py	86	86	RANGE-OK/NO-ANCHOR	OK	got = self._retry(
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/openai_compat.py	119	119	RANGE-OK/NO-ANCHOR	OK	got = self._retry(
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/common.py	208	220	RANGE-OK/NO-ANCHOR	OK	def chat( | self,
+CORE-PR-HANDOFF-v12.md	44	src/hadavin_sdk/llm/common.py	200	206	RANGE-OK/NO-ANCHOR	OK	def __init__( | self,
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	325	541	ANCHOR-OK	OK	def handle( | self,
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	425	425	ANCHOR-MISS[steps]	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	432	432	RANGE-OK/NO-ANCHOR	OK	except (
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	440	440	RANGE-OK/NO-ANCHOR	OK	self.limits.charge(agent_id, reply.cost_usd)
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	441	441	RANGE-OK/NO-ANCHOR	OK	self.store.add_cost(run.run_id, reply.cost_usd)
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	310	316	RANGE-OK/NO-ANCHOR	OK	def _screen(self, run: Run, text: str, source: str): | """The injection check; a model-backed detector's call 
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	239	250	RANGE-OK/NO-ANCHOR	OK	def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: | blocked = self.limits.blocke
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	359	359	RANGE-OK/NO-ANCHOR	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	421	421	RANGE-OK/NO-ANCHOR	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	460	460	RANGE-OK/NO-ANCHOR	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	569	597	RANGE-OK/NO-ANCHOR	OK	def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run: | """End a run that 
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	87	87	RANGE-OK/NO-ANCHOR	OK	_REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"}
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	574	574	ANCHOR-MISS[Locals]	OK	label = _REASON_TEXT.get(reason or "", reason or "no proposal")
+CORE-PR-HANDOFF-v12.md	45	src/hadavin_sdk/runtime/agent_loop.py	520	520	ANCHOR-MISS[Locals]	OK	verdict = self._screen(run, out.text, f"tool:{call.name}")
+CORE-PR-HANDOFF-v12.md	46	src/hadavin_sdk/extract.py	47	47	ANCHOR-OK	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	46	src/hadavin_sdk/evals.py	73	73	RANGE-OK/NO-ANCHOR	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	46	src/hadavin_sdk/guard/judge.py	72	72	RANGE-OK/NO-ANCHOR	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	46	src/hadavin_sdk/runtime/agent_loop.py	425	425	RANGE-OK/NO-ANCHOR	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	46	src/hadavin_sdk/k1b/loop.py	94	94	ANCHOR-OK	OK	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+CORE-PR-HANDOFF-v12.md	46	demos/ask-your-data/askdata/pipeline.py	155	155	ANCHOR-MISS[caller]	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	46	src/hadavin_sdk/guard/bedrock_guardrail.py	101	101	RANGE-OK/NO-ANCHOR	OK	resp = self._client.apply_guardrail(
+CORE-PR-HANDOFF-v12.md	47	src/hadavin_sdk/guard/bedrock_guardrail.py	95	101	ANCHOR-OK	OK	def check(self, text: str, source: str) -> Verdict: | if not text.strip():  # nothing to screen; the API refus
+CORE-PR-HANDOFF-v12.md	47	src/hadavin_sdk/guard/bedrock_guardrail.py	61	61	ANCHOR-OK	OK	def make(settings: Any, deps: Any) -> GuardrailDetector:
+CORE-PR-HANDOFF-v12.md	47	src/hadavin_sdk/guard/injection.py	85	101	ANCHOR-OK	OK	def injection_check(detector: Detector, text: str, source: str) -> Verdict: | """Any detector error is a flag 
+CORE-PR-HANDOFF-v12.md	47	src/hadavin_sdk/guard/injection.py	85	101	ANCHOR-OK	OK	def injection_check(detector: Detector, text: str, source: str) -> Verdict: | """Any detector error is a flag 
+CORE-PR-HANDOFF-v12.md	48	src/hadavin_sdk/backends/factory.py	17	54	ANCHOR-OK	OK	@dataclass(frozen=True) | class Deps:
+CORE-PR-HANDOFF-v12.md	48	src/hadavin_sdk/backends/table.py	570	579	RANGE-OK/NO-ANCHOR	OK	ALLOWED: dict[str, frozenset[str]] = { | "secrets": frozenset(),
+CORE-PR-HANDOFF-v12.md	48	src/hadavin_sdk/llm/anthropic.py	80	88	RANGE-OK/NO-ANCHOR	OK	def make(settings: Any, deps: Any) -> AnthropicLLM: | name = settings.api_key_secret_name if settings.platform
+CORE-PR-HANDOFF-v12.md	49	src/hadavin_sdk/config.py	55	59	ANCHOR-OK	OK	class Route(_Strict): | model_id: str
+CORE-PR-HANDOFF-v12.md	49	src/hadavin_sdk/config.py	47	47	RANGE-OK/NO-ANCHOR	OK	Money = Annotated[Decimal, BeforeValidator(_money)]
+CORE-PR-HANDOFF-v12.md	49	src/hadavin_sdk/config.py	40	44	RANGE-OK/NO-ANCHOR	OK	def _money(v: object) -> object: | if isinstance(v, float):
+CORE-PR-HANDOFF-v12.md	49	src/hadavin_sdk/config.py	317	317	RANGE-OK/NO-ANCHOR	OK	environment: Literal["dev", "pilot", "prod"]
+CORE-PR-HANDOFF-v12.md	49	src/hadavin_sdk/config.py	349	349	ANCHOR-MISS[table]	OK	@model_validator(mode="after")
+CORE-PR-HANDOFF-v12.md	49	src/hadavin_sdk/backends/table.py	593	602	ANCHOR-OK	OK	DEV_ONLY: frozenset[tuple[str, str]] = frozenset( | {
+CORE-PR-HANDOFF-v12.md	49	src/hadavin_sdk/config.py	36	59	RANGE-OK/NO-ANCHOR	OK	"url_allowed", | ]
+CORE-PR-HANDOFF-v12.md	50	src/hadavin_sdk/store/migrate.py	46	67	ANCHOR-OK	OK	GRANTS: dict[str, Grant] = { | "runs": Grant("table", _RW, portal=True, purge_cols=("run_id", "state", "update
+CORE-PR-HANDOFF-v12.md	50	src/hadavin_sdk/store/migrate.py	80	85	RANGE-OK/NO-ANCHOR	OK	_SAFE_CREATE = re.compile( | r"CREATE\s+(?:UNIQUE\s+)?INDEX\b|CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|TRIGGER)\b"
+CORE-PR-HANDOFF-v12.md	50	src/hadavin_sdk/store/migrate.py	87	90	ANCHOR-MISS[Migrations,exist]	OK	_UNREAD = re.compile( | r"\bALTER\s+TABLE\b[^;]*\b(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b|\bAS\s+IDENTITY\b|\bC
+CORE-PR-HANDOFF-v12.md	50	src/hadavin_sdk/store/migrate.py	93	94	ANCHOR-MISS[Migrations,exist]	OK	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | return sorted(folder.glob("*.sql"))
+CORE-PR-HANDOFF-v12.md	50	src/hadavin_sdk/store/migrate.py	97	97	ANCHOR-MISS[read]	OK	def check_ledger(paths: list[Path]) -> list[str]:
+CORE-PR-HANDOFF-v12.md	51	src/hadavin_sdk/store/postgres.py	146	146	ANCHOR-OK	OK	conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
+CORE-PR-HANDOFF-v12.md	51	src/hadavin_sdk/store/postgres.py	192	197	RANGE-OK/NO-ANCHOR	OK	class PostgresStore: | # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when thro
+CORE-PR-HANDOFF-v12.md	51	src/hadavin_sdk/store/postgres.py	416	431	RANGE-OK/NO-ANCHOR	OK	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | """Day and month cou
+CORE-PR-HANDOFF-v12.md	52	src/hadavin_sdk/models.py	289	297	ANCHOR-OK	OK	class Reply(Shape): | text: str = ""
+CORE-PR-HANDOFF-v12.md	52	src/hadavin_sdk/models.py	300	307	RANGE-OK/NO-ANCHOR	OK	class Verdict(Shape): | flagged: bool
+CORE-PR-HANDOFF-v12.md	52	src/hadavin_sdk/guard/injection.py	77	77	RANGE-OK/NO-ANCHOR	OK	cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)),
+CORE-PR-HANDOFF-v12.md	52	src/hadavin_sdk/guard/judge.py	72	97	RANGE-OK/NO-ANCHOR	OK	reply = self.llm.chat( | [{"role": "user", "content": _ASK.format(source=source)}],
+CORE-PR-HANDOFF-v12.md	53	src/hadavin_sdk/llm/anthropic.py	136	136	RANGE-OK/NO-ANCHOR	OK	# Thinking blocks are the model's working, never its answer: only text and tool calls are read.
+CORE-PR-HANDOFF-v12.md	53	src/hadavin_sdk/llm/gemini.py	98	98	RANGE-OK/NO-ANCHOR	OK	# Thinking is billed as output; candidatesTokenCount leaves it out.
+CORE-PR-HANDOFF-v12.md	53	src/hadavin_sdk/llm/gemini.py	98	100	ANCHOR-MISS[OpenAI,UNVERIFIED,Whether,optimistic,shows]	OK	# Thinking is billed as output; candidatesTokenCount leaves it out. | out = (usage.get("candidatesTokenCount")
+CORE-PR-HANDOFF-v12.md	53	src/hadavin_sdk/llm/gemini.py	96	100	ANCHOR-MISS[OpenAI,UNVERIFIED,Whether,optimistic,shows]	OK	def _parse(resp: dict[str, Any]) -> Answer: | usage = resp.get("usageMetadata") or {}
+CORE-PR-HANDOFF-v12.md	54	tests/k5_support.py	160	211	ANCHOR-OK	OK	def build_runtime( | cfg_dir: Path,
+CORE-PR-HANDOFF-v12.md	54	tests/test_p5p6_followups.py	101	101	RANGE-OK/NO-ANCHOR	OK	rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
+CORE-PR-HANDOFF-v12.md	54	tests/test_p6_detectors.py	186	186	RANGE-OK/NO-ANCHOR	OK	with_judge.detector = AnyOf([RegexDetector(0.5), judge()])
+CORE-PR-HANDOFF-v12.md	54	tests/test_k5_tools.py	608	608	RANGE-OK/NO-ANCHOR	OK	rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}])
+CORE-PR-HANDOFF-v12.md	54	tests/test_k5_round5.py	241	241	RANGE-OK/NO-ANCHOR	OK	reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+CORE-PR-HANDOFF-v12.md	54	tests/k5_support.py	206	206	RANGE-OK/NO-ANCHOR	OK	Limits(store, audit, reg),
+CORE-PR-HANDOFF-v12.md	54	tests/test_k5_postgres.py	58	58	RANGE-OK/NO-ANCHOR	OK	Limits(pg_store, audit, reg),
+CORE-PR-HANDOFF-v12.md	54	tests/test_k5_tools.py	1133	1133	RANGE-OK/NO-ANCHOR	OK	reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+CORE-PR-HANDOFF-v12.md	54	tests/test_k5_tools.py	1269	1269	RANGE-OK/NO-ANCHOR	OK	Limits(store, audit, reg),
+CORE-PR-HANDOFF-v12.md	54	tests/test_k3_pilot.py	104	104	RANGE-OK/NO-ANCHOR	OK	Limits(store, audit, reg),
+CORE-PR-HANDOFF-v12.md	54	tests/test_s5_runtime.py	28	28	RANGE-OK/NO-ANCHOR	OK	limits = Limits(store, audit, reg)
+CORE-PR-HANDOFF-v12.md	54	src/hadavin_sdk/app.py	171	171	RANGE-OK/NO-ANCHOR	OK	limits = Limits(store, audit, reg)
+CORE-PR-HANDOFF-v12.md	54	src/hadavin_sdk/cli.py	209	209	RANGE-OK/NO-ANCHOR	OK	return kill_switch(Limits(store, audit, reg), args.action, args.by)
+CORE-PR-HANDOFF-v12.md	54	src/hadavin_sdk/llm/fake.py	21	21	RANGE-OK/NO-ANCHOR	OK	class FakeLLM:
+CORE-PR-HANDOFF-v12.md	58	src/hadavin_sdk/k1b/loop.py	115	122	ANCHOR-MISS[Limits,Store,add_spend,blocked]	OK	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | """Upper estimate 
+CORE-PR-HANDOFF-v12.md	65	src/hadavin_sdk/runtime/agent_loop.py	440	440	ANCHOR-MISS[Limits,add_spend]	OK	self.limits.charge(agent_id, reply.cost_usd)
+CORE-PR-HANDOFF-v12.md	79	src/hadavin_sdk/cli.py	115	117	ANCHOR-MISS[Budget,Limits,ProcessCap]	OK	rep.add_argument( | "--max-usd", required=True, type=_money, help="total cost cap for this invocation"
+CORE-PR-HANDOFF-v12.md	89	src/hadavin_sdk/config.py	349	349	ANCHOR-OK	OK	@model_validator(mode="after")
+CORE-PR-HANDOFF-v12.md	90	src/hadavin_sdk/config.py	400	415	RANGE-OK/NO-ANCHOR	OK	class _UniqueKeyLoader(yaml.SafeLoader): | """A duplicate mapping key is an error: safe_load would keep the la
+CORE-PR-HANDOFF-v12.md	92	src/hadavin_sdk/llm/common.py	59	62	RANGE-OK/NO-ANCHOR	OK	def estimate_tokens(text: str) -> int: | """For a provider that reports no usage. Deliberately pessimistic (3 
+CORE-PR-HANDOFF-v12.md	94	src/hadavin_sdk/app.py	166	169	ANCHOR-MISS[guardrail_max_chars,guardrail_unit_chars,guardrail_usd_per_unit,unattributed_daily_usd,unattributed_monthly_usd]	OK	detector = combine(members) | # The approval summary screen has no agent to charge, so it runs the unmetered m
+CORE-PR-HANDOFF-v12.md	95	src/hadavin_sdk/config.py	55	59	ANCHOR-OK	OK	class Route(_Strict): | model_id: str
+CORE-PR-HANDOFF-v12.md	95	src/hadavin_sdk/config.py	40	44	RANGE-OK/NO-ANCHOR	OK	def _money(v: object) -> object: | if isinstance(v, float):
+CORE-PR-HANDOFF-v12.md	95	src/hadavin_sdk/registry.py	33	36	RANGE-OK/NO-ANCHOR	OK	class Budget(BaseModel): | model_config = ConfigDict(extra="forbid", frozen=True)
+CORE-PR-HANDOFF-v12.md	97	src/hadavin_sdk/config.py	451	454	ANCHOR-OK	OK	except ConfigError: | raise
+CORE-PR-HANDOFF-v12.md	101	src/hadavin_sdk/k1b/replay.py	85	91	ANCHOR-OK	OK	def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None: | route = registry.config.ro
+CORE-PR-HANDOFF-v12.md	102	src/hadavin_sdk/registry.py	41	41	ANCHOR-OK	OK	id: str
+CORE-PR-HANDOFF-v12.md	103	tests/test_k3_pilot_env.py	61	61	RANGE-OK/NO-ANCHOR	OK	"llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+CORE-PR-HANDOFF-v12.md	103	tests/test_p5p6_followups.py	82	82	RANGE-OK/NO-ANCHOR	OK	llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"}
+CORE-PR-HANDOFF-v12.md	103	tests/test_p5p6_followups.py	392	392	RANGE-OK/NO-ANCHOR	OK	"kind": "anthropic",
+CORE-PR-HANDOFF-v12.md	103	tests/test_p5_llm.py	38	46	RANGE-OK/NO-ANCHOR	OK	api = _llm(cfg_dir, {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"}) | vertex = _llm(
+CORE-PR-HANDOFF-v12.md	103	tests/test_p1a_fixes.py	117	117	ANCHOR-MISS[README,failures]	OK	update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})}
+CORE-PR-HANDOFF-v12.md	107	src/hadavin_sdk/models.py	19	20	ANCHOR-MISS[build,models]	OK	def now() -> datetime: | return datetime.now(UTC)
+CORE-PR-HANDOFF-v12.md	107	src/hadavin_sdk/app.py	73	73	RANGE-OK/NO-ANCHOR	OK	clock: Callable[[], datetime] = now,
+CORE-PR-HANDOFF-v12.md	110	src/hadavin_sdk/llm/retry.py	95	96	ANCHOR-OK	OK	except ProviderError: | raise
+CORE-PR-HANDOFF-v12.md	110	src/hadavin_sdk/k1b/loop.py	176	176	ANCHOR-MISS[Consequence,retried]	OK	except ProviderError:
+CORE-PR-HANDOFF-v12.md	110	src/hadavin_sdk/runtime/agent_loop.py	432	433	RANGE-OK/NO-ANCHOR	OK	except ( | ProviderError
+CORE-PR-HANDOFF-v12.md	111	src/hadavin_sdk/llm/fake.py	21	21	ANCHOR-OK	OK	class FakeLLM:
+CORE-PR-HANDOFF-v12.md	111	src/hadavin_sdk/backends/table.py	593	602	RANGE-OK/NO-ANCHOR	OK	DEV_ONLY: frozenset[tuple[str, str]] = frozenset( | {
+CORE-PR-HANDOFF-v12.md	111	src/hadavin_sdk/config.py	366	369	RANGE-OK/NO-ANCHOR	OK	if self.environment != "dev": | refused = [
+CORE-PR-HANDOFF-v12.md	112	src/hadavin_sdk/llm/retry.py	23	23	RANGE-OK/NO-ANCHOR	OK	MAX_DELAY_S = 8.0
+CORE-PR-HANDOFF-v12.md	120	src/hadavin_sdk/runtime/agent_loop.py	425	425	ANCHOR-MISS[ProviderError,SpendRefused]	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	120	src/hadavin_sdk/runtime/agent_loop.py	432	432	ANCHOR-MISS[card]	OK	except (
+CORE-PR-HANDOFF-v12.md	121	src/hadavin_sdk/runtime/agent_loop.py	310	310	RANGE-OK/NO-ANCHOR	OK	def _screen(self, run: Run, text: str, source: str):
+CORE-PR-HANDOFF-v12.md	121	src/hadavin_sdk/guard/judge.py	72	72	RANGE-OK/NO-ANCHOR	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	121	src/hadavin_sdk/guard/injection.py	85	101	RANGE-OK/NO-ANCHOR	OK	def injection_check(detector: Detector, text: str, source: str) -> Verdict: | """Any detector error is a flag 
+CORE-PR-HANDOFF-v12.md	122	src/hadavin_sdk/k1b/loop.py	176	176	ANCHOR-OK	OK	except ProviderError:
+CORE-PR-HANDOFF-v12.md	123	src/hadavin_sdk/evals.py	73	73	RANGE-OK/NO-ANCHOR	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	123	src/hadavin_sdk/extract.py	47	47	RANGE-OK/NO-ANCHOR	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	123	src/hadavin_sdk/cli.py	146	146	RANGE-OK/NO-ANCHOR	OK	if args.cmd == "gate":
+CORE-PR-HANDOFF-v12.md	157	src/hadavin_sdk/audit/protocol.py	23	23	ANCHOR-OK	OK	def write_outcome(self, event: AuditEvent) -> str | None:
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/app.py	62	62	ANCHOR-OK	OK	def build(
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/app.py	161	161	RANGE-OK/NO-ANCHOR	OK	audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/app.py	171	171	RANGE-OK/NO-ANCHOR	OK	limits = Limits(store, audit, reg)
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/app.py	162	162	RANGE-OK/NO-ANCHOR	OK	llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/app.py	165	165	RANGE-OK/NO-ANCHOR	OK	members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/backends/table.py	570	579	RANGE-OK/NO-ANCHOR	OK	ALLOWED: dict[str, frozenset[str]] = { | "secrets": frozenset(),
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/cli.py	150	150	RANGE-OK/NO-ANCHOR	OK	make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/cli.py	221	222	RANGE-OK/NO-ANCHOR	OK	llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes) | detector = combine([make("detector", d, secr
+CORE-PR-HANDOFF-v12.md	162	src/hadavin_sdk/cli.py	209	209	RANGE-OK/NO-ANCHOR	OK	return kill_switch(Limits(store, audit, reg), args.action, args.by)
+CORE-PR-HANDOFF-v12.md	168	tests/k5_support.py	160	211	ANCHOR-OK	OK	def build_runtime( | cfg_dir: Path,
+CORE-PR-HANDOFF-v12.md	170	tests/test_s5_runtime.py	107	111	ANCHOR-OK	OK	def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): | rt, cfg = build(cfg_dir)
+CORE-PR-HANDOFF-v12.md	170	tests/test_s5_runtime.py	114	119	RANGE-OK/NO-ANCHOR	OK	def test_budget_already_spent_stops_before_the_model(cfg_dir): | rt, cfg = build(cfg_dir)
+CORE-PR-HANDOFF-v12.md	170	tests/test_k5_tools.py	723	731	RANGE-OK/NO-ANCHOR	OK	def test_k5_run_budget_stops_run(tmp_path): | k5_tools.RESULTS["app"] = "ERROR 10.0.0.5"
+CORE-PR-HANDOFF-v12.md	172	src/hadavin_sdk/llm/common.py	208	220	ANCHOR-OK	OK	def chat( | self,
+CORE-PR-HANDOFF-v12.md	172	src/hadavin_sdk/llm/openai_compat.py	117	129	ANCHOR-MISS[OpenAI,signature]	OK	started, used = time.monotonic(), [0, 0] | for _ in range(2):  # the forced answer missing: one more request (
+CORE-PR-HANDOFF-v12.md	174	src/hadavin_sdk/llm/common.py	233	241	ANCHOR-OK	OK	def _retry(self, call: Callable[[], Answer]) -> Answer: | return with_retry(
+CORE-PR-HANDOFF-v12.md	199	src/hadavin_sdk/llm/common.py	184	189	ANCHOR-OK	OK	class Answer: | """One parsed provider answer, before pricing."""
+CORE-PR-HANDOFF-v12.md	199	src/hadavin_sdk/llm/bedrock.py	108	108	ANCHOR-OK	OK	code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+CORE-PR-HANDOFF-v12.md	199	src/hadavin_sdk/llm/retry.py	31	36	ANCHOR-MISS[Bedrock,UNVERIFIED]	OK	def status(exc: BaseException) -> int | None: | """The HTTP status an error carries as an int: ``status_code``
+CORE-PR-HANDOFF-v12.md	203	src/hadavin_sdk/limits.py	26	26	ANCHOR-OK	OK	if day >= budget.daily:
+CORE-PR-HANDOFF-v12.md	204	src/hadavin_sdk/llm/retry.py	63	63	ANCHOR-OK	OK	return isinstance(exc, OSError)  # URLError, socket timeouts, connection resets
+CORE-PR-HANDOFF-v12.md	220	src/hadavin_sdk/models.py	289	297	ANCHOR-OK	OK	class Reply(Shape): | text: str = ""
+CORE-PR-HANDOFF-v12.md	220	src/hadavin_sdk/guard/injection.py	77	77	RANGE-OK/NO-ANCHOR	OK	cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)),
+CORE-PR-HANDOFF-v12.md	220	src/hadavin_sdk/llm/common.py	164	172	ANCHOR-MISS[OpenAI]	OK	tokens_in = tokens[0] or estimate_tokens(sent) | tokens_out = tokens[1] or estimate_tokens(text + json.dumps([
+CORE-PR-HANDOFF-v12.md	228	src/hadavin_sdk/store/postgres.py	416	431	RANGE-OK/NO-ANCHOR	OK	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | """Day and month cou
+CORE-PR-HANDOFF-v12.md	228	src/hadavin_sdk/store/memory.py	196	204	ANCHOR-MISS[Postgres,commits]	OK	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | with self._lock:
+CORE-PR-HANDOFF-v12.md	233	src/hadavin_sdk/app.py	166	169	ANCHOR-OK	OK	detector = combine(members) | # The approval summary screen has no agent to charge, so it runs the unmetered m
+CORE-PR-HANDOFF-v12.md	233	src/hadavin_sdk/tools.py	1122	1122	ANCHOR-MISS[Threads,places,scope]	OK	worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")
+CORE-PR-HANDOFF-v12.md	233	src/hadavin_sdk/guard/http.py	93	93	RANGE-OK/NO-ANCHOR	OK	worker = threading.Thread(target=lookup, daemon=True, name="hadavin-resolve")
+CORE-PR-HANDOFF-v12.md	234	src/hadavin_sdk/runtime/agent_loop.py	440	440	ANCHOR-OK	OK	self.limits.charge(agent_id, reply.cost_usd)
+CORE-PR-HANDOFF-v12.md	234	src/hadavin_sdk/runtime/agent_loop.py	314	314	RANGE-OK/NO-ANCHOR	OK	self.limits.charge(run.agent_id, verdict.cost_usd)
+CORE-PR-HANDOFF-v12.md	234	tests/test_s4_llm_guard.py	39	39	RANGE-OK/NO-ANCHOR	OK	assert reply.cost_usd == Decimal("0.00225")
+CORE-PR-HANDOFF-v12.md	234	tests/test_s5_runtime.py	76	76	RANGE-OK/NO-ANCHOR	OK	assert rt.store.get_run(run.run_id).cost_usd == Decimal("0.00225")
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	325	351	ANCHOR-OK	OK	def handle( | self,
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	352	541	RANGE-OK/NO-ANCHOR	OK	rmap: dict[str, str] = runmap.RunMap(mapping or {}) | calls = errors = sent_bytes = 0
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	403	403	RANGE-OK/NO-ANCHOR	OK	manifest = self.registry.tools.get(agent_id, {})
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	405	405	RANGE-OK/NO-ANCHOR	OK	for name in self.registry.tools_for(agent_id, set(self.hooks.tools) | box_names):
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	418	418	RANGE-OK/NO-ANCHOR	OK	system = self.registry.prompt(agent_id) + (f"\n\n{_TOOL_RULE}" if tooled else "")
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	440	440	RANGE-OK/NO-ANCHOR	OK	self.limits.charge(agent_id, reply.cost_usd)
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	432	433	ANCHOR-MISS[needed]	OK	except ( | ProviderError
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/guard/injection.py	85	85	ANCHOR-MISS[needed]	OK	def injection_check(detector: Detector, text: str, source: str) -> Verdict:
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/approvals/requests.py	37	37	RANGE-OK/NO-ANCHOR	OK	flagged = detector is not None and injection_check(detector, inputs, "approval_summary").flagged
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/approvals/cards.py	79	79	RANGE-OK/NO-ANCHOR	OK	and injection_check(detector, diagnosis, "shadow_card").flagged
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	312	312	RANGE-OK/NO-ANCHOR	OK	verdict = injection_check(self.detector, text, source)
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	239	250	RANGE-OK/NO-ANCHOR	OK	def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: | blocked = self.limits.blocke
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	359	359	RANGE-OK/NO-ANCHOR	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	421	421	RANGE-OK/NO-ANCHOR	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	236	src/hadavin_sdk/runtime/agent_loop.py	460	460	RANGE-OK/NO-ANCHOR	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	237	src/hadavin_sdk/guard/injection.py	81	81	ANCHOR-OK	OK	def combine(detectors: list[Detector]) -> Detector:
+CORE-PR-HANDOFF-v12.md	237	src/hadavin_sdk/guard/injection.py	69	70	ANCHOR-OK	OK	def check(self, text: str, source: str) -> Verdict: | verdicts = [injection_check(d, text, source) for d in se
+CORE-PR-HANDOFF-v12.md	237	src/hadavin_sdk/k1b/loop.py	205	205	ANCHOR-MISS[Callers,caught,list]	OK	verdict = injection_check(detector, shown, "k1b-tool-result")
+CORE-PR-HANDOFF-v12.md	237	src/hadavin_sdk/guard/judge.py	107	107	ANCHOR-MISS[UNVERIFIED]	OK	v = injection_check(judge, case["text"], "golden")
+CORE-PR-HANDOFF-v12.md	238	src/hadavin_sdk/approvals/requests.py	30	30	ANCHOR-OK	OK	WARNING = "WARNING: the inputs read like instructions to an AI. Check them before approving. "
+CORE-PR-HANDOFF-v12.md	238	src/hadavin_sdk/approvals/requests.py	37	37	RANGE-OK/NO-ANCHOR	OK	flagged = detector is not None and injection_check(detector, inputs, "approval_summary").flagged
+CORE-PR-HANDOFF-v12.md	238	src/hadavin_sdk/approvals/cards.py	79	79	RANGE-OK/NO-ANCHOR	OK	and injection_check(detector, diagnosis, "shadow_card").flagged
+CORE-PR-HANDOFF-v12.md	239	src/hadavin_sdk/runtime/agent_loop.py	318	322	ANCHOR-MISS[reason_code]	OK	def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run: | cur = self.store.get_run(run.run_i
+CORE-PR-HANDOFF-v12.md	240	src/hadavin_sdk/runtime/agent_loop.py	359	359	ANCHOR-OK	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	240	src/hadavin_sdk/runtime/agent_loop.py	421	421	RANGE-OK/NO-ANCHOR	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	240	src/hadavin_sdk/runtime/agent_loop.py	460	460	ANCHOR-MISS[card]	OK	if (stopped := self._limits_stop(run, cited)) is not None:
+CORE-PR-HANDOFF-v12.md	240	tests/test_s5_runtime.py	107	111	ANCHOR-MISS[card]	OK	def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): | rt, cfg = build(cfg_dir)
+CORE-PR-HANDOFF-v12.md	250	src/hadavin_sdk/runtime/agent_loop.py	83	83	ANCHOR-OK	OK	GUARD_STOP_REASONS = frozenset(
+CORE-PR-HANDOFF-v12.md	252	src/hadavin_sdk/runtime/agent_loop.py	87	87	ANCHOR-OK	OK	_REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"}
+CORE-PR-HANDOFF-v12.md	252	src/hadavin_sdk/runtime/agent_loop.py	574	574	ANCHOR-MISS[made]	OK	label = _REASON_TEXT.get(reason or "", reason or "no proposal")
+CORE-PR-HANDOFF-v12.md	261	src/hadavin_sdk/store/postgres.py	194	194	ANCHOR-OK	OK	# A dropped connection fails the call (the run ends safely); reconnect-on-error arrives with S11 hosting.
+CORE-PR-HANDOFF-v12.md	265	.github/workflows/ci.yml	40	40	ANCHOR-MISS[AFTER,CHECK,CREATE,DEFAULT,DEFINER]	OK	image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
+CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	80	85	ANCHOR-MISS[Infinity,Negative,Postgres,UNVERIFIED,Volume]	OK	_SAFE_CREATE = re.compile( | r"CREATE\s+(?:UNIQUE\s+)?INDEX\b|CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|TRIGGER)\b"
+CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	55	55	ANCHOR-MISS[Negative,UNVERIFIED,Volume,else,file]	OK	"kill_switch": Grant("table", _RW),
+CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	93	94	ANCHOR-OK	OK	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | return sorted(folder.glob("*.sql"))
+CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	301	301	ANCHOR-MISS[reads]	OK	named = [r for r in (runtime_role, portal_role, purge_role) if r is not None]
+CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	93	93	ANCHOR-OK	OK	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
+CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	97	107	ANCHOR-OK	OK	def check_ledger(paths: list[Path]) -> list[str]: | """Problems with the file names: each is `NNNN_<name>.sql`
+CORE-PR-HANDOFF-v12.md	266	src/hadavin_sdk/store/postgres.py	192	197	ANCHOR-MISS[connect_timeout]	OK	class PostgresStore: | # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when thro
+CORE-PR-HANDOFF-v12.md	266	src/hadavin_sdk/store/postgres.py	146	146	ANCHOR-MISS[Mapping,Python,UNVERIFIED,seconds,setting]	OK	conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
+CORE-PR-HANDOFF-v12.md	270	src/hadavin_sdk/store/migrate.py	53	54	ANCHOR-OK	OK	"spend": Grant("table", _RW), | "spend_month": Grant("table", _RW),
+CORE-PR-HANDOFF-v12.md	270	src/hadavin_sdk/store/migrate.py	55	55	RANGE-OK/NO-ANCHOR	OK	"kill_switch": Grant("table", _RW),
+CORE-PR-HANDOFF-v12.md	274	src/hadavin_sdk/guard/bedrock_guardrail.py	61	61	ANCHOR-OK	OK	def make(settings: Any, deps: Any) -> GuardrailDetector:
+CORE-PR-HANDOFF-v12.md	274	src/hadavin_sdk/guard/bedrock_guardrail.py	101	101	RANGE-OK/NO-ANCHOR	OK	resp = self._client.apply_guardrail(
+CORE-PR-HANDOFF-v12.md	274	src/hadavin_sdk/guard/bedrock_guardrail.py	98	106	ANCHOR-OK	OK	text = runmap.redact_text( | text, {}
+CORE-PR-HANDOFF-v12.md	274	src/hadavin_sdk/guard/bedrock_guardrail.py	28	28	ANCHOR-MISS[UNVERIFIED,call,code,request]	OK	def _client(service: str, region: str) -> Any:
+CORE-PR-HANDOFF-v12.md	278	src/hadavin_sdk/evals.py	73	73	RANGE-OK/NO-ANCHOR	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	278	src/hadavin_sdk/extract.py	47	47	RANGE-OK/NO-ANCHOR	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	278	src/hadavin_sdk/k1b/loop.py	94	94	ANCHOR-MISS[time]	OK	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+CORE-PR-HANDOFF-v12.md	278	src/hadavin_sdk/cli.py	90	92	ANCHOR-MISS[time]	OK	g = sub.add_parser("gate", help="run an agent's golden set") | g.add_argument("agent")
+CORE-PR-HANDOFF-v12.md	278	src/hadavin_sdk/cli.py	146	146	RANGE-OK/NO-ANCHOR	OK	if args.cmd == "gate":
+CORE-PR-HANDOFF-v12.md	278	src/hadavin_sdk/cli.py	115	117	RANGE-OK/NO-ANCHOR	OK	rep.add_argument( | "--max-usd", required=True, type=_money, help="total cost cap for this invocation"
+CORE-PR-HANDOFF-v12.md	279	src/hadavin_sdk/k1b/loop.py	84	107	ANCHOR-OK	OK	def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -> Reply: | """``llm.chat`` wit
+CORE-PR-HANDOFF-v12.md	279	src/hadavin_sdk/k1b/loop.py	115	122	RANGE-OK/NO-ANCHOR	OK	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | """Upper estimate 
+CORE-PR-HANDOFF-v12.md	279	src/hadavin_sdk/k1b/loop.py	170	172	ANCHOR-OK	OK	budget.charge(worst_case_usd(route_prices, system, messages)) | out.status, out.stop_reason, out.halt = "timeo
+CORE-PR-HANDOFF-v12.md	300	src/hadavin_sdk/models.py	23	24	ANCHOR-OK	OK	def new_id(prefix: str) -> str: | return f"{prefix}-{uuid.uuid4().hex}"
+CORE-PR-HANDOFF-v12.md	313	src/hadavin_sdk/runtime/agent_loop.py	425	425	ANCHOR-MISS[Runtime,handle]	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	314	src/hadavin_sdk/guard/judge.py	72	72	RANGE-OK/NO-ANCHOR	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	315	src/hadavin_sdk/guard/bedrock_guardrail.py	101	101	ANCHOR-MISS[ScopedDetector]	OK	resp = self._client.apply_guardrail(
+CORE-PR-HANDOFF-v12.md	316	src/hadavin_sdk/evals.py	73	73	ANCHOR-MISS[ProcessCap]	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	317	src/hadavin_sdk/extract.py	47	47	ANCHOR-MISS[scope_missing]	OK	reply = llm.chat(
+CORE-PR-HANDOFF-v12.md	318	src/hadavin_sdk/k1b/loop.py	94	94	ANCHOR-MISS[Budget,ProcessCap]	OK	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+CORE-PR-HANDOFF-v12.md	320	demos/ask-your-data/askdata/pipeline.py	155	155	RANGE-OK/NO-ANCHOR	OK	reply = self.llm.chat(
+CORE-PR-HANDOFF-v12.md	324	src/hadavin_sdk/app.py	162	162	ANCHOR-OK	OK	llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+CORE-PR-HANDOFF-v12.md	324	src/hadavin_sdk/cli.py	150	150	RANGE-OK/NO-ANCHOR	OK	make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+CORE-PR-HANDOFF-v12.md	324	src/hadavin_sdk/llm/common.py	233	233	RANGE-OK/NO-ANCHOR	OK	def _retry(self, call: Callable[[], Answer]) -> Answer:
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	79	79	ANCHOR-MISS[check_gate4_vs_ci,gate4,github]	OK	run: ruff check src tests demos
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	81	81	RANGE-OK/NO-ANCHOR	OK	run: ruff format --check src tests demos
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	88	88	RANGE-OK/NO-ANCHOR	OK	run: pytest -q -m "not live and not perf" -rs
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	94	94	RANGE-OK/NO-ANCHOR	OK	run: pytest -q -m perf -rs
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	119	119	ANCHOR-MISS[Postgres,UNTESTED]	OK	run: bandit -q -r src demos -ll
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	86	87	ANCHOR-MISS[Postgres,UNTESTED]	OK	HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres | HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	93	93	RANGE-OK/NO-ANCHOR	OK	HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs the postgres service
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	77	77	RANGE-OK/NO-ANCHOR	OK	run: uv sync --locked --no-build --all-extras --group test
+CORE-PR-HANDOFF-v12.md	369	.github/workflows/ci.yml	83	83	ANCHOR-MISS[CodeQL,CodeRabbit,GitHub,SKIP,SonarCloud]	OK	run: psql --version
+CORE-PR-HANDOFF-v12.md	372	src/hadavin_sdk/k1b/loop.py	115	122	ANCHOR-OK	OK	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | """Upper estimate 
+CORE-PR-HANDOFF-v12.md	372	tests/fixtures/config/config.yaml	6	8	RANGE-OK/NO-ANCHOR	OK	input_usd_per_mtok: "3.00" | output_usd_per_mtok: "15.00"
+CORE-PR-HANDOFF-v12.md	379	src/hadavin_sdk/llm/bedrock.py	108	108	ANCHOR-OK	OK	code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+CORE-PR-HANDOFF-v12.md	399	src/hadavin_sdk/k1b/loop.py	176	176	ANCHOR-OK	OK	except ProviderError:
+CORE-PR-HANDOFF-v12.md	399	src/hadavin_sdk/runtime/agent_loop.py	432	433	RANGE-OK/NO-ANCHOR	OK	except ( | ProviderError
+CORE-PR-HANDOFF-v12.md	429	src/hadavin_sdk/guard/bedrock_guardrail.py	36	36	ANCHOR-OK	OK	retries={"total_max_attempts": 2, "mode": "standard"},
+CORE-PR-HANDOFF-v12.md	429	tests/demo_askdata/test_meter.py	121	170	ANCHOR-MISS[UNVERIFIED]	OK	def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | m = make(tmp_path
+CORE-PR-HANDOFF-v12.md	430	src/hadavin_sdk/llm/bedrock.py	108	108	ANCHOR-OK	OK	code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+CORE-PR-HANDOFF-v12.md	430	src/hadavin_sdk/guard/judge.py	107	107	ANCHOR-MISS[Postgres,UNVERIFIED]	OK	v = injection_check(judge, case["text"], "golden")
+CORE-PR-HANDOFF-v12-other-tracks.md	34	src/hadavin_sdk/approvals/gate.py	681	698	RANGE-OK/NO-ANCHOR	OK	def withhold_commands(text: str) -> str: | """G4 over one piece of model-derived text: each command not positi
+CORE-PR-HANDOFF-v12-other-tracks.md	35	src/hadavin_sdk/approvals/gate.py	647	678	RANGE-OK/NO-ANCHOR	OK	_WRITE_SHAPES = re.compile( | r"\bpg_(?:cancel|terminate)_backend\s*\("
+CORE-PR-HANDOFF-v12-other-tracks.md	36	src/hadavin_sdk/llm/fake.py	39	40	RANGE-OK/NO-ANCHOR	OK	doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") | digest = hashlib.s
+CORE-PR-HANDOFF-v12-other-tracks.md	37	src/hadavin_sdk/audit/chain.py	134	149	RANGE-OK/NO-ANCHOR	OK	@dataclass | class Verification:
+CORE-PR-HANDOFF-v12-other-tracks.md	37	src/hadavin_sdk/audit/chain.py	363	383	RANGE-OK/NO-ANCHOR	OK	def verify_rows( | rows: list,
+CORE-PR-HANDOFF-v12-other-tracks.md	37	src/hadavin_sdk/cli.py	349	363	RANGE-OK/NO-ANCHOR	OK	def audit_verify(audit) -> int: | """Recompute the chain, every checkpoint signature and every anchor. Exit 0 
+CORE-PR-HANDOFF-v12-other-tracks.md	38	src/hadavin_sdk/actions/secrets_file.py	34	64	RANGE-OK/NO-ANCHOR	OK	# ConfigError on `..`, absolute names or links out of the folder. The result is the real path, so | # O_NOFOLL
+CORE-PR-HANDOFF-v12-other-tracks.md	38	src/hadavin_sdk/audit/signer.py	104	108	RANGE-OK/NO-ANCHOR	OK	else: | path = Path(settings.private_key_path)
+CORE-PR-HANDOFF-v12-other-tracks.md	39	src/hadavin_sdk/models.py	218	222	RANGE-OK/NO-ANCHOR	OK	class DeadLetter(Shape): | run_id: str
+CORE-PR-HANDOFF-v12-other-tracks.md	39	src/hadavin_sdk/extract.py	18	25	RANGE-OK/NO-ANCHOR	OK	@dataclass | class Valid:
+CORE-PR-HANDOFF-v12-other-tracks.md	40	src/hadavin_sdk/guard/injection.py	85	101	RANGE-OK/NO-ANCHOR	OK	def injection_check(detector: Detector, text: str, source: str) -> Verdict: | """Any detector error is a flag 
+CORE-PR-HANDOFF-v12-other-tracks.md	47	.github/workflows/ci.yml	119	119	RANGE-OK/NO-ANCHOR	OK	run: bandit -q -r src demos -ll
+CORE-PR-HANDOFF-v12-other-tracks.md	51	src/hadavin_sdk/audit/chain.py	171	171	ANCHOR-OK	OK	self.checkpoint_every = checkpoint_every
+CORE-PR-HANDOFF-v12-other-tracks.md	51	src/hadavin_sdk/audit/chain.py	360	360	ANCHOR-MISS[CHECK,NEEDED,UNVERIFIED]	OK	return verify_rows(rows, checkpoints, public, anchors, alg, row_algs)
+CORE-PR-HANDOFF-v12-other-tracks.md	58	src/hadavin_sdk/audit/chain.py	161	161	ANCHOR-OK	OK	checkpoint_every: int = 100,
+CORE-PR-HANDOFF-v12-other-tracks.md	58	src/hadavin_sdk/backends/table.py	193	193	RANGE-OK/NO-ANCHOR	OK	checkpoint_every: int = Field(default=100, ge=1)
+CORE-PR-HANDOFF-v12-other-tracks.md	58	src/hadavin_sdk/backends/table.py	192	193	RANGE-OK/NO-ANCHOR	OK	class ChainSettings(KindSettings): | checkpoint_every: int = Field(default=100, ge=1)
+CORE-PR-HANDOFF-v12-other-tracks.md	60	src/hadavin_sdk/audit/anchor_gcs.py	69	85	ANCHOR-MISS[anchor_retention_probed,anchor_retention_proven]	OK	def probed(bucket: Any, settings) -> GcsAnchor: | try:
+CORE-PR-HANDOFF-v12-other-tracks.md	60	src/hadavin_sdk/audit/anchor_azure.py	83	96	RANGE-OK/NO-ANCHOR	OK	def probed(container: Any, settings) -> AzureBlobAnchor: | try:
+CORE-PR-HANDOFF-v12-other-tracks.md	62	src/hadavin_sdk/cli.py	349	363	ANCHOR-OK	OK	def audit_verify(audit) -> int: | """Recompute the chain, every checkpoint signature and every anchor. Exit 0 
+CORE-PR-HANDOFF-v12-other-tracks.md	62	src/hadavin_sdk/audit/chain.py	171	171	ANCHOR-MISS[Planned]	OK	self.checkpoint_every = checkpoint_every
+CORE-PR-HANDOFF-v12-other-tracks.md	62	src/hadavin_sdk/audit/chain.py	360	360	ANCHOR-MISS[Postgres,ceiling]	OK	return verify_rows(rows, checkpoints, public, anchors, alg, row_algs)
+CORE-PR-HANDOFF-v12-other-tracks.md	62	src/hadavin_sdk/audit/chain.py	203	203	ANCHOR-MISS[Postgres,ceiling]	OK	if self.signer is not None and seq % self.checkpoint_every == 0:
+CORE-PR-HANDOFF-v12-other-tracks.md	66	src/hadavin_sdk/evals.py	63	63	ANCHOR-MISS[DeadLetter,extract_unmaskable,run_id]	OK	doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+CORE-PR-HANDOFF-v12-other-tracks.md	66	src/hadavin_sdk/models.py	221	221	RANGE-OK/NO-ANCHOR	OK	errors: list[str]
+CORE-PR-HANDOFF-v12-other-tracks.md	66	src/hadavin_sdk/evals.py	63	63	ANCHOR-MISS[call]	OK	doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+CORE-PR-HANDOFF-v12-other-tracks.md	66	src/hadavin_sdk/extract.py	58	58	ANCHOR-OK	OK	errors.append(f"{exc.__class__.__name__}: {safe_head(str(exc), 300)}")
+CORE-PR-HANDOFF-v12-other-tracks.md	74	src/hadavin_sdk/llm/fake.py	39	40	ANCHOR-OK	OK	doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") | digest = hashlib.s
+CORE-PR-HANDOFF-v12-other-tracks.md	78	src/hadavin_sdk/actions/secrets_file.py	49	64	ANCHOR-OK	OK	with os.fdopen(fd, "rb") as f: | mode = os.fstat(f.fileno()).st_mode
+CORE-PR-HANDOFF-v12-other-tracks.md	80	src/hadavin_sdk/audit/signer.py	104	108	ANCHOR-OK	OK	else: | path = Path(settings.private_key_path)
+CORE-PR-HANDOFF-v12-other-tracks.md	80	src/hadavin_sdk/actions/secrets_file.py	54	54	RANGE-OK/NO-ANCHOR	OK	if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
+CORE-PR-HANDOFF-v12-other-tracks.md	81	src/hadavin_sdk/actions/secrets_file.py	54	54	ANCHOR-MISS[ed25519_local]	OK	if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
+CORE-PR-HANDOFF-v12-other-tracks.md	81	src/hadavin_sdk/config.py	395	396	ANCHOR-MISS[decides]	OK	if b.signer.kind == "ed25519_local" and b.signer.private_key_path is not None: | refused.append("signer ed2551
+CORE-PR-HANDOFF-v12-other-tracks.md	81	src/hadavin_sdk/audit/signer.py	182	182	RANGE-OK/NO-ANCHOR	OK	_create(private_real, pem, 0o600)
+CORE-PR-HANDOFF-v12-other-tracks.md	82	src/hadavin_sdk/audit/signer.py	197	197	ANCHOR-OK	OK	return _private_key(path.read_bytes(), passphrase, str(path))
+CORE-PR-HANDOFF-v12-other-tracks.md	82	src/hadavin_sdk/audit/signer.py	209	209	RANGE-OK/NO-ANCHOR	OK	key = serialization.load_pem_public_key(path.read_bytes())
+CORE-PR-HANDOFF-v12-other-tracks.md	83	tests/test_lockin_guard.py	68	75	ANCHOR-MISS[test_lockin_guard]	OK	LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their layer | "psycopg": {f"{PKG}.st
+CORE-PR-HANDOFF-v12-other-tracks.md	89	tests/test_g4_parity.py	98	98	ANCHOR-MISS[_WRITE_SHAPES]	OK	"update its set of rules",
+CORE-PR-HANDOFF-v12-other-tracks.md	112	src/hadavin_sdk/approvals/gate.py	4	4	RANGE-OK/NO-ANCHOR	OK	(`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral and fail closed).
+CORE-PR-HANDOFF-v12-other-tracks.md	112	src/hadavin_sdk/approvals/gate.py	366	377	RANGE-OK/NO-ANCHOR	OK	 | # G4: no command a person could paste to change a system reaches them. A change goes only through an action
+CORE-PR-HANDOFF-v12-other-tracks.md	112	src/hadavin_sdk/approvals/channel.py	19	21	RANGE-OK/NO-ANCHOR	OK	"""WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control character or forged | m
+CORE-PR-HANDOFF-v12-other-tracks.md	113	src/hadavin_sdk/approvals/gate.py	546	546	ANCHOR-OK	OK	_TOKEN = re.compile(r"[^\S\n]+([^\s]+)")
+CORE-PR-HANDOFF-v12-other-tracks.md	113	src/hadavin_sdk/approvals/gate.py	695	695	ANCHOR-MISS[Joined,prose]	OK	end = text.find("\n", m.end())
+CORE-PR-HANDOFF-v12-other-tracks.md	114	src/hadavin_sdk/approvals/gate.py	608	615	ANCHOR-OK	OK	def _story(text: str, prog: str, s: int, e: int, toks: list[str]) -> bool: | before = text[max(0, s - 40) : s]
+CORE-PR-HANDOFF-v12-other-tracks.md	116	src/hadavin_sdk/approvals/gate.py	674	674	ANCHOR-MISS[_NAMES]	OK	r"|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)"
+CORE-PR-HANDOFF-v12-other-tracks.md	116	src/hadavin_sdk/approvals/gate.py	540	540	ANCHOR-MISS[Scratch,guard]	OK	_NAMES = ["aws", *_VERB_FIRST, *_WORD_RUN]
+CORE-PR-HANDOFF-v12-other-tracks.md	117	src/hadavin_sdk/approvals/gate.py	404	404	ANCHOR-OK	OK	_AWS_READ_PREFIXES = ("describe-", "get-", "list-", "head-", "batch-get-", "lookup-", "search-")
+CORE-PR-HANDOFF-v12-other-tracks.md	117	src/hadavin_sdk/approvals/gate.py	597	597	ANCHOR-MISS[Justification,apart,stays]	OK	words[1].startswith(_AWS_READ_PREFIXES) or (words[0] == "s3" and words[1] == "ls")
+CORE-PR-HANDOFF-v12-other-tracks.md	122	src/hadavin_sdk/approvals/gate.py	573	589	ANCHOR-OK	OK	def _subcommands(toks: list[str]) -> list[str]: | """The subcommand words, lower-cased. A flag with no `=` tak
+CORE-PR-HANDOFF-v12-other-tracks.md	127	src/hadavin_sdk/guard/redact.py	472	472	ANCHOR-OK	OK	"PHONE",
+CORE-PR-HANDOFF-v12-other-tracks.md	129	tests/warden_port/privacy_corpus.py	42	42	RANGE-OK/NO-ANCHOR	OK	"card 4111 1111 1111 1111",
+CORE-PR-HANDOFF-v12-other-tracks.md	129	tests/warden_port/test_redaction.py	309	309	RANGE-OK/NO-ANCHOR	OK	for pan in ("4111 1111 1111 1111", "4111-1111-1111-1111"):
+CORE-PR-HANDOFF-v12-other-tracks.md	131	src/hadavin_sdk/guard/redact.py	513	513	ANCHOR-MISS[CREDPAIR,redact]	OK	# A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie jar's repr.
+CORE-PR-HANDOFF-v12-other-tracks.md	131	src/hadavin_sdk/guard/redact.py	513	513	RANGE-OK/NO-ANCHOR	OK	# A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie jar's repr.
+CORE-PR-HANDOFF-v12-other-tracks.md	131	src/hadavin_sdk/guard/redact.py	513	519	RANGE-OK/NO-ANCHOR	OK	# A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie jar's repr. | (
+CORE-PR-HANDOFF-v12-other-tracks.md	131	src/hadavin_sdk/k1b/redaction.py	103	103	RANGE-OK/NO-ANCHOR	OK	def _pair(key: str, value: str, f: Callable[[str], str]) -> str:
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/config.py	451	454	ANCHOR-OK	OK	except ConfigError: | raise
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/config.py	317	317	RANGE-OK/NO-ANCHOR	OK	environment: Literal["dev", "pilot", "prod"]
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/config.py	366	367	RANGE-OK/NO-ANCHOR	OK	if self.environment != "dev": | refused = [
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/config.py	19	19	RANGE-OK/NO-ANCHOR	OK	from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/backends/table.py	593	593	RANGE-OK/NO-ANCHOR	OK	DEV_ONLY: frozenset[tuple[str, str]] = frozenset(
+CORE-PR-HANDOFF-v12-other-tracks.md	139	tests/test_lockin_guard.py	18	18	RANGE-OK/NO-ANCHOR	OK	from hadavin_sdk.backends.table import DEV_ONLY, NOT_PROD, TABLE
+CORE-PR-HANDOFF-v12-other-tracks.md	139	tests/fixtures/config/config.yaml	2	2	RANGE-OK/NO-ANCHOR	OK	environment: dev
+CORE-PR-HANDOFF-v12-other-tracks.md	139	tests/test_p4_secrets.py	106	106	RANGE-OK/NO-ANCHOR	OK	def _config(tmp_path, secrets, environment="dev"):
+CORE-PR-HANDOFF-v12-other-tracks.md	139	tests/warden_port/test_audit_chain.py	568	568	RANGE-OK/NO-ANCHOR	OK	found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local))
+CORE-PR-HANDOFF-v12-other-tracks.md	139	tests/test_p1b_backends.py	89	91	ANCHOR-MISS[Wording]	OK	@pytest.mark.parametrize("env", ["pilot", "prod"]) | def test_dev_only_kinds_refused_outside_dev(cfg_dir, env)
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/actions/secrets_env.py	1	1	ANCHOR-MISS[Wording]	OK	"""`env` secrets: read from environment variables (`dev` only, by the environment table).
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/audit/signer.py	64	64	RANGE-OK/NO-ANCHOR	OK	"""An Ed25519 key in a PEM file (dev and pilot; refused in prod by the environment table)."""
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/backends/table.py	126	126	RANGE-OK/NO-ANCHOR	OK	# (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth.
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/config.py	346	346	RANGE-OK/NO-ANCHOR	OK	)  # dev executor only
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/defaults.py	100	100	RANGE-OK/NO-ANCHOR	OK	EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_s)
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/registry.py	50	50	RANGE-OK/NO-ANCHOR	OK	# Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash: promotion changes
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/tools.py	361	361	RANGE-OK/NO-ANCHOR	OK	Without a pin (dev only; pilot and prod require one) it is an ordinary import."""
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/runtime/agent_loop.py	179	179	RANGE-OK/NO-ANCHOR	OK	# Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev only).
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/actions/contract.py	34	34	RANGE-OK/NO-ANCHOR	OK	"""Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 tests."""
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/store/postgres.py	75	75	RANGE-OK/NO-ANCHOR	OK	captured by an impostor); an explicit weaker `sslmode` is an opt-down for dev. With iam_auth (a bearer
+CORE-PR-HANDOFF-v12-other-tracks.md	139	src/hadavin_sdk/guard/redact.py	1162	1162	ANCHOR-MISS[CHANGELOG]	OK	"dev",
+CORE-PR-HANDOFF-v12-other-tracks.md	140	src/hadavin_sdk/backends/table.py	155	155	ANCHOR-OK	OK	retain_days: int = Field(default=1, ge=1)
+CORE-PR-HANDOFF-v12-other-tracks.md	140	src/hadavin_sdk/config.py	377	398	RANGE-OK/NO-ANCHOR	OK	def _anchor_refusals(environment: str, b: Backends) -> list[str]: | """Environment table (design 4.6). Prod ne
+CORE-PR-HANDOFF-v12-other-tracks.md	140	src/hadavin_sdk/backends/table.py	150	157	ANCHOR-OK	OK	class _AnchorSettings(KindSettings): | """Every anchor kind: COMPLIANCE only in prod with `retention_ack` (the
+CORE-PR-HANDOFF-v12-other-tracks.md	140	src/hadavin_sdk/audit/anchor_gcs.py	69	85	ANCHOR-MISS[Object]	OK	def probed(bucket: Any, settings) -> GcsAnchor: | try:
+CORE-PR-HANDOFF-v12-other-tracks.md	140	src/hadavin_sdk/audit/anchor_azure.py	83	96	ANCHOR-MISS[UNVERIFIED]	OK	def probed(container: Any, settings) -> AzureBlobAnchor: | try:
+CORE-PR-HANDOFF-v12-other-tracks.md	140	src/hadavin_sdk/audit/anchor_s3.py	5	7	ANCHOR-MISS[UNVERIFIED]	OK	never overwritten even before Object Lock applies (a 412 with the same bytes is an earlier put whose answer wa
+CORE-PR-HANDOFF-v12-other-tracks.md	141	CHANGELOG.md	35	35	RANGE-OK/NO-ANCHOR	OK	- Behaviour: grounding is a whole-token match and exact in case (`payments` is not found in `payments-canary`,
+CORE-PR-HANDOFF-v12-other-tracks.md	141	src/hadavin_sdk/audit/chain.py	140	140	RANGE-OK/NO-ANCHOR	OK	False  # the audit or its anchors could not be read: not checked, not "tampered"
+CORE-PR-HANDOFF-v12-other-tracks.md	176	.github/workflows/ci.yml	86	87	ANCHOR-OK	OK	HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres | HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1
+CORE-PR-HANDOFF-v12-other-tracks.md	176	.github/workflows/ci.yml	77	77	RANGE-OK/NO-ANCHOR	OK	run: uv sync --locked --no-build --all-extras --group test
+CORE-PR-HANDOFF-v12-other-tracks.md	176	.github/workflows/ci.yml	83	83	ANCHOR-MISS[Author,SKIP,instead,outputs,script]	OK	run: psql --version
+CORE-PR-HANDOFF-v12-other-tracks.md	180	.github/workflows/ci.yml	79	79	ANCHOR-MISS[gate4,mounted,test_lockin_guard,test_p4_secrets]	OK	run: ruff check src tests demos
+CORE-PR-HANDOFF-v12-other-tracks.md	205	src/hadavin_sdk/audit/chain.py	171	171	ANCHOR-MISS[citations,other]	OK	self.checkpoint_every = checkpoint_every

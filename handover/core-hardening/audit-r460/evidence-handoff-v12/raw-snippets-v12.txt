@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v12/snippet_check_v11.py", line 5, in <module>
+    txt = open(doc, encoding="utf-8").read()
+          ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+IsADirectoryError: [Errno 21] Is a directory: '/home/user/hadavin-sdk'

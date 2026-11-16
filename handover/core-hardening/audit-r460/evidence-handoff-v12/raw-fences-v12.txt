@@ -1,0 +1,4 @@
+CORE-PR-HANDOFF-v12.md fences: 2 ['python', 'python']
+ python fence 0 parses OK, lines 22
+ python fence 1 parses OK, lines 20
+CORE-PR-HANDOFF-v12-other-tracks.md fences: 0 []
