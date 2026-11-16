@@ -321,3 +321,68 @@ interrupted as expected (<Signals.SIGTERM: 15>,)
   PASS: T42 PWR state empty
   PASS: T42 PWR no orphan pytest
 == T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 931: 22737 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T43 setup: the stranger (a pytest of its own that names the root) is its own group leader
+process 22910 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/scF/tmpstate/hadav
+  PASS: T43a restore exit 0 and the file is back (rc 0)
+  PASS: T43a the stranger was left alone
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 931: 22910 Killed                  ( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py > /dev/null 2>&1 )
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 931: 23092 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 23104; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/scF/tmpstate/hadavin-mutation-lane-0/cff573ff1aa0d801.backu
+  PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 931: 23198 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 23210 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/scF/tmpstate/hadav
+  PASS: T43c a marker with a group and NO identity and NO command at all: file restored (rc 0), nothing stopped on a guess
+== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 931: 23278 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
+  PASS: T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs
+stopped orphaned test group 23303; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/scF/tmpstate/hadavin-mutation-lane-0/cff573ff1aa0d801.backup; hash matches save
+  PASS: T44 restore exit 0, file back (rc 0)
+  PASS: T44 the surviving member was stopped
+== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 931: 23480 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T45 setup: the orphan runs
+stopped orphaned test group 23492; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/scF/tmpstate/hadavin-mutation-lane-0/cff573ff1aa0d801.backu
+  PASS: T45 restore exit 0, file back (rc 0)
+  PASS: T45 the orphan was stopped
+== T46 timeout branch with stop_group failing: signals disarmed BEFORE stop_group is called, the leader still stopped, and the result is a TIMEOUT verdict, not a traceback (review r4 evidence)
+rc: None SIG.allow seen inside stop_group: [False] after: False
+  PASS: T46 SIG.allow was already False when the timeout branch called stop_group, and the result is TIMEOUT (no traceback)
+  PASS: T46 no orphan pytest left although stop_group failed in the timeout branch
+  PASS: T46b through run.py itself (stop_group failing, timeout 3 s): exit 5 INCOMPLETE (a TIMEOUT is no complete run; r5: 0) (got 5), raw file says VERDICT: TIMEOUT, file restored, state empty
+== T47 (review r4 M1) every signal that ends a process is handled, also while the file is planted and while it is restored
+set equals valid_signals minus the six-plus-five excluded: True (51 signals)
+INTERRUPTED (signal 1): no mutant planted, no marker
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py", line 1459, in one
+    cmd, rc, out, sweep = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
+                          ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py", line 1283, in run_tests
+    deliver_pending()  # a signal remembered during the start (control run: nothing is planted)
+    ~~~~~~~~~~~~~~~^^
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py", line 232, in deliver_pending
+    raise KeyboardInterrupt(SIG.first)
+KeyboardInterrupt: 2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<stdin>", line 29, in <module>
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py", line 1853, in main
+    dirty = one(a, tests, m, results, ref)
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py", line 1465, in one
+    _, back = restore_target(p2, orig, root)
+              ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "<stdin>", line 19, in rt
+  File "<stdin>", line 19, in rt
+  File "<stdin>", line 19, in rt
+  [Previous line repeated 994 more times]
+RecursionError: maximum recursion depth exceeded
+  FAIL: T47a all handled signals in the plant window and the restore window: exit 128+N, file restored, state empty
+  T47b real signals sent from outside while the tests are awaited: TRAP RTMIN RTMAX SYS STKFLT(16) SEGV BUS FPE ILL
+  PASS: T47b TRAP exit 133 (got 133), file restored, state empty, no orphan
+  PASS: T47b RTMIN exit 162 (got 162), file restored, state empty, no orphan
+  PASS: T47b RTMAX exit 192 (got 192), file restored, state empty, no orphan
+  PASS: T47b SYS exit 159 (got 159), file restored, state empty, no orphan
+  PASS: T47b 16 exit 144 (got 144), file restored, state empty, no orphan
+  PASS: T47b SEGV exit 139 (got 139), file restored, state empty, no orphan
