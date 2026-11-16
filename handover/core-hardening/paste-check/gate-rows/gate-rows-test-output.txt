@@ -1,0 +1,74 @@
+== G2 tests (stub pgq; made-up keys)
+-- count stub=2
+GATE2 count: 2
+GATE2 count: 2
+-- count stub=1
+GATE2 count: 1
+GATE2 count: 1
+-- count stub=0
+GATE2 count: 0
+GATE2 count: 0
+-- same key
+GATE2 A and B have the same key: STOP
+-- bad char
+GATE2 key has an unexpected character: STOP
+-- A missing
+GATE2 key of A or B not in keys.txt: STOP
+== G1 tests
+-- RI empty
+GATE1 repeat-flag index not filled (lead reads it from drive.py): STOP
+-- A=[False,True] B=[False]+[True]*9
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False
+GATE1-A PASS
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False
+GATE1-B PASS
+rc=0
+-- A=[False,True] B=[True]*10
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False
+GATE1-A PASS
+GATE1-B replies=10 repeat_false=0 repeat_true=10 first_repeat=True
+GATE1-B PASS
+rc=0
+-- A=[False,False] B=[False]+[True]*9
+GATE1-A replies=2 repeat_false=2 repeat_true=0 first_repeat=False
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False
+GATE1-B PASS
+rc=0
+-- A=[False,True] B=[False]*2+[True]*8
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False
+GATE1-A PASS
+GATE1-B replies=10 repeat_false=2 repeat_true=8 first_repeat=False
+GATE1-B FAIL: STOP
+rc=1
+-- A=[False] B=[False]+[True]*9
+GATE1-A replies=1 repeat_false=1 repeat_true=0 first_repeat=False
+GATE1-A FAIL: STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False
+GATE1-B PASS
+rc=0
+-- A=[False,True] B=[False]+[True]*8
+GATE1-A replies=2 repeat_false=1 repeat_true=1 first_repeat=False
+GATE1-A PASS
+GATE1-B replies=9 repeat_false=1 repeat_true=8 first_repeat=False
+GATE1-B FAIL: STOP
+rc=1
+-- A no replies
+GATE1-A FAIL: output shape not as expected (no replies list or repeat flag not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False
+GATE1-B PASS
+GATE1-A FAIL: output shape not as expected (no replies list or repeat flag not true/false): STOP
+GATE1-B replies=10 repeat_false=1 repeat_true=9 first_repeat=False
+GATE1-B PASS
+== G1 rerun with ROW line
+-- A=[False,True] B=[False]+[True]*9
+GATE1 ROW: PASS
+GATE1 ROW: PASS
+-- A=[False,False] B=[False]+[True]*9
+GATE1 ROW: FAIL: STOP
+GATE1 ROW: FAIL: STOP
+-- A=[False,True] B=[False]*2+[True]*8
+GATE1 ROW: FAIL: STOP
+GATE1 ROW: FAIL: STOP
+-- RI empty
+GATE1 repeat-flag index not filled (lead reads it from drive.py): STOP
