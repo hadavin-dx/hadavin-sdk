@@ -31,3 +31,9 @@ Keep at least 4 agents running; when one finishes start the next in the same tur
 
 ## REFILL 09:45Z (lead)
 M16 [REVIEWED round 1, fixes applied; fresh reader running] FLOW-SET QUESTION (critical path, take day): local check says the take scripts contain NO code that switches the n8n flow set from real-v5 (scenes 1-4) to film-v5 (scenes 5-11); `scripts/n8n_api.py` can import/activate/deactivate but nothing calls it; the lead imports real-v5 by hand (WP6-RUNBOOK line 16). Decide from the run sheet, owner steps and the 'simple video' decisions which scenes the ONE N-lite video really contains and whether film-v5 scenes are in it at all. Output handover/system-map/flowset/REPORT.md: scene list, flow set each needs, exact manual switch steps (n8n_api.py commands, who runs them, how long) or 'film-v5 not in this video'. Two reviewers.
+
+## REFILL (lead): items
+M17. Replacement text file for item 1 (end never deletes): v5, run-day card, program notice, TAKE-BLOCKERS; old/new lines.
+M18. decisions/D04-D05.md (one page).
+M19. Independent reader pass over the final owner-steps page (stranger test, 10 minutes of steps, no jargon).
+M20. Re-verify every number and date in SESSION-HANDOFF live state against files (claims check), list mismatches.

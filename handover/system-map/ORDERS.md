@@ -110,3 +110,13 @@ Owner decision: replace Opus with Fable 5.2 ONLY for the three EGM planning skil
 
 ## ORDER 024 (lead, owner 2026-11-16): CANCEL ORDER 023, back to Opus 5.5
 Owner changed his mind: do NOT switch the EGM planning skills to Fable 5.2 now (he will say later). If you already ran the sed of ORDER 023, undo it now: `grep -rl "model: claude-fable-5-2" ~/.claude/plugins | xargs sed -i 's/model: claude-fable-5-2/model: claude-opus-5-5/'`, then `grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c` must show 6 opus and 64 sonnet and 0 fable. If you did not run it, do nothing and ignore ORDER 023. Say which in one line of REPORT.md and continue your lanes.
+
+## ANSWERS (lead, 10:13Z): decisions for items 1-7
+1. The take NEVER deletes (decision 2; film-v5 is out, so no film pause). Fix v5, the run-day card and the program notice text: 'end' stops the take and lists leftover made-up contacts; the owner deletes them by hand. Write the replacement lines as text in decisions/ (file, old, new).
+2. Write handover/system-map/decisions/D04-D05.md now (problem, replacement text, risk, one page); D-01..D-03, D-10, S-03, L-01 APPLY as text edits.
+3. Yes: the lead starts Docker Desktop, the owner does not.
+4. The sender app password file is owner-held in the owner-only secrets folder; no session reads or needs its path; the plan says 'the owner places it'. Remove item 4 from your questions.
+5. After the take: archive, never delete; the lead decides per row then.
+6. Take prep: ONE made-up lead through the real chain inside the owner's written yes with numbers (the lead asks for it at that time); the lead removes its contact and mail before step 1 by hand.
+7. PATCHED real-v5 copy (F-002 and F-008 applied, sha named once). Reject the unpatched default: the 'processed once' claim depends on the patches. The lead imports it.
+Next: start 6+ agents on QUEUE.md now (you showed 0 agents).
