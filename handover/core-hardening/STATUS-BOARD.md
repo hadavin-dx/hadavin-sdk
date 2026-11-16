@@ -1,26 +1,26 @@
-UPDATED_UTC: 2026-11-16T12:50:00Z
+UPDATED_UTC: 2026-11-16T12:54:47Z
 SESSION: core-hardening
-ORDER: 021 + decisions 10:02Z; 024; 027-029, 031, 032, 034, 035, 036 (6 running, reasons below)
+ORDER: 021 + decisions 10:02Z; 024; 027-029, 031, 032, 034, 035, 036 (4 running, reasons below; ORDER 038 + lead answers Q22-Q31 12:50Z)
 STATE: WORKING
 BOOT_ID: 3dcae981
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 9
 PERCENT: 96
-AGENTS_RUNNING: 6
-CAPACITY: load 0.22 of 4 cores, mem about 1.0 of 15.7 GB used (14.8 GB available), DISK: 8.2 GB free, Used 31G, Size 252G (df Size is not usable space; allowance about 39 GB, 79% used); top 3 disk users I created: /tmp/c8b 2.1G, /tmp/c5v2 1.9G, /tmp/c5v3 1.8G (from earlier beat); MB freed this beat: 0 (free above 6 GB)
+AGENTS_RUNNING: 4
+CAPACITY: load 0.14 of 4 cores, mem about 1.1 of 15.7 GB used (14.8 GB available), DISK: 8.2 GB free, Used 31G, Size 252G (df Size is not usable space; allowance about 39 GB, 79% used); top 3 disk users I created: /tmp/c8b 2.1G, /tmp/c5v2 1.9G, /tmp/c5v3 1.8G (from earlier beat); MB freed this beat: 0 (free above 6 GB)
 INTERRUPTED: none
-FAILED: (1) Owner sheet v19 NOT handover-ready (all 4 independent reviews in: security 1 blocker + 6 majors, stranger 3 blockers + 13 majors, readiness 24 gaps, contradiction 3 blockers + 9 majors; ONE v20 fix pass building): security/money review 1 blocker (take program still deletes contacts, decision 2 code change is the lead's) + 6 majors (6.2 vs R4 key wording; zero slack at 18:29 UTC window end; "key not listed" accepted as cancelled; word that ends a FREEZE not named; lead can reach clipboard/screen as same user; typed worst-case prompt unknown); stranger read 3 blockers + 13 majors (key file cannot be overwritten at 6.4/6.5; R10 vs R3 echo $?; Recording on/off contradiction); evidence 9 pointer/wording mismatches, 0 arithmetic errors; contradiction + readiness reviews running, then ONE v20 fix pass. (2) Checklist rev 12 evidence ok on Linux only; rev 13 builder running (last round, non-security); nothing run on Windows, WSL, Git Bash, PowerShell; P-4b-HIT attestation, C9 session binding, c7check 7-char still weak. (3) run.py r5: independent evidence 279 pass 0 fail on final code but could NOT reproduce builder's "r4 fails 41" (got 73 of 276 outside a git tree); r5 security review 3 majors; r6 builder running; 2 ruff S603 remain (lead decides). (4) Core audits (not mine to fix): hand-off v4 built (G-rules evidence done: all definite v4 claims confirmed on current gate, 125 tests pass, 2 candidate rows dropped or doubtful; readiness + security reviews running; v4 does not yet include window-end audit findings: no end date enforced anywhere, NetworkLLM.chat is the real choke point, cli.py bypasses the app wrap); older: hand-off v3 readiness review 2 blockers (spend reservation cap check undefined; approval-text rule cannot tell withheld from pinned examples) + 9 majors + 7 nits; zoom-out review running; spend guard 3 blockers + 5 majors, redaction 1 blocker, G4 filter 2 blockers + 11 majors; nothing run (markdown_it missing). (5) Lease wording A/B, take port, Q18 approval of run.py, S603 undecided by lead. (6) Nothing run with n8n, Postgres, PowerShell, WSL, Git Bash. (7) REPORT.md rows C3b/C8 stale (to fix). (7b) C6h fix pass done (8 majors + 12 citation mismatches fixed; not run at runtime; round 2 review running; 4 files still absent: qualify_stage.py, take n8n_start.sh, V7 raw files, bible R460; new lead question Q11 three claim wordings); 4 files absent everywhere (qualify_stage.py, take n8n_start.sh, take scripts/n8n_api.py, V7 raw files). (8) Evidence runner left dangling symlinks /c and /mnt/c; user must run rm /c /mnt/c.
-NEXT: on hand-back: save condensed copy, banned scan, commit; v19 contradiction + readiness reviews then ONE v20 fix pass; hand-off v3 zoom-out then v4 fix pass; C6h then no more review round; run.py r6 then fresh security review + evidence runner; refresh REPORT.md
-PUSHED_UTC: 2026-11-16T12:50:00Z
+FAILED: (1) Owner sheet v20 built (check-v20.py exit 0, 6,650 words, NOT shorter) but NOT independently reviewed; lead answers Q22-Q31 being applied by the builder; open gates stay with the lead (take program delete path UNVERIFIED, go marker, no stop after end, lead timer, end-date refusal at final head); nothing run on Windows, WSL, PowerShell, n8n, Postgres. (2) Core hand-off v4 NOT ready: security review 5 blockers + 10 majors, readiness 0 blockers + 7 majors, citation check 9 of 107 cites wrong, window-end audit: no end date enforced anywhere, choke point NetworkLLM.chat, cli.py bypasses; v5 builder running; nothing run (G-rules evidence only: 125 tests pass in a scratch copy, all definite claims confirmed). (3) Checklist rev 13 independent evidence found a real bug (stale proof-6.txt); fixed in rev 14 (one line); full harness NOT re-run on rev 14; Windows/WSL/Git Bash/PowerShell never run; runner left empty folder /z (user: rmdir /z). (4) run.py r5: 3 majors, r6 builder running; S603 not suppressed (Q29: tool only, out of every PR). (5) 4 files absent (qualify_stage.py, take n8n_start.sh, V7 raw files, bible R460). (6) Dangling symlinks /c and /mnt/c: user must run rm /c /mnt/c (and rm /home/user/hadavin-sdk/*.whl to quiet the stop hook).
+NEXT: v20 applies lead answers, then security (uncapped) + stranger + citation reviews; v5 hand-off then 2 reviews + citation check; run.py r6 then security review + evidence runner; REPORT/QUESTIONS refresh landing
+PUSHED_UTC: 2026-11-16T12:54:47Z
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
 |---|---|---|---|---|---|
 | C1 | cross-review flows-audit | done | 100 | reviews-of-flows-audit/REVIEW.md | |
 | C2 | hygiene patches | done | 100 | hygiene-patches/ | static |
 | C3 | paste check of re-smoke plan | done | 100 | paste-check/REPORT.md | nothing run with pwsh or n8n |
-| C3b | checklist rev 13 built; independent evidence runner running | rev 13 | 98 | paste-check/evidence-c12-independent.md | last round, non-security |
+| C3b | checklist rev 14 (one-line fix after independent evidence on rev 13) | done | 99 | paste-check/evidence-c12-independent.md | last round, non-security |
 | C4 | EDITS.md round 3: 0 blockers | done | 100 | steps-edits/EDITS.md | CODE-CHANGE-NEEDED is the lead's |
-| C4b | owner package v19 reviewed by 4; v20 fix pass building | v20 | 93 | steps-edits/review-v19-contradiction.md | money/secret path, uncapped |
+| C4b | owner sheet v20 built, lead answers being applied; reviews next | v20 | 94 | steps-edits/review-v19-contradiction.md | money/secret path, uncapped |
 | C5 | core patches | v5 done | 100 | patches-ready/review/design-r5-c5v5.md | scope cut by decision 4 |
 | C6 | C6h done; round 2 clean | done | 100 | c6-skip-audit/REPORT-c6h.md | Q1/Q2/Q9/Q10/Q11 wait for lead |
 | C7 | heavy lane tests per patch | C7b fix 4 round 5 clean | 97 | patches-ready/review/design-c7b-fix4-r5.md | flake describe-only |
@@ -28,19 +28,17 @@ PUSHED_UTC: 2026-11-16T12:50:00Z
 | C9 | apply S9 decisions into owner steps | in v19 | 90 | steps-edits/ | |
 | C10 | who-types-what table | in v19 | 90 | steps-edits/ | |
 | C11 | HubSpot probe step | in v19 | 90 | steps-edits/ | |
-| core audits | hand-off v4 built; G-rules evidence done; readiness + security reviews and citation check running; window-end audit reviewed | v4 review | 95 | audit-r460/review-handoff-v3-zoomout.md | core PRs are the lead's |
+| core audits | v4 reviewed 3 ways + citation check; v5 fix pass building | v5 | 96 | audit-r460/review-handoff-v3-zoomout.md | core PRs are the lead's |
 
-## AGENTS (6 running, counted from the real agent list at 2026-11-16T12:50:00Z)
+## AGENTS (4 running, counted from the real agent list at 2026-11-16T12:54:47Z)
 | agent id | purpose | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|
 | a6c8c0ccc8329fa28 | builder: run.py r6 (security path, uncapped) | 12:31Z | 13:30Z | running | nothing yet |
-| a3b5c8cf6c7623ab7 | builder: owner sheet v20 (uncapped path) | 12:43Z | 13:43Z | running | OWNER-SHEET-v20.md started |
-| a7e3b039fe68f6bf4 | EVIDENCE RUNNER: checklist rev 13 | 12:46Z | 13:15Z | running | nothing yet |
-| a793f596e295e4e17 | egm readiness review of hand-off v4 | 12:47Z | 13:10Z | running | nothing yet |
-| a67e3c558953d4fa1 | egm security/lock-in review of hand-off v4 | 12:47Z | 13:10Z | running | nothing yet |
-| aa303cc8fe2a44c4f | citation checker: hand-off v4 | 12:49Z | 13:35Z | running | nothing yet |
+| a3b5c8cf6c7623ab7 | builder: owner sheet v20, applying lead answers Q22-Q31 | 12:43Z | 13:20Z | running | v20 draft + note v4 + map + check output (pushed) |
+| aea7121ca4d27051f | builder: hand-off v5 (all 3 v4 reviews + citation + window-end) | 12:52Z | 13:50Z | running | nothing yet |
+| a4341f92f25c711b1 | builder: REPORT.md + QUESTIONS.md refresh | 12:54Z | 13:25Z | running | nothing yet |
 
-Missing from 8 (2): (a) v5 hand-off fix pass waits on the two v4 reviews and the citation check (row core audits); no lead answer needed. (b) run.py r6 security review + evidence runner wait on the r6 builder (row C8) and v20 security/stranger/citation reviews wait on the v20 builder (row C4b); no lead answer needed. Nothing idles for a lead answer.
+Missing from 8 (4): (a) v20 security/stranger/citation reviews wait on the v20 builder finishing the lead answers (row C4b); no lead answer needed. (b) run.py r6 security review + evidence runner wait on the r6 builder (row C8); no lead answer needed. (c) v5 hand-off two reviews + citation check wait on the v5 builder (core audits row); no lead answer needed. (d) Checklist rev 14: non-security round cap reached, no further review round (row C3b). Nothing idles for a lead answer.
 
-Finished since last board: window-end audit review (2 blockers, 5 majors; audit corrected); v4 G-rules evidence (all definite claims confirmed, 125 tests pass); C6h round 2 clean.
-NEXT 5 independent tasks if capacity frees: (1) v5 hand-off fix pass incl. window-end findings; (2) v20 reviews after builder; (3) run.py r6 security review + evidence runner; (4) refresh REPORT.md and QUESTIONS.md (Q28) with v4 evidence and window-end findings; (5) final REPORT sweep and FINAL when all rows DONE or BLOCKED.
+Finished since last board: v4 security, readiness and citation reviews saved; rev 13 independent evidence (rev 14 fix); v20 draft; lead answers Q22-Q31 read and forwarded to builders.
+NEXT 5 independent tasks if capacity frees: (1) v20 security + stranger + citation reviews; (2) v5 reviews + citation check; (3) run.py r6 security review + evidence runner; (4) re-check rev 14 with the independent harness only if the lead asks (non-security); (5) FINAL sweep when every row is DONE or BLOCKED.
