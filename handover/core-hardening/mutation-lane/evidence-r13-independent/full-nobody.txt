@@ -848,3 +848,304 @@ REFUSED: --list /tmp/r13-indep-nobody/scratch/deep.json cannot be read as a JSON
 /tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 23273 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 RESTORE FAILED: marker /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.planted.json is not valid JSON: refused; the mutant may still be planted; marker and backup k
   PASS: T95b2 a marker nested 200000 deep: exit 3 (got 3; r7: 2 with INTERNAL ERROR), no Traceback, file still planted
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 23462 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: marker file: 'src/mod.py' passes through a symbolic link (mod.py): refused; the mutant may still be planted; marker and backup kept; the file under test is now a symbolic link (/tmp/r13-indep-nobody/scratch/toy/root/src/mod.py -> "/nonexistent/nowhere") and nothing was written through it. Do this: 1) rm -- /tmp/r13-indep-nobody/scratch/toy/root/src/m
+  PASS: T95c a dangling symbolic link in place of the file: exit 3 (got 3), nothing written through it, the text gives the exact command (rm -- ... mod.py) and the restore command
+  PASS: T95c after the advised rm, --restore re-creates the original: exit 0 (got 0), file back, state empty
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 23727 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept; a folder on the way is a symbolic link (/tmp/r13-indep-nobody/scratch/toy/root/src -> "/tmp/r13-indep-nobody/scratch/decoy95/src") and the planted file may be behind it. Do this: 1) mv -- /tmp/r13-indep-nobody/scratch/toy/
+  PASS: T95c2 a folder on the way is a link: exit 3 (got 3), the text names the folder and says 'mv --' and the restore command
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 23885 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True
+  PASS: T95d1 HONEST LIMIT, pinned: marker and backup forged TOGETHER (hash matches) by someone who can write the private state folder: a plain --restore accepts them (exit 0) and the swapped text is written; this cannot be closed without a key the user cannot read (see the docstring)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 24168 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"src/mod.py" > the file; the mutant may still be planted; marker and backup kept (run --restore again 
+  PASS: T95d2 the same forged state with --restore --sha COMMIT: refused, exit 3 (got 3; r7 ignored --sha and accepted), the swapped text is NOT written (file still planted return2), marker kept
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 24325 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T95d3 guard: genuine state with --restore --sha COMMIT: restored, exit 0 (got 0), state empty
+== T96 (r9: review r8 B1 and M1, class: an exit code that says nothing is planted while planted-ness is unknown; docs must match code) --restore with NO marker, --restore --sha, other TMPDIR, documented exit codes
+REFUSED: no marker in /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT TELL whether a file is still planted (a lost marker, or a run that used another state folder, for example 
+  PASS: T96a --restore with no marker anywhere and no --sha: exit 2 (got 2; r8: 0), text says CANNOT TELL and names both ways out (TMPDIR of the killed run, --sha), file untouched
+the tree equals the git archive given with --sha: no file is planted or changed
+  PASS: T96b --restore --sha COMMIT, no marker, tree equals git: exit 0 (got 0), text says the tree equals the git archive (r8: ignored --sha, said CANNOT TELL)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 24597 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each
+  PASS: T96b2 marker LOST while the file is planted, --restore --sha COMMIT: exit 3 (got 3; r8: 0), names src/mod.py, file still planted (nothing is guessed), a hand copy from git then gives exit 0
+  PASS: T96b3 after the hand copy from git: exit 0 (got 0)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 2220: 24789 Killed                  ( export TMPDIR=$OT; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T96c killed run with TMPDIR outside the searched places, file planted: plain --restore exits 2 (got 2; r8: 0 'nothing recorded'), --restore --sha exits 3 (got 3; r8: 0), the file is still planted
+  PASS: T96c3 guard: --restore with the TMPDIR of the killed run restores it: exit 0 (got 0), file back, its state folder empty
+exit 2: the docstring rows that contain 'NO marker for this root exists anywhere': ['2']
+exit 0: the docstring rows that contain 'found the whole tree equal': ['0']
+exit 3: the docstring rows that contain 'when the tree differs from git': ['3']
+exit 2: the docstring rows that contain 'names another root or another backup path': ['2']
+BAD: []
+  PASS: T96d the exit-code table of the docstring is parsed; every code in the code has a row, and four observed --restore results (no marker, --sha equal, --sha different, marker for another root) sit in the row that says so; the new options are named (exit 0; r8: fails)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 25019 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded (exit 3): 93a5c4d42a2b68b8.planted.json was written for another folder than the one now at /tmp/r13-indep-nobody/scratch/toy/root (renamed away, replaced, or no folder identity recorded): the folder the mutant was planted in was 
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; 93a5c4d42a2b68b8.planted.json: test group already gone). ACCEPTED BY YOU (--accept-unchecked-folder), not checked: 93a5c4d42a2b68b8.planted.
+  PASS: T96e stale folder identity in the marker: --restore exits 3 for ever (got 3); --discard-marker without --sha is refused, exit 2 (got 2); with --sha and an equal tree but a marker that does not prove its folder: exit 3 (got 3; r10 M1), marker kept (1); with --accept-unchecked-folder: exit 0 (got 0), state empty
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 25370 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded: the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each
+  PASS: T96e2 --discard-marker while the file is STILL planted (tree differs from git): exit 3 (got 3; r8: 2), nothing removed, file still planted
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 2220: 25553 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/big.py --old 'X = 1' --new 'X = 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/big.py" back: File too large; the mutant may still be planted; marker and backup kept
+  PASS: T96f GUARD (passes on r8 too: it pins the behaviour): the write is cut short by a 1 KiB file-size limit: exit 3 (got 3), 'RESTORE FAILED', the file holds only a part (1024 bytes), marker and backup KEPT (1); the second restore without the limit: exit 0 (got 0), file equals git, state empty
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 25718 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: /tmp/r13-indep-nobody/scratch/toy/root/src/mod.py is not a regular file with exactly one name (links: 2): not written, mode not changed; the mutant may still be planted; marker and backup kept
+  PASS: T96g the planted file got a second name after the plant: exit 3 (got 3), the text says 'mode not changed', the mode is still 600 (got 600; r8 set it to 644 first), file still planted, marker kept
+REFUSED: mutant m1 file: 'src/__pycache__/m2.py' lies in a folder the tree comparison does not look at (.pytest_cache, .venv, __pycache__): refused
+  PASS: T96h a mutant file inside __pycache__ (exit 2) or .pytest_cache (exit 2), or an --extra there (exit 2): all exit 2 (r8: planted them: not 2), nothing planted, state empty
+  PASS: T96h2 GUARD (passes on r8 too): --file . is a clean refusal, exit 2 (got 2), no INTERNAL ERROR
+REFUSED: marker is for another root ("/nowhere/else"): refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T96h3 a marker that names another root (forged): exit 2 (got 2), and the text says that exit 2 does NOT mean nothing is planted and names --sha (r8: no such warning)
+  PASS: T96i --out-json or --raw inside the state folder: exit 2 (got 2, 2; r8 wrote there), no file created, nothing planted
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 26035 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T96j1 SIGTERM while 'git archive' stalls inside --restore --sha: ends at once with 143 (got 143; r8: the signal was only remembered and the run hung), the file is still planted and marker and backup are kept (nothing was written)
+RESTORE FAILED: git did not finish within 2 s and was stopped (--helper-timeout); the mutant may still be planted; marker and backup kept (run --restore again when the cause is fixed)
+  PASS: T96j2 a stalled 'git archive' with --helper-timeout 2: stopped, exit 3 (got 3; r8: unknown option), text 'did not finish within 2 s', marker kept, file still planted
+folder syncs after write: 1 after removal: 2
+  PASS: T96k write_state syncs the state FOLDER once, unlink_state removes and syncs it again (exit 0; r8: no folder sync, no unlink_state)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 26329 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o664): the marker may be forged; nothing written; the mutant may still be planted; marker and backup kept (run --restore aga
+  PASS: T96l marker mode 0777 (git has no execute bit for this file) with --restore --sha: exit 3 (got 3; r8: restored and wrote 0777), 'execute bits', file still planted
+  PASS: T96l2 guard: the genuine mode with --sha restores: exit 0 (got 0), state empty
+== T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 2220: 26605 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded (exit 3): 93a5c4d42a2b68b8.planted.json was written for another folder than the one now at /tmp/r13-indep-nobody/scratch/toy/root (renamed away, replaced, or no folder identity recorded): the folder the mutant was planted in was NOT compared with git. The tree at /tmp/r13-indep-
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; 93a5c4d42a2b68b8.planted.json: test group already gone). ACCEPTED BY YOU (--accept-unchecked-folder), not checked: 93a5c4d42a2b68b8.planted.json was written for another folder than the one n
+  PASS: T97a M1 root renamed away, a full git copy at its path: --discard-marker exits 3 (got 3; r9: 0 and deleted marker and backup), marker kept (1), the text says the other folder was NOT compared; with --accept-unchecked-folder: exit 0 (got 0), state empty, text says ACCEPTED BY YOU; the mutant stays in the renamed-away folder
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 26770 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (garbage): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 27039 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (list): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 27189 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+                  [--out-json OUT_JSON] [--timeout TIMEOUT]
+                  [--pythonpath PYTHONPATH] [--repo REPO]
+                  [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                  [--skip-import-check] [--restore] [--discard-marker]
+                  [--accept-unchecked-folder]
+                  [--helper-timeout HELPER_TIMEOUT]
+run.r13.py: error: argument --sha: '' is not a commit id (4 to 64 hexadecimal digits; an empty value is refused: is a shell variable unset?)
+  PASS: T97c M2 --sha "" with a forged marker and backup: exit 2 (got 2; r9: 0, the swapped text was written), the swapped text is NOT in the file (still planted), marker kept
+  PASS: T97c2 siblings (on r9 only --out-json "" failed; the other two already refused; a bundle of three): --sha zz (got 2), --repo "" (got 2), --out-json "" (got 2) are all refused with exit 2, nothing planted
+exit 2 for an argparse error: named in row 2: True
+exit 2 for a state folder that is not mode 700: named in row 2: True
+exit 2 for a lock held by a live run: named in row 2: True
+exit 2 for a --sha that names no commit: named in row 2: True
+BAD: []
+  PASS: T97d m1 row 2 of the exit table: no 'ONLY'; an argument error, a state folder not mode 700, a lock held and a --sha that names no commit all exit 2 and are named in it (exit 0; r9: fails)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 27361 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97e m2 recorded mode 0 (decimal 0), file deleted: --restore re-creates it with exactly its lowest 9 bits 0 (a special bit is never written, r11 MAJ-1): exit 0 (got 0), mode 0 (r9: 644)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 27547 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97e m2 recorded mode 4755 (decimal 2541), file deleted: --restore re-creates it with exactly its lowest 9 bits 755 (a special bit is never written, r11 MAJ-1): exit 0 (got 0), mode 755 (r9: 644)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 27704 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o4755) has a special bit (setuid, setgid or sticky): git has none, so the marker may be forged; nothing written (r10 m2); the mutant may still be planted; mark
+  PASS: T97e2 m2 marker mode 4755 with --sha: exit 3 (got 3; r9: 0 for 0666, exit 3 already for 4755), 'special bit' (4755) or 'writable by others' (0666; r12 texts), nothing written (still planted)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 27839 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o666) is writable by others: git never gives that, so the marker may be forged; nothing written; the mutant may still be planted; marker and backup kept (run -
+  PASS: T97e2 m2 marker mode 666 with --sha: exit 3 (got 3; r9: 0 for 0666, exit 3 already for 4755), 'special bit' (4755) or 'writable by others' (0666; r12 texts), nothing written (still planted)
+  PASS: T97f m3 --out-json in another searched state folder (via TMP): exit 2 (got 2; r9: wrote it), file not created; an existing foreign file: exit 2 (got 2; r9: overwritten), still 'precious', no raw file written
+  PASS: T97f2 guard: the tool's own earlier result file may be overwritten: exit 0 both times (got 0, 0)
+INTERRUPTED (signal 15): no mutant planted, no marker
+exit 143
+leaked []
+  PASS: T97g m4 SIGTERM arriving right after the temporary folder is made: exit 143 and the folder is removed (r9: an uncaught KeyboardInterrupt, the folder leaked)
+REFUSED: marker is for another root ("/nowhere/else"): refused; the tree equals the git archive given with --sha: no file is planted or changed (the marker was left alone; to remove it use --discard-marker)
+exit 2 does NOT mean nothing is planted anywhere: nothing was written; the files under --root were compared with the git archive of --sha (see above); a folder the marker may name is not looked at
+RESTORE FAILED: marker is for another root ("/nowhere/else"): refused; the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each; the mutant may 
+  PASS: T97h m5 forged marker (another root) with --sha: tree equal: exit 2 (got 2), text says the tree equals the git archive and 'does NOT mean nothing is planted'; tree different: exit 3 (got 3; r9: 2), marker kept
+WARNING: the state folder could not be synced after removing k.json (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+m6 mode after a failed reopen: 0o444
+m7 tree_check: ['<marker left behind>']
+m8 child of the helper still alive after the timeout: False
+m11 unlink_state returned, file exists: False
+BAD: []
+  PASS: T97i m6 (a failed reopen gives the mode back), m7 (a dangling link as marker counts), m8 (a timeout kills the helper's child too), m11 (a failed folder sync after the removal is a warning, not an error) (exit 0; r9: fails all four)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 28183 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+WARNING: the state folder could not be synced after removing 93a5c4d42a2b68b8.planted.json (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+WARNING: the state folder could not be synced after removing 93a5c4d42a2b68b8.backup (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True
+  PASS: T97j m11 --restore with a failing state-folder sync: exit 0 (got 0; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 28280 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant ("evil\nPASSED: faked line\u001b[31m") is still planted in "src/mod.py" from an earlier run that was killed. Restore with: python3 /tmp/r13-indep-nobody/run.r13.py --root /tmp/r13-indep-nobody/scratch/toy/root --restore --repo /tmp/
+  PASS: T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit 2): no line starts with 'PASSED:', no raw escape character in the output (r9: both)
+REFUSED: this tool cannot start here: no usable temporary folder (FileNotFoundError: No usable temporary directory found)
+exit 2
+  PASS: T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)
+  PASS: T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit 0; r9: fails)
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+  PASS: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 0 of 5 wrong (r9: exit 1 or a traceback)
+  PASS: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 0
+  PASS: T98c TEXT CHECK (greps the source; the real protection is T99a) no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 0; r9: fails)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 28440 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"s
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 28604 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True
+  PASS: T98d GUARD (passes on r9 and r10 by design: it pins behaviour that did not change) limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 3), nothing written (last 'return2' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 28828 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o664): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T98e GUARD (same behaviour on r9 and r10) forged marker with mode 0777: --sha refuses it, exit 3 (got 3), nothing written (last 'return2' = return2)
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True; NOTE the marker mode 
+  PASS: T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0755: the write bits for the group and for others are taken away (r13 relay item 4; r12 wrote 0775, r11 0777) (got exit 0, mode 755; the special-bit case is T99b)
+missing [] no (d): False
+  PASS: T98f TEXT CHECK the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 0; r9: fails)
+== T99 (r11, review r10: MAJ-1 setuid from a forged marker, S603 guard, minors 1 2 3 6; each check says whether it fails on r10 code)
+fatal: not a git repository (or any of the parent directories): .git
+wrong: []
+  PASS: T99a S603 (r12: now with a real allowed program as the base, git): Child refuses 11 kinds of bad start (shell string, tuple, relative program, empty, NUL, non-text, shell=True, preexec_fn, LD_PRELOAD, GIT_DIR, bad env) and still starts a good one (exit 0; r10: fails, nothing was checked; with the check removed from run.py: fails, see evidence)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 28953 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True; NOTE the marker mode 0o4755 had a setuid, setgid or sticky bit: --restore never writes those, the file got 0o755 (set the
+  PASS: T99b MAJ-1 forged marker mode 4755 (plain --restore): exit 0 (got 0), no special bit on the file (mode 755 has at most 3 digits), the text says NOTE (r10: the file got mode 4755)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 29235 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True; NOTE the marker mode 0o2755 had a setuid, setgid or sticky bit: --restore never writes those, the file got 0o755 (set the
+  PASS: T99b MAJ-1 forged marker mode 2755 (plain --restore): exit 0 (got 0), no special bit on the file (mode 755 has at most 3 digits), the text says NOTE (r10: the file got mode 2755)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 29382 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True; NOTE the marker mode 0o4777 had a setuid, setgid or sticky bit: --restore never writes those, the file got 0o777 (set the
+  PASS: T99b MAJ-1 forged marker mode 4777 (plain --restore): exit 0 (got 0), no special bit on the file (mode 755 has at most 3 digits), the text says NOTE (r10: the file got mode 4777)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 29655 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True; NOTE the marker mode 0o7001 had a setuid, setgid or sticky bit: --restore never writes those, the file got 0o1 (set the s
+  PASS: T99b MAJ-1 forged marker mode 7001 (plain --restore): exit 0 (got 0), no special bit on the file (mode 1 has at most 3 digits), the text says NOTE (r10: the file got mode 7001)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 29806 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T99b2 MAJ-1 file deleted, marker mode 4755, plain --restore: re-created without the setuid bit (mode 755, exit 0; r10: 4755)
+refused: /tmp/r13-indep-nobody/scratch/t99b3/f.py: the mode after the write is 0o644, not the recorded 0o666 (the system did not keep it): marker and backup kept
+  PASS: T99b3 MAJ-1 the mode is checked AFTER the write, CREATED-file path only (the existing-file path is T100e): when the system keeps another mode than the recorded one the restore is refused, not reported as done (exit 0; r10: returns normally)
+  PASS: T99b4 TEXT CHECK the docstring no longer says a setuid bit is restored as recorded, and says plain --restore never writes one (exit 0; r10: fails)
+  PASS: T99c m1 a 313-byte -k expression is not refused for its length (exit 5, no 'longer than'; r10: exit 2 'name longer than 255 bytes'); a 100001-byte one is refused, exit 2 (got 2); a 300-byte PATH is still refused, exit 2 (got 2)
+REFUSED: mutant m1 file: root plus relative path is too long: it is 4304 bytes long (the limit is 4095)
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+                  [--list LIST] [--id ID] [--file FILE] [--old OLD]
+                  [--new NEW] [--desc DESC] [--control] [--no-control]
+                  [--out-json OUT_JSON] [--timeout TIMEOUT]
+                  [--pythonpath PYTHONPATH] [--repo REPO]
+                  [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                  [--skip-import-check] [--restore] [--discard-marker]
+                  [--accept-unchecked-folder]
+                  [--helper-timeout HELPER_TIMEOUT]
+run.r13.py: error: argument --prefix: not usable as a path or name: one name in it is longer than 255 bytes
+usage: run.r13.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+  PASS: T99d m2 (what discriminates r10 here is ONLY the root-plus-relative case; the 4095 and 4096 roots below do not exist as folders, so they end in exit 2 on r10 too: real 4093/4094-byte roots are T100f) 4095 and 4096-byte roots end in a refusal (exit 2, no traceback, 4096 named too long): 0 wrong; a root of ~3900 bytes plus a 245-byte relative file (got exit 2), a 300-byte --prefix (got 2) and a 300-byte --id (got 2) are refused with exit 2, no traceback, no INTERNAL ERROR
+REFUSED: --raw /tmp/r13-indep-nobody/scratch/other-tmp/hadavin-mutation-lane-65534/rawfolder99 lies in the state folder /tmp/r13-indep-nobody/scratch/other-tmp/hadavin-mutation-lane-65534: refused (a 
+  PASS: T99e m3 --raw inside the state folder of TMP: exit 2 (got 2) and the folder was NOT created (r10: created, then refused)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 30123 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o664) is writable by the group, but the file in the git archive given with --sha has mode 0o644, without that bit: the marker may be forged; nothing written; t
+  PASS: T99f m6 marker mode 664 with --sha, git file 0644: exit 3 (got 3), nothing written (still planted) (r10: exit 0 for 0664 and 0660, mode written; 0632 is ALSO refused on r10, by the execute-bit rule, so that value does not discriminate)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 30280 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o660) is writable by the group, but the file in the git archive given with --sha has mode 0o644, without that bit: the marker may be forged; nothing written; t
+  PASS: T99f m6 marker mode 660 with --sha, git file 0644: exit 3 (got 3), nothing written (still planted) (r10: exit 0 for 0664 and 0660, mode written; 0632 is ALSO refused on r10, by the execute-bit rule, so that value does not discriminate)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 30417 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o632) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T99f m6 marker mode 632 with --sha, git file 0644: exit 3 (got 3), nothing written (still planted) (r10: exit 0 for 0664 and 0660, mode written; 0632 is ALSO refused on r10, by the execute-bit rule, so that value does not discriminate)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 30570 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T99f2 GUARD m6 with the default git archive (file 0664) a marker mode 0666 is still refused (write for others), exit 3 (got 3)
+  PASS: T99g D1/D2 SIGINT at the first import after the handlers' place: exit 130 (got 130), no traceback, no KeyboardInterrupt text (r10, measured in r12: exit 130 TOO, but with a KeyboardInterrupt traceback, so the no-traceback part of this check is what tells r10 from r11; the exit code alone does not)
+== T100 (r12, review r11: M1 the Child guard, m1 --raw order, m2 total size, m3 node id and --pythonpath, m5 world-write clamp, m4 discriminating tests; each says whether it fails on r11)
+fatal: not a git repository (or any of the parent directories): .git
+fatal: not a git repository (or any of the parent directories): .git
+Could not find platform independent libraries <prefix>
+Could not find platform dependent libraries <exec_prefix>
+Python path configuration:
+  PYTHONHOME = (not set)
+  PYTHONPATH = (not set)
+  program name = '/tmp/r13-indep-nobody/scratch/tmpstate/t100a-x-935smya3/.venv/bin/python'
+  isolated = 0
+  environment = 1
+  user site = 1
+  safe_path = 0
+  import site = 1
+  is in build tree = 0
+  stdlib dir = '/install/lib/python3.13'
+  sys.path[0] = (not set)
+  sys._base_executable = '/tmp/r13-indep-nobody/scratch/tmpstate/t100a-x-935smya3/.venv/bin/python'
+  sys.base_prefix = '/install'
+  sys.base_exec_prefix = '/install'
+  sys.platlibdir = 'lib'
+  sys.executable = '/tmp/r13-indep-nobody/scratch/tmpstate/t100a-x-935smya3/.venv/bin/python'
+  sys.prefix = '/install'
+  sys.exec_prefix = '/install'
+  sys.path = [
+    '/install/lib/python313.zip',
+    '/install/lib/python3.13',
+    '/install/lib/python3.13/lib-dynload',
+  ]
+Fatal Python error: Failed to import encodings module
+Python runtime state: core initialized
+ModuleNotFoundError: No module named 'encodings'
+
+Current thread 0x00007f6b82806740 (most recent call first):
+  <no Python frame>
+Could not find platform independent libraries <prefix>
+Could not find platform dependent libraries <exec_prefix>
+Python path configuration:
+  PYTHONHOME = (not set)
+  PYTHONPATH = (not set)
+  program name = '/tmp/r13-indep-nobody/scratch/tmpstate/t100a-x-935smya3/.venv/bin/python'
+  isolated = 0
+  environment = 1
+  user site = 1
+  safe_path = 0
+  import site = 1
+  is in build tree = 0
+  stdlib dir = '/install/lib/python3.13'
+  sys.path[0] = (not set)
+  sys._base_executable = '/tmp/r13-indep-nobody/scratch/tmpstate/t100a-x-935smya3/.venv/bin/python'
+  sys.base_prefix = '/install'
+  sys.base_exec_prefix = '/install'
+  sys.platlibdir = 'lib'
+  sys.executable = '/tmp/r13-indep-nobody/scratch/tmpstate/t100a-x-935smya3/.venv/bin/python'
+  sys.prefix = '/install'
+  sys.exec_prefix = '/install'
+  sys.path = [
+    '/install/lib/python313.zip',
+    '/install/lib/python3.13',
+    '/install/lib/python3.13/lib-dynload',
+  ]
+Fatal Python error: Failed to import encodings module
+Python runtime state: core initialized
+ModuleNotFoundError: No module named 'encodings'
+
+Current thread 0x00007ff72829f740 (most recent call first):
+  <no Python frame>
+wrong: []
+  PASS: T100a M1 Child cannot be walked round (r13: each case names its exact cause; another folder's git, patch and python are refused, a link to the real git and the root's own python are accepted; argument shapes of the fixed calls): 40 named cases and 6 direct checks, among them the old 18 (positional bufsize/executable/shell, executable=, env missing or None, /bin/sh, /usr/bin/env, /bin/bash, user, umask, close_fds, process_group, restore_signals, relative cwd, start_new_session False, shell=1) are all refused and nothing starts; a missing folder and 8 MB of arguments are a refusal, not a traceback (exit 0; r11: fails, most of them start)
+REFUSED: the folder of output path /tmp/r13-indep-nobody/scratch/no-such-folder-100/o.json does not exist: refused (nothing is created for you)
+REFUSED: --raw "/tmp/r13-indep-nobody/scratch/afile100/sub/raw" cannot be created: Not a directory
+  PASS: T100b m1 --raw: refused with exit 2 and NO folder created when another output check fails later (nonexistent --out-json folder: exit 2, created 0; --out-json inside --root: exit 2, created 0); a --raw below a file (exit 2) or equal to a file (exit 2) is exit 2 with no traceback; as a normal user a read-only parent is exit 2 too (exit 2, trace 0) (r11: folder created first; a file in the way is exit 2 with INTERNAL ERROR and a traceback)
+run.r13.py: error: the test arguments together are 63087 bytes (counted with 9 per word); the limit is 60000
+  PASS: T100c m2 six words of 21000 bytes (126000 together, under the kernel's 131072 but over the tool's 60000) are refused up front with exit 2, no traceback (exit 2); one 21000-byte -k expression is not refused for size (no 'together' text; exit 5) (r11: the first is not refused for its size)
+bad: []
+  PASS: T100d m3 a node id of 300+ bytes after a short path is not refused as a path (no 'longer than' text; exit 5); --pythonpath is checked folder by folder: a 100-folder list over 4095 bytes in total is accepted, one folder over the limit is refused (exit 0) (r11: both refused / missing)
+other text refused: /tmp/r13-indep-nobody/scratch/t100e/g.py: the mode after the write is 0o600, not the recorded 0o640 
+same text refused: /tmp/r13-indep-nobody/scratch/t100e/g.py: the mode after the write is 0o600, not the recorded 0o640 
+bad: []
+  PASS: T100e m4 the mode is checked after the write on the EXISTING-file path (need_mode) too, with other text and with the original text already in the file: refused when the system keeps another mode (exit 0; r11: this path is only exercised by T99b3's created-file case, so this check shows the guard is there rather than what r11 lacked)
+ln: failed to access '/tmp/r13-indep-nobody/scratch/rt100/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/.venv': File name too long
+  root of 4093 bytes: exit 2: REFUSED: no marker in /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534 or in ['/dev/shm', '/tmp', '/va
+ln: failed to access '/tmp/r13-indep-nobody/scratch/rt100/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr/.venv': File name too long
+  root of 4094 bytes: exit 2: REFUSED: --root "/tmp/r13-indep-nobody/scratch/rt100/rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+  PASS: T100f m4 REAL roots (folders that exist): a root of 4093 bytes passes the length check (it ends in the normal no-marker refusal, exit 2, not named 'bytes long'); a root of 4094 bytes is refused as too long, because the tool needs root plus '/x' within 4095 (r12: the honest longest root is 4093, not 4095); no traceback: 0 wrong
+first signal.signal at 23840 ; heavy imports before it: []
+  PASS: T100g T99g cause: no import of argparse, tarfile, subprocess or json stands before the first signal.signal call in the source (TEXT CHECK of the cause; T99g is the behaviour) (exit 0; r10: fails)
+/tmp/r13-indep-nobody/safety-tests.r13.sh: line 70: 31005 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/r13-indep-nobody/scratch/tmpstate/hadavin-mutation-lane-65534/93a5c4d42a2b68b8.backup; hash matches saved original: True; NOTE the marker mode 0o666 was writable by the group or by others: --restore never writes that, the file got 0o644 (a fil
+  PASS: T99h m5 forged marker mode 666 (plain --restore): exit 0 (got 0), file written WITHOUT the write bit for the group or others (mode 644 has no write bit in the last two digits), the text says NOTE (r11: written as recorded)

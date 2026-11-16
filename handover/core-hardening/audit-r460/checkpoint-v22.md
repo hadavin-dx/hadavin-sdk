@@ -1,1 +1,2 @@
 start 19:52 UTC (machine clock) v22; box ends 20:52. Plan: copy v21 -> v22, SQL fix first, guard, pg_v22, text.
+checkpoint 20:xx (machine clock 19:55) 30-min note: Done: DB-3 v22 SQL (reserve final SELECT guard, header rewritten, ten ALTERs); guard v22 (None = every ADD a problem, DDL pins, timeout canonical <=1h, timeouts-first), allow_v22 (46 DDL pins), mutants v22 262/262 (23 new, v21 misses 19). Next: audit v22 (MJ3 catalog checks, MJ4 owner), pg_v22 (MJ1/MJ3/MJ4 tests), text edits v22 main + other-tracks, CHANGES/OPEN, gate4, sha256. Blockers: none.

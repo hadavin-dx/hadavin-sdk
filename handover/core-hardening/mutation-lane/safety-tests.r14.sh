@@ -2196,15 +2196,9 @@ C3=0; [ -e "$T/root/newraw101" ] || [ -e "$S/nodir101" ] && C3=1
 mkdir -p "$S/dot101"; rm -f "$S/dot101"/*
 fresh_root; ( cd "$S/dot101" && python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw . --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py >"$S/t101a4.out" 2>&1 ); rc4=$?
 C4=$(ls -A "$S/dot101" | wc -l)
-# the two top-level cases are run only against a run.py that has the refusal (otherwise they would write into /tmp and /)
-if grep -q "top-level folder" "$RUN"; then
-  fresh_root; mut --raw /tmp -- tests/test_fast.py >"$S/t101a5.out" 2>&1; rc5=$?
-  C5=0; [ -e /tmp/X-m1.txt ] && C5=1
-  fresh_root; mut --raw / -- tests/test_fast.py >"$S/t101a6.out" 2>&1; rc6=$?
-  C6=0; [ -e /X-m1.txt ] && C6=1
-else rc5=99; rc6=99; C5=9; C6=9; echo "  (not run: this run.py has no refusal of top-level --raw folders; running it would write into /tmp and /)"; fi
+rc5=2; rc6=2; C5=0; C6=0   # r14 M2: the top-level cases (--raw /tmp, --raw /) are no longer run here as root behind a text gate: see T103b, which runs them as uid 65534
 cut -c1-200 "$S/t101a1.out" | tail -1
-chk "T101a2 relay item 1: --raw . (exit $rc4, files made there: $C4), --raw /tmp (a top-level folder: exit $rc5, X-m1.txt made: $C5) and --raw / (exit $rc6, X-m1.txt made in /: $C6) are refused with exit 2 and nothing is written (r12: --raw . and --raw /tmp write their raw files; --raw / as root wrote 3 files into the filesystem root, which this check never lets r12 do: it is only run on r13 code)" "[ $rc4 -eq 2 ] && [ $C4 -eq 0 ] && [ $rc5 -eq 2 ] && [ $C5 -eq 0 ] && [ $rc6 -eq 2 ] && [ $C6 -eq 0 ]"
+chk "T101a2 relay item 1: --raw . (exit $rc4, files made there: $C4) is refused with exit 2 and nothing is written (r12: --raw . writes its raw files). r14 M2: the top-level cases --raw /tmp and --raw / are no longer run here as root behind a text gate; T103b runs them as uid 65534" "[ $rc4 -eq 2 ] && [ $C4 -eq 0 ]"
 chk "T101a m2 --raw with a .. part (three shapes: a folder that would be made and stepped out of; a .. through an existing folder; a .. that would end inside --root): all exit 2 (got $rc1 $rc2 $rc3), the text names the .., no folder made (flags $C1 $C2 $C3) (r12: the first two run and create their folders)" "[ $rc1 -eq 2 ] && [ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && [ $C1 -eq 0 ] && [ $C2 -eq 0 ] && [ $C3 -eq 0 ] && grep -q '\.\.' '$S/t101a1.out' && grep -q 'REFUSED' '$S/t101a1.out'"
 rm -rf "$S/rawdd101" "$S/rawdd101b" "$S/rawdd101c"
 # b) m4: the comment on the total size no longer claims the limit can never be reached
@@ -2217,5 +2211,311 @@ for MODEV in 511 2541; do   # 0777 (world-write cut) and 04755 (setuid cut)
   chk "T101c m5 forged marker mode $(printf '%o' $MODEV), plain --restore: exit 0 (got $rc), mode $GOT, the mode has no write bit for group or others (755), the NOTE says limit d and names the execute and read bits and --restore --sha (r12: no such sentence; mode 775 for 0777)" "[ $rc -eq 0 ] && [ \"$GOT\" = 755 ] && grep -q 'limit d' '$S/t101c.out' && grep -q 'execute bits and the read bits' '$S/t101c.out' && grep -q 'restore --sha' '$S/t101c.out'"
   chmod 644 "$T/root/src/mod.py"
 done
+echo "== T102 (r14, review r13 M1: ONE check per Child guard, so a mutant that removes a single guard is named by its own check id; each case says what it wants)"
+python3 - "$RUN" <<'PY' >"$S/t102.out" 2>&1
+import importlib.util, shutil, sys, os, tempfile, pathlib, stat, subprocess
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+if not hasattr(r, "_MISSING"): r._MISSING = set()   # r13 has none: the seal case then fails on its own, the others still run
+G = shutil.which("git"); P = shutil.which("patch")
+GV = [G, "-C", "/", "rev-parse", "--is-inside-work-tree"]; E = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+DN = subprocess.DEVNULL
+X = pathlib.Path(tempfile.mkdtemp(prefix="t102-x-")); (X / ".venv/bin").mkdir(parents=True)
+res = {}
+def outcome(args, kw):
+    try:
+        r.Child(args, **kw).wait(); return ("started", "")
+    except r.Refused as e:
+        return ("refused", str(e))
+    except TypeError as e:
+        return ("typeerror", str(e))
+    except BaseException as e:
+        return ("other", type(e).__name__ + ": " + str(e)[:80])
+def case(gid, name, got, kind, sub=""):
+    res.setdefault(gid, []).append((got[0] == kind and sub in got[1], name, got))
+NOTGIT = "is not the git or patch this run found"
+def ok_start(gid, name, args, **kw):
+    case(gid, name, outcome(args, {"env": E, "stdin": DN, "stdout": DN, "stderr": DN, **kw}), "started")
+def no_start(gid, name, args, sub, **kw):
+    case(gid, name, outcome(args, {"env": E, "stdin": DN, "stdout": DN, "stderr": DN, **kw}), "refused", sub)
+# --- the argument list
+no_start("args-type", "a tuple", tuple(GV), "non-empty list of text")
+no_start("args-type", "a list holding an int", GV + [5], "non-empty list of text")
+no_start("args-type", "an empty list", [], "non-empty list of text")
+no_start("abs-program", "a relative program name", ["git"] + GV[1:], "must be an absolute path")
+# --- which file
+fake = X / "git"; fake.write_text("#!/bin/sh\nexit 0\n"); fake.chmod(0o755)
+no_start("program-file", "another file named git", [str(fake)] + GV[1:], NOTGIT)
+lk = X / "lk"; lk.mkdir(); os.symlink(os.path.realpath(G), lk / "git")
+no_start("program-pathtext", "a link to the real git (same file, other path text)", [str(lk / "git")] + GV[1:], NOTGIT)
+no_start("program-pathtext", "a .. path that reaches the real git", [os.path.dirname(G) + "/../" + os.path.basename(os.path.dirname(G)) + "/git"] + GV[1:], NOTGIT)
+saved = (dict(r._TRUSTED), dict(r._FOUND), set(r._MISSING))
+tg = X / "tg"; tg.write_text("#!/bin/sh\nexit 0\n"); tg.chmod(0o755)
+r._TRUSTED["git"] = r._identity(str(tg)); r._FOUND["git"] = str(tg)
+ok_start("identity-compare", "the file found at start (stand-in)", [str(tg)] + GV[1:])
+tg2 = X / "tg.new"; tg2.write_text("#!/bin/sh\nexit 1\n"); tg2.chmod(0o755); os.replace(tg2, tg)
+no_start("identity-compare", "the same path after another file was renamed over it", [str(tg)] + GV[1:], NOTGIT)
+r._TRUSTED.clear(); r._TRUSTED.update(saved[0]); r._FOUND.clear(); r._FOUND.update(saved[1])
+# size/mtime/ctime of the trusted file (r14 m1): a file edited IN PLACE (same inode) is refused; a chmod (ctime only) too
+tg3 = X / "tg3"; tg3.write_text("#!/bin/sh\nexit 0\n"); tg3.chmod(0o755)
+r._TRUSTED["git"] = r._identity(str(tg3)); r._FOUND["git"] = str(tg3)
+ok_start("identity-fields", "stand-in before any change", [str(tg3)] + GV[1:])
+with open(tg3, "a") as fh: fh.write("# edited in place\n")
+no_start("identity-fields", "same inode, bytes appended (size, mtime, ctime change)", [str(tg3)] + GV[1:], NOTGIT)
+r._TRUSTED["git"] = r._identity(str(tg3)); os.chmod(tg3, 0o700)
+no_start("identity-ctime", "same inode and bytes, only the mode changed (ctime changes, size and mtime do not)", [str(tg3)] + GV[1:], NOTGIT)
+r._TRUSTED.clear(); r._TRUSTED.update(saved[0]); r._FOUND.clear(); r._FOUND.update(saved[1])
+# first find is remembered (a hostile git put first on PATH after the start is not trusted)
+r._TRUSTED.clear(); r._FOUND.clear(); r._MISSING.clear()
+fb = X / "fakebin"; fb.mkdir(); (fb / "git").write_text("#!/bin/sh\nexit 0\n"); (fb / "git").chmod(0o755)
+oldpath = os.environ["PATH"]
+p1 = r.trust_tool("git"); os.environ["PATH"] = str(fb) + ":" + oldpath; p2 = r.trust_tool("git"); os.environ["PATH"] = oldpath
+res.setdefault("trust-first-find", []).append((p1 is not None and p1 == p2 and p2 != str(fb / "git"), "a git put first on PATH after the first find is not the trusted one", (p1, p2)))
+r._TRUSTED.clear(); r._TRUSTED.update(saved[0]); r._FOUND.clear(); r._FOUND.update(saved[1]); r._MISSING.clear(); r._MISSING.update(saved[2])
+# a program missing at start stays missing (r14 m2)
+r._TRUSTED.clear(); r._FOUND.clear(); r._MISSING.clear()
+eb = X / "emptybin"; eb.mkdir(); fb2 = X / "fakebin2"; fb2.mkdir()
+for nm in ("git", "patch"): (fb2 / nm).write_text("#!/bin/sh\nexit 0\n"); (fb2 / nm).chmod(0o755)
+os.environ["PATH"] = str(eb)
+try:
+    missing = r.seal_tools()
+except AttributeError:
+    missing = "no seal_tools"
+os.environ["PATH"] = str(fb2)
+later = r.trust_tool("patch")
+try:
+    r.tool("patch"); toolref = False
+except r.Refused:
+    toolref = True
+os.environ["PATH"] = oldpath
+res.setdefault("seal-missing", []).append((missing == ["git", "patch"] and later is None and toolref, "git and patch missing at start: a patch that appears later is never trusted", (missing, later, toolref)))
+r._TRUSTED.clear(); r._TRUSTED.update(saved[0]); r._FOUND.clear(); r._FOUND.update(saved[1]); r._MISSING.clear(); r._MISSING.update(saved[2])
+# --- text and keyword arguments
+no_start("nul-arg", "a NUL in an argument", [G, "-C", "/", "rev-parse", "--verify", "--quiet", "a\0b"], "NUL character")
+no_start("shell", "shell=True", GV, "a shell is never used", shell=True)
+no_start("kw-allowed", "shell=0 (falsy): still not in the allow-list", GV, "['shell'] is not allowed", shell=0)
+for k, v in (("executable", "/bin/sh"), ("user", 0), ("umask", 0), ("preexec_fn", lambda: None), ("close_fds", False), ("process_group", 0)):
+    no_start("kw-allowed", f"{k}=", GV, f"['{k}'] is not allowed", **{k: v})
+case("env-none", "env missing", outcome(GV, {}), "refused", "env= is required")
+case("env-none", "env=None", outcome(GV, {"env": None}), "refused", "env= is required")
+class D(dict): pass
+case("env-type", "a dict subclass", outcome(GV, {"env": D(E)}), "refused", "must be a dict of text")
+case("env-type", "a non-text key", outcome(GV, {"env": {"PATH": "/bin", 1: "x"}}), "refused", "must be a dict of text")
+case("env-type", "a non-text value", outcome(GV, {"env": {"PATH": 1}}), "refused", "must be a dict of text")
+case("env-allowlist", "FOO", outcome(GV, {"env": {"PATH": "/bin", "FOO": "1"}}), "refused", "['FOO']")
+case("env-allowlist", "LD_PRELOAD", outcome(GV, {"env": {"LD_PRELOAD": "/x.so"}}), "refused", "['LD_PRELOAD']")
+case("env-value-nul", "NUL in a value", outcome(GV, {"env": {"PATH": "a\0b"}}), "refused", "not allowed")
+no_start("cwd-abs", "a relative cwd", GV, "cwd must be None or an absolute path", cwd="rel/dir")
+cl = X / "cwdlink"; os.symlink("/", cl)
+no_start("cwd-real", "cwd through a link", GV, "cwd must be the real path", cwd=str(cl))
+no_start("cwd-real", "cwd with a .. part", GV, "cwd must be the real path", cwd="/tmp/../tmp")
+ok_start("cwd-abs", "a real absolute cwd is accepted", GV, cwd="/")
+no_start("start-new-session", "start_new_session=False", GV, "start_new_session must be True", start_new_session=False)
+ok_start("start-new-session", "start_new_session=True is accepted", GV, start_new_session=True)
+# --- git: each shape on its own (accept the real one, refuse the near miss)
+ok_start("git-show-toplevel", "git -C / rev-parse --show-toplevel", [G, "-C", "/", "rev-parse", "--show-toplevel"])
+no_start("git-show-toplevel", "plus an extra argument", [G, "-C", "/", "rev-parse", "--show-toplevel", "x"], "are not one of the git calls")
+ok_start("git-is-inside", "git -C / rev-parse --is-inside-work-tree", GV)
+no_start("git-is-inside", "plus an extra argument", GV + ["x"], "are not one of the git calls")
+ok_start("git-verify", "git -C / rev-parse --verify --quiet HEAD", [G, "-C", "/", "rev-parse", "--verify", "--quiet", "HEAD"])
+no_start("git-verify", "the revision is an option (--git-dir)", [G, "-C", "/", "rev-parse", "--verify", "--quiet", "--git-dir"], "are not one of the git calls")
+no_start("git-verify", "two revisions", [G, "-C", "/", "rev-parse", "--verify", "--quiet", "HEAD", "x"], "are not one of the git calls")
+ok_start("git-archive", "git -C / archive HEAD", [G, "-C", "/", "archive", "HEAD"])
+no_start("git-archive", "archive with an option as the revision (--output=x)", [G, "-C", "/", "archive", "--output=/tmp/t102-x"], "are not one of the git calls")
+no_start("git-archive", "archive with two arguments", [G, "-C", "/", "archive", "HEAD", "x"], "are not one of the git calls")
+no_start("git-C", "git -c core.pager=x -C ...", [G, "-c", "core.pager=x", "-C", "/", "rev-parse", "--show-toplevel"], "are not one of the git calls")
+no_start("git-C", "git --git-dir / rev-parse --show-toplevel (not -C)", [G, "--git-dir", "/", "rev-parse", "--show-toplevel"], "are not one of the git calls")
+no_start("git-C", "git --version", [G, "--version"], "are not one of the git calls")
+no_start("git-C", "git -C / (too short)", [G, "-C", "/"], "are not one of the git calls")
+no_start("git-subcommand", "git -C / config --list", [G, "-C", "/", "config", "--list"], "are not one of the git calls")
+no_start("git-subcommand", "git -C / rev-parse --git-dir", [G, "-C", "/", "rev-parse", "--git-dir"], "are not one of the git calls")
+# --- patch
+if P:
+    PA = [P, "-p1", "-s", "--batch", "--forward", "--no-backup-if-mismatch", "-d", str(X), "-i", "/dev/null"]
+    ok_start("patch-shape", "the one patch call", PA)
+    no_start("patch-shape", "an extra option (-R)", PA[:1] + ["-R"] + PA[1:], "are not one of the patch calls")
+    no_start("patch-shape", "a relative -d folder", PA[:7] + ["rel"] + PA[8:], "are not one of the patch calls")
+    no_start("patch-shape", "a relative -i file", PA[:9] + ["rel.patch"], "are not one of the patch calls")
+    no_start("patch-shape", "the options in another order", [P, "-s", "-p1", "--batch", "--forward", "--no-backup-if-mismatch", "-d", str(X), "-i", "/dev/null"], "are not one of the patch calls")
+    no_start("patch-shape", "an extra option at the end", PA + ["-R"], "are not one of the patch calls")
+    no_start("patch-shape", "-i before -d", [P, "-p1", "-s", "--batch", "--forward", "--no-backup-if-mismatch", "-i", "/dev/null", "-d", str(X)], "are not one of the patch calls")
+else:
+    res.setdefault("patch-shape", []).append((False, "patch is not installed: cannot test", None))
+# --- python
+shutil.copy2(sys.executable, X / ".venv/bin/python")
+pyx = str(X / ".venv/bin/python"); CODE = r.IMPORT_PROBE_CODE
+r.set_child_root(None)
+no_start("python-root-none", "no root set (set_child_root(None))", [pyx, "-c", CODE, "os"], NOTGIT)
+r.set_child_root(X)
+ok_start("python-root-none", "the root's python once a root is set", [pyx, "-c", CODE, "os"], cwd=str(X))
+r.set_child_root(None)
+no_start("python-root-none", "set_child_root(None) AFTER a root was set clears it", [pyx, "-c", CODE, "os"], NOTGIT)
+r.set_child_root(X)
+Y = pathlib.Path(tempfile.mkdtemp(prefix="t102-y-")); (Y / ".venv/bin").mkdir(parents=True); shutil.copy2(sys.executable, Y / ".venv/bin/python")
+no_start("python-other-root", "another tree's python", [str(Y / ".venv/bin/python"), "-c", CODE, "os"], NOTGIT)
+no_start("python-path-text", "not exactly <root>/.venv/bin/python (.venv/../.venv)", [str(X / ".venv/../.venv/bin/python"), "-c", CODE, "os"], NOTGIT)
+no_start("python-shape-probe", "-c with other code", [pyx, "-c", "print(1)", "os"], "are not one of the python calls")
+no_start("python-shape-probe", "-c with an option as the module", [pyx, "-c", CODE, "-x"], "are not one of the python calls")
+no_start("python-shape-probe", "-m http.server", [pyx, "-m", "http.server"], "are not one of the python calls")
+good = r.pytest_cmd(X, ["--version"])
+ok_start("python-shape-pytest", "the real pytest head (pytest_cmd)", good, cwd=str(X))
+no_start("python-shape-pytest", "another rootdir", [pyx, "-m", "pytest", "-q", "-p", "no:cacheprovider", f"--rootdir={Y}", f"--confcutdir={X}", "--tb=line", "-rfp"], "are not one of the python calls")
+no_start("python-shape-pytest", "the fixed tail --tb=line -rfp missing", good[:7] + ["--version"], "are not one of the python calls")
+# the interpreter file is pinned (r14 m1): edited in place or replaced after set_child_root = refused
+Z = pathlib.Path(tempfile.mkdtemp(prefix="t102-z-")); (Z / ".venv/bin").mkdir(parents=True); shutil.copy2(sys.executable, Z / ".venv/bin/python")
+r.set_child_root(Z); pz = str(Z / ".venv/bin/python")
+ok_start("python-pin", "the interpreter as pinned", [pz, "-c", CODE, "os"], cwd=str(Z))
+os.chmod(pz, 0o700)
+no_start("python-pin-ctime", "same file, only its mode changed", [pz, "-c", CODE, "os"], NOTGIT, cwd=str(Z))
+os.chmod(pz, 0o755); r.set_child_root(Z)
+os.replace(str(X / ".venv/bin/python"), pz)
+no_start("python-pin", "another file renamed over the interpreter", [pz, "-c", CODE, "os"], NOTGIT, cwd=str(Z))
+os.unlink(pz); r.set_child_root(Z)
+no_start("python-pin", "no interpreter file when the root was named: every start is refused", [pz, "-c", CODE, "os"], NOTGIT, cwd=str(Z))
+for d in (X, Y, Z): shutil.rmtree(d, ignore_errors=True)
+for gid, cs in res.items():
+    bad = [f"{n}: {g}" for ok, n, g in cs if not ok]
+    print(f"GUARD {gid} {'PASS' if not bad else 'FAIL'} ({len(cs)} cases) {' | '.join(bad)[:400]}")
+PY
+cut -c1-300 "$S/t102.out" | grep -v "^GUARD .* PASS" | head -20
+for GID in args-type abs-program program-file program-pathtext identity-compare identity-fields identity-ctime trust-first-find seal-missing nul-arg shell kw-allowed env-none env-type env-allowlist env-value-nul cwd-abs cwd-real start-new-session git-show-toplevel git-is-inside git-verify git-archive git-C git-subcommand patch-shape python-root-none python-other-root python-path-text python-shape-probe python-shape-pytest python-pin python-pin-ctime; do
+  chk "T102.$GID Child guard '$GID' holds (all its cases pass; r13 has no seal, no size/mtime/ctime pin and no dict-type check: those guards fail on r13)" "grep -q '^GUARD $GID PASS' '$S/t102.out'"
+done
+echo "== T103 (r14, review r13 M2 output paths, M3 forged-marker kill, m4 text, m5 short NOTE; each says whether it fails on r13)"
+# a) M2 the refusal itself, in-process: nothing is run, nothing is written
+python3 - "$RUN" <<'PY' >"$S/t103a.out" 2>&1
+import importlib.util, sys, os, tempfile, pathlib, shutil
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+X = pathlib.Path(tempfile.mkdtemp(prefix="t103a-"))
+os.symlink("/", X / "lnkroot"); os.symlink("/etc", X / "lnketc"); (X / "real").mkdir(); os.symlink(X / "real", X / "lnkreal")
+res = {}
+def refuse(gid, name, value, what, is_folder, sub):
+    try:
+        r.refuse_unsafe_output_path(value, what, is_folder); got = "accepted"
+    except r.Refused as e:
+        got = str(e)
+    except AttributeError:
+        got = "no refuse_unsafe_output_path"
+    except Exception as e:
+        got = "crashed: " + type(e).__name__
+    res.setdefault(gid, []).append((sub in got if sub else got == "accepted", f"{what} {value}", got[:160]))
+refuse("raw-dots", "a .. part", str(X) + "/a/../b", "--raw", True, "`.` or `..`")
+refuse("raw-dots", "a . part", str(X) + "/./b", "--raw", True, "`.` or `..`")
+refuse("raw-levels", "/", "/", "--raw", True, "fewer than two levels")
+refuse("raw-levels", "/tmp", "/tmp", "--raw", True, "fewer than two levels")
+refuse("raw-levels", "/etc", "/etc", "--raw", True, "fewer than two levels")
+refuse("raw-system", "/etc/zz", "/etc/zz", "--raw", True, "system folder")
+refuse("raw-system", "/usr/bin/zz", "/usr/bin/zz", "--raw", True, "system folder")
+refuse("raw-system", "/var/lib/zz", "/var/lib/zz", "--raw", True, "system folder")
+refuse("raw-system", "/var/tmp/zz-t103 is allowed (var/tmp is not a system folder)", "/var/tmp/zz-t103/raw", "--raw", True, "")
+refuse("raw-sharedtmp", "/var/tmp itself", "/var/tmp", "--raw", True, "shared temporary folder")
+refuse("raw-symlink", "a link to / in the middle", str(X / "lnkroot/zz"), "--raw", True, "symbolic link")
+refuse("raw-symlink", "a link to /etc in the middle", str(X / "lnketc/zz"), "--raw", True, "symbolic link")
+refuse("raw-symlink", "a link to a harmless folder as the last part", str(X / "lnkreal"), "--raw", True, "symbolic link")
+refuse("raw-symlink", "a link to / as the last part", str(X / "lnkroot"), "--raw", True, "symbolic link")
+refuse("raw-ok", "a new folder under a real folder", str(X / "real/newraw"), "--raw", True, "")
+refuse("raw-ok", "a deep new folder", str(X / "a/b/c"), "--raw", True, "")
+refuse("outjson-levels", "/x.json", "/x.json", "--out-json", False, "fewer than two levels")
+refuse("outjson-system", "/etc/x.json", "/etc/x.json", "--out-json", False, "system folder")
+refuse("outjson-system", "/usr/local/x.json", "/usr/local/x.json", "--out-json", False, "system folder")
+refuse("outjson-symlink", "a link to / on the way", str(X / "lnkroot/x.json"), "--out-json", False, "symbolic link")
+refuse("outjson-dots", "a .. part", str(X) + "/../x.json", "--out-json", False, "`.` or `..`")
+refuse("outjson-ok", "a file under a real folder", str(X / "real/x.json"), "--out-json", False, "")
+refuse("outjson-ok", "/tmp/x.json (the shared folder itself is fine for a FILE)", "/tmp/t103-x.json", "--out-json", False, "")
+# M3: which process may be stopped: only this tool's own pytest command
+R = pathlib.Path("/r14root"); py = str(R / ".venv/bin/python")
+good = [py, "-m", "pytest", "-q", "-p", "no:cacheprovider", f"--rootdir={R}", f"--confcutdir={R}", "--tb=line", "-rfp", "tests/x.py"]
+def leader(gid, name, argv, want):
+    try:
+        got = r.is_test_leader(argv, R)
+    except AttributeError:
+        got = "no is_test_leader"
+    res.setdefault(gid, []).append((got is want, name, argv))
+leader("leader-shape", "the real test command", good, True)
+leader("leader-shape", "bash -c ...", ["/bin/bash", "-c", "sleep 1"], False)
+leader("leader-shape", "tmux", ["tmux", "new"], False)
+leader("leader-shape", "python of another root", [str(pathlib.Path("/other/.venv/bin/python"))] + good[1:], False)
+leader("leader-shape", "python -m http.server", [py, "-m", "http.server", f"--rootdir={R}"], False)
+leader("leader-shape", "pytest without --rootdir of this root", good[:6] + ["--rootdir=/other"] + good[7:], False)
+leader("leader-shape", "None", None, False)
+leader("leader-shape", "too short", [py, "-m"], False)
+shutil.rmtree(X, ignore_errors=True)
+for gid, cs in res.items():
+    bad = [f"{n}: {g}" for ok, n, g in cs if not ok]
+    print(f"GUARD {gid} {'PASS' if not bad else 'FAIL'} ({len(cs)} cases) {' | '.join(bad)[:400]}")
+PY
+cut -c1-300 "$S/t103a.out" | grep -v "^GUARD .* PASS" | head -12
+for GID in raw-dots raw-levels raw-system raw-sharedtmp raw-symlink raw-ok outjson-levels outjson-system outjson-symlink outjson-dots outjson-ok leader-shape; do
+  chk "T103a.$GID output path / leader refusal '$GID' holds (all its cases pass; r13 has no refuse_unsafe_output_path or is_test_leader: fails)" "grep -q '^GUARD $GID PASS' '$S/t103a.out'"
+done
+# b) M2 end to end, as uid 65534 (or as any user that is not root): the program is run for real with output paths that WOULD be written if a guard
+#    were missing, and the user cannot write / or /etc; the check is on the exact refusal text, so a refusal for another reason ("cannot be created") does not count
+NR=$(mktemp -d /tmp/r14nr.XXXXXX); chmod 755 "$NR"; cp "$RUN" "$NR/run.py"; mkdir "$NR/root" "$NR/tmp"; ln -s / "$NR/lnkroot"; ln -s /etc "$NR/lnketc"; chmod -R a+rX "$NR"; chown -R 65534:65534 "$NR" 2>/dev/null
+if [ "$(id -u)" = 0 ] && ! setpriv --reuid=65534 --regid=65534 --clear-groups true 2>/dev/null; then
+  NRUN=""; SKIPPED="$SKIPPED T103b(no setpriv as root)"; echo "  (T103b SKIPPED: running as root and setpriv is not available; it is NOT passed)"
+elif [ "$(id -u)" = 0 ]; then
+  NRUN() { setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" TMPDIR="$NR/tmp" python3 -B "$NR/run.py" --root "$NR/root" --sha abcd1234 --prefix X --no-control "$@" --id m1 --file src/mod.py --old a --new b -- tests/x.py; }
+  NRUN=1
+else
+  NRUN() { env -i PATH="$PATH" HOME="$NR" TMPDIR="$NR/tmp" python3 -B "$NR/run.py" --root "$NR/root" --sha abcd1234 --prefix X --no-control "$@" --id m1 --file src/mod.py --old a --new b -- tests/x.py; }
+  NRUN=1
+fi
+if [ -n "$NRUN" ]; then
+  i=0
+  for CASE in "--raw /|fewer than two levels" "--raw /etc|fewer than two levels" "--raw /etc/r14zz|system folder" "--raw $NR/lnkroot/r14zz|symbolic link" "--raw $NR/lnketc/r14zz|symbolic link" \
+              "--raw $NR/rawok --out-json /r14zz.json|fewer than two levels" "--raw $NR/rawok --out-json /etc/r14zz.json|system folder" "--raw $NR/rawok --out-json $NR/lnkroot/r14zz.json|symbolic link" "--raw $NR/rawok --out-json $NR/lnketc/r14zz.json|symbolic link"; do
+    i=$((i+1)); ARGS=${CASE%%|*}; WANT=${CASE##*|}
+    NRUN $ARGS >"$S/t103b$i.out" 2>&1; rc=$?
+    N=0; [ -e /r14zz.json ] || [ -e /etc/r14zz ] || [ -e /etc/r14zz.json ] || [ -e /r14zz ] && N=1
+    chk "T103b.$i as uid 65534: run.py $ARGS: exit 2 (got $rc) with the refusal text '$WANT', nothing written outside ($N), no folder $NR/rawok made (r13: $( [ $i -le 5 ] && echo 'cases 4 and 5 are accepted past the first guard; --out-json has no guard' || echo '--out-json has no guard'))" "[ $rc -eq 2 ] && grep -q '^REFUSED: --\(raw\|out-json\) .*$WANT' '$S/t103b$i.out' && [ $N -eq 0 ] && [ ! -e '$NR/rawok' ]"
+  done
+fi
+rm -rf "$NR"
+# c) M3 a forged marker names a process group that is not this tool's pytest: plain --restore leaves it alone; a real orphaned pytest group is still stopped
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
+python3 -c 'import os,sys; os.setsid(); os.execv(sys.argv[1], [sys.argv[1], "3191"])' "$SL" & DEC=$!
+sleep 1
+python3 - "$STATE" "$DEC" <<'PY'
+import glob, json, sys
+st = open(f"/proc/{sys.argv[2]}/stat").read(); f = st[st.rindex(")") + 2:].split()
+argv = open(f"/proc/{sys.argv[2]}/cmdline", "rb").read().decode().split("\0")[:-1]
+mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; m = json.load(open(mk))
+m["pgid"] = int(sys.argv[2]); m["start_ticks"] = int(f[19]); m["argv"] = argv; json.dump(m, open(mk, "w"))
+PY
+DSID=$(awk '{print $5}' /proc/$DEC/stat 2>/dev/null); DPG=$(awk '{print $5}' /proc/$DEC/stat 2>/dev/null)
+python3 "$RUN" --root "$T/root" --restore >"$S/t103c.out" 2>&1; rc=$?
+kill -0 $DEC 2>/dev/null && ALIVE=1 || ALIVE=0
+cut -c1-300 "$S/t103c.out" | tail -1
+chk "T103c M3 forged marker naming a process group whose leader is a plain sleep (its pid, start time and argv copied from /proc): plain --restore exit 0 (got $rc), the file is restored ($(last)), the decoy group is STILL ALIVE ($ALIVE, want 1), the text says it was left alone (r13: the decoy is killed)" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ $ALIVE -eq 1 ] && grep -q 'left alone' '$S/t103c.out'"
+kill -9 $DEC 2>/dev/null; wait $DEC 2>/dev/null
+# the same with a marker that has NO process group, only the recorded command (the other way a group is found): a plain sleep started in --root
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
+( cd "$T/root" && exec python3 -c 'import os,sys; os.setsid(); os.execv(sys.argv[1], [sys.argv[1], "3192"])' "$SL" ) & DEC=$!
+sleep 1
+python3 - "$STATE" "$SL" <<'PY'
+import glob, json, sys
+mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; m = json.load(open(mk))
+for k in ("pgid", "start_ticks", "argv"): m.pop(k, None)
+m["cmd_argv"] = [sys.argv[2], "3192"]; m["run_start_ticks"] = 0; json.dump(m, open(mk, "w"))
+PY
+python3 "$RUN" --root "$T/root" --restore >"$S/t103c3.out" 2>&1; rc=$?
+kill -0 $DEC 2>/dev/null && ALIVE=1 || ALIVE=0
+cut -c1-300 "$S/t103c3.out" | tail -1
+chk "T103c3 M3 forged marker with no process group, only a recorded command that a plain sleep in --root matches: plain --restore leaves it alive (alive $ALIVE, want 1; exit $rc) (r13: the sleep is killed)" "[ $ALIVE -eq 1 ]"
+kill -9 $DEC 2>/dev/null; wait $DEC 2>/dev/null
+fresh_root; bg; waitplant; kill -9 $RP; sleep 1; wait $RP 2>/dev/null
+python3 "$RUN" --root "$T/root" --restore >"$S/t103c2.out" 2>&1; rc=$?; sleep 1
+orphan_alive && OA=1 || OA=0
+cut -c1-300 "$S/t103c2.out" | tail -1
+chk "T103c2 M3 control: a REAL orphaned pytest group of this root is still stopped by plain --restore: exit 0 (got $rc), file restored ($(last)), orphan alive: $OA (want 0), text says 'stopped orphaned test group'" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ $OA -eq 0 ] && grep -q 'stopped orphaned test group' '$S/t103c2.out'"
+pkill -9 -f "$T/root/.venv/bin/python -m pytest" 2>/dev/null
+# d) m5 a genuine 0664 file: one short sentence, not the limit (d) text; a forged 0777 keeps the long text
+kill_planted; setmarker97 mode=436
+python3 "$RUN" --root "$T/root" --restore >"$S/t103d.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py")
+NL=$(grep -o 'NOTE.*' "$S/t103d.out" | head -1 | wc -c); cut -c1-300 "$S/t103d.out" | tail -1
+chk "T103d m5 genuine mode 0664: plain --restore exit 0 (got $rc), mode $GOT (want 644), the NOTE is $NL characters (want under 110) and does not repeat the limit (d) text (r13: about 330 characters with limit d)" "[ $rc -eq 0 ] && [ '$GOT' = 644 ] && [ $NL -lt 110 ] && ! grep -q 'limit d' '$S/t103d.out' && grep -q 'group write bit' '$S/t103d.out'"
+chmod 644 "$T/root/src/mod.py"
+# e) m4 the docstring names the group write bit in both places
+M4A=$(grep -c "a write bit for the group and for others is also taken away" "$RUN"); M4B=$(grep -c "the write bits for the group and for others are taken away" "$RUN")
+chk "T103e m4 TEXT CHECK both docstring sentences name the group write bit (counts $M4A and $M4B, want 1 and 1; r13: 0 and 0)" "[ $M4A -eq 1 ] && [ $M4B -eq 1 ]"
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"
