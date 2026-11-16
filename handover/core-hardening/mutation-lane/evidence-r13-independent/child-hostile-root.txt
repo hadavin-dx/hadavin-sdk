@@ -1,4 +1,4 @@
-ROW|01 control ok git --version|REFUSED: program start refused: the arguments are not one of the git calls this tool makes
+ROW|01 control ok git --version|STARTED rc=0 out='(None, None)'
 ROW|02 positional extra bufsize|OTHER-EXC TypeError: Child.__init__() takes 2 positional arguments but 3 were given
 ROW|03 positional extra executable (bufsize,executable)|OTHER-EXC TypeError: Child.__init__() takes 2 positional arguments but 4 were given
 ROW|04 env=None|REFUSED: program start refused: env= is required (None would give the child the caller's whole environment)
@@ -17,7 +17,7 @@ ROW|16 relative cwd|REFUSED: program start refused: cwd must be None or an absol
 ROW|17 cwd absolute via symlink|REFUSED: program start refused: cwd must be the real path (no symbolic link, `..` or `//` in it)
 ROW|18 program /bin/sh|REFUSED: program start refused: "/bin/sh" is not the git or patch this run found at start, nor exactly the sc
 ROW|19 program /usr/bin/env|REFUSED: program start refused: "/usr/bin/env" is not the git or patch this run found at start, nor exactly t
-ROW|20 program named git elsewhere (script)|REFUSED: program start refused: "/tmp/chd.awsk2onx/e/git" is not the git or patch this run found at start, no
+ROW|20 program named git elsewhere (script)|REFUSED: program start refused: "/tmp/chd.uxo46zcx/e/git" is not the git or patch this run found at start, no
 ROW|21 path with .. to real git|REFUSED: program start refused: "/usr/../usr/bin/git" is not the git or patch this run found at start, nor ex
 ROW|22 unicode lookalike (cyrillic i in git)|REFUSED: program start refused: "/usr/bin/g\u0456t" is not the git or patch this run found at start, nor exac
 ROW|23 8 MB argument|REFUSED: program start refused: the arguments are not one of the git calls this tool makes
@@ -25,20 +25,20 @@ ROW|24 NUL in argument|REFUSED: program start refused: an argument holds a NUL c
 ROW|25 args as tuple|REFUSED: program start refused: the arguments must be a non-empty list of text (never one shell string)
 ROW|26 args as one string no shell|REFUSED: program start refused: the arguments must be a non-empty list of text (never one shell string)
 ROW|27 relative program git|REFUSED: program start refused: the program must be an absolute path, got "git"
-ROW|28 fake .venv/bin/python anywhere|REFUSED: program start refused: "/tmp/chd.awsk2onx/v/.venv/bin/python" is not the git or patch this run found
+ROW|28 fake .venv/bin/python anywhere|REFUSED: program start refused: "/tmp/chd.uxo46zcx/v/.venv/bin/python" is not the git or patch this run found
 ROW|29 start_new_session=False|REFUSED: program start refused: start_new_session must be True
 ROW|30 close_fds=False|REFUSED: program start refused: ['close_fds'] is not allowed
 ROW|31 process_group=0|REFUSED: program start refused: ['process_group'] is not allowed
 ROW|32 pipesize / unknown kw|REFUSED: program start refused: ['pipesize'] is not allowed
 ROW|33 many args total 8 MB (800 x 10 KB)|REFUSED: program start refused: the arguments are not one of the git calls this tool makes
 ROW|34 program with trailing space|REFUSED: program start refused: "/usr/bin/git " is not the git or patch this run found at start, nor exactly 
-ROW|35 program path symlink named git -> /bin/sh|REFUSED: program start refused: "/tmp/chd.awsk2onx/s/git" is not the git or patch this run found at start, no
-ROW|36 symlink named git -> real git (r13: should start)|REFUSED: program start refused: "/tmp/chd.awsk2onx/s2/git" is not the git or patch this run found at start, n
+ROW|35 program path symlink named git -> /bin/sh|REFUSED: program start refused: "/tmp/chd.uxo46zcx/s/git" is not the git or patch this run found at start, no
+ROW|36 symlink named git -> real git (r13: should start)|REFUSED: program start refused: "/tmp/chd.uxo46zcx/s2/git" is not the git or patch this run found at start, n
 ROW|37 script named git in cwd-relative ./e/git (relative)|REFUSED: program start refused: the program must be an absolute path, got "e/git"
-ROW|38 fake git given as absolute AND cwd=its folder|REFUSED: program start refused: "/tmp/chd.awsk2onx/e/git" is not the git or patch this run found at start, no
-ROW|39 root-own python path via fake .venv with cwd elsewhere|REFUSED: program start refused: "/tmp/chd.awsk2onx/v/.venv/bin/python" is not the git or patch this run found
-ROW|40 program is a directory|REFUSED: program start refused: "/tmp/chd.awsk2onx/e" is not the git or patch this run found at start, nor ex
-ROW|41 program missing|REFUSED: program start refused: "/tmp/chd.awsk2onx/nope/git" is not the git or patch this run found at start,
-ROW|42 cwd missing|REFUSED: program start refused: the arguments are not one of the git calls this tool makes
-ROW|43 cwd is a file|REFUSED: program start refused: the arguments are not one of the git calls this tool makes
+ROW|38 fake git given as absolute AND cwd=its folder|REFUSED: program start refused: "/tmp/chd.uxo46zcx/e/git" is not the git or patch this run found at start, no
+ROW|39 root-own python path via fake .venv with cwd elsewhere|REFUSED: program start refused: "/tmp/chd.uxo46zcx/v/.venv/bin/python" is not the git or patch this run found
+ROW|40 program is a directory|REFUSED: program start refused: "/tmp/chd.uxo46zcx/e" is not the git or patch this run found at start, nor ex
+ROW|41 program missing|REFUSED: program start refused: "/tmp/chd.uxo46zcx/nope/git" is not the git or patch this run found at start,
+ROW|42 cwd missing|REFUSED: git cannot start: No such file or directory (too many or too long arguments, or the program or its f
+ROW|43 cwd is a file|REFUSED: git cannot start: Not a directory (too many or too long arguments, or the program or its folder is m
 ROW|44 args with dash-c config injection to real git|REFUSED: program start refused: the arguments are not one of the git calls this tool makes

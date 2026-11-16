@@ -1,6 +1,6 @@
-C07 info: OWNER-SHEET-v35-A.md 6281, OWNER-CARD-v35-A.md 2256, OWNER-APPENDIX-v35-A.md 5454, OWNER-FILM-PERSON-v35.md 608, OWNER-HELPER-v35.md 985 total 15584
-C07 info: OWNER-SHEET-v35-B.md 6067, OWNER-CARD-v35-B.md 2154, OWNER-APPENDIX-v35-B.md 5375, OWNER-FILM-PERSON-v35.md 608, OWNER-HELPER-v35.md 985 total 15189
-check-v35: 214 failure(s)
+C07 info: OWNER-SHEET-v35-A.md 6274, OWNER-CARD-v35-A.md 2256, OWNER-APPENDIX-v35-A.md 5454, OWNER-FILM-PERSON-v35.md 608, OWNER-HELPER-v35.md 985 total 15577
+C07 info: OWNER-SHEET-v35-B.md 6071, OWNER-CARD-v35-B.md 2154, OWNER-APPENDIX-v35-B.md 5375, OWNER-FILM-PERSON-v35.md 608, OWNER-HELPER-v35.md 985 total 15193
+check-v35: 158 failure(s)
 FAIL C19 pointer not in the verified list: note| key at 6.7; it never stops |7.11
 FAIL C19 pointer not in the verified list: note| role exists is UNVERIFIED (|Open 131
 FAIL C19 pointer not in the verified list: note|ER-HELPER-v35.md); rule ids |R1
@@ -16,6 +16,7 @@ FAIL C19 pointer not in the verified list: note|the exposure options are in |Ope
 FAIL C19 pointer not in the verified list: note|| owner removes it at sheet |8.7
 FAIL C19 pointer not in the verified list: open|er days the ordinary chain (|7.11
 FAIL C19 pointer not in the verified list: open|henever the card ran before |7.9
+FAIL C19 pointer not in the verified list: open|le. WHEN IT FAILS (v35): at |5.6
 FAIL C19 pointer not in the verified list: open|le; the sheet removes it at |8.7
 FAIL C19 pointer not in the verified list: sheetA| 23:39 IST; both are set at |5.8
 FAIL C19 pointer not in the verified list: sheetA| after your first reading), |7.11
@@ -105,55 +106,6 @@ FAIL C19 pointer not in the verified list: sheetB|the screen; (6) FREEZE. | | |R
 FAIL C19 pointer not in the verified list: sheetB|to alarms 5 and 6; a missed |7.11
 FAIL C19 pointer not in the verified list: sheetB|ur press of create (6.3) to |6.7
 FAIL C19 pointer not in the verified list: sheetB|ure path; sheet B always to |7.11
-FAIL C53 A card triggers W1 to W9 missing or out of order
-FAIL C53 B card triggers W1 to W9 missing or out of order
-FAIL C73 A: the post-by date must be the same on the sheet pointer and the film page
-FAIL C73 B: the post-by date must be the same on the sheet pointer and the film page
-FAIL C154 O: row 78 does not say what happens when the 7 day rule fails
-FAIL C164 A lacks "must differ from the look key's word before the cancel and from every "
-FAIL C164 B lacks "must differ from the look key's word before the cancel and from every "
-FAIL C192 A lacks "the From column of the mail list shows the sender's throwaway address:"
-FAIL C192 B lacks "the From column of the mail list shows the sender's throwaway address:"
-FAIL C193 A lacks '**Name rule (8.3, 8.4):** revoke only an entry whose exact name is in '
-FAIL C193 B lacks '**Name rule (8.3, 8.4):** revoke only an entry whose exact name is in '
-FAIL C196 A lacks 'the three waits of the message added'
-FAIL C196 B lacks 'the three waits of the message added'
-FAIL C196 A: the 5-minute rule is not worded the same in 6.2 and on the card (W5 and the words list)
-FAIL C196 B: the 5-minute rule is not worded the same in 6.2 and on the card (W5 and the words list)
-FAIL C199 appendix A: unbalanced parentheses in 'Step 7.11, the backstop in full. Why: the older ke'
-FAIL C199 appendix B: unbalanced parentheses in 'Step 7.11, the backstop in full. Why: the older ke'
-FAIL C199 A: unbalanced parentheses in a line starting 'Step 7.11, the backstop in full. Why: the older ke'
-FAIL C199 B: unbalanced parentheses in a line starting 'Step 7.11, the backstop in full. Why: the older ke'
-FAIL C208 A: the deadline reminder is not set after the yes and named in the card words
-FAIL C208 B: the deadline reminder is not set after the yes and named in the card words
-FAIL C215 A lacks the B warning of 5.1 (m2)
-FAIL C215 B lacks the B warning of 5.1 (m2)
-FAIL C220 A lacks the last-5-minutes rule
-FAIL C220 B lacks the last-5-minutes rule
-FAIL C222 A: the owner-fill rows are not said to be no empty slot (m10)
-FAIL C222 B: the owner-fill rows are not said to be no empty slot (m10)
-FAIL C230 A lacks 'is never the film person, editor, post checker or backup person'
-FAIL C230 B lacks 'is never the film person, editor, post checker or backup person'
-FAIL C236 no place found for 'film pause \\((\\d+)\\)' (a changed sentence?)
-FAIL C236 no place found for 'run length \\((\\d+)\\)' (a changed sentence?)
-FAIL C237 card A: label W1 is not defined exactly once
-FAIL C237 card A: label W2 is not defined exactly once
-FAIL C237 card A: label W3 is not defined exactly once
-FAIL C237 card A: label W4 is not defined exactly once
-FAIL C237 card A: label W5 is not defined exactly once
-FAIL C237 card A: label W6 is not defined exactly once
-FAIL C237 card A: label W7 is not defined exactly once
-FAIL C237 card A: label W8 is not defined exactly once
-FAIL C237 card A: label W9 is not defined exactly once
-FAIL C237 card B: label W1 is not defined exactly once
-FAIL C237 card B: label W2 is not defined exactly once
-FAIL C237 card B: label W3 is not defined exactly once
-FAIL C237 card B: label W4 is not defined exactly once
-FAIL C237 card B: label W5 is not defined exactly once
-FAIL C237 card B: label W6 is not defined exactly once
-FAIL C237 card B: label W7 is not defined exactly once
-FAIL C237 card B: label W8 is not defined exactly once
-FAIL C237 card B: label W9 is not defined exactly once
 FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-A.md|# Owner sheet v35, sheet A: one filmed run
 FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-A.md|### THE CARD, sheet A (a separate printed page OWNER-CARD-v35-A.md)
 FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-A.md|## 10. Film rule (sheet A; the film person has their own page OWNER-F
@@ -207,11 +159,3 @@ FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md
 FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|rv23|9
 FAIL C239 fact-use row differs from the verified list: vNN-OPEN-FOR-LEAD-SOURCE.md|hw|2
 FAIL C239 fact-use row differs from the verified list: vNN-OPEN-FOR-LEAD-SOURCE.md|hw|4
-FAIL C241 A lacks the one-letter rule in full
-FAIL C241 B lacks the one-letter rule in full
-FAIL C249 the film person page lacks the "stop" effect
-FAIL C257 the "close it and tell the owner it appeared" sentence is not present exactly once
-FAIL C260 "A difference ... is never tolerated." is not present exactly twice (sheet and card)
-FAIL C261 a cancel of the older key without the name-and-creation-date condition within 330 characters: ' that the 7-day rule of 5.1 holds (read the last-used time again now: any use after your f'
-FAIL C262 the backstop "even if a run is/was in progress" sentences are missing (need 1 each)
-FAIL C271 the two backstop time definitions do not both name the Sunday and Monday times

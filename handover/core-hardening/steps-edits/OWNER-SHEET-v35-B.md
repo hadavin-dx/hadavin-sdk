@@ -16,7 +16,7 @@ Dated Mon 16 Nov 2026. This is **sheet B** (the letter is in the heading and foo
 
 ## 2. The card, then the rules
 ### THE CARD, sheet B (a separate printed page OWNER-CARD-v35-B.md)
-Print that page and keep it beside you. Every step called "the card", every danger sign W1 to W9 and the cancel lists L1 to L5 are on that page only; this sheet does not repeat them. Fill its blanks before you press create of the run key.
+Print that page and keep it beside you. Every step called "the card", every danger sign W3 to W9 and the cancel lists L1 to L5 are on that page only; this sheet does not repeat them. Fill its blanks before you press create of the run key.
 
 ### The rules (each has a short label: R1 and R4 to R10; this sheet has no R2 or R3, nothing is missing)
 | Id | The rule | If it fails, or which wins |
@@ -37,7 +37,7 @@ The sample numbers message (made-up values, the same rows a real message has) is
 
 The three kinds of brackets in the sample (`<...>`, `[LEAD FILLS ...]`, `[OWNER FILLS ...]`), what "at re-pin" means and what each blank row holds are explained in the appendix part 2 below the sample.
 
-**Your checks, by hand with a calculator** (a failing check: no yes, describe it; in a real message an empty slot, a `<...>` or `[LEAD FILLS` row, a missing last-resort step, price, settings or think-time row, or "unknown" in any slot (only the cancelled word may say "from the look key"), or the row "Test program asks you to type a figure" saying anything but no: no run; the `[OWNER FILLS` rows are yours):
+**Your checks, by hand with a calculator** (a failing check: no yes, describe it; in a real message an empty slot, a `<...>` or `[LEAD FILLS` row, a missing last-resort step, price, settings or think-time row, or "unknown" in any slot (only the cancelled word may say "from the look key"), or the row "Test program asks you to type a figure" saying anything but no: no run; the `[OWNER FILLS` rows are yours, not an empty slot):
 1. Call ceiling = the lead's figure for the most model calls one run should cause. Price per call = (tokens in x price in + tokens out x price out) / 1,000,000 = (40,000 x 3.00 + 10,000 x 15.00) / 1,000,000 = 0.27; expected total = call ceiling x that = 3 x 0.27 = 0.81. Both equal the message, the price page shows the same two prices, and every setting equals the message (cents / 100 = USD).
 2. The run day is before Mon 23 Nov 2026 (otherwise no run, no "go"). The earliest key time, latest start, alarm time, cancel-by time and older-key time are all on the run day, in that order; the cancel-by time is at least 10 minutes before the deadline (on Sun 22 Nov: at or before Sun 22 Nov 2026 17:59 UTC = 23:29 IST); the older-key time is after the cancel-by time and at least 10 minutes before the deadline (on Sun 22 Nov: before 18:09 UTC = 23:39 IST, the time of alarm 5); the latest start is at most 60 minutes after the earliest key time; the latest start and the alarm time are at least 30 minutes apart (the sum 30 = the message's y minutes + run length + film pause = 5 + 15 + 10 in the sample; your think times fall inside the y minutes and the run length).
 3. The account names are ones you know, and so is the older key, and the other channel is the one you named at 5.1; the backup person is a human you can call. The balance is at least the expected total.

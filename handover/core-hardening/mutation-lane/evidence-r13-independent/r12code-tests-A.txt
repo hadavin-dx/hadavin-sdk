@@ -1,0 +1,3 @@
+/tmp/safety-only.TsgADg.sh: line 100: syntax error near unexpected token `}'
+/tmp/safety-only.TsgADg.sh: line 100: `}'
+exit=2

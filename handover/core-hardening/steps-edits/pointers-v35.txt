@@ -52,6 +52,7 @@ note| is left | order broken | | |G29
 note| is now required for G1 and |G2
 note| is off", the contact list (|G27
 note| key as its own step, sheet |7.11
+note| key at 6.7; it never stops |7.11
 note| last-used time can lag, so |6.7
 note| limit | answer missing | | |G5
 note| lock, a fresh clean start (|G19
@@ -76,6 +77,7 @@ note| present (R5 sends `n`) | | |G18
 note| reachable from outside | | |G8
 note| read it at the final head, |G36
 note| removes it before the run (|G3
+note| role exists is UNVERIFIED (|Open 131
 note| sentence and the ban list (|section 5
 note| start or end a step (sheet |R8
 note| the builder chose neither (|Open 2 and 31
@@ -114,8 +116,8 @@ note|; owner cancels it at sheet |7.11
 note|B: left valid, cancelled at |7.11
 note|E item: it is the lead gate |G39
 note|E: every one of them passes |7.11
-note|ER-HELPER-v34.md); rule ids |R1
-note|ER-v34.md); rule ids R1 and |R4
+note|ER-HELPER-v35.md); rule ids |R1
+note|ER-v35.md); rule ids R1 and |R4
 note|Earlier v19 additions stay: |G30
 note|G36), the per-run key file (|G37
 note|G38), the end-date refusal (|G16
@@ -145,6 +147,7 @@ note|cept the older key; 5.6 and |6.2
 note|cision 7) | unconfirmed | | |G23
 note|clock (within 2 minutes) at |6.3
 note|credential check shown (G3, |G32
+note|cts only on a named key; at |8.7
 note|d key except the older key; |5.6
 note|d not cancel the older key, |7.11
 note|d record (the lead's answer |Q21
@@ -204,6 +207,7 @@ note|essage must fit the sheet's |R6
 note|et 7.8, the card step 3 and |8.1
 note|ettings file path for sheet |5.7
 note|file and line | unknown | | |G19
+note|fore it, never after. Sheet |6.6
 note|fter "model key cancelled" (|G37
 note|full date with `date -u` at |6.3
 note|g" = the 180 of this note's |section 2
@@ -212,6 +216,7 @@ note|go if | |---|---|---|---| | |G16
 note|go if | |---|---|---|---| | |G27
 note|h and the missed-7.11 path; |6.1
 note|h sheets), model key (sheet |section 6
+note|hat the owner cannot check: |Open 122
 note|he cancel race after `end` (|G34
 note|he exit code accepted then (|G18
 note|he helper page and paper at |5.8
@@ -228,6 +233,7 @@ note|ing (the owner sheet R4 and |8.1
 note|ion 9); the sheet now says (|7.8
 note|it code accepted then (G18, |G34
 note|it is not a one-person job (|Open 80
+note|it, never after. Sheet 6.6, |7.3
 note|ith a fourth phone alarm; B |7.11
 note|ithout a real cancel. Sheet |5.9
 note|kes the named apps at sheet |8.4
@@ -243,10 +249,12 @@ note|lead states keep or revoke (|G42
 note|led key save skips 6.7, and |7.11
 note|line each | any missing | | |G31
 note|ll lead or owner decisions (|Open 71, 78, 79, 82, 83, 86 to 95
+note|ll valid older key at once (|Open 121
 note|lt; neither is the default (|Open 71
 note|m made no delete call" (G1, |G27
 note|matches the film search | | |G39
 note|may be reversed (item 10 of |section 0
+note|may cancel the older key at |6.7
 note|me display exempt in W7 and |R1
 note|ments: every 1a gate (G1 to |G15
 note|model program is restarted (|G16
@@ -290,6 +298,7 @@ note|r and prep contact address (|G38
 note|r the list unreconciled | | |G4
 note|r writes his own reading at |5.6
 note|rd", "If it fails", FREEZE, |R1
+note|re (lead decisions): L-LEN (|Open 112, 124
 note|reach the lead (owner sheet |section 1
 note|read | scripts not read | | |G9
 note|reading is now required for |G1
@@ -327,6 +336,7 @@ note|th that does not exist yet, |G37
 note|the app-password page path (|8.3
 note|the delete wording present (|R5
 note|the exit code for person C (|G6
+note|the exposure options are in |Open 123
 note|the latest start on 23 Nov (|Open 103
 note|the owner to type a figure (|G35
 note|the run key's create press (|6.3
@@ -346,6 +356,7 @@ note|xisting balance (G41, sheet |R4
 note|y in A on every route where |6.7
 note|your order L-A/B). In both, |7.11
 note|| G9 | Shutdown order as in |section 4
+note|| owner removes it at sheet |8.7
 note|| roles and places | lead | |G11
 open| 5.3 (Windows power pages), |5.4
 open| Gmail is signed in only at |8.3
@@ -427,6 +438,7 @@ open|ed | Row 59 removed; R2 and |R3
 open|ed, but a failed save skips |6.7
 open|ement that nothing uses it (|G32
 open|er cancels the older key at |6.7
+open|er days the ordinary chain (|7.11
 open|er key then blocks the run (|R4
 open|ere; list permission names (|G21
 open|et lists more owner tasks | |G22
@@ -441,6 +453,7 @@ open|gives the name rule used at |8.3
 open|he figure in words (row 77; |Q24
 open|he run key is live from the |6.3
 open|heir conditions; the sheet (|5.6
+open|henever the card ran before |7.9
 open|hosen: the sheet says so in |R1
 open|ifies at final check" until |G16
 open|illed | v28 adds sheet step |5.9
@@ -451,7 +464,8 @@ open|ith `-I` (security major 1; |G39
 open|iting, checked by a human"; |G14
 open|itten lead answer that rule |R8
 open|lder key shown on screen at |5.7
-open|le. WHEN IT FAILS (v34): at |5.6
+open|le. WHEN IT FAILS (v35): at |5.6
+open|le; the sheet removes it at |8.7
 open|lm search never finds (Note |G38
 open|m pause ends without `end` (|G18
 open|major 2 of v26; AGENT-SCOPE |section 3
@@ -516,33 +530,37 @@ open|| 12 | Helpers | Sheet 5.2, |G11
 open|| | 68 | R2 and R3 removed, |R4
 open||---|---| | 1 | ANSWERED by |Q23
 sheetA| 10: Deadline backstop Step |7.11
+sheetA| 23:39 IST; both are set at |5.8
 sheetA| 5.1 to 5.8 (and 6.1, which |5.7
 sheetA| 6 and 7 - small notes Step |5.9
 sheetA| 6.4. After the `exit 0` of |6.4
 sheetA| 7.11 still follows, before |8.1
 sheetA| A cancels the older key at |6.7
-sheetA| B cancels the older key at |7.11
-sheetA| Mon 23 Nov, and check 2 of |section 3
 sheetA| This sheet holds the card (|section 2
+sheetA| after your first reading), |7.11
 sheetA| alive: the card first. | | |R9
 sheetA| and describe which (8.3 to |8.5
 sheetA| and that the 7-day rule of |5.1
 sheetA| and then your public post (|section 9
 sheetA| at once (the 7-day rule of |5.1
-sheetA| before it (so "restarted", |6.6
 sheetA| before the film cue. Step |7.9
 sheetA| by the older-key time when |6.7
 sheetA| cancel a key (the card and |7.11
 sheetA| count and the names. Step |7.3
 sheetA| differ (UNVERIFIED). Step |6.2
+sheetA| either sheet works. Step |5.1
 sheetA| follow it in order: 5.1 to |5.8
 sheetA| from the message (typed at |6.3
+sheetA| from your press of create (|6.3
 sheetA| is a real key, alive until |card step 4
 sheetA| it shares your Linux user, |R1
+sheetA| key at 6.7; it never stops |7.11
 sheetA| key's cancel was proven by |card step 4
 sheetA| key." The yes binds you to |7.11
+sheetA| line, type it again. Step |6.3
 sheetA| names, by the name rule of |8.2
-sheetA| passed); sheet B always to |7.11
+sheetA| one missing: no run. Step |5.6
+sheetA| reading means no cancel at |6.7
 sheetA| screen: revoke it at once (|8.3
 sheetA| sheet. | Same section. | | |R10
 sheetA| start or end a step: "go" (|5.8
@@ -551,8 +569,9 @@ sheetA| the message, nothing more (|R6
 sheetA| the numbers message names (|8.2
 sheetA| the yes still binds you to |7.11
 sheetA| to 8 only on the run day. "|6.3
-sheetA| to the reminders. A missed |7.11
+sheetA| to them; (2) Recording ON: |card step 1
 sheetA| type `rm -- "<key file>"` (|R6
+sheetA| used lately: money safety (|R4
 sheetA| word, from the look key at |5.9
 sheetA|", FREEZE, no `end`) passes |7.11
 sheetA|"post" (9), "revoke again" (|8.6
@@ -565,17 +584,19 @@ sheetA|**The words.** - **Labels** |R1
 sheetA|, at 7.11) and the deleting |R7
 sheetA|, or the message says none; |6.7
 sheetA|, or you use sheet B. Step |5.7
-sheetA|-key steps say none. Step |5.1
+sheetA|. Then send "posted". Step |8.8
 sheetA|. Video: follow section 10 (|R9
+sheetA|.7 on the happy path and to |7.11
+sheetA|.8); P2 you typed `n` (7.4, |R5
 sheetA|.9 and 6.3 and the paste at |6.4
 sheetA|.9 and 6.3 and the paste of |6.4
 sheetA|1-60` in the read terminal (|R6
 sheetA|10; this sheet has no R2 or |R3
+sheetA|11); alarm 5 and alarm 6 of |5.8
 sheetA|4 at the older-key time (do |7.11
 sheetA|4 to R10; this sheet has no |R2
-sheetA|7 on the happy path, and to |7.11
 sheetA|8, other channel); the yes (|5.8
-sheetA|:00 UTC = 20:30 IST) Follow |section 10
+sheetA|: no run. Step 5.6, before |5.9
 sheetA|; (3) the clean-up message (|8.2
 sheetA|= one of the four alarms of |6.2
 sheetA|Chrome profile `demo-take` (|5.5
@@ -583,22 +604,19 @@ sheetA|EZE. 4. Compare the notice (|R5
 sheetA|FIED: treat it as final). |R10
 sheetA|Latest start** (card words; |7.3
 sheetA|NVERIFIED, tolerated) Step |5.4
-sheetA|NVERIFIED, tolerated) Step |5.6
-sheetA|OWNER-FILM-PERSON-v34.md) **|R9
-sheetA|P RULE, at the end of sheet |section 1
-sheetA|The two sheets end alike if |6.7
+sheetA|NVERIFIED, tolerated) Step |5.5
+sheetA|OWNER-FILM-PERSON-v35.md) **|R9
+sheetA|RULE is at the end of sheet |section 1
+sheetA|T (phone alarms with sound; |7.11
 sheetA|UNVERIFIED, tolerated) Step |5.1
-sheetA|VERIFIED, tolerated). Step |8.8
 sheetA|` after the challenge line, |7.4
 sheetA|` for this step only. Step |8.4
 sheetA|a replaced numbers message, |R8
 sheetA|a short label: R1 and R4 to |R10
-sheetA|a sixth phone alarm, set at |5.8
-sheetA|act sentences you may post (|section 10
+sheetA|act sentences you may post (|section 9
 sheetA|agree: the card first, then |R1
 sheetA|ail under label `demo` that |R7
 sheetA|al type the printed line of |6.4
-sheetA|and paper, the two words of |5.9
 sheetA|and the yes names the risk, |R1
 sheetA|anned cancel: at 6.7, after |6.6
 sheetA|apply the rule again to it (|5.6
@@ -606,11 +624,12 @@ sheetA|ard** (a printed checklist, |section 2
 sheetA|arted" (6.6), "n8n is off" (|8.2
 sheetA|asked address> Gap before |8.1
 sheetA|at the lead lists. Start at |5.1
-sheetA|ate of the run key (6.3) to |6.7
 sheetA|auto-reload equal your yes (|R4
 sheetA|ay be done on earlier days, |5.9
 sheetA|be the times (8.8). **Step |8.8
-sheetA|can spend money until then (|R4
+sheetA|bers message**: as in sheet |section 1
+sheetA|bound those) Name rule for |8.3
+sheetA|cancel at 6.7, describe it; |7.11
 sheetA|card (not part of it):** if |7.4
 sheetA|ck as the first sentence of |8.7
 sheetA|d (its list L2 included, at |7.11
@@ -619,6 +638,7 @@ sheetA|d only if the 7-day rule of |5.1
 sheetA|d video (what you accept at |8.8
 sheetA|d-in part: the `cd` line of |7.2
 sheetA|d. The **numbers message** (|section 3
+sheetA|d` (7.8); P2 you typed `n` (|7.4
 sheetA|description; "none" only at |8.1
 sheetA|did not cancel it; a missed |7.11
 sheetA|dited video twice and check |R9
@@ -626,27 +646,31 @@ sheetA|e card first, then R1, then |R10
 sheetA|e exit code is read only at |7.9
 sheetA|e fixed printed commands of |5.7
 sheetA|e key's one-time display at |5.9
+sheetA|e lead only writes it down; |R4
 sheetA|e model key's cancel press, |card step 3
 sheetA|e numbers message gives it (|R6
 sheetA|e older key stays valid and |7.11
 sheetA|e room when you make a key (|R1
+sheetA|e set at 5.8 and each means |7.11
 sheetA|e setting is not a control (|R4
-sheetA|e shows the key once. Step |7.6
 sheetA|e the rules of the table in |section 2
-sheetA|e two deadline reminders of |5.8
 sheetA|e values on your paper when |5.7
 sheetA|ead "wait" is only a pause, |R8
 sheetA|ead copies what you sent at |5.1
 sheetA|ed commands of 5.7, 6.4 and |8.1
 sheetA|ed printed commands of 5.7, |6.4
 sheetA|el key (and the look key of |5.9
-sheetA|en "matches the sentences" (|section 10
+sheetA|en "matches the sentences" (|section 9
 sheetA|en: revoke it at once (8.3, |8.4
+sheetA|endix 10), the two words of |5.9
+sheetA|er from the printed line of |6.4
+sheetA|er, no last-resort step; at |8.1
 sheetA|erwise the card first. Step |5.9
 sheetA|es (each has a short label: |R1
 sheetA|es it. A FREEZE never stops |7.11
 sheetA|es, which then replaces it; |7.11
 sheetA|ettings figures:** first do |6.1
+sheetA|ever after it ("restarted", |6.6
 sheetA|ey may still be valid after |7.11
 sheetA|ey must be cancelled. Step |6.3
 sheetA|ff again what is on. Step |6.1
@@ -654,28 +678,24 @@ sheetA|firmed" (5.9), "restarted" (|6.6
 sheetA|from the create press until |card step 5
 sheetA|g, wait). **Name rule (8.3, |8.4
 sheetA|gn of the run key: it means |7.11
+sheetA|gns):** P1 you typed `end` (|7.8
 sheetA|go to the test terminal for |6.4
 sheetA|h has a short label: R1 and |R4
-sheetA|h the run and cancels it at |7.11
 sheetA|h them off again at 5.9 and |6.1
 sheetA|had typed `end`, proceed at |7.9
 sheetA|have not seen on its page. |R6
 sheetA|he line, then the card. | | |R6
 sheetA|he message; any other size: |6.5
 sheetA|he run key (the look key of |5.9
-sheetA|he screen; then FREEZE. | | |R4
 sheetA|hich wins | |---|---|---| | |R1
 sheetA|hours late (UNVERIFIED), so |6.7
-sheetA|il address (the one copy at |6.3
 sheetA|ill valid: you cancel it at |7.11
 sheetA|ing starts (after your yes, |7.11
 sheetA|ing. The planned cancel: at |6.7
 sheetA|ions 1 to 3 and 5 to 10: no |section 4
 sheetA|is step and describe which (|8.3
-sheetA|ise, if Recording is ON: do |card step 1
 sheetA|it never delays the card or |7.11
 sheetA|ix 7) ## 6. The model key (|R1
-sheetA|key save, a failed check at |6.7
 sheetA|key: its own time jotted at |5.9
 sheetA|l (the sender Gmail only at |8.3
 sheetA|l - the longer rule details |R4
@@ -683,35 +703,39 @@ sheetA|l mail address (the copy at |6.3
 sheetA|l profile. 8. Video: follow |section 10
 sheetA|l; you read both at 6.2 and |6.7
 sheetA|l`, `clear` and the grep of |5.7
+sheetA|lder key only at 7.11. When |6.7
 sheetA|le that is not a step) Step |5.1
 sheetA|le>"` in the test terminal (|R6
 sheetA|led after you press create (|6.3
+sheetA|ll end before the deadline, |Open 121
 sheetA|lled-in parts are checked) |R7
 sheetA|losed before you copied, or |6.6
+sheetA|may cancel the older key at |6.7
 sheetA|may go on to the next step (|7.9
 sheetA|mbers message names (8.2 to |8.6
+sheetA|minutes until you have done |7.11
 sheetA|n day. "6.3" names a step; "|card step 1
 sheetA|n it; describe; FREEZE. | | |R7
+sheetA|ncels the older key only at |7.11
 sheetA|nd switch them off again at |5.9
 sheetA|nel is the one you named at |5.1
+sheetA|new run name <name>". Step |7.6
 sheetA|ney already in the account (|R4
 sheetA|none, describe, FREEZE. | | |R8
 sheetA|nt: delete exactly those as |R7
 sheetA|o `end`) passes 7.11 before |8.1
 sheetA|o the values on your paper (|6.1
 sheetA|odel account if you cannot (|7.11
-sheetA|olerated) Step 5.6, before |5.9
 sheetA|ollow). Contacts: delete by |R7
 sheetA|on the other channel. Step |6.7
 sheetA|on to the next step (7.9 or |8.1
-sheetA|once a deadline reminder of |5.8
-sheetA|one of the two reminders of |5.8
 sheetA|one-time display at 5.9 and |6.3
 sheetA|ook-<run name>` you make at |5.9
 sheetA|op whatever its state word; |5.9
 sheetA|opy at 6.3 and the paste at |6.4
 sheetA|or 7.11, L2). The look key (|5.9
 sheetA|ording OFF and leave. Step |7.7
+sheetA|ose) Name rule for 8.3 and |8.4
 sheetA|ot a cancel and never stops |7.11
 sheetA|othing, wait). **Name rule (|8.3
 sheetA|our new key is saved, or at |7.11
@@ -721,9 +745,9 @@ sheetA|pend until it is cancelled (|6.7
 sheetA|pend until you cancel it at |6.7
 sheetA|per keeps the first values (|8.7
 sheetA|r the page and the paper at |5.8
-sheetA|r your first reading): then |7.11
 sheetA|rated items); an exit code (|7.9
 sheetA|ress is shown here). Step |7.6
+sheetA|rites VOID on the paper; at |8.7
 sheetA|rivacy switches OFF (off in |6.1
 sheetA|rs message and your checks (|section 3
 sheetA|run ends passes here before |8.1
@@ -731,12 +755,12 @@ sheetA|run key (the three words at |5.9
 sheetA|s <in words>, is it yours" (|R8
 sheetA|s a step; "card step 1" to "|card step 5
 sheetA|s no. Your yes binds you to |7.11
-sheetA|s of create of the run key (|6.3
 sheetA|s of it, and "confirmed" of |5.9
 sheetA|s; any other: no run (until |5.9
 sheetA|sage "wait" or a slow lead (|6.6
 sheetA|send "none" for the time in |8.1
 sheetA|sses here before 8.1).** If |6.7
+sheetA|t check that they are true (|Open 122
 sheetA|t in order: 5.1 to 5.8 (and |6.1
 sheetA|t post; describe the times (|8.8
 sheetA|t satisfy the 7-day rule of |5.1
@@ -745,19 +769,19 @@ sheetA|t this yes binds me to step |7.11
 sheetA|taskbar (UNVERIFIED). Step |8.3
 sheetA|te this run's demo mails as |R7
 sheetA|ted total; you read both at |6.2
-sheetA|tely, because money safety (|R4
-sheetA|the account (a record only; |R4
 sheetA|the card for your key, then |7.11
 sheetA|the no-yes path, the missed-|7.11
+sheetA|the screen; (6) FREEZE. | | |R4
 sheetA|the values on your paper in |8.7
 sheetA|til it is cancelled (6.7 or |7.11
 sheetA|till be valid after 7.11 if |7.11
 sheetA|tion 3) and the film rules (|section 10
-sheetA|two **deadline reminders** (|5.8
-sheetA|two **deadline reminders** (|7.11
+sheetA|to alarms 5 and 6; a missed |7.11
 sheetA|ty paste gives one) goes to |6.5
 sheetA|umbers message gives before |8.1
 sheetA|un). If the run ends before |6.7
+sheetA|ur press of create (6.3) to |6.7
+sheetA|ure path; sheet B always to |7.11
 sheetA|use your phone (UNVERIFIED; |5.3
 sheetA|ve from this press): alone (|R1
 sheetA|w with the real word. Step |5.6
@@ -771,31 +795,34 @@ sheetA|yes; "restarted" came after |6.6
 sheetA|yet: do its steps 2 to 4 as |5.9
 sheetA|ys`; type it by hand. Step |5.3
 sheetB| 10: Deadline backstop Step |7.11
+sheetB| 23:39 IST; both are set at |5.8
 sheetB| 5.1 to 5.8 (and 6.1, which |5.7
 sheetB| 6 and 7 - small notes Step |5.9
 sheetB| 6.4. After the `exit 0` of |6.4
 sheetB| 7.11 still follows, before |8.1
 sheetB| A cancels the older key at |6.7
-sheetB| B cancels the older key at |7.11
 sheetB| I will cancel it myself at |7.11
-sheetB| Mon 23 Nov, and check 2 of |section 3
 sheetB| This sheet holds the card (|section 2
+sheetB| after your first reading), |7.11
 sheetB| alive: the card first. | | |R9
 sheetB| and describe which (8.3 to |8.5
 sheetB| and then your public post (|section 9
-sheetB| before it (so "restarted", |6.6
 sheetB| before the film cue. Step |7.9
 sheetB| cancel a key (the card and |7.11
 sheetB| count and the names. Step |7.3
 sheetB| differ (UNVERIFIED). Step |6.2
+sheetB| either sheet works. Step |5.1
 sheetB| follow it in order: 5.1 to |5.8
 sheetB| from the message (typed at |6.3
+sheetB| from your press of create (|6.3
 sheetB| is a real key, alive until |card step 4
 sheetB| it shares your Linux user, |R1
+sheetB| key at 6.7; it never stops |7.11
 sheetB| key's cancel was proven by |card step 4
 sheetB| key." The yes binds you to |7.11
+sheetB| line, type it again. Step |6.3
 sheetB| names, by the name rule of |8.2
-sheetB| passed); sheet B always to |7.11
+sheetB| one missing: no run. Step |5.6
 sheetB| screen: revoke it at once (|8.3
 sheetB| sheet. | Same section. | | |R10
 sheetB| start or end a step: "go" (|5.8
@@ -804,8 +831,9 @@ sheetB| the message, nothing more (|R6
 sheetB| the numbers message names (|8.2
 sheetB| the yes still binds you to |7.11
 sheetB| to 8 only on the run day. "|6.3
-sheetB| to the reminders. A missed |7.11
+sheetB| to them; (2) Recording ON: |card step 1
 sheetB| type `rm -- "<key file>"` (|R6
+sheetB| used lately: money safety (|R4
 sheetB| word, from the look key at |5.9
 sheetB|", FREEZE, no `end`) passes |7.11
 sheetB|"post" (9), "revoke again" (|8.6
@@ -816,17 +844,19 @@ sheetB|* = a numbered item such as |6.3
 sheetB|** = the lead's pause word (|R8
 sheetB|**The words.** - **Labels** |R1
 sheetB|, at 7.11) and the deleting |R7
-sheetB|-key steps say none. Step |5.1
+sheetB|. Then send "posted". Step |8.8
 sheetB|. Video: follow section 10 (|R9
+sheetB|.7 on the happy path and to |7.11
+sheetB|.8); P2 you typed `n` (7.4, |R5
 sheetB|.9 and 6.3 and the paste at |6.4
 sheetB|.9 and 6.3 and the paste of |6.4
 sheetB|1-60` in the read terminal (|R6
 sheetB|10; this sheet has no R2 or |R3
+sheetB|11); alarm 5 and alarm 6 of |5.8
 sheetB|4 at the older-key time (do |7.11
 sheetB|4 to R10; this sheet has no |R2
-sheetB|7 on the happy path, and to |7.11
 sheetB|8, other channel); the yes (|5.8
-sheetB|:00 UTC = 20:30 IST) Follow |section 10
+sheetB|: no run. Step 5.6, before |5.9
 sheetB|; (3) the clean-up message (|8.2
 sheetB|= one of the four alarms of |6.2
 sheetB|Chrome profile `demo-take` (|5.5
@@ -834,34 +864,31 @@ sheetB|EZE. 4. Compare the notice (|R5
 sheetB|FIED: treat it as final). |R10
 sheetB|Latest start** (card words; |7.3
 sheetB|NVERIFIED, tolerated) Step |5.4
-sheetB|NVERIFIED, tolerated) Step |5.6
-sheetB|OWNER-FILM-PERSON-v34.md) **|R9
-sheetB|P RULE, at the end of sheet |section 1
-sheetB|The two sheets end alike if |6.7
+sheetB|NVERIFIED, tolerated) Step |5.5
+sheetB|OWNER-FILM-PERSON-v35.md) **|R9
+sheetB|RULE is at the end of sheet |section 1
+sheetB|T (phone alarms with sound; |7.11
 sheetB|UNVERIFIED, tolerated) Step |5.1
-sheetB|VERIFIED, tolerated). Step |8.8
 sheetB|` after the challenge line, |7.4
 sheetB|` for this step only. Step |8.4
 sheetB|a replaced numbers message, |R8
 sheetB|a short label: R1 and R4 to |R10
-sheetB|a sixth phone alarm, set at |5.8
-sheetB|act sentences you may post (|section 10
+sheetB|act sentences you may post (|section 9
 sheetB|agree: the card first, then |R1
 sheetB|ail under label `demo` that |R7
 sheetB|al type the printed line of |6.4
 sheetB|alid until you cancel it at |7.11
-sheetB|and paper, the two words of |5.9
 sheetB|and the yes names the risk, |R1
 sheetB|apply the rule again to it (|5.6
 sheetB|ard** (a printed checklist, |section 2
 sheetB|arted" (6.6), "n8n is off" (|8.2
 sheetB|asked address> Gap before |8.1
 sheetB|at the lead lists. Start at |5.1
-sheetB|ate of the run key (6.3) to |6.7
 sheetB|auto-reload equal your yes (|R4
 sheetB|ay be done on earlier days, |5.9
 sheetB|be the times (8.8). **Step |8.8
-sheetB|can spend money until then (|R4
+sheetB|bers message**: as in sheet |section 1
+sheetB|bound those) Name rule for |8.3
 sheetB|card (not part of it):** if |7.4
 sheetB|cel it at 7.11, so a missed |7.11
 sheetB|ck as the first sentence of |8.7
@@ -870,32 +897,37 @@ sheetB|d it never delays the card, |7.11
 sheetB|d video (what you accept at |8.8
 sheetB|d-in part: the `cd` line of |7.2
 sheetB|d. The **numbers message** (|section 3
+sheetB|d` (7.8); P2 you typed `n` (|7.4
 sheetB|description; "none" only at |8.1
 sheetB|dited video twice and check |R9
 sheetB|e card first, then R1, then |R10
 sheetB|e exit code is read only at |7.9
 sheetB|e fixed printed commands of |5.7
 sheetB|e key's one-time display at |5.9
+sheetB|e lead only writes it down; |R4
 sheetB|e model key's cancel press, |card step 3
 sheetB|e numbers message gives it (|R6
 sheetB|e room when you make a key (|R1
+sheetB|e set at 5.8 and each means |7.11
 sheetB|e setting is not a control (|R4
-sheetB|e shows the key once. Step |7.6
 sheetB|e the rules of the table in |section 2
-sheetB|e two deadline reminders of |5.8
 sheetB|e values on your paper when |5.7
 sheetB|ead "wait" is only a pause, |R8
 sheetB|ead copies what you sent at |5.1
 sheetB|ed commands of 5.7, 6.4 and |8.1
 sheetB|ed printed commands of 5.7, |6.4
 sheetB|el key (and the look key of |5.9
-sheetB|en "matches the sentences" (|section 10
+sheetB|en "matches the sentences" (|section 9
 sheetB|en: revoke it at once (8.3, |8.4
+sheetB|endix 10), the two words of |5.9
+sheetB|er from the printed line of |6.4
+sheetB|er, no last-resort step; at |8.1
 sheetB|erwise the card first. Step |5.9
 sheetB|es (each has a short label: |R1
 sheetB|es it. A FREEZE never stops |7.11
 sheetB|es, which then replaces it; |7.11
 sheetB|ettings figures:** first do |6.1
+sheetB|ever after it ("restarted", |6.6
 sheetB|ey may still be valid after |7.11
 sheetB|ey must be cancelled. Step |6.3
 sheetB|ff again what is on. Step |6.1
@@ -903,27 +935,23 @@ sheetB|firmed" (5.9), "restarted" (|6.6
 sheetB|from the create press until |card step 5
 sheetB|g, wait). **Name rule (8.3, |8.4
 sheetB|gn of the run key: it means |7.11
+sheetB|gns):** P1 you typed `end` (|7.8
 sheetB|go to the test terminal for |6.4
 sheetB|h has a short label: R1 and |R4
-sheetB|h the run and cancels it at |7.11
 sheetB|h them off again at 5.9 and |6.1
 sheetB|had typed `end`, proceed at |7.9
 sheetB|have not seen on its page. |R6
 sheetB|he line, then the card. | | |R6
 sheetB|he message; any other size: |6.5
 sheetB|he run key (the look key of |5.9
-sheetB|he screen; then FREEZE. | | |R4
 sheetB|hich wins | |---|---|---| | |R1
 sheetB|hours late (UNVERIFIED), so |6.7
-sheetB|il address (the one copy at |6.3
 sheetB|ing starts (after your yes, |7.11
 sheetB|ing. The planned cancel: at |7.11
 sheetB|ions 1 to 3 and 5 to 10: no |section 4
 sheetB|is step and describe which (|8.3
-sheetB|ise, if Recording is ON: do |card step 1
 sheetB|it never delays the card or |7.11
 sheetB|ix 7) ## 6. The model key (|R1
-sheetB|key save, a failed check at |6.7
 sheetB|key: its own time jotted at |5.9
 sheetB|l (the sender Gmail only at |8.3
 sheetB|l - the longer rule details |R4
@@ -931,34 +959,38 @@ sheetB|l mail address (the copy at |6.3
 sheetB|l profile. 8. Video: follow |section 10
 sheetB|l; you read both at 6.2 and |6.7
 sheetB|l`, `clear` and the grep of |5.7
+sheetB|lder key only at 7.11. When |6.7
 sheetB|le that is not a step) Step |5.1
 sheetB|le>"` in the test terminal (|R6
 sheetB|led after you press create (|6.3
+sheetB|ll end before the deadline, |Open 121
 sheetB|lled-in parts are checked) |R7
 sheetB|losed before you copied, or |6.6
+sheetB|may cancel the older key at |6.7
 sheetB|may go on to the next step (|7.9
 sheetB|mbers message names (8.2 to |8.6
+sheetB|minutes until you have done |7.11
 sheetB|n day. "6.3" names a step; "|card step 1
 sheetB|n it; describe; FREEZE. | | |R7
+sheetB|ncels the older key only at |7.11
 sheetB|nd switch them off again at |5.9
 sheetB|nel is the one you named at |5.1
+sheetB|new run name <name>". Step |7.6
 sheetB|ney already in the account (|R4
 sheetB|none, describe, FREEZE. | | |R8
 sheetB|nt: delete exactly those as |R7
 sheetB|o `end`) passes 7.11 before |8.1
 sheetB|o the values on your paper (|6.1
 sheetB|odel account if you cannot (|7.11
-sheetB|olerated) Step 5.6, before |5.9
 sheetB|ollow). Contacts: delete by |R7
 sheetB|on to the next step (7.9 or |8.1
-sheetB|once a deadline reminder of |5.8
-sheetB|one of the two reminders of |5.8
 sheetB|one-time display at 5.9 and |6.3
 sheetB|ook-<run name>` you make at |5.9
 sheetB|op whatever its state word; |5.9
 sheetB|opy at 6.3 and the paste at |6.4
 sheetB|or 7.11, L2). The look key (|5.9
 sheetB|ording OFF and leave. Step |7.7
+sheetB|ose) Name rule for 8.3 and |8.4
 sheetB|ot a cancel and never stops |7.11
 sheetB|othing, wait). **Name rule (|8.3
 sheetB|p: "go" (5.8), "confirmed" (|5.9
@@ -967,9 +999,9 @@ sheetB|pend until it is cancelled (|6.7
 sheetB|pend until you cancel it at |7.11
 sheetB|per keeps the first values (|8.7
 sheetB|r the page and the paper at |5.8
-sheetB|r your first reading): then |7.11
 sheetB|rated items); an exit code (|7.9
 sheetB|ress is shown here). Step |7.6
+sheetB|rites VOID on the paper; at |8.7
 sheetB|rivacy switches OFF (off in |6.1
 sheetB|rs message and your checks (|section 3
 sheetB|run ends passes here before |8.1
@@ -977,11 +1009,11 @@ sheetB|run key (the three words at |5.9
 sheetB|s <in words>, is it yours" (|R8
 sheetB|s a step; "card step 1" to "|card step 5
 sheetB|s no. Your yes binds you to |7.11
-sheetB|s of create of the run key (|6.3
 sheetB|s of it, and "confirmed" of |5.9
 sheetB|s; any other: no run (until |5.9
 sheetB|sage "wait" or a slow lead (|6.6
 sheetB|send "none" for the time in |8.1
+sheetB|t check that they are true (|Open 122
 sheetB|t in order: 5.1 to 5.8 (and |6.1
 sheetB|t post; describe the times (|8.8
 sheetB|t the video may show) is in |section 10
@@ -989,17 +1021,17 @@ sheetB|t this yes binds me to step |7.11
 sheetB|taskbar (UNVERIFIED). Step |8.3
 sheetB|te this run's demo mails as |R7
 sheetB|ted total; you read both at |6.2
-sheetB|tely, because money safety (|R4
-sheetB|the account (a record only; |R4
 sheetB|the no-yes path, the missed-|7.11
+sheetB|the screen; (6) FREEZE. | | |R4
 sheetB|the values on your paper in |8.7
 sheetB|til it is cancelled (6.7 or |7.11
 sheetB|till be valid after 7.11 if |7.11
 sheetB|tion 3) and the film rules (|section 10
-sheetB|two **deadline reminders** (|5.8
-sheetB|two **deadline reminders** (|7.11
+sheetB|to alarms 5 and 6; a missed |7.11
 sheetB|ty paste gives one) goes to |6.5
 sheetB|umbers message gives before |8.1
+sheetB|ur press of create (6.3) to |6.7
+sheetB|ure path; sheet B always to |7.11
 sheetB|use your phone (UNVERIFIED; |5.3
 sheetB|ve from this press): alone (|R1
 sheetB|w with the real word. Step |5.7

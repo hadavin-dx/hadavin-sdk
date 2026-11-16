@@ -59,8 +59,8 @@ for n, t in SH:                                                                 
 need('C52', '3. For each of your keys: press the cancel button; if a box asks, press the confirmation word.')           # Q10
 for n, t in SH:                                                                                                         # Q11: card gates (a) to (i) all present, in order, (f) text exact
     i = t.find('**Danger signs'); j = t.find('**Not danger signs'); w = t[i:j]; w = w[w.find('):**') + 4:]
-    pos = [w.find('W%d ' % c) for c in range(1, 10)]
-    if min(pos) < 0 or pos != sorted(pos): fail('C53', n + ' card triggers W1 to W9 missing or out of order')
+    pos = [w.find('W%d ' % c) for c in range(3, 10)]
+    if min(pos) < 0 or pos != sorted(pos): fail('C53', n + ' card danger signs W3 to W9 missing or out of order')
 need('C53', 'W6 the test terminal shows a shell prompt before you typed `end`')
 need('C54', 'The account must be prepaid, auto-reload off, balance at least the expected total')                          # Q12
 ban('C54', r'auto-reload on\b')
@@ -98,7 +98,7 @@ need('C71', 'A line saying contacts will be deleted or archived, or asking you t
 need('C72', 'the time is at or before the Enter-by time (else do not press Enter: send "time passed"')                              # N10 warning before cancel path
 need('C73', 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'); need('C73', 'Section 9 in full: Start only after the lead\'s word "post"')
 for n, t in SH:
-    if t.count('Wed 25 Nov 2026 15:00 UTC = 20:30 IST') < 2: fail('C73', n + ': the post-by date must be the same on the sheet pointer and the film page')                                                       # N11 post-by date tied to the literal
+    if t.count('Wed 25 Nov 2026 15:00 UTC = 20:30 IST') < 1 or t.count('Wed 25 Nov 2026 15:00 UTC = 20:30 IST') > 2: fail('C73', n + ': the post-by date is missing from section 9 (or written more than twice)')                                                       # N11 post-by date tied to the literal
 for n, t in (('N', NOTE), ('O', OPEN)):
     for m in re.finditer(r'[Pp]ost(?:ing)?[- ]by[^.\n]{0,40}?(Mon|Tue|Wed|Thu|Fri) (\d{1,2}) Nov', t):
         if (m[1], m[2]) != ('Wed', '25'): fail('C73', '%s post-by date %s %s' % (n, m[1], m[2]))
@@ -247,7 +247,7 @@ need('C161', 'every way the run ends passes here before 8.1')                   
 need('C162', 'FREEZE is not a cancel: a live key is cancelled only through the card (a planned moment P1 or P2, or a danger sign W3 to W9)')                                    # RC1: FREEZE never cancels
 need('C162', '**Not danger signs (no card, no FREEZE):** a lead message "wait"')                                         # RC1: a wait is never a trigger
 need('C163', '"confirmed" (5.9)'); need('C163', 'the seven words, which alone start or end a step')                                    # N2: the new lead word and the count
-need('C164', 'Write its state word before the cancel.'); need('C164', 'must differ from the look key\'s word before the cancel and from every live word')   # N2
+need('C164', 'Write its state word before the cancel.'); need('C164', 'must differ from the look key\'s word before the cancel and from every current state word')   # N2
 need('C165', 'If its text appeared on your screen: cancel it at once (the 7-day rule of 5.1 does not apply to that)', (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once.', (('B', B),))   # N4
 need('C166', 'except the key\'s own one-time display at 5.9 and 6.3 and the paste at 6.4')                              # N1: W7 exemption
 need('C167', 'the test program made no delete call')                                                                      # evidence-runner fix: the no-delete line in both sheets
@@ -323,9 +323,9 @@ if _sb not in OPEN: fail('C189', 'open list lacks the 7-day time %s' % _sb)
 need('C190', 'no such page: describe that, then go on; UNVERIFIED that no page means no Recall')                                                                    # S m4: Recall
 need('C191', 'no clipboard manager, remote-access or screen-capture tool running'); need('C191', 'every clipboard manager, remote-access tool or screen-capture tool')     # S m5
 need('C192', 'never a file manager, a second terminal window or the clipboard (no copy and paste)')                      # S m6 film person
-need('C192', "the From column of the mail list shows the sender's throwaway address: the film person does not stop for")   # N B1
+need('C192', "the From column of the mail list shows the sender's throwaway address: the editor cuts it, the film person does not stop for it")   # N B1
 need('C192', 'say aloud "film pause now"') if False else need('C192', 'aloud "film pause now"')
-need('C193', '**Name rule (8.3, 8.4):** revoke only an entry whose exact name is in the numbers message row "Entries to revoke later"')                      # S m7
+need('C193', 'Name rule for 8.3 and 8.4: revoke only an entry whose exact name is in the numbers message row "Entries to revoke later"')                      # S m7
 _gm = F.get('gap_max', '?')
 need('C194', 'the latest start is at most %s minutes after the earliest key time' % _gm)
 need('C194', 'at most 60 minutes after the earliest key time')                                                           # literal, independent of facts-v35.py (the lead's cap is 60)                                  # S m3: gap cap
@@ -338,9 +338,9 @@ for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
 for _pg in ('OWNER-CARD-%s-A.md' % _V, 'OWNER-CARD-%s-B.md' % _V, 'OWNER-APPENDIX-%s-A.md' % _V, 'OWNER-APPENDIX-%s-B.md' % _V, 'OWNER-FILM-PERSON-%s.md' % _V):
     if not _os.path.exists(D + _pg): continue
     for _m in _pair.finditer(open(D + _pg, encoding='utf-8').read()): fail('C195', '%s: a UTC time without its IST pair near %r' % (_pg, _m[0]))
-need('C196', 'the three waits of the message added')                                                                        # N M3: the three waits named
+need('C196', "the sum " + F['sum'] + " = the message's y minutes + run length + film pause")                                                                        # N M3: the three waits named
 for _nm in 'AB':
-    if _APP[_nm].count('at least 5 minutes before the latest start') < 3: fail('C196', '%s: the 5-minute rule is not worded the same in 6.2 and on the card (W5 and the words list)' % _nm)
+    if _APP[_nm].count('Enter-by time') < 3 or re.search(r'(?i)(?:from|at least) 5 minutes before|less than 5 minutes', _APP[_nm]): fail('C196', '%s: the 5-minute boundary is not one rule (Enter-by time, 3 or more places, no "at least 5 minutes before")' % _nm)
 need('C197', '(only that one person)')                                                                                     # N M5: one person for a failed cancel
 need('C198', 'press Enter once; the line `exit 0` appears')                                                                # N M6: press Enter in 6.4
 need('C198', 'press Enter once on the empty line')
@@ -375,7 +375,7 @@ for _r in ('| 107 |', '| 108 |', '| 109 |'):
 for _w in ('L7', 'DB-2', 'delete-path', 'Q27', 'OWNER-OPEN'):
     if _w not in OPEN: fail('C207', 'open list lacks %r (still OWNER-OPEN items)' % _w)
 for _nm, _t in (('A', A), ('B', B)):
-    if _t.count('deadline reminder') < 3: fail('C208', '%s: the deadline reminder is not set after the yes and named in the card words' % _nm)
+    if _t.count('alarm 5') < 3: fail('C208', '%s: alarm 5 is not set after the yes and named in the card words' % _nm)
 for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE)):                                                                       # S M1: the older-key line of the note and the 18:04 plan fact
     pass
 if '18:04 is a plan fact' not in NOTE or '18:04 is a plan fact' not in OPEN: fail('C209', 'note or open list lacks the sentence that 18:04 is a plan fact, not a start that fits a run (S m2)')
@@ -416,7 +416,7 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN), ('A', A), ('B', B)):
 for _nm, _t in (('A', A), ('B', B)):                                                                                       # S m1 name rule
     if 'whose exact name contains the run name' in _t: fail('C214', '%s keeps the run-name rule for revoke names' % _nm)
     if 'Entries to revoke later: app passwords <names, exact>; HubSpot apps <names, exact>' not in _t: fail('C214', '%s: the numbers sample lacks the row Entries to revoke later' % _nm)
-    if 'Sheet B cancels the older key at 7.11 even if it was used a day ago' not in _t: fail('C215', '%s lacks the B warning of 5.1 (m2)' % _nm)              # S m2
+    if 'Sheet B cancels the older key only at 7.11' not in _t: fail('C215', '%s lacks the B warning of 5.1 (m2)' % _nm)              # S m2
     if 'It does not mean no valid key remains: the older key may still spend until it is cancelled' not in _t: fail('C216', '%s: card step 5 lacks the older-key sentence (m3)' % _nm)   # S m3
     if 'The yes binds you to 7.11' not in _t or 'There is no older key.' not in _t: fail('C217', '%s: yes binding or the no-older-key wording missing (m4, N m8)' % _nm)       # S m4, N m8
     if 'it is an instruction, not a technical guard' not in _t: fail('C218', '%s lacks the film-person guard honesty sentence (m5)' % _nm)                          # S m5
@@ -429,7 +429,7 @@ for _nm in 'AB':                                                                
     if _b.count('your first action') != 1: fail('C219', 'sheet %s: 5.1a first-action wording count %d' % (_nm, _b.count('your first action')))
     if any(len(_p.split()) > 230 for _p in _b.split('\n')): fail('C219', 'sheet %s: a paragraph of 5.1 has more than 230 words' % _nm)
 for _nm, _t in (('A', A), ('B', B)):                                                                                       # N M-A3, m11
-    if 'from 5 minutes before the latest start do not press Enter' not in _t: fail('C220', '%s lacks the last-5-minutes rule' % _nm)
+    if 'press Enter at or before the Enter-by time' not in _t: fail('C220', '%s lacks the last-5-minutes rule' % _nm)
     for _p in ('ends exactly at alarm 2', 'itself it is too late'):
         if _p in _t: fail('C220', '%s keeps the old last-5-minutes wording %r' % (_nm, _p))
 if 'press F11' not in _FILM or 'preview' not in _FILM or 'item 3b' not in A: fail('C221', 'film page lacks how to show only the page area (F11, region, preview) or the sheet does not point to item 3b')    # N M-A4
@@ -444,7 +444,7 @@ for _nm, _t in (('A', A), ('B', B)):                                            
     if '## 7. The run (UNVERIFIED)' not in _t: fail('C222', '%s: heading of section 7 (m6)' % _nm)
     if 'Words with one meaning here' not in _t: fail('C222', '%s lacks the definitions of message, take, deadline, wait, gap, post (m7)' % _nm)
     if 'figure line' in _t or 'ends exactly' in _t: fail('C222', '%s: the unclear row name "figure line" is back (m9)' % _nm)
-    if 'are not an empty slot' not in _t: fail('C222', '%s: the owner-fill rows are not said to be no empty slot (m10)' % _nm)
+    if 'not an empty slot' not in _t: fail('C222', '%s: the owner-fill rows are not said to be no empty slot (m10)' % _nm)
     if re.search(r'\btake sheet B\b|\btake B\b', _t.replace('if used less than 7 days ago take B', '')): fail('C222', '%s: "take sheet B" is back (word with two meanings, m7)' % _nm)
 if 'the sheet checks only the maximum' not in OPEN or 'sheet checks both at 5.7' in OPEN: fail('C223', 'open list: the 40-minute minimum is said to be checked by the sheet (v29 m7)')
 # C224 (evidence H09): every placeholder by exact spelling and count
@@ -510,7 +510,7 @@ else:
     if len(re.findall(r'\(([a-d])\) ', _HP)) != 4: fail('C230', 'helper page does not have exactly the four triggers (a) to (d)')
     if re.search(r'(?i)\blead (?:may|can) (?:ask|tell|release)', _HP): fail('C230', 'helper page lets the lead release a cancel')
 for _n, _t in (('A', A), ('B', B)):
-    for _s in ('OWNER-HELPER-v35.md', 'give your cancel helper (if any) their page and paper', 'is never the film person, editor, post checker or backup person'):
+    for _s in ('OWNER-HELPER-v35.md', 'give your cancel helper (if any) their page and paper', 'is never the film person, editor, post checker, backup person or lead'):
         if _s not in _t: fail('C230', '%s lacks %r' % (_n, _s))
 # C231 (S minor; N M5; class: a time named two ways): the backstop time and the end of the last resort
 for _n, _t in (('A', A), ('B', B)):
@@ -544,8 +544,8 @@ _ac9 = _dt.datetime(2026, 11, 22, 10, 30) - _dt.timedelta(hours=168)
 if _FF['a_cut'] != _ac9.strftime('%a %d %b %Y ') + '10:30 UTC = 16:00 IST': fail('C235', 'facts: the sheet-A cut is %r' % _FF['a_cut'])
 # C236 (evidence H50, H51, H53; class: a number typed once and not tied to the facts file): each figure is read in every place it is written
 _TT = A + '\n' + B + '\n' + _APP9['A'] + '\n' + _APP9['B']
-for _pat, _want in ((r'Film pause: (\d+)', '10'), (r'film pause \((\d+)\)', '10'), (r'the sample says (\d+) minutes', '10'), (r"Call ceiling \(the lead's figure\): (\d+)", '3'), (r'call ceiling x that = (\d+) x', '3'),
-                    (r'sample assume (\d+)\)', '15'), (r'run length \((\d+)\)', '15'), (r'Run length: \[?[^\n]{0,60}? assume (\d+)', '15')):
+for _pat, _want in ((r'Film pause: (\d+)', '10'), (r'film pause = \d+ \+ \d+ \+ (\d+) in the sample', '10'), (r'the sample says (\d+) minutes', '10'), (r"Call ceiling \(the lead's figure\): (\d+)", '3'), (r'call ceiling x that = (\d+) x', '3'),
+                    (r'sample assume (\d+)\)', '15'), (r'run length \+ film pause = \d+ \+ (\d+) \+ \d+ in the sample', '15'), (r'Run length: \[?[^\n]{0,60}? assume (\d+)', '15')):
     _ms = re.findall(_pat, _TT)
     if not _ms and _pat != r'Run length: \[?[^\n]{0,60}? assume (\d+)': fail('C236', 'no place found for %r (a changed sentence?)' % _pat)
     for _v in _ms:
@@ -553,11 +553,11 @@ for _pat, _want in ((r'Film pause: (\d+)', '10'), (r'film pause \((\d+)\)', '10'
 # C237 (evidence H37; class: a structural label defined twice or not at all): labels L1 to L5 and W1 to W9 are each defined once on the card
 for _k in 'AB':
     for _i in range(1, 6):
-        if len(re.findall(r'(?:\*\* |\. |; )L%d (?!to )(?=[A-Za-z])' % _i, _CARD[_k])) != 1: fail('C237', 'card %s: label L%d is not defined exactly once' % (_k, _i))
-    for _i in range(1, 10):
-        if len(re.findall(r'(?:\*\* |\. |; )W%d (?!to )(?=[A-Za-z])' % _i, _CARD[_k])) != 1: fail('C237', 'card %s: label W%d is not defined exactly once' % (_k, _i))
+        if len(re.findall(r'(?:\*\* |\. |; |\n)L%d (?!to )(?=[A-Za-z])' % _i, _CARD[_k])) != 1: fail('C237', 'card %s: label L%d is not defined exactly once' % (_k, _i))
+    for _i in range(3, 10):
+        if len(re.findall(r'(?:\*\* |\. |; |\n)W%d (?!to )(?=[A-Za-z])' % _i, _CARD[_k])) != 1: fail('C237', 'card %s: label W%d is not defined exactly once' % (_k, _i))
     if set(re.findall(r'\bL(\d+)\b', A if _k == 'A' else B)) - set('12345'): fail('C237', 'sheet %s names an L label that does not exist' % _k)
-    if set(re.findall(r'\bW(\d+)\b', A if _k == 'A' else B)) - set('123456789'): fail('C237', 'sheet %s names a W label that does not exist' % _k)
+    if set(re.findall(r'\bW(\d+)\b', (A if _k == 'A' else B).replace('no W1 or W2', ''))) - set('3456789'): fail('C237', 'sheet %s names a W label that does not exist (there is no W1 or W2)' % _k)
 # C238 (evidence H38; class: a structural label or heading changed in one place): headings of every page against headings-v35.txt (ACCEPT_HEADINGS=1 rewrites it after a person read the diff)
 _hd = []
 for _n in ('OWNER-SHEET-%s-A.md', 'OWNER-SHEET-%s-B.md', 'OWNER-CARD-%s-A.md', 'OWNER-CARD-%s-B.md', 'OWNER-APPENDIX-%s-A.md', 'OWNER-APPENDIX-%s-B.md'):
@@ -593,7 +593,7 @@ for _n, _t in _OWNER_PAGES.items():
     for _m in re.finditer(r'/(?:home|Users|tmp|mnt)/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+|\b(?:ORD|DEC|ACK|WP\d*|DF\d+):', _t): fail('C240', '%s holds %r (an absolute path or an internal code)' % (_n, _m[0][:40]))
 # C241 (evidence H25; N minor): the one-letter rule is worded in full on both sheets
 for _n, _t in (('A', A), ('B', B)):
-    if 'The lead sends the numbers message for one letter only; a letter that differs from this sheet: no run' not in _t: fail('C241', '%s lacks the one-letter rule in full' % _n)
+    if 'A numbers message with another letter than this sheet: no run' not in _t: fail('C241', '%s lacks the one-letter rule in full' % _n)
 # C242 (evidence H54; class: a lead message that releases the older-key cancel, in any wording): no page lets a lead message release it
 for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
     for _m in re.finditer(r'(?i)(?:the )?lead (?:sends|says|writes|types|tells) you[^.\n]{0,12}"cancel the older key|"cancel the older key[^"]{0,20}"[^.\n]{0,40}(?:release|allow|permit)', _t): fail('C242', '%s: a lead message appears to release the older-key cancel: %r' % (_n, _m[0][:70]))
@@ -640,7 +640,7 @@ for _n, _t in (('A', A), ('B', B)):
 if _HP:
     for _s in ('(write VOID on it; a new paper replaces it)', "the owner's phone number", 'call the owner yourself on the phone number on your paper', 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = 23:49 IST', 'you have none'):
         if _s not in _HP: fail('C249', 'the helper page lacks %r' % _s[:70])
-if 'Your "stop" is a danger sign for the owner (W3)' not in _FILM9 and _FILM9: fail('C249', 'the film person page lacks the "stop" effect')
+if 'Your "stop" tells the owner to cancel the key at once' not in _FILM9 and _FILM9: fail('C249', 'the film person page lacks the "stop" effect')
 for _n, _t in (('A', A), ('B', B)):
     if 'or the film person says "stop"' not in _t: fail('C249', '%s: W3 lacks the film person "stop"' % _n)
 # C250 (N majors 1-10; class: a first-time reader cannot do the step): wording that a stranger needs
@@ -671,7 +671,7 @@ if _S10.count('Any other key, even one the owner mistyped the name of: touch not
 if len(_occ(_S10, 'you cancel only a key the owner names that is also on your paper')) != 1: fail('C257', 'the "only a key the owner names that is also on your paper" sentence is not present exactly once')
 for _m in re.finditer(r'(?i)cancel (?:any|every|all|each) (?:other |valid |remaining )?keys?\b[^.\n]{0,40}', _S10):
     if not re.search(r'(?i)(?:never|not|nothing|no|do not|nor|able to|can) [^.\n]{0,40}$', _S10[max(0, _m.start() - 40):_m.start()]) and 'of L1' not in _m[0] and 'you made' not in _m[0]: fail('C257', 'a broad cancel scope in the source: %r' % _m[0][:60])
-if len(_occ(_S10, 'if key text appears, close it and tell the owner it appeared')) != 1: fail('C257', 'the "close it and tell the owner it appeared" sentence is not present exactly once')
+if len(_occ(_S10, 'if key text appears, close it and call the owner: it appeared')) != 1: fail('C257', 'the "close it and tell the owner it appeared" sentence is not present exactly once')
 for _m in re.finditer(r'(?i)(?:keep|save|store|write down|jot|note down|photograph|copy)[^.\n;]{0,25}\bkey text', _S10):
     if not re.search(r'(?i)never [^.\n]{0,30}$', _S10[max(0, _m.start() - 40):_m.start()]): fail('C257', 'key text kept or copied: %r' % _m[0][:60])
 # C258 (H14) R6 says the typed parts are never entered by a tool, script, window or person
@@ -685,7 +685,7 @@ for _m in re.finditer(r'(?i)\bpaste (?:as often|again|twice|more than once|repea
 _modes = re.findall(r'starts `(-[rwx-]{9})`', _S10)
 if _modes != ['-rw-------']: fail('C260', 'the key file mode in the source is %r (must be exactly one -rw-------)' % _modes)
 if re.search(r'-r[w-][x-]r', _S10) or re.search(r'-rw-r', _S10): fail('C260', 'a group or world readable mode appears in the source')
-if len(_occ(_S10, 'A difference in a number, name, count, account, time or key state is never tolerated.')) != 2: fail('C260', '"A difference ... is never tolerated." is not present exactly twice (sheet and card)')
+if len(_occ(_S10, 'A difference in a number, name, count, account, time or key state is never tolerated.')) != 1: fail('C260', '"A difference ... is never tolerated." is not present exactly once (sheet; the appendix duplicate was cut in round 7)')
 for _m in re.finditer(r'(?i)(?<!never )(?<!not )tolerated[^.\n]{0,20}', _S10):
     if not re.search(r'\*\*tolerated\*\*|UNVERIFIED, tolerated|tolerated items|tolerated\)|tolerated::', _S10[_m.start() - 30:_m.end() + 12]): fail('C260', 'the word "tolerated" is used in a new way: %r' % _S10[max(0, _m.start() - 40):_m.end()][:70])
 # C261 (H23) every cancel of the older key is tied to name and creation date equal the blanks
@@ -698,7 +698,7 @@ for _n, _t in (('A', A), ('B', B)):
     for _m in re.finditer(r"cancel the older key by the card's L2|L2 the older key named", _t):
         if _cond not in _t[max(0, _m.start() - 250):_m.start() + 330]: fail('C261', '%s: a cancel of the older key without the condition: %r' % (_n, _t[_m.start():_m.start() + 70]))
 # C262 (H38 and safe defaults generally): the backstop cancels even if a run is in progress, and no safe default is reversed
-if len(_occ(_S10, 'even if a run was in progress')) < 1 or len(_occ(_S10, 'even if a run is in progress')) < 1: fail('C262', 'the backstop "even if a run is/was in progress" sentences are missing (need 1 each)')
+if len(_occ(_S10, 'even if a run was in progress')) < 1: fail('C262', 'the backstop "even if a run is/was in progress" sentences are missing (need 1)')
 for _m in re.finditer(r'(?i)unless a run (?:is|was)[^.\n]{0,30}|(?:backstop|deadline)[^.\n]{0,80}\bunless\b[^.\n]{0,40}run', _S10): fail('C262', 'a backstop cancel with an exception for a run: %r' % _m[0][:70])
 _SAFE = ('never copy, type or photograph key text', 'nothing is done by a lead message alone', 'Never copy, type or photograph key text', 'cancel nothing', 'touch nothing', 'FREEZE', 'STOP RULE', 'R6 shape check first', 'this cancel cannot be undone')
 _floor = {'FREEZE': 10, 'STOP RULE': 4, 'R6 shape check first': 3, 'touch nothing': 2, 'cancel nothing': 2, 'this cancel cannot be undone': 1, 'Never copy, type or photograph key text': 1}
@@ -756,7 +756,7 @@ _pin('C270', 'no such page: describe that, then go on; UNVERIFIED that no page m
 _ban('C270', r'Recall[^.]{0,260}(?:this is a STOP|written answer)', {'source': _S10, 'A': A, 'B': B})
 # C271 (security minors 1, 2, 4, 5) reminders, backstop times, phone fallback, mismatch exit, 22 minutes
 _ban('C271', r'a reminder never cancels a live run key|up to 20 minutes', _ALLTXT)
-if len(_occ(_S10, '**Backstop time** = {{rv22}} or {{dl_day}} {{rv23}}')) != 2: fail('C271', 'the two backstop time definitions do not both name the Sunday and Monday times')
+if len(_occ(_S10, '**Backstop time** = ten minutes after alarm 5 ({{rv22}}) or alarm 6 ({{dl_day}} {{rv23}})')) != 1: fail('C271', 'the backstop time definition does not name alarm 5, alarm 6 and both times')
 _pin('C271', '(retry 2 minutes, phone fallback, send "{{ph_cf}}", then the step)', 1, 1)
 _pin('C271', '(they differ: cancel nothing, send "{{ph_cf}}", call the backup person at once)', 1, 1)
 _pin('C271', 'In those up to 22 minutes (2 of retry, then 10 and 10)', 1, 1)

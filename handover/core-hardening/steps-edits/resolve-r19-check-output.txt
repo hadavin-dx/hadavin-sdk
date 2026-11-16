@@ -162,3 +162,13 @@ NEG e51 caught | FAIL E-51 wording
 NEG e52 caught | FAIL E-52 new word not once: A mail address
 NEG e04 caught | FAIL E-04 no final full stop
 NEG e07 caught | FAIL E-07 lacks "nobody on this branch"
+NEG e08 caught | FAIL E-08 lacks "nobody on this branch"
+NEG record caught | FAIL old record format
+NEG nd8date caught | FAIL ND record carries a date: ND8: A|B <date and time in UTC and IST>
+NEG rehearsal caught | FAIL rehearsal alone: hing leaves the laptop. - The rehearsal comes aft
+NEG q195 caught | FAIL E-48 Q19.5 wording
+NEG m4 caught | FAIL E-12 lacks what happens next
+NEG e31 caught | FAIL E-31 unproven claim
+NEG line14 caught | FAIL line 14 lacks search path =
+NEG e14 caught | FAIL E-14 post meaning
+NEG r12nd15 caught | FAIL r12 ND15 missing

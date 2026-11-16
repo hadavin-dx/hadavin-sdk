@@ -39,7 +39,7 @@ def appendix_blocks(o):
         add(m.group(1), m.group(2), m.group(3)); return ' (appendix %s)' % m.group(1) + (' ' if m.group(3).endswith(' ') else '')
     o = re.sub(r' ?\(\(\(F(\d+) ([^\n:]*?):: (.*?)\)\)\)(?!\))', r2, o, flags=re.S)
     return o, [(int(n), v[0], '\n\n'.join(v[1])) for n, v in sorted(parts.items(), key=lambda kv: int(kv[0]))]
-POINTER = ("### THE CARD, sheet %s (a separate printed page OWNER-CARD-v35-%s.md)\nPrint that page and keep it beside you. Every step called \"the card\", every danger sign W1 to W9 and the cancel lists L1 to L5 are on that page only; "
+POINTER = ("### THE CARD, sheet %s (a separate printed page OWNER-CARD-v35-%s.md)\nPrint that page and keep it beside you. Every step called \"the card\", every danger sign W3 to W9 and the cancel lists L1 to L5 are on that page only; "
            "this sheet does not repeat them. Fill its blanks before you press create of the run key.\n\n")
 def split(o, k):
     """returns (sheet text with the card cut out, card page, appendix text, film person page, cancel helper page)"""
