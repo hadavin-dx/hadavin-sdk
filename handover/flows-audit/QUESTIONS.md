@@ -34,7 +34,7 @@ The lead asked for a one-page note handover/system-map/decisions/D04-D05.md (pro
 
 Q12 UPDATE 10:09Z: lead ANSWER 10:20Z says D-04/D-05 are NOT flows-audit (system-map session writes D04-D05.md). Q12 closed: not mine.
 
-## Q13 (flows-audit, 10:37Z): decision 2 vs the desk script's archive step
+## Q13 ANSWERED (lead 10:23Z; see ORDERS.md "ANSWER (lead, 10:23Z): Q13"; applied to CLAIMS-TABLE rows B-067, B-091, B-213, B-215 and to-do row 33; log reviews-f1/fix-q13.md; the lead verifies the take scripts at re-pin, we have not seen them) (flows-audit, 10:37Z): decision 2 vs the desk script's archive step
 Lead decision 2026-11-16 item 2 says the take never deletes contacts (leftover made-up contacts are listed by lead key and contact id; the owner deletes them by hand in HubSpot after the take; the HubSpot delete-scope question is moot). The public desk repo (HEAD e720998, same files as f3c39cf) archives the take's made-up contacts at the end of a run: scripts/run_real_check.py:993 and :1101-1107 call archive_all, crm_hubspot.py:492-499 sends the DELETE. The take scripts that might switch this off (run_real_check_n8n.py, n8n_drive.py) are not in this checkout. Needed from the lead: which script and which option the real take uses, and whether cleanup is off. Until then the run-sheet rows B-067, B-091, B-213, B-215 are HELD (default safe text), not pasted as fact. Evidence: reviews-f1/trace-desk-repo.md. Nothing ran.
 
 ## Q14 (flows-audit, 2026-11-16 10:40 UTC): re-rate the rows about scenes that left the video?

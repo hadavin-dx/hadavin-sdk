@@ -2,6 +2,8 @@
 
 Nothing here starts n8n. The take uses the **real-v5** flows only (lead decision 2026-11-16): `handover/demo/n8n-flows-real-v5`. The `film-v5` folder is **NOT FOR THE TAKE**; `run_all.sh` still runs it, in a separate block that never changes the exit status and is never added to the real-v5 numbers. Needs **Python 3.10 or newer** (the checker says so and exits 3 on an older one).
 
+**What the take needs besides the four files (said first):** (1) the lead table definition `handover/demo/n8n-flows-v4/mf_leads.sql` must be the table in the database. The older table in `handover/demo/n8n-flows/mf_leads.sql` lacks the four alert columns, so on it the alert steps fail on every run and no alert is ever sent. The real-v5 folder holds no SQL file. `take_check.sh` hands the v4 file to the checker with `--ddl`; if it cannot find it, it says so loudly. (2) These four real-v5 files do **NOT** contain F-002 (a check that a lead key is well formed, an answer for a bad key, and an answer when the table write fails) or F-008 (saving of past runs): their settings `saveDataSuccessExecution` and `saveDataErrorExecution` are `none` on the two web-address flows, so the n8n run list stays empty. The checker warns about this. (3) Some values in node settings are still placeholders (sender and receiver mail addresses): the checker lists them in its closing block, even with `--quiet-info`; they must be filled before import. (4) Nothing ran in n8n; import is untested.
+
 ## OPEN LEAD DECISIONS (read these first)
 1. **Two web addresses have no password** (`mf-form`, `mf-hook` in real-v5). Exit 0 does NOT mean authentication was checked.
 2. **Two steps read environment variables** (`AlertSend` in `mf-recovery`, `Qualify` in `mf-sub-crm-mail`). If the n8n on the filming machine blocks environment-variable access inside steps, they stop working. **No static tool can see that n8n setting** (it belongs to the running n8n, not to the flow files; its name is also not verified here). Check it on the filming machine. To see which steps depend on it, add `--block-env-access` (exit 1 expected today).
@@ -9,10 +11,13 @@ Nothing here starts n8n. The take uses the **real-v5** flows only (lead decision
 
 ## Commands (from this folder)
 - **The take check** (prints the open decisions first, then the full output; exit status = the checker's): `bash take_check.sh`
-  It runs: `python3 -I check_flows.py ../../demo/n8n-flows-real-v5 --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 --expect mf-form.json=12:11 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token --quiet-info`
-- Everything at once (patches applied to a scratch copy, 11 checker runs, self-test): `bash run_all.sh`. Its exit status and its last line are about **real-v5 only**. The scratch folder is made with `mktemp` and removed at the end. Add `--strict` to make still-unreplaced placeholder ids a failure.
+  It runs: `python3 -I check_flows.py ../../demo/n8n-flows-real-v5 --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 --expect mf-form.json=12:11 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token --ddl ../../demo/n8n-flows-v4/mf_leads.sql --quiet-info`
+- Everything at once (patches applied to a scratch copy, 9 checker runs, the take script, self-test): `bash run_all.sh`. Its exit status and its last line are about **real-v5 only**. The scratch folder is made with `mktemp` and removed at the end. Add `--strict` to make still-unreplaced placeholder ids a failure.
 - Self-test only: `python3 -I selftest.py ../../demo/n8n-flows-real-v5 <patched real folder> ../../demo/n8n-flows-film-v5` (the last two arguments are optional).
 - Code checks: from the repository root, `uv run --all-extras --group test ruff check handover/flows-audit/flow-check`, the same with `ruff format --check`, and `bandit -ll -r handover/flows-audit/flow-check`.
+
+## Table columns (`--ddl FILE`)
+`--ddl FILE` reads the `CREATE TABLE` of the lead table and compares every column name used in a postgres query string of the flows with it (WARN naming the missing columns). It reads names only; it does not run any SQL. Without `--ddl` the checker prints `no --ddl file was given` as a WARN and `SQL COLUMNS NOT CHECKED` in the closing block.
 
 ## What each exit code means
 | Exit | Meaning |
@@ -25,7 +30,7 @@ Nothing here starts n8n. The take uses the **real-v5** flows only (lead decision
 Line types: `FAIL` = fault. `WARN` = read it, exit stays 0. `WARN-LEAD-DECISION` = a decision for the lead or owner (no password on a web address, steps that read the environment); exit stays 0 on purpose.
 
 ## Rules that come from memory of n8n (tag `n8n rule UNVERIFIED`)
-No source in this repository backs these: the allowed webhook `authentication` values (webhook: none, basicAuth, headerAuth, jwtAuth; form trigger: none, basicAuth), the credential kind each needs, the credential kinds of postgres, smtp and hubspot steps, the position of the error output, the default `responseMode`, and "two webhooks may not share method+path or webhookId" (compared across **all folders given in one run**, form triggers included). They are **WARN** by default. `--fail-unverified` makes them FAIL. Import into n8n is the real test.
+No source in this repository backs these: the allowed webhook `authentication` values (webhook: none, basicAuth, headerAuth, jwtAuth; form trigger: none, basicAuth), the credential kind each needs, the credential kinds of postgres, smtp and hubspot steps, the position of the error output, the default `responseMode`, and "two webhooks may not share method+path or webhookId" (compared across **all folders given in one run**, form triggers included). They are **WARN** by default. `--fail-unverified` makes them FAIL (this includes the retry limits, the `onError` value list and a webhook without `responseMode`). Import into n8n is the real test.
 
 ## Options that turn an open decision into a FAIL
 `--require-webhook-auth`, `--block-env-access`, `--require-real-credential-ids`, `--fail-unverified`. `run_all.sh` runs the first two in its strict runs; `--strict` adds the third to its default runs.
@@ -42,4 +47,4 @@ No source in this repository backs these: the allowed webhook `authentication` v
 - Who calls a web address, whether a flow is active, and test versus production web address: not checked.
 - `run_all.sh` and `take_check.sh` have no test of their own; their numbers come from running them.
 
-Details, numbers and every raw output file: `REPORT.md`. Latest fix log: `fix-f8-r4.md`.
+Details, numbers and every raw output file: `REPORT.md`. Latest fix log: `fix-f8-r5.md`.

@@ -1,5 +1,5 @@
 #!/bin/bash
-# F8 runner (round 4). Usage: bash run_all.sh [--strict] [WORKDIR]
+# F8 runner (round 5). Usage: bash run_all.sh [--strict] [WORKDIR]
 # THE TAKE USES real-v5 ONLY (lead decision 2026-11-16). This script's exit status and its last line are about real-v5 only.
 # film-v5 is NOT FOR THE TAKE: it is run and shown in its own block, it never changes the exit status and its numbers are never added to the real-v5 numbers.
 #   --strict : also pass --require-real-credential-ids to the default-mode runs, so a credential id or sub-workflow id that is still a placeholder makes this script exit 1.
@@ -11,7 +11,7 @@
 #        default mode : exit status of the 2 real-v5 runs decides this script's exit status (must be 0). The two known IF branch gaps are recorded with --accept-if (not a self-baseline).
 #        strict mode  : --require-webhook-auth --block-env-access (the owner decides these two; expected to exit 1 today; for real-v5 only exit codes other than 0 or 1 count as failure)
 #      plus one informational run of real-v5 pristine without any excuse (raw/pristine-no-baseline.txt, expected exit 1 with 2 FAIL, never gating)
-#   3. runs selftest.py (exit status counts; it also exercises the checker on a film-v5 file, which tests the checker, not the film flows)
+#   3. runs take_check.sh and requires its top-block lines (raw/take-check.txt), then selftest.py (exit status counts; it also exercises the checker on a film-v5 file, which tests the checker, not the film flows)
 # Raw output of every step goes to ./raw/ (files without a suffix = real-v5, files ending -film = film-v5).
 # Exit status: 0 only if every real-v5 default-mode run and the self-test exit 0 and no step aborted. Exit 3 = a build step aborted, 2 = usage/bad folder.
 set -u
@@ -70,6 +70,13 @@ wait
 T1=$(date +%s)
 python3 -I "$HERE/selftest.py" "$D/n8n-flows-real-v5" "$W/g/real" "$D/n8n-flows-film-v5" > "$RAW/selftest-new.txt" 2>&1; ST=$?
 T2=$(date +%s)
+# the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
+bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
+TCMISS=""
+for w in "NOTHING RAN IN n8n" "PLACEHOLDERS IN NODE SETTINGS" "these must be filled before import" "do NOT contain F-002" "Table definition used for the column check" "Environment variables that n8n must hold"; do
+  grep -q -F -- "$w" "$RAW/take-check.txt" || TCMISS="$TCMISS [$w]"
+done
+grep -q -F "SQL COLUMNS NOT CHECKED" "$RAW/take-check.txt" && TCMISS="$TCMISS [columns not checked]"
 echo "checker runs wall time: $((T1-T0)) s; self-test wall time: $((T2-T1)) s" | tee "$RAW/timing.txt"
 RC=0
 for f in pristine patched; do   # gating: real-v5 default mode, exactly one exit line each
@@ -81,6 +88,7 @@ for f in pristine-strict patched-strict; do   # real-v5 strict: 0 or 1 are both 
   for x in $(grep -h '^exit=' "$RAW/$f.txt" | cut -d= -f2); do case $x in 0|1) ;; *) RC=1;; esac; done
 done
 [ "$ST" = 0 ] || RC=1
+[ "$TC" = 0 ] && [ -z "$TCMISS" ] || RC=1
 show() { for f in "$@"; do echo "[$f]"; grep -h -E '^(######## |exit=|RESULT|Known open problems)' "$RAW/$f.txt"; done; }
 echo "==== real-v5 (THE TAKE) ===="
 echo "---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----"
@@ -89,6 +97,7 @@ echo "[pristine-no-baseline] (information only: no excuse for the 2 IF gaps; exi
 echo "==== film-v5 (NOT FOR THE TAKE; shown only, not gating, not added to the real-v5 numbers) ===="
 show pristine-film patched-film pristine-strict-film patched-strict-film
 echo "[selftest exit=$ST] $(tail -n 1 "$RAW/selftest-new.txt")"
+echo "[take_check.sh exit=$TC] missing lines:${TCMISS:- none}"
 echo "run_all exit status (real-v5 default runs + self-test): $RC"
 echo "real-v5 placeholder ids: $(grep -c 'still placeholders' "$RAW/pristine.txt") file(s) warn in the committed flows (pass --strict to make that a failure)"
 LW=$(grep -h '^OPEN LEAD DECISIONS:' "$RAW/pristine.txt" | sed -E 's/OPEN LEAD DECISIONS: ([0-9]+) webhook.* ([0-9]+) \$env.*/\1 \2/')

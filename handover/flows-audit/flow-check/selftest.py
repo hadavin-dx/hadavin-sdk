@@ -24,7 +24,6 @@ import io
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import traceback
@@ -2148,7 +2147,12 @@ def main():
         must=[("usage error: bad --accept-if", "")],
     )
     # --- round 5: placeholders in node settings, table columns (--ddl), saved-run settings, unit checks of checker internals ---
-    acc2 = ["--accept-if", "mf-recovery.json=StuckRow:1", "--accept-if", "mf-recovery.json=AlertRow:1"]
+    acc2 = [
+        "--accept-if",
+        "mf-recovery.json=StuckRow:1",
+        "--accept-if",
+        "mf-recovery.json=AlertRow:1",
+    ]
     base5 = [PRIS, "--quiet-info"] + acc2
     ddl4, ddl2, ddlx = work + "/v4.sql", work + "/v2.sql", work + "/other.sql"
     core = (
@@ -2156,9 +2160,7 @@ def main():
         "  state text NOT NULL DEFAULT 'new' CHECK (state IN ('new','done')),\n  claimed_until timestamptz,\n  claim_token text,\n  attempts int NOT NULL DEFAULT 0,\n"
         "  crm_id text,\n  mail_sent boolean NOT NULL DEFAULT false,\n  created_at timestamptz NOT NULL DEFAULT now(),\n  updated_at timestamptz NOT NULL DEFAULT now()"
     )
-    alert = (
-        ",\n  alert_sent boolean NOT NULL DEFAULT false,\n  alert_token text,\n  alert_until timestamptz,\n  alert_attempts int NOT NULL DEFAULT 0,\n  UNIQUE (lead_key));\n"
-    )
+    alert = ",\n  alert_sent boolean NOT NULL DEFAULT false,\n  alert_token text,\n  alert_until timestamptz,\n  alert_attempts int NOT NULL DEFAULT 0,\n  UNIQUE (lead_key));\n"
     wt(ddl4, core + alert)
     wt(ddl2, core + ");\n")
     wt(ddlx, "CREATE TABLE other_table(id int);\n")
@@ -2167,7 +2169,10 @@ def main():
         base5,
         0,
         must=[
-            ("WARN", "value(s) in node settings are still placeholders; these must be filled before import"),
+            (
+                "WARN",
+                "value(s) in node settings are still placeholders; these must be filled before import",
+            ),
             ("PLACEHOLDERS IN NODE SETTINGS", "these must be filled before import"),
             ("  - ", "FROM_ADDRESS_PLACEHOLDER"),
             ("  - ", "INTAKE_ADDRESS_PLACEHOLDER"),
@@ -2208,7 +2213,10 @@ def main():
         base5 + ["--ddl", ddl2],
         0,
         must=[
-            ("WARN", "node AlertClaim: the query uses column(s) ['alert_attempts', 'alert_sent', 'alert_token', 'alert_until']"),
+            (
+                "WARN",
+                "node AlertClaim: the query uses column(s) ['alert_attempts', 'alert_sent', 'alert_token', 'alert_until']",
+            ),
             ("WARN", "node AlertMark: the query uses column(s) ['alert_sent', 'alert_token']"),
         ],
         must_not=["node MailClaim: the query uses"],
@@ -2228,17 +2236,34 @@ def main():
             ("SQL COLUMNS NOT CHECKED", "no --ddl file was given"),
         ],
     )
-    check_out("r5_ddl_unreadable_file", [PRIS, "--ddl", work + "/nope.sql"], 2, must=[("usage error", "--ddl file cannot be read")])
-    check_out("r5_ddl_without_create_table", [PRIS, "--ddl", work + "/expect-list.json"], 2, must=[("usage error", "no CREATE TABLE")])
-    check_out("r5_ddl_option_without_value", [PRIS, "--ddl"], 2, must=[("usage error", "needs a value")])
+    check_out(
+        "r5_ddl_unreadable_file",
+        [PRIS, "--ddl", work + "/nope.sql"],
+        2,
+        must=[("usage error", "--ddl file cannot be read")],
+    )
+    check_out(
+        "r5_ddl_without_create_table",
+        [PRIS, "--ddl", work + "/expect-list.json"],
+        2,
+        must=[("usage error", "no CREATE TABLE")],
+    )
+    check_out(
+        "r5_ddl_option_without_value", [PRIS, "--ddl"], 2, must=[("usage error", "needs a value")]
+    )
     # saved-run settings of entry flows
     check_out(
         "r5_entry_flow_without_saved_runs_is_warn",
         base5,
         0,
-        must=[("WARN", "mf-form.json this flow starts from a web address or form and its settings ['saveDataSuccessExecution', 'saveDataErrorExecution'] are 'none'")],
+        must=[
+            (
+                "WARN",
+                "mf-form.json this flow starts from a web address or form and its settings ['saveDataSuccessExecution', 'saveDataErrorExecution'] are 'none'",
+            )
+        ],
     )
-    rc_, out_ = run(["python3", "-I", CK] + base5, "r5_count_saved_runs_warns")
+    _rc, out_ = run(["python3", "-I", CK] + base5, "r5_count_saved_runs_warns")
     report(
         "r5_saved_runs_warn_only_for_the_two_entry_flows",
         sum("are 'none'" in l for l in out_.splitlines() if l.startswith("WARN ")) == 2,
@@ -2255,7 +2280,12 @@ def main():
         "r5_saved_runs_all_has_no_warn_and_one_key_is_named",
         [sv, "--quiet-info"] + acc2,
         0,
-        must=[("WARN", "mf-hook.json this flow starts from a web address or form and its settings ['saveDataErrorExecution'] are 'none'")],
+        must=[
+            (
+                "WARN",
+                "mf-hook.json this flow starts from a web address or form and its settings ['saveDataErrorExecution'] are 'none'",
+            )
+        ],
         must_not=["mf-form.json this flow starts from a web address"],
     )
     check_out(
@@ -2264,27 +2294,6 @@ def main():
         0,
         must=[("WARN", "a database failure that ends here vanishes with no alert")],
     )
-    # the take check script itself (bash, reads the committed real-v5 folder)
-    tk = HERE + "/take_check.sh"
-    if os.path.isfile(tk) and shutil.which("bash"):
-        pr = subprocess.run(["bash", tk], capture_output=True, text=True, timeout=120, check=False)
-        tout = pr.stdout
-        want = [
-            "NOTHING RAN IN n8n",
-            "PLACEHOLDERS IN NODE SETTINGS",
-            "these must be filled before import",
-            "do NOT contain F-002",
-            "Table definition used for the column check",
-            "Environment variables that n8n must hold",
-        ]
-        miss = [w for w in want if w not in tout]
-        report(
-            "r5_take_check_script_top_block (exit 0, lines present)",
-            pr.returncode == 0 and not miss and "SQL COLUMNS NOT CHECKED" not in tout,
-            f"rc={pr.returncode} missing={miss}",
-        )
-    else:
-        print("r5_take_check_script_top_block: skipped (no bash or no take_check.sh)")
     # internals: Python version branch, FAIL counter, deep_diff and the diff header
     spec = importlib.util.spec_from_file_location("fc_unit", CK)
     old_hex = sys.hexversion
@@ -2305,7 +2314,10 @@ def main():
         code_ == 3 and "needs Python 3.10 or newer" in buf_.getvalue(),
         f"code={code_}",
     )
-    rc_, out_ = run(["python3", "-I", CK, PRIS, "--quiet-info", "--expect", "mf-form.json=99:98"], "r5_fail_counter")
+    _rc, out_ = run(
+        ["python3", "-I", CK, PRIS, "--quiet-info", "--expect", "mf-form.json=99:98"],
+        "r5_fail_counter",
+    )
     nf = len(lines_of(out_, "FAIL"))
     report(
         "r5_result_line_counts_each_fail_once",
@@ -2322,11 +2334,33 @@ def main():
         dd1 == ["p[X] (added)"] and dd2 == ["p[X] (removed)"],
         f"{dd1} {dd2}",
     )
-    cols = um.parse_ddl(rt(ddl4))
-    tb, wd = um.sql_use("UPDATE mf_leads SET a_col=now() + interval '5 seconds' WHERE k=$1::text AND state IN ('x') RETURNING z;")
+    try:
+        cols = um.parse_ddl(rt(ddl4))
+        tb, wd = um.sql_use(
+            "UPDATE mf_leads SET a_col=now() + interval '5 seconds' WHERE k=$1::text AND state IN ('x') RETURNING z;"
+        )
+    except AttributeError:
+        cols, tb, wd = {}, set(), set()  # the checker has no such function: the case fails below
+    want_cols = {
+        "lead_key",
+        "email",
+        "name",
+        "state",
+        "claimed_until",
+        "claim_token",
+        "attempts",
+        "crm_id",
+        "mail_sent",
+        "created_at",
+        "updated_at",
+        "alert_sent",
+        "alert_token",
+        "alert_until",
+        "alert_attempts",
+    }
     report(
         "r5_ddl_parse_and_query_words",
-        cols == {"mf_leads": {"lead_key", "email", "name", "state", "claimed_until", "claim_token", "attempts", "crm_id", "mail_sent", "created_at", "updated_at", "alert_sent", "alert_token", "alert_until", "alert_attempts"}}
+        cols == {"mf_leads": want_cols}
         and tb == {"mf_leads"}
         and wd == {"a_col", "k", "state", "z"},
         f"cols={sorted(cols.get('mf_leads', []))} tables={tb} words={sorted(wd)}",

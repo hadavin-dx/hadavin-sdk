@@ -167,7 +167,9 @@ def final_block():
             "SQL COLUMNS NOT CHECKED: no --ddl file was given (the take needs demo/n8n-flows-v4/mf_leads.sql)."
         )
     else:
-        print(f"SQL columns compared with the --ddl file: {SQL_DONE['checked']} query string(s) read.")
+        print(
+            f"SQL columns compared with the --ddl file: {SQL_DONE['checked']} query string(s) read."
+        )
     print(f"Known open problems: {len(KNOWN)}")
     for k in KNOWN:
         print("  - " + k)
@@ -194,20 +196,91 @@ HEADER = """# ===== READ THIS FIRST (plain words; every line of this header star
 """
 
 
-SQL_WORDS = set(
-    "select insert into values update set delete from where and or not in is null like between exists case when then else end on conflict do nothing "
-    "returning order by group having limit offset for skip locked as join left right inner outer using distinct all any true false default "
-    "asc desc union with text int integer bigint boolean timestamptz timestamp interval uuid numeric varchar date jsonb json".split()
-)
+SQL_WORDS = {
+    "select",
+    "insert",
+    "into",
+    "values",
+    "update",
+    "set",
+    "delete",
+    "from",
+    "where",
+    "and",
+    "or",
+    "not",
+    "in",
+    "is",
+    "null",
+    "like",
+    "between",
+    "exists",
+    "case",
+    "when",
+    "then",
+    "else",
+    "end",
+    "on",
+    "conflict",
+    "do",
+    "nothing",
+    "returning",
+    "order",
+    "by",
+    "group",
+    "having",
+    "limit",
+    "offset",
+    "for",
+    "skip",
+    "locked",
+    "as",
+    "join",
+    "left",
+    "right",
+    "inner",
+    "outer",
+    "using",
+    "distinct",
+    "all",
+    "any",
+    "true",
+    "false",
+    "default",
+    "asc",
+    "desc",
+    "union",
+    "with",
+    "text",
+    "int",
+    "integer",
+    "bigint",
+    "boolean",
+    "timestamptz",
+    "timestamp",
+    "interval",
+    "uuid",
+    "numeric",
+    "varchar",
+    "date",
+    "jsonb",
+    "json",
+}
 TABLE_AFTER = {"from", "update", "into", "join"}
-PH_WORD = re.compile(r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*")
+PH_WORD = re.compile(
+    r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*"
+)
 
 
 def parse_ddl(text):
     """CREATE TABLE name( col ..., ...) -> {table: {columns}} (lower case). Comments are dropped; constraint lines are not columns."""
     text = re.sub(r"--[^\n]*", "", text)
     out = {}
-    for m in re.finditer(r"create\s+table\s+(?:if\s+not\s+exists\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*\(", text, re.I):
+    for m in re.finditer(
+        r"create\s+table\s+(?:if\s+not\s+exists\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*\(",
+        text,
+        re.IGNORECASE,
+    ):
         depth, i, part, parts = 1, m.end(), "", []
         while i < len(text) and depth:
             c = text[i]
@@ -222,7 +295,14 @@ def parse_ddl(text):
         cols = set()
         for x in parts:
             w = x.split()
-            if w and w[0].lower() not in ("primary", "unique", "check", "foreign", "constraint", "like"):
+            if w and w[0].lower() not in (
+                "primary",
+                "unique",
+                "check",
+                "foreign",
+                "constraint",
+                "like",
+            ):
                 cols.add(w[0].strip('"').lower())
         out[m.group(1).lower()] = cols
     return out
@@ -230,7 +310,7 @@ def parse_ddl(text):
 
 def sql_use(query):
     """(tables, words) used by one query text: words = names that are neither SQL words, functions, parameters nor text values."""
-    q = re.sub(r"\{\{.*?\}\}", " ", query.lstrip("="), flags=re.S)
+    q = re.sub(r"\{\{.*?\}\}", " ", query.lstrip("="), flags=re.DOTALL)
     q = re.sub(r"'(?:[^']|'')*'", " ", q)
     q = re.sub(r"--[^\n]*", " ", q)
     q = re.sub(r"\$\d+|::\s*[A-Za-z_][A-Za-z0-9_]*", " ", q)
@@ -815,11 +895,18 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         else:
             warn(tag, msg + " [run with --require-real-credential-ids to make this a FAIL]")
     if pph:
-        msg = f"{len(pph)} value(s) in node settings are still placeholders; these must be filled before import: " + "; ".join(sorted(set(pph)))
+        msg = (
+            f"{len(pph)} value(s) in node settings are still placeholders; these must be filled before import: "
+            + "; ".join(sorted(set(pph)))
+        )
         if OPTS["real_ids"]:
             fail(tag, msg + " (--require-real-credential-ids)")
         else:
-            warn(tag, msg + " [run with --require-real-credential-ids to make this a FAIL]", known=True)
+            warn(
+                tag,
+                msg + " [run with --require-real-credential-ids to make this a FAIL]",
+                known=True,
+            )
     if noretry:
         warn(tag, f"external-call nodes without retryOnFail: {sorted(noretry)}")
     if silent:
@@ -1018,7 +1105,11 @@ def check_flow(d, tag, expect, baseline_d):
     if isinstance(st_, dict) and any(
         n["type"] in ("n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger") for n in nodes
     ):
-        off = [k for k in ("saveDataSuccessExecution", "saveDataErrorExecution") if st_.get(k) == "none"]
+        off = [
+            k
+            for k in ("saveDataSuccessExecution", "saveDataErrorExecution")
+            if st_.get(k) == "none"
+        ]
         if off:
             warn(
                 tag,
