@@ -961,3 +961,13 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 693 rehearsal-limits r6: no sendable text. FIXED by CURRENT r6 (passed rule NOT SET).
 - 694 L1c r9: stacked status. FIXED by ONLY CURRENT r9.
 - 695 merged-findings r6: two DECISION paths. FIXED by CURRENT LEGEND r7.
+
+- 696 end-delete-cases r9: line 38 not standalone. FIXED by CURRENT r9.
+- 697 decision-list r9: A2 options inconsistent. FIXED by CURRENT r9 (rows TO DO).
+- 698 L3c r7: r6 dropped terms. FIXED by GLOSSARY r7.
+- 699 M17 r6: table reads as settled. FIXED by HOLD r6.
+- 700 row1-builder-brief r7: done-test exit code. FIXED by CURRENT ONLY r7.
+
+- 701 ARCHIVE-CUT-LIST r6: competing verdicts. FIXED by VERDICT ONLY r7.
+- 702 FINAL-CROSSCHECK r10: proposed decisions dropped. FIXED by STATUS r11.
+- 703 not-checked r7: not standalone, no IST. FIXED by CURRENT r8.
