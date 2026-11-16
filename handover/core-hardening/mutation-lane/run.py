@@ -95,7 +95,8 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     puts the swapped text into the file. That CANNOT be closed by this tool alone: such a person can also edit run.py, the
     tests and the tree, and a signature would need a key this user cannot read (a root-owned secret or another account).
     What closes it for the operator: `--restore --sha COMMIT [--repo R] [--patch F]` takes the original from `git archive`
-    of that commit (named on the command line, not read from the state folder) and refuses, exit 3, when the backup differs.
+    of that commit (named on the command line, not read from the state folder) and refuses, exit 3, when the backup differs
+    or when the mode recorded in the marker has other execute bits than the file in git (r9 minor 8).
   * A mutant file replaced by a symbolic link at --restore is never written through; the failure text says the exact two
     commands to run (remove the link, then --restore again).
   * Output that cannot be written (/dev/full, closed pipe) is dropped, never an exit 1 or 120; the raw files hold the result.
@@ -308,6 +309,10 @@ class SafeOut:
 
     def fileno(self) -> int:
         return self.fd
+
+
+class NoMarker(Refused):
+    """--restore found no marker anywhere and no --sha was given: the planted-ness of the files is unknown (exit 2)."""
 
 
 class Forged(Refused):
@@ -776,7 +781,7 @@ def safe_rel(base: pathlib.Path, rel, what: str, must_exist: bool = True) -> pat
         raise Refused(f"{what}: must be relative to the root and contain no '..': {rel!r}")
     # r9 minor 7: the tree comparison skips `.venv` directly under the root and the cache folders at any depth, so a file
     # there would be planted, changed or restored without any later check seeing it: never a target
-    if pp.parts[0] in SKIP_TOP or SKIP_ANY & set(pp.parts):
+    if pp.parts and (pp.parts[0] in SKIP_TOP or SKIP_ANY & set(pp.parts)):
         raise Refused(
             f"{what}: {rel!r} lies in a folder the tree comparison does not look at ({', '.join(sorted(SKIP_TOP | SKIP_ANY))}): refused"
         )
@@ -1326,7 +1331,7 @@ def restore_from_marker(
             vok, vtext = verify_against_git(root, expected_ref, set(extra))
             ok, text = vok, f"{text}; {vtext}" if found else vtext
         elif not found and control_ok:
-            raise Refused(
+            raise NoMarker(
                 f"{text}. Nothing was written. Do ONE of: run --restore again with the TMPDIR of the killed run (TMPDIR=<its "
                 f"folder>), or add --sha COMMIT [--repo R] [--patch F] [--extra F] so the files are compared with git"
             )
@@ -2550,6 +2555,12 @@ def main():
             )
             sys.exit(EXIT_RESTORE_FAILED)
         print("REFUSED:", e, file=sys.stderr)
+        if a.restore and not a.sha and not isinstance(e, NoMarker):
+            print(
+                "exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; "
+                "`--restore --sha COMMIT [--repo R]` compares the files with git",
+                file=sys.stderr,
+            )
         sys.exit(EXIT_REFUSED)
     except KeyboardInterrupt as e:
         SIG.exiting = True

@@ -2,3 +2,4 @@
 14:33 run.py r9 edits done; next safety-tests
 14:35 T96 block written; next: dev run of ONLY T68 T51 T96, then r8-code run
 14:38 dev run 1: 2 fails fixed (raw dir mkdir before state check; test marker shape); dev run 2 (T96 only) started
+14:41 T96 passes on r9 (0 of 18); on r8 code 15 of 68 fail (14 of the 18 new checks + T68). Next: read evidence-r8-independent, then ONE full run

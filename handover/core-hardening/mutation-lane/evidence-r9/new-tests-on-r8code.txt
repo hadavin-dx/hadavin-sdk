@@ -112,3 +112,26 @@ REFUSED: mutant m1 reference file: 'src/__pycache__/m2.py' is not a regular file
   FAIL: T96h a mutant file inside __pycache__ (exit 2) or .pytest_cache (exit 2), or an --extra there (exit 5): all exit 2 (r8: planted them: not 2), nothing planted, state empty
   FAIL: T96i --out-json or --raw inside the state folder: exit 2 (got 5, 5; r8 wrote there), no file created, nothing planted
 /tmp/safety-only.zzdK3x.sh: line 70: 22908 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/tmp/safety-only.zzdK3x.sh: line 297: 23136 Killed                  ( PATH="$S/wrap:$PATH" exec python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" ) > "$S/t96k1.out" 2>&1
+  FAIL: T96j1 SIGTERM while 'git archive' stalls inside --restore --sha: ends at once with 143 (got 999; r8: the signal was only remembered and the run hung), the file is still planted and marker and backup are kept (nothing was written)
+usage: run.r8.py [-h] --root ROOT [--sha SHA] [--prefix PREFIX] [--raw RAW]
+                 [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+                 [--desc DESC] [--control] [--no-control]
+                 [--out-json OUT_JSON] [--timeout TIMEOUT]
+                 [--pythonpath PYTHONPATH] [--repo REPO]
+                 [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+                 [--skip-import-check] [--restore]
+run.r8.py: error: unrecognized arguments: --helper-timeout 2
+  FAIL: T96j2 a stalled 'git archive' with --helper-timeout 2: stopped, exit 3 (got 2; r8: unknown option), text 'did not finish within 2 s', marker kept, file still planted
+Traceback (most recent call last):
+  File "<stdin>", line 8, in <module>
+AttributeError: module 'runmod' has no attribute 'unlink_state'
+  FAIL: T96k write_state syncs the state FOLDER once, unlink_state removes and syncs it again (exit 1; r8: no folder sync, no unlink_state)
+/tmp/safety-only.zzdK3x.sh: line 70: 23775 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/dev3/tmpstate/hadavin-mutation-lane-0/df54a0e5b6601742.backup; hash matches saved original: True
+  FAIL: T96l marker mode 0777 (git has no execute bit for this file) with --restore --sha: exit 3 (got 0; r8: restored and wrote 0777), 'execute bits', file still planted
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+IndexError: list index out of range
+  PASS: T96l2 guard: the genuine mode with --sha restores: exit 0 (got 0), state empty
+FAILED CHECKS: 15 (of 68 checks run; skipped: none)
