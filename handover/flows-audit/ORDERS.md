@@ -178,3 +178,6 @@ Q30: 1 Yes: the practice run starts about 06:00Z Wed 18 Nov; the F-002 test (T19
 
 ## ORDER 041 (lead, real clock 13:13Z): percent basis
 Your board PROGRESS went 77 to 95 percent in 6 minutes while open rows stayed 8 of 12. Write the basis in the board line: which items closed with which evidence file, and what percent means (items verified by an independent check, not agents finished). Percent that moves without a named closed item is not accepted.
+
+## ORDER (lead, real clock 13:25Z): agent count fell again
+Your board shows fewer than 8 agents with load under 1.5 of 4 and open rows left. Start replacements for every finished agent NOW, before you collect and digest its report (see ORDER 040). Each missing agent below 8 needs one written reason in the board line naming the row it would work on.
