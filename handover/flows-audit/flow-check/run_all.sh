@@ -121,7 +121,7 @@ tcfail() { # name expected-line env-assignments...
   nm=$1; want=$2; shift 2
   # round 10c (Q4): clean TAKE_CHECK_* environment (env -u), the stand-in pin by default (a case may give its own TAKE_CHECK_WARN_PIN after it), TAKE_CHECK_TEST=1 = the documented test flag (round 10, M1)
   env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$TESTPIN" "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
-  first=$(grep -m 1 -E '^(FAIL|!!!)' "$RAW/take-check-$nm.txt" | cut -c1-240); first=${first:-none}
+  first=$(grep -m 1 -E '^FAIL ' "$RAW/take-check-$nm.txt" | cut -c1-240); [ -n "$first" ] || first=$(grep -m 1 -E '^!!! ' "$RAW/take-check-$nm.txt" | cut -c1-240); first=${first:-none}   # a FAIL (a definite fault in a file) is shown before a !!! line (a problem of this script)
   # say which condition failed and show the first FAIL or !!! line of the raw output (the output file is written by the redirect above, so no guess about another run is made)
   if [ "$x" != 4 ]; then TCMISS="$TCMISS [take_check $nm: want exit 4, got exit $x; first FAIL or !!! line of $RAW/take-check-$nm.txt: $first]"
   elif [ ! -s "$RAW/take-check-$nm.txt" ]; then TCMISS="$TCMISS [take_check $nm: exit 4 but the output file $RAW/take-check-$nm.txt is empty]"
