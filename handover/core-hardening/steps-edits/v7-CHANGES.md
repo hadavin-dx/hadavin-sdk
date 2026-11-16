@@ -35,6 +35,17 @@ Line numbers are lines of `OWNER-STEPS-realrun-v7.md`. FIXED = changed in the sh
 | N8 table order; python vs python3 | FIXED / LEAD-OPEN (L29) | rehearsal gate row now before A; `python3 -I` everywhere |
 | N9 v3 deadline 18:29 UTC | FIXED | Dates paragraph: watch and clean-up by Mon 23 Nov 18:29 UTC (earlier plan), card may be earlier |
 
+
+## Citation check (citation-check-v6.md)
+| Id | Status | Where |
+|---|---|---|
+| F1 US$180 of 189 attribution | FIXED | Words box "Spending backstop": source named (scope sheet, list of done items), "testing budget" dropped |
+| F2 retry rule | FIXED | step E: no retry at all after a bad login; stricter than v3 line 98 (one retry); reason given in the sheet; this row lists the changed rule |
+| F3 step 0 call list | FIXED | step 0 intro lists all 7 calls incl. property check, read-back only after a write worked, 8th-call fallback delete; source copy still not proven current (L19) |
+| F4 NOT NEEDED line | FIXED | step 0 item 7: exit 1 with no FAIL read as "delete not shown" |
+| F6-F9 inferences | FIXED | "4 digits" and TAKE_TAG not in v7; rehearsal named as the lead's own practice; "possibly no mail" marked untested |
+| F10 rules count | FIXED | rules 1 to 8 |
+
 ## Not done
 - C9 (S9-1..S9-5): not available; placeholder in NOTES only.
 - Memory check against the memory files: not possible here (L28).
