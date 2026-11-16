@@ -1,0 +1,17 @@
+file | M1 nodes/conns | F8 nodes/conns | same
+pristine mf-form.json (12, 11) (12, 11) same
+pristine mf-hook.json (12, 11) (12, 11) same
+pristine mf-recovery.json (10, 9) (10, 9) same
+pristine mf-sub-crm-mail.json (20, 26) (20, 26) same
+pristine mf-form.json (12, 11) (12, 11) same
+pristine mf-hook.json (12, 11) (12, 11) same
+pristine mf-recovery.json (10, 9) (10, 9) same
+pristine mf-sub-crm-mail.json (20, 26) (20, 26) same
+patched mf-form.json (15, 14) (15, 14) same
+patched mf-hook.json (15, 14) (15, 14) same
+patched mf-recovery.json (10, 9) (10, 9) same
+patched mf-sub-crm-mail.json (20, 26) (20, 26) same
+patched mf-form.json (15, 14) (15, 14) same
+patched mf-hook.json (15, 14) (15, 14) same
+patched mf-recovery.json (10, 9) (10, 9) same
+patched mf-sub-crm-mail.json (20, 26) (20, 26) same

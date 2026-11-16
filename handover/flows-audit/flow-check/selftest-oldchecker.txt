@@ -1,0 +1,44 @@
+control_unmutated                              exit=0 expected 0   as expected
+control_sticky_note_present_and_unlinked       exit=1 expected 0   NOT AS EXPECTED
+control_aws_example_key_allowed                exit=0 expected 0   as expected
+control_self_reference_is_warn_only            exit=0 expected 0   as expected
+orphan_reply                                   exit=1 expected 1   named_line_present=True as expected
+cycle_only                                     exit=1 expected 1   named_line_present=True as expected
+dangling                                       exit=1 expected 1   named_line_present=True as expected
+duplicate_name                                 exit=1 expected 1   named_line_present=True as expected
+name_case_dup                                  exit=1 expected 1   named_line_present=False NOT AS EXPECTED
+duplicate_id                                   exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+trigger_has_input                              exit=1 expected 1   named_line_present=False NOT AS EXPECTED
+no_trigger                                     exit=1 expected 1   named_line_present=True as expected
+if_one_branch                                  exit=1 expected 1   named_line_present=True as expected
+switch_gap                                     exit=1 expected 1   named_line_present=True as expected
+errout_unwired                                 exit=1 expected 1   named_line_present=True as expected
+bad_onerror_value                              exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+bad_maxtries                                   exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+bad_retry_type                                 exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+bad_alwaysoutput_type                          exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+bad_ref                                        exit=1 expected 1   named_line_present=True as expected
+bad_items_ref                                  exit=1 expected 1   named_line_present=True as expected
+bad_node_dot_ref                               exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+secret_sk                                      exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+secret_aws                                     exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+secret_under_key                               exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+cred_block_missing                             exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+cred_name_empty                                exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+cred_id_missing                                exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+webhook_path_no_reply                          exit=1 expected 1   named_line_present=False NOT AS EXPECTED
+webhook_dead_branch                            exit=1 expected 1   named_line_present=False NOT AS EXPECTED
+webhook_no_reply_node                          exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+sticky_only_file                               exit=1 expected 1   named_line_present=False NOT AS EXPECTED
+missing_position                               exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+count_wrong                                    exit=1 expected 1   named_line_present=True as expected
+duplicate_webhook_path                         exit=0 expected 1   named_line_present=False NOT AS EXPECTED
+parse_fail                                     exit=1 expected 1   named_line_present=True as expected
+missing_file                                   exit=1 expected 1   named_line_present=True as expected
+webhook_auth_required                          exit=2 expected 1   named_line_present=False NOT AS EXPECTED
+patched_control                                exit=0 expected 0   named_line_present=True as expected
+patched_wrong_code                             exit=1 expected 1   named_line_present=True as expected
+patched_failreply_cut                          exit=1 expected 1   named_line_present=True as expected
+patched_errlink_cut                            exit=1 expected 1   named_line_present=True as expected
+patched_badkey_reply_cut                       exit=1 expected 1   named_line_present=True as expected
+SELFTEST: 21 as expected, 22 not as expected (34 negative cases + 4 controls on pristine, 4 negatives + 1 control on patched)

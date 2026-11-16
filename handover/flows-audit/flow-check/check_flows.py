@@ -203,6 +203,13 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                 ref = m.group(1) or m.group(2) or m.group(3) or m.group(4)
                 if ref in byname and ref != n["name"] and ref not in ancestors(n["name"]) and not (n["type"].endswith("Trigger")): warn(tag, "node %s reads $('%s') which is not upstream of it (it may not have run)" % (n["name"], ref))
                 if ref == n["name"]: warn(tag, "node %s reads its own output $('%s')" % (n["name"], ref))
+    # a mail/CRM write whose own error, or an earlier external call's error, is swallowed (same idea as system-map M1; write = emailSend, hubspot, or httpRequest with a method other than GET)
+    for n in real:
+        short = n["type"].split(".")[-1]
+        if short in ("emailSend", "hubspot") or (short == "httpRequest" and str((n.get("parameters") or {}).get("method", "GET")).upper() != "GET"):
+            up = sorted(x for x in ancestors(n["name"]) if x in byname and byname[x]["type"].split(".")[-1] in EXTERNAL and byname[x].get("onError") == "continueRegularOutput")
+            if n.get("onError") == "continueRegularOutput": warn(tag, "write node %s continues on error" % n["name"])
+            if up: warn(tag, "write node %s has upstream external call(s) that continue on error: %s" % (n["name"], up))
     if OPTS["table"]:
         print("  error settings [%s]:" % tag)
         print("    %-18s %-18s %-22s %-10s %s" % ("node", "type", "onError", "retry", "alwaysOutputData"))

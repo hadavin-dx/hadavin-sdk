@@ -9,6 +9,9 @@ Usage:
   fill_flows.py fill   --in DIR --values FILE --out DIR   (DIR for --out must not exist)
   fill_flows.py check  DIR [--tokens-only]                (read-only scan)
   fill_flows.py delete --out DIR [--force-hash] [--no-manifest]
+
+Needs Linux, macOS or WSL (Windows Subsystem for Linux, in its Linux home folder): it refuses
+to start where the operating system cannot open files without following symlinks.
 """
 
 from __future__ import annotations
@@ -24,10 +27,13 @@ import unicodedata
 
 EXIT_OK = 0
 EXIT_REFUSED = 1  # any refusal; usage errors from argparse are 2
+EXIT_INCOMPLETE = 3  # fill wrote the copy, but placeholders are left: NOT READY TO IMPORT
 EXIT_NOTHING = 4  # fill found no token at all (already filled, or the wrong folder)
+HAS_NOFOLLOW = hasattr(os, "O_NOFOLLOW") and hasattr(os, "getuid")
 
 NAME_OK = re.compile(r"^(DESK|MF)_[A-Z0-9_]+$")
 KEY_OK = re.compile(r"^[A-Z][A-Z0-9_]*$")
+DIGITS = re.compile(r"^[0-9]+$")
 TOKEN = re.compile(r"\$env(?:\.([A-Za-z_][A-Za-z0-9_]*)|\[\s*(['\"])([^'\"\]]*)\2\s*\])")
 ANY_ENV = re.compile(r"\$env")
 BRACES = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
@@ -40,6 +46,8 @@ PLACEHOLDERS = (
     "FROM_ADDRESS_PLACEHOLDER",
     "INTAKE_ADDRESS_PLACEHOLDER",
 )
+# Any of the six names, also inside a longer string (counted as "left").
+PH_RE = re.compile("|".join(PLACEHOLDERS))
 # Node fields that hold program code: a token there would become a syntax error or worse.
 CODE_KEYS = ("jsCode", "functionCode", "pythonCode")
 MANIFEST_SUFFIX = ".manifest.json"
@@ -104,6 +112,13 @@ def read_values(path: str) -> dict[str, str]:
             )
         if "$env" in value:
             raise Refused(f"values file line {no}: value of {key} contains '$env'")
+        if value.startswith("="):
+            raise Refused(
+                f"values file line {no}: value of {key} starts with '=' (n8n would read the "
+                "field as an expression)"
+            )
+        if key.endswith("_MS") and not DIGITS.match(value):
+            raise Refused(f"values file line {no}: value of {key} must be digits only")
         if "{{" in value or "}}" in value:
             raise Refused(f"values file line {no}: value of {key} contains '{{{{' or '}}}}'")
         if value != value.strip():
@@ -117,6 +132,12 @@ def read_values(path: str) -> dict[str, str]:
             print(
                 f"warning: values file line {no}: value of {key} contains ' #'; it is kept as "
                 "part of the value (there are no inline comments)",
+                file=sys.stderr,
+            )
+        if key.endswith("_URL") and value.endswith("/"):
+            print(
+                f"warning: values file line {no}: value of {key} ends with '/'; the flows add "
+                "their own '/path', so the address would get a double slash",
                 file=sys.stderr,
             )
         values[key] = value
@@ -158,7 +179,7 @@ class Subst:
     def _expr_part(self, part: str) -> str:
         """Text between '{{' and '}}': fill tokens outside JS strings, refuse inside them."""
         out: list[str] = []
-        i, quote, comment, hit = 0, None, False, False
+        i, quote, comment, hit, slash = 0, None, False, False, False
         while i < len(part):
             m = TOKEN.match(part, i)
             if m:
@@ -180,10 +201,17 @@ class Subst:
                 quote = ch
             elif part.startswith(("//", "/*"), i):
                 comment = True
+            elif ch == "/":
+                slash = True
             out.append(ch)
             i += 1
         if hit and comment:
             raise Refused("a $env token sits in an expression that holds a // or /* comment")
+        if hit and slash:
+            raise Refused(
+                "a $env token sits in an expression with a '/' outside a string "
+                "(a division or a regex literal; not filled)"
+            )
         return "".join(out)
 
     def _expr(self, s: str) -> str:
@@ -217,7 +245,9 @@ class Subst:
 
     def walk(self, o, ctx: str | None = None):
         if isinstance(o, dict):
-            return {self.string(k): self.walk(v, k) for k, v in o.items()}
+            return {
+                self.string(k): self.walk(v, k if k in CODE_KEYS else ctx) for k, v in o.items()
+            }
         if isinstance(o, list):
             return [self.walk(v, ctx) for v in o]
         if isinstance(o, str):
@@ -302,8 +332,16 @@ def inside_git(path: str) -> bool:
 
 def _write_new(path: str, data: bytes) -> None:
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, "wb") as fh:
-        fh.write(data)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+    except BaseException:
+        # the file is ours (O_EXCL made it): remove it so a re-run is not blocked by a stub
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        raise
 
 
 # ---------------------------------------------------------------- modes
@@ -329,8 +367,9 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
         raise Refused("output folder or its manifest already exists (delete it first)")
     if not os.path.isdir(os.path.dirname(out_dir)):
         raise Refused("output parent folder does not exist")
-    if os.path.realpath(out_dir) == os.path.realpath(in_dir):
-        raise Refused("output equals input")
+    rin, rout = os.path.realpath(in_dir), os.path.realpath(out_dir)
+    if rout == rin or rout.startswith(rin.rstrip(os.sep) + os.sep):
+        raise Refused("output folder is the input folder or inside it")
 
     values = read_values(values_path)
     names = list_json(in_dir)
@@ -356,7 +395,7 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
         data = dump(new)
         if ANY_ENV.search(data.decode("utf-8")):
             raise Refused(f"{n}: a $env token is left after substitution (dynamic or odd form)")
-        ph_left += sum(1 for t in iter_strings(new) if t in PLACEHOLDERS)
+        ph_left += sum(len(PH_RE.findall(t)) for t in iter_strings(new))
         outputs[n] = data
     if not found_any and not sub.ph_used:
         print(
@@ -399,15 +438,18 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     if ph_left:
         print(
             f"NOT READY TO IMPORT: {ph_left} placeholders left "
-            "(create the credentials, import the sub-flow, fill again, then run check)"
+            "(create the credentials, import the sub-flow, fill again, then run check)",
+            file=sys.stderr,
         )
-    else:
-        print("no placeholders left; run check before importing")
+        return EXIT_INCOMPLETE
+    print("no placeholders left; run check before importing")
     return EXIT_OK
 
 
 def do_check(directory: str, tokens_only: bool) -> int:
     names = list_json(directory)
+    if not names:
+        raise Refused("no .json files in the folder (nothing was checked)")
     bad = 0
     for n in names:
         try:
@@ -425,8 +467,8 @@ def do_check(directory: str, tokens_only: bool) -> int:
             if c:
                 print(f"{n}: {c} other $env use(s) (dynamic form)")
                 bad += c
-            if text in PLACEHOLDERS:
-                ph[text] = ph.get(text, 0) + 1
+            for name in PH_RE.findall(text):
+                ph[name] = ph.get(name, 0) + 1
         if not tokens_only:
             for p, c in sorted(ph.items()):
                 print(f"{n}: placeholder {p} x{c}")
@@ -451,6 +493,42 @@ def _load_manifest(manifest_path: str) -> dict:
         if not isinstance(h, str):
             raise Refused("manifest has a bad hash entry; nothing deleted")
     return files
+
+
+def _signature_ok(out_dir: str, present: set, force_hash: bool) -> None:
+    """Without a manifest, delete only a folder that looks exactly like this tool's output:
+    the folder 0700 and the files 0600, all owned by the current user, plain .json files that
+    parse as JSON and hold no $env text. Anything else is refused (nothing is deleted)."""
+    me = os.getuid()
+    st = os.lstat(out_dir)
+    if st.st_uid != me or stat.S_IMODE(st.st_mode) != 0o700:
+        raise Refused(
+            "no manifest, and the folder is not marked as this tool's output (it must be "
+            "mode 0700 and yours); nothing deleted"
+        )
+    for n in sorted(present):
+        p = os.path.join(out_dir, n)
+        ls = os.lstat(p)
+        if not n.endswith(".json") or not stat.S_ISREG(ls.st_mode):
+            raise Refused(f"{n}: not a plain .json file; nothing deleted")
+        if ls.st_uid != me or stat.S_IMODE(ls.st_mode) != 0o600:
+            raise Refused(
+                f"{n}: not marked as this tool's output (mode 0600, yours); nothing deleted"
+            )
+        if force_hash:
+            continue
+        try:
+            fd = os.open(p, os.O_RDONLY | os.O_NOFOLLOW)
+            with os.fdopen(fd, "rb") as fh:
+                text = fh.read().decode("utf-8")
+            load_json(text.encode("utf-8"))
+        except (OSError, ValueError):
+            raise Refused(
+                f"{n}: does not parse as JSON (a file cut short by a kill needs --force-hash); "
+                "nothing deleted"
+            ) from None
+        if ANY_ENV.search(text):
+            raise Refused(f"{n}: holds $env text (looks like an input folder); nothing deleted")
 
 
 def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
@@ -479,11 +557,8 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
     present = set(os.listdir(out_dir))
     todo = []
     if no_manifest:
-        for n in sorted(present):
-            p = os.path.join(out_dir, n)
-            if not n.endswith(".json") or os.path.islink(p) or not os.path.isfile(p):
-                raise Refused(f"{n}: not a plain .json file; nothing deleted")
-            todo.append(p)
+        _signature_ok(out_dir, present, force_hash)
+        todo = [os.path.join(out_dir, n) for n in sorted(present)]
     else:
         extra = sorted(present - set(files))
         if extra:
@@ -511,6 +586,13 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
 
 
 def main(argv=None) -> int:
+    if not HAS_NOFOLLOW:
+        print(
+            "refused: this needs Linux, macOS or WSL (it must open files without following "
+            "symlinks, which this system cannot do); nothing was done",
+            file=sys.stderr,
+        )
+        return EXIT_REFUSED
     ap = argparse.ArgumentParser(prog="fill_flows", description=__doc__.split("\n")[0])
     sp = ap.add_subparsers(dest="mode", required=True)
     f = sp.add_parser("fill")
