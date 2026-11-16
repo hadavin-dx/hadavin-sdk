@@ -16,7 +16,7 @@
 | RUNBOOK step | Starts (UTC) | Starts (IST) | Minutes |
 |---|---|---|---|
 | 1 to 4 (git check, patch, regenerate, commit) | 04:00 | 09:30 | 16 |
-| 4a (text decisions) | 04:16 | 09:46 | 10 |
+| 4a (text decisions; up to 30 more minutes if an input is late, RUNBOOK step 4a) | 04:16 | 09:46 | 10 |
 | 4b (pin 1: a named person reads the warning lines) | 04:26 | 09:56 | 25 |
 | 5 (take_check on the unfilled copy) | 04:51 | 10:21 | 3 |
 | 6, 8, 7 in this order (copy the take scripts, database, start n8n; RUNBOOK "Order in time on Tuesday") | 04:54 | 10:24 | 60 |
@@ -25,7 +25,7 @@
 | 14 and 15 (text fixes, re-check by reading) | 07:44 | 13:14 | 45 |
 | 16 (short re-smoke, 60 min; the lead's slot is 08:00 to 09:30) | 08:29 | 13:59 | 60 |
 | 17 (GO / NO-GO) | by 14:00 | by 19:30 | 10 |
-The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 IST); from 04:00Z the event ends 08:29Z, 29 min later, and the re-smoke ends 09:29Z (14:59 IST). Latest start of step 1 that still allows a Tuesday GO: 06:51Z (12:21 IST) with a 60-min re-smoke, 06:21Z (11:51 IST) with the 90-min slot.
+The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 IST); from 04:00Z the event ends 08:29Z, 29 min later, and the re-smoke ends 09:29Z (14:59 IST). Latest start of step 1 that still allows a Tuesday GO: 06:51Z (12:21 IST) with a 60-min re-smoke, 06:21Z (11:51 IST) with the 90-min slot (30 minutes earlier, 06:21Z and 05:51Z, if step 4a waits the full 30 minutes).
 
 **Wednesday 18 Nov (path GO), no failure:**
 | UTC | IST | What |
@@ -50,6 +50,7 @@ The Wednesday times above are the dated times: no start-state gates and no chang
 | Who | What | When (UTC) |
 |---|---|---|
 | the named WARN reader | a real person, never a program, who reads the list of warnings (the lines that start with WARN) that Block P1a (pin 1) and Block P2a (pin 2) write, and tells the lead the line `NAME, YYYY-MM-DD` for the pin (the date must not be older than the pin's own `# date (UTC)` line) | Tue 04:26Z to 04:51Z (09:56 to 10:21 IST) for pin 1 (RUNBOOK step 4b; P1a runs first inside it) and Tue 07:14Z to 07:44Z (12:44 to 13:14 IST) for pin 2 (step 13; P2a runs after the export); never "about 08:00Z" |
+| the named WARN reader, Wednesday, only when step 13 is repeated | the same reading of the warnings (the lines that start with WARN) of the repeat's pin (Block P2a on the new export), and the line `NAME, YYYY-MM-DD` for the new pin (AUDIT PROPOSAL, lead to confirm) | Case B (recovery switched off in step 22 (ii), so step 24 (f) repeats step 13): Wed 09:47Z to 10:32Z (15:17 to 16:02 IST); also at any time of Wednesday when step 18 finds the flows gone and imports again (the lead tells the reader the time at once); Case A needs no reading |
 | the owner | tells the lead which permissions the HubSpot trial-account key has (one short answer; the key is the secret code that lets our flows write to HubSpot) | asked Wed about 07:00Z (12:30 IST); reply wanted by 08:00Z (13:30 IST); no reply by 08:30Z (14:00 IST) means no recording that day; the lead decides by Mon 16 Nov 21:00Z (Tue 02:30 IST) whether this Wednesday-only row moves to Tue 05:54Z (11:24 IST); with no decision it stays on Wednesday (QUESTIONS Q31 items 27 and 30) |
 | the owner | first message: deletes by hand, in HubSpot, the made-up test contacts the message lists (RUNBOOK step 20 calls this Step D; 7 contacts with the hook leg, 6 without; lead to confirm) | sent Wed about 07:30Z (13:00 IST), after the two test sends of RUNBOOK step 19a |
 | the owner | compares the take's settings file with the figures the lead lists, and replies (RUNBOOK step 24 (g) calls this S9-2) | message by 09:15Z (14:45 IST), reply by 09:45Z (15:15 IST) Wed |

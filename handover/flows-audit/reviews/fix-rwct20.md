@@ -1,0 +1,6 @@
+# fix-rwct20 (fixer). Edited only RUNSHEET-WORDING.md (RW) and CLAIMS-TABLE.md (CT). Nothing committed or run; made-up data.
+NOT verified: any flow behaviour by running (file read only); which mailbox fill_flows puts in place of INTAKE_ADDRESS_PLACEHOLDER; that the alert address setting DESK_ALERT_TO is set.
+Confirmed by reading tools/scratch/real-v5/mf-sub-crm-mail.json lines 257-258: toEmail is INTAKE_ADDRESS_PLACEHOLDER, subject is '[demo] lead ' + lead_key.
+Fixed: RW B-182 paste string and CT row 43 (same string, word for word): "sends the e-mail message to the made-up lead" became "sends the demo e-mail message to the fixed intake e-mail address (the flow file puts INTAKE_ADDRESS_PLACEHOLDER there; which mailbox that becomes is UNVERIFIED)". Status stays PASTE (the string itself states the unverified part).
+Grep for 'to the made-up lead', lead's e-mail/own address, e-mail message to the lead: no other row says the message goes to the lead (RW 29, 142, 173 already say the opposite). Row counts unchanged: RW 195, CT 330 ids.
+Checks (from flows-audit): check_rw_ct_pairs 140/140 found, 0 not found; check_runsheet_paste RESULT: PASS; claims-count 330 ids, 0 offenders; check_refs, check_names, check_secrets and ruff format: check_refs PASS 5176; check_names PASS 655; check_secrets PASS 0 hits; ruff format --check: 769 files already formatted.
