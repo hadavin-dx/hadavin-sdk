@@ -1,4 +1,4 @@
-=== ../CORE-PR-HANDOFF-v10.md
+=== /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v10.md
 L21 src/hadavin_sdk/llm/retry.py:83-108 | def with_retry[T]( | ANCHOR ok
 L21 src/hadavin_sdk/llm/openai_compat.py:117-129 | started, used = time.monotonic(), [0, 0] | CHECK words=chat,max_attempts
 L22 src/hadavin_sdk/store/protocol.py:107-107 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: .. | ANCHOR ok
@@ -81,7 +81,7 @@ L77 src/hadavin_sdk/cli.py:115-117 | rep.add_argument( | CHECK words=ProcessCap,
 L87 src/hadavin_sdk/config.py:349-349 | @model_validator(mode="after") | ANCHOR ok (ambiguous file)
 L88 src/hadavin_sdk/config.py:400-415 | class _UniqueKeyLoader(yaml.SafeLoader): | CHECK words=window_owner,null,None,NONE (ambiguous file)
 L90 src/hadavin_sdk/llm/common.py:59-62 | def estimate_tokens(text: str) -> int: | CHECK words=route,max_tokens
-L91 src/hadavin_sdk/app.py:157-159 | update={"dsn_secret_name": purge_name, "purge_dsn_secret_name": None} | ANCHOR ok
+L91 src/hadavin_sdk/app.py:166-169 | detector = combine(members) | ANCHOR ok
 L92 src/hadavin_sdk/config.py:55-59 | class Route(_Strict): | ANCHOR ok (ambiguous file)
 L92 src/hadavin_sdk/config.py:40-44 | def _money(v: object) -> object: | ANCHOR ok (ambiguous file)
 L92 src/hadavin_sdk/registry.py:33-36 | class Budget(BaseModel): | ANCHOR ok
@@ -97,7 +97,7 @@ L106 src/hadavin_sdk/llm/retry.py:95-96 | except ProviderError: | ANCHOR ok
 L107 src/hadavin_sdk/llm/fake.py:21-21 | class FakeLLM: | ANCHOR ok
 L107 src/hadavin_sdk/backends/table.py:593-602 | DEV_ONLY: frozenset[tuple[str, str]] = frozenset( | ANCHOR ok
 L107 src/hadavin_sdk/config.py:366-369 | if self.environment != "dev": | ANCHOR ok (ambiguous file)
-L108 src/hadavin_sdk/llm/retry.py:12-12 |  | ANCHOR ok
+L108 src/hadavin_sdk/llm/retry.py:23-23 | MAX_DELAY_S = 8.0 | ANCHOR ok
 L121 src/hadavin_sdk/app.py:62-62 | def build( | ANCHOR ok
 L121 src/hadavin_sdk/app.py:160-160 | ) | ANCHOR ok
 L121 src/hadavin_sdk/app.py:171-171 | limits = Limits(store, audit, reg) | ANCHOR ok
@@ -111,7 +111,7 @@ L127 tests/test_k5_tools.py:723-731 | def test_k5_run_budget_stops_run(tmp_path)
 L129 src/hadavin_sdk/llm/common.py:208-220 | def chat( | ANCHOR ok
 L129 src/hadavin_sdk/llm/openai_compat.py:117-129 | started, used = time.monotonic(), [0, 0] | ANCHOR ok
 L131 src/hadavin_sdk/llm/common.py:233-241 | def _retry(self, call: Callable[[], Answer]) -> Answer: | ANCHOR ok
-L153 src/hadavin_sdk/llm/common.py:194-196 | """The ``chat`` every network kind shares: the route, the tool list and bounded retries ar | ANCHOR ok
+L153 src/hadavin_sdk/llm/common.py:184-189 | class Answer: | ANCHOR ok
 L157 src/hadavin_sdk/limits.py:26-26 | if day >= budget.daily: | ANCHOR ok
 L158 src/hadavin_sdk/llm/retry.py:63-63 | return isinstance(exc, OSError)  # URLError, socket timeouts, connection resets | ANCHOR ok
 L172 src/hadavin_sdk/models.py:289-297 | class Reply(Shape): | ANCHOR ok
@@ -133,7 +133,7 @@ L213 src/hadavin_sdk/store/postgres.py:192-197 | class PostgresStore: | ANCHOR o
 L213 src/hadavin_sdk/store/postgres.py:146-146 | conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra) | ANCHOR ok
 L217 src/hadavin_sdk/store/migrate.py:53-54 | "spend": Grant("table", _RW), | ANCHOR ok
 L221 src/hadavin_sdk/guard/bedrock_guardrail.py:61-61 | def make(settings: Any, deps: Any) -> GuardrailDetector: | ANCHOR ok
-L221 src/hadavin_sdk/app.py:157-159 | update={"dsn_secret_name": purge_name, "purge_dsn_secret_name": None} | ANCHOR ok
+L221 src/hadavin_sdk/app.py:166-169 | detector = combine(members) | ANCHOR ok
 L225 src/hadavin_sdk/evals.py:73-73 | reply = llm.chat( | ANCHOR ok
 L225 src/hadavin_sdk/extract.py:47-47 | reply = llm.chat( | CHECK words=hadavin,gate
 L225 src/hadavin_sdk/k1b/loop.py:94-94 | box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type] | CHECK words=hadavin,gate
@@ -152,6 +152,7 @@ L269 src/hadavin_sdk/cli.py:150-150 | make("llm", b.llm, make("secrets", b.secre
 L294 .github/workflows/ci.yml:119-119 | run: bandit -q -r src demos -ll | ANCHOR ok
 L297 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | ANCHOR ok
 L322 src/hadavin_sdk/k1b/loop.py:176-176 | except ProviderError: | ANCHOR ok
-L322 src/hadavin_sdk/runtime/agent_loop.py:433-433 | ProviderError | ANCHOR ok
+L322 src/hadavin_sdk/runtime/agent_loop.py:432-433 | except ( | ANCHOR ok
 L350 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | CHECK words=statement_timeout,transaction,Infinity,tcp_user_timeout
 TOTAL cites=155 missing_or_range=0 anchor_check=25
+rc=0

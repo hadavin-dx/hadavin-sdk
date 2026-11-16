@@ -2,3 +2,4 @@
 Done: copied EDITS.md to EDITS.round5.md; read both round-5 reviews, the six inputs (plan v5 lines 14, 76, 81, 102, 121, 477, 489, 492, 502, 505, 506 only); parsed the 46 round-5 rows by script (old texts: 45 occur once, E-13 is two strings checked separately).
 Next: build EDITS.md round 6 by script (rows as blocks with fenced old/new text, status per row), verify old texts and overlaps by script, write resolve-r6.md.
 Blockers: none. Commit SHA: none (no git repo in this folder).
+Update 14:40 UTC: EDITS.md round 6 built and verified (46 rows; 0 old-text failures, 0 overlaps; Apply now 34, Hold 11, Conditional 1). resolve-r6.md and resolve-r6-check-output.txt written. Done within 15 minutes of start; no resume needed.

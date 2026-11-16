@@ -1,0 +1,3 @@
+/home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v10.md:133 python fence parses (17 lines)
+python fences=1 syntax_errors=0
+rc=0

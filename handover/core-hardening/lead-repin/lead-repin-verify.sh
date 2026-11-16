@@ -1002,6 +1002,28 @@ self_test_meta() {
   st_o=$( (LEAD_REPIN_TEST_LATE_FAIL=1; self_test 1 > /dev/null 2>&1; echo $?) )
   if [ "${st_o:-0}" -ne 0 ]; then mt_ok "a failure that only the return value of the self-test shows is a non-zero return"; else mt_bad "the return value of the self-test must be non-zero when a check failed late (got ${st_o:-none})"; fi
   if [ "${LC_ALL:-}" = C ]; then mt_ok "the filter runs with LC_ALL=C (byte-wise matching)"; else mt_bad "LC_ALL is not C in the filter (it is '${LC_ALL:-unset}')"; fi
+  # the two judgements of a self-test result, each tried alone on forged results (a damaged judge must be seen)
+  st_fd=$WORK/st-forged; mkdir -p "$st_fd"
+  printf 'PASS a\nSELF-TEST: passed=5 failed=0 (x)\n' > "$st_fd/good"
+  printf 'PASS a\nFAIL b\nSELF-TEST: passed=5 failed=0 (x)\n' > "$st_fd/failline"
+  printf 'PASS a\nSELF-TEST: passed=3 failed=2 (x)\n' > "$st_fd/badtally"
+  printf '' > "$st_fd/empty"
+  st_jok=1
+  for st_j in st_verdict st_recount; do
+    "$st_j" "$st_fd/good" 0 || st_jok=0
+    "$st_j" "$st_fd/good" 1 && st_jok=0
+    "$st_j" "$st_fd/failline" 0 && st_jok=0
+    "$st_j" "$st_fd/badtally" 0 && st_jok=0
+    "$st_j" "$st_fd/empty" 0 && st_jok=0
+  done
+  if [ "$st_jok" -eq 1 ]; then mt_ok "each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return"; else mt_bad "a judge of the self-test result accepted a forged result or rejected a good one"; fi
+  rm -rf "$st_fd"
+  # the report of left-out files counts names with a line break and symbolic links
+  st_t3=$WORK/st-take3; mkdir -p "$st_t3"
+  : > "$st_t3/a${NL}b.py"; ln -s a.py "$st_t3/link.py" 2>/dev/null
+  st_o=$(skip_report "$st_t3" "made-up" code 2>&1)
+  if printf '%s\n' "$st_o" | grep -a -q -F -- 'names with a line break (cannot be listed safely): 1' && printf '%s\n' "$st_o" | grep -a -q -F -- 'symbolic links of any kind (find does not follow them): 1'; then mt_ok "the left-out report counts one name with a line break and one symbolic link"; else mt_bad "the left-out report does not count a name with a line break or a symbolic link correctly"; fi
+  rm -rf "$st_t3"
   st_t2=$WORK/st-take2; mkdir -p "$st_t2/_local/d#x&y\z" 2>/dev/null
   printf '{"a": "delete"}\n' > "$st_t2/_local/d#x&y\z/a#b&c.json"
   st_o=$(LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t2" 2>&1); st_r=$?
