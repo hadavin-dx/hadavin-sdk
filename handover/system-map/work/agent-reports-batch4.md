@@ -1013,3 +1013,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 732 decision-list r10: overrides unfolded. FIXED by CURRENT r10; row splits TO DO.
 - 733 L3c r8: five glossaries. FIXED by GLOSSARY r8; severities unrated.
 - 734 merged-findings r8: legend stack. FIXED by CURRENT LEGEND r8; terms unknown.
+
+- 735 open-items-table r10: glossary lost. FIXED by CURRENT r11.
+- 736 row1-builder-brief r7: task dropped. FIXED by CURRENT ONLY r8; script not built.
+- 737 banned-claims r5: sentences not quoted. FIXED by CURRENT r6; checker unnamed.
+- 738 L5b r8: terms dropped. FIXED by CURRENT STATE r9.
