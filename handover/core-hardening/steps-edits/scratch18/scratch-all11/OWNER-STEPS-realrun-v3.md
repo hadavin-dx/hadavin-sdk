@@ -134,7 +134,8 @@ Tell the lead only: "three credentials created".
 ### Step 9. Send the lead only these short sentences
 "throwaway receiver and sender created, 2-step on, not recovery for anything"; "company address verified under Send mail as"; "filter and label done, label empty, inbox empty"; "two app passwords made, receiver file in WSL mode 600"; "property made, two HubSpot apps made"; "three credentials created"; the path of the receiver password file and of the HubSpot read token file (paths only); the HubSpot contact count if the test account has contacts.
 
-## Phase 1: the assistant checks. You only need to be reachable and to answer the questions it asks. The take is aimed at Wed 18 Nov 2026. The time of day is not yet chosen: the assistant proposes one, in UTC and IST, not later than the latest start we plan (18:00 UTC = 23:30 IST, the time at which you start typing), in the request for your yes (step 16), and you answer it before any take; no take starts on a guess.
+## Phase 1: the assistant checks.
+You only need to be reachable and to answer the questions it asks. The take is aimed at Wed 18 Nov 2026. The time of day is not yet chosen: the assistant proposes one, in UTC and IST, not later than the latest start we plan (18:00 UTC = 23:30 IST, the time at which you start typing), in the request for your yes (step 16), and you answer it before any take; no take starts on a guess.
 
 The assistant first runs the stand-in test and then the flow rehearsal on this laptop, with made-up data and no paid model call. Both tests are planned at US$0, and nothing about either is proven yet. The stand-in test is planned to use no real account; for the flow rehearsal that is not yet confirmed.
 How the assistant keeps a paid call out. This is a procedure that the assistant follows. The program does not enforce it, and nothing here proves that the assistant follows it. For each of the two tests the assistant starts the model stage only with these two things:

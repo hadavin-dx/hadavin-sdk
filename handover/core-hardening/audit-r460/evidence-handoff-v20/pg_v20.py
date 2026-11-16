@@ -501,16 +501,23 @@ try:
         toks = g20.tokenize(q); t19 = g19.tokenize(q)
         if how == "colname": mine = [t[1] for t in toks if t[0] == "word"][-1]; old = [t[1] for t in t19 if t[0] == "word"][-1]
         else: mine = (g20._body_source(toks[1]) if len(toks) > 1 and toks[1][0] == "dollar" else None); old = (g19._body_source(t19[1]) if len(t19) > 1 and t19[1][0] == "dollar" else None)
-        check(f"m3 {lbl}: the server reads {sv!r}; v20 tokenizer reads {mine!r}; v19 tokenizer read {old!r}", sv == mine and sv != old)
+        if how == "colname": check(f"m3 {lbl}: the server (which lower-cases the word) reads {sv!r}; v20 tokenizer reads {mine!r}; v19 read {old!r}: all one word, no difference to fix here", sv == mine.lower() and mine == old)
+        else: check(f"m3 {lbl}: the server reads {sv!r}; v20 tokenizer reads {mine!r}; v19 tokenizer read {old!r}", sv == mine and sv != old)
     for lbl, q in (("form feed", "SELECT\f1"), ("vertical tab", "SELECT\v1")):
         try: admin.execute(q).fetchone(); sv = "accepted"
         except psycopg.Error as e: sv = "ERR " + str(e.sqlstate)
-        check(f"m3 {lbl} is a separator for the server ({sv}) and for the v20 tokenizer ({len(g20.tokenize(q))} tokens)", sv == "accepted" and len(g20.tokenize(q)) == 2)
+        check(f"m3 {lbl}: the server {'accepts it as a separator' if sv == 'accepted' else 'refuses it (' + sv + ')'}; v20 tokenizer: {len(g20.tokenize(q))} tokens", (sv == "accepted") == (lbl == "form feed") and len(g20.tokenize(q)) == 2)
 
     section("m4 agent-id rule: locale and encoding")
     for enc, extra in (("SQL_ASCII", "LC_COLLATE 'C' LC_CTYPE 'C'"), ("LATIN1", "LC_COLLATE 'C' LC_CTYPE 'C'"), ("UTF8", "LC_COLLATE 'C.utf8' LC_CTYPE 'C.utf8'"), ("UTF8", "LC_COLLATE 'C' LC_CTYPE 'C'")):
         for tag, hold in (("v19", HOLD19), ("v20", H17)):
             dbn = "e_" + secrets.token_hex(3); admin.execute(f"CREATE DATABASE {dbn} TEMPLATE template0 ENCODING '{enc}' {extra} OWNER migr17")
+            if enc == "SQL_ASCII":
+                try:
+                    tmpn, _ = build(dbn, [(hold / "spend_decrease_log.sql", "0006_dec"), (hold / "spend_guarded_writes.sql", "0007_guard")], base=False); grants_select_only(); m.migrate(dsn("migr17", dbn), runtime_role="rt17"); r_ = None
+                except Exception as e_: r_ = type(e_).__name__
+                if tag == "v20": check(f"m4 a SQL_ASCII database: the product migrate() itself fails there ({r_}: psycopg returns bytes for names), before any held file; so the agent-id rule is needed for UTF8 and LATIN1 only; a client on SQL_ASCII must be told", r_ == "TypeError")
+                continue
             try:
                 tmpn, _ = build(dbn, [(hold / "spend_decrease_log.sql", "0006_dec"), (hold / "spend_guarded_writes.sql", "0007_guard")], base=False)
                 mgn = psycopg.connect(dsn("migr17", dbn), autocommit=True); grants_select_only(); m.migrate(dsn("migr17", dbn), runtime_role="rt17"); au.apply_function_grants(mgn, roles=ROLES)
@@ -538,7 +545,7 @@ try:
     # (2) an old row that breaks the agent rule: v19 applies the file (NOT VALID) and the settle is stuck; v20 refuses at apply time and rolls back
     for tag, hold in (("v19", HOLD19), ("v20", H17)):
         dbx = "bad_" + secrets.token_hex(3); tmpx, _ = build(dbx, []); mgx = psycopg.connect(dsn("migr17", dbx), autocommit=True)
-        mgx.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('bad name', %s, 5)", (D,)); mgx.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES ('bad name', %s, 5)", (MO,))
+        mgx.execute("INSERT INTO spend (agent_id, day, usd) VALUES (' bad', %s, 5)", (D,)); mgx.execute("INSERT INTO spend_month (agent_id, month, usd) VALUES (' bad', %s, 5)", (MO,))
         for p, n in ((hold / "spend_decrease_log.sql", "0006_dec"), (hold / "spend_guarded_writes.sql", "0007_guard")): shutil.copy(p, tmpx / f"{n}.sql")
         set_log_grants(hold / "spend_decrease_log.sql"); grants_select_only()
         err = st(lambda: m.migrate(dsn("migr17", dbx), runtime_role="rt17"))
@@ -549,11 +556,11 @@ try:
             au19 = None
             stuck = None
             try:
-                mgx.execute("UPDATE spend SET open_usd = 5 WHERE agent_id='bad name'"); mgx.execute("UPDATE spend_month SET open_usd = 5 WHERE agent_id='bad name'")
+                mgx.execute("UPDATE spend SET open_usd = 5 WHERE agent_id=' bad'"); mgx.execute("UPDATE spend_month SET open_usd = 5 WHERE agent_id=' bad'")
             except psycopg.Error as e2: stuck = e2.sqlstate
-            control(f"m6 v19 file with an old row 'bad name': the file APPLIES (error {err}); the row can no longer be changed at all (settling it fails {stuck}) because NOT VALID checks every new row version", err is None and stuck == "23514")
+            control(f"m6 v19 file with an old row ' bad': the file APPLIES (error {err}); the row can no longer be changed at all (settling it fails {stuck}) because NOT VALID checks every new row version", err is None and stuck == "23514")
         else:
-            check(f"m6 v20 file with an old row 'bad name': migrate refuses at apply time ({err}), nothing is applied (open_usd column {has_col}, function {has_fn}, ledger rows {ledger}): the whole transaction rolled back", err == "23514" and has_col == 0 and has_fn == 0 and ledger == 0)
+            check(f"m6 v20 file with an old row ' bad': migrate refuses at apply time ({err}), nothing is applied (open_usd column {has_col}, function {has_fn}, ledger rows {ledger}): the whole transaction rolled back", err == "23514" and has_col == 0 and has_fn == 0 and ledger == 0)
     # (3) day row without a month row
     for tag, hold in (("v19", HOLD19), ("v20", H17)):
         dby, mgy, rty, opy = fresh_g("dm", [(hold / "spend_decrease_log.sql", "0006_dec"), (hold / "spend_guarded_writes.sql", "0007_guard")])

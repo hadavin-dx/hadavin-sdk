@@ -3,7 +3,7 @@ BOX = rep[:box_end]
 def box_sub(a, b):
     assert BOX.count(a) >= 1, a[:70]
     return rep.replace(a, b, 1)
-M["T-E1-first-box-number"] = box_sub("READY (49:", "READY (48:")
+M["T-E1-first-box-number"] = box_sub("READY (57:", "READY (56:")
 def _allnum(t):
     for a_, b_ in (("READY (49:", "READY (50:"), ("ON DEFAULT (38:", "ON DEFAULT (39:"), ("WAITS FOR A CHECK (3:", "WAITS FOR A CHECK (4:"), ("WAITS FOR THE OWNER (6:", "WAITS FOR THE OWNER (7:"), ("applies the 87 wave 1 rows", "applies the 86 wave 1 rows")):
         t = t.replace(a_, b_, 1)
@@ -88,7 +88,7 @@ M["U-row95-gone"] = "\n".join(l for l in rep.split("\n") if not l.startswith("| 
 M["U-row96-gone"] = "\n".join(l for l in rep.split("\n") if not l.startswith("| 96 | NOT APPLIED"))
 M["U-row53-chain-broken"] = line_sub("| 53 | NOT APPLIED", "n8n stores no run data for runs that fail.", "n8n stores nothing for runs that fail.")
 M["U-row76-audited-sentence-back"] = rep + "\n- the program is not among the audited files.\n"
-M["U-box-count-96-to-95"] = box_sub("holds 96 proposed text changes", "holds 95 proposed text changes")
+M["U-box-count-96-to-95"] = box_sub("holds 104 proposed text changes", "holds 103 proposed text changes")
 M["U-box-too-long"] = rep[:box_end] + ("filler words here " * 130) + rep[box_end:]
 M["U-two-statuses-L-SAVEERR-sec3-default-no"] = rep_once("| OPEN (OWNER ONLY). Until he answers, failed runs stay unsaved", "| No (the lowest-data choice); failed runs stay unsaved")
 M["U-B4-unverified-gone"] = box_sub("equality with the real files is UNVERIFIED", "all is fine")
@@ -97,7 +97,7 @@ M["U-part2-card-words-wrong"] = rep_once("line 2 (35 words)", "line 2 (36 words)
 M["U-L-SHEET-v32-time-missing"] = re.sub(r"(OWNER-SHEET-v32-B\.md) \(written [^)]*\)", r"\1", rep, count=1)
 M["U-steps-5-to-9-back"] = rep_once("after TASKS (5) to (9) of the list", "after steps 5 to 9 of the list")
 M["U-example-time-before-check"] = rep_once("2026-11-16T18:40:00Z = 2026-11-17T00:10:00 IST", "2026-11-16T16:40:00Z = 22:10:00 IST")
-M["U-row96-old-text-not-once"] = line_sub("| 96 | NOT APPLIED", "`30 s EST`", "`30 s`")
-M["U-stale-evidence-c6t-name"] = rep_once("evidence-c6u/contact-grep-output.txt", "evidence-c6t/contact-grep-output.txt")
-M["U-applied-rows-c6t-name"] = rep_once("writes the applied row numbers to c6u-APPLIED-ROWS.md next to this report", "writes the applied row numbers to c6t-APPLIED-ROWS.md next to this report")
-M["U-evidence-file-missing"] = rep_once("evidence-c6u/contact-grep-output.txt", "evidence-c6u/no-such-file.txt")
+M["U-row96-old-text-not-once"] = line_sub("| 96 | NOT APPLIED", "`own runs. \\| 30 s EST`", "`own runs. \\| 30 s`")
+M["U-stale-evidence-c6t-name"] = rep_once("evidence-c6v/contact-grep-output.txt", "evidence-c6u/contact-grep-output.txt")
+M["U-applied-rows-c6t-name"] = rep_once("writes the applied row numbers to c6v-APPLIED-ROWS.md next to this report", "writes the applied row numbers to c6u-APPLIED-ROWS.md next to this report")
+M["U-evidence-file-missing"] = rep_once("evidence-c6v/contact-grep-output.txt", "evidence-c6v/no-such-file.txt")

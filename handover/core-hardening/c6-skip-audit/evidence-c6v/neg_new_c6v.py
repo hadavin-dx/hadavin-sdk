@@ -14,7 +14,7 @@ for _n in (0, 1, 2):
     M["W-G12-gate-flipped-copy%d" % _n] = _nth("I do not approve it", "I approve it", _n)
 M["W-G12-gate-flipped-all"] = _all("I do not approve it", "I approve it")
 M["W-G12-OPEN-to-CLOSED"] = _all("G12 OPEN", "G12 CLOSED")
-for _n in (0, 2, 4):
+for _n in (0, 2):
     M["W-G12-open-to-closed-copy%d" % _n] = _nth("G12 open", "G12 closed", _n)
 M["W-G12-open-is-open-to-approved"] = _nth("G12 is open", "G12 is approved by default", 0)
 M["W-NOTHING-APPLIED-to-EVERYTHING"] = _nth("NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", "EVERYTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", 0)
@@ -39,7 +39,7 @@ M["W-ORD230-quote-deleted-last"] = _nth("lease sentence stays out of the public 
 M["W-filmed-only-after-approval-deleted"] = _nth("Those words are filmed only after your written approval; otherwise you cut them by hand.", "", 0)
 M["W-10-files-to-12"] = _nth("to 10 files", "to 12 files", 0)
 M["W-10-files-to-12-second"] = _nth("to 10 files", "to 12 files", 1)
-M["W-twelve-TASKS-to-ten"] = _nth("twelve TASKS", "ten TASKS", 0)
+M["W-twelve-TASKS-to-ten"] = _nth("twelve numbered TASKS", "ten numbered TASKS", 0)
 M["W-two-OPEN-to-three-1"] = _nth("two OPEN", "three OPEN", 0)
 M["W-two-OPEN-to-three-2"] = _nth("two OPEN", "three OPEN", 1)
 M["W-wave1-95-to-96-one-place"] = _nth("95 wave 1 rows", "96 wave 1 rows", 0)

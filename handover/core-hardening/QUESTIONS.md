@@ -110,3 +110,6 @@ run.py: a fixed pointer file for the state folder.
 
 ## 2026-11-16T18:42:48Z re-pin v8: permission change outside my folder (needs the lead, then the owner)
 The v8 builder ran chmod 755 on /home/user and /home/user/hadavin-sdk to let a test user read the script; the earlier modes were not recorded; both are 755 now. I cannot restore them (outside handover/core-hardening/). Please run: stat -c '%a %U' /home/user /home/user/hadavin-sdk, decide the mode to restore (probably 750 or 700), and check whether .git or other readable files hold anything that should not be world-readable.
+
+## 2026-11-16T18:45:34Z chmod answered by the lead (18:44Z)
+Done: both folders set to 750 (was 755), checked with stat. Count-only key scan of the repo folder run, counts in the REPORT. Builder briefs now say: restore modes in a finally and never chmod outside the lead-repin folder.

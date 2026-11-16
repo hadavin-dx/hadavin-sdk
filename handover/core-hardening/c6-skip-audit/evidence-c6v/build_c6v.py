@@ -82,6 +82,10 @@ def build(words):
     L = t.split("\n")
     # ---- m1 (design review): row 76 carries the relayed tag
     edit_row(L, 76, "new", lambda s: s.replace(" Final states: 10 runs done", " Final states (relayed from the lane3 session's results, not run for this audit): 10 runs done", 1) if " Final states: 10 runs done" in s else (FAILS.append("row 76 anchor") or s))
+    # ---- class 6 (short anchors): row 94 old text 'Any number.' occurs on lines 30 and 32 of the run sheet; the words before it make it unique
+    edit_row(L, 94, "old", lambda s: 'in all faults". Any number.')
+    edit_row(L, 94, "new", lambda s: 'in all faults". Any test result as a number (the stopwatch is allowed; the 45 s lease setting is allowed only after G12 is approved).')
+    edit_row(L, 94, "why", lambda s: s + " c6v (class 6, short anchors): the old text now starts with the words before it, because 'Any number.' alone occurs twice in the file (lines 30 and 32).")
     # ---- M4 + m2: row 96, unique anchor, the Time cell of the state the defaults leave (G12 open: card line 1 cut by hand = 79 words = 35 s)
     edit_row(L, 96, "old", lambda s: "own runs. \\| 30 s EST")
     edit_row(L, 96, "new", lambda s: "own runs. \\| 35 s EST")

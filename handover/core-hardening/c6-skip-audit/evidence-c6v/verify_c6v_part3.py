@@ -6,7 +6,7 @@ import json
 _E = os.path.dirname(os.path.abspath(__file__))
 PHRASES = ["I do not approve it", "G12 OPEN", "G12 is open", "G12 open", "NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", "has NO delete call", "no delete call",
            "archive_contacts 'no'", "only made-up contacts of this run", "no, never", "lease sentence stays out of the public post", "filmed only after your written approval",
-           "to 10 files", "twelve TASKS", "two OPEN", "OPEN (OWNER ONLY)", "ANSWERED BY DEFAULT", "NOT APPLIED", "NOT FILMABLE", "OWNER ONLY", "OWNER-OPEN",
+           "to 10 files", "twelve numbered TASKS", "two OPEN", "OPEN (OWNER ONLY)", "ANSWERED BY DEFAULT", "NOT APPLIED", "NOT FILMABLE", "OWNER ONLY", "OWNER-OPEN",
            "the 45 s lease setting is allowed only after G12 is approved", "G12 is approved", "I confirm", "nothing is applied"]
 REGEXES = {"UNVERIFIED": r"UNVERIFIED", "VERIFIED_not_UN": r"(?<!UN)VERIFIED", "CHECKED": r"\bCHECKED\b", "DONE": r"\bDONE\b", "relayed": r"RELAYED"}
 
@@ -63,10 +63,10 @@ _ts = set(re.findall(r"At (\d\d:\d\d:\d\d) UTC = ", raw))
 _ct2 = re.search(r"check time[^\n]{0,80}?(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)", raw)
 check("class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (%s)" % sorted(_ts), len(_ts) == 1, _ts)
 _ten = re.findall(r"\bto (\d+|ten|twelve|eleven) files\b", raw)
-_tw = re.findall(r"\b(\d+|ten|twelve|eleven) TASKS\b", raw)
+_tw = re.findall(r"\b(\d+|ten|twelve|eleven) (?:numbered )?TASKS\b", raw)
 check("class 2: 'to N files' is 10 everywhere (found %s) and the number of TASKS is twelve everywhere (found %s)" % (sorted(set(_ten)), sorted(set(_tw))), set(_ten) <= {"10"} and set(_tw) <= {"twelve"}, (sorted(set(_ten)), sorted(set(_tw))))
 _two = re.findall(r"\b(two|three|four|five|six) OPEN( \(OWNER ONLY\) questions| items)?", raw)
-_osq = [l for l in txt if re.match(r"^\| L-[A-Z]+ \| (studio lead[^|]*\|)?", l) and "OWNER ONLY" in l and l.startswith("| L-SHEET (was Q10) |") or l.startswith("| L-SAVEERR | studio lead") and "OWNER ONLY" in l]
+_osq = [l for l in txt if (l.startswith("| L-SHEET (was Q10) |") or l.startswith("| L-SAVEERR | studio lead")) and "OWNER ONLY" in l]
 check("class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found %s)" % sorted(set(_two)), all((w, q) in {("two", " (OWNER ONLY) questions"), ("five", " items")} for w, q in _two) and len(_osq) == 2, (sorted(set(_two)), len(_osq)))
 _tn = [int(x) for x in re.findall(r"TASK \((\d+)\)", raw)]
 check("class 2: no TASK number above twelve (the list has 12 tasks)", max(_tn) <= 12, max(_tn))
@@ -81,3 +81,13 @@ for _qi, _q in enumerate(Q):
 check("class 4: every place that quotes a card line (from its first eight words; the shorter option (b) of L-CARDLEN differs earlier and is a different text on purpose) quotes it whole and equal to the line in rows 13 and 14 (%d lines)" % len(Q), len(Q) == 4 and not _cl_bad, _cl_bad[:6])
 # class 5: the safe-default sentence 'no row edits the owner sheet or release note' is in both the box and 1c
 check("class 1: 'changes no running n8n' appears in the box and in section 1c", boxs.count("changes no running n8n") >= 1 and sec1c.count("changes no running n8n") >= 1, (boxs.count("changes no running n8n"), sec1c.count("changes no running n8n")))
+
+# class 6: a short old text (under 40 characters) must occur once in the WHOLE file, not only on its line (a builder who applies a row by text would hit the other places)
+_short = []
+for _r in rows:
+    if len(_r["old"]) < 40 and "\n" not in _r["old"]:
+        _ft = rd(real(_r["f"]))
+        _chained = any(q["f"] == _r["f"] and q["new"] == _r["old"] for q in rows if q["i"] != _r["i"])
+        if _ft.count(_r["old"]) != 1 and not _chained:
+            _short.append((_r["i"], _ft.count(_r["old"])))
+check("class 6: every old text shorter than 40 characters occurs exactly once in the whole file (chained rows excepted)", not _short, _short)

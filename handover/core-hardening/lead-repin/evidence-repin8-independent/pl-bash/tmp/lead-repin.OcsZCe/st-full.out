@@ -1600,3 +1600,23 @@ PASS (no control byte in the output)
 PASS (no bidi control in the output)
 PASS (machinery): a weak filter stops the run with exit 3, opens no test-program file, leaves no folder
 PASS (machinery): a empty filter stops the run with exit 3, opens no test-program file, leaves no folder
+PASS (machinery): an identity filter (cat) makes --self-test fail with a non-zero exit code
+PASS (machinery): filter_ready refuses the useless rule file st-bad1.sed
+PASS (machinery): filter_ready refuses the useless rule file st-bad2.sed
+PASS (machinery): filter_ready refuses a useless awk program
+PASS (machinery): --mask with a damaged filter prints nothing, exits 3 and leaves no folder
+PASS (machinery): --mask passes the canary, hides the value and exits 0
+PASS (machinery): a normal run on a one-file folder ends with exit 0 and a SUMMARY line
+PASS (machinery): a normal run keeps exactly one work folder (the masked output copy)
+PASS (machinery): the file-mode check accepts mode 600 files in a 700 folder and sees a 644 file and a 755 folder
+PASS (machinery): a run started with umask 022 keeps only private files: the work folder 700, the output copy and the three rule files 600
+PASS (machinery): the kept work folder is mode 700 and every file in it is mode 600
+PASS (machinery): the kept folder holds only the output copy and the rule files (4 files, no file name list)
+PASS (machinery): a failure that only the return value of the self-test shows is a non-zero return
+FAIL (machinery): LC_ALL is not C in the filter (it is 'unset')
+PASS (machinery): each judge refuses a result whose number of passed cases is not the planned number (a forged shorter list)
+PASS (machinery): each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return
+PASS (machinery): the left-out report counts one name with a line break and one symbolic link
+PASS (machinery): a file name with # & and a backslash is printed as file:line:word (no sed expression is built from names)
+PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
+PASS (machinery): sh -x does not print a value (the script turns the trace off)
