@@ -21,6 +21,8 @@ control_credential_names_as_expected@real-mf-form.json (exit 0, no FAIL) as expe
 control_credential_names_as_expected@film-mf-form.json (exit 0, no FAIL) as expected
 control_webhook_auth_jwt_with_credentials@real-mf-form.json (exit 0, no FAIL) as expected
 control_webhook_auth_jwt_with_credentials@film-mf-form.json (exit 0, no FAIL) as expected
+control_real_ids_pass_when_ids_are_required@real-mf-form.json (exit 0, no FAIL) as expected
+control_real_ids_pass_when_ids_are_required@film-mf-form.json (exit 0, no FAIL) as expected
 control_closing_block_sums_lead_decisions (webhook without auth counted) as expected
 control_known_problems_are_listed (REPLY GAP and no authentication counted) as expected
 orphan_node@real-mf-form.json (FAIL, exit 1)                             as expected
@@ -523,6 +525,31 @@ switch_output_count_cannot_be_told_is_warn@real-mf-hook.json (WARN, exit 0) as e
 switch_output_count_cannot_be_told_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
 switch_output_count_cannot_be_told_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
 switch_output_count_cannot_be_told_is_warn@film-mf-form.json (WARN, exit 0) as expected
+webhook_auth_value_not_accepted_default_is_warn@real-mf-form.json (WARN, exit 0) as expected
+webhook_auth_value_not_accepted_default_is_warn@real-mf-hook.json (WARN, exit 0) as expected
+webhook_auth_value_not_accepted_default_is_warn@real-mf-recovery.json    skipped (not applicable to this file)
+webhook_auth_value_not_accepted_default_is_warn@real-mf-sub-crm-mail.json skipped (not applicable to this file)
+webhook_auth_value_not_accepted_default_is_warn@film-mf-form.json (WARN, exit 0) as expected
+webhook_auth_wrong_credential_kind_default_is_warn@real-mf-form.json (WARN, exit 0) as expected
+webhook_auth_wrong_credential_kind_default_is_warn@real-mf-hook.json (WARN, exit 0) as expected
+webhook_auth_wrong_credential_kind_default_is_warn@real-mf-recovery.json skipped (not applicable to this file)
+webhook_auth_wrong_credential_kind_default_is_warn@real-mf-sub-crm-mail.json skipped (not applicable to this file)
+webhook_auth_wrong_credential_kind_default_is_warn@film-mf-form.json (WARN, exit 0) as expected
+webhook_auth_without_credentials_default_is_warn@real-mf-form.json (WARN, exit 0) as expected
+webhook_auth_without_credentials_default_is_warn@real-mf-hook.json (WARN, exit 0) as expected
+webhook_auth_without_credentials_default_is_warn@real-mf-recovery.json   skipped (not applicable to this file)
+webhook_auth_without_credentials_default_is_warn@real-mf-sub-crm-mail.json skipped (not applicable to this file)
+webhook_auth_without_credentials_default_is_warn@film-mf-form.json (WARN, exit 0) as expected
+credential_kind_wrong_default_is_warn@real-mf-form.json (WARN, exit 0)   as expected
+credential_kind_wrong_default_is_warn@real-mf-hook.json (WARN, exit 0)   as expected
+credential_kind_wrong_default_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
+credential_kind_wrong_default_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
+credential_kind_wrong_default_is_warn@film-mf-form.json (WARN, exit 0)   as expected
+error_output_position_default_is_warn@real-mf-form.json (WARN, exit 0)   as expected
+error_output_position_default_is_warn@real-mf-hook.json (WARN, exit 0)   as expected
+error_output_position_default_is_warn@real-mf-recovery.json (WARN, exit 0) as expected
+error_output_position_default_is_warn@real-mf-sub-crm-mail.json (WARN, exit 0) as expected
+error_output_position_default_is_warn@film-mf-form.json (WARN, exit 0)   as expected
 env_read_default_is_warn@real-mf-form.json (WARN, exit 0)                as expected
 env_read_default_is_warn@real-mf-hook.json (WARN, exit 0)                as expected
 env_read_default_is_warn@real-mf-recovery.json (WARN, exit 0)            as expected
@@ -588,5 +615,23 @@ args_expect_json_not_an_object (exit 2)                                  as expe
 files_all_on_empty_folder_is_fail (exit 1)                               as expected
 not_a_directory_is_fail (exit 1)                                         as expected
 duplicate_json_key_is_fail (exit 1)                                      as expected
-SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): form_trigger_auth_value_not_accepted=2, form_trigger_auth_without_credentials=2, form_trigger_without_auth_default=2, form_trigger_without_auth_strict=2, hubspot_credential_kind_wrong=4, hubspot_credential_missing=4, hubspot_credential_name_wrong=4, silent_error_external_call=1, webhook_auth_value_not_accepted=2, webhook_auth_without_credentials=2, webhook_auth_wrong_credential_kind=2, webhook_dead_branch=2, webhook_disabled_no_trigger=2, webhook_id_dict_no_crash=2, webhook_id_list_no_crash=2, webhook_id_reused_in_other_file=2, webhook_no_reply_node=2, webhook_parameters_list_no_crash=2, webhook_parameters_text_no_crash=2, webhook_path_reused_in_other_file=2, webhook_path_reused_with_slash_and_case=2, webhook_reply_node_disabled=2, write_node_continues_on_error=3
-SELFTEST: 538 as expected, 0 not as expected, 52 skipped (not applicable)
+multi_dir_same_webhook_path_default_is_warn (exit 0)                     as expected
+multi_dir_same_webhook_path_fail_unverified (exit 1)                     as expected
+multi_dir_single_folder_has_no_clash (exit 0)                            as expected
+multi_dir_same_webhook_id_different_paths (exit 1)                       as expected
+multi_dir_same_form_trigger_path (exit 1)                                as expected
+multi_dir_form_path_and_webhook_path_are_different_addresses (exit 0)    as expected
+webhook_without_path_default_is_warn (exit 0)                            as expected
+webhook_without_path_fail_unverified (exit 1)                            as expected
+info_line_says_none_when_no_placeholder_and_no_env (exit 0)              as expected
+info_line_lists_placeholders_when_there_are_some (exit 0)                as expected
+accept_if_both_recorded_is_warn_and_counted (exit 0)                     as expected
+accept_if_missing_is_fail (exit 1)                                       as expected
+accept_if_wrong_output_is_fail (exit 1)                                  as expected
+accept_if_covers_only_what_was_recorded (exit 1)                         as expected
+accept_if_other_file_name_does_not_excuse (exit 1)                       as expected
+accept_if_bad_value (exit 2)                                             as expected
+diff_text_exact_line (the change is one readable line, on screen and in the --diff-out file) as expected
+diff_out_unwritable_is_exit_3 (a broken output file is never exit 1)     as expected
+SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): form_trigger_auth_value_not_accepted=2, form_trigger_auth_without_credentials=2, form_trigger_without_auth_default=2, form_trigger_without_auth_strict=2, hubspot_credential_kind_wrong=4, hubspot_credential_missing=4, hubspot_credential_name_wrong=4, silent_error_external_call=1, webhook_auth_value_not_accepted=2, webhook_auth_value_not_accepted_default_is_warn=2, webhook_auth_without_credentials=2, webhook_auth_without_credentials_default_is_warn=2, webhook_auth_wrong_credential_kind=2, webhook_auth_wrong_credential_kind_default_is_warn=2, webhook_dead_branch=2, webhook_disabled_no_trigger=2, webhook_id_dict_no_crash=2, webhook_id_list_no_crash=2, webhook_id_reused_in_other_file=2, webhook_no_reply_node=2, webhook_parameters_list_no_crash=2, webhook_parameters_text_no_crash=2, webhook_path_reused_in_other_file=2, webhook_path_reused_with_slash_and_case=2, webhook_reply_node_disabled=2, write_node_continues_on_error=3
+SELFTEST: 577 as expected, 0 not as expected, 58 skipped (not applicable)

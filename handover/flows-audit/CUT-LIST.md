@@ -1,5 +1,5 @@
 # CUT-LIST: AFTER THE VIDEO (candidates only; nothing below is needed to film). Exception: ORDER OF WORK steps 1 and 2 (the F-001 table definition) are BEFORE the video and move nothing. Rule: owner yes first, then MOVE to an archive folder, never delete; no patch deletes a file. Added by ORDER 003: every older flow version is listed with the one-line reason it is superseded. Evidence for "superseded": the successor named, plus the LIVE-REFERENCE test (every hit is prose in a document; no script, Execute Workflow node or errorWorkflow value points at the folder).
-The take uses only n8n-flows-real-v5 and n8n-flows-film-v5 (ORDER 003). The owner counts the many versions as duplicates: 11 older flow folders, 40 files, 525 of 655 nodes.
+The take uses only n8n-flows-real-v5 (ORDER 003, narrowed: n8n-flows-film-v5 is not in this video and is kept for a possible later video, so it must not be archived yet; lead decision 2026-11-16 item 1). The owner counts the many versions as duplicates: 11 older flow folders, 40 files, 525 of 655 nodes.
 | folder | files / nodes | successor | one-line reason it is superseded | live-reference hits (prose only) |
 |---|---|---|---|---|
 | n8n-flows/v1-superseded | 3 / 53 | n8n-flows (mf-*) | first design: no attempts cap, no alert, recovery can double-mail (F-025); README says "kept for the compare only" | 7 docs |

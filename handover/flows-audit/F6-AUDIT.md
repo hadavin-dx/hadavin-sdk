@@ -18,7 +18,7 @@ Ratings: "Nit" = no effect in the filmed take. A star ("Nit*") means the same fi
 - reply value (the "verdict" field of the answer) = one of six: new, done, processing, review, unknown, failed (plus the proposed `retry` and `rejected` in F6-01 and F6-07).
 - stage = the model step ("Qualify") that judges the lead.
 - state `review` = the lead is parked for a person to look at; nobody is notified (F6-02, F-031).
-- Which build is filmed (per SCENE-FLOW-MAP.md): scenes 1 to 4 use real-v5, scenes 5 to 11 use film-v5. The hook door exists in both builds and is unused in both.
+- Which build is filmed (per SCENE-FLOW-MAP.md): scenes 1 to 4 use real-v5; scenes 5 to 11 (film-v5) are not in this video (lead decision 2026-11-16 item 1). The hook door exists in both builds and is unused in both.
 - A "sender" below means whatever posts a message to the door (a mail gateway), not the test script.
 
 Date: 2026-11-16. Static read only. Nothing was run in n8n, Postgres, HubSpot or SMTP, so every n8n behaviour below is UNVERIFIED until a laptop test. Severity rubric: FINDINGS.md line 27 (severity = what happens in the filmed take; not reachable in the take = Nit, and the row says "a Major for a client build" where it would be one). Architecture checklist: ARCHITECTURE-AUDIT-CHECKLIST.md section 2 (workflow walk, single dependency, least privilege, failure paths).

@@ -43,7 +43,7 @@ import os
 import re
 import sys
 
-if sys.version_info < (3, 10):
+if sys.hexversion < 0x030A0000:  # Python 3.10 = 0x030A0000
     print("check_flows.py needs Python 3.10 or newer; found " + sys.version.split()[0])
     sys.exit(3)
 
@@ -304,7 +304,9 @@ WEBHOOK_AUTH = {
     "headerAuth": "httpHeaderAuth",
     "jwtAuth": "jwtAuth",
 }  # n8n webhook node: authentication value -> credential kind (none = no credential). n8n rule UNVERIFIED: from memory of n8n
-FORM_AUTH = {"basicAuth": "httpBasicAuth"}  # n8n form trigger: only none or basicAuth (n8n rule UNVERIFIED: from memory of n8n)
+FORM_AUTH = {
+    "basicAuth": "httpBasicAuth"
+}  # n8n form trigger: only none or basicAuth (n8n rule UNVERIFIED: from memory of n8n)
 CRED_TYPES = ("postgres", "emailSend", "hubspot")  # these always need an attached credential
 # secret shapes are built from parts so this file holds no secret-looking literal (the one allowed literal is the AWS example key)
 AWS_EXAMPLE = "AKIA" + "IOSFODNN7EXAMPLE"
@@ -829,17 +831,21 @@ def cross_file(dr, files, seen):
                     f"{'webhook' if isw else 'form trigger'} {n.get('name')} has no usable path (missing, empty or not text), so a clash of web addresses cannot be checked for it (n8n may use the webhookId instead)",
                 )
             else:
-                key = (
-                    (str(pr.get("httpMethod", "GET")).upper(), pth) if isw else ("FORM", pth)
-                )
+                key = (str(pr.get("httpMethod", "GET")).upper(), pth) if isw else ("FORM", pth)
                 if key in seen:
-                    unv(dr, f"two {'webhooks' if isw else 'form triggers'} share {'method+path' if isw else 'path'} {key}: {seen[key]} and {where}")
+                    unv(
+                        dr,
+                        f"two {'webhooks' if isw else 'form triggers'} share {'method+path' if isw else 'path'} {key}: {seen[key]} and {where}",
+                    )
                 else:
                     seen[key] = where
             wid = n.get("webhookId")
             if isinstance(wid, str) and wid:
                 if ("id", wid) in seen:
-                    unv(dr, f"two webhooks share webhookId {wid!r} (webhook or form trigger): {seen[('id', wid)]} and {where}")
+                    unv(
+                        dr,
+                        f"two webhooks share webhookId {wid!r} (webhook or form trigger): {seen[('id', wid)]} and {where}",
+                    )
                 else:
                     seen[("id", wid)] = where
 
@@ -1301,7 +1307,9 @@ def main(argv):
                         raise ValueError(rest)
                     OPTS["accept_if"][(fl, nd)] = idx
                 except ValueError:
-                    print("usage error: bad --accept-if value, want FILE=NODE:OUT[,OUT] with OUT 0 or 1")
+                    print(
+                        "usage error: bad --accept-if value, want FILE=NODE:OUT[,OUT] with OUT 0 or 1"
+                    )
                     return 2
             elif a.startswith("--"):
                 print("usage error: unknown option", a)
@@ -1417,7 +1425,9 @@ def main(argv):
                         f"# allowed patches: {','.join(allow) or 'none'}\n{text}"
                     )
             except OSError as e:
-                print(f"INTERNAL ERROR (exit 3): could not write --diff-out file: {type(e).__name__}")
+                print(
+                    f"INTERNAL ERROR (exit 3): could not write --diff-out file: {type(e).__name__}"
+                )
                 return 3
     print(f"RESULT: {len(FAILS)} FAIL, {len(WARNS)} WARN")
     final_block()

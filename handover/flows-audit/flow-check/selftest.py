@@ -1582,7 +1582,9 @@ def main():
             skipnames[name] = skipnames.get(name, 0) + 1
             print(f"{n:<72} skipped (not applicable to this file)")
             return
-        rc, out = run(cmd(d, src, exp, tuple(extra) + (("--fail-unverified",) if level == "FAIL" else ())), n)
+        rc, out = run(
+            cmd(d, src, exp, tuple(extra) + (("--fail-unverified",) if level == "FAIL" else ())), n
+        )
         fl, wl = lines_of(out, "FAIL"), lines_of(out, "WARN")
         if "Traceback" in out:
             report(n + " (no crash)", False, "the checker printed a Traceback")
@@ -1926,6 +1928,7 @@ def main():
     t = rt(dk + "/mf-form.json")
     wt(dk + "/mf-form.json", t.rstrip().rstrip("}") + ', "settings": {}, "settings": {"a": 1}}')
     special("duplicate_json_key_is_fail", [dk, "--baseline", PRIS], 1, "duplicate JSON key")
+
     def check_out(name, argv, want_rc, must=(), must_not=()):
         """Run the checker on argv; must = (line prefix, text) pairs that have to appear in a line, must_not = texts that may not appear anywhere."""
         rc, out = run(["python3", "-I", CK] + argv, name)
@@ -2001,7 +2004,16 @@ def main():
         wj(dd + "/mf-form.json", h)
     check_out(
         "multi_dir_form_path_and_webhook_path_are_different_addresses",
-        [wh_only, fm_only, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info", "--fail-unverified"],
+        [
+            wh_only,
+            fm_only,
+            "--files",
+            "mf-form.json",
+            "--baseline",
+            PRIS,
+            "--quiet-info",
+            "--fail-unverified",
+        ],
         0,
         must_not=["share path", "share method+path"],
     )
@@ -2046,7 +2058,12 @@ def main():
         must_not=["placeholder/env: none"],
     )
     # --- recorded decisions about IF branches (--accept-if) ---
-    acc = ["--accept-if", "mf-recovery.json=StuckRow:1", "--accept-if", "mf-recovery.json=AlertRow:1"]
+    acc = [
+        "--accept-if",
+        "mf-recovery.json=StuckRow:1",
+        "--accept-if",
+        "mf-recovery.json=AlertRow:1",
+    ]
     check_out(
         "accept_if_both_recorded_is_warn_and_counted",
         [PRIS, "--quiet-info"] + acc,
@@ -2081,7 +2098,10 @@ def main():
         must=[("FAIL", "IF node StuckRow lacks")],
     )
     check_out(
-        "accept_if_bad_value", [PRIS, "--accept-if", "StuckRow"], 2, must=[("usage error: bad --accept-if", "")]
+        "accept_if_bad_value",
+        [PRIS, "--accept-if", "StuckRow"],
+        2,
+        must=[("usage error: bad --accept-if", "")],
     )
     if PATCHED:
         nm0 = next(
@@ -2096,7 +2116,18 @@ def main():
         h = rj(dd + "/mf-form.json")
         next(x for x in h["nodes"] if x["name"] == nm0)["notes"] = "changed by a test"
         wj(dd + "/mf-form.json", h, indent=1)
-        dcmd = [dd, "--baseline", PRIS, "--patch-checks", "F002,F008", "--quiet-info", "--diff-base", PRIS, "--allow", "F002,F008"]
+        dcmd = [
+            dd,
+            "--baseline",
+            PRIS,
+            "--patch-checks",
+            "F002,F008",
+            "--quiet-info",
+            "--diff-base",
+            PRIS,
+            "--allow",
+            "F002,F008",
+        ]
         for k, v in PCOUNTS.items():
             dcmd += ["--expect", f"{k}={v[0]}:{v[1]}"]
         dout = f"{work}/diff-text-out.txt"
@@ -2107,7 +2138,10 @@ def main():
             want in out.splitlines() and want in rt(dout).splitlines(),
             f"rc={rc} on_screen={want in out.splitlines()}",
         )
-        rc, out = run(["python3", "-I", CK] + dcmd + ["--diff-out", f"{work}/no-such-folder/x.txt"], "diff_out_unwritable")
+        rc, out = run(
+            ["python3", "-I", CK] + dcmd + ["--diff-out", f"{work}/no-such-folder/x.txt"],
+            "diff_out_unwritable",
+        )
         report(
             "diff_out_unwritable_is_exit_3 (a broken output file is never exit 1)",
             rc == 3 and "INTERNAL ERROR (exit 3)" in out and "Traceback" not in out,
