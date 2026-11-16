@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:05:00Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:12:00Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-021; lead DECISIONS 10:02Z (video is real-v5 only) read, being applied
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 7 (ListAgents; target 8 to 10, refilling): security round 2 of cards; naive new-lead read round 2; result review of tools commit a3673f10e; zoom-out on what the real-v5-only decision makes wrong; adversarial reader (one-action-per-line split); readiness of fill-script row; cite check of cards against v5; what-not-checked ranked list (8th lane starts after this beat)
+AGENTS_RUNNING: 8 (ListAgents; one finished and was read): security round 2 of cards; tools commit result review; zoom-out on what the real-v5-only decision makes wrong; adversarial reader one-action-per-line split; cite check of cards against v5; what-not-checked ranked list; cite check of D04-D05 note; structure read of lead pages (restructure proposal)
 INTERRUPTED: none
-NEXT: apply decisions (film-v5 out: row 3 decided, row 4 and the flow-set switch vanish; S9-1 and S9-4 deferred; S9-2 keeps the owner compare with the honest sentence; v3 archived); revert OWNER-VIEW row 1 wording on S9-2; split card steps into one action per line; check the open point 'take identity read-only vs end deletes contacts' with the lead; collect the 7 reports
-CAPACITY: 4 cores, load 0.03 (agents are model-bound), memory 0 of 15 GB used (free -g), disk 38 percent used; heavy slots 0 of 3
+NEXT: collect 8 reports; then ONE pass applying the lead decisions to TAKE-BLOCKERS, QUESTIONS, README, OWNER-VIEW (film-v5 out; S9-1 and S9-4 deferred; S9-2 keeps owner compare; row 1 filler = real-v5 only, readiness gaps listed); split card steps into one action per line; D04-D05 note written, waits for lead reply; D-01..D-03, D-10, S-03, L-01 are APPLY but sit in core-hardening's v5 file, not mine; readiness reviewer: fill_flows.py is on the lead's laptop only, builder/Docker person/rehearsal date unnamed (lead input); open question for the lead: decision 2 'take never deletes' vs card step 'end deletes the contacts'
+CAPACITY: 4 cores, load 0.04 (agents are model-bound), memory 0 of 15 GB used, disk 38 percent used; heavy slots 0 of 3
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:05:00Z
+PUSHED_UTC: 2026-11-16T10:12:00Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
