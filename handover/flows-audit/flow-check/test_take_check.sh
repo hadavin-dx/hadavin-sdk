@@ -229,6 +229,23 @@ for pair in "r5-pat-smith:Pat Smith, $PD" "r5-obrien:O'Brien, $PD" "r5-aiden-bot
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r5: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 done
+# f8-r6 (review f8-r5): the reviewer name and note are squashed into lower-case letters and long stand-ins are refused wherever they sit; short stand-ins are refused as words or as joined 1-2 letter pieces. Dates use the pin's own date ($PD) so no test depends on today's date.
+# each line is refused with exit 4 and the reviewer-line message, even with the test flag and the pin override (these names do not start with Testonly)
+for pair in "f8r6-spaced-llm:Pat O L L M, $PD" "f8r6-spaced-claude:Pat C L A U D E, $PD" "f8r6-dot-space-llm:Pat L. L. M., $PD" "f8r6-dot-inside:Pat Cla.ude, $PD" "f8r6-hyphen-inside:Pat Cl-aude, $PD" "f8r6-dot-front:Pat C.laude, $PD" "f8r6-dot-back:Pat Clau.de, $PD" "f8r6-space-ude:Pat Cla Ude, $PD" "f8r6-claude-bot:Pat Claude Bot, $PD" "f8r6-claudebot:Pat Claudebot, $PD" "f8r6-chatgpt:Pat Chatgpt, $PD" "f8r6-openai:Pat Openai, $PD" "f8r6-gptbot:Pat Gptbot, $PD" "f8r6-bots:Pat Bots, $PD" "f8r6-agents:Pat Agents, $PD" "f8r6-grok:Pat Grok, $PD" "f8r6-llama:Pat Llama, $PD" "f8r6-mistral:Pat Mistral, $PD" "f8r6-deepseek:Pat Deepseek, $PD" "f8r6-copilot:Pat Copilot, $PD" "f8r6-anthropic:Pat Anthropic, $PD" "f8r6-robot:Pat Robot, $PD" "f8r6-o-l-l-m-lower:pat o.l.l.m., $PD" "f8r6-o-hyphen:Pat O-L-L-M, $PD" "f8r6-c-l-a-u-d-e-dots-surname:Pat C.L.A.U.D.E. Smith, $PD" "f8r6-short-pieces:Pat Ol L M, $PD" "f8r6-underscore:Pat O_L_L_M, $PD" "f8r6-digit:Pat C1aude, $PD" "f8r6-accent:Jos$(printf '\303\251') Smith, $PD" "f8r6-curly-quote:Pat O$(printf '\342\200\231')Neil, $PD" "f8r6-zero-width:Pat Cla$(printf '\342\200\213')ude, $PD" "f8r6-note-claude:Pat Smith, $PD, written by Claude" "f8r6-note-chatgpt:Pat Smith, $PD, note ChatGPT" "f8r6-note-dots:Pat Smith, $PD, read with C.l.a.u.d.e" "f8r6-note-llm:Pat Smith, $PD, an LLM read it" "f8r6-note-spaced:Pat Smith, $PD, via O p e n A I" "f8r6-two-days-ahead:Pat Smith, $IN2DAYS"; do
+  nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
+  [ "$RC" = 4 ] && grep -q -E "^!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON" "$S/$nm.txt"; ok $? "f8-r6: reviewer line '${pair#*:}' is exit 4 with the reviewer-line message (got exit $RC)"
+done
+# 'Sessions' as a surname: any reviewer line containing the word session is refused by the earlier session check (its own message); documented in the README
+{ echo "# reviewed by: Pat Sessions, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/f8r6-sessions.pin"
+tk f8r6-sessions TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/f8r6-sessions.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has f8r6-sessions "pin not yet confirmed by the lead"; ok $? "f8-r6: 'Pat Sessions' is refused (exit 4, the session message: any line holding the word session is refused) (got exit $RC)"
+# names that must be accepted (would-be pass with the override: exit 5, never the reviewer-line message). 'Claudette' is allowed on purpose (REVIEWER_ALLOW); 'Ai Nguyen' is refused on purpose (the word ai is a stand-in), see the README
+for pair in "f8r6-al-lee:Al Lee, $PD" "f8r6-bo-ng:Bo Ng, $PD" "f8r6-mary-jane:Mary-Jane O'Neil, $PD" "f8r6-tolkien:J.R.R. Tolkien, $PD" "f8r6-botha:Aiden Botha, $PD" "f8r6-claudette:Claudette Smith, $PD" "f8r6-roe:Jane Q. Roe-Smith, $PD" "f8r6-note-ok:Pat Smith, $PD, read all 4 WARN lines and the code" "f8r6-tomorrow:Pat Smith, $TOMORROW" "f8r6-today:Pat Smith, $PD"; do
+  nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
+  [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r6: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
+done
 # the test allowance: flag + override + first word Testonly = exit 5 (never 0); the same name without the flag was refused above
 { echo "# reviewed by: Testonly Runall, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"
 tk m1-allow TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/m1-allow.pin" -- --flows "$P"
