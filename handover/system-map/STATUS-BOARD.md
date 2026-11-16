@@ -50,7 +50,7 @@ INTERRUPTED: none
 
 ## AGENTS
 - a07e3a4f8e7705fb2 REMARK: re-mark patch rows against lead answers (overlay); running; next: overlay table
-- a7bacd42e664020bd READ-LN2: cold read of work/LEAD-NOTICE-batch-2.md; running; next: report
+- a6ceb1ed9867ac346 FIX-LN2: fix work/LEAD-NOTICE-batch-2.md after reader round 1 (last fix round); running; next: edits
 EMPTY SLOTS: 6. Reason: no independent work is open. The patch reader waits for the REMARK overlay; v4.3 final wording of rounds 36/34/35 (r37-r39) is not final; lane readers have nothing new (partition 4470 of 4470, 0 problems); held pages are not editable by me; the rest waits for lead answers (LEAD-NOTICE-batch-2).
 
 ## Details (long text moved from the FAILED line)
