@@ -1,0 +1,27 @@
+extracted 4 snippets from the plan text
+4b snippet in the plan == line tested in copy-test-v10.sh: identical
+=== 2a fresh key (expect: rc=0 key=made-up-prep-<utc time> before=[])
+rc=0 key=made-up-prep-20261116105713 before=[]
+=== 2a key already used (mock answers done for any key; expect before=[done]: a person must take a new key)
+rc=0 key=made-up-prep-20261116105713 before=[done]
+=== 2a login fails (expect an error line and rc not 0, before=[])
+psql: error: connection failed
+rc=2 key=made-up-prep-20261116105713 before=[]
+=== 2c state read for a key that is stored as processing, then done
+2c prints: [processing] (expect processing)
+2c prints: [done] (expect done)
+2c prints: [] (expect empty line: no such row)
+=== what the mock was given (arguments and SQL of the first 2a call and the 2c calls): the key is passed as -v k=..., never inside the SQL text
+mock psql args: postgresql://cnt_t@127.0.0.1:1/take_db -X -w -At -v ON_ERROR_STOP=1 -v k=made-up-prep-20261116105713 -v tbl=app.mf_leads
+mock psql sql: SELECT state FROM :tbl WHERE lead_key = :'k';
+mock psql args: postgresql://cnt_t@127.0.0.1:1/take_db -X -w -At -v ON_ERROR_STOP=1 -v k=made-up-prep-20261116105713 -v tbl=app.mf_leads
+lines of the log holding the key text (expect 3: the three argument lines): 3
+sql lines holding a key: 0
+=== 6 deletion list (split case, same files as section m of the clean-start test; expect 6 lines, then a refusal)
+step 6 prints: 6 (expect 6)
+second run: deletion-list exists: STOP (expect: deletion-list exists: STOP)
+=== 6 OUT only
+step 6 prints: 1 (expect 1)
+=== 4b run from the extracted plan snippet (OUT with two attempt files; expect copy ok: 3 files)
+copy ok: 3 files
+OUT_COPY exists: STOP, nothing copied
