@@ -376,6 +376,38 @@ W = [
 P += W
 EXPECT.update({'W01':['C172'],'W02':['C172'],'W03':['C172'],'W04':['C173'],'W05':['C174'],'W06':['C175'],'W07':['C176'],'W08':['C177'],'W09':['C178'],'W10':['C179'],'W11':['C180'],'W12':['C181'],'W13':['C182'],'W14':['C183'],'W15':['C184'],'W16':['C171']})
 ALLCOPIES |= {'W05', 'W11', 'W12', 'W14', 'W15', 'W07', 'W06', 'W03'}
+
+X = [
+('X01', S, 'The key list may show a last use hours late', 'The key list shows every use at once', '7-day lag sentence removed'),
+('X02', S, 'then cancel anyway: the yes covers the cancel', 'then cancel anyway unless you know something else uses it: the yes covers the cancel', '7.11 escape put back'),
+('X03', S, 'Deadline backstop (an owner action through Sun 22 Nov)', 'Deadline note', 'deadline backstop removed from the sheet'),
+('X04', N, 'does NOT wait for a message from you', 'waits for a message from you', 'note says the older key in A waits for the lead'),
+('X05', N, 'A passes only if the older key was last used before {{sevenback}}', 'A passes only if the older key was last used long ago', '7-day warning removed from the default line'),
+('X06', S, 'if there is no such page this is a STOP', 'if there is no such page go on', 'Recall page no longer a stop'),
+('X07', S, 'no clipboard manager, remote-access or screen-capture tool running', 'no other program running', 'clipboard manager rule removed'),
+('X08', S, 'never a file manager, a second terminal window or the clipboard (no copy and paste)', 'never a password', 'film person restrictions removed'),
+('X09', S, 'the film person does not stop for', 'the film person stops for', 'film person stops for the From column'),
+('X10', S, '**Name rule (8.3, 8.4):** revoke only an item whose exact name contains the run name', '**Name rule (8.3, 8.4):** revoke any item', 'revoke name rule removed'),
+('X11', FA, 'GAP_MAX = 60', 'GAP_MAX = 90', 'gap cap changed in facts'),
+('X12', S, 'after 18:30 UTC = 00:00 IST', 'after 18:30 UTC', 'UTC time without its IST pair'),
+('X13', S, 'the three waits of the message added', 'the waits added', 'three waits not named'),
+('X14', S, '(only that one person)', '', 'failed cancel calls more than one person'),
+('X15', S, 'press Enter once; the line `exit 0` appears', 'the line `exit 0` appears', 'press Enter removed from 6.4'),
+('X16', S, 'Step 7.3, matching a masked address', 'matching a masked address', 'orphaned appendix fragment'),
+('X17', S, 'match each by its first two letters', ':: match each by its first two letters', 'double colon'),
+('X18', S, '(((F10 Deadline backstop::', '(((F12 Deadline backstop::', 'appendix part number gap'),
+('X19', S, "Retire check (the lead's own test", "Retire check (a test", 'retire check not defined'),
+('X20', S, 'what "at re-pin" means', 'what the brackets mean', 'at re-pin not explained'),
+('X21', O, '`[OWNER FILLS: ...]`', '`[OWNER FILLS ...]`', 'placeholder spelling in the open list'),
+('X22', O, '| 109 | Still OWNER-OPEN', '| 110 | Still OWNER-OPEN', 'open row 109 missing'),
+('X23', S, 'set the **deadline reminder**', 'set a reminder', 'deadline reminder not set after the yes'),
+('X24', N, '18:04 is a plan fact', '18:04 is a time', '18:04 plan-fact sentence removed from the note'),
+('X25', S, 'and only if the 7-day rule of 5.1 holds', 'and only if the 7-day rule holds (at least 168 hours (7 days) before)', '7-day rule worded twice'),
+('X26', S, 'send "{{ph_older711}}", then cancel', 'send "{{ph_older}}", then cancel', '7.11 forced cancel uses the claim phrase'),
+('X27', S, 'at least 5 minutes before the latest start (the longest planned path', 'at least 4 minutes before the latest start (the longest planned path', '5-minute rule worded differently in 6.2'),
+]
+P += X
+EXPECT.update({'X01':['C185'],'X02':['C186'],'X03':['C187'],'X04':['C188'],'X05':['C189'],'X06':['C190'],'X07':['C191'],'X08':['C192'],'X09':['C192'],'X10':['C193'],'X11':['C194'],'X12':['C195'],'X13':['C196'],'X14':['C197'],'X15':['C198'],'X16':['C199'],'X17':['C200'],'X18':['C201'],'X19':['C202'],'X20':['C203'],'X21':['C206'],'X22':['C207'],'X23':['C187'],'X24':['C209'],'X25':['C185'],'X26':['C186'],'X27':['C196']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'

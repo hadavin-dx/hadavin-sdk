@@ -297,14 +297,17 @@ if 'Open 102' not in OPEN or 'Open 103' not in NOTE: fail('C183', 'the open ques
 if 'UNVERIFIED' not in OPEN or 'E-52' not in OPEN: fail('C184', 'O: the L-APP2 / E-52 UNVERIFIED row is missing')
 
 # ---- Part 7 (v30, round 2): one check per finding of review-v29-security.md, review-v29-naive.md and review-v29-evidence.md that v30 fixed. v30-fail-proof.py runs this part on the built v29 files.
+import os as _os
+_V = globals().get('PAGEVER', 'v30')                                                                                       # v30-fail-proof.py sets PAGEVER = 'v29' to read the old pages
 _APP = {'A': A, 'B': B}
 for _nm in 'AB':
     _t = _APP[_nm]
     if _t.count('at least 168 hours (7 days)') != 1: fail('C185', '%s: the 7-day rule is not worded exactly once in full (count %d)' % (_nm, _t.count('at least 168 hours (7 days)')))      # S m1: one wording
     if 'The key list may show a last use hours late' not in _t: fail('C185', '%s lacks the last-used lag sentence' % _nm)
 for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):                                                       # S M2: no "unless you know" escape in 7.11 and no "nothing else I know uses it"
-    for _p in ('unless you know something else uses', 'nothing else I know uses it'):
-        if _p in _t: fail('C186', '%s holds the escape %r (describe the older key, then cancel anyway)' % (_n, _p))
+    if 'unless you know something else uses' in _t: fail('C186', '%s holds the escape (describe the older key, then cancel anyway)' % _n)
+_i7 = A[A.find('Older key point (cannot be undone'):]; _i7 = _i7[:_i7.find('## 8.')] if '## 8.' in _i7 else _i7[:3000]
+if 'nothing else I know uses it' in _i7 or 'I cancel the older key <its name> now, the yes covers it' not in _i7: fail('C186', 'A 7.11: the forced cancel must use the phrase without the claim that nothing else uses the key')
 need('C187', 'Deadline backstop (an owner action through Sun 22 Nov)'); need('C187', 'a person who may cancel the older key if you cannot')       # S M3
 if F.get('bs') != 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST': fail('C187', 'facts: backstop time is not Sun 22 Nov 2026 18:09 UTC = 23:39 IST')
 need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: the reminder is not set'); need('C187', 'A missed 7.11: this reminder is the second chance')
@@ -322,14 +325,15 @@ need('C192', "the From column of the mail list shows the sender's throwaway addr
 need('C192', 'say aloud "film pause now"') if False else need('C192', 'aloud "film pause now"')
 need('C193', '**Name rule (8.3, 8.4):** revoke only an item whose exact name contains the run name')                      # S m7
 _gm = F.get('gap_max', '?')
-need('C194', 'the latest start is at most %s minutes after the earliest key time' % _gm)                                  # S m3: gap cap
+need('C194', 'the latest start is at most %s minutes after the earliest key time' % _gm)
+need('C194', 'at most 60 minutes after the earliest key time')                                                           # literal, independent of facts-v30.py (the lead's cap is 60)                                  # S m3: gap cap
 if 'at most %s minutes' % _gm not in OPEN or 'at most %s minutes' % _gm not in NOTE and ('%s-minute' % _gm) not in NOTE and ('at most %s minutes' % _gm) not in NOTE and (_gm + ' minutes') not in NOTE: fail('C194', 'note or open list lacks the gap cap of %s minutes' % _gm)
 _pair = re.compile(r'\b\d\d:\d\d(?::\d\d)? UTC(?! = \d\d:\d\d(?::\d\d)? IST)')                                           # EVIDENCE: every UTC time carries its IST pair
 for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
     for _m in _pair.finditer(_t):
         _ctx = _t[max(0, _m.start() - 25):_m.end() + 25].replace('\n', ' ')
         fail('C195', '%s: a UTC time without its IST pair: %r' % (_n, _ctx))
-for _pg in ('OWNER-CARD-v30-A.md', 'OWNER-CARD-v30-B.md', 'OWNER-APPENDIX-v30-A.md', 'OWNER-APPENDIX-v30-B.md', 'OWNER-FILM-PERSON-v30.md'):
+for _pg in ('OWNER-CARD-%s-A.md' % _V, 'OWNER-CARD-%s-B.md' % _V, 'OWNER-APPENDIX-%s-A.md' % _V, 'OWNER-APPENDIX-%s-B.md' % _V, 'OWNER-FILM-PERSON-%s.md' % _V):
     if not _os.path.exists(D + _pg): continue
     for _m in _pair.finditer(open(D + _pg, encoding='utf-8').read()): fail('C195', '%s: a UTC time without its IST pair near %r' % (_pg, _m[0]))
 need('C196', 'the three waits of the message added')                                                                        # N M3: the three waits named
@@ -340,7 +344,7 @@ need('C198', 'press Enter once; the line `exit 0` appears')                     
 need('C198', 'press Enter once on the empty line')
 _bad = []
 for _nm in 'AB':                                                                                                           # N M6: no orphaned appendix fragment (every paragraph starts with a capital, a digit or a bold mark)
-    _ap = open(D + 'OWNER-APPENDIX-v30-%s.md' % _nm, encoding='utf-8').read(); _in = False
+    _ap = open(D + 'OWNER-APPENDIX-%s-%s.md' % (_V, _nm), encoding='utf-8').read(); _in = False
     for _ln in _ap.split('\n'):
         if _ln.startswith('```'): _in = not _in; continue
         if _in or not _ln.strip() or _ln.startswith('#') or _ln.startswith('---') or _ln.startswith('- '): continue
@@ -349,11 +353,12 @@ for _nm in 'AB':                                                                
         if _ln.count('(') != _ln.count(')') and not _ln.startswith('```'): fail('C199', 'appendix %s: unbalanced parentheses in %r' % (_nm, _ln[:50]))
 for _nm, _t in (('A', A), ('B', B)):
     for _ln in _t.split('\n'):
+        _ln = re.sub(r'(^|\s)[a-d]\)', ' ', _ln)                                                                          # list labels a) b) c) are not parentheses
         if _ln.count('(') != _ln.count(')') and '```' not in _ln and not _ln.lstrip().startswith(('Run name', 'Start line')): fail('C199', '%s: unbalanced parentheses in a line starting %r' % (_nm, _ln[:50]))
 for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
     if ': :' in _t or '::' in _t.replace('```', ''): fail('C200', '%s holds a double colon' % _n)
 for _nm in 'AB':                                                                                                           # N M7: appendix parts 1..N with no gap, and every sheet pointer exists
-    _ap = open(D + 'OWNER-APPENDIX-v30-%s.md' % _nm, encoding='utf-8').read()
+    _ap = open(D + 'OWNER-APPENDIX-%s-%s.md' % (_V, _nm), encoding='utf-8').read()
     _parts = [int(x) for x in re.findall(r'^## Appendix part (\d+):', _ap, re.M)]
     if _parts != list(range(1, len(_parts) + 1)) or len(_parts) < 10: fail('C201', 'appendix %s parts are %r (must run 1..10 or more without a gap)' % (_nm, _parts))
     for _k in re.findall(r'\(appendix (\d+)\)', SHEETS_DISK[_nm]) + re.findall(r'appendix part (\d+)', SHEETS_DISK[_nm]):

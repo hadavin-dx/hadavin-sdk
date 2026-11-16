@@ -37,6 +37,7 @@ PH = {'mkc': 'model key cancelled', 'nokey': 'no key was made', 'cf': 'cancel fa
       'cd': 'contacts deleted <number>', 'apr': 'app passwords revoked', 'hsr': 'HubSpot apps revoked', 'dmd': 'demo mails deleted <number>',
       'acc': 'accepted', 'posted': 'posted', 'dec': 'I decline', 'ksf': 'key save failed, cancelled, new run name <name>',
       'older': 'I cancel the older key <its name>, nothing else I know uses it',
+      'older711': 'I cancel the older key <its name> now, the yes covers it',
       'req': 'send the numbers message for run <run name>',
       'msg': 'got a message that says <in words>, is it yours'}
 F = {

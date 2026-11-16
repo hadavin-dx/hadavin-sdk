@@ -1,0 +1,58 @@
+le is named in the box and every code word of the box is explained or replaced (K3B, K3, C-3 to C-9, G12 are defined)
+PASS naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list
+PASS every '23:30' example time in the box has 'IST' within 40 characters (1 places) :: 1
+PASS the real v30 files on disk are ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-B.md', 'OWNER-SHEET-v30-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-B.md', 'OWNER-SHEET-v30-SOURCE.md']
+INFO OWNER-SHEET-v30-A.md last written 17:10:52 UTC; check time of the report 2026-11-16T17:12:00Z
+INFO OWNER-SHEET-v30-B.md last written 17:10:52 UTC; check time of the report 2026-11-16T17:12:00Z
+INFO OWNER-SHEET-v30-SOURCE.md last written 17:10:52 UTC; check time of the report 2026-11-16T17:12:00Z
+PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository
+PASS 89 rows of 94 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
+PASS no row old or new text holds a raw '|' (it would break its table cell) :: []
+PASS REPORT-c6q.md was not changed by this run (it is older than the build of REPORT-c6s.md and holds its own title line)
+PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6s.md and holds its own title line)
+PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
+PASS the box line of L-SHEET and the section 0 bullet each print every real v30 file with its real written time (UTC): [('OWNER-SHEET-v30-A.md', '17:10:52'), ('OWNER-SHEET-v30-B.md', '17:10:52'), ('OWNER-SHEET-v30-SOURCE.md', '17:10:52')] :: [('OWNER-SHEET-v30-A.md', '17:10:52'), ('OWNER-SHEET-v30-B.md', '17:10:52'), ('OWNER-SHEET-v30-SOURCE.md', '17:10:52')]
+FAIL F4 the report names the newest owner sheet version (v30) and release note (v14) on disk, and the check time :: (('30', '17:12:00', '22:42:00', '13'), 30, 14)
+PASS F4 no owner sheet or release note has a version higher than the one named :: []
+PASS F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is defined
+PASS F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumption in the box, row 8 and section 9
+PASS F4 the owner-sheet check covers v19 and later (static-checks.sh globs v19 and v2x to v9x and lists a v31+ check)
+PASS F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes
+PASS F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none
+PASS F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68)
+PASS F1 L-SAVE (section 3), the box and section 9 say the plan is OVERRIDDEN on failed runs
+PASS F1 the glossary says the take uses all for successful and none for failed runs
+PASS F2 card line 2 gate in row 8 (item 12) and in the stop-rule table
+PASS F2 the box and row 14 say card line 2 waits for an alert mail seen in the loopback re-smoke
+PASS F3 item 15 runs after EVERY rehearsal with real accounts
+PASS F3 the scanner is read by a second person and tested with a fake key before it touches a real key
+PASS F3 counts only; no file holds the key or matched lines; not in the process list or shell history
+PASS F3 searches in place or on a dump that is deleted and counted to 0
+PASS F3 swap point named
+PASS F3 item 16 scans BEFORE anything is deleted, writes counts, and scans once more after the deletion
+PASS F3 the stop-rule row and check C-6 carry the same rules
+PASS F3 row 6 reason says items 11 to 16
+PASS m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
+PASS m2 row 13 says 'expected to be true until C-9 part 2'
+PASS m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer :: 4
+PASS m4 every example answer time in the box is later than the check time 2026-11-16T17:12:00Z (and has its IST) :: ['2026-11-16T18:00:00Z', '2026-11-16T18:05:00Z', '2026-11-16T18:05:00Z']
+PASS naive: the order of the reviewer names is explained
+PASS naive: the 'does not do' list comes before the answer line
+PASS naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers
+PASS naive: the answer form puts L-SHEET and L-SAVEERR on separate OWNER lines
+PASS naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'
+PASS naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)
+PASS naive: the C-9 part 2 circle is explained
+PASS naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation
+PASS naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact
+PASS naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')
+PASS naive: table 5a lists row 11 and says the 37 rows are a different group from the 36
+PASS naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)
+PASS naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box
+PASS section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
+PASS section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only)
+PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
+SUMMARY: 165 checks, 1 FAILED: F4 the report names the newest owner sheet version (v30) and release note (v14) on disk, and the check time
+
+EXIT CODE 1

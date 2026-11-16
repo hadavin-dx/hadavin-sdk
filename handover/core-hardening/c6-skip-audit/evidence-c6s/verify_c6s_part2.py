@@ -265,7 +265,7 @@ check("F4 the owner-sheet check covers v19 and later (static-checks.sh globs v19
 c4a = [l for l in txt if l.startswith("| C-4a |")][0]
 c11 = [l for l in txt if l.startswith("| C-11 |")][0]
 c4l = [l for l in txt if l.startswith("| C-4 | Import check")][0]
-check("F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes", "saveDataErrorExecution none" in c4a and "error-all 0" in c4a and "L-SAVEERR answered yes" in c4a, "")
+check("F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes", "saveDataErrorExecution none" in c4a and "error-all 0" in c4a and "error-none 1" in c4a and "L-SAVEERR answered yes" in c4a, "")
 check("F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none", "overridden" in c11 and "EXECUTIONS_DATA_SAVE_ON_ERROR=none" in c11 and "PLAN:125" in c11, "")
 check("F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68)", "rows 63, 65, 67, 69 and 92" in c4l and "63, 62" not in c4l, "")
 lsv = [l for l in txt if l.startswith("| L-SAVE | studio lead")]
