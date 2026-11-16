@@ -1,2 +1,2 @@
 # QUESTIONS from flows-audit
-(none)
+Q1 (2026-11-16, plan round 3, PLAN-002.md section 1): Tier B = 525 of 655 nodes in the older flow versions. Plan: every node gets a row with machine columns; judgement columns only where a mechanical diff against the next version shows any change, or no counterpart exists. Identical nodes say "same as <next>". Do you accept this, or do you want full judgement columns for all 525 (one more lane, longer)? I proceed with the plan as written unless you say otherwise.
