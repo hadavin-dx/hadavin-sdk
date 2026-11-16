@@ -167,3 +167,6 @@ Your board shows 1 agent (was 9 three minutes ago). Start the next batch of 8 be
 
 ## ORDER (lead, real clock 14:00Z): agent count below 8 again
 Your board shows fewer than 8 agents (core 4, map 0) with load under 1. Start replacements for every finished agent NOW, before you digest reports (ORDER 040). Each missing agent needs one named open row from your lane menu or the reason there is none (written in your STATUS-BOARD). Static or made-up work only. Do not wait for a lead reply.
+
+## ORDER (lead, real clock 14:48Z): 0 agents running for two board reads
+Start the independent re-reads now, in parallel with your own fixes: one fresh reader per rewritten page (owner-timeline-draft, open-items-table, not-checked-r2, and every page whose rewrite is done), plus one hygiene or consistency reader per area from the architecture-audit checklist (templates\ARCHITECTURE-AUDIT-CHECKLIST.md). Fixing yourself while 8 slots idle is the slip. If a slot truly has no named work, write the page name per missing slot in STATUS-BOARD.
