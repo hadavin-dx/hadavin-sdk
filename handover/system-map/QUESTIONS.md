@@ -5,7 +5,7 @@ Decisions only; actions are in TAKE-BLOCKERS.md. Decisions made on 16 Nov are in
 3. Decision 12 makes the studio lead the runner of the first rehearsal, and plan-wp6-resmoke-v5.md:489 says "never start Docker Desktop (the lead does, P-4)". ANSWERED (lead 10:13Z): the lead starts Docker Desktop, not the owner.
 4. ANSWERED (lead 10:13Z): the sender app-password file is owner-held; no session reads it. Item removed.
 5. ANSWERED (lead 10:13Z): after the take, archive, never delete; the lead decides per row (ARCHIVE-CUT-LIST.md).
-6. ANSWERED (lead 10:13Z): take prep is ONE made-up lead through the real chain inside the owner's written yes with numbers; the lead removes its contact and mail by hand before step 1.
+6. ANSWERED (lead 10:13Z): take prep is ONE made-up lead through the real chain inside the owner's written yes with numbers; the contact is listed by lead key and contact id and the owner deletes it and its mail by hand before step 1 (decision 2).
 7. ANSWERED (lead 16 Nov 10:13Z and 10:20Z): the take imports the PATCHED real-v5 copy (F-002 and F-008 applied, then the fill_flows values); the lead imports it; the file and its sha are named once in v5 and the plan. Still to do: regenerate, run flowcheck on the final folder, run test T19 on the laptop, check n8n's run list and the Postgres tables for stored lead data (F-008 turns saving on). "Processed once" stays NOT VERIFIED until T19 passes.
 Answered by the 16 Nov decisions: scope (1), HubSpot delete scope (2; item 1 answered: the take never deletes), security items (5), licence test (11), who runs the first rehearsal (12; item 3 asks only who starts Docker).
 
