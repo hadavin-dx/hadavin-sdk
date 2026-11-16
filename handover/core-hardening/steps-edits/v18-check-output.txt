@@ -255,3 +255,34 @@ NEG r15studio caught | FAIL r15 E-12 third party still has 'asks the studio lead
 NEG r15alarm caught | FAIL r15 E-48 C lacks 'If a take is running when alarm 1 rings'
 NEG r15alarm1 caught | FAIL r15 E-48 C lacks 'if no session is open or it does not ask, go straight to key'
 NEG r15app caught | FAIL r15 E-09 h lacks 'There are two different HubSpot keys'
+NEG r15e37app caught | FAIL r15 E-37 3 lacks 'Two different HubSpot keys'
+NEG r15done caught | FAIL r15 E-48 G done lacks '`shred done key copies` means that EVERY file of (a) and (b)'
+NEG r15silence caught | FAIL r15 E-48 G done lacks 'If you write neither, the assistant treats it as `shred not '
+NEG r15e59 caught | FAIL r15 E-59 missing or still has the star
+NEG r15sure caught | FAIL r15 E-48 D lacks 'Are you sure?'
+NEG r15e52conf caught | FAIL r15 E-52 confirm lacks '`no more takes` is confirmed only by your next message `yes,'
+NEG r15reply caught | FAIL r15 E-12 reply line missing: 4. money: up to 3 model calls and up to US$<X>
+NEG r15blocks caught | FAIL r15 E-12 reply still has 'Part 1'
+NEG r15ph caught | FAIL r13 placeholder in E-54 or rule R11
+NEG r15brand caught | FAIL r15 E-48 I still has 'Anthropic'
+NEG r15two caught | FAIL r15 E-09 e lacks 'with the two names `<password file name>` and `<folder>`'
+NEG r15nano caught | FAIL r15 E-09 extras lacks 'ls -a'
+NEG r15label caught | FAIL r14 3e bare no
+NEG r15row caught | FAIL ids differ {'E-61'}
+NEG r15short caught | FAIL r15 E-48 intro lacks 'In short:'
+NEG r16F1word caught | FAIL r14 E-55 lacks `key gone, no more decisions`
+NEG r16F1time caught | FAIL r16 F1 E-55 lacks 'you revoke it whatever you have written, and then you write `key g
+FAIL negative control anchor missing: r16F2a
+NEG r16F2b caught | FAIL r16 F2 E-42 still has 'made-up names'
+NEG r16F2c caught | FAIL ids differ {'E-62', 'E-63'}
+NEG r16F3 caught | FAIL r16 F3 G lacks 'password files and editor copies'
+NEG r16F4a caught | FAIL r16 F4 the numbered order is missing or out of order: [125, 632, 862, -1, 1122, 1289,
+NEG r16F4b caught | FAIL r17 pin r17 card 7 lacks '7. Then the assistant does its item 1 (the clean-up). It ne
+NEG r16F4c caught | FAIL r16 F4 E-16 lacks 'It does NOT start while a copy of the secret key for the model exi
+NEG r16F4d caught | FAIL r16 F4 E-16 lacks 'The order of step 22 is the only order'
+NEG r16m1 caught | FAIL r16 m1 E-16 lacks 'if a recording or a video file is inside, it stops, removes nothin
+NEG r16m5 caught | FAIL r16 m5 E-11 lacks 'Write `ok stand-in test` (for the stand-in test)'
+NEG r16m3 caught | FAIL r13 time arithmetic: 18:09 UTC = 23:49 IST
+NEG r16M2 caught | FAIL r14 E-12 margin
+NEG r16M1 caught | FAIL r16 M1 refs still has 'only a message typed by you counts: step 22 item 3, key step C
+NEG r16plain caught | FAIL r16 E-56 codes still has '(r17)'

@@ -409,6 +409,7 @@ check(f"MA2 real server: a definer function in another schema with the listed na
 
 # ================================================================== v20 (round 6): real-server proofs. Each "v19 guard clean" claim is computed here with the v19 guard module; each fix is computed with the v20 guard.
 import warnings
+admin = psycopg.connect(dsn("postgres", "postgres"), autocommit=True)  # fresh superuser connection: the MA1 loop above leaves the shared one running under a role
 def g20f(text, allowed, file="x.sql", **kw): return bool(g20.check_sql_text(file, text, allowed, atomic_tables=ATOMIC_TABLES_BY_FILE.get(file), **kw))
 def g19f(text, allowed, file="x.sql"): return bool(g19.check_sql_text(file, text, allowed, atomic_tables=ATOMIC_TABLES_BY_FILE.get(file)))
 PIN = g20.PIN_ANY

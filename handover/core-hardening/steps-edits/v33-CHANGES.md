@@ -57,4 +57,4 @@ The lead-note history lines were renamed v32 to v33 by sed, as in v32.
 The cancel-only role in the model account; how the lead starts or stops the model program; every vendor page path in the click steps; the time a real cancel takes.
 
 ## 5. Evidence (builder, this session)
-See the hand-back message for the run figures; the commands are build-v33.py, check-v33.py, v33-fail-proof.py, mut33.py and gap-proof-v33.py (all in this folder).
+Run at 18:42 UTC: check-v33.py 0 failures; v33-fail-proof.py: 32 Part 9 and 10 checks, 11 fail on built v32, none on v33 (the others already hold in v32 or are mutation-only, proven by plants); mut33.py: 283 plants, 282 caught by the meant check, 0 missed, 0 anchor-not-found, negative control ok (1 of the 283 is the control); gap-proof-v33.py: of 11 evidence mutations, 8 could be applied to the v32 source and the v32 checker caught 0 of those 8 (H04, H05 and H07 sentences do not exist in v32), the v33 checker catches 11 of 11. Banned-string hits 0, secret-shaped hits 0 (script reads the list at run time). Commands: the commands are build-v33.py, check-v33.py, v33-fail-proof.py, mut33.py and gap-proof-v33.py (all in this folder).

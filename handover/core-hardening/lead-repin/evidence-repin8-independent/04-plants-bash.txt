@@ -16,3 +16,7 @@ m15 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up in
 m16 [bash]: KILLED-phase1 exit=1 fail_lines=5 SELF-TEST: passed=1597 failed=4 (the made-up input and output files were deleted) (6s)
 m17 [bash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=1589 failed=12 (the made-up input and output files were deleted) (6s)
 m18 [bash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1597 failed=4 (the made-up input and output files were deleted) (5s)
+m19 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): the clean-up deleted a folder whose name is not lead-repin.XXXXXX'] (123s)
+m20 [bash]: KILLED-phase1 exit=1 fail_lines=7 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (6s)
+m21 [bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (5s)
+m22 [bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (7s)

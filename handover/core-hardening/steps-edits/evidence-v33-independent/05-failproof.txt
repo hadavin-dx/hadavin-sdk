@@ -1,0 +1,20 @@
+checks in Part 9: 32 (C228 to C262)
+fail on built v32: 11
+  v32 fails C230 (2 line(s)); first: A lacks 'OWNER-HELPER-v33.md'
+  v32 fails C238 (24 line(s)); first: heading not in the verified list: OWNER-SHEET-vNN-A.md|# Owner sheet v32, sheet A: one filmed run
+  v32 fails C239 (38 line(s)); first: fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|a_cut|1
+  v32 fails C246 (8 line(s)); first: card A lacks the near-deadline last-resort rule
+  v32 fails C247 (6 line(s)); first: A lacks 'type `cd ` and the Take folder of the message, nothing more'
+  v32 fails C248 (13 line(s)); first: NOTE holds the stale text 'OWNER-NUMBERS-'
+  v32 fails C249 (12 line(s)); first: A lacks 'Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by t'
+  v32 fails C250 (10 line(s)); first: card A lacks "the same named row" in step 4
+  v32 fails C255 (1 line(s)); first: the source holds {{bm_chain}} 0 and {{bt_end}} 2 times (need 3 each: card, yes, part 10)
+  v32 fails C256 (1 line(s)); first: the source says "both after the deadline" 0 times (need 2)
+  v32 fails C257 (2 line(s)); first: the helper scope sentence "Any other key ... touch nothing" is not present exactly once in the sourc
+do NOT fail on built v32 (cannot prove a change; reason in v33-CHANGES.md): ['C228', 'C229', 'C231', 'C232', 'C233', 'C234', 'C235', 'C236', 'C237', 'C240', 'C241', 'C242', 'C243', 'C244', 'C245', 'C251', 'C258', 'C259', 'C260', 'C261', 'C262']
+fail on built v33: none
+v33-fail-proof: 0 problem(s)
+
+real	0m0.196s
+user	0m0.125s
+sys	0m0.008s

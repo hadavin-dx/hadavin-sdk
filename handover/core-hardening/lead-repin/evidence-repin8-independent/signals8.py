@@ -11,5 +11,5 @@ for shell in ("dash","bash"):
         except subprocess.TimeoutExpired: p.kill(); out,_=p.communicate(); 
         time.sleep(0.5)
         left=glob.glob(d+"/lead-repin.*")
-        kids=subprocess.run(["pgrep","-f","/tmp/hd8i/v8.sh|lead-repin"],capture_output=True,text=True).stdout.split()
+        kids=subprocess.run(["pgrep","-g",str(p.pid)],capture_output=True,text=True).stdout.split()
         print(f"{shell} {signal.Signals(sig).name} delay={delay} exit={p.returncode} workdir_left={len(left)} files_left={sum(len(os.listdir(x)) for x in left)} stray_procs={len(kids)} out_lines={len(out.splitlines())}",flush=True)
