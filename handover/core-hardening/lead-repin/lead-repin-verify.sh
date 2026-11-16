@@ -558,6 +558,36 @@ mask_line() { sed -E -f "$MASKLINE" | awk -v CUT=1000 -v OKF="$SHAOK" -f "$MASKA
 # stage; (A) the awk stage alone, so a rule of the awk stage cannot hide behind the sed stage; (M) full filter only
 # (multi-line JSON / YAML rules, which need the awk stage and the sed stage together).
 # self_test QUIET   (QUIET=1: print only FAIL lines and the tally)
+# skip_report ROOT LABEL KIND(code|json): print the count of EVERY category of file the lists leave out,
+# so a silent drop cannot hide (a "0 matching lines" can then be told apart from "never looked").
+skip_report() {
+  sr_root=$1; sr_label=$2; sr_kind=$3
+  [ -d "$sr_root" ] || { printf 'left out of "%s": folder %s not found\n' "$sr_label" "$sr_root"; return; }
+  ( [ -n "$sr_root" ] && cd "$sr_root" || exit 0
+    if [ "$sr_kind" = json ]; then NM='-name *.json'; else NM='-name *.py -o -name *.sh'; fi
+    set -f
+    printf 'left out of "%s" (%s) and NOT searched, file counts by reason:\n' "$sr_label" "$sr_root"
+    sr_n=$(find . -mindepth 5 -type f \( $NM \) -print 2>/dev/null | wc -l | tr -d ' ')
+    printf '  path of 5 or more parts (a/b/c/d/file; the search goes at most 3 sub-folders down): %s\n' "$sr_n"
+    sr_n=$(find . -type l -print 2>/dev/null | wc -l | tr -d ' ')
+    printf '  symbolic links of any kind (find does not follow them): %s\n' "$sr_n"
+    sr_n=$(find . 2>&1 >/dev/null | grep -c -i 'permission denied')
+    printf '  folders or files the find command could not open (permission denied): %s\n' "$sr_n"
+    sr_n=$(find . -name "*${NL}*" -print0 2>/dev/null | tr -cd '\000' | wc -c | tr -d ' ')
+    printf '  names with a line break (cannot be listed safely): %s\n' "$sr_n"
+    for sr_d in node_modules _local secrets .venv venv __pycache__ tests test; do
+      if [ "$sr_kind" = json ] && { [ "$sr_d" = tests ] || [ "$sr_d" = test ]; }; then continue; fi
+      sr_n=$(find . -path "*/$sr_d/*" -type f \( $NM \) -print 2>/dev/null | wc -l | tr -d ' ')
+      printf '  files inside folders called %s, count %s\n' "$sr_d" "$sr_n"
+    done
+    sr_n=$(find . -type f ! \( $NM \) -print 2>/dev/null | wc -l | tr -d ' ')
+    printf '  files of other types (not searched at all, whatever their content or name; this one number is every file that is not a %s file): %s\n' "$( [ "$sr_kind" = json ] && echo json || echo 'python or shell')" "$sr_n"
+    if [ "$sr_kind" != json ]; then
+      sr_n=$(find . -type f \( -name 'test_*' -o -name '*_test.py' -o -name conftest.py \) -not -path '*/tests/*' -not -path '*/test/*' -not -path '*/node_modules/*' -not -path '*/_local/*' -not -path '*/secrets/*' -not -path '*/.venv/*' -not -path '*/venv/*' -print 2>/dev/null | wc -l | tr -d ' ')
+      printf '  test files outside tests folders (test_*, *_test.py, conftest.py): %s\n' "$sr_n"
+    fi
+  )
+}
 self_test() {
   st_quiet=${1:-0}
   p1=qzvx; p2=kwlp; p3=jrmn
@@ -1156,36 +1186,6 @@ make_list() { # make_list OUTFILE ROOT KIND   KIND: code | json | py | pyall | n
       json) find . -maxdepth 4 -type d \( $PRUNE \) -prune -o -type f -name '*.json' ! -name "*${NL}*" -print ;;
       named:*) find . -maxdepth 4 -type d \( $PRUNE \) -prune -o -type f -name "${ml_kind#named:}" ! -name "*${NL}*" -print ;;
     esac ) 2>/dev/null | sort | RT=$ml_root awk '{ sub(/^\.\//, ""); print ENVIRON["RT"] "/" $0 }' > "$ml_out"
-}
-# skip_report ROOT LABEL KIND(code|json): print the count of EVERY category of file the lists leave out,
-# so a silent drop cannot hide (a "0 matching lines" can then be told apart from "never looked").
-skip_report() {
-  sr_root=$1; sr_label=$2; sr_kind=$3
-  [ -d "$sr_root" ] || { printf 'left out of "%s": folder %s not found\n' "$sr_label" "$sr_root"; return; }
-  ( [ -n "$sr_root" ] && cd "$sr_root" || exit 0
-    if [ "$sr_kind" = json ]; then NM='-name *.json'; else NM='-name *.py -o -name *.sh'; fi
-    set -f
-    printf 'left out of "%s" (%s) and NOT searched, file counts by reason:\n' "$sr_label" "$sr_root"
-    sr_n=$(find . -mindepth 5 -type f \( $NM \) -print 2>/dev/null | wc -l | tr -d ' ')
-    printf '  path of 5 or more parts (a/b/c/d/file; the search goes at most 3 sub-folders down): %s\n' "$sr_n"
-    sr_n=$(find . -type l -print 2>/dev/null | wc -l | tr -d ' ')
-    printf '  symbolic links of any kind (find does not follow them): %s\n' "$sr_n"
-    sr_n=$(find . 2>&1 >/dev/null | grep -c -i 'permission denied')
-    printf '  folders or files the find command could not open (permission denied): %s\n' "$sr_n"
-    sr_n=$(find . -name "*${NL}*" -print0 2>/dev/null | tr -cd '\000' | wc -c | tr -d ' ')
-    printf '  names with a line break (cannot be listed safely): %s\n' "$sr_n"
-    for sr_d in node_modules _local secrets .venv venv __pycache__ tests test; do
-      if [ "$sr_kind" = json ] && { [ "$sr_d" = tests ] || [ "$sr_d" = test ]; }; then continue; fi
-      sr_n=$(find . -path "*/$sr_d/*" -type f \( $NM \) -print 2>/dev/null | wc -l | tr -d ' ')
-      printf '  files inside folders called %s, count %s\n' "$sr_d" "$sr_n"
-    done
-    sr_n=$(find . -type f ! \( $NM \) -print 2>/dev/null | wc -l | tr -d ' ')
-    printf '  files of other types (not searched at all, whatever their content or name; this one number is every file that is not a %s file): %s\n' "$( [ "$sr_kind" = json ] && echo json || echo 'python or shell')" "$sr_n"
-    if [ "$sr_kind" != json ]; then
-      sr_n=$(find . -type f \( -name 'test_*' -o -name '*_test.py' -o -name conftest.py \) -not -path '*/tests/*' -not -path '*/test/*' -not -path '*/node_modules/*' -not -path '*/_local/*' -not -path '*/secrets/*' -not -path '*/.venv/*' -not -path '*/venv/*' -print 2>/dev/null | wc -l | tr -d ' ')
-      printf '  test files outside tests folders (test_*, *_test.py, conftest.py): %s\n' "$sr_n"
-    fi
-  )
 }
 # local_flow_report: flows under _local are NOT searched line by line and NEVER printed (a literal-substituted copy may hold real
 # values in plain JSON fields); only the counts are shown (AGENT-SCOPE line 23, BL-wp6-G1: the real take needs such a local copy).
