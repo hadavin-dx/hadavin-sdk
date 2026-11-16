@@ -102,7 +102,7 @@ index b580c24..6366a2f 100644
 +    fn = getattr(ctx.app.audit, "reconcile", None)
 +    if fn is None:
 +        raise RuntimeError("the audit kind has no reconcile: its outbox is never drained")
-+    _LOG.info("audit_reconcile drained=%d", fn())
++    _LOG.info("audit_reconcile drained=%d", int(fn()))  # int(): a kind that returns None fails the step, not the log line
 +
 +
  def purge_evidence(ctx: TickContext) -> None:
@@ -121,7 +121,7 @@ new file mode 100644
 index 0000000..1bdf91c
 --- /dev/null
 +++ b/tests/test_a01_audit_reconcile.py
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,123 @@
 +"""Audit A-01: nothing drained the audit outbox, and a failed audit write left no log line.
 +
 +The tick step `audit_reconcile` calls the audit kind's `reconcile` and logs how many events it wrote. The chain
@@ -204,6 +204,7 @@ index 0000000..1bdf91c
 +        saved is not None and saved.last_ok_at is None
 +    )  # never a green row for a step that drained nothing
 +    assert "no reconcile" in saved.last_error
++    assert "step=audit_reconcile error_kind=RuntimeError" in caplog.text  # the failure is logged, not only stored
 +
 +
 +def test_a_failed_outcome_write_logs_type_and_id_but_never_the_body(caplog):

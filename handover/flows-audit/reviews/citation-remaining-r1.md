@@ -1,0 +1,6 @@
+# Citation check of remaining CLAIMS-TABLE rows (agent abfa80a, egm-codebase-details); saved by flows-audit, condensed; reviewer words unverified. Static.
+Checked: lane A A-051..A-101 (50 rows), lane B B-001..B-226, X-1..X-4, Table 1 rows 1-40 plus 78, 79, 85-87. 0 Blockers, 2 Majors.
+M1 B-196 (CT:948) graded UNSUPPORTED on "NO MATCHING ROW" in PUB:30: absence, so UNTRACED (or cite a contradicting line, e.g. PUB:25 "5 of 5 / REPRODUCED" if it covers K1). Same word in verdict-list row 73.
+M2 A-074 (CT:586, P:125) "SUPPORTED ONLY BY RELAYED NUMBER" but A-010 grades the same claim OVERSTATED and says T7b/HB171 reading "is not a number". Regrade OVERSTATED; relayed basis after "second verdict, not counted:". Siblings B-086 (:798), B-126 (:858), B-140 (:872) graded RELAYED-ONLY; A-010 (:520) says they are "the same grade" (false). Regrade or fix the sentence.
+Nits: X-3 (:1014) cites AGENT-SCOPE:16, quote is at :15; B-005 (:709) SUPPORTED but its note says n8n source not checkable (fits UNTRACED/OVERSTATED); B-114 129 not 130 correct.
+Could not check: desk-repo rows (B-016..B-019, B-049, B-064..B-069, B-088..B-092, B-158, desk side of B-183/B-189/B-204); relayed raw files not in checkout; RW strings not compared; Table 1 rows 85, 87, B-191 not fully; verdict counts not recounted by script.
