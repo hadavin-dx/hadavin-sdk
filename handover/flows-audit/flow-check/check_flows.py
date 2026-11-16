@@ -851,7 +851,12 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             silent.append(nm)
         if short in EXTERNAL and not n.get("retryOnFail"):
             noretry.append(nm)
-        if n.get("disabled") is True:
+        if n.get("disabled") is True and short in EXTERNAL:
+            fail(
+                tag,
+                f"node {nm} ({short}) is an external-call node and is disabled: n8n passes data through it and it sends and writes nothing, so the flow would look fine and do no work (round 9, review f8-design-r3 M1)",
+            )
+        elif n.get("disabled") is True:
             warn(
                 tag,
                 f"node {nm} is disabled (n8n passes data through it; it sends and writes nothing)",

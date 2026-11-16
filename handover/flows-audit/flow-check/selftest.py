@@ -292,8 +292,29 @@ def g_notrig(j, d):
             n["type"] = "n8n-nodes-base.noOp"
 
 
+EXTERNAL_SHORT = ("postgres", "httpRequest", "hubspot", "emailSend", "executeWorkflow")
+
+
 def g_disabled(j, d):
-    first_nt(j)["disabled"] = True
+    """a disabled node that is NOT an external call stays a WARN"""
+    for x in j["nodes"]:
+        if (
+            x["name"] not in trig(j)
+            and x["type"] != "n8n-nodes-base.stickyNote"
+            and x["type"].split(".")[-1] not in EXTERNAL_SHORT
+        ):
+            x["disabled"] = True
+            return None
+    return SKIP
+
+
+def g_disabled_external(j, d):
+    """round 9 (review f8-design-r3 M1): a disabled external-call node (mail, database, HTTP, CRM, sub-workflow) is a FAIL"""
+    x = first_of(j, "emailSend") or first_of(j, "postgres") or first_of(j, "executeWorkflow")
+    if x is None:
+        return SKIP
+    x["disabled"] = True
+    return None
 
 
 def g_badretry(j, d):
@@ -1223,6 +1244,14 @@ G = [
         [],
     ),
     ("disabled_node", g_disabled, "WARN", "is disabled", (), []),
+    (
+        "disabled_external_call_node_is_fail",
+        g_disabled_external,
+        "FAIL",
+        "is an external-call node and is disabled",
+        (),
+        [],
+    ),
     (
         "read_node_not_upstream",
         g_notup,

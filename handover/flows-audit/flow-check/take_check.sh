@@ -10,18 +10,27 @@
 # The recovery flow (exact file name mf-recovery.json, nothing else) keeps run saving off on purpose: it fires every 30 s and the one video makes no recovery claim (decision 4). It is printed as an ACCEPTED line, not a WARN. No blanket accept exists in this script.
 # film-v5 is NOT FOR THE TAKE and is not checked here.
 # The table definition the take needs is demo/n8n-flows-v4/mf_leads.sql (lead decision, order Q16). It is looked up at that exact path only (no search for a file of the same name elsewhere).
+# Round 9 (review f8-design-r3, 4 Majors): (M1) the top block and the FINAL line print RESULT and the WARN count; the set of WARN lines is pinned in take-warns.pin (folder paths removed) and ANY change is exit 4; (M2) every flow except mf-recovery.json must have run saving exactly all / all / True (a missing settings block, a missing key or an odd word is exit 4, not only "none"/false); (M3) a key check that is ABSENT is exit 4, and when both entry flows have it the checker's F-002 content check (--patch-checks F002) runs on them; (M4) the patched copy is detected by the KeyOk node: the node:connection count 15:14 is then expected without any environment variable (12:11 for an unpatched file).
+# Usage with a new pin file (after a person read and accepted a changed WARN set): bash take_check.sh --write-warn-pin FILE   (writes the set and then exits like a normal run; the pin used is take-warns.pin next to this script, or TAKE_CHECK_WARN_PIN).
 HERE=$(cd "$(dirname "$0")" && pwd)
+WRITEPIN=""
+if [ "${1:-}" = "--write-warn-pin" ]; then WRITEPIN="${2:-}"; [ -n "$WRITEPIN" ] || { echo "usage: take_check.sh [--write-warn-pin FILE]"; exit 2; }; elif [ $# -gt 0 ]; then echo "usage: take_check.sh [--write-warn-pin FILE]"; exit 2; fi
 cd "$HERE/../.." || exit 3   # the handover folder: paths printed below are short and relative to it
 D="${TAKE_CHECK_FLOWS:-demo/n8n-flows-real-v5}"   # TAKE_CHECK_FLOWS and TAKE_CHECK_DDL (absolute paths) exist only so run_all.sh can test the failure exits; the take uses the defaults. TAKE_CHECK_CK (another checker script) and TAKE_CHECK_FORM_EXPECT exist only for selftest.py and run_all.sh
 OUT=$(mktemp /tmp/take-check.XXXXXX) || exit 3
 trap 'rm -f -- "$OUT"' EXIT
 DDL="${TAKE_CHECK_DDL:-demo/n8n-flows-v4/mf_leads.sql}"
-FORMCNT="${TAKE_CHECK_FORM_EXPECT:-12:11}"   # node:connection count of mf-form and mf-hook; run_all.sh sets 15:14 for the patched copy (F-002 adds 3 nodes); the take uses the default only for the unpatched files
+PIN="${TAKE_CHECK_WARN_PIN:-$HERE/take-warns.pin}"   # the expected set of WARN lines for the take (path prefix removed); TAKE_CHECK_WARN_PIN exists only so selftest and run_all.sh can test the pin
+has_keyok() { python3 -I -c 'import json,sys; sys.exit(0 if any(n.get("name") == "KeyOk" for n in json.load(open(sys.argv[1], encoding="utf-8"))["nodes"]) else 1)' "$1" 2>/dev/null; }   # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
+# node:connection count of mf-form and mf-hook, detected per file: 15:14 when the file holds the F-002 key check (it adds 3 nodes), else 12:11. TAKE_CHECK_FORM_EXPECT (test hook) overrides both.
+FORMCNT_FORM="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-form.json" && echo 15:14 || echo 12:11)}"
+FORMCNT_HOOK="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-hook.json" && echo 15:14 || echo 12:11)}"
+PCOPT=(); if has_keyok "$D/mf-form.json" && has_keyok "$D/mf-hook.json"; then PCOPT=(--patch-checks F002); fi   # both entry flows carry the key check: also check its content (names, links, condition); only F002 here, because F-008 is judged by the exact settings check below
 DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
-python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$D" "${DDLOPT[@]}" \
+python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$D" "${DDLOPT[@]}" "${PCOPT[@]}" \
   --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 \
   --accept-no-save mf-recovery.json \
-  --expect mf-form.json="$FORMCNT" --expect mf-hook.json="$FORMCNT" --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 \
+  --expect mf-form.json="$FORMCNT_FORM" --expect mf-hook.json="$FORMCNT_HOOK" --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 \
   --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token \
   --quiet-info > "$OUT" 2>&1
 RC=$?
@@ -65,23 +74,89 @@ if grep -q -E "^WARN .*run-saving settings|^WARN accept-no-save" "$OUT"; then
   echo "!!! A FLOW THAT THE TAKE USES HAS RUN SAVING OFF (or the recorded accept for the recovery flow excused nothing): the run list in n8n stays empty for it. Apply patch F-008 to the flows first. This script exits 4."
   PROBLEMS+=("run saving off")
 fi
+# round 9 (M2): the check above only sees the words "none" and false. Every flow except the accepted recovery flow must say exactly all / all / True (a missing settings block, a missing key or an odd word such as "off" also keeps the run list empty or undefined).
+SAVEBAD=$(python3 -I - "$D" <<'PYEOF'
+import glob, json, os, sys
+files = sorted(glob.glob(os.path.join(sys.argv[1], "*.json")))
+if not files:
+    print("no flow file found")
+for p in files:
+    fn = os.path.basename(p)
+    if fn == "mf-recovery.json":
+        continue
+    try:
+        st = json.load(open(p, encoding="utf-8")).get("settings")
+    except (OSError, ValueError, AttributeError):
+        print(f"{fn}: file or settings block unreadable")
+        continue
+    st = st if isinstance(st, dict) else {}
+    got = (st.get("saveDataSuccessExecution"), st.get("saveDataErrorExecution"), st.get("saveManualExecutions"))
+    if not (got[0] == "all" and got[1] == "all" and got[2] is True):
+        print(f"{fn}: saveDataSuccessExecution={got[0]!r} saveDataErrorExecution={got[1]!r} saveManualExecutions={got[2]!r}")
+PYEOF
+)
+if [ -n "$SAVEBAD" ]; then
+  echo "!!! RUN SAVING IS NOT EXACTLY all / all / True (successful runs, failed runs, runs started by hand) ON EVERY FLOW EXCEPT THE RECOVERY FLOW: the run list in n8n would be empty or undefined. Only the recovery flow (mf-recovery.json, ACCEPTED below) may differ. This script exits 4."
+  printf '%s\n' "$SAVEBAD" | sed 's/^/    /'
+  PROBLEMS+=("run saving not all/all/True")
+fi
+if [ -f "$D/mf-recovery.json" ] && ! grep -q -F "ACCEPTED: recovery flow not part of the take (decision 4)" "$OUT"; then
+  echo "!!! THE RECOVERY FLOW IS NOT PRINTED AS ACCEPTED (line 'ACCEPTED: recovery flow not part of the take (decision 4)' is missing): its run saving is not an excused decision. This script exits 4."
+  PROBLEMS+=("recovery flow not accepted")
+fi
 echo "--- (3) Values that must be filled in before import: mail addresses and credential ids ---"
 awk '/^(PLACEHOLDERS IN NODE SETTINGS|CREDENTIAL IDS STILL PLACEHOLDERS)/ {p=1; print; next} p && /^  - / {print; next} {p=0}' "$OUT"
 echo "--- (4) Does each of the two entry flows contain the F-002 key check (a node named KeyOk)? ---"
 NOKEY=0
 for f in mf-form.json mf-hook.json; do
   # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
-  if python3 -I -c 'import json,sys; sys.exit(0 if any(n.get("name") == "KeyOk" for n in json.load(open(sys.argv[1], encoding="utf-8"))["nodes"]) else 1)' "$D/$f" 2>/dev/null; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially)"; NOKEY=$((NOKEY+1)); fi
+  if has_keyok "$D/$f"; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially). The take needs F-002: this script exits 4."; NOKEY=$((NOKEY+1)); fi
 done
+if [ "$NOKEY" -gt 0 ]; then PROBLEMS+=("key check absent in $NOKEY entry flow(s)"); fi
 echo "--- (5) Open decisions and environment variables ---"
 grep -h -E '^(OPEN LEAD DECISIONS|No static tool|IF branches accepted)' "$OUT"
 awk '/^STEPS THAT READ ENVIRONMENT VARIABLES/ {p=1; print; next} p && /^  - / {print; next} {p=0}' "$OUT"
 echo "If n8n on the filming machine blocks environment-variable access inside steps, those steps stop working. No file check can see that setting. To see which steps would break, run the checker with --block-env-access (exit 1 expected today). exit 0 does NOT mean authentication was checked."
+RESULTLINE=$(grep -h -E '^RESULT: ' "$OUT" | head -n 1)
+WARNN=$(sed -n 's/^RESULT: [0-9][0-9]* FAIL, \([0-9][0-9]*\) WARN.*/\1/p' "$OUT" | head -n 1)
+UNVN=$(grep -c -F "[n8n rule UNVERIFIED" "$OUT")
+NORM=$(mktemp /tmp/take-warns.XXXXXX) || exit 3
+trap 'rm -f -- "$OUT" "$NORM"' EXIT
+python3 -I - "$OUT" "$D" > "$NORM" <<'PYEOF'
+import sys
+out, d = sys.argv[1], sys.argv[2]
+lines = [l.rstrip("\n").replace(d + "/", "") for l in open(out, encoding="utf-8", errors="replace") if l.startswith("WARN")]
+print("\n".join(sorted(lines)))
+PYEOF
+if [ -n "$WRITEPIN" ]; then
+  { echo "# expected WARN lines of the take check (folder path removed, sorted); a person read each one; written by take_check.sh --write-warn-pin"; cat "$NORM"; } > "$WRITEPIN" || exit 3
+  echo "WARN set written to $WRITEPIN ($(grep -c . "$NORM") lines)."
+fi
+echo "--- (6) Checker result and the WARN baseline ---"
+echo "${RESULTLINE:-RESULT line missing}. WARN lines that rest on an n8n rule nobody verified: $UNVN."
+if [ -z "$WARNN" ]; then
+  echo "!!! THE CHECKER'S RESULT LINE IS MISSING: the WARN count is unknown. This script exits 4."
+  PROBLEMS+=("result line missing")
+elif [ ! -f "$PIN" ]; then
+  echo "!!! THE WARN BASELINE FILE IS MISSING ($PIN): a new WARN (for example a disabled node, an unwired error output) could not be seen. This script exits 4."
+  PROBLEMS+=("warn pin missing")
+else
+  grep -v -E '^#' "$PIN" | grep . | sort > "$NORM.pin"
+  grep . "$NORM" > "$NORM.now"
+  if cmp -s "$NORM.pin" "$NORM.now"; then
+    echo "WARN set equals the pinned set ($(grep -c . "$NORM.now") lines in take-warns.pin): no new and no vanished WARN."
+  else
+    echo "!!! THE WARN SET CHANGED against take-warns.pin (+ new, - gone). Read each line; if all are intended, write a new pin with: bash take_check.sh --write-warn-pin FILE. This script exits 4."
+    diff "$NORM.pin" "$NORM.now" | grep -E '^[<>]' | sed -e 's/^> /  + /' -e 's/^< /  - /' | cut -c1-260
+    PROBLEMS+=("warn set changed")
+  fi
+  rm -f -- "$NORM.pin" "$NORM.now"
+fi
 echo "=== end of top block; full checker output follows ==="
 cat "$OUT"
 KNOWN=$(sed -n 's/^Known open problems: \([0-9][0-9]*\).*/\1/p' "$OUT" | head -n 1)
-OPEN=$(( ${KNOWN:-0} + NOKEY + 1 + ${#PROBLEMS[@]} ))   # the checker's own count, files without KeyOk, the psql gate (always a person's step), what this script found wrong
+OPEN=$(( ${KNOWN:-0} + 1 + ${#PROBLEMS[@]} ))   # the checker's own count, the psql gate (always a person's step), what this script found wrong (a missing key check is one of those)
 if [ "$RC" -eq 0 ] && [ ${#PROBLEMS[@]} -gt 0 ]; then RC=4; fi
-echo "Open items counted: checker known open problems ${KNOWN:-0} + files without the key check $NOKEY + psql gate 1 + problems of this script ${#PROBLEMS[@]}."
-echo "FINAL: take_check exit status $RC. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. (1 = fault in a file, 4 = table check missing or failed.) This is not a pass for filming."
+echo "Open items counted: checker known open problems ${KNOWN:-0} + psql gate 1 + problems of this script ${#PROBLEMS[@]} (entry flows without the key check: $NOKEY, counted inside the problems)."
+echo "FINAL: take_check exit status $RC. ${RESULTLINE:-RESULT line missing}. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. (1 = fault in a file, 4 = table check missing or failed.) This is not a pass for filming."
 exit $RC
