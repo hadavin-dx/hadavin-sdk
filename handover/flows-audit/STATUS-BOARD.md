@@ -1,19 +1,19 @@
-UPDATED_UTC: 2026-11-16T11:39:26Z
+UPDATED_UTC: 2026-11-16T11:40:15Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 10
-PERCENT: 60
-AGENTS_RUNNING: 8
-CAPACITY: 0.30 load of 4 cores, mem 0/15 GB, RAM 890/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.9G /tmp/claude-0 , agents 8 (light+heavy per list)
+PERCENT: 62
+AGENTS_RUNNING: 7
+CAPACITY: 0.82 load of 4 cores, mem 0/15 GB, RAM 915/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.9G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
 FAILED: F8 fixer says ruff format failure did not reproduce; not yet confirmed by evidence runner (a5a7e77 running)
-NEXT: F8 r10 fixed (unverified), RUNBOOK written, evidence runner + 2 RUNBOOK reviewers + F8 reviewer started
-PUSHED_UTC: 2026-11-16T11:39:26Z
+NEXT: wait for 7 agents; verify F8 evidence, RUNBOOK reviews, RW/CT + owner-sheet fixes
+PUSHED_UTC: 2026-11-16T11:40:15Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -37,7 +37,6 @@ PUSHED_UTC: 2026-11-16T11:39:26Z
 | a488a19 | citation check CHECKLIST | sonnet | TAKE-CHECKLIST cites | 11:41 | - | 50 | RUNNING | inline |
 | a8b8781 | stranger read RUNBOOK | sonnet | RUNBOOK | 11:50 | - | 5 | RUNNING | inline |
 | af37b44 | readiness RUNBOOK | sonnet | RUNBOOK cmds | 11:50 | - | 5 | RUNNING | inline |
-| a9d7d4d | env-var form fixer | sonnet | CHECKLIST/FIX-PLAN | 11:50 | - | 5 | RUNNING | fix-envvar.md |
 | a5a7e77 | EVIDENCE RUNNER F8 r10 | sonnet | flow-check rerun | 11:52 | - | 5 | RUNNING | flow-check/evidence-r10.md |
 | a3330df | review F8 r10 | sonnet | flow-check code | 11:52 | - | 5 | RUNNING | inline |
 
