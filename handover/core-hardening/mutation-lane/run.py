@@ -337,7 +337,10 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
     if not os.path.lexists(marker):
-        return True, f"no marker in {STATE}: nothing to restore (a run that used another TMPDIR keeps its marker there)"
+        return (
+            True,
+            f"no marker in {STATE}: nothing to restore (a run that used another TMPDIR keeps its marker there)",
+        )
     m = json.loads(read_state(marker))
     if m.get("root") != str(root):
         raise Refused(f"marker is for another root ({m.get('root')!r}): refused")
@@ -417,7 +420,9 @@ def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -
         except subprocess.TimeoutExpired as e:
             raise Refused(f"import check of {mod} timed out after 300 s") from e
         if cp.returncode != 0:
-            raise Refused(f"import check: `import {mod}` failed (rc {cp.returncode}): {text_of(cp)[-300:]}")
+            raise Refused(
+                f"import check: `import {mod}` failed (rc {cp.returncode}): {text_of(cp)[-300:]}"
+            )
         got = cp.stdout.decode().strip().splitlines()[-1] if cp.stdout.strip() else ""
         want = (root / rel).resolve()
         if not got or pathlib.Path(got).resolve() != want:
@@ -454,7 +459,7 @@ def run_tests(
     env = test_env(pythonpath)
     cmd = [str(py), "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line", "-rf", *tests]
     # one process group, so a timeout or a signal can stop all of it
-    proc = subprocess.Popen(  # noqa: S603 - fixed argument list, no shell
+    proc = subprocess.Popen(
         cmd,
         cwd=root,
         env=env,
@@ -466,7 +471,7 @@ def run_tests(
     try:
         if on_start:  # inside the try: a failure here must still stop the group (review 4 M2)
             on_start(proc.pid)
-        SIG.allow = SIG.critical  # only now may a signal unwind us; outside a plant it always may
+        SIG.allow = True  # only now may a signal unwind us while a mutant is planted
         deliver_pending()  # a signal that came earlier (during the planting) is delivered here
         try:
             out, _ = proc.communicate(timeout=timeout)
@@ -477,7 +482,9 @@ def run_tests(
             result = (cmd, None, f"TIMEOUT after {timeout} s")
         SIG.allow = False
         return result
-    except BaseException:  # a signal while the tests run, or a failure: stop the group, let the caller restore
+    except (
+        BaseException
+    ):  # a signal while the tests run, or a failure: stop the group, let the caller restore
         SIG.allow = False
         stop_group(proc.pid)  # a group that is already gone must not hide the signal
         reap(proc)
@@ -503,11 +510,11 @@ def one(a, tests, m, results, ref):
         raise Refused(
             f"{m['file']} differs from the git archive reference (sha256 {sha256(orig)[:12]} vs {sha256(ref_bytes)[:12]}): refusing"
         )
-    STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
+    ensure_state()
     key = key_for(root)
     backup = STATE / f"{key}.backup"
     marker = STATE / f"{key}.planted.json"
-    n = orig.decode().count(m["old"])
+    n = decode_text(orig, m["file"]).count(m["old"])
     if n != 1:
         verdict, out, cmd, rc = f"COULD-NOT-PLANT (old text occurs {n} times)", "", [], None
         restore = "no change made"
@@ -521,32 +528,41 @@ def one(a, tests, m, results, ref):
         }
 
         def note_group(pgid: int) -> None:
-            marker.write_text(json.dumps({**info, "pgid": pgid}))
+            write_state(marker, json.dumps({**info, "pgid": pgid}).encode())
 
+        # From here to the end of the restore a signal never unwinds the run except while the tests are
+        # awaited (see SigState): a second signal cannot cut the restore short.
+        SIG.critical = True
         try:
-            backup.write_bytes(orig)
-            marker.write_text(json.dumps(info))
-            p.write_bytes(orig.decode().replace(m["old"], m["new"], 1).encode())
-            cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
+            try:
+                write_state(backup, orig)
+                write_state(marker, json.dumps(info).encode())
+                planted = decode_text(orig, m["file"]).replace(m["old"], m["new"], 1).encode()
+                write_target(p, planted)
+                cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
+            finally:
+                try:
+                    p2 = safe_rel(root, m["file"], f"mutant {m['id']} file (before restore)")
+                    write_target(p2, orig)
+                    back = p2.read_bytes()
+                    same_hash = back == orig and back == ref_bytes
+                except (Refused, OSError) as e:
+                    print("RESTORE ERROR:", e, file=sys.stderr)
+                    same_hash = False
+                if not same_hash:
+                    print(
+                        "RESTORE FAILED",
+                        m["id"],
+                        "(marker and backup kept; run --restore)",
+                        file=sys.stderr,
+                    )
+                    sys.exit(EXIT_RESTORE_FAILED)
+                # verified identical: no marker may stay, even on an error
+                marker.unlink(missing_ok=True)
+                backup.unlink(missing_ok=True)
         finally:
-            # a second signal must not cut the restore short: hold signals until it is verified
-            signal.pthread_sigmask(signal.SIG_BLOCK, HANDLED_SIGNALS)
-            p.write_bytes(orig)
-            back = p.read_bytes()
-            same_hash = back == orig and back == ref_bytes
-            if not same_hash:
-                print(
-                    "RESTORE FAILED",
-                    m["id"],
-                    "(marker and backup kept; run --restore)",
-                    file=sys.stderr,
-                )
-                sys.exit(EXIT_RESTORE_FAILED)
-            marker.unlink(
-                missing_ok=True
-            )  # verified identical: no marker may stay, even on an error
-            backup.unlink(missing_ok=True)
-            signal.pthread_sigmask(signal.SIG_UNBLOCK, HANDLED_SIGNALS)
+            SIG.critical = False
+        deliver_pending()  # a signal that arrived during the plant is delivered now, after the restore
         restore = f"saved original == file after restore (byte compare): True; sha256 equals git-archive reference: {same_hash}"
         verdict = (
             "TIMEOUT"
@@ -562,7 +578,8 @@ def one(a, tests, m, results, ref):
         f"MUTANT {a.prefix}-{m['id']}  VERDICT: {verdict}\n"
         f"description: {m.get('desc', '')}\n"
         f"base commit: {a.sha}   root: {a.root}   file: {m['file']}\n"
-        f"command: {' '.join(cmd)}   (cwd={a.root}; environment: PATH, HOME, PYTHONDONTWRITEBYTECODE only)\n"
+        f"command: {' '.join(cmd)}   (cwd={a.root}; environment: {', '.join(sorted(test_env(a.pythonpath)))} only)\n"
+        f"import check: {a.imports.get(m['file'], 'not run')}\n"
         f"rc: {rc}\n"
         f"restore check: {restore}\n"
         f"pytest summary line: {last}\n"
@@ -601,6 +618,8 @@ def load_mutants(a) -> list[dict]:
         if not NAME_RE.fullmatch(m["id"]) or m["id"] in seen:
             raise Refused(f"mutant id is not a plain unique name: {m['id']!r}")
         seen.add(m["id"])
+        if m["old"] == m["new"] or not m["old"]:
+            raise Refused(f"mutant {m['id']}: old text is empty or equal to new text (a no-op)")
     return ms
 
 
@@ -659,6 +678,11 @@ def main():
         help="path (relative to root) of a file that may exist in root beyond the reference, e.g. proof tests; repeatable",
     )
     ap.add_argument(
+        "--skip-import-check",
+        action="store_true",
+        help="do NOT check that the tests import the target files from --root (recorded in every raw file)",
+    )
+    ap.add_argument(
         "--restore",
         action="store_true",
         help="restore a file left planted by a killed run, then exit",
@@ -674,28 +698,34 @@ def main():
         ap.error("--sha, --prefix and --raw are required")
     for signum in HANDLED_SIGNALS:
         signal.signal(signum, _term)
-    STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
     marker = STATE / f"{key_for(root)}.planted.json"
     tmpref = pathlib.Path(tempfile.mkdtemp(prefix="mutation-ref-"))
     try:
-        with (STATE / f"{key_for(root)}.lock").open("w") as lock:
+        ensure_state()
+        lock_fd = os.open(
+            STATE / f"{key_for(root)}.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600
+        )
+        with os.fdopen(lock_fd, "w") as lock:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except OSError as e:
                 raise Refused(
                     f"another run holds the lock for {root}; two runs on one tree would plant over each other"
                 ) from e
+            refuse_real_repo(
+                root, a.repo, a.real_repo
+            )  # --restore too: it writes into --root (review 4 M4)
             if a.restore:
                 ok, text = restore_from_marker(root)
                 print(text)
                 sys.exit(0 if ok else EXIT_RESTORE_FAILED)
-            refuse_real_repo(root, a.repo, a.real_repo)
+            check_test_args(tests)
             if not NAME_RE.fullmatch(a.prefix):
                 raise Refused(f"--prefix is not a plain name: {a.prefix!r}")
             for x in a.extra:
                 safe_rel(root, x, "--extra", must_exist=False)
-            if marker.exists():
-                m = json.loads(marker.read_text())
+            if os.path.lexists(marker):
+                m = json.loads(read_state(marker))
                 raise Refused(
                     f"a mutant ({m['mutant']}) is still planted in {m['file']} from an earlier run that was killed. "
                     f"Restore with: python3 {sys.argv[0]} --root {root} --restore   "
@@ -713,13 +743,18 @@ def main():
             for m in ms:  # every path is checked before anything is planted
                 safe_rel(root, m["file"], f"mutant {m['id']} file")
                 safe_rel(ref, m["file"], f"mutant {m['id']} reference file")
+            a.imports = (
+                {m["file"]: "SKIPPED by --skip-import-check" for m in ms}
+                if a.skip_import_check
+                else import_check(root, a.pythonpath, [m["file"] for m in ms])
+            )
             pathlib.Path(a.raw).mkdir(parents=True, exist_ok=True)
             results = []
             if a.control:
                 cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout)
                 last, _ = summary(out)
                 (pathlib.Path(a.raw) / f"{a.prefix}-baseline.txt").write_text(
-                    f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nrc: {rc}\nsummary: {last}\n\n{out}"
+                    f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nenvironment: {', '.join(sorted(test_env(a.pythonpath)))} only\nimport check: {a.imports}\nrc: {rc}\nsummary: {last}\n\n{out}"
                 )
                 print("baseline", rc, last)
             for m in ms:
@@ -740,10 +775,12 @@ def main():
         sys.exit(EXIT_REFUSED)
     except KeyboardInterrupt as e:
         signum = e.args[0] if e.args and isinstance(e.args[0], int) else int(signal.SIGINT)
+        # a run restores and removes its own marker before the signal leaves one(); a marker found here
+        # is from another run: never touch it from a signal handler (review 4 nit)
         state = (
-            restore_from_marker(root)[1]
-            if marker.exists()
-            else "planting step restored the file and removed the marker"
+            f"a marker exists ({marker}); not touched here, use --restore"
+            if os.path.lexists(marker)
+            else "no mutant planted, no marker"
         )
         print(f"INTERRUPTED (signal {signum}): {state}", file=sys.stderr)
         sys.exit(128 + signum)

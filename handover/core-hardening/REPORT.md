@@ -1,3 +1,6 @@
+# ORDER 024 (2026-11-16): ORDER 023 cancelled, nothing to undo
+ORDER 023's sed was never run (the permission classifier denied it and I did not work around it). Checked: the skill files show 6 claude-opus-5-5, 8 claude-sonnet-5-5, 0 fable. Nothing undone, nothing changed. Continuing lanes.
+
 # ORDER 023 (model switch for the three EGM planning skills): NOT APPLIED (2026-11-16 ~10:13Z, core-hardening)
 - What I tried: the one command in ORDERS.md (`grep -rl "model: claude-opus-5-5" ~/.claude/plugins | xargs sed -i ...`). Before running it, `grep -rl` showed exactly six matching files: egm-brainstorm, egm-draft, egm-resolve SKILL.md, each in plugins/cache/egm/egm/0.1.1/skills/ and plugins/marketplaces/egm/skills/. All other skills read claude-sonnet-5-5.
 - Result: the Bash call was DENIED by the session's permission classifier (reason given: "Destructive or Unwanted Actions"; the command edits files outside this repository, under ~/.claude/plugins). Nothing was changed. I did not try another way to edit those files, because the denial looks deliberate.
