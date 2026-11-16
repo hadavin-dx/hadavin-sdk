@@ -31,3 +31,4 @@ Edited only OWNER-STEPS-q16-rows.md (plus this log). Nothing run except the secr
 ## Commands
 python3 -I tools/check_secrets.py (from handover/flows-audit): see the report below.
 PASS 0 hits in 1727 files
+- main session after citation check abc2b0a (reviews/citations-ownersteps-r8 pending save): fixed line 93 (Q25 item 1), line 28 (by about 08:00, lead's estimate), line 208 (ORDERS Q22 item 1, line 135). STILL OPEN: lines 20, 35, 36, 38, 42, 109 carry times the fixer derived (07:30 delete message 1, 08:00 fallback reply, Row 4 07:00-07:30, delete message 2 after 11:00Z) without saying so; IST missing on 35 and 109. Next: fixer after the stranger read abf390c returns.
