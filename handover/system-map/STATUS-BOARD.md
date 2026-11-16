@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:26:52Z
-PUSHED_UTC: 2026-11-16T14:26:52Z
+UPDATED_UTC: 2026-11-16T14:42:35Z
+PUSHED_UTC: 2026-11-16T14:42:35Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 (the minimum is 8)
+AGENTS_RUNNING: 1 of 8 (from ListAgents at 2026-11-16T14:42:35Z); reasons for the 7 missing slots are in the CAPACITY line under AGENTS
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1389 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1545. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,14 +43,14 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:42:10Z | PUSHED_UTC: 2026-11-16T14:42:10Z
-| id | purpose | state |
-|---|---|---|
-| (two cold readers just started: GLOSSARY.md and not-checked-r2.md; ids in the session list) | read one page cold | running |
-CAPACITY: 2 of 8. Missing slots: pages are edited right after reading (a mid-edit read is wasted); evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
-NEXT 5: fix L5ac old lines 2-8; fix L5b; fix v5-edits-for-M17; fix ARCHITECTURE-AUDIT-CHECKLIST; fix decision-list-for-lead rows.
+UPDATED_UTC: 2026-11-16T14:42:35Z | PUSHED_UTC: 2026-11-16T14:42:35Z
+| id | purpose | started | state |
+|---|---|---|---|
+| adf3232378230f643 | cold read of work/not-checked-r2.md | 14:42Z | running; check at 14:50Z |
+(closed this turn: ae0a6399495bf4df4 GLOSSARY read, digested 1545; a483fd1e376d07e94 L5ac read, digested 1544; ad6ea7f9cc6e6333f L2 read, digested 1543)
+CAPACITY: 1 of 8. Missing slots (7): the readers I started are on pages I am about to edit, and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit. I start replacements as each fix is saved.
+NEXT 5: fix L5ac old lines 2-8; fix GLOSSARY Majors; fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 
-Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
