@@ -132,6 +132,7 @@ def shape_ok(d, tag):
 # ---------------- F8 additions ----------------
 ONERROR_OK = {None, "stopWorkflow", "continueRegularOutput", "continueErrorOutput"}
 EXTERNAL = ("postgres", "httpRequest", "hubspot", "emailSend", "executeWorkflow")
+CRED_KIND = {"postgres": "postgres", "emailSend": "smtp"}  # credential kind n8n expects on these node types
 CRED_TYPES = ("postgres", "emailSend", "hubspot")  # these always need an attached credential
 # secret shapes are built from parts so this file holds no secret-looking literal (the one allowed literal is the AWS example key)
 AWS_EXAMPLE = "AKIA" + "IOSFODNN7EXAMPLE"
@@ -266,6 +267,8 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         for k, v in (cr or {}).items():
             if not isinstance(v, dict) or not str(v.get("name") or "").strip(): fail(tag, "node %s credential %r has no name" % (nm, k))
             elif not str(v.get("id") or "").strip(): fail(tag, "node %s credential %r has no id (name %r)" % (nm, k, v.get("name")))
+            elif k in OPTS["cred_names"] and v.get("name") != OPTS["cred_names"][k]: fail(tag, "node %s credential %r has name %r, expected %r (--expect-credential)" % (nm, k, v.get("name"), OPTS["cred_names"][k]))
+        if short in CRED_KIND and isinstance(cr, dict) and cr and CRED_KIND[short] not in cr: fail(tag, "node %s (%s) credential kind(s) %s do not include the expected kind %r" % (nm, short, sorted(cr), CRED_KIND[short]))
         secret_scan(n, tag)
         envs = sorted({e for s_ in strings(n.get("parameters", {})) for e in ENVTOK.findall(s_)})
         if envs:
@@ -274,6 +277,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             else: warn(tag, msg + " [run with --block-env-access to make it a FAIL]", known=True)
         if n["type"] == "n8n-nodes-base.webhook":
             au = (n.get("parameters") or {}).get("authentication", "none")
+            if au not in ("none", None, "") and (not isinstance(cr, dict) or not cr): fail(tag, "webhook %s says authentication=%r but the node has no credentials block (the password is not attached)" % (nm, au))
             if au in ("none", None, ""):
                 msg = "webhook %s has no authentication (anyone who knows the address can post)" % nm
                 if OPTS["webhook_auth"]: fail(tag, msg)
@@ -282,6 +286,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             else: webhook_paths(n, nodes, adj, tag)
         elif n["type"] == "n8n-nodes-base.formTrigger":
             au = (n.get("parameters") or {}).get("authentication", "none")
+            if au not in ("none", None, "") and (not isinstance(cr, dict) or not cr): fail(tag, "form trigger %s says authentication=%r but the node has no credentials block (the password is not attached)" % (nm, au))
             if au in ("none", None, ""):
                 msg = "form trigger %s has no authentication setting (anyone who knows the form address can submit; the n8n parameter name is itself %s)" % (nm, UNV)
                 if OPTS["webhook_auth"]: fail(tag, msg)
@@ -322,15 +327,17 @@ def cross_file(dr, files):
     seen = {}
     for fn in files:
         p = os.path.join(dr, fn)
-        try: d = json.load(open(p, encoding="utf-8"))
+        try:
+            with open(p, encoding="utf-8") as fh: d = json.load(fh)
         except Exception: continue
-        for n in d.get("nodes", []) if isinstance(d, dict) else []:
+        for n in d.get("nodes", []) if isinstance(d, dict) and isinstance(d.get("nodes"), list) else []:
             if isinstance(n, dict) and n.get("type") == "n8n-nodes-base.webhook":
-                key = (str((n.get("parameters") or {}).get("httpMethod", "GET")).upper(), str((n.get("parameters") or {}).get("path")))
+                pr = n.get("parameters") if isinstance(n.get("parameters"), dict) else {}   # a wrong shape is reported by shape_ok; here it is only skipped
+                key = (str(pr.get("httpMethod", "GET")).upper(), str(pr.get("path")))
                 if key in seen: fail(dr, "two webhooks share method+path %s: %s and %s" % (key, seen[key], fn))
                 else: seen[key] = fn
                 wid = n.get("webhookId")
-                if wid:
+                if isinstance(wid, str) and wid:
                     if ("id", wid) in seen: fail(dr, "two webhooks share webhookId %r: %s and %s" % (wid, seen[("id", wid)], fn))
                     else: seen[("id", wid)] = fn
 
@@ -392,6 +399,7 @@ def check_flow(d, tag, expect, baseline_d):
                 miss = [i for i in range(normal) if not has(i)]
                 if miss: warn(tag, "SWITCH node %s has unwired output(s) %s (legal in n8n, items on them stop silently)" % (n["name"], miss))
     for n in nodes:
+        if n["type"] == STICKY: continue   # note text is prose, not an expression
         for s in strings(n.get("parameters", {})):
             for m in REF.finditer(s):
                 ref = m.group(1) or m.group(2) or m.group(3) or m.group(4)
@@ -519,19 +527,34 @@ def main(argv):
     while i < len(argv):
         a = argv[i]
         def val():
-            nonlocal i; i += 1; return argv[i]
-        if a == "--expect":
-            try: k, v = val().split("=", 1); n, c = v.split(":"); expect[k] = {"nodes": int(n), "connections": int(c)}
-            except (ValueError, IndexError): print("bad --expect value, want FILE=NODES:CONNS"); return 2
-        elif a == "--expect-json":
-            try: expect.update(json.load(open(val(), encoding="utf-8")))
-            except (OSError, ValueError, IndexError, AttributeError): print("bad --expect-json file"); return 2
-        elif a == "--files": files = val().split(",")  # "all" = every *.json of each DIR
-        elif a == "--baseline": baseline = val()
-        elif a == "--patch-checks": pc = set(val().split(","))
-        elif a == "--diff-base": diffbase = val()
-        elif a == "--allow": allow = [x for x in val().split(",") if x]
-        elif a == "--diff-out": diffout = val()
+            nonlocal i; i += 1
+            if i >= len(argv): raise IndexError(a)
+            return argv[i]
+        try:
+            if a == "--expect":
+                try: k, v = val().split("=", 1); n, c = v.split(":"); expect[k] = {"nodes": int(n), "connections": int(c)}
+                except ValueError: print("usage error: bad --expect value, want FILE=NODES:CONNS"); return 2
+            elif a == "--expect-json":
+                try:
+                    with open(val(), encoding="utf-8") as fh: ej = json.load(fh)
+                    if not isinstance(ej, dict): raise TypeError("not an object")
+                    expect.update(ej)
+                except (OSError, ValueError, TypeError, AttributeError): print("usage error: bad --expect-json file"); return 2
+            elif a == "--expect-credential":
+                try: k, v = val().split("=", 1)
+                except ValueError: print("usage error: bad --expect-credential value, want KIND=NAME (for example postgres=my-credential)"); return 2
+                OPTS["cred_names"][k] = v
+            elif a == "--files": files = val().split(",")  # "all" = every *.json of each DIR
+            elif a == "--baseline": baseline = val()
+            elif a == "--patch-checks": pc = set(x for x in val().split(",") if x)
+            elif a == "--diff-base": diffbase = val()
+            elif a == "--allow": allow = [x for x in val().split(",") if x]
+            elif a == "--diff-out": diffout = val()
+            else: i -= 1; raise LookupError
+        except IndexError: print("usage error: option %s needs a value" % a); return 2
+        except LookupError: i += 1
+        else: i += 1; continue
+        if False: pass
         elif a == "--quiet-info": quiet = True
         elif a == "--require-webhook-auth": OPTS["webhook_auth"] = True
         elif a == "--table": OPTS["table"] = True
