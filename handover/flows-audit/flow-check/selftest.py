@@ -24,6 +24,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import traceback
@@ -174,6 +175,22 @@ def g_aws_example(j, d):
 
 def g_secret_gh(j, d):
     put_note(j, parts("gh", "p_", "a1B2c3D4" * 4))
+
+
+def g_secret_slack10(j, d):
+    put_note(j, parts("xo", "xb-", "1234567890"))  # exactly 10 characters after the dash
+
+
+def g_conn_notype(j, d):
+    src = a_source(j)
+    j["connections"][src]["main"][0][0].pop("type")
+
+
+def g_no_respmode(j, d):
+    w = _wh(j)
+    if not w:
+        return SKIP
+    w[0].setdefault("parameters", {}).pop("responseMode", None)
 
 
 def g_secret_slack(j, d):
@@ -1161,6 +1178,27 @@ G = [
     ),
     ("bad_onerror_value_is_warn", g_badonerr, "WARN", "n8n rule UNVERIFIED", (), []),
     ("max_tries_out_of_range_is_warn", g_maxtries, "WARN", "maxTries=9", (), []),
+    ("max_tries_out_of_range_fail_unverified", g_maxtries, "FAIL", "maxTries=9", (), []),
+    ("wait_out_of_range_fail_unverified", g_wait, "FAIL", "waitBetweenTries=9000", (), []),
+    ("bad_onerror_value_fail_unverified", g_badonerr, "FAIL", "onError='ignore'", (), []),
+    (
+        "response_mode_missing_default_is_warn",
+        g_no_respmode,
+        "WARN",
+        "sets no responseMode",
+        (),
+        [],
+    ),
+    (
+        "response_mode_missing_fail_unverified",
+        g_no_respmode,
+        "FAIL",
+        "sets no responseMode",
+        (),
+        [],
+    ),
+    ("secret_slack_exactly_10_chars", g_secret_slack10, "FAIL", "(Slack token)", (), []),
+    ("shape_link_without_type", g_conn_notype, "FAIL", "lacks a valid type/index", (), []),
     ("wait_out_of_range_is_warn", g_wait, "WARN", "waitBetweenTries=9000", (), []),
     (
         "max_tries_without_retry_on_fail",
@@ -2103,6 +2141,190 @@ def main():
         2,
         must=[("usage error: bad --accept-if", "")],
     )
+    # --- round 5: placeholders in node settings, table columns (--ddl), saved-run settings, unit checks of checker internals ---
+    acc2 = ["--accept-if", "mf-recovery.json=StuckRow:1", "--accept-if", "mf-recovery.json=AlertRow:1"]
+    base5 = [PRIS, "--quiet-info"] + acc2
+    ddl4, ddl2, ddlx = work + "/v4.sql", work + "/v2.sql", work + "/other.sql"
+    core = (
+        "-- comment, with a comma, in the file\nCREATE TABLE mf_leads(\n  lead_key text PRIMARY KEY,\n  email text,\n  name text,\n"
+        "  state text NOT NULL DEFAULT 'new' CHECK (state IN ('new','done')),\n  claimed_until timestamptz,\n  claim_token text,\n  attempts int NOT NULL DEFAULT 0,\n"
+        "  crm_id text,\n  mail_sent boolean NOT NULL DEFAULT false,\n  created_at timestamptz NOT NULL DEFAULT now(),\n  updated_at timestamptz NOT NULL DEFAULT now()"
+    )
+    alert = (
+        ",\n  alert_sent boolean NOT NULL DEFAULT false,\n  alert_token text,\n  alert_until timestamptz,\n  alert_attempts int NOT NULL DEFAULT 0,\n  UNIQUE (lead_key));\n"
+    )
+    wt(ddl4, core + alert)
+    wt(ddl2, core + ");\n")
+    wt(ddlx, "CREATE TABLE other_table(id int);\n")
+    check_out(
+        "r5_placeholder_in_node_setting_is_listed_even_quiet",
+        base5,
+        0,
+        must=[
+            ("WARN", "value(s) in node settings are still placeholders; these must be filled before import"),
+            ("PLACEHOLDERS IN NODE SETTINGS", "these must be filled before import"),
+            ("  - ", "FROM_ADDRESS_PLACEHOLDER"),
+            ("  - ", "INTAKE_ADDRESS_PLACEHOLDER"),
+        ],
+    )
+    check_out(
+        "r5_placeholder_in_node_setting_fails_when_real_ids_required",
+        base5 + ["--require-real-credential-ids"],
+        1,
+        must=[("FAIL", "value(s) in node settings are still placeholders")],
+    )
+    check_out(
+        "r5_no_placeholder_in_settings_no_line",
+        [only, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
+        0,
+        must_not=["PLACEHOLDERS IN NODE SETTINGS", "in node settings are still placeholders"],
+    )
+    ph1 = f"{work}/ph1"
+    shutil.copytree(only, ph1)
+    h = rj(ph1 + "/mf-form.json")
+    first_nt(h)["parameters"]["note"] = "NOTE_PLACEHOLDER_X"
+    wj(ph1 + "/mf-form.json", h)
+    check_out(
+        "r5_placeholder_in_any_setting_string",
+        [ph1, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
+        0,
+        must=[("WARN", "NOTE_PLACEHOLDER_X"), ("  - ", "setting 'note': NOTE_PLACEHOLDER_X")],
+    )
+    check_out(
+        "r5_ddl_v4_table_has_every_column",
+        base5 + ["--ddl", ddl4],
+        0,
+        must=[("SQL columns compared with the --ddl file", "query string(s) read")],
+        must_not=["does not define", "SQL COLUMNS NOT CHECKED"],
+    )
+    check_out(
+        "r5_ddl_old_table_lacks_alert_columns",
+        base5 + ["--ddl", ddl2],
+        0,
+        must=[
+            ("WARN", "node AlertClaim: the query uses column(s) ['alert_attempts', 'alert_sent', 'alert_token', 'alert_until']"),
+            ("WARN", "node AlertMark: the query uses column(s) ['alert_sent', 'alert_token']"),
+        ],
+        must_not=["node MailClaim: the query uses"],
+    )
+    check_out(
+        "r5_ddl_other_table_name_is_warn",
+        base5 + ["--ddl", ddlx],
+        0,
+        must=[("WARN", "that the --ddl file does not define")],
+    )
+    check_out(
+        "r5_no_ddl_says_so_loudly",
+        base5,
+        0,
+        must=[
+            ("WARN", "no --ddl file was given"),
+            ("SQL COLUMNS NOT CHECKED", "no --ddl file was given"),
+        ],
+    )
+    check_out("r5_ddl_unreadable_file", [PRIS, "--ddl", work + "/nope.sql"], 2, must=[("usage error", "--ddl file cannot be read")])
+    check_out("r5_ddl_without_create_table", [PRIS, "--ddl", work + "/expect-list.json"], 2, must=[("usage error", "no CREATE TABLE")])
+    check_out("r5_ddl_option_without_value", [PRIS, "--ddl"], 2, must=[("usage error", "needs a value")])
+    # saved-run settings of entry flows
+    check_out(
+        "r5_entry_flow_without_saved_runs_is_warn",
+        base5,
+        0,
+        must=[("WARN", "mf-form.json this flow starts from a web address or form and its settings ['saveDataSuccessExecution', 'saveDataErrorExecution'] are 'none'")],
+    )
+    rc_, out_ = run(["python3", "-I", CK] + base5, "r5_count_saved_runs_warns")
+    report(
+        "r5_saved_runs_warn_only_for_the_two_entry_flows",
+        sum("are 'none'" in l for l in out_.splitlines() if l.startswith("WARN ")) == 2,
+        "expected the form and hook files only, not recovery or the sub-workflow",
+    )
+    sv = f"{work}/saveall"
+    shutil.copytree(PRIS, sv)
+    for fn in ("mf-form.json", "mf-hook.json"):
+        h = rj(f"{sv}/{fn}")
+        h["settings"]["saveDataSuccessExecution"] = "all"
+        h["settings"]["saveDataErrorExecution"] = "none" if fn == "mf-hook.json" else "all"
+        wj(f"{sv}/{fn}", h)
+    check_out(
+        "r5_saved_runs_all_has_no_warn_and_one_key_is_named",
+        [sv, "--quiet-info"] + acc2,
+        0,
+        must=[("WARN", "mf-hook.json this flow starts from a web address or form and its settings ['saveDataErrorExecution'] are 'none'")],
+        must_not=["mf-form.json this flow starts from a web address"],
+    )
+    check_out(
+        "r5_accept_if_warn_says_what_a_database_failure_does",
+        base5,
+        0,
+        must=[("WARN", "a database failure that ends here vanishes with no alert")],
+    )
+    # the take check script itself (bash, reads the committed real-v5 folder)
+    tk = HERE + "/take_check.sh"
+    if os.path.isfile(tk) and shutil.which("bash"):
+        pr = subprocess.run(["bash", tk], capture_output=True, text=True, timeout=120, check=False)
+        tout = pr.stdout
+        want = [
+            "NOTHING RAN IN n8n",
+            "PLACEHOLDERS IN NODE SETTINGS",
+            "these must be filled before import",
+            "do NOT contain F-002",
+            "Table definition used for the column check",
+            "Environment variables that n8n must hold",
+        ]
+        miss = [w for w in want if w not in tout]
+        report(
+            "r5_take_check_script_top_block (exit 0, lines present)",
+            pr.returncode == 0 and not miss and "SQL COLUMNS NOT CHECKED" not in tout,
+            f"rc={pr.returncode} missing={miss}",
+        )
+    else:
+        print("r5_take_check_script_top_block: skipped (no bash or no take_check.sh)")
+    # internals: Python version branch, FAIL counter, deep_diff and the diff header
+    spec = importlib.util.spec_from_file_location("fc_unit", CK)
+    old_hex = sys.hexversion
+    try:
+        sys.hexversion = 0x03090000
+        mod_ = importlib.util.module_from_spec(spec)
+        buf_ = io.StringIO()
+        code_ = None
+        with contextlib.redirect_stdout(buf_):
+            try:
+                spec.loader.exec_module(mod_)
+            except SystemExit as e:
+                code_ = e.code
+    finally:
+        sys.hexversion = old_hex
+    report(
+        "r5_python_older_than_3_10_exits_3_with_message",
+        code_ == 3 and "needs Python 3.10 or newer" in buf_.getvalue(),
+        f"code={code_}",
+    )
+    rc_, out_ = run(["python3", "-I", CK, PRIS, "--quiet-info", "--expect", "mf-form.json=99:98"], "r5_fail_counter")
+    nf = len(lines_of(out_, "FAIL"))
+    report(
+        "r5_result_line_counts_each_fail_once",
+        nf >= 2 and f"RESULT: {nf} FAIL," in out_,
+        f"fail_lines={nf}",
+    )
+    spec2 = importlib.util.spec_from_file_location("fc_unit2", CK)
+    um = importlib.util.module_from_spec(spec2)
+    spec2.loader.exec_module(um)
+    dd1 = um.deep_diff([], [{"name": "X", "v": 1}], "p")
+    dd2 = um.deep_diff([{"name": "X", "v": 1}], [], "p")
+    report(
+        "r5_deep_diff_added_to_empty_list_and_removed_to_empty_list",
+        dd1 == ["p[X] (added)"] and dd2 == ["p[X] (removed)"],
+        f"{dd1} {dd2}",
+    )
+    cols = um.parse_ddl(rt(ddl4))
+    tb, wd = um.sql_use("UPDATE mf_leads SET a_col=now() + interval '5 seconds' WHERE k=$1::text AND state IN ('x') RETURNING z;")
+    report(
+        "r5_ddl_parse_and_query_words",
+        cols == {"mf_leads": {"lead_key", "email", "name", "state", "claimed_until", "claim_token", "attempts", "crm_id", "mail_sent", "created_at", "updated_at", "alert_sent", "alert_token", "alert_until", "alert_attempts"}}
+        and tb == {"mf_leads"}
+        and wd == {"a_col", "k", "state", "z"},
+        f"cols={sorted(cols.get('mf_leads', []))} tables={tb} words={sorted(wd)}",
+    )
     if PATCHED:
         nm0 = next(
             x["name"]
@@ -2133,6 +2355,12 @@ def main():
         dout = f"{work}/diff-text-out.txt"
         want = f"  node CHANGED {nm0}: notes (added)"
         rc, out = run(["python3", "-I", CK] + dcmd + ["--diff-out", dout], "diff_text_exact_line")
+        hdr = f"== {dd}/mf-form.json =="
+        report(
+            "diff_text_header_line_exact (one header line per file, on screen and in the --diff-out file)",
+            hdr in out.splitlines() and hdr in rt(dout).splitlines(),
+            f"on_screen={hdr in out.splitlines()}",
+        )
         report(
             "diff_text_exact_line (the change is one readable line, on screen and in the --diff-out file)",
             want in out.splitlines() and want in rt(dout).splitlines(),
