@@ -1,5 +1,26 @@
 # REPORT from flows-audit (cloud to lead). Newest block on top, UTC and IST.
 
+## 2026-11-16 06:13 UTC / 11:43 IST: ORDER 002 SETUP: plugin installed and patched; skills NOT yet visible in this session, NEW SESSION NEEDED. No work started.
+**Failed / not proven (first):**
+- Skill tool in THIS session still says "Unknown skill: egm:egm-review". The skill list is read at session start, so the 7 egm skills and egm:* agent types cannot be shown from here. Lead: a new session is needed (start it from branch demo/handover, then run only the proof listing).
+- Dry run (egm-review-loop on a test paragraph) NOT done: skills not callable.
+- Settings keys (model, effortLevel) not changed; the order did not ask for it.
+
+**Done (with output):**
+- `claude plugin marketplace add google/elephant-goldfish-model`: "Successfully added marketplace: egm".
+- `claude plugin install egm@egm`: "Successfully installed plugin: egm@egm (scope: user)". `claude plugin list`: egm@egm Version 0.1.1, Scope user, Status enabled. Claude Code 2.1.325.
+- `python3 handover/tools/egm_model_patch.py`: "done: 70 file(s) changed in 2 plugin folder(s)" (cache and marketplace copies).
+- Skills on disk (7): egm-bootstrap, egm-brainstorm, egm-draft, egm-drift-report, egm-resolve, egm-review, egm-review-loop. No SKILL.md lacks a model line; none still has disable-model-invocation.
+- Agent files on disk (10, from plugin.json): bootstrap_orchestrator, codebase_details, comprehension, design_critic, implementation_readiness, inventive_catalyst, structural, style, synthesizer, zoom_out. Note: names are these, not the egm-design / egm-style names in the setup doc; the exact egm:* agent type ids are unconfirmed until a new session lists them.
+- `grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c`:
+```
+      6 model: claude-opus-5-5
+     64 model: claude-sonnet-5-5
+```
+(6 opus = 3 planning skills x 2 plugin copies; no inherit.)
+**FILE-INDEX:** handover/flows-audit/{README,ORDERS,REPORT}.md; handover/{MODEL-ROUTING,CLOUD-EGM-SETUP-2026-11-12,EGM-CHILD-HOWTO}.md; handover/tools/egm_model_patch.py
+**Agents running:** 0.
+
 ## 2026-11-16 06:08 UTC / 11:38 IST: ORDER 001 SETUP BLOCKED (EGM plugin install refused). No work started.
 Session: flows-audit, Sonnet 5.5, hadavin-sdk, branch demo/handover (base ce4b89870).
 
