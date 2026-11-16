@@ -71,10 +71,9 @@ id	where_cited	claim	points_to	what_it_says	verdict
 70	guide l.144	owner-sheet R5 then sends n if wording changes (G17)	steps-edits/OWNER-SHEET-v24-A.md l.46,99	R5 compare; l.99 'else type n'	match
 71	guide l.13 (Q27 b outcome)	numbers message line reads 'End-date refusal: shown'	steps-edits/LEAD-RELEASE-NOTE-v8.md	v8 l.87 holds 'Spend lock: shown' fields; l.61 names 'End-date refusal' line; exact 'End-date refusal: shown' text not found	cannot-find
 72	guide l.142	AGENT-SCOPE line 20 stays marked stale; G27 sentence 'the test program made no delete call'	steps-edits/LEAD-RELEASE-NOTE-v8.md l.6,69	l.6 and G27 carry that sentence	match
-73	guide l.172 (G35)	AGENT-SCOPE line 22 still speaks (typed figure)	inputs/AGENT-SCOPE-DO-AND-DONT.md l.22	cite appears in release note G35, not in guide	cannot-find
-74	guide l.179	DECISION-one-store line 14 says ONE database	inputs/DECISION-one-store.md l.14	1. ONE database for everything we own: the single Postgres instance	match
-75	guide l.3,70	Mon 16 Nov 2026; 14:00 UTC = 19:30 IST; 18:19 UTC = 23:49 IST; Wed 18 Nov; Mon 23 Nov	calendar	16 Nov 2026 Monday; 18 Nov Wednesday; 23 Nov Monday; +5:30 sums correct	match
-76	guide l.3,5,182	test program, model program, flows, review-codebase-1.md, real test program not in checkout	core-hardening/	not present (confirmed for review-codebase-1.md; run_real_check_n8n.py not found)	match
-77	guide l.129-140 (Q23-2 targets)	what stands at run_real_check_n8n.py 1045-1056, crm_hubspot.py 500-512	not in checkout	code files absent; cannot check what the lines say	cannot-find
-78	guide l.58	BL-wp6-G1 row in studio open-problem list	handover/ (grep)	not found in core-hardening or lead-repin (only in unrelated files not matched)	cannot-find
-79	guide l.93 / v5-CHANGES	evidence-repin4/ and evidence-repin5/ file names quoted (09-git-index, 02-probe, 03, 04, 06, 07)	evidence dirs	all quoted files exist	match
+73	guide l.179	DECISION-one-store line 14 says ONE database	inputs/DECISION-one-store.md l.14	1. ONE database for everything we own: the single Postgres instance	match
+74	guide l.3,70	Mon 16 Nov 2026; 14:00 UTC = 19:30 IST; 18:19 UTC = 23:49 IST; Wed 18 Nov; Mon 23 Nov	calendar	16 Nov 2026 Monday; 18 Nov Wednesday; 23 Nov Monday; +5:30 sums correct	match
+75	guide l.3,5,182	test program, model program, flows, review-codebase-1.md, real test program not in checkout	core-hardening/	not present (confirmed for review-codebase-1.md; run_real_check_n8n.py not found)	match
+76	guide l.129-140 (Q23-2 targets)	what stands at run_real_check_n8n.py 1045-1056, crm_hubspot.py 500-512	not in checkout	code files absent; cannot check what the lines say	cannot-find
+77	guide l.58	BL-wp6-G1 row in studio open-problem list	handover/ (grep)	not found in core-hardening or lead-repin (only in unrelated files not matched)	cannot-find
+78	guide l.93 / v5-CHANGES	evidence-repin4/ and evidence-repin5/ file names quoted (09-git-index, 02-probe, 03, 04, 06, 07)	evidence dirs	all quoted files exist	match
