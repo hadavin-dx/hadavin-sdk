@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:37:44Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:39:50Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
 PERCENT: 85
-AGENTS_RUNNING: 6 (row 1 builder brief; T19 gap fill from unread plan lines; row DM crash-test read; M17 conflict wording; MASTER-MAP rows L8-X-020..024; write_outputs PIN guard draft). 7 ORDER 026 agents finished: M2 round 2 applied, M5 round 2 partly applied, M4/M6/M8/M10/M17 digested in work/agent-reports-batch4.md. Zoom-out finding: the ring log covers documents, not row 1 (no builder named), T19 (not runnable) or DM. Evidence: edits grep-verified; scan and tests not re-run.
+AGENTS_RUNNING: 6 (af6377 T19 row and steps from plan lines 296-403; a6bff7 run-day card naive read; a5c8dc verdict conflicts L6-J-047/005/014/050/057/006; aa5fcb row 1 brief check; adc525 critical path zoom-out; a9b43c D-04/D-05 cite check). Six earlier agents finished and were read.
 INTERRUPTED: none
-NEXT: patched-copy answer already applied everywhere; next: apply the 6 agent reports' wording fixes (STATUS-BOARD, OWNER-VIEW row 3, REPORT.md, README/LEAD-PAGE structure); scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: v5 step J editor; D-04/D-05 (post only); QUESTIONS 8 (film pause); rehearsal trim; row 1 builder and date.
-CAPACITY: nproc 4, load 0.48, RAM 0 GB used of 15 GB, DISK / 24 GB free of 252 GB (40 percent used); top 3: /tmp/pytest-of-root 616M, /tmp/sm-fresh 624M, /tmp/claude-0 1.3G; nothing removed.
+NEXT: collect the 6 hand-backs, grep-verify, apply safe fixes; MASTER-MAP L8-X-020..024 rows by hand (also into hand-kept/MAP-ADDITIONS.md); PIN guard test; tell lead: generator-vs-JSON finding for row 1, T19 not runnable, zoom-out finding.
+CAPACITY: nproc 4, load 0.08, RAM 815/16087 MB used, DISK 24G free of 252G (40% used); top3 /tmp/claude-0 1.3G, /tmp/sm-fresh 624M, /tmp/pytest-of-root 616M; nothing removed
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:37:44Z
+PUSHED_UTC: 2026-11-16T10:39:50Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
