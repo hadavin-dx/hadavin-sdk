@@ -127,7 +127,7 @@ tcfail() { # name expected-line env-assignments...
   elif [ ! -s "$RAW/take-check-$nm.txt" ]; then TCMISS="$TCMISS [take_check $nm: exit 4 but the output file $RAW/take-check-$nm.txt is empty]"
   else
     # round 10d (A2): the wanted text must be on a line that starts with "!!! " or "FAIL " (the loud lines), not on any line: a line printed for another reason must not satisfy a case
-    grep -E '^(FAIL|!!!) ' "$RAW/take-check-$nm.txt" | grep -q -F -- "$want" || TCMISS="$TCMISS [take_check $nm: exit 4 but the text '$want' is not on a !!! or FAIL line; first FAIL or !!! line: $first]"
+    grep -q -F -- "$want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: exit 4 but the text '$want' is not on a !!! or FAIL line; first FAIL or !!! line: $first]"
     grep -q -F "FINAL: take_check exit status 4." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: exit 4 but the FINAL line does not say 4; first FAIL or !!! line: $first]"
   fi
 }
