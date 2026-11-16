@@ -182,3 +182,31 @@ The ALTER statement in the patch comment (extracted, NOT run, not parsed by Post
 `diff -r base plan` (unpatched generator output vs all five patches, plan order), normal diff format line counts, same for real and film:
 - mf-form.json: differs, 108 lines. mf-hook.json: differs, 108 lines. mf-sub-crm-mail.json: differs, 6 lines (the two saveData settings). mf-recovery.json: identical. Whole `diff -r`: 225 lines (includes the 3 "diff -r" header lines).
 - Node-level meaning of these lines: section 4 and diff-base-vs-patched.txt.
+
+
+---
+# Round 3 fixes (final batch) (Mon Nov 16 2026, UTC)
+Command (one line, from this folder): `bash run-round2.sh > raw-round3.txt 2>&1; echo $?`. Result: **exit code 0** (the script now adds up the exit code of every apply, generator, checker and negative-test step and stops with exit 3 if any `git apply` fails). Raw output: `raw-round3.txt`. Nothing was run in n8n. patches/ was not edited.
+
+## Read this first: what exit 0 does NOT mean (R2-01)
+The checker no longer treats `alwaysOutputData=False` on the node Claim as correct. Nobody has shown how n8n behaves when `INSERT ... ON CONFLICT DO NOTHING RETURNING` matches no row (a repeat lead key): the flow may still answer, or the webhook call may hang. The checker prints, for mf-form and mf-hook in every patched run, `WARN ... F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)` and never a PASS for it. **Exit code 0 does NOT clear F-002. F-002 stays a Blocker until tests T19 and T20 pass in a real n8n.** (The 4 WARN in each patched run = 2 for that line + 2 for the pre-existing recovery IF nodes; the 2 WARN in the baseline and in F-008 alone are the recovery IF nodes only.)
+
+## What changed (finding, fix, proof)
+- R2-02: checker now asserts as expected strings: responseCode 422 (ReplyBadKey) and 503 (ReplyStoreFail), the KeyOk condition `={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}` with a boolean-true operator, and `$('Valid')` inside the ReplyStoreFail body. Mutants wrong_code, wrong_code503, wrong_cond, no_valid_ref each exit 1 with the named line.
+- R2-03: `checker-negative-tests.py` now builds ALL mutants (incl. cycle_only, which was missing from the script in round 2, so the old cycle_only.out had no generator), saves the exact command in `negative-output/CHECK-COMMAND.txt`, uses that one fixed command line (usage cases add or drop one option, written in the same file). One count: **26 cases = 23 mutants + 1 control (no defect, must exit 0) + 2 usage cases; 26 as expected, 0 not.** Round 2 said "15 mutants"; that number is replaced. The weak round-2 mutant unreach_pair is replaced by reroute_failreply (caught by the diff check, said so).
+- R2-04: each case passes only if exit code is 1 AND the named FAIL text is in the output (`named_line_present=True` for all 26 in raw-round3.txt).
+- R2-05: allowed diff paths are exact (Claim: `onError`, `alwaysOutputData`; Valid: `parameters.assignments.assignments[lead_key].value`); mutant valid_other_path (a change at `...[lead_key].type`, which the old prefix rule let through) is now caught. Full expected connection structures for Valid, KeyOk and Claim are compared as whole objects (mutant conn_structure: an index change the old sorted-target check could not see). `--allow` without `--patch-checks` for the same patches now fails (usage_allow_no_pc).
+- R2-06: run-round2.sh aborts on `git apply` failure, adds up the exit code, and regenerates F-002 alone and F-008 alone from fresh copies (orders only002, only008), no longer reusing /tmp/pa13 output. 
+- R2-07: an unknown `--expect` file key (or a bad entry) fails with exit 1 (usage_unknown_expect); a malformed `--expect` value exits 2 with a message, no traceback.
+- R2-08: `$items("X")` is checked like `$('X')` (mutant bad_items_ref); `$prevNode` gives a WARN (cannot be resolved without running); switch nodes (output count from rules, +1 for fallback "extra") and filter nodes are checked as IF-like branches (mutant switch_gap: "SWITCH node Sw lacks output(s) [1]"). None of the four flow files contains a switch or filter node today (type counts read), so this only guards later changes.
+- Proof the new tests fail on old code: the round-2 check_flows.py run against the same 26 cases: 16 as expected, 10 not (switch_gap, bad_items_ref, wrong_code, wrong_code503, wrong_cond, no_valid_ref, valid_other_path, conn_structure, usage_unknown_expect, usage_allow_no_pc).
+
+## Orders (R2-09), each on a fresh copy, all `git apply --check` and `git apply` = 0, generator real and film = 0, checker exit 0 (real and film), no .orig or .rej (0 LEFTOVER lines)
+glob (alphabetical, the order tools/check_patches.sh applies them, one at a time): F-001, 002, 003, 004, 008 (this was labelled "plan" in round 2; it is the glob order, not the plan's). FIX-PLAN item order: F-001, 002, 008, 003, 004 (NEW, fifth order, run). reverse: 008, 004, 003, 002, 001. F-002 then F-008. F-008 then F-002. F-002 alone and F-008 alone (fresh now). Generated JSON of fixplan, reverse, F-002+F-008 and F-008+F-002 equals the glob order for all 4 files in real and film: 32 of 32 cmp equal, 0 differ. Unpatched generator vs saved v5: 8 of 8 identical.
+Overlap, stated plainly: in build_mainframe.py the F-002 hunks are at old lines 76 and 94 (headers `@@ -76,11` and `@@ -90,7`) and the F-008 hunks at 41 and 117 (`@@ -41,7` and `@@ -114,7`); the line ranges do not overlap, so the patches apply in any order, which matches the results. Each of these F-008 and F-002 hunks was read from the .patch headers only.
+
+## Not fixed / not checked (with reason)
+- Whether n8n answers a repeat key (F-002 Claim): needs a real n8n run (T19, T20). Needs the lead or owner environment. Next step: run T19 and T20.
+- Not examined (unchanged from round 2): the F-008 side effects (a) to (d), canvas spacing of KeyOk, SQL run in Postgres, content of F-003 and F-004 text.
+- `$prevNode` and `$node.X` dot forms are only warned about or not parsed; `$items("X")` with a computed name is not resolvable.
+- The REPORT sections above (Round 2) still say "plan" for the glob order and show the old 15-mutant count; this section supersedes them.
