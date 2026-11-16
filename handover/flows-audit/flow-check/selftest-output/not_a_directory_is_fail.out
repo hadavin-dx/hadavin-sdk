@@ -1,4 +1,4 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-f7acopiw/does-not-exist
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-ahe94du1/does-not-exist
 # ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
 # What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
 # Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
@@ -15,8 +15,8 @@ $ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.
 #   2. Four steps read environment variables ($env): allow that in the take, or change the steps (run with --block-env-access to see the effect).
 #   3. Two yes/no steps (StuckRow, AlertRow in mf-recovery) lack a second branch: project rule says FAIL; --baseline excuses them as WARN only because the unpatched flows already had it.
 # =============================================================================
-### /tmp/fc-selftest-f7acopiw/does-not-exist
-FAIL /tmp/fc-selftest-f7acopiw/does-not-exist not a directory
+### /tmp/fc-selftest-ahe94du1/does-not-exist
+FAIL /tmp/fc-selftest-ahe94du1/does-not-exist not a directory
 RESULT: 1 FAIL, 0 WARN
 OPEN LEAD DECISIONS: 0 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
 Known open problems: 0
