@@ -1,5 +1,5 @@
 import re
-old = open("report_c6m.py", encoding="utf-8").read().split("\n")
+old = open("report_c6m.py.c6l-copy", encoding="utf-8").read().split("\n")
 def seg(a, b): return "\n".join(old[a-1:b]) + "\n"
 head = seg(1, 57).replace("writes REPORT-c6l.md", "writes REPORT-c6m.md")
 new_head = open("new_head.py", encoding="utf-8").read()
