@@ -117,6 +117,14 @@ sleep 1; t0=$(date +%s.%N); out=$(applyf $LB spend_nonneg.sql); t1=$(date +%s.%N
 el=$(python3 -c "print(round($t1-$t0,1))")
 if printf '%s' "$out" | grep -q "55P03" && python3 -c "import sys; sys.exit(0 if 4.5<=$el<=6.5 else 1)"; then ok "W1 held lock: default file fails 55P03 after about 5 s (${el}s)"; else bad "W1 lock timeout" "elapsed ${el}s out='$(printf '%s' "$out"|tr '\n' ' '|cut -c1-100)'"; fi
 sleep 5
+# W2: same lock test for the VARIANT file (added after run 1 showed no test caught a dropped lock_timeout in the variant)
+LB2="w_${LABEL}"; mkdb $LB2
+( runuser -u postgres -- psql -X -h $D -U mig_ind -d $LB2 -q -c "BEGIN; LOCK TABLE spend IN ROW EXCLUSIVE MODE; SELECT pg_sleep(9); COMMIT;" >/dev/null 2>&1 & )
+sleep 1; t0=$(date +%s.%N); out=$(applyf $LB2 spend_nonneg_finite.sql); t1=$(date +%s.%N)
+el=$(python3 -c "print(round($t1-$t0,1))")
+if printf '%s' "$out" | grep -q "55P03" && python3 -c "import sys; sys.exit(0 if 4.5<=$el<=6.5 else 1)"; then ok "W2 held lock: variant file fails 55P03 after about 5 s (${el}s)"; else bad "W2 lock timeout (variant)" "elapsed ${el}s out='$(printf '%s' "$out"|tr '\n' ' '|cut -c1-100)'"; fi
+eq "W2b variant file text has SET LOCAL lock_timeout" "$(grep -c "^SET LOCAL lock_timeout = '5s';" $SQLDIR/spend_nonneg_finite.sql)" "1"
+sleep 5
 
 # ============ VARIANT on database $FB
 mkdb $FB; seed $FB
@@ -138,6 +146,6 @@ out=$(applyf $FB spend_decrease_log.sql); eq "V7 DB-2 applies on top of the vari
 q rt_ind $FB "UPDATE spend SET usd=usd-1 WHERE agent_id='a2';" >/dev/null
 eq "V7b lowering logged on variant DB" "$(val mig_ind $FB "select count(*) from spend_decrease_log")" "1"
 
-adm "DROP DATABASE IF EXISTS $DB" >/dev/null; adm "DROP DATABASE IF EXISTS $FB" >/dev/null; adm "DROP DATABASE IF EXISTS $LB" >/dev/null
+adm "DROP DATABASE IF EXISTS $DB" >/dev/null; adm "DROP DATABASE IF EXISTS $FB" >/dev/null; adm "DROP DATABASE IF EXISTS $LB" >/dev/null; adm "DROP DATABASE IF EXISTS $LB2" >/dev/null
 echo "SUMMARY pass=$P fail=$F"
 [ $F -eq 0 ]

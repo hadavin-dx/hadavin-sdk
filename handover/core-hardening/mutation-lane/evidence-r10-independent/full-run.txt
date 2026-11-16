@@ -583,3 +583,34 @@ RESTORE FAILED m1 (marker and backup kept; run --restore)
 bad: []
   PASS: T63c restore_target: plain, already-original (no write), swap during the write, link refused, read-only, two names, FIFO, re-creation (rc 0)
 == T64 (review r5 nit 1) a REAL memory fault is not recovered by the signal handler: the process hangs (measured), as the text now says
+  PASS: T64a the process with run.py's handlers is still alive 4 s after a real memory fault (hung, handler never ran): 'acts like SIGKILL' would be wrong (alive=0, 0 = alive)
+  PASS: T64b the text in run.py no longer says a real fault 'acts like SIGKILL' or calls it 'the SIGKILL case' (r6 comment, review r6 nit 1), says it spins, and names kill -9
+== T65 (review r5 nit 2) a failure that is no signal, then a signal in the first moment of the cleanup: the test group is still stopped
+OSError (the failure itself) came out: [Errno 5] simulated read error (no signal)
+line hit: True SIG.allow: False first: 15 critical: True
+  PASS: T65 planted: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+OSError (the failure itself) came out: [Errno 5] simulated read error (no signal)
+line hit: True SIG.allow: False first: 15 critical: False
+  PASS: T65 control: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+== T66 (review r5 M1) the baseline: a failing or empty baseline refuses the mutants; a result without a passed test is no survivor; a kill that equals the baseline is flagged
+baseline 1 1 failed in 0.01s
+REFUSED: the baseline (unmutated tree, --control) is not usable: it exited with 1, not 0; no mutant was planted; see X-baseline.txt
+  PASS: T66a baseline FAILS: mutants refused, exit 2 (got 2), baseline file says 'baseline usable: NO', no raw file for the mutant, file unchanged, state empty
+  PASS: T66b baseline with every test skipped (pytest exit 0, nothing passed): refused, exit 2 (got 2), 'no test passed' in the baseline file, no mutant file
+  PASS: T66c no control, every test skipped: verdict NO-TEST-PASSED (not SURVIVED), exit 5 (got 5)
+m1 KILLED  FLAGGED: the failing tests are the same as the baseline's (here: none named): the failure may not come from the mutant
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 1 flagged; 0 not run; INCOMPLETE (exit 5 unless the tree is not clean: then exit 4)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T66d a KILLED whose failing tests equal the baseline's (none named) is FLAGGED: exit 5 (got 5), 'flags:' line in the raw file, '1 flagged' in the summary
+  PASS: T66e guard: a normal kill with --control (a named failing test) is not flagged: exit 0 (got 0), 'flags: none', baseline recorded
+  PASS: T66f --no-control: every raw file says 'baseline: NOT RUN', the SUMMARY says NO BASELINE and not COMPLETE, exit 5 (got 5)
+== T67 (review r5 M2) exit 0 means every mutant ran: COULD-NOT-PLANT, TIMEOUT and ERROR give exit 5 and a SUMMARY line
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T67a COULD-NOT-PLANT (old text absent): exit 5 (got 5), SUMMARY counts it, raw says so
+  PASS: T67b TIMEOUT: exit 5 (got 5), SUMMARY counts it
+  PASS: T67c ERROR (pytest exit 5, no test selected): exit 5 (got 5), SUMMARY counts it
+SUMMARY: 2 mutant(s) planned, 2 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+  PASS: T67d two mutants, one killed and one that could not be planted: exit 5 (got 5), both raw files, counts '1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT', summary file written
+  PASS: T67e guard: every mutant killed: exit 0 (got 0), summary says COMPLETE
