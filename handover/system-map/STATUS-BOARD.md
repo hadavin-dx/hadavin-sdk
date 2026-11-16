@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:47Z
-PUSHED_UTC: 2026-11-16T15:47Z
+UPDATED_UTC: 2026-11-16T15:49Z
+PUSHED_UTC: 2026-11-16T15:49Z
 SESSION: system-map
 ORDER: 14:48Z (parallel re-readers while I fix; keep 8 running)
 BOOT_ID: 5cbee216
@@ -18,7 +18,7 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 of 8 at 2026-11-16T15:47Z (list below)
+AGENTS_RUNNING: 8 of 8 at 2026-11-16T15:49Z (list below)
 CAPACITY nproc=4 load=0.17 disk: 18G free
 NEXT: fix my own pages from the board reader's findings (licence question wording, NEEDS_YOU 4 and 5 subjects), work/GLOSSARY.md (heading of the unknown-terms table), decisions/M17-end-never-deletes.md, T19 inline glossary; then 8 fresh readers, one per fixed page
 INTERRUPTED: none
@@ -48,17 +48,17 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-| Slot | Agent id | Job (read only) | State |
+| Slot | Agent | Job (read only, cold reader of work/ page) | State |
 |---|---|---|---|
-| 1 | a20dfaf86de3c3849 | hygiene read ORDERS.md 1-80 | running |
-| 2 | a366ea0c2e8134732 | re-read new work/decision-list-for-lead.md | running |
-| 3 | ae49bf92d677baac3 | hygiene read reviews-of-core-hardening/REVIEW.md | running |
-| 4 | ae1414d4c27702584 | hygiene read CORRECTIONS.md | running |
-| 5 | a039365c73c5d6f39 | hygiene read LEDGER-ROWS.md | running |
-| 6 | a72b1a3c43fe26e21 | hygiene read decisions/D04-D05.md | running |
-| 7 | af80d8938430b98cc | hygiene read work/banned-claims.md | running |
-| 8 | (launched same turn, id in next board) | hygiene read OWNER-CLEANUP-CARD.md | running |
-Closed and digested through 1885. D-01 to D-10 research is done and written into work/decision-list-for-lead.md (lead decides next tick). Fix queue (mine): drift/REPORT.md counts, review-r460-tools, merged-findings, open-items-table, not-checked-r2, end-delete-cases, owner-timeline-draft, row-dm-plain, banned-claims-clean, M17, AUDIT-CHECKLIST, T19 pages, GLOSSARY, this board. Held-page findings (README, QUESTIONS, SWEEP, ONE-PLACE-TABLE, LEAD-PAGE, FINAL-CROSSCHECK, OWNER-VIEW, run-day card, MASTER-MAP, TAKE-BLOCKERS) go to LEAD-NOTICE.
+| 1 | new reader, launched 2026-11-16T15:49Z | L1.md 1-120 | running |
+| 2 | new reader, launched 2026-11-16T15:49Z | L2.md 1-120 | running |
+| 3 | new reader, launched 2026-11-16T15:49Z | L3.md 1-120 | running |
+| 4 | new reader, launched 2026-11-16T15:49Z | L4.md 1-120 | running |
+| 5 | new reader, launched 2026-11-16T15:49Z | BRIEF-LANE.md | running |
+| 6 | new reader, launched 2026-11-16T15:49Z | BRIEF-EVIDENCE-1.md | running |
+| 7 | new reader, launched 2026-11-16T15:49Z | L1c.md 1-120 | running |
+| 8 | new reader, launched 2026-11-16T15:49Z | BRIEF-EVIDENCE-2.md | running |
+Closed and digested through 1894 (all 9 earlier readers handed back). Fix queue (mine, next): decision-list title/column, banned-claims collapse, L6 coverage wording, drift/REPORT counts, merged-findings, review-r460-tools, T19 header, GLOSSARY. Held-page findings go to LEAD-NOTICE.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
