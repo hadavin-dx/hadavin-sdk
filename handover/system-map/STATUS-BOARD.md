@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:32:43Z
-PUSHED_UTC: 2026-11-16T12:32:43Z
+UPDATED_UTC: 2026-11-16T12:33:14Z
+PUSHED_UTC: 2026-11-16T12:33:14Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
 CAPACITY nproc=4 load=0.06 0.11 0.15 RAM_MB used 913 of 16087 disk: 18G used, 21G free top disk by me: handover/system-map 4.7M
-NEXT: digested through 690. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+NEXT: digested through 695. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a0c14260bed513ed4 | L1c r9 read | 2026-11-16T12:32:43Z | +2 min | running | nothing yet |
-| ae82497c9f32d5a5c | merged-findings r6 read | 2026-11-16T12:32:43Z | +2 min | running | nothing yet |
-| a0bd777a5f2379e8d | premortem r9 read | 2026-11-16T12:32:43Z | +2 min | running | nothing yet |
-| a968067b09f141da8 | PLAN-002 r14 read | 2026-11-16T12:32:43Z | +2 min | running | nothing yet |
-| a115bf068eaf3829b | rehearsal-limits r6 read | 2026-11-16T12:32:43Z | +2 min | running | nothing yet |
-| NEW1 | end-delete-cases r9 read | 2026-11-16T12:32:43Z | +2 min | launching | nothing yet |
-| NEW2 | L3c r7 read | 2026-11-16T12:32:43Z | +2 min | launching | nothing yet |
-| NEW3 | decision-list r9 read | 2026-11-16T12:32:43Z | +2 min | launching | nothing yet |
+| a058d1a99a57ca38c | end-delete-cases r9 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
+| a85999b99f866ce05 | L3c r7 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
+| a78a2dade33279457 | decision-list r9 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
+| aefd1b8fa6f6d5852 | M17 r6 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
+| a02711fa8b43d7536 | FINAL-CROSSCHECK r10 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
+| a3d43f6229afb7efa | ARCHIVE-CUT-LIST r6 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
+| a315b5a26490152b4 | not-checked r7 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
+| a729dd8e233ff1a76 | row1-builder-brief r7 read | 2026-11-16T12:33:14Z | +2 min | running | nothing yet |
 
-Running: 8 (launch results; ListAgents not re-run). Digests done through 690.
+Running: 8 (launch results; ListAgents not re-run). Digests done through 695. For the lead: L4c read real-run files before decision 5 (possible breach); work/OWNER-ONLY.txt does not exist yet; digests of held pages not sent.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

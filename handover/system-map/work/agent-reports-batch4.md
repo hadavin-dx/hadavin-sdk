@@ -955,3 +955,9 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 688 owner-timeline r7: stacked amendments, unfilled rows. FIXED by CURRENT r7 (rows not rewritten, TO DO).
 - 689 t19 steps r9: not runnable, F8 unset. RECORDED in CURRENT r9 (needs lead).
 - 690 banned-claims r5: history range wrong. FIXED by CURRENT r5.
+
+- 691 premortem r9: r8 not standalone. FIXED by CURRENT r9.
+- 692 PLAN-002 r14: line 40 still old. RECORDED in CURRENT RULINGS r14 (line 40 itself TO DO).
+- 693 rehearsal-limits r6: no sendable text. FIXED by CURRENT r6 (passed rule NOT SET).
+- 694 L1c r9: stacked status. FIXED by ONLY CURRENT r9.
+- 695 merged-findings r6: two DECISION paths. FIXED by CURRENT LEGEND r7.
