@@ -160,13 +160,14 @@ def run(edits, inputs, quiet=False):
         if t not in ('18:19', '18:04', '18:29', '18:14'): F('unexpected UTC time ' + t)
     # D: keyword class -> time (nearest keyword before the pair, same line, 100 chars)
     kw = [(r'last time to revoke|revoke[^.;]{0,60}\b(by|before)\b|once more before|key for the model is\b|revoke by', '18:19'),
-          (r'no start later than|latest start (?:time )?(?:is|:|stays|\(|of)|latest start', '18:04'),
+          (r'no start later than|latest start (?:time )?(?:is|:|stays|\(|of)', '18:04'),
           (r'spending window[^.;]{0,25}(?:ends|:)|window ends|rest of the retirement by|end of the spending|retirement, by|Retirement, by|may spend money', '18:29'),
-          (r'program itself accepts|program accepts|about 18:1', '18:14')]
+          (r'program itself accepts|program accepts|accepts a start[^.;]{0,20}(?:until|about)|latest start time of about|latest start time = ', '18:14')]
     ctxn = 0
     for m in pair.finditer(body):
         t = f'{int(m.group(1)):02d}:{m.group(2)}'
         pre = body[max(0, m.start() - 100):m.start()].split('\n')[-1]
+        if ' IST' in pre: pre = pre[pre.rindex(' IST') + 4:]
         best = None
         for pat, tt in kw:
             for k in re.finditer(pat, pre):
