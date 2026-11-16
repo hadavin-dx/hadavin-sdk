@@ -5,3 +5,4 @@
 14:05 FINAL full run started on run.py 39059b7c5a1d; no edits until it ends
 14:09 first full run aborted by me at T43: 5 older checks (T23a T23b T32b T39 T43c) still expected r7 exit codes; updated them to the r8 M1/N2 semantics (exit 3 / unsettled). Second FINAL full run starts now; no edits until it ends
 14:18 full run done: 3 failed of 395 (T51b x2 rc3 = N2 semantic, T88 harness path bug: relative $0). Fixed script; targeted rerun T51 T88
+14:24 final report written; handing back

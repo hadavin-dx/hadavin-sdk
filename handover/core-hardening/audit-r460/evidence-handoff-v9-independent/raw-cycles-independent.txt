@@ -8,8 +8,8 @@ TYPE_CHECKING=False function-level=False parent-pkg-edges=True: modules=102 edge
 TYPE_CHECKING=False function-level=True parent-pkg-edges=False: modules=102 edges=349 cycles(SCC>1)=1
     ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
 TYPE_CHECKING=False function-level=True parent-pkg-edges=True: modules=102 edges=506 cycles(SCC>1)=4
-    ['hadavin_sdk.guard', 'hadavin_sdk.guard.injection', 'hadavin_sdk.guard.runmap']
     ['hadavin_sdk.store', 'hadavin_sdk.store.memory']
+    ['hadavin_sdk.guard', 'hadavin_sdk.guard.injection', 'hadavin_sdk.guard.runmap']
     ['hadavin_sdk.audit', 'hadavin_sdk.audit.local_dir']
     ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
 TYPE_CHECKING=True function-level=False parent-pkg-edges=False: modules=102 edges=335 cycles(SCC>1)=3
@@ -28,9 +28,16 @@ TYPE_CHECKING=True function-level=True parent-pkg-edges=False: modules=102 edges
     ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
     ['hadavin_sdk.k1b.replay', 'hadavin_sdk.k1b.report', 'hadavin_sdk.k1b.score']
 TYPE_CHECKING=True function-level=True parent-pkg-edges=True: modules=102 edges=510 cycles(SCC>1)=6
+    ['hadavin_sdk.store', 'hadavin_sdk.store.memory']
     ['hadavin_sdk.guard', 'hadavin_sdk.guard.injection', 'hadavin_sdk.guard.runmap']
     ['hadavin_sdk.config', 'hadavin_sdk.deferred', 'hadavin_sdk.guard.judge', 'hadavin_sdk.llm', 'hadavin_sdk.llm.common', 'hadavin_sdk.llm.fake', 'hadavin_sdk.llm.retry', 'hadavin_sdk.registry', 'hadavin_sdk.replay_records']
-    ['hadavin_sdk.store', 'hadavin_sdk.store.memory']
     ['hadavin_sdk.audit', 'hadavin_sdk.audit.local_dir']
     ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
     ['hadavin_sdk.k1b.replay', 'hadavin_sdk.k1b.report', 'hadavin_sdk.k1b.score']
+
+=== planned overlay (table of section 4.2, read from the document) with parent-package edges
+TYPE_CHECKING=False parent-pkg-edges=False: cycles before=1 after=1; changed/new cycles=0
+TYPE_CHECKING=False parent-pkg-edges=True: cycles before=4 after=4; changed/new cycles=0
+TYPE_CHECKING=True parent-pkg-edges=False: cycles before=3 after=3; changed/new cycles=0
+TYPE_CHECKING=True parent-pkg-edges=True: cycles before=6 after=6; changed/new cycles=1
+     ['hadavin_sdk.config', 'hadavin_sdk.deferred', 'hadavin_sdk.guard.judge', 'hadavin_sdk.llm', 'hadavin_sdk.llm.callgate', 'hadavin_sdk.llm.common', 'hadavin_sdk.llm.fake', 'hadavin_sdk.llm.retry', 'hadavin_sdk.llm.spend', 'hadavin_sdk.registry', 'hadavin_sdk.replay_records']

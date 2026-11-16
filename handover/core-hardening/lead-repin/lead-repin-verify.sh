@@ -997,6 +997,47 @@ self_test_meta() {
     else mt_bad "the kept folder still holds lists of file names ($st_n files)"; fi
     rm -rf "$st_d"
   done
+  # ---- v5 machinery checks: the return value, the locale, file names with sed characters, PATH, sh -x, signals
+  case $SELF in /*) st_sa=$SELF ;; *) st_sa=$PWD/$SELF ;; esac
+  st_o=$( (LEAD_REPIN_TEST_LATE_FAIL=1; self_test 1 > /dev/null 2>&1; echo $?) )
+  if [ "${st_o:-0}" -ne 0 ]; then mt_ok "a failure that only the return value of the self-test shows is a non-zero return"; else mt_bad "the return value of the self-test must be non-zero when a check failed late (got ${st_o:-none})"; fi
+  if [ "${LC_ALL:-}" = C ]; then mt_ok "the filter runs with LC_ALL=C (byte-wise matching)"; else mt_bad "LC_ALL is not C in the filter (it is '${LC_ALL:-unset}')"; fi
+  st_t2=$WORK/st-take2; mkdir -p "$st_t2/_local/d#x&y\z" 2>/dev/null
+  printf '{"a": "delete"}\n' > "$st_t2/_local/d#x&y\z/a#b&c.json"
+  st_o=$(LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t2" 2>&1); st_r=$?
+  if [ "$st_r" -eq 0 ] && printf '%s\n' "$st_o" | grep -a -q -F -- 'a#b&c.json:1:delet'; then mt_ok "a file name with # & and a backslash is printed as file:line:word (no sed expression is built from names)"
+  else mt_bad "a file name with # & and a backslash must be printed as file:line:word (exit=$st_r)"; fi
+  rm -rf "$st_t2" "$st_child"/lead-repin.??????
+  st_plant=$WORK/st-plant; mkdir -p "$st_plant"; printf '#!/bin/sh\ntouch "%s/planted-ran"\nexec /bin/cat\n' "$st_plant" > "$st_plant/sed"; chmod +x "$st_plant/sed"
+  st_o=$(cd "$st_plant" && printf 'API_KEY=%s_62_\n' "$base" | PATH=".:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask 2>/dev/null)
+  if [ ! -e "$st_plant/planted-ran" ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_62_"; then mt_ok "a program planted in the current folder (PATH with a dot) is not run"; else mt_bad "a planted program in the current folder ran or a value showed"; fi
+  rm -rf "$st_plant"
+  printf 'API_KEY=%s_63_\n' "$base" | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh -x "$st_sa" --mask > "$WORK/st-x.out" 2> "$WORK/st-x.err"
+  if ! grep -a -q -F -- "${base}_63_" "$WORK/st-x.err" "$WORK/st-x.out"; then mt_ok "sh -x does not print a value (the script turns the trace off)"; else mt_bad "sh -x printed a value"; fi
+  rm -f "$WORK/st-x.out" "$WORK/st-x.err"
+  # signals in the MAIN phase (a fake git that sleeps keeps the checklist busy), and in --mask with an open input
+  st_fake=$WORK/st-fakebin; mkdir -p "$st_fake"; printf '#!/bin/sh\nexec sleep 31\n' > "$st_fake/git"; chmod +x "$st_fake/git"
+  for st_sig in TERM:143 HUP:129; do   # INT and QUIT cannot be tested from a shell: a program started with & by a non-interactive shell ignores them (see evidence-repin5, python launcher)
+    st_sn=${st_sig%%:*}; st_se=${st_sig##*:}
+    PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2>&1 &
+    st_p=$!; st_i=0
+    while [ "$st_i" -lt 30 ] && ! ps -A -o args= 2>/dev/null | grep -q '^sleep 31$'; do st_i=$((st_i + 1)); sleep 1; done
+    kill -s "$st_sn" "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?
+    sleep 1
+    st_stray=$(ps -A -o args= 2>/dev/null | grep -c '^sleep 31$'); st_left=$(ls "$st_child" | wc -l | tr -d ' ')
+    if [ "$st_r" -eq "$st_se" ] && [ "$st_stray" -eq 0 ] && [ "$st_left" -eq 0 ]; then mt_ok "signal $st_sn in the main phase: exit $st_se, no program of the run left running, no folder left"
+    else mt_bad "signal $st_sn in the main phase (exit=$st_r wanted $st_se, programs left=$st_stray, folders left=$st_left)"; fi
+    [ "$st_stray" -gt 0 ] && pkill -x -f '^sleep 31$' 2>/dev/null
+    rm -rf "$st_child"/lead-repin.??????
+  done
+  st_pf=$WORK/st-pid; ( echo $$ > "$st_pf"; exec sleep 29 ) | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask > /dev/null 2>&1 &
+  st_p=$!; sleep 3
+  kill -s TERM "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?; sleep 1
+  st_stray=$(ps -A -o args= 2>/dev/null | grep -c -F -- "$st_child")
+  [ -s "$st_pf" ] && kill "$(cat "$st_pf")" 2>/dev/null
+  if [ "$st_r" -eq 143 ] && [ "$st_stray" -eq 0 ]; then mt_ok "signal TERM in --mask with the input still open: exit 143 and the masking sed and awk are gone"
+  else mt_bad "signal TERM in --mask (exit=$st_r, masking programs left=$st_stray)"; fi
+  rm -rf "$st_child"/lead-repin.?????? "$st_fake" "$st_pf"
   rm -rf "$st_child" "$st_t" "$WORK/st-meta.txt" "$WORK/st-bad1.sed" "$WORK/st-bad2.sed"
 }
 
