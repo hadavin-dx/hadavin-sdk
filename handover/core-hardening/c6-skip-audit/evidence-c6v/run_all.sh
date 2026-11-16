@@ -23,10 +23,12 @@ need "$H/c6-skip-audit/REPORT-c6s.md" "c6-skip-audit/REPORT-c6s.md (the report t
 if [ "$miss" -ne 0 ]; then echo "run_all.sh stopped: fix the missing input(s) above"; exit 2; fi
 export C6V_TREE C6V_STEPS="$S"
 cd "$E"
-bash static-checks.sh > static-checks-output.txt 2>&1; echo "static-checks exit $?"
+bash static-checks.sh > static-checks-output.txt 2>&1; src=$?; echo "static-checks exit $src"; if [ "$src" -ne 0 ]; then tail -n 3 static-checks-output.txt; echo "run_all.sh stopped: static-checks.sh failed (see the lines above)"; exit 2; fi
+( cd "$C6V_TREE/demo/n8n-flows-real-v5" && echo "## command: grep -il -E 'DELETE|archive' mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; echo exit \$?" && grep -il -E 'DELETE|archive' mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; echo "exit $? (1 = no file matches)" ) > contact-grep-output.txt 2>&1
 rm -rf "$E/steps-snapshot" && mkdir "$E/steps-snapshot" && cp -p "$S"/OWNER-SHEET-v*.md "$S"/LEAD-RELEASE-NOTE-v*.md "$E/steps-snapshot"/
 python3 -B -I build_base.py || exit 1
 python3 -B -I build_c6v.py || exit 1
+C6V_MAKE_CENSUS=1 python3 -B -I verify-c6v.py | tail -n 1
 python3 -B -I verify-c6v.py > verify-c6v-output.txt 2>&1; vrc=$?; echo "verify exit $vrc"; tail -n 1 verify-c6v-output.txt | cut -c1-200
 C6V_SNAPSHOT="$E/steps-snapshot" C6V_STEPS="$E/steps-snapshot" python3 -B -I neg_controls_c6v.py > /dev/null 2>&1; nrc=$?; echo "neg exit $nrc"; tail -n 1 neg-output.txt
 [ "$vrc" -eq 0 ] && [ "$nrc" -eq 0 ]
