@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:49:00Z
+UPDATED_UTC: 2026-11-16T11:49:04Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 15 (rows below 100 percent: M2-M10, M14, M15, M17-M20; 5 rows are at 100). CORRECTION: my earlier "14" and "6 at 100" were wrong; recounted by script at 11:36Z over the 20 rows. PERCENT mean of the table is 83.1 (sum 1662 over 20 rows), not 83.6. M3, M4, M6 queue tags now match the board (checked 11:26Z, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
 PERCENT: 83.1 (script recount: 1662 / 20; the earlier 83.6 was wrong)
-AGENTS_RUNNING: 8 running (ORDER 028); ids in the AGENTS table below only. New this beat: LEAD-PAGE, TAKE-BLOCKERS round 2, OWNER-RUN-DAY-CARD, OWNER-VIEW round 3, OWNER-CLEANUP-CARD, DECISION-one-store, decision-list-for-lead, critical-path-r1 (all read-only cold reads).
+AGENTS_RUNNING: 8 running (ORDER 028); ids and purposes in the AGENTS table below only.
 INTERRUPTED: none
-NEXT: digested through 351. Collect hand-backs as 308 on, refill to 8 in the same turn one ends. Then: open-items-table fixes, decision-list rows still lacking names, CORRECTIONS item 7, end-delete-cases case B closed by decision 2.
+NEXT: digested through 365. Collect hand-backs as 308 on, refill to 8 in the same turn one ends. Then: open-items-table fixes, decision-list rows still lacking names, CORRECTIONS item 7, end-delete-cases case B closed by decision 2.
 CAPACITY: nproc 4, load 0.20, RAM 875/16087 MB used, disk / 45% used (22G free); my own scratch is small (task outputs under /tmp/claude-0 about 1.3 GB, regenerable); nothing deleted.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:49:00Z
+PUSHED_UTC: 2026-11-16T11:49:04Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -38,19 +38,16 @@ PUSHED_UTC: 2026-11-16T11:49:00Z
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (ORDER 028: 8 running; last checked 2026-11-16T11:41:28Z)
+## AGENTS (ORDER 028: 8 running; last checked 2026-11-16T11:49:04Z)
 | agent id | item | purpose | state |
 |---|---|---|---|
-| a9861d4e61cf99fd6 | M6 | cold read critical-path-r1 | running, read-only |
-| a4609b5b1ca1dff2a | M6 | cold read FINAL-CROSSCHECK round 2 | running, read-only |
-| a6a593cff10d5ba65 | M17 | fact check cleanup card vs v5 step I | running, read-only |
-| a2c436d1e3cf54a82 | M17 | cold read v5 steps 131-end | running, read-only |
-| ab1bb470d34cb8d85 | M6 | cold read ARCHIVE-CUT-LIST | running, read-only |
-| a3028e1449e0f7249 | M2 | cold read DECISION-one-store inputs copy | running, read-only |
-| (new) | M17 | cold read OWNER-CLEANUP-CARD | just launched |
-| (new) | M6 | cold read not-checked-r2 | just launched |
-
-
-
+| a7f21900d6ced959e | M2 | cold read README | running, read-only |
+| a217424afd85189da | M4 | cold read MASTER-MAP 200-end | running, read-only |
+| a718fa27d9846140b | M2 | cold read FINAL-CROSSCHECK round 3 | running, read-only |
+| a6eda7e98ac2dc609 | M4 | cold read SWEEP | running, read-only |
+| a5ffe7775f4a17dd6 | M5 | cold read QUESTIONS | running, read-only |
+| acdebbf4c197bd02e | M2 | cold read t19-and-stored-data-steps | running, read-only |
+| af6dd0d225b62c6b0 | M3 | cold read LEDGER-ROWS | running, read-only |
+| (launched this beat) | M6 | cold read review-r460-tools | running, read-only |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.

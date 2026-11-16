@@ -1,5 +1,5 @@
 # QUEUE for system-map (lead, 2026-11-16). Ordered backlog that runs WITHOUT waiting for the lead.
-RULES OF THE QUEUE (owner HARD rule 2026-11-16: complete the video work by Wed 18 Nov morning; no idle session):
+RULES OF THE QUEUE (owner HARD rule 2026-11-16: complete the video work by Wed 18 Nov, time not fixed yet (the lead names it in UTC and IST); no idle session):
 1. Always keep at least 6 agents running, up to 8 (ORDER 021, 022, 027, 028; the container has 4 cores, about 15 GB, 3 heavy test slots; light reading and review agents are not core-limited). Start the next queue item the moment a lane frees; never wait for the lead between items.
 2. Take items in order; independent items run in parallel (several at once). EGM sequence per item: your own egm reviewers (two independent) on the result; evidence runner for anything that runs.
 3. Report each finished item in REPORT.md and the board (item state table); only the questions that only the lead or owner can answer go to QUESTIONS.md, and you continue with the next item meanwhile.
@@ -12,7 +12,7 @@ M1 [DONE 2026-11-16 for the read-only check; the changed flows have NOT been run
 M2 [REVIEWED 2026-11-16, fixes applied] FINAL-CROSSCHECK.md of all three audits with the combined cut list for the owner.
 M3 [REVIEWED; fixes PARTLY applied; 8 Blockers open for the lead (drift/REPORT.md row 101); 92%; tag reconciled 16 Nov 10:40Z to the board] DRIFT CHECK of the take documents (critical path): inputs/ OWNER-STEPS, AGENT-SCOPE, DECISION-one-store, plan v5: every number, file name, port, step id and claim that appears in two documents must agree (list each disagreement with both quotes and line numbers; one place per job). Output handover/system-map/drift/REPORT.md with an exact fix list. Two egm reviewers.
 M4 [REVIEWED round 1, fixes applied; round 2 started, result not seen; 90%; tag reconciled 16 Nov 10:40Z to the board] MASTER-MAP refresh: add the new artefacts from this session (board duty files, queues, fill_flows when it lands, paste-check, steps-edits) to MASTER-MAP.md and ONE-PLACE-TABLE.md; mark duplicates.
-M5 [round 3 fixes applied; round 2 naive-reader running] OWNER VIEW: one-page plain-words status for the owner (what is done, what runs, what he must do by when for a take on Wed 18 Nov: accounts, Docker running, the written yes), built from the board and REPORT files of all three sessions (read others via git show).
+M5 [round 3 fixes applied; round 2 naive-reader running] OWNER VIEW: one-page plain-words status for the owner (what is done, what runs, what is still his: the written yes, typing y, the challenge and end, deleting leftover made-up contacts by hand after the take, revoking the model key at clean-up; accounts and n8n setup are already done, decisions 2 and 7. Owner of this row: system-map; due Tue 17 Nov 12:00 UTC / 17:30 IST), built from the board and REPORT files of all three sessions (read others via git show).
 M6 [R460 review DONE (work/review-r460-tools.md); B1, B2 and B4 fixed, B3 row-number keying OPEN; 90%; tag reconciled 16 Nov 10:40Z to the board] Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
 
 M7 [APPLIED 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: M3 drift check must flag every document that still lists a done item as an open owner step (OWNER-STEPS v3, handoff, orders); M5 OWNER VIEW lists only the still-owner-only items.
@@ -34,6 +34,6 @@ M16 [CLOSED by lead decision 1 of 16 Nov 2026: the one video is real-v5 only (sc
 
 ## REFILL (lead): items
 M17 [NOT STARTED; owner: lead (applies text to v5, card, notice, TAKE-BLOCKERS); due Tue 17 Nov 12:00 UTC / 17:30 IST; 70%] Replacement text file for item 1 (end never deletes): v5, run-day card, program notice, TAKE-BLOCKERS; old/new lines.
-M18 [WRITTEN, awaiting lead; owner: lead; due Tue 17 Nov 12:00 UTC / 17:30 IST; 90%] decisions/D04-D05.md (one page).
+M18 [CLOSED: settled by decisions 4 and 5 of 16 Nov; archive the draft decisions/D04-D05.md, never delete; was: WRITTEN, awaiting lead; owner: lead; due Tue 17 Nov 12:00 UTC / 17:30 IST; 90%] decisions/D04-D05.md (one page).
 M19 [round 2 cold reads done; owner: system-map; due Tue 17 Nov 12:00 UTC / 17:30 IST; 60%] Independent reader pass over the final owner-steps page (stranger test, 10 minutes of steps, no jargon).
 M20 [BLOCKED 2026-11-16; owner: lead; needs SESSION-HANDOFF pasted into inputs/ by Tue 17 Nov 12:00 UTC / 17:30 IST, or M20 is dropped from the take] Re-verify every number and date in SESSION-HANDOFF live state against files (claims check), list mismatches.
