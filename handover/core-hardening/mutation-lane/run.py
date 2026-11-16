@@ -440,7 +440,7 @@ def tree_files(root: pathlib.Path) -> dict[str, str]:
             if stat.S_ISLNK(mode):
                 out[rel] = "symlink:" + os.readlink(p)
             elif stat.S_ISREG(mode):
-                out[rel] = sha256(p.read_bytes())
+                out[rel] = sha256(read_regular(p))
             else:
                 out[rel] = f"special file, not read (mode {mode:o})"
     return out
@@ -570,13 +570,15 @@ def group_members(pgid: int) -> list[int]:
 
 
 def works_in(pid: int, root: pathlib.Path) -> bool:
-    """The process runs inside root: its folder is under root, or an argument names root."""
+    """The process runs inside root: its folder is root or under it, or an argument IS root or a path under it
+    (exact path match on whole path parts: /x/wCD does not count as /x/wC; review r4 nit 7)."""
     try:
         if pathlib.Path(os.readlink(f"/proc/{pid}/cwd")).is_relative_to(root):
             return True
     except OSError:
         pass
-    return any(str(root) in a for a in proc_argv(pid) or [])
+    prefix = str(root) + os.sep
+    return any(a == str(root) or a.startswith(prefix) for a in proc_argv(pid) or [])
 
 
 def unreaped_child(pid: int) -> bool:
@@ -592,9 +594,7 @@ def unreaped_child(pid: int) -> bool:
 def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
     """Process groups that are provably this run's test group (a killed run may leave several things behind)."""
     pgid, rec_start, rec_argv = m.get("pgid"), m.get("start_ticks"), m.get("argv")
-    if isinstance(pgid, int) and pgid > 1:
-        if not isinstance(rec_start, int) or not isinstance(rec_argv, list):
-            return []  # a marker without the identity (older or forged): never guess
+    if isinstance(pgid, int) and pgid > 1 and isinstance(rec_start, int) and isinstance(rec_argv, list):
         st = proc_stat(pgid)
         if (
             st and st["state"] != "Z"
@@ -610,10 +610,13 @@ def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
             if (qs := proc_stat(q)) and qs["start"] >= rec_start and works_in(q, root)
         ]
         return [pgid] if alive else []
-    # SIGKILL between the start and the marker rewrite: no group recorded; find a session leader that runs the
-    # command the first marker names, in root, started after this run did
-    head, run_start = m.get("cmd_head"), m.get("run_start_ticks")
-    if not isinstance(head, list) or not isinstance(run_start, int):
+    # No group recorded (SIGKILL between the start and the marker rewrite), or a marker with a group but without
+    # its identity (review r4 nit 7): find a session leader that runs exactly the command the first marker
+    # names (full argument list when recorded, else its first words), in root, started after this run did.
+    # Never a guess: without the command and the start time of the run nothing is stopped.
+    head, full, run_start = m.get("cmd_head"), m.get("cmd_argv"), m.get("run_start_ticks")
+    want = full if isinstance(full, list) else head
+    if not isinstance(want, list) or not want or not isinstance(run_start, int):
         return []
     found = []
     for d in pathlib.Path("/proc").iterdir():
@@ -621,12 +624,13 @@ def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
             continue
         q = int(d.name)
         st = proc_stat(q)
+        argv = proc_argv(q) or []
         if (
             st
             and st["state"] != "Z"
             and st["pgrp"] == q == st["sid"]
             and st["start"] >= run_start
-            and (proc_argv(q) or [])[: len(head)] == head
+            and (argv == want if isinstance(full, list) else argv[: len(want)] == want)
             and works_in(q, root)
         ):
             found.append(q)
@@ -638,7 +642,7 @@ def stop_orphan(m: dict, root: pathlib.Path) -> str:
     full argument list recorded in the marker must match; review r3 minors). A failure to stop it is reported,
     never allowed to abort the restore of the file."""
     pgid = m.get("pgid")
-    if not isinstance(pgid, int) and not m.get("cmd_head"):
+    if not isinstance(pgid, int) and not m.get("cmd_head") and not m.get("cmd_argv"):
         return "no test group recorded"
     if isinstance(pgid, int) and pgid <= 1:
         return "no test group recorded"
@@ -651,7 +655,8 @@ def stop_orphan(m: dict, root: pathlib.Path) -> str:
             and not group_members(pgid)
         ):
             return "test group already gone"
-        return f"process {pgid} is not this run's pytest (or cannot be verified): left alone"
+        what = f"process {pgid}" if isinstance(pgid, int) else "no process"
+        return f"{what} is not this run's pytest (or cannot be verified): left alone"
     notes = []
     for g in groups:
         try:
@@ -691,7 +696,7 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
                 raise Refused("its marker does not belong to this root")
             saved = read_state(folder / f"{key}.backup")
             target = safe_rel(root, m["file"], "marker file")
-            differs = target.read_bytes() != saved
+            differs = read_regular(target) != saved
         except (Refused, OSError) as e:
             return (
                 False,
@@ -710,12 +715,31 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
     ) or f"no marker in {STATE} or in {sorted(map(str, spots - {here}))}: nothing to restore"
 
 
+def control_marker_path(key: str) -> pathlib.Path:
+    return STATE / f"{key}.control.json"
+
+
+def restore_control(root: pathlib.Path, key: str) -> str:
+    """A control run (nothing planted) that was killed with SIGKILL leaves its test group running: the control
+    marker names it. Stop it only if it is provably ours (same checks as for a planted run), then remove the
+    marker (review r4 nit 5)."""
+    path = control_marker_path(key)
+    m = json.loads(read_state(path)) if os.path.lexists(path) else None
+    if not isinstance(m, dict) or m.get("root") != str(root):
+        raise Refused(f"control marker {path} is not for this root: refused")
+    note = stop_orphan(m, root)
+    path.unlink()
+    return f"control run: {note}"
+
+
 def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     ensure_state()
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
+    control = restore_control(root, key) if os.path.lexists(control_marker_path(key)) else None
     if not os.path.lexists(marker):
-        return other_state_check(root, key)
+        ok, text = other_state_check(root, key)
+        return ok, f"{control}; {text}" if control else text
     m = load_marker(marker)
     if m.get("root") != str(root):
         raise Refused(f"marker is for another root ({m.get('root')!r}): refused")
@@ -730,15 +754,21 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     orphan = stop_orphan(m, root)
     mode = m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
     try:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        write_target(target, saved, create=True, mode=mode)
-        ok = sha256(target.read_bytes()) == m["orig_sha256"]
+        try:
+            already = read_regular(target) == saved  # the file already holds the original: nothing to write
+        except (Refused, FileNotFoundError):
+            already = False
+        if not already:
+            write_target(target, saved, create=True, mode=mode, root=root)
+        ok = sha256(read_regular(target)) == m["orig_sha256"]
     except OSError as e:
         raise Refused(f"cannot write {m['file']} back: {e.strerror or e}: refused") from e
     if ok:
         marker.unlink()
         bk.unlink(missing_ok=True)
-    return ok, f"{orphan}; restored {m['file']} from {bk}; hash matches saved original: {ok}"
+    note = " (it already held the original)" if already else ""
+    text = f"{orphan}; restored {m['file']} from {bk}{note}; hash matches saved original: {ok}"
+    return ok, f"{control}; {text}" if control else text
 
 
 def test_env(pythonpath: str | None) -> dict:
