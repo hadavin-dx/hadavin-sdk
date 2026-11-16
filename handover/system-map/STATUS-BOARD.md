@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:01:23Z
-PUSHED_UTC: 2026-11-16T15:01:23Z
+UPDATED_UTC: 2026-11-16T15:01:53Z
+PUSHED_UTC: 2026-11-16T15:01:53Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1640. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1646. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -44,11 +44,11 @@ INTERRUPTED: none
 
 ## AGENTS
 UPDATED_UTC: 2026-11-16T15:00:08Z | PUSHED_UTC: 2026-11-16T15:00:08Z
-Running (8): not-checked-r2, open-items-table, ARCHITECTURE-AUDIT-CHECKLIST, banned-claims-clean, end-delete-cases, t19-terms (launched last beat) plus t19-gap-facts, t19-and-stored-data-steps, row-dm-plain, L4c 1-60 (this beat) = 10 started; two of the last six may already have reported, check ListAgents.
-Closed and digested 1637-1640: ab648e4ce840aa527, a474e90f25a7d7085, a936f38d048b990c5, a8eeb0ab3459f8777. Earlier 1633-1636: abd14a3aa42add6ae, a96dc65fdf92a6490, ae8e634b8aca10ceb, a0603595fe6a76adf. Earlier 1631-1632: a602134eee67160a4, a8b6a4cf908a8ee42. Earlier 1625-1630: a9736197cd289fa57, aaaccbd483fcb454b, a93921ab4f6712335, acdf230aa66f521d2, a53053c9c98bb5c86, ac42d4d03f5ceca39.
+Running: t19-gap-facts, t19-and-stored-data-steps, row-dm-plain, L4c 1-60 (launched last beat; some may have reported) plus this beat L5b 50-130, L2 50-100, L4 50-130, L1 1-60, t19-row-and-steps-r3, GLOSSARY. Check ListAgents for the exact count.
+Closed and digested 1641-1646: af1acff60f0057bd2, a736e222a8d0a61b1, a2622c1cfd350026f, a8fe85e54e9cc0de6, a4045acc4b87dc00e, ad107187f1f9952d0. Earlier 1637-1640: ab648e4ce840aa527, a474e90f25a7d7085, a936f38d048b990c5, a8eeb0ab3459f8777. Earlier 1633-1636: abd14a3aa42add6ae, a96dc65fdf92a6490, ae8e634b8aca10ceb, a0603595fe6a76adf. Earlier 1631-1632: a602134eee67160a4, a8b6a4cf908a8ee42. Earlier 1625-1630: a9736197cd289fa57, aaaccbd483fcb454b, a93921ab4f6712335, acdf230aa66f521d2, a53053c9c98bb5c86, ac42d4d03f5ceca39.
 FINDING: readers of later ranges cannot see the KEY at the top. Class fix: a REMINDER line (job keys, take, DECISION, UNVERIFIED) now sits under every section heading on all 12 pages. Not yet proven by a re-read.
 CAPACITY: 8 of 8. No missing slots.
-NEXT 5: claim column for L3 Findings and merged-findings L3 rows; L1 blank line 334, FD-021, FD-025; L5b status line and void findings FD-003 to 005; group note with grep patterns above 71-row tables; L1c finding sentences. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
+NEXT 5 (changed: stop only reading; fix the work/ pages with the open Blockers: t19-terms line 2, open-items-table lines 6 and 19, not-checked-r2 F2 and gating, banned-claims-clean opening, checklist glossary): claim column for L3 Findings and merged-findings L3 rows; L1 blank line 334, FD-021, FD-025; L5b status line and void findings FD-003 to 005; group note with grep patterns above 71-row tables; L1c finding sentences. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
 
 
 ## Details (long text moved from the FAILED line)
