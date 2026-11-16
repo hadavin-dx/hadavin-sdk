@@ -35,7 +35,7 @@ def appendix_blocks(o):
     o = re.sub(r'<<F(\d+) ([^\n]*)\n(.*?)\nF\1>>\n?', r, o, flags=re.S)
     def r2(m):
         add(m.group(1), m.group(2), m.group(3)); return ' (appendix %s)' % m.group(1)
-    o = re.sub(r' ?\(\(\(F(\d+) ([^\n:]*?):: (.*?)\)\)\)', r2, o, flags=re.S)
+    o = re.sub(r' ?\(\(\(F(\d+) ([^\n:]*?):: (.*?)\)\)\)(?!\))', r2, o, flags=re.S)
     return o, [(int(n), v[0], '\n\n'.join(v[1])) for n, v in sorted(parts.items(), key=lambda kv: int(kv[0]))]
 def split(o, k):
     """returns (sheet text, card print copy, appendix text, film person page)"""

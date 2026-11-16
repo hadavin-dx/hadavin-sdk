@@ -1,3 +1,5 @@
 M01 default: drop spend CHECK line: CAUGHT (SUMMARY pass=36 fail=77) first_fail: FAIL D0 default file applies as non-superuser (no output = ok)  [got 'psql: error: /tmp/mut_pwmzjbzh/spend_nonneg.sql: Permission denied' want '']
 M02 default: drop spend_month CHECK line: CAUGHT (SUMMARY pass=36 fail=77) first_fail: FAIL D0 default file applies as non-superuser (no output = ok)  [got 'psql: error: /tmp/mut_n_e1qtob/spend_nonneg.sql: Permission denied' want '']
 M03 default: >= 0 becomes > 0 (spend): CAUGHT (SUMMARY pass=36 fail=77) first_fail: FAIL D0 default file applies as non-superuser (no output = ok)  [got 'psql: error: /tmp/mut_hpdwpw34/spend_nonneg.sql: Permission denied' want '']
+M04 default: >= 0 becomes >= -1 (month): CAUGHT (SUMMARY pass=36 fail=77) first_fail: FAIL D0 default file applies as non-superuser (no output = ok)  [got 'psql: error: /tmp/mut_rdod4ipg/spend_nonneg.sql: Permission denied' want '']
+M05 default: flip sign >= to <= (spend): CAUGHT (SUMMARY pass=36 fail=77) first_fail: FAIL D0 default file applies as non-superuser (no output = ok)  [got 'psql: error: /tmp/mut_4eg6jatb/spend_nonneg.sql: Permission denied' want '']
