@@ -1,463 +1,380 @@
-"""Client config: ``HADAVIN_CONFIG_DIR`` names a folder holding ``config.yaml`` and friends.
+"""`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
-Bad config fails at start-up. Cross-file checks (agents, actions, chains) live in ``registry``.
+Contract (design v5 kernel, section 4):
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily), reprobe_sources, audit_reconcile. Later PRs only
+  **append** a ``TickStep``.
+* Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
+  message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
+* A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
+* The tick summary line (``heartbeat``) is not a step: it is logged after the steps, is never recorded in
+  ``tick_state`` and cannot change the exit code. The external heartbeat
+  (a ping sent by the CLI entrypoint for every exit code) is PENDING (K7): nothing sends it today.
+* Exit codes: 0 all ok; 1 a step failed (store still reachable); 2 config error, or the store answers but is
+  not ready (missing table or grant: run ``migrate``); 4 store unreachable (connection refused, dropped or
+  timed out), before any step or when it stops answering during the steps; 3 is the CLI wrapper's code for any
+  other uncaught error.
+
+Concurrent ticks are safe: every state change is a compare-and-set, and a loser (``StaleState``) skips.
 """
 
 from __future__ import annotations
 
+import logging
 import re
-from decimal import Decimal
-from pathlib import Path
-from typing import Annotated, Any, Literal, get_args
-from urllib.parse import urlsplit
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Any
 
-import yaml
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from hadavin_sdk.guard.runmap import safe_head
+from hadavin_sdk.models import AuditEvent, RunState, TickState
+from hadavin_sdk.runtime.runs import IllegalTransition, advance
+from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
 
-from hadavin_sdk import defaults, deferred
-from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
-from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.scrub_settings import ScrubSettings
+if TYPE_CHECKING:
+    from hadavin_sdk.app import App
 
-__all__ = [
-    "Backends",
-    "Config",
-    "ConfigError",
-    "EvidenceSettings",
-    "K1bSettings",
-    "Retention",
-    "Route",
-    "ScrubSettings",
-    "SourceConfig",
-    "confined",
-    "load_config",
-    "load_yaml",
-    "url_allowed",
-]
+S = RunState
+TICK_SLACK_S = 60  # the longest gap between ticks (design: every 30-60 s)
+_LOG = logging.getLogger("hadavin_sdk.tick")
+OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
 
-def _money(v: object) -> object:
-    if isinstance(v, float):
-        # ValueError, not TypeError: pydantic turns only ValueError into a validation error.
-        raise ValueError("money must be a decimal string, not a float")  # noqa: TRY004
-    return v
+@dataclass
+class TickContext:
+    app: App
+    now: datetime
+    results: dict[str, str] = field(default_factory=dict)  # step name -> ok / failed / skipped
 
 
-Money = Annotated[Decimal, BeforeValidator(_money)]
+@dataclass(frozen=True)
+class TickStep:
+    name: str  # unique, [a-z_]+ (the tick_state CHECK)
+    every_s: int  # 0 = every tick
+    fn: Callable[[TickContext], None]
+    # Interval read from the config at run time (so it is not frozen at import); wins over `every_s`.
+    interval: Callable[[TickContext], int] | None = None
+
+    def __post_init__(self) -> None:
+        if not re.fullmatch(r"[a-z_]+", self.name) or self.every_s < 0:
+            raise ValueError(f"tick step name must be [a-z_]+ and every_s >= 0: {self.name!r}")
 
 
-class _Strict(BaseModel):
-    # A mistyped key may hold a secret: errors name the field, never its value.
-    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+def _each(items: list[Any], fn: Callable[[Any], None], what: str) -> None:
+    """Run fn per item; a CAS loser is skipped quietly, any other error is logged and the step fails at the
+    end, after every item had its turn (one bad row never blocks the rest)."""
+    first: Exception | None = None
+    for item in items:
+        try:
+            fn(item)
+        except (StaleState, IllegalTransition):
+            _LOG.debug("%s: moved by another worker, skipped", what)
+        except Exception as exc:  # noqa: BLE001 - isolate the item; re-raised below
+            _LOG.warning("%s: %s", what, type(exc).__name__)
+            first = first or exc
+    if first is not None:
+        raise first
 
 
-class Route(_Strict):
-    model_id: str
-    input_usd_per_mtok: Money
-    output_usd_per_mtok: Money
-    max_tokens: int = Field(gt=0, le=defaults.MAX_ROUTE_TOKENS)
+def sweep(ctx: TickContext) -> None:
+    """Escalate or expire due approvals; resend requests whose channel send failed."""
+    ctx.app.approvals.sweep(ctx.now)
+    ctx.app.approvals.resend_unsent(ctx.now)
 
 
-class Backends(_Strict):
-    """One validated settings model per capability (built by `parse_backends`, never from raw YAML)."""
+def reconcile(ctx: TickContext) -> None:
+    """Advance runs whose approval ended (APPROVED runs the plan). The receiver only records decisions."""
+    store, runtime = ctx.app.store, ctx.app.runtime
+    ended = store.list_approvals({"APPROVED", "REJECTED", "EXPIRED"})
+    # ponytail: scans every ended approval each tick; filter by a reconciled flag when the table grows.
 
-    secrets: KindSettings
-    signer: KindSettings
-    anchor: KindSettings
-    store: KindSettings
-    audit: KindSettings
-    llm: KindSettings
-    detector: tuple[KindSettings, ...]
-    channel: KindSettings
+    def one(req) -> None:
+        if store.get_run(req.run_id).state is not S.WAITING_FOR_APPROVAL:
+            return
+        ctx.app.approvals.update_message(req)  # decisions arrive record-only: show the outcome now
+        runtime.on_decided(req.run_id, req.status, store.get_approval_decision(req.approval_id))
 
-    def entries(self) -> list[tuple[str, KindSettings]]:
-        out = [(cap, getattr(self, cap)) for cap in TABLE if cap != "detector"]
-        return out + [("detector", d) for d in self.detector]
+    _each(ended, one, "reconcile")
 
 
-# Slice 1 keys, refused with the place they moved to (design 12.3; no clients yet, so no migration shim).
-MOVED = {
-    "region": "backends.<capability>.region on each AWS kind",
-    "slack": "backends.channel: {kind: slack, channel_id, signing_secret_name, bot_token_secret_name}",
-    "detector_threshold": "backends.detector: [{kind: regex, threshold}]",
-    "audit_dir": "backends.audit: {kind: local_dir, dir}",
-    "recorded_dir": "backends.llm: {kind: fake, recorded_dir}",
+def stuck_after_s(app: App, agent_id: str) -> float:
+    """max_steps x call_timeout_s x max_attempts + 60 (design 12.7): the longest a healthy run stays quiet."""
+    llm = app.config.backends.llm
+    agent = app.registry.agents.get(agent_id)
+    steps = (
+        agent.max_steps
+        if agent
+        else max((a.max_steps for a in app.registry.agents.values()), default=1)
+    )
+    return steps * getattr(llm, "call_timeout_s", 60) * getattr(llm, "max_attempts", 1) + 60
+
+
+STUCK = {
+    S.RECEIVED: "interrupted",
+    S.WORKING: "interrupted",
+    S.PLAN_READY: "interrupted",
+    S.EXECUTING: "outcome_unknown",  # never re-executed: a person checks the system
+    # ponytail: re-run verify once needs the stored RunResult; until then a person checks.
+    S.VERIFYING: "verify_interrupted",
 }
 
 
-def _one(cap: str, raw: Any, root: Path) -> KindSettings:
-    bare = isinstance(raw, str)
-    if bare:
-        raw = {"kind": raw}
-    if not isinstance(raw, dict) or not isinstance(raw.get("kind"), str):
-        raise ConfigError(f"backends.{cap}: expected {{kind: <name>, ...settings}}")
-    kinds = TABLE[cap]
-    kind = raw["kind"]
-    if kind not in kinds:
-        raise ConfigError(
-            f"backend {cap}: unknown kind {kind!r}; known: {', '.join(sorted(kinds))}"
-        )
-    model = kinds[kind].settings
-    required = [n for n, f in model.model_fields.items() if f.is_required() and n != "kind"]
-    if bare and required:
-        raise ConfigError(
-            f"backends.{cap}: {kind!r} needs settings; "
-            f"write backends.{cap}: {{kind: {kind}, {', '.join(required)}}}"
-        )
-    data = dict(raw)
-    for (
-        name,
-        field,
-    ) in model.model_fields.items():  # relative paths are relative to the config folder
-        if Path in (field.annotation, *get_args(field.annotation)) and isinstance(
-            data.get(name), str
-        ):
-            data[name] = root / data[name]
-    try:
-        return model(**data)
-    except ValidationError as exc:
-        raise ConfigError(f"backends.{cap} ({kind}): {exc}") from exc
+def stuck(ctx: TickContext) -> None:
+    """Runs quiet for longer than their agent's stuck_after_s go to NEEDS_PERSON with a reason."""
+    app = ctx.app
+    floor = min((stuck_after_s(app, a) for a in app.registry.agents), default=60)
+    for state, reason in STUCK.items():
+        candidates = app.store.list_runs(state, ctx.now - timedelta(seconds=floor))
 
-
-def parse_backends(raw: Any, root: Path) -> Backends:
-    if raw is not None and not isinstance(raw, dict):
-        raise ConfigError("backends: expected a mapping of capability to {kind: ...}")
-    raw = dict(raw or {})
-    if unknown := set(raw) - set(TABLE):
-        raise ConfigError(
-            f"backends: unknown capability {sorted(unknown)}; known: {', '.join(TABLE)}"
-        )
-    if missing := [cap for cap in TABLE if cap not in raw and cap not in DEFAULTS]:
-        raise ConfigError(f"backends: {', '.join(missing)} must be set")
-    built: dict[str, Any] = {}
-    for cap in TABLE:
-        value = raw.get(cap, DEFAULTS.get(cap))
-        if cap == "detector":
-            items = value if isinstance(value, list) else [value]
-            if not items:  # every entry runs and any flag flags the run (guard.injection.AnyOf)
-                raise ConfigError("backends.detector: list at least one detector")
-            built[cap] = tuple(_one(cap, item, root) for item in items)
-            if all(d.kind == "llm_judge" for d in built[cap]):
-                # The judge reads attacker text and can be steered to say "clean": a tripwire beside
-                # another detector, never the only one (design 4.3, 10).
-                raise ConfigError("backends.detector: llm_judge needs another detector beside it")
-        else:
-            built[cap] = _one(cap, value, root)
-    return Backends(**built)
-
-
-_LOOPBACK = {"127.0.0.1", "localhost", "::1"}
-
-
-def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
-    """The bearer token travels with every call: https only. Plain http only to this machine, and only when
-    the config sets ``allow_insecure_loopback: true`` (the local test fixture). Used at load and at call time."""
-    parts = urlsplit(url)
-    if parts.scheme == "https":
-        return True
-    return parts.scheme == "http" and allow_insecure_loopback and parts.hostname in _LOOPBACK
-
-
-class System(_Strict):
-    base_url: str
-
-
-class K1bSettings(_Strict):
-    """K1b replay limits. Not part of ``config_hash``: they bound a replay run, not an agent's qualification."""
-
-    max_steps: int = Field(default=12, gt=0)  # effective: min with the agent's own max_steps
-    max_tool_calls: int = Field(default=20, gt=0)
-    case_timeout_s: int = Field(default=300, gt=0)
-    # Mask client data before the model sees it. Turning it off needs `replay --i-know-data-is-already-masked`.
-    redact: bool = True
-
-
-HELD_MAPS_CEILING = 400  # days: the audit retention; a config cannot extend it (design 6.3)
-
-
-class Retention(_Strict):
-    """How long evidence is kept (design 6.1, 6.3). Not part of ``config_hash``."""
-
-    tool_calls_days: int = Field(default=30, gt=0)
-    redaction_maps_days: int = Field(default=30, gt=0)
-    # Runs labelled wrong, harmful or missed (or demoted) keep their tool calls past `tool_calls_days`.
-    hold_labelled: bool = True
-    # A held run's redaction map (original identifiers) is purged at this age whatever the hold says.
-    held_maps_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
-    # Tool calls of held runs are kept past `tool_calls_days`, but not forever.
-    held_tool_calls_max_days: int = Field(default=HELD_MAPS_CEILING, gt=0, le=HELD_MAPS_CEILING)
-    purge_every_s: int = Field(
-        default=defaults.PURGE_EVERY_S, gt=0
-    )  # the purge_evidence tick step's interval
-
-    @model_validator(mode="after")
-    def _held_not_shorter(self) -> Retention:
-        if self.held_maps_max_days < self.redaction_maps_days:
-            raise ValueError("retention.held_maps_max_days must be at least redaction_maps_days")
-        return self
-
-
-class EvidenceSettings(_Strict):
-    """The read path's limits (K5). Defaults live in `hadavin_sdk/defaults.py`. Not part of `config_hash`."""
-
-    scrub: ScrubSettings = ScrubSettings()
-
-    max_tool_errors: int = Field(default=defaults.MAX_TOOL_ERRORS, gt=0)
-    legacy_max_output_bytes: int = Field(
-        default=defaults.LEGACY_MAX_OUTPUT_BYTES, gt=0, le=defaults.MAX_REDACT_CHARS
-    )
-    fetch_ceiling_bytes: int = Field(default=defaults.FETCH_CEILING_BYTES, gt=0)
-    https_ports: tuple[int, ...] = defaults.HTTPS_PORTS
-    cluster_ports: tuple[int, ...] = defaults.CLUSTER_PORTS
-    # Which identifier kinds the run's redaction map may store. May narrow the default, never widen it: a kind
-    # with no grammar in `guard/runmap.py` cannot be stored.
-    stored_kinds: tuple[str, ...] = defaults.STORED_KINDS
-    # Per-run ceilings (a model can loop on a cheap tool): calls, bytes sent back to the model, and how many
-    # tool bodies may still be running past their deadline before further calls are refused.
-    max_tool_calls_per_run: int = Field(default=defaults.MAX_TOOL_CALLS_PER_RUN, gt=0)
-    # A run whose document or tool results plant more distinct values than this ends `document_too_complex`:
-    # building the redactor over a bigger map is CPU the client's text should not be able to spend.
-    max_map_entries: int = Field(default=defaults.MAX_MAP_ENTRIES, gt=0)
-    max_tool_bytes_per_run: int = Field(default=defaults.MAX_TOOL_BYTES_PER_RUN, gt=0)
-    max_abandoned_tool_threads: int = Field(default=defaults.MAX_ABANDONED_TOOL_THREADS, gt=0)
-    # What the agent can do to the client's systems: at most this many reads at once and per minute, whatever
-    # the model asks (it cannot raise the production-side load, R372).
-    max_concurrent_tool_calls: int = Field(default=defaults.MAX_CONCURRENT_TOOL_CALLS, gt=0)
-    max_tool_calls_per_minute: int = Field(default=defaults.MAX_TOOL_CALLS_PER_MINUTE, gt=0)
-    # Host suffixes that count as in-cluster, where `cluster_http` tools may use plain http.
-    cluster_suffixes: tuple[str, ...] = defaults.CLUSTER_SUFFIXES
-    # The largest document a run takes; a bigger one is refused (`document_too_large`), never half-read.
-    # Never above the redactor's own cap (`defaults.MAX_REDACT_CHARS`): a larger value would pass the size check
-    # and then be refused by the redactor.
-    max_document_bytes: int = Field(
-        default=defaults.MAX_DOCUMENT_BYTES, gt=0, le=defaults.MAX_REDACT_CHARS
-    )
-    # Target systems (a contract's `target_system`) whose names are case-insensitive, so grounding folds case
-    # for them. Every other target is compared exactly: `Admin` is not `admin`.
-    case_insensitive_targets: tuple[str, ...] = ()
-    # The secret (in the secrets kind) that keys the HMAC of the restored inputs on the gate's audit event, so
-    # an audit reader cannot confirm a guessed identifier offline. Required in pilot and prod.
-    restored_hash_key_secret_name: str | None = None
-    # Operation ids a tool module may bind to a method other than GET (a review or a query is a POST that
-    # reads). A tool's READ_OPERATIONS declares the binding; this list is the deployment's permission for it.
-    post_read_operations: tuple[str, ...] = ()
-    # How often a configured source's scope is probed again while the process runs (RBAC can widen).
-    source_reprobe_s: int = Field(default=defaults.SOURCE_REPROBE_S, gt=0)
-
-    @model_validator(mode="after")
-    def _checks(self) -> EvidenceSettings:
-        if bad := [
-            t for t in self.case_insensitive_targets if not re.fullmatch(r"[a-z0-9_-]{1,40}", t)
-        ]:
-            raise ValueError(
-                f"evidence.case_insensitive_targets: {bad} are not target_system labels"
-            )
-        if unknown := sorted(set(self.stored_kinds) - set(defaults.STORED_KINDS)):
-            raise ValueError(
-                f"evidence.stored_kinds: {unknown} cannot be stored (secret, regulated or unknown)"
-            )
-        if bad_suffix := [
-            s
-            for s in self.cluster_suffixes
-            if not s.startswith(".") or s.rsplit(".", 1)[-1] not in defaults.PRIVATE_SUFFIX_LABELS
-        ]:
-            raise ValueError(
-                f"evidence.cluster_suffixes: {bad_suffix} must start with a dot and end in a private label "
-                f"({', '.join(sorted(defaults.PRIVATE_SUFFIX_LABELS))}); a public suffix such as .com would "
-                "allow plain http to the internet"
-            )
-        for name in ("https_ports", "cluster_ports"):
-            if bad := [p for p in getattr(self, name) if not 0 < p < 65536]:
-                raise ValueError(f"evidence.{name}: {bad} are not ports")
-        return self
-
-
-class SourceConfig(_Strict):
-    """A read source built at start-up: `kind` names a registered kind, `settings` is that kind's validated
-    settings, `token_secret_name` the secret (from the configured secrets kind) it authenticates with, and
-    `ca_file` the CA bundle that signs its endpoint (a path relative to the config folder). Not part of
-    `config_hash`; `scope_inventory` can stand in for a probe only for a source that cannot be probed."""
-
-    kind: str
-    settings: dict[str, Any]
-    token_secret_name: str | None = None
-    ca_file: Path | None = None
-
-    @model_validator(mode="after")
-    def _kind_checks(self) -> SourceConfig:
-        from hadavin_sdk.sources.kinds import KINDS
-
-        if self.kind not in KINDS:
-            raise ValueError(
-                f"source kind {self.kind!r} is unknown; known: {', '.join(sorted(KINDS))}"
-            )
-        KINDS[self.kind].settings(**self.settings)
-        return self
-
-
-_DIGEST = re.compile(r"[0-9a-f]{64}")
-
-
-def _inventory_ref_ok(ref: str) -> bool:
-    """ "<page>#<anchor> sha256:<64 hex>", checked by splitting (no backtracking-prone pattern)."""
-    where, sep, digest = ref.rpartition(" sha256:")
-    page, hash_sign, anchor = where.partition("#")
-    return bool(
-        sep and hash_sign and page and anchor and " " not in where and _DIGEST.fullmatch(digest)
-    )
-
-
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="HADAVIN_")
-    config_dir: Path
-
-
-class Config(_Strict):
-    environment: Literal["dev", "pilot", "prod"]
-    routes: dict[str, Route]
-    backends: Backends
-    golden_dir: Path
-    inputs_dir: Path
-    eval_threshold: float = Field(
-        default=1.0, gt=0.0, le=1.0
-    )  # 0 would qualify an agent that passed nothing
-    check_modules: list[str] = []
-    systems: dict[str, System] = {}
-    egress_hosts: frozenset[str] = frozenset()
-    allow_insecure_loopback: bool = False  # true only in the local test fixture config
-    k1b: K1bSettings = K1bSettings()
-    # K5: modules a tool manifest's `function` may resolve from (like `check_modules`), the per-call timeout, and
-    # retention of evidence.
-    tool_modules: list[str] = []
-    tool_timeout_s: float = Field(default=10.0, gt=0)
-    retention: Retention = Retention()
-    evidence: EvidenceSettings = EvidenceSettings()
-    # design 6.6: a read source that cannot be probed names an operator-attested inventory instead (the reference
-    # is format-checked and logged; its hash is NOT compared with the page and nobody is verified to have signed),
-    # "<page>#<anchor> sha256:<64 hex>".
-    scope_inventory: dict[str, str] = {}
-    # K5: configured read sources (kind + settings), built and probed at start-up (design 6.6).
-    sources: dict[str, SourceConfig] = {}
-    # SHA-256 of each tool module's source file; required in pilot and prod, checked when listed.
-    tool_module_hashes: dict[str, str] = {}
-    executor_timeout_s: float = Field(
-        default=defaults.EXECUTOR_TIMEOUT_S, gt=0
-    )  # dev executor only
-    root: Path
-
-    @model_validator(mode="after")
-    def _cross_checks(self) -> Config:
-        for source, ref in self.scope_inventory.items():
-            if not _inventory_ref_ok(ref):
-                raise ValueError(
-                    f"scope_inventory {source}: expected '<page>#<anchor> sha256:<64 hex digits>'"
+        def one(run, state=state, reason=reason) -> None:
+            if run.updated_at >= ctx.now - timedelta(seconds=stuck_after_s(app, run.agent_id)):
+                return
+            advance(app.store, run.run_id, state, S.NEEDS_PERSON, reason)
+            app.audit.write_outcome(
+                AuditEvent(
+                    run_id=run.run_id,
+                    domain="run",
+                    operation="state",
+                    principal="system:tick",
+                    source="tick",
+                    result=S.NEEDS_PERSON.value,
+                    error_code=reason,
                 )
-        for d in self.backends.detector:  # llm_judge names a route
-            if getattr(d, "route", None) is not None and d.route not in self.routes:
-                raise ValueError(f"backends.detector {d.kind}: unknown route {d.route!r}")
-        for name, system in self.systems.items():
-            if not url_allowed(system.base_url, self.allow_insecure_loopback):
-                raise ValueError(
-                    f"system {name}: base_url must be https "
-                    f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
-                )
-        if self.backends.llm.kind != "fake":
-            # A zero or negative price makes every reply cost 0, so no spend limit could ever fire (audit C-01).
-            free = sorted(
-                n
-                for n, r in self.routes.items()
-                if min(r.input_usd_per_mtok, r.output_usd_per_mtok) <= 0
             )
-            if free:
-                raise ValueError(f"routes with a zero or negative price: {free}")
-        refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
-        if self.environment != "dev":
-            refused = [
-                f"{c}: {s.kind}" for c, s in self.backends.entries() if (c, s.kind) in DEV_ONLY
-            ]
-            refused += ["allow_insecure_loopback"] if self.allow_insecure_loopback else []
-        refused += _anchor_refusals(self.environment, self.backends)
-        if refused:
-            raise ValueError(f"environment {self.environment}: refused: {', '.join(refused)}")
-        return self
+
+        _each(candidates, one, f"stuck {state.value}")
+
+    # A crash between WAITING_FOR_APPROVAL and saving the request leaves a wait nobody can answer.
+    waiting = app.store.list_runs(S.WAITING_FOR_APPROVAL, ctx.now - timedelta(seconds=floor))
+    if waiting:
+        asked = {
+            r.run_id
+            for r in app.store.list_approvals({"PENDING", "APPROVED", "REJECTED", "EXPIRED"})
+        }
+        # ponytail: lists every approval; a by-run lookup when the table grows.
+
+        def orphan(run) -> None:
+            if run.run_id in asked:
+                return
+            advance(
+                app.store, run.run_id, S.WAITING_FOR_APPROVAL, S.NEEDS_PERSON, "approval_missing"
+            )
+            app.audit.write_outcome(
+                AuditEvent(
+                    run_id=run.run_id,
+                    domain="run",
+                    operation="state",
+                    principal="system:tick",
+                    source="tick",
+                    result=S.NEEDS_PERSON.value,
+                    error_code="approval_missing",
+                )
+            )
+
+        _each(waiting, orphan, "stuck WAITING_FOR_APPROVAL")
 
 
-def _anchor_refusals(environment: str, b: Backends) -> list[str]:
-    """Environment table (design 4.6). Prod needs a signer and an anchor whose retention the client agreed
-    (`retention_ack`); COMPLIANCE mode (undeletable even by the account root) only then. `ed25519_local` in
-    prod only with its key from the secrets kind (never a file in the image), and only beside that anchor."""
-    anchor = None if b.anchor.kind == "none" else b.anchor
-    refused = []
-    if anchor is not None and b.audit.kind != "chain":
-        refused.append(f"anchor {anchor.kind} needs backends.audit kind chain")
-    if (
-        anchor is not None
-        and anchor.mode == "COMPLIANCE"
-        and not (environment == "prod" and anchor.retention_ack)
-    ):
-        refused.append("anchor mode COMPLIANCE outside prod or without retention_ack")
-    if environment == "prod":
-        refused += [f"{c}: {s.kind}" for c, s in b.entries() if (c, s.kind) in NOT_PROD]
-        if anchor is not None and not anchor.retention_ack:
-            refused.append(f"anchor {anchor.kind} without retention_ack")
-        if b.signer.kind == "ed25519_local" and b.signer.private_key_path is not None:
-            refused.append("signer ed25519_local with a key file (use private_key_secret_name)")
-    return refused
+def checkpoint(ctx: TickContext) -> None:
+    """Sign an audit checkpoint when the audit kind has them (`chain`); others have nothing to do."""
+    fn = getattr(ctx.app.audit, "checkpoint", None)
+    if fn is not None:
+        fn()
 
 
-class _UniqueKeyLoader(yaml.SafeLoader):
-    """A duplicate mapping key is an error: safe_load would keep the last value, silently changing a level."""
-
-    def construct_mapping(self, node, deep=False):
-        seen = set()
-        for key_node, _ in node.value:
-            key = self.construct_object(key_node, deep=True)
-            if key in seen:
-                raise ConfigError(f"duplicate key {key!r} (line {key_node.start_mark.line + 1})")
-            seen.add(key)
-        return super().construct_mapping(node, deep)
+def audit_reconcile(ctx: TickContext) -> None:
+    """Drain the audit outbox: events that could not be appended after their side effect wait there (or in memory)
+    until this runs. Logs how many were written, so a growing backlog is visible (audit A-01). A kind without a
+    `reconcile` has nothing to drain."""
+    fn = getattr(ctx.app.audit, "reconcile", None)
+    if fn is None:
+        return
+    _LOG.info("audit_reconcile drained=%d", fn())
 
 
-def load_yaml(text: str) -> Any:
-    """``yaml.safe_load`` that refuses duplicate mapping keys."""
-    return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506  # nosec B506 - SafeLoader subclass
+def purge_evidence(ctx: TickContext) -> None:
+    """Delete tool calls and redaction maps past their retention, at most about every `retention.purge_every_s`.
 
-
-def _read_yaml(path: Path) -> dict:
-    if not path.exists():
-        return {}
-    data = load_yaml(path.read_text(encoding="utf-8")) or {}
-    if not isinstance(data, dict):
-        raise ConfigError(f"{path.name}: expected a mapping at the top level")
-    return data
-
-
-def confined(base: Path, relative: str) -> Path:
-    """``base / relative``, refused if it resolves outside ``base`` (no ``..`` or absolute escapes)."""
-    root = Path(base).resolve()
-    path = (root / relative).resolve()
-    if not path.is_relative_to(root):
-        raise ConfigError(f"path escapes its folder: {relative}")
-    return path
-
-
-def load_config(config_dir: Path | None = None) -> Config:
-    """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+    The two CEILINGS always run first and need no hook: a redaction map older than `held_maps_max_days` (400) and
+    a tool call older than `held_tool_calls_max_days` (400) go whatever any hold says. Then the ordinary purge
+    (30 days by default): runs that `hooks.hold_run_ids()` names (labelled wrong, harmful or missed, or demoted;
+    none before K6) keep their tool calls and maps until the ceilings. A hold is NOT retroactive: a run already
+    purged before it was named is gone. If the hook raises, the ordinary purge is skipped (keeping too much for a
+    while is the safe direction), the ceilings have already run, the error is logged, and the step then FAILS so
+    `tick_state.last_error` shows it."""
+    app = ctx.app
+    keep = app.config.retention
+    store = app.purge_store or app.store  # the deleting identity, when one is configured
+    maps = store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
+    )
+    calls = store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
+    )
+    hook = app.runtime.hooks.hold_run_ids
     try:
-        root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
-        raw = _read_yaml(root / "config.yaml")
-        egress = _read_yaml(root / "egress.yaml").get("hosts") or []
-        if early := deferred.key_problems("config.yaml", raw):
-            raise ConfigError("; ".join(early))
-        if moved := [k for k in MOVED if k in raw]:
-            raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
-        for key in ("golden_dir", "inputs_dir"):
-            if key in raw:
-                raw[key] = root / raw[key]
-        raw["backends"] = parse_backends(raw.get("backends"), root)
-        return Config(**raw, egress_hosts=frozenset(egress), root=root)
-    except ConfigError:
+        held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
+    except Exception as exc:
+        _LOG.error(
+            "purge_evidence: hold_run_ids raised %s: ordinary purge skipped this tick, ceilings applied",
+            type(exc).__name__,
+        )
         raise
-    except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
-        raise ConfigError(str(exc)) from exc
+    calls += store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.tool_calls_days), keep_run_ids=held
+    )
+    maps += store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
+    )
+    _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
+
+
+def reprobe_sources(ctx: TickContext) -> None:
+    """Probe every configured source's scope again (design 6.6): RBAC can widen after start-up. A problem fails
+    the step loudly (`tick_state.last_error`, exit 1) until the scope is read-only again."""
+    from hadavin_sdk import sources as sources_mod
+
+    app = ctx.app
+    found: list[str] = []
+    for key, source in app.sources.items():
+        token = sources_mod.PROBING.set(True)
+        try:
+            problems = sources_mod.scope_problems({key: source}, app.config.scope_inventory)
+        finally:
+            sources_mod.PROBING.reset(token)
+        if problems:  # fail CLOSED: tools stop reading this source until a probe passes again
+            app.disabled_sources.add(key)
+            found += problems
+        else:
+            app.disabled_sources.discard(key)
+    if found:
+        raise RuntimeError("source scope: " + "; ".join(found))
+
+
+def heartbeat(ctx: TickContext) -> None:
+    """After the steps (not a step): one line with this tick's outcome."""
+    failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
+    _LOG.info("tick ok=%s failed=%s", not failed, ",".join(failed) or "-")
+
+
+STEPS: list[TickStep] = [
+    TickStep("sweep", 0, sweep),
+    TickStep("reconcile", 0, reconcile),
+    TickStep("stuck", 0, stuck),
+    TickStep("checkpoint", 0, checkpoint),
+    TickStep(
+        "purge_evidence",
+        0,
+        purge_evidence,
+        interval=lambda ctx: ctx.app.config.retention.purge_every_s,
+    ),  # its own interval: Config.retention.purge_every_s
+    TickStep(
+        "reprobe_sources",
+        0,
+        reprobe_sources,
+        interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
+    ),
+    TickStep("audit_reconcile", 0, audit_reconcile),
+]
+STORE_UNREACHABLE = 4
+STORE_NOT_READY = (
+    2  # the store answers but a table or grant is missing: same code as a config error
+)
+
+
+def _safe_log(msg: str, *args: object) -> None:
+    """Log an error line; a failing log handler must never change the exit code."""
+    try:
+        _LOG.error(msg, *args)
+    except Exception:  # noqa: BLE001, S110 - safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
+        pass
+
+
+_PROBE = "heartbeat"  # the tick_state key read once, to find out whether the store answers
+
+
+_DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
+
+
+def _message(exc: Exception) -> str:
+    """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
+    if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
+        return "(driver error; details withheld)"
+    # redact first, then keep the first 500 characters (a cut first splits a secret); `safe_head` bounds the work
+    return safe_head(str(exc), 500).replace("\n", " ")
+
+
+def _run_step(ctx: TickContext, step: TickStep) -> str:
+    store = ctx.app.store
+    prev, error = None, None
+    try:
+        prev = store.get_tick_state(step.name)
+        every = step.interval(ctx) if step.interval else step.every_s
+        if (
+            step.interval
+        ):  # a tick comes every 30-60 s: due a tick-period early, so the cadence does not drift
+            every = max(every - TICK_SLACK_S, every // 2)
+        # A step whose last run FAILED is due again at the next tick (a persistently raising hold hook must
+        # not push the 30-day purge a whole interval away each time).
+        if (
+            every
+            and prev
+            and prev.last_error is None
+            and (ctx.now - prev.last_run_at).total_seconds() < every
+        ):
+            return SKIPPED
+        step.fn(ctx)
+    except Exception as exc:  # noqa: BLE001 - one step never stops the others
+        error = f"{type(exc).__name__}: {_message(exc)}"
+        _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
+    try:
+        store.save_tick_state(
+            TickState(
+                step=step.name,
+                last_run_at=ctx.now,
+                last_ok_at=ctx.now if error is None else (prev.last_ok_at if prev else None),
+                last_error=error,
+            )
+        )
+    except Exception as exc:  # noqa: BLE001 - an unrecorded step counts as failed
+        _LOG.error(
+            "step=%s error_kind=%s message=tick_state not saved", step.name, type(exc).__name__
+        )
+        return FAILED
+    return OK if error is None else FAILED
+
+
+def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None = None) -> int:
+    """One tick. Returns the exit code: 0 ok, 1 a step failed, 4 the store is unreachable, 2 the store answers but
+    is not ready (STORE_NOT_READY). A config that does not load is the caller's, before this runs."""
+    ctx = TickContext(app, now or app.approvals.clock())
+    try:
+        app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
+    except Exception as exc:  # noqa: BLE001 - any store failure: change nothing
+        if is_connectivity_error(exc):
+            _safe_log("step=- error_kind=%s message=store unreachable", type(exc).__name__)
+            return STORE_UNREACHABLE
+        _safe_log(
+            "step=- error_kind=%s message=store answers but is not ready: run hadavin-sdk migrate "
+            "and check the runtime role's grants",
+            type(exc).__name__,
+        )
+        return STORE_NOT_READY
+    for step in STEPS if steps is None else steps:
+        ctx.results[step.name] = _run_step(ctx, step)
+    try:
+        heartbeat(ctx)
+    except Exception as exc:  # noqa: BLE001 - a log line never changes the exit code
+        _safe_log("step=- error_kind=%s message=heartbeat line not written", type(exc).__name__)
+    if FAILED in ctx.results.values():
+        # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
+        try:
+            app.store.get_tick_state(_PROBE)
+        except Exception as exc:  # noqa: BLE001 - any store failure
+            if is_connectivity_error(exc):
+                _safe_log(
+                    "step=- error_kind=%s message=store unreachable after the steps",
+                    type(exc).__name__,
+                )
+                return STORE_UNREACHABLE
+            # answers but not ready: the step failures stand, exit 1
+    return 1 if FAILED in ctx.results.values() else 0

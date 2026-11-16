@@ -27,7 +27,7 @@ import subprocess
 import sys
 
 
-def run_tests(root: pathlib.Path, tests: list[str]):
+def run_tests(root: pathlib.Path, tests: list[str], pythonpath: str | None = None):
     # stale .pyc files could hide a planted change (same size, same second): never write or reuse them
     for d in root.rglob("__pycache__"):
         if ".venv" not in d.parts:
@@ -38,6 +38,7 @@ def run_tests(root: pathlib.Path, tests: list[str]):
         f"PATH={os.environ['PATH']}",
         f"HOME={os.environ['HOME']}",
         "PYTHONDONTWRITEBYTECODE=1",
+        *([f"PYTHONPATH={pythonpath}"] if pythonpath else []),
         str(root / ".venv/bin/python"),
         "-m",
         "pytest",
@@ -75,7 +76,7 @@ def one(a, tests, m, results):
     else:
         p.write_bytes(orig.decode().replace(m["old"], m["new"], 1).encode())
         try:
-            cmd, rc, out = run_tests(root, tests)
+            cmd, rc, out = run_tests(root, tests, a.pythonpath)
         finally:
             p.write_bytes(orig)
         d = subprocess.run(["diff", str(backup), str(p)], capture_output=True, text=True)
@@ -118,11 +119,12 @@ def main():
     ap.add_argument("--desc", default="")
     ap.add_argument("--control", action="store_true")
     ap.add_argument("--out-json")
+    ap.add_argument("--pythonpath", help="only for the proof copies, whose venv .pth points at another tree")
     a = ap.parse_args(argv[: argv.index("--")] if "--" in argv else argv)
     pathlib.Path(a.raw).mkdir(parents=True, exist_ok=True)
     results = []
     if a.control:
-        cmd, rc, out = run_tests(pathlib.Path(a.root), tests)
+        cmd, rc, out = run_tests(pathlib.Path(a.root), tests, a.pythonpath)
         last, _ = summary(out)
         (pathlib.Path(a.raw) / f"{a.prefix}-baseline.txt").write_text(
             f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nrc: {rc}\nsummary: {last}\n\n{out}"
