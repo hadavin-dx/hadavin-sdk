@@ -1400,10 +1400,10 @@ def _plant20(label, ap, day, app, tx):
     else: F('r20 plant not caught by its own check: ' + label)
 for lab, w, ph in NEED20:
     ap, day, app, tx = _AP, _DAY, _APP, txt
-    if w == 'A': ap = _AP.replace(ph, '#' + ph[1:], 1)
-    elif w == 'D': day = _DAY.replace(ph, '#' + ph[1:], 1)
-    elif w == 'P': app = _APP.replace(ph, '#' + ph[1:], 1)
-    else: tx = txt.replace(ph, '#' + ph[1:], 1)
+    if w == 'A': ap = _AP.replace(ph, '~' + ph[1:])
+    elif w == 'D': day = _DAY.replace(ph, '~' + ph[1:])
+    elif w == 'P': app = _APP.replace(ph, '~' + ph[1:])
+    else: tx = txt.replace(ph, '~' + ph[1:])
     if (ap, day, app, tx) == (_AP, _DAY, _APP, txt): F('r20 plant anchor missing: ' + lab); continue
     _plant20('r20 need: ' + lab, ap, day, app, tx)
 for lab, w, ph in ABSENT20:

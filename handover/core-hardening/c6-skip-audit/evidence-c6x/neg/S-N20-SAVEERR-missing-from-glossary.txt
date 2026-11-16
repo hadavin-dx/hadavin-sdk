@@ -1,0 +1,41 @@
+186 :: 1
+PASS D-M5: 'HOW MUCH IS PROVEN BY WHOM' says the counts of changed copies are my own run; the box states its own word count apart from part 2
+PASS N-M2: the branch statement of step 1 equals the table (wave 1 95 rows, 90 on branch cloud/flows-audit, 5 rows [70, 71, 72, 90, 91] on cloud/core-hardening) :: ('95', '90', '5', '70, 71, 72, 90, 91')
+PASS N-M3: section 0 says who has read what (review-c6v-design.md and review-c6v-naive.md read REPORT-c6v.md only)
+PASS N-M6: no 'sheet A' or 'sheet B' (the A and B owner-sheet files are RENDERING A and B; the older-key ways are KEY ROUTE A and B); outside quoted history: [] :: []
+PASS N-M7: the box says every answer other than the default needs a further round
+PASS N-M9: the WHAT TO TYPE block uses none of the labels the stranger review found undefined ([]) :: []
+PASS N-m1/N-m2: the LABELS bullet defines STEP, CHECK, KEY, PRIMARY KEY, 'lead', CLASS 1 TO 7, W-, L-APP2, G19, N1 and the release note versions :: 1
+PASS N-m4: the two groups of rows (the 37 viewer rows of 5a and the 38 rows on a default) are said to be different groups
+PASS N-m5: a sentence says the reason cell after its first stop is history, and that rows 39 and 76 are two edits
+PASS N-m7: the box says that if you are also the owner the two roles stay separate
+PASS N-m8/N-m9: section 9 lists the section 3e item numbers and the counts to reconcile
+PASS V12: c6x-CHANGES.md exists and has its own row for each of the 33 finding ids of the two c6v reviews (missing: []) :: []
+PASS C7-1 every owner sheet file named in the start box and in section 1c is the newest version v34 (found [34]) :: [34]
+PASS C7-2 the release note file named in the start box and every 'newest' release note statement is the newest version v18 (box [14, 18]; statements [18]) :: ([14, 18], [18])
+PASS C7-3 every statement that ties G12 to a line of release note v14 says line 33, and line 33 of the real v14 holds the words 'in writing' (found ['33']) :: (['33', '33', '33', '33'], ['33', '33'])
+PASS C7-4 'N items are OPEN' says Five in every place (found ['Five']) :: ['Five', 'Five']
+PASS C7-5 every place that names the check time names 20:23:50 (found ['20:23:50']) :: ['20:23:50', '20:23:50', '20:23:50', '20:23:50', '20:23:50']
+PASS C7-6 every question line of L-LEASE (3) carries the G12 hold :: 3
+PASS C7-7 no sentence says that anything held under G12 can be filmed while G12 is open; 'cannot be filmed' stays in the box (1 times) :: []
+PASS C8-1 the start box alone says that no reviewer has read this report and that the reach of G12 is this report's own reading
+PASS C8-2 item 6 of the start box names all four held items (card line 1, 'other lease settings', the scene 3 caption, the label 'setting: lease 45 s') and the 76-word card :: 1
+PASS C8-3 the 76-word case is recomputed from the four quoted lines (76 words without line 1 and without 'other lease settings'), 30.4 s, budget 35 s, and Table B and row 96 carry it :: ["G12 open, every held item cut by hand: card line 1 and the three words 'other lease settings' cut (card line 4 ends at 'chat messages' with the next sentence kept; the scene 3 caption cut; the label 'setting: lease 45 s' not shown); 35 + 22 + 22 - 3 = 76", '1, 2, 3, 4 = 150 s', '76', '30.4', '35 s
+PASS C8-4 the start box alone gives the three G12 forms (approved, not approved, closed: line 33 of release note v14 is my approval)
+PASS C8-5 the start box has a row with label, question and answer for L-Q27, L-DELCRIT and L-KEYLINE ({'L-Q27': (47, 17), 'L-DELCRIT': (16, 16), 'L-KEYLINE': (41, 14)}) and the OPEN ones say OWNER-OPEN :: {'L-Q27': (47, 17), 'L-DELCRIT': (16, 16), 'L-KEYLINE': (41, 14)}
+PASS C8-6 card line 3 names one place ('n8n's own database') and no number of databases or stores; L-ONEDB says its scope and the open conflict :: The made-up name and e-mail address sent to n8n may stay in n8n's own database; 
+PASS C8-7 the start box says that builder-A, reviewer-B and reviewer-C are names the studio lead chooses and that no program reads the line
+PASS C8-8 section 3e has 11 gate rows; section 1c-K says ELEVEN and SEVEN, and the section 9 reconciliation says eleven :: 11
+PASS C8-9 the first lines of the report say what failed, what is uncertain and what was not run, and that no reviewer has read it :: WHAT FAILED, WHAT IS UNCERTAIN, WHAT I DID NOT RUN (first, i
+PASS C8-10 the report is split into the main file and two appendix files, each under 200,000 bytes, the assembled text holds all 104 rows ([]) :: []
+PASS C8-11 for every late file (3 compared) the report says 'equal to' only if the file is equal after the version number is changed, and 'DIFFERENT from' otherwise (recomputed now) :: [('LEAD-RELEASE-NOTE-v19.md', False, False, True), ('OWNER-SHEET-v35-A.md', False, False, True), ('OWNER-SHEET-v35-B.md', False, False, True)]
+PASS C8-12 section 9 holds one statement of each run of run_all.sh, names the build that wrote the report and says that the output files are written after the report :: 1
+PASS C8-13 the words 'tonight or tomorrow morning IST' stand only with their dates, and the report names no 'drift report for c6v' (stale label)
+PASS C8-14 no text calls a version 'the newest at the check time' (the newest is named 'before the freeze')
+PASS C8-15 the census holds the count of every copy of each card number and of 'lease wording approved' ({'90 words': 14, 'about 36 s': 11, 'budget 40 s': 6, '87 words': 3, '34.8 s': 3, '79 words': 3, '31.6 s': 3, '76 words': 5, '30.4 s': 4, '74 words': 2, '29.6 s': 1, 'lease wording approved': 1}) :: {}
+PASS V13: every COUNT line of c6x-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6x-output.txt) and the run count in the report equals the run-log lines (differences: []) :: []
+SUMMARY: 287 checks, 2 FAILED: naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16'); D-m5: the report names the number of full runs of run_all.sh and the cap
+/home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/evidence-c6x/verify_c6x_part4.py:49: DeprecationWarning: 'maxsplit' is passed as positional argument
+  check("D-m6: option (b) of L-CARDLEN states its 0.4 s margin and that it may run over until a stopwatch run", bool(re.search(r"(?<![\d.])0\.4 s", raw)) and "stopwatch" in re.split(r"(?<![\d.])0\.4 s", raw, 1)[1][:400], "")
+
+EXIT CODE 1

@@ -1,0 +1,5 @@
+banned entries read at run time: 10
+baseline FAIL lines in scratch copy: 0
+G01 CAUGHT by C01,C04,C96 | built appendix A: deadline pair changed | first: FAIL C01 OWNER-APPENDIX-v35-A.md differs from what its source and facts build
+G07 ANCHOR-NOT-FOUND built card B: typed word
+TOTAL hostile edits 2: caught 1, missed 0 [], anchor-not-found 1

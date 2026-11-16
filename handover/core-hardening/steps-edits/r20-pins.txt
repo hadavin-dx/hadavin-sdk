@@ -2030,6 +2030,7 @@
 1	Then write `database password typed;
 1	Then write `key gone, no more decisions` (in route B this makes the cut final)" and starts nothing that cannot be undone until you do.
 1	Then you do not say yes and the take does not go ahead;
+1	Then you revoke the key (key step I);
 1	There are two different HubSpot keys.
 1	There is ONE exception, the crash check: the check of a crash between sending the mail and recording in the take's database that it was sent.
 1	These are two different figures and have two different names everywhere in this file and in the owner texts;
@@ -2822,7 +2823,6 @@
 1	replace the old key in that credential and test your n8n once.
 1	reply "accepted" or list the bad seconds.
 1	reviewers' report <reviewers' report file>;
-1	revoke the key (key step I);
 1	revoking a shared secret key at clean-up (E-48) would break the other things.) (b) "In HubSpot, Private Apps: does app 1 show only the permission contacts read (no write, no delete), and does app 2 exist?" The owner replies in plain words;
 1	risk of B (exposure kept on purpose and stated): a live paid key and its copy stay on the disk and in the chat of this laptop for up to five days, where any program that runs under the owner's Linux user can read them;
 1	risk of B: money spent before the take.

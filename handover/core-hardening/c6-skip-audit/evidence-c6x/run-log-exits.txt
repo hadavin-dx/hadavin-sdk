@@ -1,0 +1,1 @@
+run 1: scan exit 0, neg exit 1, verify exit 1 (2026-11-16T20:36:00Z)

@@ -36,3 +36,15 @@ H32 MISSED (no new FAIL line) | count: normally 1 key -> 2
 H33 CAUGHT by C259 | paste once -> twice | first: FAIL C259 "Paste once (Ctrl+Shift+V or right-click), only if" is not present exactly once
 H34 CAUGHT by C249 | Sunday condition loosened | first: FAIL C249 A lacks 'Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by t'
 H35 CAUGHT by BUILD | 7-day constant 168h -> 144h in facts | first: FAIL BUILD stopped: AssertionError
+H36 CAUGHT by C151,C19 | older-key time B 16:00 -> 17:00 | first: FAIL C151 N: G30 or alarms count wrong
+H37 CAUGHT by C177,C179 | Monday latest start 18:04 -> 18:14 | first: FAIL C177 NOTE holds 18:14 without the label "refusal limit" near it: ' order L-23NOV): latest start 18:14 UTC = 23:44 IST; ke'
+H38 MISSED (no new FAIL line) | helper wait 30 -> 45 min
+G01 ANCHOR-NOT-FOUND built sheet A: deadline pair changed
+G02 CAUGHT by C01,C04 | built sheet B: weekday changed | first: FAIL C01 OWNER-SHEET-v35-B.md differs from what its source and facts build
+G03 CAUGHT by C01,C274 | built card A: 5-minute boundary | first: FAIL C01 OWNER-CARD-v35-A.md differs from what its source and facts build
+G04 CAUGHT by C01 | built appendix A: 18:19 pair | first: FAIL C01 OWNER-APPENDIX-v35-A.md differs from what its source and facts build
+G05 CAUGHT by C01 | built sheet A: paste once | first: FAIL C01 OWNER-SHEET-v35-A.md differs from what its source and facts build
+G06 CAUGHT by C01 | built helper page: secret-shaped string appended | first: FAIL C01 OWNER-HELPER-v35.md differs from what its source and facts build
+TOTAL hostile edits 44: caught 37, missed 6 ['H17', 'H19', 'H20', 'H30', 'H32', 'H38'], anchor-not-found 1
+heavy-slot: slot 3 freed, exit 0
+exit 0

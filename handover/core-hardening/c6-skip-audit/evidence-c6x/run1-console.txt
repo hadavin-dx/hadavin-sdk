@@ -4,3 +4,7 @@ built; sizes in bytes: {'REPORT-c6x.md': 188101, 'REPORT-c6x-TABLE.md': 113604, 
 census written: 58 phrases
 scan exit 0
 SCANNED 36 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
+neg exit 1
+SUMMARY: 368 copies, 13 wrong
+verify exit 1
+SUMMARY: 287 checks, 2 FAILED: D-m5: the report names the number of full runs of run_all.sh and the cap; V13: every COUNT line of c6x-CHANGES.md equals the number in the output file (verify checks cou

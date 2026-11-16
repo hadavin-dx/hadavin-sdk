@@ -1,0 +1,393 @@
+rows parsed 60
+E-01 old1 count 1 lines [3] stated [3] OK
+E-02 old1 count 1 lines [3] stated [3] OK
+E-03 old1 count 1 lines [5] stated [5] OK
+E-04 old1 count 1 lines [69] stated [69] OK
+E-05 old1 count 1 lines [95] stated [95] OK
+E-06 old1 count 1 lines [75] stated [75] OK
+E-07 old1 count 1 lines [75] stated [75] OK
+E-08 old1 count 1 lines [187] stated [187] OK
+E-09 old1 count 1 lines [78] stated [78] OK
+E-11 old1 count 1 lines [87] stated [87] OK
+E-12 old1 count 1 lines [92] stated [92] OK
+E-13 old1 count 1 lines [99] stated [99, 11] OK
+E-13 old2 count 1 lines [11] stated [99, 11] OK
+E-14 old1 count 1 lines [107] stated [107] OK
+E-15 old1 count 1 lines [107] stated [107] OK
+E-16 old1 count 1 lines [121] stated [121] OK
+E-17 old1 count 1 lines [131] stated [131] OK
+E-18 old1 count 1 lines [131] stated [131] OK
+E-19 old1 count 1 lines [159] stated [159] OK
+E-20 old1 count 1 lines [162] stated [162] OK
+E-21 old1 count 1 lines [164] stated [164] OK
+E-22 old1 count 1 lines [166] stated [166] OK
+E-23 old1 count 1 lines [151] stated [151] OK
+E-24 old1 count 1 lines [178] stated [178] OK
+E-25 old1 count 1 lines [193] stated [193] OK
+E-26 old1 count 1 lines [2] stated [2] OK
+E-27 old1 count 1 lines [5] stated [5] OK
+E-28 old1 count 1 lines [9] stated [9] OK
+E-29 old1 count 1 lines [9] stated [9] OK
+E-30 old1 count 1 lines [7] stated [7] OK
+E-31 old1 count 1 lines [20] stated [20] OK
+E-32 old1 count 1 lines [23] stated [23] OK
+E-33 old1 count 1 lines [23] stated [23] OK
+E-34 old1 count 1 lines [27] stated [27] OK
+E-36 old1 count 1 lines [131] stated [131] OK
+E-37 old1 count 1 lines [27] stated [27] OK
+E-38 old1 count 1 lines [9] stated [9] OK
+E-39 old1 count 1 lines [23] stated [23] OK
+E-40 old1 count 1 lines [20] stated [20] OK
+E-41 old1 count 1 lines [103] stated [103] OK
+E-42 old1 count 1 lines [104] stated [104] OK
+E-43 old1 count 1 lines [14] stated [14] OK
+E-44 old1 count 1 lines [20] stated [20] OK
+E-45 old1 count 1 lines [23] stated [23] OK
+E-46 old1 count 1 lines [14] stated [14] OK
+E-47 old1 count 1 lines [1] stated [1] OK
+E-48 old1 count 1 lines [123] stated [123] OK
+E-49 old1 count 1 lines [87] stated [87] OK
+E-50 old1 count 1 lines [92] stated [92] OK
+E-51 old1 count 1 lines [92] stated [92] OK
+E-52 old1 count 1 lines [16] stated [16] OK
+E-53 old1 count 1 lines [28] stated [28] OK
+E-54 old1 count 1 lines [85] stated [85] OK
+E-55 old1 count 1 lines [119] stated [119, 120] OK
+E-56 old1 count 1 lines [20] stated [20] OK
+E-57 old1 count 1 lines [116] stated [116, 117] OK
+E-58 old1 count 1 lines [147] stated [147] OK
+E-59 old1 count 1 lines [126] stated [126] OK
+E-60 old1 count 1 lines [171] stated [171] OK
+E-61 old1 count 1 lines [144] stated [144] OK
+E-62 old1 count 1 lines [112] stated [112] OK
+old texts 61
+overlaps 0
+apply-now rows applied to scratch copies 48
+apply-now + hold rows with text applied to scratch copies 59
+status {'Apply now': 48, 'Hold': 12} files {'OWNER-STEPS-realrun-v3.md': 41, 'AGENT-SCOPE-DO-AND-DONT.md': 15, 'DECISION-one-store.md': 4} types {'STALE': 16, 'UNCLEAR WORD': 11, 'MISSING STEP': 14, 'CONTRADICTION': 18, 'DEFERRED': 1}
+index rows 60
+banned vendor strings found (indexes): [] of 10
+secret-like matches: []
+owner NEW texts containing login: ['E-48', 'E-59']
+owner NEW texts containing Re-checked: []
+owner NEW texts containing WP6: []
+owner NEW texts containing UNVERIFIED: ['E-01', 'E-09', 'E-12', 'E-16', 'E-24', 'E-37', 'E-48', 'E-52', 'E-59', 'E-62']
+owner NEW texts containing "the lead" used: ['E-01', 'E-12', 'E-52']
+owner NEW texts containing rehearsal (not flow rehearsal): []
+owner NEW texts containing bare key (not secret/lead/encryption/Code-node key): ['E-04', 'E-09', 'E-11', 'E-12', 'E-15', 'E-16', 'E-37', 'E-42', 'E-48', 'E-51', 'E-52', 'E-55', 'E-57', 'E-58', 'E-59']
+owner NEW texts containing token: ['E-52']
+owner NEW texts containing E-nn code: []
+owner NEW texts containing ND code: []
+owner NEW texts containing lead key: ['E-52']
+E-36 NEW blocks 1
+scratch OWNER-STEPS lines 356 (original 193; E-03 adds 7 lines, E-25 adds 4, E-37 adds 2)
+E-25 end of file: ['15. That n8n (release number 2.46.6) run', '16. That the saved runs are kept in Post', '17. That n8n sends nothing out. Its outg', '18. Whether a crash between sending the ', '']
+counts text (60, 41, 15, 4) computed (60, 41, 15, 4)
+hold rows ['E-04', 'E-05', 'E-13', 'E-39', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45', 'E-49', 'E-50', 'E-53'] apply-now 48 hold 12
+gates used ['G1', 'G2', 'G3', 'G4', 'G5'] defined ['G1', 'G2', 'G3', 'G4', 'G5']
+G1 named ['E-04', 'E-05', 'E-12', 'E-37', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45', 'E-56'] in headers ['E-04', 'E-05', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45']
+G2 named ['E-07', 'E-08'] in headers ['E-07', 'E-08']
+G3 named ['E-13'] in headers ['E-13']
+G4 named ['E-39'] in headers ['E-39']
+G5 named ['E-49', 'E-50', 'E-53'] in headers ['E-49', 'E-50', 'E-53']
+ND numbers [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+FAIL ND numbers
+FAIL ND header count
+confirmation letters ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r']
+E-nn named but not rows: []
+ND numbers named [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+scratch 'Then comes the preparation' apply-now False all True
+scratch 'a fifth fact' apply-now False all True
+scratch 'does not print these two values' apply-now True all True
+scratch 'Words used (read once)' apply-now True all True
+scratch '**A secret key**' apply-now True all True
+scratch '**A database user**' apply-now True all True
+4b in apply-now False in all True
+scratch apply-now OWNER-STEPS lines 356
+scratch all OWNER-STEPS lines 363
+fence lines 244
+UTC time without IST pairing (check): 15:20 UTC
+UTC time without IST pairing (check): 14:40 UTC
+UTC time without IST pairing (check): 01:00 UTC
+UTC time without IST pairing (check): 15:20 UTC
+UTC time without IST pairing (check): 01:00 UTC
+UTC time without IST pairing (check): 15:20 UTC
+UTC time without IST pairing (check): 14:20 UTC
+UTC time without IST pairing (check): 01:00 UTC
+UTC time without IST pairing (check): 15:20 UTC
+UTC time without IST pairing (check): 18:29 UTC
+UTC time without IST pairing (check): 18:29 UTC
+UTC time without IST pairing (check): 14:40 UTC
+apply-now ids 48
+older word lead key context: aive A5, five meanings of "lead"): the older words "lead", "lead key" and "table of leads" are named in this
+older word lead key context:  the take program gives to an enquiry (the older text says "lead key" or "lead id"). **The table of enquirie
+older word lead key context: iden the HubSpot key. - MAY: post this take's own generated lead keys (L plus hex); ~~~~ Why: Design M4 of r
+older word table of leads context: so call an enquiry a "lead" and the table of enquiries the "table of leads". The other new words are explained
+older word table of leads context: eanings of "lead"): the older words "lead", "lead key" and "table of leads" are named in this line so that the
+older word table of leads context: take's table with one row per enquiry (the older text says "table of leads"). - **A secret key**: a long text 
+banned list size 10 hits in EDITS.md 0
+HOLD-labelled blocks 13
+round 11 checks done
+round 12 checks done
+label uses: latest start we plan 31 program refusal limit 10
+round 14 checks done
+FAIL r14 E-12 alarms
+round 14 checks done
+round 15 checks done
+FAIL r16 F4 the numbered order is missing or out of order: [-1, 666, 1021, 1197, 1281, 1448, 1628]
+FAIL r16 alarm names lacks 'Alarm 4: Mon 23 Nov 2026 18:24 UTC = 23:54 IST'
+FAIL r16 alarm names lacks 'Alarm 5: Tue 24 Nov 2026 00:30 UTC = 06:00 IST'
+r16 checks: 84 phrase checks; UTC=IST pairs 200 ; weekday-date pairs 98 ; banned 0 of 10 ; secret-shaped 0 ; input mtimes read at run time 3
+round 16 checks done
+FAIL r17 F-8 clock lacks 'the assistant has no timer: on that day start every message that you write with '
+FAIL r17 pin B03 no space lacks 'It contains no `..`, no space, no line break, no quote sign'
+FAIL r17 pin B05 step 21 heading lacks '### Step 21. Watch the cut by Mon 23 Nov 2026 17:49 UTC = 23:19 IST (alarm 1)'
+WORDS (non-space runs inside the NEW fences): E-48 NEW 6781 ; Appendix K (whole section) 1353 ; OWNER-STEPS rows NEW 20497 ; NEW of all rows 22015 ; whole EDITS file 60583
+r17 checks: 100 phrase checks; 25 pins
+round 17 checks done
+FAIL r19 count applied '`no more takes` alone is never final; the confirmation is `y' is 6, expected 5
+FAIL r19 count applied 'this date is a proposal: it stands if the assistant names no' is 0, expected 11
+FAIL r19 count applied 'still not revoked: revoke the secret key for the model now' is 0, expected 2
+FAIL r19 count applied 'the secret key for the model must be revoked now' is 0, expected 2
+FAIL r19 count applied 'Rotate first, then delete' is 0, expected 1
+FAIL r19 count applied 'alarm 1, alarm 3, alarm 4, alarm 5, an emergency (key step D' is 0, expected 2
+FAIL r19 count applied 'Tue 24 Nov 2026 18:29 UTC = 23:59 IST' is 10, expected 11
+FAIL r19 count applied 'and that carries `take-only`' is 0, expected 2
+FAIL r19 count applied 'The key has no date and no later date' is 0, expected 2
+FAIL r19 count applied 'The real latest time to confirm in route B is when alarm 1 r' is 0, expected 1
+FAIL r19 count applied '18:19 UTC = 23:49 IST' is 38, expected 41
+FAIL r19 count applied '18:29 UTC = 23:59 IST' is 30, expected 33
+FAIL r19 count applied '17:49 UTC = 23:19 IST' is 2, expected 6
+FAIL r19 count applied '00:30 UTC = 06:00 IST' is 0, expected 2
+FAIL r19 count applied '18:24 UTC = 23:54 IST' is 0, expected 2
+FAIL r19 count applied '06:30 UTC = 12:00 IST' is 0, expected 2
+FAIL r19 count applied '`yes, no more takes`' is 31, expected 32
+FAIL r19 count applied '`key gone, no more decisions`' is 25, expected 30
+FAIL r19 count applied '`key revoked`' is 17, expected 22
+FAIL r19 day sheet line is not in the applied sheet: 1. You: before 18:19 UTC = 23:49 IST on the last day (key step D.5), m
+FAIL r19 day sheet line is not in the applied sheet: Last day, Mon 23 Nov 2026: The key is revoked by 18:19 UTC = 23:49 IST
+FAIL r19 day sheet line is not in the applied sheet: Item 2 (app passwords): at myaccount.google.com, Security, App passwor
+FAIL r19 day sheet line is not in the applied sheet: Key step B. Only you can write the words. The words in the table at th
+FAIL r19 day sheet line is not in the applied sheet: Your alarms. The assistant has no timer, and nobody else reminds you o
+FAIL r19 day sheet line is not in the applied sheet: When alarm 3 rings and the key is not yet revoked: if no take is runni
+FAIL r19 day sheet line is not in the applied sheet: When alarm 4 or alarm 5 rings and the key is not yet revoked: stop eve
+FAIL r19 day sheet line is not in the applied sheet: D.3. The confirmation. A confirmation is exactly one of two messages, 
+FAIL r19 day sheet line is not in the applied sheet: D.5. The last time to revoke, and the last day. The real latest time t
+FAIL r19 day sheet line is not in the applied sheet: Key step I. Revoke the key, ALWAYS, by 18:19 UTC = 23:49 IST on Mon 23
+FAIL r19 day sheet line is not in the applied sheet: Identify first, then revoke or delete (the rule for item 2 and item 3)
+FAIL r19 day sheet line is not in the applied sheet: Key step G. The shred rule. It is ONE rule for every file that you shr
+FAIL r19 day sheet line is not in the applied sheet: G.2. When you are done with parts (a) and (b), write `shred done key c
+FAIL r19 day sheet line is not in the applied sheet: | `yes`, `no, other things use it`, `same key`, `different key` or `no
+FAIL r19 appendix line is not in the applied sheet or in EDITS: The owner reads key steps A to K in step 22 item 3 of his sheet. This 
+FAIL r19 appendix line is not in the applied sheet or in EDITS: K-A (detail of key step A). Why the rule is fixed: a key that nobody i
+FAIL r19 appendix line is not in the applied sheet or in EDITS: K-D (detail of key step D). Route A: the clean-up removes the take's s
+FAIL r20 alarm 4 or alarm 5 in the sheet
+FAIL r19 day sheet table row differs: | `yes`, `no, other things use it`, `same key`, `different k
+r19 applied sheet words (wc -w method): 23267; day sheet 6256; appendix 1357
+r19 word counts (wc -w method, applied sheet and parts): {'applied sheet': 23267, 'key step C (alarms)': 437, 'key step D.5': 497, 'table of typed words': 539, 'card with one-liners': 673, 'key step I': 401, 'key step G with G.2': 971, 'identification check': 360}
+r19 checks: 165 count/pair/forbidden checks; 36 failures in the section
+round 19 checks done
+FAIL r19 golden sentence not pinned: Round 19 (`r19-CHANGES.md`, same paths: no round cap) applies all of those findings in one
+FAIL r19 golden sentence not pinned: The result of round 19 is NOT reviewed yet.
+FAIL r19 golden sentence not pinned: **Key (read first).** **ND** = a NOT DECIDED item (numbered 1 to 17 in the list below the 
+FAIL r19 golden sentence not pinned: ## Counts (computed by script, `r19-CHANGES.md` and `resolve-r19-check-output.txt`)
+FAIL r19 golden sentence not pinned: round 19 writes `r19-OWNER-DAY-SHEET.md` and `r19-OWNER-APPENDIX-K.md`).
+FAIL r19 golden sentence not pinned: ## NOT DECIDED: studio lead or owner only (items 1 to 17).
+FAIL r19 golden sentence not pinned: condition: the cut is watched and `cut accepted` and `no more takes` are written before 18
+FAIL r19 golden sentence not pinned: Facts: key step A is a promise by the owner backed by his four alarms;
+FAIL r19 golden sentence not pinned: all four alarms are on one person's device;
+FAIL r19 golden sentence not pinned: (12) ROUND 19: the Tue 24 Nov 2026 date and alarm 4 (06:00 UTC = 11:30 IST) are the builde
+FAIL r19 golden sentence not pinned: The owner's four alarms (key step C: 17:49 UTC = 23:19 IST and 18:09 UTC = 23:39 IST on 23
+FAIL r19 golden sentence not pinned: it is never deferred;
+FAIL r19 golden sentence not pinned: alarm 4 on Tue 24 Nov 2026 is the last prompt), watch the cut (the same 18:19 UTC = 23:49 
+FAIL r19 golden sentence not pinned: Set four alarms on your own phone or computer (step 22 item 3, key step C): alarm 1 for 17
+FAIL r19 golden sentence not pinned: alarm 2, which repeats every evening from the day of your first take (your own phone time)
+FAIL r19 golden sentence not pinned: and alarm 4 for Tue 24 Nov 2026 06:00 UTC = 11:30 IST (this date is to be confirmed by the
+FAIL r19 golden sentence copies 1, pinned 2: 18.
+FAIL r19 golden sentence not pinned: Before the take the assistant asks you three things.
+FAIL r19 golden sentence not pinned: not checked either), and for each of the four whether your own n8n (the one at `http://loc
+FAIL r19 golden sentence not pinned: Step 22 item 3 uses this list: you revoke or delete only an item that is on it and that yo
+FAIL r19 golden sentence not pinned: what you have not finished by then you finish by Tue 24 Nov 2026 18:29 UTC = 23:59 IST (th
+FAIL r19 golden sentence not pinned: Before the take you wrote on paper or on your phone a list of the two app passwords and of
+FAIL r19 golden sentence not pinned: Which one counts as used by your own n8n: a HubSpot app counts as used when the HubSpot cr
+FAIL r19 golden sentence not pinned: an app password counts as used when the Gmail credential in your own n8n holds it;
+FAIL r19 golden sentence not pinned: which key or password those credentials hold is not known (UNVERIFIED), so before the take
+FAIL r19 golden sentence not pinned: the app that step 7 calls the app for n8n (app 2) is the one most likely to be used.
+FAIL r19 golden sentence not pinned: On the day, open the page, compare each name and date with that list yourself, and revoke 
+FAIL r19 golden sentence not pinned: If a name or date is not on your list, or your list says that your own n8n uses it, or you
+FAIL r19 golden sentence not pinned: The assistant lists each such item in the handoff with you as its owner and the date Tue 2
+FAIL r19 golden sentence not pinned: the retirement is the whole of step 22.
+FAIL r19 golden sentence not pinned: In short: set four alarms (key step C);
+FAIL r19 golden sentence copies 7, pinned 6: the confirmation is `yes, no more takes`;
+FAIL r19 golden sentence copies 7, pinned 6: if you have revoked the key without having typed `yes, no more takes`,
+FAIL r19 golden sentence not pinned: revoke the key (key step I);
+FAIL r19 golden sentence not pinned: You: make sure that you have confirmed your last take with `yes, no more takes` (key step 
+FAIL r19 golden sentence not pinned: What you have not finished by 18:29 UTC = 23:59 IST you finish by Tue 24 Nov 2026 18:29 UT
+FAIL r19 golden sentence not pinned: Item 2 (app passwords): on the page of app passwords of each throwaway mailbox, revoke eac
+FAIL r19 golden sentence not pinned: Use it only when all three are true, or when you revoke at the last time to revoke.
+FAIL r19 golden sentence copies 6, pinned 5: `no more takes` alone is never final;
+FAIL r19 golden sentence not pinned: Set four alarms on your own phone or computer.
+FAIL r19 golden: 217 more differences
+FAIL r19 changes number not computed: 575 words
+FAIL r19 changes number not computed: 630 words
+FAIL r19 changes number not computed: 606 words
+FAIL r19 changes number not computed: 752 words
+FAIL r19 changes number not computed: 408 words
+FAIL r19 changes number not computed: 1076 words
+FAIL r19 changes number not computed: 542 words
+FAIL r19 changes number not computed: 24367 words
+FAIL r19 changes number not computed: 18067 words
+FAIL r19 changes number not computed: 18067 words
+FAIL r19 changes fact line missing or wrong: EDITS.md lines (wc -l): 
+FAIL r19 changes fact line missing or wrong: applied sheet words (wc -w): 
+r19 golden: 3489 pinned sentences, 257 differences
+FAIL r20 need: M1 key has no date (D.5, I)
+FAIL r20 need: M1 G.2 excludes the key
+FAIL r20 need: M1 G.2 no later date
+FAIL r20 need: M1 E-58 row
+FAIL r20 need: M1 item 3 note
+FAIL r20 need: M2 item 5 counts as done (G.2)
+FAIL r20 need: M2 item 5 counts as done (E-59)
+FAIL r20 need: M3 rotate first
+FAIL r20 need: M3 two n8n told apart
+FAIL r20 need: M3 take-only word
+FAIL r20 need: M3 entry end condition
+FAIL r20 need: M3 app 2 goes to the take n8n
+FAIL r20 need: M3 Phase 0 list words
+FAIL r20 need: M4 emergency revoke
+FAIL r20 need: M4 one rule for key gone (B)
+FAIL r20 need: M4 exceptions list
+FAIL r20 need: M5 five alarms
+FAIL r20 need: M5 alarm 4 at 18:24
+FAIL r20 need: M5 alarm 5 unconditional
+FAIL r20 need: M5 alarm 5 not conditional
+FAIL r20 need: M5 alarm 2 fixed daytime time
+FAIL r20 need: M5 alarm 4 or 5 rings
+FAIL r20 need: M5 ND18
+FAIL r20 need: m1 alarm word
+FAIL r20 need: m2 route B warning in the prompt
+FAIL r20 need: m3 In short repaired
+FAIL r20 need: m4 app password page shows only a name
+FAIL r20 need: m5 ND19 lists written
+FAIL r20 need: m7 ND15 option B
+FAIL r20 need: m8 no line break
+FAIL r20 need: m8 own list is the only check for (b) and (d)
+FAIL r20 need: m9 ND20 recommendation question
+FAIL r20 need: MB step 21 heading
+FAIL r20 need: MB real latest time
+FAIL r20 need: MC G.2 dated Monday
+FAIL r20 need: MC how to show times
+FAIL r20 need: MC other days
+FAIL r20 need: MD hedge replaced by a rule
+FAIL r20 need: MD second person rule
+FAIL r20 need: MG exact typing
+FAIL r20 need: MG replies of key step F in the table
+FAIL r20 need: min card step 1 time
+FAIL r20 need: min plain words
+FAIL r20 need: min E-37 three questions
+FAIL r20 need: min ND header
+FAIL r20 absent: M1 old handoff date for the key
+FAIL r20 absent: M1 later date
+FAIL r20 absent: M3 old unknown-credential sentence
+FAIL r20 absent: M4 old B sentence
+FAIL r20 absent: M5 four alarms
+FAIL r20 absent: M5 alarm 4 do not rely
+FAIL r20 absent: M5 evening alarm
+FAIL r20 absent: m3 double space
+FAIL r20 absent: MB old route B time
+FAIL r20 absent: MC old clock rule
+FAIL r20 absent: MD hedge
+FAIL r20 absent: MD second person open
+FAIL r20 absent: m7 ND15 stale
+FAIL r20 the round lines are not in the order 18, 19, 20: [329229, 328620, -1]
+FAIL r20 plant anchor missing: M1 key has no date (D.5, I)
+FAIL r20 plant anchor missing: M1 G.2 excludes the key
+FAIL r20 plant anchor missing: M1 G.2 no later date
+FAIL r20 plant anchor missing: M1 E-58 row
+FAIL r20 plant anchor missing: M1 item 3 note
+FAIL r20 plant anchor missing: M2 item 5 counts as done (G.2)
+FAIL r20 plant anchor missing: M2 item 5 counts as done (E-59)
+FAIL r20 plant anchor missing: M3 rotate first
+FAIL r20 plant anchor missing: M3 two n8n told apart
+FAIL r20 plant anchor missing: M3 take-only word
+FAIL r20 plant anchor missing: M3 entry end condition
+FAIL r20 plant anchor missing: M3 app 2 goes to the take n8n
+FAIL r20 plant anchor missing: M3 Phase 0 list words
+FAIL r20 plant anchor missing: M4 emergency revoke
+FAIL r20 plant anchor missing: M4 one rule for key gone (B)
+FAIL r20 plant anchor missing: M4 exceptions list
+FAIL r20 plant anchor missing: M5 five alarms
+FAIL r20 plant anchor missing: M5 alarm 4 at 18:24
+FAIL r20 plant anchor missing: M5 alarm 5 unconditional
+FAIL r20 plant anchor missing: M5 alarm 5 not conditional
+FAIL r20 plant anchor missing: M5 alarm 2 fixed daytime time
+FAIL r20 plant anchor missing: M5 alarm 4 or 5 rings
+FAIL r20 plant anchor missing: M5 ND18
+FAIL r20 plant anchor missing: m1 alarm word
+FAIL r20 plant anchor missing: m2 route B warning in the prompt
+FAIL r20 plant anchor missing: m3 In short repaired
+FAIL r20 plant anchor missing: m4 app password page shows only a name
+FAIL r20 plant anchor missing: m5 ND19 lists written
+FAIL r20 plant anchor missing: m7 ND15 option B
+FAIL r20 plant anchor missing: m8 no line break
+FAIL r20 plant anchor missing: m8 own list is the only check for (b) and (d)
+FAIL r20 plant anchor missing: m9 ND20 recommendation question
+FAIL r20 plant anchor missing: MB step 21 heading
+FAIL r20 plant anchor missing: MB real latest time
+FAIL r20 plant anchor missing: MC G.2 dated Monday
+FAIL r20 plant anchor missing: MC how to show times
+FAIL r20 plant anchor missing: MC other days
+FAIL r20 plant anchor missing: MD hedge replaced by a rule
+FAIL r20 plant anchor missing: MD second person rule
+FAIL r20 plant anchor missing: MG exact typing
+FAIL r20 plant anchor missing: MG replies of key step F in the table
+FAIL r20 plant anchor missing: min card step 1 time
+FAIL r20 plant anchor missing: min plain words
+FAIL r20 plant anchor missing: min E-37 three questions
+FAIL r20 plant anchor missing: min ND header
+FAIL r20 plant not caught by its own check: r20 absent: M1 old handoff date for the key
+FAIL r20 plant not caught by its own check: r20 absent: M1 later date
+FAIL r20 plant not caught by its own check: r20 absent: M3 old unknown-credential sentence
+FAIL r20 plant not caught by its own check: r20 absent: M4 old B sentence
+FAIL r20 plant not caught by its own check: r20 absent: M5 four alarms
+FAIL r20 plant not caught by its own check: r20 absent: M5 alarm 4 do not rely
+FAIL r20 plant not caught by its own check: r20 absent: M5 evening alarm
+FAIL r20 plant not caught by its own check: r20 absent: m3 double space
+FAIL r20 plant not caught by its own check: r20 absent: MB old route B time
+FAIL r20 plant not caught by its own check: r20 absent: MC old clock rule
+FAIL r20 plant not caught by its own check: r20 absent: MD hedge
+FAIL r20 plant not caught by its own check: r20 absent: MD second person open
+FAIL r20 plant not caught by its own check: r20 absent: m7 ND15 stale
+r20 checks: need 54, absent 16, closure ids 48; plants (planted, caught): (73, 60)
+FAIL r19 plant not caught: occurrence '`no more takes` alone is never final; th' copy 1
+FAIL r19 plant not caught: occurrence '`no more takes` alone is never final; th' copy 2
+FAIL r19 plant not caught: occurrence '`no more takes` alone is never final; th' copy 3
+FAIL r19 plant not caught: occurrence '`no more takes` alone is never final; th' copy 4
+FAIL r19 plant not caught: occurrence '`no more takes` alone is never final; th' copy 5
+FAIL r19 plant not caught: occurrence '`no more takes` alone is never final; th' copy 6
+FAIL r19 plant not caught: reversal `no more takes` alone is never final
+FAIL r19 reversal anchor missing: and that carries `take-only`
+FAIL r19 reversal anchor missing: The key has no date and no later date
+FAIL r19 reversal anchor missing: The real latest time to confirm in route B is when
+FAIL r19 reversal anchor missing: and so does item 5 for the login that it concerns
+FAIL r19 plant not caught: day sheet line 6
+FAIL r19 plant not caught: day sheet line 15
+FAIL r19 plant not caught: day sheet line 18
+FAIL r19 plant not caught: day sheet line 24
+FAIL r19 plant not caught: day sheet line 27
+FAIL r19 plant not caught: day sheet line 30
+r19 plants (planted, caught): {'occurrence': (250, 244), 'pair': (90, 90), 'reversal': (17, 16), 'day sheet': (18, 12), 'appendix': (6, 6)}
+FAIL r19 golden plant not caught: delete The app that step 7 calls the app for n8
+FAIL r19 golden plant not caught: reverse The app that step 7 calls the app for n8
+FAIL r19 golden plant not caught: delete **Key (read first).** **ND** = a NOT DEC
+FAIL r19 golden plant not caught: reverse **Key (read first).** **ND** = a NOT DEC
+FAIL r19 golden plant not caught: delete the item stays in the handoff with you a
+FAIL r19 golden plant not caught: reverse the item stays in the handoff with you a
+FAIL r19 golden plant not caught: delete The key is never one of these items.
+FAIL r19 golden plant not caught: reverse The key is never one of these items.
+FAIL r19 golden plant not caught: delete only then delete the old HubSpot app or 
+FAIL r19 golden plant not caught: reverse only then delete the old HubSpot app or 
+FAIL r19 golden plant not caught: delete otherwise you type `yes, no more takes` 
+FAIL r19 golden plant not caught: reverse otherwise you type `yes, no more takes` 
+r19 golden plants (planted, caught): (318, 306)
+FAILURES 246

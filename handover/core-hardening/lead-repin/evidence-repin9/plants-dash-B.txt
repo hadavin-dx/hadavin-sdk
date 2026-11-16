@@ -27,3 +27,8 @@ q11 [dash]: KILLED-phase1 exit=1 fail_lines=48 SELF-TEST: passed=2006 failed=48 
 q12 [dash]: SURVIVED exit=0 SELF-TEST: passed=2094 failed=0 (the made-up input and output files were deleted) first_fail=[] (125s)
 q13 [dash]: KILLED-phase1 exit=1 fail_lines=48 SELF-TEST: passed=2006 failed=48 (the made-up input and output files were deleted) (3s)
 q14 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
+r01 [dash]: KILLED-phase2 exit=1 SELF-TEST: passed=2092 failed=2 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): bash with BASH_XTRACEFD=1 must still print the masked line (exit=3)'] (123s)
+r02 [dash]: KILLED-phase2 exit=1 SELF-TEST: passed=2092 failed=2 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): bash --posix with SHELLOPTS=posix:xtrace must hide the value and print no trace (exit=0)'] (120s)
+r03 [dash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=2042 failed=12 (the made-up input and output files were deleted) (3s)
+r04 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
+r05 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)

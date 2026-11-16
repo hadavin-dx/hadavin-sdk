@@ -7,7 +7,7 @@
 | child-trust-first-find | T102 | `ONLY=T102 RUN=<run.mut-child-trust-first-find.py> bash safety-tests.r14.sh` | T102.identity-compare, T102.identity-fields, T102.trust-first-find | 34 | KILLED - as expected | 0 |
 | child-tool-location-skip | T102 | `ONLY=T102 RUN=<run.mut-child-tool-location-skip.py> bash safety-tests.r14.sh` | T102.tool-location | 34 | KILLED - as expected | 0 |
 | child-tool-location-owner | T102 | `ONLY=T102 RUN=<run.mut-child-tool-location-owner.py> bash safety-tests.r14.sh` | T102.tool-location | 34 | KILLED - as expected | 0 |
-| child-seal-missing | T102 | NOT PLANTED: old text occurs 2 times | | | ERROR | |
+| child-seal-missing | T102 | `ONLY=T102 RUN=<run.mut-child-seal-missing.py> bash safety-tests.r14.sh` | T102.seal-missing | 34 | KILLED - as expected | 0 |
 | child-nul | T102 | `ONLY=T102 RUN=<run.mut-child-nul.py> bash safety-tests.r14.sh` | T102.nul-arg | 34 | KILLED - as expected | 0 |
 | child-shell | T102 | `ONLY=T102 RUN=<run.mut-child-shell.py> bash safety-tests.r14.sh` | T102.shell | 34 | KILLED - as expected | 0 |
 | child-kw-allowed | T102 | `ONLY=T102 RUN=<run.mut-child-kw-allowed.py> bash safety-tests.r14.sh` | T102.kw-allowed | 34 | KILLED - as expected | 0 |
@@ -39,7 +39,7 @@
 | child-python-pytest-head | T102 | `ONLY=T102 RUN=<run.mut-child-python-pytest-head.py> bash safety-tests.r14.sh` | T102.python-shape-pytest | 34 | KILLED - as expected | 0 |
 | child-python-pytest-tail | T102 | `ONLY=T102 RUN=<run.mut-child-python-pytest-tail.py> bash safety-tests.r14.sh` | T102.python-shape-pytest | 34 | KILLED - as expected | 0 |
 | child-python-pin-off | T102 | `ONLY=T102 RUN=<run.mut-child-python-pin-off.py> bash safety-tests.r14.sh` | T102.python-pin, T102.python-pin-ctime | 34 | KILLED - as expected | 0 |
-| child-identity-r13-fields | T102 | `ONLY=T102 RUN=<run.mut-child-identity-r13-fields.py> bash safety-tests.r14.sh` | T102.identity-fields, T102.identity-ctime, T102.python-pin-ctime | 34 | KILLED - UNEXPECTED (wanted ['T102.identity-ctime', 'T102.identity-fields', 'T102.python-pin', 'T102.python-pin-ctime']) | 0 |
+| child-identity-r13-fields | T102 | `ONLY=T102 RUN=<run.mut-child-identity-r13-fields.py> bash safety-tests.r14.sh` | T102.identity-fields, T102.identity-ctime, T102.python-pin-ctime | 34 | KILLED - as expected | 0 |
 | child-identity-no-ctime | T102 | `ONLY=T102 RUN=<run.mut-child-identity-no-ctime.py> bash safety-tests.r14.sh` | T102.identity-ctime, T102.python-pin-ctime | 34 | KILLED - as expected | 0 |
 | child-identity-no-size | T102 | `ONLY=T102 RUN=<run.mut-child-identity-no-size.py> bash safety-tests.r14.sh` | (none) | 34 | SURVIVED - as expected (SURVIVES: equivalent, st_size is redundant next to st_ctime_ns (any write changes the change time)) | 0 |
 | child-identity-no-mtime | T102 | `ONLY=T102 RUN=<run.mut-child-identity-no-mtime.py> bash safety-tests.r14.sh` | (none) | 34 | SURVIVED - as expected (SURVIVES: equivalent, st_mtime_ns is redundant next to st_ctime_ns (any write changes the change time)) | 0 |
