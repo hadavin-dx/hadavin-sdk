@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:43:33Z
-PUSHED_UTC: 2026-11-16T14:43:33Z
+UPDATED_UTC: 2026-11-16T14:50:15Z
+PUSHED_UTC: 2026-11-16T14:50:15Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,7 +13,7 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 0 of 8 (ListAgents at 2026-11-16T14:43:33Z; see CAPACITY under AGENTS)
+AGENTS_RUNNING: 8 of 8 (started 2026-11-16T14:50:15Z, ORDER 14:48Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
 NEXT: hand-backs digested through 1547. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
@@ -43,13 +43,19 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:43:33Z | PUSHED_UTC: 2026-11-16T14:43:33Z
+UPDATED_UTC: 2026-11-16T14:50:15Z | PUSHED_UTC: 2026-11-16T14:50:15Z
 | id | purpose | started | state |
 |---|---|---|---|
-| (none running) | | | |
-(closed this turn: ae0ab9c48511eb11c M17 read, digested 1547)
-CAPACITY: 0 of 8 right now. Reason: I am fixing the pages with open findings (L5ac, L5b, v5-edits-for-M17, audit checklist, decision-list rows); readers start as each fix is saved. evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
-NEXT 5: fix L5ac old lines 2-8; fix L5b; fix v5-edits-for-M17; fix ARCHITECTURE-AUDIT-CHECKLIST; fix decision-list-for-lead rows.
+| aff6b291ad96657e8 | cold read work/owner-timeline-draft.md | 14:50Z | running; check at +8 min |
+| a8ee6a7dd1617ee31 | cold read work/open-items-table.md | 14:50Z | running; check at +8 min |
+| ada39d352233df8fe | cold read work/not-checked-r2.md | 14:50Z | running; check at +8 min |
+| a860fa2e934e28ead | cold read decisions/M17-end-never-deletes.md | 14:50Z | running; check at +8 min |
+| a996449028b475c96 | cold read work/banned-claims-clean.md | 14:50Z | running; check at +8 min |
+| a5a365e053a875703 | cold read work/LEAD-NOTICE-batch-1.md | 14:50Z | running; check at +8 min |
+| a695a0851cf0a6799 | cold read work/t19-terms.md | 14:50Z | running; check at +8 min |
+| ab8dfe657472d665b | hygiene read ARCHITECTURE-AUDIT-CHECKLIST.md | 14:50Z | running; check at +8 min |
+CAPACITY: 8 of 8. No missing slots.
+NEXT 5: digest each hand-back in the same turn that starts its replacement; fix L5ac old lines 2-8; fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 
 
 ## Details (long text moved from the FAILED line)
