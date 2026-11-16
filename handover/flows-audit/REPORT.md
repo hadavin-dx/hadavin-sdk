@@ -1,5 +1,8 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## STATUS 2026-11-16 07:32 UTC / 13:02 IST: round 2 running
+Agents running: 3 (EV2 evidence runner, RV2-d design reviewer, RV2-cb codebase reviewer), all started 07:30 UTC. Nothing failed since the last block. Not yet checked: any round-2 result. Next: read reports, save to reviews/result-r2-*.md, resolve, drift report, FINAL block.
+
 ## STATUS 07:47 UTC / 13:17 IST: result review round 1 resolved, evidence-2 and round 2 next
 Done: three fresh reviewers (codebase-details, design, zoom-out; all sonnet) reported; reports saved in reviews/ and resolved with egm:egm-resolve (reviews/result-r1-resolve.md). Fixes applied: patches F-001 to F-004 regenerated (all four pass git apply --check), FINDINGS.md now 34 findings (1 Blocker, 27 Major, 6 Nit) with a plain short answer and a glossary, CUT-LIST has the order of work and the missing candidates, claims tally corrected (28 / 4 / 15 / 36), store counts corrected (14 rows), FLOWS-AUDIT.md deduplicated (125 lines of repeated lane text removed).
 Failures and slips: the reviewers found that my patches F-003 and F-004 left the sheets contradicting themselves, that my F-002 reply said "not_stored" when the write may have succeeded, that the cut list could have moved the only correct table definition, that two of my claim verdicts were mislabelled, and that F-012 and F-014 had wrong wording. All fixed in text; none of the patched behaviour has run in n8n.
@@ -16,9 +19,9 @@ Agents running: 4 language-model agents (1 evidence runner, 3 result reviewers: 
 | RV-cb (a52c620d686a34950) | result review codebase-details | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-d (a737211799b7fc972) | result review design | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-z (a7518d3448ebfabf1) | result review zoom-out | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
-| EV2 (to be filled) | EVIDENCE RUNNER checks a-k plus F-002 rebuild and cmp into evidence-2.md | 07:30/13:00 | +15 min | - | RUNNING | read evidence-2.md |
-| RV2-d (to be filled) | result review round 2 design (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-design.md |
-| RV2-cb (to be filled) | result review round 2 codebase-details (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-codebase.md |
+| EV2 (a026774cb604af485) | EVIDENCE RUNNER checks a-k plus F-002 rebuild and cmp into evidence-2.md | 07:30/13:00 | +15 min | - | RUNNING | read evidence-2.md |
+| RV2-d (ad46b354c5fb12696) | result review round 2 design (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-design.md |
+| RV2-cb (a33d32a4f58af3185) | result review round 2 codebase-details (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-codebase.md |
 Builders L1, L2a, L2b-1, L2b-2, L2b-3, L3: closed (reported, files read, no helper shells).
 
 ## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next
