@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:19:23Z
+UPDATED_UTC: 2026-11-16T20:20:29Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 9
-CAPACITY: 4.99 load of 4 cores, mem 1/15 GB, RAM 1239/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.1G /tmp/claude-0 , agents 9 (light+heavy per list)
+CAPACITY: 6.00 load of 4 cores, mem 1/15 GB, RAM 1272/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.1G /tmp/claude-0 , agents 9 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:19:23Z
+PUSHED_UTC: 2026-11-16T20:20:29Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -32,13 +32,13 @@ PUSHED_UTC: 2026-11-16T20:19:23Z
 |---|---|---|---|---|---|---|---|
 | a7636841 | F8 fixer | sonnet | F8 flow-check fixes r13 (HEAVY only while it runs tests) | 19:50Z | 20:50Z | running | checkpoint pending |
 | a831d233 | fixer | sonnet | FIX-PLAN r64 fixes | 20:14Z | 20:35Z | running | none yet |
-| a28dff0a | fixer | sonnet | REVIEW.md r54 fixes | 20:15Z | 20:35Z | running | none yet |
 | a297f95e | fixer | sonnet | patch-copies pass 24 fixes | 20:16Z | 20:38Z | running | none yet |
-| a403dd84 | cite checker | sonnet | CLAIMS-TABLE lane A A-001..A-050 | 20:19Z | 20:35Z | running | none yet |
 | a2f26ba8 | fixer | sonnet | RUNBOOK r65 fixes (lines 1-220) | 20:20Z | 20:40Z | running | none yet |
 | a07394fa | reader | sonnet | QUESTIONS 500-579 stranger read | 20:23Z | 20:36Z | running | none yet |
 | afb9a487 | reader | sonnet | QUESTIONS 660-739 stranger read | 20:23Z | 20:36Z | running | none yet |
 | a74e43b3 | reader | sonnet | TAKE-CHECKLIST re-read after r63 fix | 20:25Z | 20:40Z | running | none yet |
+| a331b890 | cite checker | sonnet | CLAIMS-TABLE lane A A-051..A-098 | 20:27Z | 20:42Z | running | none yet |
+| aa6c7174 | reviewer | sonnet | REVIEW.md uncapped re-read after r54 fix | 20:29Z | 20:45Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)

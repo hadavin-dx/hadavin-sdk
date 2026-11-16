@@ -111,10 +111,11 @@ The total shift is 12 min (three gates of 4 min): the rehearsal block ends 09:37
 |---|---|---|---|
 | lead | the Claude session; types RUNBOOK commands, decides GO | (this session) | all days |
 | operator | whoever types; follows RUNBOOK section 5 | LEAD FILLS: the person's name by Tue 03:30Z (09:00 IST) | Tue 04:00Z (09:30 IST) |
-| WARN reader | a real person who reads the WARN lines of pin 1 and pin 2 (see "Who is needed when") | LEAD FILLS: the name by Tue 04:00Z (09:30 IST) | Tue 04:26Z (09:56 IST) |
-| judge | a person who records a judged pass (a recorded judgement, Pass rule) | LEAD FILLS: the name by Tue 04:00Z (09:30 IST) | Tue 04:26Z (09:56 IST) |
+| WARN reader | a real person who reads the WARN lines of pin 1 and pin 2 (see "Who is needed when") | LEAD FILLS: the name by Tue 03:30Z (09:00 IST) (cell `PIN_NAME`, Q31 item 48, the same time as TAKE-CHECKLIST.md Inputs-list item 14) | Tue 04:26Z (09:56 IST) |
+| judge | a person who records a judged pass (a recorded judgement, Pass rule) | LEAD FILLS: the name by Tue 03:30Z (09:00 IST) (cell `JUDGE_WHO`; Q31 item 33 says 04:00Z (09:30 IST), the earlier time governs because Block R3n needs it, TAKE-CHECKLIST.md Inputs-list item 24) | Tue 04:26Z (09:56 IST) |
 | text-fix applier | applies the hand text edits of RUNBOOK step 14 | LEAD DECIDES by Tue 07:00Z (12:30 IST); AUDIT PROPOSAL: the operator | Tue 07:44Z (13:14 IST) |
-| owner contact | how the lead reaches the owner (channel and address) | LEAD FILLS: the channel by Tue 03:30Z (09:00 IST) | Tue |
+| owner | the person who owns the studio (a fixed person, not a name cell the lead fills); answers the owner questions, deletes the made-up test contacts by hand, compares the settings file, types `y` on camera, switches off the model key, posts (rows of "Who is needed when" in the Clock block) | the studio owner | first needed Wed 07:00Z (12:30 IST) (the HubSpot permissions question) |
+| owner contact | how the lead reaches the owner (channel and address) | LEAD FILLS: the channel by Tue 03:30Z (09:00 IST); AUDIT PROPOSAL: the channel the lead already uses with the owner | first use Wed 07:00Z (12:30 IST) (the HubSpot permissions question) |
 
 ## More words (round 60, M19)
 - **PASS word**: the one printed word that shows a step worked; a missing word is a fail.
@@ -122,22 +123,12 @@ The total shift is 12 min (three gates of 4 min): the rehearsal block ends 09:37
 - **BLOCKED**: an input the lead has not supplied yet; the step does not start without it.
 - **LEAD FILLS** / **LEAD DECIDES**: a value or a choice that only the lead may write; nobody else invents it.
 - **AUDIT PROPOSAL**: the audit's suggestion; it is not an authority until the lead confirms it.
-- **Case A / Case B**: Case A, nothing to change in RUNBOOK step 22; Case B, recovery is switched off in RUNBOOK step 22 (ii).
+- **Case A / Case B**: always the two WEDNESDAY cases of RUNBOOK step 22 and nothing else: Case A, nothing to change in RUNBOOK step 22 (recovery stays on); Case B, recovery is switched off in RUNBOOK step 22 (ii). "No repeat" is a separate word (the re-pin runs once) and never part of the case name.
 - **gate**: a check that must print its words before the next send.
 - **dated time**: a time with no gates added; **gated time**: the same time plus the gates.
 
-## BLOCKED items in one table (round 60, B3; owner is the lead for every row; the pass word is what the lead's command must print; IST = UTC + 5:30)
-| Item | What | Due (UTC, IST) | Printed pass word |
-|---|---|---|---|
-| Q31 item 59 | the take folder path | Tue 03:30 (09:00) | `bootstrap-ok` |
-| Q31 item 47 | `n8n_api.py` (export script file) | Tue 04:54 (10:24) | `found` for the file, no `MISSING` |
-| Q31 item 60 | the schema the flows write to | Tue 04:54 (10:24) | `columns-ok` |
-| Q31 item 78 | `DB_SETUP.sh` and the account that runs it | Tue 04:54 (10:24) | `exit 0` (RUNBOOK step 8 (0b)) |
-| Q31 item 62 | import the sub-workflow and print its id | Tue 05:54 (11:24) | `sub-id-written` |
-| Q31 item 64 | print the ids of the three callers | Tue 05:54 (11:24); first use 06:39 (12:09) | `caller-ids-ok` |
-| Q31 item 63 | the quiet values loop | Tue 06:24 (11:54) | `values-loop-ok` |
-| Q31 item 50 | the mailbox count command | before its first use in Step 10 | `mail-count-ok` |
-| Q31 item 11 | who applies the text fixes | Tue 07:00 (12:30) | decision written |
+## BLOCKED items (the ONE table of them is the last section of this file, "Inputs the Tuesday operator waits for"; responsible: the lead for every row; IST = UTC + 5:30)
+Each BLOCKED input has ONE row there: Q31 item, input, cell, the check that prints `ready-NAME` when the input is supplied, the word the step prints when it has used the input, and the due time in UTC (IST). TAKE-CHECKLIST.md, "Inputs missing before Tue 17 Nov 14:00Z (19:30 IST)", holds the text of each input and its ORDERS line; the table here holds the due time and the two words. The two lists share the Q31 item number and never differ in a time (a difference is a finding, not a second authority). The words of the steps are also in the section "How each step passes" below.
 
 ## Self-checking pass lines (round 60, B3; each is typed AFTER its RUNBOOK step, never instead of it; the lead copies each into RUNBOOK; not run by this fixer except for `bash -n`)
 1. Step 0a: `test -n "$BASH_VERSION" && echo bash-ok`
@@ -150,12 +141,17 @@ The total shift is 12 min (three gates of 4 min): the rehearsal block ends 09:37
    - (v-a) `N="$(psql "$PGCONN_SELECT_ONLY" -t -A -c 'select count(*) from mf_leads')" && [[ "$N" =~ ^[0-9]+$ ]] && echo select-only-read-ok`
    - (v) `test "$(grep -c -F 'permission denied for table mf_leads' "$INSERTLOG")" = 1 && echo insert-refused-ok`
 5. Step 6: `test "$(grep -c '^SUB_WORKFLOW_ID=.\+' "$VALUES")" = 1 && echo sub-id-written`
-6. Step 7 (after `. "$ENVSH" && need_set NEW FILLED`; the unfilled folder is `$REPO/handover/demo/$NEW`): `test "$(grep -rl -F '$env' "$REPO/handover/demo/$NEW" | sed 's|.*/||' | sort | tr '\n' ' ')" = "mf-recovery.json mf-sub-crm-mail.json " && echo env-control-ok`; the six-name control and the two greps on `$FILLED` are RUNBOOK step 10: the lead adds `placeholder-control-ok` (exactly 4 files) and `filled-greps-clean` (0 hits and 4 json files) as the last line of each there.
-7. Step 14, the gate: `test "$(grep -c -E '^(gate-keys-clean|gate-table-clean|gate-mailbox-clean|gate-runlist-ok|gate-hubspot-clean)$' "$GATELOG")" = 5 && echo gate-pass`
+6. Step 7 (after `. "$ENVSH" && need_set NEW FILLED`; the unfilled folder is `$REPO/handover/demo/$NEW`): `test "$(grep -rl -F '$env' "$REPO/handover/demo/$NEW" | sed 's|.*/||' | sort | tr '\n' ' ')" = "mf-recovery.json mf-sub-crm-mail.json " && echo env-control-ok`; the six-name control and the two greps on `$FILLED` are RUNBOOK step 10: the lead adds `placeholder-control-ok` (exactly 4 files) and `filled-greps-clean` (0 hits and 4 json files) as the last line of each there, due Tue 06:24Z (11:54 IST), the start of RUNBOOK step 10 (row in "How each step passes" below).
+7. Step 14, the gate (each of the four words (a) to (d) exactly once; then (e) is EITHER `gate-hubspot-clean` exactly once, which prints `gate-pass`, OR, only before the owner's scope answer and never on take day, the line `PASS-WITH-(e)-NOT-CHECKED` exactly once, which prints `gate-pass-e-not-checked` and NOT `gate-pass`; both together, or neither, print nothing; RUNBOOK step 24 treats `gate-pass-e-not-checked` as FAIL; the lead's check (e) tool prints the line `PASS-WITH-(e)-NOT-CHECKED` itself when the HubSpot search is refused): `G=0; for W in gate-keys-clean gate-table-clean gate-mailbox-clean gate-runlist-ok; do test "$(grep -c -x -F "$W" "$GATELOG")" = 1 && G=$((G+1)); done; H="$(grep -c -x -F gate-hubspot-clean "$GATELOG")"; P="$(grep -c -x -F 'PASS-WITH-(e)-NOT-CHECKED' "$GATELOG")"; if test "$G" = 4 && test "$H" = 1 && test "$P" = 0; then echo gate-pass; elif test "$G" = 4 && test "$H" = 0 && test "$P" = 1; then echo gate-pass-e-not-checked; fi` (tested in a scratch folder on four made-up log files: it printed `gate-pass`, `gate-pass-e-not-checked`, nothing for a duplicated word and nothing for both (e) lines)
 8. Step 8: `test "$(grep -c -x -F "$(grep '^SUB_WORKFLOW_ID=' "$VALUES" | cut -d= -f2-)" "$IDLOG")" = 3 && echo caller-ids-ok`
 9. Step 17: `test "$(psql "$PGCONN_SELECT_ONLY" -t -A -c "select count(*) from mf_leads where lead_key in ($KEYS) and state in ('review','unknown','failed')")" = 0 && test "$(psql "$PGCONN_SELECT_ONLY" -t -A -c "select count(*) from mf_leads where lead_key in ($KEYS) and state = 'done'")" = 1 && echo counts-ok`
 10. Step 8a: `test "$(grep -c 'did you mean' "$ACTLOG.before")" = 0 && test "$(grep -c 'did you mean' "$ACTLOG")" = 2 && echo activation-probe-ok`
 11. Items 5 and 7 of the plan overview rules: (a) `grep -q -F 'a person looks at the rows in state review' "$REPO/handover/demo/VIDEO-RUNSHEET.md" && echo f031-sentence-found`; (b) `test "$(grep -rn -F 'killed after the mail left' "$REPO/handover/demo" --include='*.md' | cut -d: -f1,2 | tr '\n' ' ')" = "$REPO/handover/demo/REPORT.md:49 " && echo f007-only-allowed-hit`; (c) `test "$(grep -h '^+' "$REPO"/handover/flows-audit/patches/F-003-runsheet-claims.patch "$REPO"/handover/flows-audit/patches/F-004-*.patch | grep -v '^+++' | grep -c . )" -gt 0 && test "$(grep -h '^+' "$REPO"/handover/flows-audit/patches/F-003-runsheet-claims.patch "$REPO"/handover/flows-audit/patches/F-004-*.patch | grep -c -E '60\.1|61\.9')" = 0 && echo patches-no-recovery-number`
+12. Step 4 (after RUNBOOK step 5 and TAKE-CHECKLIST.md Block R4 have written `"$LOG.counts"`; the eight counts in the order of Block R4, the last one for the line `ACCEPTED: recovery flow not part of the take` counted by its prefix): `. "$ENVSH" && need_set LOG && test -s "$LOG.counts" && test "$(sed 's/^.* = //' "$LOG.counts" | tr '\n' ' ')" = "2 0 3 0 1 1 1 2 " && echo r4-counts-ok` (the sixth count is the line `FINAL: take_check exit status 0.`, so the exit status 0 is inside this word; tested in a scratch folder on a made-up counts file: it printed the word for `2 0 3 0 1 1 1 2` and nothing when the last count was 1)
+13. Step 4 (SHA_PIN1, after the RUNBOOK step 4b line `sha-written`): `test "$(grep -c '^SHA_PIN1=[0-9a-f]\{40\}$' "$TAKE_FOLDER/shas.env")" -ge 1 && echo sha-pin1-line-ok`
+14. Step 5 (iv), after RUNBOOK step 8 (iv) (RUNBOOK prints `db-is-take-db` at (ii) and at (iv); this is the own word of (iv)): `. "$ENVSH" && need_set PGCONN_TAKE TAKE_DB && test "$(psql "$PGCONN_TAKE" -t -A -c 'select current_database()')" = "$TAKE_DB" && echo db-is-take-db-iv`
+15. Step 9 (after RUNBOOK step 13 (e) and Block R4f have written `"$LOG2.final.counts"`): `. "$ENVSH" && need_set LOG2 && test -s "$LOG2.final.counts" && test "$(sed 's/^.* = //' "$LOG2.final.counts" | tr '\n' ' ')" = "2 0 3 0 1 1 1 2 " && echo r4f-counts-ok`
+Items 12 to 15 and the changed item 7 are new commands: `bash -n` was run on each (all passed); items 12 and 7 were also run in a scratch folder on made-up files (results above); items 13, 14 and 15 were not run (13 needs a real `shas.env`, 14 needs psql and the take database, 15 needs a real log).
 New names `IDLOG` and `SUB_ID` are typed per call; they need a Placeholder-table row in TAKE-CHECKLIST.md (another fixer owns that file: needs lead).
 
 **How the steps below map to RUNBOOK.md steps (the audit's mapping; RUNBOOK.md wins). The rule for the operator is at the top of this file (line 1). Words: "step" here always means "FIX-PLAN step N" and is written "RUNBOOK step N" for the other file; the lead is the Claude session (RUNBOOK section 2 roles); the operator is whoever types.**
