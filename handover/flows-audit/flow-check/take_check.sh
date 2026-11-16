@@ -41,7 +41,7 @@ REVIEWER_WORDS_WEAK="jenkins devin sessions"
 REVIEWER_WORDS_NEG="ai ais llm llms"
 REVIEWER_NEGATORS="no not without never zero"
 REVIEWER_PARTICLES="y e i o a"
-REVIEWER_NOTREAD='\bnot\s+(?:yet\s+|fully\s+|all\s+|really\s+|been\s+)*(?:read|reviewed|checked|looked|opened|seen|verified)\b|\bunread\b|\bunreviewed\b|\bunchecked\b|\bwill\s+(?:read|review|check)\b|\b(?:read|review|reviewed|check|checked|look|looked)\s+(?:it\s+|them\s+|these\s+|this\s+)?(?:again\s+)?later\b|^later$|\bto\s+be\s+(?:read|reviewed|checked)\b|\b(?:did|do|does|have|has|had)n'"'"'?t\s+(?:yet\s+|fully\s+|really\s+)?(?:read|review|reviewed|check|checked|look|looked|open|opened)\b|\bskimmed\s+only\b|\bonly\s+skimmed\b|\bjust\s+skimmed\b|\bwithout\s+(?:reading|reviewing|checking|looking)\b|\bno\s+time\s+to\s+(?:read|review|check)\b|\bsigning\s+only\b'
+REVIEWER_NOTREAD='\bpending\b|\bnot\s+(?:yet\s+|fully\s+|all\s+|really\s+|been\s+)*(?:read|reviewed|checked|looked|opened|seen|verified)\b|\bunread\b|\bunreviewed\b|\bunchecked\b|\bwill\s+(?:read|review|check)\b|\b(?:read|review|reviewed|check|checked|look|looked)\s+(?:it\s+|them\s+|these\s+|this\s+)?(?:again\s+)?later\b|^later$|\bto\s+be\s+(?:read|reviewed|checked)\b|\b(?:did|do|does|have|has|had)n'"'"'?t\s+(?:yet\s+|fully\s+|really\s+)?(?:read|review|reviewed|check|checked|look|looked|open|opened)\b|\bskimmed\s+only\b|\bonly\s+skimmed\b|\bjust\s+skimmed\b|\bwithout\s+(?:reading|reviewing|checking|looking)\b|\bno\s+time\s+to\s+(?:read|review|check)\b|\bsigning\s+only\b'
 # The note may use the name-only words in normal speech (a sample, the code, the lead), so they are checked in the name only.
 # Shared python code (also used by safe_text): which characters are never allowed. Refused: every control, format, unassigned, private-use and surrogate character (category C), line and paragraph separators (Zl, Zp), every Default_Ignorable_Code_Point (the Unicode list is written out below because python has no property for it), and every combining mark (Mn, Mc, Me) that does not sit on a letter. Round f8-r9 (m7): U+200C and U+200D (the zero width non-joiner and joiner that Persian, Indic and other scripts use inside real names) are accepted when they sit between two letters of a script that has no look-alike letters in Latin (so they cannot hide a Latin word); they are removed from what is shown.
 IFS= read -r -d '' REVIEWER_NORM_PY <<'PYEOF' || true
@@ -327,12 +327,14 @@ try:
     seq = ordered(name)
     listed_all = ALL | NEG | WEAK | NAME
     others = [w for w in seq if len(w) >= 2 and w not in listed_all]   # name words that are not on any list
-    hits = [h for h in find_all(nwords, ALL, stem=True)]
+    hits = [h for h in find_all(nwords, ALL, stem=True) if not (h[0] not in seq and any(w.rstrip("s") == h[0] and w in seq for w in WEAK))]   # Sessions (a surname) is a weak word; Session stays refused
     if hits:
         refuse_listed(hits[0], "name", "words")
     for h in find_all(nwords, NEG):
         if h[0] == "ai" and seq[:1] == ["ai"] and others:
             continue   # Ai Nguyen, Ai Weiwei: ai as the FIRST word of a name that has another name word
+        if h[0] not in seq and re.search(r"(?:\b[^\W\d_]\.\s*){2,}", name):
+            continue   # dotted initials (L. L. M.) that only join into a listed word
         refuse_listed(h, "name", "words")
     for h in find_all(nwords, WEAK):
         if not others:
