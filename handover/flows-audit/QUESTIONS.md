@@ -149,3 +149,9 @@ Failure first: a fresh reader says the lead could not run the plan today without
 3. Step A: Q25 item 7 removed it (owner steps = Step D only); Q27 item 10 says "Step A (if kept)". Please confirm it stays removed.
 4. Q27 item 10 says the owner types y, the challenge and end on camera (decision 7) and does S9-2 and S9-3, but Q25 item 7 says owner steps are Step D only. Please confirm which list is current; the owner sheet will follow your answer.
 5. inputs/DECISIONS-2026-11-16.md items 1 and 7 still say "processed once" and the old owner typing; lead corrects (not my file). Also VIDEO-RUNSHEET.md rows N-9, N-10, N-11 (R:6, R:21, R:33 stopwatch phrases) are applied by the lead at re-pin.
+
+## Q29 (flows-audit, 2026-11-16 11:55Z) — from the "what did we not check" lane (reviews/zoomout-not-checked-r1.md; reviewer words unverified)
+1. Positive control for the mailbox: after the take, do you want the lead to send two made-up mails with different IDs to the intake mailbox and confirm it shows two (so "one" is not a mailbox filter)? Recommendation: yes, before the rehearsal, no model call needed.
+2. Late second mail: the after-take recount should read the mailbox, not only the mf_leads table. Recommendation: add a mailbox recount to the counts proof after the stated wait.
+3. Fallback if T19/T20 fail on the patched copy: confirm whether the take is NO-GO (my reading of Q27-9) or runs the unpatched real-v5 with the caption cut.
+4. Who reviews the post-twice script and run_real_check_n8n.py when you supply them (byte-identical body check)? I can, read-only, if they are put on the branch.
