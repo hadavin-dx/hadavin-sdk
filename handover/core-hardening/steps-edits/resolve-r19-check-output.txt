@@ -261,3 +261,9 @@ NEG r15app caught | FAIL r15 E-09 h lacks 'There are two different HubSpot keys'
 NEG r15e37app caught | FAIL r15 E-37 3 lacks 'Two different HubSpot keys'
 NEG r15done caught | FAIL r15 E-48 G done lacks '`shred done key copies` means that EVERY file of (a) and (b)'
 NEG r15silence caught | FAIL r15 E-48 G done lacks 'If you write neither, the assistant treats it as `shred not '
+NEG r15e59 caught | FAIL r15 E-59 missing or still has the star
+NEG r15sure caught | FAIL r15 E-48 D lacks 'Are you sure?'
+NEG r15e52conf caught | FAIL r15 E-52 confirm lacks '`no more takes` is confirmed only by your next message `yes,'
+NEG r15reply caught | FAIL r15 E-12 reply line missing: 4. money: up to 3 model calls and up to US$<X>
+NEG r15blocks caught | FAIL r15 E-12 reply still has 'Part 1'
+NEG r15ph caught | FAIL r13 placeholder in E-54 or rule R11
