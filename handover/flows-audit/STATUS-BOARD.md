@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:27:58Z
+UPDATED_UTC: 2026-11-16T10:28:04Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 62
-AGENTS_RUNNING: 7
-CAPACITY: 1.89 load of 4 cores, mem 0/15 GB, RAM 904/16087 MB, disk 27G free of 252G, top3 551M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 7 (light+heavy per list)
+PERCENT: 63
+AGENTS_RUNNING: 6
+CAPACITY: 1.90 load of 4 cores, mem 0/15 GB, RAM 902/16087 MB, disk 27G free of 252G, top3 551M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -28,8 +28,9 @@ claims r7 fixer: 6 Majors fixed (own report), F5 checker PASS 157 rows (rerun by
 F-003/F-004 regenerated (builder: check PASS 5, no 60.1/film-v5/scene 5 in added lines; own numbers); NOT done: scene rows 5-11 and 'Update 17:08Z' caption still in VIDEO-RUNSHEET (lead applies), wording rows held by D1/D2/P2/P4a-c not pasted, 20 s source unconfirmed, F-001 patch line 7 names film-v5; 3 independent checks running
 F8 r4 independent evidence: gates rc 0 (with repo config), 577/0/58 on py3.11/3.12/3.13, hostile inputs no traceback; BUT 12 of 25 mutants survived (6 in code: lines 48,117,317,502,1045,1189) sent to r5 fixer; Python 3.10 untested; owner-morning review 4 Majors (placeholders hidden by --quiet-info, wrong table SQL = no alert (Q16), unpatched real-v5 files, --fail-unverified over-claim) in r5 fixer
 Q15 answered by lead and applied to CLAIMS-TABLE (rows 14-15 OUT, 16-17 LIVE, no numbers on a card); F5 checker PASS after; but F-003 patch closing card is 4 lines vs the lead's one line: fix after patch reviews land
-NEXT: F3 r7 fixer after evidence; F8 r5, decisions r2, 3 patch checks; patch closing card to one line
-PUSHED_UTC: 2026-11-16T10:27:58Z
+patches independent check: apply alone and together rc 0, PASS 5, target files unchanged; added lines clean for 60.1/film-v5/scene 5, but F-001 patch line 7 names film-v5, patched VIDEO-RUNSHEET keeps scene rows 5-11 (12 rows) and lines 12/64/84, PAGE-STATEMENTS line 151 keeps 61.9; evidence file is a summary not a full log; wording reviews running
+NEXT: F3 r7 fixer after evidence; F8 r5, decisions r2, 2 patch reviews
+PUSHED_UTC: 2026-11-16T10:28:04Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -51,7 +52,6 @@ PUSHED_UTC: 2026-11-16T10:27:58Z
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | decfix2 | decisions text fixer r2 | sonnet | 9 Majors of review (M4/M8 left to lead, Q14) | 10:37 | 11:00 | 5 | running | reviews/apply-decisions-r2.md |
 | f8fix5 | F8 r5 fixer | sonnet | 4 Majors of owner-morning review (placeholders hidden, wrong table SQL, unpatched files, --fail-unverified) | 10:41 | 11:10 | 5 | running | flow-check/fix-f8-r5.md |
-| patev | patches r2 evidence runner | sonnet | independent apply, grep, JSON | 10:45 | 11:00 | 5 | running | lanes7/evidence-patches-r2b.txt |
 | patrd | patches wording stranger read | sonnet | read-aloud wording | 10:45 | 11:00 | 5 | running | - |
 | patfc | patches facts review | sonnet | numbers vs flows/decisions | 10:45 | 11:00 | 5 | running | - |
 
