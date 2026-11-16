@@ -337,3 +337,5 @@ ok   B2: reviewer line 'TBD' is exit 4 with exactly the message 'NOT A PERSON' a
 ok   B2: reviewer line 'x, 2026-11-16, pin sha256 378e1121' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: name too short' (got exit 4)
 ok   B2: reviewer line 'Testonly Reviewer' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: shape' (got exit 4)
 ok   B2: reviewer line 'Testonly Reviewer, 2026-13-45' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: bad date' (got exit 4)
+ok   B2: reviewer line 'Testonly Reviewer, 2999-01-01' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: future date' (got exit 4)
+ok   B2: reviewer line ', 2026-11-16, pin sha256 378e1121' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: name characters' (got exit 4)
