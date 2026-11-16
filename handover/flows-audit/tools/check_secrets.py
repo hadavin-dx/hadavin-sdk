@@ -45,7 +45,7 @@ for d, _, fs in os.walk(R):
                     and not shaline.fullmatch(l.strip())
                     and not (
                         re.fullmatch(r"[0-9a-f]{32}|[0-9a-f]{64}", tok)
-                        and re.search(r"sha-?256|md5|hash|derived", l, re.IGNORECASE)
+                        and re.search(r"sha-?256|md5|hash|derived|combined:", l, re.IGNORECASE)
                     )
                 ):
                     hits.append(f"{rel}:{i} token-like (length {len(tok)})")
