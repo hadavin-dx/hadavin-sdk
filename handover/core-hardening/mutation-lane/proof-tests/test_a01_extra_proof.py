@@ -14,7 +14,14 @@ pytest_plugins = ["tests.test_p7_tick"]
 
 
 def _event(i=0):
-    return AuditEvent(run_id=f"run-{i}", domain="run", operation="state", principal="system:test", source="test", result="OK")
+    return AuditEvent(
+        run_id=f"run-{i}",
+        domain="run",
+        operation="state",
+        principal="system:test",
+        source="test",
+        result="OK",
+    )
 
 
 def _boom(*a, **k):
@@ -96,7 +103,9 @@ def test_chain_reconcile_drains_memory_only_events_once():
     assert log.reconcile() == 1
     assert log._pending == []
     assert log.reconcile() == 0  # not counted again
-    assert log._db.run("SELECT event_id FROM audit_entries WHERE event_id = ?", (ev.event_id,)) == [(ev.event_id,)]
+    assert log._db.run("SELECT event_id FROM audit_entries WHERE event_id = ?", (ev.event_id,)) == [
+        (ev.event_id,)
+    ]
 
 
 def test_chain_reconcile_keeps_an_event_whose_append_still_fails():

@@ -32,6 +32,11 @@ def test_the_ceiling_is_exactly_200_000(cfg_dir):
 
 
 def test_every_route_is_checked_and_the_message_names_the_free_one(cfg_dir):
-    zcheap = {"model_id": "m2", "input_usd_per_mtok": "0", "output_usd_per_mtok": "3", "max_tokens": 1024}
+    zcheap = {
+        "model_id": "m2",
+        "input_usd_per_mtok": "0",
+        "output_usd_per_mtok": "3",
+        "max_tokens": 1024,
+    }
     with pytest.raises(ConfigError, match=r"zero or negative price: \['zcheap'\]"):
         _load(cfg_dir, llm=LIVE_LLM, extra_routes={"zcheap": zcheap})

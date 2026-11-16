@@ -1,5 +1,8 @@
 # Mutation lane report, round 2 (C8b), run 2026-11-16 UTC. Evidence runner: runs and records, does not judge.
 
+> **SCOPE: v1 patches only; v2 rerun pending (C8c).** Every number below was measured on the v1 patches (`patches-ready/C-01.patch`, `A-01.patch`). The v2 patches that will merge (`patches-ready/v2/`) change the code (new function names, new checks) and were NOT run through this lane. Nothing here is merge evidence for v2. The mutant plan for v2 is `MUTANTS-V2-PLAN.md`.
+> Corrected after review 2 (`review-2.md`): the 46 vs 104 explanation (section 2), the stale m08/m09 line, the one-file proof baseline, the suppression comments in the proof test, and `run.py` (backups no longer written into this folder; crash safety added; see section 5).
+
 ## 1. What survived or could not run (read this first)
 Base: commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c` plus one patch each (`patches-ready/C-01.patch`, `A-01.patch`), in scratch copies `/tmp/c8/wC` and `/tmp/c8/wA` (byte-identical to a fresh `git archive` + `patch -p1`, checked with `diff -rq`, no output). The real repository source was not touched.
 
@@ -13,19 +16,22 @@ Base: commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c` plus one patch each (`pa
 - Mutants of the test files themselves, `reprobe_sources` / K1bAudit paths, other audit kinds: not covered. The mutant lists are hand-made, not exhaustive.
 - C-01 mutants were run against `tests/test_c01_route_limits.py` only (10 tests). A kill by some other test elsewhere in the repo is not looked for.
 - Reordered `except` clauses in `write_outcome` (review-1 M4 "reordered"): not run; only "removed" and "returns None" variants were run.
-- A-01 survivor m09: killed by the list-entry assertion; the separate two-ticks test was not proven on its own against m09.
-- Slips by me: (a) I ran two short pytest processes (proof checks) while the A-01 mutation loop was running, against the "one pytest process at a time" rule; they used different scratch trees and ran under 10 s, so the loop results are not affected, but it was a slip. (b) `run.py` first wrote `.restore-copy` into this folder and it was picked up as a tracked file by git (`git status` shows it deleted); I removed it, and the script still writes it temporarily. Treat that as a script flaw to fix.
+- A-01 survivors m08 and m09: proven by `raw-proof/A-01-proof-m08.txt` and `raw-proof/A-01-proof-m09.txt`; m09 (interval 3600) fails two tests there (the list-entry test and the two-ticks test), so both are shown to kill it. m08 also fails in its proof file.
+- Slips by me: (a) I ran two short pytest processes (proof checks) while the A-01 mutation loop was running, against the "one pytest process at a time" rule; they used different scratch trees and ran under 10 s, so the loop results are not affected, but it was a slip. (b) `run.py` first wrote `.restore-copy` into this folder and it was picked up as a tracked file by git; I removed it. FIXED in C8c prep: the saved original now lives in `$TMPDIR/hadavin-mutation-lane/`, outside the repository, and is deleted after every mutant (proof: `raw/run-py-safety-tests.txt`).
 - v1 correction: in v1 the A-01 row 14 (memory-only ERROR to DEBUG) was reported KILLED, but the first planting used text that does not exist in the file (COULD-NOT-PLANT, matches=0); the kill came from a separate rerun with corrected text. In this round the corrected text is in the list and m14 is KILLED in one run.
 - v1 also ran with Python bytecode caches left on; a stale `.pyc` with the same size and same second could in theory hide a change. This round deletes `__pycache__` before every run and sets `PYTHONDONTWRITEBYTECODE=1`.
 
-## 2. Baseline (answers review-1 M2: "46 vs 104")
+## 2. Baseline (answers review-1 M2: "46 vs 104"; corrected after review 2)
 Run in the unmutated patched copies, clean environment (`env -i`), one process, exit code 0 each time (raw: `raw/C-01-baseline.txt`, `raw/A-01-baseline.txt`):
 - C-01 command `.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_c01_route_limits.py` -> **10 passed** (6 price cases = 2 fields x 3 prices, plus 4 other tests).
 - A-01, two different sets, not one:
   - `tests/test_a01_audit_reconcile.py` alone -> 5 passed.
   - plus `tests/test_p7_tick.py` -> **46 passed** (this was the v1 REPORT number: the new tests and the tick tests).
-  - plus `tests/test_s2_audit.py` and `tests/test_p3b_neutral_audit.py` -> **104 passed**. This 4-file set is what every v1 A-01 raw file and every A-01 verdict in this round used. v1 REPORT quoted the 2-file baseline but ran the 4-file set; that was the mismatch.
+  - plus `tests/test_s2_audit.py` and `tests/test_p3b_neutral_audit.py` -> **104 passed** (4-file set).
+  - Which set ran where (corrected; the earlier text of this section said every A-01 raw file used the 4-file set, which was wrong): the v1 kill runs used `-x` and ran only the new test file `tests/test_a01_audit_reconcile.py`; only the v1 survivors were then run against the 104-test set. So "46" and "104" were never a mismatch of one number: they are the sizes of two different test sets used for two different purposes. The round-2 logs in `raw/` are clean on this point: each A-01 raw file records its exact command line (no `-x`), and the baseline files record the set they ran.
 - With the extra proof tests added (scratch only): C-01 13 passed (10 + 3 new), A-01 proof file 10 passed.
+- The proof baseline is ONE file per lane (`raw-proof/C-01-proof-baseline.txt`, `raw-proof/A-01-proof-baseline.txt`), taken once before that lane's 7 and 12 proof kills; it is not repeated per mutant. The kill files each record their own rc and failing tests.
+- Suppressions removed: `proof-tests/test_a01_extra_proof.py` had two `# noqa: F811` comments and one `# noqa: F401`. The file now registers the existing tick fixtures with `pytest_plugins = ["tests.test_p7_tick"]`, so no name is imported and nothing is suppressed. `grep -c noqa proof-tests/*.py` gives 0; `ruff check` and `ruff format --check` on both proof files pass and the A-01 proof file passes 10 tests (`raw-proof/ruff-proof-tests.txt`, `raw-proof/A-01-proof-noqa-removed-pytest.txt`). Note: the proof tests of this report still describe the v1 messages; they must be re-based on v2.
 
 ## 3. Assertions that kill each survivor (test text is in `proof-tests/`, not applied)
 - C-01 m11 (`gt=0` to `gt=1`): `assert _load(cfg_dir, max_tokens=1).routes["default"].max_tokens == 1`.
@@ -44,9 +50,18 @@ Run in the unmutated patched copies, clean environment (`env -i`), one process, 
 Unmutated scratch copy with the extra file: C-01 `13 passed`, A-01 proof file `10 passed` (rc 0; `raw-proof/C-01-proof-baseline.txt`, `A-01-proof-baseline.txt`). Each of the 19 survivors was then planted again with the same text and run with the extra tests: all 19 KILLED (rc 1). Proof copies are `/tmp/c8b/kC` and `/tmp/c8b/kA` (the venv `.pth` points at the old trees, so `run.py --pythonpath` points at the copy's `src`; the kills show the mutation took effect). A first proof run left C-01 m18 SURVIVED because `default` sorted after the test route `cheap`; the route was renamed `zcheap` and re-run; the table shows the second run.
 
 ## 5. Method and files
-- `run.py` (this folder): one mutant or a JSON list; per mutant it writes `raw/<tag>-<id>.txt` with verdict, description, base sha, root, command, rc, restore check (`diff` of the saved original against the file after restore, rc 0 means identical; the script aborts if not), pytest summary line, first and all failing tests (no `-x`), full old and new text, full pytest output. Verdict by exit code only: 0 survived, 1 killed, other = ERROR (none occurred).
+- `run.py` (this folder; rewritten in C8c prep, see below): one mutant or a JSON list; per mutant it writes `raw/<tag>-<id>.txt` with verdict, description, base sha, root, command, rc, restore check (`diff` of the saved original against the file after restore, rc 0 means identical; the script aborts if not), pytest summary line, first and all failing tests (no `-x`), full old and new text, full pytest output. Verdict by exit code only: 0 survived, 1 killed, other = ERROR (none occurred).
 - Mutant lists: `mutants-C-01.json`, `mutants-A-01.json` (same list as v1 with ids m01..; new ones M4 are C m17..m21 and A m20..m29). v1 files are in `raw-v1/` (unchanged). v1 old report text is replaced by this file.
 - Not committed or pushed.
+
+## 5b. run.py safety changes (C8c prep, after review 2 M2 and M3)
+- Backups: outside the repository (`$TMPDIR/hadavin-mutation-lane/<root key>.backup`), removed after each mutant. Nothing is written into the lane folder except `raw/`.
+- Hash baseline: the original bytes of every target file come from a fresh `git archive <sha>` extract plus the `--patch` files, never from the file on disk. Before the loop the whole scratch tree is compared with that reference; any difference means REFUSED (a planted change from a killed run cannot be read as the original).
+- `--root` that is, contains or lies inside the real repository (the repository work tree), or is any git work tree, is REFUSED. A lock per root refuses a second run.
+- A marker is written before each planting. After SIGKILL the file stays mutated, the next run refuses and prints `run.py --root R --restore`; with the marker lost the tree comparison still refuses. SIGTERM and SIGINT restore the file, stop the test process group, remove the marker and exit 143 / 130.
+- After the loop `raw/<prefix>-tree-diff.txt` holds `diff -rq` against a fresh archive extract. For the finished round-2 loops it was run once by hand on the unchanged scratch trees: `raw/C-01-tree-diff.txt` and `raw/A-01-tree-diff.txt`, both rc 0 (no differences). This is a check taken after the loop, not during it; the old claim "byte-identical, checked with `diff -rq`, no output" had no raw file until now.
+- Test of all of this on a toy repository with made-up files (not on the real code): `raw/run-py-safety-tests.txt` (T1 real repo refused, T2 SIGKILL, T3 refusal text, T4 marker lost, T5 `--restore`, T6 SIGTERM, T7 SIGINT, T8 lock, T9 clean run). Not tested: Windows (the lock uses `fcntl`, Linux and macOS only); a SIGKILL of the test process alone (the timeout path is unchanged, 600 s).
+- Not done in this prep: the full v1 loops were NOT rerun with the new `run.py` (they are superseded by the v2 rerun). The old v1/round-2 raw files were produced by the old script.
 
 ## 6. Full result tables
 
