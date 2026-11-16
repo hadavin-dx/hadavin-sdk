@@ -431,6 +431,22 @@ def c6u_stage(L, find, patch):
     rep_all("2026-11-16T18:05:00Z = 23:35:00 IST", "2026-11-16T18:50:00Z = 2026-11-17T00:20:00 IST")
     rep_all("Row 11 writes the defaults, not the cut case; you apply the cut case by hand.",
             "Row 11 writes the defaults, not the cut case; you apply the cut case by hand. The card's Time cell on run sheet line 41 (row 96): Old cell text: 30 s EST. New cell text: 40 s EST (the defaults); 35 s EST when scene 3 and card line 1 are cut (card lines 2 to 4 = 79 words, budget 35 s); the other cut cases: Table B.", 1)
+    # class: a name of this run's own evidence file carries this run's name (c6t names were left in c6u text)
+    for a_, b_ in (("evidence-c6t/verify-c6t-output.txt", "evidence-c6u/verify-c6u-output.txt"), ("evidence-c6t/verify-c6t.py", "evidence-c6u/verify-c6u.py"),
+                   ("evidence-c6t/neg_controls_c6t.py", "evidence-c6u/neg_controls_c6u.py"), ("evidence-c6t/static-checks-output.txt", "evidence-c6u/static-checks-output.txt"),
+                   ("evidence-c6t/neg-output.txt", "evidence-c6u/neg-output.txt"), ("c6t-APPLIED-ROWS.md", "c6u-APPLIED-ROWS.md"), ("the line-by-line mapping is in c6t-CHANGES.md", "the line-by-line mapping is in c6u-CHANGES.md")):
+        rep_all(a_, b_)
+    rep_all("(command and output: evidence-c6t/contact-grep-output.txt, copied from the c6k run)", "(command and output: evidence-c6u/contact-grep-output.txt, run again in c6u on the four files of the scratchpad copy)", 1)
+    rep_all("evidence-c6t/contact-grep-output.txt", "evidence-c6u/contact-grep-output.txt")
+    i = find("| Evidence 1 to 3 (stale time;")
+    L[i] = L[i].replace("| evidence-c6t/ |", "| evidence-c6u/ (verify_c6u_part2.py, neg_new_c6u.py) |")
+    L[i + 1:i + 1] = [
+        "| Late independent evidence on c6t, item 1 (14 of 40 changed copies missed: row lists, card words and seconds, option (b) words, budget, 45 s, 30 s, cites LRN14:149 and ORD:150, the count of kept runs, 13 minutes, 2 relayed runs) | every copy of a repeated fact is found by pattern and compared with ONE source: card words, seconds and budget recomputed from the four quoted lines; option (b) words recomputed from its quoted lines; the lease seconds read from ORDERS.md line 151; the recovery interval read from mf-recovery.json; the kept-run count from the four test counts; the 13 minutes and the 2 relayed runs from claims-A.md; the release note cites by line number set and the ORDERS cites by the content of the line; row lists by a near-copy rule; each change was tried on the first copy only and on all copies | evidence-c6u/verify_c6u_part2.py, evidence-c6u/neg_new_c6u.py |",
+        "| Late independent evidence on c6t, item 2 (run_all.sh needs the whole tree, the banned-names test file and the tree variable) | run_all.sh stops with one line per missing input; the variable is C6U_TREE (the folder 'handover' of the copied demo tree), optional C6U_STEPS; no machine path is written in any script | evidence-c6u/run_all.sh |",
+        "| Late independent evidence on c6t, item 3 (v32 and v16 exist) | the check names the newest owner sheet and release note version it found and stops loudly if the rendered files are missing; this report was checked against owner sheet v%d and release note v%d | evidence-c6u/static-checks.sh, section 0 |" % (NEWV, RNV),
+        "| Late independent evidence on c6t, item 4 (the verifier exits 1 on REPORT-c6r.md and REPORT-c6s.md) | NOT FIXED ON PURPOSE: the verifier is written for this report; it also exits 1 on REPORT-c6t.md; this report does not claim a pass anywhere else | section 0, c6u-CHANGES.md |",
+        "| Late independent evidence on c6t, item 5 (real-looking gmail.com address) | c6u searched c6-skip-audit: only masked fragments in the c6t copies of old owner sheets (not files of c6u); c6u's own files hold no such address | c6u-CHANGES.md |",
+    ]
     return L
 
 

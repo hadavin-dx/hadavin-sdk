@@ -1,2 +1,14 @@
-m01-end-time-all occ=29 CAUGHT 12 | FAIL E-12 lacks 18:29 UTC = 23:59 IST | 0 s
-m02-end-time-last occ=29 CAUGHT 1 | FAILURES 0 | 0 s
+m01-end-time-all occ=29 CAUGHT 11 | FAIL E-12 lacks 18:29 UTC = 23:59 IST | 0 s
+m02-end-time-last occ=29 MISSED 0 |  | 0 s
+m03-lastrevoke-all occ=61 CAUGHT 21 | FAIL E-48 deadline | 0 s
+m04-lastrevoke-mid occ=61 MISSED 0 |  | 0 s
+m05-end-wrongpair occ=29 CAUGHT 2 | FAIL r13 time arithmetic: 18:29 UTC = 23:29 IST | 0 s
+m06-REVERSE-keyrevoked-never occ=1 MISSED 0 |  | 0 s
+m07-keyrevoked-confirms-last occ=1 MISSED 0 |  | 0 s
+m08-30min-all-to-10 occ=4 CAUGHT 6 | FAIL r13 E-48 lacks at least 30 minutes remain | 0 s
+m09-20min-to-5 occ=1 MISSED 0 |  | 0 s
+m10-delete-only-exact-1 occ=2 MISSED 0 |  | 0 s
+m11-delete-only-exact-2 occ=2 MISSED 0 |  | 0 s
+m12-same-exact-address occ=1 MISSED 0 |  | 0 s
+m13-weekday-monday-all occ=34 CAUGHT 75 | FAIL E-58 times | 0 s
+m14-weekday-wed-mid occ=8 CAUGHT 2 | FAIL r14 wrong weekday: Thu 18 Nov 2026 | 0 s

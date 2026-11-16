@@ -53,6 +53,6 @@ for name,kind,old,new in MUT:
     env=dict(os.environ,EDITS_PATH=mp,NO_NEG='1')
     t=time.time()
     out=subprocess.run([sys.executable,'-I',M+'/verify17.py'],env=env,capture_output=True,text=True,cwd=M).stdout
-    fails=[l for l in out.split('\n') if l.startswith('FAIL')]
+    fails=[l for l in out.split('\n') if l.startswith('FAIL ')]
     fl=[l for l in out.split('\n') if l.startswith('FAILURES')]
     print(name,'occ=%d'%c,'CAUGHT' if fails else 'MISSED',len(fails),'|',(fails[0][:110] if fails else ''),'|',int(time.time()-t),'s',flush=True)

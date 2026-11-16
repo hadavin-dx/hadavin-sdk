@@ -509,3 +509,9 @@ for _m in re.finditer(r"\b\d+(?:, \d+)+(?: and \d+)?\b", raw):
     _runs_.append(_nums)
 _near = [(g, n_) for g, v in _grp.items() if len(v) >= 2 for n_ in _runs_ if len(n_) == len(v) and n_[0] == v[0] and n_ != v and len(set(n_) & set(v)) >= max(1, len(v) - 1)]
 check("c6u TIE row lists: no written list of row numbers is a near copy (same length, same first row, other rows) of the rows that wait for a check %s, wait for the owner, belong to L-ONEDB %s or to C-8 %s" % (_grp["rows that wait for a check"], _grp["rows of L-ONEDB"], _grp["rows of check C-8"]), not _near and all(sum(1 for n_ in _runs_ if n_ == v) >= 1 for v in _grp.values() if len(v) >= 2), _near[:4])
+
+# c6u: names of this run's own files (class: a name carried over from the earlier run). No 'evidence-c6t/' and no 'c6t-APPLIED' in this report, and every evidence file it names exists
+check("c6u names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROWS.md' (this run's files carry c6u)", "evidence-c6t/" not in raw and "c6t-APPLIED" not in raw, (raw.count("evidence-c6t/"), raw.count("c6t-APPLIED")))
+_ev = sorted(set(re.findall(r"evidence-c6u/([A-Za-z0-9_.-]+)", raw)))
+_evmiss = [f for f in _ev if f not in ("neg-output.txt", "verify-c6u-output.txt") and not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), f))]
+check("c6u names: every evidence-c6u file the report names exists in this folder (neg-output.txt is written after this check): %s" % _ev, not _evmiss and len(_ev) >= 4, _evmiss)
