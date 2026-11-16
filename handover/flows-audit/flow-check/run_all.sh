@@ -87,6 +87,9 @@ grep -q -F "CREDENTIAL IDS STILL PLACEHOLDERS" "$RAW/pristine.txt" && { grep -q 
 grep -q -F "STEPS THAT READ ENVIRONMENT VARIABLES" "$RAW/pristine.txt" && { grep -q -F "STEPS THAT READ ENVIRONMENT VARIABLES" "$RAW/take-check.txt" || TCMISS="$TCMISS [STEPS THAT READ ENVIRONMENT VARIABLES]"; }
 for f in mf-form.json mf-hook.json; do grep -q -F "$f: key check" "$RAW/take-check.txt" || TCMISS="$TCMISS [key check line for $f]"; done
 grep -q -F "SQL COLUMNS NOT CHECKED" "$RAW/take-check.txt" && TCMISS="$TCMISS [columns not checked]"
+grep -q -F "deleted at clean-up" "$RAW/take-check.txt" && TCMISS="$TCMISS [the take output promises 'deleted at clean-up' (the take never deletes anything)]"
+grep -q -E "^  combined: [0-9a-f]{64}$" "$RAW/take-check.txt" || TCMISS="$TCMISS [the sha256 of the four flow files is not printed in the top block]"
+grep -q -E "^FINAL: .*Flow files sha256 \(four files, combined\): [0-9a-f]{64}\." "$RAW/take-check.txt" || TCMISS="$TCMISS [the sha256 of the four flow files is not printed in the FINAL line]"
 grep -q -F "!!!" "$RAW/take-check.txt" && TCMISS="$TCMISS [a !!! line: the take script found a table or column problem]"
 # take_check.sh failure exits (each must be 4 with its own loud line): table file missing, old table without the alert columns, no query text to read
 mkdir -p "$W/tc" && cp -r -- "$D/n8n-flows-real-v5" "$W/tc/noquery" || TCMISS="$TCMISS [could not make the no-query test folder]"
@@ -101,7 +104,13 @@ PYEOF
 tcfail() { # name expected-line env-assignments...
   nm=$1; want=$2; shift 2
   env TAKE_CHECK_TEST=1 "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?   # TAKE_CHECK_TEST=1: the documented test flag that allows environment overrides (round 10, M1)
-  [ "$x" = 4 ] && grep -q -F -- "$want" "$RAW/take-check-$nm.txt" && grep -q -F "FINAL: take_check exit status 4." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit 4, the FINAL line with 4 and '$want', got exit $x]"
+  # round 10b: say which of the three conditions failed (an earlier evidence run reported only "got exit 4" and the cause could not be told from the message)
+  if [ "$x" != 4 ]; then TCMISS="$TCMISS [take_check $nm: want exit 4, got exit $x]"
+  elif [ ! -s "$RAW/take-check-$nm.txt" ]; then TCMISS="$TCMISS [take_check $nm: exit 4 but the output file $RAW/take-check-$nm.txt is missing or empty (deleted or overwritten by another run?)]"
+  else
+    grep -q -F -- "$want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: exit 4 but the line '$want' is not in the output]"
+    grep -q -F "FINAL: take_check exit status 4." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: exit 4 but the FINAL line does not say 4]"
+  fi
 }
 # Q18: the take on the patched copy with ONE run-saving fault planted: each must be exit 4 with its own loud line (the checker must not hide it)
 for nm in form-off sub-off rec-saves; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
