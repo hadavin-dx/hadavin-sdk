@@ -130,3 +130,49 @@ tracked raw folder /home/user/hadavin-sdk/handover/flows-audit/flow-check/raw wa
 ---diff stat
 ```
 old mirror files: check_flows.py expected-counts.pin run_all.sh selftest.py take-warns.pin take_check.sh test_run_all_raw.sh test_run_all_stop.sh test_take_check.sh 
+
+## 6a-OLD-test_run_all_stop
+command: timeout 900 bash test_run_all_stop.sh
+start UTC: 19:27:14  end UTC: 19:35:04  rc=1
+```
+ok   A-sigterm: no process of the run is left (checkers, self-test, take script, nested runs)
+FAIL A-sigterm: the run says it was interrupted
+ok   A-sigterm: the raw output of the interrupted run is kept and named (/tmp/trs.ExUugC/tmp-A-sigterm/fc8raw.Z6DNID)
+ok   A-sigterm: the work folder the run made itself is removed from TMPDIR (found: fc8raw.5iNWda fc8raw.9ig2V6 fc8raw.AorXrB fc8raw.DvOnXq fc8raw.Z6DNID )
+ok   B-sigint: the self-test of the run is running (waited up to 150 s)
+FAIL B-sigint: the run ended within 40 s of SIGINT
+FAIL B-sigint: exit status 130 (got 1)
+ok   B-sigint: no process of the run is left (checkers, self-test, take script, nested runs)
+FAIL B-sigint: the run says it was interrupted
+ok   B-sigint: the raw output of the interrupted run is kept and named (/tmp/trs.ExUugC/tmp-B-sigint/fc8raw.Yb7GII)
+ok   B-sigint: a work folder given on the command line is NOT removed
+ok   C-sighup: the self-test of the run is running (waited up to 150 s)
+ok   C-sighup: the run ended within 40 s of SIGHUP
+ok   C-sighup: exit status 129 (got 129)
+FAIL C-sighup: no process of the run is left (checkers, self-test, take script, nested runs)
+FAIL C-sighup: the run says it was interrupted
+ok   C-sighup: the raw output of the interrupted run is kept and named (/tmp/trs.ExUugC/tmp-C-sighup/fc8raw.ciHwAU)
+ok   C-sighup: a work folder given on the command line is NOT removed
+ok   D-limit: the stand-in self-test (sleeps 10 minutes) is running
+FAIL D-limit: it is stopped by the 3-second limit (within 25 s) while the run goes on
+ok   D-limit: the run itself is still going (the limit stopped the step, not the run)
+FAIL D-limit: no process of the run is left after SIGTERM
+test_run_all_stop: 16 of 25 cases as expected, 9 not as expected
+last lines of the outputs:
+[/tmp/trs.ExUugC/out-A-sigterm.txt]
+applied F-002-take-key-check-and-claim-error-path
+applied F-008-save-runs-for-the-take
+raw output of this run is kept in: /tmp/trs.ExUugC/tmp-A-sigterm/fc8raw.Z6DNID
+[/tmp/trs.ExUugC/out-B-sigint.txt]
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
+tracked raw folder /tmp/trs.ExUugC/raw-B-sigint was NOT changed (pass --refresh to publish this run's raw files)
+raw output of this run is kept in: /tmp/trs.ExUugC/tmp-B-sigint/fc8raw.Yb7GII
+[/tmp/trs.ExUugC/out-C-sighup.txt]
+applied F-002-take-key-check-and-claim-error-path
+applied F-008-save-runs-for-the-take
+raw output of this run is kept in: /tmp/trs.ExUugC/tmp-C-sighup/fc8raw.ciHwAU
+[/tmp/trs.ExUugC/out-D-limit.txt]
+applied F-002-take-key-check-and-claim-error-path
+applied F-008-save-runs-for-the-take
+raw output of this run is kept in: /tmp/trs.ExUugC/tmp-D-limit/fc8raw.2SJqM1
+```
