@@ -1,0 +1,5 @@
+v01-no-pre-stage dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1146 failed=21 (the made-up input and output files w | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v02-pwcmds-list-unused dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1137 failed=30 (the made-up input and output files w | first: FAIL (secret still visible): mysql (first 6 characters)
+v03-nonascii-noop dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1161 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): zero-width space inside a name (assignment) (first 6 characters)
+v04-ml-start-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1153 failed=14 (the made-up input and output files w | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v05-length-guard-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1166 failed=1 (the made-up input and output files we | first: FAIL (evidence was hidden): a 30000-character line carries a cut notice with its true length

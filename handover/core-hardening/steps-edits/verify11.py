@@ -56,7 +56,7 @@ for r in rows:
         nold += 1
         if o != o.strip() or o != o.strip(' '): F(f"{r['id']} old has edge space")
         c = full.count(o)
-        where = [n + 1 for n, l in enumerate(f) if o in l]
+        where = [full[:full.index(o)].count('\n') + 1] if o in full else []
         stated = [r['line']] + ([r['line2']] if r['line2'] else [])
         if c != 1: F(f"{r['id']} old count {c}")
         elif where[0] not in stated: F(f"{r['id']} old on line {where} stated {stated}")
@@ -440,7 +440,7 @@ if '`ND7a-late: <answer>; <who>; <date and time in UTC and IST>`' not in txt: F(
 for m_ in re.finditer(r'(?i)(?<!flow )rehearsal', txt):
     F('rehearsal alone: ' + txt[max(0, m_.start()-30):m_.end()+10].replace('\n', ' '))
 # c11 Q19.5 and m4
-if 'the key that the take runs on' not in rowtext('E-48'): F('E-48 Q19.5 wording')
+if 'except the key that the take runs on' not in rowtext('E-48'): F('E-48 Q19.5 wording')
 for rid_ in ('E-12', 'E-48'):
     if 'in writing what happens next' not in rowtext(rid_): F(rid_ + ' lacks what happens next')
 # c12 E-31, line 14 terms, E-14, E-22 text
@@ -500,11 +500,11 @@ for l_ in pairs['E-13']['newlabels']:
 t57 = rowtext('E-57'); t58 = rowtext('E-58')
 for need in ('18:29 UTC = 23:59 IST', '18:19 UTC = 23:49 IST', 'step 22 item 3'):
     if need not in t57: F('E-57 lacks ' + need)
-if '23:49 IST' not in t58 or 'Mon 23 Nov 2026' not in t58: F('E-58 times')
+if '23:49 IST' not in t58 or '18:29 UTC = 23:59 IST' not in t58 or 'Mon 23 Nov 2026' not in t58: F('E-58 times')
 if 'plan-4' in t57 or 'Claude default' in t57: F('E-57 internal words')
 # (8) bare "address" and old words in owner NEW texts
 for rid_, t_ in own:
-    for m_ in re.finditer(r'(?<!web )(?<!mail )(?<!postal )\baddress(?!es)', t_):
+    for m_ in re.finditer(r'(?<!web )(?<!mail )(?<!postal )(?<!["`])\baddress(?!es)', t_):
         F(f'{rid_} bare address: ' + t_[max(0, m_.start()-30):m_.end()+10].replace('\n', ' '))
     for bad in ('Take a screenshot', 'the window\'s', 'closing the window', 'mf-hook', 'row preview', 'original deadline', 'route 1 or 2', 'if nothing were done'):
         if bad in t_: F(f'{rid_} old phrase {bad}')
@@ -535,7 +535,7 @@ def neg(name, old, new, expect, count=1):
     if not ok: F('negative control not caught: ' + name)
 if not os.environ.get('NO_NEG'):
     print('---- negative controls')
-    neg('r11hold', 'NEW [HOLD G3: DO NOT APPLY] (2)', 'NEW (2)', 'HOLD blocks != 13')
+    neg('r11hold', 'NEW [HOLD G3: DO NOT APPLY] (2) (exact', 'NEW (2) (exact', 'HOLD blocks != 13')
     neg('r11e53', 'start the model stage with a real key file or with the web address of the real AI model', 'start the model stage with a real key file unless the owner\'s written yes with a number for one paid call is quoted', 'E-53 unless clause')
     neg('r11e09', 'n8n holds three saved credentials for the take', 'n8n holds four saved credentials for the take', 'E-09 credentials')
     neg('r11addr', 'the web address the assistant gives (it is NOT', 'the address the assistant gives (it is NOT', 'bare address')
@@ -544,12 +544,12 @@ if not os.environ.get('NO_NEG'):
     neg('r11e58', 'Mon 23 Nov 2026, by 18:29 UTC = 23:59 IST', 'Mon 23', 'E-58 times')
     neg('nd14', '14. **Does the lease sentence of Q22(c)', '14. **Something else', 'ND14 missing')
     neg('e17lease', '**a lead sent twice with the same id is processed once; a crash', '**a lead sent twice with the same id (see the lease) is processed once; a crash', 'E-17 lease sentence added')
-        neg('e22', 'the case counts as "crash check untested", the same words', 'the case counts as untested, the same words', 'crash check untested missing in E-22')
+    neg('e22', 'the case counts as "crash check untested", the same words', 'the case counts as untested, the same words', 'crash check untested missing in E-22')
     neg('e43', "except the model stage's journal file `stage.journal`", 'and nothing else', 'E-43 lacks stage.journal', 2)
     neg('e49', "AFTER the assistant's message that states (a) to (d)", 'after something', 'E-49 consent not tied')
     neg('e49day', 'written like this: `Wed 18 Nov 2026`', 'written as a day', 'E-49 lacks day format example')
     neg('e53', 'Section 4b overrides line 27', 'Section 4b follows line 27', 'E-53 lacks override')
-    neg('e51', 'the end of the spending window), and that statement', 'the window end), and that statement', 'E-51 wording')
+    neg('e51', 'the end of the spending window); that statement', 'the window end); that statement', 'E-51 wording')
     neg('e52', '**A mail address**', '**A postal address**', 'E-52 new word not once: A mail address')
     neg('e04', 'otherwise the made-up names to look for.\n~~~~', 'otherwise the made-up names to look for\n~~~~', 'E-04 no final full stop')
     neg('e07', 'nobody on this branch has read that evidence. The assistant checks', 'nobody has read that evidence. The assistant checks', 'E-07 lacks')
@@ -557,7 +557,7 @@ if not os.environ.get('NO_NEG'):
     neg('record', 'The line has the form shown after "Record:"', 'The line is `ND<number>: <answer>, <who>`; it has the form shown after Record', 'old record format')
     neg('nd8date', 'Record: `ND8: A|B`.', 'Record: `ND8: A|B <date and time in UTC and IST>`.', 'ND record carries a date')
     neg('rehearsal', 'The flow rehearsal comes after', 'The rehearsal comes after', 'rehearsal alone')
-    neg('q195', 'the key that the take runs on (the key you saved for the take)', 'the key', 'E-48 Q19.5 wording')
+    neg('q195', 'except the key that the take runs on (the key you saved for the take)', 'except the key', 'E-48 Q19.5 wording')
     neg('m4', 'the assistant tells you in writing what happens next (step 22', 'the assistant tells you (step 22', 'E-12 lacks what happens next')
     neg('e31', 'nothing here says that it stops safely (UNVERIFIED)', 'it stops safely (UNVERIFIED)', 'E-31 unproven claim')
     neg('line14', 'search path = the list of schemas', 'search path is a list of schemas', 'line 14 lacks')

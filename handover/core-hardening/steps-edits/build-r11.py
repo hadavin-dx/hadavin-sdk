@@ -106,7 +106,7 @@ sub('| E-56 | AGENT-SCOPE-DO-AND-DONT.md | 20 | Apply now |', '| E-56 | AGENT-SC
 m = re.search(r'\| E-56 \| AGENT-SCOPE-DO-AND-DONT\.md \| 20 \| Apply now \|[^\n]*\n', T)
 if not m: errs.append('index E-56 line not found')
 else:
-    T = T[:m.end()] + '| E-57 | OWNER-STEPS-realrun-v3.md | 116 | Apply now | - | E-48, E-55 | CONTRADICTION |\n| E-58 | OWNER-STEPS-realrun-v3.md | 147 | Apply now | - | E-48, E-55, E-57 | CONTRADICTION |\n' + T[m.end():]
+    T = T[:m.end()] + '| E-57 | OWNER-STEPS-realrun-v3.md | 116 (and 117) | Apply now | - | E-48, E-55 | CONTRADICTION |\n| E-58 | OWNER-STEPS-realrun-v3.md | 147 | Apply now | - | E-48, E-55, E-57 | CONTRADICTION |\n' + T[m.end():]
 sub('| E-37 | OWNER-STEPS-realrun-v3.md | 27 | Apply now | - | E-12; G1 (one bullet); ND7 | STALE |', '| E-37 | OWNER-STEPS-realrun-v3.md | 27 | Apply now | - | E-09, E-12; G1 (one bullet); ND7 | STALE |')
 
 # ============ E-03 ============
@@ -139,6 +139,13 @@ why_add('E-07', 'Round 11 (naive M6, minor): "address" becomes "web address"; "W
 rsub('E-08', '8. Whether the Windows browser can open the address that the assistant gives for n8n. n8n runs inside WSL, the Linux part of the laptop (WSL).',
      '8. Whether the Windows browser can open the web address that the assistant gives for n8n. n8n runs inside the Linux part of the laptop (called WSL).')
 why_add('E-08', 'Round 11 (naive M6, minor): "web address"; WSL is no longer repeated.')
+
+
+rsub('E-06', "the take's n8n has an address of its own, the same kind of web address", "the take's n8n has a web address of its own, the same kind of web address")
+rsub('E-11', "is a different address and is not", "is a different web address and is not")
+rsub('E-25', "asks the internet for the address of a website by its name", "asks the internet for the web address of a website by its name")
+why_add('E-25', 'Round 11 (naive M6): "address" becomes "web address" (E-52).')
+why_add('E-11', 'Round 11 (naive M6): "a different address" becomes "a different web address" (E-52).')
 
 # ============ E-09 ============
 E09 = '''host, database and user as the assistant names them; password = the password of THAT database user. You make the password file first, in the sub-steps a to e below, and only when the assistant sends you a message that starts "Create the password file". Do not start sub-step a before that message. This part comes BEFORE the assistant starts the database server and n8n, so the assistant asks for it first, although the rest of step 8 waits until n8n is running. (A database user is an account inside the database program Postgres. Its password is not an app password and not a secret key.) The assistant starts the database server itself; you do not start anything. Its message gives you three names that you use below: `<folder>` (a folder on the Linux disk), `<password file name>` and `<database user name>`. Wherever you see a name in angle brackets, you type the name from that message and not the brackets. The assistant never tells you the password.

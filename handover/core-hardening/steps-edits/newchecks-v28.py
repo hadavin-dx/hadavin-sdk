@@ -230,3 +230,31 @@ if 'checked by you with `ls ~/.hadavin-take-tags`' not in NOTE: fail('C156', 'N:
 for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'\bpay in (only )?(a little(?! more)|less)\b', t.replace('no request to pay in less', '').replace('propose no second account and no smaller payment', '')) : fail('C157', nm + ': suggests the owner pays in less (Q24)')
 if 'Added in v12' not in NOTE or 'look key' not in NOTE.lower(): fail('C158', 'N: v12 section or look key missing')
+# ---- Part 4 (v28): one check per class change of the v26/v27 root-cause reading (RC1 state machine, RC2 pre-flight facts, RC3 single source) and per evidence-runner fix
+def outside_numbers(t):
+    i = t.find('## 3. The numbers message'); j = t.find('## 5. Before the yes')
+    return t[:i] + t[j:]
+for nm, t in SH:                                                                                                         # C160 N3, m11: lead-set figures are read from the message; no literal copy outside the sample
+    o = outside_numbers(t)
+    for pat in (r'\b20 seconds\b', r'\bWait 20\b', r'within 5 minutes', r'\b16:00 UTC\b', r'\b21:30 IST\b'):
+        m = re.search(pat, o)
+        if m: fail('C160', '%s holds the literal %r outside the numbers page' % (nm, m[0]))
+need('C161', 'whatever way the run ended', (('B', B),))                                                                  # RC1: one older-key point for every exit
+need('C161', 'every way the run ends passes here before 8.1')                                                            # RC1 both sheets
+need('C162', 'FREEZE is not a cancel: a live key is cancelled only by a danger sign')                                    # RC1: FREEZE never cancels
+need('C162', '**Not danger signs (no card, no FREEZE):** a lead message "wait"')                                         # RC1: a wait is never a trigger
+need('C163', '"confirmed" (5.9)'); need('C163', 'Only seven words in a lead message')                                    # N2: the new lead word and the count
+need('C164', 'Write its state word before the cancel.'); need('C164', 'must differ from the look key\'s word before the cancel and from every live word')   # N2
+need('C165', "this 7-day rule belongs to the planned cancel only", (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once (the 7-day rule below never applies to that)', (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once.', (('B', B),))   # N4
+need('C166', 'except the key\'s own one-time display at 5.9 and 6.3 and the paste at 6.4')                              # N1: W7 exemption
+need('C167', 'the test program made no delete call')                                                                      # evidence-runner fix: the no-delete line in both sheets
+if 'the test program never deletes' not in NOTE: fail('C167', 'N: the sentence "the test program never deletes" is missing')   # evidence-runner fix: content check of the note
+for nm, t in SH:                                                                                                         # RC2: unknown means no run is stated on the numbers page
+    if '"unknown" in any slot' not in t: fail('C168', nm + ': the numbers checks do not say that "unknown" in any slot is no run')
+if 'Open 96' not in NOTE or '\n| 96 |' not in OPEN or '\n| 97 |' not in OPEN: fail('C169', 'note or open list lacks the rows for the aborted-run message and the A/B decision')   # N13 and RC3
+for nm in 'AB':                                                                                                           # RC3: the pages are named in both sheets as written on disk
+    _s = open(D + 'OWNER-SHEET-v28-%s.md' % nm, encoding='utf-8').read()
+    for pg in ('OWNER-CARD-v28-', 'OWNER-NUMBERS-v28-'):
+        if pg + nm + '.md' not in _s: fail('C170', '%s does not name %s%s.md' % (nm, pg, nm))
+    if 'OWNER-FILM-v28.md' not in _s: fail('C170', 'sheet %s does not name the film page' % nm)
+

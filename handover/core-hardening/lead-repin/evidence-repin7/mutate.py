@@ -4,6 +4,10 @@ import subprocess, sys, os, re, signal, tempfile, shutil
 script, outdir, shell = sys.argv[1], sys.argv[2], sys.argv[3]
 ids = sys.argv[4:]
 src = open(script, encoding="utf-8").read()
+def L(prefix):
+    for l in src.split("\n"):
+        if l.startswith(prefix): return l + "\n"
+    return "@@NOT-FOUND@@"
 D = {
  "v01-no-pre-stage": ("awk -v MODE=pre -v MAXL=20000 -v CF=\"$LENCUT\" -f \"$MASKAWK\" | sed -E -f \"$MASKSED\"", "sed -E -f \"$MASKSED\""),
  "v02-pwcmds-list-unused": ("(${PWCMDS})", "(zzzqx)", "all"),
@@ -11,18 +15,31 @@ D = {
  "v04-ml-start-off": ("function ml_start(b,   m, nm, rest, sec, t, tk) {\n", "function ml_start(b,   m, nm, rest, sec, t, tk) {\n  return\n"),
  "v05-length-guard-off": ("-v MAXL=20000 -v CF=", "-v MAXL=900000000 -v CF="),
  "v06-url-userinfo-off": ("s#(//[^:/@[:space:]]*:)[^[:space:]]*@#\\1<masked>@#g\n", "\n"),
- "v07-canary-count-off-by-one": ("CANARY_PLANNED=1167", "CANARY_PLANNED=1166"),
- "v08-selftest-count-off-by-one": ("SELFTEST_PLANNED=1191", "SELFTEST_PLANNED=1190"),
+ "v07-canary-count-off-by-one": ("CANARY_PLANNED=1360", "CANARY_PLANNED=1359"),
+ "v08-selftest-count-off-by-one": ("SELFTEST_PLANNED=1386", "SELFTEST_PLANNED=1385"),
  "v09-signal-kids-not-killed": ("kill_tree \"$MAINPID\" kids; ", ""),
- "v10-bearer-rule-off": ("s#(Bearer)[[:space:]]+[A-Za-z0-9._~+/=-]{6,}#\\1 <masked>#Ig\n", "\n"),
+ "v10-bearer-rule-off": (L("s#(Bearer)[[:space:]]+"), "\n"),
  "v11-jwt-rule-off": ("s/eyJ[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_.-]+/<masked>/g\n", "\n"),
  "v12-recount-always-ok": ("st_recount() {\n", "st_recount() {\n  return 0\n"),
- "v13-watchdog-off": ("  ( sleep \"$MAXSEC\"; : > \"$WORK/timeout.flag\"; kill -TERM \"$MAINPID\" 2>/dev/null ) &\n  WDPID=$!\n", "  WDPID=\n"),
+ "v13-watchdog-off": (L("  ( wd_i=0;") + "  WDPID=$!\n", "  WDPID=\n"),
  "v14-premain-not-background": ("  bg_wait make_list \"$WORK/named.$2.txt\"", "  make_list \"$WORK/named.$2.txt\""),
  "v15-dotted-camel-rule-reverted": ("return dotted_secret(tok)   # every piece a plain name: kept", "return 1"),
  "v16-ml-continue-off": ("  else if (ML_D > 0) { ml_scan(body); hid = 1 }\n", "\n"),
+ "v17-escaped-quote-string-rule-off": (L("s/(${BQ}(${IDQ})${BQ}[[:space:]]*:[[:space:]]*${BQ})"), "\n"),
+ "v18-unicode-escape-key-rule-off": (L('s/(["\'][^"\']*'), "\n"),
+ "v19-shape-rule-separators-off": ("|[;&|(]|\\\\\\$\\\\()[[:space:]]*([A-Za-z_]", ")[[:space:]]*([A-Za-z_]"),
+ "v20-glued-names-off": ("|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))'\n  W=", ")'\n  W="),
+ "v21-git-safety-settings-off": ("-c log.showSignature=false -c gpg.program=/bin/false -c core.hooksPath=/dev/null ", ""),
+ "v22-relative-tmpdir-allowed": (L("case ${TMPDIR:-/tmp} in /*)"), "\n"),
+ "v23-xml-text-rule-off": (L("s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<"), "\n"),
+ "v24-userinfo-no-scheme-rule-off": (L("s#(^|[[:space:]]\"'=(])([A-Za-z0-9._-]+:)"), "\n"),
+ "v25-identified-by-rule-off": (L("s/(IDENTIFIED[[:space:]]+"), "\n"),
+ "v26-colon-equals-rule-off": (L("s/((${ID})[[:space:]]*:=[[:space:]]*)"), "\n"),
+ "v27-requirepass-line-rule-off": (L("s/(^${PFX0}[[:space:]]*(requirepass|masterauth"), "\n"),
+ "v28-second-literal-rule-off": (L("s/(<masked>[[:space:]]*(\\|\\||"), "\n"),
+ "v29-escaped-slash-userinfo-off": (L("s#(("), "\n"),
 }
-META = {"v08-selftest-count-off-by-one", "v09-signal-kids-not-killed", "v13-watchdog-off", "v14-premain-not-background", "v12-recount-always-ok"}
+META = {"v21-git-safety-settings-off", "v22-relative-tmpdir-allowed", "v08-selftest-count-off-by-one", "v09-signal-kids-not-killed", "v13-watchdog-off", "v14-premain-not-background", "v12-recount-always-ok"}
 for i in ids:
     old, new = D[i][0], D[i][1]
     if src.count(old) < 1:

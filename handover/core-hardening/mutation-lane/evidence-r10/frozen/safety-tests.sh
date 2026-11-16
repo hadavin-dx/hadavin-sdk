@@ -1,8 +1,8 @@
 #!/bin/bash
-# Safety tests T1-T97 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T98 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
 # Round 7: run.py now runs the baseline BY DEFAULT; the helper base()/mut() adds --no-control (the old behaviour) unless NCF is set: `NCF= mut ...` runs with the real default. Against the r6 copy of run.py (no --no-control option) export NCF= (empty).
-# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T97 (rounds 4 to 10) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
+# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T98 (rounds 4 to 10) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
 # Round 8: ONLY="T76 T87" runs just those blocks. The shorter script is cut out of THIS file's own text at run time (the
 # header, the chosen blocks, the closing lines), so a block that runs is byte-for-byte the shipped block; there is no separate
 # copy to keep in step. A block that needs a helper defined inside another block must be listed together with it.
@@ -1177,9 +1177,9 @@ echo "== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mo
 if [ "$(id -u)" = 0 ] && [ -z "${NONROOT_CHILD:-}" ]; then
   NR=$(mktemp -d /tmp/r8nonroot.XXXXXX); chmod 755 "$NR"; cp -a "$VENV" "$NR/venv"; cp "$RUN" "$NR/run.py"; cp "$SELF_PATH" "$NR/safety-tests.sh"; mkdir "$NR/s"; chown -R nobody "$NR" 2>/dev/null
   if setpriv --reuid=65534 --regid=65534 --clear-groups true 2>/dev/null; then
-    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
+    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
     grep -E "^== |FAIL" "$S/t88child.out" | cut -c1-200 | head -60; tail -1 "$S/t88child.out"
-    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
+    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
   else
     echo "  (cannot switch to an unprivileged user here: the permission checks are UNVERIFIED)"; SKIPPED="$SKIPPED T88"
   fi
@@ -1681,5 +1681,73 @@ bad = ("also when a test made it read-only" in d) or ("ALREADY holds the origina
 print("BAD" if bad else "ok"); sys.exit(1 if bad else 0)
 PY
 chk "T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
+echo "== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)"
+# 1) a path over 4096 bytes (or a name over 255) must end as a refusal, exit 2, never Python's own exit 1 or a traceback
+LONG98=$(python3 -c "print('a'*5000)"); NAME98=$(python3 -c "print('b'*300)")
+fresh_root; BADN=0
+for what in root name sha file test; do
+  case $what in
+    root) python3 "$RUN" --root "/$LONG98" --restore >"$S/t98a.$what" 2>&1; rc=$? ;;
+    name) python3 "$RUN" --root "$T/$NAME98" --restore >"$S/t98a.$what" 2>&1; rc=$? ;;
+    sha) python3 "$RUN" --root "$T/root" --restore --sha "$LONG98" --repo "$T/repo" >"$S/t98a.$what" 2>&1; rc=$? ;;
+    file) mut --file "$LONG98" -- tests/test_fast.py >"$S/t98a.$what" 2>&1; rc=$? ;;
+    test) mut -- "tests/$LONG98" >"$S/t98a.$what" 2>&1; rc=$? ;;
+  esac
+  cut -c1-160 "$S/t98a.$what" | head -3
+  if [ $rc -ne 2 ] || grep -q Traceback "$S/t98a.$what"; then BADN=$((BADN+1)); echo "  BAD $what: exit $rc"; fi
+done
+chk "T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: $BADN of 5 wrong (r9: exit 1 or a traceback)" "[ $BADN -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ]"
+# 2) a signal while the module is still loading (the start-up window): install handlers first, so it ends as 128+N and no traceback
+python3 - "$RUN" <<'PY' >"$S/t98b.out" 2>&1; rc=$?
+import os, runpy, signal, sys
+run = sys.argv[1]
+real = os.sysconf
+def hook(name):
+    os.kill(os.getpid(), signal.SIGINT)
+    return real(name)
+os.sysconf = hook
+sys.argv = ["run.py", "--help"]
+runpy.run_path(run, run_name="__main__")
+print("not stopped")
+PY
+cut -c1-200 "$S/t98b.out" | head -3
+chk "T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got $rc; r9: KeyboardInterrupt traceback, exit 1)" "[ $rc -eq 130 ] && ! grep -q Traceback '$S/t98b.out' && ! grep -q 'not stopped' '$S/t98b.out'"
+# 3) the S603 lint: no suppression comment, and ruff finds nothing in the two places that start a program
+python3 - "$RUN" <<'PY' >"$S/t98c.out" 2>&1; rc=$?
+import re, sys
+t = open(sys.argv[1]).read()
+bad = [m for m in re.findall(r"noqa[^\n]*", t)]
+raw = len(re.findall(r"subprocess\.Popen\(", t))
+print("noqa:", bad, "direct Popen calls:", raw)
+sys.exit(1 if bad or raw else 0)
+PY
+cat "$S/t98c.out"
+chk "T98c no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
+# 4) limit (d): plain --restore trusts a marker plus a matching backup (it cannot know better); --sha does not
+kill_planted; forge97
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t98d1.out" 2>&1; rc1=$?; cut -c1-200 "$S/t98d1.out" | tail -2
+G1=$(grep -c 'return 99' "$T/root/src/mod.py"); L1=$(last)
+kill_planted; forge97
+python3 "$RUN" --root "$T/root" --restore >"$S/t98d2.out" 2>&1; rc2=$?; cut -c1-200 "$S/t98d2.out" | tail -2
+G2=$(grep -c 'return 99' "$T/root/src/mod.py")
+chk "T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got $rc1), nothing written (last '$L1' = return2), swapped text written $G1 times, marker kept; plain --restore trusts it (pinned limit): swapped text written $G2 time(s), exit $rc2" "[ $rc1 -eq 3 ] && [ $G1 -eq 0 ] && [ '$L1' = return2 ] && [ $G2 -eq 1 ] && [ $rc2 -eq 0 ]"
+kill_planted; setmarker97 mode=511
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t98e1.out" 2>&1; rc1=$?; cut -c1-200 "$S/t98e1.out" | tail -2
+L1=$(last)
+chk "T98e forged marker with mode 0777: --sha refuses it, exit 3 (got $rc1), nothing written (last '$L1' = return2)" "[ $rc1 -eq 3 ] && [ '$L1' = return2 ]"
+python3 "$RUN" --root "$T/root" --restore >"$S/t98e2.out" 2>&1; rc2=$?; cut -c1-200 "$S/t98e2.out" | tail -2
+M2=$(stat -c %a "$T/root/src/mod.py")
+chk "T98e2 plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode masked to 0777 at most (got exit $rc2, mode $M2)" "[ $rc2 -eq 0 ] && [ '$(last)' = return1 ]"
+python3 - "$RUN" <<'PY' >"$S/t98f.out" 2>&1; rc=$?
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+d = " ".join(r.__doc__.split())
+need = ["plain --restore", "forged", "--sha"]
+miss = [n for n in need if n not in d]
+bad = "(d)" not in d
+print("missing", miss, "no (d):", bad); sys.exit(1 if miss or bad else 0)
+PY
+cat "$S/t98f.out"
+chk "T98f the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"

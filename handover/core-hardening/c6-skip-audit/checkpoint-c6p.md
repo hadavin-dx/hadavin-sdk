@@ -1,0 +1,2 @@
+# checkpoint-c6p (started 2026-11-16T15:59:48Z by the machine clock)
+note 1 (16:03Z): read both c6o reviews and the naive review (lead message: apply-all-defaults gives one card; L-LEASE gets a recommendation and sentence texts; box short). Decisions: L-LEASE default 1 (Q22c in force), none reverses Q22c; card option (a) with lease sentence applied by the defaults; L-SCENES folded into L-LEASE; C-10c rerun over v19-v28 (newest v28, being edited). Next: build_c6p.py patching REPORT-c6o.md into REPORT-c6p.md, verify-c6p.py, neg controls.

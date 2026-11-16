@@ -138,6 +138,13 @@ state folder that is searched (ours, /tmp, /var/tmp, /dev/shm, TMP, TEMP), and a
 result file of this tool (a JSON list of objects with id and verdict; r10 m3). Helper programs (git, patch, the import probe) run
 in their own process group and the whole group is killed on a timeout (r10 m8); text taken from a state file is quoted and control
 characters are shown as \\xNN (r10 m9).
+Limit (d), exact: a plain `--restore` (no --sha) believes the marker and the backup in the state folder; a person or program
+that can write that folder AS THIS USER can write a forged marker plus a backup whose hash matches, and plain --restore would write that
+text into the file (a mode with the execute bits or writable by everybody is cut to at most 0777, never more). Only `--restore --sha
+COMMIT` closes it: the original then comes from git, a forged marker is refused or ignored, never trusted (T98d, T98e). Use --sha
+whenever the state folder may not be trusted. A path over 4096 bytes, or a name over 255 bytes, is refused with exit 2 (T98a). The
+signal handlers are installed right after the imports; a signal before that (Python's own start-up, about 20 to 50 ms) ends the
+process by that signal at a time when nothing has been written (T98b).
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
 scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. The modes (chmod) of the
 other files in the tree are not compared; the tree is compared by content. Paths inside --root
@@ -221,6 +228,42 @@ import tarfile
 import tempfile
 import time
 import traceback
+
+
+def _early_term(signum, frame):
+    """r10 (independent r9 run: a signal 0 to 0.05 s after the start killed run.py with the default action): from the first
+    lines of this file until main() installs the real handlers nothing has been written, no marker exists and no file is
+    planted, so a signal simply ends the run with 128+N. (A signal while Python itself starts and loads the standard modules
+    imported above, about 20 to 50 ms, still has the default action and ends the process by that signal, shell status 128+N,
+    or a KeyboardInterrupt for Ctrl-C: nothing exists yet that could be left behind.)"""
+    os._exit(128 + signum)
+
+
+def _install_early() -> None:
+    for signum in signal.valid_signals():
+        if signum in (
+            signal.SIGKILL,
+            signal.SIGSTOP,
+            signal.SIGCHLD,
+            signal.SIGCONT,
+            signal.SIGWINCH,
+            signal.SIGURG,
+            signal.SIGTSTP,
+            signal.SIGTTIN,
+            signal.SIGTTOU,
+            signal.SIGPIPE,
+            signal.SIGXFSZ,
+        ):
+            continue
+        try:
+            signal.signal(signum, _early_term)
+        except (OSError, ValueError):
+            pass
+
+
+if __name__ == "__main__":
+    _install_early()
+
 
 # skipped in the tree comparison: `.venv` ONLY directly under the root (the scratch environment); the two
 # cache folders at any depth. A `.venv` deeper in the tree is compared like any other folder.
@@ -321,6 +364,12 @@ def shown(x, limit: int = 200) -> str:
 
 
 _CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f]")
+
+
+class Child(subprocess.Popen):
+    """The ONE way this tool starts another program: a fixed argument list (never a shell string), the program found by `tool()`
+    or the scratch `.venv`, a clean environment, its own process group. A named subclass so that this single class is where the
+    start happens; the arguments are built by this tool, never taken as one string from the caller (see run_cmd and run_tests)."""
 
 
 class SafeOut:
@@ -826,7 +875,7 @@ def run_cmd(
     limit = HELPER_TIMEOUT if timeout is None else timeout
     # r10 m8: the helper gets its OWN process group; on a timeout (or a signal that unwinds the run) the WHOLE group is killed,
     # not only the leader (a wrapper script's children and the import probe's children used to stay alive)
-    proc = subprocess.Popen(
+    proc = Child(
         argv,
         stdin=subprocess.PIPE
         if input_bytes is not None
@@ -873,7 +922,9 @@ def text_of(cp: subprocess.CompletedProcess) -> str:
 def safe_rel(base: pathlib.Path, rel, what: str, must_exist: bool = True) -> pathlib.Path:
     """A relative path inside `base`: no absolute path, no `..`, no symbolic link on the way."""
     if not isinstance(rel, str) or not rel or "\0" in rel or "\\" in rel:
-        raise Refused(f"{what}: not a usable relative path: {rel!r}")
+        raise Refused(f"{what}: not a usable relative path: {rel!r}"[:300])
+    if too_long(rel):
+        raise Refused(f"{what}: not a usable relative path: {too_long(rel)}")
     pp = pathlib.PurePosixPath(rel)
     if pp.is_absolute() or ".." in pp.parts:
         raise Refused(f"{what}: must be relative to the root and contain no '..': {rel!r}")
@@ -1476,16 +1527,22 @@ def restore_from_marker(
                 f"forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:{shown(m['file'])} > the file"
             )
         ref_mode = stat.S_IMODE(os.stat(safe_rel(expected_ref, m["file"], "marker file")).st_mode)
-        if isinstance(m.get("mode"), int) and (m["mode"] & 0o111) != (ref_mode & 0o111):
+        mm = m.get("mode") if isinstance(m.get("mode"), int) else None
+        special = (
+            f"the mode in the marker ({oct(mm)}) has a special bit (setuid, setgid, sticky) or is writable by "
+            f"everybody: git has neither, so the marker may be forged; nothing written (r10 m2)"
+            if mm is not None
+            else ""
+        )
+        if mm is not None and mm & 0o7000:  # a setuid, setgid or sticky bit is named as such first
+            raise Refused(special)
+        if mm is not None and (mm & 0o111) != (ref_mode & 0o111):
             raise Refused(
-                f"the mode in the marker ({oct(m['mode'])}) has other execute bits than {shown(m['file'])} in the git archive given "
+                f"the mode in the marker ({oct(mm)}) has other execute bits than {shown(m['file'])} in the git archive given "
                 f"with --sha ({oct(ref_mode)}): the marker may be forged; nothing written"
             )
-        if isinstance(m.get("mode"), int) and m["mode"] & 0o7002:
-            raise Refused(
-                f"the mode in the marker ({oct(m['mode'])}) has a special bit (setuid, setgid, sticky) or is writable by "
-                f"everybody: git has neither, so the marker may be forged; nothing written (r10 m2)"
-            )
+        if mm is not None and mm & 0o002:
+            raise Refused(special)
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
         target = safe_rel(root, m["file"], "marker file", must_exist=False)
@@ -1883,7 +1940,7 @@ def run_tests(
     SIG.critical = True
     try:
         # one process group, so a timeout or a signal can stop all of it
-        proc = subprocess.Popen(
+        proc = Child(
             cmd,
             cwd=root,
             env=env,
@@ -2393,12 +2450,35 @@ def other_run_check(root: pathlib.Path, key: str) -> None:
                 ) from e
 
 
+PATH_MAX_BYTES, NAME_MAX_BYTES = (
+    4096,
+    255,
+)  # Linux limits: a longer path or name can never be opened
+
+
+def too_long(v: str) -> str | None:
+    """r10 (independent r9 run: a root over 4096 bytes ended in Python's own exit 1): the reason a path text can never be
+    used, or None. Checked where a value enters (argparse, safe_rel, the test paths) so no later call can raise ENAMETOOLONG."""
+    try:
+        raw = os.fsencode(v)
+    except UnicodeEncodeError:
+        return "it is not valid text for a file name"
+    if len(raw) > PATH_MAX_BYTES:
+        return f"it is {len(raw)} bytes long (the limit is {PATH_MAX_BYTES})"
+    if any(len(part) > NAME_MAX_BYTES for part in raw.split(b"/")):
+        return f"one name in it is longer than {NAME_MAX_BYTES} bytes"
+    return None
+
+
 def nonempty(v: str) -> str:
-    """argparse type: an empty value is an error, never "not given" (r10 M2)."""
+    """argparse type: an empty value is an error, never "not given" (r10 M2), and so is a text no path can be (too long)."""
     if v == "":
         raise argparse.ArgumentTypeError(
             "an empty value is not allowed (is a shell variable unset?)"
         )
+    bad = too_long(v)
+    if bad:
+        raise argparse.ArgumentTypeError(f"not usable as a path or name: {bad}")
     return v
 
 
@@ -2483,18 +2563,21 @@ def main():
         "--real-repo",
         action="append",
         default=[],
+        type=nonempty,
         help="a folder that must never be used as --root or inside it; repeatable",
     )
     ap.add_argument(
         "--patch",
         action="append",
         default=[],
+        type=nonempty,
         help="patch applied (-p1) on top of the git archive to get the expected tree; repeatable",
     )
     ap.add_argument(
         "--extra",
         action="append",
         default=[],
+        type=nonempty,
         help="path (relative to root) of a file that may exist in root beyond the reference, e.g. proof tests; repeatable",
     )
     ap.add_argument(
@@ -2547,11 +2630,20 @@ def main():
     default_repo = str(pathlib.Path(__file__).resolve().parent)
     if not a.restore or repo_given or a.sha is not None:
         a.repo = a.repo or default_repo
+    for t in tests:  # the test paths and words after `--`
+        if too_long(t) or "\0" in t:
+            ap.error(
+                f"a test argument is not usable as a path or word: {too_long(t) or 'it holds a NUL'}"
+            )
     root = pathlib.Path(a.root)
-    if not root.is_dir():
-        print(f"REFUSED: --root {root} is not a folder", file=sys.stderr)
+    try:
+        is_folder = root.is_dir()
+        root = root.resolve() if is_folder else root
+    except (OSError, RuntimeError, ValueError):
+        is_folder = False
+    if not is_folder:
+        print(f"REFUSED: --root {shown(a.root)} is not a folder", file=sys.stderr)
         sys.exit(EXIT_REFUSED)
-    root = root.resolve()
     a.root = str(root)
     global ROOT_IDENT
     rst = os.stat(root)

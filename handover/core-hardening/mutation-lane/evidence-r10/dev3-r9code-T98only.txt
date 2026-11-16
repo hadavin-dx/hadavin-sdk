@@ -1,0 +1,41 @@
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py", line 2605, in <module>
+    main()
+  BAD root: exit 1
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py", line 2605, in <module>
+    main()
+  BAD name: exit 1
+REFUSED: --sha is not a commit id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py", line 2432, in main
+    safe_rel(root, m["file"], f"mutant {m['id']} file"), f"mutant {m['id']} target"
+  BAD file: exit 2
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/run.r9.py", line 2399, in main
+    check_pytest_config(root, tests)
+  BAD test: exit 2
+  FAIL: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 4 of 5 wrong (r9: exit 1 or a traceback)
+Traceback (most recent call last):
+  File "<stdin>", line 9, in <module>
+  File "<frozen runpy>", line 294, in run_path
+  FAIL: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 1
+  FAIL: T98c no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 1; r9: fails)
+/tmp/safety-only.bkwWgg.sh: line 70: 11766 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/tmp/safety-only.bkwWgg.sh: line 126: forge97: command not found
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev3/tmpstate/hadavin-mutation-lane-0/39605088050e5de2.backup; hash match
+/tmp/safety-only.bkwWgg.sh: line 70: 15069 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/tmp/safety-only.bkwWgg.sh: line 129: forge97: command not found
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev3/tmpstate/hadavin-mutation-lane-0/39605088050e5de2.backup; hash match
+  FAIL: T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 0), nothing written (last 'return1' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 0 time(s), exit 0
+/tmp/safety-only.bkwWgg.sh: line 70: 16801 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/tmp/safety-only.bkwWgg.sh: line 133: setmarker97: command not found
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev3/tmpstate/hadavin-mutation-lane-0/39605088050e5de2.backup; hash match
+  FAIL: T98e forged marker with mode 0777: --sha refuses it, exit 3 (got 0), nothing written (last 'return1' = return2)
+REFUSED: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev3/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as 
+  FAIL: T98e2 plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode masked to 0777 at most (got exit 2, mode 664)
+missing ['plain --restore', 'forged'] no (d): True
+  FAIL: T98f the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 1; r9: fails)
+FAILED CHECKS: 7 (of 7 checks run; skipped: none)
