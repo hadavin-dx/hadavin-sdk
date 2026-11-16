@@ -1,5 +1,9 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:56 UTC / 13:26 IST: plan round 1 resolved; REVIEW-PLAN v2 written; plan round 2 next
+- Plan reviewers P1a (egm-design: 2 Blocker, 10 Major) and P1b (egm-implementation-readiness: 0 Blocker, 6 Major) are CLOSED. Findings saved as plan-review-1a.md, 1b.md. Plan v2 applies them (pinned sha 35235ac, 17 CHECK findings named, patch checks run in a copy, 3 evidence runners that only record, verdict rubric).
+- Register: no agent running now. Next: plan round 2 (egm-review-loop), then E1-E3 evidence runners.
+
 ## STATUS 07:51 UTC / 13:21 IST: plan review round 1 running
 - Register (sonnet, read-only egm reviewers, expected end +15 min): P1a egm-design on REVIEW-PLAN.md; P1b egm-implementation-readiness on REVIEW-PLAN.md. Last check: just started.
 - Next: resolve, then E1 evidence runner.
