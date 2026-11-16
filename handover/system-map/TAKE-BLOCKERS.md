@@ -25,7 +25,7 @@ Made-up data only: the demo uses invented people and a test mailbox. The owner r
 - Decisions of 16 Nov = inputs/DECISIONS-2026-11-16.md, numbered 1 to 12; they are in force.
 
 ## Dates
-The take must happen by Mon 23 Nov 18:29 UTC / 23:59 IST; latest start before 18:14:40 UTC (v5 says "about 18:15 UTC / 23:45 IST"); the studio lead's notice ("take starts at ...") must come at least 3 hours before the start, so on the last day before about 15:14 UTC / 20:44 IST. The post is Wed 25 Nov 15:00 UTC / 20:30 IST. Target take Wed 18 Nov is NOT confirmed.
+The take must happen by Mon 23 Nov 18:29 UTC / 23:59 IST; latest start before 18:14:40 UTC / 23:44:40 IST (v5 says "about 18:15 UTC / 23:45 IST"); the studio lead's notice ("take starts at ...") must come at least 3 hours before the start, so on the last day before about 15:14 UTC / 20:44 IST. The post is Wed 25 Nov 15:00 UTC / 20:30 IST. Target take Wed 18 Nov is NOT confirmed.
 
 ## Work order (row number = order of work; row ids are new)
 | # | what | by whom | done when |
