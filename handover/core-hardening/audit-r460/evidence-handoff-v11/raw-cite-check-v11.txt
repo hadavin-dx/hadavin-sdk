@@ -140,6 +140,7 @@ L196 src/hadavin_sdk/approvals/requests.py:37-37 | flagged = detector is not Non
 L196 src/hadavin_sdk/approvals/cards.py:79-79 | and injection_check(detector, diagnosis, "shadow_card").flagged | ANCHOR ok
 L196 src/hadavin_sdk/runtime/agent_loop.py:312-312 | verdict = injection_check(self.detector, text, source) | ANCHOR ok
 L196 src/hadavin_sdk/runtime/agent_loop.py:239-250 | def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: | ANCHOR ok
+L197 src/hadavin_sdk/runtime/agent_loop.py:318-322 | def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run: | CHECK words=reason_code
 L198 src/hadavin_sdk/runtime/agent_loop.py:359-359 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
 L198 tests/test_s5_runtime.py:107-111 | def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): | ANCHOR ok
 L208 src/hadavin_sdk/runtime/agent_loop.py:83-83 | GUARD_STOP_REASONS = frozenset( | ANCHOR ok
@@ -168,9 +169,11 @@ L274 src/hadavin_sdk/k1b/loop.py:94-94 | box["reply"] = llm.chat(*args, **kwargs
 L276 demos/ask-your-data/askdata/pipeline.py:155-155 | reply = self.llm.chat( | ANCHOR ok
 L280 src/hadavin_sdk/app.py:162-162 | llm = llm or make("llm", b.llm, secrets, routes=cfg.routes) | ANCHOR ok
 L280 src/hadavin_sdk/cli.py:150-150 | make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes), | ANCHOR ok (ambiguous file)
-L305 .github/workflows/ci.yml:76-78 | - name: Install (locked, every backend extra and the contract-suite test group) | ANCHOR ok
+L305 .github/workflows/ci.yml:79-79 | run: ruff check src tests demos | ANCHOR ok
+L305 .github/workflows/ci.yml:86-87 | HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres | ANCHOR ok
 L308 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | ANCHOR ok
 L334 src/hadavin_sdk/k1b/loop.py:176-176 | except ProviderError: | ANCHOR ok
 L334 src/hadavin_sdk/runtime/agent_loop.py:432-433 | except ( | ANCHOR ok
-L363 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | CHECK words=statement_timeout,transaction,Infinity,tcp_user_timeout
-TOTAL cites=174 missing_or_range=0 anchor_check=30
+L363 src/hadavin_sdk/guard/bedrock_guardrail.py:36-36 | retries={"total_max_attempts": 2, "mode": "standard"}, | CHECK words=spend_totals,Infinity,tcp_user_timeout,migrate
+L363 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | CHECK words=spend_totals,Infinity,tcp_user_timeout,migrate
+TOTAL cites=177 missing_or_range=0 anchor_check=32

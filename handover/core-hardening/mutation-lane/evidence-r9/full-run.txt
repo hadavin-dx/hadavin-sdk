@@ -333,3 +333,191 @@ process 13986 is not this run's pytest (or cannot be verified): left alone; rest
 ./safety-tests.sh: line 1483: 26411 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 stopped orphaned test group 26753; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; h
   PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
+./safety-tests.sh: line 1483: 12392 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 12747 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-m
+  PASS: T43c a marker with a group and NO identity and NO command at all: file restored (rc 3), nothing stopped on a guess, exit 3 because the group is unsettled (r8 N2)
+== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
+./safety-tests.sh: line 1483: 20538 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
+  PASS: T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs
+stopped orphaned test group 20608; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; hash matches saved or
+  PASS: T44 restore exit 0, file back (rc 0)
+  PASS: T44 the surviving member was stopped
+== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)
+./safety-tests.sh: line 1483: 23289 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T45 setup: the orphan runs
+stopped orphaned test group 23301; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; h
+  PASS: T45 restore exit 0, file back (rc 0)
+  PASS: T45 the orphan was stopped
+== T46 timeout branch with stop_group failing: signals disarmed BEFORE stop_group is called, the leader still stopped, and the result is a TIMEOUT verdict, not a traceback (review r4 evidence)
+rc: None SIG.allow seen inside stop_group: [False] after: False
+  PASS: T46 SIG.allow was already False when the timeout branch called stop_group, and the result is TIMEOUT (no traceback)
+  PASS: T46 no orphan pytest left although stop_group failed in the timeout branch
+  PASS: T46b through run.py itself (stop_group failing, timeout 3 s): exit 5 INCOMPLETE (a TIMEOUT is no complete run; r5: 0) (got 5), raw file says VERDICT: TIMEOUT, file restored, state empty
+== T47 (review r4 M1) every signal that ends a process is handled, also while the file is planted and while it is restored
+set equals valid_signals minus the six-plus-five excluded: True (51 signals)
+INTERRUPTED (signal 1): no mutant planted, no marker
+INTERRUPTED (signal 2): no mutant planted, no marker
+INTERRUPTED (signal 3): no mutant planted, no marker
+INTERRUPTED (signal 4): no mutant planted, no marker
+INTERRUPTED (signal 5): no mutant planted, no marker
+INTERRUPTED (signal 6): no mutant planted, no marker
+INTERRUPTED (signal 7): no mutant planted, no marker
+INTERRUPTED (signal 8): no mutant planted, no marker
+INTERRUPTED (signal 10): no mutant planted, no marker
+INTERRUPTED (signal 11): no mutant planted, no marker
+INTERRUPTED (signal 12): no mutant planted, no marker
+INTERRUPTED (signal 14): no mutant planted, no marker
+INTERRUPTED (signal 15): no mutant planted, no marker
+INTERRUPTED (signal 16): no mutant planted, no marker
+INTERRUPTED (signal 24): no mutant planted, no marker
+INTERRUPTED (signal 26): no mutant planted, no marker
+INTERRUPTED (signal 27): no mutant planted, no marker
+INTERRUPTED (signal 29): no mutant planted, no marker
+INTERRUPTED (signal 30): no mutant planted, no marker
+INTERRUPTED (signal 31): no mutant planted, no marker
+INTERRUPTED (signal 34): no mutant planted, no marker
+INTERRUPTED (signal 35): no mutant planted, no marker
+INTERRUPTED (signal 36): no mutant planted, no marker
+INTERRUPTED (signal 37): no mutant planted, no marker
+INTERRUPTED (signal 38): no mutant planted, no marker
+INTERRUPTED (signal 39): no mutant planted, no marker
+INTERRUPTED (signal 40): no mutant planted, no marker
+INTERRUPTED (signal 41): no mutant planted, no marker
+INTERRUPTED (signal 42): no mutant planted, no marker
+INTERRUPTED (signal 43): no mutant planted, no marker
+INTERRUPTED (signal 44): no mutant planted, no marker
+INTERRUPTED (signal 45): no mutant planted, no marker
+INTERRUPTED (signal 46): no mutant planted, no marker
+INTERRUPTED (signal 47): no mutant planted, no marker
+INTERRUPTED (signal 48): no mutant planted, no marker
+INTERRUPTED (signal 49): no mutant planted, no marker
+INTERRUPTED (signal 50): no mutant planted, no marker
+INTERRUPTED (signal 51): no mutant planted, no marker
+INTERRUPTED (signal 52): no mutant planted, no marker
+INTERRUPTED (signal 53): no mutant planted, no marker
+INTERRUPTED (signal 54): no mutant planted, no marker
+INTERRUPTED (signal 55): no mutant planted, no marker
+INTERRUPTED (signal 56): no mutant planted, no marker
+INTERRUPTED (signal 57): no mutant planted, no marker
+INTERRUPTED (signal 58): no mutant planted, no marker
+INTERRUPTED (signal 59): no mutant planted, no marker
+INTERRUPTED (signal 60): no mutant planted, no marker
+INTERRUPTED (signal 61): no mutant planted, no marker
+INTERRUPTED (signal 62): no mutant planted, no marker
+INTERRUPTED (signal 63): no mutant planted, no marker
+INTERRUPTED (signal 64): no mutant planted, no marker
+INTERRUPTED (signal 1): no mutant planted, no marker
+INTERRUPTED (signal 2): no mutant planted, no marker
+INTERRUPTED (signal 3): no mutant planted, no marker
+INTERRUPTED (signal 4): no mutant planted, no marker
+INTERRUPTED (signal 5): no mutant planted, no marker
+INTERRUPTED (signal 6): no mutant planted, no marker
+INTERRUPTED (signal 7): no mutant planted, no marker
+INTERRUPTED (signal 8): no mutant planted, no marker
+INTERRUPTED (signal 10): no mutant planted, no marker
+INTERRUPTED (signal 11): no mutant planted, no marker
+INTERRUPTED (signal 12): no mutant planted, no marker
+INTERRUPTED (signal 14): no mutant planted, no marker
+INTERRUPTED (signal 15): no mutant planted, no marker
+INTERRUPTED (signal 16): no mutant planted, no marker
+INTERRUPTED (signal 24): no mutant planted, no marker
+INTERRUPTED (signal 26): no mutant planted, no marker
+INTERRUPTED (signal 27): no mutant planted, no marker
+INTERRUPTED (signal 29): no mutant planted, no marker
+INTERRUPTED (signal 30): no mutant planted, no marker
+INTERRUPTED (signal 31): no mutant planted, no marker
+INTERRUPTED (signal 34): no mutant planted, no marker
+INTERRUPTED (signal 35): no mutant planted, no marker
+INTERRUPTED (signal 36): no mutant planted, no marker
+INTERRUPTED (signal 37): no mutant planted, no marker
+INTERRUPTED (signal 38): no mutant planted, no marker
+INTERRUPTED (signal 39): no mutant planted, no marker
+INTERRUPTED (signal 40): no mutant planted, no marker
+INTERRUPTED (signal 41): no mutant planted, no marker
+INTERRUPTED (signal 42): no mutant planted, no marker
+INTERRUPTED (signal 43): no mutant planted, no marker
+INTERRUPTED (signal 44): no mutant planted, no marker
+INTERRUPTED (signal 45): no mutant planted, no marker
+INTERRUPTED (signal 46): no mutant planted, no marker
+INTERRUPTED (signal 47): no mutant planted, no marker
+INTERRUPTED (signal 48): no mutant planted, no marker
+INTERRUPTED (signal 49): no mutant planted, no marker
+INTERRUPTED (signal 50): no mutant planted, no marker
+INTERRUPTED (signal 51): no mutant planted, no marker
+INTERRUPTED (signal 52): no mutant planted, no marker
+INTERRUPTED (signal 53): no mutant planted, no marker
+INTERRUPTED (signal 54): no mutant planted, no marker
+INTERRUPTED (signal 55): no mutant planted, no marker
+INTERRUPTED (signal 56): no mutant planted, no marker
+INTERRUPTED (signal 57): no mutant planted, no marker
+INTERRUPTED (signal 58): no mutant planted, no marker
+INTERRUPTED (signal 59): no mutant planted, no marker
+INTERRUPTED (signal 60): no mutant planted, no marker
+INTERRUPTED (signal 61): no mutant planted, no marker
+INTERRUPTED (signal 62): no mutant planted, no marker
+INTERRUPTED (signal 63): no mutant planted, no marker
+INTERRUPTED (signal 64): no mutant planted, no marker
+102 cases (signal x window); 0 bad: []
+  PASS: T47a all handled signals in the plant window and the restore window: exit 128+N, file restored, state empty
+  T47b real signals sent from outside while the tests are awaited: TRAP RTMIN RTMAX SYS STKFLT(16) SEGV BUS FPE ILL
+  PASS: T47b TRAP exit 133 (got 133), file restored, state empty, no orphan
+  PASS: T47b RTMIN exit 162 (got 162), file restored, state empty, no orphan
+  PASS: T47b RTMAX exit 192 (got 192), file restored, state empty, no orphan
+  PASS: T47b SYS exit 159 (got 159), file restored, state empty, no orphan
+  PASS: T47b 16 exit 144 (got 144), file restored, state empty, no orphan
+  PASS: T47b SEGV exit 139 (got 139), file restored, state empty, no orphan
+  PASS: T47b BUS exit 135 (got 135), file restored, state empty, no orphan
+  PASS: T47b FPE exit 136 (got 136), file restored, state empty, no orphan
+  PASS: T47b ILL exit 132 (got 132), file restored, state empty, no orphan
+== T48 (review r4 M2) pytest cannot take its root, settings or conftest from above --root
+  PASS: T48a the command carries --rootdir and --confcutdir (both = root)
+  PASS: T48 setup.py above the root refused (rc 2, hits 1)
+  PASS: T48 conftest.py above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml WITHOUT a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml with a dotted-key pytest setting above the root refused (rc 2, hits 1)
+  PASS: T48 tox.ini with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 setup.cfg with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 an ini file INSIDE the root is accepted (rc 0) and the raw file records a normal verdict
+pyproject cases wrong: []
+  PASS: T48 pyproject.toml is parsed: dotted keys, inline tables, native table found; no section and look-alike table not; invalid TOML counted (fail closed)
+== T49 (review r4 M3) a mutant's tests that change the tree stop the loop before the next mutant
+SUMMARY: 2 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 1 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['conftest.py']
+  PASS: T49 test_writeconf.py: exit 4 (got 4), the loop stopped after m1 (no X-m2.txt), m1's raw file records the changed file
+  PASS: T49 test_writeconf.py: target file restored, state empty
+SUMMARY: 2 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 1 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['data.bin']
+  PASS: T49 test_writedata.py: exit 4 (got 4), the loop stopped after m1 (no X-m2.txt), m1's raw file records the changed file
+  PASS: T49 test_writedata.py: target file restored, state empty
+  PASS: T49 a clean two-mutant run: exit 0 (got 0), both raw files record 'differing files (0; 0 = clean): []' and a digest
+== T50 (review r4 evidence) unreaped_child and the reaped-leader guard, tested directly
+running: True zombie: True reaped: False
+returncode still None, leader reaped: stop_group calls: []
+  PASS: T50 unreaped_child true while running and as a zombie, false once reaped; no stop_group call for a reaped leader whose returncode is None
+== T51 (review r4 evidence) --restore identity checks: start time, dead leader, works_in
+./safety-tests.sh: line 557: 26459 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 6634 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mu
+  PASS: T51a identical command line, other start time: stranger left alone, file restored (rc 0)
+./safety-tests.sh: line 557: 16493 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 28041; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; h
+./safety-tests.sh: line 557: 28041 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
+  PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
+./safety-tests.sh: line 570: 32265 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b outside-root setup: the member of the dead leader's group runs
+process 2674 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mu
+  PASS: T51b outside-root: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+./safety-tests.sh: line 570:  2838 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b early-start setup: the member of the dead leader's group runs
+process 2989 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mu
+  PASS: T51b early-start: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+./safety-tests.sh: line 570:  3091 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b control setup: the member of the dead leader's group runs
+stopped orphaned test group 3336; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; ha
+  PASS: T51b control (member works in root, started after the recorded start): stopped (rc 0)
+works_in wrong: []
+  PASS: T51c works_in matches whole path parts: /root2/x is not inside /root
+== T52 (review r4 nit 1) a plant that fails on the open file is a clean refusal, not RESTORE FAILED; --restore with the file already original clears the marker
+REFUSED: cannot plant into src/mod.py: Permission denied
+  PASS: T52a read-only target: exit 2 (got 2) with 'cannot plant', no 'RESTORE FAILED', file unchanged, state empty

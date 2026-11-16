@@ -1,0 +1,10 @@
+agent ids starting with '-' (reserved check present in v11 text):
+2
+stale SpendRefused/ProviderError mentions:
+196:xcept ProviderError` (`:432-433`) does not see a `SpendRefused` (it is not a `ProviderError`), so no ordering r
+334:, guard.injection, guard.runmap, tools), because `SpendRefused` was a `ProviderError` subclass and `guar
+llm/spend.py SpendRefused:
+290:SpendRefused`, `SpendWindow`, `llm/spend
+v10 mentions in v11 spend file:
+31
+On branch cloud/core-hardening

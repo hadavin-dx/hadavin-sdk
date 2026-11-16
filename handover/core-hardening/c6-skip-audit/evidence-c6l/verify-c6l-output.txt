@@ -1,0 +1,28 @@
+short names 32
+rows parsed 72
+C-1 old text once on its line: 72 of 72 ok, 0 bad
+ids consecutive from 1: True
+C-1b applied bottom-up in table order: 72 rows, 0 mismatches, 9 files written to /tmp/tmpoueug6eu
+cites checked 249, beyond end of file 0
+internal labels in new texts: 0
+stale phrase '52.9' in new texts of rows: none
+stale phrase '0 rows' in new texts of rows: none
+stale phrase 'shows 0' in new texts of rows: none
+stale phrase 'never deletes' in new texts of rows: [6, 8]
+stale phrase '70 to 75' in new texts of rows: none
+stale phrase '80 kills' in new texts of rows: none
+banned strings in report: none
+secret-like or e-mail strings in report: none
+C-4a mf-form.json [1, 1, 1] PASS
+C-4a mf-hook.json [1, 1, 1] PASS
+C-4a mf-recovery.json [1, 1, 1] PASS
+C-4a mf-sub-crm-mail.json [1, 1, 1] PASS
+recount ready 33 of 72
+table 3b recount: 9 question lines checked, all equal: True
+TOTAL line: | TOTAL | all rows | 72 | ready 33, on defaults only 35, with a check 4 | |
+lines with 18 runs and not naming both voided runs (report text): [16, 18, 71, 151]
+rows whose new text has 18 without naming both voided runs: [49, 52]
+rows with the 60.1 to 61.9 figure and no L-PAGE hold: [(18, 'NOT APPLIED; ready'), (26, 'NOT APPLIED; ready'), (27, 'NOT APPLIED; ready'), (30, 'NOT APPLIED; ready')]
+prose 'the lead' hits: 2 | 'claim' hits outside claim table/claim row/claimed: 2
+cite keys used but not defined: none
+labels missing from glossary: none
