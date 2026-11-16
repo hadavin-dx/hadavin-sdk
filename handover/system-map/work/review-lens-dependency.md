@@ -1,0 +1,7 @@
+# Single-dependency and least-privilege lens on the take (condensed; documents only, no code opened)
+1 BLOCKER "lead never sees a secret" is procedure only: lead runs as same Linux user, writes n8n.env with N8N_ENCRYPTION_KEY, so can decrypt stored credentials. Fix (a) second Linux user mode 700 for secrets/take run, or (b) reword OS:21-22 as procedure-only with named limits (throwaway accounts, made-up data, revoke at step 22) and owner accepts in writing; add ~/take-secrets, ~/.hadavin-take-tags, take folder to hook deny list and test it.
+2 MAJOR approval is typing on a terminal the lead can reach (SC:23 F1): label as procedure-only or add "lead session not open while you type".
+3 MAJOR "independent count with own credentials" (DE:11, DE:17) is not independent: docker exec psql -U picks any role over local socket; say "read-only role; limits mistakes, not who calls".
+4 MAJOR one role smk_app for all flows (PL:126): name as accepted exception or add smk_recover + negative test.
+5 MAJOR stage /qualify and /control and n8n webhooks have no caller identity (Host and Content-Type checks only): shared token header + negative test, or "no auth, loopback only, accepted".
+6 MAJOR no single-dependency table (n8n, Postgres, SMTP/Gmail, IMAP, HubSpot, Anthropic, GitHub); model key least privilege (own workspace, provider spend limit); n8n licence check (from model knowledge, UNVERIFIED).
