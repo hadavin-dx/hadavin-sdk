@@ -264,3 +264,6 @@ ok   word list: run_all.sh asks take_check.sh for the pin line check and for the
 ok   control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit 4)
 ok   Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit 5)
 ok   Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit 4)
+ok   Q1: '# reviewed by: Audit Session B, 2026-11-16' is exit 4 (got exit 4)
+ok   Q1: '# reviewed by: A. Person, 2026-11-16, Lead To Confirm' is exit 4 (got exit 4)
+ok   B1a: --write-warn-pin on the pin in use is refused (exit 2) and leaves it unchanged (got exit 2)
