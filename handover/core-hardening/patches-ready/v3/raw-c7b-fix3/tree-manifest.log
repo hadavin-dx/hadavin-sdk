@@ -1,0 +1,111 @@
+2026-11-16T10:49:46Z
+tree P (runs) and tree Q (clean reference), both: git archive b4cce5b, handover removed, git init + 1 commit, then v3 C-01, A-01, G5, then v6-extra fix
+== tree P
+CMD: patch -p1 -r - --no-backup-if-mismatch < v3/C-01.patch
+patching file src/hadavin_sdk/config.py
+patching file src/hadavin_sdk/defaults.py
+patching file src/hadavin_sdk/backends/table.py
+patching file src/hadavin_sdk/k1b/replay.py
+patching file tests/test_c01_route_limits.py
+patching file tests/test_k1b_replay.py
+rc=0
+CMD: patch -p1 -r - --no-backup-if-mismatch < v3/A-01.patch
+patching file src/hadavin_sdk/runtime/tick.py
+patching file src/hadavin_sdk/audit/protocol.py
+patching file src/hadavin_sdk/audit/chain.py
+patching file src/hadavin_sdk/audit/local_dir.py
+patching file src/hadavin_sdk/audit/spill.py
+patching file src/hadavin_sdk/backends/table.py
+Hunk #1 succeeded at 196 (offset 5 lines).
+patching file src/hadavin_sdk/k1b/audit_sink.py
+patching file tests/test_a01_audit_reconcile.py
+patching file tests/test_p7_tick.py
+rc=0
+CMD: patch -p1 -r - --no-backup-if-mismatch < v3/G5-wording.patch
+patching file src/hadavin_sdk/approvals/gate.py
+patching file src/hadavin_sdk/guard/redact.py
+patching file tests/warden_port/test_gate.py
+rc=0
+CMD: patch -p1 -r - --no-backup-if-mismatch < v6-extra/FIX-id-vs-command-withheld.patch
+patching file src/hadavin_sdk/approvals/gate.py
+Hunk #1 succeeded at 673 (offset 5 lines).
+patching file tests/test_g4_ids_not_withheld.py
+rc=0
+leftovers:
+(end)
+ M src/hadavin_sdk/approvals/gate.py
+ M src/hadavin_sdk/audit/chain.py
+ M src/hadavin_sdk/audit/local_dir.py
+ M src/hadavin_sdk/audit/protocol.py
+ M src/hadavin_sdk/backends/table.py
+ M src/hadavin_sdk/config.py
+ M src/hadavin_sdk/defaults.py
+ M src/hadavin_sdk/guard/redact.py
+ M src/hadavin_sdk/k1b/audit_sink.py
+ M src/hadavin_sdk/k1b/replay.py
+ M src/hadavin_sdk/runtime/tick.py
+ M tests/test_k1b_replay.py
+ M tests/test_p7_tick.py
+ M tests/warden_port/test_gate.py
+?? src/hadavin_sdk/audit/spill.py
+?? tests/test_a01_audit_reconcile.py
+?? tests/test_c01_route_limits.py
+?? tests/test_g4_ids_not_withheld.py
+0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+a27dc6e60b4387308c888b458779fbc258a0f9af2fe73c96fb6271475114ccf7  tests/test_g4_ids_not_withheld.py
+== tree Q
+CMD: patch -p1 -r - --no-backup-if-mismatch < v3/C-01.patch
+patching file src/hadavin_sdk/config.py
+patching file src/hadavin_sdk/defaults.py
+patching file src/hadavin_sdk/backends/table.py
+patching file src/hadavin_sdk/k1b/replay.py
+patching file tests/test_c01_route_limits.py
+patching file tests/test_k1b_replay.py
+rc=0
+CMD: patch -p1 -r - --no-backup-if-mismatch < v3/A-01.patch
+patching file src/hadavin_sdk/runtime/tick.py
+patching file src/hadavin_sdk/audit/protocol.py
+patching file src/hadavin_sdk/audit/chain.py
+patching file src/hadavin_sdk/audit/local_dir.py
+patching file src/hadavin_sdk/audit/spill.py
+patching file src/hadavin_sdk/backends/table.py
+Hunk #1 succeeded at 196 (offset 5 lines).
+patching file src/hadavin_sdk/k1b/audit_sink.py
+patching file tests/test_a01_audit_reconcile.py
+patching file tests/test_p7_tick.py
+rc=0
+CMD: patch -p1 -r - --no-backup-if-mismatch < v3/G5-wording.patch
+patching file src/hadavin_sdk/approvals/gate.py
+patching file src/hadavin_sdk/guard/redact.py
+patching file tests/warden_port/test_gate.py
+rc=0
+CMD: patch -p1 -r - --no-backup-if-mismatch < v6-extra/FIX-id-vs-command-withheld.patch
+patching file src/hadavin_sdk/approvals/gate.py
+Hunk #1 succeeded at 673 (offset 5 lines).
+patching file tests/test_g4_ids_not_withheld.py
+rc=0
+leftovers:
+(end)
+ M src/hadavin_sdk/approvals/gate.py
+ M src/hadavin_sdk/audit/chain.py
+ M src/hadavin_sdk/audit/local_dir.py
+ M src/hadavin_sdk/audit/protocol.py
+ M src/hadavin_sdk/backends/table.py
+ M src/hadavin_sdk/config.py
+ M src/hadavin_sdk/defaults.py
+ M src/hadavin_sdk/guard/redact.py
+ M src/hadavin_sdk/k1b/audit_sink.py
+ M src/hadavin_sdk/k1b/replay.py
+ M src/hadavin_sdk/runtime/tick.py
+ M tests/test_k1b_replay.py
+ M tests/test_p7_tick.py
+ M tests/warden_port/test_gate.py
+?? src/hadavin_sdk/audit/spill.py
+?? tests/test_a01_audit_reconcile.py
+?? tests/test_c01_route_limits.py
+?? tests/test_g4_ids_not_withheld.py
+0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+a27dc6e60b4387308c888b458779fbc258a0f9af2fe73c96fb6271475114ccf7  tests/test_g4_ids_not_withheld.py
+== patch sha
+12e4be6f42e2f47ae254276cdcf27b1cb31b50d5fa40a1adcedde4acfeb6b9ce  /home/user/hadavin-sdk/handover/core-hardening/patches-ready/v6-extra/FIX-id-vs-command-withheld.patch
+12e4be6f42e2f47ae254276cdcf27b1cb31b50d5fa40a1adcedde4acfeb6b9ce  FIX-id-vs-command-withheld.patch

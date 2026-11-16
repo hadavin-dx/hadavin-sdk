@@ -84,4 +84,4 @@ C10. Put the filled plan at the path of question 9. The runner then counts the l
 
 ## D. During and after the run (only if the runner asks)
 D1. If a clean-up kill of an n8n of this run is needed (plan rule R2), the runner writes `NEED-LEAD R2 pid=<digits>`. Check that the pid is the one in its register row, then append ONE line at the end of `PROGRESS.md` (EDIT POINT: the pid): `LEAD-YES R2 pid=<digits> <UTC time>`. After a `kill exit=3` no R2 is allowed, ever; you decide by hand outside the run.
-D2. After a P-4b STOP (a hit line): end the process yourself by its exact pid, outside the run; the plan lists where the run resumes (P-4b step, "Resume rules").
+D2. After a P-4b STOP (a hit line): do NOT end the process blind. You end only a process you started yourself (the stand-in of the P-4b control); for any other hit, tell the owner the pid and the command line (`tr '\0' ' ' < /proc/<pid>/cmdline`) and the owner decides; whoever decides ends it by its exact pid, outside the run; the plan lists where the run resumes (P-4b step, "Resume rules").
