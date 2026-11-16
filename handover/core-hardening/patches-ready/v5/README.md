@@ -100,5 +100,5 @@ all C01-*, the other A01-*, K1B-01 to K1B-03. All of C-01 and A-01 is cut or def
   The 61-case file passed against the old tree as 32 fail / 29 pass, but part of those failures are missing names, so they prove less than they look.
 
 ## Files
-`README.md`, `REPORT-v4.md`, `SHA256SUMS.txt`, `checkpoint.md`, `G5-wording.patch`, `C-01-MINIMAL.patch`, `DEAD-MAN-CHECK.md`,
+`README.md`, `REPORT-v5.md`, `SHA256SUMS.txt`, `checkpoint.md`, `G5-wording.patch`, `C-01-MINIMAL.patch`, `DEAD-MAN-CHECK.md`,
 `DEFERRED-A-01.patch`, `CUT-C-01-FULL-NOT-FOR-THE-TAKE.patch`, `raw/`.
