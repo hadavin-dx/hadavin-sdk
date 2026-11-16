@@ -1,0 +1,21 @@
+# TAKE-CHECKLIST/FIX-PLAN round 8 readiness read (agent a83994a; reviewer words unverified; nothing run; did not read RUNBOOK, ORDERS, FINDINGS, QUESTIONS, take_check.sh)
+Blocker
+1. Row 5 (re-smoke) has no command/test list (LEAD FILLS). R5f needs "after the stated wait" but the wait is set only Wednesday (Inputs 17) - contradiction. HubSpot token-scopes question goes out Wed ~07:00Z (TC 46, 306) but Tue fill 05:54Z and re-smoke 08:29Z use the real credential: ask before Tue 05:54Z.
+2. Row 4 needs a named human pin reader (needed 04:26Z pin 1, 07:14Z pin 2); not named. Ask owner tonight.
+3. Row 6 cannot pass Tuesday: six OPEN counted rows; who closes them and with what artifact is not stated; no review slot in the Clock 08:29-14:00Z; F-018 pass line is FP step 10b (Wednesday).
+4. F-011 half of row 7 has no runner/evidence standard; if n8n started without DB_TYPE vars at step 6-8, fix (A) restarts n8n and redoes steps 8-9 and pin 2. Say to set the variables at start or decide downgrade early.
+5. Row 3(c) mutation batch has no command; must finish before step 1; run detached (long-jobs rule); R3 checks git status for pytest only, not mutation leftovers.
+Major
+1. LEAD FILLS umbrella deadline "before 14:00Z" but real needed-by times earlier (list: before Tue 04:00Z SHA_R20-23, $BRANCH, row 3(c) command, REPO/OS/shell, $NEW etc; 04:26Z reader, PIN_NAME/DATE; 04:54Z take scripts, db logins; 05:54Z values file, import method, credential ids, DESK_URL, DESK_ALERT_TO, DESK_TIMEOUT_MS; 07:14Z export script; 08:29Z re-smoke commands, mailbox tool, HubSpot search, Inputs 19; before first live send contact count and credits ceiling; early Tue F-011 decision). Add needed-by per Inputs item.
+2. Shell variables do not persist between Bash calls: provide env.sh sourced each call and a store for the written-once shas; pwd -P check may fail on WSL/Windows.
+3. Merge rows depend on unmerged r23/r24; SHA_SCRIPTS not tied to the reviewed head; squash merge makes --is-ancestor exit 1; no rule if r23/r24 land after the evidence.
+4. Row 2 reviews have no time slot or report list; post-twice script written at re-pin needs two reviews before 14:00Z.
+5. Form 2 JUDGELOG printf records who/when only, runs unconditionally after the grep; pass line count double-counts on repeat; R6/R7 JUDGED lines carry no finding id; nothing stops Form 2 overriding a failing Form 1; no line records the GO/NO-GO decision; FP 118 "six conditions" vs TC 97 seven rows; "GO" means Tuesday decision and Wednesday 09:50Z check - name separately; no re-run protocol after NO-GO.
+6. Row 4 exact pass counts never run and cannot be amended; Block R4 first line uses SHA_PIN1 that exists only after P1c: state "pin first" in one place.
+7. gate (a) mf_leads.sql "one and only run" (TC 244, 143) vs FP 65 step 5(i) also runs it; second run fails "already exists".
+8. Row 7 F-041 greps (TC 228, 233-234) differ in scope from FP 97 (15 variants; handover/flows-audit + handover/demo); allowed wording "one Postgres server with two databases" is false if n8n stays on SQLite (downgrade path) - reconcile; "Part B lists only R2-tables.md" is a read, not a run.
+9. Downgrade evidence contradiction: TC 145/256, FP 96 say evidence "named in FINDINGS fix cells"; TC 68, FP 96(B) say standard not written (LEAD FILLS). Pick one; name the evidence file for $JUDGE_FILE.
+10. Spend/contact gap: sends = re-smoke, row 4, T19, T21, two rehearsals, take vs "up to 3 live model calls / 9 contacts" (FP 84, TC 75). State ceiling before first live send; add owner contact.
+11. Evidence artifacts: R5f, R6 awk, R7 Part A, R1/R4 counts print only to terminal; Form 1 wants raw output saved.
+12. "Row 4" means GO row 4 and the lead's HubSpot test; FP step numbers vs RUNBOOK numbers ("Step 17").
+Nit: Clock "latest start of step 1 06:51Z (12:21 IST)" does not follow (269+60+10=339 min before 14:00Z is 08:21Z; 90 min unexplained); FP 59 repeats Step 10/11-13 windows with different times (07:40-09:25 vs 07:30-09:30); TC 3 says ORDERS read to line 175, item 9 cites 176-177; "see the limit below" (TC 97) no antecedent; R3 labels (a)(b)(d) undefined; R3 git switch can carry uncommitted edits; "Tue by 04:26Z" present vs delivered; owner-facing time for "owner sees the table" missing; pin reader honor rule unverified.

@@ -13,3 +13,5 @@ Fixed: B1 (Row 4 07:05Z-07:35Z, rehearsal 07:35Z, delete message 1 at 07:35Z eve
 Not done: HELD, T-ENV, Minor and UNCONFIRMED labels in older Q sections (lines 147, 226, 276) left as is (old answered text, not in the finding's must-fix set); colon labels on older Q headings (198, 243-248, 282, 421) not rewritten; stale text in other files still listed under "ORDER 037 ITEM 3" and not edited. All new times are planned by the audit, lead to confirm. No rating or lead decision changed.
 
 Round 9 addition: Q31 items 22 (T21 method) and 23 (F-031 part 1 vs 2) added, index/counts 23. Checks exit 0,0,0,0.
+
+Round 9 addition 2: Q31 item 24 (owner sheet rules a-f) added, counts 24. Checks exit 0,0,0,0.
