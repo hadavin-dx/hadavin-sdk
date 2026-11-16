@@ -1,24 +1,30 @@
-### neg/no_errlink
-FAIL neg/no_errlink/mf-form.json orphan nodes (no incoming link, not a trigger) ['ReplyStoreFail']
-FAIL neg/no_errlink/mf-form.json unreachable from any trigger ['ReplyStoreFail']
-FAIL neg/no_errlink/mf-form.json connection count 13 != expected 14
-FAIL neg/no_errlink/mf-form.json node Claim has onError=continueErrorOutput but main[1] is missing or has no target
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py /tmp/pa13b/neg/no_errlink --baseline /tmp/pa13b/g/base/real --expect mf-form.json=15:14 --expect mf-hook.json=15:14 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --patch-checks F002,F008 --diff-base /tmp/pa13b/g/base/real --allow F002,F008 --quiet-info
+### /tmp/pa13b/neg/no_errlink
+FAIL /tmp/pa13b/neg/no_errlink/mf-form.json orphan nodes (no incoming link, not a trigger) ['ReplyStoreFail']
+FAIL /tmp/pa13b/neg/no_errlink/mf-form.json unreachable from any trigger ['ReplyStoreFail']
+FAIL /tmp/pa13b/neg/no_errlink/mf-form.json connection count 13 != expected 14
+FAIL /tmp/pa13b/neg/no_errlink/mf-form.json node Claim has onError=continueErrorOutput but main[1] is missing or has no target
 mf-form.json nodes=15 connections=13 triggers=['Receive'] saveDataSuccess=all saveDataError=all
-FAIL neg/no_errlink/mf-form.json F-002 link Claim out1 -> [] expected ['ReplyStoreFail']
+FAIL /tmp/pa13b/neg/no_errlink/mf-form.json F-002 link Claim out1 -> [] expected ['ReplyStoreFail']
+FAIL /tmp/pa13b/neg/no_errlink/mf-form.json F-002 connection structure of Claim is {"main": [[{"node": "Claimed", "type": "main", "index": 0}]]} expected {"main": [[{"node": "Claimed", "type": "main", "index": 0}], [{"node": "ReplyStoreFail", "type": "main", "index": 0}]]}
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/neg/no_errlink/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
   [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
   [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
   [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
   [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
 mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/neg/no_errlink/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
   [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
   [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
   [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
   [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
-WARN neg/no_errlink/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
-WARN neg/no_errlink/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/neg/no_errlink/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/neg/no_errlink/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
 mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
 mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
-== neg/no_errlink/mf-form.json ==
+== /tmp/pa13b/neg/no_errlink/mf-form.json ==
   node ADDED   KeyOk (n8n-nodes-base.if v2.2)
   node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
   node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
@@ -28,7 +34,7 @@ mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=
   connections CHANGED for source Valid
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
-== neg/no_errlink/mf-hook.json ==
+== /tmp/pa13b/neg/no_errlink/mf-hook.json ==
   node ADDED   KeyOk (n8n-nodes-base.if v2.2)
   node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
   node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
@@ -39,9 +45,10 @@ mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=
   connections CHANGED for source Valid
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
-== neg/no_errlink/mf-recovery.json ==
-== neg/no_errlink/mf-sub-crm-mail.json ==
+== /tmp/pa13b/neg/no_errlink/mf-recovery.json ==
+== /tmp/pa13b/neg/no_errlink/mf-sub-crm-mail.json ==
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
 
-RESULT: 5 FAIL, 2 WARN
+RESULT: 6 FAIL, 4 WARN
+exit=1

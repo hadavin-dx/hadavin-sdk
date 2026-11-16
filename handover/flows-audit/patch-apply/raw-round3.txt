@@ -1,0 +1,971 @@
+## baseline (unpatched copy)
+gen real rc=0
+gen film rc=0
+## order glob: F-001-one-ddl F-002-take-key-check-and-claim-error-path F-003-runsheet-claims F-004-page-statement-17 F-008-save-runs-for-the-take
+F-001-one-ddl check=0 apply=0
+F-002-take-key-check-and-claim-error-path check=0 apply=0
+F-003-runsheet-claims check=0 apply=0
+F-004-page-statement-17 check=0 apply=0
+F-008-save-runs-for-the-take check=0 apply=0
+gen real rc=0
+gen film rc=0
+## order fixplan: F-001-one-ddl F-002-take-key-check-and-claim-error-path F-008-save-runs-for-the-take F-003-runsheet-claims F-004-page-statement-17
+F-001-one-ddl check=0 apply=0
+F-002-take-key-check-and-claim-error-path check=0 apply=0
+F-008-save-runs-for-the-take check=0 apply=0
+F-003-runsheet-claims check=0 apply=0
+F-004-page-statement-17 check=0 apply=0
+gen real rc=0
+gen film rc=0
+## order reverse: F-008-save-runs-for-the-take F-004-page-statement-17 F-003-runsheet-claims F-002-take-key-check-and-claim-error-path F-001-one-ddl
+F-008-save-runs-for-the-take check=0 apply=0
+F-004-page-statement-17 check=0 apply=0
+F-003-runsheet-claims check=0 apply=0
+F-002-take-key-check-and-claim-error-path check=0 apply=0
+F-001-one-ddl check=0 apply=0
+gen real rc=0
+gen film rc=0
+## order p28: F-002-take-key-check-and-claim-error-path F-008-save-runs-for-the-take
+F-002-take-key-check-and-claim-error-path check=0 apply=0
+F-008-save-runs-for-the-take check=0 apply=0
+gen real rc=0
+gen film rc=0
+## order p82: F-008-save-runs-for-the-take F-002-take-key-check-and-claim-error-path
+F-008-save-runs-for-the-take check=0 apply=0
+F-002-take-key-check-and-claim-error-path check=0 apply=0
+gen real rc=0
+gen film rc=0
+## order only002: F-002-take-key-check-and-claim-error-path
+F-002-take-key-check-and-claim-error-path check=0 apply=0
+gen real rc=0
+gen film rc=0
+## order only008: F-008-save-runs-for-the-take
+F-008-save-runs-for-the-take check=0 apply=0
+gen real rc=0
+gen film rc=0
+
+## byte compare baseline generator vs saved v5 (cmp)
+real/mf-form identical
+real/mf-hook identical
+real/mf-recovery identical
+real/mf-sub-crm-mail identical
+film/mf-form identical
+film/mf-hook identical
+film/mf-recovery identical
+film/mf-sub-crm-mail identical
+
+## byte compare of generated JSON against the glob order (cmp), per order
+fixplan real/mf-form same-as-glob
+fixplan real/mf-hook same-as-glob
+fixplan real/mf-recovery same-as-glob
+fixplan real/mf-sub-crm-mail same-as-glob
+fixplan film/mf-form same-as-glob
+fixplan film/mf-hook same-as-glob
+fixplan film/mf-recovery same-as-glob
+fixplan film/mf-sub-crm-mail same-as-glob
+reverse real/mf-form same-as-glob
+reverse real/mf-hook same-as-glob
+reverse real/mf-recovery same-as-glob
+reverse real/mf-sub-crm-mail same-as-glob
+reverse film/mf-form same-as-glob
+reverse film/mf-hook same-as-glob
+reverse film/mf-recovery same-as-glob
+reverse film/mf-sub-crm-mail same-as-glob
+p28 real/mf-form same-as-glob
+p28 real/mf-hook same-as-glob
+p28 real/mf-recovery same-as-glob
+p28 real/mf-sub-crm-mail same-as-glob
+p28 film/mf-form same-as-glob
+p28 film/mf-hook same-as-glob
+p28 film/mf-recovery same-as-glob
+p28 film/mf-sub-crm-mail same-as-glob
+p82 real/mf-form same-as-glob
+p82 real/mf-hook same-as-glob
+p82 real/mf-recovery same-as-glob
+p82 real/mf-sub-crm-mail same-as-glob
+p82 film/mf-form same-as-glob
+p82 film/mf-hook same-as-glob
+p82 film/mf-recovery same-as-glob
+p82 film/mf-sub-crm-mail same-as-glob
+
+## CHECKER
+######## baseline real
+### /tmp/pa13b/g/base/real
+mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x3; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x3; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+WARN /tmp/pa13b/g/base/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/base/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env $env.DESK_ALERT_TO                 count=1 nodes=['AlertSend']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env PLACEHOLDER                        count=1 nodes=['AlertSend']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x1; n8n-nodes-base.hubspot v2.2 x1; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.DESK_TIMEOUT_MS               count=1 nodes=['Qualify']
+  placeholder/env $env.DESK_URL                      count=1 nodes=['Qualify']
+  placeholder/env HS_CRED                            count=1 nodes=['CrmUpsert']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env PLACEHOLDER                        count=3 nodes=['CrmUpsert', 'SendMail']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+RESULT: 0 FAIL, 2 WARN
+exit=0
+######## order glob real
+### /tmp/pa13b/g/glob/real
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/glob/real/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/glob/real/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/glob/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/glob/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env $env.DESK_ALERT_TO                 count=1 nodes=['AlertSend']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env PLACEHOLDER                        count=1 nodes=['AlertSend']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x1; n8n-nodes-base.hubspot v2.2 x1; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.DESK_TIMEOUT_MS               count=1 nodes=['Qualify']
+  placeholder/env $env.DESK_URL                      count=1 nodes=['Qualify']
+  placeholder/env HS_CRED                            count=1 nodes=['CrmUpsert']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env PLACEHOLDER                        count=3 nodes=['CrmUpsert', 'SendMail']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/glob/real/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/glob/real/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/glob/real/mf-recovery.json ==
+== /tmp/pa13b/g/glob/real/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order fixplan real
+### /tmp/pa13b/g/fixplan/real
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/fixplan/real/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/fixplan/real/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/fixplan/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/fixplan/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env $env.DESK_ALERT_TO                 count=1 nodes=['AlertSend']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env PLACEHOLDER                        count=1 nodes=['AlertSend']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x1; n8n-nodes-base.hubspot v2.2 x1; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.DESK_TIMEOUT_MS               count=1 nodes=['Qualify']
+  placeholder/env $env.DESK_URL                      count=1 nodes=['Qualify']
+  placeholder/env HS_CRED                            count=1 nodes=['CrmUpsert']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env PLACEHOLDER                        count=3 nodes=['CrmUpsert', 'SendMail']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/fixplan/real/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/fixplan/real/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/fixplan/real/mf-recovery.json ==
+== /tmp/pa13b/g/fixplan/real/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order reverse real
+### /tmp/pa13b/g/reverse/real
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/reverse/real/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/reverse/real/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/reverse/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/reverse/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env $env.DESK_ALERT_TO                 count=1 nodes=['AlertSend']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env PLACEHOLDER                        count=1 nodes=['AlertSend']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x1; n8n-nodes-base.hubspot v2.2 x1; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.DESK_TIMEOUT_MS               count=1 nodes=['Qualify']
+  placeholder/env $env.DESK_URL                      count=1 nodes=['Qualify']
+  placeholder/env HS_CRED                            count=1 nodes=['CrmUpsert']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env PLACEHOLDER                        count=3 nodes=['CrmUpsert', 'SendMail']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/reverse/real/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/reverse/real/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/reverse/real/mf-recovery.json ==
+== /tmp/pa13b/g/reverse/real/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order p28 real
+### /tmp/pa13b/g/p28/real
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p28/real/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p28/real/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/p28/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/p28/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env $env.DESK_ALERT_TO                 count=1 nodes=['AlertSend']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env PLACEHOLDER                        count=1 nodes=['AlertSend']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x1; n8n-nodes-base.hubspot v2.2 x1; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.DESK_TIMEOUT_MS               count=1 nodes=['Qualify']
+  placeholder/env $env.DESK_URL                      count=1 nodes=['Qualify']
+  placeholder/env HS_CRED                            count=1 nodes=['CrmUpsert']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env PLACEHOLDER                        count=3 nodes=['CrmUpsert', 'SendMail']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/p28/real/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p28/real/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p28/real/mf-recovery.json ==
+== /tmp/pa13b/g/p28/real/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order p82 real
+### /tmp/pa13b/g/p82/real
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p82/real/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p82/real/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/p82/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/p82/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env $env.DESK_ALERT_TO                 count=1 nodes=['AlertSend']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env PLACEHOLDER                        count=1 nodes=['AlertSend']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x1; n8n-nodes-base.hubspot v2.2 x1; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.DESK_TIMEOUT_MS               count=1 nodes=['Qualify']
+  placeholder/env $env.DESK_URL                      count=1 nodes=['Qualify']
+  placeholder/env HS_CRED                            count=1 nodes=['CrmUpsert']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env PLACEHOLDER                        count=3 nodes=['CrmUpsert', 'SendMail']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/p82/real/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p82/real/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p82/real/mf-recovery.json ==
+== /tmp/pa13b/g/p82/real/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## F-002 alone real (fresh)
+### /tmp/pa13b/g/only002/real
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/only002/real/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/only002/real/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/only002/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/only002/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none
+== /tmp/pa13b/g/only002/real/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+== /tmp/pa13b/g/only002/real/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+== /tmp/pa13b/g/only002/real/mf-recovery.json ==
+== /tmp/pa13b/g/only002/real/mf-sub-crm-mail.json ==
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## F-008 alone real (fresh)
+### /tmp/pa13b/g/only008/real
+mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+WARN /tmp/pa13b/g/only008/real/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/only008/real/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+== /tmp/pa13b/g/only008/real/mf-form.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/only008/real/mf-hook.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/only008/real/mf-recovery.json ==
+== /tmp/pa13b/g/only008/real/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 2 WARN
+exit=0
+######## baseline film
+### /tmp/pa13b/g/base/film
+mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x3; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x3; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+WARN /tmp/pa13b/g/base/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/base/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x2; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.MF_CRM_URL                    count=1 nodes=['CrmUpsert']
+  placeholder/env $env.MF_STAGE_TIMEOUT_MS           count=1 nodes=['Qualify']
+  placeholder/env $env.MF_STAGE_URL                  count=1 nodes=['Qualify']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+RESULT: 0 FAIL, 2 WARN
+exit=0
+######## order glob film
+### /tmp/pa13b/g/glob/film
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/glob/film/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/glob/film/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/glob/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/glob/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x2; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.MF_CRM_URL                    count=1 nodes=['CrmUpsert']
+  placeholder/env $env.MF_STAGE_TIMEOUT_MS           count=1 nodes=['Qualify']
+  placeholder/env $env.MF_STAGE_URL                  count=1 nodes=['Qualify']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/glob/film/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/glob/film/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/glob/film/mf-recovery.json ==
+== /tmp/pa13b/g/glob/film/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order fixplan film
+### /tmp/pa13b/g/fixplan/film
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/fixplan/film/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/fixplan/film/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/fixplan/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/fixplan/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x2; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.MF_CRM_URL                    count=1 nodes=['CrmUpsert']
+  placeholder/env $env.MF_STAGE_TIMEOUT_MS           count=1 nodes=['Qualify']
+  placeholder/env $env.MF_STAGE_URL                  count=1 nodes=['Qualify']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/fixplan/film/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/fixplan/film/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/fixplan/film/mf-recovery.json ==
+== /tmp/pa13b/g/fixplan/film/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order reverse film
+### /tmp/pa13b/g/reverse/film
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/reverse/film/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/reverse/film/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/reverse/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/reverse/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x2; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.MF_CRM_URL                    count=1 nodes=['CrmUpsert']
+  placeholder/env $env.MF_STAGE_TIMEOUT_MS           count=1 nodes=['Qualify']
+  placeholder/env $env.MF_STAGE_URL                  count=1 nodes=['Qualify']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/reverse/film/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/reverse/film/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/reverse/film/mf-recovery.json ==
+== /tmp/pa13b/g/reverse/film/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order p28 film
+### /tmp/pa13b/g/p28/film
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p28/film/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p28/film/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/p28/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/p28/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x2; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.MF_CRM_URL                    count=1 nodes=['CrmUpsert']
+  placeholder/env $env.MF_STAGE_TIMEOUT_MS           count=1 nodes=['Qualify']
+  placeholder/env $env.MF_STAGE_URL                  count=1 nodes=['Qualify']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/p28/film/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p28/film/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p28/film/mf-recovery.json ==
+== /tmp/pa13b/g/p28/film/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## order p82 film
+### /tmp/pa13b/g/p82/film
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p82/film/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x3; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x5; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/p82/film/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/p82/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/p82/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.scheduleTrigger v1.2 x1
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
+  placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+  types: n8n-nodes-base.emailSend v2.1 x1; n8n-nodes-base.executeWorkflowTrigger v1.1 x1; n8n-nodes-base.httpRequest v4.2 x2; n8n-nodes-base.if v2.2 x7; n8n-nodes-base.postgres v2.5 x5; n8n-nodes-base.set v3.4 x4
+  placeholder/env $env.MF_CRM_URL                    count=1 nodes=['CrmUpsert']
+  placeholder/env $env.MF_STAGE_TIMEOUT_MS           count=1 nodes=['Qualify']
+  placeholder/env $env.MF_STAGE_URL                  count=1 nodes=['Qualify']
+  placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
+  placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
+== /tmp/pa13b/g/p82/film/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p82/film/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/p82/film/mf-recovery.json ==
+== /tmp/pa13b/g/p82/film/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## F-002 alone film (fresh)
+### /tmp/pa13b/g/only002/film
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/only002/film/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=none saveDataError=none
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/g/only002/film/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/g/only002/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/only002/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none
+== /tmp/pa13b/g/only002/film/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+== /tmp/pa13b/g/only002/film/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+== /tmp/pa13b/g/only002/film/mf-recovery.json ==
+== /tmp/pa13b/g/only002/film/mf-sub-crm-mail.json ==
+
+RESULT: 0 FAIL, 4 WARN
+exit=0
+######## F-008 alone film (fresh)
+### /tmp/pa13b/g/only008/film
+mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+WARN /tmp/pa13b/g/only008/film/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/g/only008/film/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+== /tmp/pa13b/g/only008/film/mf-form.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/only008/film/mf-hook.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/g/only008/film/mf-recovery.json ==
+== /tmp/pa13b/g/only008/film/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 0 FAIL, 2 WARN
+exit=0
+
+## NEGATIVE TESTS of the checker
+control_unmutated  OK   exit=0 want_exit=0 named_line_present=True
+orphan_reply       OK   exit=1 want_exit=1 named_line_present=True
+self_only          OK   exit=1 want_exit=1 named_line_present=True
+cycle_only         OK   exit=1 want_exit=1 named_line_present=True
+reroute_failreply  OK   exit=1 want_exit=1 named_line_present=True
+no_errlink         OK   exit=1 want_exit=1 named_line_present=True
+if_one_branch      OK   exit=1 want_exit=1 named_line_present=True
+switch_gap         OK   exit=1 want_exit=1 named_line_present=True
+bad_ref            OK   exit=1 want_exit=1 named_line_present=True
+bad_items_ref      OK   exit=1 want_exit=1 named_line_present=True
+no_trigger         OK   exit=1 want_exit=1 named_line_present=True
+dangling           OK   exit=1 want_exit=1 named_line_present=True
+no_name            OK   exit=1 want_exit=1 named_line_present=True
+count_wrong        OK   exit=1 want_exit=1 named_line_present=True
+parse_fail         OK   exit=1 want_exit=1 named_line_present=True
+missing_file       OK   exit=1 want_exit=1 named_line_present=True
+wrong_save         OK   exit=1 want_exit=1 named_line_present=True
+extra_change       OK   exit=1 want_exit=1 named_line_present=True
+wrong_code         OK   exit=1 want_exit=1 named_line_present=True
+wrong_code503      OK   exit=1 want_exit=1 named_line_present=True
+wrong_cond         OK   exit=1 want_exit=1 named_line_present=True
+no_valid_ref       OK   exit=1 want_exit=1 named_line_present=True
+valid_other_path   OK   exit=1 want_exit=1 named_line_present=True
+conn_structure     OK   exit=1 want_exit=1 named_line_present=True
+usage_unknown_expect OK   exit=1 want_exit=1 named_line_present=True
+usage_allow_no_pc  OK   exit=1 want_exit=1 named_line_present=True
+CASES: 26 total = 23 mutants + 1 control + 2 usage; 26 as expected, 0 not as expected []
+negative exit=0
+
+## AGGREGATE EXIT CODE: 0

@@ -1,0 +1,4 @@
+python3 -I /home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py <DIR> --baseline /tmp/pa13b/g/base/real --expect mf-form.json=15:14 --expect mf-hook.json=15:14 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --patch-checks F002,F008 --diff-base /tmp/pa13b/g/base/real --allow F002,F008 --quiet-info
+(<DIR> = the mutated copy of /tmp/pa13b/g/glob/real; usage cases below add or drop one option)
+usage case 1: same plus  --expect mf-bogus.json=1:1
+usage case 2: same without --patch-checks

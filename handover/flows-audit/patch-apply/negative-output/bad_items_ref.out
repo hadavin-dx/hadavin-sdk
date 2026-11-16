@@ -1,0 +1,51 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py /tmp/pa13b/neg/bad_items_ref --baseline /tmp/pa13b/g/base/real --expect mf-form.json=15:14 --expect mf-hook.json=15:14 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --patch-checks F002,F008 --diff-base /tmp/pa13b/g/base/real --allow F002,F008 --quiet-info
+### /tmp/pa13b/neg/bad_items_ref
+FAIL /tmp/pa13b/neg/bad_items_ref/mf-form.json node ReplyStoreFail: expression refers to $('Nope') which is not a node of this file
+mf-form.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  [mf-form.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/neg/bad_items_ref/mf-form.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-form.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-form.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-form.json] ReplyStoreFail status=503 body=={{ $items("Nope")[0] }}
+FAIL /tmp/pa13b/neg/bad_items_ref/mf-form.json F-002 ReplyStoreFail body lacks the $('Valid') reference
+  [mf-form.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+  [mf-hook.json] Claim alwaysOutputData=False onError='continueErrorOutput'
+WARN /tmp/pa13b/neg/bad_items_ref/mf-hook.json F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)
+  [mf-hook.json] KeyOk IF condition: [{"id": "c1", "leftValue": "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "rightValue": null, "operator": {"type": "boolean", "operation": "true", "singleValue": true}}]
+  [mf-hook.json] ReplyBadKey status=422 body=={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}
+  [mf-hook.json] ReplyStoreFail status=503 body=={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}
+  [mf-hook.json] Valid lead_key assignment: ["={{ String($json.lead_key || '') }}"]
+WARN /tmp/pa13b/neg/bad_items_ref/mf-recovery.json IF node StuckRow lacks output(s) [1] (baseline already lacks the same)
+WARN /tmp/pa13b/neg/bad_items_ref/mf-recovery.json IF node AlertRow lacks output(s) [1] (baseline already lacks the same)
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+== /tmp/pa13b/neg/bad_items_ref/mf-form.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/neg/bad_items_ref/mf-hook.json ==
+  node ADDED   KeyOk (n8n-nodes-base.if v2.2)
+  node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
+  node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
+  node CHANGED Claim: alwaysOutputData, onError (added)
+  node CHANGED Valid: parameters.assignments.assignments[lead_key].value
+  connections CHANGED for source Claim
+  connections CHANGED for source KeyOk
+  connections CHANGED for source Valid
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+== /tmp/pa13b/neg/bad_items_ref/mf-recovery.json ==
+== /tmp/pa13b/neg/bad_items_ref/mf-sub-crm-mail.json ==
+  settings CHANGED saveDataErrorExecution: 'none' -> 'all'
+  settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
+
+RESULT: 2 FAIL, 4 WARN
+exit=1

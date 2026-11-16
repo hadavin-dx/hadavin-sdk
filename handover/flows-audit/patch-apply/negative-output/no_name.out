@@ -1,24 +1,26 @@
-### neg/no_name
-FAIL neg/no_name/mf-form.json node(s) at index [1] lack name or type
-FAIL neg/no_name/mf-form.json dangling target 'Item' from 'Receive'
-FAIL neg/no_name/mf-form.json connection source 'Item' is not a node
-FAIL neg/no_name/mf-form.json unreachable from any trigger ['Claim', 'Claimed', 'IsProcessing', 'KeyOk', 'ReplyBadKey', 'ReplyRan', 'ReplyReview', 'ReplyStoreFail', 'ReplyStored', 'RunSub', 'Stored', 'SubInput', 'Valid']
-FAIL neg/no_name/mf-form.json node count 14 != expected 15
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py /tmp/pa13b/neg/no_name --baseline /tmp/pa13b/g/base/real --expect mf-form.json=15:14 --expect mf-hook.json=15:14 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --patch-checks F002,F008 --diff-base /tmp/pa13b/g/base/real --allow F002,F008 --quiet-info
+### /tmp/pa13b/neg/no_name
+FAIL /tmp/pa13b/neg/no_name/mf-form.json node(s) at index [1] lack name or type
+FAIL /tmp/pa13b/neg/no_name/mf-form.json dangling target 'Item' from 'Receive'
+FAIL /tmp/pa13b/neg/no_name/mf-form.json connection source 'Item' is not a node
+FAIL /tmp/pa13b/neg/no_name/mf-form.json unreachable from any trigger ['Claim', 'Claimed', 'IsProcessing', 'KeyOk', 'ReplyBadKey', 'ReplyRan', 'ReplyReview', 'ReplyStoreFail', 'ReplyStored', 'RunSub', 'Stored', 'SubInput', 'Valid']
+FAIL /tmp/pa13b/neg/no_name/mf-form.json node count 14 != expected 15
 mf-form.json nodes=14 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
 Traceback (most recent call last):
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 254, in <module>
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 284, in <module>
     sys.exit(main(sys.argv[1:]))
              ~~~~^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 242, in main
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 272, in main
     if pc: patch_checks(d, fn, pc, tag)
            ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 151, in patch_checks
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 168, in patch_checks
     if not get(d, nm): fail(tag, "F-002 node %s missing" % nm)
            ~~~^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 139, in get
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 156, in get
     def get(d, name): return next((n for n in d["nodes"] if n["name"] == name), None)
                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 139, in <genexpr>
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 156, in <genexpr>
     def get(d, name): return next((n for n in d["nodes"] if n["name"] == name), None)
                                                             ~^^^^^^^^
 KeyError: 'name'
+exit=1
