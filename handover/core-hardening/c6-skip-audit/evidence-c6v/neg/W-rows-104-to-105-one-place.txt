@@ -29,7 +29,7 @@ FAIL class 2: every count of 'N rows/edits' with N of 30 or more equals one of t
 PASS class 2: every 'vN-A and vN-B are the newest' names the newest sheet on disk (v34) :: {'34'}
 PASS class 2: no text names evidence-c6u/contact-grep-output.txt or c6u-APPLIED-ROWS.md as this work's file
 PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v34) :: {'34'}
-PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:59:38']) :: {'18:59:38'}
+PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['19:01:36']) :: {'19:01:36'}
 PASS class 2: 'to N files' is 10 everywhere (found ['10']) and the number of TASKS is twelve everywhere (found ['twelve']) :: (['10'], ['twelve'])
 PASS class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')]) :: ([('five', ' items'), ('two', ' (OWNER ONLY) questions')], 2)
 PASS class 2: no TASK number above twelve (the list has 12 tasks) :: 12

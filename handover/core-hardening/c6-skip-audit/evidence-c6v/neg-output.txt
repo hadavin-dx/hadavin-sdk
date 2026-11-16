@@ -47,7 +47,7 @@ C14-item15-without-real-value                    exit 1  OK  failed checks: 1 (n
 C15-L-POST-gone-from-box                         exit 1  OK  failed checks: 5 (new vs unchanged: 5); first new: FAIL table 3b equals the recount (13 lines) :: (13, 14)
 C16-1051-line-without-UNVERIFIED                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every line that names plan line 1051 says it is UNVERIFIED :: [885]
 C17-ready-used-before-defined-in-box-intro       exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2479 words now) and states its own real count :: 
-C18-check-time-not-in-report                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (107 pairs) :: [('10', '00', '00', '29'), ('10', '00', '00',
+C18-check-time-not-in-report                     exit 0  WRONG  failed checks: 0 (new vs unchanged: 0); first new: none
 C19-row11-total-wrong                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
 C20-add-16-wording-back                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL answer 2 replaces answer 1: net +15 words and no 'add 16' wording
 C21-tied-column-lacks-L-POST                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL section 3 'rows tied to it' column equals the recount
@@ -59,6 +59,7 @@ E4-wrong-count-42-apply                          exit 1  OK  failed checks: 1 (n
 E5-wrong-wave1-91-rows                           exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (38 default
 E6-stale-58-s-in-box                             exit 1  OK  failed checks: 5 (new vs unchanged: 5); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2484 words now) and states its own real count :: 
 E7-within-45-seconds-row14                       exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'
+E8-v29-file-missing-from-line                    exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL the box line of L-SHEET and the section 0 bullet each print every real v34 file with its real written tim
 R1-M-A-gate-removed-row8                         exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and ma
 R2-M-B-one-alert-fact-row14                      exit 1  OK  failed checks: 4 (new vs unchanged: 4); first new: FAIL box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 
 R3-M-C-assumption-label-gone-box                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own re
@@ -98,8 +99,11 @@ S-F3g-item16-after-deletion-only                 exit 1  OK  failed checks: 1 (n
 S-F3h-3e-scan-row-old                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F3 the stop-rule row and check C-6 carry the same rules
 S-F3i-C6-no-second-person                        exit 1  OK  failed checks: 7 (new vs unchanged: 7); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2472 words now) and states its own real count :: 
 S-F3j-row6-reason-11-to-14                       exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F3 row 6 reason says items 11 to 16
+S-F4a-newest-line-says-v29                       exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F4 the report names the newest owner sheet version (v34) and release note (v18) on disk, and the check ti
+S-F4b-release-note-v13-named                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F4 the report names the newest owner sheet version (v34) and release note (v18) on disk, and the check ti
 S-F4c-LRN14-cite-gone-from-box                   exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own re
 S-F4d-own-reading-label-gone                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-defs2: the label of the wider reading of G12 stands whole in every place it is given (0), and 'EGM = ..
+S-F4e-v30-file-unnamed                           exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL the box line of L-SHEET and the section 0 bullet each print every real v34 file with its real written tim
 S-m1a-crash-then-repeat-gone                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
 S-m1b-count-gone                                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
 S-m2-until-C9-gone                               exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL m2 row 13 says 'expected to be true until C-9 part 2'
@@ -251,7 +255,7 @@ W-two-OPEN-to-three-2                            exit 1  OK  failed checks: 2 (n
 W-wave1-95-to-96-one-place                       exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (38 default
 W-ready-57-to-56-one-place                       exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57
 W-rows-104-to-105-one-place                      exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL source-copy statement: the report says the rows were checked against the scratchpad copy, that equality w
-W-sheet-version-v33-to-v32-one-place             SKIPPED (mutation target absent)
+W-sheet-version-v33-to-v32-one-place             exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL the box line of L-SHEET and the section 0 bullet each print every real v34 file with its real written tim
 W-check-time-one-second-off                      exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2479 words now) and states its own real count :: 
 W-card-line-3-one-copy-edited                    exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 
 W-card-line-3-first-copy-edited                  exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL class 1: every safe-default phrase, every UNVERIFIED/VERIFIED/CHECKED count and every 'Confirmed?' cell e
@@ -261,8 +265,4 @@ W-row96-pipe-unescaped                           exit 1  OK  failed checks: 1 (n
 W-row96-anchor-30-s-EST-only                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL class 6: every old text shorter than 40 characters occurs exactly once in the whole file (chained rows ex
 W-row96-after-row15-order                        exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL C-1b all rows apply in table order on copies, no mismatch :: [96]
 W-box-extra-words                                exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2478 words now) and states its own real count :: 
-PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_ported_c6r.py line 77: AssertionError OWNER-SHEET-v33-B.md (written
-PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 37: AssertionError NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v33
-PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 38: AssertionError NEWEST RELEASE NOTE NAMED: v17
-PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 41: AssertionError OWNER-SHEET-v33-SOURCE.md (the template
-SUMMARY: 263 copies, 1 wrong
+SUMMARY: 267 copies, 1 wrong

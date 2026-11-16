@@ -35,3 +35,16 @@ two-lines-key-then-val   SHOWN exit=0
 equals-colon             hidden exit=0
 arrow                    hidden exit=0
 question                 hidden exit=0
+semicolon-sep            hidden exit=0
+conn-string              hidden exit=0
+amqp                     hidden exit=0
+mongodb                  hidden exit=0
+html-attr                hidden exit=0
+html-input-rev           SHOWN exit=0
+cap-key-in-value         SHOWN exit=0
+emoji                    hidden exit=0
+ansi                     hidden exit=0
+nul-in-line              hidden exit=0
+very-long-key            hidden exit=0
+many-equals              SHOWN exit=0
+TOTAL 49 shown 8

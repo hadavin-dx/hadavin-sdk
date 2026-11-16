@@ -706,7 +706,7 @@ for _k, _v in _floor.items():
     if len(_occ(_S10, _k)) < _v: fail('C262', 'the safe default %r appears %d times in the source (need %d or more)' % (_k, len(_occ(_S10, _k)), _v))
 for _m in re.finditer(r'(?i)\b(?:skip|omit|ignore|no need for|without) (?:the )?(?:R6|shape check|STOP RULE|name and creation date|7-day rule)', _S10): fail('C262', 'a safe default reversed: %r' % _m[0])
 # ---- v34 (round 6): every protected sentence is pinned at EVERY occurrence in the SOURCE and in each BUILT page (A and B), so a silent edit of one copy cannot pass on a generator-compare alone
-_HELP = rd('OWNER-HELPER-v34.md'); _FILM = rd('OWNER-FILM-PERSON-v34.md')
+_HELP = rd('OWNER-HELPER-%s.md' % _V9); _FILM = rd('OWNER-FILM-PERSON-%s.md' % _V9)
 _PAGES34 = {'A': A, 'B': B}
 def _pin(code, phrase, src_n=1, page_n=1, exact=True):
     """phrase must occur src_n times in the source and (exactly or at least) page_n times in each built sheet text A and B"""
@@ -765,6 +765,6 @@ _pin('C271', 'In those up to 22 minutes (2 of retry, then 10 and 10)', 1, 1)
 _pin('C272', 'sleep Never; screen off Never; lid close action', 1, 1)
 # C273 (reading load) no net words: the five pages are lower than v33 (15722), the sheet is no longer than v33 (6286 on A)
 for _k in 'AB':
-    _w = {p % _k if '%s' in p else p: len(rd(p % _k if '%s' in p else p).split()) for p in ('OWNER-SHEET-v34-%s.md', 'OWNER-CARD-v34-%s.md', 'OWNER-APPENDIX-v34-%s.md', 'OWNER-FILM-PERSON-v34.md', 'OWNER-HELPER-v34.md')}
+    _w = {p % _k if '%s' in p else p: len(rd(p % _k if '%s' in p else p).split()) for p in ('OWNER-SHEET-' + _V9 + '-%s.md', 'OWNER-CARD-' + _V9 + '-%s.md', 'OWNER-APPENDIX-' + _V9 + '-%s.md', 'OWNER-FILM-PERSON-' + _V9 + '.md', 'OWNER-HELPER-' + _V9 + '.md')}
     if sum(_w.values()) >= 15722: fail('C273', 'sheet %s: five pages hold %d words, not lower than v33 (15722)' % (_k, sum(_w.values())))
-    if _w['OWNER-SHEET-v34-%s.md' % _k] > 6286: fail('C273', 'sheet %s page has %d words: more than v33 (6286)' % (_k, _w['OWNER-SHEET-v34-%s.md' % _k]))
+    if _w['OWNER-SHEET-%s-%s.md' % (_V9, _k)] > 6286: fail('C273', 'sheet %s page has %d words: more than v33 (6286)' % (_k, _w['OWNER-SHEET-%s-%s.md' % (_V9, _k)]))

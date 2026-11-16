@@ -60,7 +60,7 @@ M["C14-item15-without-real-value"] = mut_row(rep, 6, "new", lambda s: s.replace(
 M["C15-L-POST-gone-from-box"] = "\n".join(l for l in rep.split("\n") if not l.startswith("| L-POST |"))
 M["C16-1051-line-without-UNVERIFIED"] = rep + "\nThe plan line 1051 is stale.\n"
 M["C17-ready-used-before-defined-in-box-intro"] = once("Every question below has ONE status", "Every ready question below has ONE status")
-M["C18-check-time-not-in-report"] = rep.replace(CTU_PLACEHOLDER, "00:00:00") if False else re.sub(r"2026-11-16T18:\d\d:\d\dZ", "2026-11-16T10:00:00Z", rep)
+M["C18-check-time-not-in-report"] = rep.replace(CTU_PLACEHOLDER, "00:00:00") if False else re.sub(r"2026-11-16T(?:18|19|20):\d\d:\d\dZ", "2026-11-16T10:00:00Z", rep)
 M["C19-row11-total-wrong"] = mut_row(rep, 11, "new", lambda s: s.replace("about 190 s in all", "about 200 s in all", 1))
 M["C20-add-16-wording-back"] = rep + "\nThe longer sentence adds +16 s.\n"
 M["C21-tied-column-lacks-L-POST"] = re.sub(r"(\| L-POST \(new in c6q\).*\| )11, (13, 21, 96) \|$", r"\1 \2 |", rep, count=1, flags=re.M)

@@ -750,7 +750,7 @@ def ks(letter):
     en = [k_ for k_ in range(st[0] + 1, len(ls_)) if ls_[k_].startswith('   Key step ')]
     _o = '\n'.join(ls_[st[0]:(en[0] if en else len(ls_))])
     if letter == 'B':
-        _ti = t48.find('Table of the typed words'); _o += ('\n' + t48[_ti:t48.index('The assistant never opens the key file', _ti)]) if _ti >= 0 else ''
+        _ti = t48.find('Table of the typed words'); _o += ('\n' + t48[_ti:(t48.find('The assistant never opens the key file', _ti) if t48.find('The assistant never opens the key file', _ti) >= 0 else len(t48))]) if _ti >= 0 else ''
     return _o
 def need(label, text, *needles):
     for nd_ in needles:
@@ -1280,11 +1280,11 @@ if not os.environ.get('NO_NEG'):
     neg('r14slash', 'followed by `/`, so that the take folder', 'so that the take folder', 'r14 3f lacks followed by')
     neg('r14wild', 'none of the signs `*`, `?` and `[`', 'none of the signs `?` and `[`', 'r14 3f lacks none of the signs')
     neg('r14star', '; do not use the sign `*`. A file that holds', '. A file that holds', 'r14 E-48 item 6 star rule')
-    neg('r14alarm2', 'named `is the secret key for the model still alive?`. When alarm 1 rings', 'named `still alive`. When alarm 1 rings', 'r14 3b lacks')
+    neg('r14alarm2', 'named `is the secret key for the model still alive?`. Alarm 3', 'named `still alive`. Alarm 3', 'r14 3b lacks')
     neg('r14promise', 'a procedure, not a control', 'a control', 'r14 3a honest label')
     neg('r14default', 'revoke the one key that you created for this take', 'wait for the assistant', 'r14 3h default when unsure')
     neg('r14unless', '(key step I). No message of the assistant changes this.', '(key step I), unless the assistant tells you otherwise before that time. No message of the assistant changes this.', 'r14 3j override sentence')
-    neg('r14e16', '`shred done key copies`; (3) do your items 2, 3 and 4', '`ok`; (3) do your items 2, 3 and 4', 'r17 F-1', 9)
+    neg('r14e16', 'Item 1 starts only when ALL the conditions of key step G.2 are true (the list is there, once), each as a message', 'Item 1 starts when SOME of the conditions of key step G.2 are true, each as a message', 'r17 F-1 pointer in E-16')
     neg('r14e55', 'each of your items 2, 3, 4, 5 and 6', 'each of your items', 'r14 E-55 lacks', 9)
     neg('r14e37', 'the LAST FOUR CHARACTERS of it as the key list shows them', 'something else', 'r14 E-37 note')
     neg('r14consent', 'my screen, and that it can reach n8n\'s encryption key, the credentials saved in the take\'s n8n, the copy of the secret key for the model in the take folder and the files in `~/take-secrets`."', 'my screen, and that it can reach n8n\'s encryption key and the credentials saved in the take\'s n8n."', 'r14 E-12 consent reach')
@@ -1337,7 +1337,7 @@ if not os.environ.get('NO_NEG'):
     _skpre = 'sk-' + 'ant-' + 'api03-'
     neg('r16F1word', '`key gone, no more decisions`', '`key gone`', 'r16 F1 word lacks', 2)
     neg('r16F1time', 'you revoke it whatever you have written, and then you write `key gone, no more decisions`', 'you revoke it and write `key revoked`', 'r16 F1 E-55 lacks', 9)
-    neg('r16F2a', 'or any other contact, you delete nothing and tell the assistant\n~~~~\nWhy: Security F2', 'you delete them all\n~~~~\nWhy: Security F2', 'r16 F2 E-62 lacks')
+    neg('r16F2a', 'or any other contact, you delete nothing and tell the assistant.\n~~~~\nWhy: ', 'you delete them all.\n~~~~\nWhy: ', 'r16 F2 E-62 lacks')
     neg('r16F2b', "(with this take's id); if you find more than 3, or any other contact", "(made-up names); if you find more than 3, or any other contact", 'r16 F2 E-42')
     neg('r16F2c', '### E-62: OWNER-STEPS-realrun-v3.md, line 112', '### E-63: OWNER-STEPS-realrun-v3.md, line 112', 'ids differ')
     neg('r16F3', 'password files and editor copies made in step 8', 'other files made in step 8', 'r16 F3 G lacks')
@@ -1390,8 +1390,8 @@ if not os.environ.get('NO_NEG'):
            'r17 D.5 key gone': ('and then write `key gone, no more decisions`: that one message', 'and then write `key revoked`: that one message')}
     for _k, (_o, _n) in _pl.items():
         neg('r17pin-' + _k.split()[0] + _k.split()[1][:3], _o, _n, 'r17 ', 9)
-    neg('r17order-card', '4. You: do your item 5, the retire check.\n', '', 'r17 F-1 the seven steps')
-    neg('r17order-e16', '(4) do your item 5, the retire check; ', '', 'r17 F-1 the seven steps', 9)
+    neg('r17order-card', '4. You: do your item 4 (save the screenshots) and your item 5, the retire check.\n', '', 'r17 F-1 the seven steps')
+    neg('r17order-e16', 'The order is the card of item 3 (the seven steps printed there)', 'The order is as below', 'r17 F-1 pointer in E-55')
     neg('r17start-e55', 'you have read the list of what the assistant will remove; and `start clean-up`.', 'you have read the list; and `start clean-up`.', 'r17 F-1 start sentence')
     neg('r17oldwords', '`shred done other files` (or', '`shred done 2` (or', 'r17 F-8 old words')
     neg('r17more', 'or reply `another take`."', 'or reply `more takes`."', 'r17 F-8 old words')
@@ -1403,7 +1403,7 @@ if not os.environ.get('NO_NEG'):
     neg('r17alarm3', 'if a take is running, let it finish (key step K), then revoke the key at once', 'stop everything else and do key step I now', 'r17 F-3 C')
     neg('r17routeb', 'Route A is the safer one for keeping secrets safe;', 'Route B is fine;', 'r17 F-2 route B price')
     neg('r17appx', 'This appendix is a separate page, not part of the sheet', 'This appendix is a page', 'r17 F-2 appendix landing')
-    neg('r17applink', 'which is linked from this step; you do not need it', 'which you do not need', 'r17 F-2 link in owner text')
+    neg('r17applink', 'which is linked from this step (the file', 'which is somewhere (the file', 'r17 F-2 link in owner text')
     neg('r17thirty', 'Make no new key now unless at least 30 minutes remain', 'Make no new key now unless at least 20 minutes remain', 'r17 F-4')
     neg('r17last', 'by Mon 23 Nov 2026 18:19 UTC = 23:49 IST at the latest (the last time to revoke)', 'by Mon 23 Nov 2026 18:20 UTC = 23:50 IST at the latest (the last time to revoke)', 'r17 last time to revoke is wrong')
 

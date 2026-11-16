@@ -167,7 +167,7 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
 CANARY_PLANNED=1982
-SELFTEST_PLANNED=1635
+SELFTEST_PLANNED=2019
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 DC1=$(printf '\021'); DC2=$(printf '\022'); RS=$(printf '\036')   # v9: private stand-ins used inside one rule block only
 write_mask_sed() {
