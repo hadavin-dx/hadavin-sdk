@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T12:56:11Z
+UPDATED_UTC: 2026-11-16T12:57:44Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 14
-PERCENT: 72
+PERCENT: 73
 AGENTS_RUNNING: 8
-CAPACITY: 0.92 load of 4 cores, mem 0/15 GB, RAM 944/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.4G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.34 load of 4 cores, mem 0/15 GB, RAM 931/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.4G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: fix batches from r8/r9 reviews; fresh reviews RUNBOOK, REVIEW r12, QUESTIONS, F8; TAKE-CHECKLIST fixer after ab19a3a
-PUSHED_UTC: 2026-11-16T12:56:11Z
+NEXT: collect 8 agents; then fresh reviews of fixed files; drift-007 refresh; LEAD questions for pin reader and re-smoke list
+PUSHED_UTC: 2026-11-16T12:57:44Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,14 +30,14 @@ PUSHED_UTC: 2026-11-16T12:56:11Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| ab19a3a | reviewer | sonnet | TAKE-CHECKLIST/FIX-PLAN commands check | 12:30Z | 13:15Z | running | pending |
-| a1c3222 | reviewer | sonnet | OWNER-STEPS owner part stranger read r17 | 12:50Z | 13:15Z | running | pending |
-| a50fc9a | reviewer | sonnet | RUNBOOK r8 readiness review | 12:56Z | 13:20Z | running | pending |
-| a354419 | reviewer | sonnet | REVIEW.md r12 design | 12:56Z | 13:20Z | running | pending |
-| a590669 | reviewer | sonnet | REVIEW.md r12 code | 12:56Z | 13:20Z | running | pending |
+| a50fc9a | reviewer | sonnet | RUNBOOK r8 readiness review | 12:55Z | 13:20Z | running | pending |
+| a354419 | reviewer | sonnet | REVIEW.md r12 design | 12:55Z | 13:20Z | running | pending |
+| a590669 | reviewer | sonnet | REVIEW.md r12 code | 12:55Z | 13:20Z | running | pending |
 | aa2e135 | fixer | sonnet | FINDINGS/LEDGER r9 fixes | 12:56Z | 13:25Z | running | pending |
 | a53e161 | reviewer | sonnet | F8 round 5 result review | 12:56Z | 13:20Z | running | pending |
 | a3450a3 | reviewer | sonnet | QUESTIONS fresh review | 12:56Z | 13:20Z | running | pending |
+| ab77681 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r9 fixes (B1, M1-M11, readiness B1-5) | 12:57Z | 13:30Z | running | pending |
+| a09691e | fixer | sonnet | OWNER-STEPS owner part r17 fixes | 12:58Z | 13:25Z | running | pending |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. Fresh stranger read of QUESTIONS after round 7 (Blockers/Majors only) once the owner-part fixer is done
