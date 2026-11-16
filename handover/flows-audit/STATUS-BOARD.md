@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T17:14:41Z
+UPDATED_UTC: 2026-11-16T17:19:27Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 7
-CAPACITY: 2.27 load of 4 cores, mem 1/15 GB, RAM 1337/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 1.71 load of 4 cores, mem 1/15 GB, RAM 1360/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: 8th slot empty: every remaining independent job reads a file an agent is editing now (drift-007 r3 and citation checks wait for the fixers); ITEMS_OPEN 30, 70 percent = 7 of 10 verified, none closed since 13:59Z
-PUSHED_UTC: 2026-11-16T17:14:41Z
+NEXT: 8 of 8 running; load 1.7 of 4 cores is under the 70-85 percent target because most agents are read-only reviewers; ITEMS_OPEN 30, 70 percent = 7 of 10 verified, none closed since 13:59Z
+PUSHED_UTC: 2026-11-16T17:19:27Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,20 +30,21 @@ PUSHED_UTC: 2026-11-16T17:14:41Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| acf8ab59 | F8 flow-check r11 fixer | sonnet | fix flow-check (uncapped) | 15:50Z | 17:30Z | running | run_all.sh intermittency work |
-| ab0a31d9 | FINDINGS/LEDGER r16 fixer | sonnet | 6 Majors from reader r15 | 17:08Z | 17:25Z | running | editing |
-| afb10ffb | REVIEW.md r37 fixer | sonnet | design r36 B1+M, reader r36 M, citation caveats (uncapped) | 17:09Z | 17:35Z | running | editing REVIEW.md |
-| a8c4d118 | Q31 r23 fixer | sonnet | 6 Majors from reader r22 + 4 new items | 17:11Z | 17:30Z | running | editing QUESTIONS.md |
-| a45191d1 | RW/CT r28 reader | sonnet | stranger read of parts not yet read | 17:12Z | 17:25Z | running | reading |
-| a0007ab5 | plan-files r31 reader | sonnet | stranger read RUNBOOK steps 1-17, FIX-PLAN, TAKE-CHECKLIST | 17:13Z | 17:28Z | running | reading |
-| a17610d4 | patch-copies r13 fixer | sonnet | 6 Majors from reader r13 (uncapped) | 17:14Z | 17:35Z | running | editing README/DEAD-MAN-CHECK |
+| acf8ab59 | F8 flow-check r11 fixer | sonnet | fix flow-check (uncapped) | 15:50Z | 17:35Z | running | run_all.sh intermittency work |
+| a3f55414 | RW/CT r29 fixer | sonnet | 9 findings from reader r28 | 17:15Z | 17:35Z | running | editing RW/CT |
+| aa00a4e5 | FINDINGS/LEDGER r17 reader | sonnet | stranger read of unread rows | 17:15Z | 17:30Z | running | reading |
+| a323882c | plan-files r32 fixer | sonnet | 10 Majors from reader r31 + check 13 | 17:16Z | 17:40Z | running | editing RUNBOOK/FIX-PLAN/TAKE-CHECKLIST |
+| a635dbef | REVIEW.md r38 design review | sonnet | design review, whole file (uncapped) | 17:17Z | 17:32Z | running | reading |
+| a0d0612a | REVIEW.md r38 stranger read | sonnet | full read (uncapped) | 17:17Z | 17:32Z | running | reading |
+| a63c2e9d | patch-copies r14 reader | sonnet | stranger read README+DEAD-MAN-CHECK (uncapped) | 17:18Z | 17:30Z | running | reading |
+| a6addcb1 | QUESTIONS glossary fixer | sonnet | rows above line 420 to match Q31 | 17:18Z | 17:30Z | running | editing QUESTIONS.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. FINDINGS/LEDGER r16 fixer report: verify (compare14 0 differences), then r17 reader
-2. REVIEW.md r37 fixer report: verify counts, then design + reader + citation round 38 (uncapped)
-3. Q31 r23 fixer report: verify label counts, then fresh reader
-4. RW/CT r28 and plan-files r31 reader reports: save, then one fixer each
-5. F8 r11 report: evidence runner alone plus fresh uncapped reviews; patch-copies r13 fixer report then citation check
+1. Verify RW/CT r29 fixer report with checkers; then fresh RW/CT reader
+2. REVIEW.md r38 design + reader reports: save, one uncapped r39 fixer; then citation checker
+3. Glossary fixer report: verify Q31 section unchanged; then Q31 r24 reader
+4. Patch-copies r14 and FINDINGS r17 reader reports: save, fixers
+5. Plan-files r32 and F8 r11 reports: verify, fresh reviews; evidence runner for F8 alone
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
