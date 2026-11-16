@@ -1,0 +1,50 @@
+=== NOTHING RAN IN n8n. Import of these files into n8n was never tried. ===
+=== READ THIS BLOCK BEFORE ANYTHING ELSE ===
+--- (1) The lead table and the column check ---
+Table definition used for the column check: demo/n8n-flows-v4/mf_leads.sql (the take needs THAT table, with the four alert columns, not the older one in demo/n8n-flows).
+Query strings read: 0. Column WARNs: 0. Table WARNs: 0. Postgres steps with no query text (not compared): 0.
+!!! 0 QUERY STRINGS WERE READ (or the count line is missing): NO column was compared. This script exits 4.
+GATE BEFORE THE FIRST SEND (a person's step; this script cannot see your database): in psql run: select column_name from information_schema.columns where table_name='mf_leads' and column_name in ('alert_sent','alert_token','alert_until','alert_attempts');  It must list all four alert_ columns. If it lists fewer, do not send: no alert would ever go out.
+--- (2) Is saving of past runs off? One line per file (a run list in n8n stays empty when it is off) ---
+WARN accept-no-save --accept-no-save mf-recovery.json excused nothing: that flow was not found, or its run-saving settings are not off, or it is not a schedule-only flow, so this decision does nothing (file name wrong, or the settings changed)
+WARN accept-no-save --accept-no-save mf-recovery.json excused nothing: that flow was not found, or its run-saving settings are not off, or it is not a schedule-only flow, so this decision does nothing (file name wrong, or the settings changed)
+!!! A FLOW THAT THE TAKE USES HAS RUN SAVING OFF (or the recorded accept for the recovery flow excused nothing): the run list in n8n stays empty for it. Apply patch F-008 to the flows first. This script exits 4.
+--- (3) Values that must be filled in before import: mail addresses and credential ids ---
+--- (4) Does each of the two entry flows contain the F-002 key check (a node named KeyOk)? ---
+mf-form.json: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially)
+mf-hook.json: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially)
+--- (5) Open decisions and environment variables ---
+OPEN LEAD DECISIONS: 0 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
+No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): check it on the machine that films the take; run with --block-env-access to see which steps depend on it.
+If n8n on the filming machine blocks environment-variable access inside steps, those steps stop working. No file check can see that setting. To see which steps would break, run the checker with --block-env-access (exit 1 expected today). exit 0 does NOT mean authentication was checked.
+=== end of top block; full checker output follows ===
+# ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
+# What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
+# Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
+#   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
+# Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line. 3 = the checker itself broke or could not write a file.
+# FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
+# WARN-LEAD-DECISION = an open decision for the lead or owner (no password on a web address, $env reads). Exit stays 0, so exit 0 does NOT mean authentication was checked.
+# Rules that come from memory of n8n (tag 'n8n rule UNVERIFIED') are WARN only; --fail-unverified makes them FAIL.
+# A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
+# The numbers for THIS run (open decisions, known open problems, accepted IF branches) are printed in the closing block: 'OPEN LEAD DECISIONS' and 'Known open problems'.
+# =============================================================================
+### /tmp/e7h2/empty
+FAIL /tmp/e7h2/empty file list [] != expected ['mf-form.json', 'mf-hook.json', 'mf-recovery.json', 'mf-sub-crm-mail.json']
+WARN accept-if --accept-if mf-recovery.json=AlertRow matched nothing: no IF node of that name in that file lacks exactly the recorded output(s), so this decision excuses nothing (file or node name wrong, or the gap is gone)
+WARN accept-if --accept-if mf-recovery.json=StuckRow matched nothing: no IF node of that name in that file lacks exactly the recorded output(s), so this decision excuses nothing (file or node name wrong, or the gap is gone)
+WARN accept-no-save --accept-no-save mf-recovery.json excused nothing: that flow was not found, or its run-saving settings are not off, or it is not a schedule-only flow, so this decision does nothing (file name wrong, or the settings changed)
+RESULT: 1 FAIL, 3 WARN
+OPEN LEAD DECISIONS: 0 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
+No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): check it on the machine that films the take; run with --block-env-access to see which steps depend on it.
+SQL columns compared with the --ddl file: 0 query string(s) read.
+SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)=0
+SQL COLUMNS NOT CHECKED: a --ddl file was given but 0 query strings were read, so NO column was compared (the checker reads only the 'query' setting of postgres steps).
+Known open problems: 3
+  - accept-if: --accept-if mf-recovery.json=AlertRow matched nothing: no IF node of that name in that file lacks exactly the recorded output(s), so this decision excuses nothing (file or node name wrong, or the gap is gone)
+  - accept-if: --accept-if mf-recovery.json=StuckRow matched nothing: no IF node of that name in that file lacks exactly the recorded output(s), so this decision excuses nothing (file or node name wrong, or the gap is gone)
+  - accept-no-save: --accept-no-save mf-recovery.json excused nothing: that flow was not found, or its run-saving settings are not off, or it is not a schedule-only flow, so this decision does nothing (file name wrong, or the settings changed)
+Not proven: that n8n accepts these files on import; what n8n really does when a step fails (for example whether a repeated lead key still gets its answer, and whether a failed step reaches the failure line: only a test run in n8n can show it); whether the SQL inside the postgres nodes is correct (only the column names are compared, and only with --ddl); who calls a web address, whether the flow is active, and test versus production web address; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId).
+Passing this check does NOT mean the flows are ready to film.
+Open items counted: checker known open problems 3 + files without the key check 2 + psql gate 1 + problems of this script 2.
+FINAL: take_check exit status 1. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: 8. (1 = fault in a file, 4 = table check missing or failed.) This is not a pass for filming.
