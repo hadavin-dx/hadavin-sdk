@@ -15,8 +15,11 @@ NOTE (system-map, 2026-11-16): only the section 'Current step 3a' at the end of 
 No deadline releases this step (as with step 2). Times from the studio lead are in UTC and IST. Also needed on the card: step 4 must say it starts after 3a; step 7 must name 3a among the steps that use the `demo-take` Chrome profile; use one verb for step 6 ("delete") everywhere; keep the "card addition, not in v5" marker; the stale lines 3-4 of this file (the ".used" rule and the "stop and ask" line already exist on the card) must be dropped before applying.
 
 
-## Current step 3a (system-map, 2026-11-16, after cold read 3; replaces every earlier 3a; UNVERIFIED against the program; decision 2: the take never deletes and the assistant deletes nothing)
-3a. Leftover demo contacts: LIST ONLY. Do not delete anything in this step. After step 3, the studio lead (not the assistant) gives the owner a list with one row per leftover contact: lead id, HubSpot contact id and run name; the e-mail is shown with the domain part replaced by X. Never write the HubSpot account number in chat.
-3a-1. Reply 'contacts listed: N' (N = rows on the list). Nothing else.
-3a-2. STOP. The owner deletes the listed contacts by hand in HubSpot only after the studio lead writes 'demo mails may be deleted', following OWNER-RUN-DAY-CARD.md steps 22 to 25 (deleting cannot be undone). If any listed contact is already gone, stop and tell the studio lead; the program may have deleted it, which would be a defect.
-Terms: run name = the short name you chose for this run; lead id = the number the program gives each made-up test person; demo-take Chrome profile = the browser profile made for this demo. The earlier 'step 3a approved' release word and every 'delete these contacts' text above are cancelled.
+## Current step 3a (system-map, 2026-11-16, after cold read 4; replaces every earlier 3a; UNVERIFIED against the program; decision 2: the take never deletes and the assistant deletes nothing, ever)
+Reader of the steps marked (Owner) = the owner. Steps without a mark = the assistant (the studio lead's helper), who deletes nothing.
+3a. Leftover demo contacts: LIST FIRST, then the owner deletes by hand. Never write the HubSpot account number in chat.
+3a-1. After step 3, the studio lead sends the owner AND the assistant a list: lead id, HubSpot contact id and run name for each leftover contact (e-mail domain shown as X). The assistant replies only 'contacts listed: N'.
+3a-2. STOP. Nobody deletes anything until the studio lead writes 'contacts may be deleted' (an exact phrase; it is not the same as 'demo mails may be deleted' on the run-day card).
+3a-3. (Owner) Open each listed contact by its contact id. If the contact id does not match its run name, or a listed contact is already gone, STOP and tell the studio lead (the program may have deleted it, a defect). Delete nothing yet.
+3a-4. (Owner) STOP: deleting cannot be undone. Only when every listed contact passed 3a-3, delete exactly those contacts by hand in HubSpot, then reply 'contacts deleted: N of M'.
+Terms: run name = the short name you chose for this run; lead id = the number the program gives each made-up test person; demo-take Chrome profile = the browser profile made for this demo.

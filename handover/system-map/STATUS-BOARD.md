@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:12:22Z
-PUSHED_UTC: 2026-11-16T12:12:22Z
+UPDATED_UTC: 2026-11-16T12:14:27Z
+PUSHED_UTC: 2026-11-16T12:14:27Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 15 of 20 table items not done (table below; M3, M14, M20 are rows in it); mean 83.1 percent (1662 / 20). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 running (ORDER 035 met). Ended since last beat: 16 cold reads (digests 502-520). 0 missing. ALERT for the lead (unchanged): lane L4c marked 7 files under handover/demo/real-run/ as read; decision 5 bars real-run folders; the lead must say whether they are masked notes. Also: work/OWNER-ONLY.txt does not exist yet; the lead writes it before any lane starts (PLAN-002 section 3b).
-CAPACITY: nproc=4 load=0.14 0.20 0.20 | RAM used/total MB 908/16087 | /dev/vda        252G   18G   21G  46% / | 2368 |  top disk user I made: work/ (KB, last field); MB freed: 0 (ORDER 031)
-NEXT: digested through 520. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
+AGENTS_RUNNING: 8 running (ORDER 035 met). Ended since last beat: 10 cold reads (digests 521-530). 0 missing. ALERT for the lead (unchanged): lane L4c marked 7 files under handover/demo/real-run/ as read; decision 5 bars that; work/OWNER-ONLY.txt does not exist yet and must be written before any lane starts.
+CAPACITY: nproc=4 load=0.13 0.18 0.19 | RAM used/total MB 895/16087 | disk 252G total, 18G used, 21G free, 46% | work/ 2376 KB (largest dir I made); MB freed: 0 (ORDER 031)
+NEXT: digested through 530. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,14 +45,14 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| abea81ef | cold read cleanup-card-held-edits r2 (read-only) | 12:12 | +5 min | running | nothing yet |
-| ad626d5e | cold read banned-claims r2 (read-only) | 12:12 | +5 min | running | nothing yet |
-| ad0800b7 | cold read t19 steps r2 (read-only) | 12:12 | +5 min | running | nothing yet |
-| a1900e33 | cold read critical-path r9 (read-only) | 12:12 | +5 min | running | nothing yet |
-| aa1dedc7 | cold read FINAL-CROSSCHECK (read-only) | 12:12 | +5 min | running | nothing yet |
-| a44f27bc | cold read premortem-r1 (read-only) | 12:12 | +5 min | running | nothing yet |
-| a874e654 | cold read not-checked-r2 (read-only) | 12:12 | +5 min | running | nothing yet |
-| add974a6 | cold read row1-builder-brief (read-only) | 12:12 | +5 min | running | nothing yet |
+| a15e0698 | cold read cleanup-card step 3a r3 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
+| a46f9c73 | cold read banned-claims r3 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
+| a106bd54 | cold read t19 steps r3 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
+| a6558235 | cold read not-checked-r2 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
+| a2ff4c7d | cold read row1-builder-brief r2 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
+| aadb515f | cold read premortem-r1 r2 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
+| abff3252 | cold read FINAL-CROSSCHECK r3 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
+| abdcbdcb | cold read decision-list-for-lead r2 | 2026-11-16T12:14:27Z | +5 min | running | nothing yet |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

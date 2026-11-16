@@ -44,3 +44,9 @@ Open: mirror this list into OWNER-VIEW row 6 and run-day step 27 once the studio
 - Anything not in the Allowed list is banned. Nobody posts until a named checker is written here. The owner does not post before that; the studio lead sends the final words.
 - Plain words: D-04 = the lead's decision to apply this narrow wording (not made yet); D-05 = the crash-risk decision on the lead page; step J = the post step of the owner steps file; core-hardening = the session that owns the owner steps file.
 
+## Fourth pass (after a cold read; this block wins over everything above)
+- Roles (one term each): studio lead = the Claude session that works with the owner; studio head = the person who decides for the studio; owner = the human who runs the take and would post; checker = a second person, other than the author of the words, named by the studio head (NOT NAMED yet). Nobody posts until a checker's name is written here.
+- Allowed list, complete: (1) 'A lead sent twice with the same id is processed once.' (2) The final words the studio lead sends after the rehearsal, checked by the checker. (3) The spoken sentence 'I delete the made-up contacts by hand after the take.' Everything else is banned. Not on any list means banned; do not ask.
+- Superseded (do not use): every earlier line that says 'unless', 'until the studio lead rules', 'only as D-05 says' or 'ask the studio lead'. The only unlock left: a named result file that proves the claim, read by the checker, never for a claim that the system deletes.
+- Paths: decision N = inputs/DECISIONS-2026-11-16.md; v5 step J = the owner steps file in inputs/; run-day card = OWNER-RUN-DAY-CARD.md; OWNER-VIEW row 6 = the post row in OWNER-VIEW.md.
+

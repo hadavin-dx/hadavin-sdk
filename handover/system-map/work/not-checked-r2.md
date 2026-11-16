@@ -11,3 +11,6 @@ Terms: T19 = the test that sends one lead twice and counts mails and contact wri
 | 6 | Run sheet is not in this checkout (it is on origin/demo/handover). Mark scene 1 to 4 sentences that mention stand-ins, refusal, 60 s or counts. | studio lead | before the film |
 | 7 | flowcheck blind spots (writes without "crm" in the address, `$node[...]`, disabled steps). | core-hardening session | after the rehearsal |
 | 8 | Duplicate behaviour of `CrmUpsert` on the owner's own free HubSpot trial is unchecked. | studio lead | same time as row 1 |
+
+ADDED 16 Nov 2026 (cold read): due times in UTC and IST (proposals; the studio lead sets the real ones). Rows 1, 2, 4, 8: Tue 17 Nov 04:30 UTC / 10:00 IST, only if the loopback re-smoke passed; if it failed, the lead reports by the same time. Row 3: Tue 17 Nov 12:00 UTC / 17:30 IST (the folder must be on a fetchable branch before then). Row 7: after the rehearsal, by Tue 17 Nov 12:00 UTC / 17:30 IST. Row 5: before the owner's written yes, by Tue 17 Nov 12:00 UTC / 17:30 IST. Row 6: Tue 17 Nov 12:00 UTC / 17:30 IST. Glosses: flowcheck = the script that checks the flow files for forbidden steps; row 4 cleaned = the studio lead states in writing 'executions list cleared' or 'kept off camera'. Row 7 is not a checkable item until core-hardening lists what flowcheck must catch.
+

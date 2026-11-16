@@ -108,3 +108,6 @@ Studio head: where the archive lives; yes to every move; keep or archive extract
 | result review round 1: egm-design (5 Majors, 5 Nits) and egm-codebase-details (2 Majors, 8 Nits; no Blocker) | done; fixes applied here, saved as work/review-crosscheck-*-r1.md |
 | egm-resolve through the Skill tool | done: work/resolve-crosscheck-1.md; Majors and Nits applied here, except Major M3: no source column was added, a sources paragraph under section 2 was used instead (see the next row) |
 | round 2 (only Blockers and Majors) | NOT run. Design Major M3 was fixed as a sources paragraph under the section 2 table, not as a table column, and no reviewer has re-read it; treat M3 as fixed-unverified |
+
+
+ADDED 16 Nov 2026 (cold read): C-01 extras are CUT (decision 4); keep only the minimal price and max_tokens check, if the take's program loads Route config; A-01 is deferred (decision 4). The film-v5 mail login and alert rows are outside the take (decision 1). 'Own small database' and the Postgres saving order: decision 10 settles it as one Postgres server with two databases. Times: no hour in UTC and IST exists; the studio lead sets them (decision 12: rehearsal tonight or tomorrow morning IST).
