@@ -1117,3 +1117,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 812 critical-path r21: chain, A4, glossary. FIXED by CURRENT ANSWER r22.
 - 813 row1-builder-brief r10: not self-contained. FIXED by CURRENT ONLY r11.
 - 814 PLAN-002 r21: owner meanings, step 0. FIXED by RULINGS r22; fold TO DO.
+
+- 815 L1c r12: Blocker count, reaper, cells. PARTLY FIXED by CURRENT r13; cells TO DO.
