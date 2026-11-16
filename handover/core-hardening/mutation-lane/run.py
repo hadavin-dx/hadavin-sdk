@@ -46,6 +46,25 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
   * After the loop `raw/<prefix>-tree-diff.txt` records the differences between the scratch tree and
     a FRESH `git archive` extract (+ patches). Any difference other than the declared `--extra`
     files, or a marker left behind, gives exit code 4 (M-D).
+  * Hard links (review r3 safety Major B): the file under test is written in place, so a scratch tree built
+    with `cp -al` or `rsync --link-dest` would plant the mutant in the file it is linked to (maybe the real
+    repository). A target or reference file with more than one name (st_nlink > 1), or the same inode as its
+    reference, is REFUSED before anything is planted; `write_target` re-checks on the open file descriptor,
+    before the file is truncated (this also covers `--restore`).
+  * pytest takes its settings from the first ini file found going UP from the test paths. If the scratch root
+    has none and a folder above it has one (e.g. `addopts` in /tmp/pytest.ini), the run is REFUSED (put the
+    ini inside --root, i.e. into the git archive).
+  * `--restore` also recovers a target that was deleted (re-created with O_EXCL and the recorded mode). The
+    marker records the identity of the test process (start time and full argument list from /proc): an orphaned
+    group is stopped only if that identity still matches (pid reuse), or, when its leader is already gone, if
+    group members started after it and work inside --root. If SIGKILL hit between the start and the marker
+    rewrite, the first marker holds the expected command and the group is found by that.
+  * Signals that end the run: SIGTERM, SIGINT, SIGHUP, SIGQUIT, SIGABRT, SIGALRM, SIGUSR1, SIGUSR2, SIGXCPU,
+    SIGVTALRM, SIGPROF, SIGIO, SIGPWR (exit 128+N). SIGKILL and SIGSTOP cannot be caught: use `--restore`.
+NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
+scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. Paths inside --root
+are trusted as a whole: `.venv` (directly under the root) and the cache folders are NOT compared, so a mutant
+planted into, or a test that changes, files in them is not detected; other test files in --root run too.
 Exit codes: 0 all mutants ran and the tree is clean; 2 refused; 3 restore failed (marker and backup
 kept); 4 tree not clean or marker left after the loop; 128+N interrupted by signal N.
 Verdict per mutant from the pytest exit code: 0 SURVIVED, 1 KILLED, anything else ERROR.
@@ -84,9 +103,38 @@ SKIP_ANY = {"__pycache__", ".pytest_cache"}
 STATE = pathlib.Path(tempfile.gettempdir()) / f"hadavin-mutation-lane-{os.geteuid()}"
 NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 SHA_RE = re.compile(r"[0-9a-fA-F]{4,64}")
-HANDLED_SIGNALS = (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)
-# the only options a TESTS list may use (everything else is refused, see check_test_args)
-PLUGIN_OFF_RE = re.compile(r"no:[A-Za-z0-9_.-]+")
+# every catchable signal whose default action ends the process (SIGPIPE/SIGXFSZ are ignored by Python; the
+# synchronous SIGSEGV/SIGFPE/SIGILL/SIGBUS/SIGSYS are not "sent" by anyone and cannot be resumed)
+HANDLED_SIGNALS = tuple(
+    getattr(signal, n)
+    for n in (
+        "SIGTERM",
+        "SIGINT",
+        "SIGHUP",
+        "SIGQUIT",
+        "SIGABRT",
+        "SIGALRM",
+        "SIGUSR1",
+        "SIGUSR2",
+        "SIGXCPU",
+        "SIGVTALRM",
+        "SIGPROF",
+        "SIGIO",
+        "SIGPWR",
+    )
+    if hasattr(signal, n)
+)
+# `-p no:NAME` may only switch off one of these (review r3 safety Major A: `-p no:runner` runs NO test and every
+# mutant would look like a survivor; `no:skipping`, `no:python`, `no:terminal`, `no:mark` change what is run or
+# reported). A fixed set, exact names: every core plugin is refused by not being in it.
+PLUGINS_OFF_ALLOWED = frozenset({"randomly", "xdist", "cov", "cacheprovider"})
+# files from which pytest takes its settings (looked up going up from the test paths)
+PYTEST_INI_NAMES = ("pytest.ini", ".pytest.ini", "pytest.toml", ".pytest.toml")
+PYTEST_INI_SECTIONS = (
+    ("pyproject.toml", "[tool.pytest"),
+    ("tox.ini", "[pytest]"),
+    ("setup.cfg", "[tool:pytest]"),
+)
 # other places a run with another TMPDIR may have left a marker (built from parts, not typed as literals)
 STATE_PARENTS = tuple(
     pathlib.Path(os.sep, *parts) for parts in (("tmp",), ("var", "tmp"), ("dev", "shm"))
