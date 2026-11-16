@@ -67,7 +67,7 @@ M["S-m1b-count-gone"] = mut_row(rep, 8, "new", lambda s: s.replace("1 row and 1 
 M["S-m2-until-C9-gone"] = mut_row(rep, 13, "why", lambda s: s.replace("expected to be true for a second send until C-9 part 2", "true for a second send", 1))
 M["S-m3a-cut-totals-again-in-sec9"] = rep + "\n- [needs-lead] Cut case again: scenes 1, 2 and 4 = 25 s + 40 s + 60 s = 125 s.\n"
 M["S-m3b-time-cell-gone"] = rep_once("Old cell text: 30 s EST. New cell text: 40 s EST", "Change the cell.")
-M["S-m4-example-time-before-check"] = rep_once("2026-11-16T18:00:00Z = 23:30:00 IST", "2026-11-16T16:40:00Z = 22:10:00 IST")
+M["S-m4-example-time-before-check"] = rep_once("2026-11-16T18:40:00Z = 2026-11-17T00:10:00 IST", "2026-11-16T16:40:00Z = 22:10:00 IST")
 M["S-N1-reviewer-order-gone"] = rep_once("the ORDER of the two reviewer names matters", "the names matter")
 M["S-N2-does-not-list-after-answer"] = rep_once("Know first what the line in step 2 does NOT do", "Know first what the line in step 2 leaves out").replace("TO REVERSE A DEFAULT", "TO REVERSE A DEFAULT (it does NOT do much)", 1)
 M["S-N3-lead-may-answer-for-him"] = line_sub("| L-SAVEERR | OWNER ONLY (", "OWNER ONLY (the studio lead asks him and writes down his answer; the studio lead does not answer for him)", "OWNER ONLY (the studio lead may answer for him)")

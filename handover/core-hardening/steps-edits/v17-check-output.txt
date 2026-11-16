@@ -170,3 +170,31 @@ NEG r12key2 caught | FAIL r12 E-48 lacks http://localhost:5678
 NEG r12slot caught | FAIL r12 E-12 lacks exactly one of these four labels
 NEG r12call caught | FAIL r12 E-12 delete call
 NEG r12pw caught | FAIL r12 E-09 lacks Never type a password inside a command line
+NEG r12vol caught | FAIL E-16 lacks UNVERIFIED
+NEG r12cut caught | FAIL r12 E-57 lacks Reply `cut accepted`
+NEG r12conf caught | FAIL confirmation letters
+NEG rowcount caught | FAIL ids differ {'E-58'}
+NEG conf caught | FAIL confirmation letters
+NEG r13bare caught | FAIL r13 bare label "latest start": he owner texts; the older single label "latest start" 
+NEG r13swap caught | FAIL r13 "latest start we plan" followed by time 18:14
+NEG r13swap2 caught | FAIL r13 "program refusal limit" followed by time 18:04
+NEG r13arith caught | FAIL r13 time arithmetic: 17:49 UTC = 23:49 IST
+NEG r13typing caught | FAIL r13 E-09 lacks `mailbox password typed; you may look again`
+NEG r13reach caught | FAIL r12 E-09 lacks What the assistant can reach
+NEG r13always caught | FAIL r13 E-48 lacks WHATEVER you answer
+NEG r13alarm caught | FAIL r13 E-48 lacks `revoke the secret key for the model`
+NEG r13route caught | FAIL r13 E-48 lacks the assistant recommends route B
+NEG r13shot caught | FAIL r13 E-48 lacks does not prove that the right key is gone
+NEG r13e55 caught | FAIL index mismatch E-55 ('OWNER-STEPS-realrun-v3.md', '119', 'Apply now', 'CONTRADICTION'
+NEG r13e16 caught | FAIL r13 E-16 trigger
+NEG r13above caught | FAIL r13 E-12 refers to unseen text: the sentence above
+NEG r13ph caught | FAIL r13 E-12 lacks The time of day is not yet chosen
+NEG r13yes caught | FAIL r13 E-12 yes sentence form and bullet differ
+NEG r13nd15 caught | FAIL r13 ND15 both routes, no default
+NEG r13e52 caught | FAIL r13 E-52 studio lead defined once, next to the assistant
+NEG r13e37 caught | FAIL r13 E-37 lacks the number after the colon
+NEG r14m10 caught | FAIL r14 3h key end
+NEG r14m12f caught | FAIL r14 E-09 sub-step f does not wait for `not looking`
+NEG r14m12g caught | FAIL r14 E-09 sub-step g does not wait for `not looking`
+NEG r14m12h caught | FAIL r14 E-09 sub-step h does not wait for `not looking`
+NEG r14m22 caught | FAIL r14 3a key end

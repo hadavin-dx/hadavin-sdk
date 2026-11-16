@@ -146,7 +146,7 @@ if os.path.exists(p):
 check("c6u N5: the start box is under 2,500 words (c6s: 3,488; %d words now) and states its own real count" % bw, bw < 2500 and ("This box holds %d words" % bw) in boxs, bw)
 sets = re.findall(r"saveDataSuccessExecution|saveManualExecutions|EXECUTIONS_DATA_SAVE", box)
 check("box names no n8n setting", not sets, sets)
-check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", "2026-11-16T18:00:00Z = 23:30:00 IST" in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "Neither can be put on the line of step 2" in box and box.count("## ANSWER (studio lead,") == 1)
+check("box has one answer line with seconds, three free names, the exception form and L-SHEET apart", "2026-11-16T18:40:00Z = 2026-11-17T00:10:00 IST" in box and "builder: builder-A; reviewers: reviewer-B, reviewer-C" in box and "except L-KILL: b" in box and "Neither can be put on the line of step 2" in box and box.count("## ANSWER (studio lead,") == 1)
 W1 = len(ready) + len(onlyq)
 W1c = W1
 check("box wave 1 count equals ready + defaults (%d)" % W1, ("%d wave 1 rows" % W1) in box, W1)
@@ -229,8 +229,8 @@ check("naive M1: 'take' is defined as the filmed run and 'the recovery flow clai
 check("naive M5: the claim table is named in the box and every code word of the box is explained or replaced (K3B, K3, C-3 to C-9, G12 are defined)", all(x in box for x in ["CLAIM TABLE", "G12 =", "K3B", "THE CHECKS", "CUT NUMBER"]), "")
 check("naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list", box.find("WHAT TO TYPE") >= 0 and box.find("WHAT TO TYPE") < box.find("WORDS YOU NEED (") and box.find("WORDS YOU NEED (") - box.find("WHAT TO TYPE") < 2200, "")
 # the box: UTC with IST on the example time (coordinator item 4); no time example without IST within 40 characters
-ex = [m.start() for m in re.finditer(r"23:30", box)]
-check("every '23:30' example time in the box has 'IST' within 40 characters (%d places)" % len(ex), ex and all("IST" in box[i:i + 40] for i in ex), len(ex))
+ex = [m.start() for m in re.finditer(r"00:10:00", box)]
+check("every '00:10:00' example time in the box has 'IST' within 40 characters (%d places)" % len(ex), ex and all("IST" in box[i:i + 40] for i in ex), len(ex))
 # the owner-sheet facts: the real v29 files, their times and the check time
 NEWV = max(vs)
 sw = glob.glob(STEPS + "/OWNER-SHEET-v%d-*.md" % NEWV)

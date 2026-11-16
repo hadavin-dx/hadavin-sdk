@@ -21,17 +21,24 @@
 -- only on spend, spend_month and kill_switch and EXECUTE on spend_reserve, spend_settle and kill_switch_engage; the operator
 -- role has EXECUTE on kill_switch_release and nothing else; PUBLIC has none (5.6 item 1(o2) says how migrate() re-applies them).
 SET LOCAL lock_timeout = '5s';
+-- v19 (independent runner of v18, observations): a day or month must lie in 2020-01-01 to 2099-12-31 (infinity, -infinity, 1999 and year 1 are refused 23514; my window,
+-- owner may change it); an agent id may not have leading or trailing blanks, a control character (newline, tab) or a non-NFC form (NFC and NFD spellings of one name
+-- were two budgets); a reserve of 0 writes no row. NOT closed: names that differ only in case or by an inner space are separate agent ids (agent ids come from
+-- configuration in our code; a hostile login can name anything, see (b)), and a settle with actual above worst can raise a total (safe direction; it
+-- can only over-report spend, never hide it).
 -- v19 (security minor m7): the ADD CONSTRAINT ... CHECK lines below scan each table under an exclusive lock; lock_timeout bounds only the wait for the lock, so this
 -- second line bounds the scan itself (60 seconds is my number; the file fails and rolls back instead of holding the lock for ever).
 SET LOCAL statement_timeout = '60s';
 ALTER TABLE spend ADD COLUMN open_usd numeric NOT NULL DEFAULT 0;
 ALTER TABLE spend ADD CONSTRAINT spend_open_ok CHECK (open_usd >= 0 AND open_usd < 1000000000000::numeric);
 ALTER TABLE spend ADD CONSTRAINT spend_guarded_ok CHECK (usd >= 0 AND usd < 1000000000000::numeric);
-ALTER TABLE spend ADD CONSTRAINT spend_agent_len CHECK (length(agent_id) BETWEEN 1 AND 200) NOT VALID;
+ALTER TABLE spend ADD CONSTRAINT spend_agent_len CHECK (length(agent_id) BETWEEN 1 AND 200 AND agent_id = btrim(agent_id) AND agent_id !~ '[[:cntrl:]]' AND agent_id IS NFC NORMALIZED) NOT VALID;
+ALTER TABLE spend ADD CONSTRAINT spend_day_window CHECK (day >= DATE '2020-01-01' AND day < DATE '2100-01-01') NOT VALID;
 ALTER TABLE spend_month ADD COLUMN open_usd numeric NOT NULL DEFAULT 0;
 ALTER TABLE spend_month ADD CONSTRAINT spend_month_open_ok CHECK (open_usd >= 0 AND open_usd < 1000000000000::numeric);
 ALTER TABLE spend_month ADD CONSTRAINT spend_month_guarded_ok CHECK (usd >= 0 AND usd < 1000000000000::numeric);
-ALTER TABLE spend_month ADD CONSTRAINT spend_month_agent_len CHECK (length(agent_id) BETWEEN 1 AND 200) NOT VALID;
+ALTER TABLE spend_month ADD CONSTRAINT spend_month_agent_len CHECK (length(agent_id) BETWEEN 1 AND 200 AND agent_id = btrim(agent_id) AND agent_id !~ '[[:cntrl:]]' AND agent_id IS NFC NORMALIZED) NOT VALID;
+ALTER TABLE spend_month ADD CONSTRAINT spend_month_window CHECK (month >= DATE '2020-01-01' AND month < DATE '2100-01-01') NOT VALID;
 
 -- Reserve: adds the worst case to the total and to the open reservation of the day row and of the month row (the month is
 -- the first day of the month of p_day).
@@ -39,9 +46,9 @@ CREATE OR REPLACE FUNCTION spend_reserve(p_agent text, p_day date, p_worst numer
 RETURNS TABLE (day_usd numeric, month_usd numeric)
 LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp
 BEGIN ATOMIC
-  INSERT INTO spend (agent_id, day, usd, open_usd) VALUES (p_agent, p_day, p_worst, p_worst)
+  INSERT INTO spend (agent_id, day, usd, open_usd) SELECT p_agent, p_day, p_worst, p_worst WHERE p_worst > 0
     ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd, open_usd = spend.open_usd + EXCLUDED.open_usd;
-  INSERT INTO spend_month (agent_id, month, usd, open_usd) VALUES (p_agent, date_trunc('month', p_day)::date, p_worst, p_worst)
+  INSERT INTO spend_month (agent_id, month, usd, open_usd) SELECT p_agent, date_trunc('month', p_day)::date, p_worst, p_worst WHERE p_worst > 0
     ON CONFLICT (agent_id, month) DO UPDATE SET usd = spend_month.usd + EXCLUDED.usd, open_usd = spend_month.open_usd + EXCLUDED.open_usd;
   SELECT d.usd, m.usd FROM spend d, spend_month m
     WHERE d.agent_id = p_agent AND d.day = p_day AND m.agent_id = p_agent AND m.month = date_trunc('month', p_day)::date;

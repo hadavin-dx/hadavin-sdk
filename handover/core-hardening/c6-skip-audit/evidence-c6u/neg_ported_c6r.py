@@ -88,7 +88,7 @@ M["R10-pipe-in-row-text"] = mut_row(rep, 15, "new", lambda s: s + " a | b")
 M["R11-source-copy-statement-gone"] = rep.replace("89 of the 94 rows", "most rows", 1)
 M["R12-L-SAVEERR-default-yes"] = "\n".join(l.replace("| No |", "| Yes |") if l.startswith("| L-SAVEERR | OWNER ONLY") else l for l in rep.split("\n"))
 M["R13-item12-made-up-domain-check-gone"] = mut_row(rep, 6, "new", lambda s: s.replace("made-up e-mail domain and the name marker", "made-up domain", 1))
-M["R14-IST-missing-next-to-22-10-example"] = rep.replace("23:30:00 IST", "23:30:00", 1)
+M["R14-IST-missing-next-to-22-10-example"] = rep.replace("00:10:00 IST", "00:10:00", 1)
 M["O-REPORT-c6q-itself-must-fail"] = open(D + "REPORT-c6q.md", encoding="utf-8").read()
 M["O-REPORT-c6r-itself-must-fail"] = open(D + "REPORT-c6r.md", encoding="utf-8").read()
 

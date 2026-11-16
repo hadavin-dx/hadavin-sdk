@@ -428,6 +428,7 @@ def c6u_stage(L, find, patch):
             "and the 38 rows that wait only for a question (3, 4, 11, 12, 13, 14, 15, 20, 21, 24, 29, 31, 33, 39, 41, 43, 44, 49, 50, 51, 52, 54, 56, 57, 63, 65, 67, 69, 73, 74, 81, 86, 87, 90, 91, 92, 95, 96), 87 rows in all,", 1)
     rep_all("| No (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only). Say yes only if a failed run must be filmed;",
             "| OPEN (OWNER ONLY). Until he answers, failed runs stay unsaved (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only); this is what is done meanwhile, not an answer for him. Say yes only if a failed run must be filmed;", 1)
+    rep_all("2026-11-16T18:05:00Z = 23:35:00 IST", "2026-11-16T18:50:00Z = 2026-11-17T00:20:00 IST")
     return L
 
 
