@@ -1,0 +1,9 @@
+# QUESTIONS.md round 13 review (agent a93803a, egm-implementation-readiness; saved condensed by flows-audit; reviewer words unverified)
+0 Blockers, 6 Majors. Past-time check not run by reviewer (no shell); I ran date -u at 13:25Z Mon 16 Nov: items 30 (20:30Z) and 27 (21:00Z) are NOT past.
+Passed (reviewer claim): 33 L rows 6/5/3/19; Q31 31 items, 1 answered, 30 open, all in answer-by table with who/default; Z/IST pairs; 03:31Z = 04:00Z minus 29; Wednesday table matches TC and RUNBOOK; item 6 arithmetic 355 min.
+M1 "Case A/Case B" used for two things (retake ceiling in glossary l186/item 3 l450; RUNBOOK timing cases in L32 l88; item 24 l471 a third use). Rename one pair, define both.
+M2 Item 5, item 3, L12, glossary l133, rows l68/l175 treat rehearsal as one run; plan has two (rehearsal 1 and 2). RUNBOOK step 20 counts 4+5=9 (now 10 with hook leg). Default ceiling "4" does not cover a retake. Restate with two rehearsals and ask for the real list of contact-creating and paid runs; fix note at l220.
+M3 Stale line cites: "RUNBOOK.md line 166" (l60,78,455,478; real: paragraph "Start clock of each Tuesday step" in section 6); "TAKE-CHECKLIST.md line 46" (l78,478,481; scope row is l47); "TAKE-CHECKLIST line 79 Inputs item 22" (l50, l457; now l80). Cite by name.
+M4 Stale-text list for scopes question (items 27, 30, L22) incomplete: also RUNBOOK step 15 (l159 "NOT asked here"), step 16 (l160), step 24(h) (l176), TAKE-CHECKLIST l29 and l47.
+M5 Item 13 default (lead reads takeover time from recording time stamps) fails for rehearsals (not recorded; recording test is a 10 s clip). Make RUNBOOK's lead clock (step 21, I46) the default for rehearsals; time stamps only for the take.
+M6 Two different "second person" recommendations for F-011/F-041 downgrade (GATE l50 vs item 10 l457). Keep one wording in item 10, GATE points to it.
