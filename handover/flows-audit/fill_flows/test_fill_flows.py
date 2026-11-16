@@ -1205,7 +1205,12 @@ class Hardening(Base):
     # ---- security review minor 4: the expression lexer against a real JavaScript engine
     @unittest.skipUnless(shutil.which("node"), "node (a JavaScript engine) is not installed")
     def test_lexer_agrees_with_a_real_js_engine(self):
-        rnd = random.Random(20261116)
+        state = [20261116]
+
+        def pick(items):  # tiny fixed-seed generator: the same cases on every run
+            state[0] = (state[0] * 1103515245 + 12345) % 2**31
+            return items[(state[0] >> 8) % len(items)]
+
         frags = [
             "1",
             "+",
@@ -1242,8 +1247,8 @@ class Hardening(Base):
         value = "v\"'`\\${}/*//x"
         cases = []
         for _ in range(600):
-            a = " ".join(rnd.choice(frags) for _ in range(rnd.randint(0, 5)))
-            b = " ".join(rnd.choice(frags) for _ in range(rnd.randint(0, 5)))
+            a = " ".join(pick(frags) for _ in range(pick(range(6))))
+            b = " ".join(pick(frags) for _ in range(pick(range(6))))
             cases.append(a + " $env.MF_STAGE_URL " + b)
         accepted = []
         for part in cases:
@@ -1272,7 +1277,9 @@ class Hardening(Base):
         self.assertEqual(p.returncode, 0, p.stderr[:300])
         results = json.loads(p.stdout)
         compared = 0
-        for (orig, out), (r_orig, r_out) in zip(accepted, results):
+        self.assertEqual(len(results), len(accepted))
+        for i, (orig, out) in enumerate(accepted):
+            r_orig, r_out = results[i]
             if r_orig.startswith("ERR:SyntaxError"):
                 continue  # the unfilled text was not valid JavaScript; nothing to compare
             compared += 1
