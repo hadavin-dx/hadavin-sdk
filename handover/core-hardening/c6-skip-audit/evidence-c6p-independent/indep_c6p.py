@@ -317,11 +317,9 @@ bad115 = [(ln, m.group(0)) for ln, l in enumerate(L, 1) for m in re.finditer(r"\
 chk("H7 every 'N words, about M s' pair is consistent with 150 wpm (|M - N/2.5| <= 0.6)", not [x for x in re.findall(r"\b(\d+) words, about (\d+) s\b", text) if abs(int(x[1]) - int(x[0]) / 2.5) > 0.6], re.findall(r"\b(\d+) words, about (\d+) s\b", text))
 mm = [m for m in re.finditer(r"(\d+) words\)? ?(?:[:;,]|:)? ?(?:about|is about) (\d+) s", text)]
 r1 = re.search(r"sentence '(We make this claim[^']*)' \((\d+) words\)", cl if False else s3t)
-if r1:
-    chk("H8 reading 1 card sentence word count as stated", words(r1.group(1)) == int(r1.group(2)), (words(r1.group(1)), r1.group(2)))
-r2 = re.search(r"2 = '(The 45 seconds is a setting[^']*)'", text)
-if r2:
-    chk("H9 reading 2 sentence is 40 words (as stated) and about 16 s", words(r2.group(1)) == 40 and round(secs(40)) == 16, (words(r2.group(1)), secs(40)))
+chk("H8 reading 1 card sentence word count as stated (25)", bool(r1) and words(r1.group(1)) == int(r1.group(2)) == 25, (words(r1.group(1)), r1.group(2)) if r1 else "sentence not found")
+r2 = re.search(r"2 = '(The 45 seconds [^']*)'", text)
+chk("H9 reading 2 sentence is 40 words (as stated) and about 16 s", bool(r2) and words(r2.group(1)) == 40 and round(secs(40)) == 16 and "40 words" in text, (words(r2.group(1)), secs(40)) if r2 else "sentence not found")
 
 # ---- no 'row N' in new run-sheet text; other internal labels ----
 rs_new = [r for r in rows if r["f"].endswith("VIDEO-RUNSHEET.md")]

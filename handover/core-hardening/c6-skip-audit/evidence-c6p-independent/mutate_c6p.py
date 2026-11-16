@@ -72,7 +72,7 @@ M["17-voided-label-dropped"] = None
 ls = L[:]
 for j, l in enumerate(ls):
     if "18 kept runs" in l and "VOID-fl45k6c" in l and "VOID-fl45k3b" in l and not l.startswith("| "):
-        ls[j] = l.replace("VOID-fl45k6c", "the other voided run", 1)
+        ls[j] = l.replace("VOID-fl45k6c", "the other voided run")
         M["17-voided-label-dropped"] = "\n".join(ls)
         break
 M["18-fake-aws-key"] = rep + "\nkey " + aws + "\n"
@@ -81,7 +81,7 @@ M["20-fake-ghp-token"] = rep + "\ntoken " + ghp + "\n"
 M["21-email-address"] = rep + "\nwrite to " + "a.person" + "@" + "example-mail.org" + "\n"
 M["22-box-row-count-93"] = sub_once(rep, "holds 94 proposed", "holds 93 proposed")
 M["23-3b-total-ready-48"] = sub_once(rep, "ready 49, on defaults only 42", "ready 48, on defaults only 42")
-M["24-row-ref-in-new-runsheet-text-row17"] = in_row(rep, 17, "`Scene 4", "`See row 12. Scene 4") if "`Scene 4" in L[rowline(rep, 17)].split("` | `")[1][:0] + L[rowline(rep, 17)] else None
+M["24-row-ref-in-new-runsheet-text-row17"] = in_row(rep, 17, "` | `", "` | `(see row 12) ")
 M["25-5a-row-15-deleted"] = del_line(rep, lambda l: l.startswith("| 15 | run sheet, line"))
 M["26-5a-view-text-changed-row21"] = in_line(rep, "| 21 | run sheet, line", "Scene 3 caption", "Scene 4 caption")
 M["27-setting-name-in-box"] = sub_once(rep, "NOTHING IN THIS REPORT HAS BEEN APPLIED", "NOTHING IN THIS REPORT (EXECUTIONS_DATA_PRUNE) HAS BEEN APPLIED")

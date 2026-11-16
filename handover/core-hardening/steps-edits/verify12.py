@@ -206,13 +206,13 @@ for g in sorted(defd):
 ndsec = txt[txt.index('## NOT DECIDED'):txt.index('## FOR THE STUDIO LEAD TO CONFIRM')]
 nums = [int(x) for x in re.findall(r'(?m)^(\d+)\. \*\*', ndsec)]
 print('ND numbers', nums)
-if nums != list(range(1, 15)): F('ND numbers')
-if 'items 1 to 14' not in ndsec: F('ND header count')
+if nums != list(range(1, 16)): F('ND numbers')
+if 'items 1 to 15' not in ndsec: F('ND header count')
 # (5) confirmations a..f without gaps and no g
 csec = txt[txt.index('## FOR THE STUDIO LEAD TO CONFIRM'):txt.index('Removed in round 3')]
 letters = re.findall(r'(?m)^([a-z])\. ', csec)
 print('confirmation letters', letters)
-if letters != list('abcdefghij'): F('confirmation letters')
+if letters != list('abcdefghijkl'): F('confirmation letters')
 # (6) wording classes
 for bad in ('FOR THE LEAD TO CONFIRM', 'NEEDS-LEAD', 'five facts exist', 'yes message', 'last time to cancel', 'Linux window', 'WSL window'):
     if bad in txt: F('stale phrase: ' + bad)
@@ -224,7 +224,7 @@ if missing: F('named ids missing ' + str(missing))
 # every ND n named in the text is 1..11
 nn = sorted(set(int(x) for x in re.findall(r'(?:NOT DECIDED|\bND) ?(\d+)', txt)))
 print('ND numbers named', nn)
-if any(x < 1 or x > 14 for x in nn): F('ND number out of range')
+if any(x < 1 or x > 15 for x in nn): F('ND number out of range')
 # (8) split of E-11: apply-now scratch must hold the tests paragraph but not the preparation enquiry
 s_ap = cp1['OWNER-STEPS-realrun-v3.md']; s_all = cp2['OWNER-STEPS-realrun-v3.md']
 checks = [('Then comes the preparation', False, True), ('a fifth fact', False, True), ('a paid call can happen', None, None),

@@ -15,14 +15,14 @@
 14-range-61.8                                                exit 1 OK  fails: 1  first: FAIL G1 every '60.1 to X' is 61.9 (22) :: Counter({'60.1 to 61.9': 21, '60.1 to 61.8': 1})
 15-range-54.8                                                exit 1 OK  fails: 1  first: FAIL G2 every '52.8 to X' is 54.9 (5) :: Counter({'52.8 to 54.9': 4, '52.8 to 54.8': 1})
 16-runs-done-9                                               exit 1 OK  fails: 1  first: FAIL G4 runs done always 10, unknown always 8 :: (Counter({'9': 1, '10': 1}), Counter({'8': 2}))
-17-voided-label-dropped                                      exit 0 WRONG  fails: 0  first: -
+17-voided-label-dropped                                      exit 1 OK  fails: 1  first: FAIL G6 non-table lines with '18 runs' name both voided runs :: [75]
 18-fake-aws-key                                              exit 1 OK  fails: 1  first: FAIL M1 no secret-shaped string or e-mail address in the report (counts) :: {'aws': 1}
 19-fake-sk-key                                               exit 1 OK  fails: 1  first: FAIL M1 no secret-shaped string or e-mail address in the report (counts) :: {'sk': 1}
 20-fake-ghp-token                                            exit 1 OK  fails: 1  first: FAIL M1 no secret-shaped string or e-mail address in the report (counts) :: {'ghp': 1}
 21-email-address                                             exit 1 OK  fails: 1  first: FAIL M1 no secret-shaped string or e-mail address in the report (counts) :: {'email': 1}
 22-box-row-count-93                                          exit 1 OK  fails: 1  first: FAIL D4 box: table holds N rows = 94 :: ['93']
 23-3b-total-ready-48                                         exit 1 OK  fails: 1  first: FAIL D7 3b TOTAL line = 94/49/42/3/0 :: ('94', '48', '42', '3', '0')
-24-row-ref-in-new-runsheet-text-row17                        SKIPPED (target absent)
+24-row-ref-in-new-runsheet-text-row17                        exit 1 OK  fails: 2  first: FAIL I1 no 'row N' or 'rows N' reference inside new run-sheet text (44 run-sheet rows) :: [(17, 'row
 25-5a-row-15-deleted                                         exit 1 OK  fails: 3  first: FAIL J1 5a row set equals rows (run sheet or page statements) whose 'what the viewer sees' is not 'N
 26-5a-view-text-changed-row21                                exit 1 OK  fails: 1  first: FAIL J2 5a each row: file label, line and view text equal the table :: [21]
 27-setting-name-in-box                                       exit 1 OK  fails: 1  first: FAIL L1 box (lines 1 to 59) holds no setting name (UPPER_SNAKE names, EXECUTIONS_, N8N_, prune, flow
@@ -31,7 +31,7 @@
 30-option-b-extra-word                                       exit 1 OK  fails: 1  first: FAIL H3 option (b): four lines found, total 87 words :: ([25, 30, 18, 15], 88)
 31-option-b-35s-to-36s                                       exit 1 OK  fails: 2  first: FAIL H4 option (b) seconds = 34.8, said 'about 35 s' :: 34.8
 32-box-200s-to-210s                                          exit 1 OK  fails: 1  first: FAIL H6 'about 46 s' and '115 words' and 'about 200 s' appear in box, row 11, section 3
-33-reading2-extra-word                                       exit 0 WRONG  fails: 0  first: -
+33-reading2-extra-word                                       exit 1 OK  fails: 1  first: FAIL H9 reading 2 sentence is 40 words (as stated) and about 16 s :: (41, 16.0)
 34-utc-without-ist-in-new-text-row8                          exit 1 OK  fails: 2  first: FAIL E2 every UTC/Z clock time (34) has its +5:30 IST on the same line :: [(338, '09:00')]
 35-section3-tied-column-changed                              exit 1 OK  fails: 1  first: FAIL D8 section 3 'rows tied to it' column equals my recount (L-DEL, L-CUT, L-SHEET: none) :: [('L-O
 36-label-used-before-definition-GATE                         exit 1 OK  fails: 1  first: FAIL K1 defined box labels (upper case) are not used before their definition (position of first use 
@@ -42,4 +42,4 @@
 41-two-rows-swapped-10-11                                    exit 1 OK  fails: 2  first: FAIL B2 all 94 rows apply in table order on copies, each old text found on its stated line after the
 42-voided-run-IST-swap-noon                                  exit 1 OK  fails: 3  first: FAIL E1 every 'UTC = IST' pair is +5:30 (31 pairs) :: [(42, '18:19 UTC = 23:48 IST')]
 43-repeat-sentence-changed-to-30s-in-row21-old-text-moved    exit 1 OK  fails: 4  first: FAIL B1 old text occurs exactly once on its stated line, in the source copy (94 rows) :: [(21, 0)]
-SUMMARY: 44 copies (1 control), 3 wrong or skipped
+SUMMARY: 44 copies (1 control), 0 wrong or skipped

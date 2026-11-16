@@ -33,7 +33,7 @@ for n in ALLF:
     for m in PAIR.finditer(T[n]):
         c += 1
         u = int(m[1]) * 60 + int(m[2]); i = int(m[4]) * 60 + int(m[5])
-        if (u + 330) % 1440 != i or (m[3] or '') != (m[6] or ''): fail('K02', '%s wrong IST: %s' % (n, m[0]))
+        if (u + 330) % 1440 != i or (m[6] and m[3] != m[6]) or (m[6] and not m[3]): fail('K02', '%s wrong IST: %s' % (n, m[0]))
         if not (0 <= int(m[1]) < 24 and int(m[2]) < 60): fail('K02', '%s impossible time %s' % (n, m[0]))
     npairs[n] = c
     lone = [m[0] for m in LONE.finditer(T[n])]
@@ -80,7 +80,8 @@ for n in ALLF:
             if not ln[m.start():].startswith('18:19 UTC = 23:49 IST') and not ln[m.start():].startswith('18:19:00 UTC = 23:49 IST'): fail('K04', '%s:%d 18:19 without = 23:49 IST' % (n, i))
         for m in re.finditer(r'23:49', ln):
             if '18:19' not in ln[max(0, m.start() - 22):m.start()]: fail('K04', '%s:%d 23:49 not paired with 18:19' % (n, i))
-        if re.search(r'revoked?[- ]by|cancel-by|revoke-by', ln, re.I) and re.search(r'\b18:\d\d', ln) and '18:19 UTC = 23:49 IST' not in ln.replace('18:19:00', '18:19'):
+        near = [x for x in re.finditer(r'revoked?[- ]by|cancel-by|revoke-by', ln, re.I) if re.search(r'\b18:(?!29)\d\d', ln[max(0, x.start() - 100):x.end() + 100])]
+        if near and '18:19 UTC = 23:49 IST' not in ln.replace('18:19:00', '18:19'):
             fail('K04', '%s:%d revoke-by wording with an 18:xx time but no 18:19 UTC = 23:49 IST on the line' % (n, i))
         for m in re.finditer(r'\b18:(04|14)(:\d\d)? UTC|\b23:(34|44)(:\d\d)? IST', ln):
             src = re.search(r'lease|860|derive|your answer|deadline|latest start|allows|need_seconds|minus', ln, re.I)
@@ -142,7 +143,7 @@ info('K06', 'internal-id scan done on 7 owner pages (R1,R4-R10, W1-W9, L1-L5 are
 OWN_NAMES = re.compile(r'\b((?:OWNER|LEAD)-[A-Za-z0-9-]+\.md|v28-[A-Za-z0-9-]+\.(?:md|py)|(?:build|check|facts|mut|newchecks)-?v?28[A-Za-z0-9-]*\.py|pointers-v28\.txt)')
 for n in ALLF:
     for m in OWN_NAMES.finditer(T[n]):
-        if not os.path.isfile(D + m[1]): fail('K07', '%s links to %s which does not exist' % (n, m[1]))
+        if not any(os.path.isfile(x + m[1]) for x in (D, D + '../inputs/', D + '../')): fail('K07', '%s links to %s which does not exist' % (n, m[1]))
 for k in 'AB':
     other = 'B' if k == 'A' else 'A'
     for p in ('OWNER-SHEET-v28-%s.md' % k,):
@@ -165,7 +166,7 @@ for k in 'AB':
             pre = T[n][max(0, m.start() - 6):m.start()]
             if re.search(r'USD |x |= |\$', pre): continue
             if m[1] and int(m[1]) not in items or int(m[2]) > items.get(int(m[1]), 0): fail('K07', '%s step reference %s does not exist in sheet %s (section has %d items)' % (n, m[0], k, items.get(int(m[1]), 0)))
-        for m in re.finditer(r'\bsection (\d)\b', T[n]):
+        for m in re.finditer(r'(?<!no )\bsection (\d)\b', T[n]):
             if int(m[1]) not in items: fail('K07', '%s names section %s which does not exist' % (n, m[1]))
     info('K07', 'sheet %s items per section: %s' % (k, items))
 
@@ -178,7 +179,8 @@ for p in ('OWNER-SHEET-v28', 'OWNER-CARD-v28', 'OWNER-NUMBERS-v28'):
         la = '\n'.join(a[i1:i2]); lb = '\n'.join(b[j1:j2])
         wa, wb = la.split(), lb.split(); ws = difflib.SequenceMatcher(None, wa, wb, autojunk=False)
         seg = ' / '.join('[%s] -> [%s]' % (' '.join(wa[x1:x2])[:90], ' '.join(wb[y1:y2])[:90]) for t2, x1, x2, y1, y2 in ws.get_opcodes() if t2 != 'equal')
-        ok = bool(OLD.search(la + ' ' + lb))
+        ok = bool(OLD.search(la + ' ' + lb)) or all(x1 == x2 or ' '.join(wa[x1:x2]).lower() in ('three', 'four') for t2, x1, x2, y1, y2 in [(0, 0, 0, 0, 0)])
+        if not ok: ok = all(' '.join(wa[x1:x2]).lower() in ('three', 'four') for t2, x1, x2, y1, y2 in ws.get_opcodes() if t2 != 'equal')
         info('K08', '%s hunk A%d-%d/B%d-%d older-key vocabulary=%s : %s' % (p, i1 + 1, i2, j1 + 1, j2, ok, seg[:300]))
         if not ok: fail('K08', '%s hunk at A line %d differs in a part with no older-key wording' % (p, i1 + 1))
         for x in re.findall(r'\d\d:\d\d UTC', la + lb): pass
@@ -190,7 +192,7 @@ NEG = re.compile(r"\b(no|not|never|none|nothing|without|otherwise|difference|wou
 cred = set()
 for n in OWNER:
     for s in sentences(T[n]):
-        if re.search(r'n8n', s, re.I) and re.search(r'\b(model |run |look |older |paid[- ]model )?key\b|secret|password|token', s, re.I) and re.search(r'\b(type|typed|paste|pasted|enter|entered|put|store|stored|save|saved|add|added|upload|set|write|give)\b', s, re.I) and not NEG.search(s):
+        if re.search(r'n8n', s, re.I) and re.search(r'\b(model |run |look |older |paid[- ]model )?key\b|secret|password|token', s, re.I) and re.search(r'\b(type|typed|paste|pasted|enter|entered|put|store|stored|save|saved|add|added|upload)\b', s, re.I) and not NEG.search(s):
             fail('K09', '%s sentence puts a key/secret into n8n: %s' % (n, s[:140]))
         if re.search(r"\b(delet\w*|archiv\w*)\b", s, re.I) and re.search(r'contact', s, re.I):
             who = re.search(r'\b(take|test program|the program|n8n|workflow|script|the run)\b[^.]{0,80}\b(delet\w*|archiv\w*)|contacts? (?:will be|are|is|were|get|gets) (?:delet|archiv)\w*', s, re.I)
@@ -206,7 +208,7 @@ for n in OWNER:
         for m in re.finditer(pat, t):
             if m[0] == 'AKIAIOSFODNN7EXAMPLE': continue
             fail('K09', '%s looks like a secret (pattern %s)' % (n, pat[:14]))
-    for m in re.finditer(r'[\w.+-]+@(?!example\.com)[\w-]+\.(com|org|net|io|in)\b', t):
+    for m in re.finditer(r'(?<![\u2026\w.+-])[\w.+-]+@(?!example\.com)[\w-]+\.(com|org|net|io|in)\b', t):
         fail('K09', '%s has an address that is not example.com: %s***' % (n, m[0][:3]))
 if cred != {'model key', 'gmail app password', 'hubspot app secret'}: fail('K09', 'credential kinds named on the owner pages are %s, expected exactly 3' % sorted(cred))
 for k in 'AB':

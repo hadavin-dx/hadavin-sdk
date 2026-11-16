@@ -1,4 +1,4 @@
-demo/n8n-mainframe/mf.py': 2, 'handover/demo/n8n-flows-real-v5/mf-form.json': 2, 'handover/demo/n8n-flows-real-v5/mf-hook.json': 2, 'handover/demo/n8n-flows-real-v5/mf-recovery.json': 2, 'handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json': 2, 'handover/core-hardening/inputs/DECISION-one-store.md': 5, 'handover/demo/n8n-mainframe/build_mainframe.py'
+n8n-mainframe/mf.py': 2, 'handover/demo/n8n-flows-real-v5/mf-form.json': 2, 'handover/demo/n8n-flows-real-v5/mf-hook.json': 2, 'handover/demo/n8n-flows-real-v5/mf-recovery.json': 2, 'handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json': 2, 'handover/core-hardening/inputs/DECISION-one-store.md': 5, 'handover/demo/n8n-mainframe/build_mainframe.py'
 PASS D10b wave 1 touches 10 files (box says 10 files) :: 10
 INFO D11 occurrences of NOT FILMABLE in the report (prose should say zero rows) :: [(61, '- NOTHING IN THE EDIT TABLE HAS BEEN APPLIED. Every row says NOT APPLIED. Of the 94 rows (rows 1 to 72 keep th'), (64, '- SLIPS OF REPORT-c6n.md THAT I CORRECT HERE (my own, found by the c6n reviews): (c6o text, replaced by c6p; s')]
 PASS D12 no stale c6o counts (89 rows, 40 rows, 2 NOT FILMABLE) :: []
@@ -31,7 +31,7 @@ PASS H4 option (b) seconds = 34.8, said 'about 35 s' :: 34.8
 PASS H5 totals: 150 + 50 = 200 (a), 150 + 35 = 185 (b); scenes 25+40+25+60 = 150
 PASS H6 'about 46 s' and '115 words' and 'about 200 s' appear in box, row 11, section 3
 PASS H7 every 'N words, about M s' pair is consistent with 150 wpm (|M - N/2.5| <= 0.6) :: [('115', '46'), ('87', '35'), ('115', '46'), ('115', '46'), ('87', '35'), ('115', '46'), ('87', '35'), ('115', '46')]
-PASS H8 reading 1 card sentence word count as stated :: (25, '25')
+PASS H8 reading 1 card sentence word count as stated (25) :: (25, '25')
 PASS H9 reading 2 sentence is 40 words (as stated) and about 16 s :: (40, 16.0)
 PASS I1 no 'row N' or 'rows N' reference inside new run-sheet text (44 run-sheet rows) :: []
 PASS I1b no 'row N' in ANY row's new text (all files) :: []
