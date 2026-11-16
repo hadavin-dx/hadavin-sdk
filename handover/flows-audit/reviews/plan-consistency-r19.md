@@ -1,0 +1,10 @@
+# Plan files round 19 consistency read (agent a43d060, egm-design), saved by flows-audit, condensed; reviewer words unverified. Static. 0 Blockers, 7 Majors. Clock blocks identical (FIX-PLAN 14-47 vs TAKE-CHECKLIST 8-41); 269 sum holds but step 8 (0) and step 18 (1b) minutes not re-estimated.
+M1 FINDINGS.md:99 says F-002 lifts "until T19 and T20 pass" with T21 an open question; must read "T19, T20 and T21 pass on the patched copy".
+M2 TAKE-CHECKLIST.md:71 (input 13) says Q27 item 9 (ORDERS.md:156) names only T19 and T20; ORDERS.md:156 says T19-T21; only Q29-3 (ORDERS.md:167) is T19/T20 (the NO-GO rule).
+M3 LEDGER-ROWS.md:3 area/flag cell "GO row 6: out (F-002 rule: not in Tuesday GO; T19/T20 Wed)" -> "T19-T21 Wed".
+M4 item 55: FIX-PLAN.md:179 two times in one cell (QUESTIONS:502 Wed 05:45 vs RUNBOOK I47(a) :387 Tue 04:00; I49(a) :389 Tue 08:29); unresolved (lead).
+M5 RUNBOOK I18 (:358) says whole Wednesday set incl. run_real_check_n8n.py due Wed 05:45; item 71 / FIX-PLAN:183 / QUESTIONS:579 / I33 (:373) say Tue 09:00. Split I18.
+M6 RUNBOOK I1 (:341), I12 (:352), step 6 LEAD FILLS (3) and SHA_SCRIPTS command (:199) still list n8n_api.py in the Tuesday three due 04:54; step 6 says two files (n8n_start.sh, n8n_kill.py) with n8n_api.py at 06:59 (item 47). Make all agree.
+M7 FIX-PLAN.md:160 "one table, each row one input" lacks rows for items 69 (step 4a text 04:16Z), 35 (n8n start command and port 05:14Z), 32 (re-pin start time), step 4a (2)/(3), DB_SETUP (row 60 carries only PGCONN_TAKE), SECOND_ADMIN (no time, in no list; if missing T21 not run, F-002 Blocker, NO-GO), data-folder credentials; also missing from TAKE-CHECKLIST inputs list. New Q31 items are being added by fixer a21312d (QUESTIONS only).
+Nits: FIX-PLAN:103, RUNBOOK:327/:353 T19/T20 = Q29-3 correct. ORDERS.md :117 and :167 still T19/T20 (lead file). ledger_check.py not in repo; parenthetical after "Blocker" unverified.
+Not read: RUNBOOK step 18 beyond grep windows, section 6 by grep, FIX-PLAN/TAKE-CHECKLIST mostly by grep; 36 need_set blocks.
