@@ -33,11 +33,12 @@ The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 
 | about 11:20 | about 16:50 | whole raw recording watched; recording-ready message (planned by 12:00Z) |
 | about 13:30 | about 19:00 | "clean-up starts"; the owner revokes the model key by 17:00Z (22:30 IST), S9-3 |
 | 15:00 | 20:30 | the owner posts |
+The Wednesday times above are the dated times: no start-state gates and no change in RUNBOOK step 22. With the gates (RUNBOOK section 6): Case A (nothing to change in step 22) the rehearsal block ends 09:37, the take is 10:07 to 11:07 and the recording-ready message is about 11:27; Case B (recovery switched off only in step 22 (ii)) the take is 11:02 to 12:02 and the recording-ready message is about 12:22. RUNBOOK section 6 wins.
 
 **Who is needed when (people other than the lead):**
 | Who | What | When (UTC) |
 |---|---|---|
-| the named WARN reader | reads the pinned WARN lines and gives `NAME, YYYY-MM-DD` for the pin | Tue by 04:26Z (RUNBOOK step 4b); again Tue 07:14Z for pin 2 (step 13); never "about 08:00Z" |
+| the named WARN reader | reads the WARN lines that Block P1a (pin 1) and Block P2a (pin 2) write, and gives `NAME, YYYY-MM-DD` for the pin (the date must not be older than the pin's own `# date (UTC)` line) | Tue 04:26Z to 04:51Z for pin 1 (RUNBOOK step 4b; P1a runs first inside it) and Tue 07:14Z to 07:44Z for pin 2 (step 13; P2a runs after the export); never "about 08:00Z" |
 | the owner | answers the HubSpot token-scopes question | asked Wed about 07:00Z; reply wanted by 08:00Z; no reply by 08:30Z means no recording that day |
 | the owner | Step D message 1 (delete one leftover made-up contact) | sent Wed about 07:30Z |
 | the owner | S9-2 settings-file comparison | message by 09:15Z, reply by 09:45Z Wed |

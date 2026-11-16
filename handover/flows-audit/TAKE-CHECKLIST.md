@@ -38,11 +38,12 @@ The lead's plan "re-pin done about 08:00Z" means step 1 starts by 03:31Z (09:01 
 | about 11:20 | about 16:50 | whole raw recording watched; recording-ready message (planned by 12:00Z) |
 | about 13:30 | about 19:00 | "clean-up starts"; the owner revokes the model key by 17:00Z (22:30 IST), S9-3 |
 | 15:00 | 20:30 | the owner posts |
+The Wednesday times above are the dated times: no start-state gates and no change in RUNBOOK step 22. With the gates (RUNBOOK section 6): Case A (nothing to change in step 22) the rehearsal block ends 09:37, the take is 10:07 to 11:07 and the recording-ready message is about 11:27; Case B (recovery switched off only in step 22 (ii)) the take is 11:02 to 12:02 and the recording-ready message is about 12:22. RUNBOOK section 6 wins.
 
 **Who is needed when (people other than the lead):**
 | Who | What | When (UTC) |
 |---|---|---|
-| the named WARN reader | reads the pinned WARN lines and gives `NAME, YYYY-MM-DD` for the pin | Tue by 04:26Z (RUNBOOK step 4b); again Tue 07:14Z for pin 2 (step 13); never "about 08:00Z" |
+| the named WARN reader | reads the WARN lines that Block P1a (pin 1) and Block P2a (pin 2) write, and gives `NAME, YYYY-MM-DD` for the pin (the date must not be older than the pin's own `# date (UTC)` line) | Tue 04:26Z to 04:51Z for pin 1 (RUNBOOK step 4b; P1a runs first inside it) and Tue 07:14Z to 07:44Z for pin 2 (step 13; P2a runs after the export); never "about 08:00Z" |
 | the owner | answers the HubSpot token-scopes question | asked Wed about 07:00Z; reply wanted by 08:00Z; no reply by 08:30Z means no recording that day |
 | the owner | Step D message 1 (delete one leftover made-up contact) | sent Wed about 07:30Z |
 | the owner | S9-2 settings-file comparison | message by 09:15Z, reply by 09:45Z Wed |
@@ -157,112 +158,102 @@ Every command in this file uses `git -C "$REPO"` or an absolute path built from 
 ### GO row command blocks (copy and paste; every block uses only `$VARS` from the Placeholder table; none was run on the real tree, the shapes were run in a scratch folder)
 Block R1 (row 1; the counts are also kept in `"$ROW1.counts"`):
 ```
-: "${SHA_R20:?unset}" "${SHA_R21:?unset}" "${SHA_R22:?unset}" "${SHA_R23:?unset}" "${BRANCH:?unset}"
-test ! -e "$ROW1" && echo "log path is new"
-for S in "$SHA_R20" "$SHA_R21" "$SHA_R22" "$SHA_R23"; do git -C "$REPO" cat-file -e "$S^{commit}" && git -C "$REPO" merge-base --is-ancestor "$S" "$BRANCH"; echo "$S exit $?"; done > "$ROW1" 2>&1
-{ grep -c . "$ROW1"; grep -c ' exit 0$' "$ROW1"; } > "$ROW1.counts"; cat "$ROW1.counts"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${ROW1:?unset}" "${SHA_R20:?unset}" "${SHA_R21:?unset}" "${SHA_R22:?unset}" "${SHA_R23:?unset}" "${BRANCH:?unset}"
+test ! -e "$ROW1" && echo "log path is new" && { for S in "$SHA_R20" "$SHA_R21" "$SHA_R22" "$SHA_R23"; do git -C "$REPO" cat-file -e "$S^{commit}" && git -C "$REPO" merge-base --is-ancestor "$S" "$BRANCH"; echo "$S exit $?"; done; } > "$ROW1" 2>&1
+test ! -e "$ROW1.counts" && test -s "$ROW1" && { grep -c . "$ROW1"; grep -c ' exit 0$' "$ROW1"; } > "$ROW1.counts"; cat "$ROW1.counts"
 ```
 Block R2 (row 2, once per report; `$REPORT` is that report; the hits are read by a person):
 ```
-: "${REPORT:?unset}" && grep -n -i -E 'blocker|major' "$REPORT"; echo "grep exit $?"
-grep -c -F "$SHA_SCRIPTS" "$REPORT"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${REPORT:?unset}" && grep -n -i -E 'blocker|major' "$REPORT"; echo "grep exit $?"
+grep -c -F "${SHA_SCRIPTS:?unset}" "$REPORT"
 ```
 Block R2j (row 2, run ONLY after the person has read every hit and each is closed in that report):
 ```
-: "${JUDGE_WHO:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 2 "$(basename "$REPORT")" "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$REPORT" >> "$JUDGELOG"
+. "${ENVSH:?unset}" && : "${REPORT:?unset}" "${JUDGE_WHO:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 2 "$(basename "$REPORT")" "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$REPORT" >> "$JUDGELOG"
 grep '^JUDGED row 2 ' "$JUDGELOG" | sed 's/.* from file //' | sort -u | wc -l
 ```
 Block R3 (row 3 (a), (b) and (d); the lines are kept in `"$EVLOG.git"` and the pytest output in `$EVLOG`; the pytest line runs in a sub-shell so your shell stays where it is, and its exit code is pytest's own, never a pipe's; `git switch` carries uncommitted edits along, so the first status line must print nothing before the switch):
 ```
-test ! -e "$EVLOG" && echo "log path is new"
-{
-git -C "$REPO" status --short -- src tests
-git -C "$REPO" switch "$BRANCH" && git -C "$REPO" branch --show-current
-SHA_EVIDENCE="$(git -C "$REPO" rev-parse HEAD)"; echo "SHA_EVIDENCE=$SHA_EVIDENCE"
-test "$SHA_EVIDENCE" = "$(git -C "$REPO" rev-parse "$BRANCH")" && echo "evidence sha equals the head of the branch"
-git -C "$REPO" status --short -- src tests
-} > "$EVLOG.git" 2>&1; cat "$EVLOG.git"
-( cd "$REPO" && uv run --all-extras --group test pytest > "$EVLOG" 2>&1; rc=$?; tail -n 1 "$EVLOG"; echo "rc=$rc" )
-{ git -C "$REPO" status --short -- src tests; test "$(git -C "$REPO" rev-parse HEAD)" = "$SHA_EVIDENCE" && echo same-head; } >> "$EVLOG.git" 2>&1; tail -n 2 "$EVLOG.git"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${BRANCH:?unset}" "${EVLOG:?unset}" && unset SHA_EVIDENCE FINAL_SHA
+test ! -e "$EVLOG" && test ! -e "$EVLOG.git" && echo "log path is new" && { git -C "$REPO" status --short -- src tests; git -C "$REPO" switch "$BRANCH" && git -C "$REPO" branch --show-current && SHA_EVIDENCE="$(git -C "$REPO" rev-parse HEAD)" && echo "SHA_EVIDENCE=$SHA_EVIDENCE" && test "$SHA_EVIDENCE" = "$(git -C "$REPO" rev-parse "$BRANCH")" && echo "evidence sha equals the head of the branch" && printf 'SHA_EVIDENCE=%s\nFINAL_SHA="$SHA_EVIDENCE"\n' "$SHA_EVIDENCE" >> "$ENVSH" && git -C "$REPO" status --short -- src tests; } > "$EVLOG.git" 2>&1; echo "git part exit $?"; cat "$EVLOG.git"
+test -n "${SHA_EVIDENCE:-}" && test ! -e "$EVLOG" && ( cd "$REPO" && uv run --all-extras --group test pytest > "$EVLOG" 2>&1; rc=$?; tail -n 1 "$EVLOG"; echo "rc=$rc" )
+test -n "${SHA_EVIDENCE:-}" && { git -C "$REPO" status --short -- src tests; test "$(git -C "$REPO" rev-parse HEAD)" = "$SHA_EVIDENCE" && echo same-head; } >> "$EVLOG.git" 2>&1; tail -n 2 "$EVLOG.git"
 ```
 Block R3c (row 3 (c), after the detached mutation batch has ended: nothing planted may be left in `src/` or `tests/`, and no mutation process may still run):
 ```
-git -C "$REPO" status --short -- src tests
+. "${ENVSH:?unset}" && : "${REPO:?unset}" && git -C "$REPO" status --short -- src tests
 ps -eo pid,args | grep -i '[m]utation_check'; echo "ps grep exit $?"
 ```
 Block R4 (row 4, FIRST run on the unfilled patched copy; P1a, P1b and P1c of the Pin procedure come first, so pin 1 is already installed and committed on `$PATCH_BRANCH`; counts are kept in `"$LOG.counts"`, one labelled line each, expected values in the order printed: 2, 0, 3, 0, 1, 1, 1, 1 or 2):
 ```
-git -C "$REPO" switch "$PATCH_BRANCH" && git -C "$REPO" branch --show-current
-grep -n '^# reviewed by:' "$REPO/handover/flows-audit/flow-check/take-warns.pin"
-grep -n '^# flows sha256' "$REPO/handover/flows-audit/flow-check/take-warns.pin"
-test ! -e "$LOG" && echo "log path is new"
-bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$FLOWS" > "$LOG" 2>&1; echo "exit $?"
-{ for P in 'key check present (F-002 applied)' 'key check ABSENT' '^INFO: .* run saving is ON' '^!!!' '^WARN set equals the pinned set' '^FINAL: take_check exit status 0\.' '^FINAL: .*RESULT: 0 FAIL' '^ACCEPTED: recovery flow not part of the take'; do printf '%s = ' "$P"; grep -c -e "$P" "$LOG"; done; } > "$LOG.counts"; cat "$LOG.counts"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${PATCH_BRANCH:?unset}" "${FLOWS:?unset}" "${LOG:?unset}"
+git -C "$REPO" switch "$PATCH_BRANCH" && git -C "$REPO" branch --show-current && grep -n '^# reviewed by:' "$REPO/handover/flows-audit/flow-check/take-warns.pin" && grep -n '^# flows sha256' "$REPO/handover/flows-audit/flow-check/take-warns.pin" && test ! -e "$LOG" && echo "log path is new" && bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$FLOWS" > "$LOG" 2>&1; echo "exit $?"
+test ! -e "$LOG.counts" && test -s "$LOG" && { for P in 'key check present (F-002 applied)' 'key check ABSENT' '^INFO: .* run saving is ON' '^!!!' '^WARN set equals the pinned set' '^FINAL: take_check exit status 0\.' '^FINAL: .*RESULT: 0 FAIL' '^ACCEPTED: recovery flow not part of the take'; do printf '%s = ' "$P"; grep -c -e "$P" "$LOG"; done; } > "$LOG.counts"; cat "$LOG.counts"
 ```
 Block R4r (repeat of Block R4 on the unfilled copy after pin 2 is installed: restore pin 1 FIRST, then run Block R4 from its `test ! -e "$LOG"` line with a NEW `$LOG`; `git show` writes the file without staging it, which `git checkout SHA -- file` would do):
 ```
-: "${SHA_PIN1:?unset}" && git -C "$REPO" show "$SHA_PIN1:handover/flows-audit/flow-check/take-warns.pin" > "$REPO/handover/flows-audit/flow-check/take-warns.pin" && echo "pin 1 restored"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${SHA_PIN1:?unset}" && PINTMP="$(mktemp)" && git -C "$REPO" show "$SHA_PIN1:handover/flows-audit/flow-check/take-warns.pin" > "$PINTMP" && cp "$PINTMP" "$REPO/handover/flows-audit/flow-check/take-warns.pin" && rm -f "$PINTMP" && echo "pin 1 restored"
 grep -n '^# reviewed by:' "$REPO/handover/flows-audit/flow-check/take-warns.pin"
 ```
 Block R4b-1 (row 4, the exported copy, FIRST run: `$EXPORT` is the folder of FIX-PLAN step 9 and pin 1 is still installed, so exit 4 is the expected result):
 ```
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${EXPORT:?unset}" "${LOG2:?unset}"
 test "$(ls -A1 "$EXPORT" | LC_ALL=C sort | tr '\n' ' ')" = 'mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json ' && echo "export: exactly four files"
 for F in mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; do python3 -I -c 'import json,sys; json.load(open(sys.argv[1]))' "$EXPORT/$F" && echo "$F json-ok"; done
-test ! -e "$LOG2" && echo "log path is new"
-bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$EXPORT" > "$LOG2" 2>&1; echo "exit $?"
-grep -c '^!!! THE WARN SET CHANGED' "$LOG2"
+test ! -e "$LOG2" && echo "log path is new" && bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$EXPORT" > "$LOG2" 2>&1; echo "exit $?"
+test ! -e "$LOG2.counts" && test -s "$LOG2" && grep -c '^!!! THE WARN SET CHANGED' "$LOG2" > "$LOG2.counts"; cat "$LOG2.counts"
 ```
 Block R4b-2 (row 4, the exported copy with pin 2: P2a, P2b and P2c of the Pin procedure come first; `$LOG3` is a NEW path; expected counts as in Block R4):
 ```
-: "${SHA_PIN:?unset}" && git -C "$REPO" show "$SHA_PIN:handover/flows-audit/flow-check/take-warns.pin" > "$REPO/handover/flows-audit/flow-check/take-warns.pin" && echo "pin 2 in place"
-test ! -e "$LOG3" && echo "log path is new"
-bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$EXPORT" > "$LOG3" 2>&1; echo "exit $?"
-{ for P in 'key check present (F-002 applied)' 'key check ABSENT' '^INFO: .* run saving is ON' '^!!!' '^WARN set equals the pinned set' '^FINAL: take_check exit status 0\.' '^FINAL: .*RESULT: 0 FAIL' '^ACCEPTED: recovery flow not part of the take'; do printf '%s = ' "$P"; grep -c -e "$P" "$LOG3"; done; } > "$LOG3.counts"; cat "$LOG3.counts"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${EXPORT:?unset}" "${LOG3:?unset}" "${SHA_PIN:?unset}" && PINTMP="$(mktemp)" && git -C "$REPO" show "$SHA_PIN:handover/flows-audit/flow-check/take-warns.pin" > "$PINTMP" && cp "$PINTMP" "$REPO/handover/flows-audit/flow-check/take-warns.pin" && rm -f "$PINTMP" && echo "pin 2 in place"
+test ! -e "$LOG3" && echo "log path is new" && bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$EXPORT" > "$LOG3" 2>&1; echo "exit $?"
+test ! -e "$LOG3.counts" && test -s "$LOG3" && { for P in 'key check present (F-002 applied)' 'key check ABSENT' '^INFO: .* run saving is ON' '^!!!' '^WARN set equals the pinned set' '^FINAL: take_check exit status 0\.' '^FINAL: .*RESULT: 0 FAIL' '^ACCEPTED: recovery flow not part of the take'; do printf '%s = ' "$P"; grep -c -e "$P" "$LOG3"; done; } > "$LOG3.counts"; cat "$LOG3.counts"
 ```
 Block R5e (row 5, fallback post-twice; the same bytes twice; the sha256 is printed before and after so a changed body shows; the loop sends POST 2 only after reply 1 has arrived, so it can show the repeat case only, never the race case (FIX-PLAN rule (d)); the content type and any status other than 200 for a repeat: LEAD FILLS):
 ```
-: "${BODY:?unset}" "${HOOK_URL:?unset}" "${POSTLOG:?unset}"
-test ! -e "$POSTLOG" && echo "log path is new"
-{ sha256sum "$BODY"; for N in 1 2; do date -u +%Y-%m-%dT%H:%M:%SZ; curl -sS -m 60 -X POST -H 'Content-Type: application/json' --data-binary @"$BODY" -w '\nHTTP %{http_code} %{time_total}s\n' "$HOOK_URL"; echo "curl exit $?"; done; sha256sum "$BODY"; } > "$POSTLOG" 2>&1
-{ grep -c '^HTTP 200 ' "$POSTLOG"; grep -c '^curl exit 0$' "$POSTLOG"; grep -c '^[0-9a-f]\{64\}  ' "$POSTLOG"; grep '^[0-9a-f]\{64\}  ' "$POSTLOG" | cut -c1-64 | sort -u | wc -l; } > "$POSTLOG.counts"; cat "$POSTLOG.counts"
+. "${ENVSH:?unset}" && : "${BODY:?unset}" "${HOOK_URL:?unset}" "${POSTLOG:?unset}" "${KEY:?unset}"
+test ! -e "$POSTLOG" && test -f "$BODY" && grep -q -F -- "$KEY" "$BODY" && echo "log path is new; key is in the body" && { sha256sum "$BODY"; for N in 1 2; do date -u +%Y-%m-%dT%H:%M:%SZ; curl -sS -m 60 -X POST -H 'Content-Type: application/json' --data-binary @"$BODY" -w '\nHTTP %{http_code} %{time_total}s\n' "$HOOK_URL"; echo "curl exit $?"; done; sha256sum "$BODY"; } > "$POSTLOG" 2>&1
+test ! -e "$POSTLOG.counts" && test -s "$POSTLOG" && { grep -c '^HTTP 200 ' "$POSTLOG"; grep -c '^curl exit 0$' "$POSTLOG"; grep -c '^[0-9a-f]\{64\}  ' "$POSTLOG"; grep '^[0-9a-f]\{64\}  ' "$POSTLOG" | cut -c1-64 | sort -u | wc -l; } > "$POSTLOG.counts"; cat "$POSTLOG.counts"
 ```
 Expected in the order printed: 2, 2, 2, 1 (the first number is `grep -c '^HTTP 200 '` on `$POSTLOG`). The only exit codes shown are the labelled `curl exit` lines, one per POST; no bare `exit $?` is printed (a bare one would be the last `sha256sum`'s, not curl's). If the line `log path is new` is not printed, stop: the old log would be overwritten.
 
 Block R5f (row 5, the count proof; run only after the positive control of check 5b passed on the same mailbox and filter):
 ```
-psql "$PGCONN_SELECT_ONLY" -c "select state, attempts from mf_leads where lead_key = '$KEY'" > "$POSTLOG.row" 2>&1; echo "psql exit $?"; cat "$POSTLOG.row"
+. "${ENVSH:?unset}" && : "${PGCONN_SELECT_ONLY:?unset}" "${KEY:?unset}" "${POSTLOG:?unset}"
+test ! -e "$POSTLOG.row" && psql "$PGCONN_SELECT_ONLY" -c "select state, attempts from mf_leads where lead_key = '$KEY'" > "$POSTLOG.row" 2>&1; echo "psql exit $?"; cat "$POSTLOG.row"
 # LEAD FILLS: the mailbox count command (tool, filter on the made-up address, the wait); its output goes to "$POSTLOG.mail"
 ```
 Block R6 (row 6; the two awk lists are kept in `"$LEDGER_OUT.counted"` and `"$LEDGER_OUT.decides"`):
 ```
-test ! -e "$LEDGER_OUT" && echo "log path is new"
-( cd "$STUDIO" && python3 egm/tools/ledger_check.py --topic duplicate-proof-lead-desk > "$LEDGER_OUT" 2>&1; echo "exit $?" )
-awk -F' [|] ' '$1 ~ /^[|] F-/ && $3 ~ /^(Blocker|Major)/ && $4 ~ /GO row 6: counts/ && $6 != "FIXED-VERIFIED" {print $1, $3, $6}' "$REPO/handover/flows-audit/LEDGER-ROWS.md" > "$LEDGER_OUT.counted"; echo "awk exit $?"; cat "$LEDGER_OUT.counted"
-awk -F' [|] ' '$1 ~ /^[|] F-/ && $3 ~ /^(Blocker|Major)/ && $4 ~ /GO row 6: lead decides/ {print $1, $3, $6}' "$REPO/handover/flows-audit/LEDGER-ROWS.md" > "$LEDGER_OUT.decides"; echo "awk exit $?"; cat "$LEDGER_OUT.decides"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${STUDIO:?unset}" "${LEDGER_OUT:?unset}"
+test ! -e "$LEDGER_OUT" && echo "log path is new" && ( cd "$STUDIO" && python3 egm/tools/ledger_check.py --topic duplicate-proof-lead-desk > "$LEDGER_OUT" 2>&1; echo "exit $?" )
+test ! -e "$LEDGER_OUT.counted" && awk -F' [|] ' '$1 ~ /^[|] F-/ && $3 ~ /^(Blocker|Major)/ && $4 ~ /GO row 6: counts/ && $6 != "FIXED-VERIFIED" {print $1, $3, $6}' "$REPO/handover/flows-audit/LEDGER-ROWS.md" > "$LEDGER_OUT.counted"; echo "awk exit $?"; cat "$LEDGER_OUT.counted"
+test ! -e "$LEDGER_OUT.decides" && awk -F' [|] ' '$1 ~ /^[|] F-/ && $3 ~ /^(Blocker|Major)/ && $4 ~ /GO row 6: lead decides/ {print $1, $3, $6}' "$REPO/handover/flows-audit/LEDGER-ROWS.md" > "$LEDGER_OUT.decides"; echo "awk exit $?"; cat "$LEDGER_OUT.decides"
+grep -c '^| F-' "$REPO/handover/flows-audit/LEDGER-ROWS.md"
 ```
 Block R6j (row 6, once per `lead decides` row, for example F-003, ONLY after the lead has read the row and decided; `$JUDGE_FILE` is the file read):
 ```
-: "${JUDGE_WHO:?unset}" "${JUDGE_FILE:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 6 F-003 "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$JUDGE_FILE" >> "$JUDGELOG"
+. "${ENVSH:?unset}" && : "${JUDGE_WHO:?unset}" "${JUDGE_FILE:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 6 F-003 "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$JUDGE_FILE" >> "$JUDGELOG"
 grep '^JUDGED row 6 ' "$JUDGELOG" | sed 's/.* from file //' | sort -u | wc -l
 ```
 On the tree read on 2026-11-16 the first awk lists F-037, F-008, F-011, F-029, F-041 and F-018 (all OPEN; so row 6 is NOT PASSED today, which is the true state), the second lists F-003. The real ledger is outside this repository; the lead keeps LEDGER-ROWS.md in step with it or runs the same filter on the real ledger (LEAD FILLS).
 
 Block R7 (row 7, F-041; ONE command set and ONE pass line; FIX-PLAN item 8b uses the same text). First the two files the viewer sees, then every markdown file under the audit and demo folders, with the audit's own text, logs and finding texts filtered out by path:
 ```
-test ! -e "$GREPOUT" && echo "log path is new"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${GREPOUT:?unset}"
 grep -n -i -E 'one database|single database' "$REPO/handover/demo/VIDEO-RUNSHEET.md" "$REPO/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md"; echo "grep exit $?"
-grep -rli -E 'one database|single database' --include='*.md' "$REPO/handover/flows-audit" "$REPO/handover/demo" > "$GREPOUT" 2>&1; echo "grep exit $?"
-grep -v -E '/flows-audit/(FINDINGS|EXCEPTIONS|LEDGER-ROWS|CLAIMS-TABLE|CITATION-CHECK|CITATION-FIXES|CITATION-TRIAGE|QUESTIONS|ORDERS|REPORT|FLOWS-AUDIT|ROLES-PROPOSAL|RUNSHEET-WORDING|OWNER-STEPS-q16-rows|TAKE-CHECKLIST|FIX-PLAN|RUNBOOK|LESSONS|README)\.md$|/flows-audit/(fix|evidence|review|checkpoint|STATUS|PLAN|ANSWER)[^/]*\.md$|/flows-audit/(reviews|lanes|patches|tools|scratch|snapshot|roles|heavy|patch-apply|inputs|handover)[^/]*/' "$GREPOUT" > "$GREPOUT.read"; echo "filter exit $?"; cat "$GREPOUT.read"
+test ! -e "$GREPOUT" && echo "log path is new" && grep -rli -E 'one database|single database' --include='*.md' "$REPO/handover/flows-audit" "$REPO/handover/demo" > "$GREPOUT" 2>&1; echo "grep exit $?"
+test ! -e "$GREPOUT.read" && grep -v -E '/flows-audit/(FINDINGS|EXCEPTIONS|LEDGER-ROWS|CLAIMS-TABLE|CITATION-CHECK|CITATION-FIXES|CITATION-TRIAGE|QUESTIONS|ORDERS|REPORT|FLOWS-AUDIT|ROLES-PROPOSAL|RUNSHEET-WORDING|OWNER-STEPS-q16-rows|TAKE-CHECKLIST|FIX-PLAN|RUNBOOK|LESSONS|README)\.md$|/flows-audit/(fix|evidence|review|checkpoint|STATUS|PLAN|ANSWER)[^/]*\.md$|/flows-audit/(reviews|lanes|patches|tools|scratch|snapshot|roles|heavy|patch-apply|inputs|handover)[^/]*/' "$GREPOUT" > "$GREPOUT.read"; echo "filter exit $?"; cat "$GREPOUT.read"
 ```
 Pass line (the same in FIX-PLAN item 8b): the first grep prints no line and `grep exit 1`; `"$GREPOUT.read"` is empty (`filter exit 1`) or lists only files the lead has read once, each with its `JUDGED row 7 item F-041` line from Block R7j. A hit in the run sheet, the page statements or an owner sheet is a failure unless the lead reads it, finds it harmless and records it. A SUPERSEDED mark does not remove a hit.
 Block R7j (row 7, once per listed file, ONLY after the lead has read it):
 ```
-: "${JUDGE_WHO:?unset}" "${JUDGE_FILE:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 7 F-041 "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$JUDGE_FILE" >> "$JUDGELOG"
+. "${ENVSH:?unset}" && : "${JUDGE_WHO:?unset}" "${JUDGE_FILE:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 7 F-041 "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$JUDGE_FILE" >> "$JUDGELOG"
 grep '^JUDGED row 7 ' "$JUDGELOG" | sed 's/.* from file //' | sort -u | wc -l
 ```
 Block R8 (the decision; written once per GO / NO-GO round into that round's `$JUDGELOG`):
 ```
-: "${JUDGE_WHO:?unset}" "${JUDGELOG:?unset}" && printf 'DECISION %s by %s at %s\n' NO-GO "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" >> "$JUDGELOG"
+. "${ENVSH:?unset}" && : "${JUDGE_WHO:?unset}" "${JUDGELOG:?unset}" && printf 'DECISION %s by %s at %s\n' NO-GO "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" >> "$JUDGELOG"
 ```
 (type `GO` in place of `NO-GO` when all seven rows passed). After a NO-GO the failed rows are fixed, run again with new log paths and a NEW `$JUDGELOG`, and a new decision line is written.
 
@@ -296,14 +287,13 @@ Everything below is read in `flow-check/take_check.sh` and `flow-check/take-warn
 2. **Order of runs (one file, so order matters). Pin first, then the check:** P1a, P1b and P1c (step 3) make and commit pin 1, THEN Block R4 runs. As committed the pin holds the WARN set of the UNFILLED patched copy. So: (a) run check 1 on the unfilled patched copy `$FLOWS` with pin 1 installed and KEEP that log (GO row 4); (b) the first run on the export (Block R4b-1) also uses pin 1 and exits 4 on purpose; (c) only then make and install pin 2, the export pin (step 5, P2a to P2c), and run Block R4b-2. After pin 2 is installed, the same command on `$FLOWS` exits 4 (its WARN set and sha256 differ). To repeat a run on the unfilled copy, restore pin 1 first with Block R4r; to go back to the export pin, the first line of Block R4b-2 restores pin 2. Both restore with `git show SHA:path > path`, which writes the file without staging it (`git checkout SHA -- path` would also stage it); git then shows the pin as modified until the next commit, which is harmless, because every pin commit uses the pin file as its pathspec. Every run writes to a NEW log path, also each repeat: `$LOG.r1`, `$LOG.r2` ... for repeats of Block R4 and `$LOG2.final1`, `$LOG2.final2` ... for repeats of the export run (a repeat that reuses a path is stopped by its `test ! -e` line). CLOSING STEP after the last run: `git -C "$REPO" checkout HEAD -- handover/flows-audit/flow-check/take-warns.pin` (puts the pin back to what the last commit holds) and `git -C "$REPO" status --short -- handover/flows-audit/flow-check/take-warns.pin` must print nothing; the same line is needed after any `git checkout SHA -- pin` (which stages the file).
 3. **Pin 1, for the unfilled patched copy (run once; `$NEW_PIN` and `"$LOG.pin1"` must not exist yet).** The names of the four commits are the RUNBOOK's: `SHA_FOLDER` (the folder commit, FIX-PLAN step 3), `SHA_PIN1` (this pin's commit), `SHA_PIN` (pin 2's commit, step 5 below) and `SHA_SCRIPTS` (the take scripts' commit). Block P1a writes the new pin file; the run exits 4 on purpose and prints `NEW PIN WRITTEN to ...`:
 ```
-test ! -e "$NEW_PIN" && echo "pin path is new"
-test ! -e "$LOG.pin1" && echo "log path is new"
-bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$FLOWS" --write-warn-pin "$NEW_PIN" > "$LOG.pin1" 2>&1; echo "exit $?"
-grep -c '^NEW PIN WRITTEN to ' "$LOG.pin1"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${FLOWS:?unset}" "${NEW_PIN:?unset}" "${LOG:?unset}"
+test ! -e "$NEW_PIN" && test ! -e "$LOG.pin1" && echo "pin path and log path are new" && bash "$REPO/handover/flows-audit/flow-check/take_check.sh" --flows "$FLOWS" --write-warn-pin "$NEW_PIN" > "$LOG.pin1" 2>&1; echo "exit $?"
+test -s "$LOG.pin1" && grep -c '^NEW PIN WRITTEN to ' "$LOG.pin1"
 ```
 Pass for P1a: the two `test` lines each print their text, `exit 4`, and the count is `1`. Then a named human reads every WARN line (`cat -n "$NEW_PIN"`) and gives the lead `NAME` and the date (step 4). Block P1b writes that line into `$NEW_PIN` (the python3 program refuses a line break in the name, a date that is not `YYYY-MM-DD` in ASCII digits, and a pin that does not hold exactly one `# reviewed by:` line; it is the form tested in the scratch folder, with `re.ASCII` added now):
 ```
-python3 -I - "$NEW_PIN" "$PIN_NAME" "$PIN_DATE" <<'PYEOF'
+. "${ENVSH:?unset}" && : "${NEW_PIN:?unset}" "${PIN_NAME:?unset}" "${PIN_DATE:?unset}" && python3 -I - "$NEW_PIN" "$PIN_NAME" "$PIN_DATE" <<'PYEOF'
 import os, re, sys
 path, name, date = sys.argv[1:4]
 if "\n" in name or "\r" in name or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", date, re.ASCII):
@@ -323,7 +313,7 @@ PYEOF
 ```
 Pass for P1b: it prints `reviewer line written: # reviewed by: NAME, DATE`, exit 0. Block P1b may also be run on the committed pin file directly (RUNBOOK step 4b (c), as the audit reads it; unverified): then `$NEW_PIN` in P1b is that file's path, and in Block P1c the `cp` is left out (a copy of a file onto itself fails, and that would stop the chain); every other part of P1c is unchanged. Block P1c installs and commits pin 1 on `$PATCH_BRANCH` and writes the sha. It is ONE chain: if the switch, the copy, the add or the commit fails, no sha is written (`$COMMIT_MSG` is the lead's message and must not be empty; `$TRAILER` is the repository's attribution line; the commit takes only the pin file, so no other staged change goes in):
 ```
-: "${COMMIT_MSG:?unset}" "${TRAILER:?unset}" "${ENVSH:?unset}" "${SHA_FOLDER:?unset}" && git -C "$REPO" switch "$PATCH_BRANCH" && git -C "$REPO" branch --show-current && cp "$NEW_PIN" "$REPO/handover/flows-audit/flow-check/take-warns.pin" && git -C "$REPO" add -- handover/flows-audit/flow-check/take-warns.pin && git -C "$REPO" commit -q -m "$COMMIT_MSG" -m "$TRAILER" -- handover/flows-audit/flow-check/take-warns.pin && SHA_PIN1="$(git -C "$REPO" rev-parse HEAD)" && test "$SHA_PIN1" != "$SHA_FOLDER" && echo "SHA_PIN1=$SHA_PIN1" && printf 'SHA_PIN1=%s\n' "$SHA_PIN1" >> "$ENVSH"
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${PATCH_BRANCH:?unset}" "${NEW_PIN:?unset}" "${COMMIT_MSG:?unset}" "${TRAILER:?unset}" "${SHA_FOLDER:?unset}" && git -C "$REPO" switch "$PATCH_BRANCH" && git -C "$REPO" branch --show-current && cp "$NEW_PIN" "$REPO/handover/flows-audit/flow-check/take-warns.pin" && git -C "$REPO" add -- handover/flows-audit/flow-check/take-warns.pin && git -C "$REPO" commit -q -m "$COMMIT_MSG" -m "$TRAILER" -- handover/flows-audit/flow-check/take-warns.pin && SHA_PIN1="$(git -C "$REPO" rev-parse HEAD)" && test "$SHA_PIN1" != "$SHA_FOLDER" && echo "SHA_PIN1=$SHA_PIN1" && printf 'SHA_PIN1=%s\n' "$SHA_PIN1" >> "$ENVSH"
 git -C "$REPO" status --short -- handover/flows-audit/flow-check/take-warns.pin
 ```
 Pass for P1c: the branch name printed equals `$PATCH_BRANCH`, `SHA_PIN1=` is followed by 40 hex characters and differs from `SHA_FOLDER`, and the status line prints nothing. Then run the take_check command of GO row 4 (Block R4) with a NEW `$LOG`. The FINAL line of the script prints the sha256 of the four flow files, which names the flows by content whichever commit holds them. Whether several shas are accepted is RUNBOOK.md input I24 (the four shas are the RUNBOOK's count); ORDERS does not answer it: LEAD FILLS.

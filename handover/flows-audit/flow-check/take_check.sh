@@ -16,10 +16,131 @@
 # Round 10b (review f8-r10 round 2): the top block and the FINAL line print a sha256 of the four flow files; the pin header needs a "# reviewed by: NAME, DATE" line without the word PLACEHOLDER (exit 4 otherwise); --write-warn-pin writes only when the only problem is the WARN difference; the run-saving INFO line no longer promises a deletion (the take never deletes anything).
 # Round 10c (review f8-r10b round 2): (Q1) the output never says a person read the pin: it prints the reviewer line as written, and a reviewer line that names a session or says "lead to confirm" is exit 4 ("pin not yet confirmed by the lead"), so the first exit 0 needs the lead's own line; (Q2) the flow files (the four and every other *.json in the folder) are hashed before the checker and again after the last read, a difference is exit 4, an unreadable file prints MISSING; (Q5) a checker exit status above 3 is shown and returned as 3.
 # Round 10d (review f8-r10c): (A1) the pin comment no longer claims a person read each line (only the WARN lines are hashed; comment lines are not protected); (B1) the pin header carries '# flows sha256 ...' (the combined sha256 of the four flow files, as printed in the top block); a different sha is exit 4, a pin without that line is exit 4, so a changed flow with the same counts and WARNs no longer passes; (B2) the reviewer line must be 'NAME, YYYY-MM-DD' (optionally ', note'), a real date not in the future, and a name that is not a stand-in (TBD, x, claude agent, ...); (B3) with the test flag and an override a run that would pass is exit 5 (not 0), TAKE_CHECK_FLOWS together with --flows is exit 2, and the top block says where the folder name came from; (B4 is in run_all.sh); the flow_snapshot (sha256 of the flow files) is taken before any other read of them; a sha256sum failure is a problem (exit 4), never an empty hash.
-# Round f8-r6 (review f8-r5; f8-r4 and f8-r5 added the dotted-letter rules): the reviewer-line check now squashes the name and the note into lower-case letters only and refuses a long tool or model name inside it (Claude, ChatGPT, OpenAI, Gemini ...), refuses short stand-ins (LLM, GPT, bot, AI) as whole words or as the join of 1-2 letter pieces across spaces, dots and hyphens, checks the note, tells the truth in its refusal message, and allows a date one day ahead of the UTC date. Heuristic only: a person reading the pin lines is the control.
-# Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script)
+# Round f8-r7 (reviews f8-r6, codebase and design angle): the reviewer-line check is now ONE rule set run by a small python helper (REVIEWER_PY below): the line must read NAME, YYYY-MM-DD[, note] with exactly one comma and one space before the date (a comma inside the name or text between the name and the date is refused); the date is real, not more than one day ahead of today (UTC) and not older than the pin's own date line; the name has at least 3 letters (any alphabet; digits and signs other than space, dot, apostrophe and hyphen are refused); a whole word of the name or the note on the list REVIEWER_WORDS_ALL (tool and model names, bot and agent words, tbd/todo/none/unknown/placeholder/session) is refused; a whole word of the name on REVIEWER_WORDS_NAME (generic stand-ins) is refused; letters of two alphabets mixed in one word (look-alike letters) are refused; a note that says the lines were not read, or will be read later, is refused. Digits are read as the letters they imitate (4 as a, 3 as e, 1 as i or l, 0 as o, 5 as s, 7 as t) and single letters joined by dots (L.L.M.) are one word. There is no search inside longer words and no joining of words: Claudette, Robotham, Bo Ta and A. I. Walker pass. The words live ONLY in this file (bash take_check.sh --reviewer-words prints them; the tests and the README are compared with that output).
+# Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script). Two test helpers that run nothing else: --reviewer-words (prints the word lists) and --check-reviewer-line 'LINE' [PINDATE] (prints ok or the rule that refused, exit 0 or 1).
 LC_ALL=C; export LC_ALL
 HERE=$(cd "$(dirname "$0")" && pwd)
+REVIEWER_WORDS_ALL="claude claudebot anthropic opus sonnet haiku fable gpt gpts chatgpt gptbot chatbot openai codex gemini copilot llama mistral grok qwen kimi devin cursor deepseek agent agents assistant assistants bot bots robot robots ai aibot llm llms tbd todo none unknown placeholder session sessions"
+REVIEWER_WORDS_NAME="name nobody someone anonymous model models person xxx abc standin stand test reviewer runall dummy example sample fake code user admin lead testonly"
+# The note may use the name-only words in normal speech (a sample, the code, the lead), so they are checked in the name only. "testonly" is the script's own test name: it is accepted only with the test flag AND a pin override (such a run is exit 5, never 0).
+IFS= read -r -d '' REVIEWER_PY <<'PYEOF' || true
+import re
+import sys
+import unicodedata
+from datetime import date, datetime, timedelta, timezone
+
+try:
+    line, pindate, testallow, words_all, words_name, today_s = sys.argv[1:7]
+except ValueError:
+    print("HELPER ERROR: wrong number of arguments")
+    sys.exit(3)
+ALL = set(words_all.split())
+NAME = set(words_name.split())
+
+
+def refuse(rule, text):
+    print("REFUSED (rule: %s): %s" % (rule, text))
+    sys.exit(1)
+
+
+def fold(t):
+    t = unicodedata.normalize("NFKD", t)
+    return "".join(c for c in t if not unicodedata.combining(c)).lower()
+
+
+def words(t):
+    t = fold(t)
+    texts = {t}
+    digits = {"4": "a", "3": "e", "0": "o", "5": "s", "7": "t"}
+    base = t.translate(str.maketrans(digits))
+    texts = {base.replace("1", "i"), base.replace("1", "l")}
+    out = set()
+    letter = r"[^\W\d_]"
+    for x in texts:
+        x = re.sub(
+            r"(?<!%s)(%s(?:\.%s)+)(?!%s)" % (letter, letter, letter, letter),
+            lambda m: m.group(1).replace(".", ""),
+            x,
+        )
+        out.update(re.findall(r"%s+" % letter, x))
+    return out
+
+
+def mixed(t):
+    for w in re.findall(r"[^\W\d_]+", unicodedata.normalize("NFKD", t)):
+        scripts = {unicodedata.name(c, "?").split()[0] for c in w}
+        if len(scripts & {"LATIN", "CYRILLIC", "GREEK"}) > 1:
+            return True
+    return False
+
+
+try:
+    line = line.strip(" \t\r\n")
+    for ch in line:
+        if unicodedata.category(ch)[0] == "C":
+            refuse("hidden character", "the line holds a control or invisible character (U+%04X)" % ord(ch))
+    i = line.find(",")
+    if i < 0:
+        refuse("shape", "there is no comma; the line must read NAME, YYYY-MM-DD or NAME, YYYY-MM-DD, a note")
+    name, rest = line[:i], line[i:]
+    m = re.fullmatch(r", (\d{4}-\d{2}-\d{2})(?:, (\S.*))?", rest, re.ASCII)
+    if not m:
+        refuse(
+            "shape",
+            "the line must read NAME, YYYY-MM-DD or NAME, YYYY-MM-DD, a note: exactly one comma and one space "
+            "between the name and the date, no comma inside the name and no text between the name and the date "
+            "(write 'Jane Roe', not 'Roe, Jane'; write 'John Smith Jr.' with no comma)",
+        )
+    ds, note = m.group(1), (m.group(2) or "")
+    if not name or not (unicodedata.category(name[0])[0] == "L"):
+        refuse("name characters", "the name must start with a letter")
+    for ch in name:
+        if ch not in " .'-" and unicodedata.category(ch)[0] not in "LM":
+            refuse("name characters", "the name may hold only letters, spaces, dots, apostrophes and hyphens (no digits or other signs)")
+    if sum(1 for ch in name if unicodedata.category(ch)[0] == "L") < 3:
+        refuse("name too short", "the name has fewer than 3 letters")
+    if mixed(name) or mixed(note):
+        refuse("mixed alphabets", "one word mixes Latin letters with Cyrillic or Greek letters (look-alike letters)")
+    nwords = words(name)
+    first = (re.findall(r"[^\W\d_]+", fold(name)) or [""])[0]
+    for w in sorted(nwords):
+        if w in ALL:
+            refuse("listed word %s" % w, "the name contains the whole word '%s', which is on the list of refused words" % w)
+    if not (testallow == "1" and first == "testonly"):
+        for w in sorted(nwords):
+            if w in NAME:
+                refuse("listed word %s" % w, "the name contains the whole word '%s', which is on the list of refused name words" % w)
+    for w in sorted(words(note)):
+        if w in ALL:
+            refuse("listed word %s" % w, "the note contains the whole word '%s', which is on the list of refused words" % w)
+    nl = fold(note)
+    if re.search(r"\bnot\s+(?:yet\s+|fully\s+|all\s+)?(?:been\s+)?(?:read|reviewed)\b|\bunread\b|\blater\b|\bwill\s+read\b|\bto\s+be\s+read\b|\bnot\s+read\b", nl):
+        refuse("note says not read", "the note says the lines were not read (or will be read later)")
+    try:
+        d = date.fromisoformat(ds)
+    except ValueError:
+        refuse("bad date", "%s is not a real calendar date" % ds)
+    today = date.fromisoformat(today_s) if today_s else datetime.now(timezone.utc).date()
+    if d > today + timedelta(days=1):
+        refuse("future date", "%s is more than one day ahead of today (UTC)" % ds)
+    if pindate:
+        if d < date.fromisoformat(pindate):
+            refuse("old date", "%s is older than the pin's own '# date (UTC)' line (%s)" % (ds, pindate))
+except SystemExit:
+    raise
+except Exception as e:  # a helper fault is never a pass
+    print("HELPER ERROR: %s" % type(e).__name__)
+    sys.exit(3)
+print("ok")
+PYEOF
+reviewer_ok() { # $1 = the reviewer line as written, $2 = the pin's own date; sets REV_REASON; returns 0 for a line that passes the word check, 1 otherwise
+  local allow=0 out rc
+  [ "${TAKE_CHECK_TEST:-}" = 1 ] && [ -n "${TAKE_CHECK_WARN_PIN:-}" ] && allow=1
+  out=$(python3 -I -c "$REVIEWER_PY" "$1" "${2:-}" "$allow" "$REVIEWER_WORDS_ALL" "$REVIEWER_WORDS_NAME" "${REVIEWER_TODAY:-}" 2>&1); rc=$?
+  REV_REASON=$out
+  [ "$rc" -eq 0 ]
+}
+safe_text() { python3 -I -c 'import sys, unicodedata; t = "".join(c for c in sys.argv[1] if unicodedata.category(c)[0] != "C"); print(t[:300])' "$1" 2>/dev/null || printf '(text not shown)'; }
 USAGE="usage: take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]"
 abspath() { case "$1" in /*) printf '%s' "$1";; *) printf '%s/%s' "$PWD" "$1";; esac; }   # before the cd below, so a relative path means what the person typed
 WRITEPIN=""; FLOWSARG=""
@@ -27,6 +148,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --write-warn-pin) [ -n "${2:-}" ] || { echo "$USAGE"; exit 2; }; WRITEPIN=$(abspath "$2"); shift 2;;
     --flows) [ -n "${2:-}" ] || { echo "$USAGE"; exit 2; }; FLOWSARG=$(abspath "$2"); shift 2;;
+    --reviewer-words) echo "Words refused in the name and in the note: $REVIEWER_WORDS_ALL"; echo "Words refused in the name only: $REVIEWER_WORDS_NAME"; exit 0;;
+    --check-reviewer-line) [ $# -ge 2 ] || { echo "$USAGE"; exit 2; }
+      # test helper: only the reviewer-line word check, nothing else runs. TAKE_CHECK_TODAY (a fixed date) is read here only, and only with the test flag, so a test cannot race UTC midnight
+      REVIEWER_TODAY=""; [ "${TAKE_CHECK_TEST:-}" = 1 ] && REVIEWER_TODAY=${TAKE_CHECK_TODAY:-}
+      if reviewer_ok "$2" "${3:-}"; then echo "$REV_REASON"; exit 0; else echo "$REV_REASON"; exit 1; fi;;
     *) echo "$USAGE"; exit 2;;
   esac
 done
@@ -217,63 +343,6 @@ if [ "$NRC" -ne 0 ]; then echo "!!! THE WARN-LINE HELPER FAILED (exit status $NR
 grep . "$NORM" | LC_ALL=C sort > "$NORM.now"
 echo "--- (6) Checker result and the WARN baseline ---"
 echo "${RESULTLINE:-RESULT line missing}. WARN lines that rest on an n8n rule nobody verified: $UNVN."
-# round 10d (B2) + round f8-r4 (M1) + round f8-r6: the reviewer line grammar (the f8-r6 squashed-string and joined-pieces rules are described below the stand-in list): NAME, YYYY-MM-DD[, note]. NAME = letters, spaces, dots, apostrophes, hyphens. The name is cut into words at EVERY character that is not a letter (so "Claude-Code", "TBD." and "Unknown-" are cut like "Claude Code"), lower-cased, and refused when ANY word is in the stand-in list below, when it has fewer than 3 letters in all, or when a word is one letter repeated (aaa, xxx). The date must be real, at most one day ahead of the UTC date, and not older than the pin's own date line. A SCRIPT CANNOT KNOW WHO READ THE PIN: this only turns away names that are obviously not a person. A made-up human-looking name passes; that is why the output prints the line as written and why the pin must be looked at in the git diff.
-# Test-only way (exit 5 only, never 0): when the test flag TAKE_CHECK_TEST=1 AND a pin override TAKE_CHECK_WARN_PIN are both active, a name whose FIRST word is "testonly" skips the stand-in list. A run with an override can never be exit 0, so no stand-in name can give exit 0 without a human. "testonly" itself is on the list, so without both the flag and the override it is refused like any stand-in.
-REVIEWER_STANDINS=" tbd todo name placeholder unknown nobody someone anonymous claude agent session bot assistant gpt model lead person xxx abc standin stand test reviewer runall dummy example sample fake sonnet opus haiku gemini llm llms gpts bots agents assistants models robots ai code user admin testonly "
-# round f8-r6 (review f8-r5): the name and the note are both turned into one "squashed" string (lower-case letters only, every other character removed) and refused when it contains a long stand-in (REVIEWER_LONG, 5 or more letters, except grok). That catches Cla.ude, Claudebot, Openai, Gptbot and C-l-a-u-d-e in one place, whatever sits between the letters. Short stand-ins (llm, gpt, bot, ai, tbd, ...) are refused as whole words (above) and as the join of a run of words of 1 or 2 letters (so "O L L M", "L. L. M.", "Ol-L-M"); they are never searched inside longer words, so Botha and Aiden stay valid. REVIEWER_ALLOW holds real-name words that contain a long stand-in; they are left out of the squashed string. This is a guess about words, not a proof of a person: only a named human reading the pin lines is the control (README, Q31 item 15). The note is checked for the tool and model names only (REVIEWER_LONG_NOTE), because a note may say "lead" or "code" in normal use.
-REVIEWER_LONG_NOTE=" claude chatgpt gptbot openai anthropic gemini llama mistral grok deepseek copilot assistant robot sonnet haiku "
-REVIEWER_LONG_NAME=" placeholder anonymous unknown nobody someone reviewer dummy example sample agent "
-REVIEWER_ALLOW=" claudette "
-squash_hits() { # $1 = text, $2 = list of long stand-ins, $3 = 1 to drop REVIEWER_ALLOW words first; returns 0 when a stand-in is inside the squashed text
-  local t=$1 list=$2 drop=$3 w sq="" x
-  for w in $(printf '%s' "$t" | tr 'A-Z' 'a-z' | tr -cs 'a-z' ' '); do
-    if [ "$drop" = 1 ]; then case "$REVIEWER_ALLOW" in *" $w "*) continue;; esac; fi
-    sq="$sq$w"
-  done
-  for x in $list; do case "$sq" in *"$x"*) return 0;; esac; done
-  return 1
-}
-reviewer_ok() {
-  local r=$1 pindate=${2:-} name date note="" words w first c run tomorrow
-  case $r in *,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]|*,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9],\ *) ;; *) return 1;; esac
-  name=${r%%,*}; date=${r#*, }; date=${date%%,*}
-  case $r in *,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9],\ *) note=${r#*, $date, };; esac
-  case $name in [A-Za-z]*) ;; *) return 1;; esac
-  case $name in *[!A-Za-z\ .\'-]*) return 1;; esac   # ASCII letters, space, dot, apostrophe, hyphen only: this also refuses digits, underscores, accents, curly quotes and zero-width characters
-  [ "$(printf '%s' "$name" | tr -cd 'A-Za-z' | wc -c)" -ge 3 ] || return 1
-  words=$(printf '%s' "$name" | tr 'A-Z' 'a-z' | tr -cs 'a-z' ' ')
-  first=${words# }; first=${first%% *}
-  squash_hits "$note" "$REVIEWER_LONG_NOTE" 0 && return 1
-  for w in $(printf '%s' "$note" | tr 'A-Z' 'a-z' | tr -cs 'a-z' ' '); do
-    case " llm llms gpt gpts bot bots ai " in *" $w "*) return 1;; esac
-  done
-  if ! { [ "${TAKE_CHECK_TEST:-}" = 1 ] && [ -n "${TAKE_CHECK_WARN_PIN:-}" ] && [ "$first" = testonly ]; }; then
-    for w in $words; do
-      case "$REVIEWER_STANDINS" in *" $w "*) return 1;; esac
-    done
-    squash_hits "$name" "$REVIEWER_LONG_NOTE$REVIEWER_LONG_NAME" 1 && return 1
-    run=""
-    for w in $words ""; do
-      if [ -n "$w" ] && [ ${#w} -le 2 ]; then run="$run$w"; continue; fi
-      if [ -n "$run" ]; then
-        [ ${#run} -ge 2 ] && case "$REVIEWER_STANDINS" in *" $run "*) return 1;; esac
-        for c in $REVIEWER_STANDINS; do
-          [ ${#c} -ge 3 ] && case "$run" in *"$c"*) return 1;; esac
-        done
-        run=""
-      fi
-    done
-  fi
-  for w in $words; do
-    c=${w:0:1}
-    [ ${#w} -ge 2 ] && [ -z "$(printf '%s' "$w" | tr -d "$c")" ] && return 1
-  done
-  [ "$(date -u -d "$date" +%Y-%m-%d 2>/dev/null)" = "$date" ] || return 1
-  tomorrow=$(date -u -d "tomorrow" +%Y-%m-%d 2>/dev/null) || return 1
-  [ "$date" \> "$tomorrow" ] && return 1   # a date one day ahead of the UTC date is allowed (an IST date between 00:00 and 05:30 is already tomorrow in UTC terms); two days ahead is refused
-  [ -n "$pindate" ] && [ "$date" \< "$pindate" ] && return 1
-  return 0
-}
 PINNED=0
 if [ -z "$WARNN" ]; then
   echo "!!! THE CHECKER'S RESULT LINE IS MISSING: the WARN count is unknown. This script exits 4."
@@ -282,23 +351,25 @@ elif [ ! -f "$PIN" ]; then
   echo "!!! THE WARN BASELINE FILE IS MISSING ($PIN): a new WARN (for example a disabled node, an unwired error output) could not be seen. This script exits 4."
   PROBLEMS+=("warn pin missing")
 else
-  grep -v -E '^#' "$PIN" | grep . | LC_ALL=C sort > "$NORM.pin"
+  tr -d '\r' < "$PIN" > "$NORM.pincr" || { echo "!!! THE PIN COULD NOT BE READ. This script exits 4."; PROBLEMS+=("warn pin missing"); : > "$NORM.pincr"; }   # a pin saved with Windows line ends (CR LF) is read like one with plain line ends
+  grep -v -E '^#' "$NORM.pincr" | grep . | LC_ALL=C sort > "$NORM.pin"
   PINNED=$(grep -c . "$NORM.pin")
   PINHASH=$(sha_stdin < "$NORM.pin") || { PINHASH="UNAVAILABLE"; PROBLEMS+=("sha256sum failed (pin)"); echo "!!! sha256sum FAILED on the pin lines: the pin hash cannot be compared. This script exits 4."; }
-  HDRHASH=$(sed -n 's/^# sha256 of the WARN lines below[^:]*: \([0-9a-f]\{64\}\)$/\1/p' "$PIN" | head -n 1)
-  HDRDATE=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN" | head -n 1)
-  HDRREV=$(sed -n 's/^# reviewed by: \(.*\)$/\1/p' "$PIN" | head -n 1)
-  HDRFLOWS=$(sed -n 's/^# flows sha256 (the four flow files, combined, as printed in the top block of take_check.sh): \([0-9a-f]\{64\}\)$/\1/p' "$PIN" | head -n 1)
+  HDRHASH=$(sed -n 's/^# sha256 of the WARN lines below[^:]*: \([0-9a-f]\{64\}\)$/\1/p' "$NORM.pincr" | head -n 1)
+  HDRDATE=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$NORM.pincr" | head -n 1)
+  HDRREV=$(sed -n 's/^# reviewed by: \(.*\)$/\1/p' "$NORM.pincr" | head -n 1)
+  HDRFLOWS=$(sed -n 's/^# flows sha256 (the four flow files, combined, as printed in the top block of take_check.sh): \([0-9a-f]\{64\}\)$/\1/p' "$NORM.pincr" | head -n 1)
+  HDRSAFE=$(safe_text "$HDRREV")   # the line is printed with control and hidden characters removed
   if [ -z "$HDRREV" ]; then echo "!!! THE PIN HEADER HAS NO '# reviewed by: NAME, DATE' LINE: nobody has said that a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no reviewer line")
-  elif printf '%s' "$HDRREV" | grep -q -F "PLACEHOLDER"; then echo "!!! THE PIN HEADER STILL HAS THE PLACEHOLDER IN ITS 'reviewed by' LINE: the file was written by the script and no person has read it. Read every line, then replace that line. This script exits 4."; PROBLEMS+=("pin not reviewed (placeholder)")
-  elif printf '%s' "$HDRREV" | grep -q -i -E "session|lead to confirm"; then echo "!!! pin not yet confirmed by the lead: the 'reviewed by' line of the pin (as written: $HDRREV) names a session or says the lead still has to confirm. A session is not a person who read the WARN lines. The lead reads every WARN line and replaces that line with: # reviewed by: NAME, YYYY-MM-DD. This script exits 4."; PROBLEMS+=("pin not yet confirmed by the lead")
-  elif ! reviewer_ok "$HDRREV" "$HDRDATE"; then echo "!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON'S NAME AND A DATE (as written: $HDRREV): it must read '# reviewed by: NAME, YYYY-MM-DD' (optionally followed by ', a note'), with a real date that is not in the future and not older than the pin's own date line, and a name that is not a stand-in. What this checks: the name and the note are turned into lower-case letters only; they are refused when they contain a tool or model name such as Claude, ChatGPT or Gemini (even with dots, hyphens or spaces between the letters), when a whole word of the name is a stand-in such as TBD, test, reviewer, bot, AI or LLM, or when single letters or two-letter pieces joined together spell one of those words (for example O L L M). Only plain ASCII letters, spaces, dots, apostrophes and hyphens are allowed in the name. It does NOT prove that a real person wrote the line: it is a guess about words, and a person reading the pin lines is the real control. This script exits 4."; PROBLEMS+=("pin reviewer line malformed or a stand-in"); fi
+  elif printf '%s' "$HDRREV" | grep -q -i -F "PLACEHOLDER"; then echo "!!! THE PIN HEADER STILL HAS THE PLACEHOLDER IN ITS 'reviewed by' LINE: the file was written by the script and no person has read it. Read every line, then replace that line. This script exits 4."; PROBLEMS+=("pin not reviewed (placeholder)")
+  elif printf '%s' "$HDRREV" | grep -q -i -E "session|lead to confirm"; then echo "!!! pin not yet confirmed by the lead: the 'reviewed by' line of the pin (as written: $HDRSAFE) names a session or says the lead still has to confirm. A session is not a person who read the WARN lines. The lead reads every WARN line and replaces that line with: # reviewed by: NAME, YYYY-MM-DD. This script exits 4."; PROBLEMS+=("pin not yet confirmed by the lead")
+  elif ! reviewer_ok "$HDRREV" "$HDRDATE"; then echo "!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON'S NAME AND A DATE (as written: $HDRSAFE): Rule that fired: $(safe_text "$REV_REASON") The line must read '# reviewed by: NAME, YYYY-MM-DD' (optionally followed by ', a note'), with a real date that is not more than one day ahead and not older than the pin's own date line. What this checks: only typing mistakes. It turns away a tool or model name, a bot or agent word or another stand-in (TBD, none, unknown, placeholder) as a whole word in the name or the note, a name under 3 letters, a note that says the lines were not read, and look-alike letters from another alphabet. It does NOT prove that a real person wrote or read anything: the real control is a named person reading the WARN lines of the pin and approving it. This script exits 4."; PROBLEMS+=("pin reviewer line malformed or a stand-in"); fi
   if [ -z "$HDRFLOWS" ]; then echo "!!! THE PIN HEADER HAS NO '# flows sha256 ...' LINE: a changed flow file with the same step counts and WARN lines would pass. This script exits 4."; PROBLEMS+=("pin has no flows sha")
   elif [ -n "$FLOWSHA_HEX" ] && [ "$HDRFLOWS" != "$FLOWSHA_HEX" ]; then echo "!!! THE FLOW FILES DO NOT MATCH THE SHA-256 WRITTEN IN THE PIN (pin $HDRFLOWS, files $FLOWSHA_HEX): a flow file differs from the one a person pinned. If the change is intended, a person reads it, writes a NEW pin (--write-warn-pin) and installs it by hand. This script exits 4."; PROBLEMS+=("flow files differ from the pinned sha"); fi
   if [ -z "$HDRDATE" ]; then echo "!!! THE PIN HEADER HAS NO DATE ('# date (UTC): YYYY-MM-DD'): nobody can tell when a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no date"); fi
   if [ -z "$HDRHASH" ]; then echo "!!! THE PIN HEADER HAS NO SHA-256 LINE: a hand edit of the pin cannot be seen. This script exits 4."; PROBLEMS+=("pin has no hash")
   elif [ "$HDRHASH" != "$PINHASH" ]; then echo "!!! THE PIN FILE DOES NOT MATCH ITS OWN SHA-256 (header $HDRHASH, lines $PINHASH): it was edited after a person read it. This script exits 4."; PROBLEMS+=("pin hash differs"); fi
-  echo "Pinned WARN lines: $PINNED (pin dated ${HDRDATE:-unknown}, sha256 ${PINHASH:0:16}...). (this script cannot tell who really read the lines; the reviewer line is printed exactly as written in the pin file) reviewed by (as written in the pin): ${HDRREV:-nobody named}"
+  echo "Pinned WARN lines: $PINNED (pin dated ${HDRDATE:-unknown}, sha256 ${PINHASH:0:16}...). (this script cannot tell who really read the lines; the reviewer line is printed exactly as written in the pin file) reviewed by (as written in the pin): ${HDRSAFE:-nobody named}"
   echo "The pinned lines stand for KNOWN DEFECTS and open decisions (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them. Only the reviewer line above says who, if anyone, read them."
   if cmp -s "$NORM.pin" "$NORM.now"; then
     echo "WARN set equals the pinned set ($(grep -c . "$NORM.now") lines in take-warns.pin): no new and no vanished WARN."
@@ -345,5 +416,5 @@ if [ "$RC" -eq 0 ] && [ ${#PROBLEMS[@]} -gt 0 ]; then RC=4; fi
 if [ "$CHANGED" = 1 ] && [ "$RC" -le 1 ]; then RC=4; fi
 if [ "$RC" -eq 0 ] && [ ${#OVR[@]} -gt 0 ]; then RC=5; fi   # round 10d (B3): a would-be pass with an override is a test run, never exit 0   # a FAIL read from files that changed mid-run is not a trustworthy 1 either
 echo "Open items counted: checker known open problems ${KNOWN:-0} + psql gate 1 + problems of this script ${#PROBLEMS[@]} (entry flows without the key check: $NOKEY, counted inside the problems)."
-echo "FINAL: take_check exit status $RC. Flow files sha256 (four files, combined): $FLOWSHA. ${RESULTLINE:-RESULT line missing}. $PINNED pinned WARN lines stand for known defects that are not fixed. $OVRTXT. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. (1 = fault in a file, 4 = table check missing or failed, or a check of this script failed, 5 = a test run with an override that would have passed.) This is not a pass for filming."
+echo "FINAL: take_check exit status $RC. Flow files sha256 (four files, combined): $FLOWSHA. ${RESULTLINE:-RESULT line missing}. $PINNED pinned WARN lines stand for known defects that are not fixed. $OVRTXT. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. The reviewer line is text; not verified. (1 = fault in a file, 4 = table check missing or failed, or a check of this script failed, 5 = a test run with an override that would have passed.) This is not a pass for filming."
 exit $RC
