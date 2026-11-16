@@ -1,0 +1,5 @@
+# TAKE-CHECKLIST + FIX-PLAN citation check (agent a8d5a98; saved condensed; I re-grepped items 1-3, confirmed)
+B1 (confirmed by my grep): take_check.sh has no "must be deleted at clean-up" text (line 122 says script never deletes). FIX-PLAN 14, 29, 30, 41 and TAKE-CHECKLIST 11, 28, 48 call it stale/give wrong lines 109/69. Lead fix impossible. 
+M2 (confirmed) TAKE-CHECKLIST line 3 says lines 105-167, newest Q29; Q30 is at 169-171. M3 (confirmed) FIX-PLAN line 64 heading uses disowned stamp "13:00Z = 18:30 IST". M4 "no new owner yes for HubSpot id search, Q25 item 1" is not in ORDERS:144/QUESTIONS:110 (they cover credits/ceiling of 3 sends); in TAKE-CHECKLIST 32, 39 and FIX-PLAN 10b, b7, b4; FINDINGS NOT COVERED item 20 "SUPERSEDED by Q25 item 1" same. M5 TAKE-CHECKLIST 39 cites OWNER-STEPS-q16-rows.md line 157; real text at 210.
+Nits: OWNER-STEPS-realrun-v3 "line 121" (hits at 71,104,125); TAKE-CHECKLIST 12 "on 2026-11-16 on 2026-11-16"; n8n_api.py also in Q27 item 1.
+Not checked: sha 706b34d, scripts on take branches, F-002 row T19-T21 lines, counts against JSON, I24, etc.

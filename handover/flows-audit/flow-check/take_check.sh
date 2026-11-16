@@ -13,6 +13,7 @@
 # Round 9 (review f8-design-r3, 4 Majors): (M1) the top block and the FINAL line print RESULT and the WARN count; the set of WARN lines is pinned in take-warns.pin (folder paths removed) and ANY change is exit 4; (M2) every flow except mf-recovery.json must have run saving exactly all / all / True (a missing settings block, a missing key or an odd word is exit 4, not only "none"/false); (M3) a key check that is ABSENT is exit 4, and when both entry flows have it the checker's F-002 content check (--patch-checks F002) runs on them; (M4) the patched copy is detected by the KeyOk node: the node:connection count 15:14 is then expected without any environment variable (12:11 for an unpatched file).
 # Round 10 (review f8-r10): (B1) --write-warn-pin refuses a file that exists (so it can never overwrite the pin in use), writes only when the run has no FAIL and a RESULT line, writes AFTER the comparison, prints the difference and always exits 4: a run that writes a pin is never a pass; a person installs the pin by hand (see README). (M1) the top block and the FINAL line print an OVERRIDES line; an environment override (TAKE_CHECK_CK, TAKE_CHECK_WARN_PIN, TAKE_CHECK_FLOWS, TAKE_CHECK_DDL, TAKE_CHECK_FORM_EXPECT) is exit 4 unless the test flag TAKE_CHECK_TEST=1 is set (only selftest and run_all.sh set it); the documented way to check another folder is the option --flows DIR, which is printed. (M3/M5) the checker FAILs a listed flow that is not a regular file; the F-002 content check also asserts the reply steps and lead_key. F-008 content check (--patch-checks F008) is NOT used here: it would turn the planted run-saving cases (exit 4 by design) into exit 1; the exact run-saving check below judges F-008 instead. (M4) the pin header carries a date and the sha256 of the WARN lines; a pin that does not match its own hash is exit 4; the pinned WARN count is printed and said to stand for known defects. (N1-N4) LC_ALL=C sort, helper exit statuses checked, closing-block lines must appear once, absolute paths before the cd, one temp folder removed on exit.
 # Round 10b (review f8-r10 round 2): the top block and the FINAL line print a sha256 of the four flow files; the pin header needs a "# reviewed by: NAME, DATE" line without the word PLACEHOLDER (exit 4 otherwise); --write-warn-pin writes only when the only problem is the WARN difference; the run-saving INFO line no longer promises a deletion (the take never deletes anything).
+# Round 10c (review f8-r10b round 2): (Q1) the output never says a person read the pin: it prints the reviewer line as written, and a reviewer line that names a session or says "lead to confirm" is exit 4 ("pin not yet confirmed by the lead"), so the first exit 0 needs the lead's own line; (Q2) the flow files (the four and every other *.json in the folder) are hashed before the checker and again after the last read, a difference is exit 4, an unreadable file prints MISSING; (Q5) a checker exit status above 3 is shown and returned as 3.
 # Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script)
 LC_ALL=C; export LC_ALL
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -54,6 +55,24 @@ FORMCNT_FORM="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-form.json" && echo 15
 FORMCNT_HOOK="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-hook.json" && echo 15:14 || echo 12:11)}"
 PCOPT=(); if has_keyok "$D/mf-form.json" && has_keyok "$D/mf-hook.json"; then PCOPT=(--patch-checks F002); fi   # both entry flows carry the key check: also check its content (names, links, condition); only F002 here, because F-008 is judged by the exact settings check below
 DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
+# round 10c (Q2): sha256 of the four flow files AND of every other *.json in the folder (this script reads all *.json there for the run-saving check), taken BEFORE the checker runs and again after the last read; a difference is exit 4. A file that is not a regular file or that sha256sum cannot read is printed as MISSING (never as an empty hash).
+flow_snapshot() {
+  SNAP_FOUR=""; SNAP_OTHER=""; SNAP_MISSING=0
+  local f p h
+  for f in mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; do
+    p="$D/$f"
+    if [ -f "$p" ] && h=$(sha256sum -- "$p" 2>/dev/null) && [ -n "$h" ]; then SNAP_FOUR="$SNAP_FOUR${h%% *}  $f"$'\n'
+    else SNAP_FOUR="${SNAP_FOUR}MISSING  $f"$'\n'; SNAP_MISSING=1; fi
+  done
+  for p in "$D"/*.json; do
+    [ -e "$p" ] || [ -L "$p" ] || continue
+    f=${p##*/}
+    case "$f" in mf-form.json|mf-hook.json|mf-recovery.json|mf-sub-crm-mail.json) continue;; esac
+    if [ -f "$p" ] && h=$(sha256sum -- "$p" 2>/dev/null) && [ -n "$h" ]; then SNAP_OTHER="$SNAP_OTHER${h%% *}  $f"$'\n'
+    else SNAP_OTHER="${SNAP_OTHER}MISSING  $f"$'\n'; SNAP_MISSING=1; fi
+  done
+}
+flow_snapshot; SNAP_BEFORE="$SNAP_FOUR$SNAP_OTHER"; FLOWSHA_LINES=$SNAP_FOUR; FLOWSHA_MISSING=$SNAP_MISSING; OTHER_LINES=$SNAP_OTHER
 python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$D" "${DDLOPT[@]}" "${PCOPT[@]}" \
   --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 \
   --accept-no-save mf-recovery.json \
@@ -69,23 +88,21 @@ else
   OVRTXT="OVERRIDES: none"
 fi
 FLOWSTXT="Flows folder checked: $D"; [ -n "$FLOWSARG" ] && FLOWSTXT="$FLOWSTXT (given with --flows)"
-# round 10b (M-2): a sha256 of the four checked flow files, so a person can compare it with the sha written down at re-pin (a different file with the same name gives a different sha)
-FLOWSHA_LINES=""; FLOWSHA_MISSING=0
-for f in mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; do
-  if [ -f "$D/$f" ]; then FLOWSHA_LINES="$FLOWSHA_LINES$(sha256sum < "$D/$f" | cut -d' ' -f1)  $f
-"; else FLOWSHA_LINES="${FLOWSHA_LINES}MISSING  $f
-"; FLOWSHA_MISSING=1; fi
-done
+# round 10b (M-2): a sha256 of the four checked flow files, so a person can compare it with the sha written down at re-pin (a different file with the same name gives a different sha); round 10c: taken before the checker ran (see flow_snapshot above)
 FLOWSHA=$(printf '%s' "$FLOWSHA_LINES" | sha256sum | cut -d' ' -f1)
-[ "$FLOWSHA_MISSING" = 1 ] && FLOWSHA="$FLOWSHA (at least one of the four files is MISSING)"
+[ "$FLOWSHA_MISSING" = 1 ] && FLOWSHA="$FLOWSHA (at least one *.json file in the folder is MISSING or unreadable)"
+[ "$FLOWSHA_MISSING" = 1 ] && PROBLEMS+=("a flow file is missing or unreadable")
 echo "=== NOTHING RAN IN n8n. Import of these files into n8n was never tried. ==="
 echo "$OVRTXT"
 echo "$FLOWSTXT"
 echo "sha256 of the four flow files checked (compare with the sha written down at re-pin; it is the sha256 of the four lines below, without the two leading spaces):"
 echo "  combined: $FLOWSHA"
 printf '%s' "$FLOWSHA_LINES" | sed 's/^/  /'
+echo "  other *.json files in the folder (also read by this script, sha256 taken too): $(printf '%s' "$OTHER_LINES" | grep -c .)"
+printf '%s' "$OTHER_LINES" | grep -F MISSING | sed 's/^/  /'
 if [ "$RC" -ge 2 ]; then
-  echo "=== THE CHECKER DID NOT GIVE A VERDICT (its exit status is $RC: 2 = started wrongly, 3 = broke). Nothing below says anything about the flows. ==="
+  CKRC=$RC; [ "$RC" -ge 4 ] && RC=3   # round 10c (Q5): the checker only has 0 to 3; any other number (127 not found, 137 killed) means it broke, and 4 is reserved for this script
+  echo "=== THE CHECKER DID NOT GIVE A VERDICT (its exit status is $CKRC: 2 = started wrongly, 3 = broke; any number above 3 is shown as 3 here). Nothing below says anything about the flows. ==="
   cat "$OUT"
   echo "FINAL: take_check exit status $RC. Flow files sha256 (four files, combined): $FLOWSHA. $OVRTXT. exit 0 would have meant: no definite fault in the files; NOTHING ran in n8n. The checker gave no verdict; open items: unknown."
   exit "$RC"
@@ -168,6 +185,11 @@ for f in mf-form.json mf-hook.json; do
   if has_keyok "$D/$f"; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially). The take needs F-002: this script exits 4."; NOKEY=$((NOKEY+1)); fi
 done
 if [ "$NOKEY" -gt 0 ]; then PROBLEMS+=("key check absent in $NOKEY entry flow(s)"); fi
+# round 10c (Q2): the last read of the flow files is above; hash them again and compare with the hash taken before the checker ran
+flow_snapshot; SNAP_AFTER="$SNAP_FOUR$SNAP_OTHER"; CHANGED=0
+if [ "$SNAP_BEFORE" != "$SNAP_AFTER" ] || [ "$SNAP_MISSING" = 1 ]; then
+  if [ "$SNAP_BEFORE" != "$SNAP_AFTER" ]; then CHANGED=1; echo "!!! A FLOW FILE CHANGED WHILE THIS CHECK RAN (sha256 before the checker differs from sha256 after the last read): the checker and this script may have read different files, so nothing here is a verdict about one file set. Run it again when nothing writes to the folder. This script exits 4."; PROBLEMS+=("flow files changed during the check"); fi
+fi
 echo "--- (5) Open decisions and environment variables ---"
 grep -h -E '^(OPEN LEAD DECISIONS|No static tool|IF branches accepted)' "$OUT"
 awk '/^STEPS THAT READ ENVIRONMENT VARIABLES/ {p=1; print; next} p && /^  - / {print; next} {p=0}' "$OUT"
@@ -201,11 +223,13 @@ else
   HDRDATE=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN" | head -n 1)
   HDRREV=$(sed -n 's/^# reviewed by: \(.*\)$/\1/p' "$PIN" | head -n 1)
   if [ -z "$HDRREV" ]; then echo "!!! THE PIN HEADER HAS NO '# reviewed by: NAME, DATE' LINE: nobody has said that a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no reviewer line")
-  elif printf '%s' "$HDRREV" | grep -q -F "PLACEHOLDER"; then echo "!!! THE PIN HEADER STILL HAS THE PLACEHOLDER IN ITS 'reviewed by' LINE: the file was written by the script and no person has read it. Read every line, then replace that line. This script exits 4."; PROBLEMS+=("pin not reviewed (placeholder)"); fi
+  elif printf '%s' "$HDRREV" | grep -q -F "PLACEHOLDER"; then echo "!!! THE PIN HEADER STILL HAS THE PLACEHOLDER IN ITS 'reviewed by' LINE: the file was written by the script and no person has read it. Read every line, then replace that line. This script exits 4."; PROBLEMS+=("pin not reviewed (placeholder)")
+  elif printf '%s' "$HDRREV" | grep -q -i -E "session|lead to confirm"; then echo "!!! PIN NOT YET CONFIRMED BY THE LEAD: its 'reviewed by' line (as written: $HDRREV) names a session or says the lead still has to confirm. A session is not a person who read the WARN lines. The lead reads every WARN line and replaces that line with: # reviewed by: NAME, YYYY-MM-DD. This script exits 4."; PROBLEMS+=("pin not yet confirmed by the lead"); fi
   if [ -z "$HDRDATE" ]; then echo "!!! THE PIN HEADER HAS NO DATE ('# date (UTC): YYYY-MM-DD'): nobody can tell when a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no date"); fi
   if [ -z "$HDRHASH" ]; then echo "!!! THE PIN HEADER HAS NO SHA-256 LINE: a hand edit of the pin cannot be seen. This script exits 4."; PROBLEMS+=("pin has no hash")
   elif [ "$HDRHASH" != "$PINHASH" ]; then echo "!!! THE PIN FILE DOES NOT MATCH ITS OWN SHA-256 (header $HDRHASH, lines $PINHASH): it was edited after a person read it. This script exits 4."; PROBLEMS+=("pin hash differs"); fi
-  echo "Pinned WARN lines: $PINNED (pin dated ${HDRDATE:-unknown}, reviewed by: ${HDRREV:-nobody named}, sha256 ${PINHASH:0:16}...). They stand for KNOWN DEFECTS and open decisions that a person read and accepted (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them."
+  echo "Pinned WARN lines: $PINNED (pin dated ${HDRDATE:-unknown}, sha256 ${PINHASH:0:16}...). Reviewer line of the pin, printed exactly as written in the file (this script cannot tell who really read the lines): ${HDRREV:-nobody named}"
+  echo "The pinned lines stand for KNOWN DEFECTS and open decisions (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them. Only the reviewer line above says whether a person read them."
   if cmp -s "$NORM.pin" "$NORM.now"; then
     echo "WARN set equals the pinned set ($(grep -c . "$NORM.now") lines in take-warns.pin): no new and no vanished WARN."
   else
@@ -218,7 +242,7 @@ if [ -n "$WRITEPIN" ]; then
   # B1: written only after the comparison above, only when the checker found no FAIL and gave a RESULT line, into a file that did not exist; the run never counts as a pass
   BLOCKING=""   # round 10b (M-3): only the WARN difference (and a missing or unreadable OLD pin, which a new pin replaces) may be present; any other problem means the folder is not the take folder, so its WARN set is not worth pinning
   for pr in "${PROBLEMS[@]}"; do
-    case "$pr" in "warn set changed"|"warn pin missing"|"pin has no date"|"pin has no hash"|"pin hash differs"|"pin has no reviewer line"|"pin not reviewed (placeholder)") ;; *) BLOCKING="$BLOCKING [$pr]";; esac
+    case "$pr" in "warn set changed"|"warn pin missing"|"pin has no date"|"pin has no hash"|"pin hash differs"|"pin has no reviewer line"|"pin not reviewed (placeholder)"|"pin not yet confirmed by the lead") ;; *) BLOCKING="$BLOCKING [$pr]";; esac
   done
   if [ "$RC" -ne 0 ] || [ -z "$WARNN" ]; then
     echo "!!! NO PIN WRITTEN: the checker found a FAIL or gave no RESULT line, so this WARN set is not worth pinning. This script exits ${RC/0/4}."
@@ -245,6 +269,7 @@ cat "$OUT"
 KNOWN=$(sed -n 's/^Known open problems: \([0-9][0-9]*\).*/\1/p' "$OUT" | head -n 1)
 OPEN=$(( ${KNOWN:-0} + 1 + ${#PROBLEMS[@]} ))   # the checker's own count, the psql gate (always a person's step), what this script found wrong (a missing key check is one of those)
 if [ "$RC" -eq 0 ] && [ ${#PROBLEMS[@]} -gt 0 ]; then RC=4; fi
+if [ "$CHANGED" = 1 ] && [ "$RC" -le 1 ]; then RC=4; fi   # a FAIL read from files that changed mid-run is not a trustworthy 1 either
 echo "Open items counted: checker known open problems ${KNOWN:-0} + psql gate 1 + problems of this script ${#PROBLEMS[@]} (entry flows without the key check: $NOKEY, counted inside the problems)."
 echo "FINAL: take_check exit status $RC. Flow files sha256 (four files, combined): $FLOWSHA. ${RESULTLINE:-RESULT line missing}. $PINNED pinned WARN lines stand for known defects that are not fixed. $OVRTXT. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. (1 = fault in a file, 4 = table check missing or failed, or a check of this script failed.) This is not a pass for filming."
 exit $RC
