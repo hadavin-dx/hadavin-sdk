@@ -1,0 +1,6 @@
+# C3b v7 readiness round 5 (egm), condensed copy, 2026-11-16
+0 blockers, 2 majors; M1-M5 of round 4 closed in text. Order A1..A9,B,C1,C2,C2b,C3..C9,D1,D2 matches the plan ORDER; only the two leftovers below stop a lead.
+R5-M1 marker 9 is never flipped: A9 (checklist 55-59) only checks the path strings; no step changes LEAD-FILL 9 to LEAD-DECIDED 9 (it sits in the RE-PIN line, LEAD-FILL-list-v5.md:16), so C7 (line 97) cannot reach 0 and step (e) would STOP. Fix: A9 flips it after the 1-and-2 check and prints grep -n -o 'LEAD-FILL 9' "$PF"; same flip when the guess was right.
+R5-M2 C2b (line 79) says append the stand-in pid note "as in C9" (seven steps later; C9 defines EV and F and appends a LEAD-GO line, not a note). D2 (line 125) depends on the note. Fix: ready block in C2b (set EV, F, mkdir -p, newline guard, one line "NOTE lead stand-in pid=<digits> <UTC>", must not start with LEAD-GO or LEAD-YES) or a pid file outside the evidence folder.
+Minor/nit: D1 anchored regex ( |$) fails safe (blocks) if PROGRESS.md has CRLF: consider [[:space:]]. Checklist line 4 says PC set at A3, A2 sets it. Plan has no exact "STOP cleared" message; D2 supplies wording (acceptable).
+Not checked: counts 24/10/2/1, marker lines, patch hash, block tests (nothing run). Untested: WSL /proc, cygpath -w, patch in Git Bash, CRLF PROGRESS.md.
