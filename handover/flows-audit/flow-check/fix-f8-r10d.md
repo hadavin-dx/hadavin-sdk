@@ -61,3 +61,27 @@ FAIL B4: with nobody holding the lock, run_all.sh --lock-only takes it and exits
 FAIL RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit 2)
 test_take_check: 41 of 68 cases as expected, 27 not as expected
 rc=1
+
+## PROOF for A2 (mutation): run_all.sh edited in place to the old grep (wanted text on any line), run, then restored (cmp: restored)
+[take_check.sh exit=5] missing lines: [nested run with a planted wanted text on a non-loud line: want exit 1 and the 'not on a !!! or FAIL line' report, got exit 0 (see nested-take-failure-d.txt)]
+run_all exit status (real-v5 default runs + self-test): 1
+rc=1
+
+## FINAL RUNS (patched scripts)
+--- bash flow-check/run_all.sh <fresh dir>, own raw folder (RUN_ALL_RAW) ---
+[selftest exit=0] SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)
+[take_check.sh exit=5] missing lines: none
+run_all exit status (real-v5 default runs + self-test): 0
+rc=0
+--- bash flow-check/run_all.sh <fresh dir>, default raw folder ---
+run_all exit status (real-v5 default runs + self-test): 0
+rc=0
+ok   Q2: extra.json written after the checker ran is exit 4 with the loud line (got exit 4)
+/tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/final11755
+
+[exited with code 0]
+--- bash flow-check/test_take_check.sh <patched dir> <fresh scratch> ---
+test_take_check: 68 of 68 cases as expected, 0 not as expected
+ttc_rc=0
+--- ruff check flow-check/*.py: All checks passed! (rc 0); ruff format --check: 2 files already formatted (rc 0); bandit -ll -r flow-check -q: no output, rc 0. (No .py file was edited by me.) ---
+--- cleanup: git clean -n flow-check listed only flow-check/handover/ (existing before my work, not mine, left alone); then git checkout -- flow-check/raw flow-check/selftest-output; git status --short flow-check is empty. ---
