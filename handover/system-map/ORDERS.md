@@ -161,3 +161,6 @@ F-008 and LP-n: meaning not recorded in the files; do not guess: list them as 'm
 
 ## ORDER (lead, real clock 13:05Z): correction and zero beat
 Correction: my last answer block was stamped 13:08Z; the real time of that push was about 13:05Z (I wrote the stamp by hand; stamps come from `date -u` only, FF-029). Your board shows AGENTS_RUNNING: 0 again at 13:04Z. Start the next batch of 8 NOW from your 'next 5' list plus two more, and write the start before you read any report. A beat with 0 agents and open items needs a written reason per item.
+
+## ORDER (lead, real clock 13:31Z): 1 agent at the beat
+Your board shows 1 agent (was 9 three minutes ago). Start the next batch of 8 before you digest the last reports, as in ORDER 040 (start replacement in the same turn as a hand-back). One written reason per missing agent.
