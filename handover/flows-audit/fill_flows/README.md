@@ -122,6 +122,11 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
    (Postgres), `mf-mail-smtp` (SMTP mail) and, for `n8n-flows-real-v5` only, `hubspot-app-token`
    (HubSpot). The flows' own notes name the credentials but do not say where n8n shows their ids:
    check on your n8n (usually the id is in the address bar when you open the credential).
+   ORDER 037 (lead, 2026-11-16): there is ONE filled flow set, and `hubspot-app-token` holds the real
+   trial-account credential in every phase. There is no stand-in HubSpot credential and no refill
+   with a real one later (any older text saying so is superseded by ORDER 037). The partial
+   fill in steps 3 to 6 is only about the sub-flow id (`SUB_WORKFLOW_ID`), not about a credential.
+   Whether the take repo's runbook already matches this at its final head is UNVERIFIED.
 2. Put the three credential ids in the values file as `PG_CREDENTIAL_ID`, `SMTP_CREDENTIAL_ID`
    and (real only) `HS_CRED_PLACEHOLDER`, and the two mail addresses as `FROM_ADDRESS_PLACEHOLDER`
    and `INTAKE_ADDRESS_PLACEHOLDER` (real set; the film flows do not carry them). Leave

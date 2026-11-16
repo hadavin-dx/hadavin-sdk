@@ -25,3 +25,26 @@ REVIEW.md: Short answer rewritten in plain words; X-6 guard, identity table, rol
 
 ## Checks
 See the final report for exit codes (run from handover/flows-audit).
+
+# Round 13 (review-design-r13.md and review-codebase-r13.md; log appended here as the brief said)
+
+Backup: scratchpad bak-rev13.md. Not committed. Nothing was run against Postgres or the patches; every SQL statement is a proposal.
+
+## Unverified or not done (first)
+- All Postgres behaviour in the new text (temporary schema lookup, `TG_TABLE_SCHEMA` with `EXECUTE`, `REVOKE TEMPORARY`, `ENABLE ALWAYS`, `session_replication_role`, SECURITY DEFINER with a pinned search path) is the design reviewer's knowledge, not checked by me. No source or test was edited.
+- Not designed: the receiver recomputing the approval summary (lead choice (5)(b)); the SQL version of the hash (byte-equality with Python's `json.dumps`).
+
+## Findings, each opened in src
+- Design B1 (temporary table bypass): CONFIRMED for the source part: `migrate.py:210-212` checks CREATE on `current_schema()` only; a grep of `src/hadavin_sdk` for TEMP, search_path, SECURITY DEFINER, ENABLE ALWAYS and session_replication_role finds nothing relevant. X-6 row: the false claim is withdrawn, three-part fix and negative tests (f) added, verdict "do not build the guard as written" in the Short answer and the row. Severity: row stays Major (scale note in Counts; the Blocker is a flaw in a proposed fix, not in today's code or the three patches); flagged to the lead as choice (5)(c).
+- Design M1 (audit-writer function): confirmed as reasoning; minimum rules written in AUDIT WRITES. `migrate.py:80-85` accepts only `CREATE OR REPLACE FUNCTION`: confirmed.
+- Design M2 (INSERT rule): CONFIRMED: `requests.py:97-107`, `agent_loop.py:747` and `:762-763` (gate decision and WAITING state come before the request, so the INSERT checks are feasible), `_recheck` `:776-797` never reads the approval. Added to the guard.
+- Design M3 (frozen columns): CONFIRMED; `summary` has no update path (`requests.py:124,166,198,207` change other columns), `step_expires_at` changes only in the escalation (`requests.py:196-201`); clock-skew allowance added (`tick.py:81`).
+- Design M4: CONFIRMED in src (`0002_audit_chain.sql:28-35` plain triggers; `migrate.py:219` compares owner name only; `migrate.py:285-288` optional roles). PARTLY CONTESTED: "like app.py:86-89" - that line checks only a purge secret name; the app cannot see how `migrate` was called, so the refusal is written as a start-up `effective_problems` check, a new piece of code.
+- Design M5: CONFIRMED: `migrate.py:256` excuses only SELECT columns.
+- Design Nits 1-4 added to the guard (shared Python transition function; `save_approval_decision` has no src caller, only `test_store.py:131,132,135`; second trigger on `approval_decisions`, which breaks `test_store.py:131-135`; race: reviewer found none, I did not look independently). Nit 5: `:114` was already in the breakage list.
+- Codebase M1: line 106 said four live choices; fixed to two (matches line 23). M2: `agent_loop.py:742` sets `restored_hash` on every `gate.decide`; `:845-866` stops with `restored_unbound` for every plan; qualifier fixed, conclusion unchanged.
+- Codebase Nits: 1 (`chain.py:397-400`, `_body_event_id` `:406-410`) added; 2 (migrate callers) list completed incl. `cli.py:330`; 3 (`test_p2_postgres.py:290`, `test_store.py:237` rationale) fixed; 4 (`model_copy` has many src hits, none a Route) fixed; 5 (22 collection errors) fixed; 6 (`askdata/config.py:61-70` - the reviewer's `config.py:61-69` is the demo's file, not `src`; `_migrate` `cli.py:312`, call `:330-339`; `checkpoint()` `:295-320`) fixed.
+- Contested: none outright; one partial (M4 wording above). The reviewer said "Row counts 26, Major 12..." true and unchanged.
+
+## Changes
+REVIEW.md only (header, Short answer, counts line, evidence bullet, C-4, X-5 (c)(iii) and (i), X-6, single-dependency outline, Counts reading and effective-Major paragraph, Not checked, Open for the studio head). Counts unchanged: 26 rows; 0 Blocker, 12 Major, 4 Minor, 10 Nit; 23 PROPOSE FIX, 3 DECLINE. count_review.py not changed (the row parser needed nothing).
