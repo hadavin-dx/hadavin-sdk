@@ -17,12 +17,12 @@ Short names used below (each explained once):
 | role word used in this file | who it is | older words in the input files and older text of this file |
 |---|---|---|
 | lead session | the Claude session that gives the system-map session its orders (through ORDERS.md) | "the lead" in older pages (UNVERIFIED which session each old use meant); "laptop lead" (UNVERIFIED: the glossary says the meaning is not confirmed; it matches the lead session by the glossary's reading only) |
-| studio lead | the Claude session that does the technical steps on the take, and the only session that messages the owner | "studio lead" in the first version of this file, and "the lead" in the input files (UNVERIFIED: that the input files' "the lead" is this session and not the lead session) |
+| studio lead | the Claude session that does the technical steps on the take, and the only session that messages the owner | "operator" in the first version of this file, and "the lead" in the input files (UNVERIFIED: that the input files' "the lead" is this session and not the lead session) |
 | owner | the human at the laptop who gives the written yes | none |
 | studio head | not used in new text | an older word for a human who runs the studio; UNVERIFIED whether this is the owner; never treated as the owner |
 | core-hardening session | the Claude session that owns the owner steps V5 | "V5 author" |
 
-In this file the word "studio lead" has been replaced by "studio lead" (done 16 Nov 2026); where an old quotation or a cell still says "the lead" alone, read it as UNVERIFIED between lead session and studio lead.
+In this file the word "operator" has been replaced by "studio lead" (done 16 Nov 2026); where an old quotation or a cell still says "the lead" alone, read it as UNVERIFIED between lead session and studio lead.
 - **Decisions in force** = (1) one database = the take's Postgres, except one file, `stage.journal` (the program's own log of what it has done); (2) executions saved ON on made-up data, deleted at clean-up; (3) no portal, approval or audit-trail claims in the video; the only claim is "the same lead id sent twice is processed once"; (4) n8n's outbound internet traffic is switched off through its settings; we watch that it stays off, but nothing forces it; (5) loopback re-smoke costs US$0 before any real take; (6) take branches local only.
 - Severity: **Blocker** = the owner or a script would do the wrong thing on the filmed take (Wed 18 Nov), or the public post would claim more than the evidence shows (those rows say "post" in the severity cell). **Major** = confusing or a step cannot be followed. **Nit** = wording.
 
