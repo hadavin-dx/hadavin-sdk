@@ -784,6 +784,8 @@ self_test() {
     # only the line-start YAML rule hides the whole rest of the line (the value holds a closing bracket and a quote)
     printf 'secret: kq80ya%s) and "more" wm80ya\n' x
     printf 'yaml name at the start of a line hides the whole rest|kq80ya|wm80ya|S\n' >> "$WORK/st-pt.txt"
+    printf 'token: "kq81yb%s" note_kept_81\n' x
+    printf 'yaml quoted value at the start of a line|kq81yb|kq81yb|S\n' >> "$WORK/st-pt.txt"
     printf 'nul?b %s\n' x >/dev/null
     printf 'a\000b kept_nul_line\n'
 
@@ -869,6 +871,7 @@ self_test() {
   chk_kept 'comparison key == "end" is not hidden' 'if key == "end":'
   chk_kept 'plain answer = "end" is not hidden' 'answer = "end"'
   chk_kept 'the one allowed example key shows' 'AKIAIOSFODNN7EXAMPLE'
+  chk_kept 'a quoted value at the start of a line hides the string, not the words after it' 'note_kept_81'
   chk_kept 'ordinary line with the word end' 'plain line with the word end in it'
   chk_kept 'unrelated YAML line after a hidden block' 'next_line: stays'
   chk_kept 'unrelated grep line after hidden YAML value' '13-other: fine'

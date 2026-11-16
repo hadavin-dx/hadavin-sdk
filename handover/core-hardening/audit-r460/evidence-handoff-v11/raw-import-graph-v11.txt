@@ -1,0 +1,15 @@
+modules on disk: 102 | planned rows: 14
+planned modules not on disk yet (new): ['llm.callgate', 'llm.spend']
+== today, run-time edges only: edges=330 cycles=1
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
+== planned overlay, run-time edges only: edges=350 cycles=1
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests'] | new: False | planned modules in it: []
+== today, run-time plus TYPE_CHECKING edges: edges=335 cycles=3
+  cycle: ['hadavin_sdk.config', 'hadavin_sdk.deferred', 'hadavin_sdk.registry', 'hadavin_sdk.replay_records']
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
+  cycle: ['hadavin_sdk.k1b.replay', 'hadavin_sdk.k1b.report', 'hadavin_sdk.k1b.score']
+== planned overlay, run-time plus TYPE_CHECKING edges: edges=358 cycles=3
+  cycle: ['hadavin_sdk.config', 'hadavin_sdk.deferred', 'hadavin_sdk.registry', 'hadavin_sdk.replay_records'] | new: False | planned modules in it: []
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests'] | new: False | planned modules in it: []
+  cycle: ['hadavin_sdk.k1b.replay', 'hadavin_sdk.k1b.report', 'hadavin_sdk.k1b.score'] | new: False | planned modules in it: []
+NEW cycles caused by the planned table (both countings): 0

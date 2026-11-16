@@ -1,0 +1,78 @@
+== T17 --restore while a run is live is refused (lock): exit 3, because that run's mutant is planted (r7 review M1; r7 code: 2)
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r
+  exit code 2
+  FAIL: T17 exit 3 (got 2)
+  PASS: T17 run still planted
+== T69 (review r5 nit 4) a control marker: invalid JSON is a refusal; a group that cannot be settled keeps the marker
+REFUSED: control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.control.json is not valid JSON: refused (re
+  FAIL: T69a invalid JSON in the control marker (its test group cannot be settled): exit 3 (got 2; r7: 2), 'RESTORE FAILED', control marker KEPT, no traceback
+control run: no test group recorded; the control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.control.json is KEPT because its test group may sti
+  PASS: T69b control marker with no test group recorded (cannot be verified): marker KEPT, exit 3 (got 3), text says KEPT
+control run: test group already gone; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, b
+  PASS: T69c guard: a control marker whose group is provably gone is removed, exit 0 (got 0)
+== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
+/tmp/safety-only.IT0djt.sh: line 70:  9147 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept
+  PASS: T76a symbolic link on the way to the target at --restore: exit 3 (got 3), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
+  PASS: T76a the kept marker still allows a genuine restore
+/tmp/safety-only.IT0djt.sh: line 70: 18983 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/toy/root/src/mod.py is not a regular file with exactly one name (links:
+  PASS: T76b file with two names that still holds the planted text: exit 3 (got 3), marker and backup kept, the other name untouched
+  PASS: T76b genuine restore afterwards
+/tmp/safety-only.IT0djt.sh: line 70: 29612 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: Permission denied; the mutant may still be planted; marker and backup kept
+  PASS: T76c unwritable target (restore_target raises PermissionError): exit 3 (got 3), file still planted, marker and backup kept
+  PASS: T76c genuine restore afterwards
+/tmp/safety-only.IT0djt.sh: line 70:  3063 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  FAIL: T76d a damaged backup (hash differs from the marker): nothing is written, but the mutant is still planted, so exit 3 (got 2; r7 pinned 2), marker kept
+== T77 (review r6 M2) the baseline is the DEFAULT; --no-control gives exit 5 and never says COMPLETE
+baseline 1 1 failed in 0.01s
+REFUSED: the baseline (unmutated tree, --control) is not usable: it exited with 1, not 0; no mutant was planted; see X-baseline.txt
+  PASS: T77a no option at all, tree already failing: the baseline refuses the mutants, exit 2 (got 2), baseline file says NO, no mutant raw file, file unchanged (r6: ran every mutant as KILLED)
+  PASS: T77b no option at all, healthy tree: baseline recorded and used, exit 0 (got 0), 'baseline: rc 0, 1 passed' in the raw file, SUMMARY says COMPLETE
+  PASS: T77c a run WITHOUT a baseline (the option --no-control; on the r6 copy NOBASE_OPT= is empty: r6 runs without one by default, this is the behaviour itself), every verdict clean: exit 5 (got 5), SUMMARY says NO BASELINE and INCOMPLETE and never the word COMPLETE on its own, raw file says baseline NOT RUN, no baseline file
+  PASS: T77d the last of --no-control/--control wins: --control after --no-control runs the baseline, exit 0 (got 0)
+  PASS: T77e --no-control after --control: no baseline, exit 5 (got 5)
+  PASS: T77f guard: exit 4 (tree not clean) still wins over the no-baseline exit 5 (got 4)
+== T79 (review r6 nit 3) sweep_group: a stranger that holds the number of the finished test group is left alone
+stranger case: process(es) [7249] now hold the number of the test group but started outside this run: left alone | alive: True
+control case: STOPPED 1 process(es) of the test group that outlived the le | alive: False
+  PASS: T79 the stranger started after the group ended is left alone (still alive), the control inside the window is stopped
+== T87 (review r7 M1, class: an exit code that says nothing is planted while the mutant is planted) --restore with a marker for this root: every failure exits 3, only a marker naming another root or backup path exits 2
+/tmp/safety-only.IT0djt.sh: line 70:  7295 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.backup cannot be opened safely (No such file or
+  FAIL: T87a the backup file is missing: exit 3 (got 2; r7: 2), file still planted, marker kept, text says RESTORE FAILED
+/tmp/safety-only.IT0djt.sh: line 70:  7452 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.backup cannot be opened safely (Too many levels
+  FAIL: T87b the backup is a symbolic link (to a file with the right content): exit 3 (got 2; r7: 2), nothing written (file still planted), marker kept
+/tmp/safety-only.IT0djt.sh: line 70:  7608 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.backup is not a regular file owned by this user
+  FAIL: T87c the backup is a FIFO: exit 3 (got 2; r7: 2; 124 or 137 = hung), no hang, file still planted, marker kept
+/tmp/safety-only.IT0djt.sh: line 70:  7836 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.planted.json is not valid JSON: refused
+  FAIL: T87d the marker is not valid JSON: exit 3 (got 2; r7: 2), file still planted, marker kept, no traceback
+/tmp/safety-only.IT0djt.sh: line 70:  8066 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.planted.json lacks required fields: refused
+  FAIL: T87e the marker lacks required fields: exit 3 (got 2; r7: 2), file still planted, marker kept
+/tmp/safety-only.IT0djt.sh: line 70:  8676 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0 is not a plain folder owned by this user with mode 700: refuse
+  FAIL: T87f the state folder has mode 755 (refused by ensure_state): exit 3 (got 2; r7: 2), file still planted, marker kept
+  PASS: T87f the kept marker still allows a genuine restore
+/tmp/safety-only.IT0djt.sh: line 70:  8895 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/toy/root is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-
+  FAIL: T87g the real-repository check refuses (--real-repo is the root) while a marker exists: exit 3 (got 2; r7: 2), file still planted, marker kept
+  PASS: T87g genuine restore afterwards
+/tmp/safety-only.IT0djt.sh: line 70:  9652 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RuntimeError: an internal bug
+INTERNAL ERROR (RuntimeError: an internal bug); a marker exists (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.pl
+  FAIL: T87h an internal bug inside --restore (restore_target raises RuntimeError): exit 3 (got 2; r7: 2 with INTERNAL ERROR), file still planted, marker kept
+  PASS: T87h genuine restore afterwards
+/tmp/safety-only.IT0djt.sh: line 70: 10545 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker is for another root ('/somewhere/else'): refused
+  PASS: T87i guard: a marker that names another root is a forged marker: exit 2 (got 2), nothing written, marker kept
+/tmp/safety-only.IT0djt.sh: line 70: 14345 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker names a backup other than /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/tmpstate/hadavin-mutation-lane-0/ea6303cd2ba2641e.backup: refused
+  PASS: T87j guard: a marker that names another backup path is forged: exit 2 (got 2), nothing written, marker kept
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/r7s/toy/root is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-
+  PASS: T87k guard: no marker anywhere and the real-repository check refuses: still exit 2 (got 2), nothing recorded as planted
+== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)

@@ -3,3 +3,29 @@ REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/sc
   exit code 2
   PASS: T1 exit 2
 == T2 SIGKILL while a mutant is planted
+  file now: return2
+./safety-tests.sh: line 85: 15569 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T2 file stays planted
+== T3 the next run refuses and says how to restore
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardenin
+  exit code 2
+  PASS: T3 exit 2
+== T4 marker lost: the tree check against a fresh git archive still refuses
+REFUSED: scratch tree differs from git archive e3fe88014d38ee23166d847f628cd9f1a469132d + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+  exit code 2
+  PASS: T4 exit 2
+== T5 --restore puts the saved original back
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; hash matches saved original: True
+  PASS: T5 file restored
+  PASS: T5 state folder empty
+== T6 SIGTERM during a run restores the file and removes the marker
+  exit code 143
+  PASS: T6 exit 143
+  PASS: T6 file restored
+  PASS: T6 state empty
+== T7 SIGINT likewise, exit code read directly from $?
+  exit code 130
+  PASS: T7 exit 130
+  PASS: T7 file restored
+  PASS: T7 state empty
+== T8 two runs at once: the second is refused by the lock, and the first is still alive

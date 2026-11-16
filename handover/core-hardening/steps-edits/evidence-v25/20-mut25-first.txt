@@ -1,0 +1,84 @@
+baseline failures: 1
+P01 CAUGHT call ceiling changed | FAIL C03 facts money differs
+P02 CAUGHT ledger changed (limit 13.21 to 13.31) | FAIL C03 facts money differs
+P03 CAUGHT 860 s changed | FAIL C03 860 s is not 14.33 min
+P04 CAUGHT deadline minute | FAIL C03 deadline pairs
+P05 CAUGHT IST offset | FAIL C03 deadline pairs
+P06 CAUGHT weekday of deadline | FAIL C04 OWNER-SHEET-v25-A.md wrong weekday Tue 23 Nov 2026
+P07 CAUGHT post-by pair | FAIL C03 post-by
+P09 CAUGHT card (g) exception removed | FAIL C14a A lacks "the key's own one-time display at 6.3 and the paste at 6.4"
+P10 CAUGHT recording stop by voice | FAIL C14b A lacks 'switch it OFF yourself at once'
+P11 CAUGHT first alarm removed | FAIL C14c A lacks 'Three phone alarms'
+P12 CAUGHT backtick sentence removed | FAIL C14d A lacks 'Text between backticks is typed without the backticks'
+P13 CAUGHT paste condition removed | FAIL C14e A lacks "only if the window's last line is `paste key, Enter:`"
+P14 CAUGHT window labels removed | FAIL C14f A lacks '"READ" and "TEST"'
+P15 CAUGHT .used rule removed | FAIL C14g A lacks 'ignore a `.used` ending'
+P16 CAUGHT A older key cancelled early | FAIL C14w A older key cancel not after earliest key time
+P17 CAUGHT lead may reverse order | FAIL C14h A lacks 'reverses the order of `end` and the card'
+P18 CAUGHT no clock for the notice window | FAIL C14i A lacks 'minutes of the time `date -u` shows'
+P19 CAUGHT run that never started | FAIL C14j A lacks 'if 7.4 never happened, send "none"'
+P20 CAUGHT SAMPLE label removed | FAIL C14k A lacks 'SAMPLE (made-up values'
+P21 CAUGHT HubSpot rotate allowed | FAIL C14m A lacks 'never use rotate'
+P22 CAUGHT set phrase differs | FAIL C21 sheetA: quoted words 'no key made' look like the set phrase 'no key was made' but
+P23 CAUGHT full date check weakened | FAIL C14q A lacks 'weekday, month, day and year must equal the run day'
+P24 CAUGHT balance re-check weakened | FAIL C14r A lacks 'balance and auto-reload equal your yes'
+P25 CAUGHT last-resort step out of the yes | FAIL C14o A lacks 'last-resort step <step>'
+P26 CAUGHT one-line warning removed | FAIL C14p A lacks 'one line only'
+P27 CAUGHT card step 3 gets a new pointer | FAIL C19 pointer not in the verified list: sheetA|ss the cancel button (or at |7.8
+P29 CAUGHT pointer to missing step | FAIL C11 A pointer to missing step 8.9
+P30 CAUGHT card term renamed | FAIL C10 A card term 'Key liszt' defined but not used again in the card
+P31 CAUGHT delete guard removed | FAIL C14s A lacks 'Never "Select all", never empty Trash'
+P32 CAUGHT STOP RULE renamed | FAIL C23 A lacks the fixed sentence '**STOP RULE.**'
+P33 CAUGHT R8 character list gets a character | FAIL C23 A lacks the fixed sentence 'letters, digits, single spaces and `. _ / - : = @ + ,
+P34 CAUGHT yes pattern gets a bracket char | FAIL C13 A yes pattern has characters {'(', ';', ')'}
+P35 CAUGHT key-save line loses exit report | FAIL C15 A key-save line not found
+P36 CAUGHT key-save line breaks bash -n | FAIL C15 A key-save line not found
+P37 CAUGHT stale word back in note | FAIL C05 LEAD-RELEASE-NOTE-v9.md stale text 're-pin'
+P38 CAUGHT old minutes figure in note | FAIL C04 LEAD-RELEASE-NOTE-v9.md says 14.4 (the figure is 14.33)
+P39 CAUGHT wrong pair in note | FAIL C04 LEAD-RELEASE-NOTE-v9.md bad pair 18:19:00 UTC = 23:59 IST
+P40 CAUGHT wrong weekday in open list | FAIL C04 v25-OPEN-FOR-LEAD.md wrong weekday Tue 16 Nov 2026
+P41 CAUGHT Part 2 back in open list | FAIL C05 v25-OPEN-FOR-LEAD.md stale text 'Part 2'
+P43 CAUGHT sheet date weekday | FAIL C04 OWNER-SHEET-v25-A.md wrong weekday Mon 17 Nov 2026
+P44 CAUGHT A yes sentence changed | FAIL C08 A yes sentence wrong
+P45 CAUGHT B older key fate removed | FAIL C61 B lacks 'Until then the older key stays valid and can spend; the card does not '
+M01 CAUGHT price line 0.27 to 0.28 | FAIL C04 OWNER-SHEET-v25-A.md unexpected amount USD 0.28
+M02 CAUGHT expected total line 0.81 to 0.82 | FAIL C04 OWNER-SHEET-v25-A.md unexpected amount USD 0.82
+M03 CAUGHT sample notice price line | FAIL C04 OWNER-SHEET-v25-A.md unexpected amount USD 0.28
+M04 CAUGHT yes pattern total | FAIL C04 OWNER-SHEET-v25-A.md unexpected amount USD 0.82
+M05 CAUGHT after-the-card pointer 7.9 to 7.5 | FAIL C19 pointer not in the verified list: sheetA|u had typed `end`, go on at |7.5
+M06 CAUGHT pointer back on in 8.7 to 8.5 | FAIL C19 pointer not in the verified list: sheetA|OFF (off in 6.1, back on in |8.5
+M07 CAUGHT note pointer sheet 8.4 to 8.3 | FAIL C19 pointer not in the verified list: note|p secret revoke (G42, sheet |8.3
+M08 CAUGHT note pointer sheet 7.8 to 7.6 | FAIL C19 pointer not in the verified list: note|er `end` then cancel (sheet |7.6
+M09 CAUGHT note R8 to R7 | FAIL C19 pointer not in the verified list: note|e characters of owner sheet |R7
+M10 CAUGHT note R7 to R9 | FAIL C19 pointer not in the verified list: note|ner's method is owner sheet |R9
+M11 CAUGHT weekday of the sheet date | FAIL C04 OWNER-SHEET-v25-A.md wrong weekday Tue 16 Nov 2026
+M12 CAUGHT weekday in note | FAIL C04 LEAD-RELEASE-NOTE-v9.md wrong weekday Tue 23 Nov
+M13 CAUGHT IST pair cancel-by in sheet | FAIL C04 OWNER-SHEET-v25-A.md bad pair 12:10 UTC = 17:50 IST
+M14 CAUGHT IST pair in note | FAIL C04 LEAD-RELEASE-NOTE-v9.md bad pair 12:00 UTC = 17:00 IST
+M15 CAUGHT IST pair in open list | FAIL C04 v25-OPEN-FOR-LEAD.md bad pair 12:00 UTC = 17:20 IST
+M16 CAUGHT placeholder renamed (one place) | FAIL C20 A: placeholder not in the list: <runname>
+M17 CAUGHT yes placeholder spelled differently | FAIL C20 A: placeholder not in the list: <its name or nome>
+M18 CAUGHT list-form pointer Open 91 | FAIL C16 note: Open 91 does not exist (80 rows)
+M19 CAUGHT cancel rule paraphrased outside the card (7.6) | FAIL C07 OWNER-SHEET-v25-A.md has N words (limit 6500)
+M20 CAUGHT wrong set phrase at 8.4 | FAIL C21 A: step 8.4 does not tell its set phrase 'HubSpot apps revoked'
+M21 CAUGHT R7 to R9 in 5.4 | FAIL C19 pointer not in the verified list: sheetA|nt: delete exactly those as |R9
+M22 CAUGHT check 3 changed | FAIL C23 A lacks the fixed sentence 'The balance is at least the expected total.'
+M23 CAUGHT margin changed in facts (sums) | FAIL C03 latest start of 23 Nov is not 17:39
+M24 CAUGHT nested marker left | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: leftover in B
+
+M25 CAUGHT stray marker left |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: unbalanced markers
+
+M26 CAUGHT banned word in note | FAIL C06 LEAD-RELEASE-NOTE-v9.md holds a banned word (index 0)
+M27 CAUGHT open list numbering gap | FAIL C16 open list rows are not 1..n in order with only the removed row 59 missing (rows a
+M28 CAUGHT note G pointer G12 to G32 | FAIL C19 pointer not in the verified list: note|ecision: the lease wording (|G32
+M29 CAUGHT note Open 51 to 15 | FAIL C19 pointer not in the verified list: note|efore it goes to the owner (|Open 15
+M30 CAUGHT note section 4 to 3 | FAIL C19 pointer not in the verified list: note|| G9 | Shutdown order as in |section 3
+M31 CAUGHT run length 15 to 14 (below 860 s) | ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 25, in <module>
+AssertionError
+
+M32 CAUGHT need minutes 14.33 to 14.4 | FAIL C03 860 s is not 14.33 min
+M33 CAUGHT deadline weekday in glossary | FAIL C04 OWNER-SHEET-v25-A.md wrong weekday Tue 23 Nov 2026
+M34 CAUGHT R8 loses "A key alive: the card first" | FAIL C19 pointer not in the verified list: sheetA|n words>, is it yours". | | |R9

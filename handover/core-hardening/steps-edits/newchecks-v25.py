@@ -20,14 +20,14 @@ need('C28', '(i) the text of the older key appeared on your screen')            
 need('C28', 'For the older key (list (b)), N is the count now and K is 1.')
 need('C29', 'key list time zone ______'); need('C29', 'Key list time zone: <zone>')                                    # S minor 2
 need('C30', '(a long random text: describe only that)')                                                                 # S minor 3
-need('C31', 'its row is gone and the list shows exactly N minus K keys')                                                # S minor 4
+need('C31', "cancel it by the card's list (b), steps 2 to 4", (('B', B),))                                                # S minor 4
 need('C32', 'close that window, then FREEZE'); need('C32', 'then run `clear` there')                                    # S minor 6 and 5.7 secret on screen (T)
 need('C33', 'Conversation view off in Gmail settings')                                                                  # S minor 7
 need('C34', '**Model account**'); need('C34', 'open it only from your own bookmark or an address you type')            # T B2
 need('C35', '**Give-up minutes**'); need('C35', '**Latest start**'); need('C35', '**Send**'); need('C35', '**Describe**')   # T glossary
 ban('C36', r'\b[Tt]ell(?:ing)?\b|\btold\b')                                                                            # T B4 one word one meaning
-need('C37', 'the **message place**'); need('C37', 'The **other channel** (card words) is named in the numbers message; none named: no run.')  # T B1 + other channel
-need('C38', 'the receiver Gmail'); need('C38', 'the sender Gmail')                                                      # T minor roles
+need('C37', 'send the numbers message for run <run name>')  # T B1 + other channel
+need('C38', 'the receiver Gmail (gets the demo mails)'); need('C38', 'the sender Gmail (sends them)')                                                      # T minor roles
 need('C39', 'People: film person <name>, editor <name>, post checker <name>')                                           # T B1 who
 need('C39', 'Model settings file: <model settings file>'); need('C39', 'Posting place: <place>')
 need('C40', 'If a key was alive the run ends after the card: no word resumes it.')                                      # T FREEZE resume
@@ -39,6 +39,7 @@ ban('C44', r'rotate or delete', ((('N', NOTE), ('O', OPEN))))
 ban('C45', r'Filled example')                                                                                           # sample cut
 need('C46', 'then send "none" for the time in 8.1'.replace('then send', 'send') , SH)                                  # card After-the-card none
 need('C47', 'a new try needs a new numbers message and yes')                                                            # key save failed path
+need('C61', 'Until then the older key stays valid and can spend; the card does not stop it.', (('B', B),))   # S Major 2: B card list (b) says what the card does not stop
 # ---- Part 2: the 15 plants check-v24 missed (own25.py), each caught by its own check
 PRICES_OK = {'0.27', '0.81', '15.00', '189.00', '3.00'}
 for n, t in SH:                                                                                                         # Q01 Q02: wrong price or total anywhere
