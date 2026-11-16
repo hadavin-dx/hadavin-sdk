@@ -1,0 +1,5 @@
+Status: resolved (headless; fixes applied by the author after the report was made)
+# Resolve round 2, ORDER 011 item 1
+Accepted (PROPOSE FIX): codebase M1-M6 and design M1-M6, merged where they are one issue (M1 codebase = M6 design; M2 = M2; M3 = M3). All 11 distinct Majors accepted; 0 contested, 0 escalated. Nits accepted and fixed in the same push without a new review (round cap 2): crash wrapping per file, unused WRITE_T, run_all.sh exit status and go1 file test, T17/T18 wording, ambiguous Claim sentence, 4-of-8 tables, SendMail citation, status wording, section 1 order.
+Fixed not by edit alone: M4 codebase (self-test cases and 7 mutants, evidence/mutants-r2.txt), M5 (self-test mutant), M4 design (Docker daemon attempt saved, evidence/n8n-try.txt; the linter run stays a next step: needs licence and trust check, stated as the reason).
+Not done and why: (a) an independent evidence runner on the new script (the author re-ran it; stated in REPORT section 3); (b) n8n acceptance of the patches (no container daemon here; next step for the laptop lead); (c) a third review round (cap).

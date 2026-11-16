@@ -1,0 +1,4 @@
+# egm-design round 2 (condensed copy, saved by system-map; the reviewer ran no code)
+Result: 0 Blockers, 6 Majors, several Nits.
+M1 section 1 not readable for a non-technical person (undefined terms; item 2 packs four ideas); M2 item 1 says all 32 files, it is 16; M3 evidence-runner claim stale and miscounted; M4 rung table conditional verdicts, built after the script yet process says done, no source URLs or dates, rung 1 grep incomplete, "not tried, not forbidden" defers an allowed action; M5 checks reported "no failure" never exercised by the self-test (unreachable, $env, credentials, save settings); M6 write-path section false for 24 non-recovery files and silent on default-stop nodes.
+Nits: SendMail "by design" uncited; garbled database-steps line; tables show 4 of 8 files; "same result in every row" only of the table; crm name rule; unsaved $node search; status wording disagrees; section 1 order (patches only change the generator should be second).

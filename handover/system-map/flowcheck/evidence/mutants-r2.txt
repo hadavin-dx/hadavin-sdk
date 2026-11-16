@@ -1,0 +1,9 @@
+caught: s/in (None, "", "stopWorkflow")/in (None, "")/
+caught: s/"crm" in str/"zzz" in str/
+caught: s/unr = \[n for n in names if n not in seen and n not in orph\]/unr = []/
+SURVIVED: s/if woe == "continueRegularOutput"/if woe == "zz"/
+caught: s/if eoe == "continueRegularOutput"/if eoe == "zz"/
+SURVIVED: s/m\[0\] or m\[1\]/m[0]/
+caught: s/ and str(n.get("parameters", {}).get("method", "GET")).upper() != "GET"//
+caught: s/if woe == "continueRegularOutput"/if woe == "zz"/
+caught: s/m\[0\] or m\[1\]/m[0]/

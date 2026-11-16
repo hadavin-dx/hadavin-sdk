@@ -1,8 +1,8 @@
-go1/mf-form differs from real-v5
-go1/mf-form differs from film-v5
-go1/mf-hook differs from real-v5
-go1/mf-hook differs from film-v5
-go1/mf-recovery differs from real-v5
-go1/mf-recovery differs from film-v5
-go1/mf-sub-crm-mail differs from real-v5
-go1/mf-sub-crm-mail differs from film-v5
+go1/mf-form differs from (or is missing next to) real-v5
+go1/mf-form differs from (or is missing next to) film-v5
+go1/mf-hook differs from (or is missing next to) real-v5
+go1/mf-hook differs from (or is missing next to) film-v5
+go1/mf-recovery differs from (or is missing next to) real-v5
+go1/mf-recovery differs from (or is missing next to) film-v5
+go1/mf-sub-crm-mail differs from (or is missing next to) real-v5
+go1/mf-sub-crm-mail differs from (or is missing next to) film-v5

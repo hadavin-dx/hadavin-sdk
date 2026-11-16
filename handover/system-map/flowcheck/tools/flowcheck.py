@@ -5,12 +5,12 @@ $('Name') references name an existing node; error settings table; alwaysOutputDa
 continueErrorOutput with the error output (index 1) not wired; external-call ancestors of every mail or CRM write and how their errors are handled;
 $env reads; credentials per node; webhooks without authentication; saveExecution settings.
 WARN lines (do not change the exit code): an external call upstream of a mail or CRM write that continues on error; an external call on a responseNode webhook path with the default stop (the run stops and the caller gets no reply).
+Write nodes are decided by a name rule, not by meaning: emailSend and hubspot always; httpRequest only if its URL text contains "crm" (any case) and the method is not GET. A CRM call through a URL without "crm" in it is NOT seen as a write.
 NOT checked: $node["X"], $items("X") and computed $env keys; headerAuth without an attached credential; disabled nodes; trigger types other than the regex below; whether an expression is valid in n8n; node parameters against n8n's own schema."""
 import json, re, sys, os
 TRIG = re.compile(r"(Trigger$|\.webhook$|\.cron$|\.start$)")
 REF = re.compile(r"\$\(\s*['\"]([^'\"]+)['\"]\s*\)")
 ENV = re.compile(r"\$env\.([A-Za-z0-9_]+)|\$env\[['\"]([^'\"]+)['\"]\]")
-WRITE_T = ("emailSend", "hubspot", "httpRequest")
 EXT_T = ("postgres", "httpRequest", "hubspot", "emailSend", "executeWorkflow")
 def strings(o):
     if isinstance(o, str): yield o
@@ -68,7 +68,7 @@ def check(w):
     rows = []; envs = {}; creds = []; webh = []
     wired = {(a, i) for a, i, b in edges}
     for n in nodes:
-        oe = n.get("onError", "(default: stop)"); rt = "yes x%s" % n.get("maxTries", 3) if n.get("retryOnFail") else "no"; ao = "yes" if n.get("alwaysOutputData") else "no"
+        oe = n.get("onError") or "(default: stop)"; rt = "yes x%s" % n.get("maxTries", 3) if n.get("retryOnFail") else "no"; ao = "yes" if n.get("alwaysOutputData") else "no"
         flag = []
         if n.get("alwaysOutputData") and n.get("onError") == "continueErrorOutput":
             flag.append("alwaysOutputData+continueErrorOutput"); R["fail"].append("%s: alwaysOutputData together with continueErrorOutput (F-002 pattern)" % n["name"])
@@ -90,14 +90,14 @@ def check(w):
         if b in parents: parents[b].append(a)
     byname = {n["name"]: n for n in nodes}; paths = []
     for n in nodes:
-        if not (is_write(n) or short(n["type"]) in ("emailSend", "hubspot")): continue
+        if not is_write(n): continue
         anc = set(); st = [n["name"]]
         while st:
             x = st.pop()
             for p in parents.get(x, []):
                 if p not in anc: anc.add(p); st.append(p)
         ext = [byname[a] for a in sorted(anc) if short(byname[a]["type"]) in EXT_T]
-        paths.append((n["name"], short(n["type"]), n.get("onError", "(stop)"), [(e["name"], e.get("onError", "(stop)"), "alwaysOutputData" if e.get("alwaysOutputData") else "") for e in ext]))
+        paths.append((n["name"], short(n["type"]), n.get("onError") or "(stop)", [(e["name"], e.get("onError") or "(stop)", "alwaysOutputData" if e.get("alwaysOutputData") else "") for e in ext]))
     R["info"]["write_paths"] = paths
     for wn, wt, woe, ext in paths:
         if woe == "continueRegularOutput": R["warn"].append("%s (write): continues on error" % wn)
@@ -111,7 +111,7 @@ def check(w):
                 for a, i, b in edges:
                     if a == x and b in S and b not in seen2: seen2.add(b); st2.append(b)
             for m in nodes:
-                if m["name"] in seen2 and short(m["type"]) in ("postgres", "httpRequest", "hubspot", "executeWorkflow") and not m.get("onError"):
+                if m["name"] in seen2 and short(m["type"]) in ("postgres", "httpRequest", "hubspot", "executeWorkflow") and m.get("onError") in (None, "", "stopWorkflow"):
                     R["warn"].append("%s: default stop on a path from responseNode webhook %s (an error stops the run, the caller gets no reply)" % (m["name"], n["name"]))
     R["info"]["nodes"] = len(nodes); R["info"]["conns"] = len(edges); R["info"]["triggers"] = trig
     return R
@@ -141,6 +141,24 @@ def selftest():
                     {"name": "C", "type": "n8n-nodes-base.postgres", "parameters": {}, "onError": "continueRegularOutput"}, {"name": "M", "type": "n8n-nodes-base.emailSend", "parameters": {}}],
           "connections": {"T": {"main": [[{"node": "P", "type": "main", "index": 0}]]}, "P": {"main": [[{"node": "C", "type": "main", "index": 0}]]}, "C": {"main": [[{"node": "M", "type": "main", "index": 0}]]}}}
     t2 = " | ".join(check(wk)["warn"]); assert "P: default stop" in t2 and "upstream call C continues on error" in t2, t2
+    cy = {"nodes": [{"name": "T", "type": "n8n-nodes-base.webhook", "parameters": {"authentication": "headerAuth"}}, {"name": "X", "type": "n8n-nodes-base.set", "parameters": {}}, {"name": "Y", "type": "n8n-nodes-base.set", "parameters": {}}],
+          "connections": {"X": {"main": [[{"node": "Y", "type": "main", "index": 0}]]}, "Y": {"main": [[{"node": "X", "type": "main", "index": 0}]]}}}
+    assert any("unreachable from a trigger: X, Y" in x for x in check(cy)["fail"]), check(cy)["fail"]
+    def one(typ, par, **kw):
+        n = {"name": "W", "type": "n8n-nodes-base." + typ, "parameters": par}; n.update(kw)
+        return {"nodes": [{"name": "T", "type": "n8n-nodes-base.webhook", "parameters": {"authentication": "headerAuth"}}, {"name": "C", "type": "n8n-nodes-base.postgres", "parameters": {}, "onError": "continueRegularOutput"}, n],
+                "connections": {"T": {"main": [[{"node": "C", "type": "main", "index": 0}]]}, "C": {"main": [[{"node": "W", "type": "main", "index": 0}]]}}}
+    assert check(one("httpRequest", {"url": "=https://x/CRM/upsert", "method": "POST"}))["warn"], "crm url, POST: write expected"
+    assert not check(one("httpRequest", {"url": "https://x/other", "method": "POST"}))["warn"], "url without crm: not a write (documented)"
+    assert not check(one("httpRequest", {"url": "https://x/crm", "method": "GET"}))["warn"], "GET is not a write"
+    sw = one("set", {"v": "={{ $env.ZED }}"}); sw["nodes"][1]["onError"] = "stopWorkflow"; sw["nodes"][1]["type"] = "n8n-nodes-base.postgres"
+    sw["nodes"][0]["parameters"]["responseMode"] = "responseNode"
+    assert any("C: default stop" in x for x in check(sw)["warn"]), check(sw)["warn"]
+    r = check(sw)["info"]; assert r["env"] == {"ZED": ["W"]}, r["env"]
+    cr = one("postgres", {}); cr["nodes"][2]["credentials"] = {"postgres": {"id": "1", "name": "cred-a"}}; cr["settings"] = {"saveDataSuccessExecution": "all"}
+    ri = check(cr)["info"]; assert ri["creds"] == [("W", "postgres", "postgres", "cred-a", "1")] and ri["save"]["saveDataSuccessExecution"] == "all", ri
+    assert any("W (write): continues on error" in x for x in check(one("emailSend", {}, onError="continueRegularOutput"))["warn"])
+    eb = one("set", {"v": "={{ $env['QQ'] }}"}); assert check(eb)["info"]["env"] == {"QQ": ["W"]}
     print("selftest ok")
 if __name__ == "__main__":
     if sys.argv[1:] == ["--selftest"]: selftest(); sys.exit(0)
@@ -148,5 +166,6 @@ if __name__ == "__main__":
     for p in sys.argv[1:]:
         try: w = json.load(open(p))
         except Exception as e: print("### %s\n- FAIL: does not parse: %s\n" % (p, e)); bad += 1; continue
-        R = check(w); print(md(p, w, R)); bad += bool(R["fail"])
+        try: R = check(w); print(md(p, w, R)); bad += bool(R["fail"])
+        except Exception as e: print("### %s\n- FAIL: checker crashed on this file: %r\n" % (p, e)); bad += 1
     sys.exit(1 if bad else 0)
