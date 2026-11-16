@@ -9,7 +9,7 @@ Facts the lead states first: there is NO separate "studio head": the studio is o
 4.2 | no fixed number in any document: the start script reads the port from the take config; core-hardening confirms the variable name | 2026-11-16T16:23Z
 4.3 | not known to the lead; core-hardening names the two databases from the take repo | 2026-11-16T16:23Z
 4.4 | there is no second human; the check is: the lead reads the final post against the bible rules (R-numbers) and the evidence, the owner approves and posts it himself | 2026-11-16T16:23Z
-4.5 | asked owner (A4 is the owner's choice; the lead does not guess) | 2026-11-16T16:23Z
+4.5 | A4 = does run (a) start today; run (a) is the loopback re-smoke. Answer: NO, not today (Mon 16 Nov): it starts only after the merged head passes the final evidence run, earliest about Tue 17 Nov 00:30 UTC (06:00 IST); the lead asks the owner first, with clock times, before it starts (owner rule 2026-11-16) | 2026-11-16T16:25Z
 4.6 | rehearsal passed = one full run in which: zero refusals and zero tracebacks, the sent count equals the stored count, one mail per lead id, the T19 same-lead-twice test gives one mail, one HubSpot write, one stored row, and every exit code is 0 | 2026-11-16T16:23Z
 4.7 | the laptop lead = the lead Claude session on the owner's laptop (decision 12); the owner watches | 2026-11-16T16:23Z
 5 | seen | 2026-11-16T16:23Z
