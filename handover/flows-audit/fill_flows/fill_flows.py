@@ -309,6 +309,11 @@ def _write_new(path: str, data: bytes) -> None:
 # ---------------------------------------------------------------- modes
 
 
+_CANNOT_FILL = (
+    "cannot fill these names (missing or empty in the values file, or not a DESK_/MF_ name): "
+)
+
+
 def _plain_name(n) -> bool:
     return isinstance(n, str) and n not in ("", ".", "..") and not any(c in n for c in "/\\\0")
 
@@ -346,17 +351,13 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
             raise Refused(f"{n}: {e}") from None
         if shape(new) != before:
             raise Refused(f"{n}: node count or connections changed (internal check)")
+        if sub.bad:
+            raise Refused(f"{n}: " + _CANNOT_FILL + ", ".join(sorted(sub.bad)))
         data = dump(new)
         if ANY_ENV.search(data.decode("utf-8")):
-            left = sorted(set(sub.bad)) or ["<dynamic $env use>"]
-            raise Refused(f"{n}: a $env token is left after substitution ({', '.join(left)})")
+            raise Refused(f"{n}: a $env token is left after substitution (dynamic or odd form)")
         ph_left += sum(1 for t in iter_strings(new) if t in PLACEHOLDERS)
         outputs[n] = data
-    if sub.bad:
-        raise Refused(
-            "cannot fill these names (missing or empty in the values file, or not a "
-            "DESK_/MF_ name): " + ", ".join(sorted(sub.bad))
-        )
     if not found_any and not sub.ph_used:
         print(
             "nothing to fill: no $env token in the input (already filled, or wrong folder)",
