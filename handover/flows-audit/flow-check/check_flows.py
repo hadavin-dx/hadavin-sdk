@@ -258,7 +258,7 @@ def shape_ok(d, tag):
     for n in nodes:
         if (
             isinstance(n, dict)
-            and n.get("type") == "n8n-nodes-base.webhook"
+            and n.get("type") in ("n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger")
             and "webhookId" in n
             and not isinstance(n["webhookId"], str)
         ):
@@ -298,13 +298,13 @@ CRED_KIND = {
     "postgres": ("postgres",),
     "emailSend": ("smtp",),
     "hubspot": ("hubspotAppToken", "hubspotApi", "hubspotOAuth2Api"),
-}  # credential kind(s) n8n expects on these node types
+}  # credential kind(s) n8n expects on these node types (n8n rule UNVERIFIED: from memory of n8n)
 WEBHOOK_AUTH = {
     "basicAuth": "httpBasicAuth",
     "headerAuth": "httpHeaderAuth",
     "jwtAuth": "jwtAuth",
-}  # n8n webhook node: authentication value -> credential kind (none = no credential)
-FORM_AUTH = {"basicAuth": "httpBasicAuth"}  # n8n form trigger: only none or basicAuth
+}  # n8n webhook node: authentication value -> credential kind (none = no credential). n8n rule UNVERIFIED: from memory of n8n
+FORM_AUTH = {"basicAuth": "httpBasicAuth"}  # n8n form trigger: only none or basicAuth (n8n rule UNVERIFIED: from memory of n8n)
 CRED_TYPES = ("postgres", "emailSend", "hubspot")  # these always need an attached credential
 # secret shapes are built from parts so this file holds no secret-looking literal (the one allowed literal is the AWS example key)
 AWS_EXAMPLE = "AKIA" + "IOSFODNN7EXAMPLE"
@@ -417,8 +417,8 @@ def webhook_paths(n, nodes, adj, tag):
     mode = (n.get("parameters") or {}).get("responseMode", "onReceived")
     if mode != "responseNode":
         print(
-            "  [{}] webhook {} responseMode={} (n8n answers by itself, no respondToWebhook needed)".format(
-                tag, n["name"], mode
+            "  [{}] webhook {} responseMode={} (n8n answers by itself, no respondToWebhook needed; default onReceived is {})".format(
+                tag, n["name"], mode, UNV
             )
         )
         return
@@ -622,7 +622,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             and cr
             and not set(CRED_KIND[short]) & set(cr)
         ):
-            fail(
+            unv(
                 tag,
                 "node {} ({}) credential kind(s) {} do not include the expected kind {}".format(
                     nm, short, sorted(cr), " or ".join(repr(k) for k in CRED_KIND[short])
@@ -672,19 +672,19 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                         + " [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]",
                     )
             elif au not in table:
-                fail(
+                unv(
                     tag,
                     "{} {} authentication={!r} is not one n8n accepts here (allowed: none, {})".format(
                         what, nm, au, ", ".join(sorted(table))
                     ),
                 )
             elif not isinstance(cr, dict) or not cr:
-                fail(
+                unv(
                     tag,
                     f"{what} {nm} says authentication={au!r} but the node has no credentials block (the password is not attached)",
                 )
             elif table[au] not in cr:
-                fail(
+                unv(
                     tag,
                     f"{what} {nm} authentication={au!r} needs a credential of kind {table[au]!r} but the node has {sorted(cr)}",
                 )
@@ -794,38 +794,52 @@ def _read_json_or_none(p):
         return None
 
 
-def cross_file(dr, files):
-    seen = {}
+def _addr(n):
+    """The path text of a webhook or form trigger, normalised; None when there is none (a missing or non-text path cannot be compared)."""
+    pr = n.get("parameters") if isinstance(n.get("parameters"), dict) else {}
+    pth = pr.get("path")
+    if not isinstance(pth, str) or not pth.strip().strip("/"):
+        return None
+    return pth.strip().strip("/").lower()
+
+
+def cross_file(dr, files, seen):
+    """Webhooks and form triggers must not share method+path (form: path) or webhookId. `seen` is kept across ALL folders of one run."""
     for fn in files:
         d = _read_json_or_none(os.path.join(dr, fn))
         if d is None:
             continue
+        where = f"{dr}/{fn}"
         for n in (
             d.get("nodes", []) if isinstance(d, dict) and isinstance(d.get("nodes"), list) else []
         ):
-            if isinstance(n, dict) and n.get("type") == "n8n-nodes-base.webhook":
-                pr = (
-                    n.get("parameters") if isinstance(n.get("parameters"), dict) else {}
-                )  # a wrong shape is reported by shape_ok; here it is only skipped
+            if not isinstance(n, dict) or n.get("type") not in (
+                "n8n-nodes-base.webhook",
+                "n8n-nodes-base.formTrigger",
+            ):
+                continue
+            isw = n["type"] == "n8n-nodes-base.webhook"
+            pr = n.get("parameters") if isinstance(n.get("parameters"), dict) else {}
+            pth = _addr(n)
+            if pth is None:
+                unv(
+                    where,
+                    f"{'webhook' if isw else 'form trigger'} {n.get('name')} has no usable path (missing, empty or not text), so a clash of web addresses cannot be checked for it (n8n may use the webhookId instead)",
+                )
+            else:
                 key = (
-                    str(pr.get("httpMethod", "GET")).upper(),
-                    str(pr.get("path")).strip().strip("/").lower(),
+                    (str(pr.get("httpMethod", "GET")).upper(), pth) if isw else ("FORM", pth)
                 )
                 if key in seen:
-                    fail(dr, f"two webhooks share method+path {key}: {seen[key]} and {fn}")
+                    unv(dr, f"two {'webhooks' if isw else 'form triggers'} share {'method+path' if isw else 'path'} {key}: {seen[key]} and {where}")
                 else:
-                    seen[key] = fn
-                wid = n.get("webhookId")
-                if isinstance(wid, str) and wid:
-                    if ("id", wid) in seen:
-                        fail(
-                            dr,
-                            "two webhooks share webhookId {!r}: {} and {}".format(
-                                wid, seen[("id", wid)], fn
-                            ),
-                        )
-                    else:
-                        seen[("id", wid)] = fn
+                    seen[key] = where
+            wid = n.get("webhookId")
+            if isinstance(wid, str) and wid:
+                if ("id", wid) in seen:
+                    unv(dr, f"two webhooks or form triggers share webhookId {wid!r}: {seen[('id', wid)]} and {where}")
+                else:
+                    seen[("id", wid)] = where
 
 
 def check_flow(d, tag, expect, baseline_d):
@@ -903,17 +917,12 @@ def check_flow(d, tag, expect, baseline_d):
             normal = 1
         if n.get("onError") == "continueErrorOutput":
             if normal is None:
-                warn(
-                    tag,
-                    "node {}: cannot tell which output is its error output ({})".format(
-                        n["name"], UNV
-                    ),
-                )
+                unv(tag, "node {}: cannot tell which output is its error output".format(n["name"]))
             elif not has(normal):
-                fail(
+                unv(
                     tag,
                     f"node {n['name']} has onError=continueErrorOutput but its error output main[{normal}]"
-                    f" (the last output; {UNV}) is missing or has no target",
+                    " (the last output) is missing or has no target",
                 )
         if n["type"] == "n8n-nodes-base.if":
             miss = [i for i in (0, 1) if not has(i)]
@@ -923,14 +932,23 @@ def check_flow(d, tag, expect, baseline_d):
                     n["name"] in base_nodes
                     and [i for i in (0, 1) if not (i < len(bo) and bo[i])] == miss
                 )
-                (warn if base_missing else fail)(
-                    tag,
-                    "IF node {} lacks output(s) {}{} (project rule: every IF branch leads somewhere)".format(
-                        n["name"],
-                        miss,
-                        " (baseline already lacks the same)" if base_missing else "",
-                    ),
+                accepted = OPTS["accept_if"].get((tag.rsplit("/", 1)[-1], n["name"])) == miss
+                text = "IF node {} lacks output(s) {}{} (project rule: every IF branch leads somewhere)".format(
+                    n["name"],
+                    miss,
+                    " (accepted by a recorded decision, --accept-if)"
+                    if accepted
+                    else " (baseline already lacks the same)"
+                    if base_missing
+                    else "",
                 )
+                if accepted:
+                    ACCEPTED_IF.append(f"{tag}: IF node {n['name']} output(s) {miss}")
+                    warn(tag, text, known=True)
+                elif base_missing:
+                    warn(tag, text)
+                else:
+                    fail(tag, text)
         elif n["type"] == "n8n-nodes-base.switch":
             if not normal:
                 warn(tag, "switch node {}: cannot tell its output count".format(n["name"]))
@@ -1270,6 +1288,19 @@ def main(argv):
                 OPTS["block_env"] = True
             elif a == "--require-real-credential-ids":
                 OPTS["real_ids"] = True
+            elif a == "--fail-unverified":
+                OPTS["fail_unv"] = True
+            elif a == "--accept-if":
+                try:
+                    fl, rest = val().split("=", 1)
+                    nd, outs = rest.rsplit(":", 1)
+                    idx = sorted({int(x) for x in outs.split(",")})
+                    if not fl or not nd or not set(idx) <= {0, 1}:
+                        raise ValueError(rest)
+                    OPTS["accept_if"][(fl, nd)] = idx
+                except ValueError:
+                    print("usage error: bad --accept-if value, want FILE=NODE:OUT[,OUT] with OUT 0 or 1")
+                    return 2
             elif a.startswith("--"):
                 print("usage error: unknown option", a)
                 return 2
@@ -1314,6 +1345,7 @@ def main(argv):
         print("usage error: --files wants 'all' or a comma list of *.json names")
         return 2
     diffsum = []
+    seen_addr = {}  # web addresses and webhook ids across ALL folders of this run
     print(HEADER, end="")
     for dr in dirs:
         print(f"### {dr}")
@@ -1369,22 +1401,35 @@ def main(argv):
             except READ_ERRORS as e:
                 fail(tag, f"checker could not finish this file ({type(e).__name__}: {e})")
         try:
-            cross_file(dr, dfiles)
+            cross_file(dr, dfiles, seen_addr)
         except READ_ERRORS as e:
             fail(dr, f"cross-file check could not finish ({type(e).__name__}: {e})")
     if diffbase:
         text = "\n".join(diffsum) + "\n"
         print(text)
         if diffout:
-            with open(diffout, "w", encoding="utf-8") as fh:
-                fh.write(
-                    "# node-level diff, unpatched generator output vs patched (paths only, no values)\n"
-                    f"# allowed patches: {','.join(allow) or 'none'}\n{text}"
-                )
+            try:
+                with open(diffout, "w", encoding="utf-8") as fh:
+                    fh.write(
+                        "# node-level diff, unpatched generator output vs patched (paths only, no values)\n"
+                        f"# allowed patches: {','.join(allow) or 'none'}\n{text}"
+                    )
+            except OSError as e:
+                print(f"INTERNAL ERROR (exit 3): could not write --diff-out file: {type(e).__name__}")
+                return 3
     print(f"RESULT: {len(FAILS)} FAIL, {len(WARNS)} WARN")
     final_block()
     return 1 if FAILS else 0
 
 
+def entry(argv):
+    """main(), but a crash of the checker itself is reported as exit 3 (never as exit 1, which means 'a FAIL about the flows')."""
+    try:
+        return main(argv)
+    except READ_ERRORS as e:
+        print(f"INTERNAL ERROR (exit 3): the checker itself broke: {type(e).__name__}: {e}")
+        return 3
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(entry(sys.argv[1:]))
