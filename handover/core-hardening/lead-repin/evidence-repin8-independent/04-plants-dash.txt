@@ -1,0 +1,1 @@
+m01 [dash]: KILLED-phase1 exit=1 fail_lines=18 SELF-TEST: passed=1584 failed=17 (the made-up input and output files were deleted) (3s)

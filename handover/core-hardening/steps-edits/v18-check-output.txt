@@ -160,3 +160,7 @@ NEG e04 caught | FAIL E-04 no final full stop
 NEG e07 caught | FAIL E-07 lacks "nobody on this branch"
 NEG e08 caught | FAIL E-08 lacks "nobody on this branch"
 NEG record caught | FAIL old record format
+NEG nd8date caught | FAIL ND record carries a date: ND8: A|B <date and time in UTC and IST>
+NEG rehearsal caught | FAIL rehearsal alone: hing leaves the laptop. - The rehearsal comes aft
+NEG q195 caught | FAIL E-48 Q19.5 wording
+NEG m4 caught | FAIL E-12 lacks what happens next
