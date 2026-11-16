@@ -1,18 +1,18 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T09:49:25Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T09:54:08Z (IST = UTC+5:30)
 SESSION: system-map
-ORDER: 017-020 on top of 016; queue M10-M16
+ORDER: 017-021 on top of 016; queue M10-M16
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 5 reviewers (target 5+ met): naive owner read, structural read of work list, LEAD-PAGE vs cards, naive read of TAKE-BLOCKERS, architect read of the safe path
+AGENTS_RUNNING: 8 (target 8 to 10, ORDER 021): (1) cards-vs-v5 facts check, (2) tools R460 review, (3) adversarial take-day reader, (4) citation checker of TAKE-BLOCKERS/README/QUESTIONS/LEAD-PAGE, (5) what-did-we-not-check lane, (6) cross-read of the other two sessions, (7) security read of the cards and S9, (8) necessity read of the whole folder
 INTERRUPTED: none
-NEXT: collect the 5 reports and apply Blockers and Majors; refill a lane the same turn one ends; the lead decides QUESTIONS.md items 6, 7, 8 (S9 mechanism, licence files, whether the video needs scenes 5 to 11); core-hardening applies S9 only after those
+NEXT: collect 8 reports and apply Blockers and Majors; first apply the zoom-out finding (one place per job: TAKE-BLOCKERS = what to do, QUESTIONS = what to decide, board = status) and the S9 design finding (S9-1 and S9-4 need program code; S9-1 fallback A conflicts with v5 rule 2; do not claim a closed gate that is not built); the lead decides QUESTIONS.md items 6, 7, 8
 CAPACITY: 4 cores, load 0.5 (about 1 of 4 busy; reviewers only read, below the 70 percent target, no heavy test queued); memory 0 of 15 GB used (free -g), disk 38 percent used; heavy slots 0 of 3
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 09:49:25Z
+PUSHED_UTC: 2026-11-16T09:54:08Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
