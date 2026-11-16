@@ -1,0 +1,3 @@
+APPLY apply-now OLD texts 47 matched exactly once 47 unmatched rows [] resulting lines {'OWNER-STEPS-realrun-v3.md': 313, 'AGENT-SCOPE-DO-AND-DONT.md': 37, 'DECISION-one-store.md': 29}
+INFO rows 59 apply 47 hold 12 OLD blocks 60 NEW blocks 60 UTC=IST pairs 119 weekday-date pairs 61 banned hits 0 of 10 secret-shape hits 0 index rows 59
+FAILS 0

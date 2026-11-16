@@ -749,3 +749,34 @@ RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85b
 safety-tests.sh: line 70:  9988 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0/3227325b6c790bd7.backup is not a regular file owned by thi
   PASS: T87c the backup is a FIFO: exit 3 (got 3; r7: 2; 124 or 137 = hung), no hang, file still planted, marker kept
+safety-tests.sh: line 70: 10137 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0/3227325b6c790bd7.planted.json is not valid JSON: refused; the 
+  PASS: T87d the marker is not valid JSON: exit 3 (got 3; r7: 2), file still planted, marker kept, no traceback
+safety-tests.sh: line 70: 10348 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0/3227325b6c790bd7.planted.json lacks required fields: refused; 
+  PASS: T87e the marker lacks required fields: exit 3 (got 3; r7: 2), file still planted, marker kept
+safety-tests.sh: line 70: 10472 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0 is not a plain folder owned by this user with mode 700: 
+  PASS: T87f the state folder has mode 755 (refused by ensure_state): exit 3 (got 3; r7: 2), file still planted, marker kept
+  PASS: T87f the kept marker still allows a genuine restore
+safety-tests.sh: line 70: 13628 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/toy/root is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f
+  PASS: T87g the real-repository check refuses (--real-repo is the root) while a marker exists: exit 3 (got 3; r7: 2), file still planted, marker kept
+  PASS: T87g genuine restore afterwards
+safety-tests.sh: line 70: 18356 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RuntimeError: an internal bug
+INTERNAL ERROR (RuntimeError: an internal bug); a marker exists (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0/3227325b6c790bd7.pla
+  PASS: T87h an internal bug inside --restore (restore_target raises RuntimeError): exit 3 (got 3; r7: 2 with INTERNAL ERROR), file still planted, marker kept
+  PASS: T87h genuine restore afterwards
+safety-tests.sh: line 70: 22623 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker is for another root ("/somewhere/else"): refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87i guard: a marker that names another root is a forged marker: exit 2 (got 2), nothing written, marker kept
+safety-tests.sh: line 70: 26522 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: marker names a backup other than /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0/3227325b6c790bd7.backup: refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87j guard: a marker that names another backup path is forged: exit 2 (got 2), nothing written, marker kept
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/toy/root is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T87k guard: no marker anywhere and the real-repository check refuses: still exit 2 (got 2), nothing recorded as planted
+== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)
