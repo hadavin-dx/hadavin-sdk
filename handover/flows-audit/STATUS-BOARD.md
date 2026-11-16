@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T11:35:11Z
+UPDATED_UTC: 2026-11-16T11:35:31Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 11
 PERCENT: 95
 AGENTS_RUNNING: 8
-CAPACITY: 0.26 load of 4 cores, mem 0/15 GB, RAM 907/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.18 load of 4 cores, mem 0/15 GB, RAM 913/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
-NEXT: 8 lanes; lead readiness says No: runbook + Q27 inputs
-PUSHED_UTC: 2026-11-16T11:35:11Z
+NEXT: 8 lanes running; verify each hand-back with checkers
+PUSHED_UTC: 2026-11-16T11:35:31Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
