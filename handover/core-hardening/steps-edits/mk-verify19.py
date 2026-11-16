@@ -36,7 +36,7 @@ R("neg('r14rec2', 'Route B: you have not written', 'Route B (the one the assista
 # the negative controls may run in anchor-only mode (cheap check that every planted string still exists)
 R("    src = open(E, encoding='utf-8').read()\n    if src.count(old) < 1:\n        F('negative control anchor missing: ' + name); return\n", "    src = open(E, encoding='utf-8').read()\n    if src.count(old) < 1:\n        F('negative control anchor missing: ' + name); return\n    if os.environ.get('NEG_ANCHOR_ONLY'): return\n")
 # swap the round 18 section and plants
-sec = open('r19-section.py', encoding='utf-8').read(); pl = open('r19-plants.py', encoding='utf-8').read()
+sec = open('r19-section.py', encoding='utf-8').read() + '\n' + open('r19-golden.py', encoding='utf-8').read(); pl = open('r19-plants.py', encoding='utf-8').read()
 a = s.index('# ================= round 18 checks'); b = s.index("print('round 18 checks done')") + len("print('round 18 checks done')")
 s = s[:a] + sec.strip('\n') + s[b:]
 a = s.index('# ---- round 18 plants'); b = s.index("print('r18 plants (planted, caught):'"); b = s.index('\n', b)

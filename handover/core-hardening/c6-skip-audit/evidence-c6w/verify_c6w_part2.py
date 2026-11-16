@@ -535,6 +535,6 @@ _lt = []
 if _live and _frz and os.path.isdir(_live):
     _fz = datetime.datetime.strptime(_frz, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp()
     _lt = [f for f in glob.glob(_live + "/OWNER-SHEET-v*.md") + glob.glob(_live + "/LEAD-RELEASE-NOTE-v*.md") if os.path.getmtime(f) > _fz]
-_ltbad = [os.path.basename(f) for f in _lt if not re.search(re.escape(os.path.basename(f)) + r" \(written " + datetime.datetime.fromtimestamp(os.path.getmtime(f), datetime.timezone.utc).strftime("%H:%M:%S") + " UTC", full)]
+_ltbad = [os.path.basename(f) for f in _lt if not re.search(re.escape(os.path.basename(f)) + r" was written " + datetime.datetime.fromtimestamp(os.path.getmtime(f), datetime.timezone.utc).strftime("%H:%M:%S") + " UTC", full)]
 _frozen_ok = (not _frz) or all(os.path.getmtime(f) <= datetime.datetime.strptime(_frz, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp() for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md"))
 check("D-late: every sheet or release note file written after the freeze (%d found in the live folder) is named in the report with its real written time (UTC), and the folder read by the checks holds none of them" % len(_lt), not _ltbad and _frozen_ok, _ltbad)

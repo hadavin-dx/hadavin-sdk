@@ -1,7 +1,7 @@
 """Negative controls for verify-c6w.py. Builds changed copies of REPORT-c6w.md (never edits it), runs verify-c6w.py on each and records the exit code
 and the raw output. A control copy with no change must exit 0; every changed copy must exit non-zero. Fake key-shaped strings are built from parts here.
 Usage: python3 neg_controls_c6w.py   Output: neg/<name>.txt per copy and neg-output.txt (summary). Exit 1 if any changed copy exits 0."""
-import re, subprocess, sys, os, tempfile
+import shutil, re, subprocess, sys, os, tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 E = os.path.dirname(os.path.abspath(__file__)) + "/"
 D = os.path.dirname(E.rstrip("/")) + "/"
@@ -75,7 +75,9 @@ for name, text in M.items():
         out.append("%-48s SKIPPED (mutation target absent)" % name)
         bad += 1
         continue
-    p = os.path.join(tempfile.mkdtemp(), "REPORT-copy.md")
+    _td = tempfile.mkdtemp()
+    p = os.path.join(_td, "REPORT-c6w.md")   # the real file name (the check D-B1 compares the typed answer line with it); c6w-CHANGES.md is copied next to it for V12 and V13
+    shutil.copy(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "c6w-CHANGES.md"), os.path.join(_td, "c6w-CHANGES.md"))
     open(p, "w", encoding="utf-8").write(text)
     r = subprocess.run([sys.executable, "-B", "-I", E + "verify-c6w.py", p], capture_output=True, text=True, env=(dict(os.environ, C6V_STEPS=envd) if envd else None))
     open(E + "neg/" + name + ".txt", "w").write(r.stdout[-6000:] + r.stderr[-1500:] + "\nEXIT CODE %d\n" % r.returncode)

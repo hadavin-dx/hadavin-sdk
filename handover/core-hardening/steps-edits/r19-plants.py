@@ -39,3 +39,30 @@ for _i, _l in enumerate([l_ for l_ in _DAY.split('\n') if l_.strip() and not l_.
 for _i, _l in enumerate([l_ for l_ in _APP.split('\n') if len(l_.strip()) > 80 and not l_.startswith('#') and l_.strip() in set(_norm19(txt)) and ' the ' in l_][:12]):
     _plant19('appendix', 'line %d' % _i, _AP, _DAY, _APP.replace(_l, _l.replace(' the ', ' a ', 1) + ' (changed)', 1))
 print('r19 plants (planted, caught):', {k_: tuple(v_) for k_, v_ in _pl19.items()})
+
+# ---- round 19 golden plants: the 6 misses of the independent evidence on r18, and a sample of every safety sentence deleted or reversed at EVERY copy
+_gp = [0, 0]
+def _gplant(label, t2):
+    _gp[0] += 1
+    if t2 != txt and golden19(t2): _gp[1] += 1
+    else: F('r19 golden plant not caught: ' + label)
+_m10 = txt.index('Tue 24 Nov 2026'); _gplant('M10 first Tue 24 Nov date', txt[:_m10] + 'Mon 23 Nov 2026' + txt[_m10 + len('Tue 24 Nov 2026'):])
+for _lab, _old, _new in (('M15 once answer', 'the assistant answers it once', 'the assistant answers it twice'), ('M18 never opens', 'The assistant never opens the files.', 'The assistant opens the files.'), ('M23 never content', '(never its content)', '(and its content)')):
+    if _old in txt: _gplant(_lab, txt.replace(_old, _new))
+    else: F('r19 golden plant anchor missing: ' + _lab)
+_safe = [s_ for s_ in _PINS if re.search(r'\b(never|only|must|cannot|NOT|nothing|alone|first|anyway)\b', s_) and len(s_) > 30]
+import random as _rnd
+_rnd.seed(19)
+for _s in _rnd.sample(_safe, min(150, len(_safe))):
+    _gplant('delete ' + _s[:40], txt.replace(_s, ''))
+    _gplant('reverse ' + _s[:40], txt.replace(_s, re.sub(r'\bnever\b', 'always', _s) if re.search(r'\bnever\b', _s) else _s + ' Or not.'))
+# the changes file: forge every number written before words or lines
+if os.path.exists(_CHGF):
+    _ct = open(_CHGF, encoding='utf-8').read()
+    for _i, _m in enumerate(re.finditer(r'(\d[\d,]*) (?:words|lines)\b', _ct)):
+        if int(_m.group(1).replace(',', '')) < 100: continue
+        _gp[0] += 1
+        _v = int(_m.group(1).replace(',', '')) + 1
+        if chg19(_ct[:_m.start(1)] + '{:,}'.format(_v) + _ct[_m.end(1):]): _gp[1] += 1
+        else: F('r19 changes number plant not caught: ' + _m.group(0))
+print('r19 golden plants (planted, caught):', tuple(_gp))

@@ -376,7 +376,7 @@ def extra3b(t):
             else:
                 a_ = open(pp, encoding="utf-8").read().replace("v%d" % (int(m.group(2)) - 1), "v%d" % int(m.group(2)))
                 how = "equal to %s after the version number is changed" % prev if a_ == open(_os.path.join(_live, n), encoding="utf-8").read() else "DIFFERENT from %s beyond the version number" % prev
-            _parts.append("%s (written %s UTC = %s IST; %s)" % (n, _u, _i, how))
+            _parts.append("%s was written %s UTC = %s IST; %s" % (n, _u, _i, how))
         if _parts:
             _fin_r = max(int(_re_.search(r"-v(\d+)", f).group(1)) for f in _gl_.glob(_st + "/LEAD-RELEASE-NOTE-v*.md") if "SOURCE" not in f)
             _txt = " FILES WRITTEN AFTER THE FREEZE (%s = 01:00:00 IST on 2026-11-17, the time up to which this report reads the files): %s. This report names the newest version before the freeze and reads none of these; if the lead finishes a later version, the version numbers named here need a new check." % (_frz, "; ".join(_parts))

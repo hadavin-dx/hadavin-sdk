@@ -273,7 +273,7 @@ def _num(pattern, path):
         return None
 _cnt = {}
 if os.path.exists(_chgp):
-    for _m in re.finditer(r"^COUNT ([a-z0-9 ]+): (\d+)\s*$", open(_chgp, encoding="utf-8").read(), re.M):
+    for _m in re.finditer(r"^COUNT ([a-z0-9 _.]+): (\d+)\s*$", open(_chgp, encoding="utf-8").read(), re.M):
         _cnt[_m.group(1)] = int(_m.group(2))
 _runlog = open(_E_ + "/run-log.txt").read().count("run_all.sh start") if os.path.exists(_E_ + "/run-log.txt") else None
 _rr = re.search(r"I ran the full pipeline run_all\.sh (\d+) time\(s\)", raw)

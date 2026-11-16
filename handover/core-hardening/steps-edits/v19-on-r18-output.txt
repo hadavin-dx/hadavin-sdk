@@ -212,6 +212,60 @@ r19 applied sheet words (wc -w method): 21492; day sheet 4323; appendix 1353
 r19 word counts (wc -w method, applied sheet and parts): {'applied sheet': 21492, 'key step C (alarms)': 359, 'key step D.5': 294, 'table of typed words': 456, 'card with one-liners': 407, 'key step I': 294, 'key step G with G.2': 920, 'identification check': 186}
 r19 checks: 150 count/pair/forbidden checks; 53 failures in the section
 round 19 checks done
+FAIL r19 golden sentence not pinned: # C4 steps versus decisions: exact edit list (round 18, batched fix pass after the round 1
+FAIL r19 golden sentence not pinned: Round 17 (`resolve-r17.md`, same paths: no round cap) applies all of those findings in one
+FAIL r19 golden sentence not pinned: The result of round 17 is NOT reviewed yet.
+FAIL r19 golden sentence not pinned: Earlier files are kept as `EDITS.round5.md` to `EDITS.round9.md`, `EDITS.round10a.md` (the
+FAIL r19 golden sentence not pinned: **Key (read first).** **ND** = a NOT DECIDED item (numbered 1 to 16 in the list below the 
+FAIL r19 golden sentence not pinned: ## Counts (computed by script, `resolve-r18.md` and `resolve-r18-check-output.txt`)
+FAIL r19 golden sentence not pinned: it rewrote E-48 (the new order of the card, the last-day plan, the table of typed words, t
+FAIL r19 golden sentence not pinned: ## NOT DECIDED: studio lead or owner only (items 1 to 16).
+FAIL r19 golden sentence not pinned: **When the owner writes `no more takes`: right after the last take he wants (route A), or 
+FAIL r19 golden sentence not pinned: Facts: key step A is a promise by the owner backed by his three alarms;
+FAIL r19 golden sentence not pinned: all three alarms are on one person's device;
+FAIL r19 golden sentence not pinned: (10) NOT DECIDED 16 is new (security N1).
+FAIL r19 golden sentence not pinned: The owner's three alarms (key step C: 17:49 UTC = 23:19 IST and 18:09 UTC = 23:39 IST on 2
+FAIL r19 golden sentence not pinned: - **R10 (E-48, E-55, E-57, E-58)**: two routes (ND15), one deadline per act: revoke the ke
+FAIL r19 golden sentence not pinned: Set three alarms on your own phone or computer (step 22 item 3, key step C): alarm 1 for 1
+FAIL r19 golden sentence not pinned: alarm 3 for 18:09 UTC = 23:39 IST the same day, named `10 minutes left: revoke the secret 
+FAIL r19 golden sentence not pinned: and alarm 2, which repeats every evening from the day of your first take (your own phone t
+FAIL r19 golden sentence copies 1, pinned 2: 17.
+FAIL r19 golden sentence not pinned: not checked either), and for each of the four whether your own n8n (the one at `http://loc
+FAIL r19 golden sentence not pinned: You: delete BOTH HubSpot private apps (Settings, Integrations, Private Apps, Delete) in ca
+FAIL r19 golden sentence not pinned: what you have not finished by then you finish by Tue 24 Nov 2026 18:29 UTC = 23:59 IST (ke
+FAIL r19 golden sentence not pinned: If a name or date is not on your list, or your list says that your own n8n uses it, or you
+FAIL r19 golden sentence not pinned: Where it says "Detail", the reasons and the long checks are in the appendix of this sheet,
+FAIL r19 golden sentence not pinned: In short: set three alarms (key step C);
+FAIL r19 golden sentence not pinned: choose route A or route B and, after your last take that you accept, confirm `no more take
+FAIL r19 golden sentence not pinned: in route B after `cut accepted`);
+FAIL r19 golden sentence not pinned: You: make sure that you have confirmed your last take with `yes, no more takes` (key step 
+FAIL r19 golden sentence not pinned: You: do your items 2 and 3, the quick web revokes, each only after the identification chec
+FAIL r19 golden sentence not pinned: item 3: delete both HubSpot apps;
+FAIL r19 golden sentence not pinned: touch nothing that you are not sure about).
+FAIL r19 golden sentence not pinned: Last day, Mon 23 Nov 2026: the 10 minutes between 18:19 UTC = 23:49 IST and 18:29 UTC = 23
+FAIL r19 golden sentence not pinned: What you have not finished by 18:29 UTC = 23:59 IST you finish by Tue 24 Nov 2026 18:29 UT
+FAIL r19 golden sentence not pinned: The spending window ends 10 minutes later, at 18:29 UTC = 23:59 IST;
+FAIL r19 golden sentence not pinned: `key gone, no more decisions` is a separate word with three meanings at once: the key is g
+FAIL r19 golden sentence not pinned: Use it only when all three are true.
+FAIL r19 golden sentence not pinned: Set three alarms on your own phone or computer.
+FAIL r19 golden sentence not pinned: Alarm 3: Mon 23 Nov 2026 18:09 UTC = 23:39 IST, named `10 minutes left: revoke the secret 
+FAIL r19 golden sentence not pinned: alarm 1 gives exactly 30 minutes, so on the last day you normally make none.
+FAIL r19 golden sentence not pinned: Know the price of route B before you choose: the secret key for the model and its copy sta
+FAIL r19 golden sentence not pinned: Route A is the safer one for keeping secrets safe;
+FAIL r19 golden: 226 more differences
+FAIL r19 changes number not computed: 437 words
+FAIL r19 changes number not computed: 497 words
+FAIL r19 changes number not computed: 539 words
+FAIL r19 changes number not computed: 673 words
+FAIL r19 changes number not computed: 401 words
+FAIL r19 changes number not computed: 971 words
+FAIL r19 changes number not computed: 360 words
+FAIL r19 changes number not computed: 23,267 words
+FAIL r19 changes number not computed: 16,967 words
+FAIL r19 changes number not computed: 16,967 words
+FAIL r19 changes fact line missing or wrong: EDITS.md lines (wc -l): 
+FAIL r19 changes fact line missing or wrong: applied sheet words (wc -w): 
+r19 golden: 3378 pinned sentences, 266 differences
 FAIL r19 reversal anchor missing: THE KEY IS NOT DEFERRABLE
 FAIL r19 reversal anchor missing: it comes first.
 FAIL r19 reversal anchor missing: the last 10 minutes (18:19 UTC = 23:49 IST to
@@ -228,4 +282,19 @@ FAIL r19 plant not caught: day sheet line 15
 FAIL r19 plant not caught: day sheet line 18
 FAIL r19 plant not caught: day sheet line 21
 r19 plants (planted, caught): {'occurrence': (167, 167), 'pair': (71, 71), 'reversal': (10, 10), 'day sheet': (15, 8), 'appendix': (5, 5)}
-FAILURES 87
+FAIL r19 golden plant not caught: delete whether a second person who may revoke t
+FAIL r19 golden plant not caught: reverse whether a second person who may revoke t
+FAIL r19 golden plant not caught: delete it must print "refused as expected" for 
+FAIL r19 golden plant not caught: reverse it must print "refused as expected" for 
+FAIL r19 golden plant not caught: delete Route B: the secret key for the model an
+FAIL r19 golden plant not caught: reverse Route B: the secret key for the model an
+FAIL r19 golden plant not caught: delete THE KEY IS NOT DEFERRABLE: it is not one
+FAIL r19 golden plant not caught: reverse THE KEY IS NOT DEFERRABLE: it is not one
+FAIL r19 golden plant not caught: delete | Mon 23 Nov 2026, by 18:29 UTC = 23:59 
+FAIL r19 golden plant not caught: reverse | Mon 23 Nov 2026, by 18:29 UTC = 23:59 
+FAIL r19 golden plant not caught: delete item 3 deletes only apps that pass the c
+FAIL r19 golden plant not caught: reverse item 3 deletes only apps that pass the c
+FAIL r19 golden plant not caught: delete (c) the typed word `web revokes not done
+FAIL r19 golden plant not caught: reverse (c) the typed word `web revokes not done
+r19 golden plants (planted, caught): (317, 303)
+FAILURES 154

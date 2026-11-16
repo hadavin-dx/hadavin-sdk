@@ -1220,6 +1220,53 @@ _wc = {'applied sheet': len(_AP.split()), 'key step C (alarms)': _seg19(_AP, 'Ke
 print('r19 word counts (wc -w method, applied sheet and parts):', _wc)
 print('r19 checks:', _r19n, 'count/pair/forbidden checks;', len(_r19f), 'failures in the section')
 print('round 19 checks done')
+
+# ================= round 19 golden pins (class fix for the 6 misses of r18: every sentence of EDITS.md is pinned ONCE against r19-pins.txt, not only against its own copies) =================
+import collections as _col
+def _sent19(t):
+    out = []
+    for l_ in t.split('\n'):
+        l_ = l_.strip()
+        if not l_: continue
+        out += [s_.strip() for s_ in re.split(r'(?<=[.!?;]) +', l_) if s_.strip()]
+    return out
+_PINF = os.path.join(HERE_, 'r19-pins.txt')
+_PINS = {}
+if os.path.exists(_PINF):
+    for _ln in open(_PINF, encoding='utf-8').read().split('\n'):
+        if '\t' in _ln:
+            _n, _s = _ln.split('\t', 1); _PINS[_s] = int(_n)
+else:
+    F('r19 pin file r19-pins.txt is missing')
+def golden19(t):
+    c_ = _col.Counter(_sent19(t)); out = []
+    for s_, n_ in c_.items():
+        if s_ not in _PINS: out.append('sentence not pinned: ' + s_[:90])
+        elif _PINS[s_] != n_: out.append('sentence copies %d, pinned %d: %s' % (n_, _PINS[s_], s_[:70]))
+    for s_, n_ in _PINS.items():
+        if s_ not in c_: out.append('pinned sentence missing: ' + s_[:90])
+    return out
+_g19 = golden19(txt)
+for _f in _g19[:40]: F('r19 golden ' + _f)
+if len(_g19) > 40: F('r19 golden: %d more differences' % (len(_g19) - 40))
+# the numbers of the changes file: every number written before "words" or "lines" must be a computed number
+_CHGF = os.path.join(HERE_, 'r19-CHANGES.md')
+def _allowed19():
+    wc_ = len(_AP.split()); a_ = {wc_, len(_DAY.split()), len(_APP.split()), 6300, wc_ - 6300, txt.count('\n'), txt.count('\n') + 1}
+    for v_ in list(_wc.values()): a_.add(v_); a_.add(wc_ - v_)
+    return a_
+def chg19(t):
+    out = []; al_ = _allowed19()
+    for m_ in re.finditer(r'(\d[\d,]*) (?:words|lines)\b', t):
+        v_ = int(m_.group(1).replace(',', ''))
+        if v_ >= 100 and v_ not in al_: out.append('number not computed: ' + m_.group(0))
+    for k_, v_ in (('EDITS.md lines (wc -l): ', txt.count('\n')), ('applied sheet words (wc -w): ', len(_AP.split())), ('day sheet words (wc -w): ', len(_DAY.split())), ('appendix words (wc -w): ', len(_APP.split()))):
+        if (k_ + '%d' % v_) not in t.replace(',', ''): out.append('fact line missing or wrong: ' + k_)
+    return out
+if os.path.exists(_CHGF):
+    for _f in chg19(open(_CHGF, encoding='utf-8').read()): F('r19 changes ' + _f)
+else: F('r19 changes file r19-CHANGES.md is missing')
+print('r19 golden: %d pinned sentences, %d differences' % (len(_PINS), len(_g19)))
 # ================= negative controls (each check must fail on a planted defect) =================
 import subprocess
 def neg(name, old, new, expect, count=1):
@@ -1484,5 +1531,32 @@ for _i, _l in enumerate([l_ for l_ in _DAY.split('\n') if l_.strip() and not l_.
 for _i, _l in enumerate([l_ for l_ in _APP.split('\n') if len(l_.strip()) > 80 and not l_.startswith('#') and l_.strip() in set(_norm19(txt)) and ' the ' in l_][:12]):
     _plant19('appendix', 'line %d' % _i, _AP, _DAY, _APP.replace(_l, _l.replace(' the ', ' a ', 1) + ' (changed)', 1))
 print('r19 plants (planted, caught):', {k_: tuple(v_) for k_, v_ in _pl19.items()})
+
+# ---- round 19 golden plants: the 6 misses of the independent evidence on r18, and a sample of every safety sentence deleted or reversed at EVERY copy
+_gp = [0, 0]
+def _gplant(label, t2):
+    _gp[0] += 1
+    if t2 != txt and golden19(t2): _gp[1] += 1
+    else: F('r19 golden plant not caught: ' + label)
+_m10 = txt.index('Tue 24 Nov 2026'); _gplant('M10 first Tue 24 Nov date', txt[:_m10] + 'Mon 23 Nov 2026' + txt[_m10 + len('Tue 24 Nov 2026'):])
+for _lab, _old, _new in (('M15 once answer', 'the assistant answers it once', 'the assistant answers it twice'), ('M18 never opens', 'The assistant never opens the files.', 'The assistant opens the files.'), ('M23 never content', '(never its content)', '(and its content)')):
+    if _old in txt: _gplant(_lab, txt.replace(_old, _new))
+    else: F('r19 golden plant anchor missing: ' + _lab)
+_safe = [s_ for s_ in _PINS if re.search(r'\b(never|only|must|cannot|NOT|nothing|alone|first|anyway)\b', s_) and len(s_) > 30]
+import random as _rnd
+_rnd.seed(19)
+for _s in _rnd.sample(_safe, min(150, len(_safe))):
+    _gplant('delete ' + _s[:40], txt.replace(_s, ''))
+    _gplant('reverse ' + _s[:40], txt.replace(_s, re.sub(r'\bnever\b', 'always', _s) if re.search(r'\bnever\b', _s) else _s + ' Or not.'))
+# the changes file: forge every number written before words or lines
+if os.path.exists(_CHGF):
+    _ct = open(_CHGF, encoding='utf-8').read()
+    for _i, _m in enumerate(re.finditer(r'(\d[\d,]*) (?:words|lines)\b', _ct)):
+        if int(_m.group(1).replace(',', '')) < 100: continue
+        _gp[0] += 1
+        _v = int(_m.group(1).replace(',', '')) + 1
+        if chg19(_ct[:_m.start(1)] + '{:,}'.format(_v) + _ct[_m.end(1):]): _gp[1] += 1
+        else: F('r19 changes number plant not caught: ' + _m.group(0))
+print('r19 golden plants (planted, caught):', tuple(_gp))
 print('FAILURES', fail)
 sys.exit(1 if fail else 0)

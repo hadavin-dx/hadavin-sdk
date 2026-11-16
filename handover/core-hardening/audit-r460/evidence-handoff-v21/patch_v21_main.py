@@ -20,8 +20,8 @@ def chk(n, start):
 FILL = dict(
     DB3_SHA="e2f8017c1975f88c251e6ec2426e3c54f89cf6a3dc61c7f0417d2e8473a075fb",
     DB3_SHORT="e2f8017c1975f88c...",
-    PG_RUNS="five",
-    REG_RUNS="two",
+    PG_RUNS="six",
+    REG_RUNS="three",
     GATE4_STATE=open(here / "gate4_state.txt", encoding="utf-8").read().strip(),
     PARTLY=open(here / "fill_partly.txt", encoding="utf-8").read().strip(),
     MEASURED=open(here / "fill_measured.txt", encoding="utf-8").read().strip(),
@@ -94,7 +94,7 @@ out += src[528:563]  # lines 529..563 (8.1, 9, 10 head)
 p564 = L(564)
 a = p564.index("**Postgres:** what I ran is listed in 8")
 b = p564.index("**Not run:** Postgres 17.10")
-newpg = ("**Postgres:** what I ran is listed in section 8 (local version 16.15, scratch clusters, stopped and deleted afterwards): `raw/raw-pg-v21-run1.txt` to `-run5.txt` (run 1 and run 2 show failures that were my own wrong expectations; runs 4 and 5 are the final text: 210 safety checks, 31 controls, 3 stated exploits) and `raw/raw-pg-v16-regress-on-v21-run1.txt` and `-run2.txt` (175 of 175 checks each), including the migration step as a non-superuser role. ")
+newpg = ("**Postgres:** what I ran is listed in section 8 (local version 16.15, scratch clusters, stopped and deleted afterwards): `raw/raw-pg-v21-run1.txt` to `-run6.txt` (run 1 and run 2 show failures that were my own wrong expectations; run 6 is the final text: 220 safety checks, 31 controls, 3 stated exploits) and `raw/raw-pg-v16-regress-on-v21-run1.txt` to `-run3.txt` (175 of 175 checks each), including the migration step as a non-superuser role. ")
 p564 = p564[:a] + newpg + p564[b:]
 out += [p564]
 out += src[564:566]  # 565, 566 (also-not-checked paragraph and blank)
@@ -127,7 +127,7 @@ cut("   **(j) A guard test over every SQL file (security major 6 of v15;", "*Cla
 sub("**Rules inside a function, kept from v18:**", "**Rules inside a function:**", 1)
 sub("**New in v19 (MA1 and MA2 of the v18 review):** **N1**", "**N1**", 1)
 cut("**Run on 16.15 (`evidence-handoff-v19/raw/raw-secdef-mutants-v19.txt`)", "(`raw/raw-spell30-guard-v19.txt`).",
-    "**Rules added after S1 to S7 and N1 to N3 (bodies, calls, triggers, ASCII case folding, carriage-return comments, alias lists and the rest) are in 5.6c item 1.** **Run on 16.15 (section 0 item 5; raw files in section 8):** `secdef_mutants_v21.py` 226 checks, 0 failed (mutants of every earlier round, controls that must not be flagged, the independent runner's spellings, unit checks P3 to P11, the five held files and five product migrations clean); the v20 guard misses 12 of the 16 new v21 mutants; `spell30_guard_v21.py` flags 30 of 30 of the independent runner's spellings (`raw/raw-spell30-v21.txt`); `chk.py` finds no problem in the five held files and the five product migrations (`raw/raw-chk-v21.txt`). ")
+    "**Rules added after S1 to S7 and N1 to N3 (bodies, calls, triggers, ASCII case folding, carriage-return comments, alias lists and the rest) are in 5.6c item 1.** **Run on 16.15 (section 0 item 5; raw files in section 8):** `secdef_mutants_v21.py` 235 checks, 0 failed (mutants of every earlier round, controls that must not be flagged, the independent runner's spellings, unit checks P3 to P11, the five held files and five product migrations clean); the v20 guard misses 19 of the 23 new v21 mutants; `spell30_guard_v21.py` flags 30 of 30 of the independent runner's spellings (`raw/raw-spell30-v21.txt`); `chk.py` finds no problem in the five held files and the five product migrations (`raw/raw-chk-v21.txt`). ")
 cut("**there is still no independent run of v19:", "until a runner finds none.**",
     "**no independent run of v21 exists: earlier rounds each had spellings and bypasses the author did not think of, so expect more until a runner finds none.**")
 sub("**v19 adds** the function", "It also holds the function", 1)
@@ -143,7 +143,7 @@ for old, new in [
     ("run_pg_v20.sh", "run_pg_v21.sh"),
     ("raw-pg-v20-run1.txt", "raw-pg-v21-run1.txt"),
     ("raw-pg-v16-regress-on-v20-run1.txt", "raw-pg-v16-regress-on-v21-run1.txt"),
-    ("(the 177 checks;", "(the 210 checks;"),
+    ("(the 177 checks;", "(the 220 checks;"),
     ("(the 175 v16 checks on the v20 files)", "(the 175 v16 checks on the v21 files)"),
     ("run_secrets_v20.sh", "run_secrets_v21.sh"),
     ("agent_probe_v20.py", "agent_probe_v21.py"),
@@ -162,7 +162,7 @@ sub("written in v19, tested on four cases in", "tested on four cases in")
 
 # ---- readiness M4, M5, M7 and the contradictions of 7.1 / 5.10 ----
 sub("(`SECURITY DEFINER` function `spend_add`)", "(the four DB-3 functions, 5.6 item 1(o))", 1)
-sub("The store code that calls the functions is the later PR L-2 (5.10) |", "The store code that calls the functions is part of THIS PR (start gate G-5(e); the empty-result handling of E0-F5 is S-2b-2's) |", 1)
+sub("The store code that calls the functions is the later PR L-2 (5.10b) |", "The store code that calls the functions is part of THIS PR (start gate G-5(e); the empty-result handling of E0-F5 is S-2b-2's) |", 1)
 sub("| 3 | **S-2b** | card once per day; `limits status`; store timeouts, `tcp_user_timeout`, `spend_totals` in a transaction, reconnect (5.5b); role setting check, `PostgresStore.startup_checks` (idle-transaction check and temporary-table check), `statement_timeout_ms`, `reconnect`, `PostgresSettings.audit_reader_dsn_secret` and the audit-reader read in `limits status` (5.5b items 1 to 6, 5.6 items 2 and 4) | U | S-2a | one session |",
     "| 3 | **S-2b** (delivered as **S-2b-1 then S-2b-2**, two builder sessions of at most 60 minutes each, one merge-order id; two PRs if the lead agrees, readiness major M7) | **S-2b-1:** card once per day; store timeouts, `tcp_user_timeout`, `statement_timeout_ms`, `spend_totals` in a transaction, `reconnect`; `PostgresSettings.audit_reader_dsn_secret` and the audit-reader read in `limits status` (5.5b items 1, 2, 5, 6). **S-2b-2:** `PostgresStore.startup_checks` (role setting check, idle-transaction check, temporary-table check), `store/secdef.py` with `secdef_problems` and `FUNCTION_POLICY` (5.6c item 4), `limits status --check` (5.6c item 5), the empty-result handling and test E0-F5 (5.6c item 3), `tests/test_secdef_startup.py` (5.5b items 3, 4 and 7, 5.6 items 2 and 4) | U | S-2a (S-2b-2 also S-2b-1) | two sessions |", 1)
 # L24 and L25 rows of the conditional test table (readiness M5)

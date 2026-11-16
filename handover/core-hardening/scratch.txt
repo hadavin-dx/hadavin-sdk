@@ -1,0 +1,286 @@
+C07 info: OWNER-SHEET-v35-A.md 6281, OWNER-CARD-v35-A.md 2255, OWNER-APPENDIX-v35-A.md 5453, OWNER-FILM-PERSON-v35.md 608, OWNER-HELPER-v35.md 986 total 15583
+C07 info: OWNER-SHEET-v35-B.md 6067, OWNER-CARD-v35-B.md 2153, OWNER-APPENDIX-v35-B.md 5374, OWNER-FILM-PERSON-v35.md 608, OWNER-HELPER-v35.md 986 total 15188
+check-v35: 283 failure(s)
+FAIL C13 A yes pattern has characters {')', '('}
+FAIL C13 B yes pattern has characters {')', '('}
+FAIL C19 pointer not in the verified list: note| key at 6.7; it never stops |7.11
+FAIL C19 pointer not in the verified list: note| role exists is UNVERIFIED (|Open 131
+FAIL C19 pointer not in the verified list: note|ER-HELPER-v35.md); rule ids |R1
+FAIL C19 pointer not in the verified list: note|ER-v35.md); rule ids R1 and |R4
+FAIL C19 pointer not in the verified list: note|cts only on a named key; at |8.7
+FAIL C19 pointer not in the verified list: note|fore it, never after. Sheet |6.6
+FAIL C19 pointer not in the verified list: note|hat the owner cannot check: |Open 122
+FAIL C19 pointer not in the verified list: note|it, never after. Sheet 6.6, |7.3
+FAIL C19 pointer not in the verified list: note|ll valid older key at once (|Open 121
+FAIL C19 pointer not in the verified list: note|may cancel the older key at |6.7
+FAIL C19 pointer not in the verified list: note|re (lead decisions): L-LEN (|Open 112, 124
+FAIL C19 pointer not in the verified list: note|the exposure options are in |Open 123
+FAIL C19 pointer not in the verified list: note|| owner removes it at sheet |8.7
+FAIL C19 pointer not in the verified list: open|er days the ordinary chain (|7.11
+FAIL C19 pointer not in the verified list: open|henever the card ran before |7.9
+FAIL C19 pointer not in the verified list: open|le; the sheet removes it at |8.7
+FAIL C19 pointer not in the verified list: sheetA| 23:39 IST; both are set at |5.8
+FAIL C19 pointer not in the verified list: sheetA| after your first reading), |7.11
+FAIL C19 pointer not in the verified list: sheetA| either sheet works. Step |5.1
+FAIL C19 pointer not in the verified list: sheetA| from your press of create (|6.3
+FAIL C19 pointer not in the verified list: sheetA| key at 6.7; it never stops |7.11
+FAIL C19 pointer not in the verified list: sheetA| line, type it again. Step |6.3
+FAIL C19 pointer not in the verified list: sheetA| one missing: no run. Step |5.6
+FAIL C19 pointer not in the verified list: sheetA| reading means no cancel at |6.7
+FAIL C19 pointer not in the verified list: sheetA| to them; (2) Recording ON: |card step 1
+FAIL C19 pointer not in the verified list: sheetA| used lately: money safety (|R4
+FAIL C19 pointer not in the verified list: sheetA|. Then send "posted". Step |8.8
+FAIL C19 pointer not in the verified list: sheetA|.7 on the happy path and to |7.11
+FAIL C19 pointer not in the verified list: sheetA|.8); P2 you typed `n` (7.4, |R5
+FAIL C19 pointer not in the verified list: sheetA|11); alarm 5 and alarm 6 of |5.8
+FAIL C19 pointer not in the verified list: sheetA|: no run. Step 5.6, before |5.9
+FAIL C19 pointer not in the verified list: sheetA|NVERIFIED, tolerated) Step |5.5
+FAIL C19 pointer not in the verified list: sheetA|OWNER-FILM-PERSON-v35.md) **|R9
+FAIL C19 pointer not in the verified list: sheetA|RULE is at the end of sheet |section 1
+FAIL C19 pointer not in the verified list: sheetA|T (phone alarms with sound; |7.11
+FAIL C19 pointer not in the verified list: sheetA|act sentences you may post (|section 9
+FAIL C19 pointer not in the verified list: sheetA|bers message**: as in sheet |section 1
+FAIL C19 pointer not in the verified list: sheetA|bound those) Name rule for |8.3
+FAIL C19 pointer not in the verified list: sheetA|cancel at 6.7, describe it; |7.11
+FAIL C19 pointer not in the verified list: sheetA|d` (7.8); P2 you typed `n` (|7.4
+FAIL C19 pointer not in the verified list: sheetA|e lead only writes it down; |R4
+FAIL C19 pointer not in the verified list: sheetA|e set at 5.8 and each means |7.11
+FAIL C19 pointer not in the verified list: sheetA|en "matches the sentences" (|section 9
+FAIL C19 pointer not in the verified list: sheetA|endix 10), the two words of |5.9
+FAIL C19 pointer not in the verified list: sheetA|er from the printed line of |6.4
+FAIL C19 pointer not in the verified list: sheetA|er, no last-resort step; at |8.1
+FAIL C19 pointer not in the verified list: sheetA|ever after it ("restarted", |6.6
+FAIL C19 pointer not in the verified list: sheetA|gns):** P1 you typed `end` (|7.8
+FAIL C19 pointer not in the verified list: sheetA|lder key only at 7.11. When |6.7
+FAIL C19 pointer not in the verified list: sheetA|ll end before the deadline, |Open 121
+FAIL C19 pointer not in the verified list: sheetA|may cancel the older key at |6.7
+FAIL C19 pointer not in the verified list: sheetA|minutes until you have done |7.11
+FAIL C19 pointer not in the verified list: sheetA|ncels the older key only at |7.11
+FAIL C19 pointer not in the verified list: sheetA|new run name <name>". Step |7.6
+FAIL C19 pointer not in the verified list: sheetA|ose) Name rule for 8.3 and |8.4
+FAIL C19 pointer not in the verified list: sheetA|rites VOID on the paper; at |8.7
+FAIL C19 pointer not in the verified list: sheetA|t check that they are true (|Open 122
+FAIL C19 pointer not in the verified list: sheetA|the screen; (6) FREEZE. | | |R4
+FAIL C19 pointer not in the verified list: sheetA|to alarms 5 and 6; a missed |7.11
+FAIL C19 pointer not in the verified list: sheetA|ur press of create (6.3) to |6.7
+FAIL C19 pointer not in the verified list: sheetA|ure path; sheet B always to |7.11
+FAIL C19 pointer not in the verified list: sheetB| 23:39 IST; both are set at |5.8
+FAIL C19 pointer not in the verified list: sheetB| after your first reading), |7.11
+FAIL C19 pointer not in the verified list: sheetB| either sheet works. Step |5.1
+FAIL C19 pointer not in the verified list: sheetB| from your press of create (|6.3
+FAIL C19 pointer not in the verified list: sheetB| key at 6.7; it never stops |7.11
+FAIL C19 pointer not in the verified list: sheetB| line, type it again. Step |6.3
+FAIL C19 pointer not in the verified list: sheetB| one missing: no run. Step |5.6
+FAIL C19 pointer not in the verified list: sheetB| to them; (2) Recording ON: |card step 1
+FAIL C19 pointer not in the verified list: sheetB| used lately: money safety (|R4
+FAIL C19 pointer not in the verified list: sheetB|. Then send "posted". Step |8.8
+FAIL C19 pointer not in the verified list: sheetB|.7 on the happy path and to |7.11
+FAIL C19 pointer not in the verified list: sheetB|.8); P2 you typed `n` (7.4, |R5
+FAIL C19 pointer not in the verified list: sheetB|11); alarm 5 and alarm 6 of |5.8
+FAIL C19 pointer not in the verified list: sheetB|: no run. Step 5.6, before |5.9
+FAIL C19 pointer not in the verified list: sheetB|NVERIFIED, tolerated) Step |5.5
+FAIL C19 pointer not in the verified list: sheetB|OWNER-FILM-PERSON-v35.md) **|R9
+FAIL C19 pointer not in the verified list: sheetB|RULE is at the end of sheet |section 1
+FAIL C19 pointer not in the verified list: sheetB|T (phone alarms with sound; |7.11
+FAIL C19 pointer not in the verified list: sheetB|act sentences you may post (|section 9
+FAIL C19 pointer not in the verified list: sheetB|bers message**: as in sheet |section 1
+FAIL C19 pointer not in the verified list: sheetB|bound those) Name rule for |8.3
+FAIL C19 pointer not in the verified list: sheetB|d` (7.8); P2 you typed `n` (|7.4
+FAIL C19 pointer not in the verified list: sheetB|e lead only writes it down; |R4
+FAIL C19 pointer not in the verified list: sheetB|e set at 5.8 and each means |7.11
+FAIL C19 pointer not in the verified list: sheetB|en "matches the sentences" (|section 9
+FAIL C19 pointer not in the verified list: sheetB|endix 10), the two words of |5.9
+FAIL C19 pointer not in the verified list: sheetB|er from the printed line of |6.4
+FAIL C19 pointer not in the verified list: sheetB|er, no last-resort step; at |8.1
+FAIL C19 pointer not in the verified list: sheetB|ever after it ("restarted", |6.6
+FAIL C19 pointer not in the verified list: sheetB|gns):** P1 you typed `end` (|7.8
+FAIL C19 pointer not in the verified list: sheetB|lder key only at 7.11. When |6.7
+FAIL C19 pointer not in the verified list: sheetB|ll end before the deadline, |Open 121
+FAIL C19 pointer not in the verified list: sheetB|may cancel the older key at |6.7
+FAIL C19 pointer not in the verified list: sheetB|minutes until you have done |7.11
+FAIL C19 pointer not in the verified list: sheetB|ncels the older key only at |7.11
+FAIL C19 pointer not in the verified list: sheetB|new run name <name>". Step |7.6
+FAIL C19 pointer not in the verified list: sheetB|ose) Name rule for 8.3 and |8.4
+FAIL C19 pointer not in the verified list: sheetB|rites VOID on the paper; at |8.7
+FAIL C19 pointer not in the verified list: sheetB|t check that they are true (|Open 122
+FAIL C19 pointer not in the verified list: sheetB|the screen; (6) FREEZE. | | |R4
+FAIL C19 pointer not in the verified list: sheetB|to alarms 5 and 6; a missed |7.11
+FAIL C19 pointer not in the verified list: sheetB|ur press of create (6.3) to |6.7
+FAIL C19 pointer not in the verified list: sheetB|ure path; sheet B always to |7.11
+FAIL C24 A: yes pattern holds a character R8 does not allow
+FAIL C24 B: yes pattern holds a character R8 does not allow
+FAIL C36 A holds 'tell'
+FAIL C36 B holds 'tell'
+FAIL C53 A card triggers W1 to W9 missing or out of order
+FAIL C53 B card triggers W1 to W9 missing or out of order
+FAIL C72 A lacks 'the time is before the latest start (else do not press Enter: do the c'
+FAIL C72 B lacks 'the time is before the latest start (else do not press Enter: do the c'
+FAIL C73 A lacks 'Section 9 (posting, by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'
+FAIL C73 B lacks 'Section 9 (posting, by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'
+FAIL C73 A: the post-by date must be the same on the sheet pointer and the film page
+FAIL C73 B: the post-by date must be the same on the sheet pointer and the film page
+FAIL C75 A lacks 'Run `date -u` in the read terminal: the run day still holds and the ti'
+FAIL C75 B lacks 'Run `date -u` in the read terminal: the run day still holds and the ti'
+FAIL C91 A lacks 'FREEZE is not a cancel: a live key is cancelled only by a danger sign'
+FAIL C91 B lacks 'FREEZE is not a cancel: a live key is cancelled only by a danger sign'
+FAIL C96 A lacks '**Deadline** = the end of the period your spending approval covers'
+FAIL C96 B lacks '**Deadline** = the end of the period your spending approval covers'
+FAIL C98 A lacks '**Run day** = the one day of the run'
+FAIL C98 B lacks '**Run day** = the one day of the run'
+FAIL C137 B lacks 'whatever way the run ended (the card lists the ways)'
+FAIL C154 O: row 78 does not say what happens when the 7 day rule fails
+FAIL C162 A lacks 'FREEZE is not a cancel: a live key is cancelled only by a danger sign'
+FAIL C162 B lacks 'FREEZE is not a cancel: a live key is cancelled only by a danger sign'
+FAIL C164 A lacks "must differ from the look key's word before the cancel and from every "
+FAIL C164 B lacks "must differ from the look key's word before the cancel and from every "
+FAIL C182 A lacks 'The 7-day rule (worded the same everywhere in this package)'
+FAIL C182 B lacks 'The 7-day rule (worded the same everywhere in this package)'
+FAIL C187 A lacks 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'
+FAIL C187 B lacks 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'
+FAIL C187 A lacks 'a person who may cancel only the keys named on the helper'
+FAIL C187 B lacks 'a person who may cancel only the keys named on the helper'
+FAIL C187 A lacks 'No yes yet: the reminders are not set'
+FAIL C187 B lacks 'No yes yet: the reminders are not set'
+FAIL C187 A lacks 'A missed 7.11: the reminders are the second and third chance'
+FAIL C187 B lacks 'A missed 7.11: the reminders are the second and third chance'
+FAIL C187 A lacks 'set the two **deadline reminders**'
+FAIL C187 B lacks 'set the two **deadline reminders**'
+FAIL C190 A lacks 'no such page: describe that there is no Recall page, then go on'
+FAIL C190 B lacks 'no such page: describe that there is no Recall page, then go on'
+FAIL C192 A lacks "the From column of the mail list shows the sender's throwaway address:"
+FAIL C192 B lacks "the From column of the mail list shows the sender's throwaway address:"
+FAIL C193 A lacks '**Name rule (8.3, 8.4):** revoke only an entry whose exact name is in '
+FAIL C193 B lacks '**Name rule (8.3, 8.4):** revoke only an entry whose exact name is in '
+FAIL C196 A lacks 'the three waits of the message added'
+FAIL C196 B lacks 'the three waits of the message added'
+FAIL C196 A: the 5-minute rule is not worded the same in 6.2 and on the card (W5 and the words list)
+FAIL C196 B: the 5-minute rule is not worded the same in 6.2 and on the card (W5 and the words list)
+FAIL C199 appendix A: unbalanced parentheses in 'Step 7.11, the backstop in full. Why: the older ke'
+FAIL C199 appendix B: unbalanced parentheses in 'Step 7.11, the backstop in full. Why: the older ke'
+FAIL C199 A: unbalanced parentheses in a line starting 'Step 7.11, the backstop in full. Why: the older ke'
+FAIL C199 B: unbalanced parentheses in a line starting 'Step 7.11, the backstop in full. Why: the older ke'
+FAIL C208 A: the deadline reminder is not set after the yes and named in the card words
+FAIL C208 B: the deadline reminder is not set after the yes and named in the card words
+FAIL C210 A lacks '18:04 UTC = 23:34 IST'
+FAIL C210 A lacks 'two **deadline reminders**'
+FAIL C210 A lacks 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'
+FAIL C210 B lacks '18:04 UTC = 23:34 IST'
+FAIL C210 B lacks 'two **deadline reminders**'
+FAIL C210 B lacks 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'
+FAIL C211 A lacks 'a person who may cancel only the keys named on the helper'
+FAIL C211 B lacks 'a person who may cancel only the keys named on the helper'
+FAIL C215 A lacks the B warning of 5.1 (m2)
+FAIL C215 B lacks the B warning of 5.1 (m2)
+FAIL C220 A lacks the last-5-minutes rule
+FAIL C220 B lacks the last-5-minutes rule
+FAIL C222 A: the owner-fill rows are not said to be no empty slot (m10)
+FAIL C222 B: the owner-fill rows are not said to be no empty slot (m10)
+FAIL C230 helper page lacks 'The owner asks you, by a call you start'
+FAIL C230 helper page lacks 'Never the lead, the film person, the backup person'
+FAIL C230 helper page lacks 'do at once the last-resort step on your paper'
+FAIL C230 A lacks 'is never the film person, editor, post checker or backup person'
+FAIL C230 B lacks 'is never the film person, editor, post checker or backup person'
+FAIL C232 sheet A lacks 'a fifth and a sixth phone alarm'
+FAIL C232 sheet A lacks 'two **deadline reminders**'
+FAIL C232 card A lacks the fifth and sixth alarm
+FAIL C232 sheet B lacks 'a fifth and a sixth phone alarm'
+FAIL C232 sheet B lacks 'two **deadline reminders**'
+FAIL C232 card B lacks the fifth and sixth alarm
+FAIL C233 A lacks 'this yes binds me to step 7.11 and to the two deadline alarms'
+FAIL C233 B lacks 'this yes binds me to step 7.11 and to the two deadline alarms'
+FAIL C236 no place found for 'film pause \\((\\d+)\\)' (a changed sentence?)
+FAIL C236 no place found for 'run length \\((\\d+)\\)' (a changed sentence?)
+FAIL C237 card A: label W1 is not defined exactly once
+FAIL C237 card A: label W2 is not defined exactly once
+FAIL C237 card A: label W3 is not defined exactly once
+FAIL C237 card A: label W4 is not defined exactly once
+FAIL C237 card A: label W5 is not defined exactly once
+FAIL C237 card A: label W6 is not defined exactly once
+FAIL C237 card A: label W7 is not defined exactly once
+FAIL C237 card A: label W8 is not defined exactly once
+FAIL C237 card A: label W9 is not defined exactly once
+FAIL C237 card B: label W1 is not defined exactly once
+FAIL C237 card B: label W2 is not defined exactly once
+FAIL C237 card B: label W3 is not defined exactly once
+FAIL C237 card B: label W4 is not defined exactly once
+FAIL C237 card B: label W5 is not defined exactly once
+FAIL C237 card B: label W6 is not defined exactly once
+FAIL C237 card B: label W7 is not defined exactly once
+FAIL C237 card B: label W8 is not defined exactly once
+FAIL C237 card B: label W9 is not defined exactly once
+FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-A.md|# Owner sheet v35, sheet A: one filmed run
+FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-A.md|### THE CARD, sheet A (a separate printed page OWNER-CARD-v35-A.md)
+FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-A.md|## 10. Film rule (sheet A; the film person has their own page OWNER-F
+FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-B.md|# Owner sheet v35, sheet B: one filmed run
+FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-B.md|### THE CARD, sheet B (a separate printed page OWNER-CARD-v35-B.md)
+FAIL C238 heading not in the verified list: OWNER-SHEET-vNN-B.md|## 10. Film rule (sheet B; the film person has their own page OWNER-F
+FAIL C238 heading not in the verified list: OWNER-CARD-vNN-A.md|### THE CARD, sheet A (print the copy OWNER-CARD-v35-A.md; no printer:
+FAIL C238 heading not in the verified list: OWNER-CARD-vNN-B.md|### THE CARD, sheet B (print the copy OWNER-CARD-v35-B.md; no printer:
+FAIL C238 heading not in the verified list: OWNER-APPENDIX-vNN-A.md|# Owner appendix v35, sheet A: the long detail (it binds you the s
+FAIL C238 heading not in the verified list: OWNER-APPENDIX-vNN-B.md|# Owner appendix v35, sheet B: the long detail (it binds you the s
+FAIL C238 heading not in the verified list: OWNER-FILM-PERSON-vNN.md|# Film person page (v35): for the film person only; the same for 
+FAIL C238 heading not in the verified list: OWNER-HELPER-vNN.md|# Cancel helper page (v35): for the cancel helper only; the same for s
+FAIL C238 verified heading is gone: OWNER-SHEET-vNN-A.md|# Owner sheet v34, sheet A: one filmed run
+FAIL C238 verified heading is gone: OWNER-SHEET-vNN-A.md|### THE CARD, sheet A (a separate printed page OWNER-CARD-v34-A.md)
+FAIL C238 verified heading is gone: OWNER-SHEET-vNN-A.md|## 10. Film and post rules (sheet A; the film person has their own pa
+FAIL C238 verified heading is gone: OWNER-SHEET-vNN-B.md|# Owner sheet v34, sheet B: one filmed run
+FAIL C238 verified heading is gone: OWNER-SHEET-vNN-B.md|### THE CARD, sheet B (a separate printed page OWNER-CARD-v34-B.md)
+FAIL C238 verified heading is gone: OWNER-SHEET-vNN-B.md|## 10. Film and post rules (sheet B; the film person has their own pa
+FAIL C238 verified heading is gone: OWNER-CARD-vNN-A.md|### THE CARD, sheet A (print the copy OWNER-CARD-v34-A.md; no printer:
+FAIL C238 verified heading is gone: OWNER-CARD-vNN-B.md|### THE CARD, sheet B (print the copy OWNER-CARD-v34-B.md; no printer:
+FAIL C238 verified heading is gone: OWNER-APPENDIX-vNN-A.md|# Owner appendix v34, sheet A: the long detail (it binds you the s
+FAIL C238 verified heading is gone: OWNER-APPENDIX-vNN-B.md|# Owner appendix v34, sheet B: the long detail (it binds you the s
+FAIL C238 verified heading is gone: OWNER-FILM-PERSON-vNN.md|# Film person page (v34): for the film person only; the same for 
+FAIL C238 verified heading is gone: OWNER-HELPER-vNN.md|# Cancel helper page (v34): for the cancel helper only; the same for s
+FAIL C239 fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|bm|1
+FAIL C239 fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|bm|2
+FAIL C239 fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|bs|1
+FAIL C239 fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|bs|2
+FAIL C239 fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|enter|1
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|bm|5
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|bm|6
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|bs_pair|2
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|day|3
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|day|4
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|dl_day|10
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|dl_day|8
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|dl|5
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|dl|6
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|enter|1
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|enter|2
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|helper_scope|1
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|helper_scope|3
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|ls23|1
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|ph_ksf|3
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|ph_ksf|4
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|ph_posted|2
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|ph_posted|3
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|postby|1
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|postby|2
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|rv23|7
+FAIL C239 fact-use row differs from the verified list: OWNER-SHEET-vNN-SOURCE.md|rv23|9
+FAIL C239 fact-use row differs from the verified list: vNN-OPEN-FOR-LEAD-SOURCE.md|hw|2
+FAIL C239 fact-use row differs from the verified list: vNN-OPEN-FOR-LEAD-SOURCE.md|hw|4
+FAIL C241 A lacks the one-letter rule in full
+FAIL C241 B lacks the one-letter rule in full
+FAIL C246 A lacks "the helper path ends at the owner's last-resort step"
+FAIL C246 B lacks "the helper path ends at the owner's last-resort step"
+FAIL C249 A lacks 'so that no reminder or backstop time meets a live run key.'
+FAIL C249 B lacks 'so that no reminder or backstop time meets a live run key.'
+FAIL C249 the helper page lacks 'by a call you start to the phone number on your paper (a message is ne'
+FAIL C249 the film person page lacks the "stop" effect
+FAIL C260 "A difference ... is never tolerated." is not present exactly twice (sheet and card)
+FAIL C261 a cancel of the older key without the name-and-creation-date condition within 330 characters: ' that the 7-day rule of 5.1 holds (read the last-used time again now: any use after your f'
+FAIL C262 the backstop "even if a run is/was in progress" sentences are missing (need 1 each)
+FAIL C267 helper page or source lacks 'do at once the last-resort step on your paper'
+FAIL C267 helper page or source lacks "the last-resort step in the owner's words (or none)"
+FAIL C267 source holds 'A helper path that fails also ends at a last-resort step: th' 0 times (need 1)
+FAIL C267 sheet A pages hold 'A helper path that fails also ends at a last-resort step: th' 0 times (need 1)
+FAIL C267 sheet B pages hold 'A helper path that fails also ends at a last-resort step: th' 0 times (need 1)
+FAIL C269 source holds 'give your cancel helper (if any) their page and paper, the t' 0 times (need 1)
+FAIL C269 sheet A pages hold 'give your cancel helper (if any) their page and paper, the t' 0 times (need 1)
+FAIL C269 sheet B pages hold 'give your cancel helper (if any) their page and paper, the t' 0 times (need 1)
+FAIL C270 source holds 'no such page: describe that there is no Recall page, then go' 0 times (need 1)
+FAIL C270 sheet A pages hold 'no such page: describe that there is no Recall page, then go' 0 times (need 1)
+FAIL C270 sheet B pages hold 'no such page: describe that there is no Recall page, then go' 0 times (need 1)
+FAIL C271 the two backstop time definitions do not both name the Sunday and Monday times
