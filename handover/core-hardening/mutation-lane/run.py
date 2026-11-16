@@ -151,12 +151,27 @@ def write_state(path: pathlib.Path, data: bytes) -> None:
 
 def read_state(path: pathlib.Path) -> bytes:
     """Read a state file: no symbolic link, a regular file, owned by this user."""
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    except OSError as e:  # a link (ELOOP), missing, no permission: a refusal, not a traceback
+        raise Refused(f"state file {path} cannot be opened safely ({e.strerror}): refused") from e
     with os.fdopen(fd, "rb") as fh:
         st = os.fstat(fh.fileno())
         if not stat.S_ISREG(st.st_mode) or st.st_uid != os.geteuid():
             raise Refused(f"state file {path} is not a regular file owned by this user: refused")
         return fh.read()
+
+
+def load_marker(path: pathlib.Path) -> dict:
+    try:
+        m = json.loads(read_state(path))
+    except ValueError as e:
+        raise Refused(f"marker {path} is not valid JSON: refused") from e
+    if not isinstance(m, dict) or not all(
+        k in m for k in ("root", "file", "backup", "orig_sha256", "mutant")
+    ):
+        raise Refused(f"marker {path} lacks required fields: refused")
+    return m
 
 
 def write_target(path: pathlib.Path, data: bytes) -> None:
@@ -341,7 +356,7 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
             True,
             f"no marker in {STATE}: nothing to restore (a run that used another TMPDIR keeps its marker there)",
         )
-    m = json.loads(read_state(marker))
+    m = load_marker(marker)
     if m.get("root") != str(root):
         raise Refused(f"marker is for another root ({m.get('root')!r}): refused")
     bk = STATE / f"{key}.backup"
@@ -725,7 +740,7 @@ def main():
             for x in a.extra:
                 safe_rel(root, x, "--extra", must_exist=False)
             if os.path.lexists(marker):
-                m = json.loads(read_state(marker))
+                m = load_marker(marker)
                 raise Refused(
                     f"a mutant ({m['mutant']}) is still planted in {m['file']} from an earlier run that was killed. "
                     f"Restore with: python3 {sys.argv[0]} --root {root} --restore   "
