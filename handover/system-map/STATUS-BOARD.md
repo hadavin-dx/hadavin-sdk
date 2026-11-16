@@ -1,7 +1,12 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16 15:29Z
-PUSHED_UTC: 2026-11-16 15:29Z (this push)
+UPDATED_UTC: 2026-11-16T15:39:00Z
+PUSHED_UTC: 2026-11-16T15:39:00Z
 SESSION: system-map
+ORDER: 14:48Z (parallel re-readers while I fix; keep 8 running)
+BOOT_ID: 5cbee216
+ITEMS_TOTAL: 20
+ITEMS_OPEN: 15
+PERCENT: 25
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
 NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
@@ -13,9 +18,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
+AGENTS_RUNNING: 7 of 8, counted from my launch list at 2026-11-16T15:39:00Z (the earlier 8 of 8 line was stale and wrong)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1829. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: digested through 1835; launch reader 8 (L1c 100-200); then fix L1 status table
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,9 +48,16 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-Running readers: 0 of 8. All 10 readers launched have handed back and are digested through 1829 (a7f09c594f5bd80cd and a466b026073d984bb included). Reason for the 8 empty slots: the pages not yet read cold are my own and still unfixed, so a new reader would repeat known findings (class note 1800). Slots refill as soon as each fixed page is ready.
-Running now (me, not an agent): the per-page fix of lane pages L1-L5b and the T19 pages (inline glossary, step table).
-Next 5: 1) L1 status-table fix; 2) L2 fix; 3) L3 fix with a "what is wrong" column; 4) L4 fix; 5) T19 pages inline glossary, then fresh readers on each.
+| id | role | model | what it does | started UTC | expected end UTC | % | state |
+|---|---|---|---|---|---|---|---|
+| ac42aa1cc4c257c55 | cold reader | sonnet | reads L5a.md lines 1-200 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
+| ac814a9daa78f0336 | cold reader | sonnet | reads L5b.md lines 1-360 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
+| a6adcc49d94af1755 | cold reader | sonnet | reads merged-findings.md lines 1-240 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
+| a9bb7d37769e0f28e | cold reader | sonnet | reads L3.md lines 1-200 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
+| a8540f8f1c7253936 | cold reader | sonnet | reads L6.md lines 1-250 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
+| a484e2a4e85185666 | cold reader | sonnet | reads L1c.md lines 1-100 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
+| a9b28c9e2ba4f86c5 | cold reader | sonnet | reads L5ac.md lines 1-200 and lists what it cannot follow | about 15:45 | about 15:58 | 0 | running |
+Slot 8 is empty: reader on L1c lines 100-200 starts next turn. Closed since the last board: af2d57a91b84fc4df, ab37f6d76bc78bc1a, a3dabedb8e193c912, a0291613dce3e85df, aeb2d461d458328bb, a4afde94ea2c39e4c (digested 1830-1835). Slip: about 40 minutes with 0 agents against the 14:48Z order; my earlier board edit failed on a script error and I did not notice until this beat.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
