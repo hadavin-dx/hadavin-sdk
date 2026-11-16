@@ -1,0 +1,25 @@
+== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
+evidence-r7/t76-85-derived.sh: line 50: 29328 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept
+  PASS: T76a symbolic link on the way to the target at --restore: exit 3 (got 3), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
+  PASS: T76a the kept marker still allows a genuine restore
+evidence-r7/t76-85-derived.sh: line 50: 29477 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/dev7/s/toy/root/src/mod.py is not a regular file with exactly one name (links: 2)
+  PASS: T76b file with two names that still holds the planted text: exit 3 (got 3), marker and backup kept, the other name untouched
+  PASS: T76b genuine restore afterwards
+evidence-r7/t76-85-derived.sh: line 50: 29557 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write src/mod.py back: Permission denied; the mutant may still be planted; marker and backup kept
+  PASS: T76c unwritable target (restore_target raises PermissionError): exit 3 (got 3), file still planted, marker and backup kept
+  PASS: T76c genuine restore afterwards
+evidence-r7/t76-85-derived.sh: line 50: 29630 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T76d guard: a forged backup (hash differs) is still exit 2 and nothing is written (got 2)
+== T77 (review r6 M2) the baseline is the DEFAULT; --no-control gives exit 5 and never says COMPLETE
+baseline 1 1 failed in 0.01s
+REFUSED: the baseline (unmutated tree, --control) is not usable: it exited with 1, not 0; no mutant was planted; see X-baseline.txt
+  PASS: T77a no option at all, tree already failing: the baseline refuses the mutants, exit 2 (got 2), baseline file says NO, no mutant raw file, file unchanged (r6: ran every mutant as KILLED)
+  PASS: T77b no option at all, healthy tree: baseline recorded and used, exit 0 (got 0), 'baseline: rc 0, 1 passed' in the raw file, SUMMARY says COMPLETE
+  PASS: T77c --no-control, every verdict clean: exit 5 (got 5), SUMMARY says NO BASELINE and INCOMPLETE and never the word COMPLETE on its own, raw file says baseline NOT RUN, no baseline file
+  PASS: T77d the last of --no-control/--control wins: --control after --no-control runs the baseline, exit 0 (got 0)
+  PASS: T77e --no-control after --control: no baseline, exit 5 (got 5)
+  PASS: T77f guard: exit 4 (tree not clean) still wins over the no-baseline exit 5 (got 4)
+== T78 (review r6 nit 2) --restore is signal-guarded: a signal in the middle of the write-back does not leave the file planted
