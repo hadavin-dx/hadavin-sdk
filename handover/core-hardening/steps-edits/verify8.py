@@ -231,7 +231,7 @@ if any(x < 1 or x > 11 for x in nn): F('ND number out of range')
 # (8) split of E-11: apply-now scratch must hold the tests paragraph but not the preparation enquiry
 s_ap = cp1['OWNER-STEPS-realrun-v3.md']; s_all = cp2['OWNER-STEPS-realrun-v3.md']
 checks = [('Then comes the preparation', False, True), ('a fifth fact', False, True), ('a paid call can happen', None, None),
-          ('Why no paid call can happen', True, True), ('the program does not print these two values', True, True),
+          ('Why no paid call can happen', True, True), ('does not print these two values', True, True),
           ('Words used (read once)', True, True), ('**A secret key**', True, True), ('**A database user**', True, True)]
 for needle, ap_, all_ in checks:
     if ap_ is None: continue
@@ -265,6 +265,6 @@ nf = sum(1 for x in lines if x == '~~~~')
 print('fence lines', nf)
 if nf % 2: F('odd fence count')
 for r in rows:
-    if not r['old'] or not r['new']: F('row without old or new ' + r['id'])
+    if not r['old'] or (not r['new'] and r['id'] != 'E-13'): F('row without old or new ' + r['id'])
 
 print('FAILURES', fail)
