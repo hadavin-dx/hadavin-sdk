@@ -1,7 +1,7 @@
 # Applied security items S9-1 to S9-5 and S9-12: exact edit list for the core-hardening session (owner of the owner steps)
-Decided by the lead, ORDERS.md "ANSWER to QUESTIONS" 09:36 UTC / 15:06 IST. This session only reads v5, so these are edits for core-hardening to make in handover/core-hardening/steps-edits/OWNER-STEPS-realrun-v5.md (called v5). Line numbers are those of my copy inputs/OWNER-STEPS-realrun-v5-core-hardening.md and may have moved.
+Decided by the lead, ORDERS.md "ANSWER to QUESTIONS" 09:36 UTC / 15:06 IST. This session only reads v5, so these are edits for core-hardening to make in core-hardening's own v5 file (its path is theirs to name; the system-map copy that every v5 line number here refers to is inputs/OWNER-STEPS-realrun-v5-core-hardening.md; the file handover/core-hardening/steps-edits/ is an older edit list). Line numbers are those of my copy inputs/OWNER-STEPS-realrun-v5-core-hardening.md and may have moved.
 
-Round 2 (after an independent design review, 16 Nov 2026): the old-text quotes now match v5 character for character, S9-1 is rebuilt so the studio lead never has to "see" the confirmation, and the studio lead session gets its own MUST NOT list (new row S9-6).
+Round 2 (after an independent design review, 16 Nov 2026): the old-text quotes now match v5 character for character, S9-1 is rebuilt so the studio lead never has to "see" the confirmation, and the studio lead session gets its own MUST NOT list (new row S9-12; the id S9-6 belongs to drift REPORT section 9).
 
 | id | decision | file:line | old text (to find) | new text |
 |---|---|---|---|---|
