@@ -1,0 +1,21 @@
+== T1 the real repository as --root is refused (exit 2)
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/s1/toy/repo is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e8
+  exit code 2
+  PASS: T1 exit 2
+== T2 SIGKILL while a mutant is planted
+  file now: return2
+safety-tests.sh: line 51:   966 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T2 file stays planted
+== T3 the next run refuses and says how to restore
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9
+  exit code 2
+  PASS: T3 exit 2
+== T4 marker lost: the tree check against a fresh git archive still refuses
+REFUSED: scratch tree differs from git archive c4a0c2c1f3f69f9449259c4ed8ca861b3aada63d + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+  exit code 2
+  PASS: T4 exit 2
+== T5 --restore puts the saved original back
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/s1/tmpstate/hadavin-mutation-lane-0/2005ad976e2dd969.backup; hash matches saved original: True
+  PASS: T5 file restored
+  PASS: T5 state folder empty
+== T6 SIGTERM during a run restores the file and removes the marker
