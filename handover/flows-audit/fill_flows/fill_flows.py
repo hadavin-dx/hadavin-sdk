@@ -1,13 +1,14 @@
 """fill_flows: write a filled COPY of n8n flow files for a take, outside any git repo.
 
 Replaces every `$env.DESK_*` / `$env.MF_*` token inside node strings with the literal value
-from a KEY=VALUE file. Stdlib only. Values are never printed or logged: messages name keys,
-files and line numbers only. See README.md for the rules and exit codes.
+from a KEY=VALUE file, and the six placeholder names when the values file carries them.
+Stdlib only. Values are never printed or logged: messages name keys, files and line numbers
+only. See README.md for the rules and exit codes.
 
 Usage:
   fill_flows.py fill   --in DIR --values FILE --out DIR   (DIR for --out must not exist)
-  fill_flows.py check  DIR                                (read-only scan)
-  fill_flows.py delete --out DIR [--force-hash]
+  fill_flows.py check  DIR [--tokens-only]                (read-only scan)
+  fill_flows.py delete --out DIR [--force-hash] [--no-manifest]
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import sys
 import unicodedata
 
@@ -28,8 +30,18 @@ NAME_OK = re.compile(r"^(DESK|MF)_[A-Z0-9_]+$")
 KEY_OK = re.compile(r"^[A-Z][A-Z0-9_]*$")
 TOKEN = re.compile(r"\$env(?:\.([A-Za-z_][A-Za-z0-9_]*)|\[\s*(['\"])([^'\"\]]*)\2\s*\])")
 ANY_ENV = re.compile(r"\$env")
-BRACES = re.compile(r"(\{\{.*?\}\})", re.DOTALL)
-PLACEHOLDERS = ("PLACEHOLDER", "SUB_WORKFLOW_ID", "PG_CREDENTIAL_ID", "SMTP_CREDENTIAL_ID")
+BRACES = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
+# The six placeholder names: a node string that equals one of them exactly is a placeholder.
+PLACEHOLDERS = (
+    "PG_CREDENTIAL_ID",
+    "SMTP_CREDENTIAL_ID",
+    "SUB_WORKFLOW_ID",
+    "HS_CRED_PLACEHOLDER",
+    "FROM_ADDRESS_PLACEHOLDER",
+    "INTAKE_ADDRESS_PLACEHOLDER",
+)
+# Node fields that hold program code: a token there would become a syntax error or worse.
+CODE_KEYS = ("jsCode", "functionCode", "pythonCode")
 MANIFEST_SUFFIX = ".manifest.json"
 MANIFEST_FORMAT = "fill_flows-manifest-1"
 
@@ -45,12 +57,34 @@ def _bad_char(ch: str) -> bool:
     return unicodedata.category(ch) in ("Cc", "Cf", "Zl", "Zp") or ch == "\x7f"
 
 
+def under_mnt(path: str) -> bool:
+    """True for a path on /mnt (a Windows drive mounted into Linux: file modes do not hold)."""
+    rp = os.path.realpath(path)
+    return rp == "/mnt" or rp.startswith("/mnt/")
+
+
 def read_values(path: str) -> dict[str, str]:
+    rp = os.path.realpath(path)
+    if under_mnt(path):
+        raise Refused("values file is under /mnt (Windows drive): file modes do not protect it")
+    if inside_git(os.path.dirname(rp)):
+        raise Refused("values file is inside a git repository (move it out; it holds secrets)")
     try:
-        with open(path, "rb") as fh:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as fh:
+            st = os.fstat(fh.fileno())
+            if not stat.S_ISREG(st.st_mode):
+                raise Refused("values file is not a regular file")
+            if st.st_mode & 0o077:
+                raise Refused("values file can be read by other users (run: chmod 600 on it)")
             raw = fh.read()
+    except OSError:
+        raise Refused("values file: cannot open it (missing, a symlink, or not readable)") from None
+    if raw.startswith(b"\xef\xbb\xbf"):
+        raise Refused("values file starts with a BOM (byte order mark): save it as plain UTF-8")
+    try:
         text = raw.decode("utf-8")
-    except (OSError, UnicodeDecodeError):
+    except UnicodeDecodeError:
         raise Refused("values file: cannot read it as UTF-8 text") from None
     values: dict[str, str] = {}
     for no, line in enumerate(text.split("\n"), 1):
@@ -70,6 +104,21 @@ def read_values(path: str) -> dict[str, str]:
             )
         if "$env" in value:
             raise Refused(f"values file line {no}: value of {key} contains '$env'")
+        if "{{" in value or "}}" in value:
+            raise Refused(f"values file line {no}: value of {key} contains '{{{{' or '}}}}'")
+        if value != value.strip():
+            raise Refused(f"values file line {no}: value of {key} has a space at its start or end")
+        if value[:1] in ("'", '"') or value[-1:] in ("'", '"'):
+            raise Refused(
+                f"values file line {no}: value of {key} starts or ends with a quote mark "
+                "(write the value without quotes; quotes are not removed)"
+            )
+        if " #" in value:
+            print(
+                f"warning: values file line {no}: value of {key} contains ' #'; it is kept as "
+                "part of the value (there are no inline comments)",
+                file=sys.stderr,
+            )
         values[key] = value
     return values
 
@@ -83,10 +132,15 @@ def _js_literal(value: str) -> str:
     return json.dumps(value, ensure_ascii=True).replace("{", "\\u007b").replace("}", "\\u007d")
 
 
+QUOTED = "a $env token sits inside a quoted JS string in an expression (not filled; edit the flow)"
+OUTSIDE = "a $env token sits outside a clean {{ }} part of an expression (not filled)"
+
+
 class Subst:
     def __init__(self, values: dict[str, str]):
         self.values = values
         self.used: set[str] = set()
+        self.ph_used: set[str] = set()
         self.bad: set[str] = set()  # names we cannot fill (not DESK_/MF_, missing, empty)
 
     def _name(self, m: re.Match) -> str:
@@ -101,25 +155,95 @@ class Subst:
         v = self.values[name]
         return _js_literal(v) if as_js else v
 
-    def string(self, s: str) -> str:
-        if "$env" not in s:
-            return s
-        if not s.startswith("="):  # plain field: n8n does not evaluate it
-            return TOKEN.sub(lambda m: self._repl(m, False), s)
-        out = []
-        for part in BRACES.split(s):  # odd items are {{ ... }} segments
-            inside = part.startswith("{{") and part.endswith("}}") and len(part) >= 4
-            out.append(TOKEN.sub(lambda m, i=inside: self._repl(m, i), part))
+    def _expr_part(self, part: str) -> str:
+        """Text between '{{' and '}}': fill tokens outside JS strings, refuse inside them."""
+        out: list[str] = []
+        i, quote, comment, hit = 0, None, False, False
+        while i < len(part):
+            m = TOKEN.match(part, i)
+            if m:
+                if quote is not None:
+                    raise Refused(QUOTED)
+                hit = True
+                out.append(self._repl(m, True))
+                i = m.end()
+                continue
+            ch = part[i]
+            if quote is not None:
+                if ch == "\\":
+                    out.append(part[i : i + 2])
+                    i += 2
+                    continue
+                if ch == quote:
+                    quote = None
+            elif ch in "'\"`":
+                quote = ch
+            elif part.startswith(("//", "/*"), i):
+                comment = True
+            out.append(ch)
+            i += 1
+        if hit and comment:
+            raise Refused("a $env token sits in an expression that holds a // or /* comment")
         return "".join(out)
 
-    def walk(self, o):
+    def _expr(self, s: str) -> str:
+        out: list[str] = []
+        pos = 0
+        for m in BRACES.finditer(s):
+            outside = s[pos : m.start()]
+            if "$env" in outside or "{{" in outside or "}}" in outside or "{{" in m.group(1):
+                raise Refused(OUTSIDE)
+            out.append(outside + "{{" + self._expr_part(m.group(1)) + "}}")
+            pos = m.end()
+        tail = s[pos:]
+        if "$env" in tail or "{{" in tail or "}}" in tail:
+            raise Refused(OUTSIDE)
+        return "".join(out) + tail
+
+    def string(self, s: str, ctx: str | None = None) -> str:
+        if s in PLACEHOLDERS and s in self.values:
+            if not self.values[s]:
+                self.bad.add(s)
+                return s
+            self.ph_used.add(s)
+            return self.values[s]
+        if "$env" not in s:
+            return s
+        if ctx in CODE_KEYS:
+            raise Refused(f"a $env token sits in a {ctx} field (program code; not filled)")
+        if not s.startswith("="):  # plain field: n8n does not evaluate it
+            return TOKEN.sub(lambda m: self._repl(m, False), s)
+        return self._expr(s)
+
+    def walk(self, o, ctx: str | None = None):
         if isinstance(o, dict):
-            return {self.string(k): self.walk(v) for k, v in o.items()}
+            return {self.string(k): self.walk(v, k) for k, v in o.items()}
         if isinstance(o, list):
-            return [self.walk(v) for v in o]
+            return [self.walk(v, ctx) for v in o]
         if isinstance(o, str):
-            return self.string(o)
+            return self.string(o, ctx)
         return o
+
+
+def iter_strings(o):
+    """Every string and every dict key in a parsed JSON value."""
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield k
+            yield from iter_strings(v)
+    elif isinstance(o, list):
+        for v in o:
+            yield from iter_strings(v)
+    elif isinstance(o, str):
+        yield o
+
+
+def _no_const(_name):
+    raise ValueError("NaN or Infinity")
+
+
+def load_json(raw: bytes):
+    return json.loads(raw.decode("utf-8"), parse_constant=_no_const)
 
 
 def dump(obj) -> bytes:

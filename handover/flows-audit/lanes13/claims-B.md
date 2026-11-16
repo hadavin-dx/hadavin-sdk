@@ -1,3 +1,4 @@
+Mon Nov 16 09:08:59 UTC 2026
 
 # Claims table, lane B: plans, notes and READMEs about what the flows and the system do
 
@@ -346,5 +347,32 @@ Other claims the lead's answers touch:
 | X-3 | AGENT-SCOPE:16 | "make a second paid call for the same key (a 502 means "may be unknown", callers never loop)" | Qualify retryOnFail maxTries 2 posts again on a failure | F-013 | UNTRACED | n8n retries a failed stage call once (2 tries); the stage answers from its journal. The stage is absent. |
 | X-4 | DECISION:16 | "Audit = the lifecycle rows of `mf_leads` (state and timestamps)." | mf_leads has `updated_at` only; state is overwritten | F-043 | UNSUPPORTED | Do not use "audit". Say "the table shows the current state and whether the mail and the alert went out". |
 
+## Part 5b: owner steps in OWNER-STEPS-realrun-v3.md that are STALE (coordinator message, FACTS-ALREADY-DONE.md)
+Source of the "done" facts: inputs/FACTS-ALREADY-DONE.md line 3 (throwaway Gmail ready, 2-step on, settings done, app passwords saved in files by the owner, old practice app password revoked; HubSpot test account, users created, key given; n8n account with HubSpot, Claude and Gmail credentials in n8n's own store; Anthropic key saved, credits usable) and line 5 (it says Phase 0 of OWNER-STEPS-realrun-v3.md is stale; queue item C4 rewrites it as v4). These are not claims about what the flows do, so they have no B-row; they must not be listed as open steps.
+| ONS line | step | verdict | why |
+|---|---|---|---|
+| 30 | Step 1: revoke the old practice-mailbox app password | STALE | FACTS line 3: "the old awspractice app password was revoked" |
+| 34-36 | Step 2: create the two throwaway Gmail accounts | STALE | FACTS line 3: mailbox ready, 2-step on |
+| 41-43 | Step 3: "Send mail as" for the company address | STALE as an open step (settings done, FACTS line 3). The check that Gmail keeps the From line is still open (smoke) |
+| 46-53 | Step 4: filter and label `demo` | STALE if included in "settings done" (FACTS line 3); the file does not name the filter, so confirm with the lead. The take-side rule `REAL_IMAP_1_FOLDERS=demo` (line 52, :176) is a code setting, not an owner step |
+| 56-61 | Step 5: create app passwords | STALE: FACTS line 3 "app passwords saved in files by the owner" |
+| 63-65 | Step 6: HubSpot property `hadavin_label` | STALE if covered by "HubSpot test account, users created, key given" (FACTS line 3); the property is not named there, so confirm |
+| 67-72 | Step 7: HubSpot private apps and tokens | STALE: FACTS line 3 "key given" |
+| 75-79 | Step 8: n8n credentials (SMTP, HubSpot) | STALE: FACTS line 3 "credentials ... kept in n8n's own credential store" |
+| 180-185 | Not-verified items 1, 4 and 5 (click paths, receiver app passwords allowed, HubSpot scope names) | partly STALE: the accounts exist, so item 4 is answered. Items 2, 3 and 6 stay open |
+Still owner-only (FACTS line 4, so these stay open): typing y, the 6-digit challenge and `end` himself, the written yes with numbers, take-day laptop settings, watching and posting the video, the clean-up revoke (ONS lines 122-125).
+Ground truth caveat: I did not read the memory files FACTS cites; the verdicts follow FACTS-ALREADY-DONE.md only.
+
 ## Part 6: counts and worst rows
 Counts are in the Part 7 block at the end (computed from the tables by grep).
+
+## Part 7: counts (grep of the tables, rows B-001 to B-226 and X-1 to X-4)
+| verdict | count |
+|---|---|
+| SUPPORTED | 80 |
+| SUPPORTED ONLY BY RELAYED NUMBER | 45 |
+| OVERSTATED | 30 |
+| UNSUPPORTED | 14 |
+| UNTRACED | 61 |
+Total 230 (226 B-rows + 4 X-rows). Row B-199 has an empty cell shift in the table; its verdict is OVERSTATED.
+Five worst rows: B-045/B-046 (stage lock and "9 cached, 0 unknown": the prototype answers "unknown"); B-183/B-189 and X-4/B-059 (words "approval" and "audit"); B-054 (T1/K1 "0 lost 0 doubled on film-v5" not run); B-085 (seven columns, screen reads six); B-077/B-150/B-168 ("ONE alert", "about 30 s", "lease plus 25 to 30 s" overstated).

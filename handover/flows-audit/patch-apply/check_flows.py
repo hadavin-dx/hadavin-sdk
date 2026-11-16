@@ -9,7 +9,7 @@ Options:
   --files a.json,b.json,...     exact list of *.json files each DIR must hold (default: the four mf-*.json flow files)
   --baseline DIR                directory of the unpatched flows: an IF node that already lacks a branch there is only flagged (WARN), else FAIL
   --patch-checks F002,F008      assert the F-002 and/or F-008 patch content (names, links, settings) in the given DIRs
-  --diff-base DIR --allow F002,F008 [--diff-out FILE]
+  --diff-base DIR --allow F002,F008 (--allow requires --patch-checks naming at least the same patches) [--diff-out FILE]
                                 node-level diff DIR vs DIR (patched vs unpatched); FAIL on any change the allowed patches do not explain
   --quiet-info                  do not print the type table and the placeholder list
 
@@ -20,13 +20,23 @@ equal the expected ones; onError=continueErrorOutput nodes have a non-empty main
 every $('Name') and $node["Name"] inside an expression names a node of the same file.
 Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, or a type
 ending in 'Trigger'. respondToWebhook is NOT a trigger.
-Exit code: 0 only if no FAIL; 1 otherwise."""
+F-002 alwaysOutputData/onError on Claim is only printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002.
+Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error."""
 import json, os, re, sys, collections
 
 FILES_DEFAULT = ["mf-form.json", "mf-hook.json", "mf-recovery.json", "mf-sub-crm-mail.json"]
 TRIGGER_EXACT = {"n8n-nodes-base.webhook", "n8n-nodes-base.executeWorkflowTrigger", "n8n-nodes-base.formTrigger"}
 PLACEHOLDERS = ["PLACEHOLDER", "PG_CREDENTIAL_ID", "SMTP_CREDENTIAL_ID", "SUB_WORKFLOW_ID", "HS_CRED", "HUBSPOT_CREDENTIAL_ID"]
-REF = re.compile(r"""\$\(\s*['"]([^'"]+)['"]\s*\)|\$node\[\s*['"]([^'"]+)['"]\s*\]""")
+REF = re.compile(r"""\$\(\s*['"]([^'"]+)['"]\s*\)|\$node\[\s*['"]([^'"]+)['"]\s*\]|\$items\(\s*['"]([^'"]+)['"]""")
+PREV = re.compile(r"\$prevNode\b")
+IFLIKE = ("n8n-nodes-base.if", "n8n-nodes-base.filter", "n8n-nodes-base.switch")
+KEY_COND = "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}"
+WANT_CONN = {
+    "Valid": {"main": [[{"node": "KeyOk", "type": "main", "index": 0}]]},
+    "KeyOk": {"main": [[{"node": "Claim", "type": "main", "index": 0}], [{"node": "ReplyBadKey", "type": "main", "index": 0}]]},
+    "Claim": {"main": [[{"node": "Claimed", "type": "main", "index": 0}], [{"node": "ReplyStoreFail", "type": "main", "index": 0}]]},
+}
+F002_UNPROVEN = "F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)"
 ENVTOK = re.compile(r"\$env\.[A-Za-z0-9_]+")
 FAILS, WARNS = [], []
 
@@ -88,17 +98,24 @@ def check_flow(d, tag, expect, baseline_d):
         def has(i): return i < len(outs) and bool(outs[i])
         if n.get("onError") == "continueErrorOutput" and not has(1):
             fail(tag, "node %s has onError=continueErrorOutput but main[1] is missing or has no target" % n["name"])
-        if n["type"] == "n8n-nodes-base.if":
-            miss = [i for i in (0, 1) if not has(i)]
+        if n["type"] in IFLIKE:
+            if n["type"] == "n8n-nodes-base.switch":
+                pr = n.get("parameters", {}); rules = (pr.get("rules") or {}).get("values") or (pr.get("rules") or {}).get("rules") or []
+                need = list(range(len(rules) + (1 if (pr.get("options") or {}).get("fallbackOutput") == "extra" else 0)))
+                if not need: warn(tag, "switch node %s: cannot tell its output count" % n["name"])
+            else: need = [0, 1]
+            kind = n["type"].split(".")[-1].upper()
+            miss = [i for i in need if not has(i)]
             if miss:
                 bo = base_conns.get(n["name"], {}).get("main", [])
-                base_missing = n["name"] in base_nodes and [i for i in (0, 1) if not (i < len(bo) and bo[i])] == miss
-                (warn if base_missing else fail)(tag, "IF node %s lacks output(s) %s%s" % (n["name"], miss, " (baseline already lacks the same)" if base_missing else ""))
+                base_missing = n["name"] in base_nodes and [i for i in need if not (i < len(bo) and bo[i])] == miss
+                (warn if base_missing else fail)(tag, "%s node %s lacks output(s) %s%s" % (kind if kind != "IF" else "IF", n["name"], miss, " (baseline already lacks the same)" if base_missing else ""))
     for n in nodes:
         for s in strings(n.get("parameters", {})):
             for m in REF.finditer(s):
-                ref = m.group(1) or m.group(2)
+                ref = m.group(1) or m.group(2) or m.group(3)
                 if ref not in nameset: fail(tag, "node %s: expression refers to $('%s') which is not a node of this file" % (n["name"], ref))
+            if PREV.search(s): warn(tag, "node %s uses $prevNode (cannot be resolved statically)" % n["name"])
     return {"nodes": len(nodes), "connections": ncon, "triggers": trig}
 
 def info(d, tag):
@@ -153,12 +170,20 @@ def patch_checks(d, fname, which, tag):
                 links = [("Valid", 0, ["KeyOk"]), ("KeyOk", 0, ["Claim"]), ("KeyOk", 1, ["ReplyBadKey"]), ("Claim", 0, ["Claimed"]), ("Claim", 1, ["ReplyStoreFail"])]
                 for s, i, want in links:
                     if tg(s, i) != want: fail(tag, "F-002 link %s out%d -> %s expected %s" % (s, i, tg(s, i), want))
+                for nm, want in WANT_CONN.items():
+                    if d["connections"].get(nm) != want: fail(tag, "F-002 connection structure of %s is %s expected %s" % (nm, json.dumps(d["connections"].get(nm)), json.dumps(want)))
                 cl = get(d, "Claim")
                 if cl.get("onError") != "continueErrorOutput": fail(tag, "Claim onError is %r" % cl.get("onError"))
-                if cl.get("alwaysOutputData") is not False: fail(tag, "Claim alwaysOutputData is %r (expected False)" % cl.get("alwaysOutputData"))
-                print("  [%s] KeyOk IF condition: %s" % (fname, json.dumps(get(d, "KeyOk")["parameters"].get("conditions", {}).get("conditions"))))
-                for nm in ("ReplyBadKey", "ReplyStoreFail"):
+                print("  [%s] Claim alwaysOutputData=%r onError=%r" % (fname, cl.get("alwaysOutputData"), cl.get("onError")))
+                warn(tag, F002_UNPROVEN)
+                conds = get(d, "KeyOk")["parameters"].get("conditions", {}).get("conditions") or []
+                print("  [%s] KeyOk IF condition: %s" % (fname, json.dumps(conds)))
+                if len(conds) != 1 or conds[0].get("leftValue") != KEY_COND or conds[0].get("operator") != {"type": "boolean", "operation": "true", "singleValue": True}:
+                    fail(tag, "F-002 KeyOk condition is not the expected string %r with boolean-true operator" % KEY_COND)
+                for nm, code in (("ReplyBadKey", 422), ("ReplyStoreFail", 503)):
                     p = get(d, nm)["parameters"]; print("  [%s] %s status=%s body=%s" % (fname, nm, p.get("options", {}).get("responseCode"), p.get("responseBody")))
+                    if p.get("options", {}).get("responseCode") != code: fail(tag, "F-002 %s responseCode is %r expected %d" % (nm, p.get("options", {}).get("responseCode"), code))
+                if "$('Valid')" not in str(get(d, "ReplyStoreFail")["parameters"].get("responseBody")): fail(tag, "F-002 ReplyStoreFail body lacks the $('Valid') reference")
                 print("  [%s] Valid lead_key assignment: %s" % (fname, [a.get("value") for a in get(d, "Valid")["parameters"]["assignments"]["assignments"] if a.get("name") == "lead_key"]))
     if "F008" in which:
         want = "none" if fname == "mf-recovery.json" else "all"
@@ -168,7 +193,7 @@ def patch_checks(d, fname, which, tag):
 
 ALLOW_NODES = {  # allowed changes by patch: (flow files, node, changed path prefixes or None for added)
     "F002": [(("mf-form.json", "mf-hook.json"), "KeyOk", None), (("mf-form.json", "mf-hook.json"), "ReplyBadKey", None), (("mf-form.json", "mf-hook.json"), "ReplyStoreFail", None),
-             (("mf-form.json", "mf-hook.json"), "Valid", ("parameters.assignments.assignments[lead_key]",)),
+             (("mf-form.json", "mf-hook.json"), "Valid", ("parameters.assignments.assignments[lead_key].value",)),
              (("mf-form.json", "mf-hook.json"), "Claim", ("onError", "alwaysOutputData"))]}
 ALLOW_CONN = {"F002": ("Valid", "KeyOk", "Claim")}
 ALLOW_SETTINGS = {"F008": {"mf-form.json": ("saveDataSuccessExecution", "saveDataErrorExecution"), "mf-hook.json": ("saveDataSuccessExecution", "saveDataErrorExecution"), "mf-sub-crm-mail.json": ("saveDataSuccessExecution", "saveDataErrorExecution")}}
@@ -189,7 +214,7 @@ def node_diff(base, patched, fname, allow, tag, out):
             out.append("  node CHANGED %s: %s" % (nm, ", ".join(ch)))
             pref = allow_changed.get(nm)
             for c in ch:
-                if pref is None or not any(c.startswith(p) or c.split(" ")[0].startswith(p) for p in pref): fail(tag, "unexplained change in node %s at %s" % (nm, c))
+                if pref is None or c.split(" (")[0] not in pref: fail(tag, "unexplained change in node %s at %s" % (nm, c))
     bc, pc = base.get("connections", {}), patched.get("connections", {})
     for src in sorted(set(bc) | set(pc)):
         if bc.get(src) != pc.get(src):
@@ -211,7 +236,8 @@ def main(argv):
         def val():
             nonlocal i; i += 1; return argv[i]
         if a == "--expect":
-            k, v = val().split("=", 1); n, c = v.split(":"); expect[k] = {"nodes": int(n), "connections": int(c)}
+            try: k, v = val().split("=", 1); n, c = v.split(":"); expect[k] = {"nodes": int(n), "connections": int(c)}
+            except (ValueError, IndexError): print("bad --expect value, want FILE=NODES:CONNS"); return 2
         elif a == "--expect-json": expect.update(json.load(open(val(), encoding="utf-8")))
         elif a == "--files": files = val().split(",")
         elif a == "--baseline": baseline = val()
@@ -224,6 +250,10 @@ def main(argv):
         else: dirs.append(a)
         i += 1
     if not dirs: print(__doc__); return 2
+    for k, v in expect.items():
+        if k not in files: fail("--expect", "unknown file key %r (known: %s)" % (k, sorted(files)))
+        if not isinstance(v, dict) or set(v) - {"nodes", "connections"}: fail("--expect", "bad entry for %r: %r" % (k, v))
+    if allow and not set(allow) <= pc: fail("args", "--allow %s needs --patch-checks to name the same patches (got %s)" % (",".join(allow), ",".join(sorted(pc)) or "none"))
     diffsum = []
     for dr in dirs:
         print("### %s" % dr)
