@@ -1,5 +1,10 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 07:57 UTC / IST +5:30 - ORDER 005 running; ORDER 006 (parallel by default) received and followed
+Critical path: V1-V4 + RUN (about 08:40) -> V5 compare + my second look -> REVIEW/CORRECTIONS/LEDGER -> 3 result reviewers -> resolve -> FINAL. Load check before launch: 4 cores, load 0.3, 15 GB free.
+Agents running (10, all sonnet, read only, started about 07:58-07:57 UTC, box 45 min): V1 lane A+X | V2 lane B+D1 | V3 lane C+D3 | V4 lane D2 | H1 miss hunt (vendor SDK, stages, least privilege, hardcoding) | H2 miss hunt (dead, idle, duplicate, second source) | RUN evidence runner (citations, uncited claims, counts) | V5a cut list + rung table | V5b blind classification of all core modules | V6 independent second look at the 5 Blockers.
+My own check meanwhile (static, snapshot b4cce5b): A-01 CONFIRMED (no caller of the audit reconcile outside tests; the fallback block has no log line, chain.py:215-231); A-02 CONFIRMED (gate.py:42 and redact.py:16 promise a G5 leak check; no code for it; gate.py:6 says not ported). B-01, C-01, D2-01 still to read.
+
 ## Status 07:57 UTC / 13:27 IST - ORDER 005: plan v2 written (round 1: 2 Blocker + 11 Major found, all fixed; round 2 skipped on purpose); 7 read-only agents starting
 Failed or not checked yet: nothing verified yet about the target. Plan round 1 reviewers a2c6595cb01e7a3cb (readiness) and ab54d54f12b810c45 (zoom-out): reported, CLOSED. egm-resolve (opus) report: reviews-of-core-hardening/work/plan-resolve-r1.md (14 edits, 0 contested).
 Agent register (all sonnet-5-5, read only, started 07:58 UTC, expected end 08:40 UTC, box 45 min, state RUNNING, next action: read output file at 08:40, close row):
