@@ -398,3 +398,12 @@ FINAL: take_check exit status 1. RESULT: 1 FAIL, 3 WARN. 22 pinned WARN lines st
  D flow-check/raw/take-check-warn-pin-file-missing.txt
  D flow-check/raw/take-check-zero-queries.txt
 ```
+
+## (2b) rerun with required arguments: `bash test_take_check.sh /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/work/g/real /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/tc`
+exit code: 2
+full output: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/cmd2b.log
+```
+REFUSED: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/tc exists
+[... cut ...]
+REFUSED: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev10/tc exists
+```
