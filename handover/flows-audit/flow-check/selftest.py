@@ -2423,7 +2423,7 @@ def main():
         ],
     )
     for nm_, val_, want_ in (
-        ("not_an_address", "nobody", "is not an e-mail address"),
+        ("not_an_address", "nobody", "not shaped like an address"),
         ("change_me", "CHANGE_ME", "CHANGE_ME"),
         ("todo_word", "TODO fill in", "TODO"),
         ("replace_me", "REPLACE_ME_NOW", "REPLACE_ME_NOW"),

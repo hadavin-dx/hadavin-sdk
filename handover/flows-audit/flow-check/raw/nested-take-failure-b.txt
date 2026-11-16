@@ -1,6 +1,6 @@
 applied F-002-take-key-check-and-claim-error-path
 applied F-008-save-runs-for-the-take
-checker runs wall time: 0 s; self-test wall time: 7 s
+checker runs wall time: 1 s; self-test wall time: 7 s
 ==== real-v5 (THE TAKE) ====
 ---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----
 [pristine]

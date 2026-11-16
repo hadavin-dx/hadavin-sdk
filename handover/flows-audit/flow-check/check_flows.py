@@ -954,9 +954,9 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                     and not PH_WORD.search(v_)
                 ):
                     PARAM_PH.append(
-                        f"{tag} node {nm} setting {k_!r}: {v_!r} is not an e-mail address"
+                        f"{tag} node {nm} setting {k_!r}: not shaped like an address (the value is never printed)"
                     )
-                    pph.append(f"{nm} {k_}: {v_!r} is not an e-mail address")
+                    pph.append(f"{nm} {k_}: not shaped like an address (the value is never printed)")
         if short == "postgres":
             sql_check(n, tag)
         envs = sorted({e for s_ in strings(n.get("parameters", {})) for e in ENVTOK.findall(s_)})
