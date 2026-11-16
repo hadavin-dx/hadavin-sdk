@@ -25,4 +25,4 @@ Treat every phrase below as NOT allowed in the post, the caption or the video, u
 - Ease claims: "works first time", "one click", "no code", "fully automatic" (the run needs typed answers and a typed `end`).
 - Anything from scenes 5 to 11 (decision 1: not in this video).
 If a phrase is not on any list, ask the studio lead before you use it.
-Open: mirror this list into OWNER-VIEW row 6 and run-day step 18 once the studio lead says "D-04 apply"; v5 step J (lines 163 to 172) still allows wider claims (spending cap, separate count) and is owned by core-hardening.
+Open: mirror this list into OWNER-VIEW row 6 and run-day step 27 once the studio lead says "D-04 apply"; v5 step J (lines 163 to 172) still allows wider claims (spending cap, separate count) and is owned by core-hardening.
