@@ -1044,5 +1044,27 @@ bash "$RAS" --check-counts "$S/cc-st.txt" "$S/r12-tt2.txt" "$S/cc.pin" > "$S/r12
 mkdir -p "$S/r12-fcout"; : > "$S/r12-fcout/CHECK-COMMAND.txt"; echo mine > "$S/r12-fcout/notes.docx"
 ( cd "$S" && FC_OUT="$S/r12-fcout" timeout 120 python3 -I "$HERE/selftest.py" "$P" > "$S/r12-fcout.txt" 2>&1; echo $? > "$S/r12-fcout.rc" )
 [ "$(cat "$S/r12-fcout.rc")" = 2 ] && grep -q "^REFUSED: .* is not an earlier self-test output folder" "$S/r12-fcout.txt" && [ "$(cat "$S/r12-fcout/notes.docx")" = mine ]; ok $? "m6: selftest.py does not empty a folder that holds the marker file CHECK-COMMAND.txt beside a file of another kind (exit 2, the file is still there)"
+# f8-r13 (review f8-r12 design M1, M2, m9): an exported shell function, an empty or relative PATH entry, and a checker file that is not a finished run
+fn_run() { env 'BASH_FUNC_grep%%=() { echo planted; }' timeout 120 bash "$RAS" --raw-dir "$S/r13-rawF" --lock-only > "$S/r13-fn.txt" 2>&1; RC=$?; }
+fn_run; [ "$RC" = 2 ] && grep -q "^REFUSED: shell functions came in through the environment (names: grep" "$S/r13-fn.txt" && [ ! -e "$S/r13-rawF" ]; ok $? "f8-r13 M1: an exported shell function (grep) is refused with its name, exit 2, before anything is made (got exit $RC)"
+r13path() { local nm=$1 pv=$2 want=$3; env "PATH=$pv" "$(command -v bash)" "$RAS" --raw-dir "$S/r13-raw$nm" --lock-only > "$S/r13-$nm.txt" 2>&1; local x=$?; [ "$x" = 2 ] && grep -q -F "$want" "$S/r13-$nm.txt" && [ ! -e "$S/r13-raw$nm" ]; ok $? "f8-r13 M1: PATH '$pv' is refused, exit 2 (got exit $x)"; }
+r13path P1 "/usr/bin::/bin" "PATH has an empty entry"
+r13path P2 "/usr/bin:rel/bin:/bin" "not an absolute folder"
+r13path P3 "/usr/bin:.:/bin" "not an absolute folder"
+r13path P4 ":/usr/bin" "PATH has an empty entry"
+r13res() { local nm=$1 kind=$2 want=$3; shift 3; printf '%s\n' "$@" > "$S/r13-res-$nm.txt"; bash "$RAS" --check-result "$S/r13-res-$nm.txt" "$kind" > "$S/r13-res-$nm.out" 2>&1; local x=$?; [ "$x" = "$want" ]; ok $? "f8-r13 M2: checker file '$nm' as $kind gives exit $want (got exit $x: $(cut -c1-80 "$S/r13-res-$nm.out"))"; }
+r13res good-default pristine 0 "######## x" "RESULT: 0 FAIL, 23 WARN" "exit=0"
+r13res crash-no-result pristine 1 "######## x" "exit=1"
+r13res traceback pristine 1 "######## x" "Traceback (most recent call last):" "RESULT: 0 FAIL, 1 WARN" "exit=0"
+r13res two-results pristine 1 "RESULT: 0 FAIL, 1 WARN" "RESULT: 0 FAIL, 1 WARN" "exit=0"
+r13res exit0-but-fail pristine 1 "RESULT: 2 FAIL, 1 WARN" "exit=0"
+r13res exit1-default pristine 1 "RESULT: 2 FAIL, 1 WARN" "exit=1"
+r13res strict-ok patched-strict 0 "RESULT: 4 FAIL, 18 WARN" "exit=1"
+r13res strict-crash patched-strict 1 "exit=1"
+r13res strict-exit1-zero-fail patched-strict 1 "RESULT: 0 FAIL, 18 WARN" "exit=1"
+r13res strict-exit2 patched-strict 1 "RESULT: 4 FAIL, 18 WARN" "exit=2"
+r13res nobase-ok pristine-no-baseline 0 "RESULT: 2 FAIL, 23 WARN" "exit=1"
+r13res nobase-no-exit pristine-no-baseline 1 "RESULT: 2 FAIL, 23 WARN"
+r13res unknown-kind nonsense 1 "RESULT: 0 FAIL, 1 WARN" "exit=0"
 echo "test_take_check: $((N-BAD)) of $N cases as expected, $BAD not as expected"
 [ "$BAD" = 0 ]

@@ -4,5 +4,5 @@
 selftest_as_expected=725
 selftest_not_as_expected=0
 selftest_skipped=62
-take_suite_cases=574
+take_suite_cases=592
 take_suite_not_as_expected=0

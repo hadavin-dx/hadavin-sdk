@@ -67,6 +67,20 @@ count_check() {
   if [ -n "$msg" ]; then echo "COUNT DRIFT (expected-counts.pin):$msg"; return 1; fi
   echo "COUNTS match expected-counts.pin: self-test $e_ok as expected / $e_bad not / $e_skip skipped; take suite $e_tt of $e_tt cases"; return 0
 }
+# f8-r13: result_check FILE KIND: prints a note and returns 1 when the checker file is not what a finished checker run writes (see the comment at the call). KIND = pristine|patched (default mode), pristine-strict|patched-strict, pristine-no-baseline.
+result_check() {
+  local file=$1 f=$2 rl ex nf
+  rl=$(grep -h -E '^RESULT: [0-9]+ FAIL, [0-9]+ WARN$' "$file" 2>/dev/null); ex=$(grep -h '^exit=' "$file" 2>/dev/null | cut -d= -f2)
+  if [ "$(printf '%s\n' "$rl" | grep -c .)" != 1 ] || grep -q -E '^Traceback' "$file" 2>/dev/null; then echo "[$f: not exactly one RESULT line, or a Traceback]"; return 1; fi
+  nf=${rl#RESULT: }; nf=${nf%% *}
+  case $f in
+    pristine|patched) { [ "$ex" = 0 ] && [ "$nf" = 0 ]; } || { echo "[$f: exit=$ex but $rl]"; return 1; };;
+    pristine-strict|patched-strict) { { [ "$ex" = 0 ] && [ "$nf" = 0 ]; } || { [ "$ex" = 1 ] && [ "$nf" -gt 0 ]; }; } || { echo "[$f: exit=$ex but $rl]"; return 1; };;
+    pristine-no-baseline) { [ "$ex" = 1 ] && [ "$nf" -gt 0 ]; } || { echo "[$f: exit=$ex but $rl]"; return 1; };;
+    *) echo "[result_check: unknown kind $f]"; return 1;;
+  esac
+  return 0
+}
 # publish_raw SRC DST: copies every plain file of SRC into DST, each under a temporary name and then renamed (a reader never sees half a file); files of DST that SRC does not have are left alone; prints the number copied; returns 1 if one copy failed
 # f8-r12 (review f8-r12 M1): DST must be the raw/ folder next to THIS script (compared as physical paths), whoever calls this and however; any other folder is refused (return 2). The one writer of that folder is therefore this function; no environment variable or option can point it at another folder. After the copies, refresh-manifest.txt is written the same way: the run id, the time (UTC) and the sha256 of each file this run published, so a reader can tell which files of raw/ belong to one run (files of older runs that this run did not make are not listed).
 publish_raw() {
@@ -88,6 +102,7 @@ if [ "${1:-}" = "--publish-raw" ]; then   # f8-r13: the same lock as a run takes
   command -v flock >/dev/null 2>&1 || { echo "REFUSED: flock is not installed"; exit 2; }
   [ "$(realpath -m -- "$HERE/raw")" = "$(realpath -m -- "${3:?DST}")" ] && mkdir -p -- "$HERE/raw" && exec 9< "$HERE/raw" && { flock -n 9 || { echo "REFUSED: another run_all.sh holds the lock for $HERE/raw"; exit 2; }; }
   publish_raw "${2:?SRC}" "${3:?DST}"; exit $?; fi
+if [ "${1:-}" = "--check-result" ]; then result_check "${2:?FILE}" "${3:?KIND}"; exit $?; fi
 if [ "${1:-}" = "--check-counts" ]; then count_check "${2:?SELFTEST_FILE}" "${3:?TTC_FILE}" "${4:-}"; exit $?; fi
 STRICT_IDS=(); ARGS=(); LOCKONLY=""; REFRESH=""; KEEP=""
 # f8-r12 (m6): an option that is not known is refused (it used to be taken as the work folder); at most one work folder; --raw-dir names the folder to lock
@@ -146,6 +161,7 @@ is_run_all_ancestor() { # PID: 0 when PID is an ancestor of this shell and its c
 if [ -n "${RUN_ALL_NESTED:-}" ]; then
   is_run_all_ancestor "${RUN_ALL_PARENT_PID:-}" || { echo "REFUSED: RUN_ALL_NESTED is set but RUN_ALL_PARENT_PID does not name a running run_all.sh that started this run. RUN_ALL_NESTED belongs to the nested test runs this script starts itself; unset it (env -u RUN_ALL_NESTED bash run_all.sh)."; exit 2; }
   [ -z "${RUN_ALL_RAW:-}" ] || RAWFINAL=$RUN_ALL_RAW   # honoured only here, in a nested test run
+  echo "NESTED TEST RUN (started by a run_all.sh that is running): the four nested failure tests are skipped here, this run is one of them"   # f8-r13 (review f8-r12 m9): said out loud
   [ -z "$REFRESH" ] || { echo "REFUSED: --refresh is not allowed in a nested test run"; exit 2; }
 fi
 # f8-r12 (M1): --refresh writes only into the raw/ folder next to this script (compared as physical paths; nothing is created by this check)
@@ -435,16 +451,7 @@ for f in pristine-strict patched-strict; do   # real-v5 strict: 0 or 1 are both 
 done
 # f8-r13 (review f8-r12 design M2): an exit 1 can also come from a crash of the checker. Each of the five real-v5 files must hold exactly one RESULT line, no Traceback, and a RESULT that agrees with its exit line: default mode 0 FAIL with exit 0; strict mode FAIL count above 0 with exit 1 (or 0 FAIL with exit 0); no-baseline: exit 1 with FAIL above 0 (it is information only, but a crash must show).
 RESNOTE=""
-for f in pristine patched pristine-strict patched-strict pristine-no-baseline; do
-  rl=$(grep -h -E '^RESULT: [0-9]+ FAIL, [0-9]+ WARN$' "$RAW/$f.txt"); ex=$(grep -h '^exit=' "$RAW/$f.txt" | cut -d= -f2)
-  if [ "$(printf '%s\n' "$rl" | grep -c .)" != 1 ] || grep -q -E '^Traceback' "$RAW/$f.txt"; then RC=1; RESNOTE="$RESNOTE [$f: not exactly one RESULT line, or a Traceback]"; continue; fi
-  nf=${rl#RESULT: }; nf=${nf%% *}
-  case $f in
-    pristine|patched) { [ "$ex" = 0 ] && [ "$nf" = 0 ]; } || { RC=1; RESNOTE="$RESNOTE [$f: exit=$ex but $rl]"; };;
-    pristine-strict|patched-strict) { { [ "$ex" = 0 ] && [ "$nf" = 0 ]; } || { [ "$ex" = 1 ] && [ "$nf" -gt 0 ]; }; } || { RC=1; RESNOTE="$RESNOTE [$f: exit=$ex but $rl]"; };;
-    pristine-no-baseline) { [ "$ex" = 1 ] && [ "$nf" -gt 0 ]; } || { RC=1; RESNOTE="$RESNOTE [$f: exit=$ex but $rl]"; };;
-  esac
-done
+for f in pristine patched pristine-strict patched-strict pristine-no-baseline; do n=$(result_check "$RAW/$f.txt" "$f") || { RC=1; RESNOTE="$RESNOTE $n"; }; done
 [ "$ST" = 0 ] || RC=1
 [ "$TC" = 5 ] && [ -z "$TCMISS" ] || RC=1   # 5 = a would-be pass of a take call that has the test override (stand-in pin)
 show() { for f in "$@"; do echo "[$f]"; grep -h -E '^(######## |exit=|RESULT|Known open problems)' "$RAW/$f.txt"; done; }
