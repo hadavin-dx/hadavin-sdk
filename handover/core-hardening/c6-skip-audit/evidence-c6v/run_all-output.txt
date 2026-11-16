@@ -6,3 +6,8 @@ wrote REPORT-c6v.md (884 lines)
 census written: 25 phrases
 verify exit 1
 SUMMARY: 236 checks, 2 FAILED: m4 every example answer time in the box is later than the check time 2026-11-16T18:48:05Z (and has its IST); c6v names: every evidence-c6v file the report names exists i
+neg exit 1
+SUMMARY: 267 copies, 10 wrong
+scan exit 1
+SCANNED 379 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 39}
+RUN_ALL_EXIT 1

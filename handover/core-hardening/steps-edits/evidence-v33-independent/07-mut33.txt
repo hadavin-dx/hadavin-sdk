@@ -271,3 +271,17 @@ AA09 CAUGHT by C260 | H20 second copy: never tolerated changed
 AA10 CAUGHT by C261 | H23: older-key cancel without the name and date condition (7.11)
 AA11 CAUGHT by C261 | H23 second place: card list L2 without the condition
 AA12 CAUGHT by C257 | H35: helper told to keep key text
+AA13 CAUGHT by C262 | H38: backstop with an exception for a run
+AA14 CAUGHT by C246 | M1: card waits the ordinary chain near the deadline
+AA15 CAUGHT by C247 | M2: cd line may hold more
+AA16 CAUGHT by C247 | M2: R6 cd rule dropped
+AA17 CAUGHT by C248 | M3: Default A back in the open list
+AA18 CAUGHT by C249 | helper paper VOID step removed
+AA19 CAUGHT by C249 | helper backstop date dropped
+AA20 CAUGHT by C249 | W3 film person stop removed
+AA21 CAUGHT by C250 | card step 4 same named row removed
+AA22 CAUGHT by C250 | 8.8 edited video wording
+AA23 CAUGHT by C257,C262 | key text rule reversed
+TOTAL plants 283 (negative controls ok 1, not counted below):
+TOTAL plants 283: caught by the meant check 282, missed 0 (of them caught only by another check 0), anchor-not-found 0
+exit=0

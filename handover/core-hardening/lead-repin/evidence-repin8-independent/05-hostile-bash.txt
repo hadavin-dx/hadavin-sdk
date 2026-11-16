@@ -28,3 +28,15 @@ cli-flag-short               exit=0 hidden vlen=24 outlen=28
 cli-flag-short-space         exit=0 hidden vlen=24 outlen=29
 cli-curl-u                   exit=0 hidden vlen=24 outlen=41
 cli-curl-H                   exit=0 hidden vlen=24 outlen=58
+cli-docker-e                 exit=0 hidden vlen=24 outlen=32
+env-plain                    exit=0 hidden vlen=24 outlen=18
+env-export                   exit=0 hidden vlen=24 outlen=22
+env-quoted-dq                exit=0 hidden vlen=24 outlen=16
+env-quoted-sq                exit=0 hidden vlen=24 outlen=16
+env-prefixed                 exit=0 hidden vlen=24 outlen=25
+env-suffixed                 exit=0 hidden vlen=24 outlen=24
+comment-hash                 exit=0 hidden vlen=24 outlen=20
+comment-slash                exit=0 hidden vlen=24 outlen=21
+comment-semicolon            exit=0 hidden vlen=24 outlen=17
+comment-block                exit=0 hidden vlen=24 outlen=22
+case-upper                   exit=0 hidden vlen=24 outlen=19

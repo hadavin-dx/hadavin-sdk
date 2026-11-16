@@ -126,7 +126,7 @@ PASS V12 DB-2 text plus CREATE OR REPLACE TRIGGER spend_log_decrease ... WHEN (f
 PASS V13 DROP TRIGGER IF EXISTS of a name that is not pinned: v20 flags=1 ; v19 flags=0 ; v18 flags=0 ; v17 flags=1 ; v16 flags=1  (v19 MISSES it)  (v18 MISSES it)
 PASS V14 DB-2 text without the append-only trigger of the record (a pinned trigger the file no longer creates): v20 flags=1 ; v19 flags=0 ; v18 flags=0 ; v17 flags=1 ; v16 flags=1  (v19 MISSES it)  (v18 MISSES it)
 PASS V15 control: DB-2 text with a DROP TRIGGER IF EXISTS of a pinned name BEFORE its CREATE: v20 flags=0 ; v19 flags=0 ; v18 flags=0 ; v17 flags=1 ; v16 flags=1
-PASS V16 control: the real DB-2 and DB-3 files with every pin: v20 flags=0 ; v19 flags=0 ; v18 flags=0 ; v17 flags=1 ; v16 flags=1
+PASS V16 control: the real DB-2 file with every pin: v20 flags=0 ; v19 flags=0 ; v18 flags=0 ; v17 flags=1 ; v16 flags=1
 PASS V17 atomic body MERGE INTO an unpinned table (security M3): v20 flags=1 ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v19 MISSES it)  (v18 MISSES it)
 PASS V18 atomic body DELETE ... USING pg_authid: v20 flags=1 ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v19 MISSES it)  (v18 MISSES it)
 PASS V19 atomic body TABLE pg_authid: v20 flags=1 ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v19 MISSES it)  (v18 MISSES it)

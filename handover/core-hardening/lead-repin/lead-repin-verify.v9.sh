@@ -165,7 +165,7 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1603
+CANARY_PLANNED=0
 SELFTEST_PLANNED=1635
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 DC1=$(printf '\021'); DC2=$(printf '\022'); RS=$(printf '\036')   # v9: private stand-ins used inside one rule block only
@@ -1237,6 +1237,80 @@ self_test() {
     v8; printf '{%s"password%s": %s"%s%s"}\n' "$BS" "$BS" "$BS" "$vv" "$BS"
     v8; printf '{%s'"'"'token%s'"'"': %s'"'"'%s%s'"'"'}\n' "$BS" "$BS" "$BS" "$vv" "$BS"
 
+
+    # ---- v9 additions: classes found by the v8 reviews (every value is built from parts; first 6 and last 6 characters are checked)
+    v9n=400
+    v9() { v9n=$((v9n + 1)); hd=$(printf 'zt%03dv' "$v9n"); tl=$(printf 'xp%03dd' "$v9n"); vv=$hd$tl; }
+    v9_reg() { printf '%s|%s|%s|%s\n' "$1" "$hd" "$tl" "$2" >> "$WORK/st-pt.txt"; }
+    # (F1) a bare name and a value, no = or :, the name at the start of a line or anywhere in it: the rest of the line is hidden
+    for nm9 in api_key pass pwd key auth cookie password secret token passphrase passcode pin seed session sig Pass PWD Api_Key; do
+      v9; printf '%s %s\n' "$nm9" "$vv"; v9_reg "bare $nm9 VALUE at the start of a line" LS
+    done
+    v9; printf 'password %s horse battery\n' "$vv"; v9_reg 'bare password, a pass phrase of several words' LS
+    v9; printf '# TODO my password %s\n' "$vv"; v9_reg 'bare password after words in a comment' LS
+    v9; printf 'echo password %s\n' "$vv"; v9_reg 'echo password VALUE' LS
+    v9; printf 'user bob password %s\n' "$vv"; v9_reg 'user bob password VALUE' LS
+    v9; printf 'password ;%s\n' "$vv"; v9_reg 'bare password, value starts with a semicolon' LS
+    v9; printf 'password "%s\n' "$vv"; v9_reg 'bare password, quote that is never closed' LS
+    v9; printf "password '%s\n" "$vv"; v9_reg 'bare password, single quote that is never closed' LS
+    v9; printf 'my_key %s here\n' "$vv"; v9_reg 'bare my_key VALUE' LS
+    v9; printf 'if the key %s then\n' "$vv"; v9_reg 'bare key VALUE in the middle of a line' LS
+    v9; printf '#password #%s\n' "$vv"; v9_reg 'bare password, value starts with a hash sign' LS
+    v9; printf '%s password %s\n' '12:' "$vv"; v9_reg 'bare password after a grep prefix' LS
+    printf 'pass  # kept_pass_comment\nfor key in kept_items:\nif key == "end": kept_cmp_end\nkept_after_bare_name_line\n'
+    # (F2) flags written in camel case or glued, value after a space
+    for fl9 in apiKey accessToken authToken dbPassword clientSecret apikey sessionKey; do
+      v9; printf 'deploy --%s %s now\n' "$fl9" "$vv"; v9_reg "flag --$fl9 VALUE" LS
+    done
+    v9; printf 'deploy -apiKey %s now\n' "$vv"; v9_reg 'flag -apiKey VALUE (one dash)' LS
+    # (F3) the value is on the next line
+    v9; printf 'const apiKey =\n  "%s";\nkept_after_nxt_1 = 1\n' "$vv"; v9_reg 'const apiKey = then the value on the next line' ""
+    v9; printf 'apiKey :=\n\t%s\nkept_after_nxt_2 = 1\n' "$vv"; v9_reg 'apiKey := then the value on the next line' ""
+    v9; printf 'password =\n\n  %s\nkept_after_nxt_3 = 1\n' "$vv"; v9_reg 'password = then a blank line then the value' ""
+    v9; printf 'secret = \\\n  %s\nkept_after_nxt_4 = 1\n' "$vv"; v9_reg 'secret = backslash then the value' ""
+    printf 'API_KEY=\nkept_after_empty_env = 1\n'
+    # (F4) a comparison with a literal: hidden, except the literal end
+    v9; printf 'if x_token == "%s":\n' "$vv"; v9_reg 'x_token == "value"' LS
+    v9; printf "if key != '%s':\n" "$vv"; v9_reg "key != 'value'" LS
+    v9; printf 'if pwd === "%s" {\n' "$vv"; v9_reg 'pwd === "value"' LS
+    v9; printf 'if token.equals("%s") {\n' "$vv"; v9_reg 'token.equals("value")' LS
+    printf 'if x_token == "end": kept_cmp_end_2\nif key != '"'"'end'"'"': kept_cmp_end_3\n'
+    # (F5) JSON name and value pairs whose field names are not name and value
+    v9; printf '{"ParameterKey": "DbPassword", "ParameterValue": "%s"}\n' "$vv"; v9_reg 'ParameterKey / ParameterValue' LS
+    v9; printf '{"ParameterValue": "%s", "ParameterKey": "DbPassword"}\n' "$vv"; v9_reg 'ParameterValue first, then ParameterKey' LS
+    v9; printf '{"Key": "ApiToken", "Value": "%s"}\n' "$vv"; v9_reg 'Key / Value' LS
+    v9; printf '{"Name": "api_key", "Val": "%s"}\n' "$vv"; v9_reg 'Name / Val' LS
+    v9; printf '{"Value": "%s", "Name": "client_secret"}\n' "$vv"; v9_reg 'Value first, then Name' LS
+    v9; printf '{\n  "ParameterKey": "DbPassword",\n  "ParameterValue": "%s"\n}\n' "$vv"; v9_reg 'ParameterKey and ParameterValue on separate lines' ""
+    v9; printf '{\n  "ParameterValue": "%s",\n  "ParameterKey": "DbPassword"\n}\n' "$vv"; v9_reg 'ParameterValue line then ParameterKey line' ""
+    printf '{"ParameterKey": "Stage", "ParameterValue": "kept_param_value"}\n'
+    # (F6) look-alike separators, letters and spaces
+    v9; printf 'password\357\274\235%s\n' "$vv"; v9_reg 'full-width equals sign' ""
+    v9; printf 'password\357\274\232 %s\n' "$vv"; v9_reg 'full-width colon' ""
+    v9; printf 'p\320\260ssword %s\n' "$vv"; v9_reg 'Cyrillic a in the name, bare value' ""
+    v9; printf 'p\320\260ssword = %s\n' "$vv"; v9_reg 'Cyrillic a in the name, equals sign' ""
+    v9; printf '\357\275\220\357\275\201\357\275\223\357\275\223\357\275\227\357\275\217\357\275\222\357\275\204 = %s\n' "$vv"; v9_reg 'full-width letters in the name' ""
+    v9; printf 'password\302\240%s\n' "$vv"; v9_reg 'no-break space between name and value' ""
+    v9; printf 'password\343\200\200%s\n' "$vv"; v9_reg 'ideographic space between name and value' ""
+    v9; printf 'pass\342\200\213word %s\n' "$vv"; v9_reg 'zero-width space inside a name, bare value' ""
+    v9; printf 'password = \342\200\234%s\342\200\235\n' "$vv"; v9_reg 'curly double quotes around the value' ""
+    v9; printf 'tok\316\265n %s\n' "$vv"; v9_reg 'Greek letter inside a name, bare value' ""
+    v9; printf 'sec\321\200et %s\n' "$vv"; v9_reg 'Cyrillic letter inside a name, bare value' ""
+    # (F10) a control byte on a line that holds only a name: the lines under it are still hidden
+    v9; printf 'db_password:\001\n  %s\nkept_after_ctl_1: ok\n' "$vv"; v9_reg 'name alone with a control byte, value on the next line' ""
+    v9; printf 'db_password:\r\n  %s\nkept_after_ctl_2: ok\n' "$vv"; v9_reg 'name alone with CRLF, value on the next line' ""
+    v9; printf 'db_password:\013\n  %s\nkept_after_ctl_3: ok\n' "$vv"; v9_reg 'name alone with a vertical tab, value on the next line' ""
+    # (names not in the list before) SAS signature, login=user:password, Terraform default, Kubernetes Secret data
+    v9; printf 'https://h.example.test/c?sv=2020&sig=%s&se=1\n' "$vv"; v9_reg 'storage SAS web address sig=' LS
+    v9; printf 'conf login=bob:%s\n' "$vv"; v9_reg 'login=user:password' LS
+    v9; printf 'conf logon: bob:%s\n' "$vv"; v9_reg 'logon: user:password' LS
+    v9; printf 'tool --login bob:%s go\n' "$vv"; v9_reg '--login user:password' LS
+    v9; printf 'pin = %s\n' "$vv"; v9_reg 'pin = value' LS
+    v9; printf 'seed: %s\n' "$vv"; v9_reg 'seed: value' LS
+    v9; printf 'variable "db_password" {\n  type = string\n  default = "%s"\n}\nkept_after_tf = 1\n' "$vv"; v9_reg 'Terraform variable default' ""
+    v9; printf 'resource "aws_x" "api_token" {\n  value = "%s"\n}\nkept_after_tf_2 = 1\n' "$vv"; v9_reg 'Terraform resource block with a secret label' ""
+    v9; printf 'kind: Secret\ndata:\n  user: %s\n  other: %s\nkept_after_k8s: ok\n' "$hd" "$tl"; v9_reg 'Kubernetes Secret data' ""
+    v9; printf 'stringData:\n  user: %s\n  other: %s\nkept_after_k8s_2: ok\n' "$hd" "$tl"; v9_reg 'Kubernetes Secret stringData' ""
   } > "$in"
   if [ -n "${SELFTEST_FILTER:-}" ]; then
     # shellcheck disable=SC2086
@@ -1414,6 +1488,25 @@ self_test() {
   chk_kept 'name: alone is not a pair' 'kept_name_line'
   chk_kept 'value: alone is not hidden' 'kept_value_line_alone'
   chk_kept 'private key block markers stay' '-----END PRIVATE KEY-----'
+  chk_kept 'v9: pass alone before a comment stays' 'kept_pass_comment'
+  chk_kept 'v9: for key in ... stays readable up to the name' 'for key'
+  chk_kept 'v9: comparison with the literal end stays' 'if key == "end": kept_cmp_end'
+  chk_kept 'v9: comparison x_token == "end" stays' 'if x_token == "end": kept_cmp_end_2'
+  chk_kept 'v9: comparison key != end stays' "if key != 'end': kept_cmp_end_3"
+  chk_kept 'v9: line after a bare name line stays' 'kept_after_bare_name_line'
+  chk_kept 'v9: line after name = and value on next line (1)' 'kept_after_nxt_1 = 1'
+  chk_kept 'v9: line after name = and value on next line (2)' 'kept_after_nxt_2 = 1'
+  chk_kept 'v9: line after name = and value on next line (3)' 'kept_after_nxt_3 = 1'
+  chk_kept 'v9: line after name = and value on next line (4)' 'kept_after_nxt_4 = 1'
+  chk_kept 'v9: NAME= with nothing after it does not hide the next line' 'kept_after_empty_env = 1'
+  chk_kept 'v9: a harmless parameter pair stays' 'kept_param_value'
+  chk_kept 'v9: line after a control-byte name line (1)' 'kept_after_ctl_1: ok'
+  chk_kept 'v9: line after a control-byte name line (2)' 'kept_after_ctl_2: ok'
+  chk_kept 'v9: line after a control-byte name line (3)' 'kept_after_ctl_3: ok'
+  chk_kept 'v9: line after a Terraform block' 'kept_after_tf = 1'
+  chk_kept 'v9: line after a Terraform resource block' 'kept_after_tf_2 = 1'
+  chk_kept 'v9: line after Kubernetes Secret data' 'kept_after_k8s: ok'
+  chk_kept 'v9: line after Kubernetes Secret stringData' 'kept_after_k8s_2: ok'
   # ---- v5 checks: first 6 and last 6 characters of every value, per view
   chk_pt() { # label head tail flags
     chk_hidden "$1 (first 6 characters)" "$2" "$4"

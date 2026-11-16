@@ -144,3 +144,14 @@ NEG r11hold caught | FAIL hold row NEW without label E-13
 NEG r11e53 caught | FAIL E-53 unless clause
 NEG r11e09 caught | FAIL E-09 credentials
 NEG r11addr caught | FAIL E-06 bare address: the address the assis
+NEG r11slot caught | FAIL E-12 lacks crash check: tested or untested
+NEG r11e36 caught | FAIL E-36 text N not quoted in why
+NEG r11e58 caught | FAIL E-58 times
+NEG nd14 caught | FAIL ND14 missing
+NEG e17lease caught | FAIL E-17 lease sentence added
+NEG e22 caught | FAIL crash check untested missing in E-22
+NEG e43 caught | FAIL E-43 lacks stage.journal
+NEG e49 caught | FAIL E-49 consent not tied to message (a) to (d)
+NEG e49day caught | FAIL E-49 lacks day format example
+NEG e53 caught | FAIL E-53 lacks override of line 27
+NEG e51 caught | FAIL E-51 wording
