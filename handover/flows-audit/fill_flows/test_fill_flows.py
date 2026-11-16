@@ -2104,6 +2104,16 @@ class Round7(Base):
         self.assertIn(f"{ff.MARKER_NAME}: not a plain file", so)
         self.assertIn(f"{ff.MARKER_NAME}: differs from the manifest", so)  # the hash step too
 
+    def test_a_hash_is_never_taken_of_a_pipe(self):
+        # a pipe with a writer could deliver the right bytes; it must not count as the file
+        os.mkfifo(os.path.join(self.t, "pp"), 0o600)
+        dfd = os.open(self.t, os.O_RDONLY)
+        self.addCleanup(os.close, dfd)
+        with self.assertRaises(OSError):
+            ff.sha256_at("pp", dfd)
+        wtext(os.path.join(self.t, "plain"), "x")
+        self.assertEqual(ff.sha256_at("plain", dfd), hashlib.sha256(b"x").hexdigest())
+
     # ---- M2: --tokens-only still refuses a not-ready copy and says what it did not look at
     def test_tokens_only_refuses_a_not_ready_copy_and_says_placeholders_were_skipped(self):
         d = os.path.join(self.t, "clean")
