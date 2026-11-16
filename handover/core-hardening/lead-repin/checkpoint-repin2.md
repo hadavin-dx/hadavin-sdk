@@ -1,4 +1,4 @@
 # Checkpoint 2: lead-repin builder (Mon 16 Nov 2026, about 13:25 UTC / 18:55 IST), time box 60 min, finished in about 25 min
 Done: lead-repin-verify.sh v2 (all findings 1-11 and nits), LEAD-REPIN-VERIFY.md v2, raw-dummy-run2.txt, evidence-repin2.md, v2-CHANGES.md. Checks: sh/bash/dash -n pass; self-test 30/30 (old rule fails 19); dummy runs with dash and bash identical; git folder unchanged by a run; unreadable branch seen as uid 65534; banned-word count 0.
-Not done / uncertain: nothing run against the real take files; Q27 a, b, c and Q23 stay UNVERIFIED (lead verifies at re-pin); WSL, macOS, busybox untested; unset-MODEL_DIR message not exercised. Nothing committed. No src/tests/inputs touched.
+Not done / uncertain: nothing run against the real take files; Q27 a, b, c and Q23 stay UNVERIFIED (lead verifies at re-pin); WSL, macOS, busybox untested. Nothing committed. No src/tests/inputs touched.
 Next: the lead runs the script in the take repo at the final head, adjusts the word variables, reads the output before sharing.

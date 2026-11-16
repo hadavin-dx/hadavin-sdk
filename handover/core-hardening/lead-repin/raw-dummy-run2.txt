@@ -248,3 +248,10 @@ git folder identical before and after (names, mtimes, sizes, index sha256)
 ### RUN 3 (dash), as ordinary user uid 65534 so permissions apply: one unreadable file (lines about it only)
 UNREADABLE (not searched, NOT zero matches): /tmp/lrv-unread.3YE0a5/take dir/scripts/locked.py
     [search "delete words in python and shell files": matching lines=0 files_read=1 missing=0 unreadable=1] ZERO HITS: either not there or the search words are wrong; this is not proof of absence (1 file(s) were UNREADABLE or missing-type errors: this count is NOT complete)
+13:MODEL_DIR = <not set: the model program folder is NOT SEARCHED>
+115:--- search: test qs_37 (AGENT-SCOPE says it ends spending)
+116:MODEL_DIR not set: qs_37 NOT SEARCHED on the model side (this is not "qs_37 absent")
+117:/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy2/test_runs/take dir/tests/test_x.py:1:qs_37 = 1
+119:MODEL_SETTINGS not set, missing or unreadable: settings NOT SEARCHED (adjust)
+
+### RUN 4 above (lines with NOT SEARCHED / MODEL_DIR / qs_37 / SETTINGS): same tree, MODEL_DIR and MODEL_SETTINGS unset

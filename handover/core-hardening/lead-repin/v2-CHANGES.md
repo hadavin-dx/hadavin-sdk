@@ -18,11 +18,10 @@ All 11 findings and all nits are fixed in this pass. Nothing is deferred. Items 
 | nit | Glossary needed | Doc: "Words used in this file" (head, final head, second reader, FREEZE, R5/R7, decision 2, ban-list item 10, numbers message, need_seconds, files_read). FREEZE and need_seconds: I could not find a full definition in the files I read, so the doc says so and the lead confirms | - |
 | nit | `ss` in WSL misses Windows listeners | Script: WSL detection line; falls back to netstat, then /proc/net/tcp; doc failure 7 | /proc fallback ran; WSL branch untested |
 | nit | `^` anchor missed `export WINDOW_END=` | Script: settings-name pattern allows optional `export` | dummy `settings.env` and YAML |
-| nit | qs_37 under TAKE_DIR/MODEL_DIR only; unset meant "not searched" shown as absent | Script: prints "MODEL_DIR not set: qs_37 NOT SEARCHED on the model side (not absent)" | dummy run with and without MODEL_DIR not run without; see note below |
+| nit | qs_37 under TAKE_DIR/MODEL_DIR only; unset meant "not searched" shown as absent | Script: prints "MODEL_DIR not set: qs_37 NOT SEARCHED on the model side (not absent)" | dummy run 4 (MODEL_DIR unset), appended to raw-dummy-run2.txt |
 | nit | sha256sum error not captured | Script: `2>&1` on sha256sum and whole main; `shasum -a 256` fallback | - |
 
 ## Still UNVERIFIED (exact missing input)
 - Q27 a, b, c: the real `run_real_check_n8n.py` and model program at the final head (lead reads and answers with line numbers at re-pin).
 - Q23: the final-head grep over the real take files and flows.
 - That the default search words match the real names; that the output of the real run reads as expected.
-- The "qs_37 not searched" message for an unset MODEL_DIR is in the code but the dummy runs all set MODEL_DIR; that message path was not exercised.
