@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:10:28Z
+UPDATED_UTC: 2026-11-16T09:10:33Z
 SESSION: flows-audit
 ORDER: 015 queue (and 008 board)
 STATE: WORKING
@@ -9,7 +9,7 @@ PERCENT: 75
 AGENTS_RUNNING: 5
 INTERRUPTED: none
 NEXT: F1 reviews, F3 and F4 fixers, F5 wording
-PUSHED_UTC: 2026-11-16T09:10:28Z
+PUSHED_UTC: 2026-11-16T09:10:33Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -28,7 +28,7 @@ PUSHED_UTC: 2026-11-16T09:10:28Z
 | af7cc71941ed87a0c | fixer F4 | sonnet | stronger checker, final batch | 09:09 | 09:30 | 5 | running | patch-apply/REPORT.md |
 | aa845b0544ceeec0d | egm-codebase-details F1 | sonnet | spot-check 25 rows, find missing claims | 09:12 | 09:25 | 5 | running | none |
 | a4ea6ce33ec6be4f8 | egm-zoom-out F1 | sonnet | usability for the lead | 09:12 | 09:25 | 5 | running | none |
-| (F5 agent id in board next beat) | F5 wording | sonnet | paste-ready safe sentences | 09:11 | 09:30 | 5 | running | RUNSHEET-WORDING.md |
+| a394c8096c96c6a63 | F5 wording | sonnet | paste-ready safe sentences | 09:11 | 09:30 | 5 | running | RUNSHEET-WORDING.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
