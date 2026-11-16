@@ -1,2 +1,5 @@
 ## Lead order 20:13Z (received 20:13Z): r43 CANCELLED
 Lead: owner cut list 2026-11-17 (the lead's date; today's clock reads 2026-11-16): no r43 fix round; one mutation batch on the money path only. Wait list now: r41 (ETA 20:20Z), r42 (ETA 21:00Z), then the merge chain. Effect on my pages: RUNBOOK-V4.3-PATCH mentions r43 on 30 lines (the 13 rows the patch builder tied to r43 and the table); they must be re-marked (cancelled by owner cut list, meaning those fixes will not land) when r41 lands and the patch is next edited; not yet done. Not verified by me; taken from the lead's message.
+
+## Lead order 20:36Z (received 20:36Z): OWNER CUT LIST (owner yes 2026-11-17 as the lead dates it)
+Finish running agents only; new round only for a Blocker or Major on the video path; a page with no Blocker or Major in its last review is DONE (Minors in REPORT.md); no 100x loops, no mutation runs (the lead runs one batch at the end); per-item video yes/no on the board; 3 agents or fewer; kill nothing not mine. Applied: board section VIDEO PATH, REPORT.md entry 20:40Z.

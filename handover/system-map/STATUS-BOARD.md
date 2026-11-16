@@ -21,8 +21,32 @@ PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (cou
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 3
 CAPACITY nproc=4 load=0.11 0.14 0.14 (read at 20:34Z) disk: 12G free (floor 6G)
-NEXT: digest hand-backs; one fresh read per edited held page
+NEXT: finish the 3 running agents only (L-01 fixer, steps r14 readers); verify, digest, fix only Blockers/Majors on the video path; then stop and report (lead order 20:36Z)
 INTERRUPTED: none
+
+## VIDEO PATH (lead order 20:36Z, owner cut list): per item, needed for the video yes or no
+Rule applied: only agents already running finish; a new round starts ONLY for a Blocker or Major on the video path (the take, money, secrets, the n8n flows); a page whose last review had no Blocker or Major is DONE (Minors listed in REPORT.md, entry 20:40Z); no 100x loops, no mutation runs; 3 agents or fewer.
+| item | needed for the video | action |
+|---|---|---|
+| steps sheet v5 (inputs/OWNER-STEPS-realrun-v5-core-hardening.md, money path) | YES | round-14 readers running; a new fixer only if they report a Blocker or Major |
+| L-01 pages (L01, OWNER-VIEW M5, LEAD-PAGE; secrets) | YES | round-13 fixer running; one more round only for a Blocker or Major |
+| M1 flowcheck | YES (the n8n flows) | done; n8n run of patched flows still NOT TESTED (lead's rehearsal) |
+| M3 drift sections and the 8 Blockers in drift/REPORT.md | YES (where owner-typed things disagree) | no more rounds by me; the lead answers D-01..D-10 |
+| M17 end-never-deletes replacement lines | YES (the take deletes nothing; contacts) | written, NOT applied to v5/program: waits the lead; no new round |
+| M18 D-04 and D-05 | YES (what the post may claim) | written, awaiting the lead; no new round |
+| M19 owner steps read (run-day and clean-up cards) | YES | stop after the steps v5 and L-01 results; no new round unless Blocker/Major |
+| RUNBOOK-V4.3-PATCH (work/) | YES (runbook rows) | done at the reader cap; waits r41 (overdue), r42; r43 cancelled |
+| resmoke list, DECISION-one-store, AGENT-SCOPE | YES but DONE (reader cap) | no more rounds; the stale step-file line cites in drift/REPORT.md and the resmoke list are a Minor, listed in REPORT.md |
+| M14 licence test (1 failing) | NO | not video path; waits the lead's yes; I never edit the test |
+| M2 FINAL-CROSSCHECK round 2 | NO | stop; not run |
+| M4 MASTER-MAP, ONE-PLACE-TABLE | NO | stop; archive after the take (ARCHIVE-CUT-LIST.md) |
+| M5 earlier OWNER-VIEW rounds | covered by L-01 row | see L-01 row |
+| M6 own tools audit, M7, M9 stale items | NO | stop |
+| M8, M15 archive cut list | NO | one list for the owner to sign after the take |
+| M10 second-reader ring | NO | stop |
+| M11, M12, M13, M16 | NO (done) | done |
+| M20 SESSION-HANDOFF live state | NO | dropped 18:29Z |
+Archive: items marked NO are stopped; nothing is moved or deleted now (the owner signs ARCHIVE-CUT-LIST.md after the take).
 
 ## ITEMS
 | # | item | state | % | evidence file | note |

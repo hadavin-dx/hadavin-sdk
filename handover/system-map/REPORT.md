@@ -2,6 +2,20 @@ ORDER 023/024: the model sed of ORDER 023 was never run (the session's permissio
 
 # REPORT from system-map (newest on top, UTC and IST)
 
+## 20:40 UTC / 02:10 IST (Tue 17 Nov IST) - owner cut list received (lead order 20:36Z); open Minors for the owner
+
+Failures first: steps sheet v5 (money path) and the L-01 pages (secrets path) have NOT had a clean review: round 13 found Blockers on both; their round-14 and fix results are still running. Nothing about the take was run or verified; all work is reading and editing text.
+
+What I do now: only the agents already running finish; a new round starts only for a Blocker or Major on the video path; 3 agents or fewer; no mutation runs. Per-item table: STATUS-BOARD.md section "VIDEO PATH".
+
+Pages DONE (last review had no Blocker or Major; no more rounds). Their open Minors are in the findings files:
+- RUNBOOK-V4.3-PATCH (work/RUNBOOK-V4.3-PATCH.md): at the reader cap. Open: r43 mentions (30 lines) still need re-marking as cancelled; five questions for OD-34a unlisted.
+- work/resmoke-one-command-list.md and drift/REPORT.md: stale line cites to the steps file (the steps file was renumbered); re-point once the steps sheet stops changing.
+- DECISION-one-store.md, AGENT-SCOPE-DO-AND-DONT.md: at the reader cap; no known Blocker or Major.
+Findings files with the Minors of the two live pages: work/steps-v5-read-findings-r13.md, work/steps-v5-fact-findings-r13.md, work/l01-read-findings-r13.md, work/l01-fact-findings-r13.md (round-14 files will follow).
+
+Still needs the lead or the owner: the post and run date (18, 19, 23 or 25 Nov appear in different files); D-04/D-05 wording; the fills marked STUDIO LEAD TO FILL (62 lines) and LEAD TO CONFIRM; M14 licence test (my change only after the lead's yes); loopback re-smoke and the first n8n run.
+
 ## 10:45 UTC / 16:15 IST - failures first: the two baseline test failures are REAL on core-hardening; ORDER 019 closed
 Failed, not checked or open (first):
 - REAL DEFECT (M14, fresh clone of origin/cloud/core-hardening at 14d8fe46d, not a scratch copy): `2 failed, 9389 passed, 455 skipped in 286 s, rc=1` (log /tmp/sm-fresh.pytest.log). (1) tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked: the vendor word 'Port.io' is in handover/BRIEF-PREAMBLE-studio-2026-11-06.md and in several handover/core-hardening/patch-test-runs/raw/*.log files (10 hits; those logs quote the test's own failure message), and handover/reviews/P1a-idempotence-probe.txt is not UTF-8 text so it cannot be scanned. (2) tests/test_repo_rules.py::test_licences_are_proprietary: 10 files under handover/promotion-inputs/apexc/ (first: handover/promotion-inputs/apexc/LICENSE) are "not the proprietary licence text". None of these paths is on origin/main, so core-hardening's branch adds them; a pull request from it would fail these two guard tests. Fix owner: core-hardening/lead (rename or reword the word in the briefs and keep logs out of the tree, convert or drop the non-text file, replace the licence files or exclude promotion-inputs). Earlier scratch-copy runs gave the same 2 failures, so the patches add none.
