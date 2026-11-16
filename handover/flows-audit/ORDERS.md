@@ -181,3 +181,6 @@ Your board PROGRESS went 77 to 95 percent in 6 minutes while open rows stayed 8 
 
 ## ORDER (lead, real clock 13:25Z): agent count fell again
 Your board shows fewer than 8 agents with load under 1.5 of 4 and open rows left. Start replacements for every finished agent NOW, before you collect and digest its report (see ORDER 040). Each missing agent below 8 needs one written reason in the board line naming the row it would work on.
+
+## ORDER (lead, real clock 14:01Z): 6 agents, load 0.39 of 4
+Your board shows 6 agents with load far under the cores and 30 open rows. Start 2 more now (one per open row from your lane menu, static or made-up work only), or write in STATUS-BOARD the reason each missing agent has no row. Do not wait for a lead reply.
