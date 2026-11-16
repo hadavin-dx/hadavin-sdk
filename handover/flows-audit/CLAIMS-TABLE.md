@@ -640,6 +640,24 @@ Static reading only. Nothing ran (no n8n, Postgres, HubSpot, mail server). Writt
 - I did not read `docs/` of the desk repo, `PAGE-STATEMENTS-V4.md` and `VIDEO-RUNSHEET.md` (lane A has them). I did not re-check `doubled` and the ledger count in `mf.py` (only the `lost` line, mf.py:83).
 - Nothing was patched. Where a file says one thing and the flows another, I judge the file as it stands.
 
+## RunSheet-wording rows with no claim row
+
+RUNSHEET-WORDING.md (RW) has 13 rows whose id has no row in this file. None of them is a claim (a checked sentence of a file): each is either a new sentence or screen tag to be added, or a text fix to a sentence that other rows already cover. So no row is added here (the row count stays fixed). The status of each is the one RW gives today; none is approved. Each string is copied word for word from RW (the lead may veto it).
+
+- N-5a (HELD): "n8n lets another run take over a lead that stopped only after a waiting time of 45 seconds. We call this wait the lease. A regular check does the takeover, so the lead is picked up at the first check after the lease ends." Why no claim row: RW gives "no sentence today"; it is a new spoken paragraph for scene 4 that explains the label lease before it appears.
+- N-6 (PASTE): "A CRM is the program where a company keeps its customer contacts." Why no claim row: it is a new spoken sentence for scene 1 that explains the label CRM before it is used; it is not a claim about the flows.
+- N-9 (HELD): "the real wait is read from the rehearsal, never predicted; no phone is filmed and no timer is on screen" Why no claim row: it is a file edit of the words in VIDEO-RUNSHEET.md line 6 (stopwatch overlay), the lead applies it at the re-pin.
+- N-10 (HELD): "wherever a wait is sped up, the screen shows the words sped up; the real wait is read from the rehearsal and no timer is on screen." Why no claim row: it is a file edit of VIDEO-RUNSHEET.md line 21 (the words after the colon), held until the re-pin.
+- N-11b (HELD): "Waits for the takeover with no timer on screen, then cuts or speeds up." Why no claim row: it is a file edit of the first phrase of the VIDEO-RUNSHEET.md line 33 column "what the owner does", held until the re-pin.
+- X-6a (PASTE): "recovery wording: no time or estimate is quoted; the recording shows no timer." Why no claim row: it is a file edit of PLAN-4-NLITE-FROM-LEAD.md line 194, same wording as B-056 for another place of the plan (decision 1).
+- X-6b (PASTE): "No recovery estimate is quoted, because nothing is measured at 45 s." Why no claim row: it is a file edit of VIDEO-RUNSHEET.md line 51 (decision 1).
+- X-6c (PASTE): "Decided (decision 1): no recovery estimate and no recovery number goes on the screen or on the card." Why no claim row: it is a file edit of VIDEO-RUNSHEET.md line 79 that settles an open question (decisions 1 and Q15).
+- S5-voice (HELD): "The CRM and the mailbox in this scene are test copies." Why no claim row: RW gives "no sentence today"; it is a new spoken sentence for scene 5.
+- N-4c (HELD): "An alert e-mail message goes to the person who receives the alerts." Why no claim row: it is a new spoken sentence for scene 9 (RW cites W-02), not a claim about a file.
+- N-2 (HELD): "the SMTP stand-in with .drop = 1; scene 10 shows a rehearsal screenshot of the table" Why no claim row: it is a file edit of the end of VIDEO-RUNSHEET.md line 13 (from "the SMTP stand-in" to the final full stop).
+- S5-a (HELD): "Stand-in CRM: a test copy of the customer list" Why no claim row: it is a screen tag on the CRM list pane, a label and not a claim.
+- S5-b (HELD): "Test mailbox: not a real mailbox" Why no claim row: it is a screen tag on the alert mailbox pane (scene 5) and the stand-in inbox pane (scene 9); it settles the open mail pane question C2 of SCENE-FLOW-MAP.md.
+
 ## Part 1: OWNER-STEPS (task a)
 - The file `OWNER-STEPS` that PLAN-4-NLITE-FROM-LEAD.md:130 and :176 point to (the plan writes `OWNER-STEPS-realrun.md` and "OWNER-STEPS v2/plans") does not exist under that name anywhere in `handover/`, in the egm copies, or in the trees of the 386 remote branches I searched cheaply (file-name search). Mentions only: PLAN-4 lines 53, 130, 153, 176; flows-audit/ORDERS.md:60; RULE-R456-WORK-CONDUCT.md:19.
 - UPDATE (lead message): a later version now exists in this checkout: `handover/flows-audit/inputs/OWNER-STEPS-realrun-v3.md` (193 lines, "Replaces OWNER-STEPS-realrun.md (v2, kept untouched as history)"). v2 itself is still not in the checkout. Its sentences are rows B-190 and later in Part 2.

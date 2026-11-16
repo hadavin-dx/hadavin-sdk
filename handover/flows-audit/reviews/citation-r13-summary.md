@@ -1,0 +1,5 @@
+# Citation check r13 summary (agent a7730ce), CLAIMS-TABLE Table 2 rows 41-77, 80-84
+Full report: reviews/citation-r13-claims-table2.md. Saved by flows-audit. Checker words unverified. 0 MISMATCH, 2 SOFT, 4 CANNOT-CHECK (rows 80-84 desk repo not in this checkout: docs/settings.md:120, run_real_check.py:903/:920, imap_count.py, smtp_provider.py:73; their quoted words at FAILED-TAKE-NOTE.md:6/:12 and PLAN-4:42/:45/:66 match). Primary cite matched in all 42 rows.
+SOFT row 54 (B-093): note says OWNER-STEPS-realrun-v3.md step 18 "now describes" end.flag; step 18 (lines 102-103) says only "type `end`"; no end.flag in file. PLAN-4-NLITE-FROM-LEAD.md:46 names end.flag. Fix: cite only PLAN-4:46 or soften.
+SOFT row 51 (B-045/B-046): why-cell says AGENT-SCOPE-DO-AND-DONT.md lines 14-16 treat qualify_stage.py as existing; those lines never name it. DECISION-one-store.md:9 names it. Fix: drop the AGENT-SCOPE part or cite DECISION-one-store.md:9.
+Note: the rows 80-84 desk cites stay CANNOT-CHECK (third-party repo not in checkout; needs lead or a checkout).
