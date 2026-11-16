@@ -1030,3 +1030,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 745 L4c r7: stale lines. FIXED by CURRENT r7; in-place edits TO DO.
 - 746 L5ac r7: glossary stack. FIXED by GLOSSARY r7.
 - 747 premortem r11: terms, risk count. FIXED by CURRENT r11.
+
+- 748 ARCHIVE-CUT-LIST r10: keep list, citing files. FIXED by VERDICT r11; citation search NOT DONE.
+- 749 L2c r11: env step prints values, definitions lost. FIXED by STEPS r12.
+- 750 M17 r8: HOLD not at top. FIXED by HOLD r8 (banner in place TO DO).

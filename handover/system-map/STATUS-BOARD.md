@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:39:09Z
-PUSHED_UTC: 2026-11-16T12:39:09Z
+UPDATED_UTC: 2026-11-16T12:39:30Z
+PUSHED_UTC: 2026-11-16T12:39:30Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
 CAPACITY nproc=4 load=0.06 0.11 0.15 RAM_MB used 913 of 16087 disk: 18G used, 21G free top disk by me: handover/system-map 4.7M
-NEXT: digested through 747. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+NEXT: digested through 750. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a156f068453ec4e7d | L2c r11 read | 2026-11-16T12:39:09Z | +2 min | running | nothing yet |
-| a4fe1bca515c1c5b1 | ARCHIVE-CUT-LIST r10 read | 2026-11-16T12:39:09Z | +2 min | running | nothing yet |
-| ae30f24fc00b52b19 | decision-list r11 read | 2026-11-16T12:39:09Z | +2 min | running | nothing yet |
-| a98a0d8a9f3252b73 | merged-findings r9 read | 2026-11-16T12:39:09Z | +2 min | running | nothing yet |
-| a9a2280cf39fbecc8 | M17 r8 read | 2026-11-16T12:39:09Z | +2 min | running | nothing yet |
-| NEW1 | BRIEF-LANE r12 read | 2026-11-16T12:39:09Z | +2 min | launching | nothing yet |
-| NEW2 | PLAN-002 r18 read | 2026-11-16T12:39:09Z | +2 min | launching | nothing yet |
-| NEW3 | L4c r8 read | 2026-11-16T12:39:09Z | +2 min | launching | nothing yet |
+| ae30f24fc00b52b19 | decision-list r11 read | 2026-11-16T12:39:30Z | +2 min | running | nothing yet |
+| a98a0d8a9f3252b73 | merged-findings r9 read | 2026-11-16T12:39:30Z | +2 min | running | nothing yet |
+| a247b86e1ecf3f1fc | BRIEF-LANE r12 read | 2026-11-16T12:39:30Z | +2 min | running | nothing yet |
+| a09ca75b9205323b6 | PLAN-002 r18 read | 2026-11-16T12:39:30Z | +2 min | running | nothing yet |
+| a07d051677dce213f | L4c r8 read | 2026-11-16T12:39:30Z | +2 min | running | nothing yet |
+| NEW1 | FINAL-CROSSCHECK r13 read | 2026-11-16T12:39:30Z | +2 min | launching | nothing yet |
+| NEW2 | end-delete-cases r11 read | 2026-11-16T12:39:30Z | +2 min | launching | nothing yet |
+| NEW3 | open-items-table r12 read | 2026-11-16T12:39:30Z | +2 min | launching | nothing yet |
 
-Running: 8 (launch results; ListAgents not re-run). Digests done through 747.
+Running: 8 (launch results; ListAgents not re-run). Digests done through 750.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
