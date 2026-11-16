@@ -37,3 +37,20 @@ H3 | owner named: system-map (ONE-PLACE-TABLE.md) | 2026-11-16T16:23Z
 24 | apply and remove the labels at v4.3, but only against the FINAL wording of rounds 36, 34, 35 (branches r37, r38, r39, being reviewed now); prepare the patch against the lane D lists now, mark each row with its round, and do not apply anything to v4.2 itself (v4.2 stays) | 2026-11-16T16:23Z
 25 | v4.2 section 3 is current: re-pin Tue 17 Nov, GO/NO-GO Tue 17 Nov 14:00 UTC, take and post Wed 18 Nov (post 15:00 UTC = 20:30 IST); critical-path-r2 describes only the LAST-RESORT window on Mon 23 Nov | 2026-11-16T16:23Z
 26 | other: diff the two copies, keep the newer by commit date, list the differences in decision-list-for-lead.md; the lead has not compared them | 2026-11-16T16:23Z
+
+## Batch 2 (lead, 2026-11-16T16:41:38Z). CORRECTION FIRST: my answers 3 and the facts line said "the take never deletes contacts". WRONG. Code read (take/nlite-int scripts/run_real_check_n8n.py, _archive_once, line 1038): after the owner types end the program ARCHIVES this take's made-up contacts in HubSpot (archive_all); any it cannot archive are listed "left behind: archive them in HubSpot by hand"; the printed clean-up list (cleanup_list) tells the owner to search take-<tag>-a, -b, -c (example.com) and delete them. Use this sentence on all ten held pages instead: "After you type end, the program archives this take's three made-up contacts in HubSpot (archived is not the same as erased: HubSpot keeps them for a time); any it could not archive are listed, and you archive or delete them by hand from the list it prints." Mark it UNVERIFIED until the test run in item 11. Replace "studio head" with "owner" after reading each line in context.
+1: v5 steps A-D = the owner's steps (the written yes, laptop settings, mailbox check, profile and filming check), before the start. v4.2 "Step D" (clean-up after) is a different list; reword v4.2 to avoid the clash.
+2: outside, plan latest start 17:30Z (23:00 IST). The program still ACCEPTS a start up to 17:40Z (its formula has no pause term); the lead's rule is 17:30Z so a 10-minute pause still ends before 18:29Z.
+3: comfort margin only. No later day exists on Mon 23 Nov; say so. Noon is not a promise of a rerun.
+4: bars only a failed take; rehearsals and recording-defect retakes are allowed (they send no new lead through the real take path only if the owner approves the new run yes).
+5: both. The program prints its own notice at every start (each start needs its own); the lead sends the owner a message at least 3 h before the start time named in it; sender: lead.
+6: typing 5 min (planning figure, rehearsal measures); teardown next morning with the owner's clean-up.
+7: owner chooses the day, inside the credit window; Thu 19 Nov is the default offer.
+8: asked owner (owner-only folder; no helper opens it). Until his yes: NOT CHECKED stays; digest lines hidden. The owner decides, no studio head.
+9: system-map applies all ten pages now on this written word, with the corrected sentence above; each page gets one more fresh read afterwards. Page-owner rules: lead pages and core-hardening pages are covered by this order.
+10: yes, replace (plain copy of the inputs copy, then re-run the diff).
+11: lead runs it in the loopback re-smoke (one made-up contact, then end), day: after the re-pin, Tue 17 Nov or Wed 18 Nov before the take; result in egm/duplicate-proof-lead-desk/wp6/ (file named by the lead). Pages say UNVERIFIED until then.
+12: ask core-hardening: the clean-up list prints search text take-<tag>-a, -b, -c with the example.com domain; where <tag> first appears on screen is not verified.
+13: not enforced. Code: after the verdict the program waits for the typed word end (2 tries; end of input also ends it); no timer, no alarm, never types end itself. The 10-minute limit is the owner's own clock alarm; no code change (RIGHT-SIZE).
+14: core-hardening edits step J (it owns the v5 sheet).
+15: lead fixes M-1 at the merge (qualify app.mf_leads in n8n_drive.py and the stale test); the read-only count role is separate and not planned for the take.
