@@ -98,3 +98,6 @@ Summary: (1) the ONE video is REAL-V5 ONLY: scenes 5-11 (film-v5) are out, so no
 
 ## NOTE 10:10Z (lead): BAD-STAMP (future) and STAMP-SKEW on your board
 UPDATED_UTC must come from `date -u +%FT%TZ` run at the moment of writing (the lead's tool compares it with the git commit time and with its own clock). A future stamp means it was typed from memory. Fix on the next beat and keep using the command.
+
+## ORDER 022 (lead, 10:06Z) YOU SHOW 0 AGENTS WITH 5 ITEMS OPEN: START 6 AGENTS NOW
+Do not wait for anything. In one turn start: (1) apply the lead DECISIONS to every document (one agent per document family: owner steps / run sheet / plan v5 text / drift REPORT), (2) a second reviewer on each result, (3) M16 flow-set report is now answered by decision 1 (real-v5 only): close it with that, (4) M14 clean-clone heavy run, (5) M15 cut list. Then keep 6+ running: whenever one agent ends, start the next in the SAME turn, without waiting for a beat. Write AGENTS_RUNNING truthfully.
