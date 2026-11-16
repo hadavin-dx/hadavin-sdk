@@ -72,7 +72,7 @@ for n, t in (('A', A), ('B', B), ('N', NOTE), ('O', OPEN)):                     
             fail('C55', '%s holds secret-shaped text (pattern %s)' % (n, p[:22]))
 need('C56', 'Silence minutes: 3   Give-up minutes: 40')                                                                  # Q15 Q16
 for n, t in SH:                                                                                                         # Q18: delete guard keeps its one domain
-    if t.count('@example.com') != 3: fail('C57', '%s has %d @example.com (expected 3)' % (n, t.count('@example.com')))
+    if t.count('@example.com') != 4: fail('C57', '%s has %d @example.com (expected 4: people line, R7 twice, prep contact)' % (n, t.count('@example.com')))
     if re.search(r'@example\.(?!com)', t): fail('C57', n + ' holds a different example domain')
 if 'program limit = 12.40 + 0.81 = 13.21' not in NOTE: fail('C58', 'note lacks the program limit sum')                  # Q20
 for m in re.finditer(r'(?<![\d.])13\.\d\d\b', NOTE + OPEN):
@@ -111,7 +111,7 @@ if not secret_hits('x ' + fake + ' y'): fail('C80', 'the secret scan misses a 47
 need('C81', 'for exactly these seven settings, `MODEL_NAME`, `TOKENS_IN`, `TOKENS_OUT`, `PRICE_IN_CENTS`, `PRICE_OUT_CENTS`, `CALL_CEILING`, `DEADLINE`')
 need('C81', 'first do 6.1 (Recording and the Privacy switches OFF')
 need('C82', 'has no `..` and no part starting with `.`'); need('C82', 'the key file name contains the run name and lies inside the Take folder of the message')
-need('C83', 'addresses starting `take-<run name>-` or `prep-` and ending `@example.com`')
+need('C83', 'addresses `take-<run name>-a@example.com`, `-b@` and `-c@` or `prep-<run name>@example.com`')
 need('C84', 'type `rm -- "<key file>"`'); need('C84', 'then `ls -l "<key file>"` in the read terminal must say no such file')
 need('C85', '"restarted" (6.6)'); need('C85', '"restarted" came after 6.6')
 need('C86', '7.11, always, by 16:00 UTC = 21:30 IST', (('B', B),)); need('C86', 'Not done by 16:00 UTC = 21:30 IST', (('B', B),))
@@ -145,3 +145,68 @@ for nm, t in SH:                                                                
     if names != {'demo-take'} or t.count('demo-take') < 3: fail('C103', '%s: Chrome profile names %s, demo-take x%d' % (nm, sorted(names), t.count('demo-take')))
 need('C104', 'the entry is the one with the exact name the numbers or clean-up message gives; no name known: describe, revoke nothing')   # how to identify the entry to revoke
 need('C104', 'whether it can be undone')                                                                                  # last-resort reversibility is stated
+
+# ---- Part 4 (v27): one check per finding of review-v26-stranger.md (T) and review-v26-security.md (S). Each fails on the built v26 sheets and passes on v27 (v27-fail-proof.py shows it).
+# Literals are written out here on purpose (not read from facts-v27.py).
+def pos(t, s): return t.find(s)
+need('C105', 'silence at the y question, before the film cue, in the film pause and while waiting for `end` is normal')                  # T BL1
+need('C105', 'counted only from your Enter on the start line until the notice, and from your challenge answer until you send "run started"')
+need('C106', '9. **Look key (after "go", before the earliest key time).**')                                                              # T BL2, S M4 of v26: words seen on a real cancel before the run key matters
+need('C106', 'write on the card the three words you see: cancel button, confirmation box (the button that really cancels) and cancelled word')
+need('C107', 'A button or box word that differs from the blank: press nothing, go to "If it fails".')                                  # T BL2: a differing word never makes the owner improvise
+need('C108', 'you see the real word at 5.9 and that word counts')                                                                        # T BL2: blanks come from what the owner saw
+ban('C108', r'word seen by the lead|seen by the lead')
+need('C108', 'Cancelled word: <sample word or unknown> (UNVERIFIED sample; you see the real word at 5.9)')
+need('C109', 'a new key can always be made; only a program that uses the older key would be hurt', (('A', A),))                         # T M2
+need('C110', 'the last resort applies (the older key may still spend)', (('A', A),))                                                     # T M3
+for nm, t in SH:                                                                                                                         # T M4: the key-save line is typed before the key exists
+    a = pos(t, 'Then in the test terminal type the printed line of 6.4'); b = pos(t, 'Only then press create')
+    if a < 0 or b < 0 or a > b: fail('C111', nm + ': the printed key-save line is not typed before the create press in 6.3')
+need('C111', 'it waits at the paste line and nothing is alive yet')
+need('C111', 'The printed line, with the key file path from the message (typed at 6.3):')
+need('C111', '(the fixed printed line of 6.4 is typed as printed; only its key file path is checked)')                                    # T M4 R6 exemption
+need('C112', 'a state word you cannot judge counts as valid')                                                                            # T M5
+need('C113', 'the lead names the model company when it confirms the run name'); need('C113', 'model company and account <name>')         # T M6
+need('C114', 'Windows Settings, System, Power & battery'); need('C114', 'Control Panel, Power Options')                                   # T M7
+need('C115', 'the sender Gmail only at 8.3, in this profile, never in your normal profile'); need('C115', 'sign that account in at `demo-take` for this step only')   # T M8
+need('C116', "open the key list address in your phone's browser, signed in, and describe whether it loads")                              # T M9
+need('C117', 'The last-resort step only stops spending (it never closes the account or removes other keys) and says whether it can be undone')   # T M10
+need('C118', '**Spend lock** = a lock that stops the model program making paid calls'); need('C118', '"NOT SHOWN" = nobody has shown it exists')   # T M11
+need('C119', '**"restarted"** = the lead\'s word that it started again and now reads the key file')                                     # T M12
+need('C120', '**submitted N times**'); need('C120', '**person id** = the made-up code'); need('C120', 'a printed line "unknown" for C is allowed')   # T M13
+need('C120', '**HubSpot app secrets** = secret values of the small HubSpot programs')
+need('C121', "your phone's clock (IST minus 5:30) is within 2 minutes of it"); need('C121', 'a difference of more than 2 minutes after converting the zones')   # T M14
+need('C122', 'say "filmed" and read both counts aloud'); need('C122', 'the counts the film person read aloud equal the expected counts')   # T M15
+for nm, t in SH:                                                                                                                         # T M16: prompt has one meaning each
+    need('C123', '**Shell prompt** = the line ending in `$`', ((nm, t),)); need('C123', '**The y question** = the line `Type y to start`', ((nm, t),)); need('C123', '**Paste line** = `paste key, Enter:`', ((nm, t),))
+    for m in re.finditer(r'(?<![Ss]hell )(?<!\*\*)prompt', t): fail('C123', '%s holds "prompt" without "shell" at %d' % (nm, m.start()))
+need('C124', 'none within the silence minutes: describe, FREEZE; no key is alive then')                                                  # T M17
+need('C125', 'Start only after the lead\'s word "post" (it means the lead has the printed result and the video is accepted)')           # T M18
+need('C126', 'A run that ended before 6.7: no cancel of it until the lead sends a new numbers message', (('A', A),))                     # T M19
+need('C127', '`ls -l`, `clear` and the grep of 5.7')                                                                                     # T m2
+need('C128', '"none" only at 8.1')                                                                                                       # T m4
+need('C129', 'Minimum think time: 20 seconds'); need('C129', 'Run length: 15 minutes')                                                   # S M2, S m10
+need('C130', '[[A:(its list L2 included, at 6.7)]]'.replace('[[A:', '').replace(']]', ''), (('A', A),)); need('C130', '(its list L2 included, and 7.11)', (('B', B),))   # T m14
+need('C131', 'copy a harmless word such as `clear`')                                                                                     # T m15
+need('C132', 'run `rm -f -- "<key file>"` (R6 shape check first; the file may not exist)')                                              # S m1
+need('C133', '(only names the clean-up message already listed)')                                                                         # S m5
+need('C134', 'revoke the apps the message names'); ban('C134', r'delete or revoke')                                                      # S m6
+need('C135', 'or `prep-<run name>@example.com`')                                                                                         # S m7
+need('C136', "host name only (the part before the first `/`; type it by hand)")                                                          # S m8
+need('C137', 'On every route, after your yes, do 7.11 before 8.1 if it is not done.', (('B', B),))                                       # S B1
+need('C137', '(on every route after your yes; 7.11 is named in "After the card", "If it fails", FREEZE and R1)', (('B', B),))
+need('C137', '(after your yes, 7.11 is still due by 16:00 UTC = 21:30 IST)', (('B', B),))
+need('C137', 'whatever way the run ended (finished, declined, time passed, key save failed, cancel failed, FREEZE, no `end`)', (('B', B),))
+need('C138', 'Four phone alarms', (('B', B),)); need('C138', 'alarm 4 at 16:00 UTC = 21:30 IST (do 7.11 now, whatever else is open)', (('B', B),))   # S B1 fourth alarm
+if 'alarm 4' in A: fail('C138', 'A holds the B-only fourth alarm')
+need('C139', 'The cancel-by time is before 16:00 UTC = 21:30 IST.', (('B', B),))                                                         # S B1 time order checked by the owner
+_ct = re.search(r'Cancel-by time: (\d\d):(\d\d) UTC', B); _ot = re.search(r'alarm 4 at (\d\d):(\d\d) UTC', B)
+if not _ct or not _ot or (int(_ct[1]) * 60 + int(_ct[2])) >= (int(_ot[1]) * 60 + int(_ot[2])): fail('C139', 'B: the cancel-by time is not before the older-key time (read from the text)')
+need('C140', 'Wait at least 20 seconds (the minimum think time of the message; the program refuses faster answers)'); ban('C140', r'Wait 10 seconds')   # S M2
+need('C141', 'Test program asks you to type a figure: no'); need('C141', 'a figure line that is not "no": no run')                          # S M3
+need('C142', 'this cancel cannot be undone.', (('B', B),)); need('C142', 'send its last-used time (a use after your run key\'s create time: describe it, still cancel)', (('B', B),))   # S M5
+need('C143', 'Model key outside the model program: none (the lead checked n8n\'s credential store and shows it)'); need('C143', 'a model key stored in n8n would spend without the spend lock')   # S M6
+need('C144', 'anything but `exit 0` and the shell prompt: FREEZE')                                                                       # S m2
+need('C145', 'put the Privacy switches back as 8.7 says')                                                                                # S m3
+need('C146', 'if the last-used time is under 7 days'.replace('if the last-used time is under 7 days', 'else no run today (describe it and wait: the lead sends a new numbers message with a later run day at least 8 days after that use'), (('A', A),))   # S M4: what happens when the 7-day rule fails
+need('C147', '5.1 to 5.8 may be done on earlier days, 5.9 and sections 6 to 8 only on the run day')                                      # T m10
