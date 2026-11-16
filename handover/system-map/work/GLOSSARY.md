@@ -14,7 +14,7 @@ The lead session gives orders to the system-map session (this one) through ORDER
 ## People and sessions (one table)
 | name | what it is | kind |
 |---|---|---|
-| lead session | the Claude session that gives the system-map session its orders (older pages write "the lead"; before: "the lead decides", after: "the lead session decides"; a sales contact is "lead record", never bare "lead"; it is not the studio lead; "lead" alone is banned for a session; for a sales contact write "lead record" or "lead id") | Claude session |
+| lead session | the Claude session that gives the system-map session its orders. Old pages say "the lead" or "the lead decides"; read that as lead session. New text must say "lead session" and never "lead" alone for a session. It is not the studio lead. For a sales contact write "lead record" or "lead id" | Claude session |
 | studio lead | the Claude session that does the technical steps on the take and messages the owner | Claude session |
 | core-hardening | a separate Claude session that owns V5 and the held pages | Claude session |
 | system-map session | this Claude session; it writes only inside handover/system-map/ | Claude session |
@@ -28,12 +28,13 @@ The lead session gives orders to the system-map session (this one) through ORDER
 | held pages | listed in the table "Held pages" below | pages this session only digests and never edits |
 | V5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md | the owner's step list A to J for the filmed run |
 | decisions of 16 Nov | inputs/DECISIONS-2026-11-16.md | 12 items; known second-hand only (the original is held by the lead session) (summary in STATUS-BOARD.md) |
-| one-store decision | DECISION-one-store (two copies: root file of 20 lines, inputs/DECISION-one-store.md of 28 lines) | where the demo keeps stored leads. The lead-intake demo = the demo that takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. Two copies exist (20 and 28 lines). Which one is current is open; the lead session has not answered. Until it does, cite both. "DECISION line N" means line N of that file |
-| OWNER-ONLY | work/OWNER-ONLY.txt (does not exist yet; until it exists, ask the lead session before opening any real-run file) | would list files only the owner opens; helpers never open them |
+| one-store decision | DECISION-one-store (two copies: root file of 20 lines, inputs/DECISION-one-store.md of 28 lines) | where the demo keeps stored leads. The lead-intake demo = the demo that takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. Which of the two copies is current: the lead session has not answered; cite both. "DECISION line N" means line N of that file |
+| OWNER-ONLY | work/OWNER-ONLY.txt (not created yet; until it exists, open no real-run file without the lead session's yes) | would list files only the owner opens; helpers never open them |
 | t19 pages | work/t19-*.md | pages about test T19 |
 | critical-path-r1 | work/critical-path-r1.md | when the first filmed take can happen |
 
-## Held pages (owner unconfirmed: core-hardening session or lead session; ask the lead session; this session writes a one-line digest of what each cold read found and does not edit them)
+## Held pages
+Owners are as recorded in the table but unconfirmed; ask the lead session. This session only writes a one-line digest of each cold read and never edits these pages.
 | page | owner |
 |---|---|
 | OWNER-VIEW.md | core-hardening session |
@@ -104,7 +105,6 @@ Each term has meaning not recorded in any file. What to do instead: write "term 
 | PLAN section 5.2 | L6.md, agent-reports-batch4.md |
 
 Job keys: STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (meanings not recorded; do not use). Claim types: dead, idle, ops (meanings not recorded; do not use). L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in work/not-checked-r2.md Terms.
-The one-store decision's source copy is also unknown (same asking rule).
 
 ## Lanes (one line each)
 L1, L2, L3, L4, L5 and L6 are the lane names (meaning taken from the lane pages' headings, not confirmed: L1 to L4 read the core-hardening files in four slices, L5 the flow files, L6 whether each part is needed). Each lane page (work/L<n>*.md) says in its own first lines what it covers; this glossary does not repeat that. L5a/L5b is an unconfirmed split of L5 (UNVERIFIED, from a hand-back); do not use it until confirmed.
