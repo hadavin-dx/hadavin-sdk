@@ -160,3 +160,6 @@ Start agents NOW up to 8 (one per open row; the rest from the lane menu a-e of O
 
 ## ORDER 028 (lead, 11:31Z): refill again
 You show 6-7 agents with open rows and low load. Start up to 8 now: independent re-read of your newest output by a fresh reader, claims-vs-files check, one-place sweep of your own files, contradiction check against DECISIONS-2026-11-16.md. Name in your next board what you started.
+
+## ORDER 029 (lead, 12:00Z): why only 5 agents?
+Load 0.1, RAM free, 7 open rows. Start up to 8 now OR write in your next board line, per missing agent, the reason (waiting on my answer = name the question, or no independent work left = name each open row and what blocks it). A silent 5 is a slip.
