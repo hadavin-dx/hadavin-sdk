@@ -1,5 +1,11 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## Status 2026-11-16 07:58 UTC / 13:28 IST - ORDER 006 read (parallel by default); ORDER 005 lanes running
+Container: 4 cores, load 0.02, 15 GB free of 16 GB (checked before launch). Agents running: 5 sonnet: R5-M1 and R5-M2 (Major sample vs source), R5-D (table owners, 4 decisions, bands), R5-Z (missed items, cut list), R5-C (naive reader: wording, counts, can the studio head decide). Closed: R5-B (20 of 20 Blocker facts CONFIRMED; severity: 5 distinct Blockers AGREE, 11 DISAGREE (Major), 1 Nit; saved in reviews-of-system-map/lane-R5-B.md), EV5, plan reviewers.
+Critical path: R5-M1/M2/D/Z reports -> egm-resolve (opus) -> REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md -> one fresh reviewer on my drafts -> FINAL. Independent work started this turn: R5-C. Next independent step when a lane returns: start the draft review of the finished lanes while the others run.
+| R5-C | comprehension: wording/counts/decidability of table and fix plan | 07:57 | 08:30 | - | running | save report |
+| R5-B | closed 07:57 (reported) | | | | CLOSED | none |
+
 ## Status 2026-11-16 07:57 UTC / 13:27 IST - ORDER 005: plan v2 done, 5 review lanes running
 Agents running: 5 sonnet (R5-B 20 Blockers, R5-M1 and R5-M2 Major sample, R5-D table owners/decisions/bands, R5-Z missed items/cut list). Closed: plan reviewers (NOT READY, 1+3 Blockers, 12 Majors; all fixed in PLAN-005 v2) and EV5. EV5 raw result: 56 of 56 Blocker citations and 209 of 209 citations of every 3rd Major exist on the exact line (shows the quotes exist, not that they support the claims); table counts match the claim (59 = 49+10, 7 Owner lines). Next: save lane reports, resolve, write REVIEW/CORRECTIONS/LEDGER-ROWS.
 
