@@ -1,0 +1,22 @@
+# Result review round 1, reviewer RV3 (egm-comprehension, naive reader). Saved by the lead from the hand-back (condensed, all findings kept).
+
+Not read by RV3: PLAN.md, everything in work/, AUDIT-FINDINGS.md, src/demos code, patches/C-01.md (named in CORRECTIONS.md; may not exist as a file). Read: REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md, the 5 patches, the wording rule.
+
+## Blockers (4)
+- B1. The lead cannot decide the open items (REVIEW.md:58) from the text: no options, cost or recommendation per decision (three severity changes, stage rename X-01, zero price for fake/local-model kinds, where audit reconcile runs, archive moves). Zero-price decision points to patches/C-01.md, which is not listed in the folder. X-01 only in a parenthesis. "Where reconcile runs" never framed.
+- B2. CORRECTIONS.md:2 "all 5 report checking file with no error" is unclear: no exact apply command, working folder or branch; "partial" patches (C-01, D2-11-12): apply or hold?
+- B3. C-01 patch rewrites limits.py:206-209 to limits.py:20-30 and also edits a sentence (audit line 106) so it now says "limits.py:20-30 ... do not exist" although those lines exist; same in the X-13 row. CORRECTIONS item 4 says "only this cite is re-placed" but the patch changes several places.
+- B4. LEDGER-ROWS severity column: rows CHR-SEV-04..07 say Nit for items REVIEW.md calls Major (too high). Column meaning (severity of the issue about the audit vs. severity of the audit finding) is never said; 17 Major rows OPEN with no reading of what the lead may close.
+
+## Majors (5)
+- M1. Terms used before explained: ids A/B/C/D1/D2/D3/X, Blocker/Major/Nit, verdict words (defined after use), WRONG/CONFIRMED/AGREES/TOO HIGH/UNVERIFIABLE vs UNVERIFIED (two words, one meaning?), tick, reconcile (two meanings: audit and approvals), outbox, parked, kind, rung, lane, G5/G2/enforce/hedge, V1..V6/H1/H2, ORDER 005, PLAN.md step 7, preamble rule 20, R-numbers, Q-A1, "the target", snapshot b4cce5b, spike, scripted model, sweep/stuck/checkpoint/purge_evidence.
+- M2. Two-way sentences: 24 lowered vs duplicates overlap; "Severity too low: none" (Nits not checked); "85 of 85 CONFIRMED" vs "X-15 only in part"; 15 cites past end of file but the list sums to 13 (9+1+2+1); 54 Majors vs 57 if the three lowered Blockers become Majors; D3-09=C-10 both in the 24?; two verifiers disagree on A-01-type rating without reason; "exit code 1 wrong in the likely case" has no source and B-01 patch says both 1 and 2; H1 called stage "dev" Blocker vs my Major unreconciled; bare line numbers of two kinds in CORRECTIONS:9; A-02 patch entry still says guarantee missing while rating it a false comment; "lead" means two people in ledger vs REVIEW.
+- M3. Numbers without a source command or unit: 473 rows, 183 without path:line, 113 rows, 211 suppression comments (suppression of what?), "70-plus PR numbers about 9", "six places hash with SHA-256", 12 tests, 9 kind modules; REVIEW.md:19 points to a round-2 description / REPORT.md in the folder that does not exist there.
+- M4. Not actionable: apply command; 24 Major severities given as ids only; item 1 (gate.py rewrite) overlaps patch A-02; item 2 has placeholder `<config bound>`; item 3 (A-01) has no fix text; item 7 cut list split across REVIEW.md:48 and CORRECTIONS item 7; who asks the owner for archive moves; no statement whether money/audit fixes need another independent round.
+- M5. Claims stronger than evidence: "85 of 85" is the verifiers' count, reviewer re-read only the 5 Blockers; verdict placed before the failures section; "verified-by: lead" though nothing was lead-verified; dry-run only shows the files were found, not that hunks matched on the real file.
+
+## Nits (12)
+N1 explain ORDER 005 once; N2 dense opening paragraph; N3 heading "(first)" appears after verdict; N4 round number not stated; N5 table cells 80-120 words; N6 ledger severity read as row importance; N7 use "the reviewer" not "me"; N8 near-identical patch names (C-01.patch vs target C-01-and-A-02.patch); N9 list what is missing from the partial C-01 cites patch; N10 reviews/review folder naming; N11 D2-11-12 patch evidence not in the text; N12 patch A-02 puts reviewer explanation inside the audit text without saying who wrote it.
+
+## RV3's suggested repairs
+Glossary at top; decision table (option, choice, cost); exact apply command and pasted output; fix C-01 sentence; fix counts (15 vs 13, 54 vs 57, 85 of 85 with partials); drop pointer to a REPORT.md in the folder; separate ledger severity meaning.
