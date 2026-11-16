@@ -1,0 +1,33 @@
+header says 29 parsed 29
+edit 1 occurs in original 1 in current 1 order ok True OK
+edit 2 occurs in original 1 in current 1 order ok True OK
+edit 3 occurs in original 1 in current 1 order ok True OK
+edit 4 occurs in original 1 in current 1 order ok True OK
+edit 5 occurs in original 1 in current 1 order ok True OK
+edit 6 occurs in original 1 in current 1 order ok True OK
+edit 7 occurs in original 1 in current 1 order ok True OK
+edit 8 occurs in original 1 in current 1 order ok True OK
+edit 9 occurs in original 1 in current 1 order ok True OK
+edit 10 occurs in original 1 in current 1 order ok True OK
+edit 11 occurs in original 1 in current 1 order ok True OK
+edit 12 occurs in original 1 in current 1 order ok True OK
+edit 13 occurs in original 1 in current 1 order ok True OK
+edit 14 occurs in original 1 in current 1 order ok True OK
+edit 15 occurs in original 1 in current 1 order ok True OK
+edit 16 occurs in original 1 in current 1 order ok True OK
+edit 17 occurs in original 1 in current 1 order ok True OK
+edit 18 occurs in original 1 in current 1 order ok True OK
+edit 19 occurs in original 1 in current 1 order ok True OK
+edit 20 occurs in original 1 in current 1 order ok True OK
+edit 21 occurs in original 1 in current 1 order ok True OK
+edit 22 occurs in original 1 in current 1 order ok True OK
+edit 23 occurs in original 1 in current 1 order ok True OK
+edit 24 occurs in original 1 in current 1 order ok True OK
+edit 25 occurs in original 1 in current 1 order ok True OK
+edit 26 occurs in original 1 in current 1 order ok True OK
+edit 27 occurs in original 1 in current 1 order ok True OK
+edit 28 occurs in original 1 in current 1 order ok True OK
+edit 29 occurs in original 1 in current 1 order ok True OK
+lines before 558 after 651 fails 0
+rc=0
+input sha256 (first 16): 67a0a195537de875, 558 lines; applied result 651 lines (scratch, not kept)

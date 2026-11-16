@@ -317,7 +317,7 @@ no grant, role or database beyond 1b.2; the real-v5 HubSpot node never runs (2.1
 
 ## Edit 26: plan line 493 (section 9 first bullet)
 Why: Say exactly what is proven and not proven; fix the garbled last sentence; correct the claim about the empty key.
-Status: VERIFIED by reading the plan's 1b.2 table (`lead_key text PRIMARY KEY`) and by running the Postgres rule on a scratch server on 2026-11-16 (`clean-start-test-output.txt` shows a primary key refuses NULL but a `''` key is a normal value: see the test note in edit 27); `mf-form.json:27` (copies `body.submission_id` unchecked) was read by an earlier agent and not re-read here; what the caller sees for an empty or missing id is UNVERIFIED (nothing run)
+Status: VERIFIED by reading the plan's 1b.2 table (`lead_key text PRIMARY KEY`) and by running the Postgres rule on a scratch server on 2026-11-16 (the last lines of `clean-start-test-output.txt`: on a scratch Postgres 16 server a `text PRIMARY KEY` refused NULL, accepted `''` once and refused a second `''`); `mf-form.json:27` (copies `body.submission_id` unchecked) was read by an earlier agent and not re-read here; what the caller sees for an empty or missing id is UNVERIFIED (nothing run)
 
 ~~~~old
 Real HubSpot (O1, O2), real Gmail SMTP/IMAP (O3-O5), a real model call and ledger (O9), real-v5 at run time; the take's own `N8N_HEALTH_URL` value (only grepped in 0.1).
