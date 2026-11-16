@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:45:45Z
+UPDATED_UTC: 2026-11-16T09:46:14Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
 PERCENT: 80
 AGENTS_RUNNING: 9
-CAPACITY: 4.76 load of 4 cores, mem 0/15 GB, disk free 28G, agents 9 (light+heavy per list)
+CAPACITY: 5.22 load of 4 cores, mem 0/15 GB, disk free 28G, agents 9 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: $env nodes, 2 webhooks without auth, 7 false-pass Majors (fixer running)
 F3: fixer done (14 mutants killed by its own run); independent rerun + fresh security review running; Python 3.9/3.10 never run (README says 3.9+)
 ROLES: script fixed by its own run (22 of 25 new tests fail on old; S3 credential check OFF by default, 14 failures with it on); independent rerun running; doc fixer running (8 Majors)
 claims: no fresh review of r3 yet (2 reviewers running); F-01 unreadable; 'the lead' wording left in pasted text
 F5: all Blockers/Majors fixed by r3 fixer but NOT reviewed since; N-8 start commands, ports, take-script switch UNCHECKED; 2 fresh reviewers running
-NEXT: collect F8, ROLES doc, ROLES evidence, claims x2, F3 x2, F5 x2
-PUSHED_UTC: 2026-11-16T09:45:45Z
+NEXT: collect 9 agents; load above 4 cores so no new lanes until some finish
+PUSHED_UTC: 2026-11-16T09:46:14Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
