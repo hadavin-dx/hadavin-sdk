@@ -1,5 +1,9 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## Status 2026-11-16 08:00 UTC / 13:30 IST - ORDER 005: 4 of 6 lanes saved, 2 running
+Agents running: 2 sonnet: R5-M1 (Major sample, SWEEP lines 35-200), R5-C (naive-reader check). Closed and saved in reviews-of-system-map/: R5-B (20 Blockers: facts CONFIRMED, 5 distinct Blockers keep severity, 11 should be Major, 1 Nit), R5-M2 (35 Majors: 0 whole-row WRONG, 17 Nit-level), R5-D (table: 8 Major, owners wrong for COUNTER Owner line and rows 005, 037, 042, 058; bands: row 1 not config-only, rows 15/16 inconsistent), R5-Z (18 findings; "nothing with a caller is archived" is false for 5 ARCHIVE rows; intake mail goes to a fixed internal address). My own re-reads of the tree (not agents) confirm: 4 flow files set saveDataSuccess and saveDataError to none (8 lines); mf-hook and mf-form have 10 of 12 nodes with identical parameters; mf-hook is imported by harness.py:26; intake mail toEmail intake@example.test; no authentication on the form webhook.
+CPU/memory: load 0.00, 15 GB free (checked 07:59). Critical path: R5-M1 report -> egm-resolve (opus) -> REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md. Independent step started now: merging the saved lanes into the draft (I do it while M1 and C run).
+
 ## Status 2026-11-16 07:58 UTC / 13:28 IST - ORDER 006 read (parallel by default); ORDER 005 lanes running
 Container: 4 cores, load 0.02, 15 GB free of 16 GB (checked before launch). Agents running: 5 sonnet: R5-M1 and R5-M2 (Major sample vs source), R5-D (table owners, 4 decisions, bands), R5-Z (missed items, cut list), R5-C (naive reader: wording, counts, can the studio head decide). Closed: R5-B (20 of 20 Blocker facts CONFIRMED; severity: 5 distinct Blockers AGREE, 11 DISAGREE (Major), 1 Nit; saved in reviews-of-system-map/lane-R5-B.md), EV5, plan reviewers.
 Critical path: R5-M1/M2/D/Z reports -> egm-resolve (opus) -> REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md -> one fresh reviewer on my drafts -> FINAL. Independent work started this turn: R5-C. Next independent step when a lane returns: start the draft review of the finished lanes while the others run.
@@ -16,8 +20,8 @@ Agent register for ORDER 005 (id | purpose | started UTC/IST | expected end | la
 | PR5-design, PR5-impl | plan review r1 | 07:53 | | 07:54 | CLOSED (reported; NOT READY, fixed in PLAN-005 v2) | none |
 | R5-B | codebase-details: 20 Blockers vs source | 07:56 / 13:26 | 08:36 | - | running | save report |
 | R5-M1, R5-M2 | codebase-details: Major sample halves | 07:56 | 08:36 | - | running | save reports |
-| R5-D | design: table owners, 4 decisions, bands | 07:56 | 08:36 | - | running | save report |
-| R5-Z | zoom-out: missed items, cut list | 07:56 | 08:36 | - | running | save report |
+| R5-D | design: table owners, 4 decisions, bands | 07:56 | 08:36 | 07:59 | CLOSED (reported; lane-R5-D.md) | merge |
+| R5-Z | zoom-out: missed items, cut list | 07:56 | 08:36 | 07:59 | CLOSED (reported; lane-R5-Z.md) | merge |
 
 ## FINAL 2026-11-16 07:43 UTC / 13:13 IST: ORDER 004 applied (Reading A), waiting for the lead
 Agents running: 0 (I started none for this order). No helper shells left.
