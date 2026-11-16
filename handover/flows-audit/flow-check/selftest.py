@@ -449,6 +449,8 @@ def main():
         def m_f008_form(j, d): j["settings"]["saveDataSuccessExecution"] = "none"
         def m_f008_rec(j, d): j["settings"]["saveDataSuccessExecution"] = "all"
         def m_f002_in_rec(j, d): j["nodes"].append(noop("KeyOk")); j["connections"][a_source(j)]["main"][0].append(link("KeyOk"))
+        def m_link_swap(j, d): j["connections"]["Claim"]["main"][1] = [link("ReplyBadKey")]
+        def m_struct(j, d): j["connections"]["Valid"]["main"].append([])
         KN = ("connection count", "node count", "orphan nodes", "unreachable from", "unexplained connection change", "F-002 ")
         P = [("patched_control", None, 0, "", "mf-form.json", ()),
              ("patched_wrong_code", lambda j, d: node(j, "ReplyBadKey")["parameters"]["options"].__setitem__("responseCode", 400), 1, "ReplyBadKey responseCode is 400 expected 422", "mf-form.json", ()),
@@ -462,6 +464,8 @@ def main():
              ("patched_f002_node_in_recovery_flow", m_f002_in_rec, 1, "F-002 node KeyOk must exist only in mf-form and mf-hook", "mf-recovery.json", ("unexplained added node",)),
              ("patched_f008_wrong_value_form", m_f008_form, 1, "F-008 saveDataSuccessExecution is 'none' expected 'all'", "mf-form.json", ()),
              ("patched_f008_wrong_value_recovery", m_f008_rec, 1, "F-008 saveDataSuccessExecution is 'all' expected 'none'", "mf-recovery.json", ("unexplained settings change",)),
+             ("patchonly_link_swapped", m_link_swap, 1, "F-002 link Claim out1", "mf-form.json", ()),
+             ("patchonly_connection_structure_changed", m_struct, 1, "F-002 connection structure of Valid", "mf-form.json", ()),
              ("diff_unexplained_added_node", m_added, 1, "unexplained added node Sneaky", "mf-form.json", ("WITHOUT respondToWebhook",)),
              ("diff_unexplained_removed_node", m_removed, 1, "unexplained removed node", "mf-form.json", ("dangling target", "connection source", "orphan", "WITHOUT respondToWebhook", "no respondToWebhook", "unexplained connection change")),
              ("diff_unexplained_changed_node", m_changed, 1, "unexplained change in node", "mf-form.json", ()),
@@ -471,7 +475,7 @@ def main():
             d, sk, _ = make(name, mut, work, PATCHED, which)
             exp = []
             for f, (nn, cc) in PCOUNTS.items(): exp += ["--expect", "%s=%d:%d" % (f, nn, cc)]
-            c = ["python3", "-I", CK, d, "--baseline", PRIS] + exp + ["--patch-checks", "F002,F008", "--diff-base", PRIS, "--allow", "F002,F008", "--quiet-info"]
+            c = ["python3", "-I", CK, d, "--baseline", PRIS] + exp + ["--patch-checks", "F002,F008", "--quiet-info"] + ([] if name.startswith("patchonly_") else ["--diff-base", PRIS, "--allow", "F002,F008"])   # patchonly_ cases run without the diff so only the patch-content check can catch them
             rc, out = run(c, name); fl = lines_of(out, "FAIL")
             good = "Traceback" not in out and rc == want and (want == 0 and not fl or any(text in l for l in fl) and all(text in l or any(k in l for k in KN + tuple(extra_kn)) for l in fl))
             report("%s (exit %d)" % (name, want), good, "rc=%d fails=%s" % (rc, [x[:90] for x in fl[:3]]))
