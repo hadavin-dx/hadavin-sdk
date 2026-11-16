@@ -1,17 +1,16 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
-## STATUS 06:59 UTC / 12:29 IST: ORDER 002 build phase starting. START SHA 3bf5ae299cebac78963780895af5c585cab8473c
-Done: plan v3.1 final (3 EGM rounds, round 3 = 0 Blockers). L0 done: tools + 52 machine tables + 44 diffs; tools/test_dump_nodes.py PASS 8/8; check_counts/check_secrets pass on the tree (check_counts correctly FAILs for missing lanes). Extra tool added after plan freeze: tools/assemble_lane.py (builders write judgement cells to lanes/<lane>.judge.jsonl, the script builds the lane table, so machine columns are never retyped). Allowlist additions: tools/assemble_lane.py, lanes/<lane>.judge.jsonl, lanes/<lane>.header.md, lanes/<lane>.findings.md.
-Admitted slips so far: plan said 54 flow files (truth 52); my first fixture test passed a mutant (equal fixtures) and check_secrets skipped a file with a name prefix: both found and fixed with evidence.
-Agents running: 6 language-model agents (sonnet builders, see register), 0 script lanes. Open: QUESTIONS.md Q1 (Tier B scope), no answer yet; proceeding as written.
+## STATUS 07:15 UTC / 12:45 IST: ORDER 002 result review running. Head a29e8a8 (+ note commit)
+Done: 6 builder lanes reported and were spot-checked (SetCrmId grep, alert columns per mf_leads.sql, saveData settings, 10-of-12 identical nodes, desk door URLs, v3==v4 schema). Merge written: FLOWS-AUDIT.md (52 files, 655 nodes, every node a row; check_counts PASS 52/655, check_names PASS 655 rows), FINDINGS.md (28 merged from 98 lane findings: 1 Blocker, 21 Major, 6 Nit), 4 patches (apply-check PASS), CUT-LIST, EXCEPTIONS, FIX-PLAN, LESSONS, LEDGER-ROWS. check_secrets PASS 0 hits; check_refs PASS 5087 refs.
+Failures and slips found by me: plan said 54 files (52); first masking test could not fail (fixed, mutant now fails); check_secrets skipped a prefix-named file (fixed); check_refs swallowed refs after "and" and could not resolve short names (fixed, probe now fails as expected). Builder counts off by one in one report (L2b-3: 6 vs 7 Majors; counted by lead).
+Not verified: everything needing n8n, HubSpot, SMTP, the desk repo or the lane3 raw files (UNVERIFIED in the findings). Patch F-002 behaviour in n8n untested; patches F-003/F-004 insert relayed numbers (60.1 to 61.9 s).
+Agents running: 4 language-model agents (1 evidence runner, 3 result reviewers: codebase-details, design, zoom-out), all sonnet, all started 07:15. 0 script lanes. Open decisions for the lead: F-001 severity raised to Blocker by me; owner items F-005..F-011, F-020, F-023, CUT-LIST yes.
 ## AGENT REGISTER (id | purpose | started UTC/IST | expected end | last checked | state | next)
-| L1 (abc27aedaacbaf16c) | real-v5 + film-v5 full tables, hunts | 06:59/12:29 | +60 min | 06:59 | reported, 3 claims spot-checked OK | checkpoint 30 min |
-| L2a (ab8d57b118be6e605) | table-screen-v2, desk doors, scripts inventory | 06:59/12:29 | +60 min | 06:59 | reported, door URL + demo-clean spot-checked | checkpoint |
-| L2b-1 (a1cf3a69d8895a4c8) | real family Tier B | 06:59/12:29 | +60 min | 06:59 | reported, spot-checked (SetCrmId grep, check_names PASS) | checkpoint |
-| L2b-2 (a00b41f23f1263f79) | film family Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
-| L2b-3 (a5f74ac38268fb2e4) | plain/v1/table-screen Tier B | 06:59/12:29 | +60 min | 06:59 | reported, schema diff spot-checked | checkpoint |
-| L3 (a67e3bbe8d590c17a) | claims + store table | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
-(plan reviewers P1d P1r P2d P2r P3d P3r: all closed)
+| EV1 (a57ea181769a9537f) | EVIDENCE RUNNER checks a-k into evidence-1.md | 07:15/12:45 | +10 min | 07:15 | running | read evidence-1.md |
+| RV-cb (a52c620d686a34950) | result review codebase-details | 07:15/12:45 | +15 min | 07:15 | running | save report to reviews/ |
+| RV-d (a737211799b7fc972) | result review design | 07:15/12:45 | +15 min | 07:15 | running | save report |
+| RV-z (a7518d3448ebfabf1) | result review zoom-out | 07:15/12:45 | +15 min | 07:15 | running | save report |
+Builders L1, L2a, L2b-1, L2b-2, L2b-3, L3: closed (reported, files read, no helper shells).
 
 ## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next
 Agents running: 0 language-model agents, 0 script lanes. Next: egm:egm-review-loop on PLAN-002.md.
