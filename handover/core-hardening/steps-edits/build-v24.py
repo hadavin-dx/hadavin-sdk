@@ -1,21 +1,37 @@
-"""Builds OWNER-SHEET-v24-A.md and OWNER-SHEET-v24-B.md from the one source OWNER-SHEET-v24-SOURCE.md.
-Keeps [[A: ...]] text for A and [[B: ...]] text for B, removes the other kind and all markers. Fails if any marker is left or if a variant is unbalanced.
-Usage: python3 build-v24.py [folder]  (default: this folder)"""
+"""Builds every v24 text from its source plus the one facts file (facts-v24.py), so no copy can drift:
+  OWNER-SHEET-v24-SOURCE.md  -> OWNER-SHEET-v24-A.md and OWNER-SHEET-v24-B.md (older-key kind A or B; the finished sheets hold no marker)
+  LEAD-RELEASE-NOTE-v8-SOURCE.md -> LEAD-RELEASE-NOTE-v8.md ;  v24-OPEN-FOR-LEAD-SOURCE.md -> v24-OPEN-FOR-LEAD.md
+Placeholders {{name}} come from facts-v24.py; an unknown placeholder, a marker left over or unbalanced markers stop the build.
+Usage: python3 build-v24.py [folder]"""
 import os, re, sys
 D = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__))
 if not D.endswith('/'): D += '/'
+ns = {}
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'facts-v24.py'), encoding='utf-8').read(), ns)
+FACTS = ns['F']
+def fill(s):
+    def r(m):
+        if m.group(1) not in FACTS: raise SystemExit('unknown placeholder {{%s}}' % m.group(1))
+        return FACTS[m.group(1)]
+    return re.sub(r'\{\{(\w+)\}\}', r, s)
 def variant(s, keep):
     drop = 'B' if keep == 'A' else 'A'
     s = re.sub(r'\[\[%s:.*?\]\]' % drop, '', s, flags=re.S)
-    return re.sub(r'\[\[%s:(.*?)\]\]' % keep, lambda m: m.group(1).strip(' ') if m.group(1).startswith(' ') else m.group(1), s, flags=re.S)
-src = open(D + 'OWNER-SHEET-v24-SOURCE.md', encoding='utf-8').read()
-assert src.count('[[') == src.count(']]'), 'unbalanced markers'
-for k in 'AB':
-    out = variant(src, k)
-    out = re.sub(r' +\n', '\n', out)
-    out = re.sub(r'  +(?=[.,;:)])', '', out)
-    out = out.replace('( ', '(')
-    assert '[[' not in out and ']]' not in out, 'marker left in ' + k
-    # the sheet title says which kind it is only in the file name, never in the text
-    open(D + 'OWNER-SHEET-v24-%s.md' % k, 'w', encoding='utf-8').write(out)
-    print(k, len(out.split()), 'words')
+    return re.sub(r'\[\[%s:\s?(.*?)\]\]' % keep, r'\1', s, flags=re.S)
+def tidy(o):
+    o = re.sub(r'[ \t]+\n', '\n', o); o = re.sub(r' {2,}(?=[.,;:)])', '', o); return o.replace('( ', '(')
+def build():
+    out = {}
+    src = open(D + 'OWNER-SHEET-v24-SOURCE.md', encoding='utf-8').read()
+    assert src.count('[[') == src.count(']]'), 'unbalanced markers'
+    for k in 'AB':
+        o = tidy(fill(variant(src, k)))
+        assert '[[' not in o and ']]' not in o and '{{' not in o, 'leftover in ' + k
+        out['OWNER-SHEET-v24-%s.md' % k] = o
+    for s, d in (('LEAD-RELEASE-NOTE-v8-SOURCE.md', 'LEAD-RELEASE-NOTE-v8.md'), ('v24-OPEN-FOR-LEAD-SOURCE.md', 'v24-OPEN-FOR-LEAD.md')):
+        if os.path.exists(D + s):
+            o = fill(open(D + s, encoding='utf-8').read()); assert '{{' not in o; out[d] = o
+    return out
+if __name__ == '__main__':
+    for n, o in build().items():
+        open(D + n, 'w', encoding='utf-8').write(o); print(n, len(o.split()), 'words')

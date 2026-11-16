@@ -33,7 +33,7 @@ F = {
  'balance': usd(BALANCE_C), 'need_s': str(NEED_S), 'need_min': '%.2f' % (NEED_S / 60), 'rl': str(RL), 'y': str(Y), 'fp': str(FP), 'mg': str(MG),
  'sum': str(Y + RL + FP), 'ceil': str(CEIL), 'tok_in': str(TOK_IN), 'tok_out': str(TOK_OUT), 'p_in': usd(P_IN_C), 'p_out': usd(P_OUT_C),
  'p_in_c': str(P_IN_C), 'p_out_c': str(P_OUT_C),
- 'day': 'Wed 18 Nov 2026', 'day_date': 'Wed Nov 18', 'dl': pair(DEADLINE), 'dl_day': 'Mon 23 Nov 2026', 'dl_iso': '2026-11-23T18:29:00Z', 'dl_sp': '2026-11-23 18:29 UTC',
+ 'day': DAY.strftime('%a %d %b %Y'), 'day_date': DAY.strftime('%a %b %d'), 'dl_full': '2026-11-23 ' + pair(DEADLINE), 'dl': pair(DEADLINE), 'dl_day': 'Mon 23 Nov 2026', 'dl_iso': '2026-11-23T18:29:00Z', 'dl_sp': '2026-11-23 18:29 UTC',
  'ek': pair(EK), 'ls': pair(LS), 'lf': pair(LF), 'cb': pair(CB), 'last': pair(LAST, True), 'cap': t(CAP), 'cap_x': '%d minutes' % (Y + RL + FP + MG + 10),
  'd23cb': pair(D23_CB), 'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST', 'ls_t': t(LS), 'lf_t': t(LF), 'cb_t': t(CB),
  'ps_t': '11:08:07', 'set_t': '11:06:55', 'key_t': '11:07:30',
