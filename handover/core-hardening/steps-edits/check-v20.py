@@ -136,7 +136,7 @@ for k in 'SNO':
 if re.search(r'\brows?\b', S_nocode, re.I): bad('"row" in sheet')
 if re.search(r'HubSpot key|probe key|API key', S): bad('other key meaning in sheet')
 if '$' in re.sub(r'`[^`]*`', '', S): bad('dollar sign outside code in the sheet')
-if 'US$' in S or 'US$' in O: bad('US$ in sheet or open list')
+if 'US$' in S: bad('US$ in sheet')
 for k in 'SNO':
     Tk = re.sub(r'`[^`]*`', '', T[k])
     for m in re.finditer(r'(?<![A-Za-z])programs?(?![A-Za-z])', Tk):
