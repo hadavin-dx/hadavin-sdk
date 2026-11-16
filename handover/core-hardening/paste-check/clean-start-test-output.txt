@@ -1,0 +1,33 @@
+WARNING:  terminating connection because of crash of another server process
+DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
+HINT:  In a moment you should be able to reconnect to the database and repeat your command.
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+connection to server was lost
+psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
+	Is the server running locally and accepting connections on that socket?
+psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
+	Is the server running locally and accepting connections on that socket?
+=== WRONG database (connected to n8n_db, expected take_db): must STOP, rows stay 4
+psql: error: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+psql rc=2
+psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
+	Is the server running locally and accepting connections on that socket?
+rows now: 
+=== export file cannot match (OUT=/dev/null): must STOP, rows stay 4
+psql: error: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+psql rc=2
+psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
+	Is the server running locally and accepting connections on that socket?
+rows now: 
+=== RIGHT database: export 4 rows, truncate, count 0
+psql: error: connection to server at "127.0.0.1", port 55432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+psql rc=2
+psql: error: connection to server on socket "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/pg7/.s.PGSQL.55432" failed: Connection refused
+	Is the server running locally and accepting connections on that socket?
+rows now: 
+--- export file (0 lines; the key with a line break is escaped on ONE line):
