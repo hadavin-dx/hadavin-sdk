@@ -1,3 +1,5 @@
+CURRENT (replaces 112-140 as the one reading; they are history). FD-001: rerun E9 (register.md:205) and B6c (register.md:217) from a fresh checkout of each row's commit; first `env | grep -E '^(AWS_|ANTHROPIC_)'` must print nothing; a rerun passes if its pass counts equal the original row; append the result as a new register row. Owner and due date: NOT SET (proposal: the lead, Tue 17 Nov 2026 12:00 UTC / 17:30 IST). 'Studio head' and 'studio lead' differ: the head runs the studio, the lead is the Claude session. register.md was not opened by the later lane; line 3's claim that all 403 lines were read is UNVERIFIED. 'Blockers: none' is stale.
+
 # Lane L2c
 
 Continuation of L2 for one file. Method note (honest): I read all 403 lines of the register in four slices (1-130, 131-265, 266-403, plus one short check). I ran ONE Bash command (wc and awk, read-only, to learn the line count and widest line: 403 lines, 1235 characters) although the lane brief says no Bash. Nothing was changed by it. Counts of "running" and "closed" lines come from the Grep tool. Everything about run results is copied from register text; none of it was re-run (UNVERIFIED at runtime).

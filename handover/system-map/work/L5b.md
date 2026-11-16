@@ -1,3 +1,5 @@
+CURRENT STATE (supersedes all below; 477-495 are history). Status PARTIAL. Job keys: LOG, RETRY, COUNTER, STORE, NOTICE, FILTER, OTHER. take = the filmed run; mf_leads = the table of leads (UNVERIFIED); stage.journal: meaning not recorded; DECISION line N: file not settled (see merged-findings.md line 1). The brief, Plan section 6, CORE row: meaning not recorded. File counts '92 files, 128 test_*.py' are wrong; FD-001 and FD-002 read as 'Lead (unconfirmed)'; FD-003 to FD-005 rest on undefined stores: unusable.
+
 # Lane L5b
 
 > LEGEND (added 16 Nov 2026): a lane = one read-only audit pass over a set of files, run by one agent (lane L1, L2 ... L6; not the parked group L of decision 3). A continuation lane (L1c ...) reads what the first lane left. READ = opened fully. SKIMMED = headers or grep or first and last slice. NOT-READ = not opened or only the top (draw no conclusion from it). OWNER-ONLY = never opened (work/OWNER-ONLY.txt). Scope: real-v5 scenes 1 to 4 (decision 1). Decisions = inputs/DECISIONS-2026-11-16.md. Owner and date of each continuation lane: the studio lead, in the lead's launch message (none named yet).

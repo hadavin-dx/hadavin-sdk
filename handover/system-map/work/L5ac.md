@@ -1,3 +1,5 @@
+Lane = one reader's slice of the files. PARTIAL = only some files read. NOT-READ = not opened. L5a-X-nnn = a row in work/L5a.md. Severities as in PLAN-002.md. Only the glossary at the top of this page applies; lines 106-123 are history. FD-008 is on line 89. FD-001 table (plant text, registry key, generator key): NOT BUILT.
+
 Glossary (the only one; lines 107-121 are history). Id kinds: C component, S store, W workflow, WK workflow step, X script, K credential, D document, T test, F folder, FD finding. Job keys: LOG written record, RETRY repeat after failure, COUNTER count of outcomes, STORE saved data, NOTICE text shown to a person, FILTER blocks bad input, OTHER none. UNVERIFIED = not checked by running or reading. A plant = a made-up database row holding hostile text. FD-001: whether the registry holds 'delete all orders' is NOT CHECKED. L6, P0t, heavy-slot rule, demo ledger, stage rename: meaning not recorded.
 
 # Lane L5ac

@@ -1,3 +1,5 @@
+Terms: studio head = the human who runs the studio; studio lead = the Claude session. Section names, not line numbers, are cited: 'In one minute' and section 8 are unreliable until decisions 1, 4, 10 and 12 are confirmed in writing by the studio head. Do nothing on those four until then. ORDER 014, flowcheck, T19, lease, planted-data check, laptop lead: undefined; rows using them are unreadable.
+
 Status: r15 (the last paragraph) is the only current one; lines 113-135 are history. Decisions 1, 4, 10 and 12 are proposed, not confirmed. Rows 1-19 and 33-39 rest on 86 broken cites: UNVERIFIED. ORDER 014, flowcheck, T19, lease, planted-data check, laptop lead: meaning not recorded; rows using them are unreadable until defined.
 
 # FINAL-CROSSCHECK (ORDER 014): the three audits against each other

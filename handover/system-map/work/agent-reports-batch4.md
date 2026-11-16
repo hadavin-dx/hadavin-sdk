@@ -1154,3 +1154,9 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 847 L4c r11: nine stacked, stale counts. FIXED by CURRENT STATE; row markers TO DO.
 - 848 end-delete-cases r15: wrong pointer. FIXED by block.
 - 849 L3c r11: glossary empty, cells contradict. PARTLY FIXED by GLOSSARY r12; cells TO DO.
+- 850 banned-claims r10: depends on voided lines. FIXED by block.
+- 851 L2c r15: 14 stacked, rerun owner unset. PARTLY FIXED by CURRENT; owner NOT SET.
+- 852 L5b r12: nine stacked. FIXED by CURRENT STATE; cells TO DO.
+- 853 FINAL-CROSSCHECK r17: stacked, terms. PARTLY FIXED by terms block.
+- 854 L5ac r10: glossary gaps. FIXED by terms; FD-001 table NOT BUILT.
+- 855 merged-findings r14: DECISION source conflict. UNRESOLVED; needs the lead.
