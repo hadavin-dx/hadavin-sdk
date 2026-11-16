@@ -1,4 +1,4 @@
-Status: resolved (headless, auto accept; fixes applied by the author, not by this skill)
+Status: PARTLY RESOLVED. Findings were accepted headless; some fixes are applied, others are marked 'Still to add' below. Round 2 is pending. In this page: OS = OWNER-STEPS numbered steps, D-04/S-01 = items in drift/REPORT.md, take = the one filmed run, lead = the Claude session giving orders.
 
 # Goldfish Annotated Review Report, OWNER-VIEW.md round 1
 

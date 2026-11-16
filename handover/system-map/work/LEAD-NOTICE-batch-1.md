@@ -4,11 +4,17 @@
 3. DECISION NEEDED: ten pages (the owner's cards, the lead pages and the maps; names below) are on hold because you or core-hardening (a separate Claude session) own them: OWNER-VIEW, OWNER-RUN-DAY-CARD, OWNER-CLEANUP-CARD, LEAD-PAGE, TAKE-BLOCKERS, SWEEP, MASTER-MAP, README, QUESTIONS, QUEUE. Reader findings about them (summaries) are in work/agent-reports-batch4.md and are not yet applied. These pages still say the `end` command deletes contacts. Whether it does is not confirmed either way (decisions/M17-end-never-deletes.md is a draft that says `end` never deletes; nobody has confirmed it). (`end` = the word the owner types to close the film pause; contacts = the three made-up HubSpot entries the take creates.) If the pages stay on hold, owners read text that may wrongly say contacts are deleted. Reply `3 | apply | date` to change only the sentence that says `end` deletes contacts, on all ten pages (core-hardening confirms for the pages it owns). If applied, the pages get reworded and need one more read. My recommendation: apply, because the wrong sentence is the more dangerous one. If applied, each page's 'end deletes contacts' sentence is replaced by 'it is not yet confirmed whether end deletes contacts'. Question: keep the pages on hold, or apply the findings and reword?
 4. QUESTIONS (question | for whom | why needed):
    (Short meanings: L4c = the helper that read the seven files; A4 = item A4 of work/decision-list-for-lead.md; row 2a = a row of work/critical-path-r1.md; decision 6 = the take uses its own free port; core-hardening = the separate Claude session that owns V5 and the held pages. Answer the rows marked "you"; forward the rows marked "studio head" and write `4.<row> | asked studio head | date`; one line per row in work/LEAD-ANSWERS.md. Meanings, all NOT RECORDED in any file except where stated: take port = the free port the take uses (decision 6); A4 = item A4 of work/decision-list-for-lead.md, "does run (a) start today"; row 2a = a row of work/critical-path-r1.md; post checker = the person who checks the post before it goes out; rehearsal passed = the pass rule, NOT SET; laptop lead = the person who runs the first laptop rehearsal.)
-   - who writes fill_flows.py and scripts/n8n_api.py | you | the flows cannot be filled or imported without them
-   - the take port | you | the take needs its own free port (decision 6)
-   - the names of the two Postgres databases | you | the stored-leads check needs them
-   - name of the post checker | studio head | the post must be checked by a second person
-   - the A4 answer | studio head | row 2a of the critical path waits on it
-   - the rule for "rehearsal passed" | you | no pass message can be sent without it
-   - who the "laptop lead" is | you | the first laptop rehearsal needs a named person
-5. FOR YOUR PAGES: reader findings on ONE-PLACE-TABLE.md (digest 1580) and FINAL-CROSSCHECK.md (digests 1582 and 1588) are in work/agent-reports-batch4.md. This session does not edit those pages. Reply `5 | seen | date`.
+   4.1 who writes fill_flows.py and scripts/n8n_api.py | you | the flows cannot be filled or imported without them
+   4.2 the take port | you | the take needs its own free port (decision 6)
+   4.3 the names of the two Postgres databases | you | the stored-leads check needs them
+   4.4 name of the post checker | studio head | the post must be checked by a second person
+   4.5 the A4 answer | studio head | row 2a of the critical path waits on it
+   4.6 the rule for "rehearsal passed" | you | no pass message can be sent without it
+   4.7 who the "laptop lead" is | you | the first laptop rehearsal needs a named person
+5. FOR YOUR PAGES: reader findings on ONE-PLACE-TABLE.md (digest 1580) and FINAL-CROSSCHECK.md (digests 1582 and 1588) are in work/agent-reports-batch4.md. This session does not edit those pages. Reply `5 | seen | date`. Answer the questions as `4.1 | answer`, `4.2 | answer` and so on (4.1 to 4.7, in the order listed). Channel: write your answers in work/LEAD-ANSWERS.md (the studio head is a person; this session cannot reach them, so please relay the two questions marked studio head: 4.4 and 4.5). Written 16 Nov 2026 16:00Z / 21:30 IST.
+
+## Findings on held pages (added 2026-11-16, from readers 2014, 2016, 2018)
+Held pages are not edited by me. Each needs the owner of the page to fix:
+- decisions/D04-D05.md: D-04 allows one sentence but D-05 blocks it "as it stands"; say which governs and what is posted if the test fails. The ask names no person and no deadline. DM, E, E2, PL:100, decision 10 and 12, "two doors" are undefined.
+- FINAL-CROSSCHECK.md: seven status blocks r7-r15 void each other; keep one. ORDER 014, flowcheck, T19, lease and laptop lead are used but undefined. The cut-list counts rest on broken cites, so no yes should be asked until they are re-checked. "8 contradict" does not match the 11 rows.
+- ONE-PLACE-TABLE.md: line 76 (COUNTER owner) is garbled; EX ids and L6-EX-11 are not defined; line 133 verdict NOT-NEEDED contradicts its own definition; line 92 contradicts itself; files are named without paths.
