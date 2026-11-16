@@ -17,12 +17,15 @@ Each case copies a pristine folder, plants ONE defect, runs the checker, and req
 Expected node and connection counts are recomputed from the mutated file so a count mismatch is not a knock-on, except in the case that tests it.
 Generic cases run on 4 real files and 1 film file; cases that cannot apply to a file are printed as skipped."""
 
+import contextlib
+import importlib.util
+import io
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
+import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CK = os.environ.get("FC_CK") or HERE + "/check_flows.py"
@@ -365,7 +368,7 @@ def g_nonlist_nodes(j, d):
 
 
 def g_parse(j, d):
-    open(d + "/" + FOCUS, "w").write("{bad")
+    wt(d + "/" + FOCUS, "{bad")
     return False
 
 
@@ -1320,13 +1323,47 @@ def count(j):
         return None
 
 
+# every way the checker's own code could raise on a malformed file; such a crash is recorded as a Traceback in the output
+CRASHES = (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError, RecursionError)
+
+
+def rj(p):
+    with open(p, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def wj(p, obj, **kw):
+    with open(p, "w", encoding="utf-8") as fh:
+        json.dump(obj, fh, **kw)
+
+
+def wt(p, text):
+    with open(p, "w", encoding="utf-8") as fh:
+        fh.write(text)
+
+
+def rt(p):
+    with open(p, encoding="utf-8") as fh:
+        return fh.read()
+
+
 def run(c, name):
-    r = subprocess.run(c, capture_output=True, text=True)
-    out = r.stdout + r.stderr
-    open(f"{OUT}/{name}.out", "w").write(
-        "$ " + " ".join(c) + "\n" + out + "exit=%d\n" % r.returncode
-    )
-    return r.returncode, out
+    """Run the checker (a fresh copy of the module, so no state carries over) on the command line c[3:]; c[:3] is the old subprocess prefix."""
+    spec = importlib.util.spec_from_file_location("fc_checker", CK)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+        try:
+            rc = mod.main(c[3:])
+        except SystemExit as e:
+            rc = e.code if isinstance(e.code, int) else 1
+        except CRASHES:
+            buf.write(traceback.format_exc())
+            rc = 70
+    out = buf.getvalue()
+    wt(f"{OUT}/{name}.out", "$ " + " ".join(c) + "\n" + out + f"exit={rc}\n")
+    return rc, out
 
 
 def make(name, mut, work, src, which, keep_counts=False):
