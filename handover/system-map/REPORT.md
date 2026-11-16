@@ -24,7 +24,7 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L4c | continuation of L4: READ the 137 NOT-READ report/review files | 06:58 | +45 min | closed (reported: PARTIAL, 38 READ, 99 NOT-READ, ran out of context; 26 findings, 3 Blocker candidates; no 2nd continuation, see SWEEP exceptions) |
 | LANE-L2c | continuation of L2: read demo3/register.md fully (1 file) | 07:01 | +30 min | closed (reported: register.md read fully, 15 findings, 1 Blocker candidate) |
 | LANE-L3c | continuation of L3: READ 158 review/resolve/lint reports and partly-read scripts | 07:01 | +45 min | running |
-| LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | running |
+| LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | closed (reported: 8 of 8 READ, 13 findings, 0 Blocker) |
 | LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | running |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
