@@ -1,0 +1,85 @@
+{\"password\": \"VqHs7LwKp3ZrNd9XcYej001Q\"}
+{\"api_key\":\"VqHs7LwKp3ZrNd9XcYej002Q\", "x":1}
+"{\"token\": \"VqHs7LwKp3ZrNd9XcYej003Q\"}"
+{"pass\u0077ord": "VqHs7LwKp3ZrNd9XcYej004Q"}
+{"\u0070assword":"VqHs7LwKp3ZrNd9XcYej005Q"}
+{"\u0061pi_key": "VqHs7LwKp3ZrNd9XcYej006Q"}
+mysql -u root -pVqHs7LwKp3ZrNd9XcYej007Q -h localhost
+mysql -h db -u root -p VqHs7LwKp3ZrNd9XcYej008Q mydb
+mysql --password=VqHs7LwKp3ZrNd9XcYej009Q -u r
+mysql --password VqHs7LwKp3ZrNd9XcYej010Q -u r
+sshpass -p VqHs7LwKp3ZrNd9XcYej011Q ssh host
+cd /x && mysql -u a -pVqHs7LwKp3ZrNd9XcYej012Q
+ls; mysql -u a -pVqHs7LwKp3ZrNd9XcYej013Q
+cat f | mysql -u a -pVqHs7LwKp3ZrNd9XcYej014Q
+(mysql -u a -pVqHs7LwKp3ZrNd9XcYej015Q)
+X=1 mysql -u a -pVqHs7LwKp3ZrNd9XcYej016Q
+/usr/bin/mysql -u a -pVqHs7LwKp3ZrNd9XcYej017Q db
+echo $(mysql -u a -pVqHs7LwKp3ZrNd9XcYej018Q)
+mysql -u a -p'VqHs7LwKp3ZrNd9XcYej019Q with space' db
+mysql -u a -p"VqHs7LwKp3ZrNd9XcYej020Q two words" db
+  mysql \
+    -p VqHs7LwKp3ZrNd9XcYej021Q \
+    db
+DBPASS=VqHs7LwKp3ZrNd9XcYej022Q
+ROOTPW=VqHs7LwKp3ZrNd9XcYej023Q
+requirepass VqHs7LwKp3ZrNd9XcYej024Q
+requirepass=VqHs7LwKp3ZrNd9XcYej025Q
+masterauth VqHs7LwKp3ZrNd9XcYej026Q
+jsessionid=VqHs7LwKp3ZrNd9XcYej027Q
+<password>VqHs7LwKp3ZrNd9XcYej028Q</password>
+<apiKey>VqHs7LwKp3ZrNd9XcYej029Q</apiKey>
+<secret> VqHs7LwKp3ZrNd9XcYej030Q </secret>
+password := VqHs7LwKp3ZrNd9XcYej031Q
+db_password:=VqHs7LwKp3ZrNd9XcYej032Q
+token := 'VqHs7LwKp3ZrNd9XcYej033Q'
+api_key:= "VqHs7LwKp3ZrNd9XcYej034Q"
+CREATE USER x IDENTIFIED BY 'VqHs7LwKp3ZrNd9XcYej035Q';
+ALTER USER x IDENTIFIED BY VqHs7LwKp3ZrNd9XcYej036Q;
+identified   by  "VqHs7LwKp3ZrNd9XcYej037Q"
+GRANT ALL TO u IDENTIFIED WITH mysql_native_password BY 'VqHs7LwKp3ZrNd9XcYej038Q'
+https://alice:VqHs7LwKp3ZrNd9XcYej039Q@example.test/path
+postgres://bobby:VqHs7LwKp3ZrNd9XcYej040Q@db.internal:5432/x
+//carol:VqHs7LwKp3ZrNd9XcYej041Q@host/path
+ftp://dave:VqHs7LwKp3ZrNd9XcYej042Q@h
+dave:VqHs7LwKp3ZrNd9XcYej043Q@host.example.test
+user:VqHs7LwKp3ZrNd9XcYej044Q@host:22
+git clone https://tok:VqHs7LwKp3ZrNd9XcYej045Q@git.example.test/r.git
+https://ghuser:VqHs7LwKp3ZrNd9XcYej046Q%40x@host/
+Authorization: Bearer VqHs7LwKp3ZrNd9XcYej047Q
+authorization: bearer VqHs7LwKp3ZrNd9XcYej048Q$!#x
+Authorization: Basic VqHs7LwKp3ZrNd9XcYej049Q
+curl -H 'Authorization: Bearer VqHs7LwKp3ZrNd9XcYej050Q' u
+git config http.extraheader 'AUTHORIZATION: bearer VqHs7LwKp3ZrNd9XcYej051Q'
+git config --global url.https://u:VqHs7LwKp3ZrNd9XcYej052Q@h/.insteadOf x
+git -c credential.helper='store --file=VqHs7LwKp3ZrNd9XcYej053Q' x
+[credential]
+  helper = !f() { echo password=VqHs7LwKp3ZrNd9XcYej054Q; }; f
+[http]
+	extraHeader = Authorization: Bearer VqHs7LwKp3ZrNd9XcYej055Q
+[url "https://u:VqHs7LwKp3ZrNd9XcYej056Q@h/"]
+	insteadOf = x
+echo VqHs7LwKp3ZrNd9XcYej057Q | sudo -S ls
+echo VqHs7LwKp3ZrNd9XcYej058Q | kinit user
+echo VqHs7LwKp3ZrNd9XcYej059Q | ssh-add
+secret_key: VqHs7LwKp3ZrNd9XcYej060Q
+client_secret = "VqHs7LwKp3ZrNd9XcYej061Q"
+AWS_SECRET_ACCESS_KEY=VqHs7LwKp3ZrNd9XcYej062Q
+export PASSWORD='VqHs7LwKp3ZrNd9XcYej063Q'
+password == "VqHs7LwKp3ZrNd9XcYej064Q"
+{'password': 'VqHs7LwKp3ZrNd9XcYej065Q'}
+password: [VqHs7LwKp3ZrNd9XcYej066Q, other]
+password="VqHs7LwKp3ZrNd9XcYej067Q" next=1
+passwd=VqHs7LwKp3ZrNd9XcYej068Q;other=1
+pwd=VqHs7LwKp3ZrNd9XcYej069Q
+PRIVATE_KEY=VqHs7LwKp3ZrNd9XcYej070Q
+x-api-key: VqHs7LwKp3ZrNd9XcYej071Q
+apikey=VqHs7LwKp3ZrNd9XcYej072Q&b=1
+?token=VqHs7LwKp3ZrNd9XcYej073Q&x=1
+key = VqHs7LwKp3ZrNd9XcYej074Q
+password	VqHs7LwKp3ZrNd9XcYej075Q
+password : VqHs7LwKp3ZrNd9XcYej076Q # comment
+set password for u = 'VqHs7LwKp3ZrNd9XcYej077Q'
+--password 'VqHs7LwKp3ZrNd9XcYej078Q'
+--token=VqHs7LwKp3ZrNd9XcYej079Q
+-H "X-Auth-Token: VqHs7LwKp3ZrNd9XcYej080Q"
