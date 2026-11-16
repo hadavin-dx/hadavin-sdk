@@ -1,8 +1,8 @@
 # Glossary for the system-map pages (live text; no amendment paragraphs live here)
-Three different things, never mixed: lead session = the Claude session that gives orders to the system-map session; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; owner = the human at the laptop (older pages also say studio head). Two copies of a file: quote both side by side and say current copy unknown.
+Three different things, never mixed: lead session = the Claude session that gives orders to the system-map session; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; owner = the human at the laptop (older pages also say studio head). The word "lead" alone is never used for a session in new text; for a sales contact write "lead record" or "lead id". Two copies of a file: quote both side by side and say current copy unknown.
 This glossary serves the pages in handover/system-map/. They map what the lead-intake demo needs before one filmed run (the take) can happen, for the studio lead (a Claude session) and the owner (the human).
 What the demo does: the lead-intake demo takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. The take is the filmed run that shows one claim: a lead sent twice with the same id is processed once.
-More terms: V5 = the run sheet of the version real-v5 (its location is not recorded). Held pages = pages another session owns; the system-map session reads them but never edits them (list in ORDERS.md). Digest = my one-line note of a helper agent's report, in work/agent-reports-batch4.md. Cold read = a helper agent that reads one page with no other context and lists what it cannot follow. Real-run file = a file from a run on real accounts; no helper opens one (the OWNER-ONLY gate). UNVERIFIED (from a hand-back) = a helper agent said it, and nobody has checked the file. T19 = see work/t19-terms.md. D-04 = the question about the post wording in work/decision-list-for-lead.md.
+More terms: V5 = see the Files table below (one definition there). Held pages = pages another session owns; the system-map session reads them but never edits them (list in ORDERS.md). Digest = my one-line note of a helper agent's report, in work/agent-reports-batch4.md. Cold read = a helper agent that reads one page with no other context and lists what it cannot follow. Real-run file = a file from a run on real accounts; no helper opens one (the OWNER-ONLY gate). UNVERIFIED (from a hand-back) = a helper agent said it, and nobody has checked the file. T19 = see work/t19-terms.md. D-04 = see "Words used on the pages" below (one definition there).
 Written Mon 16 Nov 2026 by the system-map session.
 
 ## Rules for writing pages
@@ -29,7 +29,7 @@ The lead session gives orders to the system-map session (this one) through ORDER
 | name | path | what it holds |
 |---|---|---|
 | held pages | listed in the table "Held pages" below | pages this session only digests and never edits |
-| V5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md | the owner's step list A to J for the filmed run |
+| V5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md | the owner's step list A to J for the filmed run of the version called real-v5. Defined here only; other pages say "V5 (see work/GLOSSARY.md)" |
 | decisions of 16 Nov | inputs/DECISIONS-2026-11-16.md | 12 items; known second-hand only (the original is held by the lead session) (summary in STATUS-BOARD.md) |
 | one-store decision | DECISION-one-store (two copies: root file of 20 lines, inputs/DECISION-one-store.md of 28 lines) | where the demo keeps stored leads. The lead-intake demo = the demo that takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. Which of the two copies is current: the lead session has not answered; cite both. "DECISION line N" means line N of that file |
 | OWNER-ONLY | work/OWNER-ONLY.txt (not created yet; until it exists, open no real-run file without the lead session's yes) | would list files only the owner opens; helpers never open them |
@@ -58,13 +58,14 @@ Owners are as recorded in the table but unconfirmed; ask the lead session. This 
 ## Words used on the pages (one definition each)
 - **take**: one recorded run of the lead-intake demo on made-up data. The one claim it makes: "a lead sent twice with the same id is processed once". Say "take" only for the filmed run, not for preparation.
 - **lead record**: one made-up sales contact. **lead id**: that record's id. **HubSpot**: the sales-contact tool the demo writes contacts to. **n8n**: the tool that runs the demo steps.
-- **T19**: the test that sends the same made-up lead twice and expects one mail, one HubSpot write and one stored row in the demo's database (which store: see work/t19-gap-facts.md "Purpose"). Not run yet.
+- **T19**: the test that sends the same made-up lead record twice and expects one mail, one HubSpot write and one stored row in the demo's database (which store: see work/t19-gap-facts.md "Purpose"). Not run yet.
 - **row N**: row N of the table on that page, unless the page writes "TAKE-BLOCKERS row N".
 - **READ / SKIMMED / NOT-READ / OWNER-ONLY-FILE** (a read status of a file, not the file itself): READ = a lane opened all of it. SKIMMED = it opened part. NOT-READ = it opened none, so it says nothing about the file. OWNER-ONLY-FILE = it did not open the file because only the owner may.
 - **UNVERIFIED**: stated, not checked against a file or command output. **NOT VISIBLE**: the lane could not see it. **NOT FOUND**: searched, not present. **NOT SET / TO DO**: nobody has filled it in.
 - **Severity** in a finding row: the lane's own label; the lead session has confirmed none.
 
-D-04 is not unknown: it is the rule that a lead record sent twice is processed once (decision-list-for-lead.md, Reading notes).
+- **D-04**: one row id, defined in drift/REPORT.md (table row D-04): the public post would say more than the written decisions and the evidence allow. The question to the lead session about it is row D-04 in work/decision-list-for-lead.md. The one wording that is allowed is "a lead sent twice with the same id is processed once" (ORDERS.md, lead session answer of 13:08 UTC). D-04 is not a rule about processing and not a test; any older page that uses it for something else is wrong. D-04 blocks the post, not the take.
+- **laptop lead**: used on SWEEP.md and ONE-PLACE-TABLE.md for the one who gave the written work order (ORDERS.md) to this session. That matches "lead session", but no file says so; in new text write "lead session". Meaning of "laptop lead" itself: not confirmed.
 
 ## Terms with no recorded meaning
 Rule: never use these terms in new text. If an older page uses one, write "term (undefined)" and do not guess; mf_leads may be written "stored-leads table (name unconfirmed)". Rows marked "no live page" need no action. "Pages" = up to three pages that use the term now (found by search on 16 Nov).
