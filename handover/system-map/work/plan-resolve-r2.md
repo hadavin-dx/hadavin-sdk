@@ -1,4 +1,4 @@
-Status: resolved
+Status: fixes applied to PLAN-002 (now v3); v3 is not yet reviewed; two scripts (tools/partition.py change, tools/scan_outputs.py) are still to be written. Target: work/PLAN-002.md. Findings: work/plan-review-r2.md. Verdict words: PROPOSE FIX = fix is valid and applied; CONTEST = finding rejected with evidence; ESCALATE = needs a fact from the lead; DECLINE = Nit, no fix.
 # egm:egm-resolve report, PLAN-002 round 2 (opus 5.5; headless AUTO ACCEPT per order)
 Target: PLAN-002.md rewritten to version 3. Findings: work/plan-review-r2.md.
 Counts: PROPOSE FIX applied 10 of 10 Blocker/Major (B1, B2, M1-M8); Nits applied 3 (N1 size guides dropped, N2 L5 split and PARTIAL expectation stated, N3 TAKE-REPO and CORE rows defined once in section 2); CONTEST 0; ESCALATE 0; DECLINE 0; unaddressed 0.

@@ -1,6 +1,6 @@
 # Goldfish Annotated Review Report (result review round 1, resolve)
 
-Status: resolved (headless auto accept; the lead of the session applies the edits to tools/write_outputs.py and regenerates)
+Status: decisions made (31 accepted, 2 contested, 3 escalated); the edits are NOT yet applied. Target: tools/write_outputs.py output (SWEEP.md and ONE-PLACE-TABLE.md). Verdict words: PROPOSE FIX = fix is valid; CONTEST = finding rejected with evidence; ESCALATE = needs a fact from the lead; DECLINE = Nit, no fix.
 
 **Target:** `handover/system-map/tools/write_outputs.py` (full file; generates SWEEP.md and ONE-PLACE-TABLE.md)
 **Findings source:** `handover/system-map/work/result-review-r1.md` (reviewers: CD codebase-details, ZO zoom-out, CO comprehension, DE design)
