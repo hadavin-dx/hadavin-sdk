@@ -1,5 +1,14 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
+## Status 2026-11-16 07:53 UTC / 13:23 IST - ORDER 005 started (cross-review of system-map)
+Agents running: 0 at write time; 4 sonnet agents + plan review start next (register below). Target exported read-only to /tmp/sm and /tmp/smfull (git archive of origin/cloud/system-map). Plan: PLAN-005.md. Not visible: take repo, n8n runtime, HubSpot, SMTP.
+Agent register for ORDER 005 (id | purpose | started UTC/IST | expected end | last checked | state | next):
+| PR5-design, PR5-impl | plan review round 1 of PLAN-005 | 07:54 / 13:24 | 08:05 | 07:54 | starting | resolve, then launch lanes |
+| EV5 | EVIDENCE RUNNER: citation + caller checks, raw output | after plan review | +30 min | - | planned | read evidence-5.md |
+| R5-code | codebase-details: Blockers + Majors vs source | after plan review | +40 min | - | planned | save report |
+| R5-design | design: one-place owners, 4 decisions, bands | after plan review | +40 min | - | planned | save report |
+| R5-zoom | zoom-out: missed items, cut list | after plan review | +40 min | - | planned | save report |
+
 ## FINAL 2026-11-16 07:43 UTC / 13:13 IST: ORDER 004 applied (Reading A), waiting for the lead
 Agents running: 0 (I started none for this order). No helper shells left.
 Applied: Q2 answered Reading A. F-011 kept at full size and rewritten (n8n's own state moves into the take's Postgres with its own role; no script under handover/demo sets DB_TYPE or DB_POSTGRESDB_*, grep 0 hits; fix is a laptop change plus re-smoke, not patched). The owner's "save runs ON for the take only, delete at clean-up" is now patch F-008-save-runs-for-the-take.patch (build_mainframe.py:44, no node changes). EXCEPTIONS.md, QUESTIONS.md (Q2 answered), FIX-PLAN.md step 6 and FINDINGS short answer item 4 updated. Counts unchanged: 34 findings = 2 Blocker, 23 Major, 9 Nit.
