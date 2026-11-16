@@ -155,3 +155,13 @@ bash main SIGPIPE delay=0.30 grp: was_running=True rc=141 folders_left=0 files_l
 bash main SIGPIPE delay=0.80 pid: was_running=True rc=141 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=0
 bash main SIGPIPE delay=0.80 grp: was_running=True rc=141 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=0
 bash main SIGPIPE delay=1.50 pid: was_running=False rc=0 folders_left=1 files_left=4 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash main SIGPIPE delay=1.50 grp: was_running=False rc=0 folders_left=1 files_left=4 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash main SIGPIPE delay=2.20 pid: was_running=False rc=0 folders_left=1 files_left=4 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash main SIGPIPE delay=2.20 grp: was_running=False rc=0 folders_left=1 files_left=4 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash mask SIGINT delay=0.05 pid: was_running=True rc=130 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash mask SIGINT delay=0.05 grp: was_running=True rc=130 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash mask SIGINT delay=0.30 pid: was_running=True rc=130 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash mask SIGINT delay=0.30 grp: was_running=True rc=130 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash mask SIGINT delay=0.80 pid: was_running=True rc=130 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=2
+bash mask SIGINT delay=0.80 grp: was_running=True rc=130 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=0
+bash mask SIGINT delay=1.50 pid: was_running=True rc=130 folders_left=0 files_left=0 frag_in_leftover=0 frag_in_stdout=0 strays=2

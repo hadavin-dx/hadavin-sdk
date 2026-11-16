@@ -506,3 +506,10 @@ safety-tests.sh: line 568: 27345 Killed                  ( exec python3 "$RUN" -
   PASS: T51b outside-root setup: the member of the dead leader's group runs
 process 29206 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-m
   FAIL: T51b outside-root: member left alone, file restored (rc 3)
+safety-tests.sh: line 568: 30591 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b early-start setup: the member of the dead leader's group runs
+process 32330 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-m
+  FAIL: T51b early-start: member left alone, file restored (rc 3)
+safety-tests.sh: line 568: 32622 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b control setup: the member of the dead leader's group runs
+stopped orphaned test group 1514; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.backup; ha
