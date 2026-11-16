@@ -1,5 +1,27 @@
 # REPORT from system-map (cloud to lead). Newest block on top, UTC and IST.
 
+## ORDER 002 setup retry: install + patch DONE; skills NOT visible in THIS session, NEW SESSION NEEDED | 2026-11-16 06:13 UTC | 2026-11-16 11:43 IST
+FILE-INDEX: handover/system-map/REPORT.md = ORDER 002 proof (EGM installed and patched, new session needed)
+
+Failed / not proven (first):
+- The Skill tool and Agent tool of THIS running session do not list any egm:* skill or agent (lists are read at session start). So I could NOT prove the 7 skills / agents as callable here, and I did not run the dry run from CLOUD-EGM-SETUP step 8. Lead: a NEW session is needed (MODEL-ROUTING says the same). Please start/resume one and send a GO or a proof order.
+- Setting step 2 (user settings.json model/effortLevel) not changed by me: not in ORDER 002.
+
+Done, with output:
+- claude plugin marketplace add google/elephant-goldfish-model -> "Successfully added marketplace: egm"
+- claude plugin install egm@egm -> "Successfully installed plugin: egm@egm (scope: user)"
+- claude plugin list: egm@egm Version 0.1.1, Scope user, Status enabled. Claude Code 2.1.325 (needs 2.1.271+: ok).
+- python3 handover/tools/egm_model_patch.py -> "done: 70 file(s) changed in 2 plugin folder(s)" (plugins/cache/egm and plugins/marketplaces/egm).
+- grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c :
+      6 model: claude-opus-5-5
+     64 model: claude-sonnet-5-5
+  (no inherit; 6 Opus = 3 planning skills x 2 copies)
+- 7 skills on disk (both copies): egm-brainstorm, egm-draft, egm-resolve, egm-review, egm-review-loop, egm-bootstrap, egm-drift-report.
+- Agent files on disk (named egm-*.agent.md): codebase-details, comprehension, design, implementation-readiness, inventive-catalyst, structural, style, zoom-out. Note: no egm-synthesizer or bootstrap-orchestrator .agent.md file found by name (synthesizer.md and bootstrap_orchestrator.md exist as agents/ files); CLOUD-EGM-SETUP expects egm:egm-synthesizer, to be checked in the new session.
+- Plugin list note: "Default agents/ folder is ignored because the manifest sets agents".
+
+Models: session Sonnet 5.5; no agents spawned. No work started; waiting for GO. Rules cited: BRIEF-PREAMBLE 6, 13, 19.
+
 ## ORDER 001 setup: BLOCKED at step 3 (EGM plugin install refused) | 2026-11-16 06:09 UTC | 2026-11-16 11:39 IST
 FILE-INDEX: handover/system-map/REPORT.md = ORDER 001 setup proof (blocked, no EGM installed)
 
