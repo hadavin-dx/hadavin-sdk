@@ -49,8 +49,8 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- a29ef2277b7aaa1bd | L-01 round-11 naive reader (security path) | started about 20:03Z | running, expected end about 20:12Z | next: save findings, one fixer batch with fact r11 (work/l01-fact-findings-r11.md)
-- a5633119828e539d1 | steps v5 round-11 fixer (money path; naive r11 + fact r11) | started about 20:03Z | running, expected end about 20:03Z + 6 min | next: digest, round-12 readers
+- a29ef2277b7aaa1bd | L-01 round-11 naive reader (security path) | started about 19:59Z | running, expected end about 20:12Z | next: save findings, one fixer batch with fact r11 (work/l01-fact-findings-r11.md)
+- a5633119828e539d1 | steps v5 round-11 fixer (money path; naive r11 + fact r11) | started about 20:03Z | running, expected end about 20:10Z | next: digest, round-12 readers
 - EMPTY SLOTS (4 of 6): the rest are at the reader cap or wait on a landing (r41/r42/r43, lead notice 1-13, loopback re-smoke) or on steps v5/L-01 settling (cite pass).
 
 ## Details (long text moved from the FAILED line)
