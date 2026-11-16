@@ -1,4 +1,4 @@
-> REVISED 16 Nov 2026 after inputs/DECISIONS-2026-11-16.md: rows D-03 (lines 31, 91), 4 (127), 5 (128), S9-1 to S9-4 (142-145, 191-194), FS-A..D and FS-MAIL (214-215) and CARDS (216) are stale in whole or part (decisions 1, 2, 5, 12; M17). Exact replacement texts: work/drift-report-revisions.md. Program change for `end` still pending.
+> Rows named below as stale are superseded: do not apply their fix text. REVISED 16 Nov 2026 after inputs/DECISIONS-2026-11-16.md: rows D-03 (lines 31, 91), 4 (127), 5 (128), S9-1 to S9-4 (142-145, 191-194), FS-A..D and FS-MAIL (214-215) and CARDS (216) are stale in whole or part (decisions 1, 2, 5, 12; M17). Exact replacement texts: work/drift-report-revisions.md. Program change for `end` still pending.
 
 # Drift check of four take documents (item 3 of the system-map work list) (read-only, made-up data only)
 
@@ -62,10 +62,8 @@ Checked and agree (no drift): window end 2026-11-23 18:29 UTC = 23:59 IST (OS:92
 
 ## 4. Counts
 
-- Disagreements and contradictions found: 20 (D-01 to D-20): Blocker 6, Major 8, Nit 6.
 - Missing or unprepared steps: 7 (S-01 to S-07): Blocker 2, Major 4, Nit 1.
 - Added after the fact review: D-18 (Major), D-19 (Nit), D-20 (Nit), see section 5. Severity changes made: D-10 and S-03 now Blocker; D-14 is only a note.
-- Totals: 27 items, after section 6: Blocker 7 (D-01 to D-05, D-10, S-03), Major 12, Nit 8 (S-01 is now a Nit).
 - Not checked: all code, flow and evidence files; schedule dates other than those in the four documents; whether pointed-to files exist (section 1).
 
 ## 5. Added after the fact review (2026-11-16, from a second read of the four files)
