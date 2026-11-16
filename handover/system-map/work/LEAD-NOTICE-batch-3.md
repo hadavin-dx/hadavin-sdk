@@ -9,3 +9,4 @@ Ten held pages carry the archive sentence (UNVERIFIED until your loopback re-smo
 7. QUEUE: third REFILL time (UTC and IST); percents for M1, M2, M4-M8, M10-M13, M20; video time on Wed 18 Nov.
 8. SWEEP: owner's dollar limit and agent-day estimate (blank, due 17 Nov).
 9. Meanings of DESK_* names in README were inferred from names: please confirm.
+10. TAKE-BLOCKERS: the generator path (two different paths appear in the files), the path to n8n_api.py, whether the crash test is required, which runs the "rehearsal passed" rule covers, who edits the program's notice and prompt text.
