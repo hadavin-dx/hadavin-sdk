@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:52:45Z
-PUSHED_UTC: 2026-11-16T12:52:45Z
+UPDATED_UTC: 2026-11-16T12:53:44Z
+PUSHED_UTC: 2026-11-16T12:53:44Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -46,16 +46,16 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a8c9313a4730f8103 | L4c cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
-| aa9d2bba8b6f05f09 | L5ac cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
-| a30d73370063f98d1 | FINAL-CROSSCHECK cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
-| a7f927c37bddc6067 | BRIEF-LANE cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
-| ae872004f05951fdb | end-delete-cases cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
-| acd43fc8db069f73b | rehearsal-limits cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
-| af30284d2107e0dd1 | banned-claims cold read (sonnet) | 2026-11-16T12:52:45Z | +5 min | running | nothing yet |
+| afc714dc45a7555a4 | L5b cold read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
+| adbdf8e2a6b8c3003 | L2c cold read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
+| a8c299a47a4602e6b | merged-findings re-read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
+| addde6fb9ba23e49b | L3c re-read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
+| aef5ff5b5cbd669ac | end-delete-cases re-read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
+| af5a05ef64aeaff1a | banned-claims re-read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
+| aae6eafa503e2fc08 | FINAL-CROSSCHECK re-read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
+| acd90d099059952e0 | L5ac re-read (sonnet) | 2026-11-16T12:53:44Z | +5 min | running | nothing yet |
 
-Only 7 running (a ninth read, merged-findings, just ended; one replacement pending next beat: reason, the page was just folded and a re-read now would only re-flag old text).
-Next 5 independent tasks: re-reads of L3c, t19, decision-list, PLAN-002, open-items after this push.
+Next 5 independent tasks: re-reads of BRIEF-LANE, L4c, t19, decision-list, open-items after the next fixes.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
