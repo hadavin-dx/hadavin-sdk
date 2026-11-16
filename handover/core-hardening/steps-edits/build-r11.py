@@ -16,10 +16,8 @@ def sub(old, new, n=1):
 
 def row_span(rid):
     i = T.index(f'\n### {rid}: ') + 1
-    j = T.find('\n### ', i + 5)
-    k = T.find('\n## ', i + 5)
-    cands = [x for x in (j, k) if x != -1]
-    return i, (min(cands) + 1 if cands else len(T))
+    m = re.compile(r'\n### E-\d\d: |\n## Lines checked and found consistent').search(T, i + 5)
+    return i, (m.start() + 1 if m else len(T))
 
 def rsub(rid, old, new, n=1):
     global T
@@ -75,7 +73,7 @@ sub('so the ids run E-01 to E-56 without E-10 and E-35 (E-49 to E-53 are new in 
     'so the ids run E-01 to E-58 without E-10 and E-35 (E-49 to E-53 are new in round 8, E-54 in round 9, E-55 and E-56 in round 10, E-57 and E-58 in round 11).')
 sub('E-09 does NOT fall away: it is the only place that says how the password file is made, so v4 carries it.',
     'E-09 does NOT fall away: it is the only place that says how the password file is made, so v4 carries it, and v4 puts those steps in a step of their own before step 8 (the file is made before the database server and n8n start; the rest of step 8 comes after n8n runs).')
-sub('(`resolve-r10.md` and `resolve-r10b-check-output.txt`)', '(`resolve-r11.md` and `resolve-r11-check-output.txt`)')
+sub('`resolve-r10.md` and `resolve-r10b-check-output.txt`)', '`resolve-r11.md` and `resolve-r11-check-output.txt`)')
 sub('54 rows in total: E-01 to E-56 without E-10 and E-35. By file: OWNER-STEPS 35 rows, AGENT-SCOPE 15 rows,',
     '56 rows in total: E-01 to E-58 without E-10 and E-35. By file: OWNER-STEPS 37 rows, AGENT-SCOPE 15 rows,')
 sub('**Apply now 42**, **Hold 12**', '**Apply now 44**, **Hold 12**')

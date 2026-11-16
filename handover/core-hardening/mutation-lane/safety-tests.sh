@@ -1730,7 +1730,7 @@ G1=$(grep -c 'return 99' "$T/root/src/mod.py"); L1=$(last)
 kill_planted; forge97
 python3 "$RUN" --root "$T/root" --restore >"$S/t98d2.out" 2>&1; rc2=$?; cut -c1-200 "$S/t98d2.out" | tail -2
 G2=$(grep -c 'return 99' "$T/root/src/mod.py")
-chk "T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: the file holds git's text (return1), swapped text written $G1 times (got exit $rc1, last '$L1'); plain --restore trusts it (pinned limit): swapped text written $G2 time(s), exit $rc2" "[ $G1 -eq 0 ] && [ '$L1' = return1 ] && [ $G2 -eq 1 ] && [ $rc2 -eq 0 ]"
+chk "T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got $rc1), nothing written (last '$L1' = return2), swapped text written $G1 times, marker kept; plain --restore trusts it (pinned limit): swapped text written $G2 time(s), exit $rc2" "[ $rc1 -eq 3 ] && [ $G1 -eq 0 ] && [ '$L1' = return2 ] && [ $G2 -eq 1 ] && [ $rc2 -eq 0 ]"
 kill_planted; setmarker97 mode=511
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t98e1.out" 2>&1; rc1=$?; cut -c1-200 "$S/t98e1.out" | tail -2
 L1=$(last)
