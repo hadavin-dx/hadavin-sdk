@@ -32,3 +32,8 @@ Already finished earlier: v36 builder ab050ff9069214f27, v36 security a9b8b32770
 7. REPORT.md and QUESTIONS.md were not refreshed; the accumulated questions are in the board and the review copies.
 ## Committed
 Everything under handover/core-hardening/ (condensed review copies, evidence, partial builds, STATUS-BOARD.md, this file). Secret scan of what I commit: 0 banned strings, 0 secret-shaped hits (AKIAIOSFODNN7EXAMPLE excluded); only handover/core-hardening files committed.
+
+## Final clean-up (2026-11-16T20:46:40Z, lead order 20:45Z)
+- The two checker loops and their helpers were stopped with a plain kill by pid, one at a time: 16187 (verify19.py), 20211 (verify20.py), 14897, 14889, 3146, 3141, 2488, 2489, 29894, 29892, then the leftover children 20465 (mutate9.py), 27632 and 27634. Pids 21139 and 23127 had already ended. A later list showed no process from core-hardening work. `git status -- src tests` shows 0 lines, so no planted mutation was left in the product folders. The earlier denied kill (pattern kill over many pids) is superseded by the lead's order.
+- The earlier line in this report that said processes are still running is now out of date.
+- Not committed, on purpose: repo-root files `e`, `o` and five `*.whl` files (iniconfig, packaging, pluggy, pygments, pytest). They are not mine and not part of handover/core-hardening; the lead decides whether to delete them. Scratch folders under /tmp (hv1, h1 and others) are outside the repo.

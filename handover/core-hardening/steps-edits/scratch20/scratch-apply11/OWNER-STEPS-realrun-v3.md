@@ -6,7 +6,7 @@ This file holds only what ONLY YOU can do. The assistant does everything else (s
 
 Before any real take the assistant runs two tests on this laptop. Both are planned at US$0, and nothing about them is proven yet:
 - The stand-in test uses stand-in programs and made-up data only. No real account, no real secret key and no paid model call are planned. What n8n sends over the network is watched, not blocked, so we do not claim that nothing leaves the laptop.
-- The flow rehearsal comes after the stand-in test has passed: the changed flows are run once on this laptop with made-up data, also planned at US$0.
+- The rehearsal comes after the stand-in test has passed: the changed flows are run once on this laptop with made-up data, also planned at US$0.
 
 The take is planned to keep its data in Postgres (a free database program). This is planned, not yet proven: in the first trial n8n kept its data in a simpler one-file database. One Postgres program, called the database server, is planned to run in one container (a sealed box in which a program runs) and to hold two separate databases: n8n's own database (flows, saved credentials, saved runs) and the take's database (our table of enquiries).
 

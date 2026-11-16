@@ -141,4 +141,4 @@ r19 applied sheet words (wc -w method): 24367; day sheet 6256; appendix 1357
 r19 word counts (wc -w method, applied sheet and parts): {'applied sheet': 24367, 'key step C (alarms)': 575, 'key step D.5': 630, 'table of typed words': 606, 'card with one-liners': 752, 'key step I': 408, 'key step G with G.2': 1076, 'identification check': 542}
 r19 checks: 165 count/pair/forbidden checks; 0 failures in the section
 round 19 checks done
-r19 golden: 3489 pinned sentences, 0 differences
+r19 golden: 3489 pinned sentences, 0 differencesTerminated
