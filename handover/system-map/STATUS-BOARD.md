@@ -1,15 +1,15 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:34:33Z
+UPDATED_UTC: 2026-11-16T11:39:20Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
-ITEMS_OPEN: 15 (rows below 100 percent: M2-M10, M14, M15, M17-M20; 5 rows are at 100). CORRECTION: my earlier "14" and "6 at 100" were wrong; recounted by script at 11:3xZ over the 20 rows. PERCENT mean of the table is 83.1 (sum 1662 over 20 rows), not 83.6. M3, M4, M6 queue tags now match the board (checked 11:2xZ, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
+ITEMS_OPEN: 15 (rows below 100 percent: M2-M10, M14, M15, M17-M20; 5 rows are at 100). CORRECTION: my earlier "14" and "6 at 100" were wrong; recounted by script at 11:36Z over the 20 rows. PERCENT mean of the table is 83.1 (sum 1662 over 20 rows), not 83.6. M3, M4, M6 queue tags now match the board (checked 11:26Z, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
 PERCENT: 83.1 (script recount: 1662 / 20; the earlier 83.6 was wrong)
-AGENTS_RUNNING: 8 running (ORDER 028), new this beat: a01ad5676b79bbd2d, ab0e11ac9f2698c2e, a1690d014910dcb9f, a6ec90d6170609a27, ab9975d6ac4cf4cb2, a317273aae9386983, ae0d8038d9c4fa0c4; carried: a15be2e85453dbec5
+AGENTS_RUNNING: 8 running (ORDER 028), new this beat: adfafd7b58537f33c (decision list round 3), afd2d3e9c5823d4a0 (SWEEP 1-200), a4b4d02e7bc7a8f84 (MASTER-MAP 200-400), ac34e7d9abcbb68c1 (MASTER-MAP 400-600), acfe0da0671228746 (ONE-PLACE-TABLE 185-end), a572d62f91a6cef1a (MAP-ADDITIONS), aa090570da7c0d3f6 (run-day card vs v5 fact check), a2702ad784fc4178e (TAKE-BLOCKERS cold read)
 INTERRUPTED: none
-NEXT: digested through 266. Collect the 8 running hand-backs as 267 on, refill to 8 in the same turn one ends. Then fix my open-items-table (digest 264), decision list defects, and reviews-of-core-hardening headers. Held for the lead: README, ORDER 028 wording, SWEEP, DECISION-one-store root copy (stale vs inputs/), step J lines 164-172, TAKE-BLOCKERS line 55 nit.
+NEXT: digested through 295. Collect the 8 running hand-backs as 296 on, refill to 8 in the same turn one ends. Then finish decision-list gaps (A13, C1-C9, D3, E9, F rows, G1, terms), open-items-table fixes, CORRECTIONS item 7. Cold read of this board (digest 291) found: agent table lacks item and last-checked columns; licence count 7+2 vs 11 unexplained; M5/M10/M19 have no agent running now.
 CAPACITY: nproc 4, load 0.22, RAM 840/16087 MB used, disk / 44% used (22G free); top disk users: /tmp/claude-0 about 1.3 GB, /home/user/hadavin-sdk about 312 MB, /home/user/duplicate-proof-lead-desk-n8n about 5 MB
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
 PUSHED_UTC: 2026-11-16T11:34:33Z
@@ -38,16 +38,17 @@ PUSHED_UTC: 2026-11-16T11:34:33Z
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (ORDER 028: 8 running; started 2026-11-16T11:34:30Z unless noted, expected end within 10 minutes; checked at this beat)
-| id | purpose | started | due | state |
-|---|---|---|---|---|
-| a15be2e85453dbec5 | fact check of decision list cites | 11:32Z | 11:42Z | running, read-only |
-| a01ad5676b79bbd2d | LEAD-PAGE cold read | 11:34Z | 11:44Z | running, read-only |
-| ab0e11ac9f2698c2e | OWNER-RUN-DAY-CARD cold read | 11:34Z | 11:44Z | running, read-only |
-| a1690d014910dcb9f | QUESTIONS cold read | 11:34Z | 11:44Z | running, read-only |
-| a6ec90d6170609a27 | SWEEP 200-360 cold read | 11:34Z | 11:44Z | running, read-only |
-| ab9975d6ac4cf4cb2 | MASTER-MAP 1-200 cold read | 11:34Z | 11:44Z | running, read-only |
-| a317273aae9386983 | decisions/ folder vs DECISIONS-2026-11-16 | 11:34Z | 11:44Z | running, read-only |
-| ae0d8038d9c4fa0c4 | banned-claims vs step J | 11:34Z | 11:44Z | running, read-only |
+## AGENTS (ORDER 028: 8 running; started 2026-11-16T11:39:20Z; expected end within 10 minutes; last checked 2026-11-16T11:39:20Z)
+| agent id | item | purpose | state |
+|---|---|---|---|
+| adfafd7b58537f33c | M19 | cold read decision-list-for-lead, round 3 | running, read-only |
+| afd2d3e9c5823d4a0 | M6 | cold read SWEEP 1-200 | running, read-only |
+| a4b4d02e7bc7a8f84 | M2 | cold read MASTER-MAP 200-400 | running, read-only |
+| ac34e7d9abcbb68c1 | M2 | cold read MASTER-MAP 400-600 | running, read-only |
+| acfe0da0671228746 | M2 | cold read ONE-PLACE-TABLE 185-end | running, read-only |
+| a572d62f91a6cef1a | M2 | cold read MAP-ADDITIONS | running, read-only |
+| aa090570da7c0d3f6 | M19 | fact check run-day card vs v5 steps C-H | running, read-only |
+| a2702ad784fc4178e | M5 | cold read TAKE-BLOCKERS | running, read-only |
+
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
