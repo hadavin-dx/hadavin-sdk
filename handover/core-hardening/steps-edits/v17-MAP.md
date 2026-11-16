@@ -27,7 +27,7 @@ Written Mon 16 Nov 2026. Abbreviations: **Sheet** = OWNER-SHEET-v17.md (section 
 | Stop word 2 Emergency cancel | Sheet R4 (last column), R2 | |
 | Stop word 3 Time | Sheet R3 | |
 | Stop word 4 Freeze | Sheet R10 | |
-| Stop word 5 Stop | DROPPED as a word (one wait word) | bare "stop" is banned by the checker |
+| Stop word 5 Stop | DROPPED as a word (one wait word) | the checker bans the bare lowercase word |
 | Precedence | Sheet R10 | |
 | What typed answers gate | Sheet R4 (honest sentence) | |
 | Part 1 order line | Sheet section order | linear sheet |
