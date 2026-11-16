@@ -21,3 +21,8 @@ Cron 8972e8b0 (board, mine) deleted. No shells, loops or background jobs of mine
 
 ## Not committed
 Nothing left out. Scratch backups live in the session scratchpad (outside the repo); /tmp/gen7 board files are outside the repo. secret scan: check_secrets PASS 0 hits.
+
+## Clean stop check (lead order 20:45Z, run 20:46Z)
+- ps: no run_all, test_run_all, selftest, take_check or agent process of mine; `jobs` empty; cron deleted; both agents killed.
+- git status after pull --rebase: clean, no untracked files left uncommitted.
+- STATUS-BOARD.md rewritten to one state (STOPPED, AGENTS_RUNNING 0). Old item table and agent rows removed; the old board texts remain in git history.
