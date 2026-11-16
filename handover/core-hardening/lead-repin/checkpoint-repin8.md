@@ -9,3 +9,9 @@ Done: full self-test dash 1567/0 (seen as m04 survivor line). Guide v8 edited. P
 Found: m04 survives (requirepass etc. now doubly covered by the new bare-name rule): to prove equivalent or kill. m10 plant made the start check refuse (exit 3): classified KILLED-startcheck.
 Next: non-root runs (uid 65534), v8-CHANGES.md, banned-string scan, hand-back. Expect to run past 60 min by about 20 min; will say so.
 Blockers: none.
+
+## 18:40 UTC (00:10 IST) final checkpoint (past the time box; lead asked to hand back)
+Done: v8 script (sha256 in evidence-repin8/final-sha256.txt), guide v8 edited, v8-CHANGES.md written (plant and self-test tables still to be filled from the evidence files), 40+ plants run both shells (3 gaps found and fixed), root self-tests dash+bash 1635/0 on final script.
+Running: uid 65534 self-tests (dash, bash), started from /tmp/hd8-nonroot.
+Next: read the uid 65534 results, fill the two placeholders in v8-CHANGES.md, clean /tmp/hd8-nonroot, hand back.
+Blockers: none. Note: I ran chmod 755 on /home/user and /home/user/hadavin-sdk (earlier mode unknown).

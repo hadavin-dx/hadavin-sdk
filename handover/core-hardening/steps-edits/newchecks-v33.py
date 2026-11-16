@@ -484,7 +484,7 @@ for _fn in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V, 'fac
 import datetime as _dt
 _V9 = globals().get('PAGEVER', 'v33')
 def _p9(n): return open(D + n, encoding='utf-8').read() if _os.path.exists(D + n) else ''
-_HP = _p9('OWNER-HELPER-v33.md') if _V9 == 'v33' else ''                                    # the helper page exists from v33 on
+_HP = _p9('OWNER-HELPER-%s.md' % _V9)                                    # the helper page exists from v33 on
 _CARD = {k: _p9('OWNER-CARD-%s-%s.md' % (_V9, k)) for k in 'AB'}
 _APP9 = {k: _p9('OWNER-APPENDIX-%s-%s.md' % (_V9, k)) for k in 'AB'}
 _FILM9 = _p9('OWNER-FILM-PERSON-%s.md' % _V9)
@@ -501,7 +501,7 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
     if re.search(r'(?i)failed key save cancels nothing|A cancels nothing on a failed', _t): fail('C229', '%s still says a failed key save cancels nothing in A' % _n)
     if not re.search(r'failed (?:key )?save skips 6\.7', _t): fail('C229', '%s does not say a failed save skips 6.7 and that 7.11 still cancels in A' % _n)
 # C230 (S M3 and N M3; class: a role named but with no page, trigger or scope): the helper page
-if _V9 != 'v33' or not _HP: fail('C230', 'the cancel helper page OWNER-HELPER-v33.md does not exist')
+if not _HP: fail('C230', 'the cancel helper page OWNER-HELPER-%s.md does not exist' % _V9)
 else:
     for _s in (_FF['helper_scope'], 'The owner himself asks you', 'Never the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'The last-resort step is the owner\'s, not yours', 'Never copy, type or photograph key text',
                'plus %s minutes' % _FF['hw'], _FF['hcb'], _FF['hok'], _FF['dl_day'] + ' ' + _FF['rv23']):
@@ -610,3 +610,97 @@ for _n, _t in (('A', A), ('B', B)):
 # C245 (N minors 1, 2, 3; class: a pointer that sends a stranger to a place that does not say it): pointers read by a person are in pointers-v33.txt (C19); here: no bare internal pointer in owner text
 for _n, _t in (('A', A), ('B', B)):
     if re.search(r'sheet section 2\b', _t): fail('C245', '%s sends the reader to "sheet section 2" (the STOP RULE is in section 1)' % _n)
+
+# ---- Part 10 (v33, round 5): C246 to C262. One or more checks per finding of review-v32-security, review-v32-naive and review-v32-evidence.
+# Source-level checks (C255 to C262) read the SOURCE file itself, so they work with C01 off: a source mutation rebuilds the pages and C01 then passes, only these catch it. Each runs at EVERY occurrence.
+_S10 = _p9('OWNER-SHEET-%s-SOURCE.md' % _V9)
+def _occ(t, s): return [m.start() for m in re.finditer(re.escape(s), t)]
+# C246 (S M1; class: a waiting chain that runs past the deadline): the card, the yes and part 10 do the last-resort step at once and state both chain ends
+for _n, _t in (('card A', _CARD['A']), ('card B', _CARD['B'])):
+    if 'do the last-resort step at once after your first "cancel failed"' not in _t: fail('C246', '%s lacks the near-deadline last-resort rule' % _n)
+for _n, _t in (('A', A), ('B', B)):
+    if _t.count('18:31 UTC = 00:01 IST') < 3 or _t.count('18:41 UTC = 00:11 IST') < 3: fail('C246', '%s: a chain end (18:31 UTC = 00:01 IST, 18:41 UTC = 00:11 IST) is not stated in the card, the yes and part 10 (need 3 each)' % _n)
+    if _t.count('at once after') < 3: fail('C246', '%s: "at once after" is not in the card, the yes and part 10' % _n)
+    if 'A helper path that fails also ends at your last-resort step: the helper has none' not in _t: fail('C246', '%s lacks "the helper path ends at the owner\'s last-resort step"' % _n)
+if _FF['bm_chain'] != 'Mon 23 Nov 2026 18:31 UTC = 00:01 IST' or not _FF['bt_end'].endswith('18:41 UTC = 00:11 IST'): fail('C246', 'the chain end figures are not 18:31 UTC = 00:01 IST and 18:41 UTC = 00:11 IST')
+# C247 (S M2; class: a typed line wider than the shape that was checked): the cd line is `cd ` plus the Take folder, in 7.2, the rows rule and R6
+for _n, _t in (('A', A), ('B', B)):
+    for _s in ('type `cd ` and the Take folder of the message, nothing more', 'the `cd` line of 7.2 is exactly `cd ` plus the Take folder, nothing else (no `&&`, `;`, `|`, second command or space-separated word after the folder)', 'the "cd line" is `cd ` plus the Take folder and nothing else'):
+        if _s not in _t: fail('C247', '%s lacks %r' % (_n, _s[:60]))
+    if re.search(r'type `cd [^`]*(?:&&|;|\|)', _t): fail('C247', '%s: a cd line with a second command' % _n)
+# C248 (S M3, M4, m1; class: a stale claim after a change): no page says A has one live key at a time or keeps "Default: A"; no stale file names
+for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN), ('helper', _HP)):
+    for _m in re.finditer(r'(?i)one live key at a time|Default: A\b|Default A\b|OWNER-NUMBERS-|OWNER-FILM-v\d', _t): fail('C248', '%s holds the stale text %r' % (_n, _m[0]))
+for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
+    if 'OWNER-HELPER-v33.md' not in _t: fail('C248', '%s does not list the helper page' % _n)
+# C249 (S m2-m8; class: a stop or a rule only in some places): the Sunday rule, the paper void step, helper trigger, the film stop
+for _n, _t in (('A', A), ('B', B)):
+    for _s in ('Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by time is at or before ' + _FF['sun_cb'], 'a reminder never cancels a live run key'):
+        if _s not in _t: fail('C249', '%s lacks %r' % (_n, _s[:70]))
+if _HP:
+    for _s in ('(write VOID on it; a new paper replaces it)', "the owner's phone number", 'by a call you start to the phone number on your paper (a message is never enough', 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = 23:49 IST', 'you have none'):
+        if _s not in _HP: fail('C249', 'the helper page lacks %r' % _s[:70])
+if 'Your "stop" is a danger sign for the owner (W3)' not in _FILM9 and _FILM9: fail('C249', 'the film person page lacks the "stop" effect')
+for _n, _t in (('A', A), ('B', B)):
+    if 'or the film person says "stop"' not in _t: fail('C249', '%s: W3 lacks the film person "stop"' % _n)
+# C250 (N majors 1-10; class: a first-time reader cannot do the step): wording that a stranger needs
+for _n, _t in (('card A', _CARD['A']), ('card B', _CARD['B'])):
+    if 'press cancel again on the same named row and reload' not in _t: fail('C250', '%s lacks "the same named row" in step 4' % _n)
+for _n, _t in (('A', A), ('B', B)):
+    for _s in ('Watch the edited video twice', 'the subject start begins with the run name: otherwise no run', 'at or before'):
+        if _s not in _t: fail('C250', '%s lacks %r' % (_n, _s))
+    if re.search(r'Watch the (?:recording|video) twice', _t): fail('C250', '%s: 8.8 does not say "the edited video"' % _n)
+    if re.search(r'film pause now', _t): fail('C250', '%s keeps the label "film pause now"' % _n)
+# C251 (reading load; class: a page grown without a stated number): the five pages are counted and printed, and no page is silently over the figure recorded in v33-CHANGES.md
+_cg = _p9('v33-CHANGES.md')
+if _V9 == 'v33' and not re.search(r'five pages[^\n]{0,80}\d\d,\d\d\d', _cg): fail('C251', 'v33-CHANGES.md does not state the five-page word count')
+# --- source-level content checks (evidence C01-only gap): the 11 sentences the independent run mutated, each at every occurrence, on the SOURCE
+# C255 (H04) the chain-end figures are placeholders at every occurrence in the source and no literal time follows "would end at" / "until about"
+if len(_occ(_S10, '{{bm_chain}}')) < 3 or len(_occ(_S10, '{{bt_end}}')) < 3: fail('C255', 'the source holds {{bm_chain}} %d and {{bt_end}} %d times (need 3 each: card, yes, part 10)' % (len(_occ(_S10, '{{bm_chain}}')), len(_occ(_S10, '{{bt_end}}'))))
+for _m in re.finditer(r'(?:would end at|until about|ends? at) (?:Mon 23 Nov 2026 )?\d\d:\d\d UTC', _S10): fail('C255', 'a chain end typed as a literal time: %r' % _m[0])
+for _m in re.finditer(r'(?:\{\{bm_chain\}\}|\{\{bt_end\}\})', _S10):
+    _w = _S10[_m.end():_m.end() + 160]
+    if re.search(r'\d\d:\d\d UTC', _w.split('\n')[0][:60]): fail('C255', 'a literal time right after a chain end placeholder: %r' % _w[:60])
+# C256 (H05) every chain-end sentence says AFTER the deadline
+if len(_occ(_S10, 'both after the deadline')) < 2: fail('C256', 'the source says "both after the deadline" %d times (need 2)' % len(_occ(_S10, 'both after the deadline')))
+for _m in re.finditer(r'(?:\{\{bm_chain\}\}|\{\{bt_end\}\})[^\n]{0,260}', _S10):
+    if re.search(r'before the deadline', _m[0]): fail('C256', 'a chain end described as before the deadline: %r' % _m[0][:80])
+for _m in re.finditer(r'(?i)last[- ]resort[^.\n]{0,80}before the deadline', _S10): fail('C256', 'the last resort set before the deadline: %r' % _m[0][:80])
+# C257 (H07, H35) the helper cancels only keys the owner names that are on the paper; key text that appears is closed and reported, never kept
+if _S10.count('Any other key, even one the owner mistyped the name of: touch nothing, write down its name') != 1: fail('C257', 'the helper scope sentence "Any other key ... touch nothing" is not present exactly once in the source')
+if len(_occ(_S10, 'you cancel only a key the owner names that is also on your paper')) != 1: fail('C257', 'the "only a key the owner names that is also on your paper" sentence is not present exactly once')
+for _m in re.finditer(r'(?i)cancel (?:any|every|all|each) (?:other |valid |remaining )?keys?\b[^.\n]{0,40}', _S10):
+    if not re.search(r'(?i)(?:never|not|nothing|no|do not|nor) [^.\n]{0,40}$', _S10[max(0, _m.start() - 40):_m.start()]) and 'of L1' not in _m[0] and 'you made' not in _m[0]: fail('C257', 'a broad cancel scope in the source: %r' % _m[0][:60])
+if len(_occ(_S10, 'if key text appears, close it and tell the owner it appeared')) != 1: fail('C257', 'the "close it and tell the owner it appeared" sentence is not present exactly once')
+for _m in re.finditer(r'(?i)(?<!never )(?:keep|save|store|write down|jot|note down|photograph|copy)[^.\n;]{0,25}\bkey text', _S10): fail('C257', 'key text kept or copied: %r' % _m[0][:60])
+# C258 (H14) R6 says the typed parts are never entered by a tool, script, window or person
+if len(_occ(_S10, 'never by a tool, script, window or person')) != 1: fail('C258', 'R6 "never by a tool, script, window or person" is not present exactly once in the source')
+for _m in re.finditer(r'(?i)\bor by a tool, script|by a tool, script, window or person\b(?<!never by a tool, script, window or person)', _S10): fail('C258', 'R6 allows a tool or script: %r' % _m[0][:60])
+# C259 (H17, H18) the clipboard is emptied of the key after the paste, and the paste is once only
+if len(_occ(_S10, 'copy one harmless word such as `clear` (it replaces the clipboard)')) != 1 or len(_occ(_S10, 'copy a harmless word')) < 2: fail('C259', 'the clipboard-clearing steps (harmless word) are missing or fewer than in v32 (need "copy one harmless word such as `clear` (it replaces the clipboard)" once and "copy a harmless word" twice)')
+if len(_occ(_S10, 'Paste once (Ctrl+Shift+V or right-click), only if')) != 1: fail('C259', '"Paste once (Ctrl+Shift+V or right-click), only if" is not present exactly once')
+for _m in re.finditer(r'(?i)\bpaste (?:as often|again|twice|more than once|repeatedly|as many|freely)[^.\n]{0,30}', _S10): fail('C259', 'the paste is not once only: %r' % _m[0][:60])
+# C260 (H19, H20) the key file is private (-rw-------) and a difference is never tolerated
+_modes = re.findall(r'starts `(-[rwx-]{9})`', _S10)
+if _modes != ['-rw-------']: fail('C260', 'the key file mode in the source is %r (must be exactly one -rw-------)' % _modes)
+if re.search(r'-r[w-][x-]r', _S10) or re.search(r'-rw-r', _S10): fail('C260', 'a group or world readable mode appears in the source')
+if len(_occ(_S10, 'A difference in a number, name, count, account, time or key state is never tolerated.')) != 2: fail('C260', '"A difference ... is never tolerated." is not present exactly twice (sheet and card)')
+for _m in re.finditer(r'(?i)(?<!never )(?<!not )tolerated[^.\n]{0,20}', _S10):
+    if not re.search(r'\*\*tolerated\*\*|UNVERIFIED, tolerated|tolerated items|tolerated\)|tolerated::', _S10[_m.start() - 30:_m.end() + 12]): fail('C260', 'the word "tolerated" is used in a new way: %r' % _S10[max(0, _m.start() - 40):_m.end()][:70])
+# C261 (H23) every cancel of the older key is tied to name and creation date equal the blanks
+_cond = 'name and creation date equal the blanks'
+if len(_occ(_S10, _cond)) < 5: fail('C261', 'the older-key condition appears %d times in the source (v32: 5 or more)' % len(_occ(_S10, _cond)))
+for _m in re.finditer(r"cancel (?:it|the older key)[^\n]{0,40}(?:L2|card)|L2 the older key named", _S10):
+    _w = _S10[_m.start():_m.start() + 330]
+    if _cond not in _w: fail('C261', 'a cancel of the older key without the name-and-creation-date condition within 330 characters: %r' % _w[:90])
+for _n, _t in (('A', A), ('B', B)):
+    for _m in re.finditer(r"cancel the older key by the card's L2|L2 the older key named", _t):
+        if _cond not in _t[_m.start():_m.start() + 330]: fail('C261', '%s: a cancel of the older key without the condition: %r' % (_n, _t[_m.start():_m.start() + 70]))
+# C262 (H38 and safe defaults generally): the backstop cancels even if a run is in progress, and no safe default is reversed
+if len(_occ(_S10, 'even if a run was in progress')) < 1 or len(_occ(_S10, 'even if a run is in progress')) < 1: fail('C262', 'the backstop "even if a run is/was in progress" sentences are missing (need 1 each)')
+for _m in re.finditer(r'(?i)unless a run (?:is|was)[^.\n]{0,30}|(?:backstop|deadline)[^.\n]{0,80}\bunless\b[^.\n]{0,40}run', _S10): fail('C262', 'a backstop cancel with an exception for a run: %r' % _m[0][:70])
+_SAFE = ('never copy, type or photograph key text', 'nothing is done by a lead message alone', 'Never copy, type or photograph key text', 'cancel nothing', 'touch nothing', 'FREEZE', 'STOP RULE', 'R6 shape check first', 'this cancel cannot be undone')
+_floor = {'FREEZE': 10, 'STOP RULE': 4, 'R6 shape check first': 3, 'touch nothing': 2, 'cancel nothing': 2, 'this cancel cannot be undone': 1, 'Never copy, type or photograph key text': 1}
+for _k, _v in _floor.items():
+    if len(_occ(_S10, _k)) < _v: fail('C262', 'the safe default %r appears %d times in the source (need %d or more)' % (_k, len(_occ(_S10, _k)), _v))
+for _m in re.finditer(r'(?i)\b(?:skip|omit|ignore|no need for|without) (?:the )?(?:R6|shape check|STOP RULE|name and creation date|7-day rule)', _S10): fail('C262', 'a safe default reversed: %r' % _m[0])

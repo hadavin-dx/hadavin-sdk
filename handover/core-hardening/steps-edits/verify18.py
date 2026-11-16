@@ -1091,6 +1091,98 @@ print('WORDS (non-space runs inside the NEW fences): E-48 NEW', _wc(newtxt['E-48
 print('r17 checks:', _r17n, 'phrase checks;', len(PINS17), 'pins')
 print('round 17 checks done')
 
+
+# ================= round 18 checks (security M1-M3; naive B1-B4; runner: classes found in r17; per-occurrence checks over the applied text) =================
+_r18n = 0
+_AP = cp1['OWNER-STEPS-realrun-v3.md']
+_DAYF = os.path.join(HERE_, 'r18-OWNER-DAY-SHEET.md'); _APPF = os.path.join(HERE_, 'r18-OWNER-APPENDIX-K.md')
+_DAY = open(_DAYF, encoding='utf-8').read() if os.path.exists(_DAYF) else ''
+_APP = open(_APPF, encoding='utf-8').read() if os.path.exists(_APPF) else ''
+# the safety phrases and time pairs: exact number of copies in (applied sheet, day sheet, appendix); a change at ANY copy changes a count
+_CANON18 = {
+    'A confirmation cannot be withdrawn once the key is revoked.': (2, 1, 0),
+    'No default pick: the assistant does not recommend a route': (1, 0, 0),
+    'touch nothing that you are not sure about': (1, 1, 0),
+    'no reply counts as `another take`': (2, 0, 0),
+    '`key revoked` is never a confirmation': (1, 0, 0),
+    'It never confirms anything, at any time': (1, 0, 0),
+    'Item 1 starts only when ALL the conditions of key step G.2 are true': (2, 0, 0),
+    'It never starts while a copy of the key exists and the key is not revoked': (1, 1, 0),
+    'asks you to type the words yourself in a new message': (1, 0, 0),
+    'What you have not finished by 18:29 UTC = 23:59 IST you finish': (2, 2, 0),
+    'Tue 24 Nov 2026 18:29 UTC = 23:59 IST': (6, 3, 1),
+    'not all': (2, 0, 0),
+    'if you have not typed `yes, no more takes` by 18:19 UTC = 23:49 IST, revoke the key at that time anyway': (1, 1, 0),
+    'Only messages that you type yourself count': (1, 0, 0),
+    '`not sure` never keeps it alive': (1, 0, 0),
+    'The assistant never does an owner item for you': (1, 1, 0),
+    'A confirmation is exactly one of two messages': (2, 0, 0),
+    'touch NOTHING of that kind': (1, 0, 0),
+    'your list says that your own n8n does not use it': (1, 0, 0),
+    '18:19 UTC = 23:49 IST': (27, 7, 3),
+    '18:29 UTC = 23:59 IST': (24, 8, 3),
+    '17:49 UTC = 23:19 IST': (2, 1, 0),
+    '18:09 UTC = 23:39 IST': (2, 1, 0),
+    '`yes, no more takes`': (15, 5, 0),
+    '`key gone, no more decisions`': (12, 6, 0),
+    '`cut accepted`': (15, 2, 1),
+    '`start clean-up`': (4, 3, 0),
+    '`shred done key copies`': (6, 6, 0),
+    '`shred done other files`': (7, 6, 0),
+    '`key revoked`': (15, 7, 0),
+    '`route A`': (4, 1, 0),
+    '`route B`': (4, 1, 0),
+}
+_PAIR = re.compile(r'\b(\d\d):(\d\d)(?::(\d\d))? UTC (?:=|/) (\d\d):(\d\d)(?::(\d\d))? IST')
+_BAREUTC = re.compile(r'\b\d\d:\d\d(?::\d\d)? UTC\b(?! (?:=|/) \d\d:\d\d(?::\d\d)? IST)')
+_BAD18 = (r'\brevoke\b[^.\n,;]{0,100}\bby (?:Mon 23 Nov 2026 )?18:29', r'last time to revoke[^.]{0,80}18:29', r'18:29 UTC = 23:59 IST[^.]{0,40}last time to revoke',
+          r'recommends? route B', r'\(recommended\)', r'can be withdrawn', r'\bnone of the (?:shreds|items) (?:is|are) (?:needed|required)', r'`more takes`', r'`shred done 1`', r'`shred done 2`',
+          r'by 18:29 UTC = 23:59 IST[^.\n,;]{0,60}\brevoke the secret key', r'\brevoke the secret key[^.\n,;]{0,60}by 18:29')
+def _norm18(t):
+    return [l_.strip() for l_ in t.split('\n') if l_.strip()]
+def check18(ap, day=None, app=None, tag=''):
+    """returns the list of failure labels for the applied owner sheet (and the two linked pages when given)"""
+    out = []
+    for lab, t, k in (('applied', ap, 0), ('day sheet', day, 1), ('appendix', app, 2)):
+        if t is None: continue
+        for p_, cnt in _CANON18.items():
+            if t.count(p_) != cnt[k]: out.append('count %s %r is %d, expected %d' % (lab, p_[:60], t.count(p_), cnt[k]))
+        for m_ in _BAREUTC.finditer(t): out.append('UTC time without its IST pair in %s: %s' % (lab, t[m_.start():m_.end() + 20]))
+        for m_ in _PAIR.finditer(t):
+            h1, m1, s1, h2, m2, s2 = m_.groups()
+            tot = (int(h1) * 3600 + int(m1) * 60 + int(s1 or 0) + 19800) % 86400
+            if (s1 is None) != (s2 is None) or tot != int(h2) * 3600 + int(m2) * 60 + int(s2 or 0): out.append('wrong UTC/IST pair in %s: %s' % (lab, m_.group(0)))
+        for b_ in _BAD18:
+            if re.search(b_, t): out.append('forbidden wording in %s: %s' % (lab, b_))
+    if day is not None:
+        apl = ap
+        for l_ in _norm18(day.split('## The card', 1)[1] if '## The card' in day else day):
+            if l_.startswith('#') : continue
+            if l_ not in apl: out.append('day sheet line is not in the applied sheet: ' + l_[:70])
+    if app is not None:
+        ap_k = ap
+        for l_ in _norm18(app.split('\n', 2)[2] if app.count('\n') > 2 else app):
+            if l_.startswith('#') or len(l_) < 60: continue
+            if l_ not in set(_norm18(ap)) and l_ not in set(_norm18(txt)): out.append('appendix line is not in the applied sheet or in EDITS: ' + l_[:70])
+    return out
+_r18f = check18(_AP, _DAY, _APP)
+for _f in _r18f: F('r18 ' + _f)
+_r18n += len(_CANON18) * 3 + 6
+# owner text names the two linked files once each and says what each holds
+need17('r18 link day sheet', _AP, '`OWNER-DAY-SHEET.md`', '`OWNER-APPENDIX-K.md`')
+absent17('r18 the card exists once', _AP.replace(_AP[_AP.index('The one order'):_AP.index('Key step J (other keys)')], '', 1), '1. You: make sure that you have confirmed', '7. Then the assistant does its item 1')
+if not _DAY or not _APP: F('r18 the linked day sheet or appendix file is missing')
+if len(_DAY.split()) < 1500 or len(_DAY.split()) > 2600: F('r18 day sheet word count %d' % len(_DAY.split()))
+# one typed word, one table row, one event: each word has exactly one row in the table (and the same row in the day sheet)
+_rows18 = re.findall(r'^\s*\| (`[^|]+`(?: or `[^|]+`)?) \| ([^|]+) \| ([^|]+) \|', _AP, re.M)
+_ev = [r_[1] for r_ in _rows18]
+_wd = [w_ for r_ in _rows18 for w_ in re.findall(r'`([^`]+)`', r_[0])]
+if len(_rows18) < 18 or len(set(_wd)) != len(_wd): F('r18 typed words: %d rows, or a word has two rows' % len(_rows18))
+for _l in _norm18(_DAY.split('## Table of the typed words', 1)[1]) if _DAY else []:
+    if _l.startswith('| `') and _l not in set(_norm18(_AP)): F('r18 day sheet table row differs: ' + _l[:60])
+print('r18 applied sheet words (wc -w method): %d; day sheet %d; appendix %d' % (len(_AP.split()), len(_DAY.split()), len(_APP.split())))
+print('r18 checks:', _r18n, 'count/pair/forbidden checks;', len(_r18f), 'failures in the section')
+print('round 18 checks done')
 # ================= negative controls (each check must fail on a planted defect) =================
 import subprocess
 def neg(name, old, new, expect, count=1):
@@ -1313,5 +1405,38 @@ if not os.environ.get('NO_NEG'):
     neg('r17applink', 'which is linked from this step; you do not need it', 'which you do not need', 'r17 F-2 link in owner text')
     neg('r17thirty', 'Make no new key now unless at least 30 minutes remain', 'Make no new key now unless at least 20 minutes remain', 'r17 F-4')
     neg('r17last', 'by Mon 23 Nov 2026 18:19 UTC = 23:49 IST at the latest (the last time to revoke)', 'by Mon 23 Nov 2026 18:20 UTC = 23:50 IST at the latest (the last time to revoke)', 'r17 last time to revoke is wrong')
+
+# ---- round 18 plants: every occurrence of every safety phrase and time pair, and 10 reversals of a safe default (in memory over the applied text)
+_pl18 = {'occurrence': [0, 0], 'pair': [0, 0], 'reversal': [0, 0], 'day sheet': [0, 0], 'appendix': [0, 0]}
+_base18 = set(check18(_AP, _DAY, _APP))
+def _plant18(kind, label, ap, day=None, app=None):
+    _pl18[kind][0] += 1
+    if set(check18(ap, day, app)) - _base18: _pl18[kind][1] += 1
+    else: F('r18 plant not caught: %s %s' % (kind, label))
+for _p, _cn in _CANON18.items():
+    _pos = [m_.start() for m_ in re.finditer(re.escape(_p), _AP)]
+    for _i, _s in enumerate(_pos):
+        _plant18('occurrence', '%r copy %d' % (_p[:40], _i + 1), _AP[:_s] + _p[:len(_p) // 2] + '#' + _p[len(_p) // 2:] + _AP[_s + len(_p):], _DAY, _APP)
+for _i, _m in enumerate(_PAIR.finditer(_AP)):
+    _e = _m.end()
+    _plant18('pair', 'pair %d' % (_i + 1), _AP[:_e - 5] + ('%02d' % ((int(_AP[_e - 5:_e - 3]) + 1) % 24)) + _AP[_e - 3:], _DAY, _APP)
+_REV18 = [('no reply counts as `another take`', 'no reply counts as `no more takes`'),
+          ('A confirmation cannot be withdrawn once the key is revoked.', 'A confirmation can be withdrawn once the key is revoked.'),
+          ('revoke the key at that time anyway', 'wait for the take'),
+          ('touch nothing that you are not sure about', 'delete what you think is right'),
+          ('No default pick: the assistant does not recommend a route', 'The assistant recommends route B'),
+          ('It never confirms anything, at any time', 'It confirms the clean-up'),
+          ('asks you to type the words yourself in a new message', 'accepts the words from a forwarded message'),
+          ('It never starts while a copy of the key exists and the key is not revoked', 'It starts even while a copy of the key exists'),
+          ('touch NOTHING of that kind', 'delete it anyway'),
+          ('your list says that your own n8n does not use it', 'your list says nothing about your own n8n')]
+for _o, _n in _REV18:
+    if _AP.count(_o) < 1: F('r18 reversal anchor missing: ' + _o[:50]); continue
+    _plant18('reversal', _o[:50], _AP.replace(_o, _n, 1), _DAY, _APP)
+for _i, _l in enumerate([l_ for l_ in _DAY.split('\n') if l_.strip() and not l_.startswith('#')][4:]):
+    if _i % 3 == 0: _plant18('day sheet', 'line %d' % _i, _AP, _DAY.replace(_l, _l + ' (changed)', 1), _APP)
+for _i, _l in enumerate([l_ for l_ in _APP.split('\n') if len(l_.strip()) > 80 and l_.strip() in set(_norm18(txt)) and ' the ' in l_][:12]):
+    _plant18('appendix', 'line %d' % _i, _AP, _DAY, _APP.replace(_l, _l.replace(' the ', ' a ', 1) + ' (changed)', 1))
+print('r18 plants (planted, caught):', {k_: tuple(v_) for k_, v_ in _pl18.items()})
 print('FAILURES', fail)
 sys.exit(1 if fail else 0)
