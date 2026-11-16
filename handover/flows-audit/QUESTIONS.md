@@ -70,3 +70,4 @@ F8 round 6 made take_check.sh exit 4 (not 0) when the table file is missing, zer
 2. Where does the lead get the From address and the intake address for FROM_ADDRESS_PLACEHOLDER and INTAKE_ADDRESS_PLACEHOLDER? OWNER-STEPS v3 tells the owner to send the lead no addresses, and v3 step 8 has the owner type the SENDER address into n8n. Which settings file or message holds them?
 3. Is the intake address the RECEIVER mailbox? (I inferred it from the flow's toEmail field; the row says unconfirmed.)
 (Q20 addition) 4. mf-recovery.json line 178 reads a third address, DESK_ALERT_TO, from an n8n setting (mf-recovery.json read by the fixer; not run). Which value does the take use, and who sets it? The start script is the lead's, which I have not seen.
+(Q19 addition) The full list of 15 wording conflicts the mechanical fixer left for you, with both texts and line numbers, is in fix-sweep.md under needs-lead; Q19 holds the five that block the take.

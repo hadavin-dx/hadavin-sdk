@@ -24,6 +24,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import traceback
@@ -2668,6 +2669,106 @@ def main():
             rc == 3 and "INTERNAL ERROR (exit 3)" in out and "Traceback" not in out,
             f"rc={rc}",
         )
+
+    # --- Q18: run saving ON for the take; the recovery flow keeps it off by a recorded, named decision (--accept-no-save) ---
+    ACC_REC = "ACCEPTED: recovery flow not part of the take (decision 4)"
+    if PATCHED:
+        qa = [PATCHED, "--quiet-info"] + acc
+        check_out(
+            "q18_patched_recovery_none_accepted_is_exit_0_and_not_a_warn",
+            qa + ["--accept-no-save", "mf-recovery.json"],
+            0,
+            must=[("ACCEPTED: recovery flow not part of the take (decision 4)", "mf-recovery.json")],
+            must_not=["WARN " + PATCHED + "/mf-recovery.json this flow's run-saving"],
+        )
+        check_out(
+            "q18_patched_recovery_none_without_accept_is_a_warn",
+            qa,
+            0,
+            must=[("WARN", "mf-recovery.json this flow's run-saving settings")],
+            must_not=["ACCEPTED: recovery flow"],
+        )
+        check_out(
+            "q18_accept_names_a_file_that_does_not_exist_is_a_warn",
+            qa + ["--accept-no-save", "mf-recovery.json", "--accept-no-save", "mf-nothing.json"],
+            0,
+            must=[("WARN", "accept-no-save --accept-no-save mf-nothing.json excused nothing")],
+        )
+        check_out(
+            "q18_accept_for_a_flow_that_saves_is_a_warn_not_silent",
+            qa + ["--accept-no-save", "mf-recovery.json", "--accept-no-save", "mf-form.json"],
+            0,
+            must=[("WARN", "--accept-no-save mf-form.json excused nothing")],
+        )
+        check_out(
+            "q18_accept_bad_value_is_usage_error",
+            qa + ["--accept-no-save", "sub/mf-recovery.json"],
+            2,
+            must=[("usage error: bad --accept-no-save", "")],
+        )
+        for nm_, fn_ in (("form", "mf-form.json"), ("sub", "mf-sub-crm-mail.json")):
+            dd_ = f"{work}/q18-{nm_}-off"
+            shutil.copytree(PATCHED, dd_)
+            h = rj(f"{dd_}/{fn_}")
+            for k in ("saveDataSuccessExecution", "saveDataErrorExecution"):
+                h["settings"][k] = "none"
+            wj(f"{dd_}/{fn_}", h)
+            check_out(
+                f"q18_accept_given_for_{nm_}_flow_does_not_hide_its_warn",
+                [dd_, "--quiet-info"] + acc + ["--accept-no-save", "mf-recovery.json", "--accept-no-save", fn_],
+                0,
+                must=[
+                    ("WARN", f"{fn_} this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution'] are off"),
+                    ("WARN", f"--accept-no-save {fn_} names this file but it is not a flow that only has a schedule trigger"),
+                ],
+                must_not=["ACCEPTED: recovery flow not part of the take (decision 4): " + dd_ + "/" + fn_],
+            )
+
+        def take(name, folder, want_rc, want_text, not_text=()):
+            env = dict(os.environ, TAKE_CHECK_FLOWS=folder, TAKE_CHECK_FORM_EXPECT="15:14", TAKE_CHECK_CK=CK)
+            r = subprocess.run(["bash", HERE + "/take_check.sh"], env=env, capture_output=True, text=True, check=False)
+            out = r.stdout + r.stderr
+            wt(f"{OUT}/{name}.out", f"$ take_check.sh on {folder}\n{out}exit={r.returncode}\n")
+            report(
+                f"{name} (take_check exit {want_rc})",
+                r.returncode == want_rc and all(t in out for t in want_text) and not any(t in out for t in not_text),
+                f"rc={r.returncode} missing={[t for t in want_text if t not in out]}",
+            )
+
+        take(
+            "q18_take_check_patched_recovery_none_is_exit_0",
+            PATCHED,
+            0,
+            (ACC_REC,),
+            ("!!!", "WARN demo", "run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none'"),
+        )
+        take(
+            "q18_take_check_saving_off_on_the_form_flow_is_exit_4",
+            f"{work}/q18-form-off",
+            4,
+            ("A FLOW THAT THE TAKE USES HAS RUN SAVING OFF", "mf-form.json this flow's run-saving settings"),
+        )
+        take(
+            "q18_take_check_saving_off_on_the_sub_workflow_is_exit_4",
+            f"{work}/q18-sub-off",
+            4,
+            ("A FLOW THAT THE TAKE USES HAS RUN SAVING OFF", "mf-sub-crm-mail.json this flow's run-saving settings"),
+        )
+        rf_ = f"{work}/q18-rec-saves"
+        shutil.copytree(PATCHED, rf_)
+        h = rj(f"{rf_}/mf-recovery.json")
+        for k in ("saveDataSuccessExecution", "saveDataErrorExecution"):
+            h["settings"][k] = "all"
+        h["settings"]["saveManualExecutions"] = True
+        wj(f"{rf_}/mf-recovery.json", h)
+        take(
+            "q18_take_check_recovery_saving_on_makes_the_accept_idle_exit_4",
+            rf_,
+            4,
+            ("accept-no-save --accept-no-save mf-recovery.json excused nothing",),
+        )
+        take("q18_take_check_unpatched_real_v5_is_exit_4", PRIS, 4, ("A FLOW THAT THE TAKE USES HAS RUN SAVING OFF",))
+        # the take_check cases above use PRIS with the patched counts (15:14); the unpatched folder has 12:11, so a count FAIL (exit 1) may come first: see the next line
 
     if skipnames:
         print(

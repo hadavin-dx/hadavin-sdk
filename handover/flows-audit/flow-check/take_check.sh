@@ -12,13 +12,13 @@
 # The table definition the take needs is demo/n8n-flows-v4/mf_leads.sql (lead decision, order Q16). It is looked up at that exact path only (no search for a file of the same name elsewhere).
 HERE=$(cd "$(dirname "$0")" && pwd)
 cd "$HERE/../.." || exit 3   # the handover folder: paths printed below are short and relative to it
-D="${TAKE_CHECK_FLOWS:-demo/n8n-flows-real-v5}"   # TAKE_CHECK_FLOWS and TAKE_CHECK_DDL (absolute paths) exist only so run_all.sh can test the failure exits; the take uses the defaults
+D="${TAKE_CHECK_FLOWS:-demo/n8n-flows-real-v5}"   # TAKE_CHECK_FLOWS and TAKE_CHECK_DDL (absolute paths) exist only so run_all.sh can test the failure exits; the take uses the defaults. TAKE_CHECK_CK (another checker script) and TAKE_CHECK_FORM_EXPECT exist only for selftest.py and run_all.sh
 OUT=$(mktemp /tmp/take-check.XXXXXX) || exit 3
 trap 'rm -f -- "$OUT"' EXIT
 DDL="${TAKE_CHECK_DDL:-demo/n8n-flows-v4/mf_leads.sql}"
 FORMCNT="${TAKE_CHECK_FORM_EXPECT:-12:11}"   # node:connection count of mf-form and mf-hook; run_all.sh sets 15:14 for the patched copy (F-002 adds 3 nodes); the take uses the default only for the unpatched files
 DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
-python3 -I "$HERE/check_flows.py" "$D" "${DDLOPT[@]}" \
+python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$D" "${DDLOPT[@]}" \
   --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 \
   --accept-no-save mf-recovery.json \
   --expect mf-form.json="$FORMCNT" --expect mf-hook.json="$FORMCNT" --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 \
