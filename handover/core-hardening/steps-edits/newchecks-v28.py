@@ -216,7 +216,7 @@ need('C159', 'alarm 1 at the latest start, alarm 2 at the alarm time, alarm 3 at
 for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'Builder proposes B|safe default B\b|builder recommends A for money and chose neither', t): fail('C149', nm + ': still recommends B or contradicts itself on A and B')
     if re.search(r'older key stays valid unless its text appears', t): fail('C149', nm + ': stale description of B')
-if 'Money-safe default if you do not choose: A.' not in NOTE: fail('C149', 'N: A is not named as the money-safe default')
+if 'Money-safe default if you do not choose: A' not in NOTE: fail('C149', 'N: A is not named as the money-safe default')
 if 'Safe default if you do not answer: A' not in OPEN: fail('C149', 'O: row 71 does not name A as the safe default')
 if '6.2 option A none at all' in NOTE or '6.6 and 6.7 option A exactly' in NOTE: fail('C150', 'N: G26 still says A has no older key at 6.2 (v26 A keeps the older key valid until 6.7)')
 if 'no valid key except the older key (if the message names one); 6.6 and the last checks of 6.7' not in NOTE: fail('C150', 'N: G26 not rewritten for the older key')
@@ -229,4 +229,4 @@ if 'NOT MET at v28' not in OPEN: fail('C155', 'O: row 75 does not say the word t
 if 'checked by you with `ls ~/.hadavin-take-tags`' not in NOTE: fail('C156', 'N: run name check by the lead missing')
 for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'\bpay in (only )?(a little(?! more)|less)\b', t.replace('no request to pay in less', '').replace('propose no second account and no smaller payment', '')) : fail('C157', nm + ': suggests the owner pays in less (Q24)')
-if 'Added in v11' not in NOTE or 'look key' not in NOTE.lower(): fail('C158', 'N: v11 section or look key missing')
+if 'Added in v12' not in NOTE or 'look key' not in NOTE.lower(): fail('C158', 'N: v12 section or look key missing')

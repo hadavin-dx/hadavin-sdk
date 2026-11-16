@@ -1004,7 +1004,7 @@ self_test() {
     # (M2) password flag after other text: after && ; | $( , a path, a variable assignment, on a continuation line, a quoted value with spaces
     v7; printf 'cd x && mytool -p %s now\n' "$vv"; v7_reg 'password flag after &&' LS
     v7; printf 'cat f | mytool -P %s\n' "$vv"; v7_reg 'password flag after a pipe' LS
-    v7; printf 'echo $(mytool -w %s)\n' "$vv"; v7_reg 'password flag inside $( )' LS
+    v7; printf 'v=$(mytool -w %s)\n' "$vv"; v7_reg 'password flag inside $( )' LS
     v7; printf './bin/mytool -p %s go\n' "$vv"; v7_reg 'password flag, command given with a path' LS
     v7; printf 'FOO=1 mytool -p %s go\n' "$vv"; v7_reg 'password flag after a variable assignment' LS
     v7; printf 'mytool run \\\n  -p %s\n' "$vv"; v7_reg 'password flag on a continuation line' LS
