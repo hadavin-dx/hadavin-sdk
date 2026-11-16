@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:37:34Z
+UPDATED_UTC: 2026-11-16T13:39:47Z
 PUSHED_UTC: 2026-11-16T13:29:54Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 at this beat (the minimum is 8)
+AGENTS_RUNNING: 8 (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1163 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1179 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,18 +43,19 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-| agent id | purpose | started (UTC) | expected end | state | produced so far |
-|---|---|---|---|---|---|
-| a6603c1713f3d2aaf | cold read of work/L4c-history.md | 13:37Z | +10 min | running | nothing yet |
-| a9038c18fa59f461c | cold read of work/L1.md | 13:37Z | +10 min | running | nothing yet |
-| a414c2ae470544459 | cold read of work/L2.md | 13:37Z | +10 min | running | nothing yet |
-| ac090805eddb2f12a | cold read of work/L3.md | 13:37Z | +10 min | running | nothing yet |
-| (ids next beat) | cold read of work/L5a.md | 13:37Z | +10 min | running | nothing yet |
-| (ids next beat) | cold read of work/L4.md | 13:37Z | +10 min | running | nothing yet |
-| (ids next beat) | cold read of work/drift-report-revisions.md | 13:37Z | +10 min | running | nothing yet |
-| (ids next beat) | cold read of work/LEAD-NOTICE-batch-1.md | 13:37Z | +10 min | running | nothing yet |
 
-8 running (the minimum is 8). Ended and digested this beat: accaa0d16d848e520 (1157), a141541cb624a929a (1158), a08dae4bfbd4d0788 (1159), a4d91047d613654e1 (1160), a0d2e5f5aad15fc98 (1161), a9a2293ebc268011d (1162), abd8c8980c2435f7d (1163), each replaced in the same turn. work/banned-claims.md now starts with a stub line. Next 5 tasks: (1) rewrite GLOSSARY.md; (2) one "Read this first" block on L1c, L3c, L4c, L5b, L6 from digests 1154-1163; (3) move stacked notes into the history files; (4) rewrite rehearsal-passed-limits-draft.md as one block; (5) re-read each edited page.
+| agent id | purpose | started (UTC) | expected end | state | what it produced so far |
+|---|---|---|---|---|---|
+| a783026d9303d0028 | cold read plan-review-r3.md | 2026-11-16T13:39:34Z | +5 min | running | nothing yet |
+| a14cccca334ab796f | cold read resolve-crosscheck-1.md | 2026-11-16T13:39:34Z | +5 min | running | nothing yet |
+| a83a7f89b02504dfc | cold read resolve-ownerview-1.md | 2026-11-16T13:39:34Z | +5 min | running | nothing yet |
+| a49a2b0f4744ed1dc | cold read evidence-1.md | 2026-11-16T13:39:34Z | +5 min | running | nothing yet |
+| ab8f5d4660eed03d3 | cold read BRIEF-EVIDENCE-1.md | 2026-11-16T13:39:34Z | +5 min | running | nothing yet |
+| a853d72b9c913b45d | cold read cleanup-card-held-edits.md | 2026-11-16T13:39:34Z | +5 min | running | nothing yet |
+| a-new1 | cold read plan-review-r1.md | 2026-11-16T13:39:47Z | +5 min | running | nothing yet |
+| a-new2 | cold read plan-resolve-r2.md | 2026-11-16T13:39:47Z | +5 min | running | nothing yet |
+
+Next 5 independent tasks: rewrite GLOSSARY.md as one table; write a Read-this-first block on L1c/L3c/L4c/L5b/L6; move stacked notes into *-history files; rewrite rehearsal-passed-limits-draft.md as one block; add purpose headers to evidence files.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
