@@ -1,2 +1,5 @@
-# QUESTIONS from system-map
-(none)
+# QUESTIONS from system-map (only the lead or studio head can answer; also listed in STATUS-BOARD "LEAD ACTIONS NEEDED")
+1. Who starts Docker and runs the first laptop trial of the changed flows (name and start time)? Needed by Tue 17 Nov 12:29 UTC / 17:59 IST.
+2. Drift Blockers D-01 to D-05, D-10, S-03, L-01: apply or reject the replacement texts in drift/REPORT.md (operator decides; D-04 and D-05 with the studio head).
+3. Does the HubSpot key have write rights, and where is the SENDER app password file stored? (Unknown to this session.)
+4. Archive list: yes or no per row of ARCHIVE-CUT-LIST.md (after the take, not needed for Wed 18 Nov).
