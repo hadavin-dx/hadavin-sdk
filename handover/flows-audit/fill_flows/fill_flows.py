@@ -796,49 +796,106 @@ def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: boo
     return EXIT_OK
 
 
-def _check_against_manifest(directory: str) -> int:
-    """When the manifest that fill wrote sits next to the folder, compare the folder with it:
-    every listed file present (the not-ready note may be gone) with the same fingerprint, and
-    nothing else in the folder. Returns the number of problems; no manifest means 0 (an input
-    folder has none)."""
+def _marked_folder_problems(dfd: int, folder_name: str, present: set) -> int:
+    """For a folder that carries this tool's marker: the marker must be this tool's and name
+    this folder (a renamed or copied folder fails), and the folder and files must still be
+    private (mode 0700 and 0600, yours): `cp -r` or a restore can loosen them."""
+    me = os.getuid()
+    bad = 0
+    ms = _lstat_or_none(MARKER_NAME, dfd)
+    if ms is None or not stat.S_ISREG(ms.st_mode):
+        _say(f"{MARKER_NAME}: not a plain file")
+        bad += 1
+    else:
+        try:
+            same = _read_at(MARKER_NAME, dfd) == _marker_bytes(folder_name)
+        except OSError:
+            same = False
+        if not same:
+            _say(
+                f"{MARKER_NAME}: does not name this folder (the folder was renamed or copied; "
+                "fill again instead of copying)"
+            )
+            bad += 1
+    fs = os.fstat(dfd)
+    if fs.st_uid != me or stat.S_IMODE(fs.st_mode) != 0o700:
+        _say("the folder is not mode 0700 and yours (a copy can loosen it; run chmod 700)")
+        bad += 1
+    for n in sorted(present):
+        ls = _lstat_or_none(n, dfd)
+        if ls is not None and stat.S_ISREG(ls.st_mode):
+            if ls.st_uid != me or stat.S_IMODE(ls.st_mode) != 0o600:
+                _say(f"{_a(n)}: not mode 0600 and yours (a copy can loosen it; run chmod 600)")
+                bad += 1
+    return bad
+
+
+def _check_output_folder(directory: str) -> int:
+    """Checks that only make sense for a folder that `fill` wrote: the marker file, the modes,
+    and the comparison with the manifest (the fingerprint file) that sits next to the folder.
+    Always says whether the comparison ran. Returns the number of problems. A folder with no
+    marker and no manifest (an input folder) has nothing of this kind to check."""
     d = os.path.abspath(directory.rstrip("/") or "/")
     folder_name = os.path.basename(d)
     manifest_name = folder_name + MANIFEST_SUFFIX
-    if not os.path.lexists(os.path.join(os.path.dirname(d), manifest_name)):
-        return 0
-    pfd = os.open(os.path.dirname(d), DIR_FLAGS & ~os.O_NOFOLLOW)
     bad = 0
     try:
+        pfd = os.open(os.path.dirname(d), DIR_FLAGS & ~os.O_NOFOLLOW)
+    except OSError:
+        _say("folder check: the parent folder cannot be opened, so nothing was compared")
+        return 1
+    try:
+        dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
+    except OSError:
+        os.close(pfd)
+        _say("folder check: the folder cannot be opened, so nothing was compared")
+        return 1
+    try:
+        present = set(os.listdir(dfd))
+        marked = MARKER_NAME in present
+        if marked:
+            bad += _marked_folder_problems(dfd, folder_name, present)
+        if _lstat_or_none(manifest_name, pfd) is None:
+            if marked:
+                _say(
+                    f"{_a(manifest_name)}: not next to the folder, so the folder was NOT compared "
+                    "with it (a copied or moved folder, or the file was lost); it cannot be "
+                    "shown unchanged"
+                )
+                bad += 1
+            else:
+                _say(
+                    "manifest compare: not run (no fingerprint file next to the folder and no "
+                    "marker file: an input folder has neither)"
+                )
+            return bad
         try:
             files = _load_manifest(manifest_name, pfd)
         except Refused as e:
-            print(f"manifest: {e}")
-            return 1
-        dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
-        try:
-            present = set(os.listdir(dfd))
-            for n in sorted(present - set(files)):
-                print(f"{_a(n)}: not in the manifest (a file that fill did not write)")
-                bad += 1
-            for n, h in sorted(files.items()):
-                if n not in present:
-                    if n != NOT_READY_NAME:
-                        print(f"{_a(n)}: listed in the manifest but missing")
-                        bad += 1
-                    continue
-                try:
-                    same = sha256_at(n, dfd) == h
-                except OSError:
-                    same = False
-                if not same:
-                    print(f"{_a(n)}: differs from the manifest (changed since fill wrote it)")
+            _say(f"manifest: {e}")
+            return bad + 1
+        for n in sorted(present - set(files)):
+            _say(f"{_a(n)}: not in the manifest (a file that fill did not write)")
+            bad += 1
+        for n, h in sorted(files.items()):
+            if n not in present:
+                if n != NOT_READY_NAME:
+                    _say(f"{_a(n)}: listed in the manifest but missing")
                     bad += 1
-        finally:
-            os.close(dfd)
+                continue
+            try:
+                same = sha256_at(n, dfd) == h
+            except OSError:
+                same = False
+            if not same:
+                _say(f"{_a(n)}: differs from the manifest (changed since fill wrote it)")
+                bad += 1
+        _say(f"manifest compare: ran against {_a(manifest_name)}")
     except OSError:
-        print("manifest: the folder cannot be compared with it")
+        _say("folder check: the folder cannot be read, so it was not fully compared")
         bad += 1
     finally:
+        os.close(dfd)
         os.close(pfd)
     return bad
 
@@ -846,34 +903,42 @@ def _check_against_manifest(directory: str) -> int:
 def do_check(directory: str, tokens_only: bool) -> int:
     names = list_json(directory)
     if not names:
+        if os.path.lexists(os.path.join(directory, NOT_READY_NAME)):
+            raise Refused(
+                f"no .json files in the folder (nothing was checked), and {NOT_READY_NAME} is in "
+                "it: this is a copy that fill left unfinished (placeholders left, or a kill); "
+                "do not import it; run delete --out on it"
+            )
         raise Refused("no .json files in the folder (nothing was checked)")
-    bad = _check_against_manifest(directory)
+    bad = _check_output_folder(directory)
     for n in names:
         try:
             obj = read_json_file(directory, n)
         except Refused as e:
-            print(f"{_a(n)}: {e}")
+            _say(f"{_a(n)}: {e}")
             bad += 1
             continue
         ph: dict[str, int] = {}
         for text in iter_strings(obj):
             for m in TOKEN.finditer(text):
-                print(f"{_a(n)}: token $env {_a(m.group(1) or m.group(3))}")
+                _say(f"{_a(n)}: token $env {_a(m.group(1) or m.group(3))}")
                 bad += 1
             c = len(ANY_ENV.findall(_unescaped(TOKEN.sub("", text))))
             if c:
-                print(f"{_a(n)}: {c} other $env use(s) (dynamic form)")
+                _say(f"{_a(n)}: {c} other $env use(s) (dynamic form)")
                 bad += c
             for name in PH_RE.findall(text):
                 ph[name] = ph.get(name, 0) + 1
         if not tokens_only:
             for p, c in sorted(ph.items()):
-                print(f"{_a(n)}: placeholder {p} x{c}")
+                _say(f"{_a(n)}: placeholder {p} x{c}")
                 bad += c
-    if not tokens_only and os.path.lexists(os.path.join(directory, NOT_READY_NAME)):
-        print(f"{NOT_READY_NAME} is in the folder: fill left placeholders; do not import")
+    if tokens_only:
+        _say("placeholders: not checked (--tokens-only); the copy may still be NOT READY")
+    if os.path.lexists(os.path.join(directory, NOT_READY_NAME)):
+        _say(f"{NOT_READY_NAME} is in the folder: fill left placeholders; do not import")
         bad += 1
-    print(f"check: {len(names)} files, {bad} problem(s)")
+    _say(f"check: {len(names)} files, {bad} problem(s)")
     return EXIT_REFUSED if bad else EXIT_OK
 
 
@@ -881,11 +946,11 @@ def _load_manifest(manifest_name: str, pfd: int) -> dict:
     try:
         fd = os.open(manifest_name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=pfd)
         with os.fdopen(fd, "rb") as fh:
-            man = json.loads(fh.read().decode("utf-8"))
+            man = json.loads(_read_capped(fh, MAX_JSON_BYTES, "manifest").decode("utf-8"))
         files = man["files"]
         if man.get("format") != MANIFEST_FORMAT or not isinstance(files, dict):
             raise ValueError
-    except (OSError, ValueError, KeyError, AttributeError, TypeError):
+    except (OSError, ValueError, KeyError, AttributeError, TypeError, RecursionError):
         raise Refused("manifest is not a valid fill_flows manifest; nothing deleted") from None
     for n, h in files.items():
         if not _plain_name(n):
@@ -898,7 +963,7 @@ def _load_manifest(manifest_name: str, pfd: int) -> dict:
 def _read_at(name: str, dir_fd: int) -> bytes:
     fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
     with os.fdopen(fd, "rb") as fh:
-        return fh.read()
+        return _read_capped(fh, MAX_JSON_BYTES, _a(name))
 
 
 def _lstat_or_none(name: str, dir_fd: int):
