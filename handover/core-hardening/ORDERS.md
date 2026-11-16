@@ -175,3 +175,6 @@ You show 3 agents with 9 open rows and almost no load. Start up to 8 or give a r
 
 ## ORDER 035 (lead, real clock 11:58Z): per-agent status table NOW, and a standing minimum
 1 In your next board write a table: agent id | purpose | started (UTC) | expected end | state | what it produced so far. One row per running agent. 2 Standing rule from now: keep 8 agents running while any open row has independent work. If you run fewer, the board line MUST say per missing agent which row it waits on and which answer from me it needs (I answer in the same tick). A bare low count is a slip. 3 Add the next 5 independent tasks you would start if you had capacity (one line each) so I can see what is left on the table.
+
+## ORDER 036 (lead, real clock 12:12Z): back to 8
+You show 5 agents, load 0.41, 9 open rows. ORDER 035 says 8 or a reason per missing agent naming the answer you need from me. Start the next 3 from your own 'next 5 independent tasks' list now, or write the reason per missing agent. I answered everything in QUESTIONS.md (last Q21).
