@@ -28,7 +28,7 @@ PUSHED_UTC: 2026-11-16T19:03:48Z
 | C9 | apply S9 decisions into owner steps | in v22 | 92 | steps-edits/ | |
 | C10 | who-types-what table | in v22 | 90 | steps-edits/ | |
 | C11 | HubSpot probe step | in v22 | 90 | steps-edits/ | |
-| core audits | v18 FAILED security (3 majors), readiness (4 majors), evidence (guard misses CREATE VIEW, secrets script fails from a closed folder); v19 building | v20 in review | 95 | audit-r460/review-handoff-v17-evidence.md | core PRs are the lead's; L22, L23 open |
+| core audits | hand-off v19 FAILED security (1 blocker), readiness (6 majors), evidence; v20 built (author-run only, Postgres 16.15 only); security, readiness, evidence running | v20 in review | 95 | audit-r460/review-handoff-v19-security.md | L18-L25 and the new numbers are the lead's |
 | lead re-pin list | v8 FAILED security (blocker) and stranger (2 blockers); v9 building | v9 build | 92 | lead-repin/review-repin7-evidence.md | search words are guesses |
 
 ## AGENTS (9 running, counted from the real agent list at 2026-11-16T19:03:48Z)
