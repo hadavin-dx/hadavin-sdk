@@ -1,0 +1,2 @@
+checker: /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py
+fixed command per case: CHECKER.main(D --baseline PRISTINE <--expect lines recomputed from D> --quiet-info [extra option]) in-process
