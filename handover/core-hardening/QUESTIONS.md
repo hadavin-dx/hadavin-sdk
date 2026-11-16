@@ -23,3 +23,9 @@ A necessity review (patches-ready/review/necessity-r1.md) says none of C-01, A-0
 2. No step was found that empties the claim table (mf_leads) between rehearsal and take. The take id guards only the take program's tag. If the take reuses lead ids, the first send may be treated as a duplicate. Who owns the clean-start step, and is the take database new?
 3. The lead id is sent by the caller (mf-form.json:27 submission_id; mf-hook.json:27 message_id), the claim is INSERT ... ON CONFLICT DO NOTHING on mf_leads.lead_key (mf-form.json:97), lease 45 s. A second send after lease expiry does NOT take over; only the recovery flow does (every 30 s, at most 3 attempts). The "120 s" and "20 s" lease numbers elsewhere are not this lease.
 4. Model id and key file are not in the flows (n8n calls $env.DESK_URL/qualify); the spend limit lives in the stage program and is checked by the owner by eye. drive.py is not in any branch I can read.
+
+## Q16 (2026-11-16, C7b evidence): flaky core test, two repo-guard failures, outside my folder
+1. tests/test_s4_llm_guard.py::test_ids_and_plan_hashes_survive_redaction fails by chance, about 0.015 to 0.045 percent per run (a random pln- id sometimes triggers the command-withheld rule in approvals.channel.clean). It also fails on the unpatched base, so it is not caused by A-01, C-01 or G5. I may not edit src/ or tests/. Lead: allow a fix on a separate core branch, or accept the flake? (Class: random id collides with a redaction pattern; the fix belongs at the redaction rule.)
+2. With handover/ present both trees fail the same 2 guard tests (vendor string and non-UTF-8 file under handover/; non-proprietary LICENSE files in promotion-inputs, which decision 11 says never to touch). Lead: confirm these are known and expected on this branch.
+3. The brief's assumption that `git archive b4cce5b` leaves out handover/ was wrong; the C7b evidence says so.
+Evidence: patches-ready/v3/evidence-c7b.md.
