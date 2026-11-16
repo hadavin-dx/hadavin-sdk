@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:35:22Z
+UPDATED_UTC: 2026-11-16T20:36:13Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 10
-CAPACITY: 1.76 load of 4 cores, mem 1/15 GB, RAM 1163/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 10 (light+heavy per list)
+AGENTS_RUNNING: 11
+CAPACITY: 2.23 load of 4 cores, mem 1/15 GB, RAM 1222/16087 MB, disk 13G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 11 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:35:22Z
+PUSHED_UTC: 2026-11-16T20:36:13Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,7 +30,6 @@ PUSHED_UTC: 2026-11-16T20:35:22Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| ac364a63 | QUESTIONS Q31 fixer | sonnet | text fixes | 20:48Z | 21:05Z | running | none yet |
 | a5d36f17 | RUNBOOK fixer r67 | sonnet | fix r66+r67 reports | 20:27Z | 21:30Z | running | none yet |
 | affbdc9a | TAKE-CHECKLIST fixer r68 | sonnet | fix 9 Majors | 20:28Z | 21:30Z | running | none yet |
 | ac14474e | patch-copies fresh re-read pass 27 | sonnet | README 36-275, 290-344, 525-end | 20:33Z | 21:10Z | running | none yet |
@@ -40,6 +39,8 @@ PUSHED_UTC: 2026-11-16T20:35:22Z
 | a5e0ccb1 | REVIEW.md fixer r56 | sonnet | security, both r56 reports | 20:35Z | 21:20Z | running | none yet |
 | ad0e03dc | FIX-PLAN fixer r65 | sonnet | 17 Majors | 20:35Z | 21:20Z | running | none yet |
 | a26f78a9 | RUNSHEET-WORDING fixer r42 | sonnet | 2 Blockers 13 Majors | 20:35Z | 21:20Z | running | none yet |
+| af0f4668 | QUESTIONS reader 420-620 | sonnet | stranger read | 20:36Z | 21:00Z | running | none yet |
+| abebbdbd | QUESTIONS reader 620-815 | sonnet | stranger read | 20:36Z | 21:00Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
