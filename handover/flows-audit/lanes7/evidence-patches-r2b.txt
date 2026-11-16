@@ -1,0 +1,6 @@
+EVIDENCE patches r2b (runner, scratch copy /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev.RtEW, not judged)
+check_patches.sh in scratch copy: PASS 5 patches rc 0; each patch alone git apply --check ok x5; all together check rc0 apply rc0
+diffstat: mf_leads.sql +7-2; build_mainframe.py +7-3 then +5-2; VIDEO-RUNSHEET.md +17-20; PAGE-STATEMENTS-V4.md +8-9
+banned grep: added lines hit only F-001 line 7 (film-v5). Patched files still contain: RUNSHEET lines 12,64,84 (scene 5); PAGE-STATEMENTS line 151 (61.9, K1 relay); mf_leads.sql line1 (film-v5)
+real tree hashes of 4 targets unchanged (sha256 -c OK)
+no patch touches .json

@@ -16,6 +16,7 @@ Options:
   --expect-credential KIND=NAME a node credential of this kind (for example postgres, smtp) must have exactly this name, else FAIL (repeatable)
   --block-env-access            a node that reads $env.X is a FAIL (default: WARN-LEAD-DECISION): use when the take switches off env access inside nodes
   --require-real-credential-ids a credential id or sub-workflow id that is still a placeholder is a FAIL (default: always printed as WARN, even with --quiet-info)
+  --ddl FILE                    SQL file with the CREATE TABLE of the lead table: every column used in a postgres query string of the flows must exist in it, else WARN naming the missing columns. Without it the columns are NOT checked and the run says so loudly
   --fail-unverified             rules that come from memory of n8n (marked 'n8n rule UNVERIFIED') are WARN by default; this makes them FAIL
 Needs Python 3.10 or newer (the script says so and exits 3 on an older one).
 
@@ -30,7 +31,7 @@ equal the expected ones; onError=continueErrorOutput nodes have a non-empty main
 every $('Name') and $node["Name"] inside an expression names a node of the same file.
 Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, n8n-nodes-base.cron, or a type
 ending in 'Trigger'. respondToWebhook is NOT a trigger.
-F-002 Claim is printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002. A node with alwaysOutputData AND onError=continueErrorOutput is a FAIL (round 3).
+F-002 Claim is printed with a WARN (UNPROVEN until a test run in n8n): exit 0 does NOT clear F-002. A node with alwaysOutputData AND onError=continueErrorOutput is a FAIL (round 3).
 WARN-LEAD-DECISION lines (webhook or form without authentication, nodes that read $env) keep exit 0 on purpose, but the closing block always prints 'OPEN LEAD DECISIONS: n webhook(s) without auth, m $env node(s)'.
 Rules that come from MEMORY of n8n, not from a source in this repo (tag 'n8n rule UNVERIFIED'; WARN only unless --fail-unverified): webhook authentication values (none, basicAuth, headerAuth, jwtAuth;
 form trigger: none, basicAuth), the credential kind each of them needs (httpBasicAuth, httpHeaderAuth, jwtAuth), the credential kinds of postgres, smtp and hubspot nodes, the position of the error output,
@@ -103,9 +104,7 @@ WANT_CONN = {
         ]
     },
 }
-F002_UNPROVEN = (
-    "F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)"
-)
+F002_UNPROVEN = "patch F-002 (Claim step: alwaysOutputData/onError) is UNPROVEN until a test run in n8n shows a repeated lead key still gets its answer"
 ENVTOK = re.compile(
     r"\$env\s*\?\.\s*[A-Za-z0-9_]+|\$env\s*\?\.\s*\[[^\]]*\]|\$env\s*\.\s*[A-Za-z0-9_]+|\$env\s*\[[^\]]*\]|\$env\b|\bprocess\.env\b(?:\.[A-Za-z0-9_]+|\s*\[[^\]]*\])?"
 )  # $env.X, $env?.X, $env["X"], bare $env, process.env.X, process.env["X"]
@@ -157,11 +156,23 @@ def final_block():
         print(f"IF branches accepted by a recorded decision (--accept-if): {len(ACCEPTED_IF)}")
         for k in ACCEPTED_IF:
             print("  - " + k)
+    if PARAM_PH:
+        print(
+            f"PLACEHOLDERS IN NODE SETTINGS ({len(PARAM_PH)}): these must be filled before import (they are not credential ids; a mail address left as a placeholder means no mail or alert can be sent):"
+        )
+        for k in PARAM_PH:
+            print("  - " + k)
+    if OPTS["ddl"] is None:
+        print(
+            "SQL COLUMNS NOT CHECKED: no --ddl file was given (the take needs demo/n8n-flows-v4/mf_leads.sql)."
+        )
+    else:
+        print(f"SQL columns compared with the --ddl file: {SQL_DONE['checked']} query string(s) read.")
     print(f"Known open problems: {len(KNOWN)}")
     for k in KNOWN:
         print("  - " + k)
     print(
-        "Not proven: that n8n accepts these files on import; what n8n really does when a step fails (F-002, tests T19 and T20); the SQL inside the postgres nodes; "
+        "Not proven: that n8n accepts these files on import; what n8n really does when a step fails (for example whether a repeated lead key still gets its answer, and whether a failed step reaches the failure line: only a test run in n8n can show it); whether the SQL inside the postgres nodes is correct (only the column names are compared, and only with --ddl); "
         "who calls a web address, whether the flow is active, and test versus production web address; "
         f"expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked '{UNV}' "
         "(webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId)."
@@ -673,7 +684,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         if n.get("alwaysOutputData") is True and n.get("onError") == "continueErrorOutput":
             fail(
                 tag,
-                f"node {nm} has alwaysOutputData together with continueErrorOutput: a failure may then go down the normal output as an empty result instead of the failure output (work order 017 F8: failures must reach the FAILED line; what n8n really does is NOT proven until test T19)",
+                f"node {nm} has alwaysOutputData together with continueErrorOutput: a failure may then go down the normal output as an empty result instead of the failure output (work order 017 F8: failures must reach the FAILED line; what n8n really does is NOT proven until a test run in n8n)",
             )
         if n.get("onError") == "continueRegularOutput" and short in EXTERNAL:
             silent.append(nm)
@@ -1003,6 +1014,17 @@ def check_flow(d, tag, expect, baseline_d):
         if "connections" in expect and ncon != expect["connections"]:
             fail(tag, f"connection count {ncon} != expected {expect['connections']}")
     extra_checks(d, tag, nodes, adj, trig_all, sticky)
+    st_ = d.get("settings")
+    if isinstance(st_, dict) and any(
+        n["type"] in ("n8n-nodes-base.webhook", "n8n-nodes-base.formTrigger") for n in nodes
+    ):
+        off = [k for k in ("saveDataSuccessExecution", "saveDataErrorExecution") if st_.get(k) == "none"]
+        if off:
+            warn(
+                tag,
+                f"this flow starts from a web address or form and its settings {off} are 'none': n8n keeps no run list for it, so a person cannot open a past run to see what happened",
+                known=True,
+            )
     base_nodes = {n.get("name"): n for n in (baseline_d or {}).get("nodes", [])}
     base_conns = (baseline_d or {}).get("connections", {})
     for n in nodes:
@@ -1049,7 +1071,7 @@ def check_flow(d, tag, expect, baseline_d):
                 text = "IF node {} lacks output(s) {}{} (project rule: every IF branch leads somewhere)".format(
                     n["name"],
                     miss,
-                    " (accepted by a recorded decision, --accept-if)"
+                    " (accepted by a recorded decision, --accept-if; an item that would leave by the missing output stops there silently, so a database failure that ends here vanishes with no alert)"
                     if accepted
                     else " (baseline already lacks the same)"
                     if base_missing
@@ -1403,6 +1425,16 @@ def main(argv):
                 OPTS["real_ids"] = True
             elif a == "--fail-unverified":
                 OPTS["fail_unv"] = True
+            elif a == "--ddl":
+                try:
+                    with open(val(), encoding="utf-8") as fh:
+                        OPTS["ddl"] = parse_ddl(fh.read())
+                except OSError:
+                    print("usage error: --ddl file cannot be read")
+                    return 2
+                if not OPTS["ddl"]:
+                    print("usage error: --ddl file holds no CREATE TABLE definition")
+                    return 2
             elif a == "--accept-if":
                 try:
                     fl, rest = val().split("=", 1)
@@ -1534,6 +1566,12 @@ def main(argv):
                     f"INTERNAL ERROR (exit 3): could not write --diff-out file: {type(e).__name__}"
                 )
                 return 3
+    if OPTS["ddl"] is None:
+        warn(
+            "sql",
+            "no --ddl file was given: the columns used in the SQL queries were NOT compared with any table definition; pass --ddl FILE (the take needs demo/n8n-flows-v4/mf_leads.sql, the table with the alert columns)",
+            known=True,
+        )
     print(f"RESULT: {len(FAILS)} FAIL, {len(WARNS)} WARN")
     final_block()
     return 1 if FAILS else 0
