@@ -16,6 +16,9 @@ Agents running: 4 language-model agents (1 evidence runner, 3 result reviewers: 
 | RV-cb (a52c620d686a34950) | result review codebase-details | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-d (a737211799b7fc972) | result review design | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-z (a7518d3448ebfabf1) | result review zoom-out | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
+| EV2 (to be filled) | EVIDENCE RUNNER checks a-k plus F-002 rebuild and cmp into evidence-2.md | 07:30/13:00 | +15 min | - | RUNNING | read evidence-2.md |
+| RV2-d (to be filled) | result review round 2 design (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-design.md |
+| RV2-cb (to be filled) | result review round 2 codebase-details (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-codebase.md |
 Builders L1, L2a, L2b-1, L2b-2, L2b-3, L3: closed (reported, files read, no helper shells).
 
 ## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next
