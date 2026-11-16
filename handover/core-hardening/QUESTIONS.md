@@ -95,3 +95,15 @@ Independent zoom-out of hand-off v7 (saved audit-r460/review-handoff-v7-zoomout.
 ## Q34 (2026-11-16, hand-off v9): the 7 no-spend PRs
 Your wording says drop the 7 no-spend pull requests whose needed-check verdict is NOT-NEEDED or DUPLICATE. The v9 brief says carry them unchanged into the other-tracks file. I carried them (nothing dropped). No per-PR verdict exists in my inputs (MASTER-MAP gives module verdicts only: gate.py, anchor_s3.py, chain.py, signer.py, redact.py NEEDED; extract.py "tests only", UNVERIFIED, so PR-2 protects a function with no non-test caller). Question: send me the per-PR verdicts, or tell me to drop PR-2 and which others. Default: nothing dropped. Non-blocking. Detail: audit-r460/CORE-PR-HANDOFF-v9-other-tracks.md O-0 item 2, raw-needed-verdicts-v9.txt.
 Also new in v9 for you to veto: migration 0006 `CHECK (usd >= 0)` on the spend tables (without it a negative total can wipe caps).
+
+## Added 2026-11-16T15:49:22Z (lead-only; none blocks me)
+L-A/B. Owner sheet: the root-cause reader says ship ONE sheet with the older-key choice as one paragraph. Which older-key route, A (cancel at 6.7 before the run; A likely fails the 7-day rule on Wed 18 Nov) or B (cancel at 7.11 by 16:00 UTC = 21:30 IST on the run day)? Please read the older key's last-used time first.
+L-LEN. v27 is about 7,500 words (maybe 8,500+) against a 6,300 target: accept, or order the cut to one sheet?
+L-FACTS. The sheet needs a facts table only you can fill before release: button words and the cancelled word (with source), older key last-used time, minimum think time, run length, last-resort step.
+L-23NOV. Latest start on Mon 23 Nov is 18:04 UTC = 23:34 IST and the key is revoked by 18:19 UTC = 23:49 IST even if a take is running: confirm, or say no take on 23 Nov.
+L-Q22c. Does the Q22(c) lease sentence belong in the public post (EDITS ND14)? My default: no.
+L-APP2. What is HubSpot app 2 for? (EDITS E-52 calls it "the second app".)
+L-DEL, L-SAVE, L-ONEDB, L-CARD (c6): unchanged from the earlier list.
+Hand-off v13/v14: L2-L7 unchanged; L7 Infinity clause needs an explicit yes (silence is not a yes); DB-2 needs its own yes (L9); which role reads the decrease log; scope of the DB-1 migrate seam; D5 stays OWNER-OPEN and non-blocking.
+Re-pin: what the delete-path criterion is, what "Q27 is shown" means, whether Q27 b alone makes 23 Nov possible.
+run.py: a fixed pointer file for the state folder.

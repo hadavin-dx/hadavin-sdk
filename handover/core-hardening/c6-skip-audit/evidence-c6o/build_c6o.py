@@ -280,6 +280,14 @@ r57 = sub(r57, "(owner decision of 2026-11-16)", "(the owner's choice as recorde
 rows[57]["new"] = r57
 rwhy(57, rows[57]["why"], rows[57]["why"] + " c6n naive review M7: the c6n new text called an unconfirmed default 'owner decision', which breaks the report's own rule that a default is never called a decision.")
 
+# ======================================================================= RS:32 (scene 3 row): carve-out in columns 5-7 (design M3, naive M1)
+nrow(94, "NOT APPLIED; ready", RS, 32, "Nothing on screen (a note in the scene 3 row of the run sheet).", "NO NUMBER. T13",
+     "NO TEST NUMBER (the 45 s lease setting is allowed: it is a setting, not a result). The scene shows the clock times of both sends only if the studio lead chooses so; they are never a result in seconds. T13",
+     "RS:32 column 6 said NO NUMBER with no carve-out for the lease setting or the stopwatch (c6n design review M3, naive review M1). Sources: RS:32")
+nrow(95, "NOT APPLIED; ready", RS, 32, "Nothing on screen (a note in the scene 3 row of the run sheet).", "Any number.",
+     "Any test result as a number (the 45 s lease setting and the stopwatch are allowed).",
+     "RS:32 column 7 'Any number.' forbade the lease setting as well (c6n naive review M1). Sources: RS:32")
+
 # ======================================================================= C-1: old text once on its line, in the tree
 bad = 0
 for k, r in rows.items():

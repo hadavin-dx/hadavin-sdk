@@ -49,7 +49,7 @@ def patch_sections(text):
     # ---- names of this version's files
     text = text.replace("evidence-c6n/", "evidence-c6o/").replace("verify-c6n-output.txt", "verify-c6o-output.txt").replace("verify-c6n.py", "verify-c6o.py")
     text = text.replace("REPORT-c6n.md", "REPORT-c6o.md").replace("box_c6n.md", "box_c6o.md")
-    text = sub(text, "# REPORT-c6o: video audit fix pass, supersedes REPORT-c6m.md (2026-11-16, UTC; IST = UTC + 5:30)",
+    text = sub(text, "# REPORT-c6n: video audit fix pass, supersedes REPORT-c6m.md (2026-11-16, UTC; IST = UTC + 5:30)",
                "# REPORT-c6o: video audit fix pass, supersedes REPORT-c6n.md (2026-11-16, UTC; IST = UTC + 5:30)")
     W = card_words()
     CW = [len(c.split()) for c in CUT]
@@ -65,7 +65,7 @@ def patch_sections(text):
     text = replace_line(text, "| L-LEASE | Say on the closing card and in the scene 3 caption",
         "| L-LEASE | WHICH honest sentence about the 45-second setting is spoken on the closing card and in the scene 3 caption? Reading 1 (the one in ORDERS.md Q21.2): a second send is processed once only within the lease. Reading 2 (what the flow files show, section 3): a second send is refused at ANY time while its row exists; the lease only decides when the recovery flow may take over a contact that is not finished. Answer 1, 2 or none. | NO DEFAULT. Rows 13 and 21 are NOT FILMABLE until you answer. | studio lead |")
     text = insert_after_line(text, "| L-CARDTEXT | Use the new spoken card lines 2 to 4", [
-        "| L-CARDLEN | The four spoken card lines hold %d words (about %d s at 150 words a minute) but the run sheet budgets the card 30 s. Which way: (a) cut the spoken text to about %d words (the cut text is in section 3: total of the video about 180 s), or (b) keep the text and give the card about 60 s (total about 210 s)? | (a) cut. Row 11 writes no total for the card either way: its time is 'EST not measured' until the stopwatch run. | studio lead |" % (sum(W) + 0 if W else 0, round((sum(W)) / 2.5) if W else 0, sum(CW) + 8),
+        "| L-CARDLEN | The four spoken card lines hold %d words (about %d s at 150 words a minute) but the run sheet budgets the card 30 s. Which way: (a) cut the spoken text to about %d words (the cut text is in section 3: total of the video about 180 s), or (b) keep the text and give the card about 60 s (total about 210 s)? | (a) cut. Row 11 writes no total for the card either way: its time is 'EST not measured' until the stopwatch run. | studio lead |" % (sum(W), round(sum(W) / 2.5), sum(CW)),
         "| L-SCENES | Restructure scenes 2 and 3 so that the repeat send comes straight after the first reply and the evidence (CRM list 1 row, mailbox 1 mail) is shown once, at the end of scene 3? Effect: scene 2 about 25 s instead of 40 s and scene 3 about 40 s instead of 25 s (scenes 2 and 3 still add to 65 s; these seconds are estimates, not measured); the gap between the two sends falls from about 40 s or more to about 15 s. | No, the scenes stay as they are. | studio lead |"])
     text = sub(text, "| L-KILL | Say anything in scene 4 about the two crash tests K3B and K3? | No. | studio lead |", "| L-KILL | Say anything in scene 4 about the two crash tests K3B and K3? | No. | studio lead |")
     # apply all defaults: the three lists
@@ -75,7 +75,7 @@ def patch_sections(text):
                "(1) the named builder applies wave 1, %d rows (section 3c lists them), to 10 files (the 9 files of c6n and the flow generator build_mainframe.py), by text, in table order, and writes the list of applied row numbers to the file c6o-APPLIED-ROWS.md next to this report." % n_wave1)
     text = sub(text, "- IT DOES NOT: apply the 3 rows that wait for a check (23, 58, 59);", "- IT DOES NOT: apply the 3 rows that wait for a check (23, 58, 59); apply the %d NOT FILMABLE rows (%s) until you answer L-LEASE; decide L-CARDLEN or L-SCENES (the defaults keep the scenes and cut the card text only if L-CARDLEN default (a) is applied by a builder from the cut text in section 3);" % (n_nofilm, fl(nofilm)))
     text = sub(text, "The builder is the agent that applies the 69 rows.", "The builder is the agent that applies the %d wave 1 rows." % n_wave1)
-    text = sub(text, "`## ANSWER (lead, 2026-11-16T16:40Z = 22:10 IST): c6o apply all defaults to REPORT-c6o.md; builder: builder-1; reviewers: egm-design, egm-comprehension`",
+    text = sub(text, "`## ANSWER (lead, 2026-11-16T16:40Z = 22:10 IST): c6n apply all defaults to REPORT-c6o.md; builder: builder-1; reviewers: egm-design, egm-comprehension`",
                "`## ANSWER (lead, 2026-11-16T16:40:00Z = 22:10:00 IST): c6o apply all defaults to REPORT-c6o.md; builder: builder-1; reviewers: egm-design, egm-comprehension; L-LEASE: 2`")
     text = sub(text, "Replace the time with the real time (type date -u +%FT%TZ for UTC; IST = UTC + 5:30)", "Replace the time with the real time: type date -u +%FT%TZ, which prints UTC with seconds (for example 2026-11-16T16:40:00Z), and add 5 hours 30 minutes by hand for IST (22:10:00)")
     text = sub(text, "To change one default, add after the names: `; except L-KILL: b`", "REPLY FORM FOR EVERY QUESTION (what you may write after 'except', one form each): L-CARD yes or no; L-CARDCUT yes or no; L-CARDTEXT yes or no; L-CARDLEN a or b; L-LEASE 1, 2 or none (the only question without a default: write it every time); L-KILL a or b; L-APPROX yes or no; L-SAVE yes or no; L-PAGE yes or no; L-ONEDB yes or no; L-SCENES yes or no; L-DEL no reply needed; L-CUT yes or no; L-SHEET cannot be put on this line (only the owner knows; write it as a separate line in ORDERS.md: `## ANSWER (owner via lead, time): L-SHEET v25A`). To change one default, add after the names: `; except L-KILL: b`")
@@ -89,7 +89,9 @@ def patch_sections(text):
         "- SPOKEN LENGTH OF THE CLOSING CARD, STILL NOT TESTED: with the rows as they stand the spoken card text holds %d words (counted by evidence-c6o/verify-c6o.py) before the lease sentence; the c6n card held 144 words (about 58 s at 150 words a minute) against the 30 s budget. L-CARDLEN gives two ways (section 3); no stopwatch run exists." % sum(W)])
     # old c6n 'spoken length' bullet replaced by the line above
     text = delete_line(text, "- SPOKEN LENGTH OF THE CLOSING CARD, NOT TESTED (new in this version;")
-    text = sub(text, "Of the 72 rows: 35 are 'ready'", "Of the %d rows (the first 72 of REPORT-c6n.md keep their numbers; rows 73 and up are new in c6o, and several old rows were split): %d are 'ready'" % (NROWS, n_ready), 1) if "Of the 72 rows: 35 are 'ready'" in text else text
+    ls0 = [l for l in text.split("\n") if l.startswith("- NOTHING IN THE EDIT TABLE HAS BEEN APPLIED.")]
+    assert len(ls0) == 1
+    text = replace_line(text, "- NOTHING IN THE EDIT TABLE HAS BEEN APPLIED.", "- NOTHING IN THE EDIT TABLE HAS BEEN APPLIED. Every row says NOT APPLIED. Of the %d rows (rows 1 to 72 keep the numbers of REPORT-c6n.md; rows 73 and up are new in c6o, and rows 1, 33 and 39 were split): %d are 'ready' (no open question and no open check; rows %s); %d apply on the default of a question you have not answered (section 3); %d wait for a check that needs n8n (rows %s); %d are NOT FILMABLE until you answer L-LEASE (rows %s). The counts per question are made by a script and checked by a second script that fails on any difference (section 3, table 3b; section 7)." % (NROWS, n_ready, fl(ready), n_onlyq, n_withc, fl(withc), n_nofilm, fl(nofilm)))
     # ------------------------------------------------------------------ section 1 ids
     text = sub(text, "the row numbers are the same as in REPORT-c6l.md and REPORT-c6m.md.", "the row numbers 1 to 72 are the same as in REPORT-c6l.md, REPORT-c6m.md and REPORT-c6n.md; rows 73 and up are new in c6o; the table lists the rows file by file, the lowest line first within a file's group REVERSED (highest line first) so that the lines of the file do not move while the rows are applied.")
     # ------------------------------------------------------------------ section 3: questions
@@ -138,6 +140,13 @@ def patch_sections(text):
     i = [j for j, l in enumerate(ls) if l.startswith("## 8. Coverage")][0]
     ls[i + 1:i + 1] = cov
     text = "\n".join(ls)
+    gl_rows = [
+        "| L-CARDLEN, L-SCENES | the two new questions of c6o (section 3): the length of the closing card, and the restructure of scenes 2 and 3 | c6n design review M1, M2 |",
+        "| gate | a step on the run sheet that blocks the take until a named person has written a result with the time in UTC and IST; a stop sign written on the sheet, not a program | c6n naive review minors |",
+        "| NOT FILMABLE | status of a row whose text may not be filmed or applied until the studio lead has answered a question that has no default (rows 13 and 21, question L-LEASE) | c6n naive review B1 |",
+        "| money stop, the post, re-pin, claim, take | defined in the first paragraph of the box at the top of this report | c6n naive review minors |",
+    ]
+    text = insert_after_line(text, "| L-CARD, L-CARDCUT, L-CARDTEXT, L-LEASE, L-KILL", gl_rows)
     # ------------------------------------------------------------------ section 3 rows-tied column
     tied = {t: (fl(cnt[t]) if t in cnt else "none") for t in ["L-CARD", "L-CARDCUT", "L-CARDTEXT", "L-LEASE", "L-CARDLEN", "L-KILL", "L-APPROX", "L-SAVE", "L-PAGE", "L-ONEDB"]}
     s3 = text.index("## 3. Questions")

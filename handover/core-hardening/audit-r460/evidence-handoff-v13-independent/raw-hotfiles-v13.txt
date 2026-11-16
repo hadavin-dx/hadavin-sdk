@@ -1,0 +1,39 @@
+rows: 14 ['S-1', 'S-2a', 'S-2b', 'DB-1', 'DB-2', 'PR-2', 'R', 'K1', 'A1', 'G-W', 'G', 'H-0', 'H-1', 'H-2']
+.github/CODEOWNERS                 rows=DB-1 exists=False 
+.sonarcloud.properties             rows=DB-1 exists=True 
+app.py                             rows=S-1,S-2a exists=True S-1 lacks also=['S-2a'] (says None); S-2a lacks also=['S-1'] (says None)
+approvals/cards.py                 rows=S-2a exists=True 
+approvals/channel.py               rows=G-W,G exists=True G-W lacks also=['G'] (says None); G lacks also=['G-W'] (says None)
+approvals/gate.py                  rows=G-W,G exists=True G-W lacks also=['G'] (says None); G lacks also=['G-W'] (says None)
+approvals/requests.py              rows=S-2a,G exists=True 
+audit/                             rows=H-1 exists=True 
+audit/chain.py                     rows=A1 exists=True 
+backends/factory.py                rows=S-1 exists=True 
+backends/table.py                  rows=S-1,H-1 exists=True S-1 lacks also=['H-1'] (says None)
+cli.py                             rows=S-1,S-2a,S-2b exists=True S-1 lacks also=['S-2a', 'S-2b'] (says None); S-2a lacks also=['S-1', 'S-2b'] (says None); S-2b lacks also=['S-1', 'S-2a'] (says None)
+config.py                          rows=S-1,K1,H-0,H-1 exists=True S-1 lacks also=['H-0', 'H-1', 'K1'] (says None)
+defaults.py                        rows=S-1,K1,A1,H-0,H-1 exists=True S-1 lacks also=['A1', 'H-0', 'H-1', 'K1'] (says None); K1 lacks also=['H-0'] (says S-1,A1,H-1); A1 lacks also=['H-0'] (says S-1,K1,H-1); H-1 lacks also=['A1', 'H-0', 'K1', 'S-1'] (says None)
+errors.py                          rows=S-1 exists=True 
+extract.py                         rows=PR-2 exists=True 
+guard/bedrock_guardrail.py         rows=S-1,S-2a exists=True S-1 lacks also=['S-2a'] (says None); S-2a lacks also=['S-1'] (says None)
+guard/injection.py                 rows=S-1,S-2a exists=True S-1 lacks also=['S-2a'] (says None); S-2a lacks also=['S-1'] (says None)
+guard/judge.py                     rows=S-2a exists=True 
+guard/redact.py                    rows=PR-2,R exists=True R lacks also=['PR-2'] (says None)
+k1b/loop.py                        rows=S-1,S-2a exists=True S-1 lacks also=['S-2a'] (says None); S-2a lacks also=['S-1'] (says None)
+limits.py                          rows=S-1,S-2a,S-2b exists=True S-1 lacks also=['S-2a', 'S-2b'] (says None); S-2a lacks also=['S-1', 'S-2b'] (says None); S-2b lacks also=['S-1', 'S-2a'] (says None)
+llm/anthropic.py                   rows=S-1 exists=True 
+llm/bedrock.py                     rows=S-1 exists=True 
+llm/callgate.py                    rows=S-1,S-2a exists=False NOT-IN-TREE-and-not-marked-new; S-1 lacks also=['S-2a'] (says None); S-2a lacks also=['S-1'] (says None)
+llm/common.py                      rows=S-1 exists=True 
+llm/gemini.py                      rows=S-1 exists=True 
+llm/openai_compat.py               rows=S-1,S-2a exists=True S-1 lacks also=['S-2a'] (says None); S-2a lacks also=['S-1'] (says None)
+llm/retry.py                       rows=S-1 exists=True 
+llm/spend.py                       rows=S-1,S-2a exists=False NOT-IN-TREE-and-not-marked-new; S-1 lacks also=['S-2a'] (says None); S-2a lacks also=['S-1'] (says None)
+registry.py                        rows=S-1,H-0 exists=True S-1 lacks also=['H-0'] (says None)
+runtime/agent_loop.py              rows=S-1,S-2a,H-0 exists=True S-2a lacks also=['H-0', 'S-1'] (says None)
+store/memory.py                    rows=S-2a exists=True 
+store/migrate.py                   rows=DB-1 exists=True 
+store/migrations_held/             rows=DB-2 exists=False NOT-IN-TREE-and-not-marked-new
+store/owner_gates.py               rows=DB-1 exists=False 
+store/postgres.py                  rows=S-2a,S-2b,H-0 exists=True S-2b lacks also=['S-2a'] (says H-0)
+files with a flag: 19
