@@ -1,3 +1,5 @@
+## CURRENT STATE (16 Nov 2026; wins over every cell below and over the notes at the end). Blockers: FD-001 and FD-021 (false public claim or credential exposure, per PLAN-002.md). FD-016 is Major (a second retry engine in a retired desk); lines 197 and 212 cells read Major, correct. Line 217 'all three bodies' is wrong: only pr3-body.md:5 was read (UNVERIFIED); cites to pr2-body.md and REVIEW-pr2-4.md are outside the coverage table. Line 203 (PR 4 merged, PRs 2 and 3 closed) contradicts the raw JSON: UNVERIFIED. Line 212 cites DECISION line 15, not 7. Terms: see line 237 (old numbering). Reaper: unknown, UNVERIFIED. Decision owner: the studio head, no date.
+
 # Lane L1c
 
 ## Coverage

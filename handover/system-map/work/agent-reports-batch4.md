@@ -1125,3 +1125,6 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 818 row1-builder-brief r11: base folder, exit meaning. FIXED by CURRENT ONLY r12.
 - 819 premortem r14: owners and gate not complete. FIXED by STATE r15.
 - 820 critical-path r22: single time, conflicts. FIXED by FOLDING: short page r23, history file.
+- 821 PLAN-002 r22: gate not folded, three 'lead' meanings. FIXED by CURRENT STATE block at top; lines 40, 86 UNVERIFIED.
+- 822 L1c r13: cells vs notes, FD-016 severity. FIXED by CURRENT STATE block at top.
+- 823 open-items r15: bare rows, stale cells. PARTLY FIXED: line 3 and row 6 cells edited, CURRENT STATE block at top; column 6 TO DO.
