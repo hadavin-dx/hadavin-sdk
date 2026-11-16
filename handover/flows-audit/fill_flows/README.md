@@ -65,14 +65,19 @@ Keep it OUTSIDE any git folder, NOT under `/mnt`, and make it readable by you on
          --values "$HOME/keep/flow-values.env" --out "$HOME/keep/filled"
 
    Always join the next step to this one with `&&` (for example `fill ... && import ...`), never
-   with `;`. When a placeholder is still in the copy, `fill` ends with a non-zero code (3), so the
-   `&&` stops and nothing is imported. The copy is also marked: the folder then holds a file
+   with `;`. If the values file has no value for a placeholder name, `fill` refuses by default
+   (exit 1, nothing written). Add `--allow-placeholders` only for the credential walk-through
+   below: it then writes a copy and ends with code 3, so the `&&` still stops and nothing is
+   imported. That copy is also marked: the folder then holds a file
    `NOT-READY-DO-NOT-IMPORT.txt`, and `check` reports it as a problem. (Limit: a program that
    imports every file of a folder without being asked by a `&&` still sees the flow files; the
    note file and the exit code are the guards, not the file format.)
 
 2. Check (read-only; run it on the filled folder). It must say `0 problem(s)` before you import.
-   `--tokens-only` ignores placeholders. A folder with no `.json` file is an error.
+   `--tokens-only` ignores placeholders. A folder with no `.json` file is an error. When the
+   fingerprint file (`NAME.manifest.json`) sits next to the folder, `check` also compares the
+   folder with it: a missing file, an extra file (any kind) or a changed file is a problem. An
+   input folder has no such file, so only the token scan runs there.
 
        python3 -I "$TOOL" check "$HOME/keep/filled"
 
@@ -98,7 +103,7 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
    and (real only) `HS_CRED_PLACEHOLDER`, and the two mail addresses as `FROM_ADDRESS_PLACEHOLDER`
    and `INTAKE_ADDRESS_PLACEHOLDER` (real set; the film flows do not carry them). Leave
    `SUB_WORKFLOW_ID` out for now.
-3. Fill into `"$HOME/keep/filled-1"`. It ends with exit code 3 and
+3. Fill into `"$HOME/keep/filled-1"` with `--allow-placeholders`. It ends with exit code 3 and
    `NOT READY TO IMPORT: ... placeholders left` on the error screen. That is expected here (only
    `SUB_WORKFLOW_ID` is left; the folder holds the `NOT-READY-DO-NOT-IMPORT.txt` note, and you
    import only the one file named in step 4).
@@ -118,7 +123,7 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 | 0 | Done: for `fill`, the copy is written and no placeholder is left; for `check`, nothing wrong; for `delete`, deleted or nothing was there. |
 | 1 | Refused, or `check` found problems (for example a placeholder is still there: `check` ends with 1 until every one is filled) (or the folder holds no `.json`). The message names the key, file or line, never a value. |
 | 2 | The command was typed wrongly (missing option). |
-| 3 | `fill` wrote the copy, but placeholders are left. `NOT READY TO IMPORT: N placeholders left` is printed on the error screen and the folder holds `NOT-READY-DO-NOT-IMPORT.txt`. Do not import this copy. |
+| 3 | `fill --allow-placeholders` wrote the copy, but placeholders are left (without the flag `fill` refuses with 1). `NOT READY TO IMPORT: N placeholders left` is printed on the error screen and the folder holds `NOT-READY-DO-NOT-IMPORT.txt`. Do not import this copy. |
 | 4 | Nothing to fill: the input has no marker and no placeholder you gave a value for (probably already filled, or the wrong folder). Nothing is written. |
 
 ## What a refusal means and what to do
@@ -145,7 +150,11 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 - If a fill stopped half way (power cut, disk full), run `delete --out DIR` for that folder. A fill
   that fails by itself removes what it made (including a file cut in the middle). A Ctrl-C during
   a fill is held back while a file or the folder is being made and noted, so it leaves nothing
-  behind either. A kill that cannot be caught (power cut, `kill -9`) can leave the manifest cut
+  behind either; so are the signals terminate (SIGTERM) and hang-up (SIGHUP): the fill cleans up
+  and ends with code 1 (the clean-up itself is shielded from a second signal). Only a kill that
+  cannot be caught (power cut, `kill -9`) leaves a partial copy; the note
+  `NOT-READY-DO-NOT-IMPORT.txt` is written first and removed last, so such a copy is still
+  marked and `check` refuses it. It can also leave the manifest cut
   short with no folder: the next `fill` then says the manifest exists; run
   `delete --out DIR --force-hash` (it removes a cut or empty manifest when no folder exists; it
   still refuses a link, and a manifest that is not yours).
@@ -154,7 +163,10 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 - If the fingerprint file is lost: `delete --out DIR --no-manifest`. It does not touch a
   fingerprint file that sits next to the folder unless that file is a valid manifest (then it is
   removed with the folder); an invalid one makes it refuse, nothing deleted, and with
-  `--force-hash` it is removed too. It deletes only a folder that
+  `--force-hash` it is removed too. When a valid manifest exists, the folder must hold nothing
+  beyond what it lists (otherwise nothing is deleted). It removes only the marker, the
+  not-ready note and `.json` files that look like this program's output, and takes the note and
+  the marker last, so a delete cut short leaves a folder that is still marked. It deletes only a folder that
   looks exactly like this program's output: the folder holds the small marker file
   `.fill_flows-output` (and, when placeholders were left, the note `NOT-READY-DO-NOT-IMPORT.txt`
   with its exact text) that `fill` writes first (right format and this folder's name), the folder
@@ -197,6 +209,15 @@ A plain text is filled only in the address fields `url`, `toEmail`, `fromEmail`,
   Mac). The real place it leads to is still checked for `/mnt` and for git. A link made by another
   user is refused for `fill` and `delete`, because it could send your files somewhere you did not
   choose.
+
+## Two limits to know
+- A `$env` name written with a JavaScript escape (for example `\u0024env`) is refused, but how
+  n8n itself reads such an escape was not tested; refusing is the safe side.
+- The fingerprint file sits next to the folder and holds SHA-256 fingerprints of the whole filled
+  files. A short, guessable value could be tested offline against them. The statement "no extra
+  exposure" is true only while the manifest and the folder stay together; do not send the
+  manifest alone anywhere.
+- The values file must be owned by you (and mode 0600).
 
 ## What `delete --no-manifest` cannot tell
 It has no fingerprint to compare with. If someone who already controls your account edits a
