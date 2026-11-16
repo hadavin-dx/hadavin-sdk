@@ -1,19 +1,20 @@
 # External dead-man check on `tick_state.last_ok_at` (note only: no core code)
 
 **STATUS OF THE PATCH THIS NOTE DEPENDS ON (read first).** `../REVIEW.md:5` says: "A-01 is DEFERRED, the C-01 extras (the token ceiling) are CUT, the G5 wording patch is KEPT (text only)",
-and `REVIEW.md` item 3 of its list says C-01 is "DO NOT APPLY NOW". These are the lead's defaults of 2026-11-16; the studio head may veto them. So today
+and `REVIEW.md` item 3 of its list (`../REVIEW.md:67`) says C-01 is "DO NOT APPLY NOW". These are the lead's defaults of 2026-11-16; the studio head may veto them. So today
 `A-01.patch` is NOT applied, and **the query below ships in its four-name form, ready to copy as it stands**. The fifth name `audit_reconcile` exists only after A-01 is applied; it is one separate line to
 add after A-01 (see "Which names to check"). Words (tick, step, outbox, audit kind, reconcile, studio head, lead, database administrator, migrations login, scheduler operator, live): see the box in `README.md` of this folder.
-All line cites are at commit `b4cce5b`, unless marked "newest commit" (the newest commit of this working copy; `README.md` says which). This folder is for a copy, never the live code; this note adds no core code.
+All line cites are at commit `b4cce5b`, unless marked "newest commit" (`bbfbeee19`; `README.md` says which). This folder is for a copy, never the live code; this note adds no core code.
 
 RUNG: existing code. The tick already writes one `tick_state` row per step with `last_run_at`, `last_ok_at` and `last_error` (`runtime/tick.py:319`, `store.save_tick_state`;
 table in `store/migrations/0003_approvals_tick.sql:30-35`, both at `b4cce5b`). Nothing new is built in core. The check is a query run by something OUTSIDE the tick process.
 
-STATUS OF THE TESTS: the query (with five names) and rows 1, 3, 4 and 5 of the identity table below were run ONCE on 2026-11-16 on a throwaway Postgres 16.15 with the `tick_state` table (taken from
-the migration file) and made-up rows: "seen once on a throwaway Postgres, not the real store". Which other tables that throwaway held is UNVERIFIED: the first-pass log says in its header that it held only `tick_state` but its section 6 lists a refusal on a made-up table `audit_outbox`; the log has no raw output and no command that created such a table, so this note claims nothing about other tables. **That server was started by the `postgres` operating-system user and accepted every connection on a local socket without a password (`../fix-patchcopies1.md`, section 6), so the statements almost certainly ran as a superuser, which is allowed to do everything: the run does NOT show which login rights each statement needs on a real store. That is why the section "Which login runs each statement" below states the rights from the Postgres manual, marked UNVERIFIED where no database was used.** Raw commands and output: `../fix-patchcopies1.md` (the file `handover/flows-audit/reviews-of-core-patches/fix-patchcopies1.md`, one folder up from this one). UNVERIFIED (the second and third
-passes were static: no database was started): rows 2, 6, 7 and 8 of the table (the password procedure, `default_transaction_read_only`,
-`CONNECTION LIMIT`, `statement_timeout`) and decision D5 (the database-wide `REVOKE` lines), the real store, a real scheduler, an alert channel. **Needs the lead to ask the studio head for a test database with the real migrations
-applied; next action there: run the "Negative test" section.**
+STATUS OF THE TESTS (plain, in short parts):
+1. What was run: once, on 2026-11-16, in the FIRST fixer pass only, on a throwaway Postgres 16.15 with a `tick_state` table (taken from the migration file) and made-up rows: "seen once on a throwaway Postgres, not the real store". Run: the query in its FIVE-name form (the form after A-01) and rows 1, 3, 4 and 5 of the identity table below.
+2. What was NOT run: the four-name form that this file ships today (it differs from the five-name form only by one removed list item, `('audit_reconcile')`; its output was not seen). Rows 2, 6, 7 and 8 (the password procedure, `default_transaction_read_only`, `CONNECTION LIMIT`, `statement_timeout`), decision D5 (the database-wide `REVOKE` lines), the real store, a real scheduler and an alert channel were not run either (the second and third passes were static: no database was started; none was started after the first pass).
+3. Which login ran: that server was started by the `postgres` operating-system user and accepted every connection on a local socket without a password (`../fix-patchcopies1.md`, section 6), so the statements almost certainly ran as a superuser, which is allowed to do everything: the run does NOT show which login rights each statement needs on a real store. That is why the section "Which login runs each statement" below states the rights from the Postgres manual, marked UNVERIFIED where no database was used.
+4. Which other tables the throwaway held is UNVERIFIED: the first-pass log says in its header that it held only `tick_state`, but its section 6 lists a refusal on a made-up table `audit_outbox`, and that log holds a summary (rows described, exit codes, `permission denied` as a word), not the raw terminal output; so this note claims nothing about other tables. The log is `../fix-patchcopies1.md` (the file `handover/flows-audit/reviews-of-core-patches/fix-patchcopies1.md`, one folder up from this one).
+5. Next action: **the lead asks the studio head for a test database with the real migrations applied, then someone runs the "Negative test" section.**
 
 ## Decisions and who does what (this note's part; the full list of decisions is the table in `README.md`)
 Defaults marked AUDIT PROPOSAL are the audit session's proposals, **lead to confirm**; none is a studio-head decision yet.
@@ -26,8 +27,8 @@ Defaults marked AUDIT PROPOSAL are the audit session's proposals, **lead to conf
 | D5 | Whether to also remove two default rights of the group `PUBLIC` database-wide (a separate hardening of the whole database, NOT part of this read-only identity; text under the identity table) | studio head, with the database administrator | no | not done |
 | D6 | Name the scheduler operator: the person who saves the query file on the scheduler machine and wires its schedule and alert (T1, T2) | studio head | no | AUDIT PROPOSAL, lead to confirm: the studio head for the studio's own runs; for a client build, the client's operations person, named in writing |
 | T1 | Save the query as `dead-man-check.sql` on the machine of the scheduler | scheduler operator (D6) | no | not done |
-| T2 | Schedule the command below and wire its alert | scheduler operator (D6) | no | not done |
-| T3 | Apply `A-01.patch` (only if D1 is yes) | a builder opens the pull request; the lead merges | yes for A-01 | not done |
+| T2 | Schedule the command below and wire its alert. Cannot start until the place where the scheduler reads the password from is answered (see "Password procedure": UNANSWERED) and D4 is answered | scheduler operator (D6) | no | not done |
+| T3 | Apply `A-01.patch` (only if D1 is yes AND decision rows 5 and 6 of `README.md` are decided: which login the tick runs under, and the per-row guard in the chain drain) | a builder opens the pull request; the lead merges | yes for A-01 | not done |
 
 ## Which names to check (and why A-01 matters)
 The query ships with FOUR names: `sweep`, `reconcile`, `stuck`, `checkpoint`. The step `audit_reconcile` exists only after `A-01.patch` is applied (see `README.md`); while A-01 is deferred, do NOT add it:
@@ -45,7 +46,7 @@ succeeded recently. Steps that run every tick: `sweep`, `reconcile`, `stuck`, `c
 Save it as `dead-man-check.sql` on the machine that runs the scheduler (T1), in a folder only the scheduler's user can write. Placeholder rule: `:limit_s` is a `psql` variable, set on the command line
 with `-v limit_s=<seconds>`; it must be a plain number (no quotes). Without it `psql` stops with a syntax error and exit code 3, which counts as "cannot check" (rule 4 below). An
 unreachable store gives exit code 2. Suggested value (D2): 3 times the SLOWEST tick period (a tick runs every 30 to 60 seconds), so `180`; if the scheduler runs the tick every 30 seconds
-only, `90` is enough. The query assumes the table is the unqualified `tick_state` in schema `public` (as the migration creates it); with another schema, qualify it.
+only, `90` is enough. The query assumes the table is the unqualified `tick_state` and that the login's search path finds it; the migration creates it in the schema that is current when it runs (`store/migrate.py:172-173`, `current_schema()`), which is `public` unless the store setting says otherwise. If it is in another schema, write the schema name in front of `tick_state` in the query and in the `GRANT` lines.
 Clock note: `now()` is the database server's clock and `last_ok_at` is written with the clock of the machine that ran the tick; keep both on network time, or a skew of more than the
 margin gives false alarms or hides a stop.
 
@@ -67,13 +68,14 @@ WHERE t.step IS NULL
    OR t.last_ok_at < now() - make_interval(secs => :limit_s)
 ORDER BY w.step;
 ```
-Run (T2): `psql -h <host> -U deadman_reader -d <database> -v ON_ERROR_STOP=1 -v limit_s=180 -At -f dead-man-check.sql`, with `PGSSLMODE=verify-full` and `PGSSLROOTCERT=<path of the CA file>` set for that one command (see "Connection" below).
+Run (T2), as ONE line; the two settings before `psql` apply to that one command only (see "Connection" below):
+`PGSSLMODE=verify-full PGSSLROOTCERT=<path of the CA file> psql -h <host> -U deadman_reader -d <database> -v ON_ERROR_STOP=1 -v limit_s=180 -At -f dead-man-check.sql`
 - `<host>` and `<database>`: the same host and database name as the store setting of the deployment's config; the database administrator (D3) hands them over.
 - Password: never on the command line (a process list shows it), and not as an environment variable if a password file is possible. First choice: a password file (`PGPASSFILE`, permission 600, written by the
   scheduler at job start from the secret `deadman_reader_password` read through the secrets kind (a named lookup), removed at job end; the one line in it has the form `<host>:<port>:<database>:deadman_reader:<password>`); the `psql` manual calls it the safer form. Second choice, only where a password file is
   impossible: the environment variable `PGPASSWORD` set on that single command (a process environment can be read by the same user on some systems). If the client's database supports short-lived tokens or client certificates, use those instead.
 - Connection (UNVERIFIED against the real store): the password must not cross the network in clear text. Set `PGSSLMODE=verify-full` and `PGSSLROOTCERT` to the CA file of the database's certificate for that one command, so the check refuses a server it cannot verify. If the database cannot offer TLS (for example a socket on the same machine), the studio head accepts that in writing.
-- Alert when the output has any line, OR when `psql` exits non-zero. Exit codes of `psql` (its manual): 2 = it could not connect (store unreachable or login refused); 3 = the script failed
+- Alert when the output has any line, OR when `psql` exits non-zero. A database outage also makes `psql` exit non-zero (exit 2), so an outage of the store alarms too; that is wanted. Exit codes of `psql` (its manual): 2 = it could not connect (store unreachable or login refused); 3 = the script failed
   (with `ON_ERROR_STOP`), for example a missing `-v limit_s` or `permission denied`; 1 = another fatal error of `psql` itself.
 - The scheduler and the alert are not part of core and no `alert` kind exists in `src` (at `b4cce5b`); the scheduler operator (D6) wires the alert (D4).
 The query reads only `step`, `last_ok_at` and `last_run_at`. It does not read `last_error`, so error text can never reach the alert channel.
@@ -99,7 +101,7 @@ Name: `deadman_reader` (a proposed name). **Who runs these statements: the datab
 | 5 `GRANT SELECT (...) ON tick_state` | the table-owning login (the migrations login, `store/migrate.py`), a superuser, or a login with the grant option on that column | same | only as a superuser |
 | 6, 7, 8 `ALTER ROLE ... SET / CONNECTION LIMIT` | a superuser, or a login with `CREATEROLE` that is allowed to change that role (at Postgres 16 the login that created the role is; at 15 and older every `CREATEROLE` login may change any non-superuser role, UNVERIFIED) | changing another role's settings needs those rights | NOT tested at all (static) |
 Rows 3 and 4 change nothing while the group `PUBLIC` still holds `CONNECT` on the database and `USAGE` on the schema `public`, which is the default (UNVERIFIED on the real store); they stay so that the login keeps working if `PUBLIC` is tightened later.
-**Plainly:** the only rows tested were run on a throwaway where the login was almost certainly a superuser. What the manual says, not what was seen, is in this table. In the usual case one administrator login (a superuser, or the provider's top login on a managed database service) can run rows 1 to 4 and 6 to 8, and the table-owning login or that same administrator runs row 5. A managed database service may not allow a superuser at all: then the provider's administrator login stands in, and what it may do is the provider's documentation (not read here).
+**Plainly:** the only rows tested were run on a throwaway where the login was almost certainly a superuser. What the manual says, not what was seen, is in this table. One sentence decides: a superuser login (or, on a managed database service, the provider's top login) can run all eight rows alone; any other login can run only the rows its right allows in the table above (for row 5 the table-owning login), so then two logins are needed. A managed database service may not allow a superuser at all: then the provider's administrator login stands in, and what it may do is the provider's documentation (not read here).
 
 **How the database administrator finds which login to use** (read-only queries; run each as the login you are considering, in `psql`; this was NOT run against a database in this pass):
 ```
@@ -132,9 +134,9 @@ psql -h "$DBHOST" -d "$DBNAME" -U "$ADMIN_LOGIN"                           # the
 # store the same file content in the place the scheduler reads `deadman_reader_password` from (below), then delete the local copy:
 shred -u "$HOME/deadman_reader.secret"                                     # where `shred` is not available: `rm` it and clear the clipboard
 ```
-`\password` hashes the secret on the client before sending it (with the default `password_encryption = scram-sha-256` of Postgres 14 and later; UNVERIFIED here), so the plain value is not written to the server log by that command. **Where the scheduler stores it: UNANSWERED lead item.** Which secrets-kind backend the scheduler machine reads `deadman_reader_password` from (a file the scheduler writes, a vault of the client's cloud, an environment of the job) is chosen by the scheduler operator (D6) and is not named anywhere in this folder or in `REVIEW.md`; the lead asks the studio head. Rotation: repeat this procedure with a new secret and replace the stored one (the old one stops working at once); no interval is set here (`REVIEW.md` Decision 21).
+`\password` hashes the secret on the client before sending it (with the default `password_encryption = scram-sha-256` of Postgres 14 and later; UNVERIFIED here), so the plain value is not written to the server log by that command. **Where the scheduler stores it: UNANSWERED lead item; it blocks T2 and the negative test below until it is answered.** Which secrets-kind backend the scheduler machine reads `deadman_reader_password` from (a file the scheduler writes, a vault of the client's cloud, an environment of the job) is chosen by the scheduler operator (D6) and is not named anywhere in this folder or in `REVIEW.md`; the lead asks the studio head. Rotation: repeat this procedure with a new secret and replace the stored one (the old one stops working at once); no interval is set here (`REVIEW.md` Decision 21).
 
-Seen once on the throwaway Postgres, as a superuser (rows 1, 3, 4 and 5 only: the first pass): with this identity the query above returns the unhealthy rows. Refused (each `permission denied`):
+Seen once on the throwaway Postgres, as a superuser (rows 1, 3, 4 and 5 only: the first pass, five-name query): with this identity the query above returns the unhealthy rows. Refused (each `permission denied`):
 `SELECT last_error FROM tick_state`, `SELECT * FROM tick_state`, `INSERT`, `UPDATE`, `DELETE` on `tick_state`, `CREATE TABLE` in schema `public`. (The first-pass log also lists a refused `SELECT` on a made-up table `audit_outbox`; that one is UNVERIFIED, see "STATUS OF THE TESTS", and the refusal of other tables rests on the missing grant, as the Postgres manual says.) After
 `REVOKE SELECT ON tick_state FROM deadman_reader` the check exits 3 with `permission denied`. To run on the real store (needs the lead and the studio head's test database): the
 same list, plus `SHOW default_transaction_read_only;` and `SHOW statement_timeout;` as that login (expect `on` and `5s`), a third connection attempt while two are open (expect
@@ -157,7 +159,7 @@ to go back, `GRANT CREATE ON SCHEMA public TO PUBLIC;` and `GRANT TEMPORARY ON D
 4. It alerts on an unreachable store and on any non-zero exit too: a check that cannot read the store has failed, and says so.
 
 ## What it does not cover
-A tick that runs and succeeds while doing the wrong thing; a slow mail server (the step finishes, the mail is late); a stuck backlog: `audit_reconcile` that drains 0 events because the
+A database outage that turns the audit drain red (`chain.py:244`, the `DELETE`, is not guarded either, so a store that goes away between the write and the delete makes the step raise: this check then reports `STALE`; true for the store, not a dead tick). A tick that runs and succeeds while doing the wrong thing; a slow mail server (the step finishes, the mail is late); a stuck backlog: `audit_reconcile` that drains 0 events because the
 audit write path itself is broken records a success, so this check stays green ("green" means the step ran, not that the outbox is empty). The reverse also holds once A-01 is applied
 without its per-row guard (`REVIEW.md` row A-6): one unreadable outbox row in the chain kind makes the drain raise on every tick, so the step goes RED and this check reports
 `NEVER SUCCEEDED` or `STALE` although nothing is lost; the alarm then means "a bad outbox row blocks the drain", not "the tick is dead". The A-01 warning and error log lines are written at
@@ -165,7 +167,7 @@ the moment a write fails, but NOTHING reads those lines or alerts on them (no al
 nothing automatically. An audit kind with no `reconcile` method: with the A-01 patch in this folder the step FAILS (its `last_ok_at` stays empty, so this check reports NEVER SUCCEEDED);
 an earlier version of the patch skipped quietly and recorded a success, which would have shown green. `K1bAudit` (`k1b/audit_sink.py`) has no `reconcile`, but it is made only by `build_audit` (`k1b/audit_sink.py:59`), whose only caller in `src` is the `k1b` command code (`cli.py:216`, import at `:213`), not by the tick (`app.py:161`).
 
-## Negative test (to run when it is set up; who: the lead asks the database administrator of D3 to apply the grants, and the scheduler operator of D6 to stop and restart the tick; the alert it fires goes to the channel of D4, so the test cannot be completed until D4 and D6 are answered)
+## Negative test (to run when it is set up; who: the lead asks the database administrator of D3 to apply the grants, and the scheduler operator of D6 to stop and restart the tick; the alert it fires goes to the channel of D4, so the test cannot be completed until D4, D6 and the password place (UNANSWERED, see the Password procedure) are answered)
 Stop the tick for longer than the age limit and confirm the query returns the names (four, or five after A-01) and the alert fires; start it again and confirm the result is empty. Then revoke the
-identity's SELECT (row 5 rollback) and confirm the check alerts "cannot read" instead of staying silent (seen once on the throwaway database; the version with a real tick and the real store was not
+identity's SELECT (row 5 rollback) and confirm the check alerts "cannot read" instead of staying silent (seen once, in the first pass, on the throwaway database; the version with a real tick and the real store was not
 run: needs the lead, see STATUS OF THE TESTS). The grant and revoke need the logins named in "Which login runs each statement" (the table-owning login for row 5), held by the database administrator (the named human, D3), not by this check and not by an agent session.
