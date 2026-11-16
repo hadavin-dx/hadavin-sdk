@@ -6,7 +6,8 @@ Terms (one line each; meanings come from OWNER-RUN-DAY-CARD.md and the decisions
 - rehearsal = a test run before the filmed run, with no real account; film pause = the moment the program stops and waits for you to type `end` while the contact list is filmed (unconfirmed, see below).
 - stage.env = a settings file in the run folder; you open it to compare numbers. demo-take = the Chrome profile used only for the run. v5 = version 5 of the owner's step list. A13 = the question on decision-list-for-lead.md whether a 4-hour rerun margin is kept. retire check, n8n removal and clean-up step 1: meaning NOT RECORDED here (the studio lead writes them).
 - The 6 digits in row 6 are the number the program prints in its second prompt; where it comes from beyond that is NOT RECORDED.
-Rows 7 to 9 may change: the film pause is not confirmed.
+Rows 7 to 9 apply only if the studio lead confirms the film pause. Do nothing on a row marked TBD until its text is filled in. Rows 13, 16, 17 and 19 (clean-up) are read with the OWNER-CLEANUP-CARD.md steps; their one-line meaning: row 13 = you say "accepted" and clean-up starts; row 16 = you confirm the two old logins now print "refused as expected" (the retire check); row 17 = the studio lead says n8n was removed; row 19 = you revoke the model key.
+This page is a draft that replaces the older "order of messages" text in OWNER-VIEW only after the lead agrees; until then follow OWNER-VIEW.
 
 The run never deletes anything. `end` only stops the run. Leftover made-up contacts are deleted by hand. Do nothing in a row until the message above it has arrived.
 
@@ -17,7 +18,7 @@ The run never deletes anything. `end` only stops the run. Leftover made-up conta
 | 3 | Studio lead | TBD (owner of this cell: studio lead, due before the first rehearsal); at most 3 model calls, worst-case price of one call, 3 times that in US dollars, money spent so far, spending backstop, stop time, path of `stage.env` | Open `stage.env`; compare money spent so far and the backstop with the message; a number missing or different: type nothing, tell the studio lead | yes |
 | 4 | You | "Yes, run <run name>, up to 3 model calls and up to US$<total> (3 times the worst-case price of one call), stop time Mon 23 Nov 2026 18:29 UTC / 23:59 IST." | Once per paid run, with a run name never used before | yes; no money moves until you type `y` |
 | 5 | Studio lead | "start now" | Terminal; type the lines the studio lead sends; both login lines must say "still works" (good here) | yes |
-| 6 | You | `y`, then `<6 digits> <run name>` | Type both yourself, only after the figures match your yes | NO: up to 3 paid calls start |
+| 6 | You | `y`, then `<6 digits> <run name>` | Type both yourself, only after the figures match your yes | NO: up to 3 paid calls start; no refund; only the program's own limits stop them |
 | 7 | Studio lead | "program paused" (draft card only; pause not confirmed) | Type nothing; film the HubSpot contact list; no Ctrl-C, do not close the terminal | yes |
 | 8 | You | "film done" | Only after you checked the film file exists and plays | yes |
 | 9 | Studio lead | a new message beginning exactly "film done, type end" | Type `end`, Enter. Deletes nothing. Screen says "delete" or "archive": type nothing, tell the studio lead | pause ends; nothing deleted |
