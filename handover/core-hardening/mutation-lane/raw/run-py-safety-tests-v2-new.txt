@@ -1,0 +1,107 @@
+== T1 the real repository as --root is refused (exit 2)
+REFUSED: --root /home/user/hadavin-sdk is, contains or lies inside the real repository /home/user/hadavin-sdk: use a scratch copy
+  exit code 2
+  PASS: T1 exit 2
+== T2 SIGKILL while a mutant is planted
+  file now: return2
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 29:  9292 Killed                  mut "$@" -- tests/test_slow.py > /dev/null 2>&1
+  PASS: T2 file stays planted
+== T3 the next run refuses and says how to restore
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardenin
+  exit code 2
+  PASS: T3 exit 2
+== T4 marker lost: the tree check against a fresh git archive still refuses
+REFUSED: scratch tree differs from git archive 706baccb2e661cc938bb6429405d632d4485f568 + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+  exit code 2
+  PASS: T4 exit 2
+== T5 --restore puts the saved original back
+process 9299 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/tmpstate/hadavin-mutation-lane/bd5cb1ebaf938cea.backup; hash matches saved original: True
+  PASS: T5 file restored
+  PASS: T5 state folder empty
+== T6 SIGTERM during a run restores the file and removes the marker
+  exit code 143
+  PASS: T6 exit 143
+  FAIL: T6 file restored
+  FAIL: T6 state empty
+== T7 SIGINT likewise, exit code read directly from $?
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 41: kill: (9474) - No such process
+  exit code 2
+  FAIL: T7 exit 130
+  FAIL: T7 file restored
+  FAIL: T7 state empty
+== T8 two runs at once: the second is refused by the lock, and the first is still alive
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/
+  second run exit code 2
+  PASS: T8 second refused (2)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 23: kill: (9646) - No such process
+  FAIL: T8 first run still alive
+  PASS: T8 file still planted by the first
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 45: kill: (9646) - No such process
+  FAIL: T8 file restored after
+== T9 a clean run to the end: KILLED, backup gone, tree diff clean, exit 0
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  exit code 2
+  FAIL: T9 exit 0
+  FAIL: T9 state empty
+grep: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/rawT/X-tree-diff.txt: No such file or directory
+== T10 absolute path as the mutant file is refused (exit 2), nothing planted
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  exit code 2
+  PASS: T10 exit 2
+  FAIL: T10 file unchanged
+  FAIL: T10 state empty
+== T11 '..' in the mutant file is refused (exit 2)
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  exit code 2
+  PASS: T11 exit 2
+  FAIL: T11 file unchanged
+== T12 symlinked folders inside the scratch root
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  (extra symlinked folder 'evil') exit code 2
+  PASS: T12b exit 2
+  PASS: T12b real repo file unchanged
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  (src itself is a link to the real repo) exit code 2
+  PASS: T12a exit 2
+  PASS: T12a real repo file unchanged
+== T13 git cannot tell (rev-parse fails): fail closed
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  (work-tree check fails) exit code 2
+  PASS: T13a exit 2
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  (show-toplevel fails) exit code 2
+  PASS: T13b exit 2
+== T14 a leftover file after the loop gives a non-zero exit; a declared --extra does not
+  undeclared leftover: exit code 2
+  FAIL: T14a exit 4
+  declared --extra: exit code 2
+  FAIL: T14b exit 0
+== T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 67: kill: (10088) - No such process
+  PASS: T15 orphan pytest alive
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root; two runs on one tree would plant over each other
+  FAIL: T15 orphan stopped
+  PASS: T15 file restored
+== T16 SIGHUP restores too (exit 129)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 71: kill: (10474) - No such process
+  exit code 2
+  FAIL: T16 exit 129
+  PASS: T16 file restored
+== T17 --restore while a run is live is refused (lock)
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchp
+  exit code 0
+  FAIL: T17 exit 2
+  FAIL: T17 run still planted
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 74: kill: (10601) - No such process
+== T18 a mutant id that climbs out of --raw is refused
+REFUSED: mutant id is not a plain unique name: '../escape'
+  exit code 2
+  PASS: T18 exit 2
+  PASS: T18 no file outside raw
+== T19 an error while the tests start (no .venv python) still removes the marker
+REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-new/toy/root/.venv/bin/python does not exist: the scratch root needs its ow
+  exit code 2
+  PASS: T19 exit 2
+  PASS: T19 file unchanged
+  PASS: T19 state empty
+FAILED CHECKS: 18

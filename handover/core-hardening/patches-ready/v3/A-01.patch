@@ -1,0 +1,957 @@
+--- a/src/hadavin_sdk/runtime/tick.py
++++ b/src/hadavin_sdk/runtime/tick.py
+@@ -1,8 +1,8 @@
+ """`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
+ 
+ Contract (design v5 kernel, section 4):
+-* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily). Later PRs only
+-  **append** a ``TickStep``.
++* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily),
++  reprobe_sources, audit_drain. Later PRs only **append** a ``TickStep``.
+ * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
+   message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
+ * A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
+@@ -181,6 +181,31 @@
+         fn()
+ 
+ 
++def audit_drain(ctx: TickContext) -> None:
++    """Write the audit events that waited in the outbox into the audit trail (audit A-01).
++
++    Not the same as `reconcile` above, which settles approvals. Logs `drained`, `remaining` and `corrupt`. FAILS
++    the step (so `tick_state.last_ok_at` stops advancing and the exit code is 1) when anything is still waiting
++    after the attempt: the database is down, an item is damaged, or an event cannot be appended. An audit kind
++    that cannot report its backlog also FAILS: unknown is never shown as zero. A kind without `reconcile` has
++    nothing to drain, but its backlog is still checked. Limit: events held in another process's memory (the
++    serving process, after its outbox and spill folder writes also failed) cannot be seen from here."""
++    audit = ctx.app.audit
++    kind = type(audit).__name__
++    backlog = getattr(audit, "backlog", None)
++    if backlog is None:
++        raise RuntimeError(f"audit kind {kind} cannot report its backlog: not shown as empty")
++    fn = getattr(audit, "reconcile", None)
++    if fn is None:
++        _LOG.info("audit_drain: audit kind %s has no reconcile, nothing to drain", kind)
++    drained = fn() if fn is not None else 0
++    corrupt = getattr(audit, "last_corrupt", 0)
++    remaining = backlog()  # raising (store unreadable) fails the step too
++    _LOG.info("audit_drain drained=%d remaining=%d corrupt=%d", drained, remaining, corrupt)
++    if remaining > 0:
++        raise RuntimeError(f"audit events still waiting: {remaining} (corrupt {corrupt})")
++
++
+ def purge_evidence(ctx: TickContext) -> None:
+     """Delete tool calls and redaction maps past their retention, at most about every `retention.purge_every_s`.
+ 
+@@ -263,6 +288,7 @@
+         reprobe_sources,
+         interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
+     ),
++    TickStep("audit_drain", 0, audit_drain),
+ ]
+ STORE_UNREACHABLE = 4
+ STORE_NOT_READY = (
+--- a/src/hadavin_sdk/audit/protocol.py
++++ b/src/hadavin_sdk/audit/protocol.py
+@@ -28,6 +28,11 @@
+         """Drain the outbox. Returns how many events were written."""
+         ...
+ 
++    def backlog(self) -> int:
++        """Events still waiting to be written (outbox, memory, damaged items included). Raises when it cannot
++        tell: unknown must never look like zero (the tick step `audit_drain` fails on it)."""
++        ...
++
+     def verify_object(self, key: str) -> bool: ...
+ 
+     def events(self, run_id: str | None = None) -> list[AuditEvent]:
+--- a/src/hadavin_sdk/audit/chain.py
++++ b/src/hadavin_sdk/audit/chain.py
+@@ -38,6 +38,7 @@
+ from hadavin_sdk.audit import anchors
+ from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
+ from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
++from hadavin_sdk.audit.spill import Spill
+ from hadavin_sdk.errors import ConfigError
+ from hadavin_sdk.models import AuditEvent
+ 
+@@ -159,8 +160,12 @@
+         signer: Signer | None = None,
+         anchor: Any = None,
+         checkpoint_every: int = 100,
++        spill: Spill | None = None,
+     ) -> None:
+         self._db, self.signer, self.anchor = db, signer, anchor
++        self._spill = (
++            spill  # durable last stop before memory (audit A-01 option a); None: memory only
++        )
+         # A custom anchor kind written before alg and key_label existed takes three arguments: it still works (its
+         # objects just lack the two fields) and is logged once, instead of failing every put with a TypeError.
+         self._anchor_takes_meta = not hasattr(anchor, "put") or _takes_meta(anchor.put)
+@@ -171,6 +176,9 @@
+         self.checkpoint_every = checkpoint_every
+         # Last resort when even the outbox table cannot be written (the database is down): drained by reconcile.
+         self._pending: list[AuditEvent] = []
++        self.last_corrupt = (
++            0  # damaged outbox rows and spill files (they stay until a person deals with them)
++        )
+         # Checkpoints whose anchor put failed: retried by the next checkpoint() (ponytail: in-process only; a
+         # restart drops the list and `verify` then reports "never anchored", which is the truth).
+         self._unanchored: dict[int, tuple[str, str]] = {}
+@@ -218,33 +226,106 @@
+             return self._append(event)
+         except DuplicateEvent:
+             return event.event_id
+-        except Exception:  # noqa: BLE001 - the contract is "never raises"
++        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"
++            # A line a person can alert on (audit A-01): the error type and the event id only, never the body.
++            _LOG.warning(
++                "audit outcome not appended (%s): event %s goes to the outbox",
++                type(exc).__name__,
++                event.event_id,
++            )
+             try:
+                 self._db.run(
+                     "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) "
+                     "ON CONFLICT (event_id) DO NOTHING",
+                     (event.event_id, event.model_dump_json()),
+                 )
+-            except Exception:  # noqa: BLE001
+-                self._pending.append(event)
++            except Exception as exc2:  # noqa: BLE001
++                self._hold(event, type(exc2).__name__)
+             return None
+ 
++    def _hold(self, event: AuditEvent, why: str) -> None:
++        """The outbox table could not be written either: a spill file if one is configured, else memory only."""
++        if self._spill is not None:
++            try:
++                self._spill.put(event)
++            except OSError as exc:
++                _LOG.error(
++                    "audit outbox (%s) and spill folder (%s) not written: event %s is held in memory only",
++                    why,
++                    type(exc).__name__,
++                    event.event_id,
++                )
++            else:
++                _LOG.error(
++                    "audit outbox not written (%s): event %s is in the spill folder",
++                    why,
++                    event.event_id,
++                )
++                return
++        else:
++            _LOG.error(
++                "audit outbox not written (%s): event %s is held in memory only",
++                why,
++                event.event_id,
++            )
++        self._pending.append(event)
++
+     def reconcile(self) -> int:
++        """Write what waits in memory, in the spill folder and in the outbox table into the chain, in event id order;
++        returns how many were written.
++
++        A row or file that cannot be read back (a ``ValueError``, e.g. a damaged body) is logged (error type and
++        event id or file name only), skipped and counted in ``last_corrupt``: it never blocks the ones behind it.
++        It stays (in the table, or moved to the spill folder's ``corrupt/``), so ``backlog()`` still counts it and
++        a person must look (audit A-22)."""
++        self.last_corrupt = 0
+         done = 0
+         for event in list(self._pending):
+             if self._drain(event):
+                 self._pending.remove(event)
+                 done += 1
++        if self._spill is not None:
++            for path in self._spill.waiting():
++                event = self._spill.read(path)
++                if event is not None and self._drain(event):
++                    path.unlink(missing_ok=True)
++                    done += 1
++            self.last_corrupt += self._spill.quarantined()
+         try:
+             queued = self._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
+-        except Exception:  # noqa: BLE001 - the database is still down: retried next time
++        except Exception as exc:  # noqa: BLE001 - the database is still down: retried next time
++            _LOG.warning("audit outbox not readable (%s): retried next tick", type(exc).__name__)
+             return done
+         for event_id, body in queued:
+-            if self._drain(AuditEvent.model_validate_json(body)):
+-                self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
++            try:
++                event = AuditEvent.model_validate_json(body)
++            except ValueError as exc:
++                self.last_corrupt += 1
++                _LOG.error(
++                    "audit outbox row not readable (%s): event %s skipped",
++                    type(exc).__name__,
++                    event_id,
++                )
++                continue
++            if self._drain(event):
++                try:
++                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
++                except Exception as exc:  # noqa: BLE001 - written but not deleted: a duplicate is absorbed next time
++                    _LOG.warning(
++                        "audit outbox row not deleted (%s): event %s", type(exc).__name__, event_id
++                    )
++                    continue
+                 done += 1
+         return done
+ 
++    def backlog(self) -> int:
++        """Events still waiting: held in this process, in the spill folder (damaged files included) and rows in
++        the outbox table (damaged rows included). Raises when the table cannot be read, because "unknown" must
++        not look like "empty"."""
++        rows = self._db.run("SELECT COUNT(*) FROM audit_outbox")
++        spilled = self._spill.count() if self._spill is not None else 0
++        return len(self._pending) + spilled + int(rows[0][0])
++
+     def _drain(self, event: AuditEvent) -> bool:
+         try:
+             self._append(event)
+@@ -544,4 +625,5 @@
+     if deps.anchor is not None and deps.signer is None:
+         raise ConfigError("audit chain: an anchor needs a signer (backends.signer)")
+     # The anchor is its own capability (backends.anchor), built before the audit and handed in through Deps.
+-    return ChainAudit(db, deps.signer, deps.anchor, settings.checkpoint_every)
++    spill = Spill(settings.spill_dir) if settings.spill_dir is not None else None
++    return ChainAudit(db, deps.signer, deps.anchor, settings.checkpoint_every, spill)
+--- a/src/hadavin_sdk/audit/local_dir.py
++++ b/src/hadavin_sdk/audit/local_dir.py
+@@ -12,6 +12,7 @@
+ 
+ import hashlib
+ import json
++import logging
+ import os
+ import tempfile
+ import threading
+@@ -20,6 +21,8 @@
+ from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
+ from hadavin_sdk.models import AuditEvent
+ 
++_LOG = logging.getLogger("hadavin_sdk.audit.local_dir")
++
+ 
+ class LocalDirSink:
+     def __init__(self, root: Path) -> None:
+@@ -30,6 +33,7 @@
+         self._lock = threading.Lock()
+         # Last resort when even the outbox folder cannot be written: kept in memory for reconcile.
+         self._pending: list[AuditEvent] = []
++        self.last_corrupt = 0  # damaged outbox files now in outbox/corrupt/ (they stay until a person deals with them)
+ 
+     def _entries(self) -> list[dict]:
+         """Index lines, skipping a torn one (disk full mid-append): it records nothing, and must not block
+@@ -113,7 +117,12 @@
+             return self._write(event)
+         except DuplicateEvent:
+             return f"{event.event_id}.json"
+-        except Exception:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
++        except Exception as exc:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
++            _LOG.warning(
++                "audit outcome not written (%s): event %s goes to the outbox",
++                type(exc).__name__,
++                event.event_id,
++            )
+             try:
+                 self.outbox.mkdir(parents=True, exist_ok=True)
+                 tmp = self.outbox / f".tmp-{event.event_id}"
+@@ -125,7 +134,9 @@
+ 
+     def reconcile(self) -> int:
+         """Drain memory and the outbox. A corrupt outbox file is moved to ``outbox/corrupt/`` (kept for a
+-        person, counted nowhere) so it can never block the files after it."""
++        person and logged) so it can never block the files after it. ``last_corrupt`` is how many files sit in
++        ``outbox/corrupt/`` after the pass, and ``backlog()`` counts them, so the tick step keeps failing until a
++        person has dealt with them."""
+         done = 0
+         for event in list(self._pending):
+             try:
+@@ -137,13 +148,19 @@
+             self._pending.remove(event)
+             done += 1
+         if not self.outbox.exists():
++            self.last_corrupt = 0
+             return done
+         for path in sorted(self.outbox.glob("*.json")):
+             try:
+                 event = AuditEvent.model_validate_json(path.read_text(encoding="utf-8"))
+-            except ValueError:
++            except ValueError as exc:
+                 (self.outbox / "corrupt").mkdir(exist_ok=True)
+                 os.replace(path, self.outbox / "corrupt" / path.name)
++                _LOG.error(
++                    "audit outbox file not readable (%s): %s moved to outbox/corrupt",
++                    type(exc).__name__,
++                    path.name,
++                )
+                 continue
+             try:
+                 self._write(event)
+@@ -153,8 +170,18 @@
+                 continue
+             path.unlink()
+             done += 1
++        self.last_corrupt = self._quarantined()
+         return done
+ 
++    def _quarantined(self) -> int:
++        return len(list((self.outbox / "corrupt").glob("*.json")))
++
++    def backlog(self) -> int:
++        """Events still waiting: held in this process, files in the outbox folder and files moved aside to
++        ``outbox/corrupt/`` (damaged: they need a person, so they count until removed)."""
++        waiting = len(list(self.outbox.glob("*.json"))) if self.outbox.exists() else 0
++        return len(self._pending) + waiting + self._quarantined()
++
+     def verify_object(self, key: str) -> bool:
+         body = (self.objects / key).read_bytes()
+         digest = hashlib.sha256(body).hexdigest()
+--- a/src/hadavin_sdk/audit/spill.py
++++ b/src/hadavin_sdk/audit/spill.py
+@@ -0,0 +1,78 @@
++"""A durable local spill folder for audit events the audit database could not take (audit A-01, option a).
++
++Order for an outcome event in the `chain` kind: the chain, then the outbox table, then (only when a spill folder is
++configured) one file per event here, then memory. Each file is written to a temp name, flushed to disk and renamed
++into place, so a reader never sees half a file and a writer and a reader never touch the same bytes. The tick step
++`audit_drain` reads the folder, writes the events into the chain and deletes each file after its event is safe.
++A file that cannot be read is moved to ``corrupt/`` and stays counted until a person deals with it.
++
++Limit: the tick can only drain this folder when it runs on the same machine (or volume) as the serving process.
++"""
++
++from __future__ import annotations
++
++import logging
++import os
++from pathlib import Path
++
++from hadavin_sdk.models import AuditEvent
++
++_LOG = logging.getLogger("hadavin_sdk.audit.spill")
++
++
++class Spill:
++    def __init__(self, root: Path) -> None:
++        self.root = Path(root)
++        self.corrupt = self.root / "corrupt"
++
++    def put(self, event: AuditEvent) -> None:
++        """Raises OSError when the folder cannot be written (the caller then keeps the event in memory)."""
++        self.root.mkdir(parents=True, exist_ok=True)
++        tmp = self.root / f".tmp-{event.event_id}"
++        try:
++            with open(tmp, "w", encoding="utf-8") as f:
++                f.write(event.model_dump_json())
++                f.flush()
++                os.fsync(f.fileno())
++            os.replace(tmp, self.root / f"{event.event_id}.json")
++        except OSError:
++            tmp.unlink(missing_ok=True)  # no half file is left behind
++            raise
++        self._fsync_dir()
++
++    def _fsync_dir(self) -> None:
++        """Make the new name durable (POSIX). Windows cannot open a folder for fsync: best effort, like local_dir."""
++        try:
++            fd = os.open(self.root, os.O_RDONLY)
++        except OSError:
++            return
++        try:
++            os.fsync(fd)
++        except OSError:
++            pass
++        finally:
++            os.close(fd)
++
++    def waiting(self) -> list[Path]:
++        return sorted(self.root.glob("*.json")) if self.root.exists() else []
++
++    def quarantined(self) -> int:
++        return len(list(self.corrupt.glob("*.json"))) if self.corrupt.exists() else 0
++
++    def read(self, path: Path) -> AuditEvent | None:
++        """The event in the file, or None after moving a damaged file to ``corrupt/`` (type and name logged)."""
++        try:
++            return AuditEvent.model_validate_json(path.read_text(encoding="utf-8"))
++        except ValueError as exc:
++            self.corrupt.mkdir(exist_ok=True)
++            os.replace(path, self.corrupt / path.name)
++            _LOG.error(
++                "audit spill file not readable (%s): %s moved to corrupt",
++                type(exc).__name__,
++                path.name,
++            )
++            return None
++
++    def count(self) -> int:
++        """Files waiting plus files moved aside: all of them need action."""
++        return len(self.waiting()) + self.quarantined()
+--- a/src/hadavin_sdk/backends/table.py
++++ b/src/hadavin_sdk/backends/table.py
+@@ -191,6 +191,9 @@
+ 
+ class ChainSettings(KindSettings):
+     checkpoint_every: int = Field(default=100, ge=1)
++    # A durable folder on the machine for audit events the database and its outbox table could not take (audit
++    # A-01, option a). None: such an event is held in memory only. The tick drains it, so it must share the folder.
++    spill_dir: Path | None = None
+ 
+ 
+ class _SignerSettings(KindSettings):
+--- a/src/hadavin_sdk/k1b/audit_sink.py
++++ b/src/hadavin_sdk/k1b/audit_sink.py
+@@ -38,6 +38,18 @@
+         """Write one event AFTER its side effect. Never raises: on failure the sink keeps it for ``reconcile``."""
+         self.sink.write_outcome(self._event(operation, run_id, fields))
+ 
++    # The tick step `audit_drain` reads these from the audit kind it is given; this wrapper passes them to its sink,
++    # so it never reports a false green. A sink without `backlog` raises AttributeError here: unknown is a failure.
++    def reconcile(self) -> int:
++        return self.sink.reconcile()
++
++    def backlog(self) -> int:
++        return self.sink.backlog()
++
++    @property
++    def last_corrupt(self) -> int:
++        return getattr(self.sink, "last_corrupt", 0)
++
+     def _event(self, operation: str, run_id: str, fields: dict[str, str | None]) -> AuditEvent:
+         return AuditEvent(
+             run_id=run_id,
+--- a/tests/test_a01_audit_reconcile.py
++++ b/tests/test_a01_audit_reconcile.py
+@@ -0,0 +1,513 @@
++"""Audit A-01: nothing drained the audit outbox, and a failed audit write left no log line.
++
++The tick step `audit_drain` calls the audit kind's `reconcile`, logs drained, remaining and corrupt counts, and
++FAILS when events are still waiting (so `tick_state.last_ok_at` stops advancing), when a damaged item sits in a
++kind's quarantine until a person removes it, and when a kind cannot report its backlog. Both audit kinds log a
++warning (error type and event id only, never the event body or the error text) when an outcome goes to the outbox.
++The chain kind can also keep a durable spill folder as its last stop before memory."""
++
++import logging
++
++import pytest
++
++from hadavin_sdk.actions.secrets import FakeSecretProvider
++from hadavin_sdk.app import build
++from hadavin_sdk.approvals import FakeChannel
++from hadavin_sdk.audit import chain as audit
++from hadavin_sdk.audit.local_dir import LocalDirSink
++from hadavin_sdk.audit.protocol import DuplicateEvent
++from hadavin_sdk.audit.spill import Spill
++from hadavin_sdk.k1b.audit_sink import K1bAudit
++from hadavin_sdk.models import AuditEvent
++from hadavin_sdk.runtime import tick
++from hadavin_sdk.runtime.tick import TickContext, run_tick
++
++ERROR_DETAIL = "disk-detail-xyz"
++
++
++def _event(i: int = 0) -> AuditEvent:
++    return AuditEvent(
++        run_id=f"run-{i}",
++        domain="run",
++        operation="state",
++        principal="system:test",
++        source="test",
++        result="OK",
++    )
++
++
++class _FakeApp:
++    def __init__(self, audit_sink):
++        self.audit = audit_sink
++
++
++def _ctx(sink) -> TickContext:
++    return TickContext(_FakeApp(sink), now=None)
++
++
++def _down(event):
++    raise OSError(ERROR_DETAIL)
++
++
++def _chain_with_outbox(monkeypatch, *events):
++    log = audit.ChainAudit(audit._Db.memory())
++    monkeypatch.setattr(log, "_append", _down)
++    for e in events:
++        assert log.write_outcome(e) is None
++    monkeypatch.undo()
++    return log
++
++
++@pytest.fixture
++def app(cfg_dir):
++    return build(
++        cfg_dir,
++        [],
++        secrets=FakeSecretProvider({"fixture-token": "tok" + "-a01"}),
++        channel=FakeChannel("sig" + "-a01"),
++    )
++
++
++# --- the step is wired right ---------------------------------------------------------------------------------
++
++
++def test_the_step_entry_points_at_the_right_function_and_runs_every_tick():
++    (step,) = [s for s in tick.STEPS if s.name == "audit_drain"]
++    assert step.fn is tick.audit_drain
++    assert step.every_s == 0 and step.interval is None
++    assert tick.STEPS[-1] is step  # append-only contract
++
++
++def test_the_tick_function_does_not_share_a_name_with_the_approvals_reconcile():
++    assert tick.audit_drain is not tick.reconcile
++    assert "audit_reconcile" not in [s.name for s in tick.STEPS]
++
++
++# --- chain kind ----------------------------------------------------------------------------------------------
++
++
++def test_the_step_drains_the_outbox_and_logs_the_counts(caplog, monkeypatch):
++    first = _event(1)
++    log = _chain_with_outbox(monkeypatch, first)
++    assert log._db.run("SELECT event_id FROM audit_outbox") == [(first.event_id,)]
++    caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
++    tick.audit_drain(_ctx(log))
++    assert "audit_drain drained=1 remaining=0 corrupt=0" in caplog.text
++    assert log._db.run("SELECT event_id FROM audit_outbox") == []
++    assert [e.event_id for e in log.events()] == [first.event_id]
++
++
++def test_an_empty_outbox_is_green_and_says_zero(caplog):
++    caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
++    tick.audit_drain(_ctx(audit.ChainAudit(audit._Db.memory())))
++    assert "audit_drain drained=0 remaining=0 corrupt=0" in caplog.text
++
++
++def test_a_bad_row_is_skipped_logged_counted_and_the_good_row_behind_it_is_drained(
++    caplog, monkeypatch
++):
++    good = _event(2)
++    log = _chain_with_outbox(monkeypatch, good)
++    # sorts before the good one, so it is read first
++    log._db.run("INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)", ("0-bad", "{not json"))
++    caplog.set_level(logging.INFO)
++    assert log.reconcile() == 1
++    assert log.last_corrupt == 1
++    assert [e.event_id for e in log.events()] == [good.event_id]
++    assert "ValidationError" in caplog.text and "0-bad" in caplog.text
++    assert "not json" not in caplog.text
++    assert log.backlog() == 1  # the damaged row stays: a person must look
++
++
++def test_the_corrupt_count_is_per_pass_not_a_running_total_on_the_chain_kind(monkeypatch):
++    log = _chain_with_outbox(monkeypatch)
++    log._db.run("INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)", ("0-bad", "{"))
++    for _ in range(3):  # the damaged row stays, so every tick sees exactly one damaged row
++        with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++            tick.audit_drain(_ctx(log))
++    assert log.last_corrupt == 1
++
++
++def test_a_damaged_row_fails_the_step_every_tick_but_never_blocks_the_rows_behind_it(monkeypatch):
++    good = _event(3)
++    log = _chain_with_outbox(monkeypatch, good)
++    log._db.run("INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)", ("0-bad", "{"))
++    with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++        tick.audit_drain(_ctx(log))
++    assert [e.event_id for e in log.events()] == [good.event_id]
++
++
++def test_a_database_that_stays_down_leaves_the_step_failing(caplog, monkeypatch):
++    log = _chain_with_outbox(monkeypatch, _event(4))
++    monkeypatch.setattr(log, "_append", _down)
++    with pytest.raises(RuntimeError, match="still waiting: 1"):
++        tick.audit_drain(_ctx(log))
++    assert log.backlog() == 1
++
++
++def test_an_unreadable_outbox_table_fails_the_step_not_a_green_zero(monkeypatch):
++    log = _chain_with_outbox(monkeypatch, _event(5))
++
++    def table_down(*a, **k):
++        raise OSError("table down")
++
++    monkeypatch.setattr(log._db, "run", table_down)
++    with pytest.raises(OSError, match="table down"):
++        tick.audit_drain(_ctx(log))
++
++
++def test_events_held_in_memory_count_as_remaining(monkeypatch):
++    log = audit.ChainAudit(audit._Db.memory())
++    log._pending.append(_event(6))
++    monkeypatch.setattr(log, "_append", _down)
++    assert log.reconcile() == 0
++    assert log.backlog() == 1
++
++
++def test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing(caplog):
++    log = audit.ChainAudit(audit._Db.memory())
++    ev = _event(7)
++    assert log.write_outcome(ev) == ev.event_id
++    with caplog.at_level(logging.WARNING):
++        assert log.write_outcome(ev) == ev.event_id  # DuplicateEvent path
++    assert caplog.text == ""
++    assert log._db.run("SELECT event_id FROM audit_outbox") == []
++
++
++def test_a_failed_outcome_write_logs_type_and_id_but_never_the_body(caplog, monkeypatch):
++    log = audit.ChainAudit(audit._Db.memory())
++    monkeypatch.setattr(log, "_append", _down)
++    ev = _event(8)
++    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.audit.chain"):
++        log.write_outcome(ev)
++    assert "OSError" in caplog.text and ev.event_id in caplog.text
++    assert ERROR_DETAIL not in caplog.text and "run-8" not in caplog.text
++    assert [r.levelno for r in caplog.records] == [logging.WARNING]
++
++
++def test_when_the_outbox_table_also_fails_an_error_line_is_logged(caplog, monkeypatch):
++    log = audit.ChainAudit(audit._Db.memory())
++    monkeypatch.setattr(log, "_append", _down)
++
++    def broken_run(*a, **k):
++        raise OSError("table down")
++
++    monkeypatch.setattr(log._db, "run", broken_run)
++    with caplog.at_level(logging.ERROR, logger="hadavin_sdk.audit.chain"):
++        log.write_outcome(_event(9))
++    assert "held in memory only" in caplog.text and len(log._pending) == 1
++
++
++# --- local_dir kind ------------------------------------------------------------------------------------------
++
++
++def test_the_local_dir_kind_logs_one_warning_with_type_and_id_never_the_error_text(
++    caplog, tmp_path, monkeypatch
++):
++    sink = LocalDirSink(tmp_path)
++    monkeypatch.setattr(sink, "_write", _down)
++    ev = _event(10)
++    with caplog.at_level(logging.DEBUG, logger="hadavin_sdk.audit.local_dir"):
++        assert sink.write_outcome(ev) is None
++    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
++    assert len(warnings) == 1
++    assert "OSError" in caplog.text and ev.event_id in caplog.text
++    assert ERROR_DETAIL not in caplog.text and "run-10" not in caplog.text
++
++
++def test_the_local_dir_duplicate_path_logs_nothing(caplog, tmp_path):
++    sink = LocalDirSink(tmp_path)
++    ev = _event(11)
++    sink.write_intent(ev)
++    with caplog.at_level(logging.WARNING):
++        assert sink.write_outcome(ev) == f"{ev.event_id}.json"
++    assert caplog.text == ""
++    with pytest.raises(DuplicateEvent):
++        sink.write_intent(ev)
++
++
++def test_the_real_local_dir_kind_drains_through_the_tick_step(app, caplog, monkeypatch):
++    sink = app.audit
++    assert isinstance(sink, LocalDirSink)
++    ev = _event(12)
++    monkeypatch.setattr(sink, "_write", _down)
++    assert sink.write_outcome(ev) is None
++    assert len(list(sink.outbox.glob("*.json"))) == 1
++    monkeypatch.undo()
++    caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
++    assert run_tick(app) == 0
++    assert "audit_drain drained=1 remaining=0 corrupt=0" in caplog.text
++    assert list(sink.outbox.glob("*.json")) == []
++    assert [e.event_id for e in sink.events("run-12")] == [ev.event_id]
++    assert app.store.get_tick_state("audit_drain").last_ok_at is not None
++
++
++def test_a_stuck_outbox_stops_last_ok_at_from_advancing_and_exits_1(app, monkeypatch):
++    sink = app.audit
++    monkeypatch.setattr(sink, "_write", _down)
++    sink.write_outcome(_event(13))
++    assert run_tick(app) == 1
++    state = app.store.get_tick_state("audit_drain")
++    assert state.last_ok_at is None  # never green while events wait
++    assert state.last_error is not None and "still waiting: 1" in state.last_error
++    assert ERROR_DETAIL not in state.last_error
++    # the other steps still ran and stayed green
++    assert app.store.get_tick_state("sweep").last_ok_at is not None
++
++
++def _bad_file(sink, name="0-bad.json"):
++    sink.outbox.mkdir(parents=True, exist_ok=True)
++    (sink.outbox / name).write_text("{nope", encoding="utf-8")
++
++
++def test_local_dir_corrupt_file_is_moved_aside_and_the_step_keeps_failing_until_a_person_acts(
++    caplog, tmp_path
++):
++    sink = LocalDirSink(tmp_path)
++    _bad_file(sink)
++    caplog.set_level(logging.INFO)
++    with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++        tick.audit_drain(_ctx(sink))
++    assert (sink.outbox / "corrupt" / "0-bad.json").exists()
++    assert "audit_drain drained=0 remaining=1 corrupt=1" in caplog.text
++    assert "nope" not in caplog.text
++    # next tick: nothing new moves, the file is still quarantined, so still red (same as the chain kind)
++    with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++        tick.audit_drain(_ctx(sink))
++    assert sink.backlog() == 1
++    # the person removes it: green
++    (sink.outbox / "corrupt" / "0-bad.json").unlink()
++    tick.audit_drain(_ctx(sink))
++    assert sink.backlog() == 0 and sink.last_corrupt == 0
++
++
++def test_a_good_file_behind_a_corrupt_one_is_still_drained(tmp_path):
++    sink = LocalDirSink(tmp_path)
++    good = _event(16)
++    sink.outbox.mkdir(parents=True)
++    (sink.outbox / f"1-{good.event_id}.json").write_text(good.model_dump_json(), encoding="utf-8")
++    _bad_file(sink, "0-bad.json")  # sorts first
++    assert sink.reconcile() == 1
++    assert [e.event_id for e in sink.events()] == [good.event_id]
++    assert sink.last_corrupt == 1 and sink.backlog() == 1
++
++
++def test_the_two_kinds_agree_on_a_damaged_item(tmp_path, monkeypatch):
++    """Same fault, same answer: one damaged item, red until a person acts, the good one drained."""
++    sink = LocalDirSink(tmp_path)
++    _bad_file(sink)
++    good_c = _event(17)
++    log = _chain_with_outbox(monkeypatch, good_c)
++    log._db.run("INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)", ("0-bad", "{nope"))
++    for kind in (sink, log):
++        with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++            tick.audit_drain(_ctx(kind))
++
++
++# --- kinds without reconcile or backlog ----------------------------------------------------------------------
++
++
++class _NoBacklog:
++    def reconcile(self):
++        return 3
++
++
++class _OnlyBacklog:
++    def __init__(self, n):
++        self.n = n
++
++    def backlog(self):
++        return self.n
++
++
++def test_a_kind_that_cannot_report_its_backlog_fails_the_step_not_a_green_zero():
++    with pytest.raises(RuntimeError, match="cannot report its backlog"):
++        tick.audit_drain(_ctx(object()))
++    with pytest.raises(RuntimeError, match="cannot report its backlog"):
++        tick.audit_drain(_ctx(_NoBacklog()))
++
++
++def test_a_kind_without_reconcile_but_with_a_backlog_is_checked(caplog):
++    caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
++    tick.audit_drain(_ctx(_OnlyBacklog(0)))
++    assert "audit_drain: audit kind _OnlyBacklog has no reconcile" in caplog.text
++    assert "audit_drain drained=0 remaining=0 corrupt=0" in caplog.text
++    with pytest.raises(RuntimeError, match="still waiting: 4"):
++        tick.audit_drain(_ctx(_OnlyBacklog(4)))
++
++
++def test_the_audit_protocol_names_backlog():
++    from hadavin_sdk.audit.protocol import AuditSink
++
++    assert callable(getattr(AuditSink, "backlog", None))
++
++
++def test_the_k1b_audit_passes_reconcile_and_backlog_to_its_sink(monkeypatch, tmp_path):
++    wrapped = K1bAudit(_chain_with_outbox(monkeypatch, _event(18)), principal="p")
++    tick.audit_drain(_ctx(wrapped))  # drains through the wrapper: green
++    assert wrapped.sink.backlog() == 0
++    stuck = _chain_with_outbox(monkeypatch, _event(19))
++    stuck._db.run("INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)", ("0-bad", "{"))
++    with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++        tick.audit_drain(_ctx(K1bAudit(stuck, principal="p")))
++    local = LocalDirSink(tmp_path)
++    _bad_file(local)
++    with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++        tick.audit_drain(_ctx(K1bAudit(local, principal="p")))
++
++
++def test_a_k1b_audit_over_a_sink_without_backlog_fails_the_step():
++    class Old:
++        def write_intent(self, event):
++            return "k"
++
++    with pytest.raises(AttributeError):
++        K1bAudit(Old(), principal="p").backlog()
++
++
++# --- order of the drain ----------------------------------------------------------------------------------------
++
++
++def test_the_outbox_is_drained_in_event_id_order(monkeypatch):
++    log = audit.ChainAudit(audit._Db.memory())
++    events = [_event(i) for i in range(20, 25)]
++    for e in sorted(
++        events, key=lambda e: e.event_id, reverse=True
++    ):  # inserted in the opposite order
++        log._db.run(
++            "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?)",
++            (e.event_id, e.model_dump_json()),
++        )
++    assert log.reconcile() == 5
++    assert [e.event_id for e in log.events()] == sorted(e.event_id for e in events)
++
++
++# --- the durable spill folder (option a for the memory-only gap) -------------------------------------------------
++
++
++def _both_down(log, monkeypatch):
++    monkeypatch.setattr(log, "_append", _down)
++
++    def table_down(*a, **k):
++        raise OSError("table down")
++
++    monkeypatch.setattr(log._db, "run", table_down)
++
++
++def test_with_a_spill_folder_an_event_survives_the_database_and_the_outbox_failing(
++    tmp_path, caplog, monkeypatch
++):
++    log = audit.ChainAudit(audit._Db.memory(), spill=Spill(tmp_path / "spill"))
++    ev = _event(30)
++    _both_down(log, monkeypatch)
++    with caplog.at_level(logging.ERROR, logger="hadavin_sdk.audit.chain"):
++        assert log.write_outcome(ev) is None
++    assert "is in the spill folder" in caplog.text and ev.event_id in caplog.text
++    assert "memory only" not in caplog.text and log._pending == []
++    assert (tmp_path / "spill" / f"{ev.event_id}.json").exists()
++    # a different process (the tick) drains it once the database is back
++    monkeypatch.undo()
++    other = audit.ChainAudit(log._db, spill=Spill(tmp_path / "spill"))
++    assert other.backlog() == 1
++    tick.audit_drain(_ctx(other))
++    assert [e.event_id for e in other.events()] == [ev.event_id]
++    assert list((tmp_path / "spill").glob("*.json")) == []
++
++
++def test_a_spill_folder_that_cannot_be_written_falls_back_to_memory_and_says_so(
++    tmp_path, caplog, monkeypatch
++):
++    blocker = tmp_path / "file-not-folder"
++    blocker.write_text("x", encoding="utf-8")
++    log = audit.ChainAudit(audit._Db.memory(), spill=Spill(blocker / "spill"))
++    _both_down(log, monkeypatch)
++    with caplog.at_level(logging.ERROR, logger="hadavin_sdk.audit.chain"):
++        log.write_outcome(_event(31))
++    assert "held in memory only" in caplog.text and len(log._pending) == 1
++
++
++def test_a_damaged_spill_file_is_moved_aside_counted_and_keeps_the_step_red(tmp_path, caplog):
++    spill = Spill(tmp_path)
++    log = audit.ChainAudit(audit._Db.memory(), spill=spill)
++    good = _event(32)
++    spill.put(good)
++    (tmp_path / "0-bad.json").write_text("{nope", encoding="utf-8")
++    caplog.set_level(logging.INFO)
++    with pytest.raises(RuntimeError, match="still waiting: 1 .corrupt 1"):
++        tick.audit_drain(_ctx(log))
++    assert [e.event_id for e in log.events()] == [good.event_id]
++    assert (tmp_path / "corrupt" / "0-bad.json").exists() and "nope" not in caplog.text
++    (tmp_path / "corrupt" / "0-bad.json").unlink()
++    tick.audit_drain(_ctx(log))
++
++
++def test_a_failed_spill_write_leaves_no_half_file_and_a_good_one_is_whole(tmp_path, monkeypatch):
++    spill = Spill(tmp_path)
++    ev = _event(34)
++
++    def replace_fails(src, dst):
++        raise OSError(ERROR_DETAIL)
++
++    monkeypatch.setattr("hadavin_sdk.audit.spill.os.replace", replace_fails)
++    with pytest.raises(OSError):
++        spill.put(ev)
++    assert list(tmp_path.iterdir()) == []  # the temp file was removed
++    monkeypatch.undo()
++    spill.put(ev)
++    assert [p.name for p in tmp_path.iterdir()] == [f"{ev.event_id}.json"]  # no temp file left
++    assert (
++        AuditEvent.model_validate_json(spill.waiting()[0].read_text("utf-8")).event_id
++        == ev.event_id
++    )
++
++
++def test_the_spill_file_is_removed_only_after_the_event_is_in_the_chain(tmp_path, monkeypatch):
++    spill = Spill(tmp_path)
++    log = audit.ChainAudit(audit._Db.memory(), spill=spill)
++    ev = _event(33)
++    spill.put(ev)
++    monkeypatch.setattr(log, "_append", _down)
++    assert log.reconcile() == 0
++    assert len(spill.waiting()) == 1 and log.backlog() == 1  # still there, still counted
++    monkeypatch.undo()
++    assert log.reconcile() == 1 and spill.waiting() == []
++
++
++def test_the_chain_kind_is_built_with_the_configured_spill_folder(tmp_path):
++    from hadavin_sdk.backends.factory import Deps
++    from hadavin_sdk.backends.table import ChainSettings
++    from hadavin_sdk.store.memory import MemoryStore
++
++    deps = Deps(resolve=lambda n: "", store=MemoryStore(), signer=None, anchor=None)
++    with_dir = audit.build(ChainSettings(kind="chain", spill_dir=tmp_path), deps)
++    assert with_dir._spill is not None and with_dir._spill.root == tmp_path
++    assert audit.build(ChainSettings(kind="chain"), deps)._spill is None
++
++
++def test_the_spill_folder_is_a_chain_setting_and_defaults_to_none(tmp_path):
++    from hadavin_sdk.backends.table import ChainSettings
++
++    assert ChainSettings(kind="chain").spill_dir is None
++    assert ChainSettings(kind="chain", spill_dir=tmp_path).spill_dir == tmp_path
++
++
++def test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting(
++    caplog, monkeypatch
++):
++    log = _chain_with_outbox(monkeypatch, _event(14), _event(15))
++    real_run = log._db.run
++
++    def no_delete(sql, params=()):
++        if sql.startswith("DELETE FROM audit_outbox"):
++            raise OSError(ERROR_DETAIL)
++        return real_run(sql, params)
++
++    monkeypatch.setattr(log._db, "run", no_delete)
++    with caplog.at_level(logging.WARNING):
++        assert log.reconcile() == 0  # both rows are in the chain, neither counted as drained
++    assert log.backlog() == 2  # still in the table: a duplicate is absorbed next tick
++    assert ERROR_DETAIL not in caplog.text
++    monkeypatch.setattr(log._db, "run", real_run)
++    assert log.reconcile() == 2  # DuplicateEvent path, then the deletes succeed
++    assert log.backlog() == 0
++    assert len(log.events()) == 2
+--- a/tests/test_p7_tick.py
++++ b/tests/test_p7_tick.py
+@@ -86,10 +86,12 @@
+         "checkpoint",
+         "purge_evidence",
+         "reprobe_sources",
++        "audit_drain",
+     ]
+     caplog.set_level("INFO", logger="hadavin_sdk.tick")
+     assert run_tick(app) == 0
+     assert "tick ok=True failed=-" in caplog.text
++    assert app.store.get_tick_state("audit_drain").last_ok_at is not None  # A-01: the step ran
+     assert (
+         app.store.get_tick_state("heartbeat") is None
+     )  # the summary line is not a step: no tick_state row
