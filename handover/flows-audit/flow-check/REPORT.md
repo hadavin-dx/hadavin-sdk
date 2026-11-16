@@ -2,6 +2,19 @@
 
 **Bottom line: the checker finds no structural error in the 8 flow folders it was run on, but the flows are NOT shown to be ready to film. Exit code 0 only means "no structural FAIL". Known problems are open (section 1), and the checker never started n8n.**
 
+## Round 3 (2026-11-16, UTC; IST = UTC + 5:30): what changed, and what is still NOT known
+**The take uses the `real-v5` flows only (lead decision 2026-11-16). Run the checker on `handover/demo/n8n-flows-real-v5`. Everything about `film-v5` below is NOT FOR THE TAKE (kept only because the checker was asked to cover both).**
+- **Not verified, said first:** (a) If the n8n setting `N8N_BLOCK_ENV_ACCESS_IN_NODE` is switched on, the 2 `real-v5` steps that read `$env` (`AlertSend`, `Qualify`) fail on a default install; I could not check this here (unverified from memory, n8n 2.x may block it by default). **This must be checked on the laptop before the take.** (b) Import into n8n was never tried. (c) The allowed `authentication` values and credential kinds (webhook: none, basicAuth, headerAuth, jwtAuth with httpBasicAuth, httpHeaderAuth, jwtAuth; form trigger: none, basicAuth) are from my memory of n8n, not from a source in this repo.
+- **A green run is not an authentication check.** Webhooks without a password still exit 0, but now print as their own `WARN-LEAD-DECISION` line, and every run ends with `OPEN LEAD DECISIONS: n webhook(s) without auth, m $env node(s)` (real-v5 alone: 2 webhooks, 2 `$env` steps). `run_all.sh` prints the same line last.
+- **Placeholder ids** (database, mail and CRM credential ids, sub-flow id) now always print as a WARN, also with `--quiet-info`. `--require-real-credential-ids` (and `bash run_all.sh --strict`) turn them into FAIL. Today every flow file has them, so `--strict` exits 1: that is correct until the ids are replaced in n8n.
+- **Authentication value and credential kind are validated:** a webhook value other than none, basicAuth, headerAuth, jwtAuth, or a credential block of the wrong kind, is a FAIL.
+- **HubSpot** credentials are checked (kind `hubspotAppToken`, name `hubspot-app-token` via `--expect-credential`; `run_all.sh` passes it).
+- **`alwaysOutputData` together with `continueErrorOutput` is now a FAIL** (work order 017 F8: failures must reach the FAILED line). No real-v5 or film-v5 file has that combination (the F-002 patch sets `alwaysOutputData` false on `Claim`), so no real file now fails.
+- Also fixed: `$env?.X` and bare `$env` are found; node names in backticks are checked and a computed node name gives a WARN; webhook paths are compared without leading slash and without case.
+- Docs: the credential list above is now complete (Postgres, SMTP and HubSpot `hubspot-app-token`). "Four steps read `$env`" means 2 in real-v5 and 2 in film-v5 (4 over both sets). The trigger list in the checker header now names `n8n-nodes-base.cron`. The 42-mutant figure below was my own run; the independent run is `evidence-r2.md`.
+- Checker code now passes `ruff check`, `ruff format --check` and `bandit -ll` (see `fix-f8-r3.md`). The self-test now calls the checker in the same process instead of starting a new Python each time.
+- Commands: see `README.md` in this folder.
+
 ## Start here: what you must decide (plain words)
 **Are the flows safe to import into n8n? NOT KNOWN.** Nobody has tried to import these files into n8n, and the checker only reads the files. Test ONE import (for example `mf-recovery`) on the laptop before anything else. Passing the checker (exit code 0) means only "no definite fault in the files".
 
@@ -45,9 +58,9 @@ Every number comes from a file in `raw/` (table in section 3).
 ## 2. What the checker does now
 Closing block on every run: "Known open problems: N" (WARN lines that are real open defects: no password on a web address, reply gap, F-002, env reads), "Not proven: ...", "Passing this check does NOT mean the flows are ready to film." The exit code depends only on FAIL.
 - **FAIL:** file does not parse (including a JSON key written twice) or has the wrong shape (settings or webhook id of the wrong type included; a FAIL line, no crash); a web address or form that names a password type but has no credentials block; a credential of the wrong kind or, with `--expect-credential`, the wrong name; `--files all` on a folder with no JSON file; duplicate step names or ids; link to or from a step that does not exist; step with no way in; step no trigger can reach; wrong step or link count; IF step with a branch leading nowhere (project rule); failure output missing; missing position or version; wrong value types; missing credentials; secret-looking value (keys, tokens, private key, password in a URL, `Bearer` value, literal value under keys like password/token/apiKey) in any step, sticky note or top-level key; web reply paths that end without a reply step (a disabled reply step or disabled webhook does not count); two webhooks with the same address or id.
-- **WARN:** section 1 items, steps without retry, steps that swallow errors, mail or CRM steps after swallowed errors, unwired Switch outputs, disabled steps, `$prevNode`, reading a step that may not have run, `alwaysOutputData` with a failure output (F-002 pattern).
+- **WARN:** section 1 items, steps without retry, steps that swallow errors, mail or CRM steps after swallowed errors, unwired Switch outputs, disabled steps, `$prevNode`, reading a step that may not have run, (`alwaysOutputData` with a failure output is a FAIL since round 3).
 - **Options:** `--require-webhook-auth`, `--block-env-access`, `--baseline`, `--patch-checks`, `--diff-base`, `--table`, `--files all`, `--expect`, `--expect-credential KIND=NAME`. A wrong command line (unknown option, missing value, unknown patch name, bad `--expect`) exits 2 with a one-line message.
-- **Credentials per flow** are always printed. Real flows: Postgres credential `n8n-publish-pg` (id is the placeholder `PG_CREDENTIAL_ID`) and SMTP credential `mf-mail-smtp` (placeholder `SMTP_CREDENTIAL_ID`); placeholders must be replaced in n8n.
+- **Credentials per flow** are always printed. Real flows: Postgres credential `n8n-publish-pg` (id is the placeholder `PG_CREDENTIAL_ID`), SMTP credential `mf-mail-smtp` (placeholder `SMTP_CREDENTIAL_ID`) and HubSpot credential `hubspot-app-token` of kind `hubspotAppToken` (placeholder `HS_CRED_PLACEHOLDER`, step `CrmUpsert`); placeholders must be replaced in n8n.
 - **Which checker:** `flow-check/check_flows.py` replaces `patch-apply/check_flows.py` (pointer line added there). M1 (`flowcheck.py` on branch `cloud/system-map`, commit `a14a437cbeb8facaac3c19d54ea45a5c4a8fdb79`, confirmed with `git log -1`) is a separate tool; the byte-identical copy in `m1/` was replaced by `m1/POINTER.txt`. Raw M1 outputs stay in `raw/m1-*.md`.
 - Round-1 review findings, one line each: `fix-f8-r1.md`.
 
@@ -56,12 +69,12 @@ Closing block on every run: "Known open problems: N" (WARN lines that are real o
 
 | what | result | raw file |
 |---|---|---|
-| pristine real and film, default | each exit 0, 0 FAIL, 14 WARN, 6 known open problems | `raw/pristine.txt` |
-| patched real and film, default | each exit 0, 0 FAIL, 16 WARN, 8 known open problems | `raw/patched.txt` |
+| pristine real and film, default | each exit 0, 0 FAIL, 18 WARN (round 3: one placeholder-id WARN per file), 6 known open problems | `raw/pristine.txt` |
+| patched real and film, default | each exit 0, 0 FAIL, 20 WARN, 8 known open problems | `raw/patched.txt` |
 | pristine, strict (`--require-webhook-auth --block-env-access`) | each exit 1, 4 FAIL | `raw/pristine-strict.txt` |
 | patched, strict | each exit 1, 4 FAIL | `raw/patched-strict.txt` |
 | pristine real without `--baseline` | exit 1, 2 FAIL | `raw/pristine-no-baseline.txt` |
-| self-test, new checker | exit 0: 469 as expected, 0 not, 32 skipped (case needs a node type the file lacks; the list by case name is printed above the last line of `raw/selftest-new.txt`) | `raw/selftest-new.txt`, cases in `selftest-output/` |
+| self-test, new checker | exit 0: 538 as expected, 0 not, 52 skipped (case needs a node type the file lacks; the list by case name is printed above the last line of `raw/selftest-new.txt`) | `raw/selftest-new.txt`, cases in `selftest-output/` |
 | same cases, OLD checker | exit 1: 91 as expected, 378 not. Caution: many fail only because the old checker does not know the new options; this shows the new cases do not pass on old code, not 300 separate bugs | `raw/selftest-oldchecker.txt` |
 | patch and generator steps | logs and a list of generated flow files with short hashes | `raw/apply.log`, `raw/gen-real.log`, `raw/gen-film.log`, `raw/patched-flows-list.txt` |
 | what the patches change | no unexplained change (patched runs exit 0) | `raw/diff-real.txt`, `raw/diff-film.txt` |
@@ -70,7 +83,7 @@ Closing block on every run: "Known open problems: N" (WARN lines that are real o
 
 Self-test (a second program, `selftest.py`, that plants one fault at a time in a copy of a flow file and checks the checker reports it). Rules: each case plants ONE fault in a copy and requires the exit code, a line that STARTS with FAIL (or WARN) holding the named text, and no unrelated FAIL line. Cases run on 4 real files and 1 film file. Optional settings `FC_CK` (another checker) and `FC_OUT` (output folder) are described at the top of the file. Counts are recomputed so a count mismatch is not a hidden second cause.
 
-M1 versus this checker: webhook without password: M1 FAIL, here WARN by default (item 2); `alwaysOutputData` with failure output: M1 FAIL, here WARN with the F-002 reason (neither fires in the 16 files); only here: IF steps with one branch, retry, env reads, credential blocks, patch content, diff against pristine, expected counts, secrets, sticky notes; only in M1: its per-file markdown tables.
+M1 versus this checker: webhook without password: M1 FAIL, here WARN by default (item 2); `alwaysOutputData` with failure output: M1 FAIL, here FAIL since round 3 (neither fires in the 16 files); only here: IF steps with one branch, retry, env reads, credential blocks, patch content, diff against pristine, expected counts, secrets, sticky notes; only in M1: its per-file markdown tables.
 
 
 Mutation check by hand (remove one check of `check_flows.py` at a time, run the whole self-test): 42 removals tried, 39 caught (self-test fails). 3 not caught and not catchable: the `try` around the cross-file check (cannot be reached any more because that check guards every shape itself), the explicit missing-value test (Python raises the same error anyway) and the explicit `--expect-json` object test (Python raises the same error anyway). Three further removals first survived and were then caught after two self-test cases were added. This was my own run, not an independent one.
