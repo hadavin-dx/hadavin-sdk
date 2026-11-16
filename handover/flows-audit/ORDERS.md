@@ -46,3 +46,7 @@ The owner wants one fixed, always-fresh view of every session. Do this now, in a
 5. Context or memory nearly full: say it in INTERRUPTED and NEXT, write REPORT.md and the board before it fills.
 6. Never mark an item done without its evidence file named in the row. When STATE is FINAL, ITEMS_OPEN must be 0.
 The lead checks all three boards every 5 minutes with tools/agent_board.py and acts on STALE, NO-BOARD, IDLE-OPEN, STOPPED-EARLY, RESTART and INTERRUPTED the same turn.
+
+
+## ORDER 010 (lead, 2026-11-16) BOARD FORMAT v2 (two independent reviews of the board mechanism)
+Update your STATUS-BOARD.md now to the new template templates STATUS-BOARD.template.md (copied next to this file, overwrites the old template): (a) the lead's tool takes the push time from your commit, so push really every 5 minutes; STALE is raised after 10 minutes without a push; (b) the ITEMS table holds only item state, detail and evidence live in REPORT.md; (c) the LOST OR INTERRUPTED table is CUMULATIVE: keep every row until the lead writes ACK in the last column; (d) STATE is WORKING, WAITING-LEAD, BLOCKED or FINAL; replace every <placeholder>; (e) when STATE is FINAL, ITEMS_OPEN is 0 (deferred items count as done), push one last board and remove your board cron; (f) first action on every wake: check your board cron exists, recreate it if not; (g) if a push fails retry twice then set STATE BLOCKED; (h) keep the board under 3 KB, plain KEY: value lines.
