@@ -9,7 +9,7 @@
 # SCRIPT_UNDER_TEST defaults to run_all.sh next to this file; an older copy must sit in a mirror of this folder (it needs ../../demo and ../patches).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
-SUT=${1:-$HERE/run_all.sh}; [ -f "$SUT" ] || { echo "usage: bash test_run_all_raw.sh [run_all.sh to test] [scratch dir (must not exist)]"; exit 2; }
+SUT=${1:-}; [ -n "$SUT" ] || SUT=$HERE/run_all.sh; [ -f "$SUT" ] || { echo "usage: bash test_run_all_raw.sh [run_all.sh to test] [scratch dir (must not exist)]"; exit 2; }
 if [ -n "${2:-}" ]; then [ -e "$2" ] && { echo "REFUSED: $2 exists"; exit 2; }; T=$2; mkdir -p -- "$T" || exit 2; else T=$(mktemp -d "${TMPDIR:-/tmp}/tra.XXXXXX") || exit 2; trap 'rm -rf -- "$T"' EXIT; fi
 X="$T/rawfolder"; mkdir -p -- "$X"
 for f in selftest-new.txt take-check.txt apply.log gen-real.log; do echo "stale text from an earlier run" > "$X/$f"; done
