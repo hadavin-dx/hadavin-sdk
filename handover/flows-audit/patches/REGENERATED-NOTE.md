@@ -1,10 +1,10 @@
-# F-001, F-003 and F-004 regenerated a third time (2026-11-16, round 3 after review r2)
+# F-003 and F-004 regenerated (F-001 dropped, see the last bullet of round 3) a third time (2026-11-16, round 3 after review r2)
 
 This note is for the lead and the owner. The internal codes and the decision cites that the reviews wanted out of the reader text live here, not in the run sheet.
 
 Decisions used: inputs/DECISIONS-2026-11-16.md item 1 (one video, real-v5, scenes 1 to 4, no recovery number) and the lead's answer to Q15 (ANSWER-Q15-lead.md, 10:31Z: closing card is ONE line, "a lead sent twice is processed once", no recovery number). Static work: nothing ran in n8n, a CRM or a mail server. Review words are unverified until checked (patches/review-r2-patches.md). Backup of the round-2 patches: scratchpad patches-r3/ (copy); older ones in archive-pre-decision1/.
 
-Check (copy of the repo files, not the real tree): lanes7/evidence-patches-r4.txt. check_patches.sh PASS, rc 0; all 5 patches together apply, rc 0. This proves only that the patches apply; it does not judge wording. No new review runs after this round (as ordered); the lead runs the drift report.
+Check (copy of the repo files, not the real tree): lanes7/evidence-patches-r4.txt. check_patches.sh PASS, rc 0 (at that time 5 patches; now 4 after F-001 was archived); all 5 patches together apply, rc 0. This proves only that the patches apply; it does not judge wording. No new review runs after this round (as ordered); the lead runs the drift report.
 
 ## What changed in round 3
 F-003 (VIDEO-RUNSHEET.md)
@@ -18,7 +18,7 @@ F-003 (VIDEO-RUNSHEET.md)
 - Stale changelog lines are rewritten (no "moved to the closing card", no superseded notes). "example.com" is marked UNVERIFIED (read only from the older owner steps; the newer ones were not read).
 F-004 (PAGE-STATEMENTS-V4.md)
 - Statement 17 public sentence: no "the one video", no cross-reference, "run" is defined, the 30 s check interval (read, not run) and the n8n restart are named. Tag: "one source for the 20 s figures"; the 144.3 s figure is marked relayed, not measured by us (also in statement 14, honest limits and changelog bullets 1 and 3). The "lead decision item 1" cite in the struck statement 20 is reworded.
-F-001: unchanged (no finding in round 2).
+F-001: DROPPED by the lead (Q17-3, 2026-11-16, ORDERS.md 10:58Z): the take uses demo/n8n-flows-v4/mf_leads.sql as is (Q16). The patch file is moved to patches/archive/F-001-one-ddl.patch (not deleted, not applied). check_patches.sh now reports PASS 4 patches (lanes7/evidence-q14-q17.txt).
 
 ## Still needs the lead or the owner
 1. Card wording: "A lead sent twice is processed once in this recording." The bound was added because it stays on one line. It is a general promise next to the state word "processing"; the lead may reword (for example "handled once").

@@ -1,0 +1,4 @@
+EVIDENCE q14-q17 (fixer run; raw; 2026-11-16)
+=== sh handover/flows-audit/tools/check_patches.sh
+PASS 4 patches
+rc=0
