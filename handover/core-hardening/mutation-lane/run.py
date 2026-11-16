@@ -232,6 +232,7 @@ class SigState:
     allow = False
     fired = False
     first: int | None = None
+    exiting = False  # the result is decided and the process is leaving: a signal can no longer change it (r6 nit 2)
 
 
 SIG = SigState()
@@ -240,15 +241,22 @@ SIG = SigState()
 def _term(signum, frame):
     if SIG.first is None:
         SIG.first = signum
-    if not SIG.fired and (SIG.allow or not SIG.critical):
+    if not SIG.exiting and not SIG.fired and (SIG.allow or not SIG.critical):
         SIG.fired = True
         SIG.allow = False
         raise KeyboardInterrupt(SIG.first)  # unwinds through the `finally` that restores the file
 
 
+def leave(code: int) -> None:
+    """Leave with `code`; from here a signal is only remembered, so it cannot turn exit 3, 4 or 5 into a signal exit
+    while the `finally` blocks run (review r6 nit 2). Class: a late signal changing an already decided result."""
+    SIG.exiting = True
+    sys.exit(code)
+
+
 def deliver_pending() -> None:
     """Raise the remembered first signal, once, at a point where nothing is planted or the tests are awaited."""
-    if SIG.first is not None and not SIG.fired:
+    if SIG.first is not None and not SIG.fired and not SIG.exiting:
         SIG.fired = True
         SIG.allow = False
         raise KeyboardInterrupt(SIG.first)
@@ -1569,7 +1577,7 @@ def one(a, tests, m, results, ref) -> list[str]:
                         "(marker and backup kept; run --restore)",
                         file=sys.stderr,
                     )
-                    sys.exit(EXIT_RESTORE_FAILED)
+                    leave(EXIT_RESTORE_FAILED)
                 # verified identical: no marker may stay, even on an error
                 marker.unlink(missing_ok=True)
                 backup.unlink(missing_ok=True)
@@ -1708,7 +1716,7 @@ def stop_if_dirty(a, root: pathlib.Path, after: str) -> None:
             f"STOPPED before the first mutant: {after} changed the scratch tree: {diffs[:5]}",
             file=sys.stderr,
         )
-        sys.exit(EXIT_TREE_NOT_CLEAN)
+        leave(EXIT_TREE_NOT_CLEAN)
 
 
 def summarize(results: list[dict], planned: int, baseline_ran: bool = True) -> tuple[str, bool]:
@@ -1837,6 +1845,9 @@ def main():
         sys.exit(EXIT_REFUSED)
     root = root.resolve()
     a.root = str(root)
+    global ROOT_IDENT
+    rst = os.stat(root)
+    ROOT_IDENT = (str(root), rst.st_dev, rst.st_ino)  # every later open of the root must find this very folder
     if not a.restore and not (a.prefix and a.raw and a.sha):
         ap.error("--sha, --prefix and --raw are required")
     for signum in HANDLED_SIGNALS:
@@ -1862,9 +1873,13 @@ def main():
                 root, a.repo, a.real_repo
             )  # --restore too: it writes into --root (review 4 M4)
             if a.restore:
+                # review r6 nit 2: a signal during the restore is remembered, never raised: the restore ends first
+                SIG.critical = True
                 ok, text = restore_from_marker(root)
                 print(text)
-                sys.exit(0 if ok else EXIT_RESTORE_FAILED)
+                if SIG.first is not None:
+                    print(f"signal {SIG.first} arrived during the restore: the restore was finished first", file=sys.stderr)
+                leave(0 if ok else EXIT_RESTORE_FAILED)
             check_test_args(tests, root)
             check_pytest_config(root, tests)
             refuse_hard_links(root)
@@ -1887,7 +1902,7 @@ def main():
                 )
             a.sha_full = resolve_commit(a.repo, a.sha)  # the full id of a COMMIT (review r5 nit 9)
             a.baseline_failed = None
-            a.baseline_note = "NOT RUN (no --control): a tree that already fails would make every mutant look KILLED"
+            a.baseline_note = "NOT RUN (--no-control): a tree that already fails would make every mutant look KILLED"
             ref = tmpref / "ref"
             ref.mkdir()
             build_reference(a.repo, a.sha_full, a.patch, ref)
@@ -1913,12 +1928,14 @@ def main():
             rawdir = pathlib.Path(a.raw)
             if rawdir.is_symlink():
                 raise Refused(f"--raw {rawdir} is a symbolic link: refused")
+            if rawdir.resolve().is_relative_to(root):
+                raise Refused(f"--raw {rawdir} lies inside --root {root}: refused (it would change the scratch tree)")
             rawdir.mkdir(parents=True, exist_ok=True)
             outs = [rawdir / f"{a.prefix}-{n}.txt" for n in sorted(RESERVED_IDS)]
             outs += [rawdir / f"{a.prefix}-{m['id']}.txt" for m in ms]
             outs += [pathlib.Path(a.out_json)] if a.out_json else []
-            for o in outs:  # before anything is planted (review r4 nit 11)
-                check_out_path(o)
+            for o in outs:  # before anything is planted (review r4 nit 11, r6 nit 4)
+                check_out_path(o, root)
             results = []
             a.ref_files = tree_files(ref)
             # review r5 nit 6: the tree must still equal the archive after the import check (it runs the target module)
@@ -1982,7 +1999,7 @@ def main():
                     break
             if a.out_json:
                 write_out(pathlib.Path(a.out_json), json.dumps(results, indent=1))
-            line, complete = summarize(results, len(ms))
+            line, complete = summarize(results, len(ms), a.control)
             print(line, flush=True)
             write_out(rawdir / f"{a.prefix}-summary.txt", line + "\n")
             # proof the scratch tree is unchanged: compare with a FRESH archive extract
@@ -1993,18 +2010,20 @@ def main():
             print("tree diff:", len(bad), "difference(s)")
             if bad:
                 print("TREE NOT CLEAN after the loop:", bad[:5], file=sys.stderr)
-                sys.exit(EXIT_TREE_NOT_CLEAN)
+                leave(EXIT_TREE_NOT_CLEAN)
             if not complete:
                 print(
                     f"INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit {EXIT_INCOMPLETE}); "
                     f"see the SUMMARY line and the raw files",
                     file=sys.stderr,
                 )
-                sys.exit(EXIT_INCOMPLETE)
+                leave(EXIT_INCOMPLETE)
     except Refused as e:
+        SIG.exiting = True
         print("REFUSED:", e, file=sys.stderr)
         sys.exit(EXIT_REFUSED)
     except KeyboardInterrupt as e:
+        SIG.exiting = True
         signum = e.args[0] if e.args and isinstance(e.args[0], int) else int(signal.SIGINT)
         # a run restores and removes its own marker before the signal leaves one(); a marker found here
         # is from another run: never touch it from a signal handler (review 4 nit)
@@ -2015,6 +2034,18 @@ def main():
         )
         print(f"INTERRUPTED (signal {signum}): {state}", file=sys.stderr)
         sys.exit(128 + signum)
+    except Exception as e:  # review r6 nit 5: a bug here must not end in Python's own exit 1 with a bare traceback
+        SIG.exiting = True
+        import traceback
+
+        traceback.print_exc()
+        state = (
+            f"a marker exists ({marker}): a mutant may be planted, run --restore"
+            if os.path.lexists(marker)
+            else "no marker: nothing is planted by this run"
+        )
+        print(f"INTERNAL ERROR ({type(e).__name__}: {e}); {state}", file=sys.stderr)
+        sys.exit(EXIT_REFUSED)
     finally:
         shutil.rmtree(tmpref, ignore_errors=True)
 
