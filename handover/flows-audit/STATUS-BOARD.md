@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T16:15:28Z
+UPDATED_UTC: 2026-11-16T16:20:27Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 4.79 load of 4 cores, mem 1/15 GB, RAM 1511/16087 MB, disk 17G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 7.0G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 6.09 load of 4 cores, mem 1/15 GB, RAM 1467/16087 MB, disk 17G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 7.6G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: disk 17G free (56%); percent basis: 70 = 7 of 10 items verified by independent check, none closed since 13:59Z, open 30; fixers: 4 running, readers/checkers 4
-PUSHED_UTC: 2026-11-16T16:15:28Z
+NEXT: next5 in /tmp/gen7/next5.txt; disk 17G free 57%; percent basis 70 = 7 of 10 independently verified, none closed since 13:59Z
+PUSHED_UTC: 2026-11-16T16:20:27Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,21 +30,17 @@ PUSHED_UTC: 2026-11-16T16:15:28Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| acf8ab59 | F8 round 11 fixer (uncapped) | sonnet | flow-check fixes | 15:48Z | 16:48Z | running | run_all.sh intermittency work |
-| adf9bee4 | patch-copies round 9 fixer (uncapped) | sonnet | README/DEAD-MAN from 3 reports | 16:11Z | 16:41Z | running | edits pending |
-| a7188515 | RW/CT round 15 fixer | sonnet | 12 Majors of reader r14 | 16:12Z | 16:42Z | running | edits pending |
-| af2eac9a | plan-files round 23 stranger reader | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 16:12Z | 16:32Z | running | none yet |
-| a81f425a | REVIEW.md round 29 fixer (uncapped) | sonnet | design r28 + reader r28 + citation r28 | 16:13Z | 16:43Z | running | edits pending |
-| a52f846c | Q31 round 14 stranger reader | sonnet | QUESTIONS.md Q31 | 16:14Z | 16:34Z | running | none yet |
-| a61a8f40 | Q31 citation checker r14 | sonnet | cites/times/counts | 16:15Z | 16:35Z | running | none yet |
-| a4d8461a | FINDINGS/LEDGER round 9 reader | sonnet | stranger read of both files | 16:15Z | 16:35Z | running | none yet |
+| acf8ab59 | fixer | sonnet | F8 flow-check round 11 (uncapped) | 15:48Z | 16:40Z | running | edits in flow-check/ |
+| a81f425a | fixer | sonnet | REVIEW.md round 29 (uncapped) | 16:13Z | 16:35Z | running | edits in REVIEW.md |
+| a61a8f40 | citation | sonnet | Q31 citation check r14 | 16:15Z | 16:30Z | running | reviews/citation-q31-r14.md |
+| a18f1c8d | fixer | sonnet | plan files round 24 | 16:18Z | 16:40Z | running | edits in RUNBOOK/FIX-PLAN/TAKE-CHECKLIST |
+| a026f1e0 | fixer | sonnet | FINDINGS/LEDGER round 10 | 16:18Z | 16:40Z | running | edits in FINDINGS/LEDGER-ROWS |
+| ae51eddb | fixer | sonnet | Q31 round 14 | 16:19Z | 16:40Z | running | edits in QUESTIONS.md |
+| a8632c07 | reviewer | sonnet | patch-copies r9 code review (uncapped) | 16:20Z | 16:35Z | running | findings inline |
+| a03734e9 | citation | sonnet | patch-copies r9 citation check | 16:20Z | 16:35Z | running | reviews/citation-patchcopies-r9.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 patch-copies round 9 fresh uncapped reviews (stranger, code, citation) after adf9bee
-2 F8 fresh evidence runner alone plus uncapped reviews after acf8ab5
-3 RW/CT round 15 verify then fresh reader
-4 REVIEW.md fresh round 29 reader and design after a81f425
-5 Q31 fixer for reader r14 plus citation r14; FINDINGS/LEDGER fixer if reader finds Majors
+1 RW/CT round 16 reader; 2 patch-copies fixer (after r9 reviews); 3 REVIEW.md round 30 readers; 4 F8 evidence runner then reviews; 5 Q31 round 15 reader
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
