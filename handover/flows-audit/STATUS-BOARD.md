@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:58:42Z
+UPDATED_UTC: 2026-11-16T10:59:41Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 3
-PERCENT: 92
-AGENTS_RUNNING: 5
-CAPACITY: 2.61 load of 4 cores, mem 0/15 GB, RAM 951/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 733M /tmp/claude-0 , agents 5 (light+heavy per list)
+PERCENT: 93
+AGENTS_RUNNING: 3
+CAPACITY: 2.50 load of 4 cores, mem 0/15 GB, RAM 969/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 733M /tmp/claude-0 , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -47,8 +47,10 @@ q16 rows round 3 written (13 Majors addressed, not re-reviewed per round cap); o
 claims pointers done (checker PASS 157 rows, counter 327); 15 wording conflicts left for the lead in fix-sweep.md (Q19 has the 5 that matter); sweep reviewer's A-050c claim was wrong (only A-036b and N-1 match)
 F8 r6 evidence (10:50 version, files changed since): take_check printed 'key check present' with KeyOk node removed (text match), mutant M5 survives, saving 'all' gave no WARN line; forwarded to the Q18 fixer; re-run evidence after it
 Q19 and Q20 answered 11:20Z: fixers launched; the lead asked for stranger read of OWNER-STEPS v4 and claims sweep when F3/F8 finish (both already done once on v3 and CT; will rerun on the new files)
-NEXT: Q18/Q19/Q20 fixers; F3 last fix + r7 evidence
-PUSHED_UTC: 2026-11-16T10:58:42Z
+Q20 applied to q16 rows (6 places); every fact is 'the lead verifies', none confirmed by me
+Q18 applied; I reproduced run_all rc 0 (659/0/62) and check_patches PASS 4. NOTE: take_check.sh on the committed UNPATCHED real-v5 now exits 4 by design: the take must run on the patched copy. n8n saving of manual runs unverified. No independent evidence run on the final F8 head yet.
+NEXT: Q19 fixer; F3 last fix + r7 evidence; F8 final-head evidence next
+PUSHED_UTC: 2026-11-16T10:59:41Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -70,9 +72,7 @@ PUSHED_UTC: 2026-11-16T10:58:42Z
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f3ev7 | F3 r7 evidence runner | sonnet | independent rerun, 25 new mutants, hostile inputs | 10:50 | 11:20 | 5 | running | fill_flows/evidence-f3-r7.md |
 | f3fix8 | F3 last fix batch (frozen) | sonnet | F1 F2 Majors + small nits, no new round | 11:10 | 11:35 | 5 | running | fill_flows/fix-f3-r8.md |
-| q18fix | Q18 F-008 patch + ACCEPTED checker | sonnet | manual-run saving ON, recovery none ACCEPTED, tests | 10:55 | 11:20 | 5 | running | flow-check/fix-q18.md |
 | q19fix | Q19 wording decisions fixer | sonnet | 5 answers applied to CT and RW | 11:00 | 11:20 | 5 | running | fix-q19.md |
-| q20fix | Q20 rows fixer | sonnet | 3 answers applied to q16 rows | 11:00 | 11:15 | 5 | running | fix-q20.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
