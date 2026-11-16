@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:48:50Z
-PUSHED_UTC: 2026-11-16T12:48:50Z
+UPDATED_UTC: 2026-11-16T12:50:04Z
+PUSHED_UTC: 2026-11-16T12:50:04Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| ac3af8b30d48a736c | PLAN-002 r23 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
-| af2fb21b2463e5a7e | premortem r15 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
-| ab763c145f0604afe | M17 r12 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
-| aba4eb7c9b28d4441 | ARCHIVE-CUT-LIST r14 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
-| a2dd5482a05fbc6c0 | critical-path r23 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
-| a9af656afceb55cf8 | row1-builder-brief r12 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
-| ae4982badd4e396ac | open-items r16 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
-| a3e0f575f7d0076e2 | L1c r15 read | 2026-11-16T12:48:50Z | +2 min | running | nothing yet |
+| a0dfa687a0eb4359a | PLAN-002 r24 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a79740418299455eb | L1c r16 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a1b148984617468f6 | open-items r17 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a146b02ec3f334d13 | M17 r13 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a42164868c93aee8d | ARCHIVE-CUT-LIST r15 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a447b513b78766d31 | critical-path r24 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a4d83dfb97a4ff1c6 | premortem r16 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a6f1346b3f1cf2736 | row1-builder-brief r13 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
 
-Running: 8. Digests done through 815. Next 5 independent tasks: tell the lead of the L4c real-run reads and the missing work/OWNER-ONLY.txt; send held-page digests; fix decision-list row splits; re-read L3c r11 and t19; fix merged-findings and open-items cells.
+Running: 8. Digests done through 823. Three pages (M17, ARCHIVE-CUT-LIST, critical-path) are now short folded pages; PLAN-002, L1c, open-items have a CURRENT STATE block at the top. Next 5 independent tasks: tell the lead of the L4c real-run reads and the missing work/OWNER-ONLY.txt; send held-page digests; fix decision-list row splits; re-read L3c and t19; fold merged-findings.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
