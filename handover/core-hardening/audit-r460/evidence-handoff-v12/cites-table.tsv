@@ -215,7 +215,7 @@ CORE-PR-HANDOFF-v12.md	265	.github/workflows/ci.yml	40	40	ANCHOR-MISS[AFTER,CHEC
 CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	80	85	ANCHOR-MISS[Infinity,Negative,Postgres,UNVERIFIED,Volume]	OK	_SAFE_CREATE = re.compile( | r"CREATE\s+(?:UNIQUE\s+)?INDEX\b|CREATE\s+OR\s+REPLACE\s+(?:FUNCTION|TRIGGER)\b"
 CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	55	55	ANCHOR-MISS[Negative,UNVERIFIED,Volume,else,file]	OK	"kill_switch": Grant("table", _RW),
 CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	93	94	ANCHOR-OK	OK	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | return sorted(folder.glob("*.sql"))
-CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	301	301	ANCHOR-MISS[reads]	OK	named = [r for r in (runtime_role, portal_role, purge_role) if r is not None]
+CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	304	304	ANCHOR-MISS[reads]	OK	files = _migration_files()
 CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	93	93	ANCHOR-OK	OK	def _migration_files(folder: Path = MIGRATIONS) -> list[Path]:
 CORE-PR-HANDOFF-v12.md	265	src/hadavin_sdk/store/migrate.py	97	107	ANCHOR-OK	OK	def check_ledger(paths: list[Path]) -> list[str]: | """Problems with the file names: each is `NNNN_<name>.sql`
 CORE-PR-HANDOFF-v12.md	266	src/hadavin_sdk/store/postgres.py	192	197	ANCHOR-MISS[connect_timeout]	OK	class PostgresStore: | # ponytail: one connection behind one lock per process; a pool (psycopg_pool) when thro
