@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:07:46Z
-PUSHED_UTC: 2026-11-16T14:07:46Z
+UPDATED_UTC: 2026-11-16T14:08:23Z
+PUSHED_UTC: 2026-11-16T14:08:23Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,17 +45,17 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a7bbadc3c462b4bf5 | structural read OWNER-VIEW | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
-| aab96214a95405f9f | zoom-out read TAKE-BLOCKERS | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
-| abccee6c173e680b5 | readiness read decision-list | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
-| a21414915018cbcaa | style read GLOSSARY | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
-| a99e86e330bbffdf0 | readiness read M17 | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
-| adc6c5ca4bced0e4e | zoom-out read STATUS-BOARD | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
-| a140d639ac33dbe82 | readiness read audit checklist | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
-| a9d3babd04ee1526a | comprehension read LEAD-NOTICE | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| acf5bb0cc9d61a1e9 | readiness read L1c | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| a62bf2eae69434036 | readiness read L3c | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| aea06ca981aebcdfa | readiness read L4c | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| aa6cfe1b5cb2990fb | readiness read L5b | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| a60ffce06d407d37a | zoom-out read premortem-r1 | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| ae3b781228a6725cf | zoom-out read critical-path-r1 | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| ab75dd0773d9f394a | zoom-out read merged-findings | 2026-11-16T14:08Z | +5 min | running | nothing yet |
+| a3d366b70f8ee65ad | style read end-delete-cases | 2026-11-16T14:08Z | +5 min | running | nothing yet |
 
-Reason for readers not fixers: reads are second lenses on pages not yet second-read; fixes to my pages follow after digests (digested through 1404).
-NEXT 5: fix open-items-table, not-checked-r2, owner-timeline-draft, BRIEF-EVIDENCE-1, GLOSSARY.
+Reason for readers not fixers: second lenses on owned pages not yet second-read; fix edits to my pages happen in my own turns (digested through 1412).
+NEXT 5: fix owner-timeline-draft, open-items-table, not-checked-r2, GLOSSARY Unknown list, decision-list A2/A5/A13.
 CAPACITY: 8 running.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
