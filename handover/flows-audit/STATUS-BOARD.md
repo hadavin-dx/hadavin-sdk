@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:39:39Z
+UPDATED_UTC: 2026-11-16T10:40:14Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 5
-PERCENT: 77
-AGENTS_RUNNING: 4
-CAPACITY: 1.81 load of 4 cores, mem 0/15 GB, RAM 971/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 598M /tmp/claude-0 871M /tmp/f3m , agents 4 (light+heavy per list)
+ITEMS_OPEN: 4
+PERCENT: 78
+AGENTS_RUNNING: 3
+CAPACITY: 1.89 load of 4 cores, mem 0/15 GB, RAM 886/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 629M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -30,10 +30,10 @@ decisions r2 fixer done (own report: 67 edits, 45=8/8/29 as rated, every scene 5
 decisions r2 evidence: 25 unmarked phrase hits (film-v5 25, one database 9, approval 11, audit trail 8, 61.9 at SCENE-FLOW-MAP:40 = open Q14/M8); BEFORE measured on parent of a bundled commit; edit lists not compared line by line
 F8 r5 fixer own mutants: 2 equivalent survivors, 1 survivor line 353 not re-run separately; --ddl reads column names only (false WARN possible); import into n8n untested; duplicate-address rule across real-v5 + film-v5 and non-numeric HubSpot id not taken; independent evidence + review running
 F8 r5 review (false all-clear angle): 2 Blockers + 10 Majors: top block hides missing-column WARN and saving-off on sub-flow/recovery, placeholders and credential ids only WARN exit 0, v4 table file missing = exit 0, run_all can never exit 0 after fixing, README over-claims; round 6 fixer after evidence runner
-patches r3 (no new review per round cap): card wording 'processed once in this recording' still lead's choice; mail-window and 30 s facts from review r2 not re-read; F-003 rewritten as whole (larger diff); rows 5-11, example.test in build_mainframe.py, HubSpot, V7/lane3 raw, take addresses still need the lead; independent evidence running
 claims r8 fixer: B-214 has no wording (HELD, DO NOT QUOTE: what the take does at a wrong/closed answer is not in any file); Q-H re-pin date open; HubSpot recoverability UNKNOWN; nits N4 N6 N8 not taken; no new review per cap, evidence running
-NEXT: F3 r7 fixer; F8 evidence; patches and claims evidence runs
-PUSHED_UTC: 2026-11-16T10:39:39Z
+patches r3 independent evidence: patch check PASS rc 0, 5 apply rc 0, totals 160 s agree; hits left: example.test in build_mainframe.py:13-14 (desk@/intake@/alerts@, F-002/F-008 target not touched), 'scenes 5 to 11' at run sheet 14/89/103 (labelled later video), 355/380 in changelog L8 on purpose; scene 4 viewer cell 180 words, voice 53 words and scene 2 voice 49 (long to read aloud); card wording still lead's choice
+NEXT: F3 r7 fixer; F8 and claims evidence
+PUSHED_UTC: 2026-11-16T10:40:14Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -55,7 +55,6 @@ PUSHED_UTC: 2026-11-16T10:39:39Z
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f3fix7 | F3 round 7 fixer | sonnet | security review 4 Majors, 5 surviving mutants, noqa | 10:35 | 11:05 | 5 | running | fill_flows/fix-f3-r7.md |
 | f8ev5 | F8 r5 evidence runner | sonnet | run_all, 25 fresh mutants, hostile inputs | 10:48 | 11:05 | 5 | running | flow-check/evidence-r5.md |
-| patev5 | patches r4 evidence runner | sonnet | apply 5 patches in copy, grep, totals | 11:00 | 11:10 | 5 | running | lanes7/evidence-patches-r5.txt |
 | claimev8 | claims r8 evidence runner | sonnet | counts, paste checker, side-by-side rows | 11:04 | 11:12 | 5 | running | reviews-f1/evidence-claims-r8.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
