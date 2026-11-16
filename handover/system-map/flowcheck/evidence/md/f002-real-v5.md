@@ -1,5 +1,6 @@
 ### OUT/built/f002/real-v5/mf-form.json
 - nodes: 15; connections: 14; triggers: Receive
+- WARN: RunSub: default stop on a path from responseNode webhook Receive (an error stops the run, the caller gets no reply) | Stored: default stop on a path from responseNode webhook Receive (an error stops the run, the caller gets no reply)
 - FAIL: Receive: webhook without authentication
 - save settings: saveDataSuccessExecution=none, saveDataErrorExecution=none, saveManualExecutions=False, executionOrder=v1, errorWorkflow=None
 - webhooks: Receive POST /mf-form auth=none
@@ -31,6 +32,7 @@ Write nodes (mail or CRM) and the external-call nodes upstream of each:
 
 ### OUT/built/f002/real-v5/mf-hook.json
 - nodes: 15; connections: 14; triggers: Receive
+- WARN: RunSub: default stop on a path from responseNode webhook Receive (an error stops the run, the caller gets no reply) | Stored: default stop on a path from responseNode webhook Receive (an error stops the run, the caller gets no reply)
 - FAIL: Receive: webhook without authentication
 - save settings: saveDataSuccessExecution=none, saveDataErrorExecution=none, saveManualExecutions=False, executionOrder=v1, errorWorkflow=None
 - webhooks: Receive POST /mf-hook auth=none
@@ -62,6 +64,7 @@ Write nodes (mail or CRM) and the external-call nodes upstream of each:
 
 ### OUT/built/f002/real-v5/mf-recovery.json
 - nodes: 10; connections: 9; triggers: Every30s
+- WARN: AlertSend (write): upstream call AlertClaim continues on error
 - FAIL: none
 - save settings: saveDataSuccessExecution=none, saveDataErrorExecution=none, saveManualExecutions=False, executionOrder=v1, errorWorkflow=None
 - webhooks: none
@@ -89,6 +92,7 @@ Write nodes (mail or CRM) and the external-call nodes upstream of each:
 
 ### OUT/built/f002/real-v5/mf-sub-crm-mail.json
 - nodes: 20; connections: 26; triggers: SubIn
+- WARN: none
 - FAIL: none
 - save settings: saveDataSuccessExecution=none, saveDataErrorExecution=none, saveManualExecutions=False, executionOrder=v1, errorWorkflow=None
 - webhooks: none
@@ -122,7 +126,6 @@ Write nodes (mail or CRM) and the external-call nodes upstream of each:
 
 | write node | type | its onError | upstream external nodes (name: onError) |
 |---|---|---|---|
-| Qualify | httpRequest | continueErrorOutput | none |
 | CrmUpsert | hubspot | continueErrorOutput | Qualify: continueErrorOutput |
 | SendMail | emailSend | continueErrorOutput | CrmUpsert: continueErrorOutput; MailClaim: (stop) +alwaysOutputData; Qualify: continueErrorOutput; SetCrmId: (stop) +alwaysOutputData |
 

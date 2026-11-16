@@ -1,7 +1,7 @@
 #!/bin/bash
 # run_all.sh OUTDIR : rebuilds everything for the flowcheck from git (branch origin/cloud/flows-audit), no network, made-up data only.
-# Writes: OUTDIR/dry-run.txt, build.txt, repro.txt, order.txt, md/<variant>-<set>.md. Needs: git, python3, patch. Run from the repository root.
-set -u; O=${1:?outdir}; R=$(pwd); BR=origin/cloud/flows-audit; HERE=$R/handover/system-map/flowcheck
+# Writes: OUTDIR/dry-run.txt, build.txt, repro.txt, selftest.txt, changed-files.txt, go1.txt, md/<variant>-<set>.md. Needs: git, python3, patch. Run from the repository root.
+set -u; O=${1:?outdir}; case "$O" in /tmp/*) ;; *) echo "OUTDIR must be under /tmp"; exit 2;; esac; R=$(pwd); BR=origin/cloud/flows-audit; HERE=$R/handover/system-map/flowcheck
 rm -rf "$O"; mkdir -p "$O/md" "$O/src" "$O/committed"; W=$O/src
 D=handover/demo; PA=handover/flows-audit/patches
 mkdir -p $W/pristine/$D/n8n-mainframe $W/pristine/$D/n8n-flows
@@ -24,5 +24,6 @@ for v in pristine f002 f008 both; do ( cd $W/$v/$D/n8n-mainframe
 for v in pristine f002 f008 both; do for k in real-v5 film-v5; do python3 -I $HERE/tools/flowcheck.py $O/built/$v/$k/*.json > $O/md/$v-$k.md 2>&1; echo "$v $k flowcheck rc=$?" >> $O/build.txt; done; done
 for v in f002 f008 both; do for k in real-v5 film-v5; do echo "== $v vs pristine $k"; diff -rq $O/built/pristine/$k $O/built/$v/$k | sed "s#$O/##g"; done; done > $O/changed-files.txt
 sed -i "s#$O#OUT#g" $O/md/*.md $O/dry-run.txt
+for f in mf-form mf-hook mf-recovery mf-sub-crm-mail; do for k in real film; do cmp -s handover/demo3/kill/flows-go1/$f.json $O/committed/$k-v5/$f.json && echo "go1/$f == $k-v5" || echo "go1/$f differs from $k-v5"; done; done > $O/go1.txt 2>&1
 python3 -I $HERE/tools/flowcheck.py --selftest > $O/selftest.txt 2>&1; echo "selftest rc=$?" >> $O/selftest.txt
 echo done

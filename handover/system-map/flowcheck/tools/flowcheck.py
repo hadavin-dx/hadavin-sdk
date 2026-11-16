@@ -3,7 +3,9 @@ Usage: python3 -I flowcheck.py FILE.json [FILE.json ...]   -> Markdown on stdout
 Checks: parses; duplicate node names; connections name existing nodes; orphan nodes (no way in, not a trigger); unreachable from a trigger;
 $('Name') references name an existing node; error settings table; alwaysOutputData with continueErrorOutput (the F-002 pattern);
 continueErrorOutput with the error output (index 1) not wired; external-call ancestors of every mail or CRM write and how their errors are handled;
-$env reads; credentials per node; webhooks without authentication; saveExecution settings."""
+$env reads; credentials per node; webhooks without authentication; saveExecution settings.
+WARN lines (do not change the exit code): an external call upstream of a mail or CRM write that continues on error; an external call on a responseNode webhook path with the default stop (the run stops and the caller gets no reply).
+NOT checked: $node["X"], $items("X") and computed $env keys; headerAuth without an attached credential; disabled nodes; trigger types other than the regex below; whether an expression is valid in n8n; node parameters against n8n's own schema."""
 import json, re, sys, os
 TRIG = re.compile(r"(Trigger$|\.webhook$|\.cron$|\.start$)")
 REF = re.compile(r"\$\(\s*['\"]([^'\"]+)['\"]\s*\)")
@@ -20,22 +22,29 @@ def short(t): return t.split(".")[-1]
 def is_write(n):
     t = short(n["type"])
     if t in ("emailSend", "hubspot"): return True
-    if t == "httpRequest": return str(n.get("parameters", {}).get("method", "GET")).upper() != "GET"
+    if t == "httpRequest": return "crm" in str(n.get("parameters", {}).get("url", "")).lower() and str(n.get("parameters", {}).get("method", "GET")).upper() != "GET"
     return False
 def check(w):
     """returns dict of findings and tables for one parsed workflow"""
-    R = {"fail": [], "info": {}}
-    nodes = w.get("nodes", []); names = [n["name"] for n in nodes]; S = set(names)
+    R = {"fail": [], "warn": [], "info": {}}
+    if not isinstance(w, dict): R["fail"].append("top level is not an object"); w = {}
+    nodes = []
+    for i, n in enumerate(w.get("nodes") or []):
+        if isinstance(n, dict) and isinstance(n.get("name"), str) and isinstance(n.get("type"), str): nodes.append(n)
+        else: R["fail"].append("node %d has no name or no type" % i)
+    if not nodes and not R["fail"]: R["fail"].append("no nodes")
+    names = [n["name"] for n in nodes]; S = set(names)
     dup = sorted({x for x in names if names.count(x) > 1})
     if dup: R["fail"].append("duplicate node names: " + ", ".join(dup))
     edges = []; con = w.get("connections", {})
     for a, outs in con.items():
         if a not in S: R["fail"].append("connection source names no node: " + a)
-        for k, lists in outs.items():
-            for i, lst in enumerate(lists):
+        for k, lists in (outs or {}).items():
+            for i, lst in enumerate(lists or []):
                 for e in lst or []:
-                    edges.append((a, i, e["node"]))
-                    if e["node"] not in S: R["fail"].append("connection %s[%d] targets missing node: %s" % (a, i, e["node"]))
+                    tgt = e.get("node") if isinstance(e, dict) else None
+                    edges.append((a, i, tgt))
+                    if tgt not in S: R["fail"].append("connection %s[%d] targets missing node: %s" % (a, i, tgt))
     inc = {n: 0 for n in names}
     for a, i, b in edges:
         if b in inc: inc[b] += 1
@@ -90,9 +99,25 @@ def check(w):
         ext = [byname[a] for a in sorted(anc) if short(byname[a]["type"]) in EXT_T]
         paths.append((n["name"], short(n["type"]), n.get("onError", "(stop)"), [(e["name"], e.get("onError", "(stop)"), "alwaysOutputData" if e.get("alwaysOutputData") else "") for e in ext]))
     R["info"]["write_paths"] = paths
+    for wn, wt, woe, ext in paths:
+        if woe == "continueRegularOutput": R["warn"].append("%s (write): continues on error" % wn)
+        for en, eoe, _ in ext:
+            if eoe == "continueRegularOutput": R["warn"].append("%s (write): upstream call %s continues on error" % (wn, en))
+    for n in nodes:
+        if short(n["type"]) == "webhook" and n.get("parameters", {}).get("responseMode") == "responseNode":
+            seen2 = {n["name"]}; st2 = [n["name"]]
+            while st2:
+                x = st2.pop()
+                for a, i, b in edges:
+                    if a == x and b in S and b not in seen2: seen2.add(b); st2.append(b)
+            for m in nodes:
+                if m["name"] in seen2 and short(m["type"]) in ("postgres", "httpRequest", "hubspot", "executeWorkflow") and not m.get("onError"):
+                    R["warn"].append("%s: default stop on a path from responseNode webhook %s (an error stops the run, the caller gets no reply)" % (m["name"], n["name"]))
+    R["info"]["nodes"] = len(nodes); R["info"]["conns"] = len(edges); R["info"]["triggers"] = trig
     return R
 def md(path, w, R):
-    o = ["### %s" % path, "- nodes: %d; connections: %d; triggers: %s" % (len(w.get("nodes", [])), sum(len(l or []) for o_ in w.get("connections", {}).values() for lst in o_.values() for l in lst), ", ".join(n["name"] for n in w["nodes"] if TRIG.search(n["type"])))]
+    o = ["### %s" % path, "- nodes: %d; connections: %d; triggers: %s" % (R["info"]["nodes"], R["info"]["conns"], ", ".join(R["info"]["triggers"]))]
+    o.append("- WARN: " + (" | ".join(R["warn"]) if R["warn"] else "none"))
     o.append("- FAIL: " + (" | ".join(R["fail"]) if R["fail"] else "none"))
     o.append("- save settings: " + ", ".join("%s=%s" % kv for kv in R["info"]["save"].items()))
     o.append("- webhooks: " + ("; ".join("%s %s /%s auth=%s" % x for x in R["info"]["webhooks"]) or "none"))
@@ -110,6 +135,12 @@ def selftest():
     for k in ("duplicate node names: A", "targets missing node: Nope", "orphan nodes", "Ghost", "alwaysOutputData together", "error) is not wired", "webhook without authentication"): assert k in t, (k, t)
     ok = {"nodes": [{"name": "T", "type": "n8n-nodes-base.webhook", "parameters": {"authentication": "headerAuth"}}, {"name": "B", "type": "n8n-nodes-base.set", "parameters": {}}], "connections": {"T": {"main": [[{"node": "B", "type": "main", "index": 0}]]}}}
     assert check(ok)["fail"] == [], check(ok)["fail"]
+    assert any("top level" in x for x in check([])["fail"]) and any("no nodes" in x for x in check({})["fail"])
+    assert any("no name or no type" in x for x in check({"nodes": [{"name": "X"}]})["fail"])
+    wk = {"nodes": [{"name": "T", "type": "n8n-nodes-base.webhook", "parameters": {"responseMode": "responseNode", "authentication": "headerAuth"}}, {"name": "P", "type": "n8n-nodes-base.postgres", "parameters": {}},
+                    {"name": "C", "type": "n8n-nodes-base.postgres", "parameters": {}, "onError": "continueRegularOutput"}, {"name": "M", "type": "n8n-nodes-base.emailSend", "parameters": {}}],
+          "connections": {"T": {"main": [[{"node": "P", "type": "main", "index": 0}]]}, "P": {"main": [[{"node": "C", "type": "main", "index": 0}]]}, "C": {"main": [[{"node": "M", "type": "main", "index": 0}]]}}}
+    t2 = " | ".join(check(wk)["warn"]); assert "P: default stop" in t2 and "upstream call C continues on error" in t2, t2
     print("selftest ok")
 if __name__ == "__main__":
     if sys.argv[1:] == ["--selftest"]: selftest(); sys.exit(0)
