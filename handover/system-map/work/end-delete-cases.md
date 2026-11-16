@@ -1,43 +1,30 @@
-# What `end` does: replacement text for the owner cards (decision 2 applied)
-Written 16 Nov 2026; this layout rebuilt the same day after cold reads (older layout and the 12 older notes: work/end-delete-cases-history.md, -history-2.md and -history-3.md; ignore them).
+# What `end` does: replacement text for the owner cards (lead answer 3 applied)
+Written 16 Nov 2026. Older layouts: work/end-delete-cases-history-5.md (and -history.md to -history-4.md); ignore them. Where the pages that still carry old wording are listed: work/end-sentence-for-owners.md.
 
-## ACTION BLOCK (PROPOSAL, label kept)
-Owner of the check: studio lead. Do: read scripts/run_real_check_n8n.py and quote its `end` lines on the M17 page (decisions/M17-end-never-deletes.md, under "Quoted lines"). By: Tue 17 Nov 03:30 UTC / 09:00 IST (system-map session PROPOSAL; nobody has agreed). Until that quote exists, use no text from this page.
+## The sentence (use exactly)
+"The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list."
 
 ## Status
-1. This page is a HELD PROPOSAL. Do not copy its text to any card until the check in item 3 is done.
-2. What is unverified: whether the program's `end` step deletes anything. The scripts that would show it (scripts/n8n_api.py, scripts/run_real_check_n8n.py, scripts/n8n_drive.py) are NOT in this checkout, so nobody has read them for this. The only source for "`end` deletes nothing" is decision 2 of inputs/DECISIONS-2026-11-16.md (second-hand). The owner's step list (inputs/OWNER-STEPS-realrun-v5-core-hardening.md, step F) says the opposite: `end` makes the program delete the run's contacts. The two disagree, and this page cannot settle it.
-3. Next action: the studio lead reads scripts/run_real_check_n8n.py and quotes its `end`-handling lines on the M17 page (decisions/M17-end-never-deletes.md). Proposed time: Tue 17 Nov 03:30 UTC / 09:00 IST (my proposal; not agreed). Checked would mean that quote is on the M17 page. The studio lead is the proposed checker; no checker is named.
-4. Step numbers (I could not tell which numbering is right, so read this): the cited source uses LETTERS (steps A to J; the film pause is step F, a failed run is step G); it has no numbered steps 13 to 20. The numbers 13-16 and 15-20 below come from an older version of OWNER-RUN-DAY-CARD.md. The current card (status line: "APPLIED 16 Nov 2026") already says `end` deletes nothing and numbers the pause as steps 17 to 22 and the by-hand deletes as steps 23 to 25. So the replacement steps below are numbered for the old card and may no longer fit. Before using any text here, compare it with the current OWNER-RUN-DAY-CARD.md; where they differ, the current card wins until the check in item 3 shows otherwise.
-5. The replacement text below is therefore labelled "new steps A to F" (the pause part of the run-day card), not by number. Beside each letter, the numbers in the current OWNER-RUN-DAY-CARD.md (read only, steps 17 to 25, as read 16 Nov 2026; the card is system-map/OWNER-RUN-DAY-CARD.md). This pairing is my reading, not agreed:
-   - Pause and `end`: card steps 17 to 21 (no new step needed; step 18 already says `end` deletes nothing).
-   - New step A (stop, wait for the list) and B (the list): card step 22 (the card has no separate wait step and no 15-minute rule).
-   - New step C (release phrase): card step 22 ("demo mails may be deleted"); card step 23 is the warning for the Gmail and HubSpot deletes.
-   - New steps D, E and F (check the account, delete one by one, reply): card step 25 (card step 24 is the Gmail mails only and is untouched).
+1. SETTLED by lead answer 3 (work/LEAD-ANSWERS.md, 16 Nov 2026 16:23 UTC / 21:53 IST). Not verified by reading the program: scripts/run_real_check_n8n.py is not in our checkout and was not read. The cards still must not claim more than the sentence.
+2. The owner is the only person. There is no "studio head". studio lead = the Claude session doing the technical steps.
+3. The old proposal (a delete design: the program deleting, a "contacts may be deleted" release phrase, steps A to F with a 15-minute wait) is withdrawn. It is kept only in work/end-delete-cases-history-5.md.
 
 ## Words
-- end = the word the owner types to close the film pause. The pause = the moment the program waits after the 3 made-up contacts exist so the owner can film HubSpot. studio lead = the Claude session doing the technical steps; studio head = the human who runs the studio (not named); core-hardening = the other Claude session that owns V5 (the owner's step list, inputs/OWNER-STEPS-realrun-v5-core-hardening.md) and the program text.
-- lead id = the id the program gives each made-up lead (older pages write "lead key"; use "lead id", because a key reads as a secret). contact id = the number HubSpot gives a contact. run name = the short name the owner picks fresh for each run. release word = the exact words the studio lead writes in chat before the owner may do a step. QUESTIONS item 1 = the first question in system-map/QUESTIONS.md (item 1, "ANSWERED (lead 10:13Z)"), now answered by decision 2. case B = the old option "`end` deletes the contacts" (withdrawn); it is named in system-map/work/agent-reports-batch4.md (lines 450 and 502), and the decision that withdraws it is in system-map/inputs/DECISIONS-2026-11-16.md, decision 2.
-- digest N = entry N in system-map/work/agent-reports-batch4.md (for example digest 380 below; entries are numbered at the start of each line).
+- end = the word the owner types to close the film pause. The pause = the moment the program waits after the 3 made-up contacts exist so the owner can film HubSpot.
+- filtered list = the HubSpot contact list narrowed to the made-up test addresses of this run (take-<run name>-a@example.com, -b@, -c@), so only those contacts are ticked.
+- lead id = the id the program gives each made-up sales request; contact id = the number HubSpot gives a contact.
 
-## Rule (decision 2 of inputs/DECISIONS-2026-11-16.md)
-`end` only closes the pause and deletes nothing. The owner deletes leftover made-up contacts by hand. Case B is WITHDRAWN. If the program still deletes, that is a program defect: the studio lead reports it to core-hardening; it is not a card variant.
+## Rule
+`end` only closes the pause. The program deletes nothing and archives nothing. It prints the made-up contacts still in HubSpot (lead id and contact id). The owner deletes any left behind by a filtered list. If the program ever deletes a contact, that is a program defect: the studio lead reports it to core-hardening; it is not a card variant.
 
-## Files that still say it
-These said "`end` deletes up to 3 contacts" when this page was written. The studio lead must change them (not this session, and no other owner): the V5 owner step list (steps E and F, and the by-hand delete in step G); the program's own notice and prompt text. The run-day card and OWNER-VIEW row 3 already carry the new wording (see Status item 4). OWNER-CLEANUP-CARD does not say that `end` deletes; its gap is different: it has no step for leftover contacts, which is why step 3a is proposed below.
-
-Replacement text (new steps A to F, in the pause part of the run-day card):
-- Earlier step (the one that tells the owner what is left over): "Up to 3 made-up contacts are left for you to delete by hand." Heading over the pause steps: "`end` ONLY CLOSES THE PAUSE (it deletes nothing)".
-- New step A (STOP): "STOP. `end` has closed the pause. The made-up contacts are still in HubSpot. Do nothing. Wait for the studio lead's chat message with the list. If no list arrives within 15 minutes of your `end` (write down the time you typed `end`), stop; do not delete anything; tell the lead session in the next board push." (The 15-minute rule and this wording are a PROPOSAL; the current card has neither.)
-- New step B: "The studio lead's list gives, for each leftover contact, the lead id (the number the program gives each made-up test person; the program may print it as 'lead key') and the HubSpot contact id, at most 3, ids only, no names or addresses. The message shows its send time in UTC and IST."
-- New step C (STOP): "STOP. Wait for the exact words 'contacts may be deleted'. The studio lead writes them only after sending the list. Do not accept a similar phrase such as 'demo mails may be deleted'; that one is for Gmail mails only."
-- New step D: "In the demo HubSpot account (the made-up-data HubSpot account used for the take; the studio lead names it in the list message; never write its number in chat), open one listed contact by its contact id. Read its lead id. If it differs from the list, STOP: do not delete, tell the studio lead."
-- New step E: "STOP. Deleting cannot be undone. Click Delete on that one contact only. Then go back to step D for the next listed contact."
-- New step F: "Reply in chat: 'contacts deleted: N of M' (M = contacts on the list; N may be 0). If a listed contact is missing, delete nothing more and tell the studio lead."
-- Release word (PROPOSAL): the phrase on the current card is current today: card step 22 uses "demo mails may be deleted" for the contact deletes. "contacts may be deleted" below is a proposal only; until the studio lead accepts it, use the card's phrase. The one proposed trigger for contact deletes is "contacts may be deleted" (new, step C). The existing word "demo mails may be deleted" stays for the Gmail demo mails. Two words, two jobs. NOTE: the current run-day card (step 22) still uses "demo mails may be deleted" for the contact deletes, so the two do not agree yet. TO CONFIRM by the studio lead by Tue 17 Nov 12:00 UTC / 17:30 IST (my proposal); steps C and 3a stay held until then.
-- OWNER-VIEW row 3: "The one careful moment is the film pause: typing `end` closes it and deletes nothing; afterwards you delete the listed contacts by hand."
-- OWNER-VIEW (the order-of-messages paragraph): add "step 7b: the studio lead sends the contact list; you delete the listed contacts and reply 'contacts deleted: N'."
-- Clean-up card: new step 3a (only if new steps A to F were not already done; they are the same deletes, never do them twice): "STOP. Do this only if the studio lead wrote 'contacts may be deleted'. Delete only the contacts the studio lead listed. Reply 'contacts deleted: N'."
+## Replacement text for the pause part of the run-day card
+- Heading over the pause steps: "`end` ONLY CLOSES THE PAUSE (it deletes nothing)".
+- Earlier notice step: "Up to 3 made-up contacts are left in HubSpot for you to delete by a filtered list."
+- After `end`: "The program lists the made-up contacts still in HubSpot. Tell the studio lead the count and the contact ids only (addresses replaced by X)."
+- Delete step (the owner's own action, no release phrase): "In the demo HubSpot account, open Contacts and filter by the three test addresses of this run. Tick only contacts whose email is exactly one of them, then More, Delete. If the count differs from the program's list, delete nothing and tell the studio lead. Deleting cannot be undone. Reply 'contacts deleted' and the number."
+- Release words: none for contacts, because the program deletes nothing. "demo mails may be deleted" stays for the Gmail demo mails only.
+- OWNER-VIEW row 3: "The one careful moment is the film pause: typing `end` closes it. The take never deletes contacts; it lists any left behind and you delete them by a filtered list."
+- Clean-up card: add "Leftover made-up contacts: delete them by the filtered list from the run-day card, once; never twice."
 
 ## Caution
-UNVERIFIED whether the program deletes anything (digest 380). These texts say `end` deletes nothing only because decision 2 says so; do not put them on a card until someone has read the program.
+Rests on lead answer 3, not on a read of the program. The quoted-lines check of older versions is no longer a condition.

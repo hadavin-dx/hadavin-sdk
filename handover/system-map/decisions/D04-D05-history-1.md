@@ -1,0 +1,26 @@
+# Two wording problems in the owner's post: the "processed once" claim (D-04) and the crash limit (D-05)
+Written Mon 16 Nov 2026, about 10:15 UTC / 15:45 IST; corrected the same day after a cite check. Reader: the studio lead. Made-up data only. Both items block the post (Wed 25 Nov 2026 15:00 UTC / 20:30 IST), not the filming.
+
+## Names used below, each explained once
+- **Owner steps file** = `inputs/OWNER-STEPS-realrun-v5-core-hardening.md`. The post instructions are in step J (lines 163 to 172). The older v3 had the same text as "step 23"; v3 is archived (decision 10), do not edit it.
+- **Lead** = one made-up sales contact sent into the system. **Lead id** = the number the system gives that contact.
+- **Mail-crash test** = a planned test that stops the system after the mail is sent but before the lead is marked finished, then checks whether a second mail goes out. The plan calls the row DM; the tries are E and E2 (one repeat if E misses the moment). Source: plan-wp6-resmoke-v5.md lines 476 and 505.
+- **Take folder** = the one working folder used for one filming run.
+- **Who edits the owner steps file:** the file name points to core-hardening and this session was told not to edit it. No file states who owns it (UNVERIFIED); the studio lead names who edits step J.
+
+## D-04: the post says more than the video proves
+- **Problem.** Step J lets the owner say that our code caps the spend and counts mails and contacts "with a separate check of ours" (v5 line 164). Decision 1 (16 Nov) allows ONE claim: "a lead sent twice with the same id is processed once". The spend limit is a setting a person checks, not a guarantee. The count with its own separate login is not built.
+- **Replacement text for step J.** The post may say, in one sentence: "A lead sent twice with the same id is processed once." The post must not say anything about: a spending cap; the spend or count checks being separate or independent; a portal, approvals or an audit trail; one person through two doors being one contact; no lead data staying in n8n; recovery within 60 seconds; an alert within 30 seconds; n8n having no internet access; **the run being crash-safe** (forbidden unless the crash test passed, see D-05).
+- **Risk if not applied.** The owner posts a claim the video does not prove.
+- **Risk of the fix.** None for filming; the post is shorter.
+- **Open choice for the owner.** Whether a longer sentence about how the system is built stays. If it stays it must not mention the spending cap or the separate count login.
+
+## D-05, with D-18: the crash limit never reaches the owner
+- **Problem.** The plan says "processed once" does NOT hold for a crash between the mail send and the "finished" mark, if the crash test shows two mails. If both tries miss the moment, the limit is "untested" (plan lines 476, 505). If the test is not run, the plan is silent (our inference: treated as untested). Either way the take is not called crash-safe until it is fixed or the owner accepts the limit in writing (plan lines 476 and 505). The crash test has NOT been run yet; its result is empty today. Step J (v5 line 170) already forbids "crash-safe" unless the test passed, but it does not say the studio lead tells the owner the result, and it does not carry the D-18 limits: anyone who can edit the workflows can reset a lead's state, and the rule "one paid model call per lead id" holds only inside one take folder (drift/REPORT.md line 75, D-18; the plan line it cites, PL:100, was not opened by this session).
+- **Text to add to step J, after the allowed sentence.** "The studio lead tells you the result of the mail-crash test before you post. If it showed a double mail, or the test was not run or missed the moment, do not post the sentence above as it stands. The studio lead gives you the exact limit wording, and you accept it in writing or the post waits. Even when the test passed, the post may say 'processed once' only for a second send with the same lead id inside one take folder." (v5 line 172 already says the exact final words come from the studio lead and a second person checks the post; do not repeat that.)
+- **Risk if not applied.** The post says "processed once" while a crash could send a second mail.
+- **Risk of the fix.** The post can wait until the crash test has run.
+- **Timing.** The first rehearsal is run by the studio lead on the laptop after the loopback re-smoke passes (decision 12; target tonight or tomorrow morning IST). That the crash test needs Docker is an inference (the plan's evidence rows use a Postgres container); the plan line 489 says the lead starts Docker Desktop. Whether Docker exists in this cloud session: no file says (UNVERIFIED; an earlier run found no daemon).
+
+## What I need from the studio lead
+Reply "D-04 apply, D-05 apply" (or edits) and name who edits step J. The owner may veto any line. This session will then mirror the wording in OWNER-VIEW row 6.
