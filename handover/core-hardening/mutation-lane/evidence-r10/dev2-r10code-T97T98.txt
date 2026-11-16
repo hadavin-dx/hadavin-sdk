@@ -85,3 +85,14 @@ noqa: [] direct Popen calls: 0
   PASS: T98c no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 0; r9: fails)
 /tmp/safety-only.o9ox7E.sh: line 70: 12636 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"s
+/tmp/safety-only.o9ox7E.sh: line 70: 13359 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev2/tmpstate/hadavin-mutation-lane-0/c0d9afb00e6881e0.backup; hash mat
+  FAIL: T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: the file holds git's text (return1), swapped text written 0 times (got exit 3, last 'return2'); plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0
+/tmp/safety-only.o9ox7E.sh: line 70: 17941 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+  PASS: T98e forged marker with mode 0777: --sha refuses it, exit 3 (got 3), nothing written (last 'return2' = return2)
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/dev2/tmpstate/hadavin-mutation-lane-0/c0d9afb00e6881e0.backup; hash mat
+  PASS: T98e2 plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode masked to 0777 at most (got exit 0, mode 777)
+missing [] no (d): False
+  PASS: T98f the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 0; r9: fails)
+FAILED CHECKS: 2 (of 26 checks run; skipped: none)
