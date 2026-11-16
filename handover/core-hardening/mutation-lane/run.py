@@ -539,7 +539,12 @@ def stop_orphan(m: dict, root: pathlib.Path) -> str:
         return "no test group recorded"
     groups = orphan_candidates(m, root)
     if not groups:
-        if isinstance(pgid, int) and proc_stat(pgid) is None and not group_members(pgid):
+        leader = proc_stat(pgid) if isinstance(pgid, int) else None
+        if (
+            isinstance(pgid, int)
+            and (leader is None or leader["state"] == "Z")
+            and not group_members(pgid)
+        ):
             return "test group already gone"
         return f"process {pgid} is not this run's pytest (or cannot be verified): left alone"
     notes = []
