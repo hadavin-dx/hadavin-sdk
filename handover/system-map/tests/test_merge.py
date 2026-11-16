@@ -37,3 +37,27 @@ class Merge(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MergeDrops(unittest.TestCase):
+    def _lane(self, text, name="L1.md"):
+        d = tempfile.mkdtemp(); os.makedirs(os.path.join(d, "work"))
+        open(os.path.join(d, "work", name), "w").write(text)
+        return d
+
+    def test_unknown_kind_row_is_reported_and_fails(self):
+        d = self._lane("## Stores\n| id | name |\n|---|---|\n| L1-ZZ-001 | x |\n")
+        self.assertEqual(merge.main(d), 1)
+
+    def test_unlisted_lane_file_is_read(self):
+        d = self._lane("## Stores\n| id | name |\n|---|---|\n| L7-S-001 | x |\n", "L7.md")
+        self.assertEqual(merge.main(d), 0)
+        self.assertIn("L7-S-001", open(os.path.join(d, "MASTER-MAP.md")).read())
+
+    def test_unknown_section_row_is_reported(self):
+        d = self._lane("## Docs and tests\n| id | name |\n|---|---|\n| L1-D-001 | x |\n")
+        self.assertEqual(merge.main(d), 1)
+
+    def test_clean_run_returns_zero(self):
+        d = self._lane("## Stores\n| id | name |\n|---|---|\n| L1-S-001 | x |\n")
+        self.assertEqual(merge.main(d), 0)
