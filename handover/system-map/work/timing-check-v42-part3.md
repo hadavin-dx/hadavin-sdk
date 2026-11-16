@@ -4,10 +4,44 @@ Status: DRAFT. Read-only check; nothing was run, nothing changed except this pag
 
 Written 2026-11-16 (UTC). Times in UTC (Z) and IST (IST = UTC + 5 h 30 min). "Lead" means the studio lead (the Claude session on the owner's laptop). Verdicts: HOLDS = still true after the answers; CHANGE = the line must be reworded; OPEN = the answers do not settle it.
 
+## The lead answers this page uses (quoted once; "Answer N = item N in work/LEAD-ANSWERS.md")
+
+Answer N = item N in work/LEAD-ANSWERS.md. Each is quoted here as written there, so a reader need not open that file.
+
+- Answer 6: "accept the proposal: the 49 minutes cover the program's own run only (posts, table and mail waits, final reads, margin); steps A to D happen before the start; a failed run is not repeated the same day".
+- Answer 7: "accept: both lines say 'the program refuses a start that leaves less than 49 minutes before the stop time; latest start 17:40 UTC = 23:10 IST at lease 45'; the 14-minute figure was the old r28 number and is obsolete; change 18:15 and 18:14:40 everywhere".
+- Answer 8: "accept 10 minutes maximum pause with an alarm; whether the program enforces it or types `end` itself: core-hardening answers".
+- Answer 9: "A13 = no same-day rerun; a failed run means a new day inside the credit window, decided by the owner".
+- Answer 10: "anchor to the START: notice at least 3 hours before the start time named in the notice".
+- Answer 14: "49 (computed from the lease; no stage.env value)".
+- Answer 15: "a no (before the window check), b yes (inside person C's post wait), c yes (table_wait and mail wait are in the formula), d no (the program's formula has no film pause term; item 8 bounds it), e yes (the 120 s clean-up bound is the margin), f yes (final reads, covered by the margin only; not measured), g yes (margin only)". Letters a to g are the sub-questions of answer 15: a = the owner's typed answers, b = posts, c = table and mail waits, d = film pause, e = clean-up bound, f = final reads, g = margin.
+- Answer 16: "17:40 governs as the HARD latest start; 12:00 UTC stays the PLANNING target (start by noon so a failed run still has the afternoon); write both".
+- Answer 17: "next morning" (the owner's clean-up after the take).
+
+Two labels from these answers, explained where they first appear:
+
+- "Steps A to D" (answer 6): the lead's name for a set of preparation steps that must be finished before the take program starts. v4.2 only defines "Step D" (the owner's one clean-up after the take, section 10 step 5, lines 116, 510). Steps A, B and C: NOT RECORDED in the files I read. This is a conflict: answer 6 puts A to D before the start, v4.2 puts D after the take (lead-fact list, item 1).
+- "A13" (answer 9): the lead's label for the rule "no same-day rerun". A13 = no same-day rerun (answer 9).
+
+## Glossary (one line each; sources: part 1, part 2, runbook v4.2)
+
+- **take**: one recorded (filmed) run of the lead-intake demo on made-up data.
+- **take program**: the script that runs the take, `scripts/run_real_check_n8n.py` (not in this checkout).
+- **gate** (start-state gate): a check of about 25 minutes before the take on Wed 18 Nov, that the demo is in the right state; decision by 10:00Z (runbook lines 93, 217).
+- **re-pin**: pointing the demo at a new fixed version of the core code (a version id called a sha); the whole re-pin event is estimated at 223 minutes on Tue 17 Nov.
+- **re-smoke**: a repeat quick test run after the re-pin (the "loopback re-smoke", started only after the owner's yes). What "smoke" exactly checks: NOT RECORDED.
+- **W-05**: runbook step "THE TAKE" on Wed 18 Nov, about 10:00 to 11:00Z (15:30 to 16:30 IST).
+- **G6**: runbook go/no-go rule 6 (line 265): the counts proof must be green or the take slips one day at the same times; and scene 4 is shown only if the takeover shows inside 3 minutes.
+- **G7**: runbook go/no-go rule 7 (line 266): if the re-pin is done by Mon 23 Nov 07:00Z, the chain of steps after it must end before 18:29Z "with margin".
+- **U-19**: runbook item in section 13 (line 569): the clock times of the owner's clean-up, recorded before section 10 step 5.
+- **R-29**: row 29 of part 2 (work/timing-check-v42-part2.md): the 25-minute gate figure in the 30-minute W-04 slot, read two ways; still open.
+- **owner sheet v5**: version 5 of the owner's written sheet; it is the source of the obsolete 14-minute and 18:15Z figures (see timing-check-a.md). Its other contents: NOT RECORDED here.
+- **part 2**: work/timing-check-v42-part2.md, the earlier timing check of v4.2 lines 321 to 628 against a 49-minute worst case. Part 1 is work/timing-check-v42-part1.md.
+
 ## What the answers fix (the new rules, one line each)
 
 - 49 minutes = the take program's own run only. The program computes it: 2630 s + 6 x lease, lease 45 s = 2630 + 270 = 2900 s = 48 min 20 s, rounded up to 49 min (answers 6, 14). It is not a stored setting. It covers posts, table and mail waits, final reads and the margin (answer 15 b, c, e, f, g). It does not cover the owner's typed answers before the window check (15 a) and has no term for a film pause (15 d).
-- Hard latest start 17:40Z (23:10 IST): the program refuses a start that leaves less than 49 min before the stop time 18:29Z (23:59 IST). 18:29 minus 49 min = 17:40 (answer 7).
+- Hard latest start 17:40Z (23:10 IST) if no pause is planned, 17:30Z (23:00 IST) if one is (open question 2): the program refuses a start that leaves less than 49 min before the stop time 18:29Z (23:59 IST). 18:29 minus 49 min = 17:40 (answer 7); minus a 10-min pause = 17:30 (my arithmetic).
 - Planning target: start by 12:00Z (17:30 IST) so a failed run still has the afternoon. Both times are written (answer 16).
 - Pause while filming: at most 10 minutes, with an alarm (answer 8; whether the program enforces it is not yet answered).
 - No same-day rerun after a failed run; the next try is a new day inside the credit window, chosen by the owner (answers 6, 9).
@@ -39,7 +73,7 @@ Written 2026-11-16 (UTC). Times in UTC (Z) and IST (IST = UTC + 5 h 30 min). "Le
 | 491 (W-05 Failure) | "stop, retake with new keys and a new address (back to W-04)" | CHANGE | "stop; no retake today; next try on a new day from W-04 with new keys, new address and a new tag; the owner chooses the day." | 9 |
 | 508 (section 10 step 3) | "If a retake is needed: the same day for a 15:00Z post only if this watch finished by 11:15Z" | CHANGE | "A retake is never the same day. A retake needs a new `<TAKE_TAG>`, new keys, a new made-up address, the model key and passwords still valid and the ceiling re-checked." | 9 |
 | 528 (section 11) | "Retake needed | gate 25 + take 60 + edit 120 + watch 20 = 225 min; a 15:00Z post needs the gate to start by 11:15Z" | CHANGE | "Retake needed: new day, chosen by the owner; no same-day retake." | 9 |
-| 222, 265 (G6), 482, 526 | "a slipped take is allowed until Mon 23 Nov 12:00Z (17:30 IST)" | CHANGE | "Planning target: a slipped take starts by Mon 23 Nov 12:00Z (17:30 IST). Hard latest start: 17:40Z (23:10 IST), the program refuses a later start. 12:00Z is the earlier of the two and applies to the start of the program, not to its end." The reason the answer gives ("a failed run still has the afternoon") conflicts with answer 9, see lead-fact list. | 16, 7 |
+| 222, 265 (G6), 482, 526 | "a slipped take is allowed until Mon 23 Nov 12:00Z (17:30 IST)" | CHANGE | "Planning target: a slipped take starts by Mon 23 Nov 12:00Z (17:30 IST). Plan to start by 12:00Z. The program itself refuses any start after 17:40Z (23:10 IST)." The reason the answer gives ("a failed run still has the afternoon") conflicts with answer 9, see lead-fact list. | 16, 7 |
 | 221, 266 (G7), 524 | NO-GO path: re-pin by Mon 23 Nov 07:00Z; chain "re-smoke 1 h, practice 1 h, Row 4 0.5 h, rehearsal 2 h, take 1 h ... must end before 18:29Z with margin" | CHANGE | "re-smoke: as long as the owner agreed in the ask" (the 1 h is superseded); add the 25-min gate; replace "must end before 18:29Z with margin" with "the take program must start by 12:00Z (planning), never after 17:40Z (23:10 IST)". With a 1 h re-smoke the chain from 07:00Z puts the take program start at 11:55Z (07:00 + 60 + 60 + 30 + 120 + 25 minutes), 5 min inside the 12:00Z target, so there is almost no room for a longer re-smoke (arithmetic mine). Also add "notice due 3 h before the start". | 7, 10, 16 |
 | 524 | "take later, before Mon 23 Nov 18:29Z" | CHANGE | "take later; the program must start before 17:40Z (23:10 IST), planning target 12:00Z (17:30 IST)". The 168 min and 223 min arithmetic stands (re-pin start by 03:17Z). | 7, 16 |
 | 224, 517, 96 | "post at the latest Wed 25 Nov 15:00Z (20:30 IST)"; "post Wed 18 Nov 15:00Z" | HOLDS | none for the dates. Check with the new worst case on Wed 18: take 10:00Z + typing + 49 + 10 min pause, then watch 20 min, hand-over, edit 120 min; even with 15 min of typing the hand-over is about 11:35Z and the edit ends about 13:35Z, 85 min before 15:00Z (my arithmetic). | none |
@@ -52,10 +86,10 @@ Written 2026-11-16 (UTC). Times in UTC (Z) and IST (IST = UTC + 5 h 30 min). "Le
 
 ## Lines needing a lead fact that is not in the answers
 
-1. What "steps A to D happen before the start" means (answer 6). In v4.2 "Step D" is the owner's clean-up after the take (lines 500, 510), and Step A is removed (line 514). Which steps are meant, and are they the take program's own?
+1. What "steps A to D happen before the start" means (answer 6; see the label explained near the top). In v4.2 "Step D" is the owner's clean-up after the take (lines 500, 510), and Step A is removed (line 514). Which steps are meant, and are they the take program's own?
 2. Is the 10-minute pause inside or outside the program's stop time, and does the program end itself or does a person type `end` (answer 8 sent this to core-hardening)? Without it the hard latest start with a planned pause is 17:30Z (23:00 IST), not 17:40Z.
 3. Answer 16 gives "so a failed run still has the afternoon" as the reason for 12:00Z, but answer 9 says a failed run is not repeated the same day. What is the afternoon for? (Mon 23 Nov is the last day of the window, so a failed run that day has no later day.)
-4. Does "no same-day rerun" (A13) also bar a repeat of Rehearsal 2, a practice step or a retake caused only by a recording defect (a private address on screen, line 509)? The answers speak of a failed run only.
+4. Does "no same-day rerun" (A13 = no same-day rerun, answer 9) also bar a repeat of Rehearsal 2, a practice step or a retake caused only by a recording defect (a private address on screen, line 509)? The answers speak of a failed run only.
 5. Which notice has the 3-hour rule: the program's printed notice (line 487), the lead's ask to the owner, or both; who sends it, and does each take-program start need its own notice?
 6. How long the owner's three typed answers take (outside the 49), and whether the lead may tear down the same evening (lines 515, 516).
 7. Retake day: after a failed Wed 18 Nov take, is the next try Thu 19 Nov at the same times, as lines 454 and 525 say, or whatever day the owner picks (answer 9)?
