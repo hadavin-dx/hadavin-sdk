@@ -18,10 +18,10 @@ Written Mon 16 Nov 2026. Each item has a safe default that applies if you do not
 | 12 | Helpers | Sheet 5.2, G11 | Default: two humans besides the owner (one films, speaks, edits; one checks the post). With fewer: no post |
 | 13 | n8n access and the model credential in n8n's store | G3: the lead needs n8n access to import flows and to remove the model credential FACTS says is there | Default: you remove it through n8n's programming interface and show it gone; if that needs the owner's n8n login, one separate written message, never on the sheet |
 | 14 | Count of n8n connection values | checker expects three; plan has four database roles; earlier note listed two database secrets | Default: the message lists exactly what is in n8n at the check; you reconcile with the plan |
-| 15 | Window-end setting: does it exist and refuse a call after the window end | AGENT-SCOPE lists money-stop tests on an older head only | Default: Sheet keeps UNVERIFIED; the owner's cancel and the balance carry the money control |
+| 15 | Window-end setting: does it exist and refuse a call after the window end | AGENT-SCOPE lists tests that end spending on an older head only | Default: Sheet keeps UNVERIFIED; the owner's cancel and the balance carry the money control |
 | 16 | Per-key limit exists (page, amount) or none | R4, yes line | Default: "none exists" unless read from the console |
 | 17 | Second take the same day | needs a new run name, key, key path, folder, database, port, marker; lag between | Default: one take per day |
-| 18 | Step 0 | decision 8: not run; one made-up contact in take prep | Default: not run; if wanted, a separate written message |
+| 18 | The live HubSpot check before the run (earlier called step zero) | decision 8: not run; one made-up contact in take prep | Default: not run; if wanted, a separate written message |
 | 19 | Places and tools (G24), page button words, key list "cancelled" word | no source | You fill; the owner sends the visible words once on request |
 | 20 | Post-by time Wed 25 Nov 2026 15:00 UTC | evidence runner found no source in decisions, facts or scope | Default: keep, marked UNVERIFIED; you confirm |
 | 21 | DECISION-one-store line 14 still says ONE database | contradicts decision 10 | Edit it (G20) |

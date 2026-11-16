@@ -1,4 +1,5 @@
-# checkpoint v18 (builder, 2026-11-16T12:15:11Z)
-started: read brief, v17 sheet, note, open, checker, 4 reviews, 2 root-cause readers, evidence, DECISIONS, FACTS, AGENT-SCOPE s3, v3 l.171, v16 s5 (counts: A twice, B ten times, C once).
-next: write OWNER-SHEET-v18.md, LEAD-RELEASE-NOTE-v2.md, v18-OPEN-FOR-LEAD.md, v18-MAP.md, check-v18.py, run it.
-blockers: none. commit SHA: none (no commit by order).
+# checkpoint v18 (builder)
+started 2026-11-16T12:15Z; finished 2026-11-16T12:19:22Z (about 25 min).
+done: OWNER-SHEET-v18.md (98 lines, 9 headings), LEAD-RELEASE-NOTE-v2.md (G1-G29 in three groups), v18-MAP.md, v18-OPEN-FOR-LEAD.md (25 items), check-v18.py, v18-check-output.txt (0 problems; form only).
+not done: nothing run except the checker; take program delete (F-01) not fixed (not in checkout); many UNVERIFIED items remain.
+commit SHA: none (no commit by order).

@@ -1,0 +1,17 @@
+lines: {'S': 98, 'N': 129, 'M': 185, 'O': 31}
+ok: sheet lines 98
+sheet headings: 9
+ok: R1..R10 each defined once
+ok: rule references checked
+ok: G1..G29 each defined once
+ok: gate groups checked
+open rows: 25
+ok: rule phrases checked
+ok: glossary order checked
+banned words: 10 listed, occurrences case-sensitive 0, case-insensitive 0
+ok: word checks run
+UTC = IST pairs checked: 13
+ok: arithmetic, weekdays and UTC/IST pairs checked
+map table rows: 161
+ok: map checked
+TOTAL PROBLEMS 0
