@@ -240,6 +240,7 @@ fresh_root; python3 - "$RUN" "$T/root" <<'PY'
 import importlib.util, pathlib, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
 def boom(pid): raise RuntimeError("start hook failed")
+r.set_child_root(sys.argv[2])
 try: r.run_tests(pathlib.Path(sys.argv[2]), ["tests/test_slow.py"], sys.argv[2] + "/src", 60, boom)
 except RuntimeError as e: print("RuntimeError as expected:", e)
 PY
@@ -256,6 +257,7 @@ def boom(pid): raise RuntimeError("start hook failed")
 def cannot(pgid): raise PermissionError("not allowed")
 r.stop_group = cannot
 r.SIG.allow = True
+r.set_child_root(sys.argv[2])
 try: r.run_tests(pathlib.Path(sys.argv[2]), ["tests/test_slow.py"], sys.argv[2] + "/src", 60, boom)
 except (RuntimeError, PermissionError) as e: print("raised as expected:", type(e).__name__)
 print("SIG.allow after:", r.SIG.allow)
@@ -352,6 +354,7 @@ class P(Real):
         if state["n"] == 1: raise KeyboardInterrupt(int(signal.SIGTERM))   # the signal arrives just after
         return res
 subprocess.Popen = P
+r.set_child_root(root)
 try: r.run_tests(root, ["tests/test_fast.py"], str(root / "src"), 60)
 except KeyboardInterrupt: print("interrupted as expected")
 print("stop_group calls:", calls)
@@ -368,6 +371,7 @@ def P(*a, **k):
     r._term(signal.SIGTERM, None)       # the handler runs here: after the fork, before `proc = ...` in run_tests
     return proc
 subprocess.Popen = P
+r.set_child_root(root)
 try: r.run_tests(root, ["tests/test_slow.py"], str(root / "src"), 60)
 except KeyboardInterrupt as e: print("interrupted as expected", e.args)
 PY
@@ -428,6 +432,7 @@ spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = import
 seen = []
 def cannot(pgid): seen.append(r.SIG.allow); raise PermissionError("not allowed")
 r.stop_group = cannot
+r.set_child_root(sys.argv[2])
 try: res = r.run_tests(pathlib.Path(sys.argv[2]), ["tests/test_slow.py"], sys.argv[2] + "/src", 3)
 except PermissionError as e: print("raised (old behaviour):", type(e).__name__); sys.exit(1)
 print("rc:", res[1], "SIG.allow seen inside stop_group:", seen, "after:", r.SIG.allow)
@@ -556,6 +561,7 @@ class P(Real):
             os.waitpid(self.pid, 0); raise KeyboardInterrupt(int(signal.SIGTERM))   # reaped by someone else, returncode None
         return ("", 0)
 subprocess.Popen = P
+r.set_child_root(root)
 try: r.run_tests(root, ["tests/test_fast.py"], str(root / "src"), 60)
 except KeyboardInterrupt: pass
 print("returncode still None, leader reaped: stop_group calls:", calls)
@@ -884,6 +890,7 @@ def tracer(frame, event, arg):
         return local
 sys.settrace(tracer)
 r.SIG.critical, r.SIG.allow, r.SIG.fired, r.SIG.first = variant == "planted", False, False, None
+r.set_child_root(root)
 try: r.run_tests(root, ["tests/test_slow.py"], str(root / "src"), 60)
 except OSError as e: print("OSError (the failure itself) came out:", e)
 except KeyboardInterrupt as e: print("KeyboardInterrupt came out instead of the failure:", e.args)
@@ -1627,7 +1634,8 @@ if "<marker left behind>" not in res: bad.append("m7: dangling marker not counte
 try:
     wrapdir = pathlib.Path(tempfile.mkdtemp(prefix="t97i-")); wrap = wrapdir / "git"   # r12: the guard allows only git, patch and the venv python by NAME, so the wrapper script is called git
     wrap.write_text(f'#!/bin/bash\n"{sl}" 3157 &\nexec "{sl}" 3158\n'); wrap.chmod(0o755)
-    r.run_cmd([str(wrap)], timeout=1)
+    r._TRUSTED["git"] = r._identity(str(wrap)); r._FOUND["git"] = str(wrap)   # r13: the guard trusts the git this run found; the test makes the wrapper that one
+    r.run_cmd([str(wrap), "-C", "/", "rev-parse", "--is-inside-work-tree"], timeout=1)
     bad.append("m8: no timeout")
 except subprocess.TimeoutExpired:
     pass
@@ -1759,7 +1767,7 @@ echo "== T99 (r11, review r10: MAJ-1 setuid from a forged marker, S603 guard, mi
 python3 - "$RUN" <<'PY' >"$S/t99a.out" 2>&1; rc=$?
 import importlib.util, inspect, shutil, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
-G = shutil.which("git"); GE = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}   # r12: a real allowed program, so each bad kind below is refused for ITS OWN reason
+G = shutil.which("git"); GV = [G, "-C", "/", "rev-parse", "--is-inside-work-tree"]; GE = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}   # r12: a real allowed program, so each bad kind below is refused for ITS OWN reason
 bad = {
     "one shell string": (G, {"env": GE}),
     "tuple instead of list": ((G,), {"env": GE}),
@@ -1783,7 +1791,7 @@ for name, (args, kw) in bad.items():
     except BaseException as e:
         fails.append(f"{name}: {type(e).__name__} instead of a refusal")
 try:
-    p = r.Child([G, "--version"], env=GE, start_new_session=True, stdout=-3); rc0 = p.wait()
+    p = r.Child(GV, env=GE, start_new_session=True, stdout=-3); rc0 = p.wait()
     if rc0 != 0: fails.append("a good call failed")
 except BaseException as e:
     fails.append(f"a good call refused: {e}")
@@ -1919,7 +1927,7 @@ echo "== T100 (r12, review r11: M1 the Child guard, m1 --raw order, m2 total siz
 python3 - "$RUN" <<'PY' >"$S/t100a.out" 2>&1; rc=$?
 import importlib.util, shutil, sys, os
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
-G = shutil.which("git"); E = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
+G = shutil.which("git"); GV = [G, "-C", "/", "rev-parse", "--is-inside-work-tree"]; E = {"PATH": "/usr/bin:/bin", "HOME": "/", "LC_ALL": "C"}
 def started(args, kw, pos=()):
     marker = "/tmp/t100a-ran-%d" % os.getpid()
     try:
@@ -1932,23 +1940,23 @@ def started(args, kw, pos=()):
     except BaseException as e:
         return f"{type(e).__name__}"
 cases = {
-    "positional bufsize": ([G, "--version"], {"env": E}, (-1,)),
-    "positional executable (4th, /bin/sh)": ([G, "--version"], {}, (-1, "/bin/sh")),
-    "positional shell": ([G, "--version"], {}, (-1, None, None, None, None, None, None, True)),
-    "executable=/bin/sh": ([G, "--version"], {"env": E, "executable": "/bin/sh"}),
-    "env missing": ([G, "--version"], {}),
-    "env=None": ([G, "--version"], {"env": None}),
+    "positional bufsize": (GV, {"env": E}, (-1,)),
+    "positional executable (4th, /bin/sh)": (GV, {}, (-1, "/bin/sh")),
+    "positional shell": (GV, {}, (-1, None, None, None, None, None, None, True)),
+    "executable=/bin/sh": (GV, {"env": E, "executable": "/bin/sh"}),
+    "env missing": (GV, {}),
+    "env=None": (GV, {"env": None}),
     "absolute shell /bin/sh -c": (["/bin/sh", "-c", "true"], {"env": E}),
     "absolute /usr/bin/env": (["/usr/bin/env", "true"], {"env": E}),
     "absolute bash": (["/bin/bash", "-c", "true"], {"env": E}),
-    "user=": ([G, "--version"], {"env": E, "user": 0}),
-    "umask=": ([G, "--version"], {"env": E, "umask": 0}),
-    "close_fds=False": ([G, "--version"], {"env": E, "close_fds": False}),
-    "process_group=": ([G, "--version"], {"env": E, "process_group": 0}),
-    "restore_signals=": ([G, "--version"], {"env": E, "restore_signals": False}),
-    "cwd relative": ([G, "--version"], {"env": E, "cwd": "relative/dir"}),
-    "start_new_session=False": ([G, "--version"], {"env": E, "start_new_session": False}),
-    "shell=1": ([G, "--version"], {"env": E, "shell": 1}),
+    "user=": (GV, {"env": E, "user": 0}),
+    "umask=": (GV, {"env": E, "umask": 0}),
+    "close_fds=False": (GV, {"env": E, "close_fds": False}),
+    "process_group=": (GV, {"env": E, "process_group": 0}),
+    "restore_signals=": (GV, {"env": E, "restore_signals": False}),
+    "cwd relative": (GV, {"env": E, "cwd": "relative/dir"}),
+    "start_new_session=False": (GV, {"env": E, "start_new_session": False}),
+    "shell=1": (GV, {"env": E, "shell": 1}),
     "an absolute program named sh in another folder": (["/tmp/notgit/sh"], {"env": E}),
 }
 wrong = []
@@ -1967,14 +1975,14 @@ import inspect
 if [p.kind for p in inspect.signature(r.Child.__init__).parameters.values()].count(inspect.Parameter.VAR_POSITIONAL): wrong.append("Child.__init__ still takes *args")
 # OSError at the start is a refusal, never a traceback: program git with a folder that does not exist, and E2BIG
 try:
-    r.Child([G, "--version"], env=E, cwd="/nonexistent-t100/x")
+    r.Child(GV, env=E, cwd="/nonexistent-t100/x")
     wrong.append("missing cwd: started")
 except r.Refused:
     pass
 except BaseException as e:
     wrong.append(f"missing cwd: {type(e).__name__}")
 try:
-    r.Child([G] + ["x" * 100000] * 80, env=E)
+    r.Child([G, "-C", "/", "rev-parse", "--verify", "--quiet", "x" * 200000], env=E)
     wrong.append("E2BIG: started")
 except r.Refused:
     pass

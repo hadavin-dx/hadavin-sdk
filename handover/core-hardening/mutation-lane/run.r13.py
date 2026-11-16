@@ -145,7 +145,7 @@ that can write that folder AS THIS USER can write a forged marker plus a backup 
 text into the file (a mode with a setuid, setgid or sticky bit is cut to its lowest 9 bits and a write bit for others is taken away, never more: r11 MAJ-1, r12 m5, T99b, T99h). Only `--restore --sha
 COMMIT` closes it: the original then comes from git, a forged marker is refused or ignored, never trusted (T98d, T98e). Use --sha
 whenever the state folder may not be trusted. A path of 4096 bytes or more (the kernel counts the closing NUL: 4095 is the longest), the root plus a relative path together, or a name over 255
-bytes, is refused with exit 2; the length limits apply to path-shaped arguments only (a long -k expression is fine, T98a, T99c); the test words together may hold 60000 bytes (r12 m2, T100c). Every program start goes through `Child`, which accepts only git, patch and the scratch tree's .venv/bin/python, keyword arguments from a fixed list and a required, restricted env (r12 M1, T100a); it checks the NAME and PATH of the program, it is not a sandbox. The
+bytes, is refused with exit 2; the length limits apply to path-shaped arguments only (a long -k expression is fine, T98a, T99c); the test words together may hold 60000 bytes (r12 m2, T100c). Every program start goes through `Child`, which accepts only the very git and patch files found at start (same real path, device and inode) and exactly <root>/.venv/bin/python, the argument shapes of this tool's fixed calls, keyword arguments from a fixed list and a required, restricted env (r12 M1, r13 M1, T100a); it checks WHICH FILE starts and the shape of its arguments, it is not a sandbox and does not vouch for the file itself. The
 signal handlers are installed right after the imports; a signal before that (Python's own start-up, about 20 to 50 ms) ends the
 process by that signal at a time when nothing has been written (T98b).
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
@@ -367,24 +367,114 @@ CHILD_ENV_ALLOWED = frozenset({"PATH", "HOME", "LC_ALL", "PYTHONDONTWRITEBYTECOD
 CHILD_KW_ALLOWED = frozenset(
     {"stdin", "stdout", "stderr", "cwd", "env", "start_new_session", "text", "encoding", "errors"}
 )
-CHILD_PROGRAMS = ("git", "patch")  # by file name; the test interpreter is <root>/.venv/bin/python
+CHILD_PROGRAMS = ("git", "patch")  # found with shutil.which; the test interpreter is <root>/.venv/bin/python
+# r13 (review r12 M1): the programs this run may start are the ONES IT FOUND AT START, not any file with the right name.
+# `git` and `patch`: the real path (and file identity) of what `tool()` found first; the interpreter: exactly
+# <resolved --root>/.venv/bin/python (set once by `set_child_root`, called by main after --root is checked).
+_TRUSTED: dict[str, tuple[str, int, int]] = {}
+_FOUND: dict[str, str] = {}  # the path text `shutil.which` gave (what tool() returns)
+_CHILD_PYTHON: str | None = None
+IMPORT_PROBE_CODE = "import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '')"
+PYTEST_FIXED_TAIL = ("--tb=line", "-rfp")
 
 
-def child_program_ok(prog: str) -> bool:
-    """r12: the programs this tool starts are `git`, `patch` (found with shutil.which) and the scratch tree's own
-    `.venv/bin/python`. Any other absolute program, `/bin/sh` and `/usr/bin/env` included, is refused."""
-    return os.path.basename(prog) in CHILD_PROGRAMS or prog.endswith("/.venv/bin/python")
+def _identity(path: str) -> tuple[str, int, int]:
+    real = os.path.realpath(path)
+    st = os.stat(real)
+    return real, st.st_dev, st.st_ino
+
+
+def trust_tool(name: str) -> str | None:
+    """Remember what `shutil.which(name)` finds the FIRST time (real path, device and inode); every later call returns the
+    same path. None when the program is not installed (nothing is recorded)."""
+    if name not in _TRUSTED:
+        found = shutil.which(name)
+        if found is None:
+            return None
+        try:
+            _TRUSTED[name] = _identity(found)
+        except OSError:
+            return None
+        _FOUND[name] = found
+    return _FOUND[name]
+
+
+def set_child_root(root: pathlib.Path | str | None) -> None:
+    """Name the one interpreter a program start may use: exactly `<root>/.venv/bin/python` (no normalising, no symlink
+    resolving: the same text the caller builds). None clears it (every interpreter start is then refused)."""
+    global _CHILD_PYTHON
+    _CHILD_PYTHON = None if root is None else os.path.join(os.fspath(root), ".venv/bin/python")
+
+
+def _is_trusted(prog: str, name: str) -> bool:
+    if trust_tool(name) is None:
+        return False
+    try:
+        return _identity(prog) == _TRUSTED[name]
+    except OSError:
+        return False
+
+
+def child_program_ok(prog: str) -> str | None:
+    """r13: which program this is: "git" or "patch" when the file at `prog` is the very file `tool()` found at start (same real
+    path, same device and inode, so a copy, a script or another folder's `git` is refused whatever it is named), "python" when
+    `prog` is exactly the scratch tree's `.venv/bin/python`; None for anything else (`/bin/sh` and `/usr/bin/env` included)."""
+    for name in CHILD_PROGRAMS:
+        if _is_trusted(prog, name):
+            return name
+    if _CHILD_PYTHON is not None and prog == _CHILD_PYTHON:
+        return "python"
+    return None
+
+
+def _git_shape_ok(a: list[str]) -> bool:
+    """The four git calls this tool makes: -C <folder> then rev-parse --show-toplevel | --is-inside-work-tree |
+    --verify --quiet <rev>, or archive <rev>. No option (`-c`, `--exec-path`, `--upload-pack` ...) can be added."""
+    if len(a) < 4 or a[1] != "-C":
+        return False
+    rest = a[3:]
+    if rest in (["rev-parse", "--show-toplevel"], ["rev-parse", "--is-inside-work-tree"]):
+        return True
+    if rest[:3] == ["rev-parse", "--verify", "--quiet"] and len(rest) == 4:
+        return not rest[3].startswith("-")
+    return rest[0] == "archive" and len(rest) == 2 and not rest[1].startswith("-")
+
+
+def _patch_shape_ok(a: list[str]) -> bool:
+    """The one patch call: patch -p1 -s --batch --forward --no-backup-if-mismatch -d <absolute folder> -i <absolute file>."""
+    return (
+        len(a) == 10
+        and a[1:6] == ["-p1", "-s", "--batch", "--forward", "--no-backup-if-mismatch"]
+        and a[6] == "-d"
+        and a[8] == "-i"
+        and os.path.isabs(a[7])
+        and os.path.isabs(a[9])
+    )
+
+
+def _python_shape_ok(a: list[str]) -> bool:
+    """The two interpreter calls: -c <the fixed import probe> <module name>, or the fixed pytest head of `pytest_cmd`
+    followed by the test words."""
+    if len(a) == 4 and a[1] == "-c":
+        return a[2] == IMPORT_PROBE_CODE and not a[3].startswith("-")
+    root = os.path.dirname(os.path.dirname(os.path.dirname(a[0])))  # <root>/.venv/bin/python -> <root>
+    head = ["-m", "pytest", "-q", "-p", "no:cacheprovider", f"--rootdir={root}", f"--confcutdir={root}"]
+    return a[1 : 1 + len(head)] == head and a[1 + len(head) : 3 + len(head)] == list(PYTEST_FIXED_TAIL)
 
 
 def check_child_call(args, kwargs: dict) -> None:
-    """r11/r12 (review r10 S603, r11 M1): the checks every program start must pass, in ONE place (a test calls this directly
-    and through Child). Raises Refused. The argument list is a list of str (never one shell string), the program is an
-    absolute path whose file name is `git` or `patch` or which ends in `/.venv/bin/python`, no text holds a NUL, only the
+    """r11/r12/r13 (review r10 S603, r11 M1, r12 M1): the checks every program start must pass, in ONE place (a test calls this
+    directly and through Child). Raises Refused. The argument list is a list of str (never one shell string), the program is
+    an absolute path of the very git or patch file `tool()` found at start (same real path, device and inode) or exactly
+    `<--root>/.venv/bin/python`, the arguments have the shape of one of the fixed calls of this tool (git: 4 forms, patch: 1,
+    interpreter: the import probe and the pytest head; the test words after the pytest head are not checked), no text holds a NUL, only the
     keyword arguments in CHILD_KW_ALLOWED are accepted (so no shell, no `executable=`, no `preexec_fn=`, no `user=`), `env`
     is REQUIRED (a missing or None env would hand the child the caller's whole environment: LD_PRELOAD, BASH_ENV, GIT_* ...)
     and holds only names from CHILD_ENV_ALLOWED, `cwd` is None or an absolute path, and `start_new_session` is True when given.
-    HONEST LIMIT: this checks WHAT is started by name and path text; it does not prove the file at that path is the real
-    git, patch or python (a hostile file named git on PATH would run), and it is not a sandbox. Positional arguments after
+    HONEST LIMIT: this checks WHICH FILE is started (identity at the time of the start) and the shape of its arguments; it
+    does not prove that file is a trustworthy git, patch or python (a hostile `git` that was first on PATH when the run began
+    is the one that is trusted), does not check the test words or the values of stdin/stdout/env, and it is not a sandbox.
+    Positional arguments after
     the argument list are refused by Child itself (a TypeError)."""
     if type(args) is not list or not args or not all(type(a) is str for a in args):
         raise Refused(
@@ -394,9 +484,11 @@ def check_child_call(args, kwargs: dict) -> None:
         raise Refused(
             f"program start refused: the program must be an absolute path, got {shown(args[0])}"
         )
-    if not child_program_ok(args[0]):
+    kind = child_program_ok(args[0])
+    if kind is None:
         raise Refused(
-            f"program start refused: {shown(args[0])} is not one of git, patch or the scratch tree's .venv/bin/python"
+            f"program start refused: {shown(args[0])} is not the git or patch this run found at start, nor exactly "
+            f"the scratch tree's .venv/bin/python"
         )
     if any("\0" in a for a in args):
         raise Refused("program start refused: an argument holds a NUL character")
@@ -424,6 +516,9 @@ def check_child_call(args, kwargs: dict) -> None:
         raise Refused("program start refused: cwd must be None or an absolute path")
     if "start_new_session" in kwargs and kwargs["start_new_session"] is not True:
         raise Refused("program start refused: start_new_session must be True")
+    shape = {"git": _git_shape_ok, "patch": _patch_shape_ok, "python": _python_shape_ok}[kind]
+    if not shape(args):
+        raise Refused(f"program start refused: the arguments are not one of the {kind} calls this tool makes")
 
 
 class Child(subprocess.Popen):
@@ -938,7 +1033,7 @@ def decode_text(b: bytes, rel: str) -> str:
 
 
 def tool(name: str) -> str:
-    found = shutil.which(name)
+    found = trust_tool(name)  # r13: the first find is remembered; the guard in Child accepts only that file
     if found is None:
         raise Refused(f"required program not found: {name}")
     return found
@@ -1683,6 +1778,7 @@ def restore_from_marker(
             mode_note = (
                 f"; NOTE the marker mode {oct(mode)} had a setuid, setgid or sticky bit: --restore never writes those, the "
                 f"file got {oct(mode & 0o777)} (set the special bit by hand if it was really there)"
+                f"{LIMIT_D_NOTE}"
             )
             mode &= 0o777
         if mode & 0o002:
@@ -1690,7 +1786,7 @@ def restore_from_marker(
             # says; git never gives that bit. The content is still restored; the text says so
             mode_note += (
                 f"; NOTE the marker mode {oct(mode)} was writable by others: --restore never writes that, the file got "
-                f"{oct(mode & ~0o002)}"
+                f"{oct(mode & ~0o002)}{LIMIT_D_NOTE}"
             )
             mode &= ~0o002
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
@@ -1721,6 +1817,12 @@ def restore_from_marker(
         unlink_state(marker)
         unlink_state(bk)
     return ok and settled and control_ok, f"{control}; {text}" if control else text
+
+
+LIMIT_D_NOTE = (
+    " (limit d: a plain --restore still writes the group-write and execute bits a possibly forged marker names; only "
+    "--restore --sha compares the mode with git's own)"
+)
 
 
 def discard_marker(
@@ -1955,7 +2057,7 @@ def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -
                 f"import check: {rel!r} is not a plain .py module path, so the check cannot tell which file the "
                 f"tests import; pass --skip-import-check if that is intended (it is recorded in the raw file)"
             )
-        code = "import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '')"
+        code = IMPORT_PROBE_CODE
         try:
             cp = run_cmd(
                 [str(py), "-c", code, mod], cwd=root, env=test_env(pythonpath), timeout=300
@@ -2046,8 +2148,7 @@ def pytest_cmd(root: pathlib.Path, tests: list[str]) -> list[str]:
         "no:cacheprovider",
         f"--rootdir={root}",
         f"--confcutdir={root}",
-        "--tb=line",
-        "-rfp",
+        *PYTEST_FIXED_TAIL,
         *(
             t for t in tests if t != "-q"
         ),  # the command already says -q: a second -q drops pytest's summary line
@@ -2844,8 +2945,10 @@ def main():
         if why:
             ap.error(f"a test argument is not usable as a path or word: {why}")
     # r12 m2 (class: the total size of what one program start gets): all the words together (each also costs one 8-byte
-    # pointer) stay under TOTAL_ARGS_MAX_BYTES, so the kernel's limit on all arguments plus the environment (E2BIG; it can be
-    # as low as 128 KiB) can never be reached. Before anything is planted; Child() also turns an OSError into a refusal.
+    # pointer) stay under TOTAL_ARGS_MAX_BYTES. REAL BOUND (r13 m4): this keeps the words at most about 60 KB; the kernel's limit
+    # on all arguments PLUS the environment is at least 128 KiB (131072) and the environment is not counted here (PATH is as
+    # long as the caller made it, PYTHONPATH is one more path), so with a very long PATH the limit can still be reached; the
+    # start then fails with E2BIG, which Child() turns into a refusal (exit 2), never a traceback. Before anything is planted.
     total = sum(len(os.fsencode(t)) + 9 for t in tests)
     if total > TOTAL_ARGS_MAX_BYTES:
         ap.error(
@@ -2869,6 +2972,9 @@ def main():
         )
         sys.exit(EXIT_REFUSED)
     a.root = str(root)
+    set_child_root(root)  # r13 M1: the one interpreter a program start may use
+    for _name in CHILD_PROGRAMS:
+        trust_tool(_name)  # r13 M1: remember what is found now; later starts must be that very file
     global ROOT_IDENT
     rst = os.stat(root)
     ROOT_IDENT = (
@@ -2878,6 +2984,11 @@ def main():
     )  # every later open of the root must find this very folder
     if not a.restore and not (a.prefix and a.raw and a.sha):
         ap.error("--sha, --prefix and --raw are required")
+    if a.raw and ".." in a.raw.split("/"):
+        # r13 m2 (class: a path whose `..` is resolved by the operating system only after a folder on the way was created):
+        # a `..` in --raw is refused BEFORE any check or any folder is made
+        print(f"REFUSED: --raw {shown(a.raw)} holds a `..` part: give the folder without it", file=sys.stderr)
+        sys.exit(EXIT_REFUSED)
     # r10 m4 (class: a window between installing the handlers and the `try` that maps a signal to an exit code): the handled
     # signals are BLOCKED while the handlers are installed and the temporary folder is made, and unblocked inside the `try`,
     # so a signal there is held and then handled like any other (128+N, folder removed), never an uncaught KeyboardInterrupt

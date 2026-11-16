@@ -1,0 +1,66 @@
+M01	count	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: section 0 says the row count of the table; source-copy statement: the report says the rows were checked against the scr
+M02	count	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-numbers: every row count in the start box (all 96, ready 49, default 38, check 3, owner 6, wave 1 87) equals the reco
+M03	count	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-numbers: every row count in the start box (all 96, ready 49, default 38, check 3, owner 6, wave 1 87) equals the reco
+M04	count	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-numbers: every row count in the start box (all 96, ready 49, default 38, check 3, owner 6, wave 1 87) equals the reco
+M05	count	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-numbers: every row count in the start box (all 96, ready 49, default 38, check 3, owner 6, wave 1 87) equals the reco
+M06	count	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (38 default-only, 87 wave
+M07	count	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2381 words now) and states its own real count; E-count: the sta
+M08	count	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2381 words now) and states its own real count; E-count: the sta
+M09	count	CAUGHT	1 f=4	SUMMARY: 221 checks, 4 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2531 words now) and states its own real count; E-count: the sta
+M10	count	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2365 words now) and states its own real count; E-count: the sta
+M11	count	CAUGHT	1 f=7	SUMMARY: 221 checks, 7 FAILED: recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68
+M12	count	CAUGHT	1 f=11	SUMMARY: 221 checks, 11 FAILED: ids are exactly 1..N, no duplicate; recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting ro
+M13	count	CAUGHT	1 f=12	SUMMARY: 221 checks, 12 FAILED: ids are exactly 1..N, no duplicate; C-1b all rows apply in table order on copies, no mismatch; recount: ready + defaul
+M14	count	CAUGHT	1 f=4	SUMMARY: 221 checks, 4 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2377 words now) and states its own real count; source-copy stat
+M15	count	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+M16	count	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 40 s); c6u TIE
+M17	count	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-cardwords: every '(N words)' printed after a card line equals the real count of the quoted line ([11, 35, 22, 22]), a
+M18	count	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 40 s); c6u TIE
+M19	count	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+D01	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+D02	default-rev	NOT-APPLIED		
+D03	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+D04	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+D05	default-rev	CAUGHT	1 f=4	SUMMARY: 221 checks, 4 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2376 words now) and states its own real count; E-count: the sta
+D06	default-rev	CAUGHT	1 f=4	SUMMARY: 221 checks, 4 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2379 words now) and states its own real count; E-count: the sta
+D07	default-rev	CAUGHT	1 f=5	SUMMARY: 221 checks, 5 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2378 words now) and states its own real count; E-count: the sta
+D08	default-rev	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2384 words now) and states its own real count; E-count: the sta
+D09	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+D10	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+D11	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+D12	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+D13	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+D14	default-rev	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2379 words now) and states its own real count; E-count: the sta
+D15	default-rev	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2382 words now) and states its own real count; E-count: the sta
+D16	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+D17	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or r
+D18	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+D19	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+D20	default-rev	CAUGHT	1 f=11	SUMMARY: 221 checks, 11 FAILED: ids are exactly 1..N, no duplicate; recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting ro
+S01	delete	CAUGHT	1 f=4	SUMMARY: 221 checks, 4 FAILED: every word the box defines is defined in the word list and first used before that only inside the WHAT TO TYPE block, w
+S02	delete	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2372 words now) and states its own real count; E-count: the sta
+S03	delete	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+S04	delete	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+T01	time	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs); IST given with the money stop; E-keyend: the paid key is cance
+T02	time	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs); the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in
+T03	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs); the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in
+T04	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: every weekday written with a date is the true weekday (22 pairs; year 2026 unless written; no pair outside old-text quo
+T05	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: every weekday written with a date is the true weekday (22 pairs; year 2026 unless written; no pair outside old-text quo
+T06	time	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: every weekday written with a date is the true weekday (22 pairs; year 2026 unless written; no pair outside old-text quo
+T07	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: box has one answer line with seconds, three free names, the exception form and L-SHEET apart; every '00:10:00' example 
+T08	time	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs)
+T09	time	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: every weekday written with a date is the true weekday (22 pairs; year 2026 unless written; no pair outside old-text quo
+T10	time	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs)
+T11	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs); E-keyend: the paid key is cancelled by 18:19 UTC = 23:49 IST a
+V01	status	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: every line that names plan line 1051 says it is UNVERIFIED; row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a
+V02	status	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+V03	status	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+V04	status	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+V05	status	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+V06	status	NOT-APPLIED		
+X01	shape	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: no secret-like or e-mail string in report
+X02	shape	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: no secret-like or e-mail string in report; E-secret: no key-shaped string (sk-ant-style with hyphens, ghp_, xox, pat-, 
+X03	shape	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: no secret-like or e-mail string in report; E-secret: no key-shaped string (sk-ant-style with hyphens, ghp_, xox, pat-, 
+X04	shape	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: no secret-like or e-mail string in report; E-secret: no key-shaped string (sk-ant-style with hyphens, ghp_, xox, pat-, 
+X05	shape	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+X06	shape	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: no secret-like or e-mail string in report

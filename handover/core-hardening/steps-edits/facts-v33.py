@@ -67,3 +67,15 @@ HELPER_SCOPE = "the keys named on the helper's paper (at most three: the run key
 F.update({'last_day': LAST_DAY.strftime('%a %d %b %Y'), 'a_cut': A_CUT.strftime('%a %d %b %Y ') + pair(A_CUT), 'hw': str(HW), 'hcb': pair(HCB), 'hok': pair(HOK),
           'bt_end': pair(BT_END), 'helper_scope': HELPER_SCOPE})
 for k, v in PH.items(): F['ph_' + k] = v
+
+# ---- v33 additions (round 5)
+BM_CHAIN = BM + dt.timedelta(minutes=2 + 10 + 10)                              # a failed cancel started at the Mon 23 Nov reminder, ordinary waiting chain
+assert BM_CHAIN > DEADLINE and BM_CHAIN == dt.datetime(2026, 11, 23, 18, 31)
+RV22 = dt.datetime(2026, 11, 22, 18, 19)                                       # the same backstop clock time on Sun 22 Nov (the helper's Sunday time)
+SUN_CB = BS - dt.timedelta(minutes=10)                                         # on Sun 22 Nov the cancel-by time must be at least 10 minutes before the Sunday reminder
+SUN_LS = SUN_CB - dt.timedelta(minutes=Y + RL + FP + MG)                        # so the latest start on a Sunday is at most this
+ENTER = LS - dt.timedelta(minutes=5)                                           # latest time to press Enter on the start line
+MARGIN_END = ENTER + dt.timedelta(minutes=Y + RL + FP)                         # sample: when the longest planned path ends
+assert MARGIN_END < LF and (LF - MARGIN_END) == dt.timedelta(minutes=5)
+F.update({'bm_chain': 'Mon 23 Nov 2026 ' + pair(BM_CHAIN), 'rv22': 'Sun 22 Nov 2026 ' + pair(RV22), 'sun_cb': 'Sun 22 Nov 2026 ' + pair(SUN_CB), 'sun_ls': 'Sun 22 Nov 2026 ' + pair(SUN_LS),
+          'enter': pair(ENTER), 'margin_end': pair(MARGIN_END), 'sum_all': str(Y + RL + FP + MG)})
