@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:52:04Z
-PUSHED_UTC: 2026-11-16T14:52:04Z
+UPDATED_UTC: 2026-11-16T14:52:26Z
+PUSHED_UTC: 2026-11-16T14:52:26Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:04Z)
+AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:26Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1567. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1571. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,15 +43,14 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:52:04Z | PUSHED_UTC: 2026-11-16T14:52:04Z
+UPDATED_UTC: 2026-11-16T14:52:26Z | PUSHED_UTC: 2026-11-16T14:52:26Z
 | id | purpose | started | state |
 |---|---|---|---|
-| a24b12d73aa0176b8 | cold read work/critical-path-r1.md | 14:58Z | running |
-| aeab82065f7568738, a1816f11bef47c849, a746313f96e0306c5 | cold reads L1, L4, L5a lines 1-60 (id-to-page order not recorded) | 15:01Z | running |
-| (ids in session list) x4 | cold reads: decision-list 60-130, L6 60-130, merged-findings 60-130, L5b bottom 380-460 | 14:52Z | running |
-(closed and digested 1564-1567: a7289778f46c62ec5, a80291033e6315e85, a0fe429994cc6934d, a0f038c38478af5e6)
+| a56f116fdc36c570c, a932d53f3ffa87fca, ad4d302fe3212bd07, acbdbff558db34a73 | cold reads: decision-list 60-130, L6 60-130, merged-findings 60-130, L5b 380-460 (id-to-page order not recorded) | 15:05Z | running |
+| (ids in session list) x4 | cold reads: L3 1-60, L2 30-100, L5ac 40-120, L1c 60-140 | 14:52Z | running |
+(closed and digested 1568-1571: a24b12d73aa0176b8, a746313f96e0306c5, a1816f11bef47c849, aeab82065f7568738)
 CAPACITY: 8 of 8. No missing slots.
-NEXT 5: fix M17 (1548); fix not-checked-r2 (1551); fix t19-terms line 2 (1552); fix LEAD-NOTICE reply formats (1550); fix decision-list rows (1562).
+NEXT 5: fix critical-path-r1 passed slots and wake time (1568); fix M17 (1548); fix not-checked-r2 (1551); fix t19-terms line 2 (1552); fix LEAD-NOTICE reply formats (1550).
 
 
 ## Details (long text moved from the FAILED line)
