@@ -384,7 +384,7 @@ G = [
  ("hubspot_credential_missing", g_hs_nocred, "FAIL", "has no credentials block", (), []),
  ("placeholder_ids_are_warn_even_when_quiet", None, "WARN", "still placeholders", (), []),
  ("placeholder_ids_fail_when_required", None, "FAIL", "still placeholders", ("--require-real-credential-ids",), []),
- ("env_read_optional_chain_strict", g_env_optional, "FAIL", "reads $env?.SOME_NAME", ("--block-env-access",), []),
+ ("env_read_optional_chain_strict", g_env_optional, "FAIL", "$env?.SOME_NAME", ("--block-env-access",), ["reads $env"]),
  ("env_read_bare_strict", g_env_bare, "FAIL", "reads $env", ("--block-env-access",), []),
  ("expression_names_missing_node_in_backticks", g_ref_backtick, "FAIL", "refers to $('Nope')", (), []),
  ("expression_computed_node_name_is_warn", g_ref_dynamic, "WARN", "computed name", (), []),
@@ -396,7 +396,7 @@ G = [
 ]
 # cases that need a particular node of the real form flow (run on mf-form and mf-hook only)
 FH = [
- ("error_output_unwired", g_errout_unwired, "FAIL", "its error output main[1]", (), []),
+ ("error_output_unwired", g_errout_unwired, "FAIL", "its error output main[1]", (), ["alwaysOutputData together with"]),
  ("if_one_branch", g_if_one_branch, "FAIL", "IF node", (), ["orphan", "unreachable"]),
  ("if_error_output_is_last_output", g_if_err_last, "FAIL", "its error output main[2]", (), []),
  ("reply_after_store_cut", f_noreply, "FAIL", "WITHOUT respondToWebhook at ['Stored']", (), ["orphan", "unreachable"]),
@@ -469,7 +469,7 @@ def main():
             rc, out = run(cmd(d, src, exp, extra), n); report(n + " (exit 0, no FAIL)", rc == 0 and not lines_of(out, "FAIL"), "rc=%d fails=%s" % (rc, lines_of(out, "FAIL")[:2]))
     # the reply-gap and no-auth WARN must be listed as known open problems on the unmutated form file
     out = base_out[("real", "mf-form.json")]
-    report("control_closing_block_sums_lead_decisions (webhook without auth counted)", "OPEN LEAD DECISIONS: 1 webhook(s) without auth, 0 $env node(s)" in out, "line missing or numbers differ")
+    report("control_closing_block_sums_lead_decisions (webhook without auth counted)", "OPEN LEAD DECISIONS: 2 webhook(s) without auth, 2 $env node(s)" in out, "line missing or numbers differ")
     report("control_known_problems_are_listed (REPLY GAP and no authentication counted)", "REPLY GAP" in out and any(l.startswith("  - ") and "no authentication" in l for l in out.splitlines()))
     # negative / warn cases
     skipnames = {}

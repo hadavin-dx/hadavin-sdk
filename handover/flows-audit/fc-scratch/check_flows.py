@@ -40,7 +40,7 @@ FILES_DEFAULT = ["mf-form.json", "mf-hook.json", "mf-recovery.json", "mf-sub-crm
 TRIGGER_EXACT = {"n8n-nodes-base.webhook", "n8n-nodes-base.executeWorkflowTrigger", "n8n-nodes-base.formTrigger", "n8n-nodes-base.cron"}
 PLACEHOLDERS = ["PLACEHOLDER", "PG_CREDENTIAL_ID", "SMTP_CREDENTIAL_ID", "SUB_WORKFLOW_ID", "HS_CRED", "HUBSPOT_CREDENTIAL_ID"]
 REF = re.compile(r"""\$\(\s*['"`]([^'"`]+)['"`]\s*\)|\$node\[\s*['"`]([^'"`]+)['"`]\s*\]|\$items\(\s*['"`]([^'"`]+)['"`]|\$node\.([A-Za-z_][A-Za-z0-9_]*)""")
-DYNREF = re.compile(r"""\$\(\s*(?!['"`])[^)\s]|\$node\[\s*(?!['"`])[^\]\s]""")  # a node name that is not one plain quoted text: cannot be checked statically
+DYNREF = re.compile(r"""\$\(\s*(?:['"`][^'"`]*['"`]\s*)?[^'"`)\s]|\$node\[\s*(?:['"`][^'"`]*['"`]\s*)?[^'"`\]\s]""")  # a node name that is not one plain quoted text: cannot be checked statically
 PREV = re.compile(r"\$prevNode\b")
 STICKY = "n8n-nodes-base.stickyNote"
 KEY_COND = "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}"
@@ -271,7 +271,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             if not isinstance(wb, int) or isinstance(wb, bool) or not 0 <= wb <= 5000: warn(tag, "node %s waitBetweenTries=%r (0 to 5000 ms is the n8n screen limit, not a proven import rule; %s)" % (nm, wb, UNV))
         elif "maxTries" in n or "waitBetweenTries" in n: warn(tag, "node %s sets maxTries/waitBetweenTries but retryOnFail is not true (ignored by n8n)" % nm)
         if "alwaysOutputData" in n and not isinstance(n["alwaysOutputData"], bool): fail(tag, "node %s alwaysOutputData=%r is not a boolean" % (nm, n["alwaysOutputData"]))
-        if n.get("alwaysOutputData") and n.get("onError") == "continueErrorOutput": fail(tag, "node %s has alwaysOutputData together with continueErrorOutput: a failure may then go down the normal output as an empty result instead of the failure output (work order 017 F8: failures must reach the FAILED line; what n8n really does is NOT proven until test T19)" % nm)
+        if n.get("alwaysOutputData") is True and n.get("onError") == "continueErrorOutput": fail(tag, "node %s has alwaysOutputData together with continueErrorOutput: a failure may then go down the normal output as an empty result instead of the failure output (work order 017 F8: failures must reach the FAILED line; what n8n really does is NOT proven until test T19)" % nm)
         if n.get("onError") == "continueRegularOutput" and short in EXTERNAL: silent.append(nm)
         if short in EXTERNAL and not n.get("retryOnFail"): noretry.append(nm)
         if n.get("disabled") is True: warn(tag, "node %s is disabled (n8n passes data through it; it sends and writes nothing)" % nm)
@@ -300,8 +300,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             isw = n["type"] == "n8n-nodes-base.webhook"; what = "webhook" if isw else "form trigger"; table = WEBHOOK_AUTH if isw else FORM_AUTH
             au = (n.get("parameters") or {}).get("authentication", "none")
             if au in ("none", None, ""):
-                msg = "%s %s has no authentication (anyone who knows the address can %s)" % (what, nm, "post" if isw else "submit")
-                if not isw: msg += "; the n8n parameter name is itself %s" % UNV
+                msg = "webhook %s has no authentication (anyone who knows the address can post)" % nm if isw else "form trigger %s has no authentication setting (anyone who knows the form address can submit; the n8n parameter name is itself %s)" % (nm, UNV)
                 LEAD["webhook"] += 1
                 if OPTS["webhook_auth"]: fail(tag, msg)
                 else: lead(tag, msg + " [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]")
