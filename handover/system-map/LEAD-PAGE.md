@@ -2,7 +2,7 @@
 For the studio lead only. Moved out of OWNER-VIEW.md on 2026-11-16 (ORDER 017); sections 1 and 2 were rewritten the same day. The owner steps are v5 (inputs/OWNER-STEPS-realrun-v5-core-hardening.md); v3 is archived, not deleted. Everything here is for the lead: accounts, keys, Docker, engineering status, drift items.
 
 ## Next action
-START WITH TAKE-BLOCKERS.md row 1: name a builder and a date to extend `fill_flows.py` to the PATCHED real-v5 copy (fill DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO). Row 2 (rehearsals, studio lead) and row 3 (four security text edits) run in parallel. Then row 4 (take date), row 5 (apply decisions/M17-end-never-deletes.md, then the HubSpot lines). Live status: STATUS-BOARD.md.
+START WITH TAKE-BLOCKERS.md row 1: name a builder and a date to extend `fill_flows.py` to the PATCHED real-v5 copy (fill DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO). Row 3 (four security text edits) and run (a) of row 2 (the stand-in rehearsal, studio lead) run beside row 1; run (b) of row 2 waits for row 1. Then row 4 (take date), row 5 (apply decisions/M17-end-never-deletes.md, then the HubSpot lines). Live status: STATUS-BOARD.md.
 
 Written Mon 16 Nov 2026, about 09:15 UTC / 14:45 IST, by the system-map session from the other sessions' files; updated 2026-11-16T10:20:53Z. Made-up data only. A number or claim taken from another file shows its source as file:line or section.
 
@@ -22,12 +22,13 @@ The old rows 16 to 23 here were written from the stale v3 steps file and contrad
 | owner task | where it is now |
 |---|---|
 | written yes with numbers (v5 step A) | OWNER-VIEW.md row 1 (six items: calls, worst case per call, 3 times that, money spent so far, backstop and stop time as in `stage.env`, rehearsal passed with its result file) |
-| laptop settings (v5 B); label, profile (v5 C) | OWNER-RUN-DAY-CARD.md steps 1 to 4; restore at OWNER-CLEANUP-CARD.md step 7. The n8n sign-in is no longer an owner step (decision 7): first-visit setup is done (inputs/FACTS-ALREADY-DONE.md); the lead imports and activates the flows with scripts\n8n_api.py. |
-| the run, the pause, `end`, failed run (v5 E, F, G) | OWNER-RUN-DAY-CARD.md steps 6 to 17 (run exit codes: 0 pass, 1 wrong answer, 2 refused to start or go on, 3 count or verdict failed; v5 lines 188 to 192) |
-| watch the cut (v5 H) | OWNER-RUN-DAY-CARD.md step 18 |
+| laptop settings (v5 B): OWNER-VIEW.md row 2; label, profile (v5 C) | OWNER-RUN-DAY-CARD.md steps 1 to 4; restore at OWNER-CLEANUP-CARD.md step 7. The n8n sign-in is no longer an owner step (decision 7): first-visit setup is done (inputs/FACTS-ALREADY-DONE.md); the lead imports and activates the flows with scripts\n8n_api.py. |
+| the run, the pause, `end`, failed run (v5 E, F, G) | OWNER-RUN-DAY-CARD.md steps 8 to 22 (run exit codes: 0 pass, 1 wrong answer, 2 refused to start or go on, 3 count or verdict failed; v5 lines 188 to 192) |
+| watch the cut (v5 H) | OWNER-RUN-DAY-CARD.md step 27 (OWNER-VIEW.md row 4) |
+| after the run: delete demo mails, "accepted", model key (v5 I) | OWNER-RUN-DAY-CARD.md steps 23 to 28; then OWNER-CLEANUP-CARD.md |
 | clean-up (v5 I); the deadline is the lead's own and is NOT the stop time | OWNER-CLEANUP-CARD.md and its release words |
 | post (v5 J): the full must-NOT list and the rule that the lead's exact final words and a second checker come first | OWNER-VIEW.md row 6 |
-| latest start | Mon 23 Nov before 18:14:40 UTC / 23:44:40 IST (v5 rounds it to about 18:15 / 23:45) (stop time 18:29 UTC / 23:59 IST) |
+| latest start | Mon 23 Nov before 18:14:40 UTC / 23:44:40 IST (v5 rounds it to about 18:15 / 23:45) (stop time 18:29 UTC / 23:59 IST). Use 18:14:40; never 18:15. |
 "Spending backstop" = a dollar limit in the settings file `stage.env`; the program does NOT enforce it and a person checks it (v5 line 52). Any US$ figure for an in-code backstop in older notes is unsourced and not to be used.
 
 ## 3. Decisions only you can make
