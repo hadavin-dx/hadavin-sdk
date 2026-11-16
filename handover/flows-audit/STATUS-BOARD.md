@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:58:37Z
+UPDATED_UTC: 2026-11-16T10:58:42Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 3
 PERCENT: 92
 AGENTS_RUNNING: 5
-CAPACITY: 2.57 load of 4 cores, mem 0/15 GB, RAM 890/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 732M /tmp/claude-0 , agents 5 (light+heavy per list)
+CAPACITY: 2.61 load of 4 cores, mem 0/15 GB, RAM 951/16087 MB, disk 28G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 733M /tmp/claude-0 , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -48,7 +48,7 @@ claims pointers done (checker PASS 157 rows, counter 327); 15 wording conflicts 
 F8 r6 evidence (10:50 version, files changed since): take_check printed 'key check present' with KeyOk node removed (text match), mutant M5 survives, saving 'all' gave no WARN line; forwarded to the Q18 fixer; re-run evidence after it
 Q19 and Q20 answered 11:20Z: fixers launched; the lead asked for stranger read of OWNER-STEPS v4 and claims sweep when F3/F8 finish (both already done once on v3 and CT; will rerun on the new files)
 NEXT: Q18/Q19/Q20 fixers; F3 last fix + r7 evidence
-PUSHED_UTC: 2026-11-16T10:58:37Z
+PUSHED_UTC: 2026-11-16T10:58:42Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
