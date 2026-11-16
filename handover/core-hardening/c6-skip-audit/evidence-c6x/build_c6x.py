@@ -258,7 +258,7 @@ def run_statement():
     n = max(n, 1)
     s1 = open(p, encoding="utf-8").read().strip() if (n >= 2 and os.path.exists(p)) else ("this is run 1; its own exit lines are in run-log-exits.txt, written after this report" if n == 1 else "run 1 summary missing")
     ordn = {1: "first", 2: "second"}.get(n, str(n))
-    return ("I ran the full pipeline run_all.sh %d time(s) (cap 2; the negative controls go through heavy-slot.sh). STATEMENT OF EACH RUN (written by hand from the exit lines; a run that did not end clean is called so here): " % n) + s1 + " The latest run is the one that built this file; its result is the last lines of verify-c6x-output.txt and neg-output.txt in evidence-c6x/ and is quoted in c6x-CHANGES.md. WHICH BUILD WROTE THIS REPORT: evidence-c6x/build_c6x.py, in the %s run; the output files of that run are written after REPORT-c6x.md (order-check-output.txt lists both modification times; a reviewer checks that each output file is not older than the report)." % ordn
+    return ("I ran the full pipeline run_all.sh %d time(s) (cap 2; heavy-slot order). STATEMENT OF EACH RUN (written by hand from the exit lines; a run that did not end clean is called so here): " % n) + s1 + " The latest run is the one that built this file; its result is the last lines of verify-c6x-output.txt and neg-output.txt in evidence-c6x/ and is quoted in c6x-CHANGES.md. WHICH BUILD WROTE THIS REPORT: evidence-c6x/build_c6x.py, in the %s run; the output files of that run are written after REPORT-c6x.md (order-check-output.txt lists both modification times; a reviewer checks that each output file is not older than the report)." % ordn
 
 
 def main():

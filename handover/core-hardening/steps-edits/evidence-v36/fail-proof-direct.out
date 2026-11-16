@@ -1,0 +1,30 @@
+checks in Part 9: 67 (C228 to C297)
+fail on built v35: 24
+  v35 fails C230 (3 line(s)); first: helper page lacks 'do nothing more: look for no other login, role or step'
+  v35 fails C238 (24 line(s)); first: heading not in the verified list: OWNER-SHEET-vNN-A.md|# Owner sheet v35, sheet A: one filmed run
+  v35 fails C239 (38 line(s)); first: fact-use row differs from the verified list: LEAD-RELEASE-NOTE-v20-SOURCE.md|a_cut|1
+  v35 fails C246 (2 line(s)); first: A lacks "the helper path ends at the owner's last-resort step"
+  v35 fails C248 (2 line(s)); first: NOTE does not list the helper page
+  v35 fails C249 (1 line(s)); first: the helper page lacks 'look for no other login, role or step'
+  v35 fails C267 (7 line(s)); first: helper page or source lacks 'do nothing more: look for no other login, role or step'
+  v35 fails C281 (5 line(s)); first: A lacks 'Your cancel helper has phoned that the cancel button word and the cancelled word' (S1 gate 
+  v35 fails C282 (8 line(s)); first: A lacks '**Rule:** the role may do one thing, cancel keys.' (S2 permission rule)
+  v35 fails C283 (5 line(s)); first: A lacks 'phone alarms with sound that repeat every 5 minutes, with Do-not-disturb OFF and' (S3 alarm
+  v35 fails C284 (1 line(s)); first: open row 133 (7.11 cancels whatever the use) is missing
+  v35 fails C285 (2 line(s)); first: A lacks 'its time for alarm 5 is Sun 22 Nov 2026 18:19 UTC = 23:49 IST, for alarm 6 18:19' (m1 two b
+  v35 fails C286 (2 line(s)); first: A lacks 'with an earliest key time of 10:30 UTC = 16:00 IST as in the sample, sheet A fit' (m2 sampl
+  v35 fails C287 (4 line(s)); first: A lacks 'or after 7.11 when the run ends without section 8' (m3 and M11 every end reaches the remova
+  v35 fails C288 (1 line(s)); first: the lead note secrets table does not say that only an app made for this run is revoked
+  v35 fails C289 (1 line(s)); first: open row 117 does not say when Recall is checked
+  v35 fails C290 (2 line(s)); first: film page lacks 'its microphone and sound must be OFF' (m6 film page 3(a))
+  v35 fails C291 (2 line(s)); first: sheet A: the first use of "Enter-by" is not followed by what it is
+  v35 fails C292 (2 line(s)); first: A lacks '(exactly that many minutes is still in time)' (M3 inclusive minutes)
+  v35 fails C293 (2 line(s)); first: card A has a paragraph of 488 words (limit 350)
+  v35 fails C294 (2 line(s)); first: page A names an Open row label (the owner cannot see the Open list)
+  v35 fails C295 (6 line(s)); first: A lacks 'no run is planned on Mon 23 Nov' (M7, M8 Sunday wording)
+  v35 fails C296 (6 line(s)); first: A lacks 'Your numbers checks (1 to 8)' (M9, M12, M14)
+  v35 fails C297 (7 line(s)); first: open list row 132 (a lead decision) is missing or lacks 'missing input'
+do NOT fail on built v35 (cannot prove a change; reason in v36-CHANGES.md): ['C228', 'C229', 'C231', 'C232', 'C233', 'C234', 'C235', 'C236', 'C237', 'C240', 'C241', 'C242', 'C243', 'C244', 'C245', 'C247', 'C250', 'C251', 'C255', 'C256', 'C257', 'C258', 'C259', 'C260', 'C261', 'C262', 'C263', 'C264', 'C265', 'C266', 'C268', 'C269', 'C270', 'C271', 'C272', 'C273', 'C274', 'C275', 'C276', 'C277', 'C278', 'C279', 'C280']
+fail on built v36: none
+v36-fail-proof: 0 problem(s)
+rc=0

@@ -1,0 +1,18 @@
+baseline FAIL lines: v35 0, v36 0 (v36 baseline counts only what is not yet written when this runs)
+X03  v35 checker: caught (6 new FAIL line(s))        v36 checker: caught (6 new FAIL line(s))
+X07  v35 checker: caught (9 new FAIL line(s))        v36 checker: caught (9 new FAIL line(s))
+X08  v35 checker: caught (3 new FAIL line(s))        v36 checker: caught (3 new FAIL line(s))
+X10  v35 checker: caught (5 new FAIL line(s))        v36 checker: caught (5 new FAIL line(s))
+H04  v35 checker: caught (9 new FAIL line(s))        v36 checker: caught (9 new FAIL line(s))
+H05  v35 checker: caught (2 new FAIL line(s))        v36 checker: anchor absent
+H07  v35 checker: caught (1 new FAIL line(s))        v36 checker: caught (1 new FAIL line(s))
+H14  v35 checker: caught (2 new FAIL line(s))        v36 checker: caught (2 new FAIL line(s))
+H17  v35 checker: caught (1 new FAIL line(s))        v36 checker: caught (1 new FAIL line(s))
+H18  v35 checker: caught (2 new FAIL line(s))        v36 checker: caught (4 new FAIL line(s))
+H19  v35 checker: caught (2 new FAIL line(s))        v36 checker: caught (2 new FAIL line(s))
+H20  v35 checker: caught (4 new FAIL line(s))        v36 checker: caught (4 new FAIL line(s))
+H23  v35 checker: caught (4 new FAIL line(s))        v36 checker: caught (4 new FAIL line(s))
+H35  v35 checker: anchor absent                      v36 checker: caught (1 new FAIL line(s))
+H38  v35 checker: caught (2 new FAIL line(s))        v36 checker: anchor absent
+v35 checker misses 0 of 15; v36 checker misses 2 of 15
+rc=0

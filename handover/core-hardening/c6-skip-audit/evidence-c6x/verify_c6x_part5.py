@@ -63,6 +63,7 @@ check("C8-9 the first lines of the report say what failed, what is uncertain and
 _here = os.path.dirname(os.path.abspath(R))
 _ok10 = True
 _det = []
+_ok10row = len(rows) == 104 and "## 5. EDIT TABLE" in raw and "## 8. Coverage:" in raw
 if INCLUDED:
     _ok10 = sorted(INCLUDED) == ["REPORT-c6x-COVERAGE.md", "REPORT-c6x-TABLE.md"]
     for _f in INCLUDED:
@@ -70,7 +71,7 @@ if INCLUDED:
         _det.append((_f, _sz))
         _ok10 = _ok10 and _sz < 200000
     _ok10 = _ok10 and os.path.getsize(R) < 200000 and len(rows) == 104 and "## 5. EDIT TABLE" in raw and "## 8. Coverage:" in raw
-check("C8-10 the report is split into the main file and two appendix files, each under 200,000 bytes, the assembled text holds all 104 rows (%s)" % _det, _ok10 if INCLUDED else True, _det)
+check("C8-10 the assembled text holds all 104 rows and the two appendix sections; when it is read from the split files, each file is under 200,000 bytes (%s)" % _det, _ok10row and (_ok10 if INCLUDED else True), (_ok10row, _det))
 # C8-11 (design M4): the late files are compared by script; the report says what the script finds
 _late = sorted(glob.glob(os.environ.get("C6V_STEPS_LIVE", "/nonexistent") + "/*.md"))
 _cmp = []
@@ -101,3 +102,5 @@ check("C8-14 no text calls a version 'the newest at the check time' (the newest 
 _cn = {p: raw.count(p) for p in ("90 words", "about 36 s", "budget 40 s", "87 words", "34.8 s", "79 words", "31.6 s", "76 words", "30.4 s", "74 words", "29.6 s", "lease wording approved")}
 _cw = json.load(open(_E + "/census-c6x.json")) if os.path.exists(_E + "/census-c6x.json") else {}
 check("C8-15 the census holds the count of every copy of each card number and of 'lease wording approved' (%s)" % _cn, all(_cw.get(p) == n and n >= 1 for p, n in _cn.items()) if _cw else False, {p: (_cw.get(p), n) for p, n in _cn.items() if _cw.get(p) != n})
+# C8-16 (the miss R1-M-A of the independent run on c6w): row 8 (the contact-deletion gate) keeps the G12 line and the re-smoke results in its NEW text cell
+check("C8-16 row 8 (the gate for the contact-deletion check) names G12 and the table rule seen in the re-smoke database in its new text cell", "G12" in bylead[8]["new"] and "the table rule seen in the re-smoke database" in bylead[8]["new"], "")

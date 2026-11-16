@@ -44,7 +44,7 @@ M["W-wave1-95-to-96-one-place"] = _nth("95 wave 1 rows", "96 wave 1 rows", 0)
 M["W-ready-57-to-56-one-place"] = _nth("57 ready", "56 ready", 0)
 M["W-rows-104-to-105-one-place"] = _nth("104 rows", "105 rows", 0)
 M["W-sheet-version-v33-to-v32-one-place"] = _nth("holds OWNER-SHEET-v"+re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1), "holds OWNER-SHEET-v0"+re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1), 0)
-M["W-check-time-one-second-off"] = _nth("At 18:29:49 UTC", "At 18:29:50 UTC", 0) if "At 18:29:49 UTC" in rep else _nth("check time", "check time (changed)", 0)
+M["W-check-time-one-second-off"] = _nth(_ctn, _ctn[:-3] + "%02dZ" % ((int(_ctn[-3:-1]) + 1) % 60), 0)
 # card line 3 (retention): edit ONE copy
 _q3 = "The made-up name and e-mail address sent to n8n may stay in n8n's own database; we did not measure for how long."
 M["W-card-line-3-one-copy-edited"] = _nth(_q3, _q3.replace("we did not measure for how long", "it is deleted at once"), 1)
@@ -98,7 +98,7 @@ M["W-C7-row96-back-to-35s"] = mut_row(rep, 96, "new", lambda x: x.replace("40 s 
 M["W-C7-undefined-L-label"] = _nth("L-CARDLEASE", "L-CARDNOPE", 0)
 M["W-C7-before-rehearsal-list-5-to-9"] = _nth("TASKS (1) to (6) and (8) to (10)", "TASKS (1) to (6) and (8) to (9)", 1)
 M["W-C7-v30A-example"] = _nth("v34 rendering A", "v30A", 0)
-M["W-C7-stale-label-c6u-this-file"] = _nth("c6x (this file) supersedes c6v", "c6u (this file) supersedes c6t", 0)
+M["W-C7-stale-label-c6u-this-file"] = rep.replace("# REPORT-c6x:", "# REPORT-c6x: c6u (this file)", 1)
 M["W-C7-sheet-A-wording"] = _nth("the A file and the B file of one checklist", "sheet A and sheet B of one checklist", 0)
 M["W-C7-further-round-paragraph-deleted"] = _nth("EVERY ANSWER OTHER THAN THE DEFAULT NEEDS A FURTHER ROUND", "ANSWERS", 0)
 M["W-C7-branch-statement-90-to-91"] = _nth("it holds the files of 90 rows", "it holds the files of 91 rows", 0)
@@ -128,13 +128,15 @@ for _a, _b, _tag in (("90 words", "91 words", "card-words-90"), ("about 36 s", "
         INTENT[_k] = "class 1:"
 M["X-row19-G12-hold-removed-in-new-cell"] = mut_row(rep, 19, "new", lambda s_: s_.replace("allowed only after G12 is approved", "allowed"))
 INTENT["X-row19-G12-hold-removed-in-new-cell"] = "D-M2"
+M.pop("W-C7-row19-G12-hold-removed", None)
+INTENT["R1-M-A-gate-removed-row8"] = "C8-16"
 M["X-C8-1-box-no-reviewer-sentence"] = _inbox("NO REVIEWER HAS READ THIS REPORT", "THE REVIEWERS HAVE READ THIS REPORT"); INTENT["X-C8-1-box-no-reviewer-sentence"] = "C8-1"
 M["X-C8-2-box-76-to-75"] = _inbox("76 words", "75 words"); INTENT["X-C8-2-box-76-to-75"] = "C8-2"
 M["X-C8-4-box-closed-form-deleted"] = _inbox("closed: line 33 of release note v14 is my approval`", "closed`"); INTENT["X-C8-4-box-closed-form-deleted"] = "C8-4"
 M["X-C8-5-box-keyline-label"] = _inbox("| L-KEYLINE |", "| L-KEYLINX |"); INTENT["X-C8-5-box-keyline-label"] = "C8-5"
 M["X-C8-7-box-names-sentence"] = _inbox("NAMES YOU CHOOSE", "NAMES"); INTENT["X-C8-7-box-names-sentence"] = "C8-7"
 M["X-C8-8-eleven-to-ten"] = _nth("ELEVEN GATE ROWS", "TEN GATE ROWS", 0); INTENT["X-C8-8-eleven-to-ten"] = "C8-8"
-M["X-C8-14-newest-at-check-time"] = _nth("The newest version before the freeze", "The newest at the check time", 0); INTENT["X-C8-14-newest-at-check-time"] = "C8-14"
+M["X-C8-14-newest-at-check-time"] = _nth("The newest version before the freeze", "the newest at the check time", 0); INTENT["X-C8-14-newest-at-check-time"] = "C8-14"
 M["X-C8-11-different-to-equal"] = _nth(" IST; DIFFERENT from", " IST; equal to", 0); INTENT["X-C8-11-different-to-equal"] = "C8-11"
 _i50 = rep.index("\n| 50 | NOT APPLIED")
 M["X-C8-10-row50-deleted"] = rep[:_i50] + rep[rep.index("\n", _i50 + 1):]; INTENT["X-C8-10-row50-deleted"] = "C8-10"

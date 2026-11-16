@@ -18,7 +18,7 @@ _lwa = [n for n, l in enumerate(txt, 1) if "lease wording approved" in l and not
 check("N-B2: ONE G12 form: it is printed once in the box, every other copy is equal to it, the typed line comes only after the three loopback re-smoke results, and 'lease wording approved' is gone outside quoted history (%d copies, %s other lines)" % (len(_g12), _lwa), len(re.findall(r"`## G12 \(studio lead, <UTC> = <IST>\): approved: [^`]*`", boxs)) == 1 and len(set(_g12)) == 1 and "only after the loopback re-smoke of TASK (5)" in boxs and "the table rule seen in the re-smoke database" in sec1c and "a crash followed by a repeat while the recovery flow is working" in sec1c and not _lwa, (len(_g12), len(set(_g12))))
 # D-M2: every row with the lease label holds G12 (rows 1 and 19 included), and the lists of rows name exactly those rows
 _lab = sorted(r["i"] for r in rows if "setting: lease 45 s" in r["new"] or "45 s lease setting" in r["new"])
-_nohold = [i for i in _lab if "G12" not in bylead[i]["new"] + bylead[i]["view"] + bylead[i]["why"]]
+_nohold = [i for i in _lab if "G12" not in bylead[i]["new"]]   # c6x: the hold must stand in the NEW text cell; a mention in the reason cell is not a hold
 _carve = sorted(i for i in _lab if i not in (1, 17) or True)
 _lists = re.findall(r"carve-outs of rows ([\d, and]+?) that now say", raw)
 _lists += re.findall(r"carve-out in rows ([\d, and]+?) now reads", raw)

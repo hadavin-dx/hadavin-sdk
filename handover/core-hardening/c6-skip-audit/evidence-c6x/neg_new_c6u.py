@@ -98,6 +98,6 @@ M["U-L-SHEET-v32-time-missing"] = re.sub(r"(OWNER-SHEET-v\d+-B\.md) \(written [^
 M["U-steps-5-to-9-back"] = rep_once("after TASKS (5) to (9) of the list", "after steps 5 to 9 of the list")
 M["U-example-time-before-check"] = rep_once(EX1TXT, "2026-11-16T16:40:00Z = 22:10:00 IST")
 M["U-row96-old-text-not-once"] = line_sub("| 96 | NOT APPLIED", "`own runs. \\| 30 s EST`", "`own runs. \\| 31 s EST`")
-M["U-stale-evidence-c6t-name"] = rep.replace("evidence-c6w/contact-grep-output.txt", "evidence-c6u/contact-grep-output.txt", 1)
-M["U-applied-rows-c6t-name"] = rep.replace("c6w-APPLIED-ROWS.md", "c6u-APPLIED-ROWS.md", 1)
+M["U-stale-evidence-c6t-name"] = rep.replace("evidence-c6x/contact-grep-output.txt", "evidence-c6u/contact-grep-output.txt", 1)
+M["U-applied-rows-c6t-name"] = rep.replace("c6x-APPLIED-ROWS.md", "c6u-APPLIED-ROWS.md", 1)
 M["U-evidence-file-missing"] = rep_once("evidence-c6w/contact-grep-output.txt", "evidence-c6w/no-such-file.txt")
