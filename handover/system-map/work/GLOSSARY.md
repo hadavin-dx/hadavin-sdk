@@ -64,8 +64,9 @@ Owners are as recorded in the table but unconfirmed; ask the lead session. This 
 
 D-04 is not unknown: it is the rule that a lead record sent twice is processed once (decision-list-for-lead.md, Reading notes).
 
-## Unknown terms: do not use in new text (safe to ignore when reading older pages: every row marked "no live page"; the others may appear on pages you read, so write "term (undefined)")
-Each term has meaning not recorded in any file. What to do instead: write "term (undefined)" and do not guess; mf_leads may be written "stored-leads table (name unconfirmed)". Ask the lead session first (it passes studio terms to the studio lead), then the owner. "Pages" = up to three pages that use it now (computed by search on 16 Nov).
+## Terms with no recorded meaning
+Rule: never use these terms in new text. If an older page uses one, write "term (undefined)" and do not guess; mf_leads may be written "stored-leads table (name unconfirmed)". Rows marked "no live page" need no action. "Pages" = up to three pages that use the term now (found by search on 16 Nov).
+Who can answer: ask the lead session (the Claude session that gives the system-map session its orders; it passes studio questions to the studio lead). Only the studio lead may message the owner; the system-map session never does.
 | term | pages |
 |---|---|
 | mf_leads (probably a stored-leads table; UNVERIFIED) | DECISION-one-store.md, MASTER-MAP.md, ONE-PLACE-TABLE.md |
