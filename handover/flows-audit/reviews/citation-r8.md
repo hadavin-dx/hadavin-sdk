@@ -1,6 +1,6 @@
 # Citation check, round 8 (evidence only; no judging of whether a cited claim is wise)
 
-Run: 2026-11-16, UTC about 13:03 to 13:25. Read-only on every audited file. One copy of the audited files was taken at 13:03 UTC and every check ran on that copy, because QUESTIONS.md, FINDINGS.md and OWNER-STEPS-q16-rows.md were being edited by other sessions while this ran (QUESTIONS.md grew from 473 to 484 lines during the run; the line numbers below are from the copy). If those files change again, rerun.
+Run: 2026-11-16, UTC about 13:03 to 13:08 (checks began about 12:55). Read-only on every audited file. One copy of the audited files was taken at 13:03 UTC and every check ran on that copy, because QUESTIONS.md, FINDINGS.md and OWNER-STEPS-q16-rows.md were being edited by other sessions while this ran (QUESTIONS.md grew from 473 to 484 lines during the run; the line numbers below are from the copy). If those files change again, rerun.
 Audited: handover/flows-audit/QUESTIONS.md (484 lines in the copy) and RUNBOOK.md (278 lines). Cited files read: ORDERS.md (177 lines), FINDINGS.md (153), CLAIMS-TABLE.md, RUNSHEET-WORDING.md, OWNER-STEPS-q16-rows.md, EXCEPTIONS.md, QUEUE.md, SCENE-FLOW-MAP.md, inputs/, fill_flows/README.md, flow-check/take_check.sh, demo/PLAN-4-NLITE-FROM-LEAD.md, demo/n8n-flows-real-v5/mf-recovery.json.
 
 ## Counts
