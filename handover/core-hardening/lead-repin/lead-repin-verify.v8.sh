@@ -62,7 +62,8 @@ SAVE_IFS=$IFS; NEWPATH=; IFS=:
 for pth_d in ${PATH:-}; do case $pth_d in /*) NEWPATH=${NEWPATH:+$NEWPATH:}$pth_d ;; esac; done
 IFS=$SAVE_IFS; PATH=${NEWPATH:-/usr/bin:/bin}; export PATH
 # (ENV and BASH_ENV are read by a shell when it STARTS, before this line: unsetting them here protects only the programs started below, not this shell itself)
-unset ENV BASH_ENV CDPATH GREP_OPTIONS GREP_COLOR GREP_COLORS SED_OPTIONS AWKPATH AWKLIBPATH POSIXLY_CORRECT SHELLOPTS BASHOPTS BASH_XTRACEFD PS4 LOCPATH NLSPATH MALLOC_CONF
+unset ENV BASH_ENV CDPATH GREP_OPTIONS GREP_COLOR GREP_COLORS SED_OPTIONS AWKPATH AWKLIBPATH POSIXLY_CORRECT BASH_XTRACEFD PS4 LOCPATH NLSPATH MALLOC_CONF
+unset SHELLOPTS BASHOPTS 2>/dev/null   # bash keeps these two read-only (a plain unset prints an error); they stay set there, and programs the script starts are not bash scripts
 # v8: every GIT_*, LD_* and DYLD_* variable of the caller is removed (GIT_DIR or GIT_WORK_TREE would point git at another
 # folder; LD_PRELOAD would load a library into every program below), and git gets a fixed, safe setting set of its own
 for env_v in $(env 2>/dev/null | sed -n 's/^\(\(GIT\|LD\|DYLD\)_[A-Za-z0-9_]*\)=.*/\1/p'); do unset "$env_v" 2>/dev/null; done
