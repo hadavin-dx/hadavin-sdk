@@ -26,11 +26,11 @@ MUT M09 label "program" dropped: "The program refusal limit is a different" (E-1
    mine: caught label | refusal limit without "program": art for Wed 18 Nov is much earlier. The refusal limit is 
    verify13: caught (1 FAIL) | FAIL r13 E-12 lacks the two labels
 MUT M10 key end 18:29Z in E-48 part 3h
-   mine: NOT CAUGHT
+   mine: caught keyend | E-48 NEW key revoke sentence names 18:29 UTC without 18:19: Revoke the key, ALWAYS, by 18:
    verify13: NOT CAUGHT
 MUT M11 key end 18:29Z in E-55 first sentence
-   mine: ANCHOR-ERROR ValueError('substring not found')
-   verify13: 
+   mine: caught keyend,rowcontent | E-55 NEW mentions key revoke but lacks '18:19 UTC = 23:49 IST'
+   verify13: caught (1 FAIL) | FAIL r12 E-55 trigger
 MUT M12 missing not-looking step: owner does not wait for `not looking` (E-09)
    mine: caught rowcontent | E-09 NEW lacks (not-looking step): 'wait for its written reply `not looking`'
    verify13: NOT CAUGHT
@@ -115,4 +115,4 @@ MUT M38 banned vendor string appended (IN MEMORY ONLY, never written)
 MUT M39 secret-shaped string built from parts appended (IN MEMORY ONLY)
    mine: caught secret | secret-shaped string matches /AKIA[0-9A-Z]{16}/ (len 20)
    verify13: not run (file would hold banned/secret-shaped text)
-TOTAL 39 mine caught 34 verify13 caught 29 of 37 run
+TOTAL 39 mine caught 36 verify13 caught 30 of 37 run

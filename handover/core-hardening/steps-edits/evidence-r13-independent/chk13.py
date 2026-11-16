@@ -128,7 +128,7 @@ def check(path, indir=HERE + 'inputs/', info=None, text=None):
     for r in rows:
         for t in r['new']:
             for sent in re.split(r'(?<=[.;:])\s+|\n', t):
-                if re.search(r'\b(?:revoke|revoked|revoking)\b[^;]*\b(?:secret )?key\b|\bkey\b[^;]*\b(?:revoke|revoked|ends by)\b', sent) and '18:29 UTC' in sent and '18:19 UTC' not in sent:
+                if re.search(r'(?i)\b(?:revoke|revoked|revoking)\b[^;]*\bkey\b|\bkey\b[^;]*\b(?:revoke|revoked|ends by)\b', sent) and '18:29 UTC' in sent and '18:19 UTC' not in sent:
                     F('keyend', f"{r['id']} NEW key revoke sentence names 18:29 UTC without 18:19: " + sent[:140])
     # 7 steps that must exist (content checks used by mutations): not-looking step, routes A and B, shred path
     own = [r for r in rows if r['file'].startswith('OWNER')]

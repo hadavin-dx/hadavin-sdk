@@ -1,0 +1,44 @@
+INFO old texts checked 57 failures 0
+INFO UTC/IST pairs 60
+INFO weekday/date pairs 44
+INFO label+time same-phrase pairs 0 0
+INFO rows with key revoke text ['E-12', 'E-48', 'E-52', 'E-55', 'E-57', 'E-58']
+INFO REPLY GROUPS {'Yes, remove the container only | No': ['E-16'], 'Yes, remove the container only': ['E-16'], 'No': ['E-16'], 'no more takes | more takes': ['E-48', 'E-52'], 'yes | no, other things use it | not sure': ['E-48'], 'same key | different key | not sure': ['E-48'], 'cut accepted': ['E-52', 'E-57']}
+INFO PHRASES {'Ubuntu': ['E-09'], 'umask 077': ['E-09'], 'tested': ['E-12'], 'untested': ['E-12'], 'Yes, remove the container only': ['E-16'], 'No': ['E-16'], 'demo': ['E-25', 'E-49'], 'hadavin_label': ['E-37'], 'end': ['E-37', 'E-41'], 'no more takes': ['E-48', 'E-52', 'E-55', 'E-57', 'E-58'], 'more takes': ['E-48', 'E-52'], 'yes': ['E-48'], 'no, other things use it': ['E-48'], 'not sure': ['E-48', 'E-52'], 'same key': ['E-48'], 'different key': ['E-48'], 'rm': ['E-48'], 'Wed 18 Nov 2026': ['E-49'], 'cut accepted': ['E-52', 'E-57'], 'ok': ['E-52'], 'no': ['E-52'], 'key kept': ['E-58']}
+INFO banned strings found (count only) 0 of 10
+FAILS 34
+{'label': 14, 'keyend': 1, 'content': 5, 'shred': 1, 'rowcontent': 12, 'phrase': 1}
+FAIL label | old single label "latest start" without "we plan": issued it, so that it stops working). **latest start time** = the latest time the 
+FAIL label | old single label "latest start" without "we plan": IONS block", item L-23NOV, 2026-11-16): latest start Mon 23 Nov 2026 18:04 UTC = 2
+FAIL label | old single label "latest start" without "we plan": he list of checks is attached, that the latest start time and the spending window 
+FAIL label | old single label "latest start" without "we plan": t states the planned start time and the latest start time. The assistant asks for 
+FAIL label | old single label "latest start" without "we plan":  ends 2026-11-23 18:29 UTC = 23:59 IST; latest start <latest start time in UTC and
+FAIL label | old single label "latest start" without "we plan": 23 18:29 UTC = 23:59 IST; latest start <latest start time in UTC and IST>; I know 
+FAIL label | old single label "latest start" without "we plan": s as 3 times the worst case per call. `<latest start time in UTC and IST>` is copi
+FAIL label | old single label "latest start" without "we plan":  check (`tested` or `untested`) and the latest start time as a slot; (d) naive M3,
+FAIL label | old single label "latest start" without "we plan": esign m4: the last day (23 Nov) and the latest start time for the planned day (Wed
+FAIL label | old single label "latest start" without "we plan": at the last time to revoke; the earlier latest start (18:04 UTC = 23:34 IST) stays
+FAIL label | old single label "latest start" without "we plan":  numbered list of the three points; (f) latest start: the assistant asks for no st
+FAIL label | old single label "latest start" without "we plan": provider's key list) are unchecked; the latest start time of about 18:14 UTC = 23:
+FAIL label | E-12 NEW has 18:04 UTC without the label 'latest start we plan'
+FAIL label | E-12 NEW has 18:14 UTC without the label 'program refusal limit'
+FAIL keyend | E-37 lacks key end 18:19 UTC = 23:49 IST
+FAIL content | missing please stop looking reply
+FAIL content | missing route A
+FAIL content | missing route B
+FAIL content | E-48/E-55/E-57 lack E-48 route A
+FAIL content | E-48/E-55/E-57 lack E-48 route B
+FAIL shred | E-48 NEW block has shred -u without the no-'..' path rule
+FAIL rowcontent | E-09 NEW lacks (not-looking step): 'please stop looking'
+FAIL rowcontent | E-09 NEW lacks (not-looking step): 'wait for its written reply `not looking`'
+FAIL rowcontent | E-09 NEW lacks (not-looking step): 'write `you may look again`'
+FAIL rowcontent | E-48 NEW lacks (routes, deadline, shred rule): '3j.'
+FAIL rowcontent | E-48 NEW lacks (routes, deadline, shred rule): 'Route A:'
+FAIL rowcontent | E-48 NEW lacks (routes, deadline, shred rule): 'Route B (recommended):'
+FAIL rowcontent | E-48 NEW lacks (routes, deadline, shred rule): 'WHATEVER you answer'
+FAIL rowcontent | E-48 NEW lacks (routes, deadline, shred rule): 'it contains no `..`'
+FAIL rowcontent | E-16 NEW lacks (clean-up trigger): 'only after you have written `no more takes`'
+FAIL rowcontent | E-58 NEW lacks (send table): '`key revoked`'
+FAIL rowcontent | E-58 NEW lacks (send table): '`key not revoked`'
+FAIL rowcontent | E-37 NEW lacks (key end): '18:19 UTC = 23:49 IST'
+FAIL phrase | E-58 uses old phrase `key kept`

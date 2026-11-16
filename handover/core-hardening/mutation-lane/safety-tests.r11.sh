@@ -1,5 +1,5 @@
 #!/bin/bash
-# Safety tests T1-T98 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T99 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
 # Round 7: run.py now runs the baseline BY DEFAULT; the helper base()/mut() adds --no-control (the old behaviour) unless NCF is set: `NCF= mut ...` runs with the real default. Against the r6 copy of run.py (no --no-control option) export NCF= (empty).
 # Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T98 (rounds 4 to 10) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
@@ -79,6 +79,23 @@ r.main()
 PY
 }
 planted_kept() { [ "$(last)" = return2 ] && keptstate; }
+# r11 MAJ-2: helpers of T97, T98 and T99 live here (outside every block) so that any of those blocks runs alone with ONLY=
+setmarker97() { python3 - "$STATE" "$@" <<'PY'
+import glob, json, sys
+mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; m = json.load(open(mk))
+for kv in sys.argv[2:]:
+    k, v = kv.split("=", 1); m[k] = json.loads(v)
+json.dump(m, open(mk, "w"))
+PY
+}
+forge97() { python3 - "$STATE" <<'PY'
+import glob, hashlib, json, sys
+mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; bk = glob.glob(sys.argv[1] + "/*.backup")[0]
+evil = b"def f():\n    return 99  # swapped by someone who can write the state folder\n"
+open(bk, "wb").write(evil)
+m = json.load(open(mk)); m["orig_sha256"] = hashlib.sha256(evil).hexdigest(); json.dump(m, open(mk, "w"))
+PY
+}
 echo "== T1 the real repository as --root is refused (exit 2)"
 mut --root "$REALREPO" -- tests/test_fast.py 2>&1 | cut -c1-200; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T1 exit 2" "[ $rc -eq 2 ]"
 echo "== T2 SIGKILL while a mutant is planted"
@@ -1178,9 +1195,9 @@ echo "== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mo
 if [ "$(id -u)" = 0 ] && [ -z "${NONROOT_CHILD:-}" ]; then
   NR=$(mktemp -d /tmp/r8nonroot.XXXXXX); chmod 755 "$NR"; cp -a "$VENV" "$NR/venv"; cp "$RUN" "$NR/run.py"; cp "$SELF_PATH" "$NR/safety-tests.sh"; mkdir "$NR/s"; chown -R nobody "$NR" 2>/dev/null
   if setpriv --reuid=65534 --regid=65534 --clear-groups true 2>/dev/null; then
-    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
+    ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
     grep -E "^== |FAIL" "$S/t88child.out" | cut -c1-200 | head -60; tail -1 "$S/t88child.out"
-    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
+    chk "T88 the blocks ${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 T99} run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit $rc)" "grep -q '^FAILED CHECKS: 0 (of [1-9][0-9]* checks run' '$S/t88child.out' && grep -q 'PASS: T88a' '$S/t88child.out' && grep -q 'PASS: T88d' '$S/t88child.out'"
   else
     echo "  (cannot switch to an unprivileged user here: the permission checks are UNVERIFIED)"; SKIPPED="$SKIPPED T88"
   fi
@@ -1484,22 +1501,6 @@ PY
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >/dev/null 2>&1; rc=$?; chk "T96l2 guard: the genuine mode with --sha restores: exit 0 (got $rc), state empty" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ]"
 
 echo "== T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)"
-setmarker97() { python3 - "$STATE" "$@" <<'PY'
-import glob, json, sys
-mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; m = json.load(open(mk))
-for kv in sys.argv[2:]:
-    k, v = kv.split("=", 1); m[k] = json.loads(v)
-json.dump(m, open(mk, "w"))
-PY
-}
-forge97() { python3 - "$STATE" <<'PY'
-import glob, hashlib, json, sys
-mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; bk = glob.glob(sys.argv[1] + "/*.backup")[0]
-evil = b"def f():\n    return 99  # swapped by someone who can write the state folder\n"
-open(bk, "wb").write(evil)
-m = json.load(open(mk)); m["orig_sha256"] = hashlib.sha256(evil).hexdigest(); json.dump(m, open(mk, "w"))
-PY
-}
 # M1 a) the planted root was renamed away and a full git copy took its path: --discard-marker compared only that copy and said 0
 fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null
 mv "$T/root" "$T/root-moved97"; mkdir "$T/root"; git -C "$T/repo" archive "$SHA" | tar -x -C "$T/root"; ln -s "$VENV" "$T/root/.venv"
@@ -1525,7 +1526,7 @@ python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >/dev/nu
 fresh_root; python3 "$RUN" --root "$T/root" --restore --sha zz >"$S/t97c2.out" 2>&1; rc2=$?
 python3 "$RUN" --root "$T/root" --restore --repo "$EMPTY" >"$S/t97c3.out" 2>&1; rc3=$?
 mut --out-json "$EMPTY" -- tests/test_fast.py >"$S/t97c4.out" 2>&1; rc4=$?
-chk "T97c2 siblings: --sha zz (got $rc2), --repo \"\" (got $rc3), --out-json \"\" (got $rc4) are all refused with exit 2, nothing planted" "[ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && [ $rc4 -eq 2 ] && grep -q 'empty value' '$S/t97c3.out' && [ '$(last)' = return1 ]"
+chk "T97c2 siblings (on r9 only --out-json \"\" failed; the other two already refused; a bundle of three): --sha zz (got $rc2), --repo \"\" (got $rc3), --out-json \"\" (got $rc4) are all refused with exit 2, nothing planted" "[ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && [ $rc4 -eq 2 ] && grep -q 'empty value' '$S/t97c3.out' && [ '$(last)' = return1 ]"
 # m1 the exit-2 row is true: every observed exit 2 is named in it, and the word ONLY is gone
 fresh_root
 python3 - "$RUN" "$T/root" "$SHA" "$T/repo" "$STATE" <<'PY' >"$S/t97d.out" 2>&1; rc=$?
@@ -1557,14 +1558,14 @@ cut -c1-300 "$S/t97d.out"; chk "T97d m1 row 2 of the exit table: no 'ONLY'; an a
 # m2 the recorded mode is restored exactly: 0 stays 0, a setuid bit stays; --sha refuses special bits and write-for-all
 for MODEV in 0 2541; do
   kill_planted; setmarker97 mode=$MODEV; rm -f "$T/root/src/mod.py"
-  python3 "$RUN" --root "$T/root" --restore >"$S/t97e.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py" 2>/dev/null); WANT=$(printf '%o' $MODEV)
-  chk "T97e m2 recorded mode $WANT (decimal $MODEV), file deleted: --restore re-creates it with exactly that mode: exit 0 (got $rc), mode $GOT (r9: 644)" "[ $rc -eq 0 ] && [ \"$GOT\" = \"$WANT\" ]"
+  python3 "$RUN" --root "$T/root" --restore >"$S/t97e.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py" 2>/dev/null); WANT=$(printf '%o' $((MODEV & 0777)))
+  chk "T97e m2 recorded mode $(printf '%o' $MODEV) (decimal $MODEV), file deleted: --restore re-creates it with exactly its lowest 9 bits $WANT (a special bit is never written, r11 MAJ-1): exit 0 (got $rc), mode $GOT (r9: 644)" "[ $rc -eq 0 ] && [ \"$GOT\" = \"$WANT\" ]"
   chmod 644 "$T/root/src/mod.py"
 done
 for MODEV in 2541 438; do
   kill_planted; setmarker97 mode=$MODEV
   python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t97e2.out" 2>&1; rc=$?; cut -c1-200 "$S/t97e2.out"
-  chk "T97e2 m2 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc; r9: 0 and the mode written), 'special bit', nothing written (still planted)" "[ $rc -eq 3 ] && grep -q 'special bit' '$S/t97e2.out' && [ '$(last)' = return2 ]"
+  chk "T97e2 m2 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc; r9: 0 for 0666, exit 3 already for 4755), 'special bit', nothing written (still planted)" "[ $rc -eq 3 ] && grep -q 'special bit' '$S/t97e2.out' && [ '$(last)' = return2 ]"
   python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 done
 # m3 --out-json: not in any searched state folder, and an existing foreign file is never overwritten
@@ -1723,7 +1724,7 @@ print("noqa:", bad, "direct Popen calls:", raw)
 sys.exit(1 if bad or raw else 0)
 PY
 cat "$S/t98c.out"
-chk "T98c no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
+chk "T98c TEXT CHECK (greps the source; the real protection is T99a) no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
 # 4) limit (d): plain --restore trusts a marker plus a matching backup (it cannot know better); --sha does not
 kill_planted; forge97
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t98d1.out" 2>&1; rc1=$?; cut -c1-200 "$S/t98d1.out" | tail -2
@@ -1731,14 +1732,14 @@ G1=$(grep -c 'return 99' "$T/root/src/mod.py"); L1=$(last)
 kill_planted; forge97
 python3 "$RUN" --root "$T/root" --restore >"$S/t98d2.out" 2>&1; rc2=$?; cut -c1-200 "$S/t98d2.out" | tail -2
 G2=$(grep -c 'return 99' "$T/root/src/mod.py")
-chk "T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got $rc1), nothing written (last '$L1' = return2), swapped text written $G1 times, marker kept; plain --restore trusts it (pinned limit): swapped text written $G2 time(s), exit $rc2" "[ $rc1 -eq 3 ] && [ $G1 -eq 0 ] && [ '$L1' = return2 ] && [ $G2 -eq 1 ] && [ $rc2 -eq 0 ]"
+chk "T98d GUARD (passes on r9 and r10 by design: it pins behaviour that did not change) limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got $rc1), nothing written (last '$L1' = return2), swapped text written $G1 times, marker kept; plain --restore trusts it (pinned limit): swapped text written $G2 time(s), exit $rc2" "[ $rc1 -eq 3 ] && [ $G1 -eq 0 ] && [ '$L1' = return2 ] && [ $G2 -eq 1 ] && [ $rc2 -eq 0 ]"
 kill_planted; setmarker97 mode=511
 python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t98e1.out" 2>&1; rc1=$?; cut -c1-200 "$S/t98e1.out" | tail -2
 L1=$(last)
-chk "T98e forged marker with mode 0777: --sha refuses it, exit 3 (got $rc1), nothing written (last '$L1' = return2)" "[ $rc1 -eq 3 ] && [ '$L1' = return2 ]"
+chk "T98e GUARD (same behaviour on r9 and r10) forged marker with mode 0777: --sha refuses it, exit 3 (got $rc1), nothing written (last '$L1' = return2)" "[ $rc1 -eq 3 ] && [ '$L1' = return2 ]"
 python3 "$RUN" --root "$T/root" --restore >"$S/t98e2.out" 2>&1; rc2=$?; cut -c1-200 "$S/t98e2.out" | tail -2
 M2=$(stat -c %a "$T/root/src/mod.py")
-chk "T98e2 plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode masked to 0777 at most (got exit $rc2, mode $M2)" "[ $rc2 -eq 0 ] && [ '$(last)' = return1 ]"
+chk "T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0777 (got exit $rc2, mode $M2; the special-bit case is T99b)" "[ $rc2 -eq 0 ] && [ '$(last)' = return1 ] && [ \"$M2\" = 777 ]"
 python3 - "$RUN" <<'PY' >"$S/t98f.out" 2>&1; rc=$?
 import importlib.util, sys
 spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
@@ -1749,6 +1750,138 @@ bad = "(d)" not in d
 print("missing", miss, "no (d):", bad); sys.exit(1 if miss or bad else 0)
 PY
 cat "$S/t98f.out"
-chk "T98f the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
+chk "T98f TEXT CHECK the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit $rc; r9: fails)" "[ $rc -eq 0 ]"
+
+echo "== T99 (r11, review r10: MAJ-1 setuid from a forged marker, S603 guard, minors 1 2 3 6; each check says whether it fails on r10 code)"
+# a) the S603 guard: Child refuses what the arguments must never be (r10: Child had no check, every bad call below started or tried to start)
+python3 - "$RUN" <<'PY' >"$S/t99a.out" 2>&1; rc=$?
+import importlib.util, inspect, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+bad = {
+    "one shell string": ("/bin/true", {}),
+    "tuple instead of list": (("/bin/true",), {}),
+    "relative program": (["true"], {}),
+    "empty list": ([], {}),
+    "NUL in an argument": (["/bin/true", "a\0b"], {}),
+    "a non-text argument": (["/bin/true", 5], {}),
+    "shell=True": (["/bin/true"], {"shell": True}),
+    "preexec_fn": (["/bin/true"], {"preexec_fn": lambda: None}),
+    "LD_PRELOAD in the environment": (["/bin/true"], {"env": {"PATH": "/bin", "LD_PRELOAD": "/x.so"}}),
+    "GIT_DIR in the environment": (["/bin/true"], {"env": {"GIT_DIR": "/x"}}),
+    "environment is not a dict of text": (["/bin/true"], {"env": {"PATH": 1}}),
+}
+fails = []
+for name, (args, kw) in bad.items():
+    try:
+        r.Child(args, **kw).wait()
+        fails.append(name + ": started")
+    except r.Refused:
+        pass
+    except BaseException as e:
+        fails.append(f"{name}: {type(e).__name__} instead of a refusal")
+try:
+    p = r.Child(["/bin/true"], env={"PATH": "/bin", "HOME": "/", "LC_ALL": "C"}, start_new_session=True); rc0 = p.wait()
+    if rc0 != 0: fails.append("a good call failed")
+except BaseException as e:
+    fails.append(f"a good call refused: {e}")
+src = inspect.getsource(r.Child.__init__)
+if "check_child_call(" not in src: fails.append("Child.__init__ does not call check_child_call")
+print("wrong:", fails); sys.exit(1 if fails else 0)
+PY
+cat "$S/t99a.out"
+chk "T99a S603: Child refuses 11 kinds of bad start (shell string, tuple, relative program, empty, NUL, non-text, shell=True, preexec_fn, LD_PRELOAD, GIT_DIR, bad env) and still starts a good one (exit $rc; r10: fails, nothing was checked; with the check removed from run.py: fails, see evidence)" "[ $rc -eq 0 ]"
+# b) MAJ-1: a forged marker with a setuid, setgid or sticky bit never makes such a file with a plain --restore
+for MODEV in 2541 1517 2559 3585; do   # 04755 02755 04777 07001-style: octal 4755 2755 4777 and 7001
+  kill_planted; forge97; setmarker97 mode=$MODEV
+  python3 "$RUN" --root "$T/root" --restore >"$S/t99b.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py"); cut -c1-300 "$S/t99b.out" | tail -1
+  chk "T99b MAJ-1 forged marker mode $(printf '%o' $MODEV) (plain --restore): exit 0 (got $rc), no special bit on the file (mode $GOT has at most 3 digits), the text says NOTE (r10: the file got mode $(printf '%o' $MODEV))" "[ $rc -eq 0 ] && [ \${#GOT} -le 3 ] && grep -q 'NOTE the marker mode' '$S/t99b.out'"
+  chmod 644 "$T/root/src/mod.py"
+done
+kill_planted; setmarker97 mode=2541; rm -f "$T/root/src/mod.py"
+python3 "$RUN" --root "$T/root" --restore >"$S/t99b2.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py")
+chk "T99b2 MAJ-1 file deleted, marker mode 4755, plain --restore: re-created without the setuid bit (mode $GOT, exit $rc; r10: 4755)" "[ $rc -eq 0 ] && [ \"$GOT\" = 755 ] && [ '$(last)' = return1 ]"
+python3 - "$RUN" "$S/t99b3" <<'PY' >"$S/t99b3.out" 2>&1; rc=$?
+import importlib.util, os, pathlib, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+root = pathlib.Path(sys.argv[2]); root.mkdir(parents=True, exist_ok=True); os.umask(0o022)
+target = root / "f.py"; target.unlink(missing_ok=True)
+real = os.fchmod
+os.fchmod = lambda fd, mode: None   # the system "did not keep" the mode
+try:
+    r.restore_target(target, b"x = 1\n", root.resolve(), create=True, mode=0o666)
+    print("NOT refused: the file got mode", oct(target.stat().st_mode & 0o7777)); sys.exit(1)
+except r.Refused as e:
+    print("refused:", str(e)[:160])
+finally:
+    os.fchmod = real
+PY
+cat "$S/t99b3.out"
+chk "T99b3 MAJ-1 the mode is checked AFTER the write: when the system keeps another mode than the recorded one the restore is refused, not reported as done (exit $rc; r10: returns normally)" "[ $rc -eq 0 ]"
+python3 - "$RUN" <<'PY' >"$S/t99b4.out" 2>&1; rc=$?
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("runmod", sys.argv[1]); r = importlib.util.module_from_spec(spec); spec.loader.exec_module(r)
+d = " ".join(r.__doc__.split())
+bad = [x for x in ("never more: r11 MAJ-1", "never writes a setuid, setgid or sticky bit") if x not in d]
+if "restored as recorded" in d: bad.append("still says setuid bits are restored as recorded")
+print("bad:", bad); sys.exit(1 if bad else 0)
+PY
+chk "T99b4 TEXT CHECK the docstring no longer says a setuid bit is restored as recorded, and says plain --restore never writes one (exit $rc; r10: fails)" "[ $rc -eq 0 ]"
+python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+# c) minor 1: a long -k expression is not a path
+fresh_root; EXPR99=$(python3 -c "print('test_f or ' + 'q'*300)")
+mut -- -k "$EXPR99" tests/test_fast.py >"$S/t99c1.out" 2>&1; rc1=$?
+HUGE99=$(python3 -c "print('q'*100001)")
+mut -- -k "$HUGE99" tests/test_fast.py >"$S/t99c2.out" 2>&1; rc2=$?
+mut -- "tests/$(python3 -c "print('d'*300)")" >"$S/t99c3.out" 2>&1; rc3=$?
+chk "T99c m1 a 313-byte -k expression is not refused for its length (exit $rc1, no 'longer than'; r10: exit 2 'name longer than 255 bytes'); a 100001-byte one is refused, exit 2 (got $rc2); a 300-byte PATH is still refused, exit 2 (got $rc3)" "! grep -q 'longer than' '$S/t99c1.out' && ! grep -q Traceback '$S/t99c1.out' && [ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && [ '$(last)' = return1 ]"
+# d) minor 2: 4096 bytes exactly, root + relative together, a root that grows when resolved, a long prefix and a long id
+fresh_root
+python3 - "$S" <<'PY' > "$S/t99d.paths"
+import sys
+def path_of(n):
+    segs = []; total = 0
+    while total < n - 1:
+        take = min(100, n - 1 - total - 1) if n - 1 - total > 101 else n - 1 - total - 1
+        take = max(take, 1); segs.append("a" * take); total += take + 1
+    p = "/" + "/".join(segs)
+    return p[:n]
+for n in (4095, 4096):
+    p = path_of(n); print(len(p.encode()), p)
+PY
+BADD=0
+while read -r LEN P; do
+  python3 "$RUN" --root "$P" --restore >"$S/t99d.$LEN" 2>&1; rc=$?
+  if [ $rc -ne 2 ] || grep -q Traceback "$S/t99d.$LEN" || grep -q 'INTERNAL' "$S/t99d.$LEN"; then BADD=$((BADD+1)); echo "  BAD root of $LEN bytes: exit $rc"; fi
+  [ "$LEN" = 4096 ] && ! grep -q 'bytes long' "$S/t99d.$LEN" && { BADD=$((BADD+1)); echo "  BAD 4096 bytes not named as too long"; }
+done < "$S/t99d.paths"
+DEEP="$S/deep99"; rm -rf "$DEEP"; mkdir -p "$DEEP"
+python3 - "$DEEP" <<'PY' >"$S/t99d.deep"
+import os, sys
+p = sys.argv[1]
+while len(p) < 3900:
+    p += "/" + "e" * 200
+os.makedirs(p, exist_ok=True); print(p)
+PY
+DROOT=$(cat "$S/t99d.deep"); git -C "$T/repo" archive "$SHA" | tar -x -C "$DROOT"; ln -s "$VENV" "$DROOT/.venv"
+REL99=$(python3 -c "print('src/' + 'f'*240 + '.py')")
+python3 "$RUN" --root "$DROOT" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawD" --id m1 --file "$REL99" --old 'return 1' --new 'return 2' -- tests/test_fast.py >"$S/t99d.rel" 2>&1; rcr=$?
+python3 "$RUN" --root "$DROOT" --sha "$SHA" --repo "$T/repo" --prefix "$(python3 -c "print('p'*300)")" --no-control --raw "$S/rawD" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py >"$S/t99d.pre" 2>&1; rcp=$?
+python3 "$RUN" --root "$DROOT" --sha "$SHA" --repo "$T/repo" --prefix X --no-control --raw "$S/rawD" --id "$(python3 -c "print('i'*300)")" --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_fast.py >"$S/t99d.id" 2>&1; rci=$?
+cut -c1-160 "$S/t99d.rel" "$S/t99d.pre" "$S/t99d.id" | head -12
+rm -rf "${DEEP:?}" "$S/rawD"
+chk "T99d m2 4095 and 4096-byte roots end in a refusal (exit 2, no traceback, 4096 named too long): $BADD wrong; a root of ~3900 bytes plus a 245-byte relative file (got exit $rcr), a 300-byte --prefix (got $rcp) and a 300-byte --id (got $rci) are refused with exit 2, no traceback, no INTERNAL ERROR" "[ $BADD -eq 0 ] && [ $rcr -eq 2 ] && [ $rcp -eq 2 ] && [ $rci -eq 2 ] && ! grep -q 'Traceback\|INTERNAL' '$S/t99d.rel' '$S/t99d.pre' '$S/t99d.id'"
+# e) minor 3: --raw in another folder a marker may live in: refused BEFORE the folder is created
+fresh_root; mkdir -p "$S/other-tmp"; OTHER="$S/other-tmp/hadavin-mutation-lane-$(id -u)/rawfolder99"
+TMP="$S/other-tmp" mut --raw "$OTHER" -- tests/test_fast.py >"$S/t99e.out" 2>&1; rc=$?
+cut -c1-200 "$S/t99e.out" | tail -1
+chk "T99e m3 --raw inside the state folder of TMP: exit 2 (got $rc) and the folder was NOT created (r10: created, then refused)" "[ $rc -eq 2 ] && [ ! -e '$OTHER' ] && [ '$(last)' = return1 ]"
+rm -rf "$S/other-tmp"
+# f) minor 6: --sha refuses a marker mode with a write bit for the group
+for MODEV in 436 432 410; do   # 0664 0660 0632
+  kill_planted; setmarker97 mode=$MODEV
+  python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t99f.out" 2>&1; rc=$?; cut -c1-200 "$S/t99f.out" | tail -1
+  chk "T99f m6 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc), nothing written (still planted) (r10: exit 0, mode written)" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && keptstate"
+  python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+done
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"

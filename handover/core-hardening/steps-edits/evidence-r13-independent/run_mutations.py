@@ -5,7 +5,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import chk13
 BASE = open(chk13.HERE + 'steps-edits/EDITS.md', encoding='utf-8').read()
 def sec(t, rid):
-    i = t.index('### %s:' % rid); j = t.find('\n### ', i + 5); return i, (j if j != -1 else len(t))
+    i = t.index('### %s:' % rid); m_ = re.search(r'\n### E-\d+:', t[i + 5:]); return i, (i + 5 + m_.start() if m_ else len(t))
 def rs(rid, old, new, nth=0):
     def f(t):
         i, j = sec(t, rid); body = t[i:j]; k = body.index('\nNEW')

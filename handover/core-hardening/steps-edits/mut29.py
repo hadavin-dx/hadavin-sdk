@@ -354,6 +354,28 @@ EXPECT['R19'] = ['C98']
 EXPECT['R20'] = ['C103']
 EXPECT['R21'] = ['C95']
 EXPECT.update({'P20':['C14k','BUILD'],'P11':['C159'],'V01':['C105'],'V02':['C106'],'V03':['C107'],'V04':['C108'],'V05':['C137'],'V06':['C138'],'V07':['C139'],'V08':['C140'],'V09':['C111'],'V10':['C141'],'V11':['C142'],'V12':['C143'],'V13':['C149'],'V14':['C151'],'V15':['C154'],'V16':['C155'],'V17':['C126'],'V18':['C124'],'V19':['C125'],'V20':['C122'],'V21':['C121'],'NEG1':['C999']})
+# ---- v29 plants (one per new check C171 to C184 of Part 6)
+W = [
+('W01', S, 'Four phone alarms on the run day', 'Three phone alarms on the run day', 'A or B: the fourth alarm word removed'),
+('W02', S, '**Older key point (cannot be undone; every way the run ends passes here before 8.1).**', '**Older key note.**', 'older-key point step renamed'),
+('W03', S, 'a FREEZE does not stop this', 'a FREEZE stops this', 'FREEZE stops the older-key cancel'),
+('W04', S, 'This is **sheet [[A:A]][[B:B]]**', 'This is **the sheet**', 'sheet letter removed from the heading'),
+('W05', S, 'n8n credentials: exactly the three, by name', 'n8n credentials: exactly the three', 'n8n slot by name removed'),
+('W06', S, 'alone (R1), with the narrowest scopes the create form offers', 'with the widest scopes the create form offers', 'look key scopes clause'),
+('W07', S, 'if used less than 7 days ago take B', 'if used less than 7 days ago take A', 'A/B condition reversed'),
+('W08', O, "give another before the program's refusal limit 18:14 UTC = 23:44 IST;", 'give another before 18:14 UTC;', '18:14 without its label'),
+('W09', N, 'and nothing about a lease: the lease sentence is struck from the public post', 'plus "A gap longer than the lease is not claimed." (the lease sentence is struck from the public post', 'lease sentence put back in the public post'),
+('W10', FA, 'LS23 = dt.datetime(2026, 11, 23, 18, 4)', 'LS23 = dt.datetime(2026, 11, 23, 18, 14)', 'latest start of 23 Nov changed'),
+('W11', S, '[OWNER FILLS:', '[OWNER:', 'placeholder label changed'),
+('W12', S, '"continue" (after a FREEZE)', '"carry on" (after a FREEZE)', 'R8 word set changed'),
+('W13', S, 'Seven days means 168 hours', 'Seven days means a week', '168 hours wording'),
+('W14', N, 'Open 103', 'Open 99', 'open question reference removed'),
+('W15', O, 'E-52', 'E-5', 'E-52 UNVERIFIED row changed'),
+('W16', S, 'Do not use any older sheet (v4 to v28).', 'Do not use any older sheet (v4 to v28). ' + 'filler ' * 400, 'sheet grows over 6,300 words'),
+]
+P += W
+EXPECT.update({'W01':['C172'],'W02':['C172'],'W03':['C172'],'W04':['C173'],'W05':['C174'],'W06':['C175'],'W07':['C176'],'W08':['C177'],'W09':['C178'],'W10':['C179'],'W11':['C180'],'W12':['C181'],'W13':['C182'],'W14':['C183'],'W15':['C184'],'W16':['C171']})
+ALLCOPIES |= {'W05', 'W11', 'W12', 'W14', 'W15', 'W07', 'W06', 'W03'}
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'
