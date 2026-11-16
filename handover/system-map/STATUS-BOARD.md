@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:00:08Z
-PUSHED_UTC: 2026-11-16T15:00:08Z
+UPDATED_UTC: 2026-11-16T15:00:27Z
+PUSHED_UTC: 2026-11-16T15:00:27Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1630. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1632. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -44,8 +44,8 @@ INTERRUPTED: none
 
 ## AGENTS
 UPDATED_UTC: 2026-11-16T15:00:08Z | PUSHED_UTC: 2026-11-16T15:00:08Z
-Running (8): decision-list-for-lead whole (a602134eee67160a4); L6 50-130 (a8b6a4cf908a8ee42); six new this beat: L4 270-end, L3c 130-end, L1c 130-end, L5a 130-end, critical-path-r1, owner-timeline-draft (ids in session list).
-Closed and digested 1625-1630: a9736197cd289fa57, aaaccbd483fcb454b, a93921ab4f6712335, acdf230aa66f521d2, a53053c9c98bb5c86, ac42d4d03f5ceca39.
+Running (8): L3c 1-60 and L6 100-end (new this beat); six from the last beat: L4 270-end, L3c 130-end, L1c 130-end, L5a 130-end, critical-path-r1, owner-timeline-draft (ids in session list).
+Closed and digested 1631-1632: a602134eee67160a4, a8b6a4cf908a8ee42. Earlier 1625-1630: a9736197cd289fa57, aaaccbd483fcb454b, a93921ab4f6712335, acdf230aa66f521d2, a53053c9c98bb5c86, ac42d4d03f5ceca39.
 FINDING: readers of later ranges cannot see the KEY at the top. Class fix: a REMINDER line (job keys, take, DECISION, UNVERIFIED) now sits under every section heading on all 12 pages. Not yet proven by a re-read.
 CAPACITY: 8 of 8. No missing slots.
 NEXT 5: claim column for L3 Findings and merged-findings L3 rows; L1 blank line 334, FD-021, FD-025; L5b status line and void findings FD-003 to 005; group note with grep patterns above 71-row tables; L1c finding sentences. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
