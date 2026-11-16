@@ -113,3 +113,10 @@ safety-tests.sh: line 89: kill: (24140) - No such process
   FAIL: T20.2 exit 129/130/143 (got 2)
   PASS: T20.2 file restored
   FAIL: T20.2 state empty
+safety-tests.sh: line 89: kill: (28296) - No such process
+safety-tests.sh: line 89: kill: (28296) - No such process
+safety-tests.sh: line 89: kill: (28296) - No such process
+safety-tests.sh: line 89: kill: (28296) - No such process
+  FAIL: T20.3 exit 129/130/143 (got 2)
+  PASS: T20.3 file restored
+  FAIL: T20.3 state empty

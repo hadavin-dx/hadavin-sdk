@@ -29,3 +29,6 @@ A necessity review (patches-ready/review/necessity-r1.md) says none of C-01, A-0
 2. With handover/ present both trees fail the same 2 guard tests (vendor string and non-UTF-8 file under handover/; non-proprietary LICENSE files in promotion-inputs, which decision 11 says never to touch). Lead: confirm these are known and expected on this branch.
 3. The brief's assumption that `git archive b4cce5b` leaves out handover/ was wrong; the C7b evidence says so.
 Evidence: patches-ready/v3/evidence-c7b.md.
+
+## Q17 (2026-11-16, real-v5 plan edits): HubSpot node swap
+Real-v5's CrmUpsert is n8n's HubSpot node, which calls the internet, so the loopback re-smoke cannot run real-v5 unchanged. The edit list (paste-check/plan-v5-real-v5-edits.md, R8 step 2.1b) swaps ONLY that node for a loopback stand-in. Evidence then reads "real-v5 minus one node". Lead: accept, or choose another route? Also read the glue fill_flows.py and drive.py (not on this branch) and fix step 2.1's expected line.
