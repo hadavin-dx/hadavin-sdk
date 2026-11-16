@@ -1,0 +1,18 @@
+# RUNBOOK.md lines 220-226 (rows 3-7) round 51 stranger read (agent aa80a521, egm-comprehension), non-security
+Saved by flows-audit, condensed. Reviewer words unverified; static; snapshot snap-rb51. PARTIAL: read only lines 220-226 (7 of 214 requested); NOT read 227-433, 1-219, section 4, 6, 10, TAKE-CHECKLIST. Rows are 5-8k tokens each: use one reader per 5-7 rows. 2 Blockers, 13 Majors.
+Clock: every UTC/IST pair in rows 4a-6 correct (04:16, 04:26, 04:40, 04:46, 04:50, 04:54, 04:56, 05:14, 05:30, 05:45, 06:00, 06:59, 07:00, 09:00, 10:30, 14:00); 24-minute cap arithmetic correct. Row 3 five arguments match "five words" note; row 4 chain prints distinct pass words; row 5 eight-pattern list has eight entries.
+F1 L222 vs L225 Major: row 4a says a full wait moves 4b start to 04:50Z; 4b 25 min (ends 05:15Z), step 5 (3 min) follows; row 6 fixed at 04:54Z and step 8 at 05:14Z, while 4a says every later start moves by the wait. Say whether row 6 times are fixed or move; give with-wait times for steps 4b-8.
+F2 L222 Major: FILES=( ... ) must be typed "in the same call and before the chain" but commit chain and status line are separate pastes: new shell gives empty list and refusal. Put FILES= at the front of each pasted command.
+F3 L222 Major: inputs (1)(2)(3) only "Q31 item 69/80/81": no supplier or deliverable; "Decision 1 vs decision 4", "scene 4" undefined.
+F4 L223 Blocker: row 4b BLOCKED-by-I36, needs PIN_NAME "a named WARN reader" but no person named; example "Anna Smith" reads as a real name. Name person/role; mark example made up.
+F5 L223 Major: route A vs B "AUDIT PROPOSAL, lead to confirm" yet "expect route B"; Blocks P1b, P1c, R4 live in TAKE-CHECKLIST. State route B default first and where TAKE-CHECKLIST is.
+F6 L223 Major: "type Block P1b WHOLE" heredoc program text not in the row; give file/line range.
+F7 L225 Major: "six files in TWO sets" but Tuesday set 2 files, Wednesday lists 3 (5); n8n_api.py is the sixth, in neither set.
+F8 L225 Major: Pass cell needs three `found` lines at 04:54 and no MISSING, but text says MISSING n8n_api.py at 04:54 "not a pass" while file may not exist yet (arguments due 06:59). Say whether step 6 passes at 04:54 with two files.
+F9 L225 Major: due times conflict: n8n_drive.py Wed 05:45Z; post-twice script and run_real_check_n8n.py Tue 09:00Z (answer by Tue 07:00Z); review Tue 10:30Z; "Wed 05:30Z latest (my reading)"; "fifth sha" undefined. One table: file, due (UTC/IST), supplier.
+F10 L225 Major: SHA_SCRIPTS "if it prints nothing" fallback relies on silence; lead names commit by hand (I24) with no command. Require printed pass word; give manual fallback command.
+F11 L225-226 Blocker: copy commands, n8n_start.sh command line, data folder, Postgres choice, harmless call per script all "LEAD FILLS" with no value or due time; step 7 not pasteable. Give owner and due time or mark steps 6-7 not runnable.
+F12 L226 Major: step 7 says step 8 runs BEFORE step 7 when n8n uses Postgres (I50, I53); numbering and Needs cell point both ways; 05:14Z step 8 start fits only swapped case. Renumber or give both clocks.
+F13 L226 Major: only pass for step 7 is `200` in append-only $TESTLOG with tail -n 5; older 200 may linger; curl prints 000 when n8n down. Print n8n-ready / n8n-DOWN.
+F14 L224 Major: pass is eight counts (2,0,3,0,1,1,1,1-or-2) from $LOG.counts, patterns only in TAKE-CHECKLIST Block R4; "1 or 2 (ACCEPTED)" does not say which goes with which outcome. Block R4 should print counts-ok / counts-WRONG.
+F15 L220-226 Major: cells mix commands with round-history notes ("round 21, M2", "mine, not tried", "finding 9"). Move history to changelog; one command and one expected word per cell.

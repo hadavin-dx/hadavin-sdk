@@ -176,3 +176,48 @@ applied F-002-take-key-check-and-claim-error-path
 applied F-008-save-runs-for-the-take
 raw output of this run is kept in: /tmp/trs.ExUugC/tmp-D-limit/fc8raw.2SJqM1
 ```
+
+## 6b-OLD-test_run_all_raw
+command: timeout 900 bash test_run_all_raw.sh
+start UTC: 19:35:04  end UTC: 19:46:28  rc=1
+```
+FAIL run exits 0 while another process truncates every file of its raw folder (got exit 1)
+ok   no 'summary line missing' text in the run output
+ok   the untouched sentinel file in the raw folder is unchanged
+ok   the raw folder holds exactly the same file names as before the run (before: apply.log gen-real.log selftest-new.txt sentinel.txt take-check.txt | after: apply.log gen-real.log selftest-new.txt sentinel.txt take-check.txt )
+last lines of the run output (phase 1):
+real-v5 placeholder ids: 12 file(s) warn in the committed flows (pass --strict to make that a failure)
+COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: 
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
+tracked raw folder /tmp/tra.bglQdd/rawfolder was NOT changed (pass --refresh to publish this run's raw files)
+raw output of this run is kept in: /tmp/fc8raw.otwcX1
+FAIL phase 2: a passing run with --refresh exits 0 (got exit 1)
+ok   phase 2: the run's own raw folder is named in its output (--keep) (/tmp/fc8raw.Y7NPCi)
+ok   phase 2: all 40 raw files of the run are in raw/ byte for byte (0 differ)
+FAIL phase 2: refresh-manifest.txt lists exactly the files of this run with their sha256 (not the older file)
+ok   phase 2: the file of an older run is left alone and no temporary file stays
+FAIL phase 2: the run says that raw/ was refreshed and prints exit status 0
+ok   phase 3: a failing run exits 1 (got exit 1)
+FAIL phase 3: a failing run with --refresh publishes nothing (raw/ holds: apply.log diff-film.txt diff-real.txt gen-film.log gen-real.log nested-take-failure-b.txt nested-take-failure-c.txt nested-take-failure-d.txt nested-take-failure.txt older-run-only.txt patched-film.txt patched-flows-list.txt patched-strict-film.txt patched-strict.txt patched.txt pristine-film.txt pristine-no-baseline.txt pristine-strict-film.txt pristine-strict.txt pristine.txt selftest-new.txt take-check-bad-ddl.txt take-check-disabled-send.txt take-check-exit3.txt take-check-form-run-saving-odd-word.txt take-check-form-run-saving-off.txt take-check-hook-run-saving-block-empty.txt take-check-key-check-absent-is-exit-4.txt take-check-keyok-gone.txt take-check-new-warn-changes-the-pin.txt take-check-no-table-file.txt take-check-old-table.txt take-check-recovery-accept-idle.txt take-check-sub-run-saving-key-missing.txt take-check-sub-run-saving-off.txt take-check-unpatched-run-saving.txt take-check-warn-pin-file-missing.txt take-check-zero-queries.txt take-check.txt test-take-check.txt timing.txt )
+FAIL phase 3: the run says raw/ was NOT refreshed and prints exit status 1
+test_run_all_raw: 7 of 13 cases as expected, 6 not as expected
+last lines of the run outputs:
+COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: 
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
+raw files refreshed in /tmp/tra.bglQdd/m2/handover/flows-audit/flow-check/raw: 40 (run exit status 1)
+raw output of this run is kept in: /tmp/fc8raw.Y7NPCi
+COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: 
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
+raw files refreshed in /tmp/tra.bglQdd/m3/handover/flows-audit/flow-check/raw: 40 (run exit status 1)
+raw output of this run is kept in: /tmp/fc8raw.wh0AUS
+```
+
+## 7
+```
+--- git status --short
+ M ../FINDINGS.md
+ M ../LEDGER-ROWS.md
+ M evidence-f8-r12-runner2.md
+```
+elapsed s: 2158
+end UTC: 2026-11-16T19:46:28Z
