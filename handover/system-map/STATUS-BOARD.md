@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 16:21Z
+UPDATED_UTC: 16:23Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -50,7 +50,7 @@ INTERRUPTED: none
 
 ## AGENTS
 - 1 running at 16:18Z, all drafts unverified:
-- MERGE-V43 a05f5135652d6d253 | merge patches D, E, F, G into RUNBOOK-V4.3-PATCH.md | next: fresh egm reader
+- APPEND-T ae916809539a71714 | append timing rows from RUNBOOK-V4.3-PATCH-timing-v42.md to RUNBOOK-V4.3-PATCH.md | next: fresh egm reader
 - EMPTY SLOTS (7 of 8): reason: other open items wait for the lead's answers (LEAD-NOTICE items 1-26) or for MERGE-V43 to hand back; decision list, critical path, open items and owner timeline are at the reader cap
 
 ## Details (long text moved from the FAILED line)
