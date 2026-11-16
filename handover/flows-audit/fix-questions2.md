@@ -1,0 +1,4 @@
+# fix-questions2 (log written by flows-audit from fixer a86555d report; fixer wrote none)
+Failures and open first: glossary definitions of P4b/P4c, lane codes F1/F5/F9, T-row and V-row meanings are the fixer's reading, not the lead's; index lines for Q3, Q4-Q9, Q10, Q11 cite earlier ORDERS lines not re-checked; whole file not re-read after edit; "the lead"/"a lead" still one word (glossary explains).
+Changed: one section "GATE F-011 AND F-041" (ORDERS 156 wins; actor and evidence undefined = Q31 item 10, L24); index count 29 lead actions (6 VERIFY, 4 DECIDE, 3 ASK OWNER, 16 DO) with table L1-L29; line numbers fixed (Q17 117, Q20 125, Q29 167, Q30 171, answers start 109); status vocabulary extended; superseded text tagged; glossary +21 terms, n8n SQLite UNVERIFIED; Q31 (13 items) merges ownersteps7 and ownersteps8 questions.
+Checks (fixer): check_secrets PASS 0 hits in 1755 files; check_refs PASS 5147. Backup scratchpad/bak-q2.
