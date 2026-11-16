@@ -5,7 +5,9 @@
 #   A. SIGTERM: exit 143, the message INTERRUPTED (TERM), no process of the run is left, the work folder the run made itself is removed, the scratch raw folder is kept and named, and the work folder is made under TMPDIR (not a fixed /tmp)
 #   B. SIGINT (Ctrl-C) and C. SIGHUP (terminal closed): the same, with a work folder given on the command line (that one is never removed)
 #   D. time limit: in a copy whose self-test is replaced by a program that sleeps for 10 minutes, RUN_ALL_LIMIT_SELFTEST=3 stops it after about 3 seconds while the run goes on; then the run is stopped (as in A) and nothing is left.
-# Usage: bash test_run_all_stop.sh [SCRIPT_UNDER_TEST] [SCRATCH_DIR (must not exist)]. About 2 minutes. The f8-r11 script fails these cases (no time limit, no trap, helpers left running).
+#   E. SIGTERM while the nine checker runs are going, F. SIGINT while the take test suite (test_take_check.sh) is going, G. SIGHUP while the four nested test runs are going (f8-r13: A to C only fired during the self-test, so the other steps were never shown to be stopped). In D the run's exit status after the stop must be 143, not 0.
+#   Every case also checks, by SESSION id, that no process of the run's own session is left (a helper whose command line has no folder name in it would have been missed by the older command-line check).
+# Usage: bash test_run_all_stop.sh [SCRIPT_UNDER_TEST] [SCRATCH_DIR (must not exist)]. About 3 minutes. The f8-r11 script fails these cases (no time limit, no trap, helpers left running).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 SUT=${1:-}; [ -n "$SUT" ] || SUT=$HERE/run_all.sh; [ -f "$SUT" ] || { echo "usage: bash test_run_all_stop.sh [run_all.sh to test] [scratch dir (must not exist)]"; exit 2; }
@@ -26,17 +28,28 @@ start() {
   local envv=(TMPDIR="$T/tmp-$nm"); [ -n "$NEWOPT" ] || envv+=(RUN_ALL_RAW="$T/raw-$nm")
   env "${envv[@]}" "$@" python3 -I -c 'import os, signal, sys
 signal.signal(signal.SIGINT, signal.SIG_DFL)
+os.setsid()
 os.execvp("bash", ["bash"] + sys.argv[1:])' "$script" ${args[@]+"${args[@]}"} > "$T/out-$nm.txt" 2>&1 &
   RUNPID=$!
 }
 wait_for() { local i pat=$1 secs=$2; for i in $(seq 1 $((secs*2))); do pgrep -f "$pat" > /dev/null 2>&1 && return 0; sleep 0.5; done; return 1; }
 wait_gone() { local i pat=$1 secs=$2; for i in $(seq 1 $((secs*2))); do pgrep -f "$pat" > /dev/null 2>&1 || return 0; sleep 0.5; done; return 1; }
-stop_case() { # NAME SIGNAL EXPECTED-EXIT WORKDIR-GIVEN(0/1) [ENV...]
-  local nm=$1 sig=$2 want=$3 given=$4 work="" pat; shift 4
+# sid_left PID: 0 when a process of the session that the run started (its session id is the run's pid, see start) is still alive
+sid_left() { ps -e -o sid= 2>/dev/null | tr -d ' ' | grep -q -x "$1"; }
+wait_sid_gone() { local i; for i in $(seq 1 $(($2*2))); do sid_left "$1" || return 0; sleep 0.5; done; return 1; }
+stop_case() { # NAME SIGNAL EXPECTED-EXIT WORKDIR-GIVEN(0/1) [PHASE: selftest|checkers|suite|nested] [ENV...]
+  local nm=$1 sig=$2 want=$3 given=$4 phase=${5:-selftest} work="" pat what; shift 4; [ $# -eq 0 ] || shift
   [ "$given" = 0 ] || work="$T/work-$nm"
   start "$nm" "$SUT" "$work" "$@"
-  if [ -n "$work" ]; then pat="selftest\\.py .*$T/work-$nm/g/real"; else pat="selftest\\.py .*$T/tmp-$nm/fc8\\.[A-Za-z0-9]*/g/real"; fi
-  wait_for "$pat" 150; ok $? "$nm: the self-test of the run is running (waited up to 150 s)"
+  local sid=$RUNPID
+  local base="$T/tmp-$nm/fc8\\.[A-Za-z0-9]*"; [ -z "$work" ] || base="$T/work-$nm"
+  case $phase in
+    selftest) pat="selftest\\.py .*$base/g/real"; what="the self-test";;
+    checkers) pat="check_flows\\.py .*$base/g/real"; what="a checker run";;
+    suite) pat="test_take_check\\.sh .*$base/g/real"; what="the take test suite";;
+    nested) pat="run_all\\.sh .*$base/tc/nested-work"; what="the nested test runs";;
+  esac
+  wait_for "$pat" 400; ok $? "$nm: $what of the run is running (waited up to 400 s)"
   kill "-$sig" "$RUNPID" 2>/dev/null
   local i; for i in $(seq 1 80); do kill -0 "$RUNPID" 2>/dev/null || break; sleep 0.5; done
   local alive=0; kill -0 "$RUNPID" 2>/dev/null && alive=1
@@ -44,6 +57,7 @@ stop_case() { # NAME SIGNAL EXPECTED-EXIT WORKDIR-GIVEN(0/1) [ENV...]
   wait "$RUNPID" 2>/dev/null; local rc=$?; RUNPID=""
   [ "$rc" = "$want" ]; ok $? "$nm: exit status $want (got $rc)"
   wait_gone "$T/(tmp|work|raw)-$nm" 5; ok $? "$nm: no process of the run is left (checkers, self-test, take script, nested runs)"
+  wait_sid_gone "$sid" 5; ok $? "$nm: no process of the run's own session is left (found by session id, not by command line)"
   grep -q "^INTERRUPTED ($sig): stopping every process this run started" "$T/out-$nm.txt"; ok $? "$nm: the run says it was interrupted"
   local kept; kept=$(sed -n 's/^raw output of this run is kept in: \([^ ]*\).*/\1/p' "$T/out-$nm.txt" | head -n 1)
   [ -n "$kept" ] && [ -d "$kept" ]; ok $? "$nm: the raw output of the interrupted run is kept and named ($kept)"
@@ -53,6 +67,9 @@ stop_case() { # NAME SIGNAL EXPECTED-EXIT WORKDIR-GIVEN(0/1) [ENV...]
 stop_case A-sigterm TERM 143 0
 stop_case B-sigint INT 130 1
 stop_case C-sighup HUP 129 1
+stop_case E-sigterm-checkers TERM 143 1 checkers
+stop_case F-sigint-suite INT 130 1 suite
+stop_case G-sighup-nested HUP 129 1 nested
 # D: the time limit at the real call site
 F="$T/mirror/handover/flows-audit/flow-check"; mkdir -p "$F"
 for n in run_all.sh take_check.sh test_take_check.sh check_flows.py take-warns.pin expected-counts.pin; do [ ! -f "$SD/$n" ] || cp -- "$SD/$n" "$F/$n"; done
@@ -64,8 +81,10 @@ wait_for "$PD" 150; ok $? "D-limit: the stand-in self-test (sleeps 10 minutes) i
 wait_gone "$PD" 25; ok $? "D-limit: it is stopped by the 3-second limit (within 25 s) while the run goes on"
 kill -0 "$RUNPID" 2>/dev/null; ok $? "D-limit: the run itself is still going (the limit stopped the step, not the run)"
 kill -TERM "$RUNPID" 2>/dev/null; for i in $(seq 1 80); do kill -0 "$RUNPID" 2>/dev/null || break; sleep 0.5; done
-wait "$RUNPID" 2>/dev/null; RUNPID=""
+SIDD=$RUNPID; wait "$RUNPID" 2>/dev/null; DRC=$?; RUNPID=""
+[ "$DRC" = 143 ]; ok $? "D-limit: exit status 143 after the stop (got $DRC), not 0"
 wait_gone "$T/(tmp|work|raw)-D-limit" 5; ok $? "D-limit: no process of the run is left after SIGTERM"
+wait_sid_gone "$SIDD" 5; ok $? "D-limit: no process of the run's own session is left (by session id)"
 echo "test_run_all_stop: $((N-BAD)) of $N cases as expected, $BAD not as expected"
 [ "$BAD" = 0 ] || { echo "last lines of the outputs:"; for f in "$T"/out-*.txt; do echo "[$f]"; tail -n 3 "$f" | cut -c1-200; done; }
 [ "$BAD" = 0 ]
