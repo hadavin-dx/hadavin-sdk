@@ -86,7 +86,7 @@ trap cleanup EXIT
 #  8  command-line flags:  --token abc  --password abc  --api-key=abc .
 #  9  e-mail addresses are replaced by <email-masked>.
 write_mask_sed() {
-  W='(key|token|secrets?|passw(or)?d|passphrase|pass|pwd|pat|credentials?|authorization|auth|bearer|private)'
+  W='(key|token|secrets?|passw(or)?d|passphrase|pass|pwd|pw|psw|pswd|pat|credentials?|authorization|auth|bearer|private)'
   SUF='(key|token|secret|passw(or)?d|pwd|credentials?)'
   # IDB: an identifier that contains a secret word; IDQ: the same inside quotes (spaces count as separators)
   IDB="((([A-Za-z0-9_.-]*[_.-])?$W)|([A-Za-z0-9_.-]*$SUF))([_.-][A-Za-z0-9_.-]*)?"
@@ -121,7 +121,7 @@ n
 s/^([0-9]+[-:])?.*/\1<masked>/
 bt1
 }
-s/^([0-9]+[-:])?.*/\1<masked>/
+s/^(([0-9]+[-:])?)([^"]|"[^"]|""[^"])*"""/\1<masked>"""/
 b
 }
 }
@@ -134,7 +134,7 @@ n
 s/^([0-9]+[-:])?.*/\1<masked>/
 bt2
 }
-s/^([0-9]+[-:])?.*/\1<masked>/
+s/^(([0-9]+[-:])?)([^']|'[^']|''[^'])*'''/\1<masked>'''/
 b
 }
 }
@@ -170,7 +170,7 @@ s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)("[^"]*"|'[^']*')/\1<masked>/I
 s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)["'].*/\1<masked>/I
 s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)[^[:space:]<"'|>].*/\1<masked>/I
 s/((${ID})["']?[[:space:]]*,[[:space:]]*)("[^"]*"|'[^']*')/\1<masked>/Ig
-s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(key|token|secret|passw(or)?d|passphrase|pass|pwd|pat|credentials?|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))("[^"]*"|'[^']*'|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
+s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(key|token|secret|passw(or)?d|passphrase|pass|pwd|pw|psw|pswd|pat|credentials?|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))("[^"]*"|'[^']*'|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
 EOF
 }
@@ -251,6 +251,8 @@ self_test() {
     printf 'X-Api-Key: %s_38_\n' "$base"
     printf "const o = {token: '%s_39_', n: 3}\n" "$base"
     printf 'export X_PASSWORD=%s_40_\n' "$base"
+    printf 'archive_pw = %s%s_42_\n%s_43_\n%s # tail42\n' "$q3" "$base" "$base" "$q3"
+    printf 'db_pswd: %s_44_\n' "$base"
     printf 'secret = %s%s_41a_\n%s_41b_\n%s\n' "'''" "$base" "$base" "'''"
     printf "line_after_triple = %s\n" 'kept2'
     # ---- v3 false-hide cases: evidence that must stay readable
@@ -327,6 +329,10 @@ self_test() {
   chk_hidden 'X-Api-Key: header' "${base}_38_" L
   chk_hidden 'JS object {token: value}' "${base}_39_" L
   chk_hidden 'export X_PASSWORD=' "${base}_40_" L
+  chk_hidden 'pw name, triple-quoted over several lines, line 1' "${base}_42_"
+  chk_hidden 'pw name, triple-quoted over several lines, line 2' "${base}_43_"
+  chk_hidden 'pswd: name' "${base}_44_" L
+  chk_kept 'text after a multi-line value closes' '# tail42' 
   chk_hidden "single triple quotes over several lines, line 1" "${base}_41a_"
   chk_hidden "single triple quotes over several lines, line 2" "${base}_41b_"
   chk_kept 'text after a quoted JSON secret stays readable (DELETE)' '"method": "DELETE"'
@@ -363,7 +369,7 @@ self_test() {
   st_leak=0
   grep -q -F -- "$base" "$res" && st_leak=1
   rm -f "$in" "$res" "$res2"
-  printf 'SELF-TEST: pass=%s fail=%s (the made-up input and output files were deleted)\n' "$pass" "$fail"
+  printf 'SELF-TEST: passed=%s failed=%s (the made-up input and output files were deleted)\n' "$pass" "$fail"
   [ "$fail" -eq 0 ] && [ "$st_leak" -eq 0 ]
 }
 
@@ -435,7 +441,7 @@ skip_report() {
     printf '  symbolic links of any kind (find does not follow them): %s\n' "$sr_n"
     sr_n=$(find . 2>&1 >/dev/null | grep -c -i 'permission denied')
     printf '  folders or files the find command could not open (permission denied): %s\n' "$sr_n"
-    sr_n=$(find . -name "*${NL}*" -print 2>/dev/null | wc -l | tr -d ' ')
+    sr_n=$(find . -name "*${NL}*" -print0 2>/dev/null | tr -cd '\000' | wc -c | tr -d ' ')
     printf '  names with a line break (cannot be listed safely): %s\n' "$sr_n"
     for sr_d in node_modules _local secrets .venv venv __pycache__ tests test; do
       if [ "$sr_kind" = json ] && { [ "$sr_d" = tests ] || [ "$sr_d" = test ]; }; then continue; fi
@@ -634,8 +640,7 @@ main() {
   printf 'NOTE: the flow json files in the folder can differ from what n8n actually holds after import (G3); compare with the G2 checksum step.\n'
   printf 'NOTE: AGENT-SCOPE line 20 (citing review-codebase-1.md F-01) says the take archives its contacts with a DELETE call at run_real_check_n8n.py:1051 and crm_hubspot.py:504-509; the r17 review (ORDERS Q23) says there is no delete path. This script does not decide between them: block Q23-2 prints what stands at those lines today.\n'
   skip_report "$TAKE_DIR" "take folder, python and shell" code
-  if [ "$FLOWS_DIR" != "$TAKE_DIR" ]; then skip_report "$FLOWS_DIR" "flows folder, json" json; else
-    printf 'flow json files left out are counted in the line "inside folders named ..." above only for python and shell; for json:\n'; skip_report "$FLOWS_DIR" "flows, json" json; fi
+  skip_report "$FLOWS_DIR" "flows folder, json" json
   local_flow_report "$FLOWS_DIR"
   S "delete words in the four named files (take program, CRM module, n8n_drive.py, n8n.py): always searched" "$DELETE_RE" 1 "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"
   SL "delete words in the other python and shell files of the take" "$DELETE_RE" 1 "$WORK/list-code-rest.txt"

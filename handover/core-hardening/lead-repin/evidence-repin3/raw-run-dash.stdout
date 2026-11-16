@@ -1,8 +1,8 @@
 lead-repin-verify.sh v3  (reads only; prints, never judges; the lead reads this output before sharing it)
-masking self-test (canary) before any file was opened: SELF-TEST: pass=<masked>
+masking self-test (canary) before any file was opened: SELF-TEST: passed=114 failed=0 (the made-up input and output files were deleted)
 take folder: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir
-private work folder (made by mktemp; it stays after this run; delete it yourself): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/dash/lead-repin.k0bC0D
-copy of this output (masked): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/dash/lead-repin.k0bC0D/lead-repin-verify-out.txt
+private work folder (made by mktemp; it stays after this run; delete it yourself): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/dash/lead-repin.SQooXP
+copy of this output (masked): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/w3/dash/lead-repin.SQooXP/lead-repin-verify-out.txt
 Nothing below was checked against a real take program by the builder of this script.
 Q27 a, b and c stay UNVERIFIED until the lead shows them at the final head; this script only finds text.
 Files used:
@@ -20,7 +20,7 @@ files searched for "model program python files (tests left out)": 1
 ===== BLOCK R00: Final head identity (G1, G26) =====
 QUESTION: Which commit id and which file checksums are these answers about?
 not a git work tree (or git missing): cannot print a commit id here
-57800e045c52ab1f625ac977638eb674cac5591e0e10da90b6793cd8f6e146f9  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py
+b5d744d3489376d67f38ca1bdeeb414f493ac357b691042657ee861d0136a50c  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py
 dfae5afbbf891ae9b66f16c92ec067afef021bfe23df538e106358aec80b9cea  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/crm_hubspot.py
 4b3dc4220db355b1b831f2b494532f64434b00672bb6f586275fc7d18c8558e5  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/n8n_drive.py
 d41cab148d7850176c51993135eb67d33ac4e14bd145bc18a10ca3433014e8bc  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/n8n.py
@@ -34,7 +34,7 @@ left out of "take folder, python and shell" (/tmp/claude-0/-home-user/957f9d59-4
   deeper than 4 folders below the folder (anywhere): 0
   symbolic links of any kind (find does not follow them): 1
   folders or files the find command could not open (permission denied): 0
-  names with a line break (cannot be listed safely): 2
+  names with a line break (cannot be listed safely): 1
   inside folders named node_modules: 1
   inside folders named _local: 1
   inside folders named secrets: 0
@@ -44,12 +44,11 @@ left out of "take folder, python and shell" (/tmp/claude-0/-home-user/957f9d59-4
   inside folders named tests: 1
   inside folders named test: 0
   test files outside tests folders (test_*, *_test.py, conftest.py): 1
-flow json files left out are counted in the line "inside folders named ..." above only for python and shell; for json:
-left out of "flows, json" (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir) and NOT searched, file counts by reason:
+left out of "flows folder, json" (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir) and NOT searched, file counts by reason:
   deeper than 4 folders below the folder (anywhere): 1
   symbolic links of any kind (find does not follow them): 1
   folders or files the find command could not open (permission denied): 0
-  names with a line break (cannot be listed safely): 2
+  names with a line break (cannot be listed safely): 1
   inside folders named node_modules: 0
   inside folders named _local: 1
   inside folders named secrets: 0
@@ -58,10 +57,28 @@ left out of "flows, json" (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85b
   inside folders named __pycache__: 0
 _local flow json files: 1, delete-word matching lines inside them: 1 (these lines are NOT printed because a local copy may hold real values; open them yourself)
 --- search: delete words in the four named files (take program, CRM module, n8n_drive.py, n8n.py): always searched
-/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 2 match line(s)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 15 match line(s)
 1047:    # archive step (made-up)
 1048:        requests.delete(url + i, headers=h)  # line 1051 region
 1049-    return 1
+--
+1070:archive_api_key = <masked>  # archive
+1071:archive: os.environ["X_TOKEN"] = <masked>
+1072:run archive --password <masked> --verbose
+1073:archive contact <email-masked> done
+1074:archive_pair = ("API_KEY", <masked>)
+1075:archive_token:
+1076-<masked>
+1077:archive_next: stays_visible
+1078:archive_pw = """Zq9xW4kL7pR2mN5v_6_
+1079-Zq9xW4kL7pR2mN5v_7_
+1080:""" # archive end of block
+1081:headers = {"Authorization": "<masked>"}  # archive
+1082:if token:  # archive path stays readable
+1083-    pass
+1084:url = "https://user:<masked>@host.example/x"  # archive
+1085:desk-aaaaaaaaaaaa archive
+    (a value was hidden on 8 line(s) above; 1 of them were hidden whole)
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/crm_hubspot.py: 2 match line(s)
 500:def cleanup_contacts(ids):
 501-    for i in ids:
@@ -69,7 +86,7 @@ _local flow json files: 1, delete-word matching lines inside them: 1 (these line
 503-    return 0
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/n8n.py: 1 match line(s)
 2:    session.delete(u)
-    [search "delete words in the four named files (take program, CRM module, n8n_drive.py, n8n.py): always searched": matching lines=5 in 3 file(s) with a match, files_read=4 missing=0 unreadable=0]
+    [search "delete words in the four named files (take program, CRM module, n8n_drive.py, n8n.py): always searched": matching lines=18 in 3 file(s) with a match, files_read=4 missing=0 unreadable=0]
 --- search: delete words in the other python and shell files of the take
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/helper.sh: 1 match line(s)
 2:rm -rf $TMP # purge
@@ -82,11 +99,11 @@ _local flow json files: 1, delete-word matching lines inside them: 1 (these line
     (a value was hidden on 1 line(s) above; 0 of them were hidden whole)
     [search "delete words in flow json files": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
 READ THE ZERO LINES: "0 matching lines" means "none in the files listed above"; the counts of left-out files above say what was never looked at.
-[block Q23-1] total over all searches in this block: matching lines=7 files_read=6 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+[block Q23-1] total over all searches in this block: matching lines=20 files_read=6 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
 
 ===== BLOCK Q23-2: The old line numbers (Q23) =====
 QUESTION: What stands today at run_real_check_n8n.py lines 1045-1056 and crm_hubspot.py lines 500-512? (AGENT-SCOPE line 20 cites a DELETE call at line 1051 and at 504-509; the lead's answer calls that UNVERIFIED stale text.)
-/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py has 1069 line(s); lines 1045-1056:
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py has 1085 line(s); lines 1045-1056:
 1045:def finish(session, ids):
 1046:    for i in ids:
 1047:    # archive step (made-up)
@@ -122,11 +139,29 @@ QUESTION: Which HTTP methods does the CRM module send? (r17 saw only a rows_with
 ===== BLOCK Q23-4: Delete wording printed to the owner (G1, G17) =====
 QUESTION: Do the notice or the printed result still say deleted or archived, or print a delete count?
 --- search: delete or archive wording in the take program
-/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 2 match line(s)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 15 match line(s)
 1047:    # archive step (made-up)
 1048:        requests.delete(url + i, headers=h)  # line 1051 region
-    [search "delete or archive wording in the take program": matching lines=2 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
-[block Q23-4] total over all searches in this block: matching lines=2 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+--
+1070:archive_api_key = <masked>  # archive
+1071:archive: os.environ["X_TOKEN"] = <masked>
+1072:run archive --password <masked> --verbose
+1073:archive contact <email-masked> done
+1074:archive_pair = ("API_KEY", <masked>)
+1075:archive_token:
+--
+1077:archive_next: stays_visible
+1078:archive_pw = """Zq9xW4kL7pR2mN5v_6_
+--
+1080:""" # archive end of block
+1081:headers = {"Authorization": "<masked>"}  # archive
+1082:if token:  # archive path stays readable
+--
+1084:url = "https://user:<masked>@host.example/x"  # archive
+1085:desk-aaaaaaaaaaaa archive
+    (a value was hidden on 7 line(s) above; 0 of them were hidden whole)
+    [search "delete or archive wording in the take program": matching lines=15 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+[block Q23-4] total over all searches in this block: matching lines=15 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
 
 ===== BLOCK Q27a: Model call after the word end (Q27 a, G34): UNVERIFIED until the lead shows it =====
 QUESTION: After the take program reads the word end, can it still call the model? Part 1: lines with the end handling (and 20 lines after). Part 2: every model-call line.
@@ -139,6 +174,21 @@ QUESTION: After the take program reads the word end, can it still call the model
 1067-need_seconds = 860
 1068-KEYFILE = key_file
 1069-# anything else
+1070-archive_api_key = <masked>  # archive
+1071-archive: os.environ["X_TOKEN"] = <masked>
+1072-run archive --password <masked> --verbose
+1073-archive contact <email-masked> done
+1074-archive_pair = ("API_KEY", <masked>)
+1075-archive_token:
+1076-<masked>
+1077-archive_next: stays_visible
+1078-archive_pw = """Zq9xW4kL7pR2mN5v_6_
+1079-Zq9xW4kL7pR2mN5v_7_
+1080-""" # archive end of block
+1081-headers = {"Authorization": "<masked>"}  # archive
+1082-if token:  # archive path stays readable
+1083-    pass
+    (a value was hidden on 7 line(s) above; 1 of them were hidden whole)
     [search "end handling in the take program (case-sensitive; includes constants; a hit may be help or usage text: read the line)": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
 --- search: model-call words in the take program, n8n_drive.py and n8n.py
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 1 match line(s)
@@ -267,24 +317,24 @@ QUESTION: Does line 14 still say ONE database?
 [block G20] information block (not a search with hits): files_read=1 missing=0 unreadable=0
 
 SUMMARY: blocks=16 search_blocks=13 with_hits=9 zero_hits=4 information_blocks=3 files_missing=0 files_unreadable=0 (counts only; nothing judged; the lead reads each block and the per-search ZERO lines)
-Hidden by the masking filter in search results: 2 line(s) had a value hidden, 0 of them were hidden whole (next-line rule).
+Hidden by the masking filter in search results: 24 line(s) had a value hidden, 2 of them were hidden whole (next-line rule).
 Files left in the work folder (names and sizes; none holds an unmasked line of a searched file):
-  total 92
-  -rw------- 1 root root   469 Nov 16 13:23 four.txt
-  -rw------- 1 root root     0 Nov 16 13:23 grep.err
-  -rw------- 1 root root 20480 Nov 16 13:23 lead-repin-verify-out.txt
-  -rw------- 1 root root   113 Nov 16 13:23 list-code-rest.txt
-  -rw------- 1 root root   582 Nov 16 13:23 list-code.txt
-  -rw------- 1 root root   108 Nov 16 13:23 list-flows.txt
-  -rw------- 1 root root   208 Nov 16 13:23 list-model-all.txt
-  -rw------- 1 root root   104 Nov 16 13:23 list-model.txt
-  -rw------- 1 root root   700 Nov 16 13:23 list-test-all.txt
-  -rw------- 1 root root    24 Nov 16 13:23 m.txt
-  -rw------- 1 root root  5863 Nov 16 13:23 mask-line.sed
-  -rw------- 1 root root  8387 Nov 16 13:23 mask.sed
-  -rw------- 1 root root   118 Nov 16 13:23 named.crm_hubspot.py.txt
-  -rw------- 1 root root   110 Nov 16 13:23 named.n8n.py.txt
-  -rw------- 1 root root   116 Nov 16 13:23 named.n8n_drive.py.txt
-  -rw------- 1 root root   117 Nov 16 13:23 named.one.txt
-  -rw------- 1 root root   125 Nov 16 13:23 named.run_real_check_n8n.py.txt
+  total 96
+  -rw------- 1 root root   469 Nov 16 13:24 four.txt
+  -rw------- 1 root root     0 Nov 16 13:24 grep.err
+  -rw------- 1 root root 24576 Nov 16 13:24 lead-repin-verify-out.txt
+  -rw------- 1 root root   113 Nov 16 13:24 list-code-rest.txt
+  -rw------- 1 root root   582 Nov 16 13:24 list-code.txt
+  -rw------- 1 root root   108 Nov 16 13:24 list-flows.txt
+  -rw------- 1 root root   208 Nov 16 13:24 list-model-all.txt
+  -rw------- 1 root root   104 Nov 16 13:24 list-model.txt
+  -rw------- 1 root root   700 Nov 16 13:24 list-test-all.txt
+  -rw------- 1 root root    24 Nov 16 13:24 m.txt
+  -rw------- 1 root root  5863 Nov 16 13:24 mask-line.sed
+  -rw------- 1 root root  8387 Nov 16 13:24 mask.sed
+  -rw------- 1 root root   118 Nov 16 13:24 named.crm_hubspot.py.txt
+  -rw------- 1 root root   110 Nov 16 13:24 named.n8n.py.txt
+  -rw------- 1 root root   116 Nov 16 13:24 named.n8n_drive.py.txt
+  -rw------- 1 root root   117 Nov 16 13:24 named.one.txt
+  -rw------- 1 root root   125 Nov 16 13:24 named.run_real_check_n8n.py.txt
 Masking is a safety net: read this output yourself before you share it.

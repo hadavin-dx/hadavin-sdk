@@ -1,1 +1,1 @@
-dash rc=0
+dash(MODEL_DIR unset) rc=0
