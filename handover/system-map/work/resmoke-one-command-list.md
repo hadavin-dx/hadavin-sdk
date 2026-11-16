@@ -2,7 +2,7 @@
 
 **STATUS: UNVERIFIED AS A WHOLE. Nothing in this file was run. Every command, expected line and time below is copied from the two input files and has never been executed. Written Mon 16 Nov 2026 (UTC). Static text edit, made-up data only.**
 
-Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "the plan"; line numbers are its own) and `inputs/OWNER-STEPS-realrun-v5-core-hardening.md` (called "steps v5"). **The plan is required reading: this list holds the order of the steps, the run form (the exact line the lead types) and the expected lines. The paste bodies (the code of each step) stay in the plan and are not copied here, so they cannot drift; the one exception is the P-2 body (3 lines), copied in step 3 because the plan gives it as a PowerShell block with no paste file.** Where the plan gives no command for a step of this run, this file says `[LEAD FILLS: the plan gives no command]` and invents nothing. For P-2 and P-3a the plan does give bodies (P-2: plan lines 233-237, the code is on lines 234-236, copied in full in step 3 below with the user-folder name written `<USER>`; P-3a: the Write step at plan line 229 with glue text at plan lines 132-223, which the lead copies from the plan), so the only thing the lead fills there is the re-pin values. The user-folder name in Windows paths is written `<USER>`: take it from plan line 112 (the plan spells it out; this file does not copy the owner's name).
+Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "the plan"; line numbers are its own) and `inputs/OWNER-STEPS-realrun-v5-core-hardening.md` (called "steps v5"). **The plan is required reading: this list holds the order of the steps, the run form (the exact line the lead types) and the expected lines. The paste bodies (the code of each step) stay in the plan and are not copied here, so they cannot drift; the one exception is the P-2 body (3 lines), copied in step 3 because the plan gives it as a PowerShell block with no paste file.** Where the plan gives no command for a step of this run, this file says `[LEAD FILLS: the plan gives no command]` and invents nothing. For P-2 and P-3a the plan does give bodies (P-2: plan lines 233-237, the code is on lines 234-236, copied in full in step 3 below with the user-folder name written `<USER>`; P-3a: the Write step at plan line 229 with glue text at plan lines 132-223, which the lead copies from the plan), so there is nothing to fill at P-3a: the plan has no fill there (the re-pin is done at P-2, step 3). The user-folder name in Windows paths is written `<USER>`: take it from plan line 112 (the plan spells it out; this file does not copy the owner's name).
 
 ## Words box
 
@@ -13,7 +13,7 @@ Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "t
 - **merged head**: the newest commit of the combined code after the fix branches were merged.
 - **lead**: the Claude session that runs the studio's work. It is software and runs this list. It is not the owner.
 - **owner**: the studio's owner, the one person who decides; he must say yes before the lead starts.
-- **runner**: whoever carries out the plan's steps; here the lead. Its Linux user (the user account inside WSL that the lead's commands run as) is the "runner user"; the plan writes it as `<runner>` in check 4.2 only (plan line 312; check 1.5 does not use that word).
+- **runner**: whoever carries out the plan's steps; here the lead. Its Linux user (the user account inside WSL that the lead's commands run as) is the "runner user"; the plan writes it as `<runner>` in check 4.2 only (plan line 312); check 1.5 (plan line 275) says "owned by the runner" and does not use the placeholder `<runner>`.
 - **WSL**: Windows Subsystem for Linux, the Linux (Ubuntu) that runs inside this Windows laptop. Every `wsl.exe` command below runs there.
 - **HEAD_PIN**: the plan's name for the one code version (a short commit id) the run tests; the lead re-pins it to the merged head (step 3).
 - **PROGRESS**, **INDEX**, **ENV**: three evidence files in the run's evidence folder `evidence-2\` (section 6). `PROGRESS.md` gets one line per step, with the time in UTC and IST. `INDEX.md` holds the pass/fail table (Part B, plus Part A filled). `ENV.md` records the environment (versions, addresses, ports).
@@ -66,7 +66,7 @@ What the owner does during the run: nothing the plan names. The lead starts Dock
 
 How every WSL step runs (plan line 112, R5): the lead writes the step's paste file with the Write tool, then runs it from the PowerShell tool as shown. The verdict is the `exit=<n>` line in the output, never the tool status (`wsl.exe` returns `tee`'s exit code). Never call `wsl.exe` from the Git Bash tool: every block below that starts with `wsl.exe` is PowerShell, and the only Git Bash commands in this file are the two plan line 3 commands in step 3. Each paste body is the code span after the step id in the plan, verbatim, at the plan line given; this file does not copy the bodies so they cannot drift from the plan. **PowerShell blocks are wrapped so that the evidence is saved (plan line 112, R5).** Every PowerShell block below (P-2, P-5, 9.0k, 11.0k, 13.5k and the tail of 13.9) is run as `& { <block> } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\<log>.log`, with the log name of its section: `p` for P-2 and P-5, `s9` for 9.0k, `s11` for 11.0k, `s13` for 13.5k and the 13.9 tail. The blocks below are already written in this wrapped form. The folder `evidence-2\` is made by `run.sh` at P-1 (plan lines 112 and 230), so it exists from P-2 on. A STOP stops the run: write PROGRESS and INDEX, go to section 4 (plan line 108, R1). If a result differs from "expected", the plan's classes are STOP (end the run), GO (finding, carry on) and REC (record only) (plan line 111); the class is named per step in the plan.
 
-Set at the START OF EVERY PowerShell call (the variable does not survive between calls; about 70 later commands use it: 71 lines of this file contain `bash $RS`). The path is the plan's `run.sh` location (plan lines 112, 212); plan line 112 writes the same path inline, so the lead may also paste the path in place of `$RS`:
+Set at the START OF EVERY PowerShell call (the variable does not survive between calls; most later commands use it: counted by script on 16 Nov 2026 before this edit, 83 lines of this file start with `wsl.exe` or `& {`; the count is not kept up to date if the file changes). The path is the plan's `run.sh` location (plan lines 112, 212); plan line 112 writes the same path inline, so the lead may also paste the path in place of `$RS`:
 
 ```powershell
 $RS = '/mnt/c/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/run.sh'
@@ -76,7 +76,7 @@ $RS = '/mnt/c/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/run.sh'
 
 **1. P-3a** write glue and paste files with the Write tool, no WSL (plan line 229). The glue text is in the plan at lines 132-223 and each paste body is the code span after its step id in the plan; the lead copies them from the plan, not from this list. Expected: every file written; nothing run.
 
-P-3a is the Write tool, not a shell command: there is nothing to type, so this step has no code block. The bodies are in the plan (lines 132-223 for the glue; each paste is the code span after its step id).
+P-3a is the Write tool, not a shell command: there is nothing to type and nothing to fill, so this step has no code block. The bodies are in the plan (lines 132-223 for the glue; each paste is the code span after its step id).
 
 **2. P-1** (plan line 230; body at line 230). Expected (plan line 231): `absent`; a path under `.../node_modules/n8n/`; `2.46.6`; `v24.22.2`; no assert; `8`; `BASH_ENV=unset ENV=unset`; at least 2 GB free; `0`; owner-port count is record-only. Differs: any other value = STOP.
 
@@ -184,7 +184,7 @@ wsl.exe -d Ubuntu -e bash $RS 0c.4 s0c
 
 ### 3.4 S1 secrets and value files (plan lines 269-275; log `s1`; STOP class)
 
-**14-19.** Run in order. Expected per step: 1.1 prints `8`; 1.2 prints `0`; 1.2b prints `6`; 1.3 prints `grep exit=0` with every count at least 1 (rule for a 0 and for `exit=124` at plan line 273). Conditional step, run per name whose 1.3 count is 0 and that is NOT one of the STOP names (plan line 273: `DB_TYPE`, `DB_POSTGRESDB_USER`, `DB_POSTGRESDB_DATABASE` = STOP; `N8N_RUNNERS_BROKER_PORT` = STOP if P-1's owner-port file showed 5679 held, else record only; every other name with count 0 gets 1.3d and is record only): `wsl.exe -d Ubuntu -e bash $RS 1.3d s1 <NAME>` (`<NAME>` is that variable name; `pastes/1.3d.sh` removes it from the take's env file and prints a count that must be `0`; an `EXECUTIONS_*` removal makes E5 UNVERIFIED). 1.4 prints `0`; 1.5 shows files 600 and directories 700. Differs: per plan lines 270-275, STOP unless the plan says GO or record only.
+**14-19.** Run in order. Expected per step: 1.1 prints `8`; 1.2 prints `0`; 1.2b prints `6`; 1.3 prints `grep exit=0` with every count at least 1 (rule for a 0 and for `exit=124` at plan line 273). Conditional step, run per name whose 1.3 count is 0 and that is NOT one of the STOP names (plan line 273: `DB_TYPE`, `DB_POSTGRESDB_USER`, `DB_POSTGRESDB_DATABASE` = STOP; `N8N_RUNNERS_BROKER_PORT` = STOP if P-1's owner-port file showed 5679 held, else record only; every other name with count 0 gets 1.3d and is record only; `N8N_RUNNERS_BROKER_PORT` never gets 1.3d, in either case, and check 1.4 expects its value 5691 to stay): `wsl.exe -d Ubuntu -e bash $RS 1.3d s1 <NAME>` (`<NAME>` is that variable name; `pastes/1.3d.sh` removes it from the take's env file and prints a count that must be `0`; an `EXECUTIONS_*` removal makes E5 UNVERIFIED). 1.4 prints `0`; 1.5 shows files 600 and directories 700. Differs: per plan lines 270-275, STOP unless the plan says GO or record only.
 
 ```powershell
 wsl.exe -d Ubuntu -e bash $RS 1.1 s1
@@ -350,23 +350,13 @@ wsl.exe -d Ubuntu -e bash $RS 10 s10
 wsl.exe -d Ubuntu -e bash $RS 11.1 s11
 ```
 
-**11.1b is CONDITIONAL: run it ONLY IF the B2 line is the only not-ok line of 11.1 (plan line 346). After a clean 11.1 do NOT run it. What the plan's script does (plan lines 346-353): the CRM hold (the 8000 ms delay) is cleared only in the `met` branch, which also voids the B2 key and copies the three `*-B2-void1*` files; the `not met` branch only prints `B2 GO rule not met: STOP` and clears nothing. The rule for `met`: no earlier void key, a reply with `n8n_error` true in `drv-B2.out`, and a gap (`ready` minus the B2 kill time) above 120 s. The script does not check that B2 was the failing line, so on a clean 11.1 with `n8n_error` true on a reply and a gap above 120 s it would still print `met`, void a good key and clear the hold.**
+**11.1b is CONDITIONAL: run it ONLY IF the B2 line is the only not-ok line of 11.1 (plan line 346). After a clean 11.1 do NOT run it. What the plan's script does (plan lines 346-353): the CRM hold (the 8000 ms delay) is cleared only in the `met` branch, which also voids the B2 key and copies the three `*-B2-void1*` files; the `not met` branch only prints `B2 GO rule not met: STOP` and clears nothing. The rule for `met` (all four must hold, plan line 351): no earlier void key, a reply with `n8n_error` true in `drv-B2.out`, a non-empty `RD` value (the script tests `[ -n "$RD" ]`), and a gap (`ready` minus the B2 kill time) above 120 s. The script does not check that B2 was the failing line, so on a clean 11.1 with `n8n_error` true on a reply and a gap above 120 s it would still print `met`, void a good key and clear the hold.**
 
 ```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.1b s11
 ```
 
-**47-51. Case C** (default case; plan lines 354-376). Expected: 11.2 the key, `GONE-OK`, readiness under 120 s; 11.3 `HIT`; 11.4 driver alive or ended with a JSON line, status 200, `tries >= 2`; 11.5 `final=done` (or `unknown` with an alert); 11.6 `created true 1`, `mails == 1`, `model_calls == 1`, `"ok": true`. Differs: MISSED or `tries == 1` = run 11.7 (line 377), as `wsl.exe -d Ubuntu -e bash $RS 11.7 s11`, then repeat 11.2-11.6 once with argument `D` (plan lines 226 and 377: a paste that takes the case reads it as `$1`), the five commands being:
-
-```powershell
-wsl.exe -d Ubuntu -e bash $RS 11.2 s11 D
-wsl.exe -d Ubuntu -e bash $RS 11.3 s11 D
-wsl.exe -d Ubuntu -e bash $RS 11.4 s11 D
-wsl.exe -d Ubuntu -e bash $RS 11.5 s11 D
-wsl.exe -d Ubuntu -e bash $RS 11.6 s11 D
-```
-
-If D also MISSED: write "in-flight crash MISSED twice", the C part stays UNVERIFIED, make a ledger finding, go on to E (plan line 377). Mails, model calls or ok wrong = STOP.
+**47-51. Case C** (default case; plan lines 354-376). Expected: 11.2 the key, `GONE-OK`, readiness under 120 s; 11.3 `HIT`; 11.4 driver alive or ended with a JSON line, status 200, `tries >= 2`; 11.5 `final=done` (or `unknown` with an alert); 11.6 `created true 1`, `mails == 1`, `model_calls == 1`, `"ok": true`. Differs: MISSED or `tries == 1` = run the D repeat shown AFTER the five C commands (plan line 377). Run the five C commands first; the D block below is run only if C MISSED.
 
 ```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.2 s11 C
@@ -388,14 +378,19 @@ wsl.exe -d Ubuntu -e bash $RS 11.5 s11 C
 wsl.exe -d Ubuntu -e bash $RS 11.6 s11 C
 ```
 
-**52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 378; the E2 repeat is plan line 398) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C (and D if run; plan line 399), except a key listed in `b2-void.txt`; the E line (and the E2 line if the repeat ran) is judged under row DM, not by `ok` alone. Differs: E MISSED = one repeat as `E2` (about 8 min, plan line 398): run E.0 again WITHOUT an argument, then the four commands below (plan line 398: E.1 and E.2 with `E2`, then 11.4 and 11.5 with `E2`), then judge as under 11.8. The E.0 command is the one shown above; it takes no argument:
+**Run only if C MISSED (D repeat, plan lines 226 and 377).** First run 11.7 (plan line 377) as `wsl.exe -d Ubuntu -e bash $RS 11.7 s11`, then repeat 11.2-11.6 once with argument `D` (a paste that takes the case reads it as `$1`), the five commands being:
 
 ```powershell
-wsl.exe -d Ubuntu -e bash $RS E.1 s11 E2
-wsl.exe -d Ubuntu -e bash $RS E.2 s11 E2
-wsl.exe -d Ubuntu -e bash $RS 11.4 s11 E2
-wsl.exe -d Ubuntu -e bash $RS 11.5 s11 E2
+wsl.exe -d Ubuntu -e bash $RS 11.2 s11 D
+wsl.exe -d Ubuntu -e bash $RS 11.3 s11 D
+wsl.exe -d Ubuntu -e bash $RS 11.4 s11 D
+wsl.exe -d Ubuntu -e bash $RS 11.5 s11 D
+wsl.exe -d Ubuntu -e bash $RS 11.6 s11 D
 ```
+
+If D also MISSED: write "in-flight crash MISSED twice", the C part stays UNVERIFIED, make a ledger finding, go on to E (plan line 377). Mails, model calls or ok wrong = STOP.
+
+**52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 378; the E2 repeat is plan line 398) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C (and D if run; plan line 399), except a key listed in `b2-void.txt`; the E line (and the E2 line if the repeat ran) is judged under row DM, not by `ok` alone. Differs: E MISSED = one repeat as `E2` (about 8 min, plan line 398): run E.0 again WITHOUT an argument (the E.0 command is the first command in the list below; it takes no argument), then the four commands in the block after 11.8 (plan line 398: E.1 and E.2 with `E2`, then 11.4 and 11.5 with `E2`), then judge as under 11.8.
 
 Other results (plan lines 398-399): a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2, C (or D if run) line = STOP, except a key in `b2-void.txt` (listed, not counted); any other not-ok E or E2 line is a GO finding with its fields; if E2 also MISSED, row DM carries "'processed once' is NOT shown for a crash between SMTP send and MarkDone (window untested); the take is not claimed crash-safe until it is tested and holds, is fixed, or the owner accepts in writing" into every owner-facing claim (plan line 398).
 
@@ -421,6 +416,15 @@ wsl.exe -d Ubuntu -e bash $RS 11.5 s11 E
 
 ```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.8 s11
+```
+
+**Run only if E MISSED (E2 repeat, plan line 398):** run E.0 again first (the same command as above, no argument), then:
+
+```powershell
+wsl.exe -d Ubuntu -e bash $RS E.1 s11 E2
+wsl.exe -d Ubuntu -e bash $RS E.2 s11 E2
+wsl.exe -d Ubuntu -e bash $RS 11.4 s11 E2
+wsl.exe -d Ubuntu -e bash $RS 11.5 s11 E2
 ```
 
 ### 3.12 S12 leaks, key, one store, egress (plan lines 401-406; log `s12`; run order 12.2, 12.5, 12.5b, 12.3, 12.4)
@@ -543,7 +547,7 @@ Part B: the plan's own 20 pass/fail rows (plan section 7, lines 464-486). Fill i
 | H1 | scripts under test are the pinned head; quoted strings present | STOP | P-2, 0.1 | |
 | K1 | second start refused over live n8n | STOP | 8.1 | |
 | K2 | dead pid in file: refused naming the real n8n; kill finds it | STOP | 8.4 | |
-| K5 | every script kill `GONE-OK`, no fallback | STOP | 0c.4, 8.4, 9.4, 11.2, E.1 | |
+| K5 | every script kill `GONE-OK`, no fallback | STOP | 0c.4, 8.4, 9.4, 11.2, E.1 (E2 too if run) | |
 | K8 | real task-runner identity verdict | record only | S7 | |
 | T1 | restart gaps and "published workflows" line | record only (STOP if `w` empty or `NOT-UP`) | S9 | |
 | B1 | same-id burst on the new stack; B2 killed in flight | STOP | 9.4, S10, 11.1, 11.1b, 11.8 | |
