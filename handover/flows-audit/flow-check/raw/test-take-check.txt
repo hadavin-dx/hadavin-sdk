@@ -264,20 +264,3 @@ ok   word list: run_all.sh asks take_check.sh for the pin line check and for the
 ok   control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit 4)
 ok   Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit 5)
 ok   Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit 4)
-ok   Q1: '# reviewed by: Audit Session B, 2026-11-16' is exit 4 (got exit 4)
-ok   Q1: '# reviewed by: A. Person, 2026-11-16, Lead To Confirm' is exit 4 (got exit 4)
-ok   B1a: --write-warn-pin on the pin in use is refused (exit 2) and leaves it unchanged (got exit 2)
-ok   B1b: a clean run writes a NEW pin with date and sha256 and exits 4, not 0 (got exit 4)
-ok   B1: the written pin carries the '# flows sha256' line
-ok   M-3: the written pin says it is not yet read and holds the placeholder line
-ok   M-3: a pin whose header still has the placeholder is exit 4 (got exit 4)
-ok   M-3: a pin with no 'reviewed by' line is exit 4 (got exit 4)
-ok   B1b: the written pin, used as the pin, gives exit 5 (would-be pass with the pin override) (got exit 5)
-ok   B1c: --write-warn-pin on an existing file is refused (exit 2) and leaves it unchanged (got exit 2)
-ok   B1d: a run with a FAIL writes no pin and keeps exit 1 (got exit 1)
-ok   B1e: a changed WARN set prints the difference, writes the new file, exits 4 (got exit 4)
-ok   B1: the pin in use (take-warns.pin) is byte for byte unchanged by all cases above
-ok   M-3: run saving off (unpatched folder) writes no pin, exit 4 (got exit 4)
-ok   M-3: table file missing writes no pin, exit 4 (got exit 4)
-ok   M-3: an environment override without the test flag writes no pin, exit 4 (got exit 4)
-ok   M-3: key check absent writes no pin, exit 4 or 1 (got exit 1)
