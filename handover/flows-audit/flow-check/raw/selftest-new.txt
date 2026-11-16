@@ -191,3 +191,96 @@ bad_node_dot_ref@real-mf-recovery.json (FAIL, exit 1)                    as expe
 bad_node_dot_ref@real-mf-sub-crm-mail.json (FAIL, exit 1)                as expected
 bad_node_dot_ref@film-mf-form.json (FAIL, exit 1)                        as expected
 shape_connection_not_object@real-mf-form.json (FAIL, exit 1)             as expected
+shape_connection_not_object@real-mf-hook.json (FAIL, exit 1)             as expected
+shape_connection_not_object@real-mf-recovery.json (FAIL, exit 1)         as expected
+shape_connection_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected
+shape_connection_not_object@film-mf-form.json (FAIL, exit 1)             as expected
+shape_link_without_node@real-mf-form.json (FAIL, exit 1)                 as expected
+shape_link_without_node@real-mf-hook.json (FAIL, exit 1)                 as expected
+shape_link_without_node@real-mf-recovery.json (FAIL, exit 1)             as expected
+shape_link_without_node@real-mf-sub-crm-mail.json (FAIL, exit 1)         as expected
+shape_link_without_node@film-mf-form.json (FAIL, exit 1)                 as expected
+shape_node_not_object@real-mf-form.json (FAIL, exit 1)                   as expected
+shape_node_not_object@real-mf-hook.json (FAIL, exit 1)                   as expected
+shape_node_not_object@real-mf-recovery.json (FAIL, exit 1)               as expected
+shape_node_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+shape_node_not_object@film-mf-form.json (FAIL, exit 1)                   as expected
+shape_parameters_not_object@real-mf-form.json (FAIL, exit 1)             as expected
+shape_parameters_not_object@real-mf-hook.json (FAIL, exit 1)             as expected
+shape_parameters_not_object@real-mf-recovery.json (FAIL, exit 1)         as expected
+shape_parameters_not_object@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected
+shape_parameters_not_object@film-mf-form.json (FAIL, exit 1)             as expected
+shape_top_level_list@real-mf-form.json (FAIL, exit 1)                    as expected
+shape_top_level_list@real-mf-hook.json (FAIL, exit 1)                    as expected
+shape_top_level_list@real-mf-recovery.json (FAIL, exit 1)                as expected
+shape_top_level_list@real-mf-sub-crm-mail.json (FAIL, exit 1)            as expected
+shape_top_level_list@film-mf-form.json (FAIL, exit 1)                    as expected
+shape_nodes_not_list@real-mf-form.json (FAIL, exit 1)                    as expected
+shape_nodes_not_list@real-mf-hook.json (FAIL, exit 1)                    as expected
+shape_nodes_not_list@real-mf-recovery.json (FAIL, exit 1)                as expected
+shape_nodes_not_list@real-mf-sub-crm-mail.json (FAIL, exit 1)            as expected
+shape_nodes_not_list@film-mf-form.json (FAIL, exit 1)                    as expected
+shape_node_without_name@real-mf-form.json (FAIL, exit 1)                 as expected
+shape_node_without_name@real-mf-hook.json (FAIL, exit 1)                 as expected
+shape_node_without_name@real-mf-recovery.json (FAIL, exit 1)             as expected
+shape_node_without_name@real-mf-sub-crm-mail.json (FAIL, exit 1)         as expected
+shape_node_without_name@film-mf-form.json (FAIL, exit 1)                 as expected
+shape_link_index_text@real-mf-form.json (FAIL, exit 1)                   as expected
+shape_link_index_text@real-mf-hook.json (FAIL, exit 1)                   as expected
+shape_link_index_text@real-mf-recovery.json (FAIL, exit 1)               as expected
+shape_link_index_text@real-mf-sub-crm-mail.json (FAIL, exit 1)           as expected
+shape_link_index_text@film-mf-form.json (FAIL, exit 1)                   as expected
+sticky_only_file@real-mf-form.json (FAIL, exit 1)                        as expected
+sticky_only_file@real-mf-hook.json (FAIL, exit 1)                        as expected
+sticky_only_file@real-mf-recovery.json (FAIL, exit 1)                    as expected
+sticky_only_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                as expected
+sticky_only_file@film-mf-form.json (FAIL, exit 1)                        as expected
+trigger_plus_notes_only@real-mf-form.json (FAIL, exit 1)                 as expected
+trigger_plus_notes_only@real-mf-hook.json (FAIL, exit 1)                 as expected
+trigger_plus_notes_only@real-mf-recovery.json (FAIL, exit 1)             as expected
+trigger_plus_notes_only@real-mf-sub-crm-mail.json (FAIL, exit 1)         as expected
+trigger_plus_notes_only@film-mf-form.json (FAIL, exit 1)                 as expected
+parse_fail@real-mf-form.json (FAIL, exit 1)                              as expected
+parse_fail@real-mf-hook.json (FAIL, exit 1)                              as expected
+parse_fail@real-mf-recovery.json (FAIL, exit 1)                          as expected
+parse_fail@real-mf-sub-crm-mail.json (FAIL, exit 1)                      as expected
+parse_fail@film-mf-form.json (FAIL, exit 1)                              as expected
+missing_file@real-mf-form.json (FAIL, exit 1)                            as expected
+missing_file@real-mf-hook.json (FAIL, exit 1)                            as expected
+missing_file@real-mf-recovery.json (FAIL, exit 1)                        as expected
+missing_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                    as expected
+missing_file@film-mf-form.json (FAIL, exit 1)                            as expected
+webhook_path_reused_in_other_file@real-mf-form.json (FAIL, exit 1)       as expected
+webhook_path_reused_in_other_file@real-mf-hook.json (FAIL, exit 1)       as expected
+webhook_path_reused_in_other_file@real-mf-recovery.json                  skipped (not applicable to this file)
+webhook_path_reused_in_other_file@real-mf-sub-crm-mail.json              skipped (not applicable to this file)
+webhook_path_reused_in_other_file@film-mf-form.json (FAIL, exit 1)       as expected
+webhook_id_reused_in_other_file@real-mf-form.json (FAIL, exit 1)         as expected
+webhook_id_reused_in_other_file@real-mf-hook.json (FAIL, exit 1)         as expected
+webhook_id_reused_in_other_file@real-mf-recovery.json                    skipped (not applicable to this file)
+webhook_id_reused_in_other_file@real-mf-sub-crm-mail.json                skipped (not applicable to this file)
+webhook_id_reused_in_other_file@film-mf-form.json (FAIL, exit 1)         as expected
+webhook_no_reply_node@real-mf-form.json (FAIL, exit 1)                   as expected
+webhook_no_reply_node@real-mf-hook.json (FAIL, exit 1)                   as expected
+webhook_no_reply_node@real-mf-recovery.json                              skipped (not applicable to this file)
+webhook_no_reply_node@real-mf-sub-crm-mail.json                          skipped (not applicable to this file)
+webhook_no_reply_node@film-mf-form.json (FAIL, exit 1)                   as expected
+webhook_reply_node_disabled@real-mf-form.json (FAIL, exit 1)             as expected
+webhook_reply_node_disabled@real-mf-hook.json (FAIL, exit 1)             as expected
+webhook_reply_node_disabled@real-mf-recovery.json                        skipped (not applicable to this file)
+webhook_reply_node_disabled@real-mf-sub-crm-mail.json                    skipped (not applicable to this file)
+webhook_reply_node_disabled@film-mf-form.json (FAIL, exit 1)             as expected
+webhook_disabled_no_trigger@real-mf-form.json (FAIL, exit 1)             as expected
+webhook_disabled_no_trigger@real-mf-hook.json (FAIL, exit 1)             as expected
+webhook_disabled_no_trigger@real-mf-recovery.json                        skipped (not applicable to this file)
+webhook_disabled_no_trigger@real-mf-sub-crm-mail.json                    skipped (not applicable to this file)
+webhook_disabled_no_trigger@film-mf-form.json (FAIL, exit 1)             as expected
+webhook_dead_branch@real-mf-form.json (FAIL, exit 1)                     as expected
+webhook_dead_branch@real-mf-hook.json (FAIL, exit 1)                     as expected
+webhook_dead_branch@real-mf-recovery.json                                skipped (not applicable to this file)
+webhook_dead_branch@real-mf-sub-crm-mail.json                            skipped (not applicable to this file)
+webhook_dead_branch@film-mf-form.json (FAIL, exit 1)                     as expected
+webhook_without_auth_strict@real-mf-form.json (FAIL, exit 1)             as expected
+webhook_without_auth_strict@real-mf-hook.json (FAIL, exit 1)             as expected
+webhook_without_auth_strict@real-mf-recovery.json (FAIL, exit 1)         as expected
+webhook_without_auth_strict@real-mf-sub-crm-mail.json (FAIL, exit 1)     as expected

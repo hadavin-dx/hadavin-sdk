@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T15:09:56Z
+UPDATED_UTC: 2026-11-16T15:10:11Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,12 +7,12 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 2.04 load of 4 cores, mem 1/15 GB, RAM 1761/16087 MB, disk 17G free of 252G, top3 422M /tmp/tmp.SjFcfMab07 552M /tmp/pytest-of-root 11G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 1.96 load of 4 cores, mem 1/15 GB, RAM 1650/16087 MB, disk 16G free of 252G, top3 422M /tmp/tmp.SjFcfMab07 566M /tmp/pytest-of-root 11G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running abfcd0a); check_secrets FAIL 1 hit flow-check/raw/test-take-check.txt:178; run_all.sh rc 1 (reviews/evidence-run-all-2.md)
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T15:09:56Z
+PUSHED_UTC: 2026-11-16T15:10:11Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |

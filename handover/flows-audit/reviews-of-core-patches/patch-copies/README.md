@@ -39,7 +39,7 @@ Date of this text: 2026-11-16, third fixer pass, static for databases: no databa
 | 6 | Per-row guard in the chain drain (`REVIEW.md` row A-6) before A-01 goes live | studio head decides; a builder writes it | yes for A-01 (see "A-01 precondition") | not applied: one bad row turns the step red on every tick |
 | 7 | G5 wording: approve the new sentences | studio head | no (text only) | not applied |
 | 8 | Dead-man check: the limit in seconds, the second alert channel, who is the database owner who creates the login | studio head names the person; see `DEAD-MAN-CHECK.md` | no (a note, no core code) | not set up |
-| 9 | Two files under `handover/` hold a banned vendor name (see "Pass criterion", failure 1) | the lead rewords them (they are studio notes); I may not edit them | yes: the repository gate needs every guard test green | the gate stays red at `b4cce5b` |
+| 9 | Two baseline failures caused by files under `handover/`: a banned vendor name in two studio notes, and non-proprietary licence files in copies of seven other projects (see the two baseline failures under the gate recipe) | the lead fixes them in a separate change; I may not edit them | yes: the repository gate needs every guard test green | the gate stays red at `b4cce5b` |
 
 ## Who runs each step
 | Step | Who | What they hold |
@@ -113,14 +113,18 @@ run "$W/patched"   patched         # 2. the patched copy
 diff "$W/baseline-failed.txt" "$W/patched-failed.txt" && echo "same failed tests"
 ```
 **Pass criterion:** (a) the `diff` prints nothing (the patched run fails exactly the tests the baseline fails, no others); (b) the patched count line shows
-the baseline's `passed` plus 32, with the same `skipped` and `deselected`; (c) the two exit codes are equal (both 1 while the baseline failure exists, both 0 once it is
-fixed). This is "no new failure", not "all green": all guard tests must be green before a real merge (`CLAUDE.md`, gate list), which needs failure 1 fixed (decision table, row 9).
+the baseline's `passed` plus 32, with the same `skipped` and `deselected`; (c) the two exit codes are equal (both 1 while the baseline failures exist, both 0 once they are
+fixed). This is "no new failure", not "all green": all guard tests must be green before a real merge (`CLAUDE.md`, gate list), which needs failures 1 and 2 fixed (decision table, row 9).
 
-Known baseline failure at `b4cce5b` (seen in this pass, see "Results"):
-1. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked` fails because two files hold a banned vendor name (the list `BANNED`, `tests/test_no_reference_material.py:19-30`):
-   `handover/demo/portal/portal-design-v2.md` and `handover/BRIEF-PREAMBLE-studio-2026-11-06.md`. The patches do not cause or touch it. Who must fix: the lead (reword the two
-   studio notes in a separate change); I did not edit them (my files were limited to this folder) and I do not print the banned string here.
-(The second failure of the earlier pass, `test_licences_are_proprietary`, came only from running in a folder without git history; with a clone it passes.)
+Known baseline failures at `b4cce5b` (seen in this pass in a real clone, so not a git problem; see "Results"). Both are caused by files under `handover/` and neither is touched by the patches:
+1. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`: two files hold a banned vendor name (the list `BANNED`, `tests/test_no_reference_material.py:19-30`):
+   `handover/demo/portal/portal-design-v2.md` and `handover/BRIEF-PREAMBLE-studio-2026-11-06.md`. I do not print the banned string here.
+2. `tests/test_repo_rules.py::test_licences_are_proprietary`: 10 problems, all in copies of other projects under `handover/promotion-inputs/`: the `LICENSE` file of `apexc`, `dealdesk`, `helios`,
+   `killswitch`, `portal-kit`, `refunds` and `warden` is not the proprietary licence text, and the `pyproject.toml` of `killswitch` (licence and authors) and of `portal-kit` (authors) is not
+   the studio's.
+**Correction of my own earlier text:** the first and second pass said failure 2 came only from running in a folder without git history. That was wrong: it also fails in a real clone, for the reason above.
+Who must fix both: the lead (change or remove those studio copies, or tell the test to skip `handover/`, in a separate change); I did not edit them (my files were limited to this folder).
+Until then the repository gate cannot be fully green at `b4cce5b`, so the pass criterion below is "no new failure".
 
 ### Proof that the new tests fail on the old code
 Run on the unpatched copy with only the two new test files copied in (copied from the patched copy):
