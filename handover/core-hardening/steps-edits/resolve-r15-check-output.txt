@@ -1,1 +1,5 @@
 == verify15.py on EDITS.md ==
+rows parsed 59
+counts text (59, 40, 15, 4) computed (59, 40, 15, 4)
+round 15 checks done
+FAILURES 0
