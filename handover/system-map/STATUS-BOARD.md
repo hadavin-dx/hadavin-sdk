@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:56:52Z
-PUSHED_UTC: 2026-11-16T13:56:52Z
+UPDATED_UTC: 2026-11-16T13:57:53Z
+PUSHED_UTC: 2026-11-16T13:57:53Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1338 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1340 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,11 +46,11 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| ac7873f66d3765a40 | cold read GLOSSARY.md after my rewrite | 2026-11-16T13:56Z | +5 min | running | nothing yet |
+| none running | (a4bf9ca735902acc0 handed back and is closed) | - | - | - | - |
 
-CAPACITY: 1 agent running, 7 below the 8 of ORDER 040. Reason: every file in work/ has had a cold read, so no unread independent file is left; I am editing pages I own and each edited page gets one cold re-read.
+CAPACITY: 0 agents running, 8 below the 8 of ORDER 040. Reason: no unread independent file is left; I am editing pages I own (stacked paragraphs next) and will start one cold re-read per edited page.
 
-Next 5 independent tasks: Read-this-first blocks on L1c/L3c/L4c/L5b/L6; collapse stacked paragraphs in t19-history, premortem, critical-path, open-items; rewrite rehearsal-passed-limits-draft.md as one block; purpose headers on the evidence files; fix BRIEF-EVIDENCE-1/2 and LEAD-NOTICE-batch-1 tables.
+Next 5 independent tasks: collapse stacked paragraphs in t19-history, premortem, critical-path, open-items; Read-this-first blocks on L1c/L3c/L4c/L5b/L6; purpose headers on the evidence files; fix BRIEF-EVIDENCE-1/2 and LEAD-NOTICE-batch-1 tables; owner-timeline-draft row 9.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
