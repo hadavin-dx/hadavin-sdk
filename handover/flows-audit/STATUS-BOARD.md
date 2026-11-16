@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:24:56Z
+UPDATED_UTC: 2026-11-16T10:25:41Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 57
+PERCENT: 58
 AGENTS_RUNNING: 6
-CAPACITY: 4.14 load of 4 cores, mem 1/15 GB, RAM 1026/16087 MB, disk 27G free of 252G, top3 649M /tmp/pytest-of-root 663M /tmp/claude-0 871M /tmp/f3m , agents 6 (light+heavy per list)
+CAPACITY: 4.52 load of 4 cores, mem 0/15 GB, RAM 980/16087 MB, disk 27G free of 252G, top3 649M /tmp/pytest-of-root 661M /tmp/claude-0 871M /tmp/f3m , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -26,8 +26,9 @@ F5 r7 fixer: checker rc 0 twice (157 rows, 0 ids missing) as of CLAIMS-TABLE bef
 decisions pass review: 9 Majors (stale 8 files, count readings disagree, F6B steps 1-5 still describe film-set switching, TRUNCATE would destroy lead_key to crm_id list, F-003/F-004 patches still insert scene 5 text); fixer r2 + patch regeneration running; Q14 asked the lead to re-rate F-005/F-006/F-023/F6B-01/F6B-13 and decide the scene 4 caption
 F3 security review 4: 0 Blocker, 4 Majors (check says 0 problems when the manifest is not found; --tokens-only accepts a NOT READY copy; stray .DS_Store blocks check and delete; README claims Python 3.11/3.12 never run) + nits incl 6 noqa vs no-suppression rule; fixer waits for the independent evidence run (still running)
 claims r7 fixer: 6 Majors fixed (own report), F5 checker PASS 157 rows (rerun by me, see rc), counts unchanged 126/69/52/29/51=327; open: Q15 closing card (rows 14-15 tags wait for lead), Q13 contact cleanup; M8 words and 'settings-file figures' (M16) still open; 2 cites were not wrong (evidence script compared claim text to code line); independent re-read of r7 not done
-NEXT: F3 r7 fixer after evidence lands; F8 ev+review, decisions r2, patches
-PUSHED_UTC: 2026-11-16T10:24:56Z
+F8 owner-morning review (reading only): 4 Majors: take check passes with FROM/INTAKE address placeholders still in 2 mail nodes; real-v5 has no table SQL and the nearest one lacks the 4 alert columns so no alert would ever send (Q16 to lead); real-v5 files lack F-002 and F-008 (saved runs off) with no warning; --fail-unverified claim wider than the code. r5 fixer running
+NEXT: F3 r7 fixer after evidence; F8 r5 fixer + ev r4, decisions r2, patches
+PUSHED_UTC: 2026-11-16T10:25:41Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -48,9 +49,9 @@ PUSHED_UTC: 2026-11-16T10:24:56Z
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f8ev4 | F8 r4 evidence runner | sonnet | independent rerun, 25 mutants, hostile inputs | 10:33 | 10:55 | 5 | running | flow-check/evidence-r4.md |
-| f8rv4 | F8 r4 second reviewer (owner-morning angle) | sonnet | what r3 missed | 10:33 | 10:48 | 5 | running | - |
 | decfix2 | decisions text fixer r2 | sonnet | 9 Majors of review (M4/M8 left to lead, Q14) | 10:37 | 11:00 | 5 | running | reviews/apply-decisions-r2.md |
 | patchre | regenerate F-003/F-004 patches real-v5 only | sonnet | remove scene 5 / 60.1-61.9 s / film-v5 text | 10:37 | 11:05 | 5 | running | patches/REGENERATED-NOTE.md |
+| f8fix5 | F8 r5 fixer | sonnet | 4 Majors of owner-morning review (placeholders hidden, wrong table SQL, unpatched files, --fail-unverified) | 10:41 | 11:10 | 5 | running | flow-check/fix-f8-r5.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
