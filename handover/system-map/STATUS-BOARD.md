@@ -50,7 +50,7 @@ INTERRUPTED: none
 
 ## AGENTS
 - a3798a0064132a398 | RUNBOOK PATCH A: edits forced by the 12 decisions -> work/RUNBOOK-V4.3-PATCH-part1.md | running | next: merge into RUNBOOK-V4.3-PATCH.md
-- a0e8520fb4404f483 | RUNBOOK PATCH C: timing rows -> work/RUNBOOK-V4.3-PATCH-part3-timing.md | running | next: merge
+- PATCH-C-READER | READER: work/RUNBOOK-V4.3-PATCH-part3-timing.md (patch C a0e8520fb4404f483 FINISHED) | started 16:10Z | running | next: digest, merge
 - af3ad78c54c926614 | FIXER decision list D-05..D-08 | running | next: scan
 - aaf7afcfd58446272 | FIXER owner-timeline-draft, open-items-table, critical-path-r1 to 17:40Z start | running | next: one fresh reader
 - ad49732d974688a4a | WRITER LEAD-NOTICE timing items (a to h) | running | next: digest

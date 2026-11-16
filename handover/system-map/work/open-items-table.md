@@ -1,7 +1,7 @@
 # Open items that block the take (live page; Mon 16 Nov 2026)
 
 ## What this page is
-The demo (called lead-intake; the program is the demo's own script that sends the leads): a made-up sales lead goes into n8n (a tool that runs steps), is stored once, creates one contact in HubSpot (a sales-contact tool) and sends one mail; the take (one filmed run) shows that the same lead sent twice gives one mail and one contact write. The flow files carry placeholders for settings; a script (fill_flows.py, not built) fills them in. Below, the questions that must be answered first.
+The demo (called lead-intake; the program is the demo's own script that sends the leads): a made-up sales lead goes into n8n (a tool that runs steps), is stored once, creates one contact in HubSpot (a sales-contact tool) and sends one mail; the take (one filmed run) shows that the same lead sent twice gives one mail and one contact write. The flow files carry placeholders for settings; a script (fill_flows.py) fills them in. UNVERIFIED whether that script exists: this page and work/critical-path-r1.md say "not built"; the plan (plan lines 4 and 223) says it read a file fill_flows.py in the glue folder (conflict 4 in work/critical-path-r2.md). I searched this checkout and found no file of that name, but the glue folder may not be in it, so neither statement is checked; the studio lead must look at the real disk. Below, the questions that must be answered first.
 Seven rows (1a, 1b, 2, 3, 4, 4b, 5). What each blocks:
 - Rows 1b, 2, 3, 4 and 4b block the first rehearsal; row 5 blocks scheduling it; row 1a blocks it unless row 1b is answered "no"; until row 1b is answered, row 1a blocks (today it blocks). All seven must be answered before the take.
 - A row is answered when its answer, quoting who answered and when, is written in the "Answer" column (the listed answerer gives the answer; the studio lead or the system-map session, two different Claude sessions, writes it into the table; no reply file is named).
@@ -22,10 +22,27 @@ Seven rows (1a, 1b, 2, 3, 4, 4b, 5). What each blocks:
 - "before the first rehearsal" in an Answer-by cell means: due before that event; the clock time is the proposal.
 - decision-list item A4 = item A4 of handover/system-map/work/decision-list-for-lead.md: "does run (a) start today".
 
+## Schedule (the one place with all dates; every time is a PROPOSAL; from work/critical-path-r2.md, which is DRAFT and unverified; UTC / IST)
+| date and time | what | source |
+|---|---|---|
+| Mon 16 Nov 13:00 / 18:30 | row 5 (A4) was due; PASSED, answer UNKNOWN | row 5 |
+| Mon 16 Nov 18:00 / 23:30 | if the studio head is unnamed: the studio lead asks the owner "Who will build fill_flows.py?" | Words |
+| Tue 17 Nov 01:30 / 07:00 | the owner answers with one name (row 1a fallback) | Words, row 1a |
+| Tue 17 Nov 03:30 / 09:00 | rows 1a, 1b, 3 and 5 due; the name is entered in row 1a | rows 1a, 1b, 3, 5 |
+| Tue 17 Nov 09:00 / 14:30 | row 4b due | row 4b |
+| Tue 17 Nov 12:00 / 17:30 | rows 2 and 4 due | rows 2, 4 |
+| Tue 17 Nov 12:30 / 18:00 | earliest start of the first rehearsal (laptop test run) | Words, order of events |
+| Mon 23 Nov 03:40 / 09:10 | latest start of build and import of the flow copy, base case (A13 = no); a plan-length chain of 14 hours ends at the take start | r2 section 2, step 4 |
+| Mon 23 Nov 14:40 / 20:10 | latest time for the owner notice, base case (3 hours before the start; the stricter reading, 3 hours before the owner's setup, is 14:10 / 19:40) | r2 sections 2 and 5 |
+| Mon 23 Nov 17:40 / 23:10 | latest start of the take (49-minute worst case) | r2 section 1 |
+| Mon 23 Nov 18:29 / 23:59 | stop time | r2 section 1 |
+| Wed 25 Nov 15:00 / 20:30 | post | r2 section 1 |
+If A13 (4-hour rerun margin) = yes: take start 13:40 / 19:10, notice 10:40 / 16:10, build and import Sun 22 Nov 23:40 / Mon 23 Nov 05:10 (r2 section 2). What fills the 49 minutes, the owner setup time and the review and rehearsal times are NOT STATED in any file or rest on an earlier draft's guess; the margin of about 6 days is not usable until rows 1a, 1b and 5 are answered.
+
 ## Open items
 | # | old # | Question (yes/no unless it says one name or one sentence) | Where (path from the repo root, or relative as written) | Answerer (role) | Answer by (UTC / IST) | Answer |
 |---|---|---|---|---|---|---|
-| 1a | 1 | Who builds the filled patched flows (script fill_flows.py, not built; it puts the laptop's settings into the n8n flows)? One name, not yes/no. If row 1b is yes and nobody is named, the take cannot start. | handover/system-map/README.md line 3; handover/system-map/TAKE-BLOCKERS.md row 1 | studio head (if unnamed by Mon 16 Nov 18:00 UTC / 23:30 IST: the owner, see Words) | Tue 17 Nov 03:30 UTC / 09:00 IST | NOT SET |
+| 1a | 1 | Who builds the filled patched flows (script fill_flows.py; "not built" is UNVERIFIED, see the intro; it puts the laptop's settings into the n8n flows)? One name, not yes/no. If row 1b is yes and nobody is named, the take cannot start. | handover/system-map/README.md line 3; handover/system-map/TAKE-BLOCKERS.md row 1 | Answerer: the studio head. Fallback only if the studio head is unnamed by Mon 16 Nov 18:00 UTC / 23:30 IST: the owner, who then answers by Tue 17 Nov 01:30 UTC / 07:00 IST (see Words) | Tue 17 Nov 03:30 UTC / 09:00 IST | NOT SET |
 | 1b | new | Does the first rehearsal need fill_flows.py? yes/no (unknown today; if still unknown at the due time, treat it as yes) | handover/system-map/TAKE-BLOCKERS.md row 1 | studio lead | Tue 17 Nov 03:30 UTC / 09:00 IST | NOT SET |
 | 2 | 2 | Does the studio lead send the owner the HubSpot check message (one line the owner runs in HubSpot, then pastes back the result)? yes/no. (The four logins are parked by decision 3; deleting leftovers is moot because of decision 2.) | handover/system-map/OWNER-VIEW.md line 27; handover/system-map/TAKE-BLOCKERS.md row 5 | studio lead | Tue 17 Nov 12:00 UTC / 17:30 IST | NOT SET |
 | 3 | 20 | Will the studio lead name the demo HubSpot account (no account number) in the message that sends the leftover-contact list, so the owner can check it before deleting the leftover contacts by hand (decision 2)? yes/no | handover/system-map/work/end-delete-cases.md step 18 | studio lead | Tue 17 Nov 03:30 UTC / 09:00 IST (proposed; due before the first rehearsal) | NOT SET |

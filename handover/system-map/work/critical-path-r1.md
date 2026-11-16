@@ -2,6 +2,8 @@ SUPERSEDED by work/critical-path-r2.md (the table below was built on a missed 14
 
 # CRITICAL PATH: when can the first filmed take happen? (current answer, 16 Nov 2026)
 
+Note (16 Nov, added in a wording fix): conflict 4 from r2. Condition 5 below and open-items-table.md say fill_flows.py is not built, while the plan (lines 4 and 223) says it read a file fill_flows.py in the glue folder. UNVERIFIED which is right; I searched this checkout and found no such file, but the glue folder may not be in it.
+
 ## Answer
 NO CONFIRMED DATE. If all six conditions below hold and row 2a starts by Mon 16 Nov 17:00 UTC / 22:30 IST, the earliest filmed take is Tue 17 Nov 05:00 UTC / 10:30 IST (setup from 04:30 UTC / 10:00 IST; the 3-hour owner notice counts back from the setup time, so it goes out by 01:30 UTC / 07:00 IST). The 05:00 time is my guess at when the owner wakes (ASSUMED, UNVERIFIED). If any condition is missing there is no date.
 
