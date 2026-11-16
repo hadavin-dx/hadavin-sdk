@@ -15,7 +15,7 @@ chk("A2 ids are exactly 1..94, unique (table is in apply order, not numeric orde
 cols = [len(l.split(" | ")) for l in rowl]
 chk("A3 every row has the same number of cells", len(set(cols)) == 1, set(cols))
 st = [re.match(r"^\| \d+ \| (NOT APPLIED[^|]*?) \|", l).group(1) for l in rowl]
-ready = sum(1 for s in st if s.endswith("ready")); dflt = sum(1 for s in st if "default" in s and "after check" not in s); chk_ = sum(1 for s in st if "after check" in s); own = sum(1 for s in st if "owner" in s or "L-SAVEERR" in s)
+ready = sum(1 for s in st if s.endswith("ready")); dflt = sum(1 for s in st if "on the default" in s and "after check" not in s); chk_ = sum(1 for s in st if "after check" in s); own = sum(1 for s in st if "owner" in s or "L-SAVEERR" in s)
 chk("A4 status split 49+36+3+6 = 94", (ready, dflt, chk_, own) == (49, 36, 3, 6), (ready, dflt, chk_, own, sorted(set(st))[:8]))
 # every statement of the row total
 cnt = re.findall(r"\b(\d+) (?:proposed )?(?:text changes|rows)\b|Of the (\d+) rows", raw)
@@ -65,7 +65,7 @@ for l in tb:
 chk("D1 card length table: seconds = words/150*60, budget = round up to 5, total = 150+budget (6 rows)", ok, det)
 # quoted line word counts
 qs = re.search(r"THE CLOSING CARD UNDER THE DEFAULTS[^\n]*", raw).group(0)
-parts = re.findall(r"line (\d) \((\d+) words?\) '(.*?)'(?= line \d|\s*$|\. |\s*$)", qs)
+parts = re.findall(r"line (\d) \((\d+) words?\) '(.*?)'(?= line \d \(| Total )", qs)
 chk("D2 closing card: 4 quoted lines, stated word counts equal real counts", len(parts) >= 3 and all(len(t.split()) == int(c) for _, c, t in parts), [(a, c, len(t.split())) for a, c, t in parts])
 tot = sum(int(c) for _, c, _ in parts)
 chk("D3 card total (default a) equals table 90", tot == 90, tot)

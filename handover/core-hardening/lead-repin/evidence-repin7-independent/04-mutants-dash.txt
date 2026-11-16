@@ -6,3 +6,5 @@ m05 ghp min 10->100: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1387
 m06 AKIA 16->17: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1385 failed=12 (the made-up input and output files were deleted) (117s)
 m07 JWT eyJ 8->80: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1385 failed=12 (the made-up input and output files were deleted) (116s)
 m08 email rule TLD 2->20: occurrences_replaced=1 KILLED exit=1 SELF-TEST: passed=1385 failed=12 (the made-up input and output files were deleted) (117s)
+m09 STRONG drop token: occurrences_replaced=2 KILLED exit=1 SELF-TEST: passed=1370 failed=27 (the made-up input and output files were deleted) (118s)
+m10 PRE needs ==: occurrences_replaced=1 KILLED exit=3 STOP: the masking filter is not usable here (needs GNU sed or a sed that knows s///I) |  (0s)

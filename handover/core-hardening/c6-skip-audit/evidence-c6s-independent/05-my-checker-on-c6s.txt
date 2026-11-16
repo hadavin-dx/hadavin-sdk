@@ -1,0 +1,21 @@
+PASS A1 row count is 94 :: 94
+PASS A2 ids are exactly 1..94, unique (table is in apply order, not numeric order) :: [1, 73, 74, 2, 3]
+PASS A3 every row has the same number of cells :: {9}
+PASS A4 status split 49+36+3+6 = 94 :: (49, 36, 3, 6, ['NOT APPLIED; after check C-4; on the default of L-SAVE', 'NOT APPLIED; after check C-8', 'NOT APPLIED; on the default of L-APPROX', 'NOT APPLIED; on the default of L-CARD, L-CARDCUT',
+PASS A5 row totals quoted anywhere (N rows / Of the N rows) that look like totals are only 94 where >=90 :: [0, 1, 3, 6, 11, 12, 32, 36, 37, 85, 94]
+PASS A6 3b list of ready rows equals the rows whose status says ready, and count 49 :: (49, '49')
+PASS B1 every 'UTC = IST' pair is exactly +5:30 (61 pairs) :: []
+PASS B2 every clock time written as UTC has an IST pair within 45 characters :: []
+PASS C1 every weekday + date pair is right for Nov 2026 (19 pairs) :: []
+PASS C2 ISO date with weekday in brackets are right :: []
+PASS D1 card length table: seconds = words/150*60, budget = round up to 5, total = 150+budget (6 rows) :: []
+PASS D2 closing card: 4 quoted lines, stated word counts equal real counts :: [('1', '11', 11), ('2', '35', 35), ('3', '22', 22), ('4', '22', 22)]
+PASS D3 card total (default a) equals table 90 :: 90
+PASS E1 box word count (own count; report says 3,488 by builder's count) :: 3488
+PASS E2 box word count stated in report equals my count within 1 percent :: (3488, ['3,490', '4,500', '6,300', '3,490'])
+PASS F1 box: no internal-code leak patterns (R-numbers, WP, HB, c6[a-r], NEEDS_, invariants) :: {'R-number': 0, 'WP': 0, 'ledger id': 0, 'HB': 0, 'c6x label': 0, 'NEEDS_': 0, 'invariant': 0}
+PASS G1 banned strings (10 read at run time): count in report :: 0
+PASS H1 no stale 'v26' called newest
+PASS H2 title names c6s
+PASS I1 key defaults: L-SAVE default none for failed runs; L-LEASE none
+SUMMARY: 0 FAIL []

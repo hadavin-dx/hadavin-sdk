@@ -1,0 +1,128 @@
+PASS (hidden): KEY= form
+PASS (hidden, line-only final filter): KEY= form
+PASS (hidden, sed stage alone): KEY= form
+PASS (hidden): export TOKEN= form
+PASS (hidden, line-only final filter): export TOKEN= form
+PASS (hidden, sed stage alone): export TOKEN= form
+PASS (hidden): password = "..." form
+PASS (hidden, line-only final filter): password = "..." form
+PASS (hidden, sed stage alone): password = "..." form
+PASS (hidden): JSON quoted key
+PASS (hidden, line-only final filter): JSON quoted key
+PASS (hidden, sed stage alone): JSON quoted key
+PASS (hidden): JSON client_secret no spaces
+PASS (hidden, line-only final filter): JSON client_secret no spaces
+PASS (hidden, sed stage alone): JSON client_secret no spaces
+PASS (hidden): Authorization Bearer
+PASS (hidden, line-only final filter): Authorization Bearer
+PASS (hidden, sed stage alone): Authorization Bearer
+PASS (hidden): bare Bearer value
+PASS (hidden, line-only final filter): bare Bearer value
+PASS (hidden, sed stage alone): bare Bearer value
+PASS (hidden): sk- value
+PASS (hidden, line-only final filter): sk- value
+PASS (hidden, sed stage alone): sk- value
+PASS (hidden): pat- value
+PASS (hidden, line-only final filter): pat- value
+PASS (hidden, sed stage alone): pat- value
+PASS (hidden): github token shape
+PASS (hidden, line-only final filter): github token shape
+PASS (hidden, sed stage alone): github token shape
+PASS (hidden): YAML next line after grep prefix
+PASS (hidden, sed stage alone): YAML next line after grep prefix
+PASS (hidden): YAML block line a
+PASS (hidden, sed stage alone): YAML block line a
+PASS (hidden): YAML block line b
+PASS (hidden, sed stage alone): YAML block line b
+PASS (hidden): web address with user:password
+PASS (hidden, line-only final filter): web address with user:password
+PASS (hidden, sed stage alone): web address with user:password
+PASS (hidden): AKIA-shaped id
+PASS (hidden, line-only final filter): AKIA-shaped id
+PASS (hidden, sed stage alone): AKIA-shaped id
+PASS (hidden): passwd: form
+PASS (hidden, line-only final filter): passwd: form
+PASS (hidden, sed stage alone): passwd: form
+PASS (hidden): pwd= form
+PASS (hidden, line-only final filter): pwd= form
+PASS (hidden, sed stage alone): pwd= form
+PASS (hidden): credential = form
+PASS (hidden, line-only final filter): credential = form
+PASS (hidden, sed stage alone): credential = form
+PASS (hidden): secret at column 200 of a long line
+PASS (hidden, line-only final filter): secret at column 200 of a long line
+PASS (hidden, sed stage alone): secret at column 200 of a long line
+PASS (hidden): JSON secret followed by more JSON
+PASS (hidden, line-only final filter): JSON secret followed by more JSON
+PASS (hidden, sed stage alone): JSON secret followed by more JSON
+PASS (hidden): quoted secret inside a call
+PASS (hidden, line-only final filter): quoted secret inside a call
+PASS (hidden, sed stage alone): quoted secret inside a call
+PASS (hidden): bare PASS= name
+PASS (hidden, line-only final filter): bare PASS= name
+PASS (hidden, sed stage alone): bare PASS= name
+PASS (hidden): passphrase: name
+PASS (hidden, line-only final filter): passphrase: name
+PASS (hidden, sed stage alone): passphrase: name
+PASS (hidden): pat = name (personal access token)
+PASS (hidden, line-only final filter): pat = name (personal access token)
+PASS (hidden, sed stage alone): pat = name (personal access token)
+PASS (hidden): os.environ["X_TOKEN"] = "v"
+PASS (hidden, line-only final filter): os.environ["X_TOKEN"] = "v"
+PASS (hidden, sed stage alone): os.environ["X_TOKEN"] = "v"
+PASS (hidden): .get("API_KEY", "default")
+PASS (hidden, line-only final filter): .get("API_KEY", "default")
+PASS (hidden, sed stage alone): .get("API_KEY", "default")
+PASS (hidden): ("API_KEY", "value") tuple
+PASS (hidden, line-only final filter): ("API_KEY", "value") tuple
+PASS (hidden, sed stage alone): ("API_KEY", "value") tuple
+PASS (hidden): --token value flag
+PASS (hidden, line-only final filter): --token value flag
+PASS (hidden, sed stage alone): --token value flag
+PASS (hidden): --password value flag
+PASS (hidden, line-only final filter): --password value flag
+PASS (hidden, sed stage alone): --password value flag
+PASS (hidden): --api-key=value flag
+PASS (hidden, line-only final filter): --api-key=value flag
+PASS (hidden, sed stage alone): --api-key=value flag
+PASS (hidden): triple-quoted value on one line
+PASS (hidden, line-only final filter): triple-quoted value on one line
+PASS (hidden, sed stage alone): triple-quoted value on one line
+PASS (hidden): triple-quoted value over several lines, line 1
+PASS (hidden, sed stage alone): triple-quoted value over several lines, line 1
+PASS (hidden): triple-quoted value over several lines, line 2
+PASS (hidden, sed stage alone): triple-quoted value over several lines, line 2
+PASS (hidden): unterminated quote
+PASS (hidden, line-only final filter): unterminated quote
+PASS (hidden, sed stage alone): unterminated quote
+PASS (hidden): e-mail address
+PASS (hidden, line-only final filter): e-mail address
+PASS (hidden, sed stage alone): e-mail address
+PASS (hidden): JSON name/value pair
+PASS (hidden, line-only final filter): JSON name/value pair
+PASS (hidden, sed stage alone): JSON name/value pair
+PASS (hidden): single-quoted dict key 'api_key'
+PASS (hidden, line-only final filter): single-quoted dict key 'api_key'
+PASS (hidden, sed stage alone): single-quoted dict key 'api_key'
+PASS (hidden): self.token = value
+PASS (hidden, line-only final filter): self.token = value
+PASS (hidden, sed stage alone): self.token = value
+PASS (hidden): accessToken: value (camel case)
+PASS (hidden, line-only final filter): accessToken: value (camel case)
+PASS (hidden, sed stage alone): accessToken: value (camel case)
+PASS (hidden): apiKey = value (camel case)
+PASS (hidden, line-only final filter): apiKey = value (camel case)
+PASS (hidden, sed stage alone): apiKey = value (camel case)
+PASS (hidden): X-Api-Key: header
+PASS (hidden, line-only final filter): X-Api-Key: header
+PASS (hidden, sed stage alone): X-Api-Key: header
+PASS (hidden): JS object {token: value}
+PASS (hidden, line-only final filter): JS object {token: value}
+PASS (hidden, sed stage alone): JS object {token: value}
+PASS (hidden): export X_PASSWORD=
+PASS (hidden, line-only final filter): export X_PASSWORD=
+PASS (hidden, sed stage alone): export X_PASSWORD=
+PASS (hidden): pw name, triple-quoted over several lines, line 1
+PASS (hidden, sed stage alone): pw name, triple-quoted over several lines, line 1
+PASS (hidden): pw name, triple-quoted over several lines, line 2
+PASS (hidden, sed stage alone): pw name, triple-quoted over several lines, line 2

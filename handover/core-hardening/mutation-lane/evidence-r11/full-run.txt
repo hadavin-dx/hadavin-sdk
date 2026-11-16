@@ -107,3 +107,24 @@ REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpa
   PASS: T20.1 exit 129/130/143 (got 129)
   PASS: T20.1 file restored
   PASS: T20.1 state empty
+  PASS: T20.2 exit 129/130/143 (got 129)
+  PASS: T20.2 file restored
+  PASS: T20.2 state empty
+  PASS: T20.3 exit 129/130/143 (got 129)
+  PASS: T20.3 file restored
+  PASS: T20.3 state empty
+  PASS: T20.4 exit 129/130/143 (got 129)
+  PASS: T20.4 file restored
+  PASS: T20.4 state empty
+  PASS: T20.5 exit 129/130/143 (got 129)
+  PASS: T20.5 file restored
+  PASS: T20.5 state empty
+== T21 signal handler logic (deterministic): a signal while planted is only remembered, then delivered once
+handler logic ok
+  PASS: T21 handler logic
+== T22 state folder checks: wrong mode, a link, another owner are refused (exit 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22a mode 755 refused (got 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/full/tmpstate/hadavin-mutation-lane-0 is not a plai
+  PASS: T22b symlinked state folder refused (got 2)
+  PASS: T22b nothing written through the link
