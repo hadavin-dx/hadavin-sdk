@@ -64,3 +64,8 @@ F8 round 6 made take_check.sh exit 4 (not 0) when the table file is missing, zer
 3 The words "normally one" alert: CLAIMS-TABLE rows 24, 27, 30, 62, 71 use them, RUNSHEET-WORDING rule 7 forbids them. a) forbid, b) allow.
 4 The sentence for a lead with an invalid e-mail address (Q7): three candidates (CLAIMS-TABLE row 78, RUNSHEET-WORDING N-3, A-057). Which one is the run-sheet sentence? My recommendation: row 78.
 5 Retention text for scene 1 to 4: hard statement (CLAIMS-TABLE row 16) or hedged (RUNSHEET-WORDING A-053, on the card)? Your Q15 says no numbers on the card; my recommendation: hedged, in notes only.
+
+## Q20 (flows-audit, 2026-11-16 UTC): three facts only you can give, from OWNER-STEPS-q16-rows.md (fix-q16-rows-r2.md)
+1. Where is the take folder (the folder the take scripts and the v4 mf_leads.sql copy live in)? No input names it.
+2. Where does the lead get the From address and the intake address for FROM_ADDRESS_PLACEHOLDER and INTAKE_ADDRESS_PLACEHOLDER? OWNER-STEPS v3 tells the owner to send the lead no addresses, and v3 step 8 has the owner type the SENDER address into n8n. Which settings file or message holds them?
+3. Is the intake address the RECEIVER mailbox? (I inferred it from the flow's toEmail field; the row says unconfirmed.)

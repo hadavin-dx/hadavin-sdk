@@ -156,7 +156,25 @@ def _fd_path(fd: int, fallback: str) -> str:
                 return real
     except (ImportError, OSError):
         pass
+    _warn_no_handle_path()
     return fallback
+
+
+_WARNED_NO_HANDLE_PATH = False
+
+
+def _warn_no_handle_path() -> None:
+    """Said once per run: on this system the place of an open folder cannot be asked of the
+    handle, so the git, /mnt and cloud-sync checks use the typed path only (a path swapped
+    after the first check would not be caught)."""
+    global _WARNED_NO_HANDLE_PATH
+    if not _WARNED_NO_HANDLE_PATH:
+        _WARNED_NO_HANDLE_PATH = True
+        _say(
+            "warning: this system cannot say where an open folder really is (no /proc and no "
+            "F_GETPATH); the place checks use the typed path only",
+            err=True,
+        )
 
 
 def _check_open_place(fd: int, lexical: str, what: str) -> None:
@@ -171,8 +189,8 @@ def _check_open_place(fd: int, lexical: str, what: str) -> None:
 
 
 class _Stopped(BaseException):
-    """The tool was asked to stop by a signal (terminate or hang-up). It is raised so the
-    clean-up runs; a kill that cannot be caught (SIGKILL, power loss) skips it."""
+    """The tool was asked to stop by Ctrl-C, terminate or hang-up. It is raised so the clean-up
+    runs; any other end (SIGKILL, SIGQUIT, SIGUSR1, SIGALRM, SIGXCPU, power loss) skips it."""
 
 
 _STOP_SIGNALS = tuple(
@@ -726,7 +744,11 @@ def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: boo
     # the not-ready note is always listed: it is written first and removed last (a copy that
     # was cut short by a kill is then still marked), so `delete` must know it
     hashes[NOT_READY_NAME] = hashlib.sha256(_not_ready_bytes()).hexdigest()
-    manifest = {"format": MANIFEST_FORMAT, "files": dict(sorted(hashes.items()))}
+    manifest = {
+        "format": MANIFEST_FORMAT,
+        "files": dict(sorted(hashes.items())),
+        "ready": not ph_left,  # `check` reads this, so a deleted note cannot make a copy ready
+    }
     manifest_bytes = (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode()
     manifest_name = folder_name + MANIFEST_SUFFIX
     created: list[tuple[int, str]] = []  # (open folder, name) in creation order
@@ -857,7 +879,20 @@ def _check_output_folder(directory: str) -> int:
         _say("folder check: the folder cannot be opened, so nothing was compared")
         return 1
     try:
+        try:
+            _check_open_place(dfd, d, "the folder")
+        except Refused as e:
+            _say(f"place: {e}")
+            bad += 1
         present = set(os.listdir(dfd))
+        for n in sorted(present):
+            ls = _lstat_or_none(n, dfd)
+            if ls is not None and stat.S_ISREG(ls.st_mode) and ls.st_nlink > 1:
+                _say(
+                    f"{_a(n)}: has {ls.st_nlink} names (a hard link): the same file is "
+                    "also somewhere else, and delete would not remove that one"
+                )
+                bad += 1
         marked = MARKER_NAME in present
         if marked:
             bad += _marked_folder_problems(dfd, folder_name, present)
@@ -871,15 +906,24 @@ def _check_output_folder(directory: str) -> int:
                 bad += 1
             else:
                 _say(
-                    "manifest compare: not run (no fingerprint file next to the folder and no "
-                    "marker file: an input folder has neither)"
+                    "manifest compare: not run, and this is a problem: the folder has no marker "
+                    "file and no fingerprint file next to it, so it is not shown to be a copy "
+                    "that fill made (an input folder, or a copy made with `cp -r filled/*`, "
+                    "which leaves out hidden files). Import only from the folder fill made"
                 )
+                bad += 1
             return bad
         try:
-            files = _load_manifest(manifest_name, pfd)
+            files, ready = _load_manifest_doc(manifest_name, pfd)
         except Refused as e:
             _say(f"manifest: {e}")
             return bad + 1
+        if ready is not True:
+            _say(
+                "manifest: it does not say this copy is ready (fill wrote it with placeholders "
+                "left, or the manifest has no ready flag); do not import it"
+            )
+            bad += 1
         for n in sorted(present - set(files)):
             _say(f"{_a(n)}: not in the manifest (a file that fill did not write)")
             bad += 1
@@ -949,11 +993,17 @@ def do_check(directory: str, tokens_only: bool) -> int:
 
 
 def _load_manifest(manifest_name: str, pfd: int) -> dict:
+    return _load_manifest_doc(manifest_name, pfd)[0]
+
+
+def _load_manifest_doc(manifest_name: str, pfd: int) -> tuple[dict, object]:
+    """The file list and the ready flag (True, False, or None when the manifest has none)."""
     try:
         fd = os.open(manifest_name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=pfd)
         with os.fdopen(fd, "rb") as fh:
             man = json.loads(_read_capped(fh, MAX_JSON_BYTES, "manifest").decode("utf-8"))
         files = man["files"]
+        ready = man.get("ready")
         if man.get("format") != MANIFEST_FORMAT or not isinstance(files, dict):
             raise ValueError
     except (OSError, ValueError, KeyError, AttributeError, TypeError, RecursionError):
@@ -963,7 +1013,7 @@ def _load_manifest(manifest_name: str, pfd: int) -> dict:
             raise Refused("manifest names a path that is not a plain file name; nothing deleted")
         if not isinstance(h, str):
             raise Refused("manifest has a bad hash entry; nothing deleted")
-    return files
+    return files, (ready if isinstance(ready, bool) else None)
 
 
 def _read_at(name: str, dir_fd: int) -> bytes:
@@ -1069,6 +1119,24 @@ def _folder_left_behind(dfd: int, folder_name: str, has_man: bool) -> Refused:
     )
 
 
+def _warn_delete_place(dfd: int, out_dir: str) -> None:
+    """`delete` still removes a copy that sits in a git repository, a cloud-synced folder or on
+    /mnt (leaving it would be worse), but says that other copies may exist, and names any file
+    that has a second name (a hard link): that other name is not removed."""
+    try:
+        _check_open_place(dfd, out_dir, "the folder")
+    except Refused as e:
+        _say(f"warning: {e}; other copies of it may exist and are not removed", err=True)
+    for n in sorted(os.listdir(dfd)):
+        ls = _lstat_or_none(n, dfd)
+        if ls is not None and stat.S_ISREG(ls.st_mode) and ls.st_nlink > 1:
+            _say(
+                f"warning: {_a(n)} has {ls.st_nlink} names (a hard link): the other name is "
+                "not removed",
+                err=True,
+            )
+
+
 def do_delete(
     out_dir: str, force_hash: bool, no_manifest: bool = False, remove_others: bool = False
 ) -> int:
@@ -1076,6 +1144,11 @@ def do_delete(
     parent = os.path.dirname(out_dir)
     folder_name = os.path.basename(out_dir)
     manifest_name = folder_name + MANIFEST_SUFFIX
+    if not _clean_file_name(folder_name):
+        raise Refused(
+            "the folder name is empty or not a plain file name (for example --out /); "
+            "nothing deleted"
+        )
     _check_parent_links(parent)
     try:
         pfd = os.open(parent, DIR_FLAGS & ~os.O_NOFOLLOW)
@@ -1124,6 +1197,7 @@ def do_delete(
             dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
         except OSError:
             raise Refused("output folder is a symlink or not a folder; nothing deleted") from None
+        _warn_delete_place(dfd, out_dir)
         present = set(os.listdir(dfd))
         todo: list[str] = []
         others: list[str] = []
@@ -1212,9 +1286,11 @@ def main(argv=None) -> int:
             err=True,
         )
         return EXIT_REFUSED
-    ap = argparse.ArgumentParser(prog="fill_flows", description=__doc__.split("\n")[0])
+    ap = argparse.ArgumentParser(
+        prog="fill_flows", description=__doc__.split("\n")[0], allow_abbrev=False
+    )
     sp = ap.add_subparsers(dest="mode", required=True)
-    f = sp.add_parser("fill")
+    f = sp.add_parser("fill", allow_abbrev=False)
     f.add_argument("--in", dest="in_dir", required=True)
     f.add_argument("--values", required=True)
     f.add_argument("--out", required=True)
@@ -1223,10 +1299,10 @@ def main(argv=None) -> int:
         action="store_true",
         help="write a copy marked NOT READY when placeholder values are missing",
     )
-    c = sp.add_parser("check")
+    c = sp.add_parser("check", allow_abbrev=False)
     c.add_argument("dir")
     c.add_argument("--tokens-only", action="store_true", help="do not list placeholders")
-    d = sp.add_parser("delete")
+    d = sp.add_parser("delete", allow_abbrev=False)
     d.add_argument("--out", required=True)
     d.add_argument("--force-hash", action="store_true")
     d.add_argument("--no-manifest", action="store_true", help="folder has no usable manifest")
