@@ -19,7 +19,7 @@ Agents running: 4 language-model agents (1 evidence runner, 3 result reviewers: 
 | RV-cb (a52c620d686a34950) | result review codebase-details | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-d (a737211799b7fc972) | result review design | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
 | RV-z (a7518d3448ebfabf1) | result review zoom-out | 07:15/12:45 | +15 min | 07:47 | CLOSED (reported, saved to reviews/, resolved) | none |
-| EV2 (a026774cb604af485) | EVIDENCE RUNNER checks a-k plus F-002 rebuild and cmp into evidence-2.md | 07:30/13:00 | +15 min | - | RUNNING | read evidence-2.md |
+| EV2 (a026774cb604af485) | EVIDENCE RUNNER checks a-k plus F-002 rebuild and cmp into evidence-2.md | 07:30/13:00 | +15 min | - | CLOSED (reported 07:36, evidence-2.md read: all checks exit 0; patched rebuild adds KeyOk, ReplyBadKey, ReplyStoreFail to mf-form and mf-hook, no dangling edges) | none |
 | RV2-d (ad46b354c5fb12696) | result review round 2 design (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-design.md |
 | RV2-cb (a33d32a4f58af3185) | result review round 2 codebase-details (fresh) | 07:30/13:00 | +15 min | - | RUNNING | save to reviews/result-r2-codebase.md |
 Builders L1, L2a, L2b-1, L2b-2, L2b-3, L3: closed (reported, files read, no helper shells).
