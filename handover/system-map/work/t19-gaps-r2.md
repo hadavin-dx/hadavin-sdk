@@ -1,3 +1,4 @@
+Terms for this page: see work/t19-terms.md (one glossary for all T19 pages).
 Purpose: list what the plan inputs/plan-wp6-resmoke-v5.md does not yet say about test T19 (send the same made-up lead twice; expect 1 mail, 1 HubSpot write, 1 stored row). Read: plan lines 183-295 and 404-559. NOT read: 296-403, so an item marked unread may exist there. Terms: work/GLOSSARY.md.
 # T19 gap table, round 2 (agent read of plan lines 183-295 and 404-559; lines 296-403 NOT read). 16 Nov 2026 ~10:40Z. Unverified model output.
 NOT FOUND in the plan: form URL, POST body, reply keys, patched copy name/sha, freeze input, real-take clean-up method, T19 row (plan table has 20 rows, none T19; a row T1 "restart gaps with readiness" exists, so work-file steps T1-0..T1-9 would collide: rename them).

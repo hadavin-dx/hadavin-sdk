@@ -1,3 +1,4 @@
+Terms for this page: see work/t19-terms.md (one glossary for all T19 pages).
 Fix block (16 Nov 2026, from cold read 832): the real owner of both checks is NOT SET; the lead assigns one (no date). T19 proposal: studio lead sends one made-up lead twice with the same lead id through the take's webhook; expected 1 mail, 1 HubSpot write, 1 stored row in the stored-leads table (name NOT SET); run command NOT SET (fill_flows.py not built). F8 proposal: after clean-up (clean-up = the steps on OWNER-CLEANUP-CARD.md, done by the owner), a query returns 0 rows for the test lead id in each n8n table; the table list is NOT SET. Pass rule for F8: that 0-row result; it has not run. Words not used below (KeyOk, Claim, recovery, F-002, T1-8) are not defined; ignore them.
 
 # T19 and stored-data steps: CURRENT (16 Nov 2026). Nothing here has run. History: work/t19-history.md (not current; do not run it).

@@ -1,3 +1,4 @@
+Terms for this page: see work/t19-terms.md (one glossary for all T19 pages).
 # T19 readiness review round 1 (agent read, 16 Nov 2026 ~10:45Z; unverified model output; nothing run)
 VERDICT: T19 is NOT runnable. The plan (inputs/plan-wp6-resmoke-v5.md) imports the UNPATCHED film-v5 (line 298), so its import step loads the wrong flows for T19.
 Rename: use T19-0..T19-9 (plan row T1 at line 472 exists). T19-0 confirm patched copy (15 nodes in form and hook; 12 = unpatched, STOP); -1 pick key (^[A-Za-z0-9_-]{1,64}$), @example.test e-mail, made-up name; -2 baseline 0 rows/mails/CRM lines; -3 post #1; -4 poll until state done; -5 counts: mails 1, CRM upserts 1, rows 1, attempts 1; -6 post #2 identical; -7 wait 90 s, recount; -8 save raw replies and counts; -9 date and time UTC and IST. Old T1-n names kept as alias; the old file had no T1-8.

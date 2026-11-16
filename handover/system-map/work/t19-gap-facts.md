@@ -1,3 +1,4 @@
+Terms for this page: see work/t19-terms.md (one glossary for all T19 pages).
 Purpose: facts for filling gaps in test T19 (send the same made-up lead twice; expect 1 mail, 1 HubSpot write, 1 stored row). 'plan' in every cite below = inputs/plan-wp6-resmoke-v5.md. $T = the test output folder; key = the lead id being tested. Terms are in work/GLOSSARY.md; labels run (a)/(b), DM, C1, G.2, v5 138 in the premortem line: meaning not recorded.
 # Facts that fill gaps in work/t19-and-stored-data-steps.md (agent read, 16 Nov 2026; check each cite before use). Made-up data only.
 - Form door: POST, path mf-form, responseMode responseNode (flowcheck/in/real-v5/mf-form.json:6-8). Take n8n port 5690 (inputs/plan-wp6-resmoke-v5.md:121); URL form http://127.0.0.1:5690/webhook/mf-form is INFERRED from plan:316, never printed as one string.
