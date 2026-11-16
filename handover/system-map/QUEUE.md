@@ -14,3 +14,5 @@ M3 [RUNNING 2026-11-16] DRIFT CHECK of the take documents (critical path): input
 M4 [DONE 2026-11-16, reviews pending] MASTER-MAP refresh: add the new artefacts from this session (board duty files, queues, fill_flows when it lands, paste-check, steps-edits) to MASTER-MAP.md and ONE-PLACE-TABLE.md; mark duplicates.
 M5 [RUNNING: draft, 2 reviewers] OWNER VIEW: one-page plain-words status for the owner (what is done, what runs, what he must do by when for a take on Wed 18 Nov: accounts, Docker running, the written yes), built from the board and REPORT files of all three sessions (read others via git show).
 M6 Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
+
+M7 [UPDATE 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: M3 drift check must flag every document that still lists a done item as an open owner step (OWNER-STEPS v3, handoff, orders); M5 OWNER VIEW lists only the still-owner-only items.
