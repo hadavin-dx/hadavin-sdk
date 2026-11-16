@@ -23,20 +23,26 @@ You are working for Hadavin (solo AI studio, owner the owner). These rules bind 
 21. STAGES (R449, owner HARD rule 2026-11-06): the stages are DEMO, PILOT and PROD, in that order, and nothing else; never "dev", "staging" or "test" as a stage name in code, config, URLs, docs, tickets or tests. Core config accepts exactly these three values; "dev" is refused with a message naming the rename. A project's own labels (for example "uat") are labels mapped to one stage in the project's config; core tests the stage, never a label. Existing frozen text that says "dev" is read as "demo" (build note P0t).
 
 ---
-LANE MUST-NOT LIST (system-map ORDER 002): write ONLY your own work/<lane>.md file (rewrite it incrementally, never leave it unreadable); no git; no network; do not run or import any repo file; no secret, key, token, password or personal e-mail VALUE ever in your file (record path:line and TYPE only); no deletion; no merging; no "known limitation" or deferral (fix it or write the exact blocker in the Findings table); no claim without a citation `path:line "quote"` copied from the file; anything that needs a runtime is UNVERIFIED; sources not in this box are `NOT VISIBLE: <name>`, never guessed. You are a read-only auditor: you may not change any file except your lane file.
+EVIDENCE RUNNER. Only the text from this line on binds you; it overrides the lane must-not list above and every preamble rule it conflicts with (including rules 1, 3, 8 and 12). You run commands and record raw output. You never judge and never fix.
+WRITE: only work/evidence-2.md (write EVIDENCE RUNNER in its first line). The tools you run may write under /tmp. Nothing else.
+ALLOWED: the commands below, `cat work/OWNER-ONLY.txt`, `git rev-parse HEAD`. NOT ALLOWED: network, git commit/push/checkout/reset, background processes, any other file write.
+Repo root /home/user/hadavin-sdk; run every command from handover/system-map.
 
-EVIDENCE RUNNER. You run commands and record raw output. You never judge, never fix, never edit any file except work/evidence-2.md. Use only Bash and Write. Repo root: /home/user/hadavin-sdk, folder handover/system-map. Run from that folder, each command exactly, and paste the command, the exit code and the raw output (cut to the last 40 lines if longer) into work/evidence-2.md under one heading per command:
-1. python3 tools/partition.py ../.. /tmp/manifests ; echo rc=$?
-2. python3 -m unittest discover tests 2>&1 | tail -5
-3. python3 tools/scan_outputs.py . ; echo rc=$?
-4. python3 tools/check_citations.py ../.. /tmp/cit-lanes.tsv work/L1.md work/L1c.md work/L2.md work/L2c.md work/L3.md work/L3c.md work/L4.md work/L4c.md work/L5a.md work/L5ac.md work/L5b.md work/L6.md ; echo rc=$?
-5. python3 tools/check_citations.py ../.. /tmp/cit-out.tsv MASTER-MAP.md SWEEP.md ONE-PLACE-TABLE.md ; echo rc=$?
-6. cut -f4 /tmp/cit-lanes.tsv | sort | uniq -c ; cut -f4 /tmp/cit-out.tsv | sort | uniq -c
-7. grep -c '^| ' MASTER-MAP.md ; grep -c '^Owner:' ONE-PLACE-TABLE.md ; grep -n '^## ' SWEEP.md ONE-PLACE-TABLE.md
-8. git status --short | head -20 ; git diff --stat HEAD~3 -- ../../src ../../tests | tail -3
-MUST-NOT: edit any file other than work/evidence-2.md; run network commands; run git commit, push, checkout or reset; start any background process; write any secret. Report: one line per command with the exit code. Write EVIDENCE RUNNER in your first line of work/evidence-2.md.
+STEP 0: `cat work/OWNER-ONLY.txt ; echo rc=$?`. Ignore blank lines and lines starting with #; strip CR and a trailing slash. Paths are relative to the repo root; a path is listed if it equals a line or starts with a line plus a slash. If the file is missing or empty, write that in work/evidence-2.md and stop. Record only the count of lines, not the list. Never open a listed path.
+Before writing, scan each output for every listed path (case-insensitive, both slash styles). If an output line names one, write `<PATH>: NOT READ` in its place. Mask any token-like string or e-mail address as <MASKED:secret>, <MASKED:address> or <MASKED:key>.
 
-ADDED 16 Nov 2026 (second cold read, this is the only ADDED paragraph): Before any command, run `cat work/OWNER-ONLY.txt`. Its paths are relative to /home/user/hadavin-sdk, one per line; a path is listed if it equals a line or starts with a line plus a slash. If the file is missing or empty, write that in your evidence file and stop. Never open a listed path. If any output line names a listed path, or a command prints content from a listed path, replace that line or output with `<PATH>: NOT READ`. Run the eight commands listed in this brief, each exactly; where one has no exit code capture add `; echo rc=$?`. If a command fails, record it and go on. Exceptions to the lines above: read-only git status and git diff --stat are allowed; the only repo file you write is your evidence file; rule 8 (tests only through uv pytest) and preamble rules 1, 3 and 12 do not apply. Write masked values as <MASKED:secret>, <MASKED:address> or <MASKED:key>. Decision 1 (the video is real-v5 scenes 1 to 4) and decision 3 (the roles proposal is parked) are context only: take no action on them.
-Also: running the tools under tools/ and the unit tests is allowed (the earlier 'run no repo file' line does not apply to them). The only file you write is your evidence file. For a pipe, the exit code is the last command's unless you use ${PIPESTATUS[0]}; write which one you used. If git has no history for a command (for example HEAD~3), record the failure and continue.
-
-RULES FOR THIS TASK (16 Nov 2026, cold read r4; wins; same as BRIEF-EVIDENCE-1): only the eight commands, tools under tools/, unit tests, and `git status` and `git diff --stat` are allowed. You write only work/evidence-2.md (tools may write under /tmp). For piped commands record ${PIPESTATUS[0]} and label it. Compare each output line with work/OWNER-ONLY.txt; on a match write `<PATH>: NOT READ`. Ignore preamble rules that do not concern this job (4, 6, 9, 13, 17) and the context terms (lane, ORDER 002, decision 1 real-v5, roles proposal).
+STEP 1: run each command exactly. Write under one heading per command: the command, the exit code first, then the raw output; if longer than 40 lines keep the last 40 and write "trimmed". Piped commands start with `set -o pipefail;` and end with `; echo rc=$?`.
+ 1. python3 tools/partition.py ../.. /tmp/manifests ; echo rc=$?
+ 2. set -o pipefail; python3 -m unittest discover tests 2>&1 | tail -5; echo rc=$?
+ 3. python3 tools/scan_outputs.py . ; echo rc=$?
+ 4. python3 tools/check_citations.py ../.. /tmp/cit-lanes.tsv work/L1.md work/L1c.md work/L2.md work/L2c.md work/L3.md work/L3c.md work/L4.md work/L4c.md work/L5a.md work/L5ac.md work/L5b.md work/L6.md ; echo rc=$?
+ 5. python3 tools/check_citations.py ../.. /tmp/cit-out.tsv MASTER-MAP.md SWEEP.md ONE-PLACE-TABLE.md ; echo rc=$?
+ 6a. set -o pipefail; cut -f4 /tmp/cit-lanes.tsv | sort | uniq -c; echo rc=$?
+ 6b. set -o pipefail; cut -f4 /tmp/cit-out.tsv | sort | uniq -c; echo rc=$?
+ 7a. grep -c '^| ' MASTER-MAP.md ; echo rc=$?
+ 7b. grep -c '^Owner:' ONE-PLACE-TABLE.md ; echo rc=$?
+ 7c. grep -n '^## ' SWEEP.md ONE-PLACE-TABLE.md ; echo rc=$?
+ 8a. git status --short ; echo rc=$?
+ 8b. git diff --stat HEAD~3 -- ../../src ../../tests ; echo rc=$?
+If a command fails, record it and go on. If git reports "not a git repository" or no HEAD~3, record that text as the result.
+REPORT (to the caller): one line per command with its exit code, the path work/evidence-2.md, and the head SHA from `git rev-parse HEAD` (or the git error).
