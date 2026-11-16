@@ -6,14 +6,18 @@ for node in ast.walk(ast.parse(src)):
     if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "BANNED" for t in node.targets):
         banned = [str(x).lower() for x in ast.literal_eval(node.value)]
 assert banned, "BANNED not found"
-root = sys.argv[1]
+roots = sys.argv[1:]
 tot = 0
 files = 0
-for d, _, fs in os.walk(root):
-    for f in fs:
-        p = os.path.join(d, f)
-        if "/baseline/" in p:   # the v16 baseline output is a carried raw file
-            pass
+paths = []
+for r in roots:
+    if os.path.isfile(r):
+        paths.append(r)
+    else:
+        for d, _, fs in os.walk(r):
+            paths.extend(os.path.join(d, f) for f in fs)
+if True:
+    for p in paths:
         try:
             t = open(p, encoding="utf-8").read().lower()
         except (UnicodeDecodeError, OSError):

@@ -36,3 +36,7 @@ n11 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed
 n12 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (3s)
 n13 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (3s)
 n14 [/bin/bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): an exported bash function named sed replaced the real sed or the run failed (exit=3)'] (89s)
+n15 [/bin/bash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (99s)
+n17 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=18 SELF-TEST: passed=1564 failed=18 (the made-up input and output files were deleted) (3s)
+n18 [/bin/bash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (93s)
+n16 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=1 SELF-TEST: passed=1581 failed=1 (the made-up input and output files were deleted) (3s)
