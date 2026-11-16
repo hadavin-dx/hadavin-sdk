@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:13:08Z
-PUSHED_UTC: 2026-11-16T13:13:08Z
+UPDATED_UTC: 2026-11-16T13:14:42Z
+PUSHED_UTC: 2026-11-16T13:14:42Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -14,8 +14,8 @@ FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n
 PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 at this beat (8 helpers started at this beat; the 10 before them have all finished).
-CAPACITY nproc=4 load=0.84 disk: 20G free, MB freed 0
-NEXT: hand-backs digested through 971 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+CAPACITY nproc=4 load=0.17 disk: 20G free
+NEXT: hand-backs digested through 979 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,14 +45,14 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a2202b7d88738e8fc | read critical-path-r1 (r7) | 13:13 | +3 min | running | nothing yet |
-| a87d11bd296921770 | read LEAD-NOTICE (r9) | 13:13 | +3 min | running | nothing yet |
-| ab44d63fc429334b5 | read v5-edits-for-M17 (r2) | 13:13 | +3 min | running | nothing yet |
-| aaeca5ac5bd8a14f5 | read t19-row-and-steps-r3 | 13:13 | +3 min | running | nothing yet |
-| aeb7a5c90415024ba | read t19-gaps-r2 | 13:13 | +3 min | running | nothing yet |
-| a7506b4755865ca28 | read t19-gap-facts | 13:13 | +3 min | running | nothing yet |
-| a415d4d19a95b1a4c | read t19-and-stored-data-steps | 13:13 | +3 min | running | nothing yet |
-| a52e4e8f46de394b8 | read banned-claims-clean (r4) | 13:13 | +3 min | running | nothing yet |
+| aa82b6a73b828d047 | read critical-path-r1 (r8) | 13:14 | +3 min | running | nothing yet |
+| a4be349c9afb49f67 | read banned-claims-clean (r5) | 13:14 | +3 min | running | nothing yet |
+| a82208d32a42d4526 | read L5b | 13:14 | +3 min | running | nothing yet |
+| a215634cb928af5b1 | read row1-builder-brief | 13:14 | +3 min | running | nothing yet |
+| ac1191ae1f9349bd7 | read M17-history | 13:14 | +3 min | running | nothing yet |
+| a73aba7e45b8050b4 | read STATUS-BOARD | 13:14 | +3 min | running | nothing yet |
+| a54895f92f36ea432 | read L2 | 13:14 | +3 min | running | nothing yet |
+| acb46dfcb6452ee04 | read ARCHITECTURE-AUDIT-CHECKLIST | 13:14 | +3 min | running | nothing yet |
 
 AGENTS_RUNNING: 8 of 8
 
