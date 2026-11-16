@@ -86,8 +86,7 @@ trap cleanup EXIT
 #  8  command-line flags:  --token abc  --password abc  --api-key=abc .
 #  9  e-mail addresses are replaced by <email-masked>.
 write_mask_sed() {
-  W='(keys?|tokens?|secrets?|passw(or)?d|passphrase|pass|pwd|pat|credentials?|authorization|auth|bearer|private)'
-  W=$(printf '%s' "$W" | sed 's/keys?/key/; s/tokens?/token/')   # singular only: key, token (so max_tokens and keys stay readable)
+  W='(key|token|secrets?|passw(or)?d|passphrase|pass|pwd|pat|credentials?|authorization|auth|bearer|private)'
   SUF='(key|token|secret|passw(or)?d|pwd|credentials?)'
   # IDB: an identifier that contains a secret word; IDQ: the same inside quotes (spaces count as separators)
   IDB="((([A-Za-z0-9_.-]*[_.-])?$W)|([A-Za-z0-9_.-]*$SUF))([_.-][A-Za-z0-9_.-]*)?"
@@ -97,6 +96,7 @@ write_mask_sed() {
   YPRE='^([0-9]+[-:])?[[:space:]]*(- +)?["'"'"']?'  # start of a line: optional grep prefix, indent, list dash, quote
   {
     cat <<EOF
+:top
 /${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*([|>][-+]?)?[[:space:]]*\$/I{
 n
 /^([0-9]+[-:])?[[:space:]]+[^[:space:]]|^([0-9]+[-:])?- /{
@@ -107,9 +107,9 @@ n
 s/^([0-9]+[-:])?.*/\1<masked>/
 bya
 }
-b
+b top
 }
-/^([0-9]+[-:])?[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]+["']?[[:space:]]*:/b
+/^([0-9]+[-:])?[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]+["']?[[:space:]]*:|^--\$/b top
 s/^([0-9]+[-:])?.*/\1<masked>/
 }
 /(${ID})${PRE}[[:space:]]*"""/I{
@@ -140,7 +140,7 @@ b
 }
 EOF
     line_rules
-  } | sed -e 's/^$//' > "$MASKSED"
+  } > "$MASKSED"
   line_rules > "$MASKLINE"
 }
 line_rules() {
