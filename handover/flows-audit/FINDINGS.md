@@ -49,6 +49,13 @@ You asked why there are so many duplicates, idle parts and inconsistencies. The 
 20. The HubSpot id probe (one made-up lead through the real HubSpot trial before the rehearsal, a named step in OWNER-STEPS v4) is pending; it needs the owner's written yes with numbers at that time (Q17-5). Until it runs, 'id or vid, all digits' stays unverified (item 3).
 21. Lead decision 2 (the take never deletes contacts; the owner deletes leftovers by hand in HubSpot after the take) has no flow row and no fix item: it is a take-day fact, not a flow change (Q13).
 
+22. (review notchecked-lane-r1, G1 to G9; checked against FIX-PLAN item 3, which now carries the lines) The take start state (0 rows for the take keys, empty mailbox and run list, empty HubSpot search) has not been checked; no gate has run. Next: lead, at re-pin, time TBD.
+23. 'Processed once' has not been proved on any run: the proof is mailbox 1 mail + mf_leads row in state done + POST 2 reply under 10 s (Q22-4); no run exists yet. Who: lead, at re-pin, time TBD.
+24. The run list and the moment of POST 2 are not written down or rehearsed; whether the sender retries on a non-200 answer is unknown (sender not in the repo). Who: lead, at re-pin, time TBD.
+25. The 45 s lease against the Qualify and CRM durations is unmeasured (no n8n run). Next: time both in the rehearsal. Who: lead.
+26. What the camera shows has not been scanned for personal data or secrets (shown-not-opened list, one full watch not done); the abort-and-retake rule is the lead's call. Who: lead.
+27. The reviewer of items 22 to 26 read only part of this file (FINDINGS 1 to 96, REPORT top 80); FINDINGS 97 to 136, CLAIMS-TABLE, RUNSHEET-WORDING, OWNER-STEPS, QUESTIONS, PLAN-4 and flow JSON were not read by it. Not re-reviewed.
+
 ## Verdict per part of the build (ORDER 007 item 4; static reading; full text and evidence: lanes7/N7-verdicts.md)
 NEEDED = the take breaks or loses a lead without it and no simpler fix kind (a setting or a ready-made n8n step) does it. CRM-COULD-DO = the CRM could hold or do it. DUPLICATE = a copy of something else in the take. AVOIDS A DUPLICATE and NOT A DUPLICATE = a part that stops a copy from existing, and a part that only looks like a copy. NOT-NEEDED = the take works without it. Approvals and audit trail: the take has no approval step and no audit trail (F-042, F-043). Tests T19 (same key twice sends one mail), T20 (empty or invalid key gives 422), T21 (Postgres down gives 503, resend works): specs in lanes7/N7-verdicts.md section C; M0 and M1 in mf.py:119-138 (M0 at :119, M1 at :129) already assert same-key-twice, but only on flows the test builds itself, not on the take build.
 

@@ -1,3 +1,0 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --accept-if StuckRow
-usage error: bad --accept-if value, want FILE=NODE:OUT[,OUT] with OUT 0 or 1
-exit=2

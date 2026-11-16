@@ -1,0 +1,19 @@
+Self-test of check_flows.py (F8, round 1 fixes). Stdlib only. Nothing is run in n8n. Made-up data only.
+
+Usage:  selftest.py PRISTINE_REAL_DIR [PATCHED_REAL_DIR [PRISTINE_FILM_DIR]]
+  PRISTINE_REAL_DIR  committed folder handover/demo/n8n-flows-real-v5
+  PATCHED_REAL_DIR   generated folder (run_all.sh makes it: <work dir>/g/real); enables the patch cases
+  PRISTINE_FILM_DIR  committed folder handover/demo/n8n-flows-film-v5; enables the film-file cases
+Environment (both optional, both documented here and nowhere else):
+  FC_CK   path of another checker script to run the same cases against (default: check_flows.py next to this file).
+          Used to prove the new cases fail on the old patch-apply/check_flows.py.
+  FC_OUT  folder for the raw .out files (default: selftest-output/ next to this file). It is emptied first, but only if it is
+          empty, missing, or holds the marker file CHECK-COMMAND.txt of an earlier run; otherwise the self-test stops.
+Each case copies a pristine folder, plants ONE defect, runs the checker, and requires ALL of:
+  (1) the exit code (1 for a FAIL case, 0 for a WARN case or a control),
+  (2) a line that STARTS with FAIL (or WARN) and holds the named text,
+  (3) for FAIL cases: every FAIL line is the named cause or a listed knock-on of it (so an unrelated FAIL cannot hide behind it),
+  (4) for WARN cases: no FAIL line except listed knock-ons of the planted node, and the same WARN line is not already in the unmutated control.
+FAIL cases run with --fail-unverified (rules that come from memory of n8n are only WARN by default; their default WARN is tested by their own *_default_is_warn cases).
+Expected node and connection counts are recomputed from the mutated file so a count mismatch is not a knock-on, except in the case that tests it.
+Generic cases run on 4 real files and 1 film file; cases that cannot apply to a file are printed as skipped.
