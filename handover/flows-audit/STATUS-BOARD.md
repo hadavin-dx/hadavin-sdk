@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T12:14:43Z
+UPDATED_UTC: 2026-11-16T12:17:13Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 10
-PERCENT: 89
-AGENTS_RUNNING: 8
-CAPACITY: 2.07 load of 4 cores, mem 0/15 GB, RAM 948/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.3G /tmp/claude-0 , agents 8 (light+heavy per list)
+ITEMS_OPEN: 9
+PERCENT: 85
+AGENTS_RUNNING: 6
+CAPACITY: 0.85 load of 4 cores, mem 0/15 GB, RAM 969/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.3G /tmp/claude-0 , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
@@ -20,8 +20,8 @@ core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason,
 TAKE-CHECKLIST/FIX-PLAN: step 4 pass grep never matches; GO rows 1,2,3,5 have no runnable command; IST pair wrong in FIX-PLAN L70
 F8 evidence: run_all exit 0 twice (57 s), but root cannot test chmod 000; bandit -ll flags tools/scratch (B602, B608); ruff format fails only on lead file
 F8: take_check passes a changed flow with same counts (no enforced sha); pin reviewer line accepts any text; TAKE_CHECK_TEST leak exit 0; run_all.sh shared raw dir
-NEXT: agents as listed; REVIEW r5 findings fixer started
-PUSHED_UTC: 2026-11-16T12:14:43Z
+NEXT: collect 6 agents; refill
+PUSHED_UTC: 2026-11-16T12:17:13Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -40,21 +40,19 @@ PUSHED_UTC: 2026-11-16T12:14:43Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| ae1e348 | fixer | sonnet | F8 flow-check Majors (pin, tcfail, flow sha, reviewer line, test flag leak, raw lock) | 12:11 | 12:50 | running | fix-f8-r10d.md |
-| a7775df | egm-impl-readiness | sonnet | RUNBOOK round 5 fresh read | 12:11 | 12:30 | running | read-only |
-| abfa479 | fixer | sonnet | OWNER-STEPS owner part r9 Majors (6) | 12:13 | +25 min | running | fix-ownersteps11.md |
-| a0a373e | egm-codebase-details | sonnet | citation lane RW/CT changed rows round 2 | 12:13 | +15 min | running | read-only |
-| a5c0de1 | fixer | sonnet | QUESTIONS.md r4 Majors (take prep, answer-by order, L5 owner yes, glossary) | 12:13 | +25 min | running | fix-questions4.md |
-| aef228e | fixer | sonnet | F-003 patch r4 Majors (3) | 12:14 | +15 min | running | fix-f003-r4.md |
-| a67d6c4 | egm-impl-readiness | sonnet | TAKE-CHECKLIST/FIX-PLAN r4 | 12:14 | +15 min | running | read-only |
-| a4906c4 | fixer | sonnet | core patches REVIEW.md r5 Majors (X-2 tick list, live reconcile row, outbox cause) | 12:14 | +20 min | running | fix-review5.md |
+| ae1e348 | fixer | sonnet | F8 flow-check Majors | 11:50 | 12:40 | running | fix-f8-r10d.md |
+| a35711f | fixer | sonnet | RUNBOOK round 5 (B1,B2,M1-M9) | 12:17 | 12:50 | running | - |
+| a1546e0 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r4 (6 Majors) | 12:17 | 12:45 | running | - |
+| a73312e | reviewer | sonnet | egm-design REVIEW.md round 6 | 12:17 | 12:40 | running | - |
+| acefb5f | reviewer | sonnet | stranger read QUESTIONS r5 | 12:17 | 12:35 | running | - |
+| a7d3565 | reviewer | sonnet | stranger read owner part r10 | 12:17 | 12:35 | running | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
-2 Fresh egm review of F8 final head + evidence runner (waits: ae1e348 fix report)
-3 Citation lane on new RW/CT strings after a822207 and on F-003 patch after a8cad4d
-4 Stranger read of QUESTIONS.md and owner part after their fixers land (round cap: Blockers/Majors only)
-5 Core patches REVIEW.md round 6 egm-design (money/redaction path, uncapped) after a28e9c0
+1. Citation lane on F-003 r4 patch + new RW/CT (after fixers settle)
+2. Fresh egm review + evidence runner on F8 final head (waits: F8 fixer ae1e348)
+3. Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
+4. Re-read RUNBOOK and TAKE-CHECKLIST after fixers (round 6, only Blockers/Majors)
+5. Drift report refresh reviews/drift-007.md before FINAL
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
