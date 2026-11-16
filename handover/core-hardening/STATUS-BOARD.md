@@ -11,7 +11,7 @@ CAPACITY: load 0.31 of 4 cores, mem 1.0 of 15.7 GB used (15.1 GB available), dis
 INTERRUPTED: none
 FAILED: (1) v15 owner sheet failed 3 of 5 reviews so far: security 7 majors, stranger 5 blockers + 12 majors, adversarial/contradiction (key cancel rules conflict, lease sentence, step 0 vs decisions 2/8, no clock rule at 18:29 UTC); citation check running; lead blanks B1-B29 still empty; v16 builder running (started 11:36Z). (2) lead checklist v8 failed 4 reviews; v9 built, 3 reviews running. (3) run.py r4 written (220 PASS, 0 fail on its own script; 73 fail on r3 code) but NOT yet reviewed; S603 needs lead decision; open nits: marker self-attestation, symlinks, reap. (4) PLAN-CHAIN: v10 edit list does not apply after the 3-patch chain (5 of 29 edits find no old text); corrected list written, not yet reviewed; lead decides if gate-rows and v10 are in the run. (5) lease wording A/B, take port, Q18 approval of run.py r3/r4 undecided. (6) Nothing run with n8n, Postgres, PowerShell, WSL.
 NEXT: v16 owner sheet builder and chain-fix round 2 running; checklist v9 three reviews running; run.py r4 security + evidence running; then fix pass per findings; fix stale REPORT.md rows (C3b, C8 counts).
-PUSHED_UTC: 2026-11-16T11:30:43Z
+PUSHED_UTC: 2026-11-16T11:35:02Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
