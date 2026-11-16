@@ -368,6 +368,7 @@ CNTMSG=$(count_check "$RAW/selftest-new.txt" "$RAW/test-take-check.txt") || RC=1
 echo "$CNTMSG"
 [ "$ST" = 0 ] || tail -n 5 "$RAW/selftest-new.txt" 2>/dev/null | cut -c1-300 | sed 's/^/  selftest tail: /'   # f8-r11: a failing self-test shows where its output ended
 echo "[take_check.sh exit=$TC] missing lines:${TCMISS:- none}"
+[ "$TT" = 0 ] || grep -h '^FAIL' "$RAW/test-take-check.txt" 2>/dev/null | head -n 8 | cut -c1-300 | sed 's/^/  take suite: /'   # f8-r11: a failing take suite shows which cases failed (nested runs delete their raw folder, so this is the only trace)
 LW=$(grep -h '^OPEN LEAD DECISIONS:' "$RAW/pristine.txt" | sed -E 's/OPEN LEAD DECISIONS: ([0-9]+) webhook.* ([0-9]+) \$env.*/\1 \2/')
 [ -n "${RUN_ALL_NESTED:-}" ] && [ -n "${RUN_ALL_DROP_LEAD:-}" ] && LW=""   # test hook (round 10c, Q3)
 # round 10c (Q3): RC is final BEFORE it is printed; the printed status is the real exit status
