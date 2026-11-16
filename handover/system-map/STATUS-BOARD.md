@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T08:51:28Z
+UPDATED_UTC: 2026-11-16T08:51:44Z
 SESSION: system-map
 ORDER: 014 (with 011)
 STATE: WORKING
@@ -9,7 +9,7 @@ PERCENT: 70
 AGENTS_RUNNING: 2
 INTERRUPTED: none
 NEXT: collect the 2 crosscheck agents, write FINAL-CROSSCHECK.md, review it (2 egm reviewers), then FINAL
-PUSHED_UTC: 2026-11-16T08:51:28Z
+PUSHED_UTC: 2026-11-16T08:51:44Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -21,8 +21,8 @@ PUSHED_UTC: 2026-11-16T08:51:28Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a2765456 | crosscheck ratings | sonnet | different ratings, duplicates, contradictions, patch collisions | 08:43Z | 09:03Z | 30 | running | none |
-| ae283080 | combined cut list | sonnet | archive list with callers | 08:43Z | 09:03Z | 30 | running | none |
+| a2765456 | crosscheck ratings | sonnet | different ratings, duplicates, contradictions, patch collisions | 08:48Z | 09:03Z | 40 | running | none |
+| ae283080 | combined cut list | sonnet | archive list with callers | 08:48Z | 09:03Z | 40 | running | none |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
