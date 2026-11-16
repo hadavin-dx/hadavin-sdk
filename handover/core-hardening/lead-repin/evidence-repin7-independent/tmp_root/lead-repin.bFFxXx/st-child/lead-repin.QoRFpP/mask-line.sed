@@ -1,56 +1,3 @@
-:top
-/^(([^:]+[:-])?[0-9]+[-:])?[[:space:]]*(- +)?["']?(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?))["']?[[:space:]]*:[[:space:]]*((&[^[:space:]]+|![^[:space:]]*)[[:space:]]+)*([|>][-+0-9]*)?[[:space:]]*(#.*)?$/I{
-n
-/^(([^:]+[:-])?[0-9]+[-:])?[[:space:]]+[^[:space:]]|^(([^:]+[:-])?[0-9]+[-:])?- /{
-s/^(([^:]+[:-])?[0-9]+[-:])?.*/\1<masked>/
-:ya
-n
-/^(([^:]+[:-])?[0-9]+[-:])?[[:space:]]+[^[:space:]]|^(([^:]+[:-])?[0-9]+[-:])?- /{
-s/^(([^:]+[:-])?[0-9]+[-:])?.*/\1<masked>/
-bya
-}
-b top
-}
-/^(([^:]+[:-])?[0-9]+[-:])?[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]+["']?[[:space:]]*:|^--$/b top
-s/^(([^:]+[:-])?[0-9]+[-:])?.*/\1<masked>/
-}
-/-----BEGIN [A-Z ]*(PRIVATE|SECRET|ENCRYPTED)[A-Z ]*-----/{
-/-----END /!{
-s/(-----BEGIN [A-Z ]*-----).*/\1<masked>/
-:pem
-n
-/-----END /!{
-s/^(([^:]+[:-])?[0-9]+[-:])?.*/\1<masked>/
-bpem
-}
-}
-}
-/((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*"""/I{
-/((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*""".*"""/I!{
-s/(((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*""").*/\1<masked>/I
-:t1
-n
-/"""/!{
-s/^(([^:]+[:-])?[0-9]+[-:])?.*/\1<masked>/
-bt1
-}
-s/^((([^:]+[:-])?[0-9]+[-:])?)([^"]|"[^"]|""[^"])*"""/\1<masked>"""/
-b
-}
-}
-/((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*'''/I{
-/((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*'''.*'''/I!{
-s/(((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*''').*/\1<masked>/I
-:t2
-n
-/'''/!{
-s/^(([^:]+[:-])?[0-9]+[-:])?.*/\1<masked>/
-bt2
-}
-s/^((([^:]+[:-])?[0-9]+[-:])?)([^']|'[^']|''[^'])*'''/\1<masked>'''/
-b
-}
-}
 s/(^|[^A-Za-z0-9])(((max|num|n|total|prompt|completion|input|output|cached?|reserved)[_.-]?)+)(tok)(ens)/\1\2\5\6/Ig
 s/(tok)(eniz|enis)/\1\2/Ig
 s/(((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))[[:space:]]*:=[[:space:]]*)(("([^"\\]|\\.)*"|'([^'\\]|\\.)*')([[:space:]]*\+?[[:space:]]*("([^"\\]|\\.)*"|'([^'\\]|\\.)*'))*|[^[:space:]<"'][^[:space:]]*)/\1<masked>/Ig
@@ -85,7 +32,7 @@ s/(^|[^A-Za-z0-9_])xox[abprs]-[A-Za-z0-9-]{8,}/\1<masked>/g
 s/AKIAIOSFODNN7EXAMPLE/<<EXAMPLE-KEY>>/g
 s/(AKIA|ASIA)[0-9A-Z]{16}/<masked>/g
 s/<<EXAMPLE-KEY>>/AKIAIOSFODNN7EXAMPLE/g
-/(curl)/I s/((^|[[:space:]])(-u|--user|--proxy-user)(=|[[:space:]]+))(("([^"\\]|\\.)*"|'([^'\\]|\\.)*')([[:space:]]*\+?[[:space:]]*("([^"\\]|\\.)*"|'([^'\\]|\\.)*'))*|[^[:space:]<][^[:space:]]*)/\1<masked>/Ig
+/(curl|wget|http)/I s/((^|[[:space:]])(-u|--user|--proxy-user)(=|[[:space:]]+))(("([^"\\]|\\.)*"|'([^'\\]|\\.)*')([[:space:]]*\+?[[:space:]]*("([^"\\]|\\.)*"|'([^'\\]|\\.)*'))*|[^[:space:]<][^[:space:]]*)/\1<masked>/Ig
 s/(^(([^:]+[:-])?[0-9]+[-:])?[[:space:]]*(ENV|ARG|SET|SETENV|EXPORT|DECLARE)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?))[[:space:]]+)[^=[:space:]<].*/\1<masked>/I
 s/(((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*)(("([^"\\]|\\.)*"|'([^'\\]|\\.)*')([[:space:]]*\+?[[:space:]]*("([^"\\]|\\.)*"|'([^'\\]|\\.)*'))*)/\1<masked>/Ig
 s/(((^|[^A-Za-z0-9])(([A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?))(([_.-]|(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store))[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)([_.-][A-Za-z0-9_.-]*)?)))["']?[]]?[[:space:]]*=[[:space:]]*)["'].*/\1<masked>/I

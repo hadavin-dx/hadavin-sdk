@@ -237,6 +237,8 @@ if re.search(r'\bcancel', t48):
     F('e48_cancel', 'E-48 uses cancel')
 if re.search(r'Alarm 2: a repeating alarm', t48) is None:
     F('alarm2', 'Alarm 2 repeating text missing')
+if 'count only when you type them yourself' not in '\n'.join(t for rid, t in own if rid == 'E-09'):
+    F('typedonly_e09', 'E-09 lacks count only when you type them yourself')
 # alarm names attach to the right alarm
 for rid, fn, t in newall:
     for m in re.finditer(r'[Aa]larm 1[^`\n]*?named `([^`]+)`', t):
