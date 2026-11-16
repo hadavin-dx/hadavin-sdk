@@ -327,7 +327,7 @@ try:
     seq = ordered(name)
     listed_all = ALL | NEG | WEAK | NAME
     others = [w for w in seq if len(w) >= 2 and w not in listed_all]   # name words that are not on any list
-    hits = [h for h in find_all(nwords, ALL, stem=True) if not (h[0] not in seq and any(w.rstrip("s") == h[0] and w in seq for w in WEAK))]   # Sessions (a surname) is a weak word; Session stays refused
+    hits = [h for h in find_all(nwords, ALL, stem=True) if h[0] not in WEAK]   # Sessions (a surname) is a weak word; Session stays refused
     if hits:
         refuse_listed(hits[0], "name", "words")
     for h in find_all(nwords, NEG):
