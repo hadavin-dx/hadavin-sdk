@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:09:26Z
-PUSHED_UTC: 2026-11-16T14:09:26Z
+UPDATED_UTC: 2026-11-16T14:10:14Z
+PUSHED_UTC: 2026-11-16T14:10:14Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,10 +45,11 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a31a17a05c4e41110 | readiness read L2c | 2026-11-16T14:09Z | +5 min | running | nothing yet |
+| a7d4e4da9400db5ca | re-read open-items-table (new rewrite, 12 lines) | 2026-11-16T14:10Z | +5 min | running | nothing yet |
+| a29cbd6e957cc5349 | re-read not-checked-r2 (new rewrite, 19 lines) | 2026-11-16T14:10Z | +5 min | running | nothing yet |
 
-CAPACITY: 1 running. Written reason for the 7 missing slots: every page in work/ and decisions/ has now had two independent reads (digests 1357-1428); the only open independent work is applying their fixes to my own pages, which I do in my own turns (an agent that edits needs the 10950-byte preamble and would edit the same files I am editing, so it would collide). Rows open: fix owner-timeline-draft, open-items-table, not-checked-r2, GLOSSARY, decision-list, BRIEF-EVIDENCE-1/2, evidence-1/2. Digested through 1428.
-NEXT 5: fix owner-timeline-draft, open-items-table, not-checked-r2, GLOSSARY Unknown list, decision-list A2/A5/A13.
+CAPACITY: 2 running. Reason for the 6 missing slots: all pages have had two reads; remaining work is my own fixes (rewrites done: owner-timeline-draft, open-items-table, not-checked-r2; each gets one re-read). More re-reads start as I finish each rewrite. Digested through 1430.
+NEXT 5: fix GLOSSARY Unknown list, decision-list A2/A5/A13, BRIEF-EVIDENCE-1/2, evidence-1/2 reruns, premortem-r1/critical-path-r1.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
