@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T09:33:34Z
+UPDATED_UTC: 2026-11-16T09:36:15Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 5
-PERCENT: 82
-AGENTS_RUNNING: 9
-CAPACITY: 0.83 load of 4 cores, mem 0/15 GB, disk free 28G, agents 9 (light+heavy per list)
+ITEMS_OPEN: 12
+PERCENT: 70
+AGENTS_RUNNING: 7
+CAPACITY: 2.85 load of 4 cores, mem 0/15 GB, disk free 28G, agents 7 (light+heavy per list)
 INTERRUPTED: none
-FAILED: F3 independent rerun: 3 of 13 mutants survived and security review found 3 Majors (fixer running, uncapped); roles proposal Blocker fixed, re-review running; claims table round 2 Blockers (fixer running); F5 round 2 reviews found 4 Blockers (fixer running); F6b audit had a defective reset recipe (fixed, re-review launching); 157 citation quotes unmatched (triage running); guard test red from own quoted brand string fixed
-NEXT: collect F8/F1/F5/F3 fixers; second reviewers for each; ROLES and F6b r2 reviews
-PUSHED_UTC: 2026-11-16T09:33:34Z
+FAILED: F8 checker: 4 nodes read $env, 2 webhooks lack auth (lead decides: change nodes or allow env); F3 mutants + security Majors (fixer running); roles Majors cut-over/test recipes (fixer running); claims table Blockers and 157 citation mismatches triaged, fix pending; F5 round 2 Blockers (fixer running); F6b Blocker false F-031 cite (fixer running)
+NEXT: collect 7 fixers; then reviewers per deliverable; apply citation triage to claims table
+PUSHED_UTC: 2026-11-16T09:36:15Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,15 +30,13 @@ PUSHED_UTC: 2026-11-16T09:33:34Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| aaa5a08748ba9d17a | fixer F8 r1 | sonnet | flow checker fixes | 09:27 | 09:50 | 85 | running | flow-check/ |
-| a2bafbe63ce21dd88 | fixer F1 r2 | sonnet | claims table round 2 + ORDER 017 facts | 09:30 | 09:55 | 50 | running | CLAIMS-TABLE.md |
+| a2bafbe63ce21dd88 | fixer F1 r2 | sonnet | claims table round 2 | 09:30 | 09:55 | 50 | running | CLAIMS-TABLE.md |
 | aff58c29c08810449 | fixer F5 r2 | sonnet | run-sheet wording round 2 | 09:38 | 09:55 | 20 | running | RUNSHEET-WORDING.md |
-| a72b276594a01d0e0 | fixer F3 r4 | sonnet | kill 3 mutants + security review fixes | 09:40 | 09:58 | 20 | running | fill_flows/ |
-| aee4bb56840c8d24b | citation triage | sonnet | classify unmatched quotes | 09:30 | 09:48 | 70 | running | CITATION-TRIAGE.md |
-| ae317761f29afcd16 | reviewer ROLES r2 security | sonnet | least-privilege review | 09:40 | 09:50 | 30 | running | - |
-| ac11eac3fda3d70bc | reviewer ROLES r2 reader | sonnet | naive reader | 09:40 | 09:48 | 30 | running | - |
-| ac33c5c37ca79b1cb | reviewer F6b r2 facts | sonnet | cites and recipes | 09:41 | 09:50 | 20 | running | - |
-| abb0f3dbf87d92397 | reviewer F6b r2 reader | sonnet | naive reader | 09:41 | 09:48 | 20 | running | - |
+| a72b276594a01d0e0 | fixer F3 r4 | sonnet | kill 3 mutants + security fixes | 09:40 | 09:58 | 20 | running | fill_flows/ |
+| a6ad3edfc302e7503 | reviewer F8 r2 false passes | sonnet | checker review | 09:36 | 09:46 | 30 | running | - |
+| a46dc96a5a052f767 | fixer ROLES r2 | sonnet | roles proposal fixes | 09:37 | 09:55 | 20 | running | ROLES-PROPOSAL.md |
+| aa504d5c80158c02a | fixer F6b r2 | sonnet | recovery audit final | 09:37 | 09:50 | 20 | running | F6B-AUDIT.md |
+| ab790c7cf5d1d6137 | fixer F8 r2 | sonnet | REPORT.md start-here + header | 09:37 | 09:50 | 20 | running | flow-check/ |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

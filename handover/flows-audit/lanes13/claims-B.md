@@ -370,7 +370,7 @@ Ground truth caveat: I did not read the memory files FACTS cites; the verdicts f
 ## Part 6: counts and worst rows
 Counts are in the Part 7 block at the end (computed from the tables by grep).
 
-## Part 7: counts (script count of the tables after round 1: rows B-001 to B-226 and X-1 to X-4)
+## Part 7: counts (script count of the tables after round 2: rows B-001 to B-226 and X-1 to X-4)
 | verdict | count |
 |---|---|
 | SUPPORTED | 80 |

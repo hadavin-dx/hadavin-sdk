@@ -314,8 +314,8 @@ def shape(obj) -> tuple[int, dict]:
 # ---------------------------------------------------------------- file helpers
 
 
-def sha256_nofollow(path: str) -> str:
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+def sha256_at(name: str, dir_fd: int) -> str:
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=dir_fd)
     h = hashlib.sha256()
     with os.fdopen(fd, "rb") as fh:
         for chunk in iter(lambda: fh.read(65536), b""):
@@ -356,15 +356,28 @@ def inside_git(path: str) -> bool:
         p = parent
 
 
-def _write_new(path: str, data: bytes) -> None:
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+def _write_new(name: str, data: bytes, dir_fd: int) -> None:
+    """Create `name` inside the open folder `dir_fd` (never through a path that could be
+    swapped), then check on the open file that it really is 0600 and ours: on a disk that
+    ignores file modes this refuses and leaves nothing."""
+    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=dir_fd)
     try:
+        os.fchmod(fd, 0o600)
+        st = os.fstat(fd)
+        if st.st_uid != os.getuid() or stat.S_IMODE(st.st_mode) != 0o600:
+            raise Refused(
+                "file modes do not hold on this disk (a new file is not private); "
+                "use a folder on a normal Linux or macOS disk"
+            )
         with os.fdopen(fd, "wb") as fh:
+            fd = -1
             fh.write(data)
     except BaseException:
         # the file is ours (O_EXCL made it): remove it so a re-run is not blocked by a stub
+        if fd >= 0:
+            os.close(fd)
         try:
-            os.unlink(path)
+            os.unlink(name, dir_fd=dir_fd)
         except OSError:
             pass
         raise
@@ -401,6 +414,10 @@ def _plain_name(n) -> bool:
     return isinstance(n, str) and n not in ("", ".", "..") and not any(c in n for c in "/\\\0")
 
 
+def _marker_bytes(folder_name: str) -> bytes:
+    return f"{MARKER_FORMAT}\n{folder_name}\n".encode("utf-8", "surrogateescape")
+
+
 def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
     manifest_path = out_dir + MANIFEST_SUFFIX
@@ -433,14 +450,15 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
         try:
             new = sub.walk(obj)
         except Refused as e:
-            raise Refused(f"{n}: {e}") from None
+            raise Refused(f"{_a(n)}: {e}") from None
         if shape(new) != before:
-            raise Refused(f"{n}: node count or connections changed (internal check)")
+            raise Refused(f"{_a(n)}: node count or connections changed (internal check)")
         if sub.bad:
-            raise Refused(f"{n}: " + _CANNOT_FILL + ", ".join(sorted(sub.bad)))
+            bad_names = ", ".join(_a(b) for b in sorted(sub.bad))
+            raise Refused(f"{_a(n)}: " + _CANNOT_FILL + bad_names)
         data = dump(new)
         if ANY_ENV.search(data.decode("utf-8")):
-            raise Refused(f"{n}: a $env token is left after substitution (dynamic or odd form)")
+            raise Refused(f"{_a(n)}: a $env token is left after substitution (dynamic or odd form)")
         ph_left += sum(len(PH_RE.findall(t)) for t in iter_strings(new))
         outputs[n] = data
     if not found_any and not sub.ph_used:
@@ -452,34 +470,52 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     for k in sorted(set(values) - sub.used - sub.ph_used):
         print(f"warning: key {k} in the values file is not used by any node", file=sys.stderr)
 
-    manifest = {
-        "format": MANIFEST_FORMAT,
-        "files": {n: hashlib.sha256(d).hexdigest() for n, d in sorted(outputs.items())},
-    }
-    created: list[str] = []
+    folder_name = os.path.basename(out_dir)
+    marker = _marker_bytes(folder_name)
+    hashes = {n: hashlib.sha256(d).hexdigest() for n, d in outputs.items()}
+    hashes[MARKER_NAME] = hashlib.sha256(marker).hexdigest()
+    manifest = {"format": MANIFEST_FORMAT, "files": dict(sorted(hashes.items()))}
+    manifest_bytes = (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode()
+    manifest_name = folder_name + MANIFEST_SUFFIX
+    created: list[tuple[int, str]] = []  # (open folder, name) in creation order
+    pfd = os.open(os.path.dirname(out_dir), DIR_FLAGS & ~os.O_NOFOLLOW)
+    dfd = -1
     made_dir = False
     try:
         # the manifest goes first: if this stops half way, `delete` can still find every file
-        _write_new(manifest_path, (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode())
-        created.append(manifest_path)
-        os.mkdir(out_dir, 0o700)
+        _write_new(manifest_name, manifest_bytes, pfd)
+        created.append((pfd, manifest_name))
+        os.mkdir(folder_name, 0o700, dir_fd=pfd)
         made_dir = True
-        os.chmod(out_dir, 0o700)
+        dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
+        os.fchmod(dfd, 0o700)
+        dst = os.fstat(dfd)
+        if dst.st_uid != os.getuid() or stat.S_IMODE(dst.st_mode) != 0o700:
+            raise Refused(
+                "file modes do not hold on this disk (the new folder is not private); "
+                "use a folder on a normal Linux or macOS disk"
+            )
+        _write_new(MARKER_NAME, marker, dfd)
+        created.append((dfd, MARKER_NAME))
         for n, d in outputs.items():
-            _write_new(os.path.join(out_dir, n), d)
-            created.append(os.path.join(out_dir, n))
+            _write_new(n, d, dfd)
+            created.append((dfd, n))
     except BaseException:
-        for p in reversed(created):
+        for fd, nm in reversed(created):
             try:
-                os.unlink(p)
+                os.unlink(nm, dir_fd=fd)
             except OSError:
                 pass
         if made_dir:
             try:
-                os.rmdir(out_dir)
+                os.rmdir(folder_name, dir_fd=pfd)
             except OSError:
                 pass
         raise
+    finally:
+        if dfd >= 0:
+            os.close(dfd)
+        os.close(pfd)
     print(f"filled {len(outputs)} files, {len(sub.used)} names and {len(sub.ph_used)} placeholders")
     if ph_left:
         print(
@@ -501,31 +537,31 @@ def do_check(directory: str, tokens_only: bool) -> int:
         try:
             obj = read_json_file(directory, n)
         except Refused as e:
-            print(f"{n}: {e}")
+            print(f"{_a(n)}: {e}")
             bad += 1
             continue
         ph: dict[str, int] = {}
         for text in iter_strings(obj):
             for m in TOKEN.finditer(text):
-                print(f"{n}: token $env {m.group(1) or m.group(3)}")
+                print(f"{_a(n)}: token $env {_a(m.group(1) or m.group(3))}")
                 bad += 1
             c = len(ANY_ENV.findall(TOKEN.sub("", text)))
             if c:
-                print(f"{n}: {c} other $env use(s) (dynamic form)")
+                print(f"{_a(n)}: {c} other $env use(s) (dynamic form)")
                 bad += c
             for name in PH_RE.findall(text):
                 ph[name] = ph.get(name, 0) + 1
         if not tokens_only:
             for p, c in sorted(ph.items()):
-                print(f"{n}: placeholder {p} x{c}")
+                print(f"{_a(n)}: placeholder {p} x{c}")
                 bad += c
     print(f"check: {len(names)} files, {bad} problem(s)")
     return EXIT_REFUSED if bad else EXIT_OK
 
 
-def _load_manifest(manifest_path: str) -> dict:
+def _load_manifest(manifest_name: str, pfd: int) -> dict:
     try:
-        fd = os.open(manifest_path, os.O_RDONLY | os.O_NOFOLLOW)
+        fd = os.open(manifest_name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=pfd)
         with os.fdopen(fd, "rb") as fh:
             man = json.loads(fh.read().decode("utf-8"))
         files = man["files"]
@@ -541,95 +577,144 @@ def _load_manifest(manifest_path: str) -> dict:
     return files
 
 
-def _signature_ok(out_dir: str, present: set, force_hash: bool) -> None:
+def _read_at(name: str, dir_fd: int) -> bytes:
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
+    with os.fdopen(fd, "rb") as fh:
+        return fh.read()
+
+
+def _lstat_or_none(name: str, dir_fd: int):
+    try:
+        return os.lstat(name, dir_fd=dir_fd)
+    except FileNotFoundError:
+        return None
+
+
+def _signature_ok(dfd: int, folder_name: str, present: set, force_hash: bool) -> None:
     """Without a manifest, delete only a folder that looks exactly like this tool's output:
-    the folder 0700 and the files 0600, all owned by the current user, plain .json files that
-    parse as JSON and hold no $env text. Anything else is refused (nothing is deleted)."""
+    the folder 0700 and the files 0600, all owned by the current user, the marker file this
+    tool writes first (right format and this folder's name), and plain .json files that parse
+    as JSON and hold no $env text. Anything else is refused (nothing is deleted)."""
     me = os.getuid()
-    st = os.lstat(out_dir)
+    st = os.fstat(dfd)
     if st.st_uid != me or stat.S_IMODE(st.st_mode) != 0o700:
         raise Refused(
             "no manifest, and the folder is not marked as this tool's output (it must be "
             "mode 0700 and yours); nothing deleted"
         )
+    if MARKER_NAME not in present:
+        raise Refused(
+            "no manifest, and the folder has no marker file written by this tool "
+            f"({MARKER_NAME}); nothing deleted"
+        )
     for n in sorted(present):
-        p = os.path.join(out_dir, n)
-        ls = os.lstat(p)
-        if not n.endswith(".json") or not stat.S_ISREG(ls.st_mode):
-            raise Refused(f"{n}: not a plain .json file; nothing deleted")
+        ls = os.lstat(n, dir_fd=dfd)
+        if not stat.S_ISREG(ls.st_mode) or not (n == MARKER_NAME or n.endswith(".json")):
+            raise Refused(f"{_a(n)}: not a plain .json file; nothing deleted")
         if ls.st_uid != me or stat.S_IMODE(ls.st_mode) != 0o600:
             raise Refused(
-                f"{n}: not marked as this tool's output (mode 0600, yours); nothing deleted"
+                f"{_a(n)}: not marked as this tool's output (mode 0600, yours); nothing deleted"
             )
+        try:
+            raw = _read_at(n, dfd)
+        except OSError:
+            raise Refused(f"{_a(n)}: cannot be read; nothing deleted") from None
+        if n == MARKER_NAME:
+            if raw != _marker_bytes(folder_name):
+                raise Refused("the marker file is not this tool's, or is for another folder name")
+            continue
         if force_hash:
             continue
         try:
-            fd = os.open(p, os.O_RDONLY | os.O_NOFOLLOW)
-            with os.fdopen(fd, "rb") as fh:
-                text = fh.read().decode("utf-8")
-            load_json(text.encode("utf-8"))
-        except (OSError, ValueError):
+            text = raw.decode("utf-8")
+            load_json(raw)
+        except ValueError:  # UnicodeDecodeError is a ValueError
             raise Refused(
-                f"{n}: does not parse as JSON (a file cut short by a kill needs --force-hash); "
-                "nothing deleted"
+                f"{_a(n)}: does not parse as JSON (a file cut short by a kill needs "
+                "--force-hash); nothing deleted"
             ) from None
         if ANY_ENV.search(text):
-            raise Refused(f"{n}: holds $env text (looks like an input folder); nothing deleted")
+            raise Refused(f"{_a(n)}: holds $env text (looks like an input folder); nothing deleted")
 
 
 def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
     out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
-    manifest_path = out_dir + MANIFEST_SUFFIX
-    _check_parent_links(os.path.dirname(out_dir))
-    has_dir = os.path.lexists(out_dir)
-    has_man = os.path.lexists(manifest_path)
-    if has_dir and (os.path.islink(out_dir) or not os.path.isdir(out_dir)):
-        raise Refused("output folder is a symlink or not a folder; nothing deleted")
-    if has_man and (os.path.islink(manifest_path) or not os.path.isfile(manifest_path)):
-        raise Refused("manifest is a symlink or not a file; nothing deleted")
-    if not has_dir and not has_man:
-        raise Refused("output folder and manifest are both missing; nothing to delete")
-    files: dict = {}
-    if not no_manifest:
-        if not has_man:
+    parent = os.path.dirname(out_dir)
+    folder_name = os.path.basename(out_dir)
+    manifest_name = folder_name + MANIFEST_SUFFIX
+    _check_parent_links(parent)
+    try:
+        pfd = os.open(parent, DIR_FLAGS & ~os.O_NOFOLLOW)
+    except OSError:
+        raise Refused("output parent folder cannot be opened; nothing deleted") from None
+    dfd = -1
+    me = os.getuid()
+    try:
+        dst = _lstat_or_none(folder_name, pfd)
+        mst = _lstat_or_none(manifest_name, pfd)
+        has_dir, has_man = dst is not None, mst is not None
+        if has_dir and not stat.S_ISDIR(dst.st_mode):
+            raise Refused("output folder is a symlink or not a folder; nothing deleted")
+        if has_man and not stat.S_ISREG(mst.st_mode):
+            raise Refused("manifest is a symlink or not a file; nothing deleted")
+        if not has_dir and not has_man:
+            raise Refused("output folder and manifest are both missing; nothing to delete")
+        files: dict = {}
+        if not no_manifest and not has_man:
             raise Refused(
                 "manifest is missing; nothing deleted (to remove the folder anyway, use "
-                "--no-manifest: it removes only plain .json files)"
+                "--no-manifest: it removes only the files this tool writes)"
             )
-        files = _load_manifest(manifest_path)
-    if not has_dir:  # a fill was stopped after the manifest and before the folder
-        os.unlink(manifest_path)
-        print("deleted the manifest (the folder was not there)")
-        return EXIT_OK
-    present = set(os.listdir(out_dir))
-    todo = []
-    if no_manifest:
-        _signature_ok(out_dir, present, force_hash)
-        todo = [os.path.join(out_dir, n) for n in sorted(present)]
-    else:
-        extra = sorted(present - set(files))
-        if extra:
-            raise Refused(
-                f"folder holds files not in the manifest: {', '.join(extra)}; nothing deleted"
-            )
-        for n, h in sorted(files.items()):
-            p = os.path.join(out_dir, n)
-            if not os.path.lexists(p):
-                continue
-            if os.path.islink(p) or not os.path.isfile(p):
-                raise Refused(f"{n}: symlink or not a regular file; nothing deleted")
-            if sha256_nofollow(p) != h and not force_hash:
+        if has_man and (not no_manifest or not has_dir):
+            files = _load_manifest(manifest_name, pfd)  # a manifest we rely on or remove is valid
+        if not has_dir:  # a fill was stopped after the manifest and before the folder
+            os.unlink(manifest_name, dir_fd=pfd)
+            print("deleted the manifest (the folder was not there)")
+            return EXIT_OK
+        try:
+            dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
+        except OSError:
+            raise Refused("output folder is a symlink or not a folder; nothing deleted") from None
+        present = set(os.listdir(dfd))
+        todo: list[str] = []
+        if no_manifest:
+            _signature_ok(dfd, folder_name, present, force_hash)
+            todo = sorted(present)
+        else:
+            if os.fstat(dfd).st_uid != me:
+                raise Refused("output folder is not owned by you; nothing deleted")
+            extra = sorted(present - set(files))
+            if extra:
                 raise Refused(
-                    f"{n}: content changed since it was written (use --force-hash); nothing deleted"
+                    f"folder holds files not in the manifest: {', '.join(_a(e) for e in extra)}; "
+                    "nothing deleted"
                 )
-            todo.append(p)
-    for p in todo:
-        os.unlink(p)
-    os.rmdir(out_dir)
-    if has_man:
-        os.unlink(manifest_path)
-    print(f"deleted {len(todo)} files, the folder and the manifest")
-    return EXIT_OK
+            for n, h in sorted(files.items()):
+                ls = _lstat_or_none(n, dfd)
+                if ls is None:
+                    continue
+                if not stat.S_ISREG(ls.st_mode):
+                    raise Refused(f"{_a(n)}: symlink or not a regular file; nothing deleted")
+                if ls.st_uid != me:
+                    raise Refused(f"{_a(n)}: not owned by you; nothing deleted")
+                if sha256_at(n, dfd) != h and not force_hash:
+                    raise Refused(
+                        f"{_a(n)}: content changed since it was written (use --force-hash); "
+                        "nothing deleted"
+                    )
+                todo.append(n)
+        for n in todo:
+            os.unlink(n, dir_fd=dfd)
+        os.rmdir(folder_name, dir_fd=pfd)
+        if has_man:
+            os.unlink(manifest_name, dir_fd=pfd)
+        count = len([n for n in todo if n != MARKER_NAME])
+        print(f"deleted {count} files, the folder and the manifest")
+        return EXIT_OK
+    finally:
+        if dfd >= 0:
+            os.close(dfd)
+        os.close(pfd)
 
 
 def main(argv=None) -> int:
