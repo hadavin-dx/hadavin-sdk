@@ -85,3 +85,6 @@ Q31. ANSWERED (lead, 12:50Z): same line as Q30. Change in my work: nothing. The 
 - Q28 D5 (Decimal or integers): OWNER-OPEN, non-blocking.
 - Q29: Q18's approval of run.py as a tool, and whether r6 is the last round, were not answered.
 - Q1, Q2, Q9, Q10, Q11 (from c6-skip-audit/REPORT-c6h.md, not copied here in full), Q3 to Q8, Q12, Q18 (stop C8/C5/C7 now?) and Q19.3: I found no matching answer by question number in ORDERS.md (some may be covered by DECISIONS-2026-11-16.md, which I did not re-read for this task); ORDERS.md line 180 says "I answered everything in QUESTIONS.md (last Q21)", which I cannot match item by item. They stay open until the lead says which line answers them.
+
+## Q32 (run.py r6, 2026-11-16, for the lead): real memory faults
+A real SEGV, BUS, FPE or ILL signal with a Python handler still makes run.py spin forever (the interpreter holds the lock, so a watchdog thread cannot help; measured by the r6 builder, T64a). Choose: (a) keep restore-on-sent-signal (current) or (b) die-on-fault with no restore (a planted mutation could then stay in the tree; the marker file still says so and `--restore` repairs it). Default if you do not answer: (a), documented. The tool stays out of every pull request (Q29).
