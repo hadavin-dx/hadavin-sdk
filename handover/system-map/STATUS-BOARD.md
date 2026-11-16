@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T19:10Z
+UPDATED_UTC: 2026-11-16T19:12Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -19,8 +19,8 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 3
-CAPACITY nproc=4 load=0.79 0.55 0.48 (read at 19:10Z) disk: 13G free (was 8.3G; cleared 4734 MB of old scratch at 19:10Z; floor 6G). DISK TOP5: /root/.claude 1106MB; /home/user/hadavin-sdk 448MB; /root/.cache 414MB; /tmp/tr 96MB; /tmp/claude-code.log 30MB
+AGENTS_RUNNING: 5
+CAPACITY nproc=4 load=0.36 0.45 0.45 (read at 19:10Z) disk: 13G free (was 8.3G; cleared 4734 MB of old scratch at 19:10Z; floor 6G). DISK TOP5: /root/.claude 1106MB; /home/user/hadavin-sdk 448MB; /root/.cache 414MB; /tmp/tr 96MB; /tmp/claude-code.log 30MB
 NEXT: digest hand-backs; one fresh read per edited held page
 INTERRUPTED: none
 
@@ -50,9 +50,11 @@ INTERRUPTED: none
 
 ## AGENTS
 - a8c64e64f4ffd869c: steps v5 round-6 reader (money path); started 19:15Z; running; next: fix findings
-- a59c332fa2cb2f8c2: r40 patch rows (LANE-D/A/C-13x into RUNBOOK-V4.3-PATCH); started 19:07Z; running; next: digest
-- (new) L-01 pages round-5 reader (security path); started 19:10Z; running; next: fix findings
-EMPTY SLOTS: 5 empty (queue minimum 6). Reasons: re-smoke list and drift report wait for the steps v5 file to settle (their cites would be stale again); M14, store/scope and the earlier patch rows have used their reader rounds; r41-r43 and the loopback re-smoke wait on the lead; no other independent open work.
+- a2fd247732c1f72fa: L-01 pages round-5 reader (security path); started 19:20Z; running; next: fix findings
+- a22accac7ebea2961: fact reviewer of new r40 patch rows P141-P145, OD-34; started 19:12Z; running; next: fix findings
+- a7a48332531958ddc: fact reviewer of drift/REPORT.md (cites other than steps v5); started 19:12Z; running; next: fix findings
+- aefc6ee897573c51e: fact reviewer of re-smoke list against plan commands; started 19:12Z; running; next: fix findings
+EMPTY SLOTS: 3 empty (queue minimum 6; 8 wanted). Reasons: store/scope, M14 and the earlier patch rows have used their reader rounds and have no unfixed findings; r41, r42, r43 and the loopback re-smoke wait on the lead; steps v5 cite pass waits until the round-6 reader and its fix land (cites would move again); no other independent open item.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
