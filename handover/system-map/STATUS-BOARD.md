@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T18:36Z
+UPDATED_UTC: 2026-11-16T18:38Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -50,11 +50,11 @@ INTERRUPTED: none
 
 ## AGENTS
 - a51484a01a4fff9aa fixer: patch gaps G01-G20 (work/RUNBOOK-V4.3-PATCH.md)
-- a54dec32208e0d5bc fixer: write_outputs.py row-id B4-1..B4-9
 - aa6aa85593406b7c1 fixer: store, scope file, drift report F-01..F-14
 - a1902605f20a17847 reader: M14 diff and re-smoke command list
-- a96f1f462a7b26353 reader: steps v5 round 2 (money path)
-EMPTY SLOTS: 3 of 8 (5 running; QUEUE minimum 6 is not met for about 10 minutes). Reason: the remaining QUEUE rows wait on r37/r40/r41/r42 landing or on the lead (notice items 1-13); no independent static work is left. Will start a reader on the patch when a51484a01a4fff9aa reports.
+- a44dfa73eb8876da9 reader: write_outputs fix round 2
+- ac0cfcdc2964f349b fixer: steps v5 round 2 (R2-01..R2-12, money path)
+EMPTY SLOTS: 3 of 8 (5 running; QUEUE minimum 6 not met). Reason: remaining QUEUE rows wait on r37/r40/r41/r42 landing or on the lead (notice items 1-13); no independent static work left. A patch reader starts when a51484a01a4fff9aa reports.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
