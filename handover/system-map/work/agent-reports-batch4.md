@@ -1109,3 +1109,11 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 806 open-items r13: bare row numbers, deadlines. PARTLY FIXED by CURRENT r13; cells TO DO.
 
 - 807 merged-findings r11: glossary missing, severity cells, duplicates. PARTLY FIXED by LEGEND r12; cells TO DO.
+
+- 808 M17 r10: top-of-file status, cites, terms. FIXED by HOLD r11.
+- 809 premortem r13: gate undefined, replaced rules. FIXED by STATE r14.
+- 810 ARCHIVE-CUT-LIST r13: row C names, search form, void lines. FIXED by VERDICT r14.
+- 811 open-items r14: stale line 3, bare rows, column 6. PARTLY FIXED by CURRENT r14; cells TO DO.
+- 812 critical-path r21: chain, A4, glossary. FIXED by CURRENT ANSWER r22.
+- 813 row1-builder-brief r10: not self-contained. FIXED by CURRENT ONLY r11.
+- 814 PLAN-002 r21: owner meanings, step 0. FIXED by RULINGS r22; fold TO DO.
