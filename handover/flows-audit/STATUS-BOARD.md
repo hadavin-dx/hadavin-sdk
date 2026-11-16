@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T19:53:51Z
+UPDATED_UTC: 2026-11-16T19:54:26Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 10
-CAPACITY: 0.79 load of 4 cores, mem 1/15 GB, RAM 1097/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 10 (light+heavy per list)
+AGENTS_RUNNING: 9
+CAPACITY: 0.98 load of 4 cores, mem 1/15 GB, RAM 1108/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 9 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T19:53:51Z
+PUSHED_UTC: 2026-11-16T19:54:26Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,11 +30,11 @@ PUSHED_UTC: 2026-11-16T19:53:51Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
+| a1c808dd | TAKE-CHECKLIST 1-200 reader | sonnet | stranger read | 19:51Z | 19:54Z | completed (report saved, r56) | 2 Blockers/13 Majors |
 | a7636841 | F8 fixer r13 (HEAVY when it runs tests, one at a time) | sonnet | fix F8 review findings | 19:50Z | 20:50Z | running | checkpoint-f8-r13.md |
 | abd42d8c | DEAD-MAN-CHECK fresh reader (uncapped) | sonnet | stranger read | 19:50Z | 20:05Z | running | none yet |
 | a43b46aa | RUNBOOK 245-300 reader | sonnet | stranger read | 19:51Z | 20:06Z | running | none yet |
 | a2d81cf3 | CLAIMS-TABLE 600-1052 reader | sonnet | stranger read | 19:51Z | 20:06Z | running | none yet |
-| a1c808dd | TAKE-CHECKLIST 1-200 reader | sonnet | stranger read | 19:51Z | 20:06Z | running | none yet |
 | a9a0584f | REVIEW.md 633-943 reader (uncapped) | sonnet | stranger read | 19:52Z | 20:07Z | running | none yet |
 | a8200900 | FINDINGS/LEDGER r32 fixer | sonnet | fix 28 Majors | 19:54Z | 20:34Z | running | none yet |
 | a921f079 | patch-copies README 31-329 reader (uncapped) | sonnet | stranger read | 19:54Z | 20:09Z | running | none yet |
