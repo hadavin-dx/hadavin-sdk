@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:23:27Z
+UPDATED_UTC: 2026-11-16T09:23:54Z
 SESSION: core-hardening
 ORDER: 016
 STATE: WORKING
@@ -7,10 +7,10 @@ ITEMS_TOTAL: 9
 ITEMS_OPEN: 5
 PERCENT: 74
 AGENTS_RUNNING: 4
-CAPACITY: load 1.11 of 4 cores (below target: the unblocked lanes are all running, next lanes start when reviewers are due), mem 1 of 15 GB, disk 22 GB free, 3 light + 1 heavy agents
+CAPACITY: load 1.10 of 4 cores (about 27 percent, below the 70-85 target: every unblocked lane is running, the next lanes are reviewers that start when a builder reports), mem 1 of 15 GB, disk 21 GB free, 3 light + 1 heavy agents
 INTERRUPTED: none
 NEXT: C4b v5 lands then one fresh naive reader; C5 v2 lands then two reviewers; C7 and C8b results then two reviewers each; FINAL when all done
-PUSHED_UTC: 2026-11-16T09:23:27Z
+PUSHED_UTC: 2026-11-16T09:23:54Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
