@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:29:35Z
-PUSHED_UTC: 2026-11-16T12:29:35Z
+UPDATED_UTC: 2026-11-16T12:30:08Z
+PUSHED_UTC: 2026-11-16T12:30:08Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
 CAPACITY nproc=4 load=0.06 0.11 0.15 RAM_MB used 913 of 16087 disk: 18G used, 21G free top disk by me: handover/system-map 4.7M
-NEXT: digested through 668. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+NEXT: digested through 672. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a3680caa6478f0902 | L2c r8 read | earlier beat | ended | done | digest 668 |
-| a590feb718d23ed92 | rehearsal-limits r5 read | 2026-11-16T12:29:21Z | +2 min | running | nothing yet |
-| afb796a6606e8a455 | t19 r8 read | 2026-11-16T12:29:21Z | +2 min | running | nothing yet |
-| a407625f7ccf9779b | PLAN-002 r13 read | 2026-11-16T12:29:21Z | +2 min | running | nothing yet |
-| a12529d45cc8b0572 | open-items r9 read | 2026-11-16T12:29:21Z | +2 min | running | nothing yet |
-| a059562155f92385c | owner-timeline r6 read | 2026-11-16T12:29:21Z | +2 min | running | nothing yet |
-| a9713aa0f051d931d | critical-path r15 read | 2026-11-16T12:29:21Z | +2 min | running | nothing yet |
-| a9b4e76e6a56ab730 | banned-claims-clean r4 read | 2026-11-16T12:29:21Z | +2 min | running | nothing yet |
+| a590feb718d23ed92 | rehearsal-limits r5 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
+| a9713aa0f051d931d | critical-path r15 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
+| a9b4e76e6a56ab730 | banned-claims-clean r4 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
+| a2f2193b65026f4d5 | BRIEF-LANE r9 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
+| NEW1 | L1c r8 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
+| NEW2 | L4c r5 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
+| NEW3 | L5ac r5 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
+| NEW4 | merged-findings r5 read | 2026-11-16T12:30:08Z | +2 min | running | nothing yet |
 
-Running: 7 (L2c ended, refill next; launch results; ListAgents not re-run). Digests done through 667.
+Running: 8 (launch results; ListAgents not re-run). Digests done through 672.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

@@ -925,3 +925,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 667 L3c r5: gloss-pending terms. FIXED by TERMS r5.
 
 - 668 L2c r8: steps not runnable. FIXED by STEPS r8.
+
+- 669 open-items r9: undefined glossary. FIXED by GLOSSARY.
+- 670 PLAN-002 r13: remainder text. FIXED by CURRENT RULINGS r13.
+- 671 t19 r8: F8 rule not set. FIXED by CURRENT r8.
+- 672 owner-timeline r6: row 9 words, fill-ins. FIXED by CURRENT r6.
