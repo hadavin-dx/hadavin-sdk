@@ -151,6 +151,122 @@ for n, t in (('A', A), ('B', B)):
     line = m[1].replace('<key file>', '/home/x/k')
     r = subprocess.run(['bash', '-n', '-c', line], capture_output=True, text=True)
     if r.returncode: fail('C15', n + ' bash -n: ' + r.stderr[:80])
+
+# ---- v24b additions: C16 to C25 (each closes a gap the ported v23 plants M01 to M54 showed) ----
+import difflib
+NOTE = ALL.get('LEAD-RELEASE-NOTE-v8.md', ''); OPEN = ALL.get('v24-OPEN-FOR-LEAD.md', ''); CHG = ALL.get('v24-CHANGES.md', '')
+TEXTS = {'sheetA': A, 'sheetB': B, 'note': NOTE, 'open': OPEN, 'changes': CHG}
+# C16 every pointer target exists: Open N has a row, G N has a row, sheet N.M is a step, open rows run 1..n with no gap
+open_rows = [int(m[1]) for m in re.finditer(r'^\| (\d+) \|', OPEN, re.M)]
+if open_rows != list(range(1, len(open_rows) + 1)): fail('C16', 'open list rows are not numbered 1..n without a gap')
+g_rows = set(m[1] for m in re.finditer(r'^\| (G\d+) \|', NOTE, re.M))
+def step_ids(t):
+    out = set(); cur = None
+    for line in t.split('\n'):
+        mh = re.match(r'## (\d)\.', line)
+        if mh: cur = mh[1]
+        ms = re.match(r'(\d+)\. ', line)
+        if cur in ('5', '6', '7', '8') and ms: out.add('%s.%s' % (cur, ms[1]))
+    return out
+SIDS = step_ids(A) | step_ids(B)
+for n, t in TEXTS.items():
+    for m in re.finditer(r'\bOpen (\d+)((?:(?:, | and | to )\d+)*)', t):
+        for k in [m[1]] + re.findall(r'\d+', m[2]):
+            if int(k) not in open_rows: fail('C16', '%s: Open %s does not exist (%d rows)' % (n, k, len(open_rows)))
+    for m in re.finditer(r'\bG(\d+)\b', t):
+        if 'G' + m[1] not in g_rows: fail('C16', '%s: G%s has no row in the note' % (n, m[1]))
+    for m in re.finditer(r'\b[Ss]heet ([5-8]\.\d{1,2})\b', t):
+        if m[1] not in SIDS: fail('C16', '%s: sheet %s is not a step' % (n, m[1]))
+# C17 values: every statement of a number in any file equals the independent value
+EXPECT = [(r'[Pp]rice per call(?: at full size)?:? (?:USD )?(\d+\.\d+)', '0.27'), (r'Expected total:? (?:USD )?(\d+\.\d+)', '0.81'), (r'expected total (?:USD )?(\d+\.\d+)', '0.81'),
+          (r'gives (0\.\d+);', '0.27'), (r'TOKENS_OUT = (\d+)', '10000'), (r'TOKENS_IN = (\d+)', '40000'), (r'PRICE_IN_CENTS = (\d+)', '300'), (r'PRICE_OUT_CENTS = (\d+)', '1500'),
+          (r'CALL_CEILING = (\d+)', '3'), (r'B submitted (\d+) times', '10'), (r'A submitted (\d+) times', '2'), (r'IST = UTC \+ (\d+:\d+)', '5:30'),
+          (r'Program limit:? (?:USD )?(\d+\.\d+)', '13.21'), (r'Ledger total (\d+\.\d+)', '12.40'), (r'balance USD (\d+\.\d+)', '189.00'), (r'\b(14\.\d+) min', '14.33'), (r'(\d+) seconds = (\d+\.\d+)', None)]
+for n, t in TEXTS.items():
+    for p, v in EXPECT:
+        if v is None: continue
+        for m in re.finditer(p, t):
+            if m[1] != v: fail('C17', '%s: %r says %s, expected %s' % (n, m[0][:50], m[1], v))
+    for m in re.finditer(r'\b14\.\d+\b', t):
+        if m[0] != '14.33': fail('C17', '%s: figure %s (the only figure is 14.33)' % (n, m[0]))
+# C18 independent time literals (not read from facts-v24.py)
+LIT = {'ek': '11:00 UTC = 16:30 IST', 'ls': '11:30 UTC = 17:00 IST', 'lf': '12:00 UTC = 17:30 IST', 'cb': '12:10 UTC = 17:40 IST', 'sum': '30', 'y': '5', 'rl': '15', 'fp': '10', 'mg': '10'}
+for k, v in LIT.items():
+    if F[k] != v: fail('C18', 'fact %s is %r, expected %r' % (k, F[k], v))
+if int(F['y']) + int(F['rl']) + int(F['fp']) != int(F['sum']): fail('C18', 'Y + RL + FP is not the sum')
+if -(-860 // 60) > int(F['rl']): fail('C18', 'run length below 860 s')
+# C19 pointer ledger: every pointer (with the 28 characters before it) must be one a person verified; --accept-pointers rewrites the list
+PT = re.compile(r'(?<![\d.$:])(?:\b[5-9]\.\d{1,2}\b(?![.:]?\d)|\bG\d+\b|\bOpen \d+(?:(?:, | and | to )\d+)*|\bsection \d+\b|\bR\d{1,2}\b|\bQ\d+\b|\bcard step \d\b)')
+cur_ptr = set()
+for n, t in TEXTS.items():
+    for m in PT.finditer(t):
+        pre = re.sub(r'\s+', ' ', t[max(0, m.start() - 28):m.start()])
+        cur_ptr.add('%s|%s|%s' % (n, pre, m[0]))
+LEDGER = D + 'pointers-v24.txt'
+if '--accept-pointers' in sys.argv:
+    open(LEDGER, 'w', encoding='utf-8').write('\n'.join(sorted(cur_ptr)) + '\n'); print('pointers-v24.txt rewritten: %d entries (a person must have read each new one)' % len(cur_ptr))
+elif not os.path.exists(LEDGER): fail('C19', 'pointers-v24.txt missing')
+else:
+    ok_ptr = set(open(LEDGER, encoding='utf-8').read().split('\n')) - {''}
+    for e in sorted(cur_ptr - ok_ptr): fail('C19', 'pointer not in the verified list: ' + e[:100])
+# C20 angle-bracket placeholders in the sheet come from one list
+PH_OK = {'<amount or none>', '<call ceiling>', '<date>', '<expected total>', '<in words>', '<its name or none>', '<its name>', '<key file>', "<lead's answer>", '<model settings file>',
+         '<name and how>', '<name>', '<number or none>', '<number>', '<page address>', '<path from the message>', '<range>', '<run name>', '<setting name>', '<step>',
+         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>'}
+for n, t in (('A', A), ('B', B)):
+    for m in set(re.findall(r'<[A-Za-z][^<>\n]{0,45}>', t)):
+        if m not in PH_OK: fail('C20', '%s: placeholder not in the list: %s' % (n, m))
+# C21 set phrase told at the step that owns it; no near-miss of a set phrase anywhere
+OWN = {'8.2': 'ph_cd', '8.3': 'ph_apr', '8.4': 'ph_hsr', '8.5': 'ph_dmd', '7.4': 'ph_rs', '6.5': 'ph_ksf'}
+for n, t in (('A', A), ('B', B)):
+    cur = None; steps = {}; last = None
+    for line in t.split('\n'):
+        mh = re.match(r'## (\d)\.', line)
+        if mh: cur = mh[1]; last = None
+        ms = re.match(r'(\d+)\. ', line)
+        if cur in ('5', '6', '7', '8') and ms: last = '%s.%s' % (cur, ms[1]); steps[last] = line
+        elif last and line.strip() and not line.startswith('#'): steps[last] += ' ' + line
+    for k, ph in OWN.items():
+        if '"%s"' % F[ph] not in steps.get(k, ''): fail('C21', '%s: step %s does not tell its set phrase %r' % (n, k, F[ph]))
+        for k2, v2 in F.items():
+            if k2.startswith('ph_') and k2 != ph and k2 not in ('ph_mkc', 'ph_nokey', 'ph_rs', 'ph_cf', 'ph_ksf', 'ph_tp', 'ph_msg') and 'tell "%s"' % v2 in steps.get(k, ''): fail('C21', '%s: step %s tells the phrase of another step: %s' % (n, k, v2))
+    i = t.find('### THE CARD'); card = t[i:t.find('### The rules')]
+    if 'Tell the lead exactly: %s. Only now' % F['ph_mkc'] not in card: fail('C21', n + ': card step 5 lacks its exact phrase')
+PHS = [v for k, v in F.items() if k.startswith('ph_')]
+for n, t in TEXTS.items():
+    for q in set(re.findall(r'"([^"\n]{6,70})"', t)):
+        for v in PHS:
+            r = difflib.SequenceMatcher(None, q.lower(), v.lower()).ratio()
+            if q != v and r >= 0.88: fail('C21', '%s: quoted words %r look like the set phrase %r but differ' % (n, q, v))
+# C22 the cancel rule text lives only on the card: paraphrases outside it, in any file
+CAN = [r'(?<!auto-)\b(reload|reloads|reloaded|refresh|refreshes|refreshed)\b', r'beside each key', r'click Cancel', r'cancelled (state|word) each time', r'press the cancel button', r'confirmation word']
+for n, t in (('sheetA', A), ('sheetB', B)):
+    i = t.find('### THE CARD'); j = t.find('### The rules'); out = t[:i] + t[j:]
+    for p in CAN:
+        for m in re.finditer(p, out): fail('C22', '%s: cancel-rule wording %r outside the card' % (n, m[0]))
+for n in ('note', 'open'):
+    for p in CAN:
+        for m in re.finditer(p, TEXTS[n]): fail('C22', '%s: cancel-rule wording %r' % (n, m[0]))
+# C23 fixed sentences that must stay (each one is a rule the reviews asked for)
+KEEP = ['**STOP RULE.**', 'A key alive: the card first', 'The balance is at least the expected total.', 'If two rules disagree: the card first, then R1, then R10', 'Never "Select all", never empty Trash',
+        'letters, digits, single spaces and `. _ / - : = @ + ,` only', 'A submitted 2 times with the same person id, 1 contact, 1 mail; B submitted 10 times, 1 contact, 1 mail',
+        'paper note "READ" and "TEST" beside them', 'No word of the lead resumes a run whose key was alive', 'a wait never delays the card'.capitalize()]
+for n, t in (('A', A), ('B', B)):
+    for s_ in KEEP:
+        if s_ not in t: fail('C23', '%s lacks the fixed sentence %r' % (n, s_))
+for item in ('Windows menu paths', 'the Recall page', 'the paste method', 'the app-password page path', 'the HubSpot private-app page path', 'the Chrome profile menu', 'where the contact id sits'):
+    if item not in NOTE: fail('C23', 'note lacks tolerated item: ' + item)
+# C24 R8 character list: the yes pattern uses only what R8 allows
+mr = re.search(r'single spaces and `([^`]+)` only', A)
+if mr:
+    allowed = set(mr[1].replace(' ', '')) | set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ')
+    for n, t in (('A', A), ('B', B)):
+        m = re.search(r'follows this pattern, each `<\.\.\.>` filled: "(.*?)" \*\*Filled example', t, re.S)
+        if m and set(re.sub(r'<[^>]*>', 'x', m[1])) - allowed: fail('C24', n + ': yes pattern holds a character R8 does not allow')
+else: fail('C24', 'R8 character list not found')
+# C25 the three window facts of 5.1 and the three alarms agree (set once in the card words and in 6.2)
+for n, t in (('A', A), ('B', B)):
+    if t.count('one of the three alarms of 6.2') != 1 or 'Three phone alarms' not in t: fail('C25', n + ' alarm count wording')
 print('check-v24: %d failure(s)' % len(FAILS))
 for f in FAILS: print('FAIL', f)
 sys.exit(1 if FAILS else 0)

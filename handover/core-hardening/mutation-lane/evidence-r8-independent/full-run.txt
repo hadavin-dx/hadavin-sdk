@@ -242,3 +242,30 @@ REFUSED: import check: 'docs/note.txt' is not a plain .py module path, so the ch
   PASS: T34 run ends normally (rc 5: 5 = INCOMPLETE because of --no-control, r7) with verdict KILLED in the raw file
   PASS: T34 file restored
 == T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted
+./safety-tests.sh: line 1332: 18386 Killed                  ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+STILL PLANTED: src/mod.py differs from the backup kept by a run that used another TMPDIR; restore with: TMPDIR=/tmp python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py --root /tmp/claude-0/-home-u
+  PASS: T35a exit 3 (got 3) and the file is still planted
+  PASS: T35b restoring with the right TMPDIR works
+  PASS: T35c nothing planted anywhere: exit 0 (got 0)
+== T36 hard links (review r3 safety Major B): a target with two names would plant the mutant in the other file
+REFUSED: src/mod.py is not a regular file with exactly one name (links: 2): a hard-linked scratch tree shares files with another tree: refused
+  PASS: T36a target hard-linked to a real repository file: refused for that reason (rc 2, hits 1)
+  PASS: T36a the real repository file was not even touched (content and modification time)
+  PASS: T36b tree built with cp -al: refused (rc 2, hits 1)
+  PASS: T36b the linked original was not touched
+refused: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/hl/a.t
+both names unchanged and a one-name file still written: True
+  PASS: T36c write_target itself refuses a two-name file before truncating it, and still writes a one-name file
+== T37 an ini file ABOVE --root would change what pytest runs (review r3 minor)
+REFUSED: pytest would take its settings from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/toy/pytest.ini, outside --root /tmp/claude-0/-home-user/957f9d59-4d7f-5
+  PASS: T37a pytest.ini above the root refused (rc 2, hits 1)
+  PASS: T37a file unchanged, state empty
+  PASS: T37b pyproject.toml with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T37c a setup.cfg above WITHOUT a pytest section is no setting: the run goes ahead (rc 0)
+== T38 --restore re-creates a deleted target with its recorded mode (review r3 minor)
+./safety-tests.sh: line 1332: 18732 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full/tmpstate/hadavin-mutation-lane-0/38e10dbcb711ede2.backup; hash mat
+  PASS: T38 exit 0 and the file is back with the original text (rc 0)
+  PASS: T38 mode 640 restored
+  PASS: T38 state empty
+== T39 the orphan cannot be stopped (no permission) during --restore: the file is still restored (review r3 minor)
