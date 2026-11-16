@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T09:57:00Z
+UPDATED_UTC: 2026-11-16T09:59:54Z
 SESSION: core-hardening
-ORDER: 021
+ORDER: 021 + lead decisions 10:02Z
 STATE: WORKING
 BOOT_ID: 3dcae981
 ITEMS_TOTAL: 13
 ITEMS_OPEN: 8
-PERCENT: 88
-AGENTS_RUNNING: 9
-CAPACITY: load 1.1 of 4 cores (27%; agents are model-bound, count is the lever per ORDER 021), mem 1 of 15 GB used, disk 19 GB free, 9 light + 0 heavy agents (C5 v3 suite run pending)
+PERCENT: 89
+AGENTS_RUNNING: 7
+CAPACITY: load 2.2 of 4 cores (54%; agents model-bound, count is the lever), mem 1.8 of 15 GB used, disk 16 GB free, 7 light + 0 heavy agents
 INTERRUPTED: none
-FAILED: C5 v2 NOT READY (blocker: route refusals dropped in pilot/prod) -> C5 v3 running (NaN-refused-by-pydantic claim REFUTED on clean tree, builder told). C4b v7 had 1 blocker + 16 majors -> v8 built, 3 checkers running. run.py review: 6 majors -> fix pass running. C6b: lane3 void fl45k3b explained by TRUNCATE overlap (harness.py:261, not proven), "killed after mail left" false for K3B, closing-card 80/0/0 has no readable raw, "nothing doubled" overstated (CRM called twice in 13 of 18) -> lead decisions in REPORT-c6b.md. C3b v3 reviewed: 7 majors -> v4 building; 8 lead answers needed (LEAD-FILL-list.md). v8 needs 21 lead answers (v8-NOTES-FOR-LEAD.md). Hygiene: licence test fails as BRANCH ARTEFACT
-NEXT: C5 v3 then 2 reviewers then C7b/C8c on v3; C3b v4 then 2 reviewers; C4b v8 two reviewers + citation checker then v9 and C9 when APPLIED-S9.md lands; run.py fixes then reviewer; fold C6b decisions into C6 once lead answers
-PUSHED_UTC: 2026-11-16T09:57:00Z
+FAILED: C4b v8 NOT SAFE to send: security review 2 blockers + 8 majors, naive reader 6 blockers + 11 majors, citation check 14 mismatches -> v9 building (also applies lead decisions 10:02Z: video is real-v5 only, take never deletes contacts, S9-5/12/3/2 as text). C5 v2 NOT READY (route refusals dropped) -> C5 v3 finishing, scope now cut by lead (A-01 deferred, C-01 extras cut). run.py review 6 majors -> fix pass running. C6b: K3B void cause unproven, "killed after mail left" false for K3B, closing-card 80/0/0 has no readable raw -> evidence lane recomputes lane3 numbers. C3b v3 had 7 majors -> v4 building; 8 lead answers needed. Baseline licence test fails as BRANCH ARTEFACT.
+NEXT: v9 sheet then 2 fresh reviewers + citation checker; C5 v3 hand-back then 2 reviewers + C7b/C8c; C3b v4 then 2 reviewers; lane3 evidence then C6c; fold cross-read contradictions; REPORT.md refresh
+PUSHED_UTC: 2026-11-16T09:59:54Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
@@ -30,16 +30,14 @@ PUSHED_UTC: 2026-11-16T09:57:00Z
 | C10 | who-types-what table | in v7, reviewed | 85 | steps-edits/OWNER-STEPS-realrun-v7.md | naive round 2 done; gaps listed |
 | C11 | HubSpot probe step | in v7, reviewed | 85 | steps-edits/OWNER-STEPS-realrun-v7.md | needs box and exit-0 wording (v8) |
 
-## AGENTS (9 running; lanes per ORDER 021 menu)
-| id | role / lane | model | what it does | started UTC | expected end UTC | % | state | last output |
-|---|---|---|---|---|---|---|---|---|
-| a24a61032fba7c19e | builder C5 v3 money patches | sonnet | blocker + 4 majors, suite, mutants | 09:41Z | 10:45Z | 50 | running | patches-ready/v3 files |
-| a55b15a14460ca160 | builder C8c run.py fix pass | sonnet | 6 majors, T10+, v2 mutants | 09:50Z | 10:50Z | 40 | running | run-py-safety-tests-v2-new.txt |
-| a4cf0ec07cb53689e | builder C3b v4 repin | sonnet | naive+facts findings | 09:53Z | 10:55Z | 15 | running | checkpoint-v4 pending |
-| ac07992f76c206f2a | (d) adversarial take-day reader on v7 | sonnet | tries to make owner do a wrong step | 09:54Z | 10:20Z | 30 | running | none yet |
-| a4a4a389ddc9aefe5 | (e) cross-read other sessions | sonnet | contradictions, APPLIED-S9 | 09:54Z | 10:45Z | 20 | running | cross-read/ |
-| aa5a5e045236d77e2 | reviewer C4b v8 security | sonnet | money and secrets on v8 | 09:55Z | 10:20Z | 20 | running | none yet |
-| af7de949ed6fb6a3f | reviewer C4b v8 naive owner | sonnet | paraphrase and traps on v8 | 09:55Z | 10:20Z | 20 | running | none yet |
-| a1c3af07a5f94bb5c | (necessity) CODE-LAST reviewer on C5 patches | sonnet | rung table | 09:56Z | 10:20Z | 10 | running | none yet |
-| aef5e3f900a1eaf7e | (b) citation checker on v8 | sonnet | every number/row/xref | 09:57Z | 10:25Z | 5 | running | none yet |
-Finished this window: a547f7ebe061a0d2a (v7 citation check, saved), a05550009712931f4 (unverified-claims test, saved), ab14e1a120fcc5ffa (v8 builder), a6a889dee174ad270 + ab389dbb78785694e (C3b v3 reviewers), af663dc4b5b9156df (C6b reviewer).
+## AGENTS (7 running; lanes per ORDER 021 menu)
+| id | role / lane | model | what it does | started UTC | expected end UTC | state |
+|---|---|---|---|---|---|---|
+| a24a61032fba7c19e | builder C5 v3 | sonnet | finish blocker fix, scope cut by lead | 09:41Z | 10:20Z | running |
+| a55b15a14460ca160 | builder C8c run.py fix | sonnet | 6 majors, safety tests, v2 mutants | 09:50Z | 10:50Z | running |
+| a4cf0ec07cb53689e | builder C3b v4 repin | sonnet | naive+facts findings | 09:53Z | 10:55Z | running |
+| add10029f6e83984f | builder C4b v9 sheet | sonnet | folds 4 reviews + decisions | 10:00Z | 11:00Z | running |
+| a04d3e34619f11a75 | (c) evidence runner lane3 numbers | sonnet | recomputes C6b claims from raw | 10:01Z | 10:30Z | running |
+| adc1daedf6550c95c | builder C6c report | sonnet | applies decisions to C6b | 10:02Z | 10:30Z | running |
+| ac7c381203de39639 | (e) fact reviewer of CROSS-READ | egm-codebase-details | checks cites per row | 10:02Z | 10:20Z | running |
+Done this window: necessity review, v7 adversarial, v8 security/naive/citation, cross-read (all saved and pushed).
