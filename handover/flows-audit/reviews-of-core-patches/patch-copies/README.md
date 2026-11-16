@@ -7,9 +7,9 @@ and timing tests left out. NOT run: `bandit -ll` (not installed in this containe
 
 ## Where the files are, and which commit they fit
 - The files are in this folder: `handover/flows-audit/reviews-of-core-patches/patch-copies/` (`C-01.patch`, `A-01.patch`,
-  `G5-wording.patch`, `DEAD-MAN-CHECK.md`).
+  `DEAD-MAN-CHECK.md`; `G5-wording.patch` is deliberately NOT in this folder, see below).
 - They fit commit `b4cce5b` (the base all line numbers below refer to) and nothing newer. Checked on 2026-11-16 with `git apply --check`:
-  `A-01.patch` also fits `176a0cbe0` and the then-current head `ec65e4614`; `C-01.patch` and `G5-wording.patch` do NOT (exit code 1; the
+  `A-01.patch` also fits `176a0cbe0` and the then-current head `ec65e4614`; `C-01.patch` does NOT (exit code 1; the
   environment check in `config.py` and the head of `tests/warden_port/test_gate.py` changed). On a newer commit,
   rebuild those two from the text of the hunks; that was not done here. Line numbers at head `ec65e4614`: Route
   `config.py:64`, `refused = []` at `config.py:393`.
@@ -23,8 +23,8 @@ cd /tmp/patch-test
 P=<path to this folder>
 git apply --check "$P/C-01.patch"        # saw: exit 0, no output
 git apply --check "$P/A-01.patch"        # saw: exit 0
-git apply --check "$P/G5-wording.patch"  # saw: exit 0
-git apply "$P/C-01.patch" && git apply "$P/A-01.patch" && git apply "$P/G5-wording.patch"   # saw: exit 0
+# G5-wording.patch is not kept here (REVIEW.md Decision 23): its context lines carry a personal repository handle; rebuild it from the G5 wording drop section below
+git apply "$P/C-01.patch" && git apply "$P/A-01.patch"   # saw: exit 0 (C-01 then A-01 only)
 ```
 (`git apply` works in a folder that is not a git repository; it needs no history.) Apply `A-01.patch` before using `DEAD-MAN-CHECK.md`.
 The real change goes in as a branch and a pull request opened by the builder; nobody merges from here.
@@ -37,7 +37,7 @@ no approver credential and no executor credential: it opens the pull request and
 |---|---|---|
 | `uv run --all-extras --group test ruff check` | exit 0, "All checks passed!" | passed (run as `.venv/bin/ruff check src tests`) |
 | `uv run --all-extras --group test ruff format --check` | exit 0, nothing "would be reformatted" | passed, 265 files already formatted |
-| `uv run --all-extras --group test pytest` | exit 0, no failed test | see `../fix-patchcopies1.md` for the full-suite line |
+| `uv run --all-extras --group test pytest` | exit 0, no failed test | `2 failed, 9396 passed, 454 skipped` (live and timing tests left out). Both failures also fail on an unpatched `b4cce5b` archive: a vendor-name scan of `handover/` files, and a test that needs a real git checkout (`git ls-files`). Details in `../fix-patchcopies1.md` section 7 |
 | `bandit -ll` | exit 0, no medium or high finding | NOT RUN (UNVERIFIED: the tool is missing here) |
 
 Gate on the exit code of each command itself, never on a `| tail` pipe.
@@ -56,11 +56,10 @@ Infinity cases, which the existing pydantic field check already refuses (so they
 |---|---|---|---|
 | `C-01.patch` | `config.py`, `defaults.py`, `tests/test_c01_route_limits.py` | existing code (the `Route` field and `Config` validator already exist) + one documented default in `defaults.py`; CODE-LAST holds: a safety guarantee (no spend limit may be bypassed by price 0) | 26 cases (6 zero or negative price, 16 NaN or Infinity price, 1 priced route, 1 fake model, 2 `max_tokens`) |
 | `A-01.patch` | `runtime/tick.py`, `audit/chain.py`, `audit/local_dir.py`, `tests/test_a01_audit_reconcile.py`, `tests/test_p7_tick.py` | existing code (`reconcile()` exists on the audit Protocol, `audit/protocol.py:27`; nothing in `src` calls it) + a 9-line tick step and log lines | 6 new tests + 2 edits |
-| `G5-wording.patch` | `guard/redact.py`, `approvals/gate.py`, `tests/warden_port/test_gate.py` | config / text only: comments and docstrings, no behaviour | none needed (see below) |
+| (G5 wording, no patch file kept) | `guard/redact.py`, `approvals/gate.py`, `tests/warden_port/test_gate.py` | config / text only: comments and docstrings, no behaviour | none needed (see below) |
 | `DEAD-MAN-CHECK.md` | none (a documented check) | existing code: `tick_state` rows already exist | negative test described and run on a throwaway Postgres 16 (see the file) |
 
-`G5-wording.patch` is in this folder. It was copied byte for byte (same checksum) from the earlier working copy
-`handover/core-hardening/patches-ready/G5-wording.patch` (a scratch folder outside the repository, from the run that made these patches).
+No `G5-wording.patch` is kept in this folder. The earlier working copy (a scratch folder outside the repository) carries a personal repository handle in two context lines, so it was archived outside the repository (session scratchpad, flows-audit) and not committed; REVIEW.md Decision 23 asks the studio head whether a cleaned copy may be kept. Fixer a1e940f copied it in by mistake; flows-audit removed it. If it was pushed, the earlier commit still holds it in the branch history (needs the lead: history cannot be changed by this session).
 
 ## C-01: price above 0 at load, and a ceiling on `max_tokens`
 - Price: for every route, `min(input, output) <= 0` is refused when `backends.llm.kind != "fake"` (the recorded fake never spends).

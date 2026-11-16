@@ -42,3 +42,10 @@ Postgres 16.15 started as the `postgres` OS user on a local socket (port 54399),
 Identity `deadman_reader` (CREATE ROLE ... NOSUPERUSER NOCREATEDB NOCREATEROLE; GRANT CONNECT; GRANT USAGE ON SCHEMA public; GRANT SELECT (step, last_ok_at, last_run_at) ON tick_state): query as that role returned the same 3 rows, rc 0. Each of `SELECT last_error`, `SELECT *`, INSERT, UPDATE, DELETE on tick_state, `SELECT * FROM audit_outbox` (a made-up table), `CREATE TABLE` in public: `permission denied`. After `REVOKE SELECT ON tick_state`: rc 3, `permission denied for table tick_state`. M5: `last_error` is no longer selected.
 Credentials: none printed; the throwaway server used trust login on a local socket only.
 
+## 7. Full suite on the patched copy
+Command: `PYTHONPATH=src .venv/bin/python -m pytest -q -p no:cacheprovider -m "not live and not perf"` in the patched archive of `b4cce5b`. Result: `2 failed, 9396 passed, 454 skipped, 26 deselected in 218.01s`, exit 1. The 2 failures are not from the patches:
+- `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`: same failure on a pristine archive of `b4cce5b` (`1 failed, 2 passed`): vendor string in two `handover/` files and one non-UTF-8 file.
+- `tests/test_repo_rules.py::test_licences_are_proprietary`: needs `git ls-files` (`CalledProcessError ... status 128` on the pristine archive too), because an archive folder is not a git repository. Not run inside a real checkout, so UNVERIFIED there.
+The timing tests (`perf`) and live tests were not run (deselected, as CI does).
+## 8. Cleanup
+Throwaway Postgres stopped (`pg_ctl stop`) and `/tmp/hadavin-pgtest` removed; no background process left. No file outside the named ones was edited; `src` of the repository untouched.
