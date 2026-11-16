@@ -230,3 +230,4 @@ tree diff: 0 difference(s)
   FAIL: T31 raw file says TIMEOUT and holds the early output
   PASS: T31 file restored
 == T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang
+  FAIL: T32a FIFO in the tree refused, no hang (got 124; 124 = hung)

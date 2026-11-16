@@ -1,7 +1,10 @@
-# Lead fill-ins before running (UNVERIFIED 15): TAKE_DB_NAME, SCHEMA, PGURL (owner or superuser login to the take's database), OUT (export file, outside any repo).
+# Lead fill-ins before running (UNVERIFIED 15): TAKE_DB_NAME, SCHEMA, PGURL (owner or superuser login to the take's database, WITHOUT a password in it), PGPASSFILE (a file of mode 600 outside any repo that holds the password), OUT (export file that must NOT exist yet, outside any repo, no spaces).
 # Stop n8n (or deactivate every flow) first, so no row can arrive while this runs. The LOCK below is a second guard, not a replacement.
-export OUT
-psql "$PGURL" -X -q -v ON_ERROR_STOP=1 -v want="$TAKE_DB_NAME" -v tbl="$SCHEMA.mf_leads" -v out="$OUT" <<'SQL'
+if [ -e "$OUT" ] || [ -L "$OUT" ]; then
+  echo "OUT exists: STOP, nothing was changed. Read step 4a before doing anything."
+else
+export OUT PGPASSFILE
+psql "$PGURL" -X -w -q -v ON_ERROR_STOP=1 -v want="$TAKE_DB_NAME" -v tbl="$SCHEMA.mf_leads" -v out="$OUT" <<'SQL'
 SELECT current_database() = :'want' AS db_ok \gset
 \if :db_ok
 \else
@@ -36,3 +39,4 @@ SELECT (:lines = :n) AS export_ok \gset
 \endif
 SQL
 echo "psql rc=$?"
+fi
