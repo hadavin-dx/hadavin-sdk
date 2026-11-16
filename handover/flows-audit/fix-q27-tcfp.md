@@ -33,3 +33,4 @@ Q30 applied: practice run from about 06:00Z, F-002 test at its end; F-031/F-007 
 $ python3 tools/check_refs.py   -> exit 0, last line: PASS 5147 references
 $ python3 -I tools/check_secrets.py -> exit 0, last line: PASS 0 hits in 1719 files
 Sizes: FIX-PLAN.md 47115 -> 54080 bytes.
+- FIX-PLAN.md line 65 still said 'owner decision pending' after fixer af263ed reported M4 done; fixed by the main session (checked with grep).
