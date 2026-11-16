@@ -1041,3 +1041,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 753 PLAN-002 r17: lead meaning, line 86. FIXED by CURRENT RULINGS r18.
 - 754 L4c r8: quarantine list missing. FIXED by CURRENT r8; markers not added.
 - 755 open-items-table r12: history contradicts. FIXED by CURRENT r12; cells TO DO.
+
+- 756 end-delete-cases r11: step 3a text, no-list exit, verifier, terms. FIXED by CURRENT r11; card step 3a TO DO (held).
+- 757 FINAL-CROSSCHECK r13: r12 left r11 standing; route config void. FIXED by STATUS r13; terms with no recorded meaning marked.
+- 758 BRIEF-LANE r12: r10/r11 conflict, rule 17 waiver, terms. FIXED by BINDING r13.
+- NOTE: six hand-backs (open-items r12, L3c r9, L1c r11, not-checked r11, critical-path r19, owner-timeline r12) completed but were not seen by me; re-reads launched.
