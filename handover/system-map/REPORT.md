@@ -1,5 +1,17 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 07:57 UTC / 13:27 IST - ORDER 005: plan v2 written (round 1: 2 Blocker + 11 Major found, all fixed; round 2 skipped on purpose); 7 read-only agents starting
+Failed or not checked yet: nothing verified yet about the target. Plan round 1 reviewers a2c6595cb01e7a3cb (readiness) and ab54d54f12b810c45 (zoom-out): reported, CLOSED. egm-resolve (opus) report: reviews-of-core-hardening/work/plan-resolve-r1.md (14 edits, 0 contested).
+Agent register (all sonnet-5-5, read only, started 07:58 UTC, expected end 08:40 UTC, box 45 min, state RUNNING, next action: read output file at 08:40, close row):
+- V1 verify lane A+X (2 Blocker, 22 Major) -> work/verify-V1.md
+- V2 verify lane B+D1 (1 Blocker, 14 Major) -> work/verify-V2.md
+- V3 verify lane C+D3 (1 Blocker, 27 Major) -> work/verify-V3.md
+- V4 verify lane D2 (1 Blocker, 17 Major) -> work/verify-V4.md
+- H1 miss hunt: vendor SDK, stages, least privilege, secrets, hardcoding (not given the target's findings) -> work/hunt-H1.md
+- H2 miss hunt: dead, idle, duplicate, second source, demo-local generic (not given the target's findings) -> work/hunt-H2.md
+- RUN EVIDENCE RUNNER: citation check, uncited claims, counts, 22 changed src files (runs and records only) -> work/evidence-ch-1.md
+Next: V5 (verdicts, cut list, rung table) after V1-V4 and RUN report; my second look at all 5 Blockers; REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md; 3 result reviewers.
+
 ## Status 07:52 UTC / 13:22 IST - ORDER 005 (independent review of core-hardening) started; plan review round 1 running
 Failed or not checked yet: nothing verified yet; this is the plan stage. Facts found: target = branch cloud/core-hardening, audited commit b4cce5b; target src/demos/tests equal b4cce5b, but my branch is on a later base (22 files in src differ), so I read code from a snapshot of b4cce5b. Target: 150 findings (5 Blocker, 80 Major, 65 Nit).
 Agents running (sonnet, read-only egm reviewers, started 07:52 UTC, expected end +15 min): a2c6595cb01e7a3cb egm-implementation-readiness (plan round 1) | ab54d54f12b810c45 egm-zoom-out (plan round 1). Next: egm-resolve, then builders V1-V5, H1, H2 (45 min box) and an evidence runner.
