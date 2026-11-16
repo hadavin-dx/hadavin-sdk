@@ -811,13 +811,13 @@ Ground truth caveat: I did not read the memory files FACTS cites; the verdicts f
 ## Part 6: counts and worst rows
 Counts are in the Part 7 block at the end (computed from the tables by grep).
 
-## Part 7: counts (script count of the tables after round 2: rows B-001 to B-226 and X-1 to X-4)
+## Part 7: counts (recounted by an independent script after round 8; the earlier figures were stale: rows B-001 to B-226 and X-1 to X-4)
 | verdict | count |
 |---|---|
-| SUPPORTED | 80 |
+| SUPPORTED | 90 |
 | SUPPORTED ONLY BY RELAYED NUMBER | 45 |
-| UNSUPPORTED | 12 |
-| OVERSTATED | 30 |
-| UNTRACED | 63 |
+| UNSUPPORTED | 16 |
+| OVERSTATED | 35 |
+| UNTRACED | 44 |
 Total 230 (226 B-rows + 4 X-rows). Counted by the first verdict word of each row. Round 1 fix: the inner pipes in B-010, B-011, B-012, B-014, B-016, B-018, B-019, B-023, B-024, B-025, B-199 and B-200 were replaced by " / " (B-023: the psql separator quote now reads (pipe)), so every row has 7 cells.
 Five worst rows: B-045/B-046 (stage lock and "9 cached, 0 unknown": the prototype answers "unknown" to callers that arrive during the first call; verdict UNTRACED since round 2 because the planned stage file is absent); B-183/B-189 and X-4/B-059 (words "approval" and "audit"); B-054 (T1/K1 "0 lost 0 doubled on film-v5" not run); B-085 (seven columns, the v2 screen reads six); B-077/B-150/B-168 ("ONE alert", "about 30 s", "lease plus 25 to 30 s" overstated).
