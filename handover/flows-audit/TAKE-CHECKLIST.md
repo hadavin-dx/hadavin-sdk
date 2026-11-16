@@ -42,6 +42,6 @@ Open risk named by the lead: a design change to the n8n single-instance guard (o
 3. Lead decides at re-pin: whether the rehearsal goes into real HubSpot (default no); whether Step A stays; F-044 (keep the six swallowing steps with the reason, or fail them).
 4. The n8n single-instance guard design (owner decision pending).
 5. First laptop run has no schedule beyond the table above; nothing has run in n8n.
-6. Stale texts the lead corrects: `flow-check/take_check.sh` line 69 (INFO text about deleting saved runs); per Q25 items 13 and 14 also `QUEUE.md:8`, `ORDERS.md:20` and a README line near 240 (not re-read by me; `flow-check/README.md` has none).
+6. Stale texts the lead corrects: `flow-check/take_check.sh` line 69 (INFO text about deleting saved runs); per Q25 items 13 and 14 also `QUEUE.md:8`, `ORDERS.md:20` and `fill_flows/README.md` line 240 (the clean-up list says to remove imported workflows and saved executions; read 2026-11-16, it is stale against the no-deletion-promise answer).
 
 After the video, not in this checklist: the 45 findings and wording of claims; scenes 5 to 11; the recovery flow's own behaviour (no recovery claim is made); the parked checker options; archiving old dumps (archive, never delete).
