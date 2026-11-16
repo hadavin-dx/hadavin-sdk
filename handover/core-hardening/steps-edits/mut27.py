@@ -26,9 +26,9 @@ P = [
 ('P07', 'facts-v27.py', "'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST'", "'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:00 IST'", 'post-by pair'),
 ('P09', 'OWNER-SHEET-v27-SOURCE.md', "except the key's own one-time display at 6.3 and the paste at 6.4 (a long text elsewhere counts)", '', 'card (g) exception removed'),
 ('P10', 'OWNER-SHEET-v27-SOURCE.md', 'switch it OFF yourself at once with the tool the numbers message names', 'say "stop" and wait', 'recording stop by voice'),
-('P11', 'OWNER-SHEET-v27-SOURCE.md', 'Three phone alarms on the run day, all in IST: alarm 1 at the latest start, ', 'Two phone alarms on the run day, all in IST: ', 'first alarm removed'),
+('P11', 'OWNER-SHEET-v27-SOURCE.md', 'alarm 1 at the latest start, alarm 2 at the alarm time', 'alarm 2 at the alarm time', 'first alarm removed'),
 ('P12', 'OWNER-SHEET-v27-SOURCE.md', 'Text between backticks is typed without the backticks. ', '', 'backtick sentence removed'),
-('P13', 'OWNER-SHEET-v27-SOURCE.md', "only if the window's last line is `paste key, Enter:` (otherwise do not paste; copy a harmless word; describe the last line), ", '', 'paste condition removed'),
+('P13', 'OWNER-SHEET-v27-SOURCE.md', "only if the window's last line is `paste key, Enter:` (otherwise do not paste; copy a harmless word such as `clear`; describe the last line; then the card), ", '', 'paste condition removed'),
 ('P14', 'OWNER-SHEET-v27-SOURCE.md', ' with paper notes "READ" and "TEST"', '', 'window labels removed'),
 ('P15', 'OWNER-SHEET-v27-SOURCE.md', '(no earlier run used it or begins like it)', '(any run name will do)', 'run-name reuse rule removed'),
 ('P16', 'OWNER-SHEET-v27-SOURCE.md', 'only at 6.7, after 6.6 passed (new key saved, size checked)', 'at 6.4', 'A older key cancelled before the key is saved'),
@@ -62,6 +62,31 @@ P = [
 ]
 S, N, O, C, FA = 'OWNER-SHEET-v27-SOURCE.md', 'LEAD-RELEASE-NOTE-v11-SOURCE.md', 'v27-OPEN-FOR-LEAD-SOURCE.md', 'v27-CHANGES.md', 'facts-v27.py'
 BW = BANNED_WORD
+V = [
+('V01', S, 'silence at the y question, before the film cue, in the film pause and while waiting for `end` is normal', 'silence is never normal', 'silence rule exemptions removed (stranger BL1)'),
+('V02', S, '9. **Look key (after "go", before the earliest key time).**', '9. **Key (after "go").**', 'look key step removed (stranger BL2)'),
+('V03', S, 'A button or box word that differs from the blank: press nothing, go to "If it fails". ', '', 'differing cancel word rule removed'),
+('V04', S, 'you see the real word at 5.9 and that word counts', 'the lead gives it', 'cancelled word no longer seen by the owner'),
+('V05', S, 'On every route, after your yes, do 7.11 before 8.1 if it is not done.', '', 'B 7.11 not reachable from every route (security B1)'),
+('V06', S, '[[B:, alarm 4 at {{okb}} (do 7.11 now, whatever else is open)]]', '', 'B fourth alarm removed'),
+('V07', S, 'The cancel-by time is before {{okb}}.', '', 'cancel-by before older-key time no longer checked'),
+('V08', S, 'Wait at least {{think}} seconds (', 'Wait 10 seconds (', 'minimum think time back to 10 seconds'),
+('V09', S, 'Then in the test terminal type the printed line of 6.4 (R6 shape check of its key file path first): it waits at the paste line and nothing is alive yet. ', '', 'key-save line no longer typed before create'),
+('V10', S, 'Test program asks you to type a figure: no', 'Test program asks you to type a figure: yes', 'typed-figure line changed'),
+('V11', S, 'send its last-used time (a use after', 'send its time (a use after', 'B 7.11 last-used time dropped'),
+('V12', S, 'a model key stored in n8n would spend without the spend lock', 'a model key in n8n is fine', 'n8n model key reason removed'),
+('V13', O, 'Safe default if you do not answer: A', 'Safe default if you do not answer: B', 'open list names B as default'),
+('V14', N, 'sheet B has a fourth alarm at', 'sheet B has an alarm at', 'note G30 loses the fourth alarm'),
+('V15', O, 'WHEN IT FAILS (v27)', 'WHEN IT FAILS', 'A 7-day failure handling removed from open list'),
+('V16', O, 'NOT MET at v27', 'MET at v27', 'open list says word target met'),
+('V17', S, 'A run that ended before 6.7: no cancel of it until the lead sends a new numbers message', '', 'A older key cancelled after an early end'),
+('V18', S, 'none within the silence minutes: describe, FREEZE; no key is alive then', '', 'no shell prompt: no action'),
+('V19', S, 'Start only after the lead\'s word "post"', 'Start', 'posting without the lead word'),
+('V20', S, 'say "filmed" and read both counts aloud', 'say "filmed"', 'film counts no longer read aloud'),
+('V21', S, "and your phone's clock (IST minus 5:30) is within 2 minutes of it", '', 'phone clock check removed'),
+('NEG1', S, '9. **Look key (after "go", before the earliest key time).**', '9. **Key (after "go").**', 'NEGATIVE CONTROL: same plant as V02 but the meant check is a wrong one, so it must print MISSED'),
+]
+P += V
 # ported from the 54 v23 plants (evidence-v23-independent/scripts/mut.py M01-M54); anchors rewritten for the v25 source; M-ids kept
 M = [
 ('M01', S, 'Price per call at full size: USD {{price}}', 'Price per call at full size: USD 0.28', 'price line 0.27 to 0.28'),
@@ -81,7 +106,7 @@ M = [
 ('M15', O, 'alarm 12:00 UTC = 17:30 IST', 'alarm 12:00 UTC = 17:20 IST', 'IST pair in open list'),
 ('M16', S, '`run-<run name>`', '`run-<runname>`', 'placeholder renamed (one place)'),
 ('M17', S, 'older key <its name or none>', 'older key <its name or nome>', 'yes placeholder spelled differently'),
-('M18', N, '(Open 2 and 31)', '(Open 2 and 91)', 'list-form pointer Open 91'),
+('M18', N, '(Open 2 and 31)', '(Open 2 and 99)', 'list-form pointer Open 99 (no such row)'),
 ('M19', S, 'minimise the test terminal. The film person alone', 'minimise the test terminal: if you must stop it, click Cancel beside each key and refresh the page twice to see the cancelled state. The film person alone', 'cancel rule paraphrased outside the card (6.6)'),
 ('M20', S, 'send "{{ph_hsr}}"', 'send "{{ph_apr}}"', 'wrong set phrase at 8.4'),
 ('M21', S, 'delete exactly those as R7 says', 'delete exactly those as R9 says', 'R7 to R9 in 5.4'),
@@ -102,7 +127,7 @@ M = [
 ('M36', N, '## 6. Contact list after the take', '## 6. Contact list after the take\nThe owner reloads the key list twice and sees the cancelled word each time before telling the lead.', 'cancel rule paraphrased in note'),
 ('M37', FA, "'limit': usd(LIMIT_C)", "'limit': '13.22'", 'program limit 13.22 in facts'),
 ('M38', S, 'TOKENS_OUT = {{tok_out}}', 'TOKENS_OUT = 12000', 'settings TOKENS_OUT 12000'),
-('M39', S, '5. Send exactly: {{ph_mkc}}.', '5. Send exactly: model key canceled.', 'card step 5 phrase spelled differently'),
+('M39', S, 'Send exactly: {{ph_mkc}} (not for a look key).', 'Send exactly: model key canceled (not for a look key).', 'card step 5 phrase spelled differently'),
 ('M40', S, 'B submitted 10 times', 'B submitted 12 times', 'B submitted 12 times'),
 ('M41', N, '(IST = UTC + 5:30)', '(IST = UTC + 5:00)', 'IST definition in note'),
 ('M42', O, 'the take program needs at least 860 seconds (14.33 minutes)', 'the take program needs at least 860 seconds (14.5 minutes)', 'open list minutes figure'),
@@ -115,7 +140,7 @@ M = [
 ('M49', O, "the sheet's 7.8 error sentence stays", "the sheet's 7.7 error sentence stays", 'open row pointer 7.8 to 7.7'),
 ('M50', N, 'gives 0.27; ceiling 3 gives expected total 0.81', 'gives 0.28; ceiling 3 gives expected total 0.81', 'note worked price'),
 ('M51', S, 'send "{{ph_dmd}}"', 'send "all done"', 'unlisted set phrase sent in 8.5'),
-('M52', N, '(Open 2 and 31)', '(Open 2, 31 and 91)', 'Open 91 in a list form'),
+('M52', N, '(Open 2 and 31)', '(Open 2, 31 and 99)', 'Open 99 in a list form (no such row)'),
 ('M53', N, 'expected total 0.81. Ledger total 12.40', 'expected total 0.80. Ledger total 12.40', 'expected total in note'),
 ('M54', S, 'Deadline {{dl_full}}.', 'Deadline 2026-11-23 18:29 UTC = 23:29 IST.', 'yes deadline IST pair'),
 ]
@@ -132,12 +157,12 @@ Q = [
 ('Q08', S, '(1) if a key is alive, do the card now; (2) then FREEZE', '(2) then FREEZE', 'STOP RULE step 1 deleted'),
 ('Q09', S, 'W1 you typed `end`;', 'W1 you typed `end;', 'stray backtick in card gate W1'),
 ('Q10', S, 'press the cancel button; if a box asks, press the confirmation word', 'press the cancel button; if a box asks, press close', 'card cancel step changed'),
-('Q11', S, 'W6 the test terminal shows a prompt before you typed `end`; ', '', 'card gate W6 deleted'),
+('Q11', S, 'W6 the test terminal shows a shell prompt before you typed `end`; ', '', 'card gate W6 deleted'),
 ('Q12', S, 'auto-reload off, balance at least the expected total', 'auto-reload on, balance at least the expected total', 'R4 auto-reload flipped to on'),
 ('Q13', S, 'Silence minutes: 3   Give-up minutes: 40', 'Silence minutes: 3   Give-up minutes: 40   Key: ' + SECRET, 'secret-shaped string (built from parts) in the sheet'),
 ('Q15', S, 'Give-up minutes: 40', 'Give-up minutes: 30', 'sample give-up minutes changed'),
 ('Q16', S, 'Silence minutes: 3', 'Silence minutes: 5', 'sample silence minutes changed'),
-('Q18', S, 'and ending `@example.com`', 'and ending `@example.org`', 'one delete-domain guard changed'),
+('Q18', S, 'or not ending `@example.com`', 'or not ending `@example.org`', 'one delete-domain guard changed'),
 ('Q20', N, 'program limit = 12.40 + 0.81 = 13.21', 'program limit = 12.40 + 0.81 = 13.12', 'lead note limit wrong'),
 ('Q22', S, 'Exit codes accepted: 0 only', 'Exit codes accepted: 0 or 1', 'accepted exit codes widened'),
 ('Q24', S, 'Only six words in a lead message', 'Only five words in a lead message', 'R8 word count changed'),
@@ -162,7 +187,7 @@ V26 = [
 ('R03', S, 'exactly the rows you wrote minus K', 'exactly N minus K', 'card proof uses N minus K again'),
 ('R04', S, 'otherwise only at 6.7, after 6.6 passed (new key saved, size checked)', 'otherwise at once', 'A older-key cancel before the key is saved'),
 ('R05', S, '`PRICE_OUT_CENTS`, `CALL_CEILING`,', '`PRICE_OUT_CENTS`,', 'one of the seven setting names dropped'),
-('R06', S, 'or `prep-` and ending', 'and ending', 'R7 prep prefix dropped'),
+('R06', S, '`-c@` or `prep-<run name>@example.com`', '`-c@`', 'R7 prep prefix dropped'),
 ('R07', S, 'in the read terminal must say no such file. Send the two times', 'in the read terminal must say nothing. Send the two times', '8.1 proof of the deleted key file weakened'),
 ('R08', S, '"restarted" (6.6), ', '', 'R8 loses the restarted word (and its count stays six)'),
 ('R09', S, '(a human you can call who', '(a person who', 'backup person no longer a human you can call'),
@@ -177,7 +202,7 @@ V26 = [
 ('R18', S, '**FREEZE** (a key alive: the card first)', '**FREEZE**', 'FREEZE loses the card-first rule'),
 ('R19', S, '**Key** alone = a model key', '**Key** alone = any key', 'word key given a second meaning'),
 ('R20', S, 'make a Chrome profile `demo-take`', 'make a Chrome profile `demo-film`', 'profile name differs between steps'),
-('R21', S, 'without a Google account (how unknown: ask the lead)', 'without a Google account', 'Chrome profile how-to and ask-the-lead removed'),
+('R21', S, '(click your profile picture at the top right, Add profile, Continue without an account, name it; UNVERIFIED, tolerated)', '(name it)', 'Chrome profile how-to and ask-the-lead removed'),
 ('R22', S, 'no name known: describe, revoke nothing', 'no name known: revoke the newest entry', 'entry to revoke guessed'),
 ]
 P = P + V26
@@ -327,6 +352,7 @@ EXPECT['R18'] = ['C91']
 EXPECT['R19'] = ['C98']
 EXPECT['R20'] = ['C103']
 EXPECT['R21'] = ['C95']
+EXPECT.update({'P11':['C159'],'V01':['C105'],'V02':['C106'],'V03':['C107'],'V04':['C108'],'V05':['C137'],'V06':['C138'],'V07':['C139'],'V08':['C140'],'V09':['C111'],'V10':['C141'],'V11':['C142'],'V12':['C143'],'V13':['C149'],'V14':['C151'],'V15':['C154'],'V16':['C155'],'V17':['C126'],'V18':['C124'],'V19':['C125'],'V20':['C122'],'V21':['C121'],'NEG1':['C999']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'
@@ -334,7 +360,7 @@ def main():
     for f in FILES:
         if os.path.exists(H + f): shutil.copy(H + f, base + f)
     b0, r0 = run(base); print('baseline failures: %d' % len(b0))
-    cau = mis = anc = inc = 0; norm = lambda x: re.sub(r'\d+ words', 'N words', x)
+    cau = mis = anc = inc = neg = 0; norm = lambda x: re.sub(r'\d+ words', 'N words', x)
     for pid, f, old, new, what in P:
         d = tmp + '/' + pid + '/'; shutil.copytree(base, d)
         s = open(d + f, encoding='utf-8').read()
@@ -345,10 +371,14 @@ def main():
         if learn: print('LEARN', pid, sorted(nc), 'TB' if 'Traceback' in r.stderr else ''); continue
         meant = set(EXPECT.get(pid) or [])
         if not meant: print(pid, 'NO-MEANT-CHECK-DECLARED', what); mis += 1; continue
+        if pid.startswith('NEG'):
+            if nc & meant: print(pid, 'NEGATIVE CONTROL BROKEN: caught by a check that does not exist'); mis += 1
+            else: print(pid, 'NEGATIVE CONTROL ok: printed MISSED as it must (other checks fired: %s)' % ','.join(sorted(nc))); neg += 1
+            continue
         if nc & meant: cau += 1; print(pid, 'CAUGHT by', ','.join(sorted(nc & meant)), '|', what)
         elif nc: inc += 1; mis += 1; print(pid, 'MISSED (only other checks fired: %s; meant %s)' % (','.join(sorted(nc)), ','.join(sorted(meant))), what)
         else: mis += 1; print(pid, 'MISSED (no check fired; meant %s)' % ','.join(sorted(meant)), what)
-    if not learn: print('TOTAL plants %d: caught by the meant check %d, missed %d (of them caught only by another check %d), anchor-not-found %d' % (len(P), cau, mis, inc, anc))
+    if not learn: print('TOTAL plants %d (negative controls ok %d, not counted below):' % (len(P), neg)); print('TOTAL plants %d: caught by the meant check %d, missed %d (of them caught only by another check %d), anchor-not-found %d' % (len(P), cau, mis, inc, anc))
     shutil.rmtree(tmp)
     return 1 if (mis or anc) else 0
 sys.exit(main())

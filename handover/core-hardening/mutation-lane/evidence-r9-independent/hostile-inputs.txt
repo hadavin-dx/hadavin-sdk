@@ -1,0 +1,47 @@
+### H1 1 MB --root (restore)
+ROW|H1a|exit=126|/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/hostile.sh: line 10: /usr/local/bin/python3: Argument list too long |
+### H1b 1 MB --file in a mutant run
+ROW|H1b|exit=126|file_last=return1|/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/hostile.sh: line 12: /usr/local/bin/python3: Argument list too long 
+### H1c 1 MB test argument
+ROW|H1c|exit=126|file_last=return1|state=|/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/hostile.sh: line 14: /usr/local/bin/python3: Argument list too long 
+### H1d 1 MB --restore --sha value
+ROW|H1d|exit=126|/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/hostile.sh: line 16: /usr/local/bin/python3: Argument list too long 
+### H2 path with newline and zero-width bytes
+ROW|H2a|exit=2|tail=REFUSED: import check: `import mod` loads '\u200bo\u200cot\ufeff/src/mod.py', not /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-in ​o‌ot﻿/src/mod.py: the tests would not run the mutated file; fix the scratch environment (editable install, .pth file) or pass --pythonpath |file_last=return1|state=7698c4a456c8ee43.lock 
+planted newline-root: return1
+ROW|H2b|exit=2|file_last=return1|state=7698c4a456c8ee43.lock |REFUSED: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm',  
+ROW|H2c|exit=2|file_last=return1|REFUSED: mutant m1 file: 'src/mor\n\u200bo\u200cot\ufeff.py' is not a regular file under /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpa 
+### H3 output paths inside the state folder
+ROW|H3a|exit=2|file_last=return1|raw dir created=no|ModuleNotFoundError: No module named 'mod'
+ROW|H3b|exit=2|file_last=return1|out.json exists=no|ModuleNotFoundError: No module named 'mod'
+ROW|H3c|exit=2|file_last=return1|out dotdot path|ModuleNotFoundError: No module named 'mod'
+ROW|H3d|exit=2|file_last=return1|via symlink to state|rawd exists=no|ModuleNotFoundError: No module named 'mod'
+### H4 SIGTERM / SIGINT during restore
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13: 32582 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0|exit=143|after_signal_file=return1|marker_left=1|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:   434 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.02|exit=143|after_signal_file=return1|marker_left=1|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:   555 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.05|exit=143|after_signal_file=return1|marker_left=1|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:   688 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.1|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:   767 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.2|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:   871 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.4|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:   917 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=0.8|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:  2737 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=plain|delay=1.5|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:  3415 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=sha_slowgit|delay=0|exit=143|after_signal_file=return1|marker_left=1|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:  4653 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=sha_slowgit|delay=0.02|exit=143|after_signal_file=return1|marker_left=1|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:  6034 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=sha_slowgit|delay=0.05|exit=143|after_signal_file=return1|marker_left=1|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13:  8608 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=sha_slowgit|delay=0.1|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13: 10970 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=sha_slowgit|delay=0.2|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/neg/lib.sh: line 13: 11206 Killed                  ( python3 $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file ${1:-src/mod.py} --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|H4|sig=TERM|mode=sha_slowgit|delay=0.4|exit=0|after_signal_file=return1|marker_left=0|followup_restore_exit=0|final_file=return1

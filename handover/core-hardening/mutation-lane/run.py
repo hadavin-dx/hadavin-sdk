@@ -114,7 +114,11 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     the files with git, and a normal run compares the tree with the git archive before it plants (r9 M1).
   * A marker that can never be used (the root folder renamed and replaced, a damaged marker, a marker for another root)
     is removed with `--restore --sha COMMIT --discard-marker`, only after the tree under --root equals the git archive
-    and no test group of the marker still runs (r9 minor 3; T96). `--helper-timeout S` (default 300) stops a `git` or
+    and no test group of the marker still runs (r9 minor 3; T96). r10 M1: the marker must also be readable and carry the device and
+    inode of the folder now at --root; a marker of a renamed-away or replaced folder, or an unreadable one, gives exit 3 and is
+    removed only with the extra flag `--accept-unchecked-folder`, whose text says what was NOT checked (T97). `--sha` is 4 to 64
+    hex digits; an empty value (an unset shell variable) is refused with exit 2, as is an empty value of any option that
+    names a path or a name (r10 M2). `--helper-timeout S` (default 300) stops a `git` or
     `patch` call that does not end and refuses (r9 minor 2).
   * Not a target: a file under `.venv` (directly under the root) or in a cache folder (`__pycache__`, `.pytest_cache`) is
     refused as the file under test, an `--extra` or a marker file, because the tree comparison skips those folders (r9).
@@ -123,10 +127,17 @@ Output files (review r6 nit 4): `--raw` and `--out-json` may not lie inside --ro
 output file that already exists must be a regular file with one name, and the folder of `--out-json` must exist: all
 checked before anything is planted. The folder --root is identified by device and inode when the run starts and
 recorded in the marker: a folder that has been renamed away and replaced by another one with the same name is refused
-(plant and restore, exit 3), so a decoy cannot receive a restore. The mode of the file under test is set back on restore, also when a test made it read-only (444): the owner's own
+(plant and restore, exit 3), so a decoy cannot receive a restore. When the file under test holds changed text and a test made it read-only (444), the owner's own
 write permission is given back on the open file, the same inode is opened for writing, the original text and mode are
-written back (r7 N7; as root a mode bit never blocks a write, so this path is only proven as a normal user, T88).
-`--out-json` may not be run.py itself, the `--list` file, a `--patch` file or the same path as a raw file (r7 N4).
+written back (r7 N7; as root a mode bit never blocks a write, so this path is only proven as a normal user, T88). A read-only
+file that ALREADY holds the original text is left as it is, mode included (nothing is written, T88d); if it cannot be opened for
+writing the added owner permission is taken away again (r10 m6). The recorded mode is restored exactly: mode 0 stays 0, and setuid,
+setgid and sticky bits are restored as recorded; with --sha a marker mode with such a bit, or writable by everybody, is refused (r10 m2).
+`--out-json` may not be run.py itself, the `--list` file, a `--patch` file or the same path as a raw file (r7 N4), may not lie in any
+state folder that is searched (ours, /tmp, /var/tmp, /dev/shm, TMP, TEMP), and an existing file is overwritten only when it is a
+result file of this tool (a JSON list of objects with id and verdict; r10 m3). Helper programs (git, patch, the import probe) run
+in their own process group and the whole group is killed on a timeout (r10 m8); text taken from a state file is quoted and control
+characters are shown as \\xNN (r10 m9).
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
 scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. The modes (chmod) of the
 other files in the tree are not compared; the tree is compared by content. Paths inside --root
@@ -136,14 +147,19 @@ Exit codes (round 8, reviews r6 M1/M2 and r7 M1):
   0    EVERY mutant ran and got a clean verdict (KILLED or SURVIVED, no flag), a baseline of the unmutated tree
        ran and passed, and the tree is clean. With --restore: the file is KNOWN to hold the original (a marker was found
        and its file written back or already original, and every test group settled), or `--restore --sha` found the
-       whole tree equal to the git archive; also `--discard-marker` after that same comparison
+       whole tree equal to the git archive; also `--discard-marker` after that same comparison, when the marker is readable and
+       belongs to the folder now at --root (or --accept-unchecked-folder says the other folder does not matter)
   2    refused: this run wrote nothing and planted nothing. 2 NEVER says "nothing is planted": the planted-ness of an
-       earlier run is either shown by its marker (then 3, or 0 after a good restore) or it is unknown. In a normal run: the
-       baseline of the unmutated tree is not usable, a bad argument, or the marker of an EARLIER killed run (this run
-       planted nothing). With --restore: 2 ONLY when the marker names another root or another backup path (it is not this
-       run's marker; nothing is written), or when NO marker for this root exists anywhere searched and no --sha was
-       given to check the files (r9: before, this was exit 0; the files are unknown). With --restore --sha and no marker:
-       the files are compared with git, equal is 0, different is 3
+       earlier run is either shown by its marker (then 3, or 0 after a good restore) or it is unknown. 2 is the answer to a
+       refusal when NO planted or control marker for this root exists (a bad argument or an empty value such as `--sha ""`,
+       an argparse error, a refused real-repository check, a state folder that is not mode 700, a lock held by a live run, a
+       --sha that names no commit, a git or patch call that did not finish (--helper-timeout), a temporary folder that
+       cannot be found) and, with a marker, only when the marker names another root or another backup path (it is not this
+       run's marker; nothing is written). In a normal run also: the baseline of the unmutated tree is not usable, or the
+       marker of an EARLIER killed run (this run planted nothing). With --restore: NO marker for this root exists anywhere
+       searched and no --sha was given to check the files (the files are unknown). With --restore --sha and no marker: the
+       files are compared with git, equal is 0, different is 3; a marker for another root with --sha: the files are compared
+       with git too, equal stays 2, different is 3
   3    restore failed (marker and backup kept; run --restore): the class is "an exit code that says nothing is planted
        while the mutant is planted", fixed in ONE place (may_be_planted in main): with --restore, EVERY failure once a
        planted or control marker for this root exists exits 3: invalid or damaged marker, missing, linked, FIFO or
@@ -152,7 +168,8 @@ Exit codes (round 8, reviews r6 M1/M2 and r7 M1):
        longer the one the mutant was planted in, an internal bug; in a normal run, any exit while this run's own marker
        still exists. Also: --restore could not settle a control run, a control marker that cannot be read, or an
        orphaned test group that could not be stopped (the file is still written back; marker and backup are kept); `--restore --sha` with no marker
-       when the tree differs from git; `--discard-marker` when the tree differs or a test group still runs
+       when the tree differs from git; `--discard-marker` when the tree differs, a test group still runs, or the marker does not
+       prove it belongs to the folder now at --root or cannot be read (unless --accept-unchecked-folder is given; r10 M1)
   4    tree not clean (before the first mutant, after a mutant, or after the loop) or marker left behind
   5    INCOMPLETE: at least one mutant has no clean verdict (COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED,
        or a KILLED whose failing tests equal the baseline's), or the loop ended before every mutant ran, or
@@ -175,7 +192,7 @@ line says `NO BASELINE ... INCOMPLETE` (never COMPLETE) and the exit code is 5 e
 Usage:
   run.py --root /tmp/c8/wC --sha b4cce5b --prefix C-01 --raw DIR --list mutants.json -- TESTS...
   run.py --root ... --sha ... --prefix C-01 --raw DIR --id m01 --file src/x.py --old "a" --new "b" -- TESTS...
-  run.py --root R --restore [--sha COMMIT [--repo R] [--patch F] [--extra F]] [--discard-marker]
+  run.py --root R --restore [--sha COMMIT [--repo R] [--patch F] [--extra F]] [--discard-marker [--accept-unchecked-folder]]
 mutants.json: [{"id": "m01", "file": "...", "old": "...", "new": "...", "desc": "..."}, ...]
 The unmutated tree is run once first (default; `--no-control` turns it off) and recorded as <prefix>-baseline.txt.
 TESTS are pytest arguments (paths / -k ...). The command run is, with only the environment named above:
@@ -210,7 +227,18 @@ import traceback
 SKIP_TOP = {".venv"}
 SKIP_ANY = {"__pycache__", ".pytest_cache"}
 # outside every repository, one folder per user (a shared temp folder must not be shared) (review 4 M4)
-STATE = pathlib.Path(tempfile.gettempdir()) / f"hadavin-mutation-lane-{os.geteuid()}"
+# r10 m10: a failure while the module is loaded (no usable temporary folder, no sysconf) must end as a refusal (exit 2) in
+# main(), never as Python's own exit 1 with a traceback before main() runs
+_INIT_ERRORS: list[str] = []
+try:
+    STATE = pathlib.Path(tempfile.gettempdir()) / f"hadavin-mutation-lane-{os.geteuid()}"
+except (
+    OSError,
+    RuntimeError,
+    ValueError,
+) as _e:  # any failure of tempfile or os here is the same class
+    STATE = pathlib.Path(os.sep, "nonexistent", f"hadavin-mutation-lane-{os.geteuid()}")
+    _INIT_ERRORS.append(f"no usable temporary folder ({type(_e).__name__}: {_e})")
 NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 SHA_RE = re.compile(r"[0-9a-fA-F]{4,64}")
 # Every signal that can be sent to a process, except the ones named here (review r4 M1). Not handled, with the reason:
@@ -261,7 +289,11 @@ FULL_SHA_RE = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 # (path, device, inode) of --root as found when the run started; None in unit tests that call the writers directly.
 # Every open of the root folder checks it (review r6 nit 8: a root renamed away and replaced by a decoy folder).
 ROOT_IDENT: tuple[str, int, int] | None = None
-CLK_TCK = os.sysconf("SC_CLK_TCK")
+try:
+    CLK_TCK = os.sysconf("SC_CLK_TCK")
+except (ValueError, OSError) as _e:
+    CLK_TCK = 100
+    _INIT_ERRORS.append(f"the clock tick rate cannot be read ({type(_e).__name__}: {_e})")
 
 
 class Refused(Exception):
@@ -282,6 +314,15 @@ RESTORE_ERRORS = (
 )
 
 
+def shown(x, limit: int = 200) -> str:
+    """r10 m9: text that came from a state file (marker fields, link targets) is quoted and escaped before it is printed: a
+    newline, a carriage return or a terminal escape inside a marker can neither add a fake line nor overwrite a real one."""
+    return json.dumps(str(x)[:limit] + ("..." if len(str(x)) > limit else ""), ensure_ascii=True)
+
+
+_CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f]")
+
+
 class SafeOut:
     """r8: standard output and error that never fail. A closed pipe, /dev/full or a full disk made print() raise (and the
     flush at exit made Python exit with 1 or 120, which are no exit codes of this tool; found by the independent r7 run).
@@ -293,6 +334,8 @@ class SafeOut:
         self.fd, self.lost = fd, False
 
     def write(self, text: str) -> int:
+        # r10 m9: every control character except newline and tab is shown as \xNN (a terminal escape cannot act)
+        text = _CTRL.sub(lambda m: f"\\x{ord(m.group()):02x}", text)
         data = text.encode("utf-8", "replace")
         try:
             while data:
@@ -390,7 +433,16 @@ def fsync_state_dir() -> None:
 def unlink_state(path: pathlib.Path) -> None:
     """The one way a state file (marker, backup, control marker) is removed: unlink, then sync the folder."""
     path.unlink(missing_ok=True)
-    fsync_state_dir()
+    try:
+        fsync_state_dir()
+    except OSError as e:
+        # r10 m11: the file IS gone; only the proof that the removal survives a power loss failed. That must not turn a finished
+        # restore into an error (and strand the backup): a marker that came back later is stale and `--restore` settles it.
+        print(
+            f"WARNING: the state folder could not be synced after removing {path.name} ({e.strerror}): the removal is not "
+            f"proven durable; after a power loss a stale marker may return (harmless: --restore settles it)",
+            file=sys.stderr,
+        )
 
 
 def write_state(path: pathlib.Path, data: bytes) -> None:
@@ -523,7 +575,7 @@ def write_target(
         except FileNotFoundError:
             if not create:
                 raise
-            fd = os.open(name, flags | os.O_CREAT | os.O_EXCL, mode, dir_fd=pfd)
+            fd = os.open(name, flags | os.O_CREAT | os.O_EXCL, mode & 0o777, dir_fd=pfd)
             created = True
         except OSError as e:
             if e.errno == errno.ENXIO:  # a FIFO with no reader
@@ -568,9 +620,19 @@ def _make_writable(fd: int, name: str, pfd: int, base: int, saved: bytes) -> tup
     os.chmod(
         f"/proc/self/fd/{fd}", stat.S_IMODE(st.st_mode) | 0o600
     )  # works on O_PATH descriptors, follows the inode
+
+    def put_back() -> (
+        None
+    ):  # r10 m6: the owner permission we added is taken away again when the file is not written
+        try:
+            os.chmod(f"/proc/self/fd/{fd}", stat.S_IMODE(st.st_mode))
+        except OSError:
+            pass
+
     try:
         fd2 = os.open(name, base | os.O_RDWR, dir_fd=pfd)
     except OSError:
+        put_back()
         return fd, False
     st2 = os.fstat(fd2)
     if (st2.st_dev, st2.st_ino) != (
@@ -578,6 +640,7 @@ def _make_writable(fd: int, name: str, pfd: int, base: int, saved: bytes) -> tup
         st.st_ino,
     ):  # swapped meanwhile: not the file we changed
         os.close(fd2)
+        put_back()
         return fd, False
     os.close(fd)
     return fd2, True
@@ -609,7 +672,12 @@ def restore_target(
         except FileNotFoundError:
             if not create:
                 raise
-            fd = os.open(name, base | os.O_RDWR | os.O_CREAT | os.O_EXCL, mode or 0o644, dir_fd=pfd)
+            fd = os.open(
+                name,
+                base | os.O_RDWR | os.O_CREAT | os.O_EXCL,
+                (0o644 if mode is None else mode) & 0o777,
+                dir_fd=pfd,
+            )
             created = writable = True
         except (
             PermissionError
@@ -649,8 +717,8 @@ def restore_target(
             )
         if created:
             os.fchmod(
-                fh.fileno(), mode or 0o644
-            )  # the umask of the caller must not change the recorded mode
+                fh.fileno(), 0o644 if mode is None else mode
+            )  # the umask of the caller must not change the recorded mode (r10 m2: a recorded mode 0 stays 0)
         elif need_mode:
             os.fchmod(fh.fileno(), mode)  # a test changed the mode of the file under test
         if not already:
@@ -755,25 +823,47 @@ def run_cmd(
     With no `env` the helper environment above is used (never the caller's whole environment). A call with no `timeout`
     gets HELPER_TIMEOUT (r9: a stalled `git archive` used to hang the run and the `--restore --sha`); the child is killed
     and the call is a refusal. A caller that passes its own `timeout` handles `TimeoutExpired` itself."""
+    limit = HELPER_TIMEOUT if timeout is None else timeout
+    # r10 m8: the helper gets its OWN process group; on a timeout (or a signal that unwinds the run) the WHOLE group is killed,
+    # not only the leader (a wrapper script's children and the import probe's children used to stay alive)
+    proc = subprocess.Popen(
+        argv,
+        stdin=subprocess.PIPE
+        if input_bytes is not None
+        else subprocess.DEVNULL,  # no helper may read the caller's input
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=cwd,
+        env=helper_env() if env is None else env,
+        start_new_session=True,
+    )
     try:
-        return subprocess.run(
-            argv,
-            input=input_bytes,
-            stdin=None
-            if input_bytes is not None
-            else subprocess.DEVNULL,  # no helper may read the caller's input
-            capture_output=True,
-            check=False,
-            cwd=cwd,
-            env=helper_env() if env is None else env,
-            timeout=HELPER_TIMEOUT if timeout is None else timeout,
-        )
-    except subprocess.TimeoutExpired as e:
-        if timeout is not None:
-            raise
-        raise Refused(
-            f"{pathlib.Path(argv[0]).name} did not finish within {HELPER_TIMEOUT} s and was stopped (--helper-timeout)"
-        ) from e
+        out, err = proc.communicate(input_bytes, timeout=limit)
+    except BaseException as e:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except OSError:
+            pass
+        proc.kill()
+        try:
+            proc.communicate(timeout=5)
+        except (
+            subprocess.TimeoutExpired,
+            OSError,
+            ValueError,
+        ):  # a process that left the group may still hold the pipes: give up on them
+            for fh in (proc.stdout, proc.stderr, proc.stdin):
+                try:
+                    fh and fh.close()
+                except OSError:
+                    pass
+            proc.wait()
+        if isinstance(e, subprocess.TimeoutExpired) and timeout is None:
+            raise Refused(
+                f"{pathlib.Path(argv[0]).name} did not finish within {HELPER_TIMEOUT} s and was stopped (--helper-timeout)"
+            ) from e
+        raise
+    return subprocess.CompletedProcess(argv, proc.returncode, out, err)
 
 
 def text_of(cp: subprocess.CompletedProcess) -> str:
@@ -955,7 +1045,7 @@ def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path)
 def script_repo_root() -> pathlib.Path | None:
     """The repository that holds this script, found by walking up to a `.git` entry (no git call)."""
     here = pathlib.Path(__file__).resolve().parent
-    return next((p for p in (here, *here.parents) if (p / ".git").exists()), None)
+    return next((p for p in (here, *here.parents) if os.path.lexists(p / ".git")), None)
 
 
 def refuse_real_repo(root: pathlib.Path, repo: str | None, extra_real: list[str]) -> None:
@@ -977,7 +1067,7 @@ def refuse_real_repo(root: pathlib.Path, repo: str | None, extra_real: list[str]
                 f"--root {root} is, contains or lies inside the real repository {top}: use a scratch copy"
             )
     for p in (root, *root.parents):
-        if (p / ".git").exists():
+        if os.path.lexists(p / ".git"):
             raise Refused(
                 f"--root {root}: a .git entry exists in {p}: use a plain scratch copy (git archive + patch)"
             )
@@ -1211,13 +1301,13 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str, bool]:
             return (
                 False,
                 (
-                    f"STILL PLANTED: {m['file']} differs from the backup kept by a run that used another TMPDIR; "
-                    f"restore with: TMPDIR={parent} python3 {sys.argv[0]} --root {root} --restore"
+                    f"STILL PLANTED: {shown(m['file'])} differs from the backup kept by a run that used another TMPDIR; "
+                    f"restore with: TMPDIR={shlex.quote(str(parent))} python3 {shlex.quote(sys.argv[0])} --root {shlex.quote(str(root))} --restore"
                 ),
                 True,
             )
         notes.append(
-            f"stale marker in {folder}: {m['file']} already equals its backup (remove it by hand)"
+            f"stale marker in {folder}: {shown(m['file'])} already equals its backup (remove it by hand)"
         )
     if notes:
         return True, "; ".join(notes), True
@@ -1293,11 +1383,11 @@ def link_hint(root: pathlib.Path, rel) -> str:
             again = f"python3 {script} --root {shlex.quote(str(root))} --restore"
             if i == len(parts) - 1:
                 return (
-                    f"; the file under test is now a symbolic link ({cur} -> {where}) and nothing was written through it. "
+                    f"; the file under test is now a symbolic link ({cur} -> {shown(where)}) and nothing was written through it. "
                     f"Do this: 1) rm -- {q}   2) {again}   (the original is created again from the backup)"
                 )
             return (
-                f"; a folder on the way is a symbolic link ({cur} -> {where}) and the planted file may be behind it. "
+                f"; a folder on the way is a symbolic link ({cur} -> {shown(where)}) and the planted file may be behind it. "
                 f"Do this: 1) mv -- {q} {q}.link   2) put the real folder back under the name {part!r}   3) {again}"
             )
     return ""
@@ -1350,11 +1440,22 @@ def restore_from_marker(
     # another root or another backup path is a refusal (Forged, exit 2, nothing written). Everything else that goes wrong
     # once a marker for this root exists (unreadable or damaged marker, missing, linked or damaged backup, state folder,
     # real-repository check, lock) is raised as Refused or fails otherwise and main() maps it to exit 3.
-    if m.get("root") != str(root):
-        raise Forged(f"marker is for another root ({m.get('root')!r}): refused")
     bk = STATE / f"{key}.backup"
-    if m.get("backup") != str(bk):
-        raise Forged(f"marker names a backup other than {bk}: refused")
+    if m.get("root") != str(root) or m.get("backup") != str(bk):
+        why = (
+            f"marker is for another root ({shown(m.get('root'))}): refused"
+            if m.get("root") != str(root)
+            else f"marker names a backup other than {bk}: refused"
+        )
+        if expected_ref is not None:
+            # r10 m5: the marker is not this run's, but the files themselves can still be compared with the git archive
+            vok, vtext = verify_against_git(root, expected_ref, set(extra))
+            if not vok:
+                raise Refused(
+                    f"{why}; {vtext}"
+                )  # a marker exists for this key: exit 3, a mutant may be planted
+            why = f"{why}; {vtext} (the marker was left alone; to remove it use --discard-marker)"
+        raise Forged(why)
     saved = read_state(bk)
     if sha256(saved) != m["orig_sha256"]:
         raise Refused(
@@ -1371,13 +1472,18 @@ def restore_from_marker(
             ) from e
         if want != saved:
             raise Refused(
-                f"the saved backup differs from {m['file']} in the git archive given with --sha: the state folder may be "
-                f"forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:{m['file']} > the file"
+                f"the saved backup differs from {shown(m['file'])} in the git archive given with --sha: the state folder may be "
+                f"forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:{shown(m['file'])} > the file"
             )
         ref_mode = stat.S_IMODE(os.stat(safe_rel(expected_ref, m["file"], "marker file")).st_mode)
+        if isinstance(m.get("mode"), int) and m["mode"] & 0o7002:
+            raise Refused(
+                f"the mode in the marker ({oct(m['mode'])}) has a special bit (setuid, setgid, sticky) or is writable by "
+                f"everybody: git has neither, so the marker may be forged; nothing written (r10 m2)"
+            )
         if isinstance(m.get("mode"), int) and (m["mode"] & 0o111) != (ref_mode & 0o111):
             raise Refused(
-                f"the mode in the marker ({oct(m['mode'])}) has other execute bits than {m['file']} in the git archive given "
+                f"the mode in the marker ({oct(m['mode'])}) has other execute bits than {shown(m['file'])} in the git archive given "
                 f"with --sha ({oct(ref_mode)}): the marker may be forged; nothing written"
             )
     try:
@@ -1387,7 +1493,11 @@ def restore_from_marker(
             m, root
         )  # r7 review N2: an orphan that could not be stopped is reported, not hidden
         mode = (
-            m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
+            m["mode"]
+            if isinstance(m.get("mode"), int)
+            and not isinstance(m["mode"], bool)
+            and 0 <= m["mode"] <= 0o7777
+            else 0o644
         )
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)
@@ -1402,12 +1512,14 @@ def restore_from_marker(
     except (Refused, OSError) as e:
         why = e.strerror or e if isinstance(e, OSError) else e
         text = (
-            f"RESTORE FAILED: cannot write {m['file']} back: {why}; the mutant may still be planted; marker and backup kept"
+            f"RESTORE FAILED: cannot write {shown(m['file'])} back: {why}; the mutant may still be planted; marker and backup kept"
             + link_hint(root, m["file"])
         )
         return False, f"{control}; {text}" if control else text
     note = " (it already held the original)" if already else ""
-    text = f"{orphan}; restored {m['file']} from {bk}{note}; hash matches saved original: {ok}"
+    text = (
+        f"{orphan}; restored {shown(m['file'])} from {bk}{note}; hash matches saved original: {ok}"
+    )
     if ok and not settled:
         text += (
             "; the test group may STILL RUN (it could not be stopped or verified): marker and backup KEPT, stop it by "
@@ -1420,40 +1532,73 @@ def restore_from_marker(
 
 
 def discard_marker(
-    root: pathlib.Path, expected_ref: pathlib.Path, extra: set[str]
+    root: pathlib.Path,
+    expected_ref: pathlib.Path,
+    extra: set[str],
+    unchecked_folder: bool = False,
 ) -> tuple[bool, str]:
     """r9 minor 3: a marker that `--restore` can never use (the root folder was renamed and replaced, the marker names
     another root or backup, it is damaged) used to strand the operator: exit 3 or 2 on every try and no command to remove it.
     Deleting a marker is safe only when the files themselves are known to be original: the tree under --root must equal the
-    git archive named by --sha, and no orphaned test group of that marker may still run. Anything else: exit 3, nothing
-    removed. The folder a mutant was planted in before it was renamed is NOT looked at (that one is the operator's)."""
+    git archive named by --sha, and no orphaned test group of that marker may still run.
+    r10 M1 (class: an exit code 0 that says "nothing is planted" while the place the mutant was planted is not looked at): the
+    tree under --root says nothing about a folder that was renamed away, and a marker that cannot be read says nothing about
+    its test group. So the marker must PROVE it belongs to the folder now at --root (its recorded device and inode equal this
+    folder's) and must be readable; otherwise the answer is exit 3, nothing removed, unless the operator adds
+    `--accept-unchecked-folder` (a statement that they looked at, or do not need, the folder that was renamed away)."""
     ensure_state()
     key = key_for(root)
     vok, vtext = verify_against_git(root, expected_ref, extra)
     if not vok:
         return False, f"marker NOT discarded: {vtext}"
     notes = [vtext]
+    unchecked: list[str] = []
+    todo: list[pathlib.Path] = []
+    now = os.stat(root)
     for path in (STATE / f"{key}.planted.json", control_marker_path(key)):
         if not os.path.lexists(path):
             continue
+        planted = path.name.endswith(".planted.json")
         try:
             m = loads_json(read_state(path))
-            note, settled = (
-                stop_orphan(m, root) if isinstance(m, dict) else ("no test group recorded", True)
-            )
         except (Refused, ValueError, OSError):
-            note, settled = (
-                "the marker could not be read: its test group, if any, was not looked for",
-                True,
+            m = None
+        if not isinstance(m, dict):
+            unchecked.append(
+                f"{path.name} cannot be read as a marker: its test group, if any, was not looked for"
+                + (" and the folder it was planted in is unknown" if planted else "")
             )
+            note, settled = "the marker could not be read", True
+        else:
+            if planted and (
+                m.get("root") != str(root)
+                or not isinstance(m.get("root_dev"), int)
+                or not isinstance(m.get("root_ino"), int)
+                or (now.st_dev, now.st_ino) != (m["root_dev"], m["root_ino"])
+            ):
+                unchecked.append(
+                    f"{path.name} was written for another folder than the one now at {root} (renamed away, replaced, or no "
+                    f"folder identity recorded): the folder the mutant was planted in was NOT compared with git"
+                )
+            note, settled = stop_orphan(m, root)
         if not settled:
             return False, f"marker NOT discarded: {note}; stop that test group by hand first"
         notes.append(f"{path.name}: {note}")
+        todo.append(path)
+    if unchecked and not unchecked_folder:
+        return False, (
+            f"marker NOT discarded (exit 3): {'; '.join(unchecked)}. The tree at {root} equals git, but that says nothing about "
+            f"the other folder. Look at it by hand; if it does not matter, repeat the command with --accept-unchecked-folder"
+        )
+    for path in todo:
         unlink_state(path)
     unlink_state(STATE / f"{key}.backup")
-    return True, "marker and backup discarded (" + "; ".join(
-        notes
-    ) + "). A folder that was renamed away is NOT checked"
+    tail = (
+        f" ACCEPTED BY YOU (--accept-unchecked-folder), not checked: {'; '.join(unchecked)}"
+        if unchecked
+        else ""
+    )
+    return True, "marker and backup discarded (" + "; ".join(notes) + ")." + tail
 
 
 def test_env(pythonpath: str | None) -> dict:
@@ -2097,7 +2242,7 @@ def load_mutants(a) -> list[dict]:
 def tree_check(a, root, fresh, marker) -> list[str]:
     """Differences between the scratch tree and a fresh archive; written to raw/<prefix>-tree-diff.txt."""
     diffs = diff_trees(fresh, root, set(a.extra))
-    leftover = marker.exists()
+    leftover = os.path.lexists(marker)  # r10 m7: a dangling link in the marker's place counts too
     write_out(
         pathlib.Path(a.raw) / f"{a.prefix}-tree-diff.txt",
         f"TREE CHECK after the loop\ncompared: <fresh git archive {a.sha_full} + patches {a.patch}> against {a.root} "
@@ -2161,15 +2306,47 @@ def may_be_planted(
     return restore and os.path.lexists(control_marker_path(key_for(root)))
 
 
+def state_folders() -> list[pathlib.Path]:
+    """Every folder a run of this tool may keep markers in: ours and the other usual places (the same list `--restore` and
+    the other-run check search)."""
+    spots = {p.resolve() for p in STATE_PARENTS} | {STATE.parent.resolve()}
+    spots |= {pathlib.Path(v).resolve() for v in map(os.environ.get, ("TMP", "TEMP")) if v}
+    return sorted(parent / STATE.name for parent in spots)
+
+
+def check_out_json_target(path: pathlib.Path) -> None:
+    """r10 m3: --out-json overwrites its target, so an EXISTING file is accepted only when it is the tool's own earlier
+    result (a JSON list of objects that each have `id` and `verdict`); any other file is refused, nothing is overwritten.
+    A path that does not exist yet is fine."""
+    if not os.path.lexists(path):
+        return
+    try:
+        old = loads_json(read_regular(path))
+    except (Refused, ValueError, OSError):
+        old = None
+    ok = (
+        isinstance(old, list)
+        and old
+        and all(isinstance(x, dict) and "id" in x and "verdict" in x for x in old)
+    )
+    if not ok:
+        raise Refused(
+            f"--out-json {path} already exists and is not a result file of this tool (a JSON list of objects with id and "
+            f"verdict): refused, it would be overwritten. Use a new file name"
+        )
+
+
 def reject_output_inputs(paths: list[pathlib.Path], inputs: list[pathlib.Path]) -> None:
     """r7 review N4: an output file (--out-json, raw files) must not be one of the files this run reads: run.py itself,
     --list, --patch. Compared by device and inode, so a different spelling or a hard link is caught too."""
-    state = STATE.resolve()
+    states = [f.resolve() for f in state_folders()]
     for o in paths:
-        if pathlib.Path(os.path.abspath(o)).resolve().is_relative_to(state):
-            raise Refused(
-                f"output path {o} lies in the state folder {STATE}: refused (a file written there could pose as a marker)"
-            )
+        here = pathlib.Path(os.path.abspath(o)).resolve()
+        for state in states:  # r10 m3: every folder a marker may live in, not only the current one
+            if here.is_relative_to(state):
+                raise Refused(
+                    f"output path {o} lies in the state folder {state}: refused (a file written there could pose as a marker)"
+                )
         if not os.path.lexists(o):
             continue
         for i in inputs:
@@ -2216,6 +2393,24 @@ def other_run_check(root: pathlib.Path, key: str) -> None:
                 ) from e
 
 
+def nonempty(v: str) -> str:
+    """argparse type: an empty value is an error, never "not given" (r10 M2)."""
+    if v == "":
+        raise argparse.ArgumentTypeError(
+            "an empty value is not allowed (is a shell variable unset?)"
+        )
+    return v
+
+
+def sha_arg(v: str) -> str:
+    """argparse type for --sha: 4 to 64 hex digits; an empty or malformed value is refused with exit 2 (r10 M2)."""
+    if not SHA_RE.fullmatch(v):
+        raise argparse.ArgumentTypeError(
+            f"{v!r} is not a commit id (4 to 64 hexadecimal digits; an empty value is refused: is a shell variable unset?)"
+        )
+    return v
+
+
 def restore_args(a, repo_given: bool) -> str:
     """The extra words of the restore command that make it equal to this run's own checks (--repo and
     --real-repo are what refuse a root inside the real repository), review r4 nit 10."""
@@ -2240,14 +2435,20 @@ def main():
             file=sys.stderr,
         )
         sys.exit(EXIT_REFUSED)
+    if _INIT_ERRORS:  # r10 m10
+        print(f"REFUSED: this tool cannot start here: {'; '.join(_INIT_ERRORS)}", file=sys.stderr)
+        sys.exit(EXIT_REFUSED)
     argv = sys.argv[1:]
     tests = argv[argv.index("--") + 1 :] if "--" in argv else []
     ap = argparse.ArgumentParser()
-    for k in ("root", "sha", "prefix", "raw"):
-        ap.add_argument("--" + k, required=(k == "root"))
-    ap.add_argument("--list")
-    ap.add_argument("--id")
-    ap.add_argument("--file")
+    for k in ("root", "prefix", "raw"):
+        ap.add_argument("--" + k, required=(k == "root"), type=nonempty)
+    # r10 M2 (class: an empty value read as "option not given"): `--sha ""` (an unset shell variable) used to drop the git
+    # authority of --restore; an empty value is now a refusal (exit 2) for every option that names a path, a commit or a name
+    ap.add_argument("--sha", type=sha_arg)
+    ap.add_argument("--list", type=nonempty)
+    ap.add_argument("--id", type=nonempty)
+    ap.add_argument("--file", type=nonempty)
     ap.add_argument("--old")
     ap.add_argument("--new")
     ap.add_argument("--desc", default="")
@@ -2264,14 +2465,17 @@ def main():
         action="store_false",
         help="skip the baseline: the run can never be COMPLETE and exits 5 (the last of --control/--no-control wins)",
     )
-    ap.add_argument("--out-json")
+    ap.add_argument("--out-json", type=nonempty)
     ap.add_argument("--timeout", type=int, default=600, help="seconds per test run")
     ap.add_argument(
-        "--pythonpath", help="only for the proof copies, whose venv .pth points at another tree"
+        "--pythonpath",
+        type=nonempty,
+        help="only for the proof copies, whose venv .pth points at another tree",
     )
     ap.add_argument(
         "--repo",
         default=None,
+        type=nonempty,
         help="a folder inside the repository that holds --sha (default: this script's folder; "
         "--restore needs no repository unless --repo is given)",
     )
@@ -2310,6 +2514,13 @@ def main():
         "damaged or names another root) AFTER the tree under --root was compared with git and found equal",
     )
     ap.add_argument(
+        "--accept-unchecked-folder",
+        action="store_true",
+        help="with --discard-marker: also discard a marker that does not prove it belongs to the folder now at --root "
+        "(that folder was renamed away or replaced, or the marker cannot be read). You state that you looked at the other folder "
+        "or do not need it; the text says what was not checked",
+    )
+    ap.add_argument(
         "--helper-timeout",
         type=int,
         default=HELPER_TIMEOUT,
@@ -2326,13 +2537,15 @@ def main():
     if a.helper_timeout < 1:
         ap.error("--helper-timeout must be at least 1")
     HELPER_TIMEOUT = a.helper_timeout
-    if a.discard_marker and not (a.restore and a.sha):
+    if a.accept_unchecked_folder and not a.discard_marker:
+        ap.error("--accept-unchecked-folder only goes with --discard-marker")
+    if a.discard_marker and not (a.restore and a.sha is not None):
         ap.error(
             "--discard-marker needs --restore and --sha (git must confirm the files are original)"
         )
     repo_given = a.repo is not None
     default_repo = str(pathlib.Path(__file__).resolve().parent)
-    if not a.restore or repo_given or a.sha:
+    if not a.restore or repo_given or a.sha is not None:
         a.repo = a.repo or default_repo
     root = pathlib.Path(a.root)
     if not root.is_dir():
@@ -2349,14 +2562,26 @@ def main():
     )  # every later open of the root must find this very folder
     if not a.restore and not (a.prefix and a.raw and a.sha):
         ap.error("--sha, --prefix and --raw are required")
+    # r10 m4 (class: a window between installing the handlers and the `try` that maps a signal to an exit code): the handled
+    # signals are BLOCKED while the handlers are installed and the temporary folder is made, and unblocked inside the `try`,
+    # so a signal there is held and then handled like any other (128+N, folder removed), never an uncaught KeyboardInterrupt
+    try:
+        signal.pthread_sigmask(signal.SIG_BLOCK, HANDLED_SIGNALS)
+    except (OSError, ValueError):
+        pass
     for signum in HANDLED_SIGNALS:
         try:
             signal.signal(signum, _term)
         except (OSError, ValueError):  # a signal the C library keeps for itself (32, 33 on Linux)
             pass
     marker = STATE / f"{key_for(root)}.planted.json"
-    tmpref = pathlib.Path(tempfile.mkdtemp(prefix="mutation-ref-"))
+    tmpref = None
     try:
+        tmpref = pathlib.Path(tempfile.mkdtemp(prefix="mutation-ref-"))
+        try:
+            signal.pthread_sigmask(signal.SIG_UNBLOCK, HANDLED_SIGNALS)
+        except (OSError, ValueError):
+            pass
         ensure_state()
         lock_fd = os.open(
             STATE / f"{key_for(root)}.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600
@@ -2374,7 +2599,7 @@ def main():
             if a.restore:
                 expected_ref = None
                 if (
-                    a.sha
+                    a.sha is not None
                 ):  # r8 (d): the commit named on the command line decides what the original is
                     # r9 minor 1: nothing is written yet, so a signal here ends the run (128+N) with every state file untouched
                     expected_ref = tmpref / "ref"
@@ -2383,7 +2608,9 @@ def main():
                 # review r6 nit 2: from the first write on, a signal during the restore is remembered, never raised
                 SIG.critical = True
                 if a.discard_marker:
-                    ok, text = discard_marker(root, expected_ref, set(a.extra))
+                    ok, text = discard_marker(
+                        root, expected_ref, set(a.extra), a.accept_unchecked_folder
+                    )
                     print(text)
                     leave(0 if ok else EXIT_RESTORE_FAILED)
                 ok, text = restore_from_marker(root, expected_ref, set(a.extra))
@@ -2406,14 +2633,14 @@ def main():
             if os.path.lexists(control_marker_path(key_for(root))):
                 raise Refused(
                     f"a control run on {root} was killed and its test group may still run. Restore with: "
-                    f"python3 {sys.argv[0]} --root {root} --restore{restore_args(a, repo_given)}"
+                    f"python3 {shlex.quote(sys.argv[0])} --root {shlex.quote(str(root))} --restore{restore_args(a, repo_given)}"
                 )
             if os.path.lexists(marker):
                 m = load_marker(marker)
                 raise Refused(
-                    f"a mutant ({m['mutant']}) is still planted in {m['file']} from an earlier run that was killed. "
-                    f"Restore with: python3 {sys.argv[0]} --root {root} --restore{restore_args(a, repo_given)}   "
-                    f"(stops a leftover test run, copies {m['backup']} back and checks the hash); then run again"
+                    f"a mutant ({shown(m['mutant'])}) is still planted in {shown(m['file'])} from an earlier run that was killed. "
+                    f"Restore with: python3 {shlex.quote(sys.argv[0])} --root {shlex.quote(str(root))} --restore{restore_args(a, repo_given)}   "
+                    f"(stops a leftover test run, copies {shown(m['backup'])} back and checks the hash); then run again"
                 )
             a.sha_full = resolve_commit(a.repo, a.sha)  # the full id of a COMMIT (review r5 nit 9)
             a.baseline_failed = None
@@ -2459,6 +2686,8 @@ def main():
             outs += [pathlib.Path(a.out_json)] if a.out_json else []
             for o in outs:  # before anything is planted (review r4 nit 11, r6 nit 4)
                 check_out_path(o, root)
+            if a.out_json:
+                check_out_json_target(pathlib.Path(a.out_json))
             if len({os.path.abspath(o) for o in outs}) != len(outs):
                 raise Refused(
                     "two output files have the same path (--out-json is also a raw file): refused"
@@ -2564,12 +2793,19 @@ def main():
             )
             sys.exit(EXIT_RESTORE_FAILED)
         print("REFUSED:", e, file=sys.stderr)
-        if a.restore and not a.sha and not isinstance(e, NoMarker):
-            print(
-                "exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; "
-                "`--restore --sha COMMIT [--repo R]` compares the files with git",
-                file=sys.stderr,
-            )
+        if a.restore and not isinstance(e, NoMarker):
+            if a.sha is None:
+                print(
+                    "exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; "
+                    "`--restore --sha COMMIT [--repo R]` compares the files with git",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "exit 2 does NOT mean nothing is planted anywhere: nothing was written; the files under --root were "
+                    "compared with the git archive of --sha (see above); a folder the marker may name is not looked at",
+                    file=sys.stderr,
+                )
         sys.exit(EXIT_REFUSED)
     except KeyboardInterrupt as e:
         SIG.exiting = True
@@ -2598,7 +2834,8 @@ def main():
             EXIT_RESTORE_FAILED if may_be_planted(a.restore, root, marker, e) else EXIT_REFUSED
         ) from e
     finally:
-        shutil.rmtree(tmpref, ignore_errors=True)
+        if tmpref is not None:
+            shutil.rmtree(tmpref, ignore_errors=True)
 
 
 if __name__ == "__main__":

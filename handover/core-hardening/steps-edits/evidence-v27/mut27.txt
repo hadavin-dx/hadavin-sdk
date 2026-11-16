@@ -1,0 +1,55 @@
+baseline failures: 28
+P01 CAUGHT by C03,C04,C17,C48 | call ceiling changed
+P02 CAUGHT by C03 | ledger changed (limit 13.21 to 13.31)
+P03 CAUGHT by C03 | 860 s changed
+P04 CAUGHT by C03,C79 | deadline minute
+P05 CAUGHT by C03,C04,C18,C79,C86 | IST offset
+P06 CAUGHT by C04 | weekday of deadline
+P07 CAUGHT by C03,C04,C73 | post-by pair
+P09 CAUGHT by C14a | card (g) exception removed
+P10 CAUGHT by C14b | recording stop by voice
+P11 CAUGHT by C159 | first alarm removed
+P12 CAUGHT by C14d | backtick sentence removed
+P13 CAUGHT by C14e | paste condition removed
+P14 CAUGHT by C14f,C23 | window labels removed
+P15 CAUGHT by C102 | run-name reuse rule removed
+P16 CAUGHT by C89 | A older key cancelled before the key is saved
+P17 CAUGHT by C14h | lead may reverse order
+P18 CAUGHT by C14i | no clock for the notice window
+P19 CAUGHT by C14j,C46 | run that never started
+P20 CAUGHT by C14k | SAMPLE label removed
+P21 CAUGHT by C14m,C44 | HubSpot rotate allowed
+P22 CAUGHT by C21 | set phrase differs
+P23 CAUGHT by C14q | full date check weakened
+P24 CAUGHT by C14r | balance re-check weakened
+P25 CAUGHT by C14o | last-resort step out of the yes
+P26 CAUGHT by C14p | one-line warning removed
+P27 CAUGHT by C52 | card step 3 gets a new pointer
+P29 CAUGHT by C11 | pointer to missing step
+P30 CAUGHT by C10 | card term renamed
+P31 CAUGHT by C14s,C23 | delete guard removed
+P32 CAUGHT by C23 | STOP RULE renamed
+P33 CAUGHT by C23 | R8 character list gets a character
+P34 CAUGHT by C13,C24 | yes pattern gets a bracket char
+P35 CAUGHT by C15 | key-save line loses exit report
+P36 CAUGHT by C15 | key-save line breaks bash -n
+P37 CAUGHT by C05 | stale word back in note
+P38 CAUGHT by C04,C17 | old minutes figure in note
+P39 CAUGHT by C04 | wrong pair in note
+P40 CAUGHT by C04 | wrong weekday in open list
+P41 CAUGHT by C05 | Part 2 back in open list
+P43 CAUGHT by C04 | sheet date weekday
+P44 CAUGHT by C08 | A yes sentence changed
+P45 CAUGHT by C27,C61 | B older key fate removed
+V01 CAUGHT by C105 | silence rule exemptions removed (stranger BL1)
+V02 CAUGHT by C106 | look key step removed (stranger BL2)
+V03 CAUGHT by C107 | differing cancel word rule removed
+V04 CAUGHT by C108 | cancelled word no longer seen by the owner
+V05 CAUGHT by C137 | B 7.11 not reachable from every route (security B1)
+V06 CAUGHT by C138 | B fourth alarm removed
+V07 CAUGHT by C139 | cancel-by before older-key time no longer checked
+V08 CAUGHT by C140 | minimum think time back to 10 seconds
+V09 CAUGHT by C111 | key-save line no longer typed before create
+V10 CAUGHT by C141 | typed-figure line changed
+V11 CAUGHT by C142 | B 7.11 last-used time dropped
+V12 CAUGHT by C143 | n8n model key reason removed

@@ -183,7 +183,7 @@ for nm, t in SH:                                                                
 need('C124', 'none within the silence minutes: describe, FREEZE; no key is alive then')                                                  # T M17
 need('C125', 'Start only after the lead\'s word "post" (it means the lead has the printed result and the video is accepted)')           # T M18
 need('C126', 'A run that ended before 6.7: no cancel of it until the lead sends a new numbers message', (('A', A),))                     # T M19
-need('C127', '`ls -l`, `clear` and the grep of 5.7')                                                                                     # T m2
+need('C127', 'a second Ubuntu window where you only type `date -u`, `ls -l`, `clear` and the grep of 5.7')                                                                                     # T m2
 need('C128', '"none" only at 8.1')                                                                                                       # T m4
 need('C129', 'Minimum think time: 20 seconds'); need('C129', 'Run length: 15 minutes')                                                   # S M2, S m10
 need('C130', '[[A:(its list L2 included, at 6.7)]]'.replace('[[A:', '').replace(']]', ''), (('A', A),)); need('C130', '(its list L2 included, and 7.11)', (('B', B),))   # T m14
@@ -211,6 +211,7 @@ need('C145', 'put the Privacy switches back as 8.7 says')                       
 need('C146', 'if the last-used time is under 7 days'.replace('if the last-used time is under 7 days', 'else no run today (describe it and wait: the lead sends a new numbers message with a later run day at least 8 days after that use'), (('A', A),))   # S M4: what happens when the 7-day rule fails
 need('C147', '5.1 to 5.8 may be done on earlier days, 5.9 and sections 6 to 8 only on the run day')                                      # T m10
 need('C148', 'or no sentence "the test program made no delete call": skip that step (all deleting) and describe which')                  # S m14
+need('C159', 'alarm 1 at the latest start, alarm 2 at the alarm time, alarm 3 at the cancel-by time')                                      # plant P11 showed the alarm contents were unchecked
 # ---- Part 5 (v27): lead-side documents must match the built sheets (S M1 and the stranger's lead-document findings)
 for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'Builder proposes B|safe default B\b|builder recommends A for money and chose neither', t): fail('C149', nm + ': still recommends B or contradicts itself on A and B')
@@ -227,5 +228,5 @@ if 'WHEN IT FAILS (v27)' not in OPEN: fail('C154', 'O: row 78 does not say what 
 if 'NOT MET at v27' not in OPEN: fail('C155', 'O: row 75 does not say the word target is not met')
 if 'checked by you with `ls ~/.hadavin-take-tags`' not in NOTE: fail('C156', 'N: run name check by the lead missing')
 for nm, t in (('N', NOTE), ('O', OPEN)):
-    if re.search(r'\bpay in (only )?(a little|less)\b', t.replace('no request to pay in less', '').replace('propose no second account and no smaller payment', '')) : fail('C157', nm + ': suggests the owner pays in less (Q24)')
+    if re.search(r'\bpay in (only )?(a little(?! more)|less)\b', t.replace('no request to pay in less', '').replace('propose no second account and no smaller payment', '')) : fail('C157', nm + ': suggests the owner pays in less (Q24)')
 if 'Added in v11' not in NOTE or 'look key' not in NOTE.lower(): fail('C158', 'N: v11 section or look key missing')

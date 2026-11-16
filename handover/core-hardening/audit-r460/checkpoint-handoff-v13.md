@@ -1,4 +1,7 @@
-# Checkpoint, hand-off v13 builder
-Started 2026-11-16T15:18:33Z (first command). Stop and report at 60 minutes (about 16:18Z).
-Plan: (1) read v12 + both reviews [done]; (2) run a throwaway Postgres 16 (installed locally) to settle B1, M1, M3 by experiment; (3) copy v12 to v13 and patch; (4) regenerate evidence scripts; (5) read citation check when it lands.
-15:24Z: Postgres 16.15 server IS installed here; throwaway cluster experiments done (raw-pg-*-v13.txt, 47/47 real-code checks). B1 CONFIRMED by experiment. Next: patch v13 docs.
+# Checkpoint, hand-off v13 builder (Sonnet 5.5)
+
+Started about 15:18Z (20:48 IST) on 2026-11-16. Notes: 15:48Z was due; work finished early, so this is the final note, written 15:40Z (21:10 IST).
+
+Done: `CORE-PR-HANDOFF-v13.md`, `CORE-PR-HANDOFF-v13-other-tracks.md`, `v13-CHANGES.md`, `evidence-handoff-v13/` (raw outputs; every file named in section 8 exists: `raw-counts-v13.txt`). Postgres checks ran on local 16.15 only; the scratch cluster was stopped and deleted.
+Not done / not run: unit tests, ruff, bandit, `gate4.sh`, Postgres 17.10, any vendor call, EGM skills (not invokable by me). No commit made (the lead commits). 
+Next: the lead runs the independent reviews.

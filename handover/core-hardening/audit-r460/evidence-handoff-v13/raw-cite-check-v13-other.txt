@@ -1,4 +1,4 @@
-=== /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v13-other-tracks.md
+=== ../CORE-PR-HANDOFF-v13-other-tracks.md
 L34 src/hadavin_sdk/approvals/gate.py:681-698 | def withhold_commands(text: str) -> str: | ANCHOR ok
 L35 src/hadavin_sdk/approvals/gate.py:647-678 | _WRITE_SHAPES = re.compile( | ANCHOR ok
 L36 src/hadavin_sdk/llm/fake.py:39-40 | doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8") | ANCHOR ok

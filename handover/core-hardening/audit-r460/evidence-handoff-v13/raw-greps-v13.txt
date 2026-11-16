@@ -89,3 +89,59 @@ src/hadavin_sdk/tools.py:1057:        max_abandoned: int = defaults.MAX_ABANDONE
 69:    rt, cfg = build(cfg_dir, Hooks(request_approval=lambda p, d, r: seen.append((p, d))))
 95:    rt, cfg = build(cfg_dir, Hooks(tools={"echo": lambda inp: inp["text"]}))
 102:    rt, cfg = build(cfg_dir, Hooks(tools={"echo": lambda inp: "x"}))
+
+## G12 (re-run 2026-11-16, replaces the v9 file raw-greps-v9.txt) cache marker or thinking setting in src/hadavin_sdk/llm/*.py:
+## G13 'window_end' in src:
+(exit 0)
+## G14 'fileguard' in src and tests:
+(exit 0)
+## G15 (replaces raw-nit-greps-v9.txt) non-fake network kinds configured in tests (kind: bedrock/anthropic/openai_compat/gemini in config literals):
+tests/test_k1b_replay.py:391:        env.run(ScriptedLLM([]), reg=reg, llm_kind="anthropic")
+tests/test_p1a_fixes.py:117:                update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})}
+tests/test_lockin_guard.py:61:    "anthropic": {f"{PKG}.llm.anthropic"},
+tests/warden_port/test_bedrock_provider_r16.py:74:        make("llm", BedrockSettings(kind="bedrock", region="contract-region-1"), routes=routes)
+tests/warden_port/test_bedrock_provider_r16.py:78:    settings = BedrockSettings(kind="bedrock", region="contract-region-1", call_timeout_s=7)
+tests/warden_port/test_bedrock_provider_r16.py:89:    settings = BedrockSettings(kind="bedrock", region="contract-region-1")
+tests/warden_port/test_providers.py:59:        parse_backends({"llm": "gemini", "audit": {"kind": "local_dir", "dir": "a"}}, tmp_path)
+tests/warden_port/test_providers.py:64:    settings = OpenAICompatSettings(kind="openai_compat", base_url="http://localhost:11434/v1")
+tests/warden_port/test_providers.py:72:        OpenAICompatSettings(kind="openai_compat")
+tests/warden_port/test_providers.py:113:        OpenAICompatSettings(kind="openai_compat", base_url=url, api_key_secret_name="k")  # noqa: S106 - a na
+tests/warden_port/test_providers.py:119:        kind="openai_compat",
+tests/warden_port/test_providers.py:147:    settings = GeminiSettings(kind="gemini", api_key_secret_name="g")  # noqa: S106 - a name
+tests/warden_port/test_providers.py:171:    settings = AnthropicSettings(kind="anthropic", platform=platform, **extra)
+tests/warden_port/test_providers.py:189:        AnthropicSettings(kind="anthropic", platform=platform, **extra)
+tests/warden_port/test_providers.py:196:    settings = OpenAICompatSettings(kind="openai_compat", base_url="http://localhost:11434/v1")
+tests/test_p5p6_followups.py:82:    llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"}
+tests/test_p5p6_followups.py:142:        ("llm", AnthropicSettings(kind="anthropic", platform="api", api_key_secret_name="a")),  # noqa: S106
+tests/test_p5p6_followups.py:143:        ("llm", BedrockSettings(kind="bedrock", region="r-1")),
+tests/test_p5p6_followups.py:144:        ("llm", OpenAICompatSettings(kind="openai_compat", base_url="https://llm.example/v1")),
+tests/test_p5p6_followups.py:145:        ("llm", GeminiSettings(kind="gemini", api_key_secret_name="g")),  # noqa: S106
+tests/test_p5p6_followups.py:163:            kind="anthropic", platform="vertex", project_id="p", region=region
+tests/test_p5p6_followups.py:253:            AnthropicSettings(kind="anthropic", platform="api", api_key_secret_name="a"),  # noqa: S106
+tests/test_p5p6_followups.py:257:        (BedrockSettings(kind="bedrock", region="r-1"), "sonnet", "anthropic.claude-x-v1:0"),
+tests/test_p5p6_followups.py:259:            OpenAICompatSettings(kind="openai_compat", base_url="https://api.example/v1"),
+tests/test_p5p6_followups.py:264:            OpenAICompatSettings(kind="openai_compat", base_url="https://api.example/v1"),
+tests/test_p5p6_followups.py:269:            OpenAICompatSettings(kind="openai_compat", base_url="http://localhost:11434/v1"),
+tests/test_p5p6_followups.py:274:            GeminiSettings(kind="gemini", api_key_secret_name="g"),  # noqa: S106
+tests/test_p5p6_followups.py:279:            GeminiSettings(kind="gemini", api_key_secret_name="g"),  # noqa: S106
+tests/test_p5p6_followups.py:288:    if settings.kind == "anthropic":
+tests/test_p5p6_followups.py:290:    if settings.kind == "bedrock":
+tests/test_p5p6_followups.py:392:        "kind": "anthropic",
+tests/test_p5p6_followups.py:415:    settings = OpenAICompatSettings(kind="openai_compat", base_url="https://router.example/v1")
+tests/test_p5p6_followups.py:443:            ("llm", BedrockSettings(kind="bedrock", region="cn-x-1")),
+tests/test_k3_pilot_env.py:61:            "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+tests/contracts/kinds/llm_wire.py:45:    kind_name = "anthropic"
+tests/contracts/kinds/llm_wire.py:52:        anthropic = pytest.importorskip("anthropic", reason="needs extra anthropic")
+tests/contracts/kinds/llm_wire.py:86:    kind_name = "openai_compat"
+tests/contracts/kinds/llm_wire.py:114:    kind_name = "gemini"
+tests/contracts/kinds/llm_wire.py:147:    kind_name = "bedrock"
+tests/contracts/kinds/llm_wire.py:171:        return fixture("bedrock", name)
+
+## G12b (G12 above was case-sensitive and missed the comments; same pattern, case-insensitive, 2026-11-16): cache marker or thinking in src/hadavin_sdk/llm/*.py
+src/hadavin_sdk/llm/anthropic.py:136:        # Thinking blocks ... (comment only)
+src/hadavin_sdk/llm/gemini.py:98:        # Thinking is billed as output; ... (comment only)
+(the two lines are copied from the case-insensitive grep run in the same pass; no other hit)
+
+## G16 (re-run 2026-11-16) count of NOT-NEEDED / DUPLICATE per file:
+./handover/core-hardening/ORDERS.md NOT-NEEDED: 3 DUPLICATE: 4
+./handover/core-hardening/MASTER-MAP.md NOT-NEEDED: 3 DUPLICATE: 13

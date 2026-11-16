@@ -1,4 +1,4 @@
-=== /home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v13.md
+=== ../CORE-PR-HANDOFF-v13.md
 L12 handover/core-hardening/ORDERS.md:216-217 | ## ANSWER Q34 (lead, real clock 14:22Z) | CHECK words=CHANGES
 L12 src/hadavin_sdk/store/postgres.py:416-431 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | ANCHOR ok
 L19 src/hadavin_sdk/approvals/requests.py:37-37 | flagged = detector is not None and injection_check(detector, inputs, "approval_summary").f | ANCHOR ok
@@ -284,9 +284,8 @@ L389 src/hadavin_sdk/llm/bedrock.py:108-108 | code = exc.response.get("ResponseM
 L394 src/hadavin_sdk/guard/injection.py:92-97 | _LOG.warning( | CHECK words=SpendRefused,code,AKIAIOSFODNN7EXAMPLE,settle
 L410 src/hadavin_sdk/k1b/loop.py:176-176 | except ProviderError: | ANCHOR ok
 L410 src/hadavin_sdk/runtime/agent_loop.py:432-433 | except ( | ANCHOR ok
-L443 src/hadavin_sdk/guard/bedrock_guardrail.py:36-36 | retries={"total_max_attempts": 2, "mode": "standard"}, | CHECK words=spend_totals,Infinity,tcp_user_timeout,migrate
-L443 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | CHECK words=spend_totals,Infinity,tcp_user_timeout,migrate
-L444 src/hadavin_sdk/llm/bedrock.py:108-108 | code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") | ANCHOR ok
-L444 src/hadavin_sdk/guard/judge.py:107-107 | v = injection_check(judge, case["text"], "golden") | CHECK words=ResponseMetadata,HTTPStatusCode,anthropic,urllib
-TOTAL cites=289 missing_or_range=0 anchor_check=49
+L443 src/hadavin_sdk/guard/bedrock_guardrail.py:36-36 | retries={"total_max_attempts": 2, "mode": "standard"}, | CHECK words=statement_timeout,transaction,tcp_user_timeout,migrate
+L443 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | CHECK words=statement_timeout,transaction,tcp_user_timeout,migrate
+L443 src/hadavin_sdk/guard/judge.py:107-107 | v = injection_check(judge, case["text"], "golden") | CHECK words=migrate,gemini,build,NetworkLLM
+TOTAL cites=288 missing_or_range=0 anchor_check=49
 rc=0

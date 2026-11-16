@@ -1,0 +1,6 @@
+checks in Part 4 and 5: 55
+fail on built v26: 52
+do NOT fail on built v26 (cannot prove a change; reason must be given in v27-CHANGES.md): ['C152', 'C157', 'C159']
+fail on built v27: none
+v27-fail-proof: 0 problem(s)
+rc=0
