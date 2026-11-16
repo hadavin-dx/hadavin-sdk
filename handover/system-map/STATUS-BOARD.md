@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:16:50Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:17:19Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-024; lead ANSWER 10:20Z (take uses the PATCHED real-v5 copy) read; ORDER 024 done
 STATE: WORKING
@@ -7,7 +7,7 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 5 (run-day card rewrite draft; owner timeline draft; F-008/T19 facts; QUESTIONS/TAKE-BLOCKERS recheck; scan_outputs fix spec). banned-claims.md extended with accidental-phrase list.
+AGENTS_RUNNING: 4 (owner timeline draft; F-008/T19 facts; QUESTIONS/TAKE-BLOCKERS recheck; scan_outputs fix spec); starting 2 more. Run-day card v2 draft saved (work/run-day-card-draft-v2.md); new QUESTIONS item 8 (does the film pause stay).
 INTERRUPTED: none
 NEXT: apply the lead's ANSWER (patched copy: F-002 and F-008 applied, then fill_flows) to QUESTIONS 7, TAKE-BLOCKERS rows 1 and 2, README and LEAD-PAGE (my earlier note recommended the unpatched files; now superseded). Then collect the 6 reports and apply wording fixes; scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: does end delete (QUESTIONS 1); v5 step J editor; D-04/D-05; rehearsal trim; row 1 builder and date.
 CAPACITY: nproc 4, load 0.11, mem 15 GB total 0 used, disk 40 percent
