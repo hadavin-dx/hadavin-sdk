@@ -8,7 +8,6 @@ def R(old, new, n=1):
     c = s.count(old)
     if (n is None and c < 1) or (n is not None and c != n): errs.append((c, n, old[:80])); return
     s = s.replace(old, new)
-R("verify16", "verify17", None)
 R("scratch16", "scratch17", None)
 R("nums != list(range(1, 16))", "nums != list(range(1, 17))")
 R("'items 1 to 15' not in ndsec", "'items 1 to 16' not in ndsec")
@@ -38,6 +37,10 @@ R("need16('F3 E-59', newtxt['E-59'], '`shred done 2`', 'part (d)')", "need16('F3
 R("('1. Revoke the secret key', '2. Shred the copy of the key in the take folder', '3. Do your items 2 and 4', '4. Do your item 5', '5. Shred the two files of your item 6', '6. Read the list that the assistant sends', '7. The assistant does its item 1')", "('1. You: revoke the secret key', '2. You: shred the copy of the key in the take folder', '3. You: do your items 2, 3 and 4', '4. You: do your item 5', '5. You: do your item 6', '6. You: read the list of what the assistant will remove', '7. Then the assistant does its item 1')")
 R("need16('F4 card', _card, '`shred done 1`', '`shred done 2`'", "need16('F4 card', _card, '`shred done key copies`', '`shred done other files`'")
 R("neg('r16F4a', '4. Do your item 5: the retire check.', '0. Do your item 5: the retire check.'", "neg('r16F4a', '4. You: do your item 5, the retire check.', '0. You: do your item 5, the retire check.'")
+sec = open(H + 'r17-section.py', encoding='utf-8').read()
+R("# ================= negative controls (each check must fail on a planted defect) =================", sec + "# ================= negative controls (each check must fail on a planted defect) =================")
+pl = open(H + 'r17-plants.py', encoding='utf-8').read()
+R("print('FAILURES', fail)", pl + "print('FAILURES', fail)")
 if errs:
     print('MK ERRORS'); [print(' ', e) for e in errs]; raise SystemExit(1)
 open(H + 'verify17.py', 'w', encoding='utf-8').write(s)

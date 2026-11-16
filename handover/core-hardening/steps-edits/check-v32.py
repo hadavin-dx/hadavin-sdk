@@ -23,7 +23,7 @@ except BaseException as e:
 for n, o in GEN.items():                                   # C01 copies cannot differ from source
     if not os.path.exists(D + n): fail('C01', 'missing ' + n); continue
     if rd(n) != o: fail('C01', n + ' differs from what its source and facts build')
-PAGES = ('OWNER-SHEET-v32-A.md', 'OWNER-CARD-v32-A.md', 'OWNER-APPENDIX-v32-A.md', 'OWNER-SHEET-v32-B.md', 'OWNER-CARD-v32-B.md', 'OWNER-APPENDIX-v32-B.md', 'OWNER-FILM-PERSON-v32.md')
+PAGES = ('OWNER-SHEET-v32-A.md', 'OWNER-CARD-v32-A.md', 'OWNER-APPENDIX-v32-A.md', 'OWNER-SHEET-v32-B.md', 'OWNER-CARD-v32-B.md', 'OWNER-APPENDIX-v32-B.md', 'OWNER-FILM-PERSON-v32.md', 'OWNER-HELPER-v32.md')
 for n in PAGES + ('LEAD-RELEASE-NOTE-v16.md', 'v32-OPEN-FOR-LEAD.md', 'v32-CHANGES.md'):
     if not os.path.exists(D + n): fail('C02', 'file missing: ' + n)
 def whole(k):                                              # the sheet with its card page and numbers page put back, and the film page: what the owner reads
@@ -87,11 +87,11 @@ except Exception as e: fail('C06', 'banned list unreadable: %s' % type(e).__name
 # C07 word counts by the same split(): the sheet itself must be under 6300 words; every page is printed
 tot = {}
 for k in 'AB':
-    cnt = {p: len(rd(p).split()) if os.path.exists(D + p) else 0 for p in ('OWNER-SHEET-v32-%s.md' % k, 'OWNER-CARD-v32-%s.md' % k, 'OWNER-APPENDIX-v32-%s.md' % k, 'OWNER-FILM-PERSON-v32.md')}
+    cnt = {p: len(rd(p).split()) if os.path.exists(D + p) else 0 for p in ('OWNER-SHEET-v32-%s.md' % k, 'OWNER-CARD-v32-%s.md' % k, 'OWNER-APPENDIX-v32-%s.md' % k, 'OWNER-FILM-PERSON-v32.md', 'OWNER-HELPER-v32.md')}
     tot[k] = sum(cnt.values())
     sh = cnt['OWNER-SHEET-v32-%s.md' % k]
     if sh >= 6300: fail('C07', 'sheet %s has %d words (target under 6300; v28 had 7473 with the card inside)' % (k, sh))
-    if tot[k] > 14000: fail('C07', 'sheet %s with its card, appendix and film pages has %d words: more than the v32 figure of 14000 (the sheet alone is capped at 6300; the other pages are linked detail, nothing deleted, lead order L-LEN)' % (k, tot[k]))
+    if tot[k] > 14800: fail('C07', 'sheet %s with its card, appendix, film and helper pages has %d words: more than the v32 figure of 14800 (v31 five pages with the helper page did not exist; the sheet alone is capped at 6300; the other pages are linked detail, nothing deleted, lead order L-LEN)' % (k, tot[k]))
     print('C07 info: %s' % ', '.join('%s %d' % (p, c) for p, c in cnt.items()), 'total', tot[k])
 # C08 variant checks and no marker
 for n, t in (('A', A), ('B', B)):

@@ -162,8 +162,8 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1570
-SELFTEST_PLANNED=1603
+CANARY_PLANNED=1582
+SELFTEST_PLANNED=1615
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -1149,6 +1149,8 @@ self_test() {
     v8; printf 'client.set_password("%s")\n' "$vv"; v8_reg 'set_password("value")' LS
     # (evidence) a name followed only by white space and the value
     v8; printf 'password %s\n' "$vv"; v8_reg 'bare password VALUE (one space)' LS
+    v8; printf 'proxy sent Basic %s%s and then closed\n' "$vv" "$vv"; v8_reg 'Basic VALUE inside a sentence (sed rule alone)' LS
+    v8; printf 'Basic %s%s\n' "$vv" "$vv"; v8_reg 'Basic VALUE at line start (sed rule alone)' LS
     v8; printf '# password %s\n' "$vv"; v8_reg 'commented-out bare password VALUE (#)' LS
     v8; printf '// secret %s\n' "$vv"; v8_reg 'commented-out bare secret VALUE (//)' LS
     v8; printf '; token\t%s\n' "$vv"; v8_reg 'commented-out bare token TAB VALUE (;)' LS

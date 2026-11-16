@@ -51,6 +51,8 @@ M = [
 ("n13", "|remmina'\nPWCMDS_A=\"$PWCMDS|http|https|xh\"", "|remmina'\nPWCMDS_A=\"$PWCMDS\""),
 ("n14", "unset -f sed awk grep tr find git ps head sort wc cat kill sleep date mktemp rm ls cut tee id uname mkdir cp mv chmod basename dirname env printf test 2>/dev/null", ":"),
 ("n15", "  gsub(/\\002/, \"<\", line)", "  gsub(/\\002/, \"\", line)"),
+("n17", "s/(^${PFX0}[[:space:]]*([#;]+|\\/\\/+)?[[:space:]]*(- +)?[\"']?[A-Za-z0-9_.-]*${STRONG}", "s/(^${PFX0}[[:space:]]*(- +)?[\"']?[A-Za-z0-9_.-]*${STRONG}"),
+("n18", "([#;]+|\\/\\/+)?[[:space:]]*(requirepass|masterauth", "(requirepass|masterauth"),
 ("n16", "EBD='\\\\\"'", "EBD=''"),
 ]
 os.makedirs(outdir + "/mut", exist_ok=True)

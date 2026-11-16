@@ -152,7 +152,7 @@ else:
     T = T.replace(_nd15[0], _nd15[0] + '\n' + ND16)
 sub("letters run a to q without gaps)", "letters run a to r without gaps)")
 sub("CONFIRMED by the studio lead (ORDERS.md, \"LEAD ANSWERS to your 15:49Z QUESTIONS block\", item L-23NOV, 2026-11-16): latest start we plan 18:04 UTC = 23:34 IST (Mon 23 Nov 2026), key revoked by 18:19 UTC = 23:49 IST even if a take runs, no take planned on 23 Nov (the take targets Wed 18 Nov).",
-    "The studio lead's item L-23NOV (ORDERS.md, \"LEAD ANSWERS to your 15:49Z QUESTIONS block\", 2026-11-16) gave the latest start 18:04 UTC = 23:34 IST; that figure is REPLACED by 18:00 UTC = 23:30 IST (see o). The rest of L-23NOV stands: key revoked by 18:19 UTC = 23:49 IST even if a take runs, no take planned on 23 Nov (the take targets Wed 18 Nov).")
+    "The studio lead's item L-23NOV (ORDERS.md, \"LEAD ANSWERS to your 15:49Z QUESTIONS block\", 2026-11-16) gave the latest start we plan 18:04 UTC = 23:34 IST; that figure is REPLACED by 18:00 UTC = 23:30 IST (see o). The rest of L-23NOV stands: key revoked by 18:19 UTC = 23:49 IST even if a take runs, no take planned on 23 Nov (the take targets Wed 18 Nov).")
 _q = [l for l in T.split('\n') if l.startswith('q. Round 16 additions of the builder, to confirm:')]
 if len(_q) != 1: errs.append('confirmation q line')
 else:
@@ -178,6 +178,13 @@ for k_, l_ in enumerate(_ls):
     for a_, b_ in _ren: l_ = l_.replace(a_, b_)
     _ls[k_] = l_
 T = '\n'.join(_ls)
+
+sub("the 10 minutes between are for the rest of the retirement.", "the 10 minutes between are only for the shred of the key copies (card step 2); the other owner items do not fit into them.")
+sub("23:59 IST for the rest of the retirement.", "23:59 IST only for the shred of the key copies (card step 2).")
+
+rsub('E-55', "and for your items 2 to 6 (deleting", "and for each of your items 2, 3, 4, 5 and 6 (deleting")
+sub("you delete the HubSpot apps and the app passwords (items 2 and 3).", "you delete the HubSpot apps and the app passwords (item 3 and item 2).")
+sub("and `key revoked` counts as the confirmation only after", "and `key revoked` counted as the confirmation (REPLACED in round 17: see r (1)) only after")
 
 if errs:
     print('ERRORS', len(errs))

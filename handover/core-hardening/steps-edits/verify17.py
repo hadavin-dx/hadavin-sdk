@@ -105,7 +105,7 @@ def apply(statuses, outdir):
     for fn, t in cp.items():
         open(os.path.join(outdir, fn), 'w', encoding='utf-8').write(t)
     return n, cp
-sd = os.path.join(HERE_, 'scratch16') + '/'
+sd = os.path.join(HERE_, 'scratch17') + '/'
 os.makedirs(sd, exist_ok=True)
 n1, cp1 = apply({'Apply now'}, sd + 'scratch-apply11')
 print('apply-now rows applied to scratch copies', n1)
@@ -212,13 +212,13 @@ for g in sorted(defd):
 ndsec = txt[txt.index('## NOT DECIDED'):txt.index('## FOR THE STUDIO LEAD TO CONFIRM')]
 nums = [int(x) for x in re.findall(r'(?m)^(\d+)\. \*\*', ndsec)]
 print('ND numbers', nums)
-if nums != list(range(1, 16)): F('ND numbers')
-if 'items 1 to 15' not in ndsec: F('ND header count')
+if nums != list(range(1, 17)): F('ND numbers')
+if 'items 1 to 16' not in ndsec: F('ND header count')
 # (5) confirmations a..f without gaps and no g
 csec = txt[txt.index('## FOR THE STUDIO LEAD TO CONFIRM'):txt.index('Removed in round 3')]
 letters = re.findall(r'(?m)^([a-z])\. ', csec)
 print('confirmation letters', letters)
-if letters != list('abcdefghijklmnopq'): F('confirmation letters')
+if letters != list('abcdefghijklmnopqr'): F('confirmation letters')
 # (6) wording classes
 for bad in ('FOR THE LEAD TO CONFIRM', 'NEEDS-LEAD', 'five facts exist', 'yes message', 'last time to cancel', 'Linux window', 'WSL window'):
     if bad in txt: F('stale phrase: ' + bad)
@@ -230,7 +230,7 @@ if missing: F('named ids missing ' + str(missing))
 # every ND n named in the text is 1..11
 nn = sorted(set(int(x) for x in re.findall(r'(?:NOT DECIDED|\bND) ?(\d+)', txt)))
 print('ND numbers named', nn)
-if any(x < 1 or x > 15 for x in nn): F('ND number out of range')
+if any(x < 1 or x > 16 for x in nn): F('ND number out of range')
 # (8) split of E-11: apply-now scratch must hold the tests paragraph but not the preparation enquiry
 s_ap = cp1['OWNER-STEPS-realrun-v3.md']; s_all = cp2['OWNER-STEPS-realrun-v3.md']
 checks = [('Then comes the preparation', False, True), ('a fifth fact', False, True), ('a paid call can happen', None, None),
@@ -521,7 +521,7 @@ if 'UNVERIFIED' not in rowtext('E-12'): F('E-12 lacks UNVERIFIED (take id rule)'
 if idx.get('E-57', ('',))[0] != 'OWNER-STEPS-realrun-v3.md' or idx.get('E-58', ('',))[0] != 'OWNER-STEPS-realrun-v3.md': F('index E-57/E-58')
 # (11) ND14 answered text, confirmation h answered text, g three credentials
 if 'ANSWERED by the studio lead: (a)' not in ndsec: F('ND14 answer')
-if 'CONFIRMED by the studio lead' not in csec: F('confirmation h')
+if 'item L-23NOV' not in csec or 'REPLACED by 18:00 UTC = 23:30 IST' not in csec or 'CONFIRMED by the studio lead' in csec: F('confirmation h')
 print('round 11 checks done')
 
 # ================= round 12 checks =================
@@ -534,7 +534,7 @@ for need in ('What the assistant can reach', 'the settings of the database serve
     if need not in t09: F('r12 E-09 lacks ' + need)
 if 'if a message asks you that, answer no' not in t09: F('r12 E-09 fallback forbidden')
 t48 = pairs['E-48']['new'][0] + APPX_TEXT
-for need in ('`no more takes`', '`more takes`', '`same key`', '`different key`', 'shred -u -- \'<path>\'', 'Shredding does not revoke', 'not reliable on every disk', 'the path that you checked in key step E', 'the list says it was last used more than 7 days ago', 'http://localhost:5678', 'after your last take you write `no more takes`', 'In its next message after your confirmed `no more takes`', 'no key characters'):
+for need in ('`no more takes`', '`another take`', '`same key`', '`different key`', 'shred -u -- \'<path>\'', 'Shredding does not revoke', 'not reliable on every disk', 'the path that you checked in key step E', 'the list says it was last used more than 7 days ago', 'http://localhost:5678', 'after your last take you write `no more takes`', 'In its next message after your confirmation (key step D.3)', 'no key characters'):
     if need not in t48: F('r12 E-48 lacks ' + need)
 t37 = pairs['E-37']['new'][0]
 for need in ('5678', 'delete request', 'asks HubSpot to delete a contact', 'whether archiving a contact in HubSpot is the same as deleting it is not settled'):
@@ -597,7 +597,7 @@ if 'please stop looking' not in t48: F('r13 E-48 typing rule for new keys')
 # C. the key always ends: unconditional, alarm, routes, identification
 for need in ('WHATEVER you answer', '`not sure` never keeps it alive', '17:49 UTC = 23:19 IST', '`revoke the secret key for the model`', 'Route A', 'Route B', 'the assistant recommends route B', 'LAST FOUR CHARACTERS',
              '`key revoked`', '`key not revoked`', 'more than 7 days ago', 'never tell the assistant the characters', 'does not prove that the right key is gone', 'contains no `..`', 'starts with `-`',
-             'at least 20 minutes remain', 'security decision of 16 Nov 2026', 'nobody else reminds you', 'If it forgets to ask, you may write `no more takes` at any time', '18:29 UTC = 23:59 IST'):
+             'at least 30 minutes remain', 'security decision of 16 Nov 2026', 'nobody else reminds you', 'If it forgets to ask, you may write `no more takes` at any time', '18:29 UTC = 23:59 IST'):
     if need not in t48: F('r13 E-48 lacks ' + need)
 for bad in ('do NOT revoke the key', 'the key stays and asks', 'The assistant writes down that the key stays'):
     if bad in t48: F('r13 E-48 still keeps the key alive: ' + bad)
@@ -608,7 +608,7 @@ r55 = pairs['E-55']
 if r55['line2'] != 120 or r55['line'] != 119: F('r13 E-55 header lines')
 if 'after the lead says the last take is done' not in r55['old'][0] or r55['old'][0].count('\n') != 1: F('r13 E-55 old text is not two lines')
 if 'before you have confirmed `no more takes`' not in rowtext('E-55') or '| E-55 | OWNER-STEPS-realrun-v3.md | 119 (and 120) |' not in txt: F('r13 E-55 trigger or index')
-if 'You must have confirmed `no more takes`' not in rowtext('E-16') or 'there is nothing for you to do' in rowtext('E-16'): F('r13 E-16 trigger')
+if 'Item 1 starts only when ALL of these are true' not in rowtext('E-16') or 'there is nothing for you to do' in rowtext('E-16'): F('r13 E-16 trigger')
 # E. no reference to text the owner cannot see
 for rid_, t_ in own:
     for bad in ('the sentence above', 'The first question of step 22', 'The second question of step 22', 'In the sentence above'):
@@ -694,12 +694,12 @@ if _alln.count('Write `route A` or `route B` once, before your last take') != 1:
 if 'The words `no more takes` alone do not choose a route' not in p3c if (p3c := part(t48n, '3c')) else True: F('r14 3c lacks the no more takes sentence')
 if len(re.findall(r'recommends? route B', _alln)) != 1: F('r14 recommendation sentence count %d' % len(re.findall(r'recommends? route B', _alln)))
 if re.search(r'\(recommended\)|the one the assistant recommends', _alln): F('r14 second recommendation spot')
-for need in ('it asks again right after `cut accepted`', 'Your `key revoked` then counts as `yes, no more takes`', 'Route B, before `cut accepted`', 'Route A:', 'a retake', 'a live paid key and its copy'):
+for need in ('it asks again right after `cut accepted`', '`key revoked` is never a confirmation', 'Route B, before `cut accepted`', 'Route A:', 'a retake', 'a live paid key and its copy'):
     if need not in p3c + APPX_TEXT: F('r14 3c lacks ' + need)
 if 'route A' not in newtxt['E-57'] or '`route A` or `route B`' not in newtxt['E-57']: F('r14 E-57 route message')
 # 6. shred rule: one rule, path checks, no star
 p3f = part(t48n, '3f')
-for need in ('realpath', 'starts with `/`', 'no `..`', 'none of the signs `*`', 'the number `1` in its second column', 'followed by `/`', "`shred -u -- '<path>'`", "`rm -- '<path>'`", '`shred done 1`', '`shred not done 1`'):
+for need in ('realpath', 'starts with `/`', 'no `..`', 'none of the signs `*`', 'the number `1` in its second column', 'followed by `/`', "`shred -u -- '<path>'`", "`rm -- '<path>'`", '`shred done key copies`', '`shred not done key copies`'):
     if need not in p3f: F('r14 3f lacks ' + need)
 if 'do not use the sign `*`' not in t48n or 'one at a time' not in t48n: F('r14 E-48 item 6 star rule')
 if re.search(r'shred -u [^-\'<]', t48n.replace('`shred -u ~/take-secrets/*`', '')): F('r14 E-48 shred command without the path rule')
@@ -715,13 +715,13 @@ for _r in rows:
     for _b in _r['new']:
         if 'unless the assistant tells you otherwise' in _b: F('r14 override sentence in ' + _r['id'])
 if 'A new key lives only inside the program that uses it' not in APPX_TEXT: F('r14 3g new key storage')
-if 'a `key revoked` that counts under key step D.5' not in part(t48n, '3d') and 'after a `key revoked` that counts under key step D.5' not in t48n: F('r14 3d forced revoke')
+if '`key revoked` is never a confirmation' not in t48n: F('r14 3d forced revoke')
 if 'a bare `no`, counts as `not sure`' not in part(t48n, '3e'): F('r14 3e bare no')
 # 8. order of the clean-up, path rules, owner items wait
 t16n, t55n, t37n, t12n = newtxt['E-16'], newtxt['E-55'], newtxt['E-37'], newtxt['E-12']
-for need in ('`key revoked`', '`shred done 1`', 'home folder', '`/mnt/c`', '`..`', 'link'):
+for need in ('`key revoked`', '`shred done key copies`', 'home folder', '`/mnt/c`', '`..`', 'link'):
     if need not in t16n: F('r14 E-16 lacks ' + need)
-for need in ('your items 2 to 6', '`shred done 1`', 'counts as the confirmation', '`cut accepted`'):
+for need in ('your items 2, 3, 4 and 5', '`shred done key copies`', '`key gone, no more decisions`', '`cut accepted`'):
     if need not in t55n: F('r14 E-55 lacks ' + need)
 if 'LAST FOUR CHARACTERS' not in t37n or 'on paper or on your phone' not in t37n: F('r14 E-37 note')
 # 9. E-12: test items, consent reach, margin, alarms, fallback
@@ -802,12 +802,12 @@ need('E-09 h', newtxt['E-09'], 'There are two different HubSpot keys', 'needs th
 absent('E-09 h', newtxt['E-09'], 'Use the key of app 1 (read only) unless')
 need('E-37 3', newtxt['E-37'], 'Two different HubSpot keys', 'should be the key of app 2')
 # 6. naive M4: shred done scope, silence rule, step 22 item 6
-need('E-48 G done', G_, '`shred done 1` means that EVERY file of (a) and (b) is shredded', 'If you write neither, the assistant treats it as `shred not done`', 'If by 18:29 UTC = 23:59 IST you have written none of these, the assistant does not start item 1')
+need('E-48 G done', G_, '`shred done key copies` means that EVERY file of (a) and (b) is shredded', 'If you write neither, the assistant treats it as `shred not done key copies` or `shred not done other files`', 'you have written none of these, the assistant does not start item 1')
 if 'E-59' not in newtxt or 'take-secrets/*' in newtxt['E-59']: F('r15 E-59 missing or still has the star')
 need('E-59', newtxt.get('E-59', ''), 'one at a time', 'shred rule of key step G', 'realpath ~/take-secrets')
 # 7. naive M5: are-you-sure step
 _D = ks('D')
-need('E-48 D', _D, 'Are you sure?', 'Only a new message from you with the words `yes, no more takes` confirms it', 'Anything else, or no reply, counts as `more takes`', 'You cannot know that a take is your last one until you have seen the cut')
+need('E-48 D', _D, 'Are you sure?', 'A confirmation is exactly one of two messages', 'Anything else, or no reply, counts as `another take`', 'You cannot know that a take is your last one until you have seen the cut')
 need('E-52 confirm', newtxt['E-52'], '`no more takes` is confirmed only by your next message `yes, no more takes`')
 # 8. naive M6: reply in short numbered lines, no copyable money figure, blocks not parts
 for k_ in ('1. Yes, take <take id>', '2. tests: stand-in test <N1> pass', '3. files: result file <result file>', '4. money: up to 3 model calls and up to US$<X>', '5. I know that the assistant shares'):
@@ -854,8 +854,8 @@ _ownall = '\n'.join(b_ for _, b_ in _own)
 _full48 = newtxt['E-48']
 # F1: a separate plain word, and key revoked counts only after the last time
 need16('F1 word', ks('B'), '`key gone, no more decisions`')
-need16('F1 D5', ks('D'), 'ONLY when you type it AFTER 18:19 UTC = 23:49 IST on Mon 23 Nov 2026', 'no `no more takes` before it', '`key gone, no more decisions`')
-need16('F1 E-55', newtxt['E-55'], 'ONLY when you type it AFTER 18:19 UTC = 23:49 IST on Mon 23 Nov 2026', '`key gone, no more decisions`')
+need16('F1 D5', ks('D'), 'you revoke the key at that time anyway (key step I) and then write `key gone, no more decisions`', '`key revoked` is only a report', '`key gone, no more decisions`')
+need16('F1 E-55', newtxt['E-55'], 'you revoke it whatever you have written, and then you write `key gone, no more decisions`', '`key gone, no more decisions`')
 absent16('F1 old sentence', newtxt['E-55'], 'and your `key revoked` then counts as `no more takes`')
 # F2: contacts only by the exact address, at most 3, in the three rows, and no made-up names
 for rid_ in ('E-04', 'E-42', 'E-62'):
@@ -865,16 +865,16 @@ _r62 = [r_ for r_ in rows if r_['id'] == 'E-62']
 if not _r62 or _r62[0]['line'] != 112 or 'delete any leftover HubSpot contacts the lead counted' not in _r62[0]['old'][0]: F('r16 E-62 header or old text')
 if _r62 and _r62[0]['status'] != 'Apply now': F('r16 E-62 status')
 # F3: shred part (d) and the own list
-need16('F3 G', ks('G'), '(d)', 'password files and editor copies', 'every file that holds a secret you saved', '`shred done 2`')
-need16('F3 E-59', newtxt['E-59'], '`shred done 2`', 'part (d)')
+need16('F3 G', ks('G'), '(d)', 'password files and editor copies', 'every file that holds a secret you saved', '`shred done other files`')
+need16('F3 E-59', newtxt['E-59'], '`shred done other files`', 'part (d)')
 need16('F3 E-37', newtxt['E-37'], 'your own list of every file in which you saved a secret')
 # F4: one numbered order (the card) and item 1 never early
 _card = _full48[_full48.index('The one order'):]
 _pos = []
-for _k in ('1. Revoke the secret key', '2. Shred the copy of the key in the take folder', '3. Do your items 2 and 4', '4. Do your item 5', '5. Shred the two files of your item 6', '6. Read the list that the assistant sends', '7. The assistant does its item 1'):
+for _k in ('1. You: revoke the secret key', '2. You: shred the copy of the key in the take folder', '3. You: do your items 2, 3 and 4', '4. You: do your item 5', '5. You: do your item 6', '6. You: read the list of what the assistant will remove', '7. Then the assistant does its item 1'):
     _pos.append(_card.find(_k))
 if -1 in _pos or _pos != sorted(_pos): F('r16 F4 the numbered order is missing or out of order: %s' % _pos)
-need16('F4 card', _card, '`shred done 1`', '`shred done 2`', '`start clean-up`', 'never starts while a copy of the key exists and the key is not revoked')
+need16('F4 card', _card, '`shred done key copies`', '`shred done other files`', '`start clean-up`', 'never starts while a copy of the key exists and the key is not revoked')
 need16('F4 E-16', newtxt['E-16'], 'It does NOT start while a copy of the secret key for the model exists and the key is not revoked', 'The order of step 22 is the only order')
 absent16('F4 E-16', newtxt['E-16'], 'your item 3 comes first', 'None of it can be undone and because', 'about doing items first')
 # m1 take folder and list, m4 stop looking before the click, m5 ok words, m3 alarm 3, m6 counts, m8 other secret files
@@ -966,6 +966,119 @@ _mt = {n_: os.path.getmtime(os.path.join(IN, n_)) for n_ in ('OWNER-STEPS-realru
 print('r16 checks:', _r16n, 'phrase checks; UTC=IST pairs', _np, '; weekday-date pairs', _wdn, '; banned', _bh, 'of', len(_banned), '; secret-shaped', _sh2, '; input mtimes read at run time', len(_mt))
 print('round 16 checks done')
 
+# ================= round 17 checks (security N1, minors; stranger F-1 to F-15; runner: 6 fresh + 15 missed mutations) =================
+_r17n = 0
+def need17(label, text, *needles):
+    global _r17n
+    for nd_ in needles:
+        _r17n += 1
+        if nd_ not in text: F('r17 %s lacks %r' % (label, nd_[:80]))
+def absent17(label, text, *bad):
+    global _r17n
+    for b_ in bad:
+        _r17n += 1
+        if b_ in text: F('r17 %s still has %r' % (label, b_[:80]))
+_nowhy = '\n'.join(l_ for l_ in txt.split('\n') if not l_.startswith('Why:'))
+_E48 = newtxt['E-48']
+_card17 = _E48[_E48.index('The one order'):]
+_G17 = ks('G')
+_P17 = ['revoke the secret key for the model (key step I) and write `key revoked`',
+        'shred the copy of the key in the take folder and the other copies of the old key on your own list (key step G, parts (a) and (b)) and write `shred done key copies`',
+        'do your items 2, 3 and 4 (item 2: revoke both app passwords; item 3: delete both HubSpot apps; item 4: save the screenshots)',
+        'do your item 5, the retire check',
+        'do your item 6 (shred its two files) and shred the other secret files on your own list (key step G, parts (c) and (d)), and write `shred done other files`',
+        "read the list of what the assistant will remove (the full paths and the container's name) and, if nothing in it is a file that you want to keep, write `start clean-up`",
+        'the assistant does its item 1 (the clean-up)']
+_START17 = ('Item 1 starts only when ALL of these are true, each as a message that you typed yourself: a confirmation (`yes, no more takes` or `key gone, no more decisions`; key step D.3); '
+            '`key revoked` (or `key gone, no more decisions`, which counts as `key revoked`; or `key not revoked` and the reason, but item 1 never starts while a copy of the key exists and the key is not revoked); '
+            '`shred done key copies` (or `shred not done key copies` and the reason); your items 2, 3, 4 and 5 done; `shred done other files` (or `shred not done other files` and the reason); '
+            'you have read the list of what the assistant will remove; and `start clean-up`.')
+# F-1: ONE order in four places, same seven phrases in the same order; ONE start sentence in three places
+for _lab, _tx in (('card', _card17), ('E-16', newtxt['E-16']), ('E-55', newtxt['E-55'])):
+    _ps = [_tx.find(p_) for p_ in _P17]
+    if -1 in _ps or _ps != sorted(_ps): F('r17 F-1 the seven steps are missing or out of order in %s: %s' % (_lab, _ps))
+    _r17n += 1
+for _lab, _tx in (('G.2', _G17), ('E-16', newtxt['E-16']), ('E-55', newtxt['E-55'])):
+    need17('F-1 start sentence in ' + _lab, _tx, _START17)
+absent17('F-1 old order forms', _nowhy, 'items 2 and 3', 'items 2 to 5', 'items 2 and 4 and the HubSpot', 'your items 2 to 6', 'your item 3 comes first')
+absent17('F-8 old words', _nowhy, '`more takes`', '`shred done 1`', '`shred done 2`', '`shred not done 1`', '`shred not done 2`', 'ONLY when you type it AFTER', 'a `key revoked` that counts', 'counts as the confirmation')
+# F-4: one number for the new-key rule
+_mins = re.findall(r'at least (\d+) minutes remain', _nowhy)
+if len(_mins) < 4 or set(_mins) != {'30'}: F('r17 F-4 the new-key rule has numbers %s' % sorted(set(_mins)))
+_r17n += 1
+absent17('F-4 old number', _nowhy, 'at least 20 minutes', 'exactly 20 minutes')
+# F-3: alarm 3 yields to a running take, in key step C and in the request for the yes
+need17('F-3 C', ks('C'), 'if a take is running, let it finish (key step K), then revoke the key at once')
+need17('F-3 E-12', newtxt['E-12'], 'if a take is running when it rings, you let it finish')
+# F-2: route B price in D.1 and in step 21 (E-57); Appendix K lands on the owner sheet
+for _lab, _tx in (('D.1', ks('D')), ('E-57', newtxt['E-57'])):
+    need17('F-2 route B price in ' + _lab, _tx, 'up to five days', 'Route A is the safer one')
+need17('F-2 appendix landing', APPX_TEXT, 'last page of the same sheet', 'appends it unchanged')
+need17('F-2 header', txt, 'Appendix K (after the last row) is part of the owner sheet')
+# F-5: D.4 and key step E follow the order of the actions
+need17('F-5 D.4', ks('D'), 'you follow the one order (the card) at once, from card step 1')
+need17('F-5 E', ks('E'), "(4) the one order (the card above)", "copies the take's result file and counts out of the take folder first")
+# F-8: confirmations and the ten minutes
+need17('F-8 D.3', ks('D'), 'A confirmation is exactly one of two messages', '`key revoked` is never a confirmation', 'no reply counts as `another take`', 'mean the opposite of each other')
+need17('F-8 D.5', ks('D'), 'Between 18:19 UTC = 23:49 IST and 18:29 UTC = 23:59 IST there are only 10 minutes', 'card step 2 (shred the copies of the key)')
+need17('F-8 clock', _G17, 'the assistant has no timer: it reads the time shown on your last message')
+need17('F-8 F', ks('F'), 'including a bare `no`, counts as `not sure`')
+need17('F-8 B', ks('B'), '`another take`', '`shred done key copies`', '`shred done other files`', 'It never confirms anything, at any time')
+# F-9: shred rule heading and the marks of part (b) and (d)
+need17('F-9 G', _G17, 'It is ONE rule for every file that you shred in this item and in step 8', 'mark it `old key` (part (b)) or `other` (part (d))', 'a file is in exactly one part')
+need17('F-9 E-37', newtxt['E-37'], 'Mark each file `old key`', 'as part (a)')
+# security: N1 (owner-open) with three options and the accepted-risk sentence; minors 4, 5, 7; r16 NOT DONE items
+need17('N1 ND16', txt, '16. **Nobody but the owner can cancel the secret key for the model', 'Options, not decided by the builder: (1)', '(2) name a second person', '(3) the owner accepts the exposure in writing', 'I accept that until I revoke the secret key for the model it can spend up to what my account at the company allows')
+need17('N1 key step A', ks('A'), 'limits the program only, not a copy of the key', 'Whether the company that provides the AI model can also limit this key is not checked')
+need17('r confirmation', txt, 'r. Round 17 additions of the builder, to confirm:')
+need17('m4 E-09', newtxt['E-09'], 'write its full path on your own list (mark it `other`)', 'add the full path of `n8n.env` to your own list (mark it `other`)', 'Detail: appendix K-8')
+need17('K-8 moved', APPX_TEXT, 'K-8 (detail of step 8')
+need17('m7 E-62', why_of('E-62'), 'Round 17 (security m7)')
+need17('E-16 copy first', newtxt['E-16'], 'At the start of item 1 it checks that this copy is there')
+# scans over owner text and the appendix
+_own17 = _ownall + '\n' + APPX_TEXT
+for _m in re.finditer(r'(?<![\w~.\-])/(?:home|Users|root|tmp|var|etc|opt|usr)/|\b[A-Za-z]:\\\\', _own17): F('r17 absolute path in owner text: ' + _own17[max(0, _m.start()-20):_m.end()+20].replace('\n', ' '))
+for _m in re.finditer(r'\b(?:ORD|DEC|WP\d*|L-[A-Z0-9]+)[:\-]|\brow E-\d\d|\bE-\d\d\b|\bND ?\d+\b|\bF-\d+\b', _own17): F('r17 internal code in owner text: ' + _m.group(0))
+_r17n += 2
+for _m in re.finditer(r'spending window ends(?: later,)? at (\d\d:\d\d) UTC = (\d\d:\d\d) IST', _own17 + '\n' + txt):
+    if (_m.group(1), _m.group(2)) != ('18:29', '23:59'): F('r17 spending window end is wrong: ' + _m.group(0))
+for _m in re.finditer(r'revoke[^.\n]{0,100}? by (?:Mon 23 Nov 2026 )?(\d\d:\d\d) UTC = (\d\d:\d\d) IST', _own17):
+    if (_m.group(1), _m.group(2)) != ('18:19', '23:49'): F('r17 last time to revoke is wrong: ' + _m.group(0))
+# the pins: one exact sentence per safety rule that a mutation was able to delete or reverse without a failure in round 16
+_SC = {'A': ks('A'), 'B': ks('B'), 'C': ks('C'), 'D': ks('D'), 'E': ks('E'), 'F': ks('F'), 'G': _G17, 'H': ks('H'), 'I': ks('I'), 'K': ks('K'), 'CARD': _card17, 'E48': _E48, 'APPX': APPX_TEXT, 'E-57': newtxt['E-57'], 'WHY62': why_of('E-62')}
+PINS17 = [
+ ('m18 D.4 appendix ref', 'D', 'Detail with the full costs of both routes: appendix K-D'),
+ ('m34 word list', 'B', '`key revoked`, `key not revoked`, `key gone, no more decisions`, `shred done key copies`'),
+ ('m37 window end', 'A', 'The spending window ends 10 minutes later, at 18:29 UTC = 23:59 IST'),
+ ('m40 not sure', 'F', 'Reply `yes`, `no, other things use it` or `not sure`'),
+ ('m41 only yes', 'F', 'Only `yes` together with `different key` means that nothing has to be replaced first'),
+ ('m43 stop looking', 'B', '`ok flow rehearsal`, `please stop looking`, `you may look again`'),
+ ('m45 C', 'C', 'unless at least 30 minutes remain after you have answered'),
+ ('m45 H', 'H', 'only if at least 30 minutes remain before 18:19 UTC = 23:49 IST'),
+ ('m45 I', 'I', 'and at least 30 minutes remain'),
+ ('m45 card', 'CARD', 'at least 30 minutes remain'),
+ ('m48 G', 'G', 'Do not shred part (a) while a take is running'),
+ ('m48 K', 'K', 'Do not shred part (a) until the take has stopped'),
+ ('m51 why', 'WHY62', 'Security F2 of round 15: input line 112'),
+ ('m53 unverified', 'K', 'is not proven (UNVERIFIED)'),
+ ('m54 typed', 'E48', 'Only your own typed messages count (key step B)'),
+ ('m60 card 1', 'CARD', 'on Mon 23 Nov 2026 it is at 18:19 UTC = 23:49 IST at the latest'),
+ ('B03 no space', 'G', 'It contains no `..`, no space, no quote sign'),
+ ('B04 ten minutes', 'APPX', 'the 10 minutes between are only for the shred of the key copies'),
+ ('B05 step 21 heading', 'E-57', '### Step 21. Watch the cut by Mon 23 Nov 2026 18:19 UTC = 23:49 IST'),
+ ('B08 never opens', 'E48', 'The assistant never opens the key file (this is a procedure, not enforced by a program).'),
+ ('B09 default', 'D', 'no reply counts as `another take`'),
+ ('B10 forced revoke', 'K', 'revoke the key at that time anyway (key step I)'),
+ ('r17 key gone one word', 'B', 'so after it you do not type `key revoked` again'),
+ ('r17 D.5 key gone', 'D', 'then write `key gone, no more decisions`'),
+]
+for _lab, _sc, _ph in PINS17:
+    need17('pin ' + _lab, _SC[_sc], _ph)
+absent17('B09 reversed', ks('D'), 'no reply counts as `no more takes`')
+absent17('B10 reversed', ks('K'), 'wait for the take')
+print('r17 checks:', _r17n, 'phrase checks;', len(PINS17), 'pins')
+print('round 17 checks done')
+
 # ================= negative controls (each check must fail on a planted defect) =================
 import subprocess
 def neg(name, old, new, expect, count=1):
@@ -1034,7 +1147,7 @@ if not os.environ.get('NO_NEG'):
     neg('r13route', 'and the assistant recommends route B.', 'and the choice is open.', 'r13 E-48 lacks the assistant recommends route B')
     neg('r13shot', 'does not prove that the right key is gone', 'proves that the right key is gone', 'r13 E-48 lacks', 2)
     neg('r13e55', '| E-55 | OWNER-STEPS-realrun-v3.md | 119 (and 120) |', '| E-55 | OWNER-STEPS-realrun-v3.md | 119 |', 'r13 E-55 trigger or index')
-    neg('r13e16', 'You must have confirmed `no more takes`', 'You may have confirmed `no more takes`', 'r13 E-16 trigger')
+    neg('r13e16', 'Item 1 starts only when ALL of these are true', 'Item 1 starts when SOME of these are true', 'r13 E-16 trigger')
     neg('r13above', 'In the older sentences of this step', 'In the sentence above this one', 'r13 E-12 refers to unseen text')
     neg('r13ph', 'The time of day is not yet chosen: the assistant proposes a time of day for that Wednesday', 'The time is chosen: the assistant proposes a time of day for that Wednesday', 'r13 E-12 lacks')
     neg('r13yes', 'my screen, and that it can reach n8n\'s encryption key, the credentials saved in the take\'s n8n, the copy of the secret key for the model in the take folder and the files in `~/take-secrets`."', 'my screen."', 'r13 E-12')
@@ -1056,7 +1169,7 @@ if not os.environ.get('NO_NEG'):
     neg('r14rec2', 'Route B: you have not written', 'Route B (the one the assistant recommends): you have not written', 'r14 second recommendation spot')
     neg('r14norec', 'and the assistant recommends route B.', 'and the choice is open.', 'r14 recommendation sentence count')
     neg('r14again', 'in route B it asks again right after `cut accepted`', 'in route B it never asks again', 'r14 3c lacks it asks again')
-    neg('r14forced', 'Your `key revoked` then counts as `yes, no more takes` (and, in route B, as `cut accepted`) ONLY', 'Your `key revoked` then counts as nothing (and, in route B, as `cut accepted`) ONLY', 'r14 3c lacks Your `key revoked`')
+    neg('r14forced', '`key revoked` is never a confirmation', '`key revoked` is a confirmation', 'r14 3c lacks')
     neg('r14real', '(3) `realpath \'<path>\'` prints exactly the same path', '(3) the path looks right', 'r14 3f lacks realpath')
     neg('r14link', 'has the number `1` in its second column', 'is a plain file', 'r14 3f lacks the number `1`')
     neg('r14slash', 'followed by `/`, so that the take folder', 'so that the take folder', 'r14 3f lacks followed by')
@@ -1078,7 +1191,7 @@ if not os.environ.get('NO_NEG'):
     neg('r14line30', '(18:14:40 UTC = 23:44:40 IST, if the 860 seconds are right', '(18:14 if the 860 seconds are right', 'r14 18:14:40 pair missing')
     neg('r14clip', 'open the Windows clipboard history (press the Windows key and V together)', 'open the clipboard', 'r14 E-09 clipboard history')
     neg('r14e57', 'You choose one by writing `route A` or `route B` in the chat once, before your last take (step 22 item 3, key step D).', 'You choose one.', 'r14 E-57 route message')
-    neg('r14forcedd', 'that counts under key step D.5', 'that counts', 'r14 3d forced revoke', 2)
+    neg('r14forcedd', '`key revoked` is never a confirmation', '`key revoked` is a confirmation', 'r14 3d forced revoke', 2)
     neg('r14bareno', 'including a bare `no`, counts as `not sure`', 'including a bare `no`, counts as no', 'r14 3e bare no')
     neg('r14g', 'A new key lives only inside the program that uses it', 'A new key may be saved anywhere', 'r14 3g new key storage')
     neg('r14opt', 'Option leave:', 'Option keep:', 'r14 3i options')
@@ -1101,8 +1214,8 @@ if not os.environ.get('NO_NEG'):
     neg('r15alarm1', 'if no session is open, go straight to key step I', 'do key step I at once', 'r15 E-48 C lacks')
     neg('r15app', 'There are two different HubSpot keys.', 'Use the key of app 1 (read only) unless the assistant says otherwise. There is one HubSpot key.', 'r15 E-09 h lacks')
     neg('r15e37app', 'Two different HubSpot keys: the key in your file', 'The HubSpot key: the key in your file', 'r15 E-37 3 lacks')
-    neg('r15done', '`shred done 1` means that EVERY file of (a) and (b) is shredded', '`shred done` means done', 'r15 E-48 G done lacks')
-    neg('r15silence', 'If you write neither, the assistant treats it as `shred not done`.', 'If you write neither, it waits.', 'r15 E-48 G done lacks')
+    neg('r15done', '`shred done key copies` means that EVERY file of (a) and (b) is shredded', '`shred done` means done', 'r15 E-48 G done lacks')
+    neg('r15silence', 'If you write neither, the assistant treats it as `shred not done key copies` or `shred not done other files`.', 'If you write neither, it waits.', 'r15 E-48 G done lacks')
     neg('r15e59', 'Do not use the sign `*`. If shred is not installed, run the same five checks', 'Use `shred -u ~/take-secrets/*`. If shred is not installed, run the same five checks', 'r15 E-59 missing or still has the star')
     neg('r15sure', 'Are you sure? After this you cannot make another take', 'After this you cannot make another take', 'r15 E-48 D lacks')
     neg('r15e52conf', '`no more takes` is confirmed only by your next message `yes, no more takes`.', '`no more takes` is confirmed.', 'r15 E-52 confirm lacks')
@@ -1123,7 +1236,7 @@ if not os.environ.get('NO_NEG'):
     neg('r16F2b', "(with this take's id); if you find more than 3, or any other contact", "(made-up names); if you find more than 3, or any other contact", 'r16 F2 E-42')
     neg('r16F2c', '### E-62: OWNER-STEPS-realrun-v3.md, line 112', '### E-63: OWNER-STEPS-realrun-v3.md, line 112', 'ids differ')
     neg('r16F3', 'password files and editor copies made in step 8', 'other files made in step 8', 'r16 F3 G lacks')
-    neg('r16F4a', '4. Do your item 5: the retire check.', '0. Do your item 5: the retire check.', 'r16 F4 the numbered order')
+    neg('r16F4a', '4. You: do your item 5, the retire check.', '0. You: do your item 5, the retire check.', 'r16 F4 the numbered order')
     neg('r16F4b', 'never starts while a copy of the key exists and the key is not revoked', 'starts at any time', 'r16 F4 card lacks')
     neg('r16F4c', 'It does NOT start while a copy of the secret key for the model exists', 'It starts while a copy of the secret key for the model exists', 'r16 F4 E-16 lacks')
     neg('r16F4d', 'the order of step 22 is the only order'.capitalize(), 'The order of step 22 is one order', 'r16 F4 E-16 lacks')
@@ -1149,5 +1262,44 @@ if not os.environ.get('NO_NEG'):
     neg('r16pair', '17:49 UTC = 23:19 IST', '17:49 UTC = 23:29 IST', 'r16 UTC/IST pair is wrong')
     neg('r16wd', 'Mon 23 Nov 2026 17:49 UTC', 'Tue 23 Nov 2026 17:49 UTC', 'r16 weekday/date wrong')
     neg('r16code', 'In short: set three alarms', 'In short (E-12): set three alarms', 'r16 internal code in owner text')
+    # ---- round 17 negative controls (each must fail the new check; the first 22 are the runner's pins m18..m60 and B03..B10)
+    _pl = {'m18 D.4 appendix ref': ('appendix K-D', 'appendix K-E'), 'm34 word list': ('`key revoked`, `key not revoked`, `key gone, no more decisions`, `shred done key copies`', '`key revoked`, `key not revoked`, `shred done key copies`'),
+           'm37 window end': ('The spending window ends 10 minutes later, at 18:29 UTC = 23:59 IST', 'The spending window ends 10 minutes later, at 18:19 UTC = 23:49 IST'),
+           'm40 not sure': ('Reply `yes`, `no, other things use it` or `not sure`', 'Reply `yes` or `no, other things use it`'),
+           'm41 only yes': ('Only `yes` together with `different key` means', 'Only `yes` means'),
+           'm43 stop looking': ('`ok flow rehearsal`, `please stop looking`, `you may look again`', '`ok flow rehearsal`, `you may look again`'),
+           'm45 C': ('unless at least 30 minutes remain after you have answered', 'unless at least 2 minutes remain after you have answered'),
+           'm45 H': ('only if at least 30 minutes remain before', 'only if at least 20 minutes remain before'),
+           'm48 G': ('Do not shred part (a) while a take is running (the model stage reads that copy); wait until the take has stopped. ', ''),
+           'm51 why': ('Security F2 of round 15: input line 112', 'Security F2'),
+           'm53 unverified': ('is not proven (UNVERIFIED)', 'is proven'),
+           'm54 typed': ('Only your own typed messages count (key step B)', 'Messages count (key step B)'),
+           'm60 card 1': ('on Mon 23 Nov 2026 it is at 18:19 UTC = 23:49 IST at the latest', 'on Mon 23 Nov 2026 it is at 18:29 UTC = 23:59 IST at the latest'),
+           'B03 no space': ('no `..`, no space, no quote sign', 'no `..`, no quote sign'),
+           'B04 ten minutes': ('the 10 minutes between are only for the shred', 'the 20 minutes between are only for the shred'),
+           'B05 step 21 heading': ('### Step 21. Watch the cut by Mon 23 Nov 2026 18:19 UTC = 23:49 IST', '### Step 21. Watch the cut by Mon 23 Nov 2026 18:21 UTC = 23:51 IST'),
+           'B08 never opens': ('The assistant never opens the key file (this is a procedure, not enforced by a program).', ''),
+           'B09 default': ('no reply counts as `another take`', 'no reply counts as `no more takes`'),
+           'B10 forced revoke': ('revoke the key at that time anyway (key step I)', 'wait for the take'),
+           'r17 key gone one word': ('so after it you do not type `key revoked` again', 'so after it you type `key revoked` again'),
+           'r17 D.5 key gone': ('and then write `key gone, no more decisions`: that one message', 'and then write `key revoked`: that one message')}
+    for _k, (_o, _n) in _pl.items():
+        neg('r17pin-' + _k.split()[0] + _k.split()[1][:3], _o, _n, 'r17 ')
+    neg('r17ord', 'do your item 5, the retire check', 'do your item 5, the retire check', 'xx') if False else None
+    neg('r17order-card', '4. You: do your item 5, the retire check.\n', '', 'r17 F-1 the seven steps')
+    neg('r17order-e16', 'do your item 5, the retire check; (5)', 'do your item 5, the retire check, and (5)', 'r17 F-1')
+    neg('r17start-e55', 'you have read the list of what the assistant will remove; and `start clean-up`.', 'you have read the list; and `start clean-up`.', 'r17 F-1 start sentence')
+    neg('r17oldwords', '`shred done other files` (or', '`shred done 2` (or', 'r17 F-8 old words')
+    neg('r17more', 'Reply `another take`.', 'Reply `more takes`.', 'r17 F-8 old words')
+    neg('r17abs', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take (see /ho' + 'me/user/x/notes).', 'r17 absolute path')
+    neg('r17ord-code', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take. ORD: 5.', 'r17 internal code')
+    neg('r17dec-code', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take. DEC: 5.', 'r17 internal code')
+    neg('r17row-e48', 'The owner reads key steps A to K in step 22 item 3 of his sheet.', 'The owner reads key steps A to K in row E-48.', 'r17 internal code')
+    neg('r17n1', 'I accept that until I revoke the secret key for the model it can spend', 'I accept that it can spend', 'r17 N1 ND16')
+    neg('r17alarm3', 'if a take is running, let it finish (key step K), then revoke the key at once', 'stop everything else and do key step I now', 'r17 F-3 C')
+    neg('r17routeb', 'Route A is the safer one for keeping secrets safe;', 'Route B is fine;', 'r17 F-2 route B price')
+    neg('r17appx', 'This appendix is the last page of the same sheet', 'This appendix is a separate file', 'r17 F-2 appendix landing')
+    neg('r17thirty', 'Make no new key now unless at least 30 minutes remain', 'Make no new key now unless at least 20 minutes remain', 'r17 F-4')
+    neg('r17last', 'by Mon 23 Nov 2026 18:19 UTC = 23:49 IST at the latest (the last time to revoke)', 'by Mon 23 Nov 2026 18:20 UTC = 23:50 IST at the latest (the last time to revoke)', 'r17 last time to revoke is wrong')
 print('FAILURES', fail)
 sys.exit(1 if fail else 0)

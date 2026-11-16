@@ -162,8 +162,8 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1534
-SELFTEST_PLANNED=1567
+CANARY_PLANNED=1582
+SELFTEST_PLANNED=1615
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -324,9 +324,9 @@ s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<\//\1<masked><\//Ig
 s/((^|[^A-Za-z0-9])[A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|api[_.-]?key)[A-Za-z0-9_.-]*[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
 s/(<masked>[[:space:]]*(\|\||\?\?|or|:-)[[:space:]]*)(${STR})/\1<masked>/Ig
 s/(IDENTIFIED[[:space:]]+(WITH[[:space:]]+[A-Za-z_]+[[:space:]]+)?BX[[:space:]]+)(${STR}|[^[:space:];<][^[:space:];]*)/\1<masked>/Ig
-s/(^${PFX0}[[:space:]]*(requirepass|masterauth|auth-pass|bindpw|rootpw)[[:space:]]+)[^[:space:]<=].*/\1<masked>/I
+s/(^${PFX0}[[:space:]]*([#;]+|\/\/+)?[[:space:]]*(requirepass|masterauth|auth-pass|bindpw|rootpw)[[:space:]]+)[^[:space:]<=].*/\1<masked>/I
 s/(<(${IDB})([[:space:]][^>]*)?>)<!\[CDATA\[([^]]|\][^]]|\]\][^>])*\]\]>/\1<masked>/Ig
-s/(^${PFX0}[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]*${STRONG}[A-Za-z0-9_.-]*["']?[[:space:]]+)[^][:space:]<"'=:;,(){}][^[:space:]]*/\1<masked>/I
+s/(^${PFX0}[[:space:]]*([#;]+|\/\/+)?[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]*${STRONG}[A-Za-z0-9_.-]*["']?[[:space:]]+)[^][:space:]<"'=:;,(){}][^[:space:]]*/\1<masked>/I
 s/((login|authenticate|authorize|sign_?in|basic_?auth|set_?pass(word)?|add_?user)[[:space:]]*\(([^(),]*,)[[:space:]]*)(${STR})/\1<masked>/Ig
 s/((set_?pass(word)?|set_?secret|set_?token|set_?api_?key)[[:space:]]*\([[:space:]]*)(${STR})/\1<masked>/Ig
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
@@ -1149,6 +1149,14 @@ self_test() {
     v8; printf 'client.set_password("%s")\n' "$vv"; v8_reg 'set_password("value")' LS
     # (evidence) a name followed only by white space and the value
     v8; printf 'password %s\n' "$vv"; v8_reg 'bare password VALUE (one space)' LS
+    v8; printf 'proxy sent Basic %s%s and then closed\n' "$vv" "$vv"; v8_reg 'Basic VALUE inside a sentence (sed rule alone)' LS
+    v8; printf 'Basic %s%s\n' "$vv" "$vv"; v8_reg 'Basic VALUE at line start (sed rule alone)' LS
+    v8; printf '# password %s\n' "$vv"; v8_reg 'commented-out bare password VALUE (#)' LS
+    v8; printf '// secret %s\n' "$vv"; v8_reg 'commented-out bare secret VALUE (//)' LS
+    v8; printf '; token\t%s\n' "$vv"; v8_reg 'commented-out bare token TAB VALUE (;)' LS
+    v8; printf '#requirepass %s\n' "$vv"; v8_reg 'commented-out requirepass VALUE (#, no space)' LS
+    v8; printf 'requirepass short_first %s\n' "$vv"; v8_reg 'requirepass: a second word on the line is hidden too' LS
+    v8; printf 'rootpw  two_part %s\n' "$vv"; v8_reg 'rootpw: a second word on the line is hidden too' LS
     v8; printf 'password\t%s\n' "$vv"; v8_reg 'bare password TAB VALUE' LS
     v8; printf 'db_password\t%s\n' "$vv"; v8_reg 'bare db_password TAB VALUE' LS
     v8; printf 'secret\t%s\n' "$vv"; v8_reg 'bare secret TAB VALUE' LS

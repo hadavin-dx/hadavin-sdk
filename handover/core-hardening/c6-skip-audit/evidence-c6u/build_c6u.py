@@ -46,7 +46,7 @@ RNN, RNS = "LEAD-RELEASE-NOTE-v%d.md" % RNV, "LEAD-RELEASE-NOTE-v%d-SOURCE.md" %
 assert cs.count("the whole line is the same in v14 and in") == 4 and "DIFFERS" not in cs, "release note lines 8, 33, 149, 150 differ between v14 and the newest"
 OLDCT, OLDCTI, OLDT, OLDTI = "17:13:05", "22:43:05", "17:12:09", "22:42:09"
 
-box_tpl = open(E + "c6t_box.txt", encoding="utf-8").read().rstrip("\n").split("\n")
+box_tpl = open(E + "c6u_box.txt", encoding="utf-8").read().rstrip("\n").split("\n")
 sbox = open(E + "c6s_box.txt", encoding="utf-8").read().split("\n")
 
 
@@ -325,5 +325,5 @@ if __name__ == "__main__":
             print("  " + f)
         sys.exit(1)
     t = "\n".join(L)
-    open(D + "REPORT-c6t.md", "w", encoding="utf-8").write(t if t.endswith("\n") else t + "\n")
+    open(D + "REPORT-c6u.md", "w", encoding="utf-8").write(t if t.endswith("\n") else t + "\n")
     print("wrote REPORT-c6t.md (%d lines)" % len(L))
