@@ -907,7 +907,10 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         norm[fold_name(n["name"])].add(n["name"])
     near = sorted(k for k, v in norm.items() if len(v) > 1)
     if near:
-        fail(tag, f"names that differ only by case, spaces, accents or width {near}")
+        fail(
+            tag,
+            f"names that differ only by case or spaces {near} (accents and width are folded too)",
+        )
     for n in nodes:
         if mixes_alphabets(
             n["name"]
@@ -1483,9 +1486,14 @@ def info(d, tag):
         print("  placeholder/env: none")
 
 
+def safe_id(i):
+    """f8-r11 (M4): an id that holds a placeholder word is printed as its label only (see ph_labels); a real id is printed as it is."""
+    return ph_labels(i)[0] if isinstance(i, str) and PH_WORD.search(i) else i
+
+
 def creds(d):
     cr = [
-        (n.get("name"), k, (v or {}).get("name"), (v or {}).get("id"))
+        (n.get("name"), k, (v or {}).get("name"), safe_id((v or {}).get("id")))
         for n in d.get("nodes", [])
         for k, v in (n.get("credentials") or {}).items()
         if isinstance(v, dict)

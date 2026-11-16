@@ -3104,7 +3104,7 @@ def main():
                 n_["parameters"]["workflowId"] = idv_
 
         r11_case(
-            f"m4_id_{nm_}_with_text_around_prints_only_the_label",
+            f"m4_id_{nm_}_label_only",
             mut_id_,
             0,
             must=[
@@ -3131,7 +3131,7 @@ def main():
         "m5_node_names_that_differ_only_by_an_accent_are_a_fail",
         r11_names,
         1,
-        must=[("FAIL", "names that differ only by case, spaces, accents or width")],
+        must=[("FAIL", "names that differ only by case or spaces")],
     )
     r11_case(
         "m5_node_name_mixing_latin_and_cyrillic_in_one_word_is_a_fail",
@@ -3152,11 +3152,7 @@ def main():
                 and not qn_
             ):
                 n_["parameters"]["query"] = (
-                    "SELECT lead_key FROM mf_leads WHERE lead_key = $$"
-                    + "Hunter2"
-                    + "Passw0rd$$ OR lead_key = $t$"
-                    + "Other9"
-                    + "Word$t$"
+                    "SELECT lead_key FROM mf_leads WHERE lead_key = $$Hunter2Passw0rd$$ OR lead_key = $t$Other9Word$t$"
                 )
                 qn_ = n_["name"]
         wj(f"{dq_}/mf-sub-crm-mail.json", h)

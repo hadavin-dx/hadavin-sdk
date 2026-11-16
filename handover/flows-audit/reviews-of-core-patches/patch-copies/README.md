@@ -145,26 +145,28 @@ run() {  # $1 = folder, $2 = tag; writes $W/$2.log, $W/$2.rc (the exit code of p
 run "$W/unpatched" baseline        # 1. the baseline FIRST, on the unpatched copy; exit 1 is expected while the two baseline failures below exist
 run "$W/patched"   patched         # 2. the patched copy
 ```
-Then the verdict script (it reads only the files written above and prints one line per clause, then the verdict). It computes every number from YOUR two logs; the figures 9364, 9394 and 9396 in this file are examples from the one run of the fifth pass, not values to compare with.
+Then the verdict script (it reads only the files written above and prints one line per clause, then the verdict). It computes every number from YOUR two logs; the figures 9364, 9394 and 9396 in this file are examples from the one run of the fifth pass, not values to compare with. It was tested in the seventh pass on ten sets of made-up log files (see `handover/flows-audit/reviews/fix-patchcopies7.md`), not on real runs.
 ```
 count() { tail -n 1 "$1" | grep -o "[0-9]* $2" | grep -o '^[0-9]*'; }   # the number before the word $2 on the last line of log $1; empty if the word is absent
+sumline() { tail -n 1 "$1" | sed -E 's/ in [0-9.]+s.*$//'; }            # the last line of log $1 without the time, e.g. "2 failed, 9364 passed, 454 skipped, 26 deselected"
+lines() { wc -l < "$1" | tr -d ' '; }                                    # a line count without the padding that some systems (macOS) add
+red() { [ -s "$W/$1-failed.txt" ] || tail -n 1 "$W/$1.log" | grep -Eq '[0-9]+ (failed|errors?)'; }   # true if run $1 has a failed test or an error
 ADD=30; [ "$C" = C-01.patch ] && ADD=32
-bp=$(count "$W/baseline.log" passed);   pp=$(count "$W/patched.log" passed)
-bf=$(count "$W/baseline.log" failed);   pf=$(count "$W/patched.log" failed)
-bs=$(count "$W/baseline.log" skipped);  ps=$(count "$W/patched.log" skipped)
-bd=$(count "$W/baseline.log" deselected); pd=$(count "$W/patched.log" deselected)
+bp=$(count "$W/baseline.log" passed)
 ok=1
-# (a) the patched run fails exactly the tests the baseline fails
+# (a) the patched run has exactly the FAILED and ERROR lines of the baseline (a new failure or a new error is a difference)
 if diff "$W/baseline-failed.txt" "$W/patched-failed.txt" > /dev/null; then echo "(a) ok"; else echo "(a) FAILED"; ok=0; fi
-# (b) passed = baseline passed + 30 (or + 32), same skipped, same deselected, same failed
-if [ -n "$bp" ] && [ "$pp" = "$((bp + ADD))" ] && [ "${bs:-0}" = "${ps:-0}" ] && [ "${bd:-0}" = "${pd:-0}" ] && [ "${bf:-0}" = "${pf:-0}" ]
-then echo "(b) ok (baseline passed $bp + $ADD = $pp)"; else echo "(b) FAILED (baseline passed [$bp] + $ADD, patched passed [$pp])"; ok=0; fi
-# (c) six gate lines all 0, and the two pytest exit codes equal: 1 if any test failed, otherwise 0
-want=0; [ "${pf:-0}" -gt 0 ] && want=1
-if [ "$(wc -l < "$W/gates.txt")" = 6 ] && [ -z "$(awk '$3 != 0' "$W/gates.txt")" ] && [ "$(cat "$W/baseline.rc")" = "$want" ] && [ "$(cat "$W/patched.rc")" = "$want" ]
+# (b) the whole last line of the patched log (without the time) is the baseline's last line with the number before "passed" raised by 30 (or 32):
+#     so failed, error(s), skipped, deselected, xfailed, warnings and every other count must be equal
+if [ -n "$bp" ]; then exp=$(sumline "$W/baseline.log" | sed -E "s/[0-9]+ passed/$((bp + ADD)) passed/"); else exp=""; fi
+if [ -n "$exp" ] && [ "$(sumline "$W/patched.log")" = "$exp" ]
+then echo "(b) ok ([$(sumline "$W/baseline.log")] + $ADD passed = [$(sumline "$W/patched.log")])"; else echo "(b) FAILED (expected [$exp], patched [$(sumline "$W/patched.log")])"; ok=0; fi
+# (c) six gate lines all 0; each pytest exit code is 1 if its run has a failed test or an error, otherwise 0
+wb=0; red baseline && wb=1; wp=0; red patched && wp=1
+if [ "$(lines "$W/gates.txt")" = 6 ] && [ -z "$(awk '$3 != 0' "$W/gates.txt")" ] && [ "$(cat "$W/baseline.rc")" = "$wb" ] && [ "$(cat "$W/patched.rc")" = "$wp" ]
 then echo "(c) ok"; else echo "(c) FAILED"; ok=0; fi
-# (d) only while a test fails: the two red guard tests must not hide a new problem
-if [ "${bf:-0}" -eq 0 ] && [ "${pf:-0}" -eq 0 ]; then echo "(d) not needed: neither run has a failed test"
+# (d) only while a run has a failed test or an error: the two red guard tests must not hide a new problem
+if [ "$wb" = 0 ] && [ "$wp" = 0 ]; then echo "(d) not needed: neither run has a failed test or an error"
 else
   n1=$(grep -o 'Left contains [0-9]* more items' "$W/baseline.log"); n2=$(grep -o 'Left contains [0-9]* more items' "$W/patched.log")
   echo "baseline: [$n1]  patched: [$n2]"; if [ -n "$n1" ] && [ "$n1" = "$n2" ]; then echo "(d1) ok"; else echo "(d1) FAILED"; ok=0; fi
@@ -172,20 +174,20 @@ else
   offenders "$W/baseline.log" > "$W/o-base.txt"; offenders "$W/patched.log" > "$W/o-pat.txt"
   if [ -s "$W/o-base.txt" ] && diff "$W/o-base.txt" "$W/o-pat.txt" > /dev/null; then echo "(d2) ok"; else echo "(d2) FAILED"; ok=0; fi
 fi
-if [ "$ok" = 1 ] && [ "${pf:-0}" -eq 0 ]; then echo "VERDICT: PASSED"
+if [ "$ok" = 1 ] && [ "$wp" = 0 ]; then echo "VERDICT: PASSED"
 elif [ "$ok" = 1 ]; then echo "VERDICT: ADDS NO NEW FAILURE (the baseline failures still exist; the repository gate is still red)"
 else echo "VERDICT: NOT PASSED"; fi
 ```
 **Pass rule.** Clauses (a) to (d) say "this patch adds no new failure"; they are all needed because the two guard tests that are already red can hide a new problem inside them.
-(a) the `diff` prints nothing: the patched run fails exactly the tests the baseline fails, no others.
-(b) the patched count line shows the baseline's `passed` plus 30 (default `C-01-price-only.patch` with `A-01.patch`) or plus 32 (`C-01.patch` with `A-01.patch`), the same `skipped` and `deselected`, and the same number of `failed`. The script prints "(b) ok" or "(b) FAILED" from the numbers.
-(c) the six lint and bandit exit codes are the ones in the table above (all 0), and the two `pytest` exit codes are equal (1 while any test fails, 0 when none fails).
-(d) applies ONLY while the runs contain failed tests (today: the two red guard tests), so that those two do not hide a new problem: (d1) both logs print a NUMBER after "Left contains" (an empty result is a failure, not a match) and the two numbers are equal (10 at `b4cce5b`), for `test_licences_are_proprietary`; (d2) the list of offending files in the message of `test_no_vendor_brand_string_is_tracked` is not empty and is the same in both logs (3 files at `b4cce5b`, see the baseline failures below), because that test scans untracked files too, so a banned string inside a patch or a new test file would add an entry while (a) to (c) stay silent. **Branch "no failures at all":** once decision row 9 is done and neither run has a failed test, those two log lines no longer exist; the script then prints "(d) not needed" and the verdict rests on (a), (b) and (c), with every exit code 0.
+(a) the `diff` prints nothing: the patched run has exactly the `FAILED` and `ERROR` lines the baseline has, no others (an `ERROR` is a test that could not run or whose clean-up failed; it counts like a failure).
+(b) the whole last line of the patched log, without the time, is the baseline's last line with the number before `passed` raised by 30 (default `C-01-price-only.patch` with `A-01.patch`) or by 32 (`C-01.patch` with `A-01.patch`): so `failed`, `error` or `errors`, `skipped`, `deselected` and every other count must be equal. A changed count of warnings also gives "(b) FAILED"; that is intended (fail safe): read the two logs. The script prints "(b) ok" or "(b) FAILED" with both lines.
+(c) the six lint and bandit exit codes are the ones in the table above (all 0), and each `pytest` exit code is 1 if its run has a failed test or an error and 0 if it has none.
+(d) applies ONLY while a run contains a failed test or an error (today: the two red guard tests), so that those two do not hide a new problem: (d1) both logs print a NUMBER after "Left contains" (an empty result is a failure, not a match) and the two numbers are equal (10 at `b4cce5b`), for `test_licences_are_proprietary`; (d2) the list of offending files in the message of `test_no_vendor_brand_string_is_tracked` is not empty and is the same in both logs (3 files at `b4cce5b`, see the baseline failures below), because that test scans untracked files too, so a banned string inside a patch or a new test file would add an entry while (a) to (c) stay silent. **Branch "no failures at all":** once decision row 9 is done and neither run has a failed test or an error, those two log lines no longer exist; the script then prints "(d) not needed" and the verdict rests on (a), (b) and (c), with every exit code 0.
 The **guard tests** are the 99 tests in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` and `tests/test_lockin_guard.py` (counted in the sixth pass with `pytest --collect-only`: 99 tests collected; `CLAUDE.md` says "the repo guard tests" without a list; this is this folder's definition). Today exactly two of them are red: `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked` and `tests/test_repo_rules.py::test_licences_are_proprietary`.
 The three **verdicts** (use exactly these names; the script prints them):
 - **PASSED**: (a), (b) and (c) hold, and the full run of the patched copy has no failed test at all (so the two baseline failures are fixed, decision table row 9, both exit codes are 0, and (d) does not apply).
 - **ADDS NO NEW FAILURE**: (a) to (d) hold, but the baseline failures still exist, so the repository gate is still red. The patch is clean; no pull request with it may be merged until row 9 is done. **This is the verdict today.**
-- **NOT PASSED**: any other result: a lint or bandit exit code that differs from the table, a failed test the baseline does not have, a wrong count, a (d) check that prints FAILED while failed tests exist.
+- **NOT PASSED**: any other result: a lint or bandit exit code that differs from the table, a failed test or an error the baseline does not have, a wrong count, a (d) check that prints FAILED while failed tests exist.
 Only the four local gate commands count here. CodeQL, SonarCloud and CodeRabbit (named in `CLAUDE.md`) run on the pull request on GitHub, cannot be run in this recipe, and are not part of any verdict above.
 
 Known baseline failures at `b4cce5b` (seen in this pass in a repository with one commit made from a fresh `git archive b4cce5b`; the earlier passes also saw them in real clones). Both are caused by files under `handover/` and neither is touched by the patches:
@@ -198,11 +200,11 @@ Known baseline failures at `b4cce5b` (seen in this pass in a repository with one
 Who must fix both: the lead (change or remove those studio copies, or tell the tests to skip `handover/`, in a separate change); I did not edit them (my files were limited to this folder).
 
 ### Proof that the new tests fail on the old code
-Run on the unpatched copy with only the two new test files copied in (copied from the patched copy; `git add -A` so the repository rule tests see them):
+Run this section only AFTER the baseline run and the verdict script: it adds the two new test files to `$W/unpatched` and stages them, so a baseline run made afterwards in that folder would no longer be a baseline (to repeat the baseline, make a third fresh clone). Run on the unpatched copy with only the two new test files copied in (copied from the patched copy; `git add -A` so the repository rule tests see them):
 ```
 cp "$W/patched/tests/test_a01_audit_reconcile.py" "$W/patched/tests/test_c01_route_limits.py" "$W/unpatched/tests/"
-cd "$W/unpatched" && git add -A && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider \
-  tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py -rf ; echo "exit=$?"     # expected exit 1
+cd "$W/unpatched" && git add -A && env -i PATH="$PATH" HOME="$HOME" uv run --locked --all-extras --group test pytest -q -p no:cacheprovider \
+  tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py -rfE ; echo "exit=$?"     # expected exit 1
 ```
 Seen in this pass (fifth), same recipe: with `C-01-price-only.patch`: exit 1, `12 failed, 18 passed`; with `C-01.patch`: exit 1, `13 failed, 19 passed`. Each failure is about behaviour, not a missing name.
 **Count of new tests (re-counted in this pass with `pytest --collect-only`; one table, the sums add up):**
@@ -213,7 +215,7 @@ Seen in this pass (fifth), same recipe: with `C-01-price-only.patch`: exit 1, `1
 | total new test cases | **30** | **32** | |
 | fail on old code | 12 (6 price + 6 A-01) | 13 (6 price + 1 ceiling + 6 A-01) | |
 | pass on old code (controls) | 18 (1 priced route + 16 NaN/Infinity + 1 fake) | 19 (the same 18 + the 1 at-the-ceiling test) | |
-(The earlier text counted "three" `max_tokens` cases; the right figure is two tests, one of them with two assertions. `tests/test_p7_tick.py` is an existing file with 41 tests at `b4cce5b`; A-01 changes 2 assertions in it, not its count.)
+(The earlier text counted "three" `max_tokens` cases; the right figure is two tests, one of them with two assertions. `tests/test_p7_tick.py` is an existing file with 41 collected tests at `b4cce5b` (39 test functions, one of them with 3 parametrized cases; `pytest --collect-only` printed `41 tests collected`, seventh pass); its hunk in `A-01.patch` only adds two lines, one list entry (`audit_reconcile` in the step list) and one assertion (a saved success row exists for it), changes and removes nothing, and leaves the count at 41. At the newest commit the file still has 39 test functions and the same parametrized test (counted with `grep`); `pytest --collect-only` was not run there, so 41 at the newest commit is UNVERIFIED.)
 The failures on old code:
 - 6 price cases: `Failed: DID NOT RAISE ConfigError` (a price of 0 or -1 loads on old code).
 - `test_max_tokens_above_the_ceiling_is_refused` (only in `C-01.patch`): `DID NOT RAISE ConfigError` (200_001 loads on old code).
@@ -230,7 +232,7 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
 - Baseline (unpatched), full run: `2 failed, 9364 passed, 454 skipped, 26 deselected in 286.64s`, exit 1. Patched with `C-01-price-only.patch` then `A-01.patch`: `2 failed, 9394 passed, 454 skipped, 26 deselected in 286.29s`, exit 1 (9394 = 9364 + 30). Patched with `C-01.patch` then `A-01.patch`: `2 failed, 9396 passed, 454 skipped, 26 deselected in 233.17s`, exit 1 (9396 = 9364 + 32). In all three, the failed tests are the same two guard tests; (a) the `diff` is empty; (d1) `Left contains 10 more items` in all three logs; (d2) the same three offending files in all three logs.
   Verdict by the pass rule for both patched runs: **ADDS NO NEW FAILURE** (the repository gate stays red because of the two baseline failures).
   The full runs shared a 4-core machine with each other and with smaller jobs, so their times are not comparable.
-- Gates, exit codes: `ruff check` 0 (`All checks passed!`) on both copies; `ruff format --check` 0 (`299 files already formatted` unpatched, `301` patched with the default pair); `bandit -q -r src demos -ll` 0 on both (one `nosec` warning line); also 0 with `tools` added.
+- Gates, exit codes (fifth pass, with `ruff` and `bandit` called without the `uv run` forms of the recipe above): `ruff check` 0 (`All checks passed!`) on both copies; `ruff format --check` with no folder named 0 (`299 files already formatted` unpatched, `301` patched with the default pair); `bandit -q -r src demos -ll` 0 on both (one `nosec` warning line); also 0 with `tools` added. How bandit was found in the fifth pass is not recorded (the old recipe line `--group test bandit` cannot install it): UNVERIFIED. Seventh pass, unpatched extract only, with the exact recipe lines: `ruff check src tests demos` 0 (`All checks passed!`), `ruff format --check src tests demos` 0 (`294 files already formatted`; the count differs from 299 because the folders are named as in CI), `uv run --locked --only-group scan bandit -q -r src demos -ll` rc 0. These three were not repeated on a patched copy in the seventh pass.
 - New tests on the unpatched copy: `12 failed, 18 passed` (price-only file) and `13 failed, 19 passed` (`C-01.patch`), both exit 1.
 - Not re-run in this pass: the `perf` tests, bandit and ruff on a patched copy of `C-01.patch` (the lint and bandit lines above are for the default pair), a run with an empty `uv` cache.
 - The runs of earlier passes (third and fourth) gave the same numbers for the same patch texts; they are not repeated here.
@@ -240,7 +242,7 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
 |---|---|---|---|
 | `C-01-price-only.patch` | `config.py`, `tests/test_c01_route_limits.py` | as `C-01.patch`, without the ceiling | 24 cases (the 26 of `C-01.patch` minus the 2 `max_tokens` cases) |
 | `C-01.patch` | `config.py`, `defaults.py`, `tests/test_c01_route_limits.py` | existing code (the `Route` field and the `Config` validator already exist) + one documented default in `defaults.py`; CODE-LAST holds: a safety guarantee (no spend limit may be bypassed by price 0) | 26 test cases (6 zero or negative price, 16 NaN or Infinity price, 1 priced route, 1 fake model, 2 `max_tokens` tests); table under "Proof that the new tests fail on the old code" |
-| `A-01.patch` | `runtime/tick.py`, `audit/chain.py`, `audit/local_dir.py`, `tests/test_a01_audit_reconcile.py`, `tests/test_p7_tick.py` | existing code (`reconcile()` exists on the audit Protocol, `audit/protocol.py:27`; nothing in `src` calls it) + a short tick step and log lines | 6 new tests; `test_p7_tick.py` gets one hunk with 2 changed assertions |
+| `A-01.patch` | `runtime/tick.py`, `audit/chain.py`, `audit/local_dir.py`, `tests/test_a01_audit_reconcile.py`, `tests/test_p7_tick.py` | existing code (`reconcile()` exists on the audit Protocol, `audit/protocol.py:27`; nothing in `src` calls it) + a short tick step and log lines | 6 new tests; `test_p7_tick.py` gets one hunk that adds 2 lines (one list entry, one assertion) |
 | (G5 wording, no patch file) | `guard/redact.py`, `approvals/gate.py`, `tests/warden_port/test_gate.py` | text only: comments and docstrings, no behaviour | none needed |
 | `DEAD-MAN-CHECK.md` | none (a documented check) | existing code: `tick_state` rows already exist | negative test described; seen once on a throwaway Postgres, not the real store |
 
@@ -281,7 +283,7 @@ Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, eac
 - A kind without `reconcile` FAILS the step (error text "the audit kind has no reconcile", saved in `tick_state.last_error`; exit code 1 of the tick **when the store is reachable**;
   `tick.py:357-369` returns 4 when the store is unreachable after the steps) instead of the first version's quiet skip. Checked: both audit kinds (`local_dir`, `chain`:
   `backends/table.py:502-511`) have `reconcile` (`local_dir.py:126`, `chain.py:232`), and the audit protocol requires it (`audit/protocol.py:27`). `K1bAudit`
-  (`k1b/audit_sink.py:26`) has none, but it is built only for the `k1b` commands (`cli.py:213`), never as the `app.audit` the tick uses (`app.py:161`).
+  (`k1b/audit_sink.py:26`) has none, but it is made only by `build_audit` (`k1b/audit_sink.py:59`), whose only caller in `src` is the `k1b` command code (`cli.py:216`, after the import at `:213`, same lines at `b4cce5b` and at the newest commit), never as the `app.audit` the tick uses (`app.py:161`).
 - `ChainAudit.write_outcome` and `LocalDirSink.write_outcome` log a WARNING when an outcome goes to the outbox (error type and event id only, never the body) and an ERROR when even the outbox
   write fails.
 - **A-01 precondition (REVIEW.md row A-6, must be in place before this is turned on):** in the chain kind, `audit/chain.py:243` calls `AuditEvent.model_validate_json(body)` with no guard, so one
