@@ -11,7 +11,7 @@ _rnl_ = sorted((f for f in glob.glob(STEPS + "/LEAD-RELEASE-NOTE-v*.md") if "SOU
 _rnn = rd(_rnl_[-1]).split("\n")
 _nh = "\n".join(l for l in txt if not _c7_hist(l))   # report text without the quoted-history table lines
 _eq = sorted(k for k in (8, 33, 149, 150) if _rn14[k - 1] == _rnn[k - 1])
-check("D-M1: the real files agree with the one statement 'lines 33 and 150 equal, lines 8 and 149 differ' (equal now: %s) and no text says that lines 8, 33, 149 and 150 are equal" % _eq, _eq == [33, 150] and "its lines 33 and 150 equal the newest note" in boxs and "its lines 8 and 149 differ" in boxs and not re.search(r"lines 8, 33, 149(,| and) 150\b[^.;|]{0,30}\bequal", _nh) and not re.search(r"lines 8, 33 and 149 (are )?equal", _nh), _eq)
+check("D-M1: the real files agree with the one statement 'lines 33 and 150 equal, lines 8 and 149 differ' (equal now: %s) and no text says that lines 8, 33, 149 and 150 are equal" % _eq, _eq == [33, 150] and "its lines 33 and 150 equal the notes v18 and v19" in boxs and "its lines 8 and 149 differ" in boxs and not re.search(r"lines 8, 33, 149(,| and) 150\b[^.;|]{0,30}\bequal", _nh) and not re.search(r"lines 8, 33 and 149 (are )?equal", _nh), _eq)
 # N-B2: one form of the G12 line
 _g12 = re.findall(r"`## G12 \(studio lead, <UTC> = <IST>\): approved: [^`]*`", raw)
 _lwa = [n for n, l in enumerate(txt, 1) if "lease wording approved" in l and not _c7_hist(l)]
@@ -46,7 +46,7 @@ check("D-m4: no stale label ('[done in c6x]', 'RECHECKED AGAIN IN c6t', 'c6u (th
 # D-m5: run count named
 check("D-m5: the report names the number of full runs of run_all.sh and the cap", re.search(r"I started no sub-agent; I ran the full pipeline run_all\.sh \d+ time\(s\) \(cap 2; heavy-slot order\)", raw) is not None, "")
 # D-m6, D-m7
-check("D-m6: option (b) of L-CARDLEN states its 0.4 s margin and that it may run over until a stopwatch run", "0.4 s" in raw and "stopwatch" in raw.split("0.4 s")[1][:400] if "0.4 s" in raw else False, "")
+check("D-m6: option (b) of L-CARDLEN states its 0.4 s margin and that it may run over until a stopwatch run", bool(re.search(r"(?<![\d.])0\.4 s", raw)) and "stopwatch" in re.split(r"(?<![\d.])0\.4 s", raw, 1)[1][:400], "")
 _ll4 = [l for l in txt if l.startswith("| L-LEASE |") and "studio lead (his answers" in l]
 check("D-m7: the L-LEASE row of section 3 says plainly that the default follows ORD:230 and reverses ORD:186", len(_ll4) == 1 and "ORD:230" in _ll4[0] and "THE DEFAULT REVERSES YOUR ANSWER Q22 (c) (ORD:186)" in _ll4[0], len(_ll4))
 # D-M5: honest counts
@@ -54,7 +54,7 @@ check("D-M5: 'HOW MUCH IS PROVEN BY WHOM' says the counts of changed copies are 
 # N-M2: the branch statement equals the table
 _w1rows = [r["i"] for r in rows if "after check" not in r["st"] and "waits for the answer of L-SAVEERR" not in r["st"]]
 _dec = sorted(r["i"] for r in rows if r["i"] in _w1rows and "DECISION-one-store" in r["f"])
-_stb = re.search(r"A builder applies the (\d+) rows of WAVE 1 .*?on branch cloud/flows-audit \(folder handover/; it holds the files of (\d+) rows\)\. (\d+) rows \(([\d, ]+)\) edit inputs/DECISION-one-store\.md, which exists only on branch cloud/core-hardening", boxs)
+_stb = re.search(r"A builder applies the (\d+) rows of WAVE 1 .*?on branch cloud/flows-audit \(folder handover/; it holds the files of (\d+) rows\)\. (\d+) rows \(([\d, ]+)\) edit a file that exists only on branch cloud/core-hardening", boxs)
 check("N-M2: the branch statement of step 1 equals the table (wave 1 %d rows, %d on branch cloud/flows-audit, %d rows %s on cloud/core-hardening)" % (len(_w1rows), len(_w1rows) - len(_dec), len(_dec), _dec), _stb is not None and int(_stb.group(1)) == len(_w1rows) and int(_stb.group(2)) == len(_w1rows) - len(_dec) and int(_stb.group(3)) == len(_dec) and [int(x) for x in _stb.group(4).split(",")] == _dec, _stb.groups() if _stb else None)
 # N-M3, N-M6, N-M7
 check("N-M3: section 0 says who has read what (review-c6v-design.md and review-c6v-naive.md read REPORT-c6v.md only)", "WHO HAS READ WHAT" in raw and "review-c6v-design.md and review-c6v-naive.md read REPORT-c6v.md only" in raw, "")

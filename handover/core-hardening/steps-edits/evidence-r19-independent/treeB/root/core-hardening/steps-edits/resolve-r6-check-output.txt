@@ -1,0 +1,61 @@
+rows parsed 46
+E-01 count 1 lines [3] stated 3 OK
+E-02 count 1 lines [3] stated 3 OK
+E-03 count 1 lines [5] stated 5 OK
+E-04 count 1 lines [69] stated 69 OK
+E-05 count 1 lines [95] stated 95 OK
+E-06 count 1 lines [75] stated 75 OK
+E-07 count 1 lines [75] stated 75 OK
+E-08 count 1 lines [187] stated 187 OK
+E-09 count 1 lines [78] stated 78 OK
+E-11 count 1 lines [87] stated 87 OK
+E-12 count 1 lines [92] stated 92 OK
+E-13 count 1 lines [99] stated 99 (and 11) OK
+E-13 count 1 lines [11] stated 99 (and 11) OK
+E-14 count 1 lines [107] stated 107 OK
+E-15 count 1 lines [107] stated 107 OK
+E-16 count 1 lines [121] stated 121 OK
+E-17 count 1 lines [131] stated 131 OK
+E-18 count 1 lines [131] stated 131 OK
+E-19 count 1 lines [159] stated 159 OK
+E-20 count 1 lines [162] stated 162 OK
+E-21 count 1 lines [164] stated 164 OK
+E-22 count 1 lines [166] stated 166 OK
+E-23 count 1 lines [151] stated 151 OK
+E-24 count 1 lines [178] stated 178 OK
+E-25 count 1 lines [193] stated 193 OK
+E-26 count 1 lines [2] stated 2 OK
+E-27 count 1 lines [5] stated 5 OK
+E-28 count 1 lines [9] stated 9 OK
+E-29 count 1 lines [9] stated 9 OK
+E-30 count 1 lines [7] stated 7 OK
+E-31 count 1 lines [20] stated 20 OK
+E-32 count 1 lines [23] stated 23 OK
+E-33 count 1 lines [23] stated 23 OK
+E-34 count 1 lines [27] stated 27 OK
+E-36 count 1 lines [131] stated 131 OK
+E-37 count 1 lines [27] stated 27 OK
+E-38 count 1 lines [9] stated 9 OK
+E-39 count 1 lines [23] stated 23 OK
+E-40 count 1 lines [20] stated 20 OK
+E-41 count 1 lines [103] stated 103 OK
+E-42 count 1 lines [104] stated 104 OK
+E-43 count 1 lines [14] stated 14 OK
+E-44 count 1 lines [20] stated 20 OK
+E-45 count 1 lines [23] stated 23 OK
+E-46 count 1 lines [14] stated 14 OK
+E-47 count 1 lines [1] stated 1 OK
+E-48 count 1 lines [123] stated 123 OK
+old-text failures 0
+overlaps 0
+applied rows 34
+owner-NEW contains 'rehearsal' 3
+owner-NEW contains 'Re-checked' 0
+owner-NEW contains 'login' 0
+owner-NEW contains 'lead key' 3
+owner-NEW contains 'loopback' 0
+owner-NEW contains 'WP6 smoke plan' 0
+owner-NEW contains 'plan-wp6' 0
+banned []
+secret-like []
+personal path 0 (inherited from old texts)

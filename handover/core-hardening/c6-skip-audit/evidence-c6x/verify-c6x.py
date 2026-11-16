@@ -255,7 +255,7 @@ check("box says the ready count", bool(m), len(ready))
 check("action box first (before section 0)", full.index("## Start here") < full.index("## 0. Failures"))
 # 14.. content checks of c6q, c6r and c6s live in verify_c6x_part2.py; each top-level statement runs on its own, a crash is a FAIL
 import ast
-for _pn in ("verify_c6x_part2.py", "verify_c6x_part3.py", "verify_c6x_part4.py"):
+for _pn in ("verify_c6x_part2.py", "verify_c6x_part3.py", "verify_c6x_part4.py", "verify_c6x_part5.py"):
     _p2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), _pn)
     _src2 = open(_p2, encoding="utf-8").read()
     for _node in ast.parse(_src2).body:

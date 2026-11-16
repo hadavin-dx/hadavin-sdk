@@ -155,3 +155,14 @@ NEG r17ord-code caught | FAIL r17 internal code in owner text: ORD:
 NEG r17dec-code caught | FAIL r17 internal code in owner text: DEC:
 NEG r17row-e48 caught | FAIL r17 internal code in owner text: row E-48
 NEG r17n1 caught | FAIL r17 N1 ND16 lacks 'I accept that until I revoke the secret key for the model it can s
+NEG r17alarm3 caught | FAIL r17 F-3 C lacks 'if a take is running, let it finish (key step K), then revoke the ke
+NEG r17routeb caught | FAIL r17 F-2 route B price in D.1 lacks 'In route A the live key exists for hours, in rout
+NEG r17appx caught | FAIL r17 F-2 appendix landing lacks 'a separate page, not part of the sheet'
+NEG r17applink caught | FAIL r17 F-2 link in owner text lacks 'the detail is on a separate page, Appendix K, which
+NEG r17thirty caught | FAIL r17 F-4 the new-key rule has numbers ['20', '30']
+NEG r17last caught | FAIL r14 3a key end
+r19 plants (planted, caught): {'occurrence': (269, 269), 'pair': (90, 90), 'reversal': (18, 18), 'day sheet': (15, 15), 'appendix': (9, 9)}
+r19 golden plants (planted, caught): (317, 317)
+FAILURES 0
+heavy-slot: slot 1 freed, exit 0
+exit 0

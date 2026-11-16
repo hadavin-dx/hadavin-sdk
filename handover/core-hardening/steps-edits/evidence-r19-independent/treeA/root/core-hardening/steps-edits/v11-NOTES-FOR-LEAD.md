@@ -1,0 +1,20 @@
+# v11 NOTES FOR THE STUDIO LEAD (Mon 16 Nov 2026; failures and unverified items first)
+
+**Not done / not checked by me:** I ran no program, no command from the sheet, no click path. The day sheet is 209 lines (v10: 240) but about 1.8 KB larger in bytes: the 180-200 target is missed. The sample notice (E.2) and the sample printed result (appendix 5) are INVENTED and labelled so. Banned-word scan: 0 hits.
+
+**Questions only you can answer (each is a card value, a statement or a code fact):**
+- Q1 (go condition 5, the hard stop). Does `run_real_check_n8n.py` at the row 14 commit delete or archive contacts at `end` (scope sheet F-01, line 1051)? The sheet now stops E without your written statement. If it does delete: it is a code change plus rewrites of F, G, F.3 and the post ban. Also confirm the 20-minute margin before the latest start time (my suggestion) and the F.1 safe-exit wait (row 12 minutes + 10, my suggestion).
+- Q2 (money rule). Which counter does the backstop count against: the account's total money used, or the run's own spending record from zero? The step A message must say; the sheet answers "no" without it. Also: with the notes' backstop US$180 and credit US$189, counter (1) fails the check unless the backstop is set to money used + run total: you set it per run in your session.
+- Q3 (row 5, appendix 10). What are the real n8n stop and start commands, and does the program print a line that tells the person on row 5 when to stop and start? The sheet's forms (`kill <n8n process number>`, `<start line>`) are guesses; no source file has them (only "n8n killed once by hand"). Put the real words on card row 5.
+- Q4 (decision 8). Did the owner lift decision 8 (no extra real-account smoke) for step 0 and the trial run? The sheet now requires "go step 0" to quote his written yes, and a trial to need a written "yes step T". If he has not, step 0 and T are cut.
+- Q5 (go condition 6). Are `ls -l --time-style=full-iso`, `ps -o lstart= -p <number>` and `date` usable on this WSL? The owner can see only start times, not which key the model program loaded. Can you give the process number and the key file name in a way he can check?
+- Q6 (A.0 key). Old key: FACTS says one key exists and was used in earlier runs; v11 makes the owner review the whole list and decide, and create a NEW run key. Does the model program accept the file form (key alone, or `NAME=` then key)? State the form in the step A message. The `read -rs` / `set -C` line is unverified on this laptop.
+- Q7 (python3 -I). Does `scripts/run_real_check_n8n.py` and `hubspot_probe.py` run under `python3 -I`? Rehearse the printed form.
+- Q8 (row 14 commit). The run branch is local only, so the owner cannot compare the commit with a public page; checksums prove only equality with your card. Is there a way to publish the commit id (not the files)?
+- Q9 (new card rows). Row 5 now holds the exact words of the program's stop and start lines; row 7 now holds the model-key cancel deadline; row 9 holds the n8n port; row 10 means pictures of counts only. Update the card template. Success exit codes (go condition 7) and the post-by date (Wed 25 Nov 2026 15:00 UTC = 20:30 IST, v3 sheet only) are still yours to confirm.
+- Q10 (F.1 safe exit). Does closing the terminal at the delete line itself trigger the deletion? Unknown to me.
+- Q11 (run name rule: letters and digits, 4-12 characters, starting with a letter) and the 5-minute notice limit and 60-minute I.0 limit are my suggestions: change or confirm.
+
+**Decisions I made that you may veto:** accounts check moved from run day (v10 C.4) to step A.5 so the yes comes after it; labels are now A.0 to A.6; trial run moved to the end (appendix 11); I.1 screenshots follow row 13; "erase" is the verb for secret files; the money-rule backstop check is an increase above the reading.
+
+**Residual honesty:** decision 5 is stated openly in DO THIS FIRST, the E warning, the J ban list and appendix 14. Section 7 (secret display) is deleted; if the lead needs a connection value typed in n8n, the owner stops and you do it with your script.

@@ -27,7 +27,9 @@ def move_out(t, old, new):
     if t[k0:k1].count(old) != 1:
         FAILS.append("move_out: expected 1 match in the box, found %d: %r" % (t[k0:k1].count(old), old[:90]))
         return t
-    MOVED.append(old)
+    i0 = t[k0:k1].index(old)
+    ctx = t[k0:k1][max(0, i0 - 60):i0].replace("\n", " ").strip()
+    MOVED.append((ctx, old))
     return t[:k0] + t[k0:k1].replace(old, new) + t[k1:]
 
 
@@ -67,7 +69,7 @@ def patches(t, ct):
     t = sub(t, "NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE. The edit table",
             "NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE. NO REVIEWER HAS READ THIS REPORT (nor its checks): every statement in it is the builder's own until the reviewers you order have read it; step 3 of TASKS reads the changed files, not this report. The reach of G12 below (which words it holds) is this report's own reading, not a quote of any file. The edit table")
     t = sub(t, "G12 (yours); two owner items about the take script (section 1c). The deletion question is ANSWERED (no, never).",
-            "G12 (yours); the two OWNER-OPEN items about the take script, L-Q27 and L-DELCRIT (ORD:232; they are rows of the QUESTIONS table). The deletion question is ANSWERED (no, never).")
+            "G12 (yours); the two OWNER-OPEN items about the take script (two rows marked OWNER-OPEN in the QUESTIONS table). The deletion question is ANSWERED (no, never).")
     t = sub(t, "puts no sentence about the 45-second setting into any document;",
             "writes no sentence that explains the 45-second setting into any document (the rows that write the label 'setting: lease 45 s' or the words 'other lease settings' write them only as HELD under G12: see item 6);")
     # naive M9 / m: the names in the typed line, who parses it
@@ -126,15 +128,15 @@ def patches3(t, ct):
     g("(i) card line 1, (ii) the three words 'other lease settings' at the end of card line 4, (iii) the scene 3 caption, (iv) the on-screen label 'setting: lease 45 s' (scene 4, rows 1 and 17) with the carve-out sentences of rows 1, 2, 5, 15, 17, 19, 30, 34, 81, 83, 93 and 94 that name it. Card line 2 also waits for an alert mail seen in the loopback re-smoke. The video is NOT yet filmable. Rows 11 to 14 write the whole card (90 words, about 36 s, budget 40 s) and its Time cell on the run sheet is set to 40 s; a gate keeps the held lines off the film, so a person cuts (i) to (iii) by hand before filming: the card then holds 76 words, about 30.4 s, inside the 40 s (Table B, case 'G12 open', section 1c).",
       "(i) card line 1, (ii) the three words 'other lease settings' (card line 4), (iii) the scene 3 caption, (iv) the label 'setting: lease 45 s' (scene 4; rows 1, 2, 5, 15, 17, 19, 30, 34, 81, 83, 93, 94 carry it). Card line 2 also waits for an alert mail seen in the re-smoke. The video is NOT yet filmable. A person cuts (i) to (iii) by hand: the card then holds 76 words, about 30.4 s (Table B, 1c).")
     g(" 5 rows (70, 71, 72, 90, 91) edit inputs/DECISION-one-store.md, which exists only on branch cloud/core-hardening; the builder writes the applied row numbers to c6x-APPLIED-ROWS.md there, one commit per branch. The old texts were checked only against a copy (evidence-c6x/tree/): UNVERIFIED against the real files; the builder confirms each old text first and stops at any row where it does not match.",
-      " 5 rows (70, 71, 72, 90, 91) edit a file that exists only on branch cloud/core-hardening; one commit per branch. The old texts were checked only against a copy: UNVERIFIED; the builder confirms each first (details: 1c-J).")
+      " 5 rows (70, 71, 72, 90, 91) edit a file that exists only on branch cloud/core-hardening; one commit per branch. The old texts were checked only against a copy (evidence-c6x/tree/): UNVERIFIED; the builder confirms each first (1c-J).")
     g("; writes no card line about the owner's HubSpot key; writes no sentence that explains the 45-second setting into any document (the rows that write the label 'setting: lease 45 s' or the words 'other lease settings' write them only as HELD under G12: see item 6); leaves unapplied the 3 rows that wait for a check and the 6 that wait for the owner.",
       "; writes no card line about the owner's HubSpot key; explains the 45-second setting in no document (the label and 'other lease settings' are HELD, item 6); leaves unapplied the 3 rows that wait for a check and the 6 that wait for the owner.")
     g("- CONTACT = one made-up sales contact (the files say 'lead'; card line 1 keeps your decided word 'lead', lines 2 to 4 say 'contact'). HUBSPOT = the customer-record system (a CRM) where the take writes its contacts. KEY = a secret code that lets a program use an account. SEND = one submission of a contact; SAME ID = every send carries the same contact id. n8n = the tool that runs the flows. STAND-IN = a fake service. LOOPBACK RE-SMOKE = a short test of the whole setup on this computer only, with stand-ins.",
       "- CONTACT = one made-up sales contact (the files say 'lead'). HUBSPOT = the customer-record system where the take writes its contacts. KEY = a secret code that lets a program use an account. SEND = one submission of a contact (SAME ID = the same contact id). n8n = the tool that runs the flows. STAND-IN = a fake service. LOOPBACK RE-SMOKE = a test of the whole setup on this computer only, with stand-ins.")
     g(" (the run sheet calls it scene 12; scenes 5 to 11 of an older plan are listed, not filmed); RISKS LIST and REHEARSAL LIST = two numbered lists in it. RE-PIN = putting together and reading the final take files. PUBLIC POST = the post that goes out with the video (your ruling: section 1c).",
-      " (the run sheet calls it scene 12); RISKS LIST and REHEARSAL LIST = two numbered lists in it. RE-PIN = reading the final take files. PUBLIC POST = the post that goes with the video (section 1c).")
+      " (the run sheet calls it scene 12; scenes 5 to 11, an older plan, are listed, not filmed); RISKS LIST and REHEARSAL LIST = two numbered lists in it. RE-PIN = reading the final take files. PUBLIC POST = the post that goes with the video (section 1c).")
     g(" Answer with one version and one rendering, for example 'v34 rendering A' (RENDERING A and B = the A file and the B file of one checklist; not the KEY ROUTES A and B, section 3). The newest version at the check time is v34.",
-      " Answer with one version and rendering, for example 'v34 rendering A' (A and B = the two files of one checklist). Newest at the check time: v34.")
+      " Answer with one version and rendering, for example 'v34 rendering A' (RENDERING A and B = the two files of one checklist). Newest at the check time: v34.")
     g(" TO ANSWER: add after the names in step 2 one 'except' per label, for example `; except L-KILL: b; except L-APPROX: yes`. The two OWNER ONLY questions go on two separate lines (form: section 1c). Answer forms: yes or no (L-KEYLINE too), except L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply; L-CARDLEASE keep or drop.",
       " TO ANSWER: add after the names in step 2 one 'except' per label, for example `; except L-KILL: b`. The two OWNER ONLY questions go on two lines (1c). Forms: yes or no, except L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply; L-CARDLEASE keep or drop.")
     g(" NO REVIEWER HAS READ THIS REPORT (nor its checks): every statement in it is the builder's own until the reviewers you order have read it; step 3 of TASKS reads the changed files, not this report. The reach of G12 below (which words it holds) is this report's own reading, not a quote of any file.",
@@ -160,6 +162,10 @@ def patches3(t, ct):
     g(" (estimates until the stopwatch run)", " (estimates)")
     g("Cut the old card lines about '80 kills' and the recovery time (older flows; an estimate no data of this take backs)?", "Cut the old card lines about '80 kills' and the recovery time (no data of this take backs them)?")
     g("Does the take make n8n save every SUCCESSFUL run, so that the past runs filmed in scenes 1 and 2 show runs? (The owner approved this on made-up data, ONE:22-27.)", "Does the take make n8n save every SUCCESSFUL run, so scenes 1 and 2 show past runs? (The owner approved this on made-up data, ONE:22-27.)")
+    g(" L-LEASE 1 or 2 counts only if L-POST is 'no' and G12 is approved; with L-POST 'yes' (the default) it is ignored.", " L-LEASE 1 or 2 counts only if L-POST is 'no' and G12 is approved.")
+    g("carries the 45-second limit sentence; your release note strikes it from the public post (LRN14:150).", "carries the 45-second limit sentence (LRN14:150 strikes it from the post).")
+    g(" are done and written (TASK (7) comes after the take; TASK (9) is done once answered).", " are done and written.")
+    g(" Newest at the check time: v34.", "")
     return t_ref[0]
 
 
@@ -185,8 +191,9 @@ def late_paragraph(t):
             how = ("equal to %s after the version number is changed" % prev) if a_ == open(fp, encoding="utf-8").read() else ("DIFFERENT from %s beyond the version number" % prev)
         parts.append("%s was written %s UTC = %s IST; %s" % (n, u, i, how))
     pin = open(E + "PIN-TIME.txt").read().strip()
-    new = (" FILES WRITTEN AFTER THE FREEZE (%s = 01:00:00 IST on 2026-11-17, the time up to which this report reads the files; copied ONCE at %s and read from that copy by every check, evidence-c6x/late-pinned/): %s. This report names the newest version before the freeze and reads none of these; if the lead finishes a later version, the version numbers named here need a new check. "
-           "COMPARISON BY SCRIPT (evidence-c6x/compare-late-files-output.txt): all three pairs are DIFFERENT (the line 'v35 equals v34, v19 equals v18' of c6w-CHANGES.md 6a was wrong).") % (frz, pin, "; ".join(parts))
+    pin_ist = (datetime.datetime.strptime(pin, "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(hours=5, minutes=30)).strftime("%Y-%m-%dT%H:%M:%S")
+    new = (" FILES WRITTEN AFTER THE FREEZE (%s = 01:00:00 IST on 2026-11-17, the time up to which this report reads the files; copied ONCE at %s = %s IST and read from that copy by every check, evidence-c6x/late-pinned/): %s. This report names the newest version before the freeze and reads none of these; if the lead finishes a later version, the version numbers named here need a new check. "
+           "COMPARISON BY SCRIPT (evidence-c6x/compare-late-files-output.txt): all three pairs are DIFFERENT (the line 'v35 equals v34, v19 equals v18' of c6w-CHANGES.md 6a was wrong).") % (frz, pin, pin_ist, "; ".join(parts))
     a = t.index(" FILES WRITTEN AFTER THE FREEZE (")
     b = t.index("need a new check.", a) + len("need a new check.")
     return t[:a] + new + t[b:]
@@ -214,12 +221,12 @@ def patches2(t, ct):
             "- WHAT run_all.sh IS (naive m, plain): run_all.sh is the one script that rebuilds this report from the older one, checks it and tests the checks; its text says what it needs as input. It did not always end clean: the statement of each run of c6x (how many ran and what each ended with) is in section 9; where a run did not end clean, section 9 says so in those words.")
     # =============== 1c-J and 1c-K, before section 2 =================
     j = ["1c-J. WHAT LEFT THE START BOX IN c6x (nothing is deleted; each piece below is printed word for word as it stood in the box of c6w, and the box now holds a shorter form of it):"]
-    for i, m in enumerate(MOVED, 1):
-        j.append("- (%d) %s" % (i, m))
+    for i, (ctx, m) in enumerate(MOVED, 1):
+        j.append("- (%d) [in the box after: '...%s'] %s" % (i, ctx[-50:], m.strip()))
     k = [
      "",
      "1c-K. THREE CLAIMS THAT NEED A PLAIN SENTENCE (c6w reviews, c6x fix).",
-     "- SEVEN, TEN AND ELEVEN (the counts of stops): the builder of step 2 has SEVEN stop steps in the box that stop him until a person writes something: rehearsal list items 11 to 15 (five) and risks list items 11 and 12 (two). The run sheet carries TEN gate rows in section 3e (the rows a person must clear before the take). ELEVEN is the ten plus the execution-list check of row 23 (a check that needs n8n). They count different things on purpose; a reviewer confirms that no list lacks a member.",
+     "- SEVEN STOP STEPS AND ELEVEN GATE ROWS (the counts of stops; the c6w report said ten, wrongly): the builder of step 2 adds SEVEN stop steps to the run sheet (rehearsal list items 11 to 15, five, and risks list items 11 and 12, two). The table of section 3e (who stops, who is told) has ELEVEN rows, counted by script (check C8-8); it has more rows than the builder's stop steps because it also holds the execution-list check of row 23 (it waits for n8n), the real-key scan, card line 2, the G12 approval and the made-up domain row. I did not match the rows of the two lists one by one: a reviewer does.",
      "- THE 45-SECOND SENTENCE AND THE LABEL 'setting: lease 45 s' (naive M): the 45-second sentence (L-LEASE answers 1 and 2) is written in no document by default (box item 5). The label 'setting: lease 45 s' IS a lease word, it is on screen in scene 4 (rows 1 and 17) and it is HELD under G12 with the other held items (box item 6); it is not a sentence.",
      "- THE REACH OF G12 IS THIS REPORT'S READING: release note v14 line 33 says 'sentence in writing'; LREP:80 says 'approval of the lease sentence'. Which on-screen words need it is not written anywhere; this report holds all lease words (card line 1, 'other lease settings', the scene 3 caption, the label, and the carve-out sentences of rows 1, 2, 5, 15, 17, 19, 30, 34, 81, 83, 93 and 94). If you read G12 more narrowly, say which words are free and a builder drops the hold on those rows (a further round).",
      "- ORDER OF THE DEPARTURE FROM ORD:147: the line 'the HubSpot key used by the take is read-only; the probe key is separate' is NOT written; the question L-KEYLINE asks you for a yes or no.",
@@ -227,10 +234,15 @@ def patches2(t, ct):
     t = sub(t, "## 2. Numbers and names that look alike and are not the same", "\n".join(j + k) + "\n## 2. Numbers and names that look alike and are not the same")
     # =============== SECTION 9 =================
     t = sub(t, "- [needs-lead] Counts to reconcile (naive m9): the builder's stop steps (section 1c, seven), the gate rows of section 3e (ten) and the list of six in section 1c-F count different things (steps that stop a builder; gates on the run sheet; steps of the first-rehearsal list). They are not equal on purpose; a reviewer should confirm that each list is complete.",
-            "- [needs-lead] Counts to reconcile (naive m9): seven stop steps (rehearsal items 11 to 15 and risks items 11 and 12), ten gate rows in section 3e, eleven = the ten and the check of row 23; the list of six in section 1c-F. They count different things on purpose (section 1c-K). A reviewer confirms that each list is complete.\n"
+            "- [needs-lead] Counts to reconcile (naive m9): seven stop steps (rehearsal items 11 to 15 and risks items 11 and 12), eleven gate rows in section 3e (counted by check C8-8); the list of six in section 1c-F. They count different things on purpose (section 1c-K). A reviewer confirms that each list is complete.\n"
             "- [needs-lead] L-KEYLINE (ORD:147 departure): the card line about the read-only key is not written; yes or no under L-KEYLINE. Until the owner confirms the key's scope the answer 'yes' cannot be backed.\n"
             "- [needs-lead] Card line 3 and L-ONEDB: a reviewer decides whether 'n8n's own database' on card line 3 is a count (section 3, row L-ONEDB, last sentences).\n"
             "- [needs-lead] c6w independent evidence (review-c6w-evidence.md): all six uncaught copies are now controls with a named check; their results are in neg-output.txt (section 1c-K).")
+    t = sub(t, "The newest version at the check time is v34.", "The newest version before the freeze (2026-11-16T19:30:00Z) is v34; v35 was written later and no check reads it.", 1)
+    t = sub(t, "the release note v14, the newest at the check time (its G12 row is on line 33;", "the release note v14 (not the newest: v18 is the newest before the freeze; its G12 row is on line 33;", 1)
+    t = sub(t, "THE NEWEST OWNER SHEET AT THE CHECK TIME:", "THE NEWEST OWNER SHEET BEFORE THE FREEZE (the check time is only when the scripts ran):", 1)
+    t = sub(t, "The EGM review of the changed files, resolve and the drift report for c6v are run by the studio lead.", "The EGM review of the changed files, resolve and the drift report for c6x are run by the studio lead.", 1)
+    t = sub(t, "Card line 1 and the scene 3 caption are blocked until you approve G12; card line 2 until", "Card line 1, the scene 3 caption and the three words 'other lease settings' at the end of line 4 are blocked until you approve G12 (a person cuts them by hand: 76 words, about 30.4 s); card line 2 until", 1)
     return t
 
 

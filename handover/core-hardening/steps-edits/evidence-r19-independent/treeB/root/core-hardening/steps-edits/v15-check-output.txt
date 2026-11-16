@@ -1,0 +1,17 @@
+banned strings in test list: 10
+OWNER-STEPS-realrun-v15.md: banned=0 PENDING/TBD/TODO=0 bytes=35882 UNVERIFIED=9
+OWNER-DAY-CARD-v15.md: banned=0 PENDING/TBD/TODO=0 bytes=12537 UNVERIFIED=3
+OWNER-STEPS-v15-APPENDIX.md: banned=0 PENDING/TBD/TODO=0 bytes=32027 UNVERIFIED=7
+v15-CHANGES.md: banned=0 PENDING/TBD/TODO=0 bytes=15449 UNVERIFIED=8
+v15-OPEN-FOR-LEAD.md: banned=0 PENDING/TBD/TODO=0 bytes=5063 UNVERIFIED=1
+blank list numbers: 1 .. 29 count 29
+card rows with an underline: 50
+S 18:29 UTC = 23:59 IST 2
+S 25 Nov 2026 15:00 UTC = 20:30 IST 2
+finding ids expected: 144 rows in CHANGES: 144 missing: []
+card underline rows still open (lead fills): 50
+sheet markers "THE STUDIO LEAD FILLS THIS IN": 1 | proposals listed in OPEN: 12
+OWNER-STEPS-realrun-v15.md bytes 35882
+OWNER-DAY-CARD-v15.md bytes 12537
+OWNER-STEPS-v15-APPENDIX.md bytes 32027
+TOTAL PROBLEMS 0

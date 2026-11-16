@@ -1,0 +1,4 @@
+# v18 evidence runner summary (condensed; raw in evidence-v18.md), 2026-11-16
+check-v18.py in scratch copy: exit 0, 0 problems (form only), identical to builder output. 13 UTC/IST pairs 0 wrong; weekdays right; money 0.27/0.81/13.21 right.
+Mismatches: M1 post-by time HAS a source (ORDERS.md:150 Q21.1; OWNER-STEPS v3:130; QUESTIONS.md:55) so UNVERIFIED label and "no source" claims are stale; M2 map row RC-5 points to Open 24 (wrong, no Open item says what to cut for length); M3 "US$180 of 189 in-code backstop" exact only in FACTS:3 (AGENT-SCOPE:15 says "at the time of writing"); M4 Note section 5 wording "a made-up sales contact sent twice" vs decision 1 "a lead sent twice"; M5 DECISION-one-store:14 says ONE database but CORRECTIONS (a) lines 25-26 describe separate n8n database, package does not say so.
+Not checked: BR-a..s lettered list file; take scripts/flows/model program.

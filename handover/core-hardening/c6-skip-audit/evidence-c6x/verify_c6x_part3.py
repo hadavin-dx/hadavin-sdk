@@ -4,7 +4,7 @@
 # The census file census-c6x.json is written by `C6V_MAKE_CENSUS=1 python3 -B -I verify-c6x.py` right after the build (run_all.sh does it); a report that was changed afterwards no longer matches it.
 import json
 _E = os.path.dirname(os.path.abspath(__file__))
-PHRASES = ["I do not approve it", "G12 OPEN", "G12 is open", "G12 open", "NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", "has NO delete call", "no delete call",
+PHRASES = ["90 words", "about 36 s", "budget 40 s", "87 words", "34.8 s", "79 words", "31.6 s", "76 words", "30.4 s", "74 words", "29.6 s", "lease wording approved", "lease wording seen", "NO REVIEWER HAS READ THIS REPORT", "other lease settings", "setting: lease 45 s", "I do not approve it", "G12 OPEN", "G12 is open", "G12 open", "NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", "has NO delete call", "no delete call",
            "archive_contacts 'no'", "only made-up contacts of this run", "no, never", "lease sentence stays out of the public post", "filmed only after your written approval",
            "to 10 files", "twelve numbered TASKS", "two OPEN", "OPEN (OWNER ONLY)", "ANSWERED BY DEFAULT", "NOT APPLIED", "NOT FILMABLE", "OWNER ONLY", "OWNER-OPEN",
            "the 45 s lease setting is allowed only after G12 is approved", "G12 is approved", "I confirm", "nothing is applied",

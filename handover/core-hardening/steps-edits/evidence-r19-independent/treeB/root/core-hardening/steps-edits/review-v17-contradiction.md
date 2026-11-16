@@ -1,0 +1,31 @@
+# v17 contradiction review of OWNER-SHEET-v17 / LEAD-RELEASE-NOTE-v1 / v17-MAP / v17-OPEN-FOR-LEAD against the inputs (condensed copy of the inline report, 2026-11-16)
+Not checked: plan-wp6-resmoke-v5.md lines 183-559 (read 1-182 plus keyword search); check-v17.py and its output; checkpoint-v17.md; v4-v16 files; Q-numbers and review ids cited; source of the 15:00 UTC post-by time (not found in decisions, facts or scope files); nothing run; take scripts/flows/model program not in checkout; whether the lead is bound by AGENT-SCOPE section 4 (real key use).
+## Rules that cannot be followed together
+1 BLOCKER R2 + R4 + R8 vs FACTS-ALREADY-DONE:2-3: an older saved model key is "any other valid key"; owner cannot clear it, cannot start (M:12 admits "neither cancelled nor listed"; O item 9 sees only the name part). Needs a path (lead names the one old key R2 may cancel) or R4 must allow a listed old key.
+2 MAJOR R5 vs N G17: the "old wording" escape cannot work; R5 says n on any delete/archive line and R8 forbids override; AGENT-SCOPE:20 says the take program really calls a delete (run_real_check_n8n.py:1051) so the line is probably still printed; decision 2 is binding, fix belongs in the take program (G1).
+3 MAJOR R9 charset (letters, digits, dot, underscore, slash, hyphen) vs typed values in sections 4 and 5 (usage-page, key-list, prepaid, price-page and console addresses have colon, ?, =; the model program command line has = and quotes). M:234 claims fixed; typed addresses not exempt.
+4 MAJOR R7 (delete by contact id only, none if no or two results) vs O item 15 (fallback to exact address); R8 forbids; N:79 admits no file gives contact ids.
+5 MAJOR R10 freeze vs R6 `end` on the lead's word: count mismatch is also a freeze trigger; no exception in R10; which rule wins is unsaid.
+6 MINOR R3 (cancel right after the printed result) vs 6.7 (read usage page first) vs R10 (browser work limited to R2, R3, R7 under freeze); cancel first, then read.
+7 MINOR R4 "two things only" vs the same cell naming a balance limit; N G4 says four (balance, key deadline, cancel, window end).
+8 MAJOR film rules: S 6.5 films CRM and mail lists "never the take window" vs N shot list filming the notice and printed result; S says no masked text or path on film but the notice prints masked accounts; R9 says the editor never sees the owner's screen but N:82 has the editor crop it; who crops (film person or editor) unsaid; who may see raw footage undecided.
+## Conflicts with binding inputs
+9 MAJOR S lists far more owner tasks than decision 7 and FACTS allow ("six things" count wrong whichever side wins; key making every paid run against FACTS:2-3); O item 6 and G22 put it to the lead.
+10 MAJOR N G14 backstop vs FACTS/SCOPE "US$180 of 189 in-code backstop": the worked example needs the backstop at about the ledger total; nothing says to lower it; O item 7 "189 is the credit" is a guess; S carries neither number; FACTS says "no limit questions, just tell him the number" while R4 makes the owner accept a balance and per-key limit.
+11 MINOR G3 says n8n holds three connection values, section 8 lists two database secrets, plan and DECISION-one-store have four database roles.
+12 MAJOR port: O item 3 proposes 5691 for the take but plan:121 already uses 5691 as broker port next to the 5690 rehearsal n8n (control pair 5692/5693); G7 makes a collision a no-go.
+13 MAJOR which person is sent twice: decision 1 says a lead sent twice with the same id; S:71 says person A; AGENT-SCOPE says a "B ten times" burst; plan tests a same-id burst on B; if the printed result shows only B the post condition can never be met.
+14 MAJOR AGENT-SCOPE:20 says the take archives contacts with a delete call (F-01) vs decision 2 and R7 stating "the take never deletes" as fact; say "per the lead's G1 statement".
+15 MINOR AGENT-SCOPE/FACTS say the owner types a worst-case figure shown in the notice; S has no such step (consistent with decision S9-2 but stale and unflagged).
+16 MINOR window-end setting: S says "not yet shown to work", scope lists money-stop tests on older heads; say "tested on an older head".
+## Conflicts inside the package
+17 MAJOR key-deadline formula circular (N:41 vs N:42); latest start subtracts step A (before the take starts) so it yields the latest time to begin step A, not to start the take; lag wait subtracted though the second usage reading comes after the cancel.
+18 MAJOR message fields S needs but the N template lacks: expected contact and mail counts (R6, 6.x), minutes at "Type y to start", subject start of demo mails (sent only in the second message).
+19 MAJOR post-take order differs: S has the lead erase secrets after the video watch; N step 11 erases before the watch and post; N step 9 waits for "model key cancelled" which S never asks for; N step 11 retire check needs app passwords revoked but S has no send step.
+20 NIT R8 lists R1 to R10, then names R1,R3,R4,R5,R6,R7 only.
+21 MINOR S:71 post condition has counts, N step J has only the claim part; the lease sentence NOT APPROVED appears in five places.
+22 NIT M says sheet 70 lines (71); M says S section 1 has "10 terms" (about 25); O item 19 refers to an owner account-name and last-4-digits check that S dropped and S:39 contradicts.
+## Rules or numbers stated more than once (drift)
+S:19 and N:3 claim each rule is written only once; false. Ban list (S:17 eight items vs N:74 thirteen, wording differs); what the film must not show (S:39, S:67, N:76; N adds browser tab titles); recording/clipboard-off lists (S:22, S:48, N:76 not identical); R7 delete method (S and N:79); R9 presence rule (S:30, N:82); R4 re-yes on a changed figure (S:25, N:66); account-name check (S:23, 28, 39, 42); window end 18:29 UTC typed in six places while S:34 says it arrives in the message; post-by time in S:70 and N:40 (no source found); "30 minutes" used for alarm and for lag; five-role rule (S:36, N:24, N:82, O:20); narrow claim and step J rule (S:71, N:73, N:28, D:2).
+## Checked and fine
+18:29 UTC = 23:59 IST; 15:00 UTC = 20:30 IST; weekdays Mon 16, Wed 18, Mon 23, Wed 25 Nov 2026; R1 to R10 ten rows; G1 to G24 24 rows; worked example 12.40 + 0.81 = 13.21 and the 3.10-3.90 / 4.00 money-used check; open-item cross references checked (1,2,5,6,7,9,10,11,12,15,16,17,18).

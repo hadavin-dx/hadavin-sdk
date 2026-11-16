@@ -1,0 +1,2 @@
+## command: grep
+exit 1

@@ -48,7 +48,7 @@ for l in box.split("\n"):
     mm = re.match(r"^\| (none|1|2)[^|]* \| \((a|b)\)[^|]* \| (\d+) \| ([\d.]+) \| (\d+) s \| about (\d+) s \|$", l)
     if mm:
         boxrows.append((mm.group(1), "(%s)" % mm.group(2), int(mm.group(3)), mm.group(4), int(mm.group(5)), int(mm.group(6))))
-check("one construction in the length table: no 24-word rewrite of line 1 anywhere (c6q design review M-F)", "B_L1_R1" not in open(os.path.dirname(os.path.abspath(__file__)) + "/build_c6r_text.py").read() and "24-word" not in full and "24 words" not in box, "")
+check("one construction in the length table: no 24-word rewrite of line 1 anywhere (c6q design review M-F)", "B_L1_R1" not in open(os.path.dirname(os.path.abspath(__file__)) + "/build_c6x.py").read() and "24-word" not in full and "24 words" not in box, "")
 check("table of lengths in the box (6 rows) equals the recomputation from the quoted card lines and lease sentences", ok and boxrows == tab_calc and len(boxrows) == 6, (boxrows[:2], tab_calc[:2]))
 check("answer 2 replaces answer 1: net +15 words and no 'add 16' wording", ok and (W[0] + len(m2.group(1).split())) - (W[0] + len(m1.group(1).split())) == 15 and "net +15 words" in full and not re.search(r"\+16 s|add 16|adds 16", full), "")
 # questions and L-POST
@@ -314,7 +314,7 @@ check("naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the
 check("naive: the C-9 part 2 circle is explained", "THE CIRCLE IN C-9 PART 2" in box and "the approval rests on that look" in box, "")
 check("naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation", "may take it again" not in raw and not [l for l in txt if "reserved for the run that took it first" in l and "the plain sense of 'take'" not in l] and "THE TWO CLAIMS" not in raw and "unlimited claim" not in raw and "takes the 45-second limit out" not in raw, "")
 check("naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact", "a warning mail the system is built to send" in box and "a warning mail the system is built to send" in raw.split("| alert |")[1][:300], "")
-check("naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')", raw.startswith("# REPORT-c6x:") and "supersedes REPORT-c6v.md" in raw.split("\n")[0] and "L-SAVE, L-SAVEERR, L-PAGE" in raw, "")
+check("naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')", raw.startswith("# REPORT-c6x:") and "supersedes REPORT-c6w.md" in raw.split("\n")[0] and "L-SAVE, L-SAVEERR, L-PAGE" in raw, "")
 check("naive: table 5a lists row 11 and says the 37 rows are a different group from the 36", any(l.startswith("| 11 | run sheet") for l in a5.split("\n")) and "37 rows of the run sheet" in a5 and "different group from the 38 rows" in a5, "")
 check("naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)", raw.index("## 1b.") > raw.index("## 1. ") and raw.index("## 1b.") < raw.index("## 2. ") and "HISTORY, c6q" in sec1b and "HISTORY, c6q" not in sec0 and "HISTORY, c6r" in sec1b, "")
 check("naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box", all(x in box for x in ["EGM = ", "KEY = ", "FINAL = ", "RUN = ", "CHECK = ", "ROW = "]), "")

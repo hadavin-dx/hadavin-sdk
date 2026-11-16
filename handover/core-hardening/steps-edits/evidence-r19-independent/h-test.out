@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/steps-edits/evidence-r19-independent/hostile.py", line 67, in <module>
+    add('m14-never-opens-removed-one' + r, nth(E, 'The assistant never opens', 'The assistant opens', 2), regen)
+                                           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/handover/core-hardening/steps-edits/evidence-r19-independent/hostile.py", line 23, in nth
+    assert len(idx) > n, ('anchor', old[:50], len(idx))
+           ^^^^^^^^^^^^
+AssertionError: ('anchor', 'The assistant never opens', 2)
