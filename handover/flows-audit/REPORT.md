@@ -5,7 +5,7 @@ Done: plan v3.1 final (3 EGM rounds, round 3 = 0 Blockers). L0 done: tools + 52 
 Admitted slips so far: plan said 54 flow files (truth 52); my first fixture test passed a mutant (equal fixtures) and check_secrets skipped a file with a name prefix: both found and fixed with evidence.
 Agents running: 6 language-model agents (sonnet builders, see register), 0 script lanes. Open: QUESTIONS.md Q1 (Tier B scope), no answer yet; proceeding as written.
 ## AGENT REGISTER (id | purpose | started UTC/IST | expected end | last checked | state | next)
-| L1 (abc27aedaacbaf16c) | real-v5 + film-v5 full tables, hunts | 06:59/12:29 | +60 min | 06:59 | running | checkpoint 30 min |
+| L1 (abc27aedaacbaf16c) | real-v5 + film-v5 full tables, hunts | 06:59/12:29 | +60 min | 06:59 | reported, 3 claims spot-checked OK | checkpoint 30 min |
 | L2a (ab8d57b118be6e605) | table-screen-v2, desk doors, scripts inventory | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
 | L2b-1 (a1cf3a69d8895a4c8) | real family Tier B | 06:59/12:29 | +60 min | 06:59 | reported, spot-checked (SetCrmId grep, check_names PASS) | checkpoint |
 | L2b-2 (a00b41f23f1263f79) | film family Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
