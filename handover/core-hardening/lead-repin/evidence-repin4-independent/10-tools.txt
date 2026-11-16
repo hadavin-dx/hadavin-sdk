@@ -1,0 +1,15 @@
+busybox: not found
+gawk: not found
+nawk: /usr/bin/nawk
+original-awk: not found
+bsdsed: not found
+gsed: not found
+perl: /usr/bin/perl
+python3: /usr/local/bin/python3
+/usr/share/vim/vim91/compiler/gawk.vim
+/nix/store/l34zf9300cgydgsimmnxvjl9ivjn2yjc-busybox-1.36.1/bin/busybox
+mawk 1.3.4 20240123
+sed (GNU sed) 4.9
+grep (GNU grep) 3.11
+find (GNU findutils) 4.9.0
+Linux vm 6.18.44-fc-v470 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux
