@@ -1000,7 +1000,7 @@ K-G (detail of key step G). To shred is to overwrite the content of a file befor
 
 K-H (detail of key step H). A new key lives only inside the program that uses it (for example the credential in your own n8n): do not save it in a file on this laptop and do not write it in a note. If you already did, tell the assistant the path (never the content) and put the path on your own list; the file is part (d) of key step G once the key is in the program that uses it.
 
-K-I (detail of key step I). Before the take you wrote down, in your own private note, the NAME of the key and the LAST FOUR CHARACTERS of it (step 8 asks you to; whether the key list shows the last four characters is UNVERIFIED; if it shows none, the note holds the name and the day you made the key). The screenshot does not prove that the right key is gone, because the assistant cannot tell from a picture which key is which.
+K-I (detail of key step I). Before the take you wrote down, in your own private note, the NAME of the key and the LAST FOUR CHARACTERS of it (step 8 asks you to; whether the key list shows the last four characters is UNVERIFIED; if it shows none, the note holds the name and the day you made the key). The screenshot proves that the right key is gone, because the assistant cannot tell from a picture which key is which.
 
 ## Lines checked and found consistent
 Numbers in brackets such as (EL-7) name the earlier-list item the line was checked against (EL-n and D-n are explained at the top). Covered means read line by line.

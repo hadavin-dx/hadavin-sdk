@@ -1,0 +1,97 @@
+PASS S01 attributes after the body: v18 flags=2 ; v17 flags=2 ; v16 flags=0
+PASS S02 single-quoted body: v18 flags=2 ; v17 flags=2 ; v16 flags=0
+PASS S03 BEGIN ATOMIC body, function not on the list: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S04 schema-qualified name not on the list: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S05 ALTER FUNCTION ... SECURITY DEFINER: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S06 CREATE PROCEDURE ... SECURITY DEFINER: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S07 one %I. hides a bare table statement: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S08 a comment inside the token: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S09 newline and tab inside the token: v18 flags=1 ; v17 flags=1 ; v16 flags=1
+PASS S10 DO block that creates one: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S11 search_path without pg_temp last: v18 flags=1 ; v17 flags=1 ; v16 flags=1
+PASS S12 search_path names public: v18 flags=1 ; v17 flags=1 ; v16 flags=1
+PASS S13 no search_path at all: v18 flags=1 ; v17 flags=1 ; v16 flags=1
+PASS S14 no REVOKE from PUBLIC: v18 flags=1 ; v17 flags=1 ; v16 flags=1
+PASS S15 GRANT EXECUTE to PUBLIC after the REVOKE: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S16 lower-case token, name in a quoted identifier: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS S17 token in a function that is not OR REPLACE: v18 flags=2 ; v17 flags=1 ; v16 flags=1
+PASS S18 EXECUTE of a concatenated string: v18 flags=1 ; v17 flags=2 ; v16 flags=1
+PASS S19 bare UPDATE ONLY in a dollar body: v18 flags=1 ; v17 flags=1 ; v16 flags=1
+PASS S20 DB-3 style body without search_path: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS A1 name "a--b" hides the token on the same line: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS A2 name "t/*" opens a comment that hides an ALTER FUNCTION: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS A3 E'..\'..' string hides a statement boundary: v18 flags=1 ; v17 flags=1 ; v16 flags=2
+PASS B1 ALTER FUNCTION ... SET search_path = public: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS B2 ALTER FUNCTION ... RESET search_path: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS B3 ALTER FUNCTION ... OWNER TO the runtime role: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS B4 ALTER ROUTINE ... SET search_path: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS B5 ALTER FUNCTION ... SECURITY INVOKER (drops the guard on a definer): v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS C1 second overload of a listed name, only the real signature revoked: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS C2 two listed signatures, only one REVOKE: v18 flags=1 ; v17 flags=2 ; v16 flags=2
+PASS C3 overload with an alias type (int4 for integer): REVOKE for int does cover it: v18 flags=0 ; v17 flags=1 ; v16 flags=1
+PASS D1 GRANT of a second function in a list: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS D2 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS D3 ALTER DEFAULT PRIVILEGES ... GRANT EXECUTE ON FUNCTIONS (survives the later REVOKE): v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS D4 release granted to a non-operator role: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS D5 role membership: GRANT operator_role TO rt17: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS E1 SET ROLE before the CREATE: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS E2 SET SESSION AUTHORIZATION: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS E3 SET LOCAL ROLE: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS E4 RESET ROLE / RESET ALL: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS E5 ALTER TABLE ... OWNER TO: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS E6 function attribute SET role = postgres: v18 flags=1 ; v17 flags=0 ; v16 flags=1  (v17 MISSES it)
+PASS F1 the DB-2 file defines a DB-3 function name: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F2 search_path names a schema the runtime can write: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F3 EXECUTE format with %L from a caller value: v18 flags=2 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F4 EXECUTE format with %s: v18 flags=2 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F5 EXECUTE format whose schema argument is a caller value: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F6 bare SELECT ... FROM in a body: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F7 bare LOCK TABLE in a body: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F8 bare DROP in a body: v18 flags=2 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F9 EXECUTE of ALTER through format: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F10 LANGUAGE c: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS F11 DO block with a computed token (independent runner cases 12 to 15 in one): v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS K1 control: a correct listed function: v18 flags=0 ; v17 flags=0 ; v16 flags=0
+PASS K2 control: token only in a comment and in a string: v18 flags=0 ; v17 flags=1 ; v16 flags=0
+PASS K3 control: an atomic body with CASE ... END and a second statement: v18 flags=0 ; v17 flags=0 ; v16 flags=0
+PASS K4 control: a listed invoker function (the DB-2 audit trigger): v18 flags=0 ; v17 flags=0 ; v16 flags=0
+PASS R01 quoted mixed-case name "Evil": v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R02 schema-qualified public.evil: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R03 CREATE FUNCTION (no OR REPLACE): v18 flags=2 ; v17 flags=1 ; v16 flags=0
+PASS R04 ALTER FUNCTION evil() SECURITY DEFINER: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R05 mixed case SeCuRiTy dEfInEr: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R06 block comment between words: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R07 line comment between words: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R08 nested block comment between words: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R09 unicode-escaped identifier U&"ev\0069l": v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R10 odd dollar tag $a_1$ body: v18 flags=1 ; v17 flags=1 ; v16 flags=1
+PASS R11 token only in a DO block string (CREATE FUNCTION via EXECUTE): v18 flags=1 ; v17 flags=1 ; v16 flags=3
+PASS R12 token built by concatenation in a DO block: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R13 token built with format('%s') in a DO block: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R14 token via E'' unicode escape in a DO block: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R15 token via chr(32) in a DO block: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R16 CREATE PROCEDURE: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R17 ALTER ROUTINE evil() SECURITY DEFINER: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R18 tab and newlines inside the token: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R19 double-quoted name containing '--' (guard comment-strip is not quote-aware?): v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R20 double-quoted name containing '/*' (opens guard block comment): v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R21 double-quoted name with -- , token AFTER it on the same line: v18 flags=2 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R22 unquoted name with $tag$ shape: evil$q$: v18 flags=1 ; v17 flags=1 ; v16 flags=0
+PASS R23 E'' string with \' hiding a statement boundary: v18 flags=3 ; v17 flags=1 ; v16 flags=0
+PASS R24 token in statement preceded by a legit declared function (same statement via BEGIN ATOMIC mimic): v18 flags=4 ; v17 flags=1 ; v16 flags=0
+PASS R25 SECURITY DEFINER declared-name function but a 2nd same-named overload with other args: v18 flags=1 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R25 (fixed) same name, second overload spend_reserve(int) SECURITY DEFINER, only the first overload revoked: v18 flags=2 ; v17 flags=0 ; v16 flags=0  (v17 MISSES it)
+PASS R26 (fixed) quoted name "Evil" revoked correctly: v18 flags=1 ; v17 flags=2 ; v16 flags=0
+PASS P1 BEGIN ATOMIC with CASE ... END is ONE statement (plus the SELECT: 2 in all) [v18=2 v17=4]
+PASS P2 a quoted name with -- and /* leaves the next statement visible [v18 sees 3 statements]
+PASS real file 0001_core.sql: []
+PASS real file 0002_audit_chain.sql: []
+PASS real file 0003_approvals_tick.sql: []
+PASS real file 0004_audit_checkpoint_meta.sql: []
+PASS real file 0005_evidence.sql: []
+PASS real file spend_decrease_log.sql: []
+PASS real file spend_guarded_writes.sql: []
+PASS real file spend_nonneg.sql: []
+PASS real file spend_nonneg_finite.sql: []
+PASS real file spend_nonneg_upgrade.sql: []
+96 checks passed, 0 failed; mutants the v17 guard misses: 39; the v16 guard misses: 66

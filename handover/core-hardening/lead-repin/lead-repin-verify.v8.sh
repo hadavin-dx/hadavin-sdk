@@ -641,7 +641,7 @@ function ctl_strip(s,   t, n) {
 }
 # decode_forms (v8, MIN-5): HTML entities and URL escapes for the quote, equals, less-than and greater-than signs are turned into the
 # plain character BEFORE the sed stage, so the name rules see the same text a reader would. (The printed line shows the plain character.)
-function decode_forms(t) {
+function decode_forms(t,   o) {
   if (index(t, "&") > 0) {
     gsub(/&[Qq][Uu][Oo][Tt];|&#0*34;|&#[xX]0*22;/, "\"", t)
     gsub(/&[Aa][Pp][Oo][Ss];|&#0*39;|&#[xX]0*27;/, "'", t)
@@ -650,6 +650,16 @@ function decode_forms(t) {
   }
   if (index(t, "%") > 0) {
     gsub(/%3[Dd]/, "=", t); gsub(/%22/, "\"", t); gsub(/%27/, "'", t)
+  }
+  # a < that starts the text of one of our own marks, in the INPUT, is turned into STX at once (the sed stage turns the other raw < later):
+  # the input cannot pass as "already hidden". The main stage turns STX back into <, so the line is printed as it was.
+  if (index(tolower(t), "<masked") > 0 || index(tolower(t), "<email-masked") > 0) {
+    o = ""
+    while (match(t, /<([Mm][Aa][Ss][Kk][Ee][Dd]|[Ee][Mm][Aa][Ii][Ll]-[Mm][Aa][Ss][Kk][Ee][Dd])/)) {
+      o = o substr(t, 1, RSTART - 1) "\002" substr(t, RSTART + 1, RLENGTH - 1)
+      t = substr(t, RSTART + RLENGTH)
+    }
+    t = o t
   }
   return t
 }
@@ -1122,7 +1132,7 @@ self_test() {
     v8; printf 'the token is <ma%s>\n' "$vv"; v8_reg 'prose: token is <ma...>' ""
     v8; printf 'run --token <m%s>\n' "$vv"; v8_reg 'flag --token <m...>' ""
     v8; printf 'Bearer <e%s>\n' "$vv"; v8_reg 'Bearer <e...>' ""
-    v8; printf 'name: <email-masked>%s\n' "$vv"; v8_reg 'YAML value that starts with the exact email mark and goes on' ""
+    v8; printf 'api_key: <email-masked>%s\n' "$vv"; v8_reg 'YAML value that starts with the exact email mark and goes on' ""
     v8; printf 'secret is <MASKED>%s\n' "$vv"; v8_reg 'upper case mark with a value' ""
     # (MIN-5) other spellings of the same text
     v8; printf 'x &quot;password&quot;: &quot;%s&quot; y\n' "$vv"; v8_reg 'HTML entities for the quotes' ""
@@ -1426,8 +1436,22 @@ self_test_meta() {
   else mt_bad "a normal run must end with exit 0 and a SUMMARY line (exit=$st_r)"; fi
   st_left=$(ls "$st_child" | wc -l | tr -d ' ')
   if [ "$st_left" -eq 1 ]; then mt_ok "a normal run keeps exactly one work folder (the masked output copy)"; else mt_bad "a normal run must keep exactly one work folder (found $st_left)"; fi
+  # v8: file modes. st_modes DIR prints how many entries are NOT private (a file other than mode 600, or the folder other than 700)
+  st_modes() { find "$1" \( -type f ! -perm 600 \) -o \( -type d ! -perm 700 \) 2>/dev/null | wc -l | tr -d ' '; }
+  st_mf=$WORK/st-modefolder; mkdir "$st_mf"; chmod 700 "$st_mf"; : > "$st_mf/a"; chmod 600 "$st_mf/a"
+  st_m0=$(st_modes "$st_mf"); chmod 644 "$st_mf/a"; st_m1=$(st_modes "$st_mf"); chmod 600 "$st_mf/a"; chmod 755 "$st_mf"; st_m2=$(st_modes "$st_mf")
+  if [ "$st_m0" -eq 0 ] && [ "$st_m1" -eq 1 ] && [ "$st_m2" -eq 1 ]; then mt_ok "the file-mode check accepts mode 600 files in a 700 folder and sees a 644 file and a 755 folder"; else mt_bad "the file-mode check is damaged (private=$st_m0, file 644=$st_m1, folder 755=$st_m2)"; fi
+  rm -rf "$st_mf"
+  # a run started by a caller whose umask is 022 must still keep only private files (the script sets umask 077 itself)
+  st_o=$( (umask 022; LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$SELF" "$st_t" 2>/dev/null) ); st_r=$?
+  st_um=1; for st_d in "$st_child"/lead-repin.??????; do [ -d "$st_d" ] && st_um=$(st_modes "$st_d"); done
+  if [ "$st_r" -eq 0 ] && [ "$st_um" -eq 0 ]; then mt_ok "a run started with umask 022 keeps only private files: the work folder 700, the output copy and the three rule files 600"; else mt_bad "a run started with umask 022 left a file that is not private (exit=$st_r, entries not private=$st_um)"; fi
+  rm -rf "$st_child"/lead-repin.??????
+  st_o=$(LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$SELF" "$st_t" 2>/dev/null); st_r=$?
   for st_d in "$st_child"/lead-repin.??????; do
     [ -d "$st_d" ] || continue
+    st_um=$(st_modes "$st_d")
+    if [ "$st_um" -eq 0 ]; then mt_ok "the kept work folder is mode 700 and every file in it is mode 600"; else mt_bad "the kept work folder holds $st_um entries that are not private (mode 700 folder, 600 files wanted)"; fi
     st_n=$(ls "$st_d" | wc -l | tr -d ' ')
     if [ "$st_n" -le 6 ] && ! grep -a -r -q -F -- 'a.py' "$st_d" 2>/dev/null; then mt_ok "the kept folder holds only the output copy and the rule files ($st_n files, no file name list)"
     else mt_bad "the kept folder still holds lists of file names ($st_n files)"; fi
@@ -1525,17 +1549,56 @@ self_test_meta() {
   if [ "$st_r" -eq 143 ] && [ "$st_stray" -eq 0 ] && [ "$st_left" -eq 0 ] && grep -a -q 'took longer than 2 seconds' "$WORK/st-wd.err"; then mt_ok "the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left"
   else mt_bad "the time limit did not end a stuck run cleanly (exit=$st_r, programs left=$st_stray, folders left=$st_left)"; fi
   rm -rf "$st_child"/lead-repin.?????? "$WORK/st-wd.err"
-  # v7: git is started with settings that stop the folder's own signature program, hook folder and file-system monitor
+  # v7/v8: git is started with settings that stop the folder's own signature program, hook folder and file-system monitor.
+  # v8: EVERY git call (not only one) carries all four settings; git status is OFF by default and runs only with LEAD_REPIN_GIT_STATUS=1; the GIT_*
+  # variables of the caller (GIT_DIR, GIT_WORK_TREE) are not passed on; a fake git that answers --version makes the status call reachable.
   cat > "$st_fake/git" <<EOF
 #!/bin/sh
-printf '%s\\n' "\$*" >> "$st_fake/git.args"
+case \$1 in --version) echo "git version 2.40.0"; exit 0 ;; esac
+printf 'ARGS %s\\n' "\$*" >> "$st_fake/git.args"
+printf 'ENV GIT_DIR=%s GIT_WORK_TREE=%s GIT_CONFIG_GLOBAL=%s\\n' "\${GIT_DIR-unset}" "\${GIT_WORK_TREE-unset}" "\${GIT_CONFIG_GLOBAL-unset}" >> "$st_fake/git.args"
 exit 0
 EOF
-  chmod +x "$st_fake/git"; rm -f "$st_fake/git.args"
-  PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2>&1
-  if [ -s "$st_fake/git.args" ] && grep -q -F 'log.showSignature=false' "$st_fake/git.args" && grep -q -F 'gpg.program=/bin/false' "$st_fake/git.args" && grep -q -F 'core.hooksPath=/dev/null' "$st_fake/git.args" && grep -q -F 'core.fsmonitor=false' "$st_fake/git.args"; then mt_ok "every git call carries the settings log.showSignature=false, gpg.program=/bin/false, core.hooksPath=/dev/null and core.fsmonitor=false"
-  else mt_bad "a git call is missing one of the safety settings (log.showSignature, gpg.program, core.hooksPath, core.fsmonitor)"; fi
+  chmod +x "$st_fake/git"
+  st_gok=1
+  for st_gm in default status; do
+    rm -f "$st_fake/git.args"
+    if [ "$st_gm" = status ]; then st_gs=1; else st_gs=; fi
+    PATH="$st_fake:$PATH" GIT_DIR=/nonexistent-gitdir GIT_WORK_TREE=/nonexistent-tree LEAD_REPIN_GIT_STATUS=$st_gs LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2>&1
+    [ -s "$st_fake/git.args" ] || st_gok=0
+    st_na=$(grep -c '^ARGS ' "$st_fake/git.args" 2>/dev/null); st_nb=$(grep '^ARGS ' "$st_fake/git.args" 2>/dev/null | grep -c -F -e 'log.showSignature=false' )
+    st_nc=$(grep '^ARGS ' "$st_fake/git.args" 2>/dev/null | grep -F -e 'log.showSignature=false' | grep -F -e 'gpg.program=/bin/false' | grep -F -e 'core.hooksPath=/dev/null' | grep -F -e 'core.fsmonitor=false' | grep -c -F -e '--no-optional-locks')
+    [ "${st_na:-0}" -ge 1 ] && [ "${st_na:-0}" -eq "${st_nc:-1}" ] && [ "${st_nb:-0}" -eq "${st_na:-1}" ] || st_gok=0
+    grep -q '^ENV GIT_DIR=unset GIT_WORK_TREE=unset GIT_CONFIG_GLOBAL=/dev/null$' "$st_fake/git.args" 2>/dev/null || st_gok=0
+    if grep -c '^ENV ' "$st_fake/git.args" 2>/dev/null | grep -q -v -x "$st_na"; then st_gok=0; fi
+    if grep '^ENV ' "$st_fake/git.args" 2>/dev/null | grep -q -v -x 'ENV GIT_DIR=unset GIT_WORK_TREE=unset GIT_CONFIG_GLOBAL=/dev/null'; then st_gok=0; fi
+    st_ns=$(grep -c ' status ' "$st_fake/git.args" 2>/dev/null)
+    if [ "$st_gm" = status ]; then [ "${st_ns:-0}" -ge 1 ] || st_gok=0; else [ "${st_ns:-0}" -eq 0 ] || st_gok=0; fi
+    rm -rf "$st_child"/lead-repin.??????
+  done
+  if [ "$st_gok" -eq 1 ]; then mt_ok "every git call carries all four safety settings and --no-optional-locks, GIT_DIR and GIT_WORK_TREE of the caller are not passed on, and git status runs only with LEAD_REPIN_GIT_STATUS=1"
+  else mt_bad "a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)"; fi
   rm -rf "$st_child"/lead-repin.?????? "$st_fake/git" "$st_fake/git.args"
+  # v8: a failing stage of the masking filter is not silent (unit check of the helper, then a whole run with a program that fails on one marked input line)
+  st_mf=$WORK/st-maskfail; mkdir "$st_mf"
+  ( WORK=$st_mf; printf 'x\n' | mstage sh -c 'cat > /dev/null; exit 7'; printf 'x\n' | mstage sh -c 'cat > /dev/null; exit 141'; [ "$(cat "$WORK/mask.fail" 2>/dev/null)" = "sh 7" ] ) && st_mu=1 || st_mu=0
+  rm -rf "$st_mf"
+  st_realtr=$(command -v tr)
+  printf '#!/bin/sh\ncat > "%s/tr.in"\nif grep -a -q ZZFAILMARKZZ "%s/tr.in"; then exit 5; fi\nexec "%s" "$@" < "%s/tr.in"\n' "$st_fake" "$st_fake" "$st_realtr" "$st_fake" > "$st_fake/tr"; chmod +x "$st_fake/tr"
+  st_o=$(printf 'ZZFAILMARKZZ\n' | PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask 2>"$WORK/st-mf.err"); st_r=$?
+  if [ "$st_mu" -eq 1 ] && [ "$st_r" -eq 4 ] && grep -a -q 'a stage of the masking filter failed' "$WORK/st-mf.err"; then mt_ok "a failing stage of the masking filter is recorded, and --mask then stops with exit 4 and says so"
+  else mt_bad "a failing stage of the masking filter must stop --mask with exit 4 (helper=$st_mu, exit=$st_r)"; fi
+  rm -rf "$st_fake/tr" "$st_fake/tr.in" "$WORK/st-mf.err" "$st_child"/lead-repin.??????
+  # v8: a time limit that is a very long digit string is not a stop at once
+  st_o=$(LEAD_REPIN_MAX_SECONDS=99999999999999999999999999 LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" 2>/dev/null); st_r=$?
+  if [ "$st_r" -eq 0 ] && printf '%s' "$st_o" | grep -a -q '^SUMMARY:'; then mt_ok "a time limit of 26 digits falls back to the default and the run ends normally"; else mt_bad "a time limit of 26 digits must not end the run (exit=$st_r)"; fi
+  rm -rf "$st_child"/lead-repin.??????
+  # v8: a shell function of the caller that replaces sed (bash: export -f) is not used
+  if command -v bash > /dev/null 2>&1; then
+    st_o=$(printf 'API_KEY=%s_64_\n' "$base" | env 'BASH_FUNC_sed%%=() { cat; }' LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$st_sa" --mask 2>/dev/null); st_r=$?
+    if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_64_"; then mt_ok "an exported bash function named sed does not replace the real sed"; else mt_bad "an exported bash function named sed replaced the real sed or the run failed (exit=$st_r)"; fi
+  else mt_ok "an exported bash function named sed: NOT TESTED (bash is not installed here)"; fi
+  rm -rf "$st_child"/lead-repin.??????
   # v7: a relative TMPDIR is refused (exit 2)
   st_o=$(TMPDIR=relative_dir LEAD_REPIN_NO_META=1 sh "$st_sa" --mask < /dev/null 2>&1); st_r=$?
   if [ "$st_r" -eq 2 ] && printf '%s\n' "$st_o" | grep -a -q -F 'TMPDIR must be an absolute path'; then mt_ok "a relative TMPDIR is refused with exit 2"; else mt_bad "a relative TMPDIR must be refused (exit=$st_r)"; fi
@@ -1590,6 +1653,7 @@ case ${1:-} in
     if ! run_canary; then printf 'STOP: the masking self-test (canary) FAILED, no input was read:\n%s\n' "$CANARY" >&2; exit 3; fi
     mask <&3 &
     BGPID=$!; wait "$BGPID"; mrc=$?; BGPID=
+    if [ -s "$WORK/mask.fail" ]; then echo "STOP: a stage of the masking filter failed ($(cut -d' ' -f1 "$WORK/mask.fail" | sort -u | tr '\n' ' ')): the output is NOT complete" >&2; exit 4; fi
     exit "$mrc" ;;
   --self-test)
     CLEAN=1; start_watchdog
@@ -2011,6 +2075,7 @@ VALEOF
 cnt_awk='{ n += gsub(/<(email-)?masked>/, "&"); print } END { print n + 0 > f }'
 ( { main 2>&1; echo $? > "$WORK/main.rc"; } | awk -v f="$WORK/cnt-before" "$cnt_awk" | mask_line | awk -v f="$WORK/cnt-after" "$cnt_awk" | tee "$OUT" ) &
 BGPID=$!; wait "$BGPID"; pipe_rc=$?; BGPID=
+mfail=; [ -s "$WORK/mask.fail" ] && mfail=$(cut -d' ' -f1 "$WORK/mask.fail" | sort -u | tr '\n' ' ')
 mrc=$(cat "$WORK/main.rc" 2>/dev/null); cb=$(cat "$WORK/cnt-before" 2>/dev/null); ca=$(cat "$WORK/cnt-after" 2>/dev/null)
 # remove every working file except the masked output copy and the three rule files (file name lists may hold private names)
 for fin_f in "$WORK"/* "$WORK"/.[!.]*; do
@@ -2022,6 +2087,10 @@ FINISHED=1   # the file-name lists are gone. A stop signal after this point stil
   printf 'Final pass over the whole output above: %s additional value(s) hidden (0 means the search-time filter had already hidden everything the belt knows).\n' "$(( ${ca:-0} - ${cb:-0} ))"
   printf 'The work folder %s now holds only: the masked output copy and the three masking rule files (lists of file names were deleted).\n' "$WORK"
 } | mask_line | tee -a "$OUT"
+if [ -n "$mfail" ]; then
+  echo "STOP: a stage of the masking filter failed ($mfail): the output above is NOT complete" >&2
+  exit 4
+fi
 if [ "$pipe_rc" -ne 0 ] || [ "${mrc:-1}" -ne 0 ]; then
   echo "STOP: the output pipeline failed (pipeline status $pipe_rc, checklist status ${mrc:-none}); the output above is NOT complete" >&2
   exit 4

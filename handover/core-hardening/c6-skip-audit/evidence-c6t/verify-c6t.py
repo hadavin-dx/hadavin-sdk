@@ -113,7 +113,7 @@ check("no stale phrase in new texts", all(not v for _, v in st), [x for x in st 
 B = list(eval(re.search(r"BANNED\s*=\s*(\(.*?\n\))", rd(H + "/tests/test_no_reference_material.py"), re.S).group(1)))
 hits = [b for b in B if b.lower() in raw.lower()]
 check("banned vendor strings in report: count %d of %d listed (names not printed)" % (len(hits), len(B)), not hits, "count=%d" % len(hits))
-sec = re.findall(r"AKIA[A-Z0-9]{8,}|sk-[A-Za-z0-9]{10,}|ghp_[A-Za-z0-9]{10,}|[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[a-z]{2,}", raw)
+sec = re.findall(r"AKIA[A-Z0-9]{8,}|sk-[A-Za-z0-9_-]{10,}|ghp_[A-Za-z0-9_]{10,}|xox[abprs]-[A-Za-z0-9-]{10,}|pat-[a-z0-9]{2,5}-[0-9a-f-]{20,}|[A-Za-z0-9._-]+@[A-Za-z0-9.-]+\.[a-z]{2,}", raw)
 sec = [s for s in sec if s != "AKIAIOSFODNN7EXAMPLE"]
 check("no secret-like or e-mail string in report", not sec, len(sec))
 # 7 C-4a

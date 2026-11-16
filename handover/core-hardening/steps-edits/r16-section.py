@@ -64,7 +64,7 @@ need16('E-37', newtxt['E-37'], 'UNVERIFIED')
 for _rid, _b in [(r_['id'], b_) for r_ in rows for b_ in r_['new']]:
     for _m in re.finditer(r'please stop looking', _b):
         _win = _b[_m.end():_m.end() + 90]
-        if 'not looking' not in _win and not _win.startswith('` and `you may look again`') and not _win.startswith('` before the click') and not _win.startswith('`, `you may look again`'):
+        if 'not looking' not in _win and not _win.startswith('` and `you may look again`') and not _win.startswith('`, `you may look again`'):
             F('r16 stop-looking without the wait for `not looking` in %s: %r' % (_rid, _win[:60]))
 if 'wait for its written reply `not looking`' not in txt: F('r16 typing rule definition lacks the wait for its written reply `not looking`')
 # runner mutation #18: E-09 sub-step a lists every typing sub-step

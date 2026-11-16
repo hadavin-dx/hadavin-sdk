@@ -182,3 +182,31 @@ ROW|S60|uid=0|rep=5|sig=INT|delay=0.05|exit=130 elapsed=0.052|traceback_lines=0|
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 18918 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
 ROW|S61|uid=0|rep=5|sig=INT|delay=0.08|exit=-2 elapsed=0.084|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
     followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 19182 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S62|uid=0|rep=5|sig=INT|delay=0.12|exit=0 elapsed=0.125|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 19983 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S63|uid=0|rep=5|sig=INT|delay=0.2|exit=0 elapsed=0.204|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 22723 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S64|uid=0|rep=5|sig=TERM|delay=0|exit=-15 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 24020 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S65|uid=0|rep=5|sig=TERM|delay=0.01|exit=-15 elapsed=0.018|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 24162 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S66|uid=0|rep=5|sig=TERM|delay=0.02|exit=-15 elapsed=0.022|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 26254 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S67|uid=0|rep=5|sig=TERM|delay=0.05|exit=143 elapsed=0.066|traceback_lines=0|marker=kept|file_after=return2|msg=INTERRUPTED (signal 15): a marker exists (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratc 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 28389 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S68|uid=0|rep=5|sig=TERM|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 31460 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S69|uid=0|rep=5|sig=TERM|delay=0.12|exit=0 elapsed=0.121|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11-indep/neg/lib.sh: line 9: 32750 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S70|uid=0|rep=5|sig=TERM|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
+    followup_exit=0 final_file=return1
+DONE

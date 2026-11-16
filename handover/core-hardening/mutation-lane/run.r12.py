@@ -360,14 +360,34 @@ def shown(x, limit: int = 200) -> str:
 _CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f]")
 
 
-CHILD_ENV_ALLOWED = frozenset({"PATH", "HOME", "LC_ALL", "PYTHONDONTWRITEBYTECODE", "PYTHONPATH"})
+CHILD_ENV_ALLOWED = frozenset(
+    {"PATH", "HOME", "LC_ALL", "PYTHONDONTWRITEBYTECODE", "PYTHONPATH"}
+)
+# r12 (review r11 M1): the keyword arguments a program start may carry. Everything else (shell, executable, preexec_fn, user,
+# group, umask, process_group, close_fds, pass_fds, creationflags, bufsize ...) is refused by NAME, so a new Popen option can
+# never slip in unchecked.
+CHILD_KW_ALLOWED = frozenset(
+    {"stdin", "stdout", "stderr", "cwd", "env", "start_new_session", "text", "encoding", "errors"}
+)
+CHILD_PROGRAMS = ("git", "patch")  # by file name; the test interpreter is <root>/.venv/bin/python
+
+
+def child_program_ok(prog: str) -> bool:
+    """r12: the programs this tool starts are `git`, `patch` (found with shutil.which) and the scratch tree's own
+    `.venv/bin/python`. Any other absolute program, `/bin/sh` and `/usr/bin/env` included, is refused."""
+    return os.path.basename(prog) in CHILD_PROGRAMS or prog.endswith("/.venv/bin/python")
 
 
 def check_child_call(args, kwargs: dict) -> None:
-    """r11 (review r10 S603): the checks every program start must pass, in ONE place (a test calls this directly and through
-    Child). Raises Refused. The argument list is a list of str (never one shell string), the program is an absolute path, no
-    text holds a NUL, no shell, no `executable=` or `preexec_fn=` override, and an environment holds only names from
-    CHILD_ENV_ALLOWED (no LD_PRELOAD, no BASH_ENV, no GIT_* ...)."""
+    """r11/r12 (review r10 S603, r11 M1): the checks every program start must pass, in ONE place (a test calls this directly
+    and through Child). Raises Refused. The argument list is a list of str (never one shell string), the program is an
+    absolute path whose file name is `git` or `patch` or which ends in `/.venv/bin/python`, no text holds a NUL, only the
+    keyword arguments in CHILD_KW_ALLOWED are accepted (so no shell, no `executable=`, no `preexec_fn=`, no `user=`), `env`
+    is REQUIRED (a missing or None env would hand the child the caller's whole environment: LD_PRELOAD, BASH_ENV, GIT_* ...)
+    and holds only names from CHILD_ENV_ALLOWED, `cwd` is None or an absolute path, and `start_new_session` is True when given.
+    HONEST LIMIT: this checks WHAT is started by name and path text; it does not prove the file at that path is the real
+    git, patch or python (a hostile file named git on PATH would run), and it is not a sandbox. Positional arguments after
+    the argument list are refused by Child itself (a TypeError)."""
     if type(args) is not list or not args or not all(type(a) is str for a in args):
         raise Refused(
             "program start refused: the arguments must be a non-empty list of text (never one shell string)"
@@ -376,33 +396,51 @@ def check_child_call(args, kwargs: dict) -> None:
         raise Refused(
             f"program start refused: the program must be an absolute path, got {shown(args[0])}"
         )
+    if not child_program_ok(args[0]):
+        raise Refused(
+            f"program start refused: {shown(args[0])} is not one of git, patch or the scratch tree's .venv/bin/python"
+        )
     if any("\0" in a for a in args):
         raise Refused("program start refused: an argument holds a NUL character")
     if kwargs.get("shell"):
         raise Refused("program start refused: a shell is never used")
-    for bad in ("executable", "preexec_fn", "pass_fds", "creationflags"):
-        if kwargs.get(bad):
-            raise Refused(f"program start refused: {bad}= is not allowed")
+    unknown = sorted(set(kwargs) - CHILD_KW_ALLOWED)
+    if unknown:
+        raise Refused(f"program start refused: {unknown} is not allowed")
     env = kwargs.get("env")
-    if env is not None:
-        if not isinstance(env, dict) or not all(
-            type(k) is str and type(v) is str for k, v in env.items()
-        ):
-            raise Refused("program start refused: the environment must be a dict of text")
-        extra = sorted(set(env) - CHILD_ENV_ALLOWED)
-        if extra or any("\0" in v for v in env.values()):
-            raise Refused(f"program start refused: environment variable(s) not allowed: {extra}")
+    if env is None:
+        raise Refused(
+            "program start refused: env= is required (None would give the child the caller's whole environment)"
+        )
+    if not isinstance(env, dict) or not all(type(k) is str and type(v) is str for k, v in env.items()):
+        raise Refused("program start refused: the environment must be a dict of text")
+    extra = sorted(set(env) - CHILD_ENV_ALLOWED)
+    if extra or any("\0" in v for v in env.values()):
+        raise Refused(f"program start refused: environment variable(s) not allowed: {extra}")
+    cwd = kwargs.get("cwd")
+    if cwd is not None and (
+        not isinstance(cwd, (str, os.PathLike)) or not os.path.isabs(os.fspath(cwd))
+    ):
+        raise Refused("program start refused: cwd must be None or an absolute path")
+    if "start_new_session" in kwargs and kwargs["start_new_session"] is not True:
+        raise Refused("program start refused: start_new_session must be True")
 
 
 class Child(subprocess.Popen):
-    """The ONE way this tool starts another program (r11: a real guard, not only a name). Every start runs
-    `check_child_call` first: a list of text, an absolute program path, no NUL, no shell, an environment from the fixed
-    allowed names. The arguments are built by this tool (run_cmd and run_tests), never taken as one string from the caller;
-    the check is there so that a later change cannot weaken that without a test failing (T99a)."""
+    """The ONE way this tool starts another program. Every start runs `check_child_call` first (see its docstring for what it
+    checks and its honest limit). Only keyword arguments after the argument list are possible (r12: positional extras such
+    as bufsize, executable, preexec_fn used to skip every check). An OSError from the start itself (the program or the
+    folder is gone, E2BIG: too many or too long arguments) is a refusal, never a traceback."""
 
-    def __init__(self, args, *a, **kw):
+    def __init__(self, args, **kw):
         check_child_call(args, kw)
-        super().__init__(args, *a, **kw)
+        try:
+            super().__init__(args, **kw)
+        except OSError as e:
+            raise Refused(
+                f"program start failed: {pathlib.Path(args[0]).name}: {e.strerror or e} (too many or too long arguments, "
+                f"or the program or its folder is missing)"
+            ) from e
 
 
 class SafeOut:
@@ -869,13 +907,18 @@ def write_out(path: pathlib.Path, text: str) -> None:
         fh.write(text)
 
 
-def check_out_path(path: pathlib.Path, root: pathlib.Path | None = None) -> None:
+def check_out_path(
+    path: pathlib.Path, root: pathlib.Path | None = None, pending: pathlib.Path | None = None
+) -> None:
     """Before anything is planted (review r4 nit 11, r6 nit 4): an output path must not be a symbolic link or a special
     file, must have an existing folder, must not have two names (writing it would change the other name too) and, with
-    `root`, must not lie inside the scratch tree (it would be overwritten by or dirty the tree)."""
+    `root`, must not lie inside the scratch tree (it would be overwritten by or dirty the tree). r12 m1: `pending` is a folder
+    that does not exist YET and will be created after all checks (--raw): a file directly in it needs no existing folder."""
     if path.is_symlink() or (path.exists() and not path.is_file()):
         raise Refused(f"output path {path} is a symbolic link or not a regular file: refused")
-    if not path.parent.is_dir():
+    if not path.parent.is_dir() and not (
+        pending is not None and not os.path.lexists(pending) and path.parent == pending
+    ):
         raise Refused(
             f"the folder of output path {path} does not exist: refused (nothing is created for you)"
         )
@@ -2551,6 +2594,7 @@ def too_long(v: str) -> str | None:
     return None
 
 
+TOTAL_ARGS_MAX_BYTES = 60_000  # all the test words together (r12 m2); far below the smallest kernel limit (131072)
 ARG_MAX_BYTES = 100_000  # one program argument: Linux allows 131072 bytes (MAX_ARG_STRLEN); r11 m1
 
 
@@ -2593,6 +2637,22 @@ def nonempty(v: str) -> str:
     bad = too_long(v)
     if bad:
         raise argparse.ArgumentTypeError(f"not usable as a path or name: {bad}")
+    return v
+
+
+def pythonpath_arg(v: str) -> str:
+    """r12 m3: --pythonpath is a COLON-SEPARATED list: each folder is checked as a path, not the whole text; the whole text
+    stays within one program argument's size."""
+    if v == "":
+        raise argparse.ArgumentTypeError(
+            "an empty value is not allowed (is a shell variable unset?)"
+        )
+    if len(os.fsencode(v)) > ARG_MAX_BYTES // 4:
+        raise argparse.ArgumentTypeError(f"too long ({len(os.fsencode(v))} bytes)")
+    for part in v.split(":"):
+        bad = too_long(part)
+        if bad:
+            raise argparse.ArgumentTypeError(f"one folder of the list is not usable as a path: {bad}")
     return v
 
 
@@ -2663,7 +2723,7 @@ def main():
     ap.add_argument("--timeout", type=int, default=600, help="seconds per test run")
     ap.add_argument(
         "--pythonpath",
-        type=nonempty,
+        type=pythonpath_arg,
         help="only for the proof copies, whose venv .pth points at another tree",
     )
     ap.add_argument(
@@ -2753,13 +2813,24 @@ def main():
         if "\0" in t:
             why = "it holds a NUL"
         elif ix in paths_among:
-            why = too_long(t)
+            # r12 m3: only the path part before `::` is a path; the node id after it is a word (limited by the argument sizes)
+            why = too_long(t.split("::", 1)[0])
+            if why is None and size > ARG_MAX_BYTES:
+                why = f"it is {size} bytes long (the limit for one argument is {ARG_MAX_BYTES})"
         elif size > ARG_MAX_BYTES:
             why = f"it is {size} bytes long (the limit for one argument is {ARG_MAX_BYTES})"
         else:
             why = None
         if why:
             ap.error(f"a test argument is not usable as a path or word: {why}")
+    # r12 m2 (class: the total size of what one program start gets): all the words together (each also costs one 8-byte
+    # pointer) stay under TOTAL_ARGS_MAX_BYTES, so the kernel's limit on all arguments plus the environment (E2BIG; it can be
+    # as low as 128 KiB) can never be reached. Before anything is planted; Child() also turns an OSError into a refusal.
+    total = sum(len(os.fsencode(t)) + 9 for t in tests)
+    if total > TOTAL_ARGS_MAX_BYTES:
+        ap.error(
+            f"the test arguments together are {total} bytes (counted with 9 per word); the limit is {TOTAL_ARGS_MAX_BYTES}"
+        )
     root = pathlib.Path(a.root)
     try:
         is_folder = root.is_dir()
@@ -2910,12 +2981,13 @@ def main():
                 raise Refused(
                     f"--raw {shown(a.raw)}: the folder plus a raw file name would be too long a path"
                 )
-            rawdir.mkdir(parents=True, exist_ok=True)
+            if os.path.lexists(rawdir) and not rawdir.is_dir():
+                raise Refused(f"--raw {shown(a.raw)} exists and is not a folder: refused")
             outs = [rawdir / f"{a.prefix}-{n}.txt" for n in sorted(RESERVED_IDS)]
             outs += [rawdir / f"{a.prefix}-{m['id']}.txt" for m in ms]
             outs += [pathlib.Path(a.out_json)] if a.out_json else []
             for o in outs:  # before anything is planted (review r4 nit 11, r6 nit 4)
-                check_out_path(o, root)
+                check_out_path(o, root, pending=rawdir)
             if a.out_json:
                 check_out_json_target(pathlib.Path(a.out_json))
             if len({os.path.abspath(o) for o in outs}) != len(outs):
@@ -2930,6 +3002,12 @@ def main():
                     *map(pathlib.Path, a.patch),
                 ],
             )
+            # r12 m1 (class: a folder created before every refusal that could stop it, and an OSError of mkdir shown as a
+            # traceback): the --raw folder is created only now, after every output check; a failure is a refusal (exit 2)
+            try:
+                rawdir.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                raise Refused(f"--raw {shown(a.raw)} cannot be created: {e.strerror or e}") from e
             results = []
             a.ref_files = tree_files(ref)
             # review r5 nit 6: the tree must still equal the archive after the import check (it runs the target module)
