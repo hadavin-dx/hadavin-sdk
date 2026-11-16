@@ -1,21 +1,21 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T11:58:31Z (17:28 IST)
-PUSHED_UTC: 2026-11-16T11:58:31Z
+UPDATED_UTC: 2026-11-16T12:01:32Z
+PUSHED_UTC: 2026-11-16T12:01:32Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
 NEEDS_YOU, in this order (lead; one action each; times UTC / IST):
-  1. Start Docker and run the first rehearsal of the changed flows. Target: tonight or tomorrow morning IST (decision 12); write the UTC and IST start in the handoff. Nothing else can finish before this.
-  2. Yes or no: may the three Apache-2.0 licence copies under handover/promotion-inputs stay as they are? (A yes means the failing test is changed, not the files.)
-  3. Paste the SESSION-HANDOFF text into inputs/ by Tue 17 Nov 12:00 UTC / 17:30 IST, or check M20 (0 percent) is dropped. This date is the one I am holding you to; tell me if it is wrong.
-  4. Answer the 8 open Blockers in drift/REPORT.md (row M3) and the two open questions D-04 and D-05 (both in work/decision-list-for-lead.md).
-  5. Answer work/decision-list-for-lead.md. Its first row (the self-check, run (a)) was due Mon 16 Nov 13:00 UTC / 18:30 IST; its status is UNKNOWN.
+  1. Start Docker, then run the loopback self-check, then the first rehearsal of the changed flows (steps: work/t19-and-stored-data-steps.md; about 1.5 h, my estimate, unverified). Start by Tue 17 Nov 03:30 UTC / 09:00 IST (decision 12). Write your start time in the handoff.
+  2. Yes or no: may the system-map session change the failing licence test so it accepts the three Apache-2.0 licence copies under handover/promotion-inputs? (Yes: the files stay unchanged and the test changes. No: the test stays failing. Decision 11 forbids relicensing the files.)
+  3. Yes or no: will you paste the SESSION-HANDOFF text (the live-state text on your laptop) into inputs/ by Tue 17 Nov 12:00 UTC / 17:30 IST? If no, I drop row M20.
+  4. Answer the 8 open Blockers in drift/REPORT.md (row M3). Second action: answer D-04 and D-05 in work/decision-list-for-lead.md (the questions are written there).
+  5. Yes or no: did you start the loopback self-check (row 2a in work/critical-path-r1.md)? It was due Mon 16 Nov 13:00 UTC / 18:30 IST. Then answer work/decision-list-for-lead.md.
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
-PROGRESS: 15 of 20 items open (table below); mean 83.1 percent (1662 / 20). Percent is how far a page has been checked, not confidence the take will work.
+PROGRESS: 15 of 20 table items not done (table below; M3, M14, M20 are rows in it); mean 83.1 percent (1662 / 20). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 6 running, 2 missing (ORDER 035). Missing 1: re-read of work/open-items-table.md, waits on my own fix (Person column), not on an answer from you. Missing 2: re-read of work/decision-list-for-lead.md, waits on my own fix (A13 and split rows), not on an answer from you. I fix both next, then start them.
-CAPACITY: nproc 4, load low, RAM under 1 GB of 16087 MB, disk 45% used (22 GB free of 252 GB); my disk users: work 2.3 MB, reviews-of-core-hardening 0.4 MB; freed 0 MB (ORDER 031).
-NEXT: digested through 423. Fix my own files from digests 411-423 (decision-list A13 and split rows, open-items-table Person column, t19 steps, banned-claims sources, QUEUE glossary), then refill.
+AGENTS_RUNNING: 8 running (ORDER 035 minimum met): read-only cold reads of critical-path-r1, STATUS-BOARD, OWNER-VIEW, OWNER-CLEANUP-CARD, t19 steps, banned-claims, QUEUE, TAKE-BLOCKERS. 0 missing.
+CAPACITY: nproc 4, load 0.11, RAM 889 MB used of 16087 MB, disk 45% used (22 GB free of 252 GB, `df -h .`); my disk users: work 2.3 MB, reviews-of-core-hardening 0.4 MB; freed 0 MB (ORDER 031).
+NEXT: digested through 433. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
 INTERRUPTED: none
 
 ## ITEMS
@@ -42,17 +42,17 @@ INTERRUPTED: none
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (ORDER 028/035: 6 running, 2 missing, reasons in AGENTS_RUNNING; last checked 2026-11-16T11:58:31Z)
+## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a8cdcedff58e2abfc | re-read STATUS-BOARD top | 11:58:31Z | +3 min | running | nothing yet (hand-back arrives) |
-| ad28d2bc6a9f778bc | re-read work/critical-path-r1.md | 11:58:31Z | +3 min | running | nothing yet (hand-back arrives) |
-| a356f4b25f7227072 | re-read work/end-delete-cases.md | 11:58:31Z | +3 min | running | nothing yet (hand-back arrives) |
-| a128fbbb9ff065fa3 | re-read work/rehearsal-passed-limits-draft.md | 11:58:31Z | +3 min | running | nothing yet (hand-back arrives) |
-| a2c4ce259247661e0 | re-read work/not-checked-r2.md | 11:58:31Z | +3 min | running | nothing yet (hand-back arrives) |
-| a0a594bc16bb2587c | re-read work/cleanup-card-held-edits.md | 11:58:31Z | +3 min | running | nothing yet (hand-back arrives) |
-
-NEXT 5 tasks I would start with more capacity: (1) cold read QUEUE.md after glossary; (2) cold read banned-claims.md after sources; (3) cold read reviews-of-core-hardening/CORRECTIONS.md after fix; (4) cold read work/t19-and-stored-data-steps.md after split; (5) cold read PLAN-002.md after the L4 fix. None waits on you.
+| af19e141 | critical-path-r1 r4 (read-only) | about 12:01 | about +10 min | running | nothing yet |
+| a7e31e98 | STATUS-BOARD r5 (read-only) | about 12:01 | about +10 min | running | nothing yet |
+| a1d61c6c | OWNER-VIEW cold read (read-only) | about 12:01 | about +10 min | running | nothing yet |
+| a1dd28c6 | OWNER-CLEANUP-CARD cold read (read-only) | about 12:01 | about +10 min | running | nothing yet |
+| aa5d45ad | t19-and-stored-data-steps cold read (read-only) | about 12:01 | about +10 min | running | nothing yet |
+| af897a5b | banned-claims cold read (read-only) | about 12:01 | about +10 min | running | nothing yet |
+| a03e237d | QUEUE cold read (read-only) | about 12:01 | about +10 min | running | nothing yet |
+| aca48ab5 | TAKE-BLOCKERS cold read (read-only) | about 12:01 | about +10 min | running | nothing yet |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
