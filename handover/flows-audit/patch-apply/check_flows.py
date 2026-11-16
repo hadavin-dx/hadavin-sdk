@@ -284,7 +284,7 @@ def deep_diff(a, b, path=""):
 
 
 def get(d, name):
-    return next((n for n in d["nodes"] if n["name"] == name), None)
+    return next((n for n in d["nodes"] if n.get("name") == name), None)
 
 
 def patch_checks(d, fname, which, tag):
@@ -403,8 +403,8 @@ ALLOW_SETTINGS = {
 
 
 def node_diff(base, patched, fname, allow, tag, out):
-    bn = {n["name"]: n for n in base["nodes"]}
-    pn = {n["name"]: n for n in patched["nodes"]}
+    bn = {n["name"]: n for n in base["nodes"] if "name" in n}
+    pn = {n["name"]: n for n in patched["nodes"] if "name" in n}
     allowed = [r for a in allow for r in ALLOW_NODES.get(a, []) if fname in r[0]]
     allow_added = {r[1] for r in allowed if r[2] is None}
     allow_changed = {r[1]: r[2] for r in allowed if r[2] is not None}

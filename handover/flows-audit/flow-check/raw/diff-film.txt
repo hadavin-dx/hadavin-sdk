@@ -1,6 +1,6 @@
 # node-level diff, unpatched generator output vs patched (paths only, no values)
 # allowed patches: F002,F008
-== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w1/g/film/mf-form.json ==
+== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w2/g/film/mf-form.json ==
   node ADDED   KeyOk (n8n-nodes-base.if v2.2)
   node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
   node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
@@ -12,7 +12,7 @@
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
   settings CHANGED saveManualExecutions: False -> True
-== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w1/g/film/mf-hook.json ==
+== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w2/g/film/mf-hook.json ==
   node ADDED   KeyOk (n8n-nodes-base.if v2.2)
   node ADDED   ReplyBadKey (n8n-nodes-base.respondToWebhook v1.4)
   node ADDED   ReplyStoreFail (n8n-nodes-base.respondToWebhook v1.4)
@@ -24,8 +24,8 @@
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
   settings CHANGED saveManualExecutions: False -> True
-== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w1/g/film/mf-recovery.json ==
-== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w1/g/film/mf-sub-crm-mail.json ==
+== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w2/g/film/mf-recovery.json ==
+== /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w2/g/film/mf-sub-crm-mail.json ==
   settings CHANGED saveDataErrorExecution: 'none' -> 'all'
   settings CHANGED saveDataSuccessExecution: 'none' -> 'all'
   settings CHANGED saveManualExecutions: False -> True

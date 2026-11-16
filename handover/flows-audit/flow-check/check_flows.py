@@ -1804,10 +1804,13 @@ def main(argv):
             p = os.path.join(dr, fn)
             tag = f"{dr}/{fn}"
             if not os.path.isfile(p):
-                fail(
-                    tag,
-                    "this listed flow is not a regular file (a folder, a dangling link or missing), so it was NOT checked",
-                )
+                if (
+                    fn in have
+                ):  # a missing file is already a FAIL through the file list above; this is the entry that exists but is no regular file
+                    fail(
+                        tag,
+                        "this listed flow is not a regular file (a folder or a dangling link), so it was NOT checked",
+                    )
                 continue
             d = load(p, tag)
             if d is None:

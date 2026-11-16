@@ -69,7 +69,7 @@ json.dump(j, open(p, "w", encoding="utf-8"))
 PYEOF
 tk b1e -- --flows "$S/warnnew" --write-warn-pin "$S/warnnew.pin"
 [ "$RC" = 4 ] && [ -f "$S/warnnew.pin" ] && has b1e "THE WARN SET CHANGED" && has b1e "NEW PIN WRITTEN" && grep -q '^  + ' "$S/b1e.txt"; ok $? "B1e: a changed WARN set prints the difference, writes the new file, exits 4 (got exit $RC)"
-[ "$(sha256sum < "$PIN")" = "$PINSUM" ]; ok $? "B1: the pin in use (take-warns.pin) is byte for byte unchanged by all cases above"
+[ "$(sha256sum < "$PIN" | cut -d' ' -f1)" = "$PINSUM" ]; ok $? "B1: the pin in use (take-warns.pin) is byte for byte unchanged by all cases above"
 
 # M1: an environment override is printed and is exit 4 without the test flag; with the test flag it is printed and allowed
 cp -- "$HERE/check_flows.py" "$S/ck-copy.py"
@@ -78,7 +78,7 @@ tk m1a TAKE_CHECK_WARN_PIN="$S/new.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has m1a "ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_WARN_PIN=$S/new.pin" && grep -q '^FINAL: .*ACTIVE ENVIRONMENT OVERRIDES' "$S/m1a.txt"; ok $? "M1: TAKE_CHECK_WARN_PIN without the test flag is exit 4 and is named in the top block and the FINAL line (got exit $RC)"
 for pair in "TAKE_CHECK_FLOWS=$P" "TAKE_CHECK_DDL=$S/ddl-copy.sql" "TAKE_CHECK_CK=$S/ck-copy.py" "TAKE_CHECK_FORM_EXPECT=15:14"; do
   nm=m1-${pair%%=*}
-  tk "$nm" "$pair" --
+  tk "$nm" "$pair" -- --flows "$P"
   [ "$RC" = 4 ] && has "$nm" "ACTIVE ENVIRONMENT OVERRIDES: $pair"; ok $? "M1: ${pair%%=*} without the test flag is exit 4 and is printed (got exit $RC)"
 done
 tk m1b TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/new.pin" -- --flows "$P"
@@ -122,7 +122,7 @@ c["ExtraNode"] = {"main": [[{"node": "ReplyRan", "type": "main", "index": 0}]]}
 json.dump(j, open(p, "w", encoding="utf-8"))
 PYEOF
   tk "count-$f" -- --flows "$S/count-$f"
-  [ "$RC" = 1 ] && grep -q "^FAIL .*$f.*nodes" "$S/count-$f.txt" && ! grep -q -E "^FAIL .*(unreachable|orphan)" "$S/count-$f.txt"; ok $? "count: $f with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit $RC)"
+  [ "$RC" = 1 ] && grep -q "^FAIL .*$f node count 16 != expected 15" "$S/count-$f.txt" && ! grep -q -E "^FAIL .*(unreachable|orphan)" "$S/count-$f.txt"; ok $? "count: $f with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit $RC)"
 done
 echo "test_take_check: $((N-BAD)) of $N cases as expected, $BAD not as expected"
 [ "$BAD" = 0 ]

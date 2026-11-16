@@ -2843,6 +2843,127 @@ def main():
                 ],
             )
 
+    # --- round 10 (review f8-r10): entry-flow responseMode (M2), listed flow that is not a file (M3), F-002 reply steps and lead_key (M5), queries that were not compared (M7) ---
+    if PATCHED:
+        pa = ["--quiet-info"] + acc
+        for fn_ in ("mf-form.json", "mf-hook.json"):
+            dd_ = f"{work}/r10-respmode-{fn_}"
+            shutil.copytree(PATCHED, dd_)
+            h = rj(f"{dd_}/{fn_}")
+            for n_ in h["nodes"]:
+                if n_["type"] == "n8n-nodes-base.webhook":
+                    n_["parameters"]["responseMode"] = "onReceived"
+            wj(f"{dd_}/{fn_}", h)
+            check_out(
+                f"r10_m2_entry_flow_response_mode_not_response_node_is_fail_{fn_}",
+                [dd_] + pa,
+                1,
+                must=[
+                    (
+                        "FAIL",
+                        f"{fn_} webhook Receive sets responseMode='onReceived' on an entry flow",
+                    )
+                ],
+            )
+        dd_ = f"{work}/r10-m3-dir"
+        shutil.copytree(PATCHED, dd_)
+        os.remove(f"{dd_}/mf-hook.json")
+        os.mkdir(f"{dd_}/mf-hook.json")
+        check_out(
+            "r10_m3_listed_flow_that_is_a_folder_is_fail",
+            [dd_] + pa,
+            1,
+            must=[("FAIL", "mf-hook.json this listed flow is not a regular file")],
+        )
+        dd_ = f"{work}/r10-m3-link"
+        shutil.copytree(PATCHED, dd_)
+        os.remove(f"{dd_}/mf-recovery.json")
+        os.symlink(f"{work}/no-such-flow-file.json", f"{dd_}/mf-recovery.json")
+        check_out(
+            "r10_m3_listed_flow_that_is_a_dangling_link_is_fail",
+            [dd_] + pa,
+            1,
+            must=[("FAIL", "mf-recovery.json this listed flow is not a regular file")],
+        )
+        dd_ = f"{work}/r10-m5-type"
+        shutil.copytree(PATCHED, dd_)
+        h = rj(f"{dd_}/mf-form.json")
+        for n_ in h["nodes"]:
+            if n_["name"] == "ReplyBadKey":
+                n_["type"] = "n8n-nodes-base.noOp"
+        wj(f"{dd_}/mf-form.json", h)
+        check_out(
+            "r10_m5_reply_bad_key_must_be_respond_to_webhook",
+            [dd_] + pa + ["--patch-checks", "F002"],
+            1,
+            must=[("FAIL", "F-002 ReplyBadKey is of type 'n8n-nodes-base.noOp'")],
+        )
+        dd_ = f"{work}/r10-m5-leadkey"
+        shutil.copytree(PATCHED, dd_)
+        h = rj(f"{dd_}/mf-hook.json")
+        for n_ in h["nodes"]:
+            if n_["name"] == "Valid":
+                n_["parameters"]["assignments"]["assignments"] = [
+                    a_
+                    for a_ in n_["parameters"]["assignments"]["assignments"]
+                    if a_.get("name") != "lead_key"
+                ]
+        wj(f"{dd_}/mf-hook.json", h)
+        check_out(
+            "r10_m5_valid_must_set_lead_key",
+            [dd_] + pa + ["--patch-checks", "F002"],
+            1,
+            must=[
+                (
+                    "FAIL",
+                    "F-002 Valid must set lead_key exactly once with a non-empty value, found 0",
+                )
+            ],
+        )
+        check_out(
+            "r10_m5_patched_copy_passes_the_new_f002_asserts",
+            [PATCHED] + pa + ["--patch-checks", "F002"],
+            0,
+            must_not=[
+                "F-002 Valid must set lead_key",
+                "F-002 ReplyBadKey is of type",
+                "F-002 ReplyStoreFail is of type",
+            ],
+        )
+        dd_ = f"{work}/r10-m7-expr"
+        shutil.copytree(PATCHED, dd_)
+        h = rj(f"{dd_}/mf-sub-crm-mail.json")
+        done_ = 0
+        for n_ in h["nodes"]:
+            if (
+                n_["type"] == "n8n-nodes-base.postgres"
+                and "query" in n_.get("parameters", {})
+                and not done_
+            ):
+                n_["parameters"]["query"] = "={{ $json.sql }}"
+                done_ = n_["name"]
+        wj(f"{dd_}/mf-sub-crm-mail.json", h)
+        check_out(
+            "r10_m7_query_that_is_only_an_expression_is_not_counted_as_compared",
+            [dd_] + pa + ["--ddl", ddl4],
+            0,
+            must=[
+                (
+                    "WARN",
+                    f"mf-sub-crm-mail.json node {done_}: the query text names no table that could be read",
+                ),
+                ("SQL columns compared with the --ddl file: 13 query string(s) read.", ""),
+                ("SQL NOT COMPARED: query strings read but not compared", ")=1;"),
+            ],
+        )
+        check_out(
+            "r10_m7_control_all_queries_compared",
+            [PATCHED] + pa + ["--ddl", ddl4],
+            0,
+            must=[("SQL columns compared with the --ddl file: 14 query string(s) read.", "")],
+            must_not=["names no table that could be read"],
+        )
+
     if skipnames:
         print(
             "SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): "

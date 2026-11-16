@@ -1,6 +1,6 @@
 applied F-002-take-key-check-and-claim-error-path
 applied F-008-save-runs-for-the-take
-checker runs wall time: 0 s; self-test wall time: 8 s
+checker runs wall time: 1 s; self-test wall time: 7 s
 ==== real-v5 (THE TAKE) ====
 ---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----
 [pristine]
@@ -47,8 +47,8 @@ exit=1
 RESULT: 4 FAIL, 16 WARN
 Known open problems: 10
 exit=1
-[selftest exit=0] SELFTEST: 668 as expected, 0 not as expected, 62 skipped (not applicable)
-[take_check.sh exit=4] missing lines: [a run-saving WARN on the patched copy] [a !!! line: the take script found a table or column problem] [take_check: want 3 INFO lines saying run saving is ON on purpose (form, hook, sub-workflow)]
+[selftest exit=1] SELFTEST: 668 as expected, 5 not as expected, 62 skipped (not applicable)
+[take_check.sh exit=4] missing lines: [a run-saving WARN on the patched copy] [WARN set equals the pinned set] [Query strings read:] [a !!! line: the take script found a table or column problem] [take_check: want 3 INFO lines saying run saving is ON on purpose (form, hook, sub-workflow)] [test_take_check.sh exit 1 (see raw/test-take-check.txt)]
 run_all exit status (real-v5 default runs + self-test): 1
 real-v5 placeholder ids: 12 file(s) warn in the committed flows (pass --strict to make that a failure)
 OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check
