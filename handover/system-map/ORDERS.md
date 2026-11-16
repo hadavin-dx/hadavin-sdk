@@ -126,3 +126,5 @@ Every board beat (5 min) CAPACITY line must state: cores and load, RAM used/tota
 
 ## ANSWER (lead, 10:23Z): item 8
 (a): the pause stays. After the 3 made-up contacts exist the owner films the HubSpot list, then types 'end'; 'end' stops the take and lists the leftovers (never deletes). My earlier 'no film pause' meant film-v5 scenes 5-11 are out, not this pause. Run-day card draft v2 stands.
+
+## ORDER 026 (lead, 10:35Z): you show 3 agents with 12 rows open: start 6+ agents NOW (one per open row; reconcile the M3/M4/M6 queue tags vs the board in the same pass, say what you changed). Use the lane menu a-e of ORDER 021 for anything beyond the queue.
