@@ -12,7 +12,7 @@ Made-up data only. Status: PROPOSAL from the system-map session; nothing here is
 - **Approver** = the studio head. The owner may approve only words the owner did not write.
 - **Checker** = a person who is not the author and not the approver; compares the post with this page. NOT NAMED. Nobody posts until the studio head writes the checker's name here.
 
-## Allowed (three items only)
+## Allowed (two sentences only)
 1. The sentence: "A lead sent twice with the same id is processed once." (inside one take folder = one recorded run).
 2. Other words only if the approver confirms them AND the checker finds no banned phrase. A banned phrase is never unlocked by this item.
 3. One spoken sentence: the owner deletes the leftover made-up contacts by hand.
@@ -26,4 +26,4 @@ The studio head names a result file (a text file written by the rehearsal record
 ## Open items
 Checker's name; date to name it (proposal: Tue 17 Nov 2026 12:00 UTC / 17:30 IST); exact sentence of decision 8 (UNVERIFIED, quote from inputs/DECISIONS-2026-11-16.md); the final words after the rehearsal.
 
-CURRENT r8 16 Nov 2026 (wins). OPEN QUESTION FIRST: is the studio head the owner or a separate person? NOT SETTLED; nobody posts until it is answered. Roles: owner; studio head (unsettled); checker (unnamed, must differ from the approver); Claude session (never posts). Allowed: 'A lead sent twice with the same id is processed once' and 'The owner deletes the leftover made-up contacts by hand'. Everything under the heading "Banned (do not say or show)" stays banned. Allowed means ONLY these two sentences; any older item that allows other words is void. Terms are in the glossary on the earlier lines of this page; decision 8 is UNVERIFIED (its text was never quoted to this session). The roles and the unlock rule above are in force until the studio head decides otherwise; nothing is unlocked today. Do not cite by line number.
+(Item 2 is void: no other words are allowed.)

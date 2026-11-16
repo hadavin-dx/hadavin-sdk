@@ -1,4 +1,5 @@
 # v5 line edits so the owner steps file matches M17 (the take never deletes). For core-hardening, who own v5. 16 Nov 2026. Made-up data only.
+Words: M17 = the proposal in decisions/M17-end-never-deletes.md that `end` never deletes anything. The take = the one filmed run of the lead-intake demo on made-up data. Film pause = the moment the program waits so the 3 made-up contacts can be filmed. `end` = the word the owner types to close that pause. Studio lead = the Claude session that sends the owner steps. v5 = inputs/OWNER-STEPS-realrun-v5-core-hardening.md. Run-day card = OWNER-RUN-DAY-CARD.md. The table lists the edit to make, not the old text; check each v5 line yourself.
 Source: a read of M17 and inputs/OWNER-STEPS-realrun-v5-core-hardening.md (agent text, unverified; check each quote). The program's own notice text must change FIRST or v5 will describe output that does not exist (M17 line 24).
 Use "lead id and contact id", not "lead key" (v5 line 20 says key means a secret).
 | v5 line | change |

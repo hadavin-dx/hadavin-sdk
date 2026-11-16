@@ -1,4 +1,4 @@
-# HISTORY ONLY (moved 16 Nov 2026 from M17-end-never-deletes.md). Not current; apply nothing from it.
+STATUS: PROPOSAL ON HOLD (not history). Apply nothing until the studio lead writes VERIFIED after reading the program's end step. Nobody is named for that yet. The current text is the last paragraph (HOLD r11); older paragraphs are kept for the record and their line pointers are void. | # HISTORY ONLY (moved 16 Nov 2026 from M17-end-never-deletes.md). Not current; apply nothing from it.
 
 # M17: the take never deletes (decision 2); replacement lines for "end"
 Written Mon 16 Nov 2026 by the system-map session from a read-only agent report (UNVERIFIED against the program: `scripts/run_real_check_n8n.py` is not in this checkout; only docs name it). Reader: the studio lead. Made-up data only.
