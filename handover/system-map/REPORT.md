@@ -1,5 +1,8 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 2026-11-16 07:41 UTC / 13:11 IST - evidence-1 done; 4 result reviewers running
+Agents running: 4 sonnet egm reviewers (codebase-details, zoom-out, comprehension, design) reading outputs plus work/evidence-1.md. Evidence-1: partition 4470 of 4470, 21 tests OK, scan no defects, 1879 lane and 2006 output citations all FOUND (raw output only; the runner judged nothing). Next: egm-resolve, fixes, evidence-2, drift report, FINAL.
+
 ## Status 2026-11-16 07:25 UTC / 12:55 IST - all lanes closed; SWEEP.md, ONE-PLACE-TABLE.md, MASTER-MAP.md written
 Agents running: 1 (sonnet EVIDENCE-1: runs partition, citation check, scan, unit tests; records raw output only). Own checks: 3740 of 3740 citations FOUND after I fixed 14 drifted or wrong ones; scan_outputs no defects; 21 unit tests OK. Counts: 797 map rows, 311 findings (11 Blocker candidates before L6, now 19). Lane gaps stay listed in SWEEP.md Exceptions (L1c 18, L3c 66, L4c 99 files NOT-READ). Next: evidence-1, 4 result reviewers (codebase-details, zoom-out, comprehension, design), resolve, FINAL.
 
@@ -32,7 +35,11 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L3c | continuation of L3: READ 158 review/resolve/lint reports and partly-read scripts | 07:01 | +45 min | closed (reported: PARTIAL, 92 READ, 66 NOT-READ (62 review reports + 4), 37 findings, 0 Blocker; no 2nd continuation, listed for the lead) |
 | LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | closed (reported: 8 of 8 READ, 13 findings, 0 Blocker) |
 | LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | closed 07:17 UTC (PARTIAL: 18 NOT-READ) |
-| EVIDENCE-1 | EVIDENCE RUNNER: runs partition.py, check_citations.py on lanes and 3 outputs, scan_outputs.py, unit tests; saves raw output to work/evidence-1.md; never judges | 07:26 | +15 min | running |
+| EVIDENCE-1 | EVIDENCE RUNNER: runs partition.py, check_citations.py on lanes and 3 outputs, scan_outputs.py, unit tests; saves raw output to work/evidence-1.md; never judges | 07:26 | +15 min | closed 07:40 UTC (all 8 commands rc=0) |
+| RESULT-CODEBASE | egm:egm-codebase-details result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
+| RESULT-ZOOM | egm:egm-zoom-out result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
+| RESULT-COMPREHENSION | egm:egm-comprehension result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
+| RESULT-DESIGN | egm:egm-design result reviewer: reads MASTER-MAP, SWEEP, ONE-PLACE-TABLE, DECISION, ORDERS, evidence-1; returns findings inline | 07:41 | +20 min | running |
 | LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | closed 07:25 UTC (PARTIAL, SKIMMED) |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
