@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:17:38Z
-PUSHED_UTC: 2026-11-16T13:17:38Z
+UPDATED_UTC: 2026-11-16T13:19:30Z
+PUSHED_UTC: 2026-11-16T13:19:30Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 at this beat (8 helpers started at this beat; the 10 before them have all finished).
 CAPACITY nproc=4 load=0.25 disk: 20G free
-NEXT: hand-backs digested through 1012 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1020 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,18 +43,19 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
+
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a6de9d3dac4fa195b | read critical-path-r1 | 13:17 | +3 min | running | nothing yet |
-| a4fe20b0bcd777994 | read banned-claims-clean (r6) | 13:17 | +3 min | running | nothing yet |
-| a55cdd5cac06e44d8 | read t19-gaps-r2 (r3) | 13:17 | +3 min | running | nothing yet |
-| a4359e279ad0ecfe0 | read L5b (r3) | 13:17 | +3 min | running | nothing yet |
-| aed0cd8d0765170b5 | read row1-builder-brief (r2) | 13:17 | +3 min | running | nothing yet |
-| a15df8499448204de | read LEAD-NOTICE-batch-1 (r12) | 13:17 | +3 min | running | nothing yet |
-| ac2501a8fced868ef | read M17-history (r2) | 13:17 | +3 min | running | nothing yet |
-| aa929c25b20e9bf2f | read GLOSSARY (r3) | 13:17 | +3 min | running | nothing yet |
+| a6ed1128aabd3c426 | cold read work/row1-builder-brief.md (r3) | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
+| a607372afcd4334e9 | cold read decisions/M17-history.md (r3) | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
+| ae12dcf02e6ebd45d | cold read decisions/v5-edits-for-M17.md | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
+| acddd389b4a38f9ae | cold read decisions/M17-end-never-deletes.md | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
+| a0f46a2b86fcf99af | cold read work/rehearsal-passed-limits-draft.md | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
+| af8a9593e38f62a83 | cold read work/rehearsal-trim-notes.md | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
+| a5fb2afb64874a24b | cold read ARCHITECTURE-AUDIT-CHECKLIST.md | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
+| a13a012980865d83a | cold read work/decision-list-for-lead.md | 2026-11-16T13:19:30Z | about +5 min | running | nothing yet |
 
-AGENTS_RUNNING: 8 of 8
+Previous eight (critical-path, banned-claims, t19-gaps, L5b, row1 brief, LEAD-NOTICE, M17-history, GLOSSARY) finished; reports digested as lines 1013-1020 in work/agent-reports-batch4.md.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
