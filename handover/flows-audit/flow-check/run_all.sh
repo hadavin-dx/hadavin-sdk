@@ -1,5 +1,5 @@
 #!/bin/bash
-# F8 runner (round 5). Usage: bash run_all.sh [--strict] [WORKDIR]
+# F8 runner (round 6). Usage: bash run_all.sh [--strict] [WORKDIR]
 # THE TAKE USES real-v5 ONLY (lead decision 2026-11-16). This script's exit status and its last line are about real-v5 only.
 # film-v5 is NOT FOR THE TAKE: it is run and shown in its own block, it never changes the exit status and its numbers are never added to the real-v5 numbers.
 #   --strict : also pass --require-real-credential-ids to the default-mode runs, so a credential id or sub-workflow id that is still a placeholder makes this script exit 1.
@@ -11,7 +11,7 @@
 #        default mode : exit status of the 2 real-v5 runs decides this script's exit status (must be 0). The two known IF branch gaps are recorded with --accept-if (not a self-baseline).
 #        strict mode  : --require-webhook-auth --block-env-access (the owner decides these two; expected to exit 1 today; for real-v5 only exit codes other than 0 or 1 count as failure)
 #      plus one informational run of real-v5 pristine without any excuse (raw/pristine-no-baseline.txt, expected exit 1 with 2 FAIL, never gating)
-#   3. runs take_check.sh and requires its top-block lines (raw/take-check.txt), then selftest.py (exit status counts; it also exercises the checker on a film-v5 file, which tests the checker, not the film flows)
+#   3. runs take_check.sh (exit 0 required) and requires its fixed top-block lines (raw/take-check.txt); the lines about placeholders, credential ids and environment variables are required only while the checker reports them, so this script can exit 0 once the files are fixed and filled; then selftest.py (exit status counts; it also exercises the checker on a film-v5 file, which tests the checker, not the film flows)
 # Raw output of every step goes to ./raw/ (files without a suffix = real-v5, files ending -film = film-v5).
 # Exit status: 0 only if every real-v5 default-mode run and the self-test exit 0 and no step aborted. Exit 3 = a build step aborted, 2 = usage/bad folder.
 set -u
@@ -73,10 +73,34 @@ T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
 TCMISS=""
-for w in "NOTHING RAN IN n8n" "PLACEHOLDERS IN NODE SETTINGS" "these must be filled before import" "do NOT contain F-002" "Table definition used for the column check" "Environment variables that n8n must hold" "GATE BEFORE THE FIRST SEND"; do
+for w in "NOTHING RAN IN n8n" "READ THIS BLOCK BEFORE ANYTHING ELSE" "Query strings read:" "GATE BEFORE THE FIRST SEND" "Is saving of past runs off" "key check" "FINAL: take_check exit status"; do
   grep -q -F -- "$w" "$RAW/take-check.txt" || TCMISS="$TCMISS [$w]"
 done
+# lines that exist only while the checker itself reports the matching problem: required when it reports it, not otherwise (so this script can exit 0 on files that are fixed and filled)
+grep -q -F "PLACEHOLDERS IN NODE SETTINGS" "$RAW/pristine.txt" && { grep -q -F "PLACEHOLDERS IN NODE SETTINGS" "$RAW/take-check.txt" || TCMISS="$TCMISS [PLACEHOLDERS IN NODE SETTINGS]"; }
+grep -q -F "CREDENTIAL IDS STILL PLACEHOLDERS" "$RAW/pristine.txt" && { grep -q -F "CREDENTIAL IDS STILL PLACEHOLDERS" "$RAW/take-check.txt" || TCMISS="$TCMISS [CREDENTIAL IDS STILL PLACEHOLDERS]"; }
+grep -q -F "STEPS THAT READ ENVIRONMENT VARIABLES" "$RAW/pristine.txt" && { grep -q -F "STEPS THAT READ ENVIRONMENT VARIABLES" "$RAW/take-check.txt" || TCMISS="$TCMISS [STEPS THAT READ ENVIRONMENT VARIABLES]"; }
+for f in mf-form.json mf-hook.json; do grep -q -F "$f: key check" "$RAW/take-check.txt" || TCMISS="$TCMISS [key check line for $f]"; done
 grep -q -F "SQL COLUMNS NOT CHECKED" "$RAW/take-check.txt" && TCMISS="$TCMISS [columns not checked]"
+grep -q -F "!!!" "$RAW/take-check.txt" && TCMISS="$TCMISS [a !!! line: the take script found a table or column problem]"
+# take_check.sh failure exits (each must be 4 with its own loud line): table file missing, old table without the alert columns, no query text to read
+mkdir -p "$W/tc" && cp -r -- "$D/n8n-flows-real-v5" "$W/tc/noquery" || TCMISS="$TCMISS [could not make the no-query test folder]"
+python3 -I - "$W/tc/noquery" <<'PYEOF' || TCMISS="$TCMISS [no-query test folder not built]"
+import glob, json, sys
+for p in glob.glob(sys.argv[1] + "/*.json"):
+    j = json.load(open(p, encoding="utf-8"))
+    for n in j["nodes"]:
+        n.get("parameters", {}).pop("query", None)
+    json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+tcfail() { # name expected-line env-assignments...
+  nm=$1; want=$2; shift 2
+  env "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
+  [ "$x" = 4 ] && grep -q -F -- "$want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit 4 and '$want', got exit $x]"
+}
+tcfail no-table-file "THE TABLE FILE IS MISSING" TAKE_CHECK_DDL="$W/tc/does-not-exist.sql"
+tcfail old-table "A COLUMN OR TABLE IS MISSING" TAKE_CHECK_DDL="$D/n8n-flows/mf_leads.sql"
+tcfail zero-queries "0 QUERY STRINGS WERE READ" TAKE_CHECK_FLOWS="$W/tc/noquery"
 echo "checker runs wall time: $((T1-T0)) s; self-test wall time: $((T2-T1)) s" | tee "$RAW/timing.txt"
 RC=0
 for f in pristine patched; do   # gating: real-v5 default mode, exactly one exit line each

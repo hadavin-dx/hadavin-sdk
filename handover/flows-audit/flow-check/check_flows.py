@@ -872,7 +872,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                             PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {w_}")
                             pph.append(f"{nm} {k_}: {w_}")
                 if k_ in MAIL_KEYS and isinstance(v_, str) and not v_.startswith("="):
-                    if not MAIL_SHAPE.fullmatch(v_.strip()):
+                    if not MAIL_SHAPE.fullmatch(v_.strip()) and not PH_WORD.search(v_):
                         PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {v_!r} is not an e-mail address")
                         pph.append(f"{nm} {k_}: {v_!r} is not an e-mail address")
         if short == "postgres":
@@ -938,7 +938,11 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         if OPTS["real_ids"]:
             fail(tag, msg + " (--require-real-credential-ids)")
         else:
-            warn(tag, msg + " [run with --require-real-credential-ids to make this a FAIL]")
+            warn(
+                tag,
+                msg + " [run with --require-real-credential-ids to make this a FAIL]",
+                known=True,
+            )
     if pph:
         msg = (
             f"{len(pph)} value(s) in node settings are still placeholders; these must be filled before import: "
@@ -1638,6 +1642,16 @@ def main(argv):
             continue
         if have != sorted(dfiles):
             fail(dr, f"file list {have} != expected {sorted(dfiles)}")
+            for xf in have:
+                if xf not in dfiles:  # an extra file is not checked as a flow, but say so when it cannot even be read
+                    try:
+                        with open(os.path.join(dr, xf), encoding="utf-8") as fh:
+                            json.load(fh)
+                    except (OSError, ValueError, RecursionError) as e:
+                        fail(
+                            f"{dr}/{xf}",
+                            f"extra file is unreadable or not valid JSON ({type(e).__name__}); it is not one of the expected flow files",
+                        )
         for fn in dfiles:
             p = os.path.join(dr, fn)
             tag = f"{dr}/{fn}"

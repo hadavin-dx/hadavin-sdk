@@ -2226,7 +2226,7 @@ def main():
         base5 + ["--ddl", ddl2],
         0,
         must=[
-            ("  - ", "mf-form.json: this flow starts from a web address or form"),
+            ("  - ", "mf-form.json: this flow's run-saving settings"),
             ("  - ", "mf-recovery.json: 1 value(s) in node settings are still placeholders"),
             ("  - ", "node AlertMark: the query uses column(s)"),
         ],
@@ -2269,15 +2269,20 @@ def main():
         must=[
             (
                 "WARN",
-                "mf-form.json this flow starts from a web address or form and its settings ['saveDataSuccessExecution', 'saveDataErrorExecution'] are 'none'",
+                "mf-form.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off",
             )
         ],
     )
     _rc, out_ = run(["python3", "-I", CK] + base5, "r5_count_saved_runs_warns")
     report(
-        "r5_saved_runs_warn_only_for_the_two_entry_flows",
-        sum("are 'none'" in l for l in out_.splitlines() if l.startswith("WARN ")) == 2,
-        "expected the form and hook files only, not recovery or the sub-workflow",
+        "r6_saved_runs_warn_for_all_four_flows_incl_manual_runs",
+        sum("run-saving settings" in l for l in out_.splitlines() if l.startswith("WARN ")) == 4
+        and all(
+            "saveManualExecutions" in l
+            for l in out_.splitlines()
+            if l.startswith("WARN ") and "run-saving settings" in l
+        ),
+        "expected one WARN per flow file (all four), each naming saveManualExecutions",
     )
     sv = f"{work}/saveall"
     shutil.copytree(PRIS, sv)
@@ -2285,6 +2290,7 @@ def main():
         h = rj(f"{sv}/{fn}")
         h["settings"]["saveDataSuccessExecution"] = "all"
         h["settings"]["saveDataErrorExecution"] = "none" if fn == "mf-hook.json" else "all"
+        h["settings"]["saveManualExecutions"] = True
         wj(f"{sv}/{fn}", h)
     check_out(
         "r5_saved_runs_all_has_no_warn_and_one_key_is_named",
@@ -2293,16 +2299,186 @@ def main():
         must=[
             (
                 "WARN",
-                "mf-hook.json this flow starts from a web address or form and its settings ['saveDataErrorExecution'] are 'none'",
+                "mf-hook.json this flow's run-saving settings ['saveDataErrorExecution'] are off",
             )
         ],
-        must_not=["mf-form.json this flow starts from a web address"],
+        must_not=["mf-form.json this flow's run-saving settings"],
     )
     check_out(
         "r5_accept_if_warn_says_what_a_database_failure_does",
         base5,
         0,
         must=[("WARN", "a database failure that ends here vanishes with no alert")],
+    )
+    # --- round 6: saving of manual runs, credential ids and environment steps in the closing block, SQL counts, quiet, unreadable files ---
+    mn = f"{work}/manualoff"
+    shutil.copytree(PRIS, mn)
+    for fn in FILES:
+        h = rj(f"{mn}/{fn}")
+        h["settings"]["saveDataSuccessExecution"] = "all"
+        h["settings"]["saveDataErrorExecution"] = "all"
+        h["settings"]["saveManualExecutions"] = fn != "mf-recovery.json"
+        wj(f"{mn}/{fn}", h)
+    check_out(
+        "r6_manual_runs_off_alone_is_named_and_only_for_that_file",
+        [mn, "--quiet-info"] + acc2,
+        0,
+        must=[("WARN", "mf-recovery.json this flow's run-saving settings ['saveManualExecutions'] are off")],
+        must_not=["mf-form.json this flow's run-saving", "mf-hook.json this flow's run-saving"],
+    )
+    check_out(
+        "r6_credential_ids_listed_in_closing_block_and_counted",
+        base5,
+        0,
+        must=[
+            ("CREDENTIAL IDS STILL PLACEHOLDERS (20)", "replaced in n8n before import"),
+            ("  - ", "mf-form.json node Claim credential postgres id: PG_CREDENTIAL_ID"),
+            ("  - ", "mf-form.json node RunSub sub-workflow id: SUB_WORKFLOW_ID"),
+            ("  - ", "mf-form.json: 3 id(s) are still placeholders"),
+        ],
+    )
+    check_out(
+        "r6_environment_steps_listed_in_closing_block",
+        base5,
+        0,
+        must=[
+            ("STEPS THAT READ ENVIRONMENT VARIABLES (2)", ""),
+            ("  - ", "mf-recovery.json node AlertSend: $env.DESK_ALERT_TO"),
+            ("  - ", "mf-sub-crm-mail.json node Qualify: $env.DESK_TIMEOUT_MS, $env.DESK_URL"),
+        ],
+    )
+    for nm_, val_, want_ in (
+        ("not_an_address", "nobody", "is not an e-mail address"),
+        ("change_me", "CHANGE_ME", "CHANGE_ME"),
+        ("todo_word", "TODO fill in", "TODO"),
+        ("replace_me", "REPLACE_ME_NOW", "REPLACE_ME_NOW"),
+    ):
+        dm = f"{work}/mail-{nm_}"
+        shutil.copytree(only, dm)
+        h = rj(dm + "/mf-form.json")
+        first_nt(h)["parameters"]["toEmail"] = val_
+        wj(dm + "/mf-form.json", h)
+        check_out(
+            f"r6_mail_setting_{nm_}_is_listed",
+            [dm, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
+            0,
+            must=[("  - ", "setting 'toEmail'"), ("  - ", want_)],
+        )
+    for nm_, val_ in (("plain", "someone@example.test"), ("expression", "={{ $env.DESK_ALERT_TO }}")):
+        dm = f"{work}/mail-ok-{nm_}"
+        shutil.copytree(only, dm)
+        h = rj(dm + "/mf-form.json")
+        first_nt(h)["parameters"]["toEmail"] = val_
+        wj(dm + "/mf-form.json", h)
+        check_out(
+            f"r6_mail_setting_{nm_}_is_not_listed",
+            [dm, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
+            0,
+            must_not=["setting 'toEmail'"],
+        )
+    # SQL counts printed in the closing block
+    check_out(
+        "r6_sql_warn_counts_for_old_table",
+        base5 + ["--ddl", ddl2],
+        0,
+        must=[
+            ("SQL columns compared with the --ddl file: 14 query string(s) read.", ""),
+            ("SQL WARNS: column WARNs=3 table WARNs=0 postgres steps with no query text (not compared)=0", ""),
+        ],
+    )
+    check_out(
+        "r6_sql_warn_counts_for_other_table_name",
+        base5 + ["--ddl", ddlx],
+        0,
+        must=[("SQL WARNS: column WARNs=0 table WARNs=14 postgres", "")],
+    )
+    check_out(
+        "r6_sql_counts_zero_for_the_v4_table",
+        base5 + ["--ddl", ddl4],
+        0,
+        must=[("SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)=0", "")],
+        must_not=["SQL COLUMNS NOT CHECKED"],
+    )
+    nq = f"{work}/noquery"
+    shutil.copytree(PRIS, nq)
+    npg = 0
+    for fn in FILES:
+        h = rj(f"{nq}/{fn}")
+        for x in h["nodes"]:
+            if x["type"].split(".")[-1] == "postgres":
+                x["parameters"].pop("query", None)
+                npg += 1
+        wj(f"{nq}/{fn}", h)
+    check_out(
+        "r6_ddl_given_but_zero_queries_read_says_so_loudly",
+        [nq, "--quiet-info", "--ddl", ddl4] + acc2,
+        0,
+        must=[
+            ("SQL columns compared with the --ddl file: 0 query string(s) read.", ""),
+            ("SQL COLUMNS NOT CHECKED: a --ddl file was given but 0 query strings were read", ""),
+            (f"SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)={npg}", ""),
+            ("WARN", "this postgres step has no query text"),
+        ],
+    )
+    # --quiet-info hides the type table; without it the table is printed
+    _rc, out_q = run(["python3", "-I", CK, only, "--files", "mf-form.json", "--quiet-info"], "r6_quiet_on")
+    _rc, out_n = run(["python3", "-I", CK, only, "--files", "mf-form.json"], "r6_quiet_off")
+    report(
+        "r6_quiet_info_hides_the_type_table_and_without_it_the_table_is_printed",
+        "  types:" not in out_q and "  types:" in out_n and "credentials (node, kind, name, id):" in out_q,
+        f"quiet_has_types={'  types:' in out_q} loud_has_types={'  types:' in out_n}",
+    )
+    # value_is_safe: a placeholder token or the AWS example key under a secret-looking key is not a secret; a real-looking literal is
+    for nm_, val_, bad_ in (
+        ("placeholder_token", "PG_CREDENTIAL_ID", False),
+        ("aws_example_key", "AKIA" + "IOSFODNN7EXAMPLE", False),
+        ("literal_value", "hunter2hunter2", True),
+    ):
+        dv = f"{work}/safe-{nm_}"
+        shutil.copytree(only, dv)
+        h = rj(dv + "/mf-form.json")
+        first_nt(h)["parameters"]["password"] = val_
+        wj(dv + "/mf-form.json", h)
+        _rc, out_v = run(
+            ["python3", "-I", CK, dv, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"],
+            f"r6_secret_key_{nm_}",
+        )
+        got = "literal value under key 'password'" in out_v
+        report(
+            f"r6_secret_looking_key_with_{nm_}_{'fails' if bad_ else 'is_safe'}",
+            got == bad_ and _rc == (1 if bad_ else 0),
+            f"rc={_rc} flagged={got}",
+        )
+    # unreadable files: never a Traceback, never exit 3 for bad input text
+    bad_ddl = f"{work}/bad-utf8.sql"
+    with open(bad_ddl, "wb") as fh:
+        fh.write(b"CREATE TABLE t(a int); \xff\xfe\xfa")
+    check_out(
+        "r6_ddl_file_not_utf8_is_a_usage_error_not_a_crash",
+        [PRIS, "--ddl", bad_ddl],
+        2,
+        must=[("usage error", "--ddl file cannot be read")],
+        must_not=["INTERNAL ERROR"],
+    )
+    bf = f"{work}/badflow"
+    shutil.copytree(PRIS, bf)
+    with open(bf + "/mf-hook.json", "wb") as fh:
+        fh.write(b'{"nodes": "\xff\xfe"}')
+    check_out(
+        "r6_flow_file_not_utf8_says_unreadable",
+        [bf, "--quiet-info"],
+        1,
+        must=[("FAIL", "mf-hook.json parse failure UnicodeDecodeError: the file is unreadable")],
+    )
+    bx = f"{work}/badextra"
+    shutil.copytree(PRIS, bx)
+    with open(bx + "/mf-bad.json", "wb") as fh:
+        fh.write(b"\xff\xfe\x00 not json")
+    check_out(
+        "r6_extra_json_file_not_utf8_says_unreadable",
+        [bx, "--quiet-info"],
+        1,
+        must=[("FAIL", "mf-bad.json extra file is unreadable or not valid JSON"), ("FAIL", "file list")],
     )
     # internals: Python version branch, FAIL counter, deep_diff and the diff header
     spec = importlib.util.spec_from_file_location("fc_unit", CK)

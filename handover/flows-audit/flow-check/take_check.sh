@@ -1,37 +1,76 @@
 #!/bin/bash
-# The take check: runs the checker on the real-v5 flows only and prints the open decisions FIRST.
-# Usage: bash take_check.sh   (from any folder). Exit status = the checker's (0 = no FAIL, 1 = FAIL, 2 = bad command line, 3 = the checker itself broke).
+# The take check: runs the checker on the real-v5 flows only and prints what a person must read FIRST (top block), then the full checker output.
+# Usage: bash take_check.sh   (from any folder).
+# Exit status of this script (decided 2026-11-16, round 6):
+#   0 = the checker found no definite fault AND the table file was found AND at least one SQL query was compared AND no column or table is missing. It is NOT "ready to film": see the last line.
+#   1 = the checker found at least one FAIL (a definite fault in a file).
+#   2 = the checker was started wrongly (bad command line, for example the table file cannot be read).
+#   3 = the checker itself broke.
+#   4 = the checker found no FAIL, but a check this take depends on did not happen or found a mismatch: the table file demo/n8n-flows-v4/mf_leads.sql is missing, OR 0 query strings were read, OR a query uses a column or table that file does not define, OR a postgres step has no query text (its columns were not compared).
 # film-v5 is NOT FOR THE TAKE and is not checked here.
-# The table definition the take needs is demo/n8n-flows-v4/mf_leads.sql (it has the four alert columns; the older table in demo/n8n-flows lacks them).
-HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo/n8n-flows-real-v5"
+# The table definition the take needs is demo/n8n-flows-v4/mf_leads.sql (lead decision, order Q16). It is looked up at that exact path only (no search for a file of the same name elsewhere).
+HERE=$(cd "$(dirname "$0")" && pwd)
+cd "$HERE/../.." || exit 3   # the handover folder: paths printed below are short and relative to it
+D="${TAKE_CHECK_FLOWS:-demo/n8n-flows-real-v5}"   # TAKE_CHECK_FLOWS and TAKE_CHECK_DDL (absolute paths) exist only so run_all.sh can test the failure exits; the take uses the defaults
 OUT=$(mktemp /tmp/take-check.XXXXXX) || exit 3
 trap 'rm -f -- "$OUT"' EXIT
-DDL="$HERE/../../demo/n8n-flows-v4/mf_leads.sql"
-if [ ! -f "$DDL" ]; then DDL=$(find "$HERE/../.." -name mf_leads.sql -path '*n8n-flows-v4*' -not -path '*/scratch/*' 2>/dev/null | head -n 1); fi
-DDLOPT=(); [ -n "$DDL" ] && [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
+DDL="${TAKE_CHECK_DDL:-demo/n8n-flows-v4/mf_leads.sql}"
+DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
 python3 -I "$HERE/check_flows.py" "$D" "${DDLOPT[@]}" \
   --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 \
   --expect mf-form.json=12:11 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 \
   --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token \
   --quiet-info > "$OUT" 2>&1
 RC=$?
+PROBLEMS=()   # things this script itself found wrong (each one makes the exit status 4 when the checker exited 0)
 echo "=== NOTHING RAN IN n8n. Import of these files into n8n was never tried. ==="
-echo "=== OPEN LEAD DECISIONS (read before anything else) ==="
-grep -h -E '^(OPEN LEAD DECISIONS|No static tool|IF branches accepted|SQL COLUMNS NOT CHECKED|SQL columns compared)' "$OUT"
-awk '/^PLACEHOLDERS IN NODE SETTINGS/ {p=1; print; next} p && /^  - / {print; next} {p=0}' "$OUT"
+if [ "$RC" -ge 2 ]; then
+  echo "=== THE CHECKER DID NOT GIVE A VERDICT (its exit status is $RC: 2 = started wrongly, 3 = broke). Nothing below says anything about the flows. ==="
+  cat "$OUT"
+  echo "FINAL: take_check exit status $RC. exit 0 would have meant: no definite fault in the files; NOTHING ran in n8n. The checker gave no verdict; open items: unknown."
+  exit "$RC"
+fi
+echo "=== READ THIS BLOCK BEFORE ANYTHING ELSE ==="
+echo "--- (1) The lead table and the column check ---"
+QN=$(sed -n 's/^SQL columns compared with the --ddl file: \([0-9][0-9]*\) query string.*/\1/p' "$OUT" | head -n 1)
+COLW=$(sed -n 's/^SQL WARNS: column WARNs=\([0-9]*\) .*/\1/p' "$OUT" | head -n 1)
+TBLW=$(sed -n 's/^SQL WARNS: .* table WARNs=\([0-9]*\) .*/\1/p' "$OUT" | head -n 1)
+NOQ=$(sed -n 's/^SQL WARNS: .*(not compared)=\([0-9]*\).*/\1/p' "$OUT" | head -n 1)
 if [ ${#DDLOPT[@]} -eq 0 ]; then
-  echo "WARNING: the table definition file (n8n-flows-v4/mf_leads.sql) was not found, so the column names in the SQL steps were NOT checked. On the older table the alert steps would fail on every run and no alert would be sent."
+  echo "!!! THE TABLE FILE IS MISSING: demo/n8n-flows-v4/mf_leads.sql was not found, so the column names in the SQL steps were NOT checked. On the older table the alert steps fail on every run and no alert is sent. This script exits 4."
+  PROBLEMS+=("table file missing")
 else
-  echo "Table definition used for the column check: demo/n8n-flows-v4/mf_leads.sql. The take needs THAT table (with the four alert columns), not the older one in demo/n8n-flows."
+  echo "Table definition used for the column check: demo/n8n-flows-v4/mf_leads.sql (the take needs THAT table, with the four alert columns, not the older one in demo/n8n-flows)."
+  echo "Query strings read: ${QN:-unknown}. Column WARNs: ${COLW:-unknown}. Table WARNs: ${TBLW:-unknown}. Postgres steps with no query text (not compared): ${NOQ:-unknown}."
+  if [ -z "$QN" ] || [ "$QN" -eq 0 ]; then
+    echo "!!! 0 QUERY STRINGS WERE READ (or the count line is missing): NO column was compared. This script exits 4."
+    PROBLEMS+=("0 queries read")
+  fi
+  if [ "${COLW:-1}" -gt 0 ] || [ "${TBLW:-1}" -gt 0 ] || [ "${NOQ:-1}" -gt 0 ]; then
+    echo "!!! A COLUMN OR TABLE IS MISSING, or a step was not compared (counts above, WARN lines further down): the alert or lead steps would fail on every run. This script exits 4."
+    PROBLEMS+=("column/table WARN")
+  fi
 fi
-echo "GATE BEFORE THE FIRST SEND (decided by the lead, order Q16): the take uses demo/n8n-flows-v4/mf_leads.sql. In psql, run: select column_name from information_schema.columns where table_name='mf_leads' and column_name in ('alert_sent','alert_token','alert_until','alert_attempts');  It must list all four alert_ columns. If it lists fewer, do not send: no alert would ever go out. This script cannot see your database."
-if ! grep -q '"KeyOk"' "$D/mf-form.json" "$D/mf-hook.json" 2>/dev/null; then
-  echo "These files do NOT contain F-002 (the check that a lead key is well formed, the answer for a bad key, and the answer when the table write fails) or F-008 (saving of past runs, so the run list in n8n shows what happened). Apply both patches first if the take should show them."
-fi
-echo "Environment variables that n8n must hold for these files: $(grep -h -o '\$env\.[A-Za-z0-9_]*' "$D"/*.json | sort -u | sed 's/^\$env\.//' | tr '\n' ' ')"
-echo "Two steps of real-v5 read environment variables (the \$env form): if n8n on the filming machine blocks that, they stop working. No file check can see that setting."
-echo "To see which steps would break, run the checker with --block-env-access (exit 1 expected today). exit 0 below does NOT mean authentication was checked."
-echo "=== full checker output ==="
+echo "GATE BEFORE THE FIRST SEND (a person's step; this script cannot see your database): in psql run: select column_name from information_schema.columns where table_name='mf_leads' and column_name in ('alert_sent','alert_token','alert_until','alert_attempts');  It must list all four alert_ columns. If it lists fewer, do not send: no alert would ever go out."
+echo "--- (2) Is saving of past runs off? One line per file (a run list in n8n stays empty when it is off) ---"
+grep -h -E '^mf-[a-z-]+\.json nodes=' "$OUT"
+grep -h -E "^WARN .*run-saving settings" "$OUT" | cut -c1-260
+echo "--- (3) Values that must be filled in before import: mail addresses and credential ids ---"
+awk '/^(PLACEHOLDERS IN NODE SETTINGS|CREDENTIAL IDS STILL PLACEHOLDERS)/ {p=1; print; next} p && /^  - / {print; next} {p=0}' "$OUT"
+echo "--- (4) Does each of the two entry flows contain the F-002 key check (a node named KeyOk)? ---"
+NOKEY=0
+for f in mf-form.json mf-hook.json; do
+  if grep -q '"KeyOk"' "$D/$f" 2>/dev/null; then echo "$f: key check present (F-002 applied)"; else echo "$f: key check ABSENT (F-002 not applied: a malformed lead key and a failed table write are not answered specially)"; NOKEY=$((NOKEY+1)); fi
+done
+echo "--- (5) Open decisions and environment variables ---"
+grep -h -E '^(OPEN LEAD DECISIONS|No static tool|IF branches accepted)' "$OUT"
+awk '/^STEPS THAT READ ENVIRONMENT VARIABLES/ {p=1; print; next} p && /^  - / {print; next} {p=0}' "$OUT"
+echo "If n8n on the filming machine blocks environment-variable access inside steps, those steps stop working. No file check can see that setting. To see which steps would break, run the checker with --block-env-access (exit 1 expected today). exit 0 does NOT mean authentication was checked."
+echo "=== end of top block; full checker output follows ==="
 cat "$OUT"
-echo "take_check exit status: $RC"
+KNOWN=$(sed -n 's/^Known open problems: \([0-9][0-9]*\).*/\1/p' "$OUT" | head -n 1)
+OPEN=$(( ${KNOWN:-0} + NOKEY + 1 + ${#PROBLEMS[@]} ))   # the checker's own count, files without KeyOk, the psql gate (always a person's step), what this script found wrong
+if [ "$RC" -eq 0 ] && [ ${#PROBLEMS[@]} -gt 0 ]; then RC=4; fi
+echo "Open items counted: checker known open problems ${KNOWN:-0} + files without the key check $NOKEY + psql gate 1 + problems of this script ${#PROBLEMS[@]}."
+echo "FINAL: take_check exit status $RC. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. (1 = fault in a file, 4 = table check missing or failed.) This is not a pass for filming."
 exit $RC
