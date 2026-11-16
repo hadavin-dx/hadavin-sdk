@@ -4,6 +4,7 @@ Env SCRIPT=<path> runs the tests against another copy of the script. The script 
 process the way `python3 script.py ...` runs it (runpy, as __main__), output and exit code captured."""
 
 import contextlib
+import importlib.util
 import io
 import json
 import os
@@ -14,6 +15,7 @@ import sys
 import tempfile
 import traceback
 import unittest
+from unittest import mock
 
 HERE = pathlib.Path(__file__).resolve().parent
 SCRIPT = os.environ.get("SCRIPT", str(HERE / "check_grants_cover_queries.py"))
@@ -618,6 +620,119 @@ class Round5(Base):
             "mf-form", "Stored", lambda q: "SELECT state FROM mf_leads WHERE lead_key='x;"
         )
         self.assertFails("unbalanced single quote")
+
+    # round 6: tests that kill three surviving mutants, and the table-name case decision
+    def load_script(self):
+        spec = importlib.util.spec_from_file_location("check_under_test", SCRIPT)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_main_safety_net_unexpected_error_is_one_clean_line(self):
+        """An unexpected error type inside run() ends as one FAIL line, rc=1, no traceback.
+        Each type the net names is forced, so the test does not depend on the stack size."""
+        mod = self.load_script()
+        for exc in (OSError, ValueError, LookupError, TypeError, AttributeError, RecursionError):
+
+            def boom(*_a, _exc=exc, **_k):
+                raise _exc("made-up failure")
+
+            buf = io.StringIO()
+            with (
+                mock.patch.object(mod, "run", boom),
+                contextlib.redirect_stdout(buf),
+                contextlib.redirect_stderr(buf),
+            ):
+                rc = mod.main(["--roles-doc", str(self.doc), str(self.flows)])
+            out = buf.getvalue()
+            self.assertEqual(rc, 1, out)
+            self.assertEqual(len(out.strip().splitlines()), 1, out)
+            self.assertTrue(out.startswith("FAIL internal error while checking"), out)
+            self.assertIn(exc.__name__, out)
+            self.assertNotIn("Traceback", out)
+
+    def test_real_input_overflowing_the_stack_is_clean(self):
+        """A very deeply nested parameter can overflow the stack inside the check (the exact depth
+        depends on the interpreter, so a range is tried): never a traceback, and at least one depth
+        must reach the safety net."""
+        seen_internal = False
+        base = json.loads((self.flows / "mf-form.json").read_text())
+        for depth in range(900, 1001, 5):
+            x = "s"
+            for _ in range(depth):
+                x = [x]
+            node = {"name": "deep", "type": "n8n-nodes-base.set", "parameters": {"v": x}}
+            (self.flows / "mf-form.json").write_text(
+                json.dumps(dict(base, nodes=[*base["nodes"], node]))
+            )
+            rc, out = self.check()
+            self.assertNotIn("Traceback", out)
+            if rc == 1:
+                fails = [ln for ln in out.splitlines() if ln.startswith("FAIL")]
+                self.assertEqual(len(fails), 1, out)
+                seen_internal = seen_internal or "internal error" in out
+        self.assertTrue(seen_internal, "no depth reached the safety net on this interpreter")
+
+    def test_literal_starting_with_escaped_quote_is_one_literal(self):
+        # The text after SET state= is ONE literal that holds: 'drop table
+        # A parser that ignores the doubled quote sees an empty literal, a bare DROP and a lone quote.
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: "UPDATE mf_leads SET state='''drop table' WHERE lead_key=$1;",
+        )
+        rc, out = self.check()
+        self.assertEqual(rc, 1, out)
+        self.assertIn("forbidden keyword DROP inside a string literal", out)
+        self.assertNotIn("unbalanced", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_literal_starting_with_escaped_quote_harmless_is_balanced(self):
+        self.set_query(
+            "mf-sub-crm-mail",
+            "MarkDone",
+            lambda q: "UPDATE mf_leads SET state='''ok' WHERE lead_key=$1;",
+        )
+        rc, out = self.check()
+        self.assertNotIn("unbalanced", out)
+        self.assertNotIn("inside a string literal", out)
+        self.assertNotIn("Traceback", out)
+
+    def add_note_node(self, notes):
+        node = {
+            "name": "Note holder",
+            "type": "n8n-nodes-base.set",
+            "parameters": {},
+            "notes": notes,
+        }
+        self.put("mf-form", lambda d: dict(d, nodes=[*d["nodes"], node]))
+
+    def test_sql_in_notes_of_non_postgres_node(self):
+        self.add_note_node("SELECT email FROM mf_leads")
+        rc, out = self.check()
+        self.assertEqual(rc, 1, out)
+        self.assertIn("SQL-like text in a 'n8n-nodes-base.set' node", out)
+        self.assertIn("Note holder", out)
+
+    def test_plain_notes_on_non_postgres_node_not_flagged(self):
+        self.add_note_node("sets the greeting")
+        rc, out = self.check()
+        self.assertEqual(rc, 0, out)
+
+    def test_uppercase_table_name_is_the_same_table_by_decision(self):
+        """Decision (round 6): MF_LEADS passes. Postgres folds an unquoted name to lower case, so
+        MF_LEADS and mf_leads are the same table; names are compared in lower case on purpose.
+        A quoted "MF_LEADS" would be a different table and is refused (quoted names not allowed)."""
+        self.set_query(
+            "mf-form", "Stored", lambda q: "SELECT state FROM MF_LEADS WHERE lead_key=$1;"
+        )
+        rc, out = self.check()
+        self.assertNotIn("touches table", out)
+        self.assertNotIn("Traceback", out)
+        self.set_query(
+            "mf-form", "Stored", lambda q: 'SELECT state FROM "MF_LEADS" WHERE lead_key=$1;'
+        )
+        self.assertFails("quoted name not allowed")
 
     # (7) the README command
     def test_readme_unittest_command_has_no_dash_i(self):
