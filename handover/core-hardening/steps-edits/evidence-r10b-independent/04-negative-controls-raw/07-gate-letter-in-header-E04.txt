@@ -1,0 +1,6 @@
+rc=1
+FAIL E-04 HOLD label gate differs from header: G1
+FAIL gate letters used but not defined: ['G6']
+FAIL gate G1 list ['E-04', 'E-05', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45'] differs from headers ['E-05', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45']
+FAIL index gate differs for E-04
+RESULT FAIL 4

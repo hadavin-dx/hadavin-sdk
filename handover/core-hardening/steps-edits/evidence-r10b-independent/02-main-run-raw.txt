@@ -1,0 +1,186 @@
+OLD E-01 ONCE 1 3
+OLD E-02 ONCE 1 3
+OLD E-03 ONCE 1 5
+OLD E-04 ONCE 1 69
+OLD E-05 ONCE 1 95
+OLD E-06 ONCE 1 75
+OLD E-07 ONCE 1 75
+OLD E-08 ONCE 1 187
+OLD E-09 ONCE 1 78
+OLD E-11 ONCE 1 87
+OLD E-12 ONCE 1 92
+OLD E-13 ONCE 1 99
+OLD E-13 ONCE 1 11
+OLD E-14 ONCE 1 107
+OLD E-15 ONCE 1 107
+OLD E-16 ONCE 1 121
+OLD E-17 ONCE 1 131
+OLD E-18 ONCE 1 131
+OLD E-19 ONCE 1 159
+OLD E-20 ONCE 1 162
+OLD E-21 ONCE 1 164
+OLD E-22 ONCE 1 166
+OLD E-23 ONCE 1 151
+OLD E-24 ONCE 1 178
+OLD E-25 ONCE 1 193
+OLD E-26 ONCE 1 2
+OLD E-27 ONCE 1 5
+OLD E-28 ONCE 1 9
+OLD E-29 ONCE 1 9
+OLD E-30 ONCE 1 7
+OLD E-31 ONCE 1 20
+OLD E-32 ONCE 1 23
+OLD E-33 ONCE 1 23
+OLD E-34 ONCE 1 27
+OLD E-36 ONCE 1 131
+OLD E-37 ONCE 1 27
+OLD E-38 ONCE 1 9
+OLD E-39 ONCE 1 23
+OLD E-40 ONCE 1 20
+OLD E-41 ONCE 1 103
+OLD E-42 ONCE 1 104
+OLD E-43 ONCE 1 14
+OLD E-44 ONCE 1 20
+OLD E-45 ONCE 1 23
+OLD E-46 ONCE 1 14
+OLD E-47 ONCE 1 1
+OLD E-48 ONCE 1 123
+OLD E-49 ONCE 1 87
+OLD E-50 ONCE 1 92
+OLD E-51 ONCE 1 92
+OLD E-52 ONCE 1 16
+OLD E-53 ONCE 1 28
+OLD E-54 ONCE 1 85
+OLD E-55 ONCE 1 119
+OLD E-56 ONCE 1 20
+overlaps []
+PAIR line 30 18:29 UTC = 23:59 IST True
+PAIR line 30 18:19 UTC = 23:49 IST True
+PAIR line 30 18:14 UTC = 23:44 IST True
+PAIR line 54 18:29 UTC = 23:59 IST True
+PAIR line 55 18:19 UTC = 23:49 IST True
+PAIR line 72 18:04 UTC = 23:34 IST True
+PAIR line 72 18:14 UTC = 23:44 IST True
+PAIR line 72 18:19 UTC = 23:49 IST True
+PAIR line 86 18:19 UTC = 23:49 IST True
+PAIR line 86 18:29 UTC = 23:59 IST True
+PAIR line 91 18:19 UTC = 23:49 IST True
+PAIR line 299 18:29 UTC = 23:59 IST True
+PAIR line 299 18:04 UTC = 23:34 IST True
+PAIR line 299 18:19 UTC = 23:49 IST True
+PAIR line 299 18:14 UTC = 23:44 IST True
+PAIR line 299 18:19 UTC = 23:49 IST True
+PAIR line 301 18:29 UTC = 23:59 IST True
+PAIR line 306 18:14 UTC = 23:44 IST True
+PAIR line 306 18:19 UTC = 23:49 IST True
+PAIR line 306 18:04 UTC = 23:34 IST True
+PAIR line 306 18:04 UTC = 23:34 IST True
+PAIR line 584 18:29 UTC = 23:59 IST True
+PAIR line 588 18:29 UTC = 23:59 IST True
+PAIR line 588 18:29 UTC = 23:59 IST True
+PAIR line 719 18:19 UTC = 23:49 IST True
+PAIR line 719 18:29 UTC = 23:59 IST True
+PAIR line 720 18:19 UTC = 23:49 IST True
+PAIR line 721 18:19 UTC = 23:49 IST True
+PAIR line 721 18:19 UTC = 23:49 IST True
+PAIR line 726 18:19 UTC = 23:49 IST True
+PAIR line 726 18:19 UTC = 23:49 IST True
+PAIR line 726 18:29 UTC = 23:59 IST True
+PAIR line 785 18:29 UTC = 23:59 IST True
+PAIR line 787 18:19 UTC = 23:49 IST True
+PAIR line 826 18:29 UTC = 23:59 IST True
+PAIR line 830 18:19 UTC = 23:49 IST True
+PAIR line 830 18:29 UTC = 23:59 IST True
+PAIR line 832 18:29 UTC = 23:59 IST True
+PAIR line 832 18:19 UTC = 23:49 IST True
+PAIR line 832 18:19 UTC = 23:49 IST True
+PAIR line 832 18:29 UTC = 23:59 IST True
+PAIR line 886 18:14 UTC = 23:44 IST True
+LONE [(288, '23:59 IST'), (306, '23:59 IST')]
+DATE line 86 Mon 23 Nov 2026 -> 2026-11-23 Mon True
+DATE line 162 Mon 16 Nov 2026 -> 2026-11-16 Mon True
+DATE line 299 Wed 18 Nov 2026 -> 2026-11-18 Wed True
+DATE line 299 Mon 23 Nov 2026 -> 2026-11-23 Mon True
+DATE line 306 Wed 18 Nov -> 2026-11-18 Wed True
+DATE line 584 Mon 16 Nov -> 2026-11-16 Mon True
+DATE line 588 Mon 16 Nov 2026 -> 2026-11-16 Mon True
+DATE line 588 Mon 23 Nov 2026 -> 2026-11-23 Mon True
+DATE line 740 Wed 18 Nov 2026 -> 2026-11-18 Wed True
+DATE line 805 Wed 18 Nov 2026 -> 2026-11-18 Wed True
+DATE line 819 Wed 18 Nov 2026 -> 2026-11-18 Wed True
+DATE line 821 Wed 18 Nov -> 2026-11-18 Wed True
+DATE line 826 Mon 23 Nov -> 2026-11-23 Mon True
+DATE line 830 Mon 23 Nov 2026 -> 2026-11-23 Mon True
+DATE line 830 Wed 18 Nov 2026 -> 2026-11-18 Wed True
+DATE line 832 Mon 23 Nov -> 2026-11-23 Mon True
+DATE line 832 Mon 23 Nov 2026 -> 2026-11-23 Mon True
+DATE line 832 Wed 18 Nov -> 2026-11-18 Wed True
+DATE line 832 Wed 18 Nov -> 2026-11-18 Wed True
+INFO rows parsed 54
+INFO non-hold blocks applied cleanly: 42, failures 0
+INFO naive apply-all: HOLD blocks that a script applying every NEW block would apply: 14 rows ['E-04', 'E-05', 'E-13', 'E-36', 'E-39', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45', 'E-49', 'E-50', 'E-53']; naive failures 1 ['E-36']
+INFO status counts {'Apply now': 42, 'Hold': 12}
+INFO confirmation letters defined abcdefghij used ['a', 'b', 'c', 'h']
+INFO gates defined ['G1', 'G2', 'G3', 'G4', 'G5']; used anywhere ['G1', 'G2', 'G3', 'G4', 'G5']; in headers ['G1', 'G2', 'G3', 'G4', 'G5']
+INFO removed ids E-10/E-35 mentioned at lines [(42, 'E-10'), (42, 'E-35'), (45, 'E-10'), (45, 'E-35'), (76, 'E-10')]
+INFO UTC/IST pairs 42 (all consistent: True); lone times [(288, '23:59 IST'), (306, '23:59 IST')]
+INFO weekday/date strings 19 all correct: True
+INFO banned strings in EDITS.md: 0 of 10
+INFO NEW blocks labelled HOLD: 14
+NAIVE ('E-01', 'applied NEW (exact):')
+NAIVE ('E-02', 'applied NEW (exact):')
+NAIVE ('E-03', 'applied NEW (exact):')
+NAIVE ('E-04', 'applied HOLD NEW [HOLD G1: DO NOT APPLY] ')
+NAIVE ('E-05', 'applied HOLD NEW [HOLD G1: DO NOT APPLY] ')
+NAIVE ('E-06', 'applied NEW (exact):')
+NAIVE ('E-07', 'applied NEW (exact):')
+NAIVE ('E-08', 'applied NEW (exact):')
+NAIVE ('E-09', 'applied NEW (exact):')
+NAIVE ('E-11', 'applied NEW (exact):')
+NAIVE ('E-12', 'applied NEW (exact):')
+NAIVE ('E-13', 'applied HOLD NEW 1 [HOLD G3: DO NOT APPLY')
+NAIVE ('E-13', 'applied HOLD NEW 2 [HOLD G3: DO NOT APPLY')
+NAIVE ('E-14', 'applied NEW (exact):')
+NAIVE ('E-15', 'applied NEW (exact):')
+NAIVE ('E-16', 'applied NEW (exact):')
+NAIVE ('E-17', 'applied NEW (exact):')
+NAIVE ('E-18', 'applied NEW (exact):')
+NAIVE ('E-19', 'applied NEW (exact):')
+NAIVE ('E-20', 'applied NEW (exact):')
+NAIVE ('E-21', 'applied NEW (exact):')
+NAIVE ('E-22', 'applied NEW (exact):')
+NAIVE ('E-23', 'applied NEW (exact):')
+NAIVE ('E-24', 'applied NEW (exact):')
+NAIVE ('E-25', 'applied NEW (exact):')
+NAIVE ('E-26', 'applied NEW (exact):')
+NAIVE ('E-27', 'applied NEW (exact):')
+NAIVE ('E-28', 'applied NEW (exact):')
+NAIVE ('E-29', 'applied NEW (exact):')
+NAIVE ('E-30', 'applied NEW (exact):')
+NAIVE ('E-31', 'applied NEW (exact):')
+NAIVE ('E-32', 'applied NEW (exact):')
+NAIVE ('E-33', 'applied NEW (exact):')
+NAIVE ('E-34', 'applied NEW (exact):')
+NAIVE ('E-36', 'applied NEW (exact; TEXT W, the defa')
+NAIVE ('E-36', 'FAILED old count 0 at apply time (NEW [HOLD Cb: DO NOT APPLY] (e)')
+NAIVE ('E-37', 'applied NEW (exact):')
+NAIVE ('E-38', 'applied NEW (exact):')
+NAIVE ('E-39', 'applied HOLD NEW [HOLD G4: DO NOT APPLY],')
+NAIVE ('E-40', 'applied HOLD NEW [HOLD G1: DO NOT APPLY] ')
+NAIVE ('E-41', 'applied HOLD NEW [HOLD G1: DO NOT APPLY] ')
+NAIVE ('E-42', 'applied HOLD NEW [HOLD G1: DO NOT APPLY] ')
+NAIVE ('E-43', 'applied NEW (exact):')
+NAIVE ('E-44', 'applied HOLD NEW [HOLD G1: DO NOT APPLY] ')
+NAIVE ('E-45', 'applied HOLD NEW [HOLD G1: DO NOT APPLY] ')
+NAIVE ('E-46', 'applied NEW (exact):')
+NAIVE ('E-47', 'applied NEW (exact):')
+NAIVE ('E-48', 'applied NEW (exact):')
+NAIVE ('E-49', 'applied HOLD NEW [HOLD G5: DO NOT APPLY] ')
+NAIVE ('E-50', 'applied HOLD NEW [HOLD G5: DO NOT APPLY] ')
+NAIVE ('E-51', 'applied NEW (exact):')
+NAIVE ('E-52', 'applied NEW (exact):')
+NAIVE ('E-53', 'applied HOLD NEW [HOLD G5: DO NOT APPLY] ')
+NAIVE ('E-54', 'applied NEW (exact):')
+NAIVE ('E-55', 'applied NEW (exact):')
+NAIVE ('E-56', 'applied NEW (exact):')
+RESULT OK

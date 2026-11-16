@@ -1,0 +1,4 @@
+rc=1
+FAIL E-03 OLD starts on line 5 but stated [6]
+FAIL index row mismatch E-03: ['OWNER-STEPS-realrun-v3.md', '5', 'Apply now'] vs OWNER-STEPS-realrun-v3.md 6 Apply now
+RESULT FAIL 2

@@ -1,0 +1,4 @@
+rc=1
+FAIL OLD overlap E-06 / E-07
+FAIL apply (non-hold) ('E-07', 'FAILED old count 0 at apply time (NEW (exact):)')
+RESULT FAIL 2

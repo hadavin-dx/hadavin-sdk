@@ -13,9 +13,11 @@ R = sys.argv[1] if len(sys.argv) > 1 else H + "/handover/core-hardening/c6-skip-
 raw = open(R, encoding="utf-8").read()
 txt = raw.split("\n")
 FAILS = []
+TOTAL = [0]
 
 
 def check(name, ok, detail=""):
+    TOTAL[0] += 1
     print(("PASS " if ok else "FAIL ") + name + ((" :: " + str(detail)[:300]) if detail != "" else ""))
     if not ok:
         FAILS.append(name)
@@ -166,13 +168,14 @@ for l in txt:
 check("section 3 'rows tied to it' column equals the recount", tied_ok)
 # 9 figure
 full = raw
-f1 = re.findall(r"60\.\d ?(?:to|-) ?6\d\.\d", full)
+full_noold = "\n".join(re.sub(r"^(\| \d+ \| NOT APPLIED[^|]*? \| handover/[^|]+? \| \d+ \| [^|]* \| )`.*?` (\| `)", r"\1`` \2", l) for l in txt)
+f1 = re.findall(r"60\.\d ?(?:to|-) ?6\d\.\d", full_noold)
 f1bad = [x for x in f1 if x.replace(" ", "") not in ("60.1to61.9",)]
 check("figure 60.1 to 61.9 exact everywhere (%d occurrences)" % len(f1), not f1bad, f1bad[:4])
-check("no '61.1' or other upper bound next to 60.1", not re.search(r"60\.1 ?(?:to|-) ?(?!61\.9)\d", full))
-f2 = re.findall(r"52\.\d ?(?:to|-) ?5\d\.\d", full)
+check("no '61.1' or other upper bound next to 60.1", not re.search(r"60\.1 ?(?:to|-) ?(?!61\.9)\d", full_noold))
+f2 = re.findall(r"52\.\d ?(?:to|-) ?5\d\.\d", full_noold)
 check("figure 52.8 to 54.9 exact everywhere (%d occurrences)" % len(f2), all(x.replace(" ", "") in ("52.8to54.9",) for x in f2), [x for x in f2 if x.replace(" ", "") != "52.8to54.9"][:4])
-check("61.9 only after 60.1 to", all(full[max(0, m.start() - 8):m.start()].replace(" ", "").endswith("60.1to") for m in re.finditer(r"61\.9", full)), "")
+check("61.9 only after 60.1 to", all(full_noold[max(0, m.start() - 8):m.start()].replace(" ", "").endswith("60.1to") for m in re.finditer(r"61\.9", full_noold)), "")
 # 10 split
 runs_done = re.findall(r"(\d+) runs? done", full)
 runs_unk = re.findall(r"(\d+) runs? unknown", full)
@@ -205,6 +208,8 @@ for ln, l in enumerate(body_lines):
 check("every clock time in UTC or Z has its IST nearby (outside old-text quotes)", not noist, noist[:4])
 nu = [r["i"] for r in rows if re.search(r"\bUTC\b", r["new"]) and "IST" not in r["new"]]
 check("every new text with UTC also has IST", not nu, nu)
+nu2 = [r["i"] for r in rows if len(re.findall(r"\bUTC\b", r["new"])) > len(re.findall(r"\bIST\b", r["new"]))]
+check("in every new text each UTC has its own IST (UTC count <= IST count)", not nu2, nu2)
 check("IST given with the money stop", "23:59 IST" in full and "18:19 UTC = 23:49 IST" in full and "15:00 UTC = 20:30 IST" in full)
 # 12 18 runs
 b18 = [i + 1 for i, l in enumerate(txt) if re.search(r"\b18 (kept )?(crash )?runs?\b|each of 18|all 18", l, re.I) and not ("VOID-fl45k3b" in l and "VOID-fl45k6c" in l)
@@ -232,7 +237,7 @@ check("row 11 is tied to L-CARD", "L-CARD" in r11["st"] and "L-CARDLEN" in r11["
 check("L-CARDLEN gives both options with numbers (about 75 words / about 60 s, total about 210 s)", "(b) keep the text" in full and "210 s" in full and "cut the spoken text to" in full)
 check("L-SCENES question present with the 40 s and 25 s budgets", "| L-SCENES |" in full and "about 25 s instead of 40 s" in full)
 check("rows 15, 20, 29, 31 tied to L-CARDTEXT", all("L-CARDTEXT" in bylead[k]["st"] for k in (15, 20, 29, 31)))
-check("rows 1, 33, 39 split: an always part and an L-APPROX part", all(bylead[k]["st"].endswith("ready") for k in (1, 76, 77)) and all("L-APPROX" in bylead[k]["st"] for k in (74, 33, 39)))
+check("rows 1, 33, 39 split: an always part and an L-APPROX part", all(bylead[k]["st"].endswith("ready") for k in (1, 75, 76)) and all("L-APPROX" in bylead[k]["st"] for k in (73, 33, 39)))
 check("'sped up, real wait' label in the exceptions of rows 1 and 17", "sped up, real wait" in bylead[1]["new"] and "sped up, real wait" in bylead[17]["new"])
 nonum = [r["i"] for r in rows if re.search(r"(?i)\bno (test |timing |recovery )?number\b", r["new"]) and "45 s lease setting is allowed" not in r["new"]]
 check("every new text that says NO NUMBER carries the 45 s carve-out", not nonum, nonum)
@@ -242,10 +247,10 @@ r8 = bylead[8]["new"]
 check("row 8 reads every request line, answers Q27 (a)(b)(c), key scope UNVERIFIED, made-up vs real", "EVERY line" in r8 and "(a)" in r8 and "(b)" in r8 and "(c)" in r8 and "UNVERIFIED" in r8 and "STOP" in r8 and "made-up e-mail domain" in r8)
 r6 = bylead[6]["new"]
 check("row 6 has the second leak scan (item 15) and the after-take deletion (item 16), no blank and no builder note", "15. SECOND LEAK SCAN" in r6 and "16. AFTER THE TAKE" in r6 and "______" not in r6 and "delete this item" not in r6 and "SESSION-HANDOFF" not in r6)
-check("generator rule on rows 62 to 69 and row 93 edits the generator", all("GENERATOR RULE" in bylead[k]["why"] for k in range(62, 70)) and bylead[93]["f"].endswith("build_mainframe.py"))
-check("reply line has seconds and IST", "T16:40:00Z = 22:10:00 IST" in full and "REPLY FORM FOR EVERY QUESTION" in full)
-check("box says six blocking steps (not four)", "six new blocking steps" in full and "four new blocking checks" not in full)
-check("no 'two stores' or 'three stores' outside quotes of what is rejected (count of 'two stores' in prose is at most 3)", full.count("two stores") <= 3 and "three stores" not in "\n".join(r["new"] for r in rows))
+check("generator rule on rows 62 to 69 and row 92 edits the generator", all("GENERATOR RULE" in bylead[k]["why"] for k in range(62, 70)) and bylead[92]["f"].endswith("build_mainframe.py"))
+check("reply line has seconds and IST", "T16:40:00Z = 22:10:00 IST" in full and "L-LEASE: 2`" not in full and "REPLY FORM FOR EVERY QUESTION" in full)
+check("box says six blocking steps (the word four only in the slip note)", "six new blocking steps" in full and full.count("four new blocking checks") <= 1)
+check("no 'two stores' or 'three stores' in any new text", "two stores" not in "\n".join(r["new"] for r in rows) and "three stores" not in "\n".join(r["new"] for r in rows))
 W = []
 for k in (13, 14):
     W += [len(q.split()) for q in re.findall(r'spoken: "([^"]*)"', bylead[k]["new"])]
@@ -254,5 +259,5 @@ check("run-sheet list headings are given at lines 49 and 61 (not 59 and 71)", "l
 bl = [(r["i"]) for r in rows if re.search(r"(?<!studio )(?<!Studio )\blead\b(?!er)", re.sub(r"[Aa] lead sent twice with the same id is processed once", "", r["new"]))]
 check("no bare 'lead' in new texts (the one decision sentence excepted)", not bl, bl)
 check("section 8 has the coverage of the c6n reviews", "COVERAGE OF THE c6n REVIEWS" in full)
-print("SUMMARY: %d checks, %d FAILED%s" % (0, len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))
+print("SUMMARY: %d checks, %d FAILED%s" % (TOTAL[0], len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))
 sys.exit(1 if FAILS else 0)

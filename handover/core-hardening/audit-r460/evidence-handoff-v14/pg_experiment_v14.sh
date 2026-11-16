@@ -15,13 +15,13 @@ runuser -u postgres -- psql -X -h $D -d postgres -c "select version()" -At > "$O
 runuser -u postgres -- psql -X -h $D -d postgres -c "create database exp" >/dev/null
 for f in "$@"; do :; done
 HERE="$(cd "$(dirname "$0")" && pwd)"
-for n in b1 m1 m3; do
-  cp "$HERE/pg_$n.sql" "$D/pg_$n.sql"; chown postgres "$D/pg_$n.sql"
-  P exp "$D/pg_$n.sql" > "$OUT/raw-pg-$n-v14.txt" 2>&1
+for n in b1 tmp m3; do
+  cp "$HERE/pg_$n.sql" "$D/pg_$n.sql"; cp "$HERE"/held-sql/*.sql "$D/"; chown postgres "$D"/*.sql
+  (cd "$D" && P exp "$D/pg_$n.sql") > "$OUT/raw-pg-$n-v14.txt" 2>&1
   runuser -u postgres -- psql -X -h $D -d postgres -c "drop database exp" -c "create database exp" >/dev/null
 done
-if [ -n "${V13_PY:-}" ] && [ -n "${V13_SRC:-}" ]; then
+if [ -n "${V14_PY:-}" ] && [ -n "${V14_SRC:-}" ]; then
   runuser -u postgres -- psql -X -h $D -d postgres -c "select 1" >/dev/null
-  "$V13_PY" "$HERE/pg_real_code_v14.py" "$D" "$V13_SRC" > "$OUT/raw-pg-real-code-v14.txt" 2>&1; echo "real-code rc=$?" >> "$OUT/raw-pg-real-code-v14.txt"
+  "$V14_PY" "$HERE/pg_real_code_v14.py" "$D" "$V14_SRC" > "$OUT/raw-pg-real-code-v14.txt" 2>&1; echo "real-code rc=$?" >> "$OUT/raw-pg-real-code-v14.txt"
 fi
 echo done

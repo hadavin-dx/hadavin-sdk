@@ -1,0 +1,25 @@
+V0-control-unchanged                             exit 0  OK  first failed check: none
+V1a-oldquote-row1                                exit 1  OK  first failed check: FAIL C-1 old text occurs once on its stated line (94 rows) :: [1]
+V1b-oldquote-row40                               exit 1  OK  first failed check: FAIL C-1 old text occurs once on its stated line (94 rows) :: [40]
+V2a-61.1-glossary-only                           exit 1  OK  first failed check: FAIL figure 60.1 to 61.9 exact everywhere (20 occurrences) :: ['60.1 to 61.1']
+V2b-61.1-everywhere                              exit 1  OK  first failed check: FAIL C-1 old text occurs once on its stated line (94 rows) :: [73, 33, 76]
+V2c-61.1-in-NEW-text-row39                       exit 1  OK  first failed check: FAIL figure 60.1 to 61.9 exact everywhere (20 occurrences) :: ['60.1 to 61.1']
+V2d-61.1-new-text-and-prose                      exit 1  OK  first failed check: FAIL figure 60.1 to 61.9 exact everywhere (20 occurrences) :: ['60.1 to 61.1', '60.1 to 61.1']
+V3a-VOID-label-removed-prose-1                   exit 1  OK  first failed check: FAIL report prose lines with '18 runs' name both voided runs :: [77]
+V3b-VOID-label-removed-prose-2                   exit 1  OK  first failed check: FAIL report prose lines with '18 runs' name both voided runs :: [239]
+V3c-VOID-label-removed-in-NEW-text-row39         exit 1  OK  first failed check: FAIL new texts with '18 runs' name both voided runs :: [39]
+V4a-one-IST-time                                 exit 1  OK  first failed check: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (18 pairs) :: [('18', '29', '23', '58')]
+V4b-all-23:59-IST                                exit 1  OK  first failed check: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (18 pairs) :: [('18', '29', '23', '58'), ('18', '29', '23', 
+V4c-IST-word-broken-in-NEW-text-row6             exit 1  OK  first failed check: FAIL in every new text each UTC has its own IST (UTC count <= IST count) :: [6]
+V5-fakekey-akia-in-row1-NEWtext                  exit 1  OK  first failed check: FAIL no secret-like or e-mail string in report :: 1
+V5-fakekey-akia-in-row1-reason                   exit 1  OK  first failed check: FAIL no secret-like or e-mail string in report :: 1
+V5-fakekey-sk-in-row1-NEWtext                    exit 1  OK  first failed check: FAIL no secret-like or e-mail string in report :: 1
+V5-fakekey-sk-in-row1-reason                     exit 1  OK  first failed check: FAIL no secret-like or e-mail string in report :: 1
+V5-fakekey-ghp-in-row1-NEWtext                   exit 1  OK  first failed check: FAIL no secret-like or e-mail string in report :: 1
+V5-fakekey-ghp-in-row1-reason                    exit 1  OK  first failed check: FAIL no secret-like or e-mail string in report :: 1
+V6-one-row-deleted                               exit 1  OK  first failed check: FAIL ids are exactly 1..N, no duplicate :: N=93
+V7-split-wrong-11-runs-done                      exit 1  OK  first failed check: FAIL 18 kept runs split: every '<n> runs done' is 10 and every '<n> runs unknown' is 8 :: (['11', '10'], ['8',
+V8-IST-arithmetic-wrong                          exit 1  OK  first failed check: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (18 pairs) :: [('18', '19', '23', '19')]
+V9-NOT-FILMABLE-sentence-back-in-row13           exit 1  OK  first failed check: FAIL rows 13 and 21 are NOT FILMABLE and carry no 'within 45 seconds' sentence :: [13, 21]
+V10-index-not-seen-accepted-back-in-row8         exit 1  OK  first failed check: FAIL no stale phrase in new texts :: [('index not seen, accepted', [8])]
+SUMMARY: 24 copies, 0 wrong

@@ -1,0 +1,8 @@
+rc=1
+FAIL odd number of fences
+FAIL E-01 fence without OLD/NEW label: wt\nlite-int`).
+FAIL E-01 unclosed fence
+FAIL E-01 has no OLD block
+FAIL E-01 has no NEW block
+FAIL E-01 non-Hold row has only HOLD blocks
+RESULT FAIL 6

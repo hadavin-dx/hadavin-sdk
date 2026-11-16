@@ -1,7 +1,7 @@
 """Run the REAL store and migration code of src/ (read only, never edited) against the throwaway cluster.
 Usage: python pg_real_code_v14.py <socket_dir> <src_dir>. Prints one line per check: PASS/FAIL/INFO.
 Prototype of the S-2a store shape lives here only as `add_spend_v14` (a reference for the builder, not product code)."""
-import sys, tempfile, shutil
+import sys, tempfile, shutil, time
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -21,7 +21,7 @@ def info(msg): print("INFO " + msg)
 def dsn(user, db="exp2"): return f"host={sock} dbname={db} user={user}"
 
 admin = psycopg.connect(f"host={sock} dbname=postgres user=postgres", autocommit=True)
-for r in ("migr_v14", "rtr_v14"):
+for r in ("migr_v14", "rtr_v14", "portal_v14"):
     admin.execute(f"CREATE ROLE {r} LOGIN")
 admin.execute("CREATE DATABASE exp2 OWNER migr_v14")
 
@@ -41,6 +41,19 @@ tmp = Path(tempfile.mkdtemp(prefix="v14mig_"))
 for p in m.MIGRATIONS.glob("*.sql"): shutil.copy(p, tmp / p.name)
 shutil.copy(HERE / "held-sql" / "spend_nonneg.sql", tmp / "0006_spend_nonneg.sql")
 real_files = m._migration_files
+m._migration_files = lambda folder=tmp: sorted(Path(folder).glob("*.sql"))
+# v14 security minor 4: a run that holds the table makes held file 1 fail after its own lock_timeout and roll back
+holder = connect(dsn("migr_v14"))
+t0 = time.monotonic(); err = None
+with holder.transaction():
+    holder.execute("LOCK TABLE spend IN ROW SHARE MODE")
+    try: m.migrate(dsn("migr_v14"), runtime_role="rtr_v14")
+    except psycopg.Error as e: err = e
+el = time.monotonic() - t0
+check("v14 lock: with a session holding spend, held file 1 fails with 55P03 after about its 5 s lock_timeout", err is not None and err.sqlstate == "55P03" and 4.5 < el < 15, f"{getattr(err, 'sqlstate', None)} after {el:.1f}s")
+check("v14 lock: the failed migration rolled back (no 0006 row in the ledger, no constraint)", mig.execute("SELECT count(*) FROM schema_migrations WHERE version LIKE '0006%%'").fetchone()[0] == 0 and mig.execute("SELECT count(*) FROM pg_constraint WHERE conname = 'spend_usd_ok'").fetchone()[0] == 0)
+holder.close()
+m._migration_files = real_files
 m._migration_files = lambda folder=tmp: sorted(Path(folder).glob("*.sql"))
 check("guard: check_ledger + check_grants accept held file 1 numbered 0006", (m.check_ledger(m._migration_files()) + m.check_grants(m._migration_files())) == [])
 applied = m.migrate(dsn("migr_v14"), runtime_role="rtr_v14")
@@ -64,16 +77,22 @@ def add_spend_v14(store, agent, day, usd):
             d = store._exec("INSERT INTO spend (agent_id, day, usd) VALUES (%s, %s, %s) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd", (agent, day, usd)).fetchone()["usd"]
             mo = store._exec("INSERT INTO spend_month (agent_id, month, usd) VALUES (%s, %s, %s) ON CONFLICT (agent_id, month) DO UPDATE SET usd = spend_month.usd + EXCLUDED.usd RETURNING usd", (agent, month, usd)).fetchone()["usd"]
         else:
-            r = store._exec("UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s RETURNING usd", (usd, agent, day)).fetchone()
-            q = store._exec("UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s RETURNING usd", (usd, agent, month)).fetchone()
+            try:
+                r = store._exec("UPDATE spend SET usd = usd + %s WHERE agent_id = %s AND day = %s RETURNING usd", (usd, agent, day)).fetchone()
+                q = store._exec("UPDATE spend_month SET usd = usd + %s WHERE agent_id = %s AND month = %s RETURNING usd", (usd, agent, month)).fetchone()
+            except pgerr.CheckViolation as e:  # v14 security minor 1: one exception type with the memory store
+                raise ValueError("a spend total may not go below zero") from e
             if r is None or q is None: raise LookupError("negative change to a total that does not exist")
             d, mo = r["usd"], q["usd"]
     return Decimal(d), Decimal(mo)
 
 check("B1 fix: v14 shape, delta -1 on a row of 2 works", add_spend_v14(store, "a", DAY, Decimal("-1")) == (Decimal(1), Decimal(1)))
 check("B1 fix: v14 shape, give back to exactly 0 works (positive control)", add_spend_v14(store, "a", DAY, Decimal("-1")) == (Decimal(0), Decimal(0)))
-st = sqlstate(lambda: add_spend_v14(store, "a", DAY, Decimal("-0.01")))
-check("B1 fix: v14 shape, a delta that would go below zero is refused by the database (23514)", st == "CheckViolation/23514", st)
+def exc_name(fn):
+    try: fn(); return None
+    except Exception as e: return type(e).__name__
+st = exc_name(lambda: add_spend_v14(store, "a", DAY, Decimal("-0.01")))
+check("B1 fix: v14 shape, a delta that would go below zero is refused by the database (23514) and surfaces as ValueError", st == "ValueError", str(st))
 try: add_spend_v14(store, "nobody", DAY, Decimal("-1")); check("missing-row error raised", False)
 except LookupError: check("missing-row error raised (LookupError)", True)
 check("positive and zero deltas still upsert", add_spend_v14(store, "a", DAY, Decimal("2")) == (Decimal(2), Decimal(2)) and add_spend_v14(store, "z", DAY, Decimal("0")) == (Decimal(0), Decimal(0)))
@@ -83,8 +102,8 @@ for bad in ("NaN", "Infinity", "-Infinity"):
 # E0-S2-2 rollback claim: day row and month row disagree; the month UPDATE fails, the day UPDATE must roll back
 mig.execute("UPDATE spend_month SET usd = 1 WHERE agent_id = 'a'")  # month 1, day 2
 before = store.spend_totals("a", DAY)
-st = sqlstate(lambda: add_spend_v14(store, "a", DAY, Decimal("-1.5")))  # day 0.5 ok, month -0.5 refused
-check("rollback: when the month row refuses, the day row is unchanged too", st == "CheckViolation/23514" and store.spend_totals("a", DAY) == before, f"{st} {store.spend_totals('a', DAY)}")
+st = exc_name(lambda: add_spend_v14(store, "a", DAY, Decimal("-1.5")))  # day 0.5 ok, month -0.5 refused
+check("rollback: when the month row refuses, the day row is unchanged too", st == "ValueError" and store.spend_totals("a", DAY) == before, f"{st} {store.spend_totals('a', DAY)}")
 mig.execute("UPDATE spend_month SET usd = 2 WHERE agent_id = 'a'")
 
 # 5. hostile direct writes as the runtime role (the E0-DB-1 list)
@@ -130,6 +149,41 @@ for stmt in ("SELECT * FROM spend_decrease_log", "INSERT INTO spend_decrease_log
     check(f"runtime role denied on the log: {stmt.split()[0]} -> 42501", st == "InsufficientPrivilege/42501", st)
 row = mig.execute("SELECT who FROM spend_decrease_log LIMIT 1").fetchone()
 check("log: the who column holds the login role (session_user) of the runtime connection", row[0] == "rtr_v14", str(row))
+# v14 security blocker B1: the runtime role creates a temporary table of the log's name, then lowers a total
+rtc = connect(dsn("rtr_v14"))
+mig.execute("DELETE FROM spend_decrease_log")
+rtc.execute("CREATE TEMP TABLE spend_decrease_log (agent_id text, period date, scope text, old_usd numeric, new_usd numeric, at timestamptz DEFAULT clock_timestamp(), who text DEFAULT session_user)")
+check("B1 attack set-up: the runtime role CAN create a temporary table (PUBLIC default) before the REVOKE", True)
+store_rt = PostgresStore(rtc)
+add_spend_v14(store_rt, "a", DAY, Decimal("-0.5"))
+n_temp = rtc.execute("SELECT count(*) FROM pg_temp.spend_decrease_log").fetchone()[0]
+n_real = mig.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0]
+check("B1 fix: with the temporary table present, the REAL log still gets both rows (day and month) and the temporary table none", n_real == 2 and n_temp == 0, f"real={n_real} temp={n_temp}")
+rtc.close()
+# REVOKE TEMP FROM PUBLIC as the operator would; the check proposed for effective_problems
+def can_temp(role): return mig.execute("SELECT has_database_privilege(%s, current_database(), 'TEMP')", (role,)).fetchone()[0]
+check("TEMP check (prototype of the DB-2 check): the runtime role can create temporary tables before the REVOKE", can_temp("rtr_v14") is True)
+admin.execute("REVOKE TEMPORARY ON DATABASE exp2 FROM PUBLIC")
+admin.execute("GRANT TEMPORARY ON DATABASE exp2 TO migr_v14")
+check("TEMP check: after REVOKE ... FROM PUBLIC the runtime role has no TEMP and the migration role keeps it", can_temp("rtr_v14") is False and can_temp("migr_v14") is True)
+rtc = connect(dsn("rtr_v14"))
+st = sqlstate(lambda: rtc.execute("CREATE TEMP TABLE spend_decrease_log (agent_id text)"))
+check("B1 defence in depth: the runtime role creating the temporary table is now refused (42501)", st == "InsufficientPrivilege/42501", st)
+rtc.close()
+# portal read role (question L10): SELECT on the log for the portal role only
+m.GRANTS["spend_decrease_log"] = m.Grant("table", "", portal=True)
+applied = m.migrate(dsn("migr_v14"), runtime_role="rtr_v14", portal_role="portal_v14")
+check("portal role: migrate(runtime, portal) accepts Grant('table', '', portal=True) for the log", applied == [], str(applied))
+pt = connect(dsn("portal_v14"))
+rows = pt.execute("SELECT count(*), COALESCE(sum(old_usd - new_usd), 0) FROM spend_decrease_log").fetchall()
+check("portal role can read the log (the status line's figures)", rows[0][0] == 2, str(rows))
+sz = pt.execute("SELECT pg_total_relation_size('spend_decrease_log')").fetchone()[0]
+check("portal role can read the size of the log (alarm figure)", sz > 0, str(sz))
+st = sqlstate(lambda: pt.execute("DELETE FROM spend_decrease_log"))
+check("portal role cannot delete from the log (42501)", st == "InsufficientPrivilege/42501", st)
+st = sqlstate(lambda: connect(dsn("rtr_v14")).execute("SELECT 1 FROM spend_decrease_log"))
+check("runtime role still cannot read the log (42501)", st == "InsufficientPrivilege/42501", st)
+pt.close()
 # the same migration run twice applies nothing (ledger) and the guard still accepts
 check("second migrate() applies nothing", m.migrate(dsn("migr_v14"), runtime_role="rtr_v14") == [])
 m._migration_files = real_files

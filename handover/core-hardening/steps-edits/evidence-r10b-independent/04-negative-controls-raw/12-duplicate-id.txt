@@ -1,0 +1,8 @@
+rc=1
+FAIL duplicate E-nn ids: ['E-11']
+FAIL ids not the expected continuous list (E-01..E-56 without E-10, E-35): diff ['E-12']
+FAIL Apply now id list in Counts differs from headers
+FAIL E-nn mentioned but not a row: ['E-12']
+FAIL index table ids differ from rows: ['E-12']
+FAIL index row mismatch E-11: ['OWNER-STEPS-realrun-v3.md', '87', 'Apply now'] vs OWNER-STEPS-realrun-v3.md 92 Apply now
+RESULT FAIL 6

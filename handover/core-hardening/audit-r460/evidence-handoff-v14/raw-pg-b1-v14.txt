@@ -1,0 +1,188 @@
+Pager usage is off.
+                                                                 version                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+(1 row)
+
+CREATE ROLE
+CREATE ROLE
+GRANT
+GRANT
+SET
+CREATE TABLE
+GRANT
+RESET
+--- T0 before the CHECK: old shape, reserve +5 then settle delta -3 (the shape store/postgres.py uses)
+SET
+ usd 
+-----
+   5
+(1 row)
+
+INSERT 0 1
+ usd 
+-----
+   2
+(1 row)
+
+INSERT 0 1
+RESET
+--- apply file 1 (the Q34 CHECK plus the Infinity clause)
+SET
+ALTER TABLE
+RESET
+--- T1 after the CHECK: OLD SHAPE, a delta of -3 on a row that holds 2 (resulting total stays positive)
+SET
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:24: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (a, 2026-11-16, -3).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+--- T1b OLD SHAPE, a give-back of the exact amount (resulting total 0), the "positive control" of v12 E0-DB-1
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:26: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (a, 2026-11-16, -2).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+--- T1c OLD SHAPE, positive delta +1 (must still work)
+ usd 
+-----
+   3
+(1 row)
+
+INSERT 0 1
+--- T2 NEW SHAPE: negative delta as UPDATE ... RETURNING (the row holds 3, +2 makes 5, -1 makes 4)
+ usd 
+-----
+   5
+(1 row)
+
+INSERT 0 1
+ usd 
+-----
+   4
+(1 row)
+
+UPDATE 1
+--- T2b NEW SHAPE: give back to exactly 0
+ usd 
+-----
+   0
+(1 row)
+
+UPDATE 1
+--- T2c NEW SHAPE: a delta that would leave the total below zero is refused by the CHECK (expect 23514)
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:35: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (a, 2026-11-16, -0.01).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+--- T2d NEW SHAPE: negative delta on a row that does not exist: UPDATE touches 0 rows (the code must treat that as an error)
+ usd 
+-----
+(0 rows)
+
+UPDATE 0
+--- T3 hostile values as the runtime role, INSERT and UPDATE: expect 23514 each
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:39: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (h1, 2026-11-16, -0.01).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:40: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (h2, 2026-11-16, NaN).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:41: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (h3, 2026-11-16, Infinity).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:42: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (h4, 2026-11-16, -Infinity).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:43: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (a, 2026-11-16, NaN).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:44: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (a, 2026-11-16, Infinity).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:45: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (a, 2026-11-16, -Infinity).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:46: ERROR:  23514: new row for relation "spend" violates check constraint "spend_usd_ok"
+DETAIL:  Failing row contains (a, 2026-11-16, -0.01).
+SCHEMA NAME:  public
+TABLE NAME:  spend
+CONSTRAINT NAME:  spend_usd_ok
+LOCATION:  ExecConstraints, execMain.c:2109
+--- T3b positive delta shape on a NEW row with +0 (a zero upsert) and UPDATE to exactly 0
+ usd 
+-----
+   0
+(1 row)
+
+INSERT 0 1
+ usd 
+-----
+   0
+(1 row)
+
+UPDATE 1
+RESET
+--- T4 ALTERNATIVE (not chosen): no CHECK, an AFTER trigger on the RESULTING value keeps the old write shape working
+SET
+ALTER TABLE
+CREATE FUNCTION
+CREATE TRIGGER
+RESET
+DELETE 2
+SET
+ usd 
+-----
+   5
+(1 row)
+
+INSERT 0 1
+T4a trigger variant: old shape, delta -3 on a row of 5 (expect 2, no error)
+ usd 
+-----
+   2
+(1 row)
+
+INSERT 0 1
+T4b trigger variant: old shape, delta -3 on a row of 2 (resulting -1: expect 23514)
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:69: ERROR:  23514: spend total out of range
+CONTEXT:  PL/pgSQL function spend_result_ok() line 4 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+T4c trigger variant: negative first insert for a NEW key (no conflict): expect 23514
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:71: ERROR:  23514: spend total out of range
+CONTEXT:  PL/pgSQL function spend_result_ok() line 4 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+T4d trigger variant: NaN and Infinity by UPDATE: expect 23514
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:73: ERROR:  23514: spend total out of range
+CONTEXT:  PL/pgSQL function spend_result_ok() line 4 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+psql:/var/lib/postgresql/hadavin_v14_exp/pg_b1.sql:74: ERROR:  23514: spend total out of range
+CONTEXT:  PL/pgSQL function spend_result_ok() line 4 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+RESET

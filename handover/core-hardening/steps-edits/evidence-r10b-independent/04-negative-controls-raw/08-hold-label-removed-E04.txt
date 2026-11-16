@@ -1,0 +1,4 @@
+rc=1
+FAIL E-04 Hold row has a NEW block without [HOLD label
+FAIL HOLD-labelled NEW blocks 13 != 14
+RESULT FAIL 2

@@ -1,0 +1,5 @@
+rc=1
+FAIL gates defined ['G1', 'G2', 'G9', 'G4', 'G5']
+FAIL gate letters used but not defined: ['G3']
+FAIL gate G9 list ['E-13'] differs from headers []
+RESULT FAIL 3

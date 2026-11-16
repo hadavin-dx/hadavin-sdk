@@ -104,12 +104,12 @@ rows[1].update(old=pre, new=('Scene 4 filming note (a note for the person filmin
                              'On screen only the live stopwatch overlay (the clock of the run being filmed; where the wait is cut short it carries the label "sped up, real wait" and the real time from the overlay) and the label "setting: lease 45 s" (a setting, not a result). Withdrawn old caption, kept as history: '),
                view="Scene 4 shows no test result in seconds; the live stopwatch, the label 'sped up, real wait' and the label 'setting: lease 45 s' stay.")
 rows[1]["st"] = "NOT APPLIED; ready"
-rwhy(1, rows[1]["why"], "ALWAYS-APPLY part of the old row 1 (split, c6n design review M4): the label of the line changes from 'FINAL caption' to a filming note, and the exceptions (stopwatch, 'sped up, real wait', 'setting: lease 45 s') are named. The wording part is row 74 (question L-APPROX), the kill-case, 52.9 and alert-delay corrections are row 75 (question L-KILL for the kill-case sentence). Sources: DEC:2 (decision 1), RES:92")
-nrow(74, "NOT APPLIED; on the default of L-APPROX", RS, 90, "Scene 4 shows no caption with a time after the crash and no rounded wording.", pa,
+rwhy(1, rows[1]["why"], "ALWAYS-APPLY part of the old row 1 (split, c6n design review M4): the label of the line changes from 'FINAL caption' to a filming note, and the exceptions (stopwatch, 'sped up, real wait', 'setting: lease 45 s') are named. The wording part is row 73 (question L-APPROX), the kill-case, 52.9 and alert-delay corrections are row 74 (question L-KILL for the kill-case sentence). Sources: DEC:2 (decision 1), RES:92")
+nrow(73, "NOT APPLIED; on the default of L-APPROX", RS, 90, "Scene 4 shows no caption with a time after the crash and no rounded wording.", pa,
      'Withdrawn caption (no time after the crash is shown, and no rounded wording such as "about a minute"). The clock of the run is the stopwatch overlay.',
      "L-APPROX WORDING part of the old row 1 (split, c6n design review M4): the caption with 'about a minute' and the range. If the studio lead answers yes to L-APPROX he gives the exact caption and this row is re-issued with it. Sources: DEC:2 (decision 1)")
 rid = 75
-nrow(75, "NOT APPLIED; on the default of L-KILL", RS, 90, "Scene 4 does not mention the two crash tests K3B and K3; the 52.8 figure is corrected.", post,
+nrow(74, "NOT APPLIED; on the default of L-KILL", RS, 90, "Scene 4 does not mention the two crash tests K3B and K3; the 52.8 figure is corrected.", post,
      (' The 18 kept crash runs of lane3 (60.1 to 61.9 s from the crash to the final state; 52.8 to 54.9 s from n8n coming back up) were measured on the film-v4 stand-in flows, not on the flows of this take, and stay out of the video. '
       'Two further lane3 runs at the same lease, VOID-fl45k3b (it never reached a final state, 338.7 s) and VOID-fl45k6c (the stand-in services were not up), were voided and are not counted; the cause is unknown. '
       'The kill cases K3B and K3 are not mentioned in scene 4. No statement about alert delay is made. Never "within 60 s".'),
@@ -121,8 +121,8 @@ pa33 = 'Caption wording: "about a minute after the crash (measured at lease 45 s
 assert old33.startswith(pa33) and old33.endswith(" Do not pool medians.")
 rows[33]["old"] = pa33
 rows[33]["new"] = 'Caption wording: none (the studio lead cut the scene 4 number on 2026-11-16, and the earlier wording "about a minute after the crash (measured at lease 45 s ...)" is withdrawn).'
-rwhy(33, rows[33]["why"], "L-APPROX WORDING part of the old row 33 (split, c6n design review M4). The always-apply part is row 76. If the studio lead answers yes to L-APPROX he gives the exact caption. Sources: DEC:2 (decision 1)")
-nrow(76, "NOT APPLIED; ready", PG, 161, "Web page: the medians belong to stand-in flows.", " Do not pool medians.",
+rwhy(33, rows[33]["why"], "L-APPROX WORDING part of the old row 33 (split, c6n design review M4). The always-apply part is row 75. If the studio lead answers yes to L-APPROX he gives the exact caption. Sources: DEC:2 (decision 1)")
+nrow(75, "NOT APPLIED; ready", PG, 161, "Web page: the medians belong to stand-in flows.", " Do not pool medians.",
      " Do not pool medians. The medians belong to the film-v4 stand-in flows, not to the flows in the video.",
      "ALWAYS-APPLY part of the old row 33 (split, c6n design review M4): the medians in the old caption said 'measured at lease 45 s' without saying that the flows were stand-ins. Sources: RES:89, RES:92")
 
@@ -134,17 +134,17 @@ pb39 = old39[len("20. " + pa39):]
 new39 = rows[39]["new"]
 assert new39.startswith('20. "On the film-v4 stand-in flows')
 cut = new39.index('" Final states:') + 1
-nA, nB = new39[:cut], new39[cut:]
+nA, nB = new39[:cut] + " (the voided runs VOID-fl45k3b and VOID-fl45k6c are not counted)", new39[cut:]
 rows[39]["old"] = pa39
 rows[39]["new"] = nA[len("20. "):]
-rows[39]["why"] = "L-APPROX WORDING part of the old row 39 (split, c6n design review M4): the sentence with 'about a minute' and 'was finished' (8 of the 18 runs ended unknown with one alert, not finished). The always-apply part (the count, the two voided runs) is row 77. If the studio lead answers yes to L-APPROX he gives the exact wording. Sources: RES:89, RES:92"
-nrow(77, "NOT APPLIED; ready", PG, 149, "Web page, statement 20: correct count (10 done, 8 unknown with one alert) and the two voided runs named.", pb39, nB,
+rows[39]["why"] = "L-APPROX WORDING part of the old row 39 (split, c6n design review M4): the sentence with 'about a minute' and 'was finished' (8 of the 18 kept runs ended unknown with one alert, not finished; the voided runs VOID-fl45k3b and VOID-fl45k6c are not counted). The always-apply part (the count, the two voided runs) is row 76. If the studio lead answers yes to L-APPROX he gives the exact wording. Sources: RES:89, RES:92"
+nrow(76, "NOT APPLIED; ready", PG, 149, "Web page, statement 20: correct count (10 done, 8 unknown with one alert) and the two voided runs named.", pb39, nB,
      "ALWAYS-APPLY part of the old row 39 (split, c6n design review M4): 'all 18 kill runs correct' is replaced by the final states: 10 runs done (K1 5, K2 5) and 8 runs unknown with one alert (K3B 5, K3 3); the two voided runs VOID-fl45k3b and VOID-fl45k6c are named and the 5 runs that overlapped a voided run are listed. Sources: RES:89, RES:92")
 rows[39]["new"] = rows[39]["new"]
 # row 39 first piece must keep the '20. ' number: put it back in the old and new of the first piece
 rows[39]["old"] = "20. " + pa39
 rows[39]["new"] = nA
-rows[77]["old"] = pb39
+rows[76]["old"] = pb39
 
 # ======================================================================= card rows: L-CARDTEXT ties (design M4) and L-CARDLEN (M1)
 for k in (15, 20, 29, 31):
@@ -155,7 +155,7 @@ for k in (13, 14):
 add_dep(14, "L-CARDLEN")
 rwhy(14, "Sources: MF:153, RS:82, NS:42, NS:45", "Row 14 is also tied to L-CARDLEN: the length of the four spoken lines (about 58 s with the old line 1 and the lease sentence) is the question L-CARDLEN, which offers a shorter text. Sources: MF:153, RS:82, NS:42, NS:45")
 
-rows[11]["new"] = ("- The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 s = 150 s, plus the closing card: EST NOT MEASURED (the card length is the question L-CARDLEN; the spoken card text is about 58 s long at 150 words a minute, so the total is not 180 s as long as the card keeps its four spoken lines). "
+rows[11]["new"] = ("- The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 s = 150 s, plus the closing card: EST NOT MEASURED (the card length is not decided; the spoken card text is about 58 s long at 150 words a minute, so the total is not 180 s as long as the card keeps its four spoken lines). "
                    "The next two lines count scenes 5 to 11, which are not in the one video (the studio lead's decision of 2026-11-16).<br>- Core scenes 1 to 10 and 12:")
 rview(11, "the run sheet gives the length of the one video: 3 minutes.", "the run sheet gives 150 s for scenes 1 to 4 and says that the closing card length is not measured.")
 rows[11]["why"] = ("c6n design review M1 and naive review M3: the c6n row wrote 'closing card 30 s = 180 s', a total that its own reason said was probably false. The four scenes add to 150 s (25 + 40 + 25 + 60, checked against the Time column of the run sheet rows 1, 2, 3, 4). The closing card is NOT given a number here because no stopwatch run of the card exists; the four spoken lines hold 144 words (about 58 s at 150 words a minute), which would make a total of about 208 s. "
@@ -181,7 +181,7 @@ r6 = rows[6]["new"]
 r6 = sub(r6, "Write the list, with the date and time in UTC and IST, into the studio's handoff note (the file handoff\\SESSION-HANDOFF.md in the studio folder, not in this repository).",
          "Write the list, with the date and time in UTC and IST, on this run sheet under this item.")
 r6 = sub(r6, "13. REPEAT-SEND TIMING (scene 3). The 45-second lease starts when the first send arrives, because the flow writes the claim row at that moment (mf-form.json line 97), not when the reply is shown. Write down the clock time of the first send in scene 2 and of the repeat send in scene 3 (UTC, to the second), and the reply text of the repeat. The gap between the two sends must be less than 30 seconds, so that 15 seconds of margin remain before the lease ends. Scene 2 is budgeted 40 seconds, so if the first send is the first thing in scene 2 the repeat comes about 40 seconds later, too close to 45: make the first send late in scene 2, or shorten scene 2, and redo the scene until the gap is under 30 seconds. After the repeat",
-         "13. REPEAT-SEND CHECK (scene 3). The owner sends the same prepared send note twice (he pastes the note again; he types no new id). Write down the clock time of the first send in scene 2 and of the repeat send in scene 3 (UTC to the second, with IST), the reply text of the repeat (it must say the repeat flag is true), and the gap. The gap is written down, not limited: the unique rule on the contact id refuses a second row at any gap (row 13 explains; the lease only decides when the recovery flow may take over a contact that is not finished). If the gap is long, the studio lead may choose the shorter scenes of question L-SCENES. After the repeat")
+         "13. REPEAT-SEND CHECK (scene 3). The owner sends the same prepared send note twice (he pastes the note again; he types no new id). Write down the clock time of the first send in scene 2 and of the repeat send in scene 3 (UTC to the second, with IST), the reply text of the repeat (it must say the repeat flag is true), and the gap. The gap is written down, not limited: the unique rule on the contact id refuses a second row at any gap (row 13 explains; the lease only decides when the recovery flow may take over a contact that is not finished). If the gap is long, the studio lead may restructure scenes 2 and 3 so that the repeat send comes straight after the first reply. After the repeat")
 r6 = sub(r6, "This item applies from the moment the four real-v5 flow files are edited to save every run (if they are not edited, delete this item).",
          "This item applies as soon as the four real-v5 flow files, or n8n's two settings, save every run; if they save nothing, the studio lead writes 'not applicable: saving is off' with the time in UTC and IST under this item.")
 r6 = sub(r6, "He runs both checks himself, or names a builder to write the leak scan; the builder's name is written here: ______ (while it is empty, the gate cannot pass).",
@@ -197,13 +197,13 @@ r8 = rows[8]["new"]
 i11 = r8.index("11. GATE, contact deletion")
 i12 = r8.index("12. GATE, the repeat-send statement")
 r8 = r8[:i11] + (
-    "11. GATE, contact deletion (the studio lead's step). The studio lead decided that the take never deletes contacts (ORDERS.md Q23 of 2026-11-16 12:50 UTC = 18:20 IST). The independent review of 11:00 UTC (16:30 IST) reported only a listing request in the take script scripts/run_real_check_n8n.py, but the script is not in the audited files, so this is UNVERIFIED: the studio lead verifies it at the re-pin (the moment he puts together and reads the final version of the take files). "
+    "11. GATE, contact deletion (the studio lead's step). The studio lead decided that the take does not delete contacts (his written answer of 2026-11-16 12:50 UTC = 18:20 IST). The independent review of 11:00 UTC (16:30 IST) reported only a listing request in the take script scripts/run_real_check_n8n.py, but the script is not in the audited files, so this is UNVERIFIED: the studio lead verifies it at the re-pin (the moment he puts together and reads the final version of the take files). "
     "Two scripts have similar names: scripts/run_real_check_n8n.py is the take script; scripts/run_real_check.py is the old desk test program, whose help text offers a clean-up option that archives contacts; it is not the take. Older plan text that shows the owner a notice 'up to 3 HubSpot contacts archived at the end' is probably stale and must not be shown. "
-    "At the re-pin the studio lead reads EVERY line of the take script that sends a request to the customer list (HubSpot), not only the lines found by a search for archive and delete, because a delete can hide behind another word. He writes here, with date and time in UTC and IST: (1) the version id of the files he read; (2) each request line of the take script with its line number (method and path); (3) the answer to Q27 as (a), (b) or (c) with line numbers: (a) the script waits for a go marker before it spends anything, (b) the script refuses to run after the end date (the money stop), (c) what happens and which exit code results when the key is cancelled during a run; "
-    "if (b) cannot be shown, STOP: no take on or after Mon 23 Nov 2026 (the target take is Wed 18 Nov 2026, ORDERS.md Q25); (4) 'matches the decision' or, if a request line deletes or archives, 'stop: tell the owner'; (5) that no owner sheet and no notice promises that the program deletes or archives contacts. "
-    "The HubSpot key: what the owner's key may do is UNVERIFIED (ORDERS.md Q20 item 3 says it is not known from here); the studio lead asks the owner once at take prep; no text says 'read-only' or 'cannot archive' about the key until the owner has confirmed it. "
+    "At the re-pin the studio lead reads EVERY line of the take script that sends a request to the customer list (HubSpot), not only the lines found by a search for archive and delete, because a delete can hide behind another word. He writes here, with date and time in UTC and IST: (1) the version id of the files he read; (2) each request line of the take script with its line number (method and path); (3) the answer to each of (a), (b) and (c) with line numbers: (a) the script waits for a go marker before it spends anything, (b) the script refuses to run after the end date (the money stop), (c) what happens and which exit code results when the key is cancelled during a run; "
+    "if (b) cannot be shown, STOP: no take on or after Mon 23 Nov 2026 (the target take is Wed 18 Nov 2026); (4) 'matches the decision' or, if a request line deletes or archives, 'stop: tell the owner'; (5) that no owner sheet and no notice promises that the program deletes or archives contacts. "
+    "The HubSpot key: what the owner's key may do is UNVERIFIED (the studio lead's answer says it is not known from here); the studio lead asks the owner once at take prep; no text says 'read-only' or 'cannot archive' about the key until the owner has confirmed it. "
     "Made-up contacts are told from real ones by the made-up e-mail domain and the name marker that the take script uses; no file I read names them (the run sheet line 30 names example.test only for what is shown on screen), so the studio lead writes the exact domain and marker here at the re-pin (UNVERIFIED until then); the owner deletes by hand only contacts that carry them, and never any other contact. Until the lines above are written, nothing is touched in the CRM. Not checked: whether an archived contact keeps its e-mail address reserved.<br>") + (
-    "12. GATE, the repeat-send statement: scene 3 and card line 1 are NOT FILMABLE until BOTH hold: (1) the unique rule on the contact id (the database rule that refuses a second row for the same contact id) has been seen in the table of the take's own database: in the loopback re-smoke the studio lead lists the table's rules (the psql command \\d mf_leads), writes the output here, and the output shows a primary key or a unique rule on the contact id; (2) the studio lead has answered L-LEASE (which lease sentence, if any, is spoken). "
+    "12. GATE, the repeat-send statement: scene 3 and card line 1 are NOT FILMABLE until BOTH hold: (1) the unique rule on the contact id (the database rule that refuses a second row for the same contact id) has been seen in the table of the take's own database: in the loopback re-smoke the studio lead lists the table's rules (the psql command \\d mf_leads), writes the output here, and the output shows a primary key or a unique rule on the contact id; (2) the studio lead has decided which sentence about the 45-second setting, if any, is spoken with it. "
     "There is no exit: if (1) is not seen, scene 3 and card line 1 are cut and the take goes on without them. In the test program the table is created with a primary key on the contact id (mf.py line 45) and the same rule is in n8n-flows-v4/mf_leads.sql line 5; that is not proof for the take database.")
 rows[8]["new"] = r8
 rwhy(8, rows[8]["why"], rows[8]["why"] + " c6n changes (c6n design review M5, naive review B1 and M5): item 11 now asks the studio lead to read every request line of the take script and to answer Q27 (a), (b), (c) with line numbers, states the HubSpot key scope as UNVERIFIED, and says how made-up contacts are told from real ones; item 12 no longer has the exit 'index not seen, accepted'. The meaning of (a), (b), (c) is from QUESTIONS.md line 73; what '(b) means stop' is applied here as: no take on or after Mon 23 Nov without it (the lead's own text, Q25, says exactly that). Sources: ORD:187, ORD:189, ORD:191, ORD:147")
@@ -212,79 +212,79 @@ rwhy(8, rows[8]["why"], rows[8]["why"] + " c6n changes (c6n design review M5, na
 rnew(47, "(n=1, one run, v4 K1)", "(n=2, two runs, both 144.3 s, v4 K1; RES:85)")
 rwhy(47, "Sources:", "c6n design review M6: RESULTS.md line 85 shows 2 runs for v4 K1 (n=2), not 1. Sources: RES:85,")
 rows[47]["why"] = rows[47]["why"].replace("RES:85, RES:85,", "RES:85,")
-nrow(78, "NOT APPLIED; ready", RS, 33, "Nothing on screen (planning note).", "lane3 v4 K1 144.3 s at lease 120 s, n=1 (RELAYED-INDEPENDENT)",
+nrow(77, "NOT APPLIED; ready", RS, 33, "Nothing on screen (planning note).", "lane3 v4 K1 144.3 s at lease 120 s, n=1 (RELAYED-INDEPENDENT)",
      "lane3 v4 K1 144.3 s at lease 120 s, n=2 (two runs, both 144.3 s; RESULTS.md line 85)",
-     "n=1 was wrong: RESULTS.md line 85 shows 2 runs (c6n design review M6). The same count in the three other places is rows 79, 80 and 81. Sources: RES:85")
-nrow(79, "NOT APPLIED; ready", RS, 23, "Nothing on screen (planning note).", "Source: lane3 v4 K1 144.3 s at lease 120 s (n=1, RELAYED-INDEPENDENT)",
+     "n=1 was wrong: RESULTS.md line 85 shows 2 runs (c6n design review M6). The same count in the three other places is rows 78, 79 and 80. Sources: RES:85")
+nrow(78, "NOT APPLIED; ready", RS, 23, "Nothing on screen (planning note).", "Source: lane3 v4 K1 144.3 s at lease 120 s (n=1, RELAYED-INDEPENDENT)",
      "Source: lane3 v4 K1 144.3 s at lease 120 s (n=2, two runs, both 144.3 s; RESULTS.md line 85)",
      "n=1 was wrong (c6n design review M6, RES:85). Sources: RES:85")
-nrow(80, "NOT APPLIED; ready", PG, 120, "Web page, statement 17: the 120 s figure has two runs.", "measured 144.3 s once (n=1, v4 K1)",
+nrow(79, "NOT APPLIED; ready", PG, 120, "Web page, statement 17: the 120 s figure has two runs.", "measured 144.3 s once (n=1, v4 K1)",
      "measured 144.3 s in both of 2 runs (n=2, v4 K1; RESULTS.md line 85)",
      "n=1 was wrong (c6n design review M6, RES:85). Statement 17 lives on PAGE-STATEMENTS-V4.md line 120 (it is the page statement number 17). Sources: RES:85")
-nrow(81, "NOT APPLIED; ready", PG, 145, "Web page: the 144.3 s figure has two runs.", "n=1 for the 144.3 s figure", "n=2 for the 144.3 s figure",
+nrow(80, "NOT APPLIED; ready", PG, 145, "Web page: the 144.3 s figure has two runs.", "n=1 for the 144.3 s figure", "n=2 for the 144.3 s figure",
      "n=1 was wrong (c6n design review M6, RES:85). Sources: RES:85")
 
 # ======================================================================= M7 residual lines
-nrow(82, "NOT APPLIED; on the default of L-CARD, L-CARDCUT", RS, 57, "Nothing on screen (an open decision on the run sheet).",
+nrow(81, "NOT APPLIED; on the default of L-CARD, L-CARDCUT", RS, 57, "Nothing on screen (an open decision on the run sheet).",
      "The closing card names the take's 45 s and the 120 s lane3 figure separately.",
      "The closing card names only the take's 45 s setting; no lane3 figure (neither 45 s nor 120 s) is on the card.",
      "Rows 14 and 15 remove the 120 s lane3 figure from the card; this open decision (item 8) still said the card names it (c6n design review M7). Sources: RS:41, DEC:2 (decision 1)")
-nrow(83, "NOT APPLIED; ready", RS, 52, "Nothing on screen (a rule on the run sheet): earlier runs are hidden from the list, not 'pruned'.",
+nrow(82, "NOT APPLIED; ready", RS, 52, "Nothing on screen (a rule on the run sheet): earlier runs are hidden from the list, not 'pruned'.",
      "prune old ones first. It must not be presented as privacy proof: the request body stays in n8n data until pruned.",
      "the studio lead hides the earlier executions from the list first. It must not be presented as privacy proof: the request body stays in n8n data until n8n's automatic removal of old runs removes it, if it ever does.",
      "'Prune' means two different things in the files (hiding a run on the screen, and n8n's automatic removal); the glossary uses HIDING and AUTOMATIC REMOVAL (c6n design review M7). Sources: NS:42, NS:45")
+nrow(83, "NOT APPLIED; ready", RS, 30, "Nothing on screen (a note on the run sheet).",
+     "NO NUMBER on screen. History only:",
+     "NO TEST NUMBER on screen (the 45 s lease setting is allowed: it is a setting, not a result). History only:",
+     "RS:30 column 6 said NO NUMBER without the carve-out for the lease setting (c6n naive review M1). Saved-run wording of the same line is rows 23 and 24 (row 23 already replaces the sentence with 'pruned'). Sources: RS:30")
 nrow(84, "NOT APPLIED; ready", RS, 30, "Nothing on screen (a note on the run sheet).",
-     "Executions older than the take are pruned first; if a leftover execution shows, do not open it.",
-     "The studio lead hides every execution made before the take from the list first (row of this scene about the take start time); if a leftover execution shows, do not open it.",
-     "RS:30 still said 'pruned' (c6n design review M7). This is the wording part only; the saved-run rows 23 and 24 on the same line are separate pieces. Sources: NS:42")
-nrow(85, "NOT APPLIED; ready", RS, 30, "Nothing on screen (a note on the run sheet).",
      "the request body stays in n8n data until pruned.",
      "the request body stays in n8n data until n8n's automatic removal of old runs removes it, if it ever does.",
      "RS:30 col 7 still said 'until pruned' (c6n design review M7). Sources: NS:42, NS:45")
-nrow(86, "NOT APPLIED; ready", RS, 47, "Nothing on screen (a note on the run sheet).", "behind the sped-up scenes (4, 5, 9, 11)",
+nrow(85, "NOT APPLIED; ready", RS, 47, "Nothing on screen (a note on the run sheet).", "behind the sped-up scenes (4, 5, 9, 11)",
      "behind the sped-up scene (scene 4; scenes 5, 9 and 11 are not in the one video)",
      "RS:47 still counted scenes 5, 9 and 11 (c6n design review M7); the rest of the line is row 10. Sources: DEC:2 (decision 1)")
-nrow(87, "NOT APPLIED; on the default of L-CARD, L-CARDLEN", RS, 6, "Nothing on screen (a note on the run sheet).", "EST total re-done: 355 s core, 380 s with scene 11.",
+nrow(86, "NOT APPLIED; on the default of L-CARD, L-CARDLEN", RS, 6, "Nothing on screen (a note on the run sheet).", "EST total re-done: 355 s core, 380 s with scene 11.",
      "EST total re-done on 2026-11-16 for the one video: see the one-video line of this run sheet (line 44); the older totals 355 s and 380 s counted scenes that are not in the one video.",
      "RS:6 kept the old totals (c6n design review M7). The new total depends on the closing card length (L-CARDLEN). Sources: RS:44")
-nrow(88, "NOT APPLIED; on the default of L-PAGE", PG, 144, "Web page: the 13-minute alert delay is marked not for the page.",
+nrow(87, "NOT APPLIED; on the default of L-PAGE", PG, 144, "Web page: the 13-minute alert delay is marked not for the page.",
      "- Alert delay: up to about 13 minutes if n8n dies during the alert send (statement 19); n and raw file not given to me.",
      "- Alert delay: up to about 13 minutes if n8n dies during the alert send (statement 19; relayed for lane3 v4 flows, not the flows of the video, and not for the web page unless the studio lead says yes); n and raw file not given to me.",
      "PG:144 repeated the figure without the hold of row 43 (c6n design review M7). Sources: RES:78, RES:79")
-nrow(89, "NOT APPLIED; ready", PG, 121, "Web page: the 45 s line says what was measured and what was not.", "45 s: NOT RUN.",
+nrow(88, "NOT APPLIED; ready", PG, 121, "Web page: the 45 s line says what was measured and what was not.", "45 s: NOT RUN.",
      "45 s: lane3 ran 18 kept crash runs on film-v4 stand-in flows (statement 20; the voided runs VOID-fl45k3b and VOID-fl45k6c are not counted); on the real-v5 flows of the video: NOT RUN.",
      "'45 s: NOT RUN' contradicted statement 20 (c6n design review M7). Sources: RES:89, RES:92")
-nrow(90, "NOT APPLIED; ready", PG, 132, "Web page: the NOT RUN list says where 45 s was run.", "17 (lease 45 s)",
+nrow(89, "NOT APPLIED; ready", PG, 132, "Web page: the NOT RUN list says where 45 s was run.", "17 (lease 45 s)",
      "17 (lease 45 s on the real-v5 flows of the video; the film-v4 stand-in runs are in statement 20)",
      "PG:132 listed statement 17 at 45 s as NOT RUN with no word on statement 20 (c6n design review M7). Sources: RES:89")
-nrow(91, "NOT APPLIED; on the default of L-ONEDB", ONE, 26, "Nothing (the one-store decision wording).",
+nrow(90, "NOT APPLIED; on the default of L-ONEDB", ONE, 26, "Nothing (the one-store decision wording).",
      "The one store is Postgres, including n8n's own state, which for the re-smoke lives in a SEPARATE database `n8n`",
      "The target is one Postgres server that holds two databases: n8n's own database (`n8n`, separate from the claim database) and the claim database; the stage journal file is a third place that stays a file",
      "ONE:26 said 'the one store is Postgres' (c6n design review M7); the files never say 'two stores' or 'three stores': the three places are the n8n database, the claim database and the journal file. Sources: ORD:152")
-nrow(92, "NOT APPLIED; on the default of L-ONEDB", ONE, 1, "Nothing (the one-store decision title).",
+nrow(91, "NOT APPLIED; on the default of L-ONEDB", ONE, 1, "Nothing (the one-store decision title).",
      "# DECISION: one database for the take",
      "# DECISION (TARGET until the loopback re-smoke, check C-8): one Postgres server for the take (n8n's own database and the claim database; the stage journal stays a file)",
      "ONE:1 titled the decision 'one database', which is the 'one store' wording the studio lead rejected (ORD:152). Sources: ORD:152")
 
 # ======================================================================= M8: generator vs JSON rows 62-69
-nrow(93, "NOT APPLIED; on the default of L-SAVE", GEN, 44, "Scenes 1 and 2: the generated flow files save every run.",
+nrow(92, "NOT APPLIED; on the default of L-SAVE", GEN, 44, "Scenes 1 and 2: the generated flow files save every run.",
      '"saveDataSuccessExecution": "none", "saveDataErrorExecution": "none"',
      '"saveDataSuccessExecution": "all", "saveDataErrorExecution": "all"',
      "The four flow files are GENERATED by build_mainframe.py (its docstring line 6; the setting is the dictionary ST at line 44): a hand edit of the JSON (rows 62 to 69) is lost the next time the generator runs. GENERATOR RULE for rows 62 to 69: the builder applies this row AND rows 62 to 69; afterwards he runs the generator into a temporary folder with the arguments of the V5 README and compares the four generated files with the four edited ones: they must be identical, otherwise he stops and tells the studio lead (c6n design review M8). Sources: JF:424")
 for k in range(62, 70):
-    rwhy(k, rows[k]["why"], rows[k]["why"] + " GENERATOR RULE (c6n design review M8): these files are generated; apply row 93 as well and compare the generator output with these edits (row 93 explains).")
+    rwhy(k, rows[k]["why"], rows[k]["why"] + " GENERATOR RULE (c6n design review M8): these files are generated; apply row 92 as well and compare the generator output with these edits (row 92 explains).")
 
 # ======================================================================= M6 naive: row 57 wording for an unconfirmed default
 r57 = rows[57]["new"]
-r57 = sub(r57, "(owner decision of 2026-11-16)", "(the owner's choice as recorded in the plan of the re-smoke, PLAN:125; the studio lead has not confirmed it, question L-SAVE)")
+r57 = sub(r57, "(owner decision of 2026-11-16)", "(the owner's choice as recorded in the plan of the re-smoke, PLAN:125; the studio lead has not yet confirmed it)")
 rows[57]["new"] = r57
 rwhy(57, rows[57]["why"], rows[57]["why"] + " c6n naive review M7: the c6n new text called an unconfirmed default 'owner decision', which breaks the report's own rule that a default is never called a decision.")
 
 # ======================================================================= RS:32 (scene 3 row): carve-out in columns 5-7 (design M3, naive M1)
-nrow(94, "NOT APPLIED; ready", RS, 32, "Nothing on screen (a note in the scene 3 row of the run sheet).", "NO NUMBER. T13",
+nrow(93, "NOT APPLIED; ready", RS, 32, "Nothing on screen (a note in the scene 3 row of the run sheet).", "NO NUMBER. T13",
      "NO TEST NUMBER (the 45 s lease setting is allowed: it is a setting, not a result). The scene shows the clock times of both sends only if the studio lead chooses so; they are never a result in seconds. T13",
      "RS:32 column 6 said NO NUMBER with no carve-out for the lease setting or the stopwatch (c6n design review M3, naive review M1). Sources: RS:32")
-nrow(95, "NOT APPLIED; ready", RS, 32, "Nothing on screen (a note in the scene 3 row of the run sheet).", "Any number.",
+nrow(94, "NOT APPLIED; ready", RS, 32, "Nothing on screen (a note in the scene 3 row of the run sheet).", "Any number.",
      "Any test result as a number (the 45 s lease setting and the stopwatch are allowed).",
      "RS:32 column 7 'Any number.' forbade the lease setting as well (c6n naive review M1). Sources: RS:32")
 

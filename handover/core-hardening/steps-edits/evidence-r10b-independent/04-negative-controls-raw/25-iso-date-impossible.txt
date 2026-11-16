@@ -1,0 +1,3 @@
+rc=1
+FAIL line 30 impossible ISO date 2026-11-31
+RESULT FAIL 1

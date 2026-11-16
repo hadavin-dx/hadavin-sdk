@@ -1,0 +1,4 @@
+rc=1
+FAIL E-01 OLD missing in OWNER-STEPS-realrun-v3.md
+FAIL apply (non-hold) ('E-01', 'FAILED old count 0 at apply time (NEW (exact):)')
+RESULT FAIL 2

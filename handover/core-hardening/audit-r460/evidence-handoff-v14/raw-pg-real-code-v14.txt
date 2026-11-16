@@ -1,0 +1,61 @@
+PASS real migrate() applies 0001-0005 and the runtime grants on Postgres 16  [['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']]
+PASS old add_spend: reserve +5 then settle -3 works before the CHECK  [(Decimal('2'), Decimal('2'))]
+PASS v14 lock: with a session holding spend, held file 1 fails with 55P03 after about its 5 s lock_timeout  [55P03 after 5.0s]
+PASS v14 lock: the failed migration rolled back (no 0006 row in the ledger, no constraint)
+PASS guard: check_ledger + check_grants accept held file 1 numbered 0006
+PASS real migrate() applies held file 1 as 0006  [['0006_spend_nonneg']]
+PASS B1: the REAL old add_spend with delta -1 on a row that holds 2 fails after file 1  [CheckViolation/23514]
+PASS B1: nothing changed after that failure (both rows rolled back)  [(Decimal('2'), Decimal('2'))]
+PASS B1 fix: v14 shape, delta -1 on a row of 2 works
+PASS B1 fix: v14 shape, give back to exactly 0 works (positive control)
+PASS B1 fix: v14 shape, a delta that would go below zero is refused by the database (23514) and surfaces as ValueError  [ValueError]
+PASS missing-row error raised (LookupError)
+PASS positive and zero deltas still upsert
+PASS non-finite NaN refused in code before any statement
+PASS non-finite Infinity refused in code before any statement
+PASS non-finite -Infinity refused in code before any statement
+PASS rollback: when the month row refuses, the day row is unchanged too  [ValueError (Decimal('2'), Decimal('1'))]
+PASS runtime role INSERT -0.01 into spend -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE -0.01 on spend -> 23514  [CheckViolation/23514]
+PASS runtime role INSERT NaN into spend -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE NaN on spend -> 23514  [CheckViolation/23514]
+PASS runtime role INSERT Infinity into spend -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE Infinity on spend -> 23514  [CheckViolation/23514]
+PASS runtime role INSERT -Infinity into spend -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE -Infinity on spend -> 23514  [CheckViolation/23514]
+PASS runtime role INSERT -0.01 into spend_month -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE -0.01 on spend_month -> 23514  [CheckViolation/23514]
+PASS runtime role INSERT NaN into spend_month -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE NaN on spend_month -> 23514  [CheckViolation/23514]
+PASS runtime role INSERT Infinity into spend_month -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE Infinity on spend_month -> 23514  [CheckViolation/23514]
+PASS runtime role INSERT -Infinity into spend_month -> 23514  [CheckViolation/23514]
+PASS runtime role UPDATE -Infinity on spend_month -> 23514  [CheckViolation/23514]
+PASS M3 (v14 DB-2 PR state, no GRANTS entry yet): guard says the table is created but not in GRANTS  [spend_decrease_log (table) is created by a migration but is not in GRANTS]
+PASS M3 move PR state (file numbered + GRANTS entry with an EMPTY runtime list): check_grants == []  [[]]
+PASS M3 v12 state (GRANTS entry merged, SQL held elsewhere): migrate()'s guard fails with 'which no migration creates'  [GRANTS names spend_decrease_log, which no migration creates]
+PASS real migrate() applies held file 2 as 0007 and effective_problems(runtime role) is empty (an empty Grant is accepted)  [['0007_spend_decrease_log']]
+PASS guard refuses a plain CREATE FUNCTION (only CREATE OR REPLACE FUNCTION is read)  [0008_plain_function.sql: statement the guard does not read: 'CREATE FUNCTION f() RETURNS int LANGUAG]
+PASS M1: runtime role key rewrite on spend -> 42501  [InsufficientPrivilege/42501]
+PASS M1: runtime role key rewrite on spend_month -> 42501  [InsufficientPrivilege/42501]
+PASS log: one lowering through the v14 store writes two rows (day and month) and a raise writes none  [[('spend', Decimal('2'), Decimal('1.5')), ('spend_month', Decimal('2'), Decimal('1.5'))]]
+PASS log: a raising write added no row
+PASS runtime role denied on the log: SELECT -> 42501  [InsufficientPrivilege/42501]
+PASS runtime role denied on the log: INSERT -> 42501  [InsufficientPrivilege/42501]
+PASS runtime role denied on the log: UPDATE -> 42501  [InsufficientPrivilege/42501]
+PASS runtime role denied on the log: DELETE -> 42501  [InsufficientPrivilege/42501]
+PASS runtime role denied on the log: TRUNCATE -> 42501  [InsufficientPrivilege/42501]
+PASS log: the who column holds the login role (session_user) of the runtime connection  [('rtr_v14',)]
+PASS B1 attack set-up: the runtime role CAN create a temporary table (PUBLIC default) before the REVOKE
+PASS B1 fix: with the temporary table present, the REAL log still gets both rows (day and month) and the temporary table none  [real=2 temp=0]
+PASS TEMP check (prototype of the DB-2 check): the runtime role can create temporary tables before the REVOKE
+PASS TEMP check: after REVOKE ... FROM PUBLIC the runtime role has no TEMP and the migration role keeps it
+PASS B1 defence in depth: the runtime role creating the temporary table is now refused (42501)  [InsufficientPrivilege/42501]
+PASS portal role: migrate(runtime, portal) accepts Grant('table', '', portal=True) for the log  [[]]
+PASS portal role can read the log (the status line's figures)  [[(2, Decimal('1.0'))]]
+PASS portal role can read the size of the log (alarm figure)  [32768]
+PASS portal role cannot delete from the log (42501)  [InsufficientPrivilege/42501]
+PASS runtime role still cannot read the log (42501)  [InsufficientPrivilege/42501]
+PASS second migrate() applies nothing
+INFO 59 of 59 checks passed
+real-code rc=0
