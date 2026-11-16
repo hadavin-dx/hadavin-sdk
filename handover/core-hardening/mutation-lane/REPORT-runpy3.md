@@ -1,4 +1,4 @@
-# run.py round 2 (review 4 findings), 2026-11-16 (UTC)
+# run.py round 2 (review 4 findings), 2026-11-16 (UTC)  **[SUPERSEDED by REPORT-runpy4.md (run.py round 3); kept as evidence of round 2. Its "no precedent" wording for the S603 note differs from the evidence review, which says a precedent exists]**
 
 Files changed: `run.py`, `safety-tests.sh`, `MUTANTS-V2-PLAN.md`. Raw files: `raw/*-r2-*.txt` (nothing earlier overwritten). Final sha256 of run.py and safety-tests.sh: `raw/run-py-r2-final-sha256.txt`. Not reviewed by anyone yet; the review of this result is the lead's.
 

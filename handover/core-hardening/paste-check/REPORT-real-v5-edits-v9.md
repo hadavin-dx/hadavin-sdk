@@ -1,4 +1,4 @@
-# Real-v5 edit list v9 (round 5, builder), 2026-11-16
+# Real-v5 edit list v9 (round 5, builder), 2026-11-16  **[SUPERSEDED by REPORT-real-v5-edits-v10.md (edit list plan-v10-real-v5-edits.md)]**
 Not done / not verified (first):
 - PowerShell was not run (none here). The new PowerShell command (git archive, then a file-exists and size test printing `tar ok`) and the claim that `$S` is the folder bash sees as `$W/_local/scratch/wp6-smoke` are unverified (UNVERIFIED 14, extended).
 - The prep record's SEND line is not written: the take's program (`drive.py`, a take-branch file) is not readable here; the lead fills the exact line at re-pin (UNVERIFIED 15). Where the "unknown" alert arrives is also the lead's to name. Nothing ran in n8n.

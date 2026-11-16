@@ -1,4 +1,4 @@
-# Edit list v6 (fix pass 1): plan-wp6-resmoke-v5.md -> real-v5 minus ONE node (TEXT FOR THE LEAD; the plan itself is NOT edited)
+# Edit list v6 (fix pass 1): plan-wp6-resmoke-v5.md -> real-v5 minus ONE node (TEXT FOR THE LEAD; the plan itself is NOT edited)  **[SUPERSEDED by plan-v10-real-v5-edits.md plus plan-v10-corrections-after-chain.md; see SUPERSEDED-INDEX.md]**
 
 **This list has 28 edits.** Replaces `plan-v5-real-v5-edits.md` (19 edits, review `review-real-v5-edits.md`: 6 findings and the nits). Edits are listed in plan order and named by their plan location (not by R-numbers: the plan has its own R1-R6 rules). Apply each as an exact-match replace of the OLD block by the NEW block; every OLD text occurs exactly once in `inputs/plan-wp6-resmoke-v5.md` (558 lines) and was machine-checked. The OLD and NEW blocks carry no `+ ` or `- ` prefixes (copy them as they stand; in particular the heredoc ends with a bare `PYEOF`). A dry-run apply to a scratch copy is in `dryrun-v6.txt`; its result is in `REPORT-real-v5-edits-v6.md`.
 

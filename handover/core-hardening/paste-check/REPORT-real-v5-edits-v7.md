@@ -1,4 +1,4 @@
-# Real-v5 edit list v7 (fix pass 2, builder), 2026-11-16
+# Real-v5 edit list v7 (fix pass 2, builder), 2026-11-16  **[SUPERSEDED by REPORT-real-v5-edits-v10.md (edit list plan-v10-real-v5-edits.md)]**
 Not done / not verified (first):
 - The swapped node was never run in n8n 2.46.6, and nothing ran on the laptop. 2.1b "2 minutes" is still a builder estimate.
 - Section 10b paste ran only against a scratch Postgres 16 server (user postgres, db take_db, schema app); the take's database, schema, login and count-role names are unread (UNVERIFIED 15). Edit 27 is marked as a drafter addition beyond Q15.2; the lead may strike parts.

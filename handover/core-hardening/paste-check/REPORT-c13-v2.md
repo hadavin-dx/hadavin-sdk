@@ -1,4 +1,4 @@
-# REPORT-c13-v2 (builder, Sonnet 5.5): fix pass on the gate rows. Not a verdict; the lead runs the reviews.
+# REPORT-c13-v2 (builder, Sonnet 5.5): fix pass on the gate rows. Not a verdict; the lead runs the reviews.  **[SUPERSEDED by REPORT-c13-v3.md (patch plan-v5-gate-rows-v3.patch)]**
 
 ## Failed or not checked (first)
 - Nothing ran on the real stack; tests are bash and dash with a stand-in `pgq` and made-up JSON. `drive.py` is not on disk, so `RI=3`, the `keys.txt` shape, the lease length and whether 11.8's A and B lines carry `mails` and `model_calls` are all UNVERIFIED (named in the plan text).

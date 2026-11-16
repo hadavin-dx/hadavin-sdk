@@ -1,4 +1,4 @@
-# Ready-to-apply core patches, v2 (C5 v2, 2026-11-16)
+# Ready-to-apply core patches, v2 (C5 v2, 2026-11-16)  **[SUPERSEDED. The kept scope is ../v5/ (decision 4, Q18). Kept only for its raw evidence. Do not apply anything from this folder. See SUPERSEDED-NOTE.md]**
 
 ## What failed, what is uncertain, what was NOT checked (read first)
 - Full suite on the scratch copy (`b4cce5b` plus all three patches): 2 tests FAIL, both also fail on a pristine `b4cce5b`

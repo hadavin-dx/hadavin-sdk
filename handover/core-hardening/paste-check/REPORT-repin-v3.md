@@ -1,4 +1,4 @@
-# C3b re-pin patch v3 (2026-11-16), builder report
+# C3b re-pin patch v3 (2026-11-16), builder report  **[SUPERSEDED by REPORT-repin-v6.md (patch plan-v5-repin-v6.patch); do not use the patch this report describes]**
 ## Failed, unchecked or open (first)
 - NOT RUN: PowerShell (P-2, P-5, 9.0k, 11.0k, 13.5k), `wsl.exe`, Git Bash, real n8n scripts, the real `nlite-fix5` worktree. The Git Bash commands I wrote (fill command, `cat-file` test, two diff commands incl. `<( )`, last check, names check) ran only as STUB tests in plain bash on this Linux container against stub git repos. `C:/...` paths and `<( )` in Git Bash are unverified (UNVERIFIED 16). `dash -n` fails on the `<( )` command by design (bash is the named shell).
 - Container limits of my stub tests: `ss` is not installed here, so the port-wait loop of `gone()` saw no listener; the exit-number logic was tested, the port logic was not.

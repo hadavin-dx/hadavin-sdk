@@ -1,4 +1,4 @@
-# Edit list: plan-wp6-resmoke-v5.md -> real-v5 (TEXT FOR THE LEAD; the plan itself is NOT edited)
+# Edit list: plan-wp6-resmoke-v5.md -> real-v5 (TEXT FOR THE LEAD; the plan itself is NOT edited)  **[SUPERSEDED by plan-v10-real-v5-edits.md plus plan-v10-corrections-after-chain.md; see SUPERSEDED-INDEX.md]**
 
 Written 2026-11-16 (UTC and IST: see the checkpoint file). Source plan: `handover/core-hardening/inputs/plan-wp6-resmoke-v5.md` (558 lines as read). Every `old` text below was machine-checked to occur exactly once in that file at the line given; apply with an exact-match replace. Edits are listed in plan order. A tag line under each edit says VERIFIED (read) or UNVERIFIED (what the lead must check).
 

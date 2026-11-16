@@ -1,4 +1,4 @@
-# run.py round 3 (review r2 findings), 2026-11-16 (UTC)
+# run.py round 3 (review r2 findings), 2026-11-16 (UTC)  **[NOTE: line 3 says "Not reviewed by anyone yet" and that is out of date; reviews exist: review-runpy4-evidence.md and review-runpy4-security.md. Text below is not changed]**
 
 Files changed: `run.py`, `safety-tests.sh`, `MUTANTS-V2-PLAN.md`. Nothing earlier overwritten except `raw/run-py-safety-tests-r3-*.txt` (new). Hashes: `raw/run-py-r3-final-sha256.txt` (`sha256sum -c`: all OK). Not reviewed by anyone yet; the review of this result is the lead's.
 

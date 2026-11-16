@@ -1,4 +1,4 @@
-# C6 skip audit (rule R460, read-only): 7 findings of the n8n flows audit that were never checked (revision 2, after review)
+# C6 skip audit (rule R460, read-only): 7 findings of the n8n flows audit that were never checked (revision 2, after review)  **[SUPERSEDED in part by REPORT-c6f.md and evidence-lane3-recompute.md: lane3 is no longer "NOT READ" (recomputed from results.jsonl); the narrow claim in force is "inside the lease" (REPORT-c6f.md:64), which the claim text near line 20 omits. Text below is not changed]**
 
 ## Failures and gate items first (settle before filming)
 1. **M1, decision needed (Major).** `VIDEO-RUNSHEET.md:90` sets a FINAL scene 4 caption with a number ("About a minute after the crash (measured at lease 45 s: 18 kill runs, 60.1 to 61.9 s)"). The same sheet says the 45 s lease is UNMEASURED (:22), says NO number in scene 4 until lane3 numbers land (:85), and :90 itself says "Raw not seen by me"; `n8n-flows/PAGE-STATEMENTS-V4.md:149` says "I read nothing". Decision for the lead: read the lane3 raw (HB194) and cite it, or drop the number. I could not read it (not in the tree).

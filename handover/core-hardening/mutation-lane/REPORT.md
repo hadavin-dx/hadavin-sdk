@@ -1,4 +1,4 @@
-# Mutation lane report, round 2 (C8b), run 2026-11-16 UTC. Evidence runner: runs and records, does not judge.
+# Mutation lane report, round 2 (C8b), run 2026-11-16 UTC. Evidence runner: runs and records, does not judge.  **[SUPERSEDED, see paste-check/SUPERSEDED-INDEX.md: round-2 result on the v1 patches. The line "v2 rerun pending (C8c)" will not happen: ANSWER-Q18-lead.md:2 stopped new C8 work. Numbers stay valid only for the v1 patches]**
 
 > **SCOPE: v1 patches only; v2 rerun pending (C8c).** Every number below was measured on the v1 patches (`patches-ready/C-01.patch`, `A-01.patch`). The v2 patches that will merge (`patches-ready/v2/`) change the code (new function names, new checks) and were NOT run through this lane. Nothing here is merge evidence for v2. The mutant plan for v2 is `MUTANTS-V2-PLAN.md`.
 > Corrected after review 2 (`review-2.md`): the 46 vs 104 explanation (section 2), the stale m08/m09 line, the one-file proof baseline, the suppression comments in the proof test, and `run.py` (backups no longer written into this folder; crash safety added; see section 5).

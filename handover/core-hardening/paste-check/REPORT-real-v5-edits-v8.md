@@ -1,4 +1,4 @@
-# Real-v5 edit list v8 (fix pass v8, builder), 2026-11-16
+# Real-v5 edit list v8 (fix pass v8, builder), 2026-11-16  **[SUPERSEDED by REPORT-real-v5-edits-v10.md (edit list plan-v10-real-v5-edits.md)]**
 Not done / not verified (first):
 - Nothing ran on n8n 2.46.6 or on the laptop. The PowerShell half of the new film-file recipe (`git -C $HD archive -o ...; Get-FileHash`) was NOT run (no PowerShell here); only its bash half ran (film file via a `git archive` tar in a scratch repo, byte-identical).
 - The route B check in step 3 (`n8n list:workflow --active=true`) is UNVERIFIED (flag not run on 2.46.6; plan 2.5 uses `list:workflow` without it). The primary route is A: n8n stopped, `curl -s -o /dev/null -w '%{http_code}\n' "$N8N_HEALTH_URL"` prints `000` (tested with a throwaway web server: 200 up, 000 down; n8n's own health address untested). Step 2 makes the lead run the same curl once while n8n runs (must print 200), so a mistyped address cannot fake a 000.

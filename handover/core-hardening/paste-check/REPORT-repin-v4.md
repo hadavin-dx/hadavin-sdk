@@ -1,4 +1,4 @@
-# C3b re-pin patch v4 (2026-11-16), builder report
+# C3b re-pin patch v4 (2026-11-16), builder report  **[SUPERSEDED by REPORT-repin-v6.md (patch plan-v5-repin-v6.patch); do not use the patch this report describes]**
 ## Failed, unchecked or open (first)
 - NOT RUN: PowerShell (P-2, P-5, 9.0k, 11.0k, 13.5k), `wsl.exe`, Git Bash, real n8n scripts, the real `nlite-fix5` worktree, a real unreadable n8n process. Every new Git Bash and WSL command ran only as a STUB test in plain bash (and `dash -n` for syntax) on this Linux container against stub folders and stub git repos. `C:/` paths and `<( )` in Git Bash stay unverified (UNVERIFIED 16, extended). `dash -n` fails on the `<( )` command by design (bash is the named shell).
 - NOT VERIFIED, my guess: the laptop path of the plan file in the `PF=` variable of the last check and names check (`C:/Users/rakes/Downloads/Hadavin/egm/duplicate-proof-lead-desk/wp6/plan-wp6-resmoke-v5.md`). Only the folder `wp6` is known (from the evidence folder). Written into the plan as a guess and listed as new question 9; wrong path = `grep` prints `No such file` = STOP.

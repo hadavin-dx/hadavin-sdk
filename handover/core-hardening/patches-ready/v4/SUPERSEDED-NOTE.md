@@ -1,0 +1,2 @@
+SUPERSEDED. The kept scope is `../v5/` (decision 4, Q18). Kept only for its raw evidence. Do not apply anything from this folder.
+No banner was written into `README.md` or `DEAD-MAN-CHECK.md` of this folder on purpose: both are listed in `SHA256SUMS.txt` here and a banner would break `sha256sum -c`. This file is the banner. The title of `DEAD-MAN-CHECK.md` here still reads like a current note; it is the unedited v3 text (`../v5/README.md:32`); use `../v5/DEAD-MAN-CHECK.md`.

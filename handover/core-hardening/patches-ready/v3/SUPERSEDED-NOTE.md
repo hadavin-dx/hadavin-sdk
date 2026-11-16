@@ -1,0 +1,1 @@
+SUPERSEDED. The kept scope is `../v5/` (decision 4, Q18). Kept only for its raw evidence (v5 cites v3 raw files and the C7b evidence). Its `C-01.patch` holds the cut extras and its `A-01.patch` is deferred. Do not apply anything from this folder.

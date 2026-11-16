@@ -1,4 +1,4 @@
-# Ready-to-apply core patches, v3 (C5 v3, 2026-11-16)
+# Ready-to-apply core patches, v3 (C5 v3, 2026-11-16)  **[SUPERSEDED. The kept scope is ../v5/ (decision 4, Q18). Kept for its raw files and C7b evidence (v5 cites them). Its C-01 holds cut extras and its A-01 is deferred. Do not apply. See SUPERSEDED-NOTE.md]**
 
 ## SCOPE CUT by the lead, 10:02Z (read before anything else)
 - **`A-01.patch` is DEFERRED.** Finished and tested as described below, but not to be applied or extended now.

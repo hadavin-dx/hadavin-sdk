@@ -1,4 +1,4 @@
-# C3b re-pin patch report (2026-11-16)
+# C3b re-pin patch report (2026-11-16)  **[SUPERSEDED by REPORT-repin-v6.md (patch plan-v5-repin-v6.patch); do not use the patch this report describes]**
 ## Failures and unchecked items (first)
 - NOT DONE: the exit 3 pre-run check command. Nothing in the plan or the scripts' text shows how to list unreadable n8n-shaped processes. The existing scans (`grep -lsF ... /proc/*/environ`, plan 13.1, 13.5, `ours`) use `-s`, which silently skips processes whose environ cannot be read, so they cannot find them. Written as step P-4b (patched plan line 242): "the lead supplies the command", status UNVERIFIED. The lead must supply it.
 - NOT CHECKED: I did not read `n8n_kill.py` or `n8n_start.sh` (outside my allowed files). The exit 3 rule rests on the lead's text only. `gone()` already failed on any non-zero exit; the new line only gives exit 3 its own message and wording.

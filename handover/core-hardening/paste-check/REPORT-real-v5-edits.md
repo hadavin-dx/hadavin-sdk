@@ -1,4 +1,4 @@
-# Plan edit list for real-v5 (builder report, condensed copy, 2026-11-16 about 10:25 UTC = 15:55 IST)
+# Plan edit list for real-v5 (builder report, condensed copy, 2026-11-16 about 10:25 UTC = 15:55 IST)  **[SUPERSEDED by REPORT-real-v5-edits-v10.md (edit list plan-v10-real-v5-edits.md)]**
 Written: paste-check/plan-v5-real-v5-edits.md (19 edits R1-R20 without R9), checkpoint-real-v5.md. The plan itself was NOT edited. Only read-only git show/diff/cmp ran; a script confirmed each old text occurs exactly once in the plan (19 of 19). Banned-word count 0 on the edit list and checkpoint.
 ## Failures and unverified first
 1. Real-v5 cannot run unchanged on loopback: its CrmUpsert is n8n's HubSpot node (mf-sub-crm-mail.json:94-95, type n8n-nodes-base.hubspot, credential placeholder), which calls the internet and breaks the loopback-only rule (sampler would give EGRESS-FAIL). Edit R8 adds step 2.1b: a derived copy swapping ONLY that node for a loopback CRM stand-in call (POST <CRM_URL>/upsert). Evidence becomes "real-v5 minus one node", not unchanged real-v5. Lead must confirm. No third way found.

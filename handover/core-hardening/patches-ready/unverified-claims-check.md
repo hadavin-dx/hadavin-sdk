@@ -1,4 +1,4 @@
-# ORDER 021 lane c: unverified claims check (EVIDENCE RUNNER: runs and records, no judging)
+# ORDER 021 lane c: unverified claims check (EVIDENCE RUNNER: runs and records, no judging)  **[SUPERSEDED as the index of the first set; the current index is patches-ready/README.md. Kept as evidence]**
 Date 2026-11-16. Clean tree: `git archive b4cce5b` extracted to scratch (same method as patch-test-runs/REPORT.md: archive, no .git, uv env, no cloud variables). No patch applied. Repo not edited. pydantic in that env: 2.14.1 (from uv.lock). Raw output: `raw-unverified/`.
 
 ## Failures first

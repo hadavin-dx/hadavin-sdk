@@ -1,4 +1,4 @@
-# External dead-man check on `tick_state.last_ok_at` (note only: no core code)
+# External dead-man check on `tick_state.last_ok_at` (note only: no core code)  **[SUPERSEDED by v5/DEAD-MAN-CHECK.md (first set, made on a scratch copy)]**
 
 RUNG: existing code. The tick already writes one `tick_state` row per step with `last_run_at`, `last_ok_at` and `last_error`
 (`runtime/tick.py:323`, table in `store/migrations/0003_approvals_tick.sql:30-35`). Nothing new is built in core. The check
