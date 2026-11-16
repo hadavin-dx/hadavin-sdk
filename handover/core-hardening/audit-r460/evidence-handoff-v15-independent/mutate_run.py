@@ -38,13 +38,28 @@ M = [
  ("M32 log: month scope row stores NEW as old (month insert)", L, "USING OLD.agent_id, OLD.month, TG_TABLE_NAME, OLD.usd, NEW.usd;", "USING OLD.agent_id, OLD.month, TG_TABLE_NAME, NEW.usd, NEW.usd;", 1),
  ("M33 log: audit-relevant: log column scope stores wrong period (day for month)", L, "USING OLD.agent_id, OLD.month, TG_TABLE_NAME", "USING OLD.agent_id, OLD.month + 1, TG_TABLE_NAME", 1),
 ]
+EXEC_Q = "EXECUTE format('INSERT INTO %I.spend_decrease_log (agent_id, period, scope, old_usd, new_usd) VALUES ($1, $2, $3, $4, $5)', TG_TABLE_SCHEMA)"
+EXEC_U = "EXECUTE 'INSERT INTO spend_decrease_log (agent_id, period, scope, old_usd, new_usd) VALUES ($1, $2, $3, $4, $5)'"
+M += [
+ ("M34 log: v13 shape (unqualified log name in both EXECUTEs, no SET search_path on the log function)", L, None, None, 2),
+ ("M35 log: unqualified log name but path kept pg_catalog, pg_temp", L, None, None, 2),
+]
+START = int(os.environ.get('START', '1'))
 out = open(sys.argv[1], "w"); caught = 0
 for mid, fn, old, new, cnt in M:
+    if int(re.match(r'M(\d+)', mid).group(1)) < START: continue
     d = tempfile.mkdtemp(prefix="mut_"); 
     for f in os.listdir(SRC): shutil.copy(os.path.join(SRC, f), d)
     p = os.path.join(d, fn); t = open(p).read()
-    assert t.count(old) == cnt, (mid, t.count(old))
-    open(p, "w").write(t.replace(old, new))
+    if old is None:
+        assert t.count(EXEC_Q) == 2, (mid, t.count(EXEC_Q)); t2 = t.replace(EXEC_Q, EXEC_U)
+        if mid.startswith("M34"):
+            k = "LANGUAGE plpgsql SECURITY DEFINER\nSET search_path = pg_catalog, pg_temp AS $f$"; assert t2.count(k) == 1
+            t2 = t2.replace(k, "LANGUAGE plpgsql SECURITY DEFINER AS $f$")
+        open(p, "w").write(t2)
+    else:
+        assert t.count(old) == cnt, (mid, t.count(old))
+        open(p, "w").write(t.replace(old, new))
     os.chmod(d, 0o755)
     for f in os.listdir(d): os.chmod(os.path.join(d, f), 0o644)
     lab = "m" + re.match(r"M(\d+)", mid).group(1)
