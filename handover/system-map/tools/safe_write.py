@@ -40,6 +40,7 @@ def refused(base, name, force=False):
 
 def safe_write(base, name, text, force=False):
     """Return True if written, False if refused. With force the old text is kept as <name>.bak."""
+    hashes = _load(base)  # a damaged registry fails here, before anything is written
     if refused(base, name, force):
         return False
     path = _path(base, name)
@@ -50,7 +51,6 @@ def safe_write(base, name, text, force=False):
             fh.write(old)
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)
-    hashes = _load(base)
     hashes[name] = _sha(text)
     reg = os.path.join(base, REG)
     os.makedirs(os.path.dirname(reg), exist_ok=True)

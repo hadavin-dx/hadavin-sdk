@@ -3,7 +3,7 @@ STATE AS OF Mon 16 Nov 2026 09:35 UTC / 15:05 IST. Goal: a safe filmed take on W
 WARNING: the step list inputs/OWNER-STEPS-realrun-v3.md (OS) is stale at steps 7 and 8 (wrong n8n port, database password model, HubSpot key rights; drift/REPORT.md D-01, D-02, D-03) and in its schedule (D-10, 'Wed to Sun'). Steps 1 to 9 are already done by the studio head (inputs/FACTS-ALREADY-DONE.md). Follow only steps the laptop lead re-issues.
 
 ## If you are the studio head
-Read OWNER-VIEW.md section 1, then section 3. Decide by Tue 17 Nov 12:29 UTC / 17:59 IST (a suggested time; if you cannot, the take moves, latest Mon 23 Nov 18:29 UTC / 23:59 IST): item 1 name the test owner and a start time; items 3, 5 and 6a as written there (D-05 and L-01 are your decisions too). Item 3 (archive of extract.py) is a clean-up choice and can wait until after the take. The take time on Wed 18 is set by the lead at least 3 hours ahead.
+Read OWNER-VIEW.md section 1, then section 3. Decide by Tue 17 Nov 12:29 UTC / 17:59 IST (a suggested time; if you cannot, the take moves, latest Mon 23 Nov 18:29 UTC / 23:59 IST): item 1 name the test owner and a start time; items 5 and 6a as written there (D-05 and L-01 are your decisions too). Item 3 (archive of extract.py) is a clean-up choice and can wait until after the take. The take time on Wed 18 is set by the lead at least 3 hours ahead.
 
 ## If you are the laptop lead
 1. FIRST: STATUS-BOARD.md block "LEAD ACTIONS NEEDED": your to-do list. Do today: get the first laptop trial started (Docker and n8n) and check that the saved HubSpot key can delete contacts. Both are needed before the take.

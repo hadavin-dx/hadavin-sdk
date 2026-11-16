@@ -1,5 +1,5 @@
 # FINAL-CROSSCHECK (ORDER 014): the three audits against each other
-Written by system-map, 2026-11-16. STATUS: round 1 and round 2 reviews applied (section 9); round 2 findings applied without a third review (round cap 2); not final until the studio head and the laptop lead have read section 8.
+Written by system-map, 2026-11-16. STATUS: round 1 review applied; round 2 NOT run (section 9); round 2 findings applied without a third review (round cap 2); not final until the studio head and the laptop lead have read section 8.
 
 **In one minute.** Three audits looked at the same system and rated the same faults differently (section 2); 8 statements contradict each other and 3 more are open or only a difference of wording (rows 4, 7 and 11 of section 4); several fixes would collide (section 5). Nothing here was run. The combined cut list (section 6) has 39 rows: 2 can move once you name an archive place outside the repository, 28 not yet, 9 no. Your yes is needed before any file moves. Open decisions are in section 8.
 Id key: F-nnn = flows audit finding; X-, A-, B-, C-, D1- to D3- = core-hardening finding; L2- to L7- with FD = our sweep finding (the first part names the reading lane); rows in section 6 are numbered 1 to 39.

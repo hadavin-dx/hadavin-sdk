@@ -19,6 +19,18 @@ class WriteOutputsGuard(unittest.TestCase):
         self.assertIn("REFUSED", r.stdout + r.stderr)
         self.assertIn(marker, open(os.path.join(d, "SWEEP.md")).read())
 
+    def test_only_one_place_table_edited_leaves_sweep_unchanged(self):
+        d = os.path.join(tempfile.mkdtemp(), "sm")
+        shutil.copytree(BASE, d, ignore=shutil.ignore_patterns(".git", "__pycache__", "archive"))
+        run = lambda *a: subprocess.run([sys.executable, os.path.join(d, "tools", "write_outputs.py"), d, *a], capture_output=True, text=True)
+        self.assertEqual(run("--force").returncode, 0)  # valid registry for both files
+        before = open(os.path.join(d, "SWEEP.md")).read()
+        with open(os.path.join(d, "ONE-PLACE-TABLE.md"), "a") as f:
+            f.write("\nHAND-EDIT-92\n")
+        r = run()
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertEqual(open(os.path.join(d, "SWEEP.md")).read(), before)
+
 
 if __name__ == "__main__":
     unittest.main()

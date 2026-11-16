@@ -31,9 +31,6 @@ class Part(unittest.TestCase):
         self.assertEqual(len(problems), 1)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class PartitionKeepsStatus(unittest.TestCase):
     def test_rerun_keeps_read_status(self):
@@ -48,3 +45,7 @@ class PartitionKeepsStatus(unittest.TestCase):
         p = os.path.join(out, mf); s = open(p).read().replace("NOT-READ", "READ"); open(p, "w").write(s)
         partition.main(root, out)
         self.assertIn("\tREAD\n", open(p).read())
+
+
+if __name__ == "__main__":
+    unittest.main()

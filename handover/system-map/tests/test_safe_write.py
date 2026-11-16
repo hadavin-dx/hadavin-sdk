@@ -21,9 +21,6 @@ class SafeWrite(unittest.TestCase):
         self.assertTrue(safe_write(d, "A.md", "new", force=True))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class SafeWriteHardening(unittest.TestCase):
     def test_name_outside_base_is_rejected(self):
@@ -39,6 +36,7 @@ class SafeWriteHardening(unittest.TestCase):
         open(os.path.join(d, "hand-kept", ".generated-hashes.json"), "w").write("{trunc")
         with self.assertRaises(ValueError):
             safe_write(d, "a.md", "x")
+        self.assertFalse(os.path.exists(os.path.join(d, "a.md")))
 
     def test_force_keeps_a_backup(self):
         import tempfile, os
@@ -46,3 +44,7 @@ class SafeWriteHardening(unittest.TestCase):
         open(os.path.join(d, "a.md"), "w").write("hand edit")
         self.assertTrue(safe_write(d, "a.md", "new", force=True))
         self.assertEqual(open(os.path.join(d, "a.md.bak")).read(), "hand edit")
+
+
+if __name__ == "__main__":
+    unittest.main()

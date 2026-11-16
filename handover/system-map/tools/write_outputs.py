@@ -286,8 +286,7 @@ out += ["## Lessons", "",
 bad = [r[1] for r in fixrows if not r[2].rstrip().endswith((".", ")", "?")) and not r[2].startswith("apply the proposals")]
 if bad:
     print("Fix plan action cells not ending in a full stop:", bad); sys.exit(1)
-if not safe_write(base, "SWEEP.md", "\n".join(out), OVERWRITE_OK):
-    print("REFUSED: SWEEP.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
+SWEEP_TEXT = "\n".join(out)  # written together with ONE-PLACE-TABLE.md at the end, after both are built
 
 # ---- ONE-PLACE-TABLE
 HDR = ["| copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |", "|---|---|---|---|---|---|---|---|---|"]
@@ -316,6 +315,8 @@ op += ["## Seed check against DECISION", "", "| seed row | state in repo | statu
  "| HubSpot and Gmail | client systems; only a fake CRM in the rig; real run NOT VISIBLE | CONSISTENT with DECISION (line 11); real run UNVERIFIED | `handover/demo3/kill/fakes.py:103 \"hit = next((r for r in rows.values()\"` |", "",
  "## Not visible", "", "| copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |", "|---|---|---|---|---|---|---|---|---|",
  "| TAKE-REPO | duplicate-proof-lead-desk | N/A: not visible | none | N/A: not visible | no | N/A: not visible | not visible, the laptop lead covers it locally; content not guessed | NOT VISIBLE: duplicate-proof-lead-desk |", ""]
+if not safe_write(base, "SWEEP.md", SWEEP_TEXT, OVERWRITE_OK):
+    print("REFUSED: SWEEP.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
 if not safe_write(base, "ONE-PLACE-TABLE.md", "\n".join(op), OVERWRITE_OK):
     print("REFUSED: ONE-PLACE-TABLE.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
 print(len(rows_f), "findings;", len(rows), "job rows;", nrows, "in blocks;", len(fixrows), "fix rows; blockers touching the take", touch)

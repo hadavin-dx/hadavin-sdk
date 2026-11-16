@@ -17,7 +17,7 @@ PUSHED_UTC: 2026-11-16T09:28:00Z
 |---|---|---|---|---|---|
 | M1 | flowcheck and third read | done | 100 | flowcheck/REPORT.md, flowcheck/third-read.md | n8n run of patched flows still NOT TESTED (no Docker daemon here) |
 | M2 | FINAL-CROSSCHECK.md | reviewed round 1, fixes applied | 95 | FINAL-CROSSCHECK.md, work/resolve-crosscheck-1.md | design M3 fixed-unverified; round 2 not run |
-| M3 | drift check of take documents | wording and readiness fixes applied; new section 7 (L-01 to L-06 least-privilege gaps) | 92 | drift/REPORT.md, work/review-drift-readiness.md, work/review-lens-dependency.md | 8 Blocker, 17 Major, 8 Nit |
+| M3 | drift check of take documents | wording and readiness fixes applied; new section 7 (L-01 to L-06 least-privilege gaps) | 92 | drift/REPORT.md, work/review-drift-readiness.md, work/review-lens-dependency.md | 8 Blocker, 18 Major, 9 Nit |
 | M4 | MASTER-MAP and ONE-PLACE-TABLE refresh | round 1 fixes applied; merge.py keeps hand-kept rows (new test fails on old code, passes now); round 2 reviewer running | 90 | hand-kept/MAP-ADDITIONS.md, ONE-PLACE-TABLE.md Appendix B, work/evidence-m4-cmp.txt | other branches read via git only |
 | M5 | OWNER VIEW | round 3 fixes applied (verdict line, decide-by, words); round 2 naive-reader running | 90 | OWNER-VIEW.md, work/review-ownerview-r3.md | verdict: Wed 18 Nov not yet shown reachable |
 | M6 | R460 audit | ORDER 007 edits reviewed, fixes applied to SWEEP.md; R460 on tools/ and tests/ running | 85 | work/review-m6-r460.md | |
