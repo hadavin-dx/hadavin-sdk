@@ -134,4 +134,34 @@ sssssssssssssssssss..................................................... [ 13%]
 ........................................................................ [ 92%]
 .ssss................................................................... [ 93%]
 ........................................................................ [ 94%]
-.........
+........................................................................ [ 94%]
+........................F............................................... [ 95%]
+...................................sss.................................. [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+........................................................................ [ 99%]
+..........                                                               [100%]
+=================================== FAILURES ===================================
+__________________ test_ids_and_plan_hashes_survive_redaction __________________
+
+    def test_ids_and_plan_hashes_survive_redaction():
+        from hadavin_sdk.approvals.channel import clean
+        from hadavin_sdk.models import new_id, sha256_hex
+    
+        ids = [new_id(p) for p in ("run", "pln", "apr", "evt")]
+        digest = sha256_hex({"a": "b"})
+        text = " ".join(ids) + f" plan {digest} short {digest[:12]}"
+        assert redact(text).text == text
+        cleaned = clean(text)
+        for value in [*ids, digest, digest[:12]]:
+>           assert value in cleaned, value
+E           AssertionError: pln-ec2b5a9547134252bf5b7758d1013e00
+E           assert 'pln-ec2b5a9547134252bf5b7758d1013e00' in 'run-39734e2d6199426d866cf70cf10a2e49 [command withheld (G4)] apr-2473f2a30e0f43feba3d78dcdfeedcdb evt-d0c3b6939bd34c3abc1737d7c94aa671 plan db4a7ecb114bc66c623a06c4ff6fe8daa2f49cc270ebbf7a1f81e22ab061c837 short db4a7ecb114b'
+
+../patched/tests/test_s4_llm_guard.py:152: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_s4_llm_guard.py::test_ids_and_plan_hashes_survive_redaction
+1 failed, 9490 passed, 455 skipped in 229.33s (0:03:49)
+PYTEST_RC=1
