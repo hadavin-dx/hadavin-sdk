@@ -42,3 +42,6 @@ sev {'Blocker': 5, 'Major': 7, 'Nit': 33}
 (The tool has no line named RESULT; the last line is the sev dict above.)
 LEDGER-ROWS.md: 45 rows; ids and severity words equal FINDINGS (python comparison printed True, no mismatch).
 Needs from QUEUE.md (lead-owned, not edited): line 8 stale "delete at clean-up" exception; F1-F8 tags answered-but-open (Q18 to Q21).
+
+
+CORRECTION NOTE 2026-11-16 (fix-cite5, later than the text above; history kept): Q20 item 4 is ANSWERED (ORDERS.md line 138: the lead sets DESK_ALERT_TO at take prep and verifies it at re-pin; never typed in a file), so lines 6, 32 and 33 saying 'open' are stale. The 'QUESTIONS Q22' added in item (j) is now headed 'Q22b' (the first Q22 is the take-day read). F-031 and FINDINGS line numbers cited in older logs are stale; use row ids.

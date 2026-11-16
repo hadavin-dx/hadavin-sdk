@@ -2,7 +2,7 @@
 Q1 ANSWERED (lead, ORDERS.md ORDER 003, 2026-11-16): accepted as written. Original: (2026-11-16, plan round 3, PLAN-002.md section 1): Tier B = 525 of 655 nodes in the older flow versions. Plan: every node gets a row with machine columns; judgement columns only where a mechanical diff against the next version shows any change, or no counterpart exists. Identical nodes say "same as <next>". Do you accept this, or do you want full judgement columns for all 525 (one more lane, longer)? I proceed with the plan as written unless you say otherwise.
 
 Q2 (2026-11-16, result review round 2, F-011): the order says the one database is n8n Postgres. Reading A: n8n's own state must also be in Postgres (it runs on SQLite today). Reading B: only the lead table must be in Postgres (a separate Postgres 16 holds mf_leads; n8n's own SQLite is by design). Which one is meant? Under B, F-011 shrinks to the personal data n8n keeps in its own file.
-ANSWERED (lead, ORDER 004, 2026-11-16): Q2 = Reading A. F-011 stays at full size; executions saved ON for the take only and deleted at clean-up (F-008 patch).
+ANSWERED (lead, ORDER 004, 2026-11-16): Q2 = Reading A. F-011 stays at full size; executions saved ON for the take only and deleted at clean-up (F-008 patch). [SUPERSEDED by Q19-1 and Q21: no text promises deletion and no step deletes the saved runs; whether anyone removes them is the lead's optional clean-up of the take's own database.]
 
 Q3 ANSWERED by ORDER 012 on 2026-11-16: option (a), one exception of two files, owner studio lead, trigger and review line written in EXCEPTIONS.md. Original question: (2026-11-16, ORDER 007 item 5, F-041): the take makes up to 3 live model calls (PLAN-4-NLITE-FROM-LEAD.md:106), so the stage's spend ledger exists next to the stage journal. ORDER 002 allows ONE exception. Choose: (a) one exception made of two files (journal + ledger; EXCEPTIONS.md now words it that way), or (b) move the ledger into Postgres first. Also name an owner and a removal trigger for the exception. Not blocking: the board stays WORKING; the wording is paste-ready either way.
 
@@ -78,7 +78,7 @@ Two choices only the lead can make; both sit in FINDINGS/FIX-PLAN today as oppos
 2. Saved runs. Q19-1 says the video does not say they are deleted and the take never deletes. Who removes them after the take (if anyone)? Recommendation: the lead, as an optional clean-up of the take's own database, written nowhere in the video or the owner sheet. Until answered, EXCEPTIONS.md:16, FINDINGS F-008 and FIX-PLAN item 4 will carry "no deletion promise".
 3. Also open with no number: whether F-011 and F-041 stay Major BEFORE or are Nit AFTER (FINDINGS counts), the F-044 choice (keep the six swallowing nodes or fail them), and the OWNER-STEPS Step A cost (the take may make up to 3 live model calls per EXCEPTIONS.md:4, so "US$0" is not shown).
 
-## Q22 (11:25Z, from the adversarial take-day read; reviews/adversarial-takeday-r1.md) decisions only the lead can make
+## Q22 (first of two headings; take-day read) (11:25Z, from the adversarial take-day read; reviews/adversarial-takeday-r1.md) decisions only the lead can make
 1. Who stops n8n and who starts the stopwatch in scene 4 (Q-A, Q-B), and the fallback if the stop misses: recommendation "cut scene 4 if no takeover shows within 2 minutes; speak the takeover line only after a rehearsal showed it".
 2. If the one real HubSpot test (P4a) fails: recommendation postpone the take, do not film failed rows.
 3. Take-prep rule: the take uses a lead id and e-mail used nowhere before (rehearsal, loopback and P4a leads included); prep checks lead_key = 0 rows in mf_leads and empties or filters the intake mailbox. Recommendation: yes, written into OWNER-STEPS lead steps by the lead.
@@ -88,7 +88,7 @@ Two choices only the lead can make; both sit in FINDINGS/FIX-PLAN today as oppos
 ## Q23 (11:15Z, from the F3 test-gap fixer, fill_flows/fix-f3-r9.md)
 fill_flows (frozen) accepts an output path whose parent folder is a symbolic link made by you or root, and writes into the link target; it refuses a link made by another user, and still checks the real target for /mnt, git and cloud-synced folders (README section "Folders that are links"). A test now documents this. Question for the lead: keep it accepted? Recommendation: keep (refusing every parent link would break macOS /tmp); no change to the frozen tool.
 
-## Q22 (after the 11:25Z answer, open lead decisions that had no number; pointers only, nothing here blocks the take)
+## Q22b (open decisions without number; the second list that was first headed Q22, renamed 2026-11-16; items cited elsewhere as 'Q22-1' or 'Q22-2' in older logs mean THIS list) (after the 11:25Z answer, open lead decisions that had no number; pointers only, nothing here blocks the take)
 Each is already written in a file; this list only gives it a place.
 1. ANSWERED (lead, ORDERS.md line 138, item 1): F-002, F-031 and F-007 stay Blocker (ORDER 007 stands). By the one rating rule they would be Major; that rating note stays in REPORT ('Where I disagree').
 2. ANSWERED (lead, ORDERS.md line 138, item 2): F-013 accepted as the trade-off: a stage call that never finishes ends failed after 3 tries, for a person to look at. Never described as retrying forever.

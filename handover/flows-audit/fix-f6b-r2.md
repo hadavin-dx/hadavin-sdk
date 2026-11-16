@@ -4,7 +4,7 @@ Static edit only. Nothing run. n8n facts UNVERIFIED. Only F6B-AUDIT.md edited, p
 ## Not done / still open
 - The Postgres database name is not in the repository: action 1 tells the person to run `SELECT current_database();` and check. Needs the owner or the laptop.
 - No independent EGM review of the audit exists; the file now says so plainly. All SQL stays UNTESTED; T-xxx tests PROPOSED.
-- Reviewer claims were condensed; I checked cites myself (FINDINGS.md:93, PLAN-002.md:61, build_mainframe.py:28-29,51,54,97,103, SCENE-FLOW-MAP.md:66, 12 recovery files by `find`, tick arithmetic for F6B-16).
+- Reviewer claims were condensed; I checked cites myself (row id F-031 in FINDINGS.md, line 107 on 2026-11-16; PLAN-002.md:61, build_mainframe.py:28-29,51,54,97,103, SCENE-FLOW-MAP.md:66, 12 recovery files by `find`, tick arithmetic for F6B-16).
 
 ## Done
 - F6B-01: false F-031 sentence removed (F-031 = invalid e-mail to `review`); rated take Blocker unless action 2 done, by the rubric; client Blocker.

@@ -30,7 +30,7 @@ import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CK = os.environ.get("FC_CK") or HERE + "/check_flows.py"
-OUT = os.environ.get("FC_OUT") or ""  # round 8: empty = a new temporary folder is made in main(); the committed selftest-output/ is rewritten only when FC_OUT names it: a run never rewrites the committed selftest-output/ folder unless FC_OUT names it
+OUT = os.environ.get("FC_OUT") or ""  # round 8: empty = a new temporary folder is made in main(); the committed selftest-output/ is rewritten only when FC_OUT names it
 args = [a for a in sys.argv[1:]]
 if not args:
     print(__doc__)

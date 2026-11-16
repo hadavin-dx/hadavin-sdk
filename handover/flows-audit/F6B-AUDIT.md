@@ -100,7 +100,7 @@ Not repeated here (already in FINDINGS.md or F6-AUDIT.md): lease shared by up to
 
 Both recovery flows have a 30 s timer and no web address, so n8n probably lets both be active (UNVERIFIED; C1 in `SCENE-FLOW-MAP.md:66` says the same). Each recovery calls its own copy of the sub-workflow (own `SUB_WORKFLOW_ID`). A lead created in scenes 2 to 4 (real HubSpot, real mail address) can then be picked up by the film recovery and finished against the stand-in CRM and the `example.test` mailbox. The row says `done`, no error is shown, and the real CRM never got the contact: a silently wrong destination, not a lost mail. C1 already names the risk and gives a manual rule (deactivate the real set, check for stuck rows and for `unknown`/`failed` rows with `alert_sent` false). What C1 does not give: a command, a person who owns the step, a place in the run sheet (C1 says the take tool is UNCHECKED), a check that stops two sets running, or the client-build effect. Stale rows from rehearsals can also cause real alert mail or a retry against the real HubSpot and mail server in scenes 1 to 4. T11 (`mf.py:214-219`, a test with two copies of one build) runs two copies of the SAME build only, so it says nothing about two different builds. The table has no column that says which build touched a row.
 
-(An earlier version called F-031 a take Blocker for this; that was wrong: F-031 is about invalid e-mail addresses ending in `review`, `FINDINGS.md:93`.)
+(An earlier version called F-031 a take Blocker for this; that was wrong: F-031 is about invalid e-mail addresses ending in `review`, row id F-031 in FINDINGS.md, at line 107 on 2026-11-16; line numbers shift, use the row id.)
 
 ## Read and found no problem (static read only, nothing run)
 
