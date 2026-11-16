@@ -16,17 +16,16 @@
            'B05 step 21 heading': ('### Step 21. Watch the cut by Mon 23 Nov 2026 18:19 UTC = 23:49 IST', '### Step 21. Watch the cut by Mon 23 Nov 2026 18:21 UTC = 23:51 IST'),
            'B08 never opens': ('The assistant never opens the key file (this is a procedure, not enforced by a program).', ''),
            'B09 default': ('no reply counts as `another take`', 'no reply counts as `no more takes`'),
-           'B10 forced revoke': ('revoke the key at that time anyway (key step I)', 'wait for the take'),
+           'B10 forced revoke': ('tell the assistant at once and revoke the key at that time anyway (key step I)', 'tell the assistant at once and wait for the take'),
            'r17 key gone one word': ('so after it you do not type `key revoked` again', 'so after it you type `key revoked` again'),
            'r17 D.5 key gone': ('and then write `key gone, no more decisions`: that one message', 'and then write `key revoked`: that one message')}
     for _k, (_o, _n) in _pl.items():
-        neg('r17pin-' + _k.split()[0] + _k.split()[1][:3], _o, _n, 'r17 ')
-    neg('r17ord', 'do your item 5, the retire check', 'do your item 5, the retire check', 'xx') if False else None
+        neg('r17pin-' + _k.split()[0] + _k.split()[1][:3], _o, _n, 'r17 ', 9)
     neg('r17order-card', '4. You: do your item 5, the retire check.\n', '', 'r17 F-1 the seven steps')
-    neg('r17order-e16', 'do your item 5, the retire check; (5)', 'do your item 5, the retire check, and (5)', 'r17 F-1')
+    neg('r17order-e16', '(4) do your item 5, the retire check; ', '', 'r17 F-1 the seven steps', 9)
     neg('r17start-e55', 'you have read the list of what the assistant will remove; and `start clean-up`.', 'you have read the list; and `start clean-up`.', 'r17 F-1 start sentence')
     neg('r17oldwords', '`shred done other files` (or', '`shred done 2` (or', 'r17 F-8 old words')
-    neg('r17more', 'Reply `another take`.', 'Reply `more takes`.', 'r17 F-8 old words')
+    neg('r17more', 'or reply `another take`."', 'or reply `more takes`."', 'r17 F-8 old words')
     neg('r17abs', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take (see /ho' + 'me/user/x/notes).', 'r17 absolute path')
     neg('r17ord-code', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take. ORD: 5.', 'r17 internal code')
     neg('r17dec-code', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take. DEC: 5.', 'r17 internal code')

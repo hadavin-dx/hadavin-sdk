@@ -1042,7 +1042,7 @@ for _m in re.finditer(r'\b(?:ORD|DEC|WP\d*|L-[A-Z0-9]+)[:\-]|\brow E-\d\d|\bE-\d
 _r17n += 2
 for _m in re.finditer(r'spending window ends(?: later,)? at (\d\d:\d\d) UTC = (\d\d:\d\d) IST', _own17 + '\n' + txt):
     if (_m.group(1), _m.group(2)) != ('18:29', '23:59'): F('r17 spending window end is wrong: ' + _m.group(0))
-for _m in re.finditer(r'revoke[^.\n]{0,100}? by (?:Mon 23 Nov 2026 )?(\d\d:\d\d) UTC = (\d\d:\d\d) IST', _own17):
+for _m in re.finditer(r'\bby (?:Mon 23 Nov 2026 )?(\d\d:\d\d) UTC = (\d\d:\d\d) IST at the latest', _own17):
     if (_m.group(1), _m.group(2)) != ('18:19', '23:49'): F('r17 last time to revoke is wrong: ' + _m.group(0))
 # the pins: one exact sentence per safety rule that a mutation was able to delete or reverse without a failure in round 16
 _SC = {'A': ks('A'), 'B': ks('B'), 'C': ks('C'), 'D': ks('D'), 'E': ks('E'), 'F': ks('F'), 'G': _G17, 'H': ks('H'), 'I': ks('I'), 'K': ks('K'), 'CARD': _card17, 'E48': _E48, 'APPX': APPX_TEXT, 'E-57': newtxt['E-57'], 'WHY62': why_of('E-62')}
@@ -1179,8 +1179,8 @@ if not os.environ.get('NO_NEG'):
     neg('r14promise', 'a procedure, not a control', 'a control', 'r14 3a honest label')
     neg('r14default', 'revoke the one key that you created for this take', 'wait for the assistant', 'r14 3h default when unsure')
     neg('r14unless', '(key step I). No message of the assistant changes this.', '(key step I), unless the assistant tells you otherwise before that time. No message of the assistant changes this.', 'r14 3j override sentence')
-    neg('r14e16', 'and write `shred done 1`; (3) your items 2 and 3', 'and write `ok`; (3) your items 2 and 3', 'r14 E-16 lacks')
-    neg('r14e55', "That holds for the assistant's item 1 and for your items 2 to 6", "That holds for the assistant's item 1", 'r14 E-55 lacks your items 2 to 6')
+    neg('r14e16', '`shred done key copies`; (3) do your items 2, 3 and 4', '`ok`; (3) do your items 2, 3 and 4', 'r14 E-16 lacks')
+    neg('r14e55', 'your items 2, 3, 4 and 5 done', 'your items done', 'r14 E-55 lacks', 9)
     neg('r14e37', 'the LAST FOUR CHARACTERS of it as the key list shows them', 'something else', 'r14 E-37 note')
     neg('r14consent', 'my screen, and that it can reach n8n\'s encryption key, the credentials saved in the take\'s n8n, the copy of the secret key for the model in the take folder and the files in `~/take-secrets`."', 'my screen, and that it can reach n8n\'s encryption key and the credentials saved in the take\'s n8n."', 'r14 E-12 consent reach')
     neg('r14testitem', 'A test item is one numbered test on the plan\'s list of test items.', 'A check is one numbered test on the plan\'s list of checks.', 'r14 E-12 test item')
@@ -1231,13 +1231,13 @@ if not os.environ.get('NO_NEG'):
     # ---- round 16 negative controls (each planted defect must fail the new check; the runner's nine missed mutations are r16m15 to r16m51)
     _skpre = 'sk-' + 'ant-' + 'api03-'
     neg('r16F1word', '`key gone, no more decisions`', '`key gone`', 'r16 F1 word lacks', 2)
-    neg('r16F1time', 'ONLY when you type it AFTER 18:19 UTC = 23:49 IST on Mon 23 Nov 2026', 'when you type it at any time', 'r16 F1 D5 lacks', 2)
+    neg('r16F1time', 'you revoke it whatever you have written, and then you write `key gone, no more decisions`', 'you revoke it and write `key revoked`', 'r16 F1 E-55 lacks', 9)
     neg('r16F2a', 'or any other contact, you delete nothing and tell the assistant\n~~~~\nWhy: Security F2', 'you delete them all\n~~~~\nWhy: Security F2', 'r16 F2 E-62 lacks')
     neg('r16F2b', "(with this take's id); if you find more than 3, or any other contact", "(made-up names); if you find more than 3, or any other contact", 'r16 F2 E-42')
     neg('r16F2c', '### E-62: OWNER-STEPS-realrun-v3.md, line 112', '### E-63: OWNER-STEPS-realrun-v3.md, line 112', 'ids differ')
     neg('r16F3', 'password files and editor copies made in step 8', 'other files made in step 8', 'r16 F3 G lacks')
     neg('r16F4a', '4. You: do your item 5, the retire check.', '0. You: do your item 5, the retire check.', 'r16 F4 the numbered order')
-    neg('r16F4b', 'never starts while a copy of the key exists and the key is not revoked', 'starts at any time', 'r16 F4 card lacks')
+    neg('r16F4b', '(the clean-up). It never starts while a copy of the key exists and the key is not revoked.', '(the clean-up). It starts at any time.', 'r16 F4 card lacks')
     neg('r16F4c', 'It does NOT start while a copy of the secret key for the model exists', 'It starts while a copy of the secret key for the model exists', 'r16 F4 E-16 lacks')
     neg('r16F4d', 'the order of step 22 is the only order'.capitalize(), 'The order of step 22 is one order', 'r16 F4 E-16 lacks')
     neg('r16m1', 'if a recording or a video file is inside, it stops, removes nothing and tells you', 'a recording is removed too', 'r16 m1 E-16 lacks')
@@ -1280,17 +1280,16 @@ if not os.environ.get('NO_NEG'):
            'B05 step 21 heading': ('### Step 21. Watch the cut by Mon 23 Nov 2026 18:19 UTC = 23:49 IST', '### Step 21. Watch the cut by Mon 23 Nov 2026 18:21 UTC = 23:51 IST'),
            'B08 never opens': ('The assistant never opens the key file (this is a procedure, not enforced by a program).', ''),
            'B09 default': ('no reply counts as `another take`', 'no reply counts as `no more takes`'),
-           'B10 forced revoke': ('revoke the key at that time anyway (key step I)', 'wait for the take'),
+           'B10 forced revoke': ('tell the assistant at once and revoke the key at that time anyway (key step I)', 'tell the assistant at once and wait for the take'),
            'r17 key gone one word': ('so after it you do not type `key revoked` again', 'so after it you type `key revoked` again'),
            'r17 D.5 key gone': ('and then write `key gone, no more decisions`: that one message', 'and then write `key revoked`: that one message')}
     for _k, (_o, _n) in _pl.items():
-        neg('r17pin-' + _k.split()[0] + _k.split()[1][:3], _o, _n, 'r17 ')
-    neg('r17ord', 'do your item 5, the retire check', 'do your item 5, the retire check', 'xx') if False else None
+        neg('r17pin-' + _k.split()[0] + _k.split()[1][:3], _o, _n, 'r17 ', 9)
     neg('r17order-card', '4. You: do your item 5, the retire check.\n', '', 'r17 F-1 the seven steps')
-    neg('r17order-e16', 'do your item 5, the retire check; (5)', 'do your item 5, the retire check, and (5)', 'r17 F-1')
+    neg('r17order-e16', '(4) do your item 5, the retire check; ', '', 'r17 F-1 the seven steps', 9)
     neg('r17start-e55', 'you have read the list of what the assistant will remove; and `start clean-up`.', 'you have read the list; and `start clean-up`.', 'r17 F-1 start sentence')
     neg('r17oldwords', '`shred done other files` (or', '`shred done 2` (or', 'r17 F-8 old words')
-    neg('r17more', 'Reply `another take`.', 'Reply `more takes`.', 'r17 F-8 old words')
+    neg('r17more', 'or reply `another take`."', 'or reply `more takes`."', 'r17 F-8 old words')
     neg('r17abs', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take (see /ho' + 'me/user/x/notes).', 'r17 absolute path')
     neg('r17ord-code', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take. ORD: 5.', 'r17 internal code')
     neg('r17dec-code', 'Write `route A` or `route B` once, before your last take.', 'Write `route A` or `route B` once, before your last take. DEC: 5.', 'r17 internal code')

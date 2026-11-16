@@ -438,7 +438,7 @@ class Child(subprocess.Popen):
             super().__init__(args, **kw)
         except OSError as e:
             raise Refused(
-                f"program start failed: {pathlib.Path(args[0]).name}: {e.strerror or e} (too many or too long arguments, "
+                f"{pathlib.Path(args[0]).name} cannot start: {e.strerror or e} (too many or too long arguments, "
                 f"or the program or its folder is missing)"
             ) from e
 

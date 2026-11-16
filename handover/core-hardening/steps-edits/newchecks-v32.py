@@ -463,7 +463,7 @@ for _nm, _t in (('A', _AP['A']), ('B', _AP['B'])):
 _srcs = ''.join(_pg(x) for x in ('OWNER-SHEET-%s-SOURCE.md' % _V, 'v%s-OPEN-FOR-LEAD-SOURCE.md' % _V[1:]) if _os.path.exists(D + x)) if False else ''
 _ns = {}; exec(_pg('facts-%s.py' % _V), _ns)
 for _x in _glob.glob(D + '*-SOURCE.md'):
-    if _V in _x or 'NOTE' in _x and ('-v15-' in _x if _V == 'v32' else '-v14-' in _x): _srcs += open(_x, encoding='utf-8').read()
+    if _V in _x or 'NOTE' in _x and ('-v16-' in _x if _V == 'v32' else '-v15-' in _x if _V == 'v31' else '-v14-' in _x): _srcs += open(_x, encoding='utf-8').read()
 _chk = ''.join(_pg(x) for x in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V) if _os.path.exists(D + x))
 _dead = [k for k in _ns['F'] if ('{{%s}}' % k) not in _srcs and not k.startswith('ph_') and ("F['%s']" % k) not in _chk and ("F.get('%s'" % k) not in _chk and ("'%s'" % k) not in _chk]
 if _dead: fail('C225', 'facts used by no source (dead): %s' % ', '.join(sorted(_dead)))
@@ -479,3 +479,130 @@ for _nm in 'AB':
             if _os.path.exists(D + _dep) and _mt(_built) + 1 < _mt(_dep): fail('C227', '%s is older than %s (rebuild)' % (_built, _dep))
 for _fn in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V, 'facts-%s.py' % _V, 'mut%s.py' % _V[1:], '%s-fail-proof.py' % _V):
     if _os.path.exists(D + _fn) and re.search(r"['\"]/(?:ho" + r"me|tmp|Users|mnt)/", _pg(_fn)): fail('C227', '%s holds a hard-coded absolute path' % _fn)
+# ---- Part 9 (v32, round 4): one or more checks per finding of review-v31-security, review-v31-naive and review-v31-evidence (C228 to C250).
+# Self-contained: v32-fail-proof.py runs this part on the built v31 pages (it must fail there) and on the built v32 pages (it must pass).
+import datetime as _dt
+_V9 = globals().get('PAGEVER', 'v32')
+def _p9(n): return open(D + n, encoding='utf-8').read() if _os.path.exists(D + n) else ''
+_HP = _p9('OWNER-HELPER-v32.md') if _V9 == 'v32' else ''                                    # the helper page exists from v32 on
+_CARD = {k: _p9('OWNER-CARD-%s-%s.md' % (_V9, k)) for k in 'AB'}
+_APP9 = {k: _p9('OWNER-APPENDIX-%s-%s.md' % (_V9, k)) for k in 'AB'}
+_FILM9 = _p9('OWNER-FILM-PERSON-%s.md' % _V9)
+_OWNER_PAGES = {'A': A, 'B': B, 'helper': _HP}
+_FX = {}; exec(_p9('facts-v32.py'), _FX); _FF = _FX['F']                                      # the expected figures always come from the v32 facts
+# C228 (S M1; class: an irreversible-cancel authorization wider than its identity check): no owner page lets anyone cancel "any" key
+for _n, _t in _OWNER_PAGES.items():
+    for _m in re.finditer(r'(?i)any valid key of yours|any of your keys|cancel any key|all of your keys|any key (?:you|that you) (?:find|see)', _t): fail('C228', '%s holds the over-broad cancel scope %r' % (_n, _m[0]))
+for _k in 'AB':
+    if 'only if its name and creation date equal the blanks' not in _CARD[_k]: fail('C228', 'card %s: L2 is not tied to the older key by name and creation date' % _k)
+    if 'a key you find valid' in _CARD[_k] and 'L1' not in _CARD[_k]: fail('C228', 'card %s: a valid-key rule without L1' % _k)
+# C229 (S M2; class: a lead-page statement that contradicts the sheet): the 7.11 path after a failed key save
+for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
+    if re.search(r'(?i)failed key save cancels nothing|A cancels nothing on a failed', _t): fail('C229', '%s still says a failed key save cancels nothing in A' % _n)
+    if not re.search(r'failed (?:key )?save skips 6\.7', _t): fail('C229', '%s does not say a failed save skips 6.7 and that 7.11 still cancels in A' % _n)
+# C230 (S M3 and N M3; class: a role named but with no page, trigger or scope): the helper page
+if _V9 != 'v32' or not _HP: fail('C230', 'the cancel helper page OWNER-HELPER-v32.md does not exist')
+else:
+    for _s in (_FF['helper_scope'], 'The owner himself asks you', 'Never the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'you called the owner twice, 5 minutes apart, with no answer', 'every key on your paper that is still valid is cancelled', 'The last-resort step is the owner\'s, not yours', 'Never copy, type or photograph key text',
+               'plus %s minutes' % _FF['hw'], _FF['hcb'], _FF['hok'], _FF['dl_day'] + ' ' + _FF['rv23']):
+        if _s not in _HP: fail('C230', 'helper page lacks %r' % _s[:70])
+    if len(re.findall(r'\(([a-d])\) ', _HP)) != 4: fail('C230', 'helper page does not have exactly the four triggers (a) to (d)')
+    if re.search(r'(?i)\blead (?:may|can) (?:ask|tell|release)', _HP): fail('C230', 'helper page lets the lead release a cancel')
+for _n, _t in (('A', A), ('B', B)):
+    for _s in ('OWNER-HELPER-v32.md', 'give your cancel helper (if any) their page and paper', 'is never the film person, editor, post checker or backup person'):
+        if _s not in _t: fail('C230', '%s lacks %r' % (_n, _s))
+# C231 (S minor; N M5; class: a time named two ways): the backstop time and the end of the last resort
+for _n, _t in (('A', A), ('B', B)):
+    if _FF['bt_end'] not in _t: fail('C231', '%s lacks the end of the last resort %s (after the deadline, stranger M5)' % (_n, _FF['bt_end']))
+    if 'backstop time' not in _t or ('Mon 23 Nov 2026 ' + _FF['rv23']) not in _t: fail('C231', '%s does not name the backstop time with date and both zones' % _n)
+    if re.search(r'cancel-by time of (?:Sun|Mon)', _t): fail('C231', '%s calls the backstop time a cancel-by time' % _n)
+# C232 (S minor 5, N minor): alarms: two deadline reminders are a fifth and a sixth alarm, set at 5.8
+for _n, _t in (('A', A), ('B', B)):
+    for _s in ('a fifth and a sixth phone alarm', 'check all six are set and ring with sound', 'two **deadline reminders**'):
+        if _s not in _t: fail('C232', '%s lacks %r' % (_n, _s))
+    if _FF['bs'] not in _t or _FF['bm'] not in _t: fail('C232', '%s lacks a deadline reminder time' % _n)
+# C233 (N M7; class: one statement with two sources): the yes is typed from one pattern, and it binds the owner
+for _n, _t in (('A', A), ('B', B)):
+    for _s in ('this yes binds me to step 7.11 and to the two deadline alarms', 'cancel helper <name or none>', 'Two sources: the lead\'s sentence and this pattern must b', 'a later yes replaces this one'):
+        if _s not in _t: fail('C233', '%s lacks %r' % (_n, _s))
+# C234 (N: raw recording; S: owner-open row): the raw recording is a secret file with an owner for deleting
+for _n, _t in (('A', A), ('B', B)):
+    if 'Raw recording:' not in _t or 'treat it as secret' not in _t: fail('C234', '%s: the raw recording is not placed and treated as secret' % _n)
+if 'Open 110' not in OPEN and '| 110 |' not in OPEN: fail('C234', 'open list lacks the raw recording row')
+# C235 (evidence H33; class: a computed time with a wrong constant): the 7-day time computed here from independent figures
+_rd9 = _dt.datetime(2026, 11, 18, 10, 30) - _dt.timedelta(hours=168)
+_exp9 = _rd9.strftime('%a %d %b %Y ') + _rd9.strftime('%H:%M') + ' UTC = ' + (_rd9 + _dt.timedelta(hours=5, minutes=30)).strftime('%H:%M') + ' IST'
+if _exp9 != 'Wed 11 Nov 2026 10:30 UTC = 16:00 IST': fail('C235', 'independent 7-day time is %r' % _exp9)
+if _FF.get('sevenback') != _exp9 or F.get('sevenback') not in (None, _exp9): fail('C235', 'facts: the 7-day time is %r, independent figure %r' % (F.get('sevenback'), _exp9))
+for _n, _t in (('A', A), ('B', B)):
+    if _exp9 not in _t: fail('C235', '%s lacks the 7-day time %s' % (_n, _exp9))
+_ac9 = _dt.datetime(2026, 11, 22, 10, 30) - _dt.timedelta(hours=168)
+if _FF['a_cut'] != _ac9.strftime('%a %d %b %Y ') + '10:30 UTC = 16:00 IST': fail('C235', 'facts: the sheet-A cut is %r' % _FF['a_cut'])
+# C236 (evidence H50, H51, H53; class: a number typed once and not tied to the facts file): each figure is read in every place it is written
+_TT = A + '\n' + B + '\n' + _APP9['A'] + '\n' + _APP9['B']
+for _pat, _want in ((r'Film pause: (\d+)', '10'), (r'film pause \((\d+)\)', '10'), (r'the sample says (\d+) minutes', '10'), (r"Call ceiling \(the lead's figure\): (\d+)", '3'), (r'call ceiling x that = (\d+) x', '3'),
+                    (r'sample assume (\d+)\)', '15'), (r'run length \((\d+)\)', '15'), (r'Run length: \[?[^\n]{0,60}? assume (\d+)', '15')):
+    _ms = re.findall(_pat, _TT)
+    if not _ms and _pat != r'Run length: \[?[^\n]{0,60}? assume (\d+)': fail('C236', 'no place found for %r (a changed sentence?)' % _pat)
+    for _v in _ms:
+        if _v != _want: fail('C236', '%r reads %s, the figure is %s' % (_pat, _v, _want))
+# C237 (evidence H37; class: a structural label defined twice or not at all): labels L1 to L5 and W1 to W9 are each defined once on the card
+for _k in 'AB':
+    for _i in range(1, 6):
+        if len(re.findall(r'(?:\*\* |\. |; )L%d (?!to )(?=[A-Za-z])' % _i, _CARD[_k])) != 1: fail('C237', 'card %s: label L%d is not defined exactly once' % (_k, _i))
+    for _i in range(1, 10):
+        if len(re.findall(r'(?:\*\* |\. |; )W%d (?!to )(?=[A-Za-z])' % _i, _CARD[_k])) != 1: fail('C237', 'card %s: label W%d is not defined exactly once' % (_k, _i))
+    if set(re.findall(r'\bL(\d+)\b', A if _k == 'A' else B)) - set('12345'): fail('C237', 'sheet %s names an L label that does not exist' % _k)
+    if set(re.findall(r'\bW(\d+)\b', A if _k == 'A' else B)) - set('123456789'): fail('C237', 'sheet %s names a W label that does not exist' % _k)
+# C238 (evidence H38; class: a structural label or heading changed in one place): headings of every page against headings-v32.txt (ACCEPT_HEADINGS=1 rewrites it after a person read the diff)
+_hd = []
+for _n in ('OWNER-SHEET-%s-A.md', 'OWNER-SHEET-%s-B.md', 'OWNER-CARD-%s-A.md', 'OWNER-CARD-%s-B.md', 'OWNER-APPENDIX-%s-A.md', 'OWNER-APPENDIX-%s-B.md'):
+    for _l in _p9(_n % _V9).split('\n'):
+        if _l.startswith('#'): _hd.append('%s|%s' % (_n % 'vNN', _l))
+for _n in ('OWNER-FILM-PERSON-%s.md', 'OWNER-HELPER-%s.md'):
+    for _l in _p9(_n % _V9).split('\n'):
+        if _l.startswith('#'): _hd.append('%s|%s' % (_n % 'vNN', _l.replace('(v31)', '(v32)')))
+_HL = D + 'headings-v32.txt'
+if _os.environ.get('ACCEPT_HEADINGS') == '1': open(_HL, 'w', encoding='utf-8').write('\n'.join(_hd) + '\n'); print('headings-v32.txt rewritten: %d headings' % len(_hd))
+elif not _os.path.exists(_HL): fail('C238', 'headings-v32.txt missing')
+else:
+    _okh = [x for x in open(_HL, encoding='utf-8').read().split('\n') if x]
+    for _x in _hd:
+        if _x not in _okh: fail('C238', 'heading not in the verified list: ' + _x[:90])
+    for _x in _okh:
+        if _x not in _hd: fail('C238', 'verified heading is gone: ' + _x[:90])
+# C239 (evidence 5; class: a number typed once): the placeholder use count of each fact, per source, against factuse-v32.txt (ACCEPT_FACTUSE=1 rewrites it after a person read the diff)
+_srcl = [x for x in ('OWNER-SHEET-%s-SOURCE.md' % _V9, 'LEAD-RELEASE-NOTE-%s-SOURCE.md' % ('v16' if _V9 == 'v32' else 'v15'), '%s-OPEN-FOR-LEAD-SOURCE.md' % _V9) if _os.path.exists(D + x)]
+_fu = []
+for _x in _srcl:
+    _cnt = {}
+    for _m in re.findall(r'\{\{([a-z0-9_]+)\}\}', _p9(_x)): _cnt[_m] = _cnt.get(_m, 0) + 1
+    _fu += ['%s|%s|%d' % (_x.replace('v16', 'vNN').replace('v15', 'vNN').replace(_V9, 'vNN'), _k, _v) for _k, _v in sorted(_cnt.items())]
+_FL = D + 'factuse-v32.txt'
+if _os.environ.get('ACCEPT_FACTUSE') == '1': open(_FL, 'w', encoding='utf-8').write('\n'.join(_fu) + '\n'); print('factuse-v32.txt rewritten: %d rows' % len(_fu))
+elif not _os.path.exists(_FL): fail('C239', 'factuse-v32.txt missing')
+else:
+    _okf = set(x for x in open(_FL, encoding='utf-8').read().split('\n') if x)
+    for _x in sorted(set(_fu) ^ _okf): fail('C239', 'fact-use row differs from the verified list: ' + _x[:90])
+# C240 (evidence H18, H20, H21; class: an internal code or an absolute path in text for the owner)
+for _n, _t in _OWNER_PAGES.items():
+    for _m in re.finditer(r'/(?:home|Users|tmp|mnt)/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+|\b(?:ORD|DEC|ACK|WP\d*|DF\d+):', _t): fail('C240', '%s holds %r (an absolute path or an internal code)' % (_n, _m[0][:40]))
+# C241 (evidence H25; N minor): the one-letter rule is worded in full on both sheets
+for _n, _t in (('A', A), ('B', B)):
+    if 'The lead sends the numbers message for one letter only; a letter that differs from this sheet: no run' not in _t: fail('C241', '%s lacks the one-letter rule in full' % _n)
+# C242 (evidence H54; class: a lead message that releases the older-key cancel, in any wording): no page lets a lead message release it
+for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
+    for _m in re.finditer(r'(?i)(?:the )?lead (?:sends|says|writes|types|tells) you[^.\n]{0,12}"cancel the older key|"cancel the older key[^"]{0,20}"[^.\n]{0,40}(?:release|allow|permit)', _t): fail('C242', '%s: a lead message appears to release the older-key cancel: %r' % (_n, _m[0][:70]))
+# C243 (evidence H09; class: a warning removed from beside the choice it concerns): the 7-day warning is beside Open 71 in both lead pages
+for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
+    if 'will probably fail on Wed 18 Nov' not in _t or 'No default pick' not in _t: fail('C243', '%s lacks the warning or the no-default wording' % _n)
+# C244 (N B1, M1, M2; class: a first action that cannot be done): 5.1a is doable and 6.6 / 7.3 do not contradict each other
+for _n, _t in (('A', A), ('B', B)):
+    _i = _t.find('a) Which sheet'); _b = _t[_i:_t.find('\n', _i)]
+    if len(_b.split()) > 215: fail('C244', '%s: 5.1a has %d words (more than 215)' % (_n, len(_b.split())))
+    if _b.count('**The 7-day rule') != 1: fail('C244', '%s: the 7-day rule is not defined exactly once (in bold) in 5.1a' % _n)
+    if 'before any message from the lead' in _t: fail('C244', '%s keeps "before any message from the lead" (B1)' % _n)
+    if re.search(r'\btake (?:sheet )?B\b', _t): fail('C244', '%s uses "take B" for a choice of sheet (word with two meanings)' % _n)
+# C245 (N minors 1, 2, 3; class: a pointer that sends a stranger to a place that does not say it): pointers read by a person are in pointers-v32.txt (C19); here: no bare internal pointer in owner text
+for _n, _t in (('A', A), ('B', B)):
+    if re.search(r'sheet section 2\b', _t): fail('C245', '%s sends the reader to "sheet section 2" (the STOP RULE is in section 1)' % _n)

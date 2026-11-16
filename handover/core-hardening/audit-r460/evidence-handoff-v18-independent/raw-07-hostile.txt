@@ -125,7 +125,7 @@ EXPECT PASS B8 runtime role: set_config session_authorization refused  [sqlstate
 EXPECT PASS B8 runtime role: SET ROLE op_i refused  [sqlstate=42501]
 EXPECT PASS B8 runtime role: SET SESSION AUTHORIZATION op_i refused  [sqlstate=42501]
 EXPECT PASS B9 runtime engage works and records by=session login  [(True, 'rt_i')]
-EXPECT PASS B9b engage again on an ON switch leaves by and ts alone  [(True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 0, 35, 245292, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) vs (True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 0, 35, 245292, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))]
+EXPECT PASS B9b engage again on an ON switch leaves by and ts alone  [(True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 2, 20, 429786, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC'))) vs (True, 'rt_i', datetime.datetime(2026, 11, 16, 18, 2, 20, 429786, tzinfo=zoneinfo.ZoneInfo(key='Etc/UTC')))]
 EXPECT PASS B10 operator release works, by=op_i  [(False, 'op_i')]
 EXPECT PASS B10b release on an OFF switch changes nothing
 EXPECT PASS B11 row missing: engage creates it ON
@@ -196,35 +196,35 @@ EXPECT PASS O8 secdef_problems (builder's start-up query) is empty on the fresh 
 ==== C. migrate four times, table fingerprints
 OBS C0 tables: approval_decisions,approval_requests,audit_checkpoints,audit_entries,audit_outbox,dead_letters,gate_decisions,kill_switch,kill_switch_log,plans,redaction_maps,runs,schema_migrations,spend,spend_decrease_log,spend_month,tick_state,tool_calls
 OBS C0 ledger tables: [('schema_migrations',)]
-OBS C1 migrate() run 1: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'b2b3791a85e8', 21729]
-OBS C2 migrate() run 2: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'd9d6f89dedf2', 21729]
-OBS C3 migrate() run 3: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', '3a2598e7af09', 21729]
-OBS C4 migrate() run 4: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'bf8c03202fbc', 21729]
-OBS C-diff run0 vs dump of run 1: 4 differing lines: -\restrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\restrict g0aFeBKADoL7MfbOTgqQYrOGjZMiqwzUovC5zScCsoAHNZp0pdbF2vlMgDaXbsY || -\unrestrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\unrestrict g0aFeBKADoL7MfbOTgqQYrOGjZMiqwzUovC5zScCsoAHNZp0pdbF2vlMgDaXbsY
-OBS C-diff run0 vs dump of run 2: 4 differing lines: -\restrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\restrict XVJue1uyjZLlwykTwQhCxdNOqe45JhK5cisys3nbshEnt6Dwe2CZfpANL9n0vzs || -\unrestrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\unrestrict XVJue1uyjZLlwykTwQhCxdNOqe45JhK5cisys3nbshEnt6Dwe2CZfpANL9n0vzs
-OBS C-diff run0 vs dump of run 3: 4 differing lines: -\restrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\restrict OlsDkJbJrunLj3nEJyuwvPP33iQBVkKJth44oPwgIRwetOFcutp1HtQcVOeP40r || -\unrestrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\unrestrict OlsDkJbJrunLj3nEJyuwvPP33iQBVkKJth44oPwgIRwetOFcutp1HtQcVOeP40r
-OBS C-diff run0 vs dump of run 4: 4 differing lines: -\restrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\restrict 7BK3WzxWp8YeMATIDmjaDGn2RXEKwd0erWSxPZnyXzTyXYJLIAqIb73yrHULHXJ || -\unrestrict wgx1OMdt3FzRokLArk2dKkUO9ua9l5CrzbbdciaqJf1jJbfZ5hLCPLE2Y7B0esk || +\unrestrict 7BK3WzxWp8YeMATIDmjaDGn2RXEKwd0erWSxPZnyXzTyXYJLIAqIb73yrHULHXJ
-EXPECT FAIL C5 the fingerprint (functions+ACL+owner, constraints, triggers, columns, table ACL+owner, indexes, pg_dump -s) is identical after run 0 and runs 1 to 4  [['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', '66668bb90107', 21729] vs {('f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'bf8c03202fbc', 21729), ('f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'd9d6f89dedf2', 21729), ('f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', '3a2598e7af09', 21729), ('f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', '66668bb90107', 21729), ('f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'b2b3791a85e8', 21729)}]
-EXPECT PASS C6 a second fresh database migrated four times has the same fingerprint as the first (deterministic)  [['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', '646940122d77', 21729] vs ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', '66668bb90107', 21729]]
+OBS C1 migrate() run 1: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579]
+OBS C2 migrate() run 2: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579]
+OBS C3 migrate() run 3: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579]
+OBS C4 migrate() run 4: returned []; fingerprint ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579]
+EXPECT PASS C5 the fingerprint (functions+ACL+owner, constraints, triggers, columns, table ACL+owner, indexes, pg_dump -s) is identical after run 0 and runs 1 to 4  [['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579] vs {('f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579)}]
+EXPECT PASS C6 a second fresh database migrated four times has the same fingerprint as the first (deterministic)  [['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579] vs ['f541d1ff93bb', '097ecf52d5c0', 'a50eb22e7746', '12dfa71544d5', 'f126394d5f83', '9941c1ac58c0', 'cbf67423a429', 21579]]
 ==== D. lock_timeout (55P03) on all held files
-OBS D spend_nonneg.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=False; ledger rows now=5
-EXPECT FAIL D spend_nonneg.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=False]
-OBS D spend_nonneg.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.02s; schema unchanged=False; ledger rows now=5
-EXPECT FAIL D spend_nonneg.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.02s unchanged=False]
-OBS D spend_nonneg.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.02s; schema unchanged=False; ledger rows now=6
-EXPECT FAIL D spend_nonneg.sql ROW EXCLUSIVE on kill_switch: 55P03 within 4 to 9 s and nothing applied  [None 0.02s unchanged=False]
-OBS D spend_nonneg.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=False; ledger rows now=5
-OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=False; ledger rows now=5
-EXPECT FAIL D spend_nonneg_finite.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=False]
-OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=False; ledger rows now=5
-EXPECT FAIL D spend_nonneg_finite.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=False]
-OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.02s; schema unchanged=False; ledger rows now=6
-EXPECT FAIL D spend_nonneg_finite.sql ROW EXCLUSIVE on kill_switch: 55P03 within 4 to 9 s and nothing applied  [None 0.02s unchanged=False]
-OBS D spend_nonneg_finite.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.02s; schema unchanged=False; ledger rows now=5
-OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.03s; schema unchanged=False; ledger rows now=6
-EXPECT FAIL D spend_nonneg_upgrade.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.03s unchanged=False]
-OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=False; ledger rows now=6
-EXPECT FAIL D spend_nonneg_upgrade.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=False]
+OBS D spend_nonneg.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_nonneg.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
+OBS D spend_nonneg.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_nonneg.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
+OBS D spend_nonneg.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.03s; schema unchanged=False; ledger rows now=6
+OBS D (no lock conflict expected: the file does not touch kill_switch) spend_nonneg.sql: sqlstate=None
+OBS D spend_nonneg.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_nonneg_finite.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
+OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_nonneg_finite.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
+OBS D spend_nonneg_finite.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.04s; schema unchanged=False; ledger rows now=6
+OBS D (no lock conflict expected: the file does not touch kill_switch) spend_nonneg_finite.sql: sqlstate=None
+OBS D spend_nonneg_finite.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=5
+OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=6
+EXPECT PASS D spend_nonneg_upgrade.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
+OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=6
+EXPECT PASS D spend_nonneg_upgrade.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.01s unchanged=True]
 OBS D spend_nonneg_upgrade.sql with ROW EXCLUSIVE held on kill_switch: sqlstate=None after 0.03s; schema unchanged=False; ledger rows now=7
-EXPECT FAIL D spend_nonneg_upgrade.sql ROW EXCLUSIVE on kill_switch: 55P03 within 4 to 9 s and nothing applied  [None 0.03s unchanged=False]
-OBS D spend_nonneg_upgrade.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=False; ledger rows now=6
+OBS D (no lock conflict expected: the file does not touch kill_switch) spend_nonneg_upgrade.sql: sqlstate=None
+OBS D spend_nonneg_upgrade.sql with ACCESS SHARE held on spend: sqlstate=55P03 after 5.01s; schema unchanged=True; ledger rows now=6
+OBS D spend_decrease_log.sql with ROW EXCLUSIVE held on spend: sqlstate=55P03 after 5.02s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_decrease_log.sql ROW EXCLUSIVE on spend: 55P03 within 4 to 9 s and nothing applied  [55P03 5.02s unchanged=True]
+OBS D spend_decrease_log.sql with ROW EXCLUSIVE held on spend_month: sqlstate=55P03 after 5.02s; schema unchanged=True; ledger rows now=5
+EXPECT PASS D spend_decrease_log.sql ROW EXCLUSIVE on spend_month: 55P03 within 4 to 9 s and nothing applied  [55P03 5.02s unchanged=True]

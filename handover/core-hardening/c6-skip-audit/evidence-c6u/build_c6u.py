@@ -62,13 +62,14 @@ def tn(x, v=None):
 
 V30 = ("At %s the folder holds OWNER-SHEET-v%d-A.md (written %s) and OWNER-SHEET-v%d-B.md (written %s), both rendered sheets, and "
        "OWNER-SHEET-v%d-SOURCE.md (the template; written %s)." % (hh(CT), NEWV, hh(tn("A")), NEWV, hh(tn("B")), NEWV, hh(tn("SOURCE"))))
-LSHEET_SHORT = "| L-SHEET | OWNER ONLY: which ONE owner sheet (the checklist the owner reads) is final? %s | None: only the owner can answer it. NOT covered by 'apply all defaults'. |" % V30
-LLEASE_SHORT = ("| L-LEASE | Which sentence about the 45-second setting goes on the card (line 1) and in the scene 3 caption? It counts only if L-POST is 'no', and any answer other than none needs the G12 approval first. "
-                "none = the plain statement only; 1 = the 25-word limit sentence of your earlier answer; 2 = the 40-word explanation (the full words of 1 and 2 are in section 1c). "
-                "| none. No row puts the 45-second limit sentence in any document or on the video; whether you want it in the owner sheet and the release note is your question TASK (9). |")
-CARD_SHORT = ("THE CLOSING CARD UNDER THE DEFAULTS (four spoken lines of 11, 35, 22 and 22 words; the exact words and the table of lengths are in section 1c): Total 90 words, about 36 s, budget 40 s. "
-              "Card line 1 and the scene 3 caption stay blocked until you approve G12; card line 2 stays blocked until the loopback re-smoke on the edited flows has shown an alert mail (risks list item 12).")
-ANSWER_SHORT = ("TO ANSWER: add after the names in step 2 one 'except' per label, for example `; except L-KILL: b; except L-APPROX: yes`. The two OWNER ONLY questions are two separate lines, each after you have asked the owner (the form is in section 1c). "
+NROWS, NREADY, NDEF, NW1, NUNREAD, TIMEROW = 96, 49, 38, 87, 91, 96
+LSHEET_SHORT = "| L-SHEET | Which ONE owner sheet (the checklist the owner reads) is final? %s | OPEN (OWNER ONLY). Until he answers, the builder uses none and applies no row to a sheet. NOT covered by 'apply all defaults'. |" % V30
+LLEASE_SHORT = ("| L-LEASE | Which sentence about the 45-second setting goes on the card (line 1) and in the scene 3 caption? It counts only if L-POST is 'no' (if L-POST is 'yes', the default, answers 1 and 2 are ignored and 'none' applies), and any answer other than none needs the G12 approval first. "
+                "none = the plain statement only; 1 = 'We make this claim only when the second send comes within 45 seconds of the first send; for a longer gap we make no claim.' (25 words, your earlier answer Q22 (c)); "
+                "2 = 'The 45 seconds is a setting called the lease. It only sets when a second program, checking every 30 seconds, may claim a stopped contact again. A second send of the same contact is not processed again, whenever it arrives.' (40 words; it REPLACES sentence 1; not to be spoken as fact before check C-9 part 2). "
+                "| none. No row puts the 45-second limit sentence on the card, in the caption, or in any other document; whether you want it in the owner sheet and the release note is your question TASK (9). |")
+CARD_SHORT = oldl("THE CLOSING CARD UNDER THE DEFAULTS").replace("THE CLOSING CARD UNDER THE DEFAULTS (exactly what rows 13 and 14 put on the run sheet)", "THE CLOSING CARD UNDER THE DEFAULTS (exactly what rows 13 and 14 put on the run sheet; the table of lengths is in section 1c)")
+ANSWER_SHORT = ("TO ANSWER: add after the names in step 2 one 'except' per label, for example `; except L-KILL: b; except L-APPROX: yes`. The two OPEN (OWNER ONLY) questions are two separate lines, each after you have asked the owner (the form is in section 1c). "
                 "Answer forms: L-CARD, L-CARDCUT, L-CARDTEXT, L-POST, L-APPROX, L-SAVE, L-PAGE, L-ONEDB, L-CUT yes or no; L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply.")
 
 
@@ -86,7 +87,7 @@ def make_box(words):
             l = CARD_SHORT
         elif l == "{{ANSWERFORM}}":
             l = ANSWER_SHORT
-        out.append(l.replace("{BOXWORDS}", str(words)).replace("{SHEETA}", "OWNER-SHEET-v%d-A.md" % NEWV).replace("{SHEETB}", "OWNER-SHEET-v%d-B.md" % NEWV).replace("{RNN}", RNN))
+        out.append(l.replace("{BOXWORDS}", str(words)).replace("{NROWS}", str(NROWS)).replace("{NREADY}", str(NREADY)).replace("{NDEF}", str(NDEF)).replace("{NW1}", str(NW1)).replace("{NUNREAD}", str(NUNREAD)).replace("{TIMEROW}", str(TIMEROW)).replace("{SHEETA}", "OWNER-SHEET-v%d-A.md" % NEWV).replace("{SHEETB}", "OWNER-SHEET-v%d-B.md" % NEWV).replace("{RNN}", RNN))
     return out
 
 
@@ -301,6 +302,88 @@ def build(words):
         "| Evidence 1 to 3 (stale time; absolute paths; 13 of 45 planted changes missed; box count never compared) | check times read at run time; relative paths; new checks and negative controls; box word recount; a newer owner sheet or release note fails | evidence-c6t/ |",
         "",
     ]
+    L = c6u_stage(L, find, patch)
+    return L
+
+
+def tokens_rows(L):
+    """Parse the rows of the edit table; return list of dicts (status, file, line, index in L)."""
+    P = re.compile(r"^\| (\d+) \| (NOT APPLIED[^|]*?) \| (handover/[^|]+?) \| (\d+) \| ")
+    out = []
+    for k, l in enumerate(L):
+        m = P.match(l)
+        if m:
+            out.append(dict(i=int(m.group(1)), st=m.group(2), f=m.group(3), ln=int(m.group(4)), k=k))
+    return out
+
+
+def c6u_stage(L, find, patch):
+    """c6u: fixes of review-c6t-design.md, review-c6t-naive.md and review-c6t-evidence.md. Every patch asserts its match count."""
+    def rep_all(old, new, c=None):
+        t = "\n".join(L)
+        n = t.count(old)
+        if n == 0 or (c is not None and n != c):
+            FAILS.append("c6u: expected %s match(es), found %d: %r" % (c, n, old[:90]))
+            return
+        L[:] = t.replace(old, new).split("\n")
+    L[0] = "# REPORT-c6u: video audit fix pass, supersedes REPORT-c6t.md (2026-11-16, UTC; IST = UTC + 5:30)"
+    # ---- rows 95 and 96 (design M2, M3)
+    rows = tokens_rows(L)
+    i53 = find("| 53 | NOT APPLIED")
+    r95 = ("| 95 | NOT APPLIED; on the default of L-SAVE | handover/demo/n8n-flows/N8N-START.md | 24 | Nothing on screen (start notes). | "
+           "`- SAVE_ON_ERROR=none: the same for runs that fail.` | `- SAVE_ON_ERROR=none: n8n stores no run data for runs that fail.` | "
+           "Without this row, after row 54 the line above says that runs that succeed are stored and this line then reads as if runs that fail were stored too (c6t design review m1, c6t stranger review M9). "
+           "It applies with row 54 (the default of L-SAVE); the failed-run saving itself stays none until L-SAVEERR is answered 'yes' by the owner (rows 53, 55, 62, 64, 66, 68). Row 53 now starts from this row's new text, so the table order is row 95, then row 53. "
+           "Sources: NS:23, NS:24, PLAN:125 | new in c6u |")
+    L.insert(i53, r95)
+    patch("| 53 | NOT APPLIED", "`- SAVE_ON_ERROR=none: the same for runs that fail.` | `- SAVE_ON_ERROR=all: the same for runs that fail.`",
+          "`- SAVE_ON_ERROR=none: n8n stores no run data for runs that fail.` | `- SAVE_ON_ERROR=all: n8n stores the run data (node inputs and outputs, which hold the made-up contact name and e-mail) for runs that fail.`")
+    patch("| 53 | NOT APPLIED", "Follows the value change.", "Follows the value change. Its old text is the new text of row 95, so row 95 is applied first (if L-SAVE is 'no', row 95 is not applied and this row is re-issued with the original old text 'the same for runs that fail.').")
+    i15 = find("| 15 | NOT APPLIED")
+    r96 = ("| 96 | NOT APPLIED; on the default of L-CARD, L-CARDLEN, L-LEASE, L-POST | handover/demo/VIDEO-RUNSHEET.md | 41 | Nothing on screen (the planned time of the closing card in the run sheet table). | "
+           "`30 s EST` | `40 s EST` | The card row's own Time cell on run sheet line 41 said 30 s EST while row 11 sets the card to 40 s; without this row the table says two times (c6t design review M3). "
+           "The old text '30 s EST' contains no table border and occurs once on line 41 (3 times in the file, so the stated line matters). 40 s is the budget of the 90-word card (36.0 s rounded up to a multiple of 5; an ESTIMATE until the stopwatch run). "
+           "Under L-CARDLEN (b) the cell is right and the row is not applied; under the other cut cases the cell takes the matching value of Table B in section 1c, by hand, because those cases are not defaults. Sources: RS:41, L-CARDLEN | new in c6u |")
+    L.insert(i15 + 1, r96)
+    # ---- row 76 (design M5), section 0 line about the program, overlap wording (m4)
+    patch("| 76 | NOT APPLIED", "which is the design intent for those two cases as the test program and the studio lead's decisions describe it (relayed; the program is not among the audited files: the system cannot tell whether the CRM entry and the mail happened, so in our stand-in tests it sent one alert and a person decides)",
+          "which is the design intent for those two cases as the studio lead's decisions describe it (the system cannot tell whether the CRM entry and the mail happened, so in our stand-in tests it sent one alert and a person decides)")
+    patch("| 76 | NOT APPLIED", "Five of the 18 counted runs ran at the same time as a voided run", "Five of the 18 counted runs overlapped in time with a voided run")
+    patch("| 76 | NOT APPLIED", "Sources: RES:89, RES:92 | new in c6o |", "c6u (c6t design review M5): the words 'the program is not among the audited files' are gone from the viewer text: the test program mf.py IS in the audited copy, and MF:153 to MF:159 define the crash points of K3B (mail not yet delivered) and K3 (mail delivered, table not yet updated); that the END STATE is 'unknown with one alert' is relayed from the lane3 results and the studio lead's decisions, not shown by mf.py. Sources: RES:89, RES:92, MF:153, MF:159 | new in c6o |")
+    rep_all("so 5 of the 18 kept runs ran at the same time as a voided run", "so 5 of the 18 kept runs overlapped in time with a voided run", 1)
+    rep_all("the test program mf.py is not among the audited files, so this is not verified against it.",
+            "the test program mf.py is among the audited files, but its lines 153 to 159 only name the crash points of K3B (mail not yet delivered) and K3 (mail delivered, table not yet updated); that the END STATE is 'unknown with one alert' is relayed from the lane3 results and the studio lead's decisions and is not shown by mf.py.", 1)
+    # ---- design M1: L-LEASE cell
+    rep_all("THE TWO STATEMENTS: the one final owner sheet and the release note carry the limited claim (within 45 seconds, your Q22 (c) wording) while the video, under 'none', carries the unlimited one; the limited claim is true and weaker, so the sheets understate the video; the studio lead decides whether that is wanted.",
+            "THE TWO STATEMENTS: no owner sheet and no release note carries the limited claim (searched at the check time; your release note says the plain sentence 'and nothing about a lease' is in force, LRN14:150), so the video and the documents say the same plain sentence; whether you want the limited claim added to the sheet and the note is your question TASK (9).", 1)
+    rep_all("Q22 (c)'s sentence lives only in the one final owner sheet and the release note, which no row here edits (section 9 names who adds it);",
+            "Q22 (c)'s sentence is in no document (the owner sheets and the release note do not carry it, LRN14:150; TASK (9) asks you whether you want it added, and no row does it);", 1)
+    # ---- M3: stale 'no row edits the Time cell'
+    patch("| 11 | NOT APPLIED", "c6r: the card row's own Time cell on run sheet line 41 still says '30 s EST' and no row edits it, because an edit of that cell would need a text that contains a table border; the studio lead changes that cell to '40 s EST' by hand when he applies this row, or says that he does not (the run sheet's total in lines 44 to 46 is what this row changes). It is listed as a lead question under L-CARDLEN. c6s changes (c6r design review m3; c6r naive review M6): the cut-case totals are given once, in the box (CUT CASE); the card's own Time cell on run sheet line 41 is a hand edit with a two-line replacement in the box (L-CARDLEN: old cell text 30 s EST, new cell text 40 s EST under the defaults, 35 s EST in the cut case);",
+          "c6u (c6t design review M3): the earlier claim that no row can edit the card's Time cell on run sheet line 41 was false: the old text '30 s EST' has no table border and occurs once on that line; row 96 edits it, tied to L-CARDLEN, so the hand edit is gone for the defaults. c6s changes (c6r design review m3; c6r naive review M6): the cut-case totals are given once, in the box (CUT CASE);")
+    i = find("- [needs-lead] The card row's own Time cell on run sheet line 41")
+    L[i] = "- [done in c6u] The card row's own Time cell on run sheet line 41 ('30 s EST') is edited by row 96 under the defaults ('40 s EST'); the cut cases (35 s EST and the values of Table B in section 1c) are hand edits by the builder of step 2 when the studio lead tells him which cut case applies (box, step 6)."
+    patch("- [needs-lead] PROPOSED ROW 95", "- [needs-lead] PROPOSED ROW 95", "- [done in c6u] ROW 95 IS ADDED (it was only proposed here before): the old proposal text")
+    patch("| Design m1 (rows 53, 54, line 24) |", "NOT FIXED: a new row 95 is needed; proposed text in section 9; stated first in section 0", "FIXED IN c6u: row 95 added (see c6u-CHANGES.md)")
+    patch("| Design m1 (rows 53, 54, line 24) |", "NOT FIXED: a new row 95 is needed; proposed text in section 9; stated first in section 0", "FIXED IN c6u: row 95 added (see c6u-CHANGES.md)") if False else None
+    # ---- section 0 item (5): rewritten
+    i = find("- FAILURES FIRST IN c6t")
+    L[i] = L[i].replace("FAILURES FIRST IN c6t (my own, still open when I wrote this)", "FAILURES FIRST IN c6u (the c6t failures in 1b are fixed or restated here; still open when I wrote this)")
+    t = L[i]
+    a = t.index("(5) NOT FIXED, rows 53 and 54")
+    b = t.index("(6) not run:")
+    t = t[:a] + "(5) FIXED IN c6u: rows 53 and 54 left line 24 of N8N-START.md reading as if failed runs were stored; row 95 now corrects it (row count 96); " + t[b:]
+    t = t.replace("(1) the EGM review of REPORT-c6t.md is not run", "(1) the EGM review of REPORT-c6u.md is not run")
+    L[i] = t
+    L[i] += " (7) the start-box rewrite of c6u (shorter, G12 and the defaults' end state said plainly) is a builder statement, not read by any reviewer; (8) the verifier exits non-zero on REPORT-c6r.md and REPORT-c6s.md: it was written for this report and its checks name text only this report holds, so it passes on no earlier report and nothing here claims that it does."
+    # ---- stale labels (design m2)
+    rep_all("c6s (this file) supersedes c6r, which superseded c6q, c6p and c6o;", "c6u (this file) supersedes c6t, which superseded c6s, c6r, c6q, c6p and c6o;", 1)
+    rep_all("| C-1 to C-11 (C-1b, C-4a, C-10a to C-10d) |", "| C-1 to C-12 (C-1b, C-4a, C-10a to C-10d) |", 1)
+    rep_all("they are not used if the owner reads v30.", "they are not used if the owner reads the newest sheet.", 1)
+    # ---- naive minors: wrong cross reference
+    rep_all("after steps 5 to 9 of the list in the box are written (the loopback re-smoke has passed", "after TASKS (5) to (9) of the list in the box are done and written (the loopback re-smoke has passed", 1)
+    rep_all("comes after steps 5 to 9 of the box list)", "comes after TASKS (5) to (9) of the box list)", 1)
+    rep_all("the first rehearsal comes after steps 5 to 9 everywhere", "the first rehearsal comes after TASKS (5) to (9) everywhere (c6u: the c6t text said 'steps 5 to 9', which are the wrong list)", 1)
     return L
 
 
@@ -326,4 +409,4 @@ if __name__ == "__main__":
         sys.exit(1)
     t = "\n".join(L)
     open(D + "REPORT-c6u.md", "w", encoding="utf-8").write(t if t.endswith("\n") else t + "\n")
-    print("wrote REPORT-c6t.md (%d lines)" % len(L))
+    print("wrote REPORT-c6u.md (%d lines)" % len(L))

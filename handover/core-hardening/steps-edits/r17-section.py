@@ -74,7 +74,7 @@ for _m in re.finditer(r'\b(?:ORD|DEC|WP\d*|L-[A-Z0-9]+)[:\-]|\brow E-\d\d|\bE-\d
 _r17n += 2
 for _m in re.finditer(r'spending window ends(?: later,)? at (\d\d:\d\d) UTC = (\d\d:\d\d) IST', _own17 + '\n' + txt):
     if (_m.group(1), _m.group(2)) != ('18:29', '23:59'): F('r17 spending window end is wrong: ' + _m.group(0))
-for _m in re.finditer(r'revoke[^.\n]{0,100}? by (?:Mon 23 Nov 2026 )?(\d\d:\d\d) UTC = (\d\d:\d\d) IST', _own17):
+for _m in re.finditer(r'\bby (?:Mon 23 Nov 2026 )?(\d\d:\d\d) UTC = (\d\d:\d\d) IST at the latest', _own17):
     if (_m.group(1), _m.group(2)) != ('18:19', '23:49'): F('r17 last time to revoke is wrong: ' + _m.group(0))
 # the pins: one exact sentence per safety rule that a mutation was able to delete or reverse without a failure in round 16
 _SC = {'A': ks('A'), 'B': ks('B'), 'C': ks('C'), 'D': ks('D'), 'E': ks('E'), 'F': ks('F'), 'G': _G17, 'H': ks('H'), 'I': ks('I'), 'K': ks('K'), 'CARD': _card17, 'E48': _E48, 'APPX': APPX_TEXT, 'E-57': newtxt['E-57'], 'WHY62': why_of('E-62')}
