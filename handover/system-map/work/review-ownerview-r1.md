@@ -1,0 +1,7 @@
+# Reviews of OWNER-VIEW.md, round 1 (condensed by system-map; originals were inline)
+## egm-codebase-details (fact check): 0 Blocker, 3 Major, 7 Nit
+Major: (1) every FINAL-CROSSCHECK line cite stale by about 4 lines; (2) owner steps 20, 22 items 5-6, rule OS:25 missing; (3) step 23 post content narrowed from OS:131. Nits: "take" defined as one run; re-smoke effort; board cite; 1,000,000 figure is from our review; 20-hour estimate lost "unmeasured"; step 9 check invented; "13 listing 14". Not checked by the reviewer: lines 7, 8, 33, 43, 47 (other branches; I checked them myself with git show: counts 45 = 8+8+29, 17+28, core-hardening item 1 text confirmed; flows-audit 58 percent now).
+## egm-comprehension: 1 Blocker, 10 Major, 9 Nit
+Blocker B1: no go/no-go; today's deadline (Mon 16 18:29 UTC steps 1-7, step 9 sentences and decisions due Mon 16, OS:144) not stated; nobody named for the laptop n8n run or Docker.
+Major: "lead" two meanings (Claude session vs sales request); "take" three meanings, "take id" undefined; session/window/password/audit/form address drift; unexplained labels (Blocker/Major/Nit, CRM, HubSpot, Postgres, 422, egress, pytest, cap, OS abbreviation); stale cites; post content; steps dropped (20, 22, the never-send-a-secret rule, STOP rules); line 29 DISAGREES points to nothing and assigns nobody; decisions without deadlines or plain words; table not in time order.
+Nits: "Stuck" heading; "same" in by-when column; RECEIVER/SENDER undefined; "worst case per call"; US$0 repeated.
