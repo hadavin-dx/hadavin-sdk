@@ -1,0 +1,249 @@
+### 1 CORE-PR-HANDOFF-v15.md:19 approvals/requests.py:37-40 -> src/hadavin_sdk/approvals/requests.py
+DOC: ...7. **Code I read this pass** (every cite below was opened by me unless it is marked "carried"): `store/migrate.py` 40-100 and 283-345, `guard/bedrock_guardrail.py` 25-66 and 90-110, `guard/injection.py` 60-101, `approvals/requests.py:37-40` and `approvals/cards.py:76-83` (the lines that call the check), `app.py` 150-215, `cli.py` 140-160 and 205-235, `limit...
+  37:     flagged = detector is not None and injection_check(detector, inputs, "approval_summary").flagged
+  38:     try:
+  39:         return clean(
+  40:             f"{WARNING if flagged else ''}{plan.agent_id} asks to run {plan.action_id} "
+### 2 CORE-PR-HANDOFF-v15.md:19 approvals/cards.py:76-83 -> src/hadavin_sdk/approvals/cards.py
+DOC: ... this pass** (every cite below was opened by me unless it is marked "carried"): `store/migrate.py` 40-100 and 283-345, `guard/bedrock_guardrail.py` 25-66 and 90-110, `guard/injection.py` 60-101, `approvals/requests.py:37-40` and `approvals/cards.py:76-83` (the lines that call the check), `app.py` 150-215, `cli.py` 140-160 and 205-235, `limits.py` (whole), `llm/retry.py` 3...
+  76:     flagged = (
+  77:         detector is not None
+  78:         and bool(diagnosis)
+  79:         and injection_check(detector, diagnosis, "shadow_card").flagged
+  80:     )
+  81:     lines = [
+  82:         SHADOW_HEADER,
+  83:         *([WARNING.strip()] if flagged else []),
+### 3 CORE-PR-HANDOFF-v15.md:23 llm/openai_compat.py:117-129 -> src/hadavin_sdk/llm/openai_compat.py
+DOC: ... one request sent to the provider. One call makes one attempt, or up to `max_attempts` when the provider fails and the call is retried (`llm/retry.py:83-108`); the OpenAI-compatible kind can make two such groups inside one call (`llm/openai_compat.py:117-129`)....
+  117:         started, used = time.monotonic(), [0, 0]
+  118:         for _ in range(2):  # the forced answer missing: one more request (design 4.3)
+  119:             got = self._retry(
+  120:                 lambda: self._parse(post_json(self.url, body, self._headers(), self.timeout_s))
+  121:             )
+  122:             used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+  123:             # Done when answered, or when asking again would end the same way (cut off, refused).
+  124:             done = stop_reason(got.stop, got.calls) in ("max_tokens", "refusal")
+  125:             if done or not forced or any(c.name == forced for c in got.calls):
+  126:                 break
+  127:             if (found := json_in_text(got.text)) is not None:
+  128:                 got.calls = [ToolCall(name=forced, input=found)]
+  129:                 break
+### 4 CORE-PR-HANDOFF-v15.md:40 pipeline.py:147 -> demos/ask-your-data/askdata/pipeline.py
+DOC: ...| F2 | The demo reserves **once per call** (`pipeline.py:147`, before `self.llm.chat` at `pipeline.py:155`) and settles after (`pipeline.py:232-236`). It reserves one attempt's wor...
+  147:                 self.meter.reserve(worst, live=self.s.live)
+### 5 CORE-PR-HANDOFF-v15.md:40 pipeline.py:232-236 -> demos/ask-your-data/askdata/pipeline.py
+DOC: ...| F2 | The demo reserves **once per call** (`pipeline.py:147`, before `self.llm.chat` at `pipeline.py:155`) and settles after (`pipeline.py:232-236`). It reserves one attempt's worst case even though a retry layer can send up to `max_attempts` requests inside that ca...
+  232:         """Replace the reservation with the real cost. False (and the question ends over budget) if the meter
+  233:         cannot be written."""
+  234:         try:
+  235:             self.meter.settle(reserved, actual)
+  236:         except MeterError:
+### 6 CORE-PR-HANDOFF-v15.md:41 k1b/loop.py:170 -> src/hadavin_sdk/k1b/loop.py
+DOC: ...| F3 | The worst-case formula exists **three times**: demo meter (`meter.py:48-55`), `k1b/loop.py:115-122` (identical shape; used at `k1b/loop.py:170` when a call times out, and `k1b/loop.py:179`, `k1b/loop.py:206` charge the real reply and verdict cost), and the prici...
+  170:                 budget.charge(worst_case_usd(route_prices, system, messages))
+### 7 CORE-PR-HANDOFF-v15.md:41 k1b/loop.py:206 -> src/hadavin_sdk/k1b/loop.py
+DOC: ...| F3 | The worst-case formula exists **three times**: demo meter (`meter.py:48-55`), `k1b/loop.py:115-122` (identical shape; used at `k1b/loop.py:170` when a call times out, and `k1b/loop.py:179`, `k1b/loop.py:206` charge the real reply and verdict cost), and the pricing inside `reply()` (`llm/common.py:164-172`). All use the 3-cha...
+  206:                 budget.charge(verdict.cost_usd)
+### 8 CORE-PR-HANDOFF-v15.md:41 llm/common.py:164-172 -> src/hadavin_sdk/llm/common.py
+DOC: ...ter (`meter.py:48-55`), `k1b/loop.py:115-122` (identical shape; used at `k1b/loop.py:170` when a call times out, and `k1b/loop.py:179`, `k1b/loop.py:206` charge the real reply and verdict cost), and the pricing inside `reply()` (`llm/common.py:164-172`). All use the 3-characters-per-token estimator (`llm/common.py:59-62`). | files named | read |...
+  164:     tokens_in = tokens[0] or estimate_tokens(sent)
+  165:     tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
+  166:     cost = (
+  167:         Decimal(tokens_in) * route.input_usd_per_mtok
+  168:         + Decimal(tokens_out) * route.output_usd_per_mtok
+  169:     ) / Decimal(1_000_000)
+  170:     stop = stop_reason(stop, calls)
+  171:     return Reply(
+  172:         text=text,
+### 9 CORE-PR-HANDOFF-v15.md:41 llm/common.py:59-62 -> src/hadavin_sdk/llm/common.py
+DOC: ...`k1b/loop.py:170` when a call times out, and `k1b/loop.py:179`, `k1b/loop.py:206` charge the real reply and verdict cost), and the pricing inside `reply()` (`llm/common.py:164-172`). All use the 3-characters-per-token estimator (`llm/common.py:59-62`). | files named | read |...
+  59: def estimate_tokens(text: str) -> int:
+  60:     """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
+  61:     zeros never fires."""
+  62:     return max(1, len(text) // 3)
+### 10 CORE-PR-HANDOFF-v15.md:43 models.py:19-20 -> src/hadavin_sdk/models.py
+DOC: ...| F5 | `Limits(store, audit, registry)` has no clock; `charge` and `blocked` call `models.now()` (`limits.py:17-18`, `limits.py:24-25`; `models.py:19-20`). `blocked` reads the agent from `registry.agents[agent_id]` (a made-up id raises `KeyError`) and tests `>=` against t...
+  19: def now() -> datetime:
+  20:     return datetime.now(UTC)
+### 11 CORE-PR-HANDOFF-v15.md:53 anthropic.py:136 -> src/hadavin_sdk/llm/anthropic.py
+DOC: ...| F15 | No request builder of the four kinds sends a cache marker or an explicit thinking setting (grep over `llm/*.py`: the only hits are two comments, `anthropic.py:136` and `gemini.py:98-99`; `evidence-handoff-v13/raw-greps-v13.txt` (carried from v13, not re-run in v14) (G12 and G12b))....
+  136:         # Thinking blocks are the model's working, never its answer: only text and tool calls are read.
+### 12 CORE-PR-HANDOFF-v15.md:54 tests/test_k5_tools.py:608 -> tests/test_k5_tools.py
+DOC: ...| F16 | The test suite builds runtimes that bypass `app.py` (`tests/k5_support.py:160-211`), assigns `.detector =` or `.llm =` after build (`tests/test_p5p6_followups.py:101-102`, `tests/test_p6_detectors.py:186,264,364`, `tests/test_k5_tools.py:608`: five sites), and builds `Limits(` at seven test sites (`tests/test_k5_round5.py:241`, `tests/k5_support.py:206`, `tes...
+  608:         rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}])
+### 13 CORE-PR-HANDOFF-v15.md:65 agent_loop.py:440 -> src/hadavin_sdk/runtime/agent_loop.py
+DOC: ...| `add_spend` and `Limits` | any reservation before a call (the charge happens after the answer, `agent_loop.py:440`, so one call can pass a cap by one call's cost plus its retries); a window end; protection against a negative amount; ...
+  440:             self.limits.charge(agent_id, reply.cost_usd)
+### 14 CORE-PR-HANDOFF-v15.md:79 src/hadavin_sdk/cli.py:115-117 -> src/hadavin_sdk/cli.py
+DOC: ...| Command-line and library cap (`ProcessCap`) | no paid call without a cap | rung 1: k1b `Budget` and `--max-usd` (`src/hadavin_sdk/cli.py:115-117`) cover replay only; `gate` and `extract` have none | F8 | one in-memory reserver of about 15 lines that the gate calls...
+  115:     rep.add_argument(
+  116:         "--max-usd", required=True, type=_money, help="total cost cap for this invocation"
+  117:     )
+### 15 CORE-PR-HANDOFF-v15.md:90 src/hadavin_sdk/config.py:400-415 -> src/hadavin_sdk/config.py
+DOC: ...-01 or, in prod only, the word none". A **date and time** (YAML `2026-12-01 10:00`) is refused with "write a date only"; an unquoted or quoted date is accepted (YAML reads an unquoted date as a date and `~`/`null`/empty as null, `src/hadavin_sdk/config.py:400-415`; E0-S1-2). With no paid kind (all fake) the whole rule is ignored....
+  400: class _UniqueKeyLoader(yaml.SafeLoader):
+  401:     """A duplicate mapping key is an error: safe_load would keep the last value, silently changing a level."""
+  402: 
+  403:     def construct_mapping(self, node, deep=False):
+  404:         seen = set()
+  405:         for key_node, _ in node.value:
+  406:             key = self.construct_object(key_node, deep=True)
+  407:             if key in seen:
+  408:                 raise ConfigError(f"duplicate key {key!r} (line {key_node.start_mark.line + 1})")
+  409:             seen.add(key)
+  410:         return super().construct_mapping(node, deep)
+  411: 
+  412: 
+  413: def load_yaml(text: str) -> Any:
+### 16 CORE-PR-HANDOFF-v15.md:96 tests/test_p5p6_followups.py:62-67 -> tests/test_p5p6_followups.py
+DOC: ...`monthly` get the same `ge=0` finite rule (same `Money` fix). **The registry's `config_hash` excludes `price_basis`, `max_input_tokens` and `self_hosted` from its dump, so no existing agent's hash changes** (test in the style of `tests/test_p5p6_followups.py:62-67`); the CHANGELOG notes that `hadavin-sdk gate` needs `--max-usd` on a non-fake kind (5.8)....
+  62: 
+  63: 
+  64: def test_the_default_threshold_keeps_existing_hashes(cfg_dir):
+  65:     before = _hash(cfg_dir)
+  66:     _edit(cfg_dir, lambda d: d.update(eval_threshold=1.0))
+  67:     assert _hash(cfg_dir) == before
+### 17 CORE-PR-HANDOFF-v15.md:104 tests/test_k3_pilot_env.py:61 -> tests/test_k3_pilot_env.py
+DOC: ...6. **Config sites that need the new fields** (grep re-run in v13, `evidence-handoff-v13/raw-greps-v13.txt` (carried from v13, not re-run in v14) G15, carried): non-fake network kinds are configured in `tests/test_k3_pilot_env.py:61`, `tests/test_p5p6_followups.py:82` and `tests/test_p5p6_followups.py:392`, `tests/test_p5_llm.py:38-46` (five config l...
+  61:             "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+### 18 CORE-PR-HANDOFF-v15.md:104 tests/test_p5p6_followups.py:82 -> tests/test_p5p6_followups.py
+DOC: ...Config sites that need the new fields** (grep re-run in v13, `evidence-handoff-v13/raw-greps-v13.txt` (carried from v13, not re-run in v14) G15, carried): non-fake network kinds are configured in `tests/test_k3_pilot_env.py:61`, `tests/test_p5p6_followups.py:82` and `tests/test_p5p6_followups.py:392`, `tests/test_p5_llm.py:38-46` (five config lines), `tests/test_p1a_fixes.py:117...
+  82:     llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"}
+### 19 CORE-PR-HANDOFF-v15.md:104 tests/test_p5p6_followups.py:392 -> tests/test_p5p6_followups.py
+DOC: ...* (grep re-run in v13, `evidence-handoff-v13/raw-greps-v13.txt` (carried from v13, not re-run in v14) G15, carried): non-fake network kinds are configured in `tests/test_k3_pilot_env.py:61`, `tests/test_p5p6_followups.py:82` and `tests/test_p5p6_followups.py:392`, `tests/test_p5_llm.py:38-46` (five config lines), `tests/test_p1a_fixes.py:117`: **five places in four files**. Each ...
+  392:         "kind": "anthropic",
+### 20 CORE-PR-HANDOFF-v15.md:104 tests/test_p5_llm.py:38-46 -> tests/test_p5_llm.py
+DOC: ...doff-v13/raw-greps-v13.txt` (carried from v13, not re-run in v14) G15, carried): non-fake network kinds are configured in `tests/test_k3_pilot_env.py:61`, `tests/test_p5p6_followups.py:82` and `tests/test_p5p6_followups.py:392`, `tests/test_p5_llm.py:38-46` (five config lines), `tests/test_p1a_fixes.py:117`: **five places in four files**. Each needs `spend.window_end` (a fi...
+  38:     api = _llm(cfg_dir, {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"})
+  39:     vertex = _llm(
+  40:         cfg_dir, {"kind": "anthropic", "platform": "vertex", "project_id": "p", "region": "global"}
+  41:     )
+  42:     local = _llm(cfg_dir, {"kind": "openai_compat", "base_url": "http://localhost:11434/v1"})
+  43:     other = _llm(cfg_dir, {"kind": "openai_compat", "base_url": "https://llm.example/v1"})
+  44:     assert len({api, vertex, local, other}) == 4
+  45:     # Retry settings say how the call is made, not which model answers: no new gate run.
+  46:     tuned = {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api", "max_attempts": 5}
+### 21 CORE-PR-HANDOFF-v15.md:104 tests/test_p5p6_followups.py:121 -> tests/test_p5p6_followups.py
+DOC: ... plus every number this section requires for a paid kind (`studio_daily_usd`, `studio_monthly_usd`, `cli_daily_usd`, `cli_monthly_usd`, and the `unattributed_*` and `guardrail_*` numbers when a guardrail detector is configured); `tests/test_p5p6_followups.py:121` and `:454` configure a guardrail detector kind and need the `guardrail_*` and `unattributed_*` numbers as well (I read...
+  121:                 "kind": "bedrock_guardrail",
+### 22 CORE-PR-HANDOFF-v15.md:105 tests/test_p6_detectors.py:339 -> tests/test_p6_detectors.py
+DOC: ...ing); these tests pass it as `gate=` through `make` (`gate` is in `ALLOWED`).** Direct constructors (`AnthropicLLM(...)` and the like) say `unmetered=True`. **Guardrail detector test sites** that need a gate or `unmetered=True`: `tests/test_p6_detectors.py:339` and `:355`, `tests/test_k5_round9.py:74`, `tests/contracts/kinds/detectors.py:92` (`guardrail()`) and `:101` (`guardra...
+  339:     v = injection_check(GuardrailDetector(Odd(), "g", "1", 0.5), CLEAN, "document")
+### 23 CORE-PR-HANDOFF-v15.md:105 tests/test_k5_round9.py:74 -> tests/test_k5_round9.py
+DOC: ...`make` (`gate` is in `ALLOWED`).** Direct constructors (`AnthropicLLM(...)` and the like) say `unmetered=True`. **Guardrail detector test sites** that need a gate or `unmetered=True`: `tests/test_p6_detectors.py:339` and `:355`, `tests/test_k5_round9.py:74`, `tests/contracts/kinds/detectors.py:92` (`guardrail()`) and `:101` (`guardrail_settings()`). **Tests that build the l...
+  74:     GuardrailDetector(Client(), "g", "1", 0.5).check(f"a {s} b", "t")
+### 24 CORE-PR-HANDOFF-v15.md:125 evals.py:73 -> src/hadavin_sdk/evals.py
+DOC: ...| `evals.py:73` through `hadavin-sdk gate`; `extract.py:47` | the `gate` branch of `main` (`src/hadavin_sdk/cli.py:146`) catches `Spen...
+  73:             reply = llm.chat(
+### 25 CORE-PR-HANDOFF-v15.md:125 extract.py:47 -> src/hadavin_sdk/extract.py
+DOC: ...| `evals.py:73` through `hadavin-sdk gate`; `extract.py:47` | the `gate` branch of `main` (`src/hadavin_sdk/cli.py:146`) catches `SpendRefused`, prints `spend refused: <code>` on...
+  47:         reply = llm.chat(
+### 26 CORE-PR-HANDOFF-v15.md:184 tests/test_k5_tools.py:723-731 -> tests/test_k5_tools.py
+DOC: ...tes no audit row (`runtime/agent_loop.py:572`, `if self.hooks.post_card is None: ... nothing to post or audit`), so the run ends in the same state and with the same reason as today and the test passes unchanged; E0-S2-1 runs it. `tests/test_k5_tools.py:723-731` also uses the fake kind and should pass unchanged (E0-S2-1 decides)....
+  723: def test_k5_run_budget_stops_run(tmp_path):
+  724:     k5_tools.RESULTS["app"] = "ERROR 10.0.0.5"
+  725:     llm = CostLLM([{"tool": "app"}, {"tool": "app"}, {"tool": "app"}, {"noaction": True}])
+  726:     rt, cards = build_runtime(k5_cfg(tmp_path, max_run_usd="0.50"), llm)
+  727:     run = handle(rt)
+  728:     assert (run.state, run.reason_code) == (S.NEEDS_PERSON, "run_budget")
+  729:     assert len(llm.sent) == 2  # 0.30 + 0.30 reaches 0.50; the third call never happens
+  730:     assert "run_budget" in cards[-1].text
+  731:     assert next(e for e in _events(rt, run) if e.operation == "abstain").caught_by == "guard"
+### 27 CORE-PR-HANDOFF-v15.md:241 llm/common.py:164 -> src/hadavin_sdk/llm/common.py
+DOC: ...2. Token counts: `clean_tokens` (5.3 item 3); `reply()` uses it, so a negative count no longer prices negative. **S-1 owns this edit** (`reply()` and `clean_tokens`, `llm/common.py:164`), not S-2a....
+  164:     tokens_in = tokens[0] or estimate_tokens(sent)
+### 28 CORE-PR-HANDOFF-v15.md:248 src/hadavin_sdk/tools.py:1122 -> src/hadavin_sdk/tools.py
+DOC: ... instance used from both places. Only that wrapper can book against `-unattributed`; any other paid call without a scope is refused `scope_missing`. A call with a paid kind and no scope is refused `scope_missing` (5.3). Threads: `src/hadavin_sdk/tools.py:1122` and `guard/http.py:90-93` start daemon threads that do not call a model today; if one ever did, it would stop at `scop...
+  1122:             worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")
+### 29 CORE-PR-HANDOFF-v15.md:249 tests/test_s5_runtime.py:76 -> tests/test_s5_runtime.py
+DOC: .... The two charge sites pass `reply.booked_usd` (`agent_loop.py:440`) and `verdict.booked_usd` (`agent_loop.py:314`). With the fake kind `booked_usd` is 0 and nothing changes (the `0.00225` tests, `tests/test_s4_llm_guard.py:39`, `tests/test_s5_runtime.py:76`; E0-S2-1)....
+  76:     assert rt.store.get_run(run.run_id).cost_usd == Decimal("0.00225")
+### 30 CORE-PR-HANDOFF-v15.md:253 k1b/loop.py:205 -> src/hadavin_sdk/k1b/loop.py
+DOC: ...- **A replay refusal at its screen (readiness R7).** A k1b replay refusal at the screen (`k1b/loop.py:205`, outside the `try` at `:157-178`) ends the case with status `error`, stop reason `spend_refused` and halt `aborted` (S...
+  205:                 verdict = injection_check(detector, shown, "k1b-tool-result")
+### 31 CORE-PR-HANDOFF-v15.md:257 runtime/agent_loop.py:318-322 -> src/hadavin_sdk/runtime/agent_loop.py
+DOC: ...- **End states** (the string is the run's `reason_code`, written by `_to` (`runtime/agent_loop.py:318-322`); readiness minor 8). Three different paths end a run on a spend limit and they must not be confused:...
+  318:     def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
+  319:         cur = self.store.get_run(run.run_id)
+  320:         run = advance(self.store, run.run_id, cur.state, new, reason)
+  321:         self._note(run, "run", "state", result=new.value, error_code=reason)
+  322:         return run
+### 32 CORE-PR-HANDOFF-v15.md:306 evals.py:73 -> src/hadavin_sdk/evals.py
+DOC: ...- **Paths with no run** (`evals.py:73` through `hadavin-sdk gate`; `extract.py:47`; replay `k1b/loop.py:94`) **cannot be uncapped** (security major 5). `Proc...
+  73:             reply = llm.chat(
+### 33 CORE-PR-HANDOFF-v15.md:306 extract.py:47 -> src/hadavin_sdk/extract.py
+DOC: ...- **Paths with no run** (`evals.py:73` through `hadavin-sdk gate`; `extract.py:47`; replay `k1b/loop.py:94`) **cannot be uncapped** (security major 5). `ProcessCap(max_usd)` in `llm/callgate.py` is a `...
+  47:         reply = llm.chat(
+### 34 CORE-PR-HANDOFF-v15.md:342 agent_loop.py:425-427 -> src/hadavin_sdk/runtime/agent_loop.py
+DOC: ...| `Runtime.handle` main call (`agent_loop.py:425-427`), network kinds | yes (per attempt) | yes (S-2a) | yes | the metered path |...
+  425:                 reply = self.llm.chat(
+  426:                     messages,
+  427:                     system=system,
+### 35 CORE-PR-HANDOFF-v15.md:345 evals.py:73 -> src/hadavin_sdk/evals.py
+DOC: ...| `evals.py:73` (`gate` command) | yes | yes, `ProcessCap` from `--max-usd` | yes | refused without `--max-usd` on a non-fake kind |...
+  73:             reply = llm.chat(
+### 36 CORE-PR-HANDOFF-v15.md:347 k1b/loop.py:94 -> src/hadavin_sdk/k1b/loop.py
+DOC: ...| `k1b/loop.py:94` (replay) | yes | yes, `ProcessCap` plus its own `Budget` | yes | abandoned calls stop at the next attempt (5.8) |...
+  94:             box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+### 37 CORE-PR-HANDOFF-v15.md:389 table.py:155 -> src/hadavin_sdk/backends/table.py
+DOC: ...| 13 | H-1 | other | NC-1 | `audit/` retention code, `config.py` (lines 377-398; also S-1, K1, H-0), `config.py` `_anchor_refusals` (`config.py:377`; H-1 edits `config.py`, not `table.py:155`), `audit/anchor_s3.py`, `defaults.py` |...
+  155:     retain_days: int = Field(default=1, ge=1)
+### 38 CORE-PR-HANDOFF-v15.md:435 llm/common.py:59-62 -> src/hadavin_sdk/llm/common.py
+DOC: ...ange is now widened to cover its own line (34 edits in this file, 7 in the other-tracks file; the program is `patch05_v15.py`). **Of the 55 MOVED I read 15 cited ranges against the source and each holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `ll...
+  59: def estimate_tokens(text: str) -> int:
+  60:     """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
+  61:     zeros never fires."""
+  62:     return max(1, len(text) // 3)
+### 39 CORE-PR-HANDOFF-v15.md:435 models.py:19-20 -> src/hadavin_sdk/models.py
+DOC: ...n line (34 edits in this file, 7 in the other-tracks file; the program is `patch05_v15.py`). **Of the 55 MOVED I read 15 cited ranges against the source and each holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:...
+  19: def now() -> datetime:
+  20:     return datetime.now(UTC)
+### 40 CORE-PR-HANDOFF-v15.md:435 k1b/loop.py:94 -> src/hadavin_sdk/k1b/loop.py
+DOC: ...rogram is `patch05_v15.py`). **Of the 55 MOVED I read 15 cited ranges against the source and each holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:73`, `extract.py:47`, `guard/redact.py:1162`, `audit/signer.py:...
+  94:             box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+### 41 CORE-PR-HANDOFF-v15.md:435 llm/anthropic.py:136 -> src/hadavin_sdk/llm/anthropic.py
+DOC: ...55 MOVED I read 15 cited ranges against the source and each holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:73`, `extract.py:47`, `guard/redact.py:1162`, `audit/signer.py:182`, `audit/chain.py:140`, `:171`); in thos...
+  136:         # Thinking blocks are the model's working, never its answer: only text and tool calls are read.
+### 42 CORE-PR-HANDOFF-v15.md:435 evals.py:73 -> src/hadavin_sdk/evals.py
+DOC: ... ranges against the source and each holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:73`, `extract.py:47`, `guard/redact.py:1162`, `audit/signer.py:182`, `audit/chain.py:140`, `:171`); in those the line's wo...
+  73:             reply = llm.chat(
+### 43 CORE-PR-HANDOFF-v15.md:435 extract.py:47 -> src/hadavin_sdk/extract.py
+DOC: ... the source and each holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:73`, `extract.py:47`, `guard/redact.py:1162`, `audit/signer.py:182`, `audit/chain.py:140`, `:171`); in those the line's words that the prog...
+  47:         reply = llm.chat(
+### 44 CORE-PR-HANDOFF-v15.md:435 guard/redact.py:1162 -> src/hadavin_sdk/guard/redact.py
+DOC: ...ach holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:73`, `extract.py:47`, `guard/redact.py:1162`, `audit/signer.py:182`, `audit/chain.py:140`, `:171`); in those the line's words that the program matched are generic ...
+  1162:         "dev",
+### 45 CORE-PR-HANDOFF-v15.md:435 audit/signer.py:182 -> src/hadavin_sdk/audit/signer.py
+DOC: ...nce says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `runtime/agent_loop.py:440-441`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:73`, `extract.py:47`, `guard/redact.py:1162`, `audit/signer.py:182`, `audit/chain.py:140`, `:171`); in those the line's words that the program matched are generic ('reply', 'before', 'ch...
+  182:     _create(private_real, pem, 0o600)
+### 46 CORE-PR-HANDOFF-v15.md:472 guard/judge.py:107 -> src/hadavin_sdk/guard/judge.py
+DOC: ... below); whether tests other than the three named break under the reserve (E0-S2-5 lists them); the behaviour of `ScopedDetector` and of store `reconnect` on a real dropped connection; the estimator against real replies; whether `guard/judge.py:107` runs inside a run or a replay (5.5 chooses `spend="raise"` for `qualify` in both cases); the hot-file overlaps of the ...
+  107:         v = injection_check(judge, case["text"], "golden")
+### 47 CORE-PR-HANDOFF-v15-other-tracks.md:83 signer.py:182 -> src/hadavin_sdk/audit/signer.py
+DOC: .... v6 states it in the error text and the docs; and in prod `ed25519_local` with a key file is already refused (**`src/hadavin_sdk/config.py:395-396`**, corrected from v5's `393-394`). Tests that write keys must create them 0600 (`signer.py:182` does); the mode of hand-written fixtures is unchecked (E0-1 finds failures)....
+  182:     _create(private_real, pem, 0o600)
+### 48 CORE-PR-HANDOFF-v15-other-tracks.md:131 tests/warden_port/test_redaction.py:309 -> tests/warden_port/test_redaction.py
+DOC: ...- `CREDITCARD` (`:451`, 4-4-4-4 only today): 15-digit 4-6-5 grouping, 17-19 digits, dot separator. The value `4111...` also appears in `tests/warden_port/privacy_corpus.py:41-42` and `tests/warden_port/test_redaction.py:309,356`....
+  309:     for pan in ("4111 1111 1111 1111", "4111-1111-1111-1111"):
+### 49 CORE-PR-HANDOFF-v15-other-tracks.md:141 src/hadavin_sdk/config.py:346 -> src/hadavin_sdk/config.py
+DOC: ...config.yaml:2`, `tests/test_p4_secrets.py:106`, `tests/warden_port/test_audit_chain.py:568-573`, `tests/test_p1b_backends.py:89-91`. Wording sites: `actions/secrets_env.py:1`, `audit/signer.py:64,98`, `table.py:126,214,254,591`, `src/hadavin_sdk/config.py:346`, `defaults.py:100`, `registry.py:50`, `src/hadavin_sdk/tools.py:361`, `agent_loop.py:174-179,553,572`, `actions/contra...
+  346:     )  # dev executor only
+### 50 CORE-PR-HANDOFF-v15-other-tracks.md:141 registry.py:50 -> src/hadavin_sdk/registry.py
+DOC: ...ts/warden_port/test_audit_chain.py:568-573`, `tests/test_p1b_backends.py:89-91`. Wording sites: `actions/secrets_env.py:1`, `audit/signer.py:64,98`, `table.py:126,214,254,591`, `src/hadavin_sdk/config.py:346`, `defaults.py:100`, `registry.py:50`, `src/hadavin_sdk/tools.py:361`, `agent_loop.py:174-179,553,572`, `actions/contract.py:34`, `store/postgres.py:75,90`....
+  50:     # Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash: promotion changes
+### 51 CORE-PR-HANDOFF-v15-other-tracks.md:141 src/hadavin_sdk/tools.py:361 -> src/hadavin_sdk/tools.py
+DOC: ...t_audit_chain.py:568-573`, `tests/test_p1b_backends.py:89-91`. Wording sites: `actions/secrets_env.py:1`, `audit/signer.py:64,98`, `table.py:126,214,254,591`, `src/hadavin_sdk/config.py:346`, `defaults.py:100`, `registry.py:50`, `src/hadavin_sdk/tools.py:361`, `agent_loop.py:174-179,553,572`, `actions/contract.py:34`, `store/postgres.py:75,90`. Leave `guard/redact.py:1162` (a...
+  361:     Without a pin (dev only; pilot and prod require one) it is an ordinary import."""
+### 52 CORE-PR-HANDOFF-v15-other-tracks.md:141 actions/contract.py:34 -> src/hadavin_sdk/actions/contract.py
+DOC: ...rding sites: `actions/secrets_env.py:1`, `audit/signer.py:64,98`, `table.py:126,214,254,591`, `src/hadavin_sdk/config.py:346`, `defaults.py:100`, `registry.py:50`, `src/hadavin_sdk/tools.py:361`, `agent_loop.py:174-179,553,572`, `actions/contract.py:34`, `store/postgres.py:75,90`. Leave `guard/redact.py:1162` (a word list). CHANGELOG upgrade step; E0-8 greps demos for `...
+  34:     """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 tests."""
+### 53 CORE-PR-HANDOFF-v15-other-tracks.md:141 guard/redact.py:1162 -> src/hadavin_sdk/guard/redact.py
+DOC: ...4,98`, `table.py:126,214,254,591`, `src/hadavin_sdk/config.py:346`, `defaults.py:100`, `registry.py:50`, `src/hadavin_sdk/tools.py:361`, `agent_loop.py:174-179,553,572`, `actions/contract.py:34`, `store/postgres.py:75,90`. Leave `guard/redact.py:1162` (a word list). CHANGELOG upgrade step; E0-8 greps demos for `environment: dev`. Round cap 2. It protects nothing today...
+  1162:         "dev",
+### 54 CORE-PR-HANDOFF-v15-other-tracks.md:143 src/hadavin_sdk/audit/chain.py:140 -> src/hadavin_sdk/audit/chain.py
+DOC: ...ch hit checked against the evidence behind it (E0-O12). **Today's grep found no claim-word hit that needs a change** (`CHANGELOG.md:35` has an unrelated "proven" ; the grep covered `docs/`, `README.md` and `SECURITY.md` only, so `src/hadavin_sdk/audit/chain.py:140` is not a grep hit and is named only as a place to read; citation finding 1), so the expected NEEDED-CHECK verdict is N...
+  140:         False  # the audit or its anchors could not be read: not checked, not "tampered"
+### 55 CORE-PR-HANDOFF-v15-other-tracks.md:209 chain.py:171 -> src/hadavin_sdk/audit/chain.py
+DOC: ...om code read in v8 and was not re-read in v10 except through the citation programs (the independent v9 citation review `review-handoff-v9-citations.md` and `evidence-handoff-v14/raw-cite-check-v14-other.txt`; the one wrong cite, `chain.py:171`, was re-opened and fixed) (`evidence-handoff-v9/raw-cite-check-v9.txt`, which checks that each cited line exists and h...
+  171:         self.checkpoint_every = checkpoint_every

@@ -1389,11 +1389,11 @@ PASS (machinery): a file name with # & and a backslash is printed as file:line:w
 PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
 PASS (machinery): sh -x does not print a value (the script turns the trace off)
 PASS (machinery): signal TERM in the main phase: exit 143, no program of the run left running, no folder left
-FAIL (machinery): signal HUP in the main phase (exit=0 wanted 129, programs left=0, folders left=1)
+PASS (machinery): signal HUP in the main phase: exit 129, no program of the run left running, no folder left
 PASS (machinery): signal TERM while the file lists are made: exit 143 within 5 seconds, no program left
 PASS (machinery): the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left
 PASS (machinery): every git call carries the settings log.showSignature=false, gpg.program=/bin/false, core.hooksPath=/dev/null and core.fsmonitor=false
 PASS (machinery): a relative TMPDIR is refused with exit 2
 PASS (machinery): signal TERM in --mask with the input still open: exit 143 and the masking sed and awk are gone
-SELF-TEST: passed=1397 failed=1 (the made-up input and output files were deleted)
-exit code: 1
+SELF-TEST: passed=1398 failed=0 (the made-up input and output files were deleted)
+exit code: 0

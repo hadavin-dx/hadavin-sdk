@@ -1,4 +1,4 @@
-## check time (UTC): 2026-11-16T16:22:48Z
+## check time (UTC): 2026-11-16T16:32:07Z
 ## C-10c: owner sheets, hits per phrase (grep -c -i: never deletes / read, create and change only / does not delete / read-only or read only any mention)
 OWNER-SHEET-v19.md: 1 / 0 / 0 / 1
 OWNER-SHEET-v20.md: 0 / 0 / 0 / 0
@@ -20,11 +20,11 @@ OWNER-SHEET-v27-SOURCE.md: 0 / 0 / 0 / 1
 OWNER-SHEET-v28-A.md: 0 / 0 / 0 / 1
 OWNER-SHEET-v28-B.md: 0 / 0 / 0 / 1
 OWNER-SHEET-v28-SOURCE.md: 0 / 0 / 0 / 1
-OWNER-SHEET-v29-SOURCE.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v29-SOURCE.md: 0 / 0 / 0 / 2
 ## newest owner sheet by modification time (UTC), at the check time
 2026-11-16T16:09:58Z OWNER-SHEET-v28-A.md
 2026-11-16T16:09:58Z OWNER-SHEET-v28-B.md
-2026-11-16T16:21:25Z OWNER-SHEET-v29-SOURCE.md
+2026-11-16T16:32:05Z OWNER-SHEET-v29-SOURCE.md
 ## v28 A and B: owner deletes by hand present (count of 'delete' lines)
 OWNER-SHEET-v28-A.md: 9
 OWNER-SHEET-v28-B.md: 9

@@ -1,1 +1,2 @@
 checkpoint v29 16:26 UTC (start about 16:21): copied v28 to v29 names; sheet source patched (A/B headings, 5.1 which-sheet, A older-key end at 7.11 + alarm 4, R8 whole set, numbers rows, film person page); next: build-v29 (one sheet + appendix + film person), facts, note/open edits, checks, mut
+16:33 UTC: sheet A 6286 words (<=6300), card 1377 separate page, appendix 3209, film 363. Next: facts/note/open sources, checks, mut, fail-proof, CHANGES.

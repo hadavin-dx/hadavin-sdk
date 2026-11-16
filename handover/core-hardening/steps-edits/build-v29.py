@@ -34,21 +34,28 @@ def appendix_blocks(o):
         add(m.group(1), m.group(2), m.group(3)); return ''
     o = re.sub(r'<<F(\d+) ([^\n]*)\n(.*?)\nF\1>>\n?', r, o, flags=re.S)
     def r2(m):
-        add(m.group(1), m.group(2), m.group(3)); return ' (appendix %s)' % m.group(1)
+        add(m.group(1), m.group(2), m.group(3)); return ' (appendix %s)' % m.group(1) + (' ' if m.group(3).endswith(' ') else '')
     o = re.sub(r' ?\(\(\(F(\d+) ([^\n:]*?):: (.*?)\)\)\)(?!\))', r2, o, flags=re.S)
     return o, [(int(n), v[0], '\n\n'.join(v[1])) for n, v in sorted(parts.items(), key=lambda kv: int(kv[0]))]
+POINTER = ("### THE CARD, sheet %s (a separate printed page OWNER-CARD-v29-%s.md)\nPrint that page and keep it beside you. Every step called \"the card\", every danger sign W1 to W9 and the cancel lists L1 to L5 are on that page only; "
+           "this sheet does not repeat them. Fill its blanks before you press create of the run key.\n\n")
 def split(o, k):
-    """returns (sheet text, card print copy, appendix text, film person page)"""
+    """returns (sheet text with the card cut out, card page, appendix text, film person page)"""
     o, film = cut(o, 'FILMPERSON')
     o, parts = appendix_blocks(o)
     i = o.index('<<CARD\n'); j = o.index('CARD>>\n')
     card = o[i + 7:j].strip('\n') + '\n'
-    o = unmark(unmark(o, 'CARD'), 'NUMBERS')
-    sheet = o.rstrip('\n') + '\n\n---\nEnd of sheet %s (OWNER-SHEET-v29-%s.md).\n' % (k, k)
+    o = o[:i] + '@@CARD@@' + o[j + 8:]
+    o = unmark(o, 'NUMBERS')
+    sheet = o.replace('@@CARD@@', POINTER % (k, k)).rstrip('\n') + '\n\n---\nEnd of sheet %s (OWNER-SHEET-v29-%s.md).\n' % (k, k)
     app = '# Owner appendix v29, sheet %s: the long detail (it binds you the same as the sheet; each part says where the sheet points to it)\n' % k
     for n, t, body in parts: app += '\n## Appendix part %s: %s\n%s\n' % (n, t, body)
     app += '\n---\nEnd of the appendix, sheet %s (OWNER-APPENDIX-v29-%s.md).\n' % (k, k)
     return sheet, card, app, film
+def combine(sheet, card):
+    """the whole text a check reads: the card page put back in place of its pointer"""
+    i = sheet.index('### THE CARD'); j = sheet.index('### The rules')
+    return sheet[:i] + card.rstrip('\n') + '\n\n' + sheet[j:]
 def build():
     out = {}
     src = open(D + 'OWNER-SHEET-v29-SOURCE.md', encoding='utf-8').read()

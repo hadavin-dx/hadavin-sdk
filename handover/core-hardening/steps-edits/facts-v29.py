@@ -25,6 +25,8 @@ assert CB < OKB, 'B: the older-key time must come after cancel-by'  # the run is
 LAST = DEADLINE - dt.timedelta(seconds=NEED_S)
 CAP = DEADLINE - dt.timedelta(minutes=Y + RL + FP + MG + 10)
 D23_CB = DEADLINE - dt.timedelta(minutes=10)
+LS23 = dt.datetime(2026, 11, 23, 18, 4)      # lead ORDER L-23NOV: latest start on Mon 23 Nov (derivation asked in v29-OPEN-FOR-LEAD)
+RV23 = dt.datetime(2026, 11, 23, 18, 19)     # key revoked by this time even if a take runs (L-23NOV)
 assert -(-NEED_S // 60) <= RL
 PH = {'mkc': 'model key cancelled', 'nokey': 'no key was made', 'cf': 'cancel failed', 'tp': 'time passed', 'rs': 'run started',
       'cd': 'contacts deleted <number>', 'apr': 'app passwords revoked', 'hsr': 'HubSpot apps revoked', 'dmd': 'demo mails deleted <number>',
@@ -39,7 +41,7 @@ F = {
  'p_in_c': str(P_IN_C), 'p_out_c': str(P_OUT_C),
  'day': DAY.strftime('%a %d %b %Y'), 'day_date': DAY.strftime('%a %b %d'), 'dl_full': '2026-11-23 ' + pair(DEADLINE), 'dl': pair(DEADLINE), 'dl_day': 'Mon 23 Nov 2026', 'dl_iso': '2026-11-23T18:29:00Z', 'dl_sp': '2026-11-23 18:29 UTC',
  'ek': pair(EK), 'okb': pair(OKB), 'ls': pair(LS), 'lf': pair(LF), 'cb': pair(CB), 'last': pair(LAST, True), 'cap': t(CAP), 'cap_x': '%d minutes' % (Y + RL + FP + MG + 10),
- 'd23cb': pair(D23_CB), 'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST', 'ls_t': t(LS), 'lf_t': t(LF), 'cb_t': t(CB),
+ 'd23cb': pair(D23_CB), 'ls23': pair(LS23), 'rv23': pair(RV23), 'last_label': 'the program\'s refusal limit: ' + pair(LAST, True), 'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST', 'ls_t': t(LS), 'lf_t': t(LF), 'cb_t': t(CB),
  'think': '20', 'ps_t': '11:08:07', 'set_t': '11:06:55', 'key_t': '11:07:30',
 }
 for k, v in PH.items(): F['ph_' + k] = v

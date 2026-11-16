@@ -780,3 +780,198 @@ REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/sc
 exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
   PASS: T87k guard: no marker anywhere and the real-repository check refuses: still exit 2 (got 2), nothing recorded as planted
 == T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)
+== T52 (review r4 nit 1) a plant that fails on the open file is a clean refusal, not RESTORE FAILED; --restore with the file already original clears the marker
+  PASS: T52a read-only target: exit 2 (got 2) with 'cannot plant', no 'RESTORE FAILED', file unchanged, state empty
+== T53 (review r4 nit 2) a FIFO in place of the target: --restore refuses instead of hanging
+== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
+RESTORE FAILED: cannot write "src/mod.py" back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept; a folder on the way is
+  PASS: T76a symbolic link on the way to the target at --restore: exit 3 (got 3), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
+RESTORE FAILED: cannot write "src/mod.py" back: /tmp/r8nonroot.WPszw2/s/toy/root/src/mod.py is not a regular file with exactly one name (links: 2): not written, mode not changed; the mutant may still 
+RESTORE FAILED: cannot write "src/mod.py" back: Permission denied; the mutant may still be planted; marker and backup kept
+== T85 (review r6 nit 8) a test that changes the mode of the file under test: the mode is set back
+== T87 (review r7 M1, class: an exit code that says nothing is planted while the mutant is planted) --restore with a marker for this root: every failure exits 3, only a marker naming another root or b
+RESTORE FAILED: state file /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.backup cannot be opened safely (No such file or directory): refused; the mutant may still be pl
+  PASS: T87a the backup file is missing: exit 3 (got 3; r7: 2), file still planted, marker kept, text says RESTORE FAILED
+RESTORE FAILED: state file /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.backup cannot be opened safely (Too many levels of symbolic links): refused; the mutant may sti
+RESTORE FAILED: state file /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.backup is not a regular file owned by this user: refused; the mutant may still be planted; mark
+RESTORE FAILED: marker /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.planted.json is not valid JSON: refused; the mutant may still be planted; marker and backup kept (r
+RESTORE FAILED: marker /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.planted.json lacks required fields: refused; the mutant may still be planted; marker and backup kep
+RESTORE FAILED: state folder /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534 is not a plain folder owned by this user with mode 700: refused (remove it or fix it); the mutant may still be
+RESTORE FAILED: --root /tmp/r8nonroot.WPszw2/s/toy/root is, contains or lies inside the real repository /tmp/r8nonroot.WPszw2/s/toy/root: use a scratch copy; the mutant may still be planted; marker an
+== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)
+RESTORE FAILED: cannot write "src/mod.py" back: the file is read-only and differs from the original; the mutant may still be planted; marker and backup kept
+== T92 (review r7 N3) a signal that arrives AFTER the result 'clean, exit 0' is decided (while the folders are removed) cannot change it
+== T93 (review r7 N1, N2) --restore with a damaged control marker still restores the planted file; an orphaned test group that cannot be stopped keeps the marker
+control run: RESTORE FAILED: control marker /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.control.json is not valid JSON: refused (remove it by hand); its test group ma
+control run: RESTORE FAILED: state file /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.control.json cannot be opened safely (Too many levels of symbolic links): refused;
+control run: RESTORE FAILED: control marker /tmp/r8nonroot.WPszw2/s/tmpstate/hadavin-mutation-lane-65534/75021d677aa282aa.control.json is not for this root: refused; its test group may still run; the 
+== T94 (review r7 M1, sibling in a normal run) the restore at the end of a mutant fails with a bug that is no refusal: exit 3, file left planted, marker kept (r7: exit 2 'INTERNAL ERROR')
+RESTORE FAILED m1 (marker and backup kept; run --restore)
+== T96 (r9: review r8 B1 and M1, class: an exit code that says nothing is planted while planted-ness is unknown; docs must match code) --restore with NO marker, --restore --sha, other TMPDIR, document
+RESTORE FAILED: cannot write "src/big.py" back: File too large; the mutant may still be planted; marker and backup kept
+  PASS: T96f GUARD (passes on r8 too: it pins the behaviour): the write is cut short by a 1 KiB file-size limit: exit 3 (got 3), 'RESTORE FAILED', the file holds only a part (1024 bytes), marker and b
+RESTORE FAILED: cannot write "src/mod.py" back: /tmp/r8nonroot.WPszw2/s/toy/root/src/mod.py is not a regular file with exactly one name (links: 2): not written, mode not changed; the mutant may still 
+RESTORE FAILED: git did not finish within 2 s and was stopped (--helper-timeout); the mutant may still be planted; marker and backup kept (run --restore again when the cause is fixed)
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+== T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)
+RESTORE FAILED: the mode in the marker (0o4755) has a special bit (setuid, setgid, sticky) or is writable by everybody: git has neither, so the marker may be forged; nothing written (r10 m2); the muta
+RESTORE FAILED: the mode in the marker (0o666) has a special bit (setuid, setgid, sticky) or is writable by everybody: git has neither, so the marker may be forged; nothing written (r10 m2); the mutan
+RESTORE FAILED: marker is for another root ("/nowhere/else"): refused; the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no mar
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"s
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be 
+FAILED CHECKS: 0 (of 87 checks run; skipped: none)
+FAILED CHECKS: 0 (of 87 checks run; skipped: none)
+  PASS: T88 the blocks T52 T53 T76 T85 T87 T88 T92 T93 T94 T96 T97 T98 run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit 0)
+== T89 (review r7 N5) a test process that leaves the process group (setsid) is NOT stopped: this is named in the docstring; the check pins what is true and the escapee is stopped here by the test
+SUMMARY: 1 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+  PASS: T89 the escapee (setsid) outlived the run (documented): alive=1 (1), the run itself is clean: exit 0 (got 0), file restored, raw file says no process of the test group left
+  PASS: T89 the docstring of run.py names this limit (PROCESS GROUP ONLY)
+== T90 (review r7 N4) an output file that is also an input of the run (run.py itself, --list, --patch) or another output is refused before anything is planted
+REFUSED: --out-json /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/runcopy.py already exists and is not a result file of this tool (a JSON list of objects with id an
+  PASS: T90a --out-json is the running script itself (another spelling of its path): exit 2 (got 2; r7: ran and truncated it), script unchanged, nothing planted
+REFUSED: --out-json /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/two.json already exists and is not a result file of this tool (a JSON list of objects with id and 
+  PASS: T90b --out-json is the --list file: exit 2 (got 2; r7: the list was overwritten by the results), list unchanged
+REFUSED: --out-json /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/note90.patch already exists and is not a result file of this tool (a JSON list of objects with id 
+  PASS: T90c --out-json is a --patch file: exit 2 (got 2; r7: the patch was overwritten), patch unchanged
+REFUSED: two output files have the same path (--out-json is also a raw file): refused
+  PASS: T90d --out-json is the same path as a raw file of this run: exit 2 (got 2), file unchanged
+  PASS: T90e guard: an ordinary --out-json still works: exit 0 (got 0), the file exists
+== T91 (review r7 N6) a run with ANOTHER TMPDIR on the same root: its lock is found (TMP names the other place) and this run is refused
+REFUSED: another run holds the lock for /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/root in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/othertmp91/hadavin-mutat
+  PASS: T91a run A (TMPDIR=other) is in its baseline; run B (default TMPDIR, TMP=other) is refused: exit 2 (got 2; r7: B ran too), text names the other TMPDIR
+  PASS: T91b guard: after run A has ended its lock is free: the same B now runs, exit 0 (got 0)
+== T92 (review r7 N3) a signal that arrives AFTER the result 'clean, exit 0' is decided (while the folders are removed) cannot change it
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (a baseline ran and every mutant has a clean KILLED o
+tree diff: 0 difference(s)
+MAIN RETURNED NORMALLY (exit 0 stands)
+  PASS: T92 SIGTERM during the final clean-up of a clean run: main returns normally, exit 0 (got 0; r7: KeyboardInterrupt out of main, exit 130/143)
+== T93 (review r7 N1, N2) --restore with a damaged control marker still restores the planted file; an orphaned test group that cannot be stopped keeps the marker
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 23174 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+control run: RESTORE FAILED: control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.control.json is not valid JSON: refused (remove it by hand); its
+  PASS: T93a a planted marker AND a control marker that is not valid JSON: the planted file IS restored (r7: refused, still planted), planted marker cleared, exit 3 (got 3), control marker KEPT
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 23847 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+control run: RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.control.json cannot be opened safely (Too many levels of symbolic li
+  PASS: T93b the control marker is a symbolic link: the planted file IS restored, exit 3 (got 3), link kept
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 24162 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+control run: RESTORE FAILED: control marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.control.json is not for this root: refused; its test group may s
+  PASS: T93c the control marker names another root: the planted file IS restored, exit 3 (got 3), control marker kept
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1753: 24987 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+could NOT stop test group 25029 (Operation not permitted): file restored anyway; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash matches saved original: True; the test group ma
+  PASS: T93d an orphaned test group that cannot be stopped: the file is restored, but exit 3 (got 3; r7: 0 and the marker cleared), marker and backup KEPT, text says the group may still run (orphan alive=1)
+  PASS: T93e the next --restore (nothing in the way) stops the orphan and clears the state: exit 0 (got 0), orphan gone
+== T94 (review r7 M1, sibling in a normal run) the restore at the end of a mutant fails with a bug that is no refusal: exit 3, file left planted, marker kept (r7: exit 2 'INTERNAL ERROR')
+baseline 0 1 passed in 0.01s
+RESTORE ERROR: an internal bug while writing the original back
+RESTORE FAILED m1 (marker and backup kept; run --restore)
+  PASS: T94 normal run, restore_target raises RuntimeError: exit 3 (got 3), file still planted, marker and backup kept
+  PASS: T94 genuine restore afterwards
+== T95 (lead's four findings from the independent r7 run) (a) output that cannot be written, (b) a 200000-deep JSON, (c) a link left in place of the file, (d) forged marker with a swapped backup
+  PASS: T95a standard output is /dev/full (every write fails): the run ends with the tool's own code 0 (got 0; r7: 1), file restored, state empty, raw summary written
+  PASS: T95a2 standard output AND error closed: exit 0 (got 0), file restored, state empty
+REFUSED: --list /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/deep.json cannot be read as a JSON list (ValueError: nested too deeply): refused
+  PASS: T95b a mutants file nested 200000 deep: clean refusal exit 2 (got 2), REFUSED text, no INTERNAL ERROR, no Traceback, short output (1 lines; r7: INTERNAL ERROR with a traceback)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 26839 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: marker /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.planted.json is not valid JSON: refused; the 
+  PASS: T95b2 a marker nested 200000 deep: exit 3 (got 3; r7: 2 with INTERNAL ERROR), no Traceback, file still planted
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 29622 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: marker file: 'src/mod.py' passes through a symbolic link (mod.py): refused; the mutant may still be planted; marker and backup kept; the file under test is now a symbolic link (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/root/src/mod.py -> "/nonexistent/nowhere") and nothing was written through it. Do this: 1
+  PASS: T95c a dangling symbolic link in place of the file: exit 3 (got 3), nothing written through it, the text gives the exact command (rm -- ... mod.py) and the restore command
+  PASS: T95c after the advised rm, --restore re-creates the original: exit 0 (got 0), file back, state empty
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 32611 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker and backup kept; a folder on the way is a symbolic link (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/root/src -> "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/d
+  PASS: T95c2 a folder on the way is a link: exit 3 (got 3), the text names the folder and says 'mv --' and the restore command
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70:  3915 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash mat
+  PASS: T95d1 HONEST LIMIT, pinned: marker and backup forged TOGETHER (hash matches) by someone who can write the private state folder: a plain --restore accepts them (exit 0) and the swapped text is written; this cannot be closed without a key the user cannot read (see the docstring)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70:  5214 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from "src/mod.py" in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:"src/mod.py" > the file; the mutant may still be planted; marker and backup kept (run --restore again 
+  PASS: T95d2 the same forged state with --restore --sha COMMIT: refused, exit 3 (got 3; r7 ignored --sha and accepted), the swapped text is NOT written (file still planted return2), marker kept
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70:  6777 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T95d3 guard: genuine state with --restore --sha COMMIT: restored, exit 0 (got 0), state empty
+== T96 (r9: review r8 B1 and M1, class: an exit code that says nothing is planted while planted-ness is unknown; docs must match code) --restore with NO marker, --restore --sha, other TMPDIR, documented exit codes
+REFUSED: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT TELL whether a file is still planted (a lost marker, or a 
+  PASS: T96a --restore with no marker anywhere and no --sha: exit 2 (got 2; r8: 0), text says CANNOT TELL and names both ways out (TMPDIR of the killed run, --sha), file untouched
+the tree equals the git archive given with --sha: no file is planted or changed
+  PASS: T96b --restore --sha COMMIT, no marker, tree equals git: exit 0 (got 0), text says the tree equals the git archive (r8: ignored --sha, said CANNOT TELL)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70:  9499 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each
+  PASS: T96b2 marker LOST while the file is planted, --restore --sha COMMIT: exit 3 (got 3; r8: 0), names src/mod.py, file still planted (nothing is guessed), a hand copy from git then gives exit 0
+  PASS: T96b3 after the hand copy from git: exit 0 (got 0)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1753: 11355 Killed                  ( export TMPDIR=$OT; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T96c killed run with TMPDIR outside the searched places, file planted: plain --restore exits 2 (got 2; r8: 0 'nothing recorded'), --restore --sha exits 3 (got 3; r8: 0), the file is still planted
+  PASS: T96c3 guard: --restore with the TMPDIR of the killed run restores it: exit 0 (got 0), file back, its state folder empty
+exit 2: the docstring rows that contain 'NO marker for this root exists anywhere': ['2']
+exit 0: the docstring rows that contain 'found the whole tree equal': ['0']
+exit 3: the docstring rows that contain 'when the tree differs from git': ['3']
+exit 2: the docstring rows that contain 'names another root or another backup path': ['2']
+BAD: []
+  PASS: T96d the exit-code table of the docstring is parsed; every code in the code has a row, and four observed --restore results (no marker, --sha equal, --sha different, marker for another root) sit in the row that says so; the new options are named (exit 0; r8: fails)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 14347 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded (exit 3): e9436765dc442bb7.planted.json was written for another folder than the one now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/root (renamed away, replaced, or no folder identity 
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; e9436765dc442bb7.planted.json: test group already gone). ACCEPTED BY YOU (--accept-unchecked-folder), not checked: e9436765dc442bb7.planted.
+  PASS: T96e stale folder identity in the marker: --restore exits 3 for ever (got 3); --discard-marker without --sha is refused, exit 2 (got 2); with --sha and an equal tree but a marker that does not prove its folder: exit 3 (got 3; r10 M1), marker kept (1); with --accept-unchecked-folder: exit 0 (got 0), state empty
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 17376 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded: the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each
+  PASS: T96e2 --discard-marker while the file is STILL planted (tree differs from git): exit 3 (got 3; r8: 2), nothing removed, file still planted
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1753: 20647 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/big.py --old 'X = 1' --new 'X = 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/big.py" back: File too large; the mutant may still be planted; marker and backup kept
+  PASS: T96f GUARD (passes on r8 too: it pins the behaviour): the write is cut short by a 1 KiB file-size limit: exit 3 (got 3), 'RESTORE FAILED', the file holds only a part (1024 bytes), marker and backup KEPT (1); the second restore without the limit: exit 0 (got 0), file equals git, state empty
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 22660 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/root/src/mod.py is not a regular file with exactly one name (links: 2): not written, mode not changed; the mutant ma
+  PASS: T96g the planted file got a second name after the plant: exit 3 (got 3), the text says 'mode not changed', the mode is still 600 (got 600; r8 set it to 644 first), file still planted, marker kept
+REFUSED: mutant m1 file: 'src/__pycache__/m2.py' lies in a folder the tree comparison does not look at (.pytest_cache, .venv, __pycache__): refused
+  PASS: T96h a mutant file inside __pycache__ (exit 2) or .pytest_cache (exit 2), or an --extra there (exit 2): all exit 2 (r8: planted them: not 2), nothing planted, state empty
+  PASS: T96h2 GUARD (passes on r8 too): --file . is a clean refusal, exit 2 (got 2), no INTERNAL ERROR
+REFUSED: marker is for another root ("/nowhere/else"): refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T96h3 a marker that names another root (forged): exit 2 (got 2), and the text says that exit 2 does NOT mean nothing is planted and names --sha (r8: no such warning)
+  PASS: T96i --out-json or --raw inside the state folder: exit 2 (got 2, 2; r8 wrote there), no file created, nothing planted
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 25188 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T96j1 SIGTERM while 'git archive' stalls inside --restore --sha: ends at once with 143 (got 143; r8: the signal was only remembered and the run hung), the file is still planted and marker and backup are kept (nothing was written)
+RESTORE FAILED: git did not finish within 2 s and was stopped (--helper-timeout); the mutant may still be planted; marker and backup kept (run --restore again when the cause is fixed)
+  PASS: T96j2 a stalled 'git archive' with --helper-timeout 2: stopped, exit 3 (got 3; r8: unknown option), text 'did not finish within 2 s', marker kept, file still planted
+folder syncs after write: 1 after removal: 2
+  PASS: T96k write_state syncs the state FOLDER once, unlink_state removes and syncs it again (exit 0; r8: no folder sync, no unlink_state)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 29450 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be planted; marker and backup kept (run --restore aga
+  PASS: T96l marker mode 0777 (git has no execute bit for this file) with --restore --sha: exit 3 (got 3; r8: restored and wrote 0777), 'execute bits', file still planted
+  PASS: T96l2 guard: the genuine mode with --sha restores: exit 0 (got 0), state empty
+== T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1753:  6662 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded (exit 3): e9436765dc442bb7.planted.json was written for another folder than the one now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/toy/root (renamed away, replaced, or no folder identity recorded): the folder the mutant was planted in wa
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; e9436765dc442bb7.planted.json: test group already gone). ACCEPTED BY YOU (--accept-unchecked-folder), not checked: e9436765dc442bb7.planted.json was written for another folder than the one n
+  PASS: T97a M1 root renamed away, a full git copy at its path: --discard-marker exits 3 (got 3; r9: 0 and deleted marker and backup), marker kept (1), the text says the other folder was NOT compared; with --accept-unchecked-folder: exit 0 (got 0), state empty, text says ACCEPTED BY YOU; the mutant stays in the renamed-away folder
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 25055 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (garbage): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70:  6437 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (list): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 16730 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+              [--timeout TIMEOUT] [--pythonpath PYTHONPATH] [--repo REPO]
+              [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+              [--skip-import-check] [--restore] [--discard-marker]
+              [--accept-unchecked-folder] [--helper-timeout HELPER_TIMEOUT]
+run.py: error: argument --sha: '' is not a commit id (4 to 64 hexadecimal digits; an empty value is refused: is a shell variable unset?)
+  PASS: T97c M2 --sha "" with a forged marker and backup: exit 2 (got 2; r9: 0, the swapped text was written), the swapped text is NOT in the file (still planted), marker kept
+  PASS: T97c2 siblings: --sha zz (got 2), --repo "" (got 2), --out-json "" (got 2) are all refused with exit 2, nothing planted
+exit 2 for an argparse error: named in row 2: True
+exit 2 for a state folder that is not mode 700: named in row 2: True
+exit 2 for a lock held by a live run: named in row 2: True
+exit 2 for a --sha that names no commit: named in row 2: True
+BAD: []
+  PASS: T97d m1 row 2 of the exit table: no 'ONLY'; an argument error, a state folder not mode 700, a lock held and a --sha that names no commit all exit 2 and are named in it (exit 0; r9: fails)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 30702 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97e m2 recorded mode 0 (decimal 0), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 0 (r9: 644)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70:  9667 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97e m2 recorded mode 4755 (decimal 2541), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 4755 (r9: 644)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 18236 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o4755) has a special bit (setuid, setgid, sticky) or is writable by everybody: git has neither, so the marker may be forged; nothing written (r10 m2); the muta
+  PASS: T97e2 m2 marker mode 4755 with --sha: exit 3 (got 3; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 25808 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o666) has a special bit (setuid, setgid, sticky) or is writable by everybody: git has neither, so the marker may be forged; nothing written (r10 m2); the mutan
+  PASS: T97e2 m2 marker mode 666 with --sha: exit 3 (got 3; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+  PASS: T97f m3 --out-json in another searched state folder (via TMP): exit 2 (got 2; r9: wrote it), file not created; an existing foreign file: exit 2 (got 2; r9: overwritten), still 'precious', no raw file written

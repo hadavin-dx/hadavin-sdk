@@ -1,0 +1,3 @@
+banned strings loaded: 10
+files scanned: 26 | files with a case-insensitive hit: 0
+TOTAL case-sensitive matches: 0 | TOTAL case-insensitive matches: 0

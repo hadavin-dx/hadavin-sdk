@@ -45,12 +45,14 @@ for mid, fn, old, new, cnt in M:
     p = os.path.join(d, fn); t = open(p).read()
     assert t.count(old) == cnt, (mid, t.count(old))
     open(p, "w").write(t.replace(old, new))
+    os.chmod(d, 0o755)
+    for f in os.listdir(d): os.chmod(os.path.join(d, f), 0o644)
     lab = "m" + re.match(r"M(\d+)", mid).group(1)
     r = subprocess.run(["bash", os.path.join(HERE, "suite_indep.sh"), d, lab], capture_output=True, text=True)
     lines = r.stdout.splitlines(); fails = [l for l in lines if l.startswith("FAIL")]
     summ = [l for l in lines if l.startswith("SUMMARY")]
     is_caught = bool(fails) or r.returncode != 0
     caught += is_caught
-    out.write(f"{mid}: {'CAUGHT' if is_caught else 'NOT CAUGHT'} ({summ[-1] if summ else 'no summary'}) first_fail: {fails[0][:150] if fails else '-'}\n"); out.flush()
+    out.write(f"{mid}: {'CAUGHT' if is_caught else 'NOT CAUGHT'} ({summ[-1] if summ else 'no summary'}) failing_checks: {' ; '.join(l[5:].split('  [')[0][:60] for l in fails[:6])}{' ...' if len(fails)>6 else ''}\n"); out.flush()
     shutil.rmtree(d)
 out.write(f"TOTAL mutations={len(M)} caught={caught}\n"); out.close()

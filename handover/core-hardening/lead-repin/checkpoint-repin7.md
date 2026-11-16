@@ -1,5 +1,5 @@
-# Checkpoint repin7 (builder, evidence side only)
-15:52 UTC (21:22 IST). Started 15:47 UTC. Stop 16:47 UTC.
-Done: launcher fault confirmed (stuck v6 leftovers show SigIgn=7 = INT, QUIT, HUP ignored, inherited from a launcher started as a background job). Fixed launcher evidence-repin7/signals.py; all 16 rows OK against unchanged v6 (02, 03 files).
-Running: old launcher repro (04), dash mutation lane (06). Next: bash mutation lane, v08 re-check, non-root, timing, sha256, 00-RESULTS.md.
-Not touched: lead-repin-verify.sh, guide, src/, tests/.
+# Checkpoint repin7 (16:29 UTC / 21:59 IST)
+Done: v7 script (lead-repin-verify.v7.sh), guide v7, mutate.py v17-v29, signals launcher fix, v7-CHANGES.md.
+Found at 16:28: self-test HUP case failed (exit 0) in both shells because the batch was started with nohup (HUP ignored at entry; no script can catch it). Fixed: the case now says NOT TESTED when the caller ignores HUP. First batch stopped by me (my own pids only) and rerun without nohup at 16:29.
+Next: read 11/11b/12/13/14 results, 1 MB timing, non-root run, banned-string count, 00-RESULTS.md. Stop 16:47.
+Blockers: lead-repin-verify.sh still v6 (overwrite refused by the permission system); lead promotes v7.
