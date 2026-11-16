@@ -654,3 +654,94 @@ args_option_without_value_baseline (exit 2)                              as expe
 args_option_without_value_expect (exit 2)                                as expected
 args_bad_expect_value (exit 2)                                           as expected
 args_unknown_option (exit 2)                                             as expected
+args_no_directory_given (exit 2)                                         as expected
+args_expect_unknown_file_key (exit 2)                                    as expected
+args_files_not_json_names (exit 2)                                       as expected
+args_expect_credential_bad_value (exit 2)                                as expected
+args_expect_json_not_an_object (exit 2)                                  as expected
+files_all_on_empty_folder_is_fail (exit 1)                               as expected
+not_a_directory_is_fail (exit 1)                                         as expected
+duplicate_json_key_is_fail (exit 1)                                      as expected
+multi_dir_same_webhook_path_default_is_warn (exit 0)                     as expected
+multi_dir_same_webhook_path_fail_unverified (exit 1)                     as expected
+multi_dir_single_folder_has_no_clash (exit 0)                            as expected
+multi_dir_same_webhook_id_different_paths (exit 1)                       as expected
+multi_dir_same_form_trigger_path (exit 1)                                as expected
+multi_dir_form_path_and_webhook_path_are_different_addresses (exit 0)    as expected
+webhook_without_path_default_is_warn (exit 0)                            as expected
+webhook_without_path_fail_unverified (exit 1)                            as expected
+info_line_says_none_when_no_placeholder_and_no_env (exit 0)              as expected
+info_line_lists_placeholders_when_there_are_some (exit 0)                as expected
+accept_if_both_recorded_is_warn_and_counted (exit 0)                     as expected
+accept_if_missing_is_fail (exit 1)                                       as expected
+accept_if_wrong_output_is_fail (exit 1)                                  as expected
+accept_if_covers_only_what_was_recorded (exit 1)                         as expected
+accept_if_other_file_name_does_not_excuse (exit 1)                       as expected
+accept_if_bad_value (exit 2)                                             as expected
+r5_placeholder_in_node_setting_is_listed_even_quiet (exit 0)             as expected
+r5_placeholder_in_node_setting_fails_when_real_ids_required (exit 1)     as expected
+r5_no_placeholder_in_settings_no_line (exit 0)                           as expected
+r5_placeholder_in_any_setting_string (exit 0)                            as expected
+r5_ddl_v4_table_has_every_column (exit 0)                                as expected
+r5_ddl_old_table_lacks_alert_columns (exit 0)                            as expected
+r5_new_warns_are_counted_as_known_open_problems (exit 0)                 as expected
+r5_ddl_other_table_name_is_warn (exit 0)                                 as expected
+r5_no_ddl_says_so_loudly (exit 0)                                        as expected
+r5_ddl_unreadable_file (exit 2)                                          as expected
+r5_ddl_without_create_table (exit 2)                                     as expected
+r5_ddl_option_without_value (exit 2)                                     as expected
+r5_entry_flow_without_saved_runs_is_warn (exit 0)                        as expected
+r6_saved_runs_warn_for_all_four_flows_incl_manual_runs                   as expected
+r5_saved_runs_all_has_no_warn_and_one_key_is_named (exit 0)              as expected
+r5_accept_if_warn_says_what_a_database_failure_does (exit 0)             as expected
+r6_manual_runs_off_alone_is_named_and_only_for_that_file (exit 0)        as expected
+r6_credential_ids_listed_in_closing_block_and_counted (exit 0)           as expected
+r6_environment_steps_listed_in_closing_block (exit 0)                    as expected
+r6_mail_setting_not_an_address_is_listed (exit 0)                        as expected
+r6_mail_setting_change_me_is_listed (exit 0)                             as expected
+r6_mail_setting_todo_word_is_listed (exit 0)                             as expected
+r6_mail_setting_replace_me_is_listed (exit 0)                            as expected
+r6_mail_setting_plain_is_not_listed (exit 0)                             as expected
+r6_mail_setting_expression_is_not_listed (exit 0)                        as expected
+r6_sql_warn_counts_for_old_table (exit 0)                                as expected
+r6_sql_warn_counts_for_other_table_name (exit 0)                         as expected
+r6_sql_counts_zero_for_the_v4_table (exit 0)                             as expected
+r6_ddl_given_but_zero_queries_read_says_so_loudly (exit 0)               as expected
+r6_accept_if_that_matches_nothing_is_a_warn_and_counted (exit 0)         as expected
+r6_accept_if_that_matches_is_not_reported_stale (exit 0)                 as expected
+r6_quiet_info_hides_the_type_table_and_without_it_the_table_is_printed   as expected
+r6_secret_looking_key_with_placeholder_token_is_safe                     as expected
+r6_secret_looking_key_with_aws_example_key_is_safe                       as expected
+r6_secret_looking_key_with_literal_value_fails                           as expected
+r6_ddl_file_not_utf8_is_a_usage_error_not_a_crash (exit 2)               as expected
+r6_flow_file_not_utf8_says_unreadable (exit 1)                           as expected
+r6_extra_json_file_not_utf8_says_unreadable (exit 1)                     as expected
+r6_any_crash_of_the_checker_is_exit_3_not_1                              as expected
+r5_python_older_than_3_10_exits_3_with_message                           as expected
+r5_result_line_counts_each_fail_once                                     as expected
+r5_deep_diff_added_to_empty_list_and_removed_to_empty_list               as expected
+r8_value_is_safe_rejects_no_block_and_non_reference_block_and_accepts_a_reference as expected
+r5_ddl_parse_and_query_words                                             as expected
+diff_text_header_line_exact (one header line per file, on screen and in the --diff-out file) as expected
+diff_text_exact_line (the change is one readable line, on screen and in the --diff-out file) as expected
+diff_out_unwritable_is_exit_3 (a broken output file is never exit 1)     as expected
+q18_patched_recovery_none_accepted_is_exit_0_and_not_a_warn (exit 0)     as expected
+q18_patched_recovery_none_without_accept_is_a_warn (exit 0)              as expected
+q18_accept_names_a_file_that_does_not_exist_is_a_warn (exit 0)           as expected
+q18_accept_for_a_flow_that_saves_is_a_warn_not_silent (exit 0)           as expected
+q18_accept_bad_value_is_usage_error (exit 2)                             as expected
+q18_other_schedule_only_flow_is_not_excused_by_the_recovery_name (exit 0) as expected
+q18_accept_given_for_form_flow_does_not_hide_its_warn (exit 0)           as expected
+q18_accept_given_for_sub_flow_does_not_hide_its_warn (exit 0)            as expected
+r10_m2_entry_flow_response_mode_not_response_node_is_fail_mf-form.json (exit 1) as expected
+r10_m2_entry_flow_response_mode_not_response_node_is_fail_mf-hook.json (exit 1) as expected
+r10_m3_listed_flow_that_is_a_folder_is_fail (exit 1)                     as expected
+r10_m3_listed_flow_that_is_a_dangling_link_is_fail (exit 1)              as expected
+r10_m5_reply_bad_key_must_be_respond_to_webhook (exit 1)                 as expected
+r10_m5_valid_must_set_lead_key (exit 1)                                  as expected
+r10_m5_patched_copy_passes_the_new_f002_asserts (exit 0)                 as expected
+r10_m7_query_that_is_only_an_expression_is_not_counted_as_compared (exit 0) as expected
+r10_m7_control_all_queries_compared (exit 0)                             as expected
+SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): form_trigger_auth_value_not_accepted=2, form_trigger_auth_without_credentials=2, form_trigger_without_auth_default=2, form_trigger_without_auth_strict=2, hubspot_credential_kind_wrong=4, hubspot_credential_missing=4, hubspot_credential_name_wrong=4, response_mode_missing_default_is_warn=2, response_mode_missing_fail_unverified=2, silent_error_external_call=1, webhook_auth_value_not_accepted=2, webhook_auth_value_not_accepted_default_is_warn=2, webhook_auth_without_credentials=2, webhook_auth_without_credentials_default_is_warn=2, webhook_auth_wrong_credential_kind=2, webhook_auth_wrong_credential_kind_default_is_warn=2, webhook_dead_branch=2, webhook_disabled_no_trigger=2, webhook_id_dict_no_crash=2, webhook_id_list_no_crash=2, webhook_id_reused_in_other_file=2, webhook_no_reply_node=2, webhook_parameters_list_no_crash=2, webhook_parameters_text_no_crash=2, webhook_path_reused_in_other_file=2, webhook_path_reused_with_slash_and_case=2, webhook_reply_node_disabled=2, write_node_continues_on_error=3
+case output folder: /tmp/fc8.RhRiB4/selftest-out
+SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)
