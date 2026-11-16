@@ -1,3 +1,3 @@
-SIMULATED non-GNU sed (shim, not a real BSD sed) mode= rc=1 stdout_lines=0 stderr=masking filter is not usable here (needs GNU sed or a sed that knows s///I)
-SIMULATED non-GNU sed (shim, not a real BSD sed) mode=take rc=0 stdout_lines=0 stderr=STOP: the masking filter is not usable here (the rule file is empty or this sed does not know s///I, which GNU sed does). Nothing was read.
+SIMULATED non-GNU sed (shim only; a real BSD/busybox sed was NOT available) arg=--self-test rc=3 stdout_lines=0
+SIMULATED non-GNU sed (shim only; a real BSD/busybox sed was NOT available) arg=/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ev3/take rc=3 stdout_lines=0
 work folders left: 0
