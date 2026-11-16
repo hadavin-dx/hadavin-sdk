@@ -1,1 +1,1 @@
-checker runs wall time: 0 s; self-test wall time: 8 s
+checker runs wall time: 1 s; self-test wall time: 7 s

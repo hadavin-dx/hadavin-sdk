@@ -10,8 +10,9 @@ mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=no
 mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none saveManual=False
 WARN demo/n8n-flows-real-v5/mf-form.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started wi
 WARN demo/n8n-flows-real-v5/mf-hook.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started wi
-WARN demo/n8n-flows-real-v5/mf-recovery.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run starte
 WARN demo/n8n-flows-real-v5/mf-sub-crm-mail.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run st
+ACCEPTED: recovery flow not part of the take (decision 4): demo/n8n-flows-real-v5/mf-recovery.json keeps run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] off on purpose (it fires every 30 s, so saved runs would pile up with lead keys and e-mails; the
+!!! A FLOW THAT THE TAKE USES HAS RUN SAVING OFF (or the recorded accept for the recovery flow excused nothing): the run list in n8n stays empty for it. Apply patch F-008 to the flows first. This script exits 4.
 --- (3) Values that must be filled in before import: mail addresses and credential ids ---
 PLACEHOLDERS IN NODE SETTINGS (3): these must be filled before import (they are not credential ids; a mail address left as a placeholder means no mail or alert can be sent):
   - demo/n8n-flows-real-v5/mf-recovery.json node AlertSend setting 'fromEmail': FROM_ADDRESS_PLACEHOLDER
@@ -84,7 +85,7 @@ WARN demo/n8n-flows-real-v5/mf-recovery.json 1 value(s) in node settings are sti
 WARN demo/n8n-flows-real-v5/mf-recovery.json external-call nodes without retryOnFail: ['AlertBackoff', 'AlertClaim', 'AlertMark', 'AlertSend', 'ClaimStuck', 'MarkFailed', 'RunSub']
 WARN demo/n8n-flows-real-v5/mf-recovery.json external-call nodes with onError=continueRegularOutput (an error becomes normal-looking data): ['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed', 'RunSub']
 WARN demo/n8n-flows-real-v5/mf-recovery.json write node AlertSend has upstream external call(s) that continue on error: ['AlertClaim']
-WARN demo/n8n-flows-real-v5/mf-recovery.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
+ACCEPTED: recovery flow not part of the take (decision 4): demo/n8n-flows-real-v5/mf-recovery.json keeps run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] off on purpose (it fires every 30 s, so saved runs would pile up with lead keys and e-mails; the one video makes no recovery claim)
 WARN demo/n8n-flows-real-v5/mf-recovery.json IF node StuckRow lacks output(s) [1] (accepted by a recorded decision, --accept-if; an item that would leave by the missing output stops there silently, so a database failure that ends here vanishes with no alert) (project rule: every IF branch leads somewhere)
 WARN demo/n8n-flows-real-v5/mf-recovery.json IF node AlertRow lacks output(s) [1] (accepted by a recorded decision, --accept-if; an item that would leave by the missing output stops there silently, so a database failure that ends here vanishes with no alert) (project rule: every IF branch leads somewhere)
 mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none saveManual=False
@@ -97,12 +98,14 @@ WARN demo/n8n-flows-real-v5/mf-sub-crm-mail.json this flow's run-saving settings
 mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=none saveDataError=none saveManual=False
   credentials (node, kind, name, id): CrmUpsert hubspotAppToken hubspot-app-token HS_CRED_PLACEHOLDER; SetCrmId postgres n8n-publish-pg PG_CREDENTIAL_ID; MailClaim postgres n8n-publish-pg PG_CREDENTIAL_ID; SendMail smtp mf-mail-smtp SMTP_CREDENTIAL_ID; MarkDone postgres n8n-publish-pg PG_CREDENTIAL_ID; MarkUnknownA postgres n8n-publish-pg PG_CREDENTIAL_ID; MarkUnknownB postgres n8n-publish-pg PG_CREDENTIAL_ID
 WARN sql no --ddl file was given: the columns used in the SQL queries were NOT compared with any table definition; pass --ddl FILE (the take needs demo/n8n-flows-v4/mf_leads.sql, the table with the alert columns)
-RESULT: 0 FAIL, 25 WARN
+RESULT: 0 FAIL, 24 WARN
 OPEN LEAD DECISIONS: 2 webhook(s) without auth, 2 $env node(s)  (exit 0 does NOT mean authentication was checked)
 No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): check it on the machine that films the take; run with --block-env-access to see which steps depend on it.
 IF branches accepted by a recorded decision (--accept-if): 2
   - demo/n8n-flows-real-v5/mf-recovery.json: IF node StuckRow output(s) [1]
   - demo/n8n-flows-real-v5/mf-recovery.json: IF node AlertRow output(s) [1]
+Run-saving left off by a recorded decision (--accept-no-save), recovery flow not part of the take (decision 4): 1
+  - demo/n8n-flows-real-v5/mf-recovery.json: ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions']
 PLACEHOLDERS IN NODE SETTINGS (3): these must be filled before import (they are not credential ids; a mail address left as a placeholder means no mail or alert can be sent):
   - demo/n8n-flows-real-v5/mf-recovery.json node AlertSend setting 'fromEmail': FROM_ADDRESS_PLACEHOLDER
   - demo/n8n-flows-real-v5/mf-sub-crm-mail.json node SendMail setting 'fromEmail': FROM_ADDRESS_PLACEHOLDER
@@ -132,7 +135,7 @@ STEPS THAT READ ENVIRONMENT VARIABLES (2):
   - demo/n8n-flows-real-v5/mf-recovery.json node AlertSend: $env.DESK_ALERT_TO
   - demo/n8n-flows-real-v5/mf-sub-crm-mail.json node Qualify: $env.DESK_TIMEOUT_MS, $env.DESK_URL
 SQL COLUMNS NOT CHECKED: no --ddl file was given (the take needs demo/n8n-flows-v4/mf_leads.sql).
-Known open problems: 19
+Known open problems: 18
   - demo/n8n-flows-real-v5/mf-form.json: webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
   - demo/n8n-flows-real-v5/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
   - demo/n8n-flows-real-v5/mf-form.json: 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
@@ -144,7 +147,6 @@ Known open problems: 19
   - demo/n8n-flows-real-v5/mf-recovery.json: node AlertSend reads $env.DESK_ALERT_TO; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: n8n rule UNVERIFIED) this node stops working [run with --block-env-access to make it a FAIL]
   - demo/n8n-flows-real-v5/mf-recovery.json: 7 id(s) are still placeholders and must be replaced in n8n before import: AlertBackoff credential postgres id PG_CREDENTIAL_ID; AlertClaim credential postgres id PG_CREDENTIAL_ID; AlertMark credential postgres id PG_CREDENTIAL_ID; AlertSend credential smtp id SMTP_CREDENTIAL_ID; ClaimStuck credential postgres id PG_CREDENTIAL_ID; MarkFailed credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID [run with --require-real-credential-ids to make this a FAIL]
   - demo/n8n-flows-real-v5/mf-recovery.json: 1 value(s) in node settings are still placeholders; these must be filled before import: AlertSend fromEmail: FROM_ADDRESS_PLACEHOLDER [run with --require-real-credential-ids to make this a FAIL]
-  - demo/n8n-flows-real-v5/mf-recovery.json: this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
   - demo/n8n-flows-real-v5/mf-recovery.json: IF node StuckRow lacks output(s) [1] (accepted by a recorded decision, --accept-if; an item that would leave by the missing output stops there silently, so a database failure that ends here vanishes with no alert) (project rule: every IF branch leads somewhere)
   - demo/n8n-flows-real-v5/mf-recovery.json: IF node AlertRow lacks output(s) [1] (accepted by a recorded decision, --accept-if; an item that would leave by the missing output stops there silently, so a database failure that ends here vanishes with no alert) (project rule: every IF branch leads somewhere)
   - demo/n8n-flows-real-v5/mf-sub-crm-mail.json: node Qualify reads $env.DESK_TIMEOUT_MS, $env.DESK_URL; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: n8n rule UNVERIFIED) this node stops working [run with --block-env-access to make it a FAIL]
@@ -154,5 +156,5 @@ Known open problems: 19
   - sql: no --ddl file was given: the columns used in the SQL queries were NOT compared with any table definition; pass --ddl FILE (the take needs demo/n8n-flows-v4/mf_leads.sql, the table with the alert columns)
 Not proven: that n8n accepts these files on import; what n8n really does when a step fails (for example whether a repeated lead key still gets its answer, and whether a failed step reaches the failure line: only a test run in n8n can show it); whether the SQL inside the postgres nodes is correct (only the column names are compared, and only with --ddl); who calls a web address, whether the flow is active, and test versus production web address; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId).
 Passing this check does NOT mean the flows are ready to film.
-Open items counted: checker known open problems 19 + files without the key check 2 + psql gate 1 + problems of this script 1.
+Open items counted: checker known open problems 18 + files without the key check 2 + psql gate 1 + problems of this script 2.
 FINAL: take_check exit status 4. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: 23. (1 = fault in a file, 4 = table check missing or failed.) This is not a pass for filming.

@@ -1,0 +1,24 @@
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-13t0xvi1/empty-dir --files all
+# ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
+# What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
+# Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
+#   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
+# Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line. 3 = the checker itself broke or could not write a file.
+# FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
+# WARN-LEAD-DECISION = an open decision for the lead or owner (no password on a web address, $env reads). Exit stays 0, so exit 0 does NOT mean authentication was checked.
+# Rules that come from memory of n8n (tag 'n8n rule UNVERIFIED') are WARN only; --fail-unverified makes them FAIL.
+# A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
+# The numbers for THIS run (open decisions, known open problems, accepted IF branches) are printed in the closing block: 'OPEN LEAD DECISIONS' and 'Known open problems'.
+# =============================================================================
+### /tmp/fc-selftest-13t0xvi1/empty-dir
+FAIL /tmp/fc-selftest-13t0xvi1/empty-dir --files all: this folder holds no *.json file, so nothing was checked
+WARN sql no --ddl file was given: the columns used in the SQL queries were NOT compared with any table definition; pass --ddl FILE (the take needs demo/n8n-flows-v4/mf_leads.sql, the table with the alert columns)
+RESULT: 1 FAIL, 1 WARN
+OPEN LEAD DECISIONS: 0 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
+No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): check it on the machine that films the take; run with --block-env-access to see which steps depend on it.
+SQL COLUMNS NOT CHECKED: no --ddl file was given (the take needs demo/n8n-flows-v4/mf_leads.sql).
+Known open problems: 1
+  - sql: no --ddl file was given: the columns used in the SQL queries were NOT compared with any table definition; pass --ddl FILE (the take needs demo/n8n-flows-v4/mf_leads.sql, the table with the alert columns)
+Not proven: that n8n accepts these files on import; what n8n really does when a step fails (for example whether a repeated lead key still gets its answer, and whether a failed step reaches the failure line: only a test run in n8n can show it); whether the SQL inside the postgres nodes is correct (only the column names are compared, and only with --ddl); who calls a web address, whether the flow is active, and test versus production web address; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId).
+Passing this check does NOT mean the flows are ready to film.
+exit=1
