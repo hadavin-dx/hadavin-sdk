@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T16:42:08Z
+UPDATED_UTC: 2026-11-16T16:46:40Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 7
-CAPACITY: 6.50 load of 4 cores, mem 1/15 GB, RAM 1486/16087 MB, disk 13G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 7 (light+heavy per list)
+CAPACITY: 5.91 load of 4 cores, mem 1/15 GB, RAM 1436/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: 7 fixers editing, one slot empty (load 6.7 of 4 cores); disk 13G after freeing 2.6G scratch; percent stays 70
-PUSHED_UTC: 2026-11-16T16:42:08Z
+NEXT: 7 running (8th slot empty: load 4.2 of 4 cores); disk 12G free 70%; FINDINGS/LEDGER r11 verified, r12 reader started; percent stays 70 (no independent close since 13:59Z)
+PUSHED_UTC: 2026-11-16T16:46:40Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,21 +30,20 @@ PUSHED_UTC: 2026-11-16T16:42:08Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| acf8ab59 | fixer | sonnet | F8 flow-check round 11 (uncapped) | 15:48Z | 16:55Z | running | edits in flow-check/ |
-| af7e2278 | fixer | sonnet | FINDINGS/LEDGER round 11 (13 Majors) | 16:31Z | 16:48Z | running | edits in FINDINGS.md, LEDGER-ROWS.md |
-| a19c5921 | citation | sonnet | patch-copies r10 cite check (git apply, counts) | 16:33Z | 16:48Z | running | reviews/citation-patchcopies-r10.md |
-| a695e7c1 | fixer | sonnet | RW/CT round 19 (17 Majors) | 16:34Z | 16:52Z | running | edits in RUNSHEET-WORDING.md, CLAIMS-TABLE.md |
-| a294f937 | fixer | sonnet | plan files RUNBOOK/FIX-PLAN/TAKE-CHECKLIST round 26 (11 Majors) | 16:37Z | 16:55Z | running | edits in the three files |
-| a008bea7 | fixer | sonnet | Q31 round 17 (13 Majors) | 16:40Z | 16:55Z | running | edits in QUESTIONS.md |
-| a3736717 | fixer | sonnet | REVIEW.md round 33 (1 Blocker + 15 Majors, uncapped) | 16:42Z | 17:00Z | running | edits in REVIEW.md |
+| acf8ab59 | F8 flow-check round 11 fixer (uncapped) | sonnet | fix F8 run_all.sh intermittency and review findings | 15:49Z | about 17:00Z | running | edits in flow-check/ |
+| a294f937 | plan-files round 26 fixer | sonnet | fix 11 Majors in RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 16:37Z | about 17:05Z | running | edits in progress |
+| a3736717 | REVIEW.md round 33 fixer (uncapped) | sonnet | fix design B1 + M2-M8, reader F1-F10 | 16:42Z | about 17:10Z | running | edits in progress |
+| a6f19722 | patch-copies round 11 fixer (uncapped) | sonnet | fix 9 Majors README/DEAD-MAN-CHECK | 16:43Z | about 17:10Z | running | edits in progress |
+| ab3ee0ff | RW/CT round 20 reader | sonnet | stranger read of RUNSHEET-WORDING/CLAIMS-TABLE | 16:44Z | about 16:58Z | running | pending |
+| a26c1f8a | Q31 round 18 reader | sonnet | stranger read of Q31 | 16:45Z | about 16:58Z | running | pending |
+| a1f4e17f | FINDINGS/LEDGER round 12 reader | sonnet | stranger read after round 11 fix (verified: counts 45/5/5/35, all checkers pass) | 16:46Z | about 17:00Z | running | pending |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. 8th agent slot EMPTY because load is 6.7 on 4 cores (above 85%) and five fixers are editing; adding a reviewer now would slow all of them.
-2. Patch-copies round 10 fixer (reader, code, citation reports): waits for citation checker a19c5921 (due 16:48Z).
-3. Fresh readers for FINDINGS/LEDGER (r12), RW/CT (r20), plan files (r27), Q31 (r17), REVIEW.md (r34 reader + design): each waits for its fixer.
-4. F8 evidence runner (alone) plus fresh uncapped reviews: waits for acf8ab59.
-5. Drift report refresh (reviews/drift-007-r3.md) and trigger-word grep: before FINAL.
-Disk 13G free (69%) after I deleted 2.6G of old scratch clones (g/patched, g/unpatched, a1, x/arc; regenerable extracts, no evidence); percent basis: 70 = 7 of 10 items verified by an independent check; none closed since 13:59Z.
+1. Save RW/CT r20 and Q31 r18 reader reports, launch their fixers
+2. Verify plan-files fixer a294f937 (clock diff, refs), launch round 27 reader
+3. Verify REVIEW.md fixer, launch design + reader + citation (uncapped)
+4. Verify patch-copies fixer, launch reader + code + citation (uncapped)
+5. F8: evidence runner alone, then fresh uncapped reviews
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
