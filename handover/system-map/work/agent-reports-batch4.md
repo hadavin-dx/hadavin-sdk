@@ -100,3 +100,13 @@ Still wrong or unverified: line 28 says "steps 23 to 28" but 23-25 are the faile
 - OWNER-VIEW: applied 6 of aead2de's clarity edits (row 3 timestamps removed, film done in chat, y after start now, 6-digit number source, ids, contacts-deleted count). Still held: run-name and laptop-settings order, row 6 limit.
 
 ## BATCH 35 (FINAL-CROSSCHECK recheck a93318d): 49 cites, 46 hold, 3 wrong (lines 21, 26, 88), all fixed; 9 not checkable here (flows-audit and core-hardening files). Outside my scope: flowcheck/REPORT.md:152 cites SWEEP fix-plan row 20 but the shared Postgres login is row 6 (SWEEP.md:378); not mine to edit, listed for the lead.
+
+## BATCH 36 (README vs LEAD-PAGE word clashes, a36a6c5; model output, not applied)
+The two files disagree on seven shared words, and each breaks its own "one meaning" rule. Needs the lead's choice before any mass rename:
+- "lead" alone: README bans it (:28) but uses it at :2, :5, :15, :18, :19, :21, :25; LEAD-PAGE bans it for an enquiry but writes "lead key", "A lead sent twice", "one made-up lead" (:9, :40, :45). Note: the lead's own decision text uses "a lead sent twice", so the lead must pick the name.
+- Rehearsal vs re-smoke vs laptop trial: README one thing, LEAD-PAGE two steps (:9, :12).
+- Take count: README one, LEAD-PAGE up to two (cites v3, superseded).
+- "decision 10" is cited for two different decisions (Postgres, and v3 superseded): UNVERIFIED which is right; check inputs/DECISIONS-2026-11-16.md.
+- "run" (four meanings), "blocker" (fault grade vs thing that stops the take), "pause" (undefined), owner named three ways (studio head, owner, you).
+- Dates: LEAD-PAGE :13 and :31 copy the latest start; TAKE-BLOCKERS Dates paragraph is the one source.
+Not applied: renaming across files is not a safe mechanical edit.
