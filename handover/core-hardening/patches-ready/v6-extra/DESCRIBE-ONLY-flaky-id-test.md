@@ -6,3 +6,13 @@ Guard failures on this branch are BRANCH ARTEFACTs (Q16.2): the vendor-string an
 
 ## Added 2026-11-16 (C7b round 3 security review): pre-existing gap, describe-only per Q16
 The cloud-cmdlet branch of `_WRITE_SHAPES` needs a letter after the module word, so `Remove-EC2*` (wildcard), `gcm Remove-EC2*` and a bare `Remove-EC2` may not match that branch. Unchecked whether `_PROGRAM` or another rule still catches them. Not caused by FIX-id-vs-command-withheld.patch. Next step for the lead: a test that feeds those three strings to the gate and a decision on a fix in src (we do not edit src/ or tests/).
+
+## Full list of open C7b gaps (added 2026-11-16, one-place sweep r2 finding 4). Status of every item below: described, not fixed.
+No item below was run by the author of this list; each is copied from the file named on its line. None is fixed. The patch `FIX-id-vs-command-withheld.patch` (sha256 `12e4be6f...`) is unchanged and describe-only (Q16.1). The lead decides: accept the gaps, or ship a patch with a new hash.
+1. Bare `Remove-EC2`, the wildcard `Remove-EC2*` and `gcm Remove-EC2*` may not match the cloud-cmdlet branch of `_WRITE_SHAPES`; whether `_PROGRAM` or another rule still catches them is unchecked (line 8 above). Pre-existing, not caused by the patch. Described, not fixed.
+2. `Remove-EC2_x`: a module word followed by an underscore is, per the codebase review, never withheld by the id rule (`review/codebase-c7b-fix3-r4.md:4`; `v3/REPORT-c7b-fix3.md:43`). Not run here. Described, not fixed.
+3. `Remove-S32`: a module word followed by a digit, same source and same status as item 2. Described, not fixed.
+4. Patch test at patch lines 124-126 (`"Remove-ec2" + "0"*32 + "-suffix"`) also passes on the old code, and its comment "same" misleads; it pins nothing the fix changed (`v3/REPORT-c7b-fix3.md:42`; `review/codebase-c7b-fix3-r4.md:4`). Suggested change for a later pass: delete the case or rewrite its comment. Changing it changes the patch hash. Described, not fixed.
+5. Wording of the rule: the lookahead releases a run of 32 or more hex digits that ends at any non-word character (for example a hyphen), not strictly "an id" (`review/codebase-c7b-fix3-r4.md:4`; `v3/REPORT-c7b-fix3.md:43`). The patch text and README should say it that way. Described, not fixed.
+Next step for the lead for items 1 to 5: one test that feeds the strings of items 1 to 3 to the gate (unknown today whether another rule withholds them), then decide about a patch with a new hash. We do not edit `src/` or `tests/`.
+Not carried here (other open items): the 455 Postgres tests, the real head `de6b574` and a full re-run after fix 4 were not run (`review/design-c7b-fix4-r5.md:4`).
