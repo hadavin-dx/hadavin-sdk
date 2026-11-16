@@ -616,7 +616,7 @@ grep -q 'REVIEWER_TODAY' "$HERE/README.md"; ok $? "f8-r8 M1: the README names RE
 tk big TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/big.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has big "rule: too long" && has big "[cut: 300 of 2000" && ! grep -q -E 'x{301}' "$S/big.txt"; ok $? "f8-r8: a reviewer line of 200 KiB is exit 4 with 'rule: too long', printed cut at 300 characters with its length (got exit $RC)"
 # a note with shell syntax is only text: accepted (exit 5 with the override), nothing is run
-SENT="$S/sentinel-ran"; rm -f -- "$SENT" "$SENT-2"
+SENT="/tmp/ttc-sentinel-$$"; rm -f -- "$SENT" "$SENT-2"   # a short neutral path: the scratch folder name itself may hold a listed word
 { printf '# reviewed by: Pat Smith, %s, run $(touch %s) and `touch %s-2` and "q" and '"'"'r'"'"' ; touch %s\n' "$PD" "$SENT" "$SENT" "$SENT"; grep -v '^# reviewed by' "$PIN"; } > "$S/shellnote.pin"
 tk shellnote TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/shellnote.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has shellnote "NOT A PERSON" && [ ! -e "$SENT" ] && [ ! -e "$SENT-2" ] && has shellnote 'run $(touch'; ok $? "f8-r8: a note holding \$(...), backticks and quotes is accepted as plain text (exit 5 with the override) and nothing is executed (got exit $RC)"

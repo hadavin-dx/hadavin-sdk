@@ -37,7 +37,7 @@ Line numbers are for the real set (`handover/demo/n8n-flows-real-v5/`); the film
 | `id` empty text "" and `vid` digits | CrmIdOk (the `??` does not fall through "") | failed after 3 tries, although a good `vid` exists |
 | `id` text with non-digits (e.g. a long code) and `vid` digits | CrmIdOk (`id` wins) | failed after 3 tries |
 | `id` or `vid` negative, decimal, exponent form ("1e+21"), or has spaces | CrmIdOk | failed after 3 tries |
-| neither field | CrmIdOk | failed after 3 tries (T18 covers this on the stand-in only, not run) |
+| neither field | CrmIdOk | failed after 3 tries (T18 is the planned test; under ORDER 037 there is no stand-in run, and it has not been run against the real trial flows) |
 | answer comes as a list of 2 items | SetCrmId runs twice (second run matches the same row and rewrites it; harmless), CrmIdOk reads only `.first()` | result depends on the first item |
 | HubSpot error (token, missing custom property) | CrmUpsert error output to OutStage | same failed-after-3 path; retried upserts keep one contact per e-mail |
 
