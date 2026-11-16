@@ -71,3 +71,22 @@ CORRECTION to the archive sentence, same facts: decision 2 of 2026-11-16 keeps t
 11: v4.2 lines 453 and 507: the lead corrects them in v4.3 (system-map drafts the wording from the sentence above); HubSpot key right: stays read-only by decision 2; whether HubSpot's filtered list shows archived contacts: UNVERIFIED, the re-smoke shows it.
 
 ## RETRACTION (lead, 2026-11-16T17:46:03Z): my "CORRECTION" in Batch 2 and Batch 3 was WRONG. I read an OLD integration branch (take/nlite-int 8eba53a) that still called archive_all; the program that will be taken is the r34+ line (run_real_check_n8n.py head r38 0cead2c), and there the code is read-only on HubSpot: it has no create/update/delete or archive call, prints "this script only reads HubSpot and never deletes: it counts and lists them at the end and you delete them by hand" and "left in HubSpot (this take never deletes): N contact(s)". So the ORIGINAL sentence was right: "The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list." Put that sentence back on all ten held pages and in the v4.3 rows; decision 2 of 2026-11-16 and inputs/DECISIONS-2026-11-16.md line 3 are restored. Keep it UNVERIFIED until the loopback re-smoke on the merged head. Also item 11 of batch 3: v4.2 lines 453 and 507 ("no archive call, read-only identity", "never deletes") are therefore CORRECT for the final program; do not rewrite them. Item 12 filter text, from the r38 clean-up list: search take-<tag>-a, -b, -c (example.com). Item 13 pause: unchanged (no timer in the code I read).
+
+## Batch 4 (lead, 18:29Z): decision-list rows in the requested format, plus board items 1-5
+Owner rule 2026-11-16: small things go with the recommended option. These are lead decisions; none needs the owner.
+D-01 A
+D-02 A
+D-03 A (use only the RETRACTION sentence: the take never deletes; the owner deletes leftovers by the filtered list; steps v5 lines 127 and 130 reworded to say so)
+D-04 A
+D-05 A
+D-06 A
+D-07 A
+D-08 A
+D-09 A
+D-10 A (downgrade to Major or Nit; real dates are set by the lead and the owner, see item 1)
+Board item 1 (first rehearsal of changed flows = the loopback re-smoke): the lead runs it AFTER the merged head passes evidence-final and ASKS the owner first with clock times. Not by Tue 17 Nov 03:30 UTC; do not wait on it; write the steps so the lead can start it with one command list. The earliest start is Tue 17 Nov about 09:00 UTC / 14:30 IST.
+Board item 2 (M14 licence test): YES. Change only the test so it accepts Apache-2.0 in handover/promotion-inputs; licence files stay unchanged (decision 11). It is core-hardening's test file: write the proposed edit to work/ and tell core-hardening through its QUESTIONS.md; do not edit it yourself.
+Board item 3 (paste SESSION-HANDOFF): NO. It holds live laptop state and account names. Drop M20 in the cloud; the lead checks the pages against the handoff on the laptop later if time allows.
+Board item 4 (8 open Blockers): D-01 to D-05 and D-10 are answered above; S-03 (take-time value substitution, BL-wp6-G1) is a lead item, not built yet, describe it only; L-01 (lead and secrets under one Linux user): option (b), reword OS:21-22 as procedure only and write the owner acceptance as a line for the owner to approve (NOT assumed accepted).
+Board item 5: D-04 and D-05 answered A above.
+Capacity: your board shows 1 agent and 18 GB disk free. Start agents again from QUEUE.md (6 or more; reason per empty slot). Disk: delete only regenerable scratch you created (pytest caches, __pycache__, temporary clones outside git, old test copies); never git, handover, inputs, evidence.
