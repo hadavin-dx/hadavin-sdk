@@ -147,8 +147,8 @@ line_rules() {
   cat <<EOF
 s/((${ID})${PRE}[[:space:]]*""")([^"]|"[^"]|""[^"])*"""/\1<masked>"""/Ig
 s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
-s/((${ID})${PRE}[[:space:]]*""").*/\1<masked>/I
-s/((${ID})${PRE}[[:space:]]*''').*/\1<masked>/I
+/(${ID})${PRE}[[:space:]]*""".*"""/I!s/((${ID})${PRE}[[:space:]]*""").*/\1<masked>/I
+/(${ID})${PRE}[[:space:]]*'''.*'''/I!s/((${ID})${PRE}[[:space:]]*''').*/\1<masked>/I
 s/(["'](${IDQ})["'][[:space:]]*:[[:space:]]*)("[^"]*"|'[^']*'|[^,}[:space:]]+)/\1"<masked>"/Ig
 s/(["'](name|key|var|variable|env)["'][[:space:]]*:[[:space:]]*["'](${IDQ})["'][[:space:]]*,[[:space:]]*["'][A-Za-z_]*["'][[:space:]]*:[[:space:]]*)("[^"]*"|'[^']*'|[^,}[:space:]]+)/\1"<masked>"/Ig
 s/([{,][[:space:]]*(${IDB})[[:space:]]*:[[:space:]]*)("[^"]*"|'[^']*'|[^,}[:space:]]+)/\1<masked>/Ig
@@ -203,55 +203,55 @@ self_test() {
   long=$(awk 'BEGIN{for(i=0;i<300;i++) printf "x"}')
   q3='"""'
   {
-    printf 'API_KEY=%s1\n' "$base"
-    printf 'export MY_TOKEN=%s2\n' "$base"
-    printf 'password = "%s3"\n' "$base"
-    printf '{"api_key": "%s4", "other": 1}\n' "$base"
-    printf '{"client_secret":"%s5"}\n' "$base"
-    printf 'Authorization: Bearer %s6\n' "$base"
-    printf 'header Bearer %s7 end\n' "$base"
-    printf 'value sk-%s8 here\n' "$base"
-    printf 'value pat-%s9 here\n' "$base"
-    printf 'value %s%s10Abcdef here\n' "$gh1$gh2" "$base"
+    printf 'API_KEY=%s_1_\n' "$base"
+    printf 'export MY_TOKEN=%s_2_\n' "$base"
+    printf 'password = "%s_3_"\n' "$base"
+    printf '{"api_key": "%s_4_", "other": 1}\n' "$base"
+    printf '{"client_secret":"%s_5_"}\n' "$base"
+    printf 'Authorization: Bearer %s_6_\n' "$base"
+    printf 'header Bearer %s_7_ end\n' "$base"
+    printf 'value sk-%s_8_ here\n' "$base"
+    printf 'value pat-%s_9_ here\n' "$base"
+    printf 'value %s%s_10_Abcdef here\n' "$gh1$gh2" "$base"
     printf '11:db_password:\n'
-    printf '12-    %s11\n' "$base"
+    printf '12-    %s_11_\n' "$base"
     printf '13-other: fine\n'
-    printf 'secret: |\n  %s12a\n  %s12b\nnext_line: stays\n' "$base" "$base"
-    printf 'url https://user:%s13@host.example/path\n' "$base"
+    printf 'secret: |\n  %s_12a_\n  %s_12b_\nnext_line: stays\n' "$base" "$base"
+    printf 'url https://user:%s_13_@host.example/path\n' "$base"
     printf 'id %s\n' "$fakeid"
-    printf 'passwd: %s14\n' "$base"
-    printf 'pwd=%s15\n' "$base"
-    printf 'credential = %s16\n' "$base"
-    printf '%s token=%s17\n' "$long" "$base"
-    printf '{"api_key": "%s18", "nodes": [{"method": "DELETE"}]}\n' "$base"
-    printf 'x = call(token="%s19") # delete path\n' "$base"
+    printf 'passwd: %s_14_\n' "$base"
+    printf 'pwd=%s_15_\n' "$base"
+    printf 'credential = %s_16_\n' "$base"
+    printf '%s token=%s_17_\n' "$long" "$base"
+    printf '{"api_key": "%s_18_", "nodes": [{"method": "DELETE"}]}\n' "$base"
+    printf 'x = call(token="%s_19_") # delete path\n' "$base"
     printf 'if key == "end":\n'
     printf 'answer = "end"\n'
     printf 'literal AKIAIOSFODNN7EXAMPLE stays\n'
     printf 'plain line with the word end in it\n'
     # ---- v3 additions: forms the v2 filter missed
-    printf 'PASS=%s20\n' "$base"
-    printf 'passphrase: %s21\n' "$base"
-    printf 'pat = %s22\n' "$base"
-    printf 'os.environ["X_TOKEN"] = "%s23"\n' "$base"
-    printf 'v = cfg.get("API_KEY", "%s24")\n' "$base"
-    printf 'pair = ("API_KEY", "%s25")\n' "$base"
-    printf 'run --token %s26 --verbose\n' "$base"
-    printf 'run --password %s27\n' "$base"
-    printf 'run --api-key=%s28 --other\n' "$base"
-    printf 'password = %s%s29%s # tail29\n' "$q3" "$base" "$q3"
-    printf 'secret = %s\n%s30a\n%s30b\n%s\nafter_multiline = kept\n' "$q3" "$base" "$base" "$q3"
-    printf 'token = "%s31\n' "$base"
+    printf 'PASS=%s_20_\n' "$base"
+    printf 'passphrase: %s_21_\n' "$base"
+    printf 'pat = %s_22_\n' "$base"
+    printf 'os.environ["X_TOKEN"] = "%s_23_"\n' "$base"
+    printf 'v = cfg.get("API_KEY", "%s_24_")\n' "$base"
+    printf 'pair = ("API_KEY", "%s_25_")\n' "$base"
+    printf 'run --token %s_26_ --verbose\n' "$base"
+    printf 'run --password %s_27_\n' "$base"
+    printf 'run --api-key=%s_28_ --other\n' "$base"
+    printf 'password = %s%s_29_%s # tail29\n' "$q3" "$base" "$q3"
+    printf 'secret = %s\n%s_30a_\n%s_30b_\n%s\nafter_multiline = kept\n' "$q3" "$base" "$base" "$q3"
+    printf 'token = "%s_31_\n' "$base"
     printf 'contact %s here\n' "$fakemail"
-    printf '{"name": "X_TOKEN", "value": "%s33"}\n' "$base"
-    printf "{'api_key': '%s34', 'n': 2}\n" "$base"
-    printf 'self.token = %s35\n' "$base"
-    printf 'accessToken: %s36\n' "$base"
-    printf 'apiKey = %s37\n' "$base"
-    printf 'X-Api-Key: %s38\n' "$base"
-    printf "const o = {token: '%s39', n: 3}\n" "$base"
-    printf 'export X_PASSWORD=%s40\n' "$base"
-    printf 'secret = %s%s41a\n%s41b\n' "'''" "$base" "$base"
+    printf '{"name": "X_TOKEN", "value": "%s_33_"}\n' "$base"
+    printf "{'api_key': '%s_34_', 'n': 2}\n" "$base"
+    printf 'self.token = %s_35_\n' "$base"
+    printf 'accessToken: %s_36_\n' "$base"
+    printf 'apiKey = %s_37_\n' "$base"
+    printf 'X-Api-Key: %s_38_\n' "$base"
+    printf "const o = {token: '%s_39_', n: 3}\n" "$base"
+    printf 'export X_PASSWORD=%s_40_\n' "$base"
+    printf 'secret = %s%s_41a_\n%s_41b_\n%s\n' "'''" "$base" "$base" "'''"
     printf "line_after_triple = %s\n" 'kept2'
     # ---- v3 false-hide cases: evidence that must stay readable
     printf 'if token:\n    return kept_after_if_token\n'
@@ -284,51 +284,51 @@ self_test() {
     if grep -q -F -- "$2" "$res"; then pass=$((pass + 1)); say "PASS (kept): $1"
     else fail=$((fail + 1)); printf 'FAIL (evidence was hidden): %s\n' "$1"; fi
   }
-  chk_hidden 'KEY= form' "${base}1" L
-  chk_hidden 'export TOKEN= form' "${base}2" L
-  chk_hidden 'password = "..." form' "${base}3" L
-  chk_hidden 'JSON quoted key' "${base}4" L
-  chk_hidden 'JSON client_secret no spaces' "${base}5" L
-  chk_hidden 'Authorization Bearer' "${base}6" L
-  chk_hidden 'bare Bearer value' "${base}7" L
-  chk_hidden 'sk- value' "${base}8" L
-  chk_hidden 'pat- value' "${base}9" L
-  chk_hidden 'github token shape' "${base}10" L
-  chk_hidden 'YAML next line after grep prefix' "${base}11"
-  chk_hidden 'YAML block line a' "${base}12a"
-  chk_hidden 'YAML block line b' "${base}12b"
-  chk_hidden 'web address with user:password' "${base}13" L
+  chk_hidden 'KEY= form' "${base}_1_" L
+  chk_hidden 'export TOKEN= form' "${base}_2_" L
+  chk_hidden 'password = "..." form' "${base}_3_" L
+  chk_hidden 'JSON quoted key' "${base}_4_" L
+  chk_hidden 'JSON client_secret no spaces' "${base}_5_" L
+  chk_hidden 'Authorization Bearer' "${base}_6_" L
+  chk_hidden 'bare Bearer value' "${base}_7_" L
+  chk_hidden 'sk- value' "${base}_8_" L
+  chk_hidden 'pat- value' "${base}_9_" L
+  chk_hidden 'github token shape' "${base}_10_" L
+  chk_hidden 'YAML next line after grep prefix' "${base}_11_"
+  chk_hidden 'YAML block line a' "${base}_12a_"
+  chk_hidden 'YAML block line b' "${base}_12b_"
+  chk_hidden 'web address with user:password' "${base}_13_" L
   chk_hidden 'AKIA-shaped id' "$fakeid" L
-  chk_hidden 'passwd: form' "${base}14" L
-  chk_hidden 'pwd= form' "${base}15" L
-  chk_hidden 'credential = form' "${base}16" L
-  chk_hidden 'secret at column 300 (hidden before the cut)' "${base}17" L
-  chk_hidden 'JSON secret followed by more JSON' "${base}18" L
-  chk_hidden 'quoted secret inside a call' "${base}19" L
-  chk_hidden 'bare PASS= name' "${base}20" L
-  chk_hidden 'passphrase: name' "${base}21" L
-  chk_hidden 'pat = name (personal access token)' "${base}22" L
-  chk_hidden 'os.environ["X_TOKEN"] = "v"' "${base}23" L
-  chk_hidden '.get("API_KEY", "default")' "${base}24" L
-  chk_hidden '("API_KEY", "value") tuple' "${base}25" L
-  chk_hidden '--token value flag' "${base}26" L
-  chk_hidden '--password value flag' "${base}27" L
-  chk_hidden '--api-key=value flag' "${base}28" L
-  chk_hidden 'triple-quoted value on one line' "${base}29" L
-  chk_hidden 'triple-quoted value over several lines, line 1' "${base}30a"
-  chk_hidden 'triple-quoted value over several lines, line 2' "${base}30b"
-  chk_hidden 'unterminated quote' "${base}31" L
+  chk_hidden 'passwd: form' "${base}_14_" L
+  chk_hidden 'pwd= form' "${base}_15_" L
+  chk_hidden 'credential = form' "${base}_16_" L
+  chk_hidden 'secret at column 300 (hidden before the cut)' "${base}_17_" L
+  chk_hidden 'JSON secret followed by more JSON' "${base}_18_" L
+  chk_hidden 'quoted secret inside a call' "${base}_19_" L
+  chk_hidden 'bare PASS= name' "${base}_20_" L
+  chk_hidden 'passphrase: name' "${base}_21_" L
+  chk_hidden 'pat = name (personal access token)' "${base}_22_" L
+  chk_hidden 'os.environ["X_TOKEN"] = "v"' "${base}_23_" L
+  chk_hidden '.get("API_KEY", "default")' "${base}_24_" L
+  chk_hidden '("API_KEY", "value") tuple' "${base}_25_" L
+  chk_hidden '--token value flag' "${base}_26_" L
+  chk_hidden '--password value flag' "${base}_27_" L
+  chk_hidden '--api-key=value flag' "${base}_28_" L
+  chk_hidden 'triple-quoted value on one line' "${base}_29_" L
+  chk_hidden 'triple-quoted value over several lines, line 1' "${base}_30a_"
+  chk_hidden 'triple-quoted value over several lines, line 2' "${base}_30b_"
+  chk_hidden 'unterminated quote' "${base}_31_" L
   chk_hidden 'e-mail address' "$em1$em2" L
-  chk_hidden 'JSON name/value pair' "${base}33" L
-  chk_hidden "single-quoted dict key 'api_key'" "${base}34" L
-  chk_hidden 'self.token = value' "${base}35" L
-  chk_hidden 'accessToken: value (camel case)' "${base}36" L
-  chk_hidden 'apiKey = value (camel case)' "${base}37" L
-  chk_hidden 'X-Api-Key: header' "${base}38" L
-  chk_hidden 'JS object {token: value}' "${base}39" L
-  chk_hidden 'export X_PASSWORD=' "${base}40" L
-  chk_hidden "single triple quotes over several lines, line 1" "${base}41a"
-  chk_hidden "single triple quotes over several lines, line 2" "${base}41b"
+  chk_hidden 'JSON name/value pair' "${base}_33_" L
+  chk_hidden "single-quoted dict key 'api_key'" "${base}_34_" L
+  chk_hidden 'self.token = value' "${base}_35_" L
+  chk_hidden 'accessToken: value (camel case)' "${base}_36_" L
+  chk_hidden 'apiKey = value (camel case)' "${base}_37_" L
+  chk_hidden 'X-Api-Key: header' "${base}_38_" L
+  chk_hidden 'JS object {token: value}' "${base}_39_" L
+  chk_hidden 'export X_PASSWORD=' "${base}_40_" L
+  chk_hidden "single triple quotes over several lines, line 1" "${base}_41a_"
+  chk_hidden "single triple quotes over several lines, line 2" "${base}_41b_"
   chk_kept 'text after a quoted JSON secret stays readable (DELETE)' '"method": "DELETE"'
   chk_kept 'text after a quoted secret in a call stays readable' '# delete path'
   chk_kept 'comparison key == "end" is not hidden' 'if key == "end":'
