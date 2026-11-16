@@ -28,3 +28,6 @@ M13 [RUNNING 2026-11-16 09:36Z] THREE-WAY CONSISTENCY: ports, folder names, file
 M14 [RUNNING 2026-11-16 09:35Z] HEAVY LANE: re-run the core test suite in a FRESH git clone of cloud/core-hardening head (not a scratch copy) with 3 slots, record the two baseline failures exactly (vendor-word, licence) and whether they exist in a clean clone.
 M15 Cut list (archive, never delete) for repo files not used by the take: next area under R460.
 Keep at least 4 agents running; when one finishes start the next in the same turn.
+
+## REFILL 09:45Z (lead)
+M16 FLOW-SET QUESTION (critical path, take day): local check says the take scripts contain NO code that switches the n8n flow set from real-v5 (scenes 1-4) to film-v5 (scenes 5-11); `scripts/n8n_api.py` can import/activate/deactivate but nothing calls it; the lead imports real-v5 by hand (WP6-RUNBOOK line 16). Decide from the run sheet, owner steps and the 'simple video' decisions which scenes the ONE N-lite video really contains and whether film-v5 scenes are in it at all. Output handover/system-map/flowset/REPORT.md: scene list, flow set each needs, exact manual switch steps (n8n_api.py commands, who runs them, how long) or 'film-v5 not in this video'. Two reviewers.
