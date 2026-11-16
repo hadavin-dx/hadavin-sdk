@@ -21,14 +21,20 @@ Date of this text: 2026-11-16, fifth fixer pass. Nothing that needs a database w
 | audit kind | the kind that writes the tamper-evident audit trail; two exist at `b4cce5b`: `chain` (in the database) and `local_dir` (files in a folder) |
 | outbox | a holding table (`audit_outbox`) or folder where an audit event waits when it could not be written at once; "draining" it means writing the waiting events for real |
 | reconcile (three different things) | (1) the tick step `reconcile` (matches finished work against the store); (2) the audit method `reconcile()` that drains the outbox; (3) the tick step `audit_reconcile` that A-01 adds, which calls (2). This folder always writes which one |
-| owner (three different things) | "the studio head" = the person who owns the studio and decides; "database owner" = the database login that owns the tables; "table owner" = the same idea for one table. This folder never uses the bare word "owner" |
+| studio head, database administrator, migrations login | "the studio head" = the person who owns the studio and decides. "the migrations login" = the database login that owns the tables and runs the migrations (`store/migrate.py`); only it can hand out rights on a table. "the database administrator" = the named human who is allowed to sign in with that login (the studio head names him or her). This folder never uses the bare words "owner" or "database owner" |
 | studio head vs lead | the studio head is a person (called "the owner" in older studio notes). The lead is the AI session that directs the other sessions and runs the reviews; the lead is not a person |
 | builder vs fixer | a builder is a session that builds a change; a fixer is a session that corrects an earlier piece of work after a review. Both open pull requests and never merge |
-| pass, check, gate | "gate" = a command the repository requires to succeed before a change goes in (`ruff`, `pytest`, `bandit`); "check" = any command or reading whose result is reported; "pass" = a gate command ended with the exit code the table below names |
-| `b4cce5b` and "head" | `b4cce5b` = the commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c`, the one both patches were built on; "head" = commit `f05790e42`, the newest commit of this working copy on 2026-11-16 (branch `cloud/flows-audit`). Every file and line cite below says "at `b4cce5b`" or "at head" |
-| unpatched copy / patched copy | a fresh clone checked out at `b4cce5b` with nothing applied / the same with `C-01.patch` then `A-01.patch` applied |
+| gate, check, guard test, verdict | "gate" = a command the repository requires to succeed before a change goes in; locally these are four: `ruff check`, `ruff format --check`, `pytest` and `bandit -ll` (the pull-request checks CodeQL, SonarCloud and CodeRabbit run on GitHub, cannot be run here and are NOT part of any local verdict). "check" = any command or reading whose result is reported. "guard test" = a test in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` or `tests/test_lockin_guard.py` (the repository rules; listed by name under "Pass rule"). "verdict" = exactly one of three names defined under "Pass rule": PASSED, ADDS NO NEW FAILURE, NOT PASSED |
+| `b4cce5b` and "head" | `b4cce5b` = the commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c`, the one the patches were built on; "head" = the newest commit of this working copy (branch `cloud/flows-audit`): `5b5b8933a` when this pass ran. Earlier text said `f05790e42`; `src/` and `tests/` are identical in the two, so every head result below holds for both. Every file and line cite below says "at `b4cce5b`" or "at head" |
+| unpatched copy / patched copy | a fresh clone checked out at `b4cce5b` with nothing applied / the same with `C-01-price-only.patch` (or `C-01.patch`) then `A-01.patch` applied |
 | G5, G2, G3, G4 | rules of an older outbound text gate: G3 = remove untrusted text, G4 = withhold commands, G5 = block leaked secrets, G2 = flag unverifiable claims. Only G3 and G4 exist in the code |
-| RUNG, CODE-LAST | the ladder from "use something that already exists" to "write our own code" (BRIEF-PREAMBLE rule 20): our own code is the last resort |
+| RUNG, CODE-LAST | the ladder from "use something that already exists" to "write our own code" (`handover/BRIEF-PREAMBLE.md` rule 20): our own code is the last resort |
+| I, my, the assistant | the fixer session (an assistant run, not a person) that last edited this file. Older text said "I" without saying who |
+| `../REVIEW.md` and its row ids (C-3, C-4, C-6, C-8, A-1, A-3, A-6, A-8, G-1, X-2, X-5, X-6, D-3) | the review file one folder up (`handover/flows-audit/reviews-of-core-patches/REVIEW.md`); the ids are rows of its findings table: find a row by its id, or an item by its number in the plain summary at the top |
+| "Decision 18, 19, 23" | numbered questions the studio head is asked in item 11 of `../REVIEW.md`; here only: 18 = where the price check lives, 19 = the stand-in price of a self-hosted model |
+| ORDER 012 | `handover/flows-audit/ORDERS.md`, section "ORDER 012": the lead's order that asked for these copies. ORDER 009 is cited in the G5 section; its text is not in this checkout (searched `handover/`), so what is said about it there is UNVERIFIED |
+| `system-map` Decision B | the "Decision B" of the system-map review folder `handover/flows-audit/reviews-of-system-map/`; its text was not found there. Here it means only: who picks, and pays for, a second alert channel (row D4 of `DEAD-MAN-CHECK.md`) |
+| BRIEF-PREAMBLE rules 9 and 20 | numbered rules in `handover/BRIEF-PREAMBLE.md`: 9 = cloud sessions open pull requests and never merge, 20 = code last |
 | dead-man check | a query run by something outside the tick that alarms when the tick has stopped; see `DEAD-MAN-CHECK.md` |
 
 ## Decisions that are not mine to make (ONE table; each row says who decides and whether it stops a merge)
@@ -41,7 +47,7 @@ Date of this text: 2026-11-16, fifth fixer pass. Nothing that needs a database w
 | 5 | Which database login the tick runs under, and whether the drain gets its own login (`REVIEW.md` rows X-2, X-5, X-6) | studio head | yes for A-01 (rating "Major, conditional") | one runtime login, accepted in writing by the studio head |
 | 6 | Per-row guard in the chain drain (`REVIEW.md` row A-6) before A-01 goes live | studio head decides; a builder writes it | yes for A-01 (see "A-01 precondition") | not applied: one bad row turns the step red on every tick |
 | 7 | G5 wording: approve the new sentences | studio head | no (text only) | not applied |
-| 8 | Dead-man check: the limit in seconds, the second alert channel, who is the database owner who creates the login | studio head names the person; see `DEAD-MAN-CHECK.md` | no (a note, no core code) | not set up |
+| 8 | Dead-man check: the limit in seconds, the second alert channel, who is the database administrator who creates the login | studio head names the person; see `DEAD-MAN-CHECK.md` | no (a note, no core code) | not set up |
 | 9 | Two baseline failures caused by files under `handover/`: a banned vendor name in two studio notes, and non-proprietary licence files in copies of seven other projects (see the two baseline failures under the gate recipe) | the lead fixes them in a separate change; I may not edit them | yes: the repository gate needs every guard test green | the gate stays red at `b4cce5b` |
 
 ## Who runs each step
@@ -49,18 +55,23 @@ Date of this text: 2026-11-16, fifth fixer pass. Nothing that needs a database w
 |---|---|---|
 | Clone, apply, run the gates (recipe below) | any person or session; it writes only into a new temporary folder | no credential, no cloud setting (the commands run with `env -i`) |
 | Open the pull request with a patch | a builder session | no approver credential, no executor credential; opens the pull request and never merges (`CLAUDE.md`: cloud sessions never merge) |
-| Merge | the lead (BRIEF-PREAMBLE rule 9), after the gates and reviews | a normal merge right; nothing here changes branch protection |
-| Create the dead-man login, run its grants | a named human database owner (studio head names him or her) | the database owner login; not an agent |
+| Merge | the lead (`handover/BRIEF-PREAMBLE.md` rule 9), after the gates and reviews | a normal merge right; nothing here changes branch protection |
+| Create the dead-man login, run its grants | the database administrator (a named human; the studio head names him or her) | the migrations login; not an agent |
 | Everything marked "run on the real store" | the lead asks the studio head for a test database | not available to this static review |
 
-## Where the files are, and which commit they fit
-- This folder: `handover/flows-audit/reviews-of-core-patches/patch-copies/`: `C-01.patch` (price check plus ceiling), `C-01-price-only.patch` (price check only), `A-01.patch`, `DEAD-MAN-CHECK.md`, this file. The earlier
-  G5 patch file is gone on purpose and must NOT be recreated (see "G5 wording drop"). So there is no G5 patch file: three patch files, one note, one hand-edit list.
-- `git apply --check` of both patches on fresh `git archive` copies, run 2026-11-16 in this pass:
-  at `b4cce5b`: `C-01.patch` exit 0, `C-01-price-only.patch` exit 0, `A-01.patch` exit 0; at head (`f05790e42`): `C-01.patch` exit 1 (`error: patch failed: src/hadavin_sdk/config.py:362`),
-  `A-01.patch` exit 0. C-01 fails at head because the stage check was rewritten after `b4cce5b`: hunk 2's context line is
-  `if self.environment != "dev":` (at `b4cce5b`, `config.py:366`) but at head the line is `if is_live(self.environment):` (`config.py:394`).
-  `C-01.patch` therefore must be rebuilt from the text of its hunks before it can go onto head; not done (C-01 is "do not apply now").
+## Where the files are
+This folder, `handover/flows-audit/reviews-of-core-patches/patch-copies/`, holds three patch files (`C-01.patch` = price check plus ceiling, `C-01-price-only.patch` = price check only, `A-01.patch`), one note
+(`DEAD-MAN-CHECK.md`), this file, and no G5 patch file: the earlier G5 patch file is gone on purpose and must NOT be recreated (see "G5 wording drop"; G5 is a hand-edit list).
+
+## Which commit these patches fit (the one place that says it: do NOT apply any of them on a copy of head)
+All three patches were built on `b4cce5b`, and every test number, exit code and criterion in this file is valid only for a copy of `b4cce5b`. Do not apply any patch on a copy of head.
+`git apply --check` run in this pass (2026-11-16) on fresh `git archive` extracts, each in its own new folder, no cloud settings:
+| Patch | at `b4cce5b` | at head (`5b5b8933a`) | why |
+|---|---|---|---|
+| `C-01.patch` | rc 0 | **rc 1** (`error: patch failed: src/hadavin_sdk/config.py:362`) | hunk 2 of `config.py` has the context line `if self.environment != "dev":` (`config.py:366` at `b4cce5b`); at head the stage check was rewritten and the line is `if is_live(self.environment):` (`config.py:394`) |
+| `C-01-price-only.patch` | rc 0 | **rc 1** (same error, same line) | same hunk 2, same context line |
+| `A-01.patch` | rc 0 | rc 0 (it applies, but nobody ran its tests at head, so it is not cleared for head either) | its files did not change in the lines it touches |
+A patch for head would have to be rebuilt from the text of its hunks and re-tested; not done, because nothing here is to be applied now.
 - Line numbers: every `config.py`, `ci.yml` and fixture line cite in this file is at `b4cce5b` unless it says "head". Where they differ:
   `Route` `config.py:55` (head `:64`); `Config` `:316` (head `:332`); `refused = []` `:365` (head `:393`); the allowed-in-demo table is `DEV_ONLY` at
   `backends/table.py:593` (head: `DEMO_ONLY`, `table.py:593`); `ci.yml` bandit line `:119` (head `:181`, and the head form adds `tools`);
