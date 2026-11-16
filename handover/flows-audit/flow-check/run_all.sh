@@ -1,5 +1,7 @@
 #!/bin/bash
-# F8 runner (round 6; f8-r11: scratch raw folder). Usage: bash run_all.sh [--strict] [--refresh] [--keep] [WORKDIR]
+# F8 runner (round 6; f8-r11: scratch raw folder; f8-r12: limits, clean-up of helper processes, narrower environment). Usage: bash run_all.sh [--strict] [--refresh] [--keep] [--raw-dir FOLDER] [WORKDIR]
+#   --raw-dir : the folder that is LOCKED (default: raw/ next to this script). With --refresh only raw/ next to this script may be published into (exit 2 otherwise), whatever --raw-dir says.
+# f8-r12: every long step has a time limit (timeout -k 10, limits in ONE place below, a timeout is a failure), a run that is interrupted or aborted stops every process it started before it removes anything, an unknown option is refused (it used to be taken as the work folder), and --refresh publishes only after a run that passed.
 #   --refresh : at the very end, and only when the run got that far, copy this run's raw files into the tracked folder raw/ (each file is written under a temporary name and then renamed, so a reader never sees half a file). Without --refresh the tracked raw/ folder is NOT touched (git status stays clean).
 #   --keep    : do not delete this run's scratch raw folder at the end (its path is printed). A run that fails keeps it anyway (except the nested test runs), so the raw output of a failure is never lost.
 # f8-r11 (the intermittent exit 1 'SELFTEST summary line missing'): every run writes ALL its raw output into its own new scratch folder (mktemp), never into a folder another run, another script or a reader can also touch. Before f8-r11 every run wrote into the one tracked raw/ folder; the lock made a second run refuse, but any other writer of those files (a person's or an agent's second run through another copy of the script, a reader that opens the file while it is rewritten) could mix with this run, and the run could only report 'line missing' without its raw output.
@@ -18,20 +20,27 @@
 # Raw output of every step goes to ./raw/ (files without a suffix = real-v5, files ending -film = film-v5).
 # Exit status: 0 only if every real-v5 default-mode run and the self-test exit 0 and no step aborted. Exit 3 = a build step aborted, 2 = usage/bad folder.
 set -u
-HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAWFINAL="${RUN_ALL_RAW:-$HERE/raw}"   # RAWFINAL = the tracked raw folder (locked; written only with --refresh); RAW (the scratch folder of this run) is made below   # RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure tests below (second runs of this script that are made to fail); RUN_ALL_DROP_LEAD and RUN_ALL_PLANT_TCFAIL_FLOWS (round 10c) are honoured only together with RUN_ALL_NESTED
+HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAWFINAL="$HERE/raw"   # RAWFINAL = the raw folder that is locked (default: the tracked raw/ next to this script; written only with --refresh, and only when it IS that folder); RAW (the scratch folder of this run) is made below   # f8-r12 (review f8-r12 M1): RUN_ALL_RAW is no longer an input of a plain run (refused); a person or a test names another folder to lock with --raw-dir. RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure tests below (second runs of this script that are made to fail); RUN_ALL_DROP_LEAD and RUN_ALL_PLANT_TCFAIL_FLOWS (round 10c) are honoured only together with RUN_ALL_NESTED
+# f8-r12 (M2): time limits in seconds, ONE place. A step that runs longer is stopped (SIGTERM, then SIGKILL after 10 s) and counts as a failure (exit 124 or 137 is not 0). A limit is never a way to pass: a smaller number only makes a run fail sooner; each can be changed with the RUN_ALL_LIMIT_* variable of the same name (a whole number from 1 to 99999, else exit 2).
+LIM_CHECKER=${RUN_ALL_LIMIT_CHECKER:-300}; LIM_SELFTEST=${RUN_ALL_LIMIT_SELFTEST:-900}; LIM_TAKE=${RUN_ALL_LIMIT_TAKE:-300}; LIM_SUITE=${RUN_ALL_LIMIT_SUITE:-1200}; LIM_NESTED=${RUN_ALL_LIMIT_NESTED:-1800}
+for v in LIM_CHECKER LIM_SELFTEST LIM_TAKE LIM_SUITE LIM_NESTED; do [[ ${!v} =~ ^[1-9][0-9]{0,4}$ ]] || { echo "REFUSED: the time limit $v (RUN_ALL_${v/LIM_/LIMIT_}) must be a whole number of seconds from 1 to 99999"; exit 2; }; done
+lim() { local l=$1; shift; timeout -k 10 "$l" "$@" & wait $!; }   # run in the background and wait, so that a signal sent to this script is handled at once (bash holds a signal until a foreground command ends); the status is the command's (124 / 137 = stopped by the limit)
 TCUNSET=(-u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT)   # round 10c (Q4): every take_check.sh call below starts from a clean TAKE_CHECK_* environment, whatever the caller exported
 # f8-r11: the pinned case counts, in ONE place (expected-counts.pin next to this script). count_check SELFTEST_FILE TTC_FILE [PIN]: prints one line, returns 0 when both programs ran exactly the pinned number of cases, 1 otherwise (the number drifted, a line is missing or printed twice, or a case was not as expected).
 count_check() {
   local st=$1 tt=$2 pin=${3:-$HERE/expected-counts.pin} k v e_ok="" e_bad="" e_skip="" e_tt="" e_ttbad="" msg="" n
   [ -f "$pin" ] || { echo "COUNT DRIFT: the pin file $pin is missing"; return 1; }
-  while IFS='=' read -r k v; do
-    case $k in selftest_as_expected) e_ok=$v;; selftest_not_as_expected) e_bad=$v;; selftest_skipped) e_skip=$v;; take_suite_cases) e_tt=$v;; take_suite_not_as_expected) e_ttbad=$v;; esac
+  local seen=" "
+  while IFS='=' read -r k v; do   # f8-r12 (m2): a key written twice or a key of another name is a failure, not "the last one wins" / "ignored"
+    case $seen in *" $k "*) echo "COUNT DRIFT: the pin file $pin names $k twice"; return 1;; esac
+    seen="$seen$k "
+    case $k in selftest_as_expected) e_ok=$v;; selftest_not_as_expected) e_bad=$v;; selftest_skipped) e_skip=$v;; take_suite_cases) e_tt=$v;; take_suite_not_as_expected) e_ttbad=$v;; *) echo "COUNT DRIFT: the pin file $pin has a key that is not one of the five ($k)"; return 1;; esac
   done < <(grep -E '^[a-z_]+=[0-9]+$' "$pin")
   for v in "$e_ok" "$e_bad" "$e_skip" "$e_tt" "$e_ttbad"; do [[ $v =~ ^[0-9]+$ ]] || { echo "COUNT DRIFT: $pin does not hold all five numbers"; return 1; }; done
   n=$(grep -c -E '^SELFTEST: [0-9]+ as expected, [0-9]+ not as expected, [0-9]+ skipped \(not applicable\)$' "$st" 2>/dev/null)
   if [ "$n" != 1 ]; then msg="$msg [self-test summary line found $n times (want 1) in $st]"
   else
-    local l; l=$(grep -E '^SELFTEST: ' "$st")
+    local l; l=$(grep -m 1 -E '^SELFTEST: [0-9]+ as expected, [0-9]+ not as expected, [0-9]+ skipped \(not applicable\)$' "$st")   # f8-r12 (m1): the SAME line that was counted above
     [[ $l =~ ^SELFTEST:\ ([0-9]+)\ as\ expected,\ ([0-9]+)\ not\ as\ expected,\ ([0-9]+)\ skipped ]]
     [ "${BASH_REMATCH[1]}" = "$e_ok" ] || msg="$msg [self-test as expected: ${BASH_REMATCH[1]}, pinned $e_ok]"
     [ "${BASH_REMATCH[2]}" = "$e_bad" ] || msg="$msg [self-test not as expected: ${BASH_REMATCH[2]}, pinned $e_bad]"
@@ -40,7 +49,7 @@ count_check() {
   n=$(grep -c -E '^test_take_check: [0-9]+ of [0-9]+ cases as expected, [0-9]+ not as expected$' "$tt" 2>/dev/null)
   if [ "$n" != 1 ]; then msg="$msg [take-suite summary line found $n times (want 1) in $tt]"
   else
-    local l; l=$(grep -E '^test_take_check: ' "$tt")
+    local l; l=$(grep -m 1 -E '^test_take_check: [0-9]+ of [0-9]+ cases as expected, [0-9]+ not as expected$' "$tt")
     [[ $l =~ ^test_take_check:\ ([0-9]+)\ of\ ([0-9]+)\ cases\ as\ expected,\ ([0-9]+)\ not ]]
     [ "${BASH_REMATCH[2]}" = "$e_tt" ] || msg="$msg [take suite cases: ${BASH_REMATCH[2]}, pinned $e_tt]"
     [ "${BASH_REMATCH[1]}" = "${BASH_REMATCH[2]}" ] || msg="$msg [take suite: only ${BASH_REMATCH[1]} of ${BASH_REMATCH[2]} as expected]"
