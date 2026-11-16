@@ -923,3 +923,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 665 end-delete-cases r7: step 3a missing. FIXED by CURRENT r7.
 - 666 decision-list r7: run (a) meaning split. FIXED by CURRENT r7 (row splits TO DO).
 - 667 L3c r5: gloss-pending terms. FIXED by TERMS r5.
+
+- 668 L2c r8: steps not runnable. FIXED by STEPS r8.
