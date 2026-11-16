@@ -1003,3 +1003,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 724 L2c r10: purpose missing. FIXED by STEPS r11.
 - 725 ARCHIVE-CUT-LIST r9: first move unsafe, approver unclear. FIXED by VERDICT r10.
 - 726 owner-timeline r10: r9 covered only part. FIXED by CURRENT r10; 10-minute wait still open.
+
+- 727 premortem r10: gate cite wrong file. FIXED by CURRENT r10; program unread.
+- 728 end-delete-cases r10: steps 13-16 unresolved. Recorded in CURRENT r10; card held, wait rule not decided.
+- 729 M17 r7: five status paragraphs. FIXED by HOLD r7.
+- 730 FINAL-CROSSCHECK r12: decisions not stated. FIXED by STATUS r12.
