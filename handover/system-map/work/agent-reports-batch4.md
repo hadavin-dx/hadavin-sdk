@@ -795,3 +795,58 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 570 L2c r2: line 114 claim unclear, FD-001 no date, key list, stale 'Next'. FIXED by CORRECTION paragraph (dates are my proposals).
 - 571 L3c r2: orientation paragraph last, undefined round labels, 'lead' three meanings, PLAN-002 path. PARTLY FIXED by READ ME FIRST paragraph (still at file end; move is TO DO).
+
+- 572 rehearsal-passed-limits-draft r1: glossary not self-contained, message rule unclear, branch split, deadline source. FIXED by CORRECTION paragraph.
+- 573 t19 r4: stacked F8 rules, steps not runnable, glossary last. FIXED by READ FIRST paragraph; step table still TO DO.
+
+- 574 premortem r3: table reference, line 16 vs 18, two titles, undefined terms. FIXED by ADDED paragraph.
+- 575 owner-timeline r2: you vs owner, two logins, clean-up step 1, glossary, row 7. FIXED by ADDED paragraph; split rows and fills still TO DO.
+- 576 banned-claims r5: six layers still stacked (Blocker, one-page rewrite TO DO), studio lead as approver, decision 8 two meanings, unlock rule. PARTLY FIXED by SEVENTH PASS.
+- 577 FINAL-CROSSCHECK r4: stale open rows, undefined real-v5/film-v5, archive v3, unnamed databases, two lead roles. PARTLY FIXED by ADDED paragraph.
+- 578 decision-list r3: deadline mix of start and notice (Blocker), A2, route config, A11, A9/E9 split. PARTLY FIXED; split rows TO DO.
+
+- 579 L5b r3: job key definition wrong (Blocker), take, DECISION, WARDEN, stage.journal. FIXED by ADDED paragraph.
+- 580 PLAN-002 r9: REMAINDER rule contradicts line 40 (Blocker), proposals, check (c), read count. FIXED by ADDED paragraph; read count still open.
+- 581 BRIEF-LANE r5: scope, precedence, rule 13, terms. FIXED by ADDED paragraph.
+
+- 582 M17 note r2: status unclear (Blocker), table vs Corrections, archive vs delete. FIXED by STATUS paragraph.
+- 583 ARCHIVE-CUT-LIST r2: body contradicts verdict (Blocker), row A, rows G and I, glossary. FIXED by READ FIRST paragraph; rows not rewritten.
+
+- 584 row1-builder-brief r3: done-when split builder vs lead (Blocker), which seven values, ship time, missing inputs, no paths. FIXED by ADDED paragraph; paths still unnamed.
+
+- 585 not-checked r3: due times missing for rows 3, 5, 6, 7 (Blocker), row 5 clock, opener wording. FIXED by ADDED paragraph (times are proposals).
+
+- 586 merged-findings r2 (lines 1-100, 290-320 only): legend lost, claims missing, severity format, undefined terms. FIXED by ADDED paragraph; lines 101-289 still unread.
+- 587 open-items-table r6: decision 10 rows, A4 'row 2a', decisions dropped, row naming, owner vs answerer. FIXED by ADDED paragraph.
+
+- 588 L1c r3: FD-021 sources not in table (Blocker), line 7 vs 15, counts, PR map, claim types. FIXED by CORRECTION; PR map still missing.
+- 589 critical-path r12: earliest-start figures unclear (Blocker), stale pointers. FIXED by ADDED paragraph.
+- 590 RING-LOG first read: no definitions (Blocker), states, deliverable names. FIXED by PREFACE.
+- 591 end-delete-cases r4: steps 13-14 text missing (Blocker), lead id vs key, scope. FIXED by ADDED paragraph.
+- 592 cleanup-3a r5 (held page): demo-account check, channel, terms. FIXED in my edits file; digest to lead.
+
+- 593 L4c r2: take stores undefined (Blocker), partial coverage, decision 5, paths. FIXED by ADDED paragraph.
+- 594 merged-findings lines 101-289: keys and codes undefined (Blocker), DECISION line 15, id prefixes. FIXED by LEGEND paragraph.
+
+- 595 L2c r3: line 112 contradicts correction, FD-001 scope, FD-005/008 criterion, unglossed ids. FIXED by CORRECTION paragraph; glosses need the lead.
+
+- 596 FINAL-CROSSCHECK r5: no single current state (Blocker), decisions second-hand, glossary late, evidence unreliable. PARTLY FIXED by STILL OPEN LIST; folding into the body is TO DO.
+
+- 597 t19 r5: steps not runnable (Blocker), KeyOk, contradicting F8 lines, table names, CRM vs HubSpot. PARTLY FIXED by ADDED paragraph; commands still blocked.
+- 598 PLAN-002 r10: REMAINDER duplicate (Blocker), check (c), read count, 'I'. FIXED by ADDED paragraph (line 40 itself not edited; held by lead? no, mine: edit TO DO).
+- 599 banned-claims r6: seven stacked passes (Blocker), approver ambiguous, decision 8. FIXED by writing work/banned-claims-clean.md; decision 8 sentence still UNVERIFIED.
+
+- 600 decision-list r4: F rows not yes/no, A9/E9 parts, route config, stand-in rehearsal, deadlines. PARTLY FIXED by ADDED paragraph; row split TO DO.
+- 601 owner-timeline r3: pause order contradiction (Blocker), stop time, model key, rehearsal. FIXED by ADDED paragraph.
+- 602 premortem r4: owner/date rule not in one place, S9-1/S9-4, risks after take. FIXED by ADDED paragraph.
+- 603 L3c r3: glossary last, undefined terms, FD-001 conflict cell, DECISION path. PARTLY FIXED by TERMS paragraph.
+- 604 FINAL-CROSSCHECK r5 digest 596 and t19 r5 digest 597 stand.
+
+- 605 banned-claims-clean r1: undefined decisions/terms, three-vs-two items, delete sentence. FIXED by ADDED paragraph.
+- 606 BRIEF-LANE r6: preamble waiver conflict, lane name source, real-v5 scope. FIXED by ADDED paragraph.
+- 607 rehearsal-limits r2: four cases, undefined terms. FIXED by ADDED paragraph.
+- 608 L5ac r3: no overview, undefined terms. PARTLY FIXED (table rebuild TO DO).
+- 609 end-delete-cases r5: stacked paragraphs, lead id vs key. FIXED by FINAL paragraph.
+- 610 L1c r4: FD-021 unread bodies, PR state. FIXED by CORRECTION.
+- 611 critical-path r13: firm date overstated. FIXED by FINAL paragraph.
+- 612 open-items r7: row 12/16 cite, answerer column. FIXED by FINAL paragraph.
