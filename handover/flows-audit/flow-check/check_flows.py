@@ -44,10 +44,21 @@ WANT_CONN = {
 }
 F002_UNPROVEN = "F-002 Claim alwaysOutputData/onError UNPROVEN until T19 (repeat key still gets its answer)"
 ENVTOK = re.compile(r"\$env\.[A-Za-z0-9_]+")
-FAILS, WARNS = [], []
+FAILS, WARNS, KNOWN = [], [], []
+UNV = "n8n rule UNVERIFIED"  # rules about n8n itself that no source in this repo backs; they never FAIL a file, they only WARN
 
 def fail(where, msg): FAILS.append("%s: %s" % (where, msg)); print("FAIL", where, msg)
-def warn(where, msg): WARNS.append("%s: %s" % (where, msg)); print("WARN", where, msg)
+def warn(where, msg, known=False):
+    """known=True marks a defect we already know is open (it is counted in the closing block 'Known open problems')."""
+    WARNS.append("%s: %s" % (where, msg)); print("WARN", where, msg)
+    if known: KNOWN.append("%s: %s" % (where, msg))
+
+def final_block():
+    print("Known open problems: %d" % len(KNOWN))
+    for k in KNOWN: print("  - " + k)
+    print("Not proven: that n8n accepts these files on import; what n8n really does when a step fails (F-002, tests T19 and T20); the SQL inside the postgres nodes; "
+          "expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked '%s' (retry limits, onError values, position of the error output)." % UNV)
+    print("Passing this check does NOT mean the flows are ready to film.")
 
 def is_trigger(t): return t in TRIGGER_EXACT or t.endswith("Trigger")
 
