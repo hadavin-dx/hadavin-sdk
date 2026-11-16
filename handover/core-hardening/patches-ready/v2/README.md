@@ -4,11 +4,11 @@
 - Full suite on the scratch copy (`b4cce5b` plus all three patches): 2 tests FAIL, both also fail on a pristine `b4cce5b`
   extract, so they are not caused by these patches: `tests/test_repo_rules.py::test_licences_are_proprietary` (needs a git
   repo; the scratch folder has none) and `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`
-  (reports the text '[BANNED-WORD-REDACTED]' in two `handover/` notes and one non-UTF-8 file already in the repo; this needs the studio
+  (reports a vendor-inspired product name (the guard test lists it; not repeated here) in two `handover/` notes and one non-UTF-8 file already in the repo; this needs the studio
   head's attention: it will fail the repo guard on the real repo too, unless those files are handled). Raw: `raw/`.
 - The G5 guard tests (ORDER 009 files) were not run separately and not read again; they are part of the full run above only.
 - Postgres tests were skipped (455 skipped in the full run; no Postgres here). The dead-man query was never run.
-- Mutation lane v2 is hand-made and not exhaustive (29 mutants). 3 survived; 2 are equivalent or double-covered (below).
+- Mutation lane v2 is hand-made and not exhaustive (27 mutants). 3 survived; 2 are equivalent or double-covered (below).
 - "Fails on old code": A-01 tests 17 of 19 fail on `b4cce5b`; C-01 20 of 42 fail on old code, but the C-01 file imports a
   new helper so it cannot even load on old code: I ran a copy with that import and one test removed. Weak evidence for C-01.
 - The design review blockers B1 (A-01) and B2 (C-01) are addressed in code, but the memory-only gap below is a limit I could
@@ -106,8 +106,8 @@ added" gate is included. v2 replaces the v1 patches in `patches-ready/`.
 ## What I ran (scratch copy of `b4cce5b`, all three patches applied; raw output in `raw/`)
 | Command | Result |
 |---|---|
-| `uv run --all-extras --group test pytest tests -p no:cacheprovider -q` (full suite) | see top: 2 failed (also on pristine), rest passed, 455 skipped; counts in `raw/full-suite.txt` |
-| targeted: `test_c01_route_limits.py`, `test_a01_audit_reconcile.py`, `test_p7_tick.py` | passed, counts in `raw/targeted.txt` |
+| `uv run --all-extras --group test pytest tests -p no:cacheprovider -q` (full suite) | 2 failed (also fail on pristine), 9451 passed, 455 skipped, 240 s (`raw/full-suite.txt`) |
+| targeted: `test_c01_route_limits.py`, `test_a01_audit_reconcile.py`, `test_p7_tick.py` | plus the audit, neutral-audit, gate and audit-chain test files: 217 passed, 3 skipped (`raw/targeted.txt`) |
 | `ruff check src tests`, `ruff format --check src tests` | clean (`raw/ruff.log`) |
 | `bandit -ll` on the 8 touched src files (via `uvx`, it is not in the test group) | rc 0, no findings (`raw/bandit.log`) |
-| hand-made mutation lane (29 mutants) | `raw/mutation.txt`; survivors: C01-07 (equivalent: the flag-on-non-local case is refused by its own line either way), C01-10 (double coverage by pydantic, above), A01-14 (killed after adding a test, `raw/mutation-A01.txt`) |
+| hand-made mutation lane (27 mutants) | `raw/mutation.txt`; survivors: C01-07 (equivalent: the flag-on-non-local case is refused by its own line either way), C01-10 (double coverage by pydantic, above), A01-14 (killed after adding a test, `raw/mutation-A01.txt`) |

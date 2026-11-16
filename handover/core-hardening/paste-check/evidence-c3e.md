@@ -95,3 +95,12 @@ grep -c '<FINAL[-]' plan: 24  (expected 24 = lines 2, 121, 236, header 517, 20 c
 2 121 236 517 519 520 521 522 523 524 525 526 527 528 529 530 531 532 533 534 535 536 537 538 
 
 ## 6 repo guard BANNED strings in the patch: none found (test_no_reference_material.py list)
+
+## 7 Builder notes (REPORT-repin-v2.md could not be written: the Write tool refused report files for sub-agents; these notes stand in)
+FAILURES FIRST
+- v1 slip, fixed: plan-v5-repin.patch deleted plan items 12 and 13 of "UNVERIFIED in this plan" (hunk 559,561c561). v2 restores both verbatim (patched plan lines 565-566).
+- Needs the lead: pastes\P-4b.sh (command unknown; run stops at P-3a without it); the four placeholder places; confirm folder nlite-fix5 and branch take/nlite-int-r5 (UNVERIFIED 14); eec6ba4 existing in that worktree is unchecked.
+- Not run: PowerShell, wsl.exe, Git Bash, real n8n scripts. Loop, gone(), run.sh, P-3b test -s ran on Linux with a made-up repo and stubs (sections 3, 4).
+- S9 "round 1" / "B2 round" are defined as restart rounds in the WORDS line, not renamed.
+CHANGES (plan lines after both patches): WORDS 4, R5 exceptions 113, RE-PIN 3 (four places, F/WT/SF defined, return in grep, final check grep -c '<FINAL[-]' = 0), section 11 515-538 (phrase "final-head column", cells FINAL-LINES), P-4b 243 (+ 228, 230, 231, 241), section 5 now 172 min = 2 h 52 min (433, 448), row U1 476 (21 rows), exit 3 "per lead" 153, R2 no-op clause 110 (+13.1, 13.3), MUST-NOT 495, items 14 and 15 (567-568), history rows 20 and 26 marked HISTORY.
+APPLY (folder holding inputs/): cd /home/user/hadavin-sdk/handover/core-hardening && patch -p1 < paste-check/plan-v5-fixes.patch && patch -p1 < paste-check/plan-v5-repin-v2.patch   (not together with the old repin patch)
