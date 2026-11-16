@@ -8,7 +8,7 @@ Check (copy of the repo files, not the real tree): lanes7/evidence-patches-r4.tx
 
 ## What changed in round 3
 F-003 (VIDEO-RUNSHEET.md)
-- Card (lead decision needed, item 1 below): the line now reads "A lead sent twice is processed once in this recording." The bound stays on one line, so it went into the card cell as ordered; the Must-NOT cell keeps the same bound. The lead may keep or drop "in this recording".
+- Card: SUPERSEDED by the lead answers Q25-2 and Q28-1. The card now carries the scoped sentence "In this recording, the same lead ID sent twice gave one e-mail message in the intake mailbox." The broad sentence "A lead sent twice is processed once in this recording." is not used. Text of this round-3 line is kept in git history.
 - Scene 4: voice says "at least 45 seconds, a setting we chose"; the mail window is named (a stop after the CRM write, around the mail send, can end unknown with one alert mail instead of done; caption only if the row reaches done). Must-NOT says the lead does not always end done. Rehearsal item 4 records the final state, the alert and the real wait of each try. Scene 3 and rehearsal item 2 note that a repeat sent while the first is still processing replies "processing".
 - Producer note: the 30 s sentence is labelled "read from the flow files, not run"; the n8n restart time is added (not measured).
 - Scene 2: one short sentence defines "lead"; a voice line introduces lead, lead table row, CRM and receiving mailbox. Scene 1 explains the lead table and the execution list in plain words.
@@ -21,7 +21,7 @@ F-004 (PAGE-STATEMENTS-V4.md)
 F-001: DROPPED by the lead (Q17-3, 2026-11-16, ORDERS.md 10:58Z): the take uses demo/n8n-flows-v4/mf_leads.sql as is (Q16). The patch file is moved to patches/archive/F-001-one-ddl.patch (not deleted, not applied). check_patches.sh now reports PASS 4 patches (lanes7/evidence-q14-q17.txt).
 
 ## Still needs the lead or the owner
-1. Card wording: "A lead sent twice is processed once in this recording." The bound was added because it stays on one line. It is a general promise next to the state word "processing"; the lead may reword (for example "handled once").
+1. Card wording: ANSWERED (lead, Q25-2 and Q28-1): the scoped sentence above goes on screen and on the card. Nothing is open here.
 2. Rows 5 to 11 are moved, not deleted; the lead may delete them or move them to a separate file.
 3. PAGE-STATEMENTS-V4.md other lines are untouched: statement 12 still says "Detail ... 59.6 s"; statement 19 and the honest limits still name 13 minutes. True for their own text, not in the video.
 4. build_mainframe.py lines 13-14 still carry example.test (not for the take).

@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T12:06:02Z
+UPDATED_UTC: 2026-11-16T12:06:26Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 10
 PERCENT: 96
 AGENTS_RUNNING: 9
-CAPACITY: 0.99 load of 4 cores, mem 0/15 GB, RAM 965/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 9 (light+heavy per list)
+CAPACITY: 0.71 load of 4 cores, mem 0/15 GB, RAM 975/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 9 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
@@ -20,7 +20,7 @@ core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason,
 TAKE-CHECKLIST/FIX-PLAN: step 4 pass grep never matches; GO rows 1,2,3,5 have no runnable command; IST pair wrong in FIX-PLAN L70
 F8 evidence: run_all exit 0 twice (57 s), but root cannot test chmod 000; bandit -ll flags tools/scratch (B602, B608); ruff format fails only on lead file
 NEXT: 9 lanes running
-PUSHED_UTC: 2026-11-16T12:06:02Z
+PUSHED_UTC: 2026-11-16T12:06:26Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -42,12 +42,12 @@ PUSHED_UTC: 2026-11-16T12:06:02Z
 | ad171a4 | fixer | sonnet | RUNBOOK round 4 | 12:29 | 12:50 | running | fix-runbook4.md |
 | a347fea | fixer | sonnet | RW/CT 5 citation Majors | 12:02 | 12:30 | running | fix-rwct6.md |
 | a86555d | fixer | sonnet | QUESTIONS.md 7 findings + Q31 | 12:02 | 12:30 | running | fix-questions2.md |
-| ad97fb2 | fixer | sonnet | drift B1,M1-M7 (F-003 patch etc) | 12:02 | 12:35 | running | fix-drift2.md |
 | a20c2e0 | fixer | sonnet | core patches REVIEW round 4 | 12:04 | 12:30 | running | fix-review3.md |
 | abe419b | fixer | sonnet | OWNER-STEPS r7 Majors | 12:05 | 12:30 | running | fix-ownersteps9.md |
 | a08e0d6 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r2 B1,B2,M1-M5 | 12:05 | 12:40 | running | fix-tcfp3.md |
 | a840cb7 | egm-codebase-details | sonnet | F8 diff review (correctness) | 12:06 | 12:25 | running | read-only |
 | adc5835 | egm-design | sonnet | F8 second review (hostile angle) | 12:06 | 12:25 | running | read-only |
+| a6e409e | egm-codebase-details | sonnet | F-003 patch fresh review vs Q25/Q28 | 12:06 | 12:25 | running | read-only |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
