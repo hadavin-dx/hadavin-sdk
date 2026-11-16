@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T15:48:38Z
+UPDATED_UTC: 2026-11-16T15:50:06Z
 SESSION: core-hardening
 ORDER: 021 + decisions; 024; 027-029, 031, 032, 034-036, 038-040 and 14:00Z (8 running, meets the 8); Q22-Q34 applied
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: 3dcae981
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 8
 PERCENT: 96
-AGENTS_RUNNING: 11
-CAPACITY: cores 4, load 1.0 of 4, RAM 1.3 of 15.7 GB used (14.8 GB available), DISK 12 GB free of about 39 GB allowance (71% used, above the 6 GB floor); my scratch cleaned this beat: 3635 MB freed (old c5v2, c5v3, c3b, c3p2 copies and pytest caches; c8, c8b, c7clone kept while their evidence runners may still read them); top 3 of mine: c8b 2108 MB, c7clone 1362 MB, c8 1313 MB
+AGENTS_RUNNING: 10
+CAPACITY: cores 4, load 1.5 of 4, RAM 1.3 of 15.7 GB used (14.8 GB available), DISK 12 GB free of about 39 GB allowance (71% used, above the 6 GB floor); 0 MB freed this beat (3635 MB freed on the 15:48Z beat); top 3 of mine: c8b 2108 MB, c7clone 1362 MB, c8 1313 MB
 INTERRUPTED: none
 FAILED: (1) Owner sheet v25, v26 and v27 FAILED independent reviews: v27 stranger 1 blocker (look key at 5.9 outside the run-key rules) and 18 majors, v27 security 0 blockers and 4 majors (N1-N4); v28 building with a root-cause reader. (2) Hand-off v13 FAILED: security 1 blocker (DB-2 log function can be bypassed through a temp table, not run) and 4 majors; readiness 7 majors; v14 building. (3) Re-pin v6 FAILED: signal check 12 of 16 rows bad (cause unknown: launcher or script), mutation and non-root runs unfinished, naive review 5 blockers and 14 majors; security review still running; v7 evidence builder running. (4) EDITS r10b built, 3 items only partly done, unreviewed; design and naive reviews running. (5) run.py r9 FAILED security (2 majors); r10 building. (6) c6n FAILED design and naive; c6o building. (7) Never run or verified: n8n, Postgres 17.10, Windows/WSL, the real take program, vendor behaviour.
 NEXT: on hand-back start the next agents the same turn: c6o reviews (design, naive, evidence); run.py r10 reviews (security uncapped, evidence); EDITS r10b evidence runner; v14 reviews (security, readiness, citation); v28 reviews (security, stranger, evidence); re-pin v7 fix pass; clean old scratch when agents close
-PUSHED_UTC: 2026-11-16T15:48:38Z
+PUSHED_UTC: 2026-11-16T15:50:06Z
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
 |---|---|---|---|---|---|
@@ -31,7 +31,7 @@ PUSHED_UTC: 2026-11-16T15:48:38Z
 | core audits | v13 built; security, readiness and citation reviews running | v13 reviews | 94 | audit-r460/review-handoff-v6-readiness.md | core PRs are the lead's |
 | lead re-pin list | v5 failed 3 checks; v6 building | v6 build | 92 | lead-repin/evidence-repin3/ | search words are guesses |
 
-## AGENTS (11 running, counted from the real agent list at 2026-11-16T15:48:38Z)
+## AGENTS (10 running, counted from the real agent list at 2026-11-16T15:50:06Z)
 | agent id | purpose | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|
 | a6e8d87d74c2c413f | EVIDENCE RUNNER: run.py r9 independent run (scratch copies only) | 15:25Z | 16:00Z | running | hostile-signals.txt in progress |
@@ -41,11 +41,10 @@ PUSHED_UTC: 2026-11-16T15:48:38Z
 | a736ab4c250f8c990 | egm-design security review re-pin v6 (uncapped) | 15:44Z | 16:15Z | running | working |
 | af257118a85af100a | builder: hand-off v14 (fix v13 security blocker, 4 majors, readiness R1-R7) | 15:46Z | 16:46Z | running | working |
 | a30577d1d2a79f4dd | egm-design review EDITS r10b (security angle) | 15:46Z | 16:10Z | running | working |
-| a565e76d7ca550932 | egm-comprehension naive review EDITS r10b | 15:46Z | 16:10Z | running | working |
+| afab95e7d5d2e697e | EVIDENCE RUNNER: EDITS r10b independent checks (old texts, apply, UTC/IST, 20 negative controls) | 15:49Z | 16:20Z | running | working |
 | a49f396f7943a1ecc | builder: re-pin v7 evidence gaps (signal launcher, mutation, non-root, timing) | 15:46Z | 16:46Z | running | working |
 | a71f2a146d6acae91 | builder: owner sheet v28 single-source fix (v27 stranger and security) | 15:47Z | 16:47Z | running | working |
-| aa41588c482ff8502 | egm-comprehension: same-root-cause reader of v26 and v27 findings (ORDER 034) | 15:48Z | 16:05Z | running | working |
 
-Missing from 8: none (11 running; load 1.0 of 4). a66ac7623d38b08e4 (re-pin v6 builder) handed back incomplete and is waiting on its own background runs; not counted.
-Closed since last board and saved: a6176d4ec0c8468e4 (v13 security review), a97ada7b19392e307 (v13 readiness review), a3fcde56e69bf1e76 (EDITS r10b builder), ade215f7827a96025 (v27 evidence runner), ae8fe0637c0a77c0b (v27 security review), a75d77faf783b9a4e (v27 stranger review), a517f62e719ddceab (re-pin v6 naive review).
+Missing from 8: none (10 running; load 1.5 of 4). a66ac7623d38b08e4 (re-pin v6 builder) handed back incomplete and is waiting on its own background runs; not counted.
+Closed since last board and saved: a565e76d7ca550932 (EDITS r10b naive review: 2 blockers, 9 majors), aa41588c482ff8502 (root-cause reader), a6176d4ec0c8468e4 (v13 security review), a97ada7b19392e307 (v13 readiness review), a3fcde56e69bf1e76 (EDITS r10b builder), ade215f7827a96025 (v27 evidence runner), ae8fe0637c0a77c0b (v27 security review), a75d77faf783b9a4e (v27 stranger review), a517f62e719ddceab (re-pin v6 naive review).
 NEXT 5 independent tasks: (1) c6o reviews after its builder; (2) run.py r10 reviews (security uncapped, evidence); (3) EDITS r10b evidence runner; (4) v14 reviews (security uncapped, readiness, citation); (5) v28 reviews (security uncapped, stranger, evidence).
