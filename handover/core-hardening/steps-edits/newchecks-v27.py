@@ -210,3 +210,22 @@ need('C144', 'anything but `exit 0` and the shell prompt: FREEZE')              
 need('C145', 'put the Privacy switches back as 8.7 says')                                                                                # S m3
 need('C146', 'if the last-used time is under 7 days'.replace('if the last-used time is under 7 days', 'else no run today (describe it and wait: the lead sends a new numbers message with a later run day at least 8 days after that use'), (('A', A),))   # S M4: what happens when the 7-day rule fails
 need('C147', '5.1 to 5.8 may be done on earlier days, 5.9 and sections 6 to 8 only on the run day')                                      # T m10
+need('C148', 'or no sentence "the test program made no delete call": skip that step (all deleting) and describe which')                  # S m14
+# ---- Part 5 (v27): lead-side documents must match the built sheets (S M1 and the stranger's lead-document findings)
+for nm, t in (('N', NOTE), ('O', OPEN)):
+    if re.search(r'Builder proposes B|safe default B\b|builder recommends A for money and chose neither', t): fail('C149', nm + ': still recommends B or contradicts itself on A and B')
+    if re.search(r'older key stays valid unless its text appears', t): fail('C149', nm + ': stale description of B')
+if 'Money-safe default if you do not choose: A.' not in NOTE: fail('C149', 'N: A is not named as the money-safe default')
+if 'Safe default if you do not answer: A' not in OPEN: fail('C149', 'O: row 71 does not name A as the safe default')
+if '6.2 option A none at all' in NOTE or '6.6 and 6.7 option A exactly' in NOTE: fail('C150', 'N: G26 still says A has no older key at 6.2 (v26 A keeps the older key valid until 6.7)')
+if 'no valid key except the older key (if the message names one); 6.6 and the last checks of 6.7' not in NOTE: fail('C150', 'N: G26 not rewritten for the older key')
+if 'sheet B has a fourth alarm at 16:00 UTC = 21:30 IST' not in NOTE: fail('C151', 'N: G30 or alarms count wrong for B')
+if '4 owner: two alarms' in NOTE: fail('C151', 'N: the day order still says two alarms')
+if 'Test program asks you to type a figure: no' not in NOTE or 'G35' not in NOTE: fail('C152', 'N: typed-figure line / G35 missing')
+if 'Minimum think time' not in NOTE or 'Minimum think time' not in OPEN: fail('C153', 'note and open list must name the minimum think time slot')
+if 'WHEN IT FAILS (v27)' not in OPEN: fail('C154', 'O: row 78 does not say what happens when the 7 day rule fails')
+if 'NOT MET at v27' not in OPEN: fail('C155', 'O: row 75 does not say the word target is not met')
+if 'checked by you with `ls ~/.hadavin-take-tags`' not in NOTE: fail('C156', 'N: run name check by the lead missing')
+for nm, t in (('N', NOTE), ('O', OPEN)):
+    if re.search(r'\bpay in (only )?(a little|less)\b', t.replace('no request to pay in less', '').replace('propose no second account and no smaller payment', '')) : fail('C157', nm + ': suggests the owner pays in less (Q24)')
+if 'Added in v11' not in NOTE or 'look key' not in NOTE.lower(): fail('C158', 'N: v11 section or look key missing')

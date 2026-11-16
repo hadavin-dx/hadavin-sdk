@@ -1,7 +1,7 @@
 #!/bin/sh
-# The five CI check commands as one script (v12). NEVER RUN by its author: only `bash -n` and a line comparison with ci.yml.
+# The five CI check commands as one script (v13). NEVER RUN by its author: only `bash -n` and a line comparison with ci.yml.
 # usage: sh gate4.sh <prefix>      (start it from any folder; it finds the repository root itself)
-# Repository root = four folders above this script's own folder (evidence-handoff-v12 -> audit-r460 -> core-hardening -> handover -> root).
+# Repository root = four folders above this script's own folder (evidence-handoff-v13 -> audit-r460 -> core-hardening -> handover -> root).
 # Outputs go into THIS script's folder (the evidence folder) as <prefix>-<name>.txt; each file ends with its own rc=<exit code>.
 # The gate is each command's own exit code, never a pipe. Nothing here changes a source file. The timing step runs alone, last but one.
 #

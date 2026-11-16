@@ -1,0 +1,7 @@
+# raw-planned-names-v13.txt 2026-11-16T15:35:48Z: files under src/ (not __pycache__) that contain each planned name
+restore_kinds: 0 files
+hash_chain_ok: 0 files
+anchored_checkpoints: 0 files
+anchor_supplied: 0 files
+signing_key_location: 0 files
+masking_damage: 0 files

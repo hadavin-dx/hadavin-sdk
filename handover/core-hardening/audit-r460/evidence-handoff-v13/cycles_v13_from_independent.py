@@ -14,13 +14,13 @@ Counting B: A plus, for every imported module, an edge to each ancestor package 
             runs the package __init__ first.
 
 Output: strongly connected components (size > 1) for each variant, then the same after adding the planned edges
-of section 8.1 of CORE-PR-HANDOFF-v11.md (read by this script from the markdown between the PLANNED-EDGES markers).
+of section 8.1 of CORE-PR-HANDOFF-v13.md (read by this script from the markdown between the PLANNED-EDGES markers).
 """
 import ast, os, re, sys, json
 from collections import defaultdict
 
 SRC = "/home/user/hadavin-sdk/src"
-DOC = "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v11.md"
+DOC = "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v13.md"
 PKG = "hadavin_sdk"
 
 mods = {}  # dotted -> path

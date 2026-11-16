@@ -24,11 +24,11 @@
 #     PIPE signal). A normal run that reaches its end keeps the work folder with the masked output copy; delete
 #     it yourself;
 #   - makes NO network call and NO model call. Apart from the tools named above it starts no other program of
-#     the take. It never starts the model program.
+#     the test program. It never starts the model program.
 # It judges NOTHING: it prints what it found, with line numbers, for the lead to read.
 # Values that look like secrets are hidden by ONE masking filter (see "mask") that every search uses, and a
 # canary self-test of that filter runs FIRST in every mode that prints search results (normal run, --mask):
-# if the canary test fails, the script stops before it opens any take file or reads any input. A filter is
+# if the canary test fails, the script stops before it opens any test-program file or reads any input. A filter is
 # still a safety net, not a guarantee: THE LEAD READS THE OUTPUT BEFORE SHARING IT.
 #
 # usage:
@@ -40,15 +40,15 @@
 #              In every other mode SELFTEST_FILTER is removed from the environment.
 #
 # Exit codes: 0 the checklist ran to its end (this does NOT mean the answers are good: read the output);
-#   2 setup problem (no work folder, take folder missing); 3 the masking filter is not usable or failed its
-#   own test, no take file or input was opened; 4 the output pipeline failed; 129/130/131/141/143 stopped by
+#   2 setup problem (no work folder, test-program folder missing); 3 the masking filter is not usable or failed its
+#   own test, no test-program file or input was opened; 4 the output pipeline failed; 129/130/131/141/143 stopped by
 #   HUP/INT/QUIT/PIPE/TERM (the work folder is removed, and so are the programs the run had started); for --self-test:
 #   0 all cases passed, 1 at least one failed.
 #
 # Needs: GNU sed (or a sed that knows the s///I flag; the canary stops the run otherwise), grep, awk, tr, find.
 # Every file name below is "adjust if different": set the variable in the environment.
 # If TAKE_PY, CRM_PY, DRIVE_PY or N8N_PY is not set, the script looks for the file BY NAME (in files that
-# have at most 3 folders between the take folder and the file, preferring a scripts/ folder below the take
+# have at most 3 folders between the test-program folder and the file, preferring a scripts/ folder below the test-program folder
 # folder) and prints which one it used.
 #   TAKE_PY CRM_PY DRIVE_PY N8N_PY FLOWS_DIR MODEL_DIR MODEL_SETTINGS ONE_STORE END_RE MODEL_RE DELETE_RE LEAD_REPIN_NO_STATUS
 set +x +v 2>/dev/null          # a trace option from the caller (sh -x, sh -v) would print every line, secret values included
@@ -1199,7 +1199,7 @@ self_test_meta() {
   for st_mode in weak empty; do
     st_o=$(LEAD_REPIN_TEST_BREAK_FILTER=$st_mode LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$SELF" "$st_t" 2>/dev/null); st_r=$?
     st_left=$(ls "$st_child" | wc -l | tr -d ' ')
-    if [ "$st_r" -eq 3 ] && [ "$st_left" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q 'BLOCK'; then mt_ok "a $st_mode filter stops the run with exit 3, opens no take file, leaves no folder"
+    if [ "$st_r" -eq 3 ] && [ "$st_left" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q 'BLOCK'; then mt_ok "a $st_mode filter stops the run with exit 3, opens no test-program file, leaves no folder"
     else mt_bad "a $st_mode filter must stop the run (exit 3=$st_r, folders left=$st_left, BLOCK printed or not)"; fi
   done
   SELFTEST_FILTER=cat LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$SELF" --self-test > "$WORK/st-meta.txt" 2>&1; st_r=$?
@@ -1380,15 +1380,15 @@ case ${1:-} in
     exit 1 ;;
 esac
 
-# ---------------------------------------------------------------- canary: the masking filter must work BEFORE any take file is opened
+# ---------------------------------------------------------------- canary: the masking filter must work BEFORE any test-program file is opened
 if ! filter_ready; then
   CLEAN=1
-  echo "STOP: the masking filter is not usable here (the rule file is empty or this sed does not know s///I, which GNU sed does). No take file was opened." >&2
+  echo "STOP: the masking filter is not usable here (the rule file is empty or this sed does not know s///I, which GNU sed does). No test-program file was opened." >&2
   exit 3
 fi
 if ! run_canary; then
   CLEAN=1
-  printf 'STOP: the masking self-test (canary) FAILED, so the filter cannot be trusted and no take file was opened:\n%s\n' "$CANARY" >&2
+  printf 'STOP: the masking self-test (canary) FAILED, so the filter cannot be trusted and no test-program file was opened:\n%s\n' "$CANARY" >&2
   exit 3
 fi
 start_watchdog
@@ -1398,7 +1398,7 @@ CLEAN=0   # the canary passed: a normal run keeps the masked output copy (every 
 # ---------------------------------------------------------------- settings
 TAKE_DIR=${1:-$PWD}
 if [ ! -d "$TAKE_DIR" ]; then echo "take folder not found: $TAKE_DIR" >&2; CLEAN=1; exit 2; fi
-TAKE_DIR=$(cd "$TAKE_DIR" && pwd -P) || { echo "cannot enter the take folder: $TAKE_DIR" >&2; CLEAN=1; exit 2; }
+TAKE_DIR=$(cd "$TAKE_DIR" && pwd -P) || { echo "cannot enter the test-program folder: $TAKE_DIR" >&2; CLEAN=1; exit 2; }
 [ -n "$TAKE_DIR" ] || { echo "take folder path is empty" >&2; CLEAN=1; exit 2; }
 FLOWS_DIR=${FLOWS_DIR:-$TAKE_DIR}
 MODEL_DIR=${MODEL_DIR:-}
@@ -1598,15 +1598,15 @@ main() {
   printf 'take folder: %s\n' "$TAKE_DIR"
   printf 'private work folder (made by mktemp; after this run it keeps ONLY the masked output copy and the three masking rule files; delete it yourself): %s\n' "$WORK"
   printf 'copy of this output (masked): %s\n' "$OUT"
-  printf 'Nothing below was checked against a real take program by the builder of this script.\n'
+  printf 'Nothing below was checked against a real test program by the builder of this script.\n'
   printf 'Q27 a, b and c stay UNVERIFIED until the lead shows them at the final head; this script only finds text.\n'
   printf 'Files used:\n%s' "$PATHNOTES"
   for f4 in "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"; do
-    case $f4 in "$TAKE_DIR"/*) ;; *) printf 'NOTE: %s is OUTSIDE the take folder (it is still searched, because it is one of the four named files).\n' "$f4" ;; esac
+    case $f4 in "$TAKE_DIR"/*) ;; *) printf 'NOTE: %s is OUTSIDE the test-program folder (it is still searched, because it is one of the four named files).\n' "$f4" ;; esac
   done
   printf 'FLOWS_DIR = %s\nMODEL_DIR = %s\n' "$FLOWS_DIR" "${MODEL_DIR:-<not set: the model program folder is NOT SEARCHED>}"
-  printf 'Left out on purpose (counts are printed in block Q23-1): folders .git node_modules _local secrets .venv venv __pycache__ tests test; files test_*, *_test.py, conftest.py (only below the take folder, so a take folder under a test_ parent is still searched); files whose path has 5 or more parts (a/b/c/d/file; at most 3 sub-folders below the folder are searched); symbolic links; every file that is not python, shell or json.\n'
-  list_info "python and shell files of the take (the four named files are searched first and left out of this list)" "$WORK/list-code-rest.txt"
+  printf 'Left out on purpose (counts are printed in block Q23-1): folders .git node_modules _local secrets .venv venv __pycache__ tests test; files test_*, *_test.py, conftest.py (only below the test-program folder, so a test-program folder under a test_ parent is still searched); files whose path has 5 or more parts (a/b/c/d/file; at most 3 sub-folders below the folder are searched); symbolic links; every file that is not python, shell or json.\n'
+  list_info "python and shell files of the test program (the four named files are searched first and left out of this list)" "$WORK/list-code-rest.txt"
   list_info "flow json files" "$WORK/list-flows.txt"
   list_info "model program python files (tests left out)" "$WORK/list-model.txt"
   model_notice "Q27 a (model side), Q27 b (model side and qs_37 on the model side) and Q27 c (half B)"
@@ -1614,7 +1614,7 @@ main() {
   : > "$SHAOK"
   begin R00 "Final head identity (G1, G26)" "Which commit id and which file checksums are these answers about?"
   if command -v git >/dev/null 2>&1 && g rev-parse --git-dir >/dev/null 2>&1; then
-    printf 'git work tree top folder: %s (if this is a PARENT of the take folder, the commit id below is the parent repository'"'"'s)\n' "$(g rev-parse --show-toplevel 2>&1)"
+    printf 'git work tree top folder: %s (if this is a PARENT of the test-program folder, the commit id below is the parent repository'"'"'s)\n' "$(g rev-parse --show-toplevel 2>&1)"
     head_l="HEAD: $(g rev-parse HEAD 2>&1)"
     printf '%s\n' "$head_l" >> "$SHAOK"; printf '%s\n' "$head_l"
     # core.fsmonitor=false is read as a true/false switch only by git 2.36 and newer; an older git reads it as the name
@@ -1637,14 +1637,14 @@ main() {
   done
   finish_info R00
 
-  begin Q23-1 "Any delete or archive path to the CRM (Q23, G1)" "Does any python or shell file of the take (not tests), the CRM module or any flow json contain a delete, archive, purge, remove or cleanup path to the CRM? Decision 2 (the take never deletes) stays; the r17 review found only a rows_with_prefix GET; two earlier reviews DISAGREE (see the document); this block is the final-head grep the lead shows."
+  begin Q23-1 "Any delete or archive path to the CRM (Q23, G1)" "Does any python or shell file of the test program (not tests), the CRM module or any flow json contain a delete, archive, purge, remove or cleanup path to the CRM? Decision 2 (the take never deletes) stays; the r17 review found only a rows_with_prefix GET; two earlier reviews DISAGREE (see the document); this block is the final-head grep the lead shows."
   printf 'NOTE: the flow json files in the folder can differ from what n8n actually holds after import (G3); compare with the G2 checksum step.\n'
-  printf 'NOTE: AGENT-SCOPE line 20 (citing review-codebase-1.md F-01) says the take archives its contacts with a DELETE call at run_real_check_n8n.py:1051 and crm_hubspot.py:504-509; the r17 review (ORDERS Q23) says there is no delete path. This script does not decide between them: block Q23-2 prints what stands at those lines today.\n'
+  printf 'NOTE: AGENT-SCOPE line 20 (citing review-codebase-1.md F-01) says the test program archives its contacts with a DELETE call at run_real_check_n8n.py:1051 and crm_hubspot.py:504-509; the r17 review (ORDERS Q23) says there is no delete path. This script does not decide between them: block Q23-2 prints what stands at those lines today.\n'
   skip_report "$TAKE_DIR" "take folder, python and shell" code
   skip_report "$FLOWS_DIR" "flows folder, json" json
   local_flow_report "$FLOWS_DIR"
-  S "delete words in the four named files (take program, CRM module, n8n_drive.py, n8n.py): always searched" "$DELETE_RE" 1 "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"
-  SL "delete words in the other python and shell files of the take" "$DELETE_RE" 1 "$WORK/list-code-rest.txt"
+  S "delete words in the four named files (test program, CRM module, n8n_drive.py, n8n.py): always searched" "$DELETE_RE" 1 "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"
+  SL "delete words in the other python and shell files of the test program" "$DELETE_RE" 1 "$WORK/list-code-rest.txt"
   SL "delete words in flow json files" "$DELETE_RE" 1 "$WORK/list-flows.txt"
   printf 'READ THE ZERO LINES: "0 matching lines" means "none in the files listed above"; the counts of left-out files above say what was never looked at.\n'
   finish Q23-1
@@ -1664,13 +1664,13 @@ main() {
   S "delete, archive or purge wording in the four named files" 'delet|archiv|purg' 0 "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"
   finish Q23-4
 
-  begin Q27a "Model call after the word end (Q27 a, G34): UNVERIFIED until the lead shows it" "After the take program reads the word end, can it still call the model? Part 1: lines with the end handling (and 20 lines after). Part 2: every model-call line."
+  begin Q27a "Model call after the word end (Q27 a, G34): UNVERIFIED until the lead shows it" "After the test program reads the word end, can it still call the model? Part 1: lines with the end handling (and 20 lines after). Part 2: every model-call line."
   model_notice "Q27 a (model side)"
   GI=
-  S "end handling in the take program (case-sensitive; includes constants; a hit may be help or usage text: read the line)" "$END_RE" 20 "$TAKE_PY"
+  S "end handling in the test program (case-sensitive; includes constants; a hit may be help or usage text: read the line)" "$END_RE" 20 "$TAKE_PY"
   GI=-i
   ha=$LAST_HITS
-  S "model-call words in the take program, n8n_drive.py and n8n.py" "$MODEL_RE" 0 "$TAKE_PY" "$DRIVE_PY" "$N8N_PY"
+  S "model-call words in the test program, n8n_drive.py and n8n.py" "$MODEL_RE" 0 "$TAKE_PY" "$DRIVE_PY" "$N8N_PY"
   hb=$LAST_HITS
   SL "model-call words in the model program folder (only if MODEL_DIR is set)" "$MODEL_RE" 0 "$WORK/list-model.txt"
   printf 'Q27a reading: end-handling lines=%s, model-call lines=%s. Zero in either means the words are probably wrong, NOT "no model call".\n' "$ha" "$hb"
@@ -1680,12 +1680,12 @@ main() {
   begin Q27b "End-date refusal (Q27 b, G16, G10): UNVERIFIED until the lead shows it" "Does a setting that refuses a call after the window end exist, and is a refusal SHOWN at the final head (a test run or a startup refusal)?"
   model_notice "Q27 b (model side)"
   printf 'SPEND WARNING: to SEE the refusal run ONLY the named qs_37 test, against the FAKE model. Never start the real model program or the real stage with a real key to "see" a refusal: that can make a paid call. This script starts nothing.\n'
-  S "window end, need_seconds, refusal words in the take program" 'window|end_date|not_after|deadline|need_seconds|2026-11-2|refus' 0 "$TAKE_PY"
+  S "window end, need_seconds, refusal words in the test program" 'window|end_date|not_after|deadline|need_seconds|2026-11-2|refus' 0 "$TAKE_PY"
   SL "same words in the model program folder (only if MODEL_DIR is set)" 'window|end_date|not_after|deadline|2026-11-2|refus|after the' 0 "$WORK/list-model.txt"
-  list_info "python files of the take, tests INCLUDED (for qs_37)" "$WORK/list-test-all.txt"
+  list_info "python files of the test program, tests INCLUDED (for qs_37)" "$WORK/list-test-all.txt"
   list_info "python files of the model program folder, tests INCLUDED (for qs_37)" "$WORK/list-model-all.txt"
   if [ -n "$MODEL_DIR" ] && [ -d "$MODEL_DIR" ]; then skip_report "$MODEL_DIR" "model program folder, python and shell" code; fi
-  SL "test name qs_37 in the take folder (tests included)" 'qs_37' 0 "$WORK/list-test-all.txt"
+  SL "test name qs_37 in the test-program folder (tests included)" 'qs_37' 0 "$WORK/list-test-all.txt"
   SL "test name qs_37 in the model program folder (tests included; only if MODEL_DIR is set)" 'qs_37' 0 "$WORK/list-model-all.txt"
   if [ -n "$MODEL_SETTINGS" ] && [ -f "$MODEL_SETTINGS" ] && [ -r "$MODEL_SETTINGS" ]; then
     printf -- '--- search: settings lines whose NAME has the whole word end, window, deadline, until or not_after (a value is shown ONLY if it looks like a date or a number; any other value is replaced by a note)\n'
@@ -1708,41 +1708,41 @@ VALEOF
   printf 'NOTE: to SEE the refusal, run the named test (fake model only) or read the startup refusal at the final head; this script only finds text.\n'
   finish Q27b
 
-  begin Q27c "Go marker before any model call (Q27 c, G33): UNVERIFIED until the lead shows it" "Does the model program refuse to make a paid call until the take program has written a marker after the accepted challenge? BOTH halves are needed."
+  begin Q27c "Go marker before any model call (Q27 c, G33): UNVERIFIED until the lead shows it" "Does the model program refuse to make a paid call until the test program has written a marker after the accepted challenge? BOTH halves are needed."
   model_notice "Q27 c (half B)"
-  S "half A: marker words in the take program" 'marker|go_file|ready_file|\.used|\.go([^A-Za-z]|$)|accepted|challenge' 0 "$TAKE_PY"
+  S "half A: marker words in the test program" 'marker|go_file|ready_file|\.used|\.go([^A-Za-z]|$)|accepted|challenge' 0 "$TAKE_PY"
   hA=$LAST_HITS
   SL "half B: marker words in the model program folder (only if MODEL_DIR is set)" 'marker|go_file|ready_file|\.go([^A-Za-z]|$)|exists\(|isfile' 0 "$WORK/list-model.txt"
   hB=$LAST_HITS
-  printf 'Q27c reading: take-program half hits=%s, model-program half hits=%s. Both halves must be shown; a zero in either half means NOT SHOWN by this search. The .used tag marker is not shown to be the go marker.\n' "$hA" "$hB"
+  printf 'Q27c reading: test-program half hits=%s, model-program half hits=%s. Both halves must be shown; a zero in either half means NOT SHOWN by this search. The .used tag marker is not shown to be the go marker.\n' "$hA" "$hB"
   finish Q27c
 
-  begin G35 "Prompts to the owner (G35)" "Does the take program ask the owner to type anything besides y, the challenge line and end?"
-  S "input and prompt words in the take program" 'input\(|getpass|readline|stdin|isatty|worst.?case|figure' 0 "$TAKE_PY"
+  begin G35 "Prompts to the owner (G35)" "Does the test program ask the owner to type anything besides y, the challenge line and end?"
+  S "input and prompt words in the test program" 'input\(|getpass|readline|stdin|isatty|worst.?case|figure' 0 "$TAKE_PY"
   finish G35
 
-  begin G06 "Exit codes (G6, Q20.4)" "Which exit codes can the take program leave, and which one for person C unknown?"
-  S "exit words in the take program" 'sys\.exit|[^a-z_]exit\(|SystemExit|EXIT_|return [0-3]$|unknown' 0 "$TAKE_PY"
+  begin G06 "Exit codes (G6, Q20.4)" "Which exit codes can the test program leave, and which one for person C unknown?"
+  S "exit words in the test program" 'sys\.exit|[^a-z_]exit\(|SystemExit|EXIT_|return [0-3]$|unknown' 0 "$TAKE_PY"
   finish G06
 
   begin G04 "Call ceiling, price and ledger (G4, G14)" "Where are the call ceiling, retries, ledger total and program limit set?"
-  S "ceiling words in the take program" 'ceiling|max_calls|retries|retry|ledger|backstop|program.?limit|180|189|price' 0 "$TAKE_PY"
+  S "ceiling words in the test program" 'ceiling|max_calls|retries|retry|ledger|backstop|program.?limit|180|189|price' 0 "$TAKE_PY"
   SL "ceiling words in the model program folder (only if MODEL_DIR is set)" 'ceiling|max_calls|retries|retry|ledger|backstop|limit|180|189|price' 0 "$WORK/list-model.txt"
   finish G04
 
   begin G18 "Stop, signal and lock behaviour (G18)" "What happens on a wrong line after end, Ctrl-C, a pause that ends without end, a cancelled key; which lock file is left?"
-  S "signal and lock words in the take program" 'KeyboardInterrupt|SIGINT|SIGTERM|SIGHUP|\.lock|closing|interrupted|called off|timeout|give.?up' 0 "$TAKE_PY"
+  S "signal and lock words in the test program" 'KeyboardInterrupt|SIGINT|SIGTERM|SIGHUP|\.lock|closing|interrupted|called off|timeout|give.?up' 0 "$TAKE_PY"
   finish G18
 
   begin G36 "Think time, silence and film cue (G36)" "Which printed line could start the film pause, and what are the minimum think time, silence and give-up values?"
-  S "pause words in the take program" 'think|silence|give.?up|pause|film|sleep\(|print\(.*(start|wait)' 0 "$TAKE_PY"
+  S "pause words in the test program" 'think|silence|give.?up|pause|film|sleep\(|print\(.*(start|wait)' 0 "$TAKE_PY"
   finish G36
 
-  begin G37-38 "Per-run key file, demo mail subject, prep contact (G37, G38)" "How is the per-run key file made (does it refuse an existing file), what starts the take mail subjects, and does the prep contact address match the film search?"
-  S "file-creation and subject words in the take program" 'set -C|noclobber|O_EXCL|key_file|subject|take-|prep-|label|demo' 0 "$TAKE_PY"
+  begin G37-38 "Per-run key file, demo mail subject, prep contact (G37, G38)" "How is the per-run key file made (does it refuse an existing file), what starts the test program mail subjects, and does the prep contact address match the film search?"
+  S "file-creation and subject words in the test program" 'set -C|noclobber|O_EXCL|key_file|subject|take-|prep-|label|demo' 0 "$TAKE_PY"
   finish G37-38
 
-  begin G07 "Ports (G7)" "Which of the ports 5678, 5679, 5690-5693, 5701, 5702 are listening now, and does the take program name its own port?"
+  begin G07 "Ports (G7)" "Which of the ports 5678, 5679, 5690-5693, 5701, 5702 are listening now, and does the test program name its own port?"
   if grep -qi microsoft /proc/version 2>/dev/null; then printf 'NOTE: this looks like WSL: ss here does NOT see programs listening on Windows (such as the owner n8n on 5678/5679). Check on Windows with: netstat -ano | findstr "5678 5679".\n'; fi
   if command -v ss >/dev/null 2>&1; then lt=$(ss -tln 2>&1); lt_tool=ss
   elif command -v netstat >/dev/null 2>&1; then lt=$(netstat -tln 2>&1); lt_tool=netstat
@@ -1754,7 +1754,7 @@ VALEOF
     bf=$((bf + 1)); o=$(printf '%s\n' "$lt" | grep -E ':(5678|5679|569[0-3]|570[0-9])[[:space:]]')
     if [ -n "$o" ]; then printf 'listening (from %s):\n%s\n' "$lt_tool" "$o"; else printf 'none of those ports is listening now (from %s)\n' "$lt_tool"; fi
   fi
-  S "port numbers in the take program" '5678|5679|569[0-3]|570[0-9]' 0 "$TAKE_PY"
+  S "port numbers in the test program" '5678|5679|569[0-3]|570[0-9]' 0 "$TAKE_PY"
   finish G07
 
   begin G20 "DECISION-one-store line 14 (G20)" "Does line 14 still say ONE database?"
