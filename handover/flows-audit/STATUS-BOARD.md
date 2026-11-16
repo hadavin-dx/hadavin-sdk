@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-16T09:43:06Z
+UPDATED_UTC: 2026-11-16T09:43:30Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
-PERCENT: 72
-AGENTS_RUNNING: 6
-CAPACITY: 4.79 load of 4 cores, mem 0/15 GB, disk free 28G, agents 6 (light+heavy per list)
+PERCENT: 74
+AGENTS_RUNNING: 7
+CAPACITY: 4.60 load of 4 cores, mem 0/15 GB, disk free 28G, agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: $env nodes, 2 webhooks without auth, 7 false-pass Majors (fixer running)
 F3: 3 surviving mutants + 3 security Majors (fixer running)
-ROLES script: 5 mutants survive (SQL in Code/MySQL/postgresTool/Set; fixer running)
+ROLES: script 5 mutants survive + 7 script gaps; doc 8 Majors from security r3 (two fixers running)
 claims: no fresh review of r3 yet (2 reviewers running); F-01 unreadable; 'the lead' wording left in pasted text
 F5: T8 Blocker (final fixer running)
-NEXT: collect F3, F8, F5, ROLES r3 reviewer and survivor fixer, 2 claims reviewers; then evidence reruns
-PUSHED_UTC: 2026-11-16T09:43:06Z
+NEXT: collect F3, F8, F5, ROLES x2, claims x2; then evidence reruns and fresh security review
+PUSHED_UTC: 2026-11-16T09:43:30Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -43,6 +43,7 @@ PUSHED_UTC: 2026-11-16T09:43:06Z
 | a643eeae | ROLES survivors fixer | sonnet | fix 5 surviving mutants in coverage script | 09:44 | 09:55 | 5 | running | roles-coverage-check/fix-roles-r4.md |
 | ae5d88f1 | claims reader r3 | egm-comprehension | naive read of CLAIMS-TABLE | 09:44 | 09:52 | 5 | running | inline |
 | aa4dd7eb | claims facts r3 | egm-codebase-details | cites and totals check | 09:44 | 09:55 | 5 | running | inline |
+| aeb408d4 | ROLES doc fixer r3 | sonnet | fix M1-M8, N1-N10 in ROLES-PROPOSAL.md | 09:47 | 10:00 | 5 | running | reviews-roles/fix-roles-r3.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

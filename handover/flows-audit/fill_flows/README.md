@@ -18,7 +18,8 @@ Linux, macOS, or WSL (Windows Subsystem for Linux) using the Linux home folder (
 `/home/you/keep`), NOT `/mnt/c/...` (a Windows drive, where file permissions do not protect
 anything). Native Windows is not supported: the program checks this when it starts and refuses
 with a plain message if the system cannot open files without following symlinks.
-Always use full paths (below); a relative `--in` path depends on the folder you are standing in.
+Python 3.9 or newer (run on 3.11, 3.12 and 3.13 only; 3.9 and 3.10 were not run: no such
+interpreter was available). Always use full paths (below); a relative `--in` path depends on the folder you are standing in.
 
 ## The values file
 A plain text file with one `KEY=VALUE` per line. Use only the keys of the flow set you are filling
@@ -53,7 +54,7 @@ Keep it OUTSIDE any git folder, NOT under `/mnt`, and make it readable by you on
     REPO=/full/path/to/hadavin-sdk
     TOOL="$REPO/handover/flows-audit/fill_flows/fill_flows.py"
     mkdir -p -m 700 "$HOME/keep"
-    install -m 600 /dev/null "$HOME/keep/flow-values.env"
+    (umask 077; : > "$HOME/keep/flow-values.env")
     # now open "$HOME/keep/flow-values.env" in an editor and type the KEY=VALUE lines
 
 ## The commands
@@ -128,8 +129,9 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 - `delete` refuses a file whose content changed since it was written (you edited it, or a kill left
   it cut short). If you are sure, add `--force-hash`.
 - If the fingerprint file is lost: `delete --out DIR --no-manifest`. It deletes only a folder that
-  looks exactly like this program's output: the folder is mode 0700 and the files are mode 0600,
-  all owned by you; every file is a plain `.json` file that reads as JSON and holds no `$env`
+  looks exactly like this program's output: the folder holds the small marker file
+  `.fill_flows-output` that `fill` writes first (right format and this folder's name), the folder
+  is mode 0700 and the files are mode 0600, all owned by you; every file is a plain `.json` file that reads as JSON and holds no `$env`
   text. Anything else is refused and nothing is deleted. A file cut short by a kill is not valid
   JSON: add `--force-hash` to skip the JSON and `$env` reading (the mode, owner and name
   checks stay).
@@ -142,7 +144,12 @@ becomes `Number("2500" || 10000)`. A new node that needs a bare number must wrap
 `Number(...)`. Placeholder names are replaced only when the whole text equals the name.
 The output files are re-printed with 2-space indent (layout may differ from the input; node
 count and connections are checked equal). Same input and same values give identical files.
-Files are mode 0600 and the folder 0700, created without following symlinks.
+Files are mode 0600 and the folder 0700. The program opens the output folder once and creates,
+reads and deletes everything through that open folder, so swapping the folder name for a link
+while it runs changes nothing. It also reads the mode back from each new file and folder and
+refuses (removing what it made) if the disk did not keep it private, instead of guessing from
+the path. The first folder in the output path is looked up by name once; a link there is accepted
+only when you or root made it.
 
 ## Clean-up checklist (after the take)
 1. `delete --out DIR` (removes the filled files, the folder and the fingerprint file).
@@ -165,10 +172,15 @@ yours, the folder is still deleted. This is accepted: that someone could delete 
 anyway, and the command only removes files of this program's own kind inside a 0700 folder that
 you named. Use the normal `delete` (with the fingerprint file) when you have it.
 
-## Known limits (not fixed, by design)
-- Someone who can already write inside the parent folder while this runs could swap a path between
-  a check and its use. The folder is 0700 and the tool is meant for your own laptop; keep the
-  parent folder private.
+## Other facts
+- A placeholder name inside a longer text (for example `x PG_CREDENTIAL_ID y`) is counted as
+  "left" but cannot be filled (only a text that equals the name is replaced), so `fill` ends with
+  exit code 3 until the flow is edited. A placeholder name alone in a program-code field is refused.
+- The fingerprint file holds a SHA-256 of each filled file. Someone who can read it can read the
+  filled files too (same owner, same mode 0600), so it adds no new exposure; but do not copy it
+  anywhere the filled files must not go.
+
+## Known limits
 - The "inside a git folder" check looks for a `.git` entry in the folder or a parent. A bare
   repository (a git store with no `.git` entry) is not recognised; do not put the values file or
   the output in one.
