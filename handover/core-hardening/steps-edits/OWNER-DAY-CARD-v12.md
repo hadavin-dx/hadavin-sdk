@@ -1,6 +1,6 @@
 # DAY CARD v12 (run day: what you type, what the screen shows, when to stop). Print it.
 
-Mon 16 Nov 2026 draft. UTC and IST. Words are in `OWNER-STEPS-realrun-v12.md`. **FREEZE** = type nothing more, close nothing, send the studio lead what the screen shows, wait. **STOP** = this step ends, go on to nothing. `[UNVERIFIED]` = the writer never ran this command; a different screen means FREEZE. "Row N" = run card row. **Run window** = the WSL window of the program. **Second window** = a separate Ubuntu window used only by the person on row 8.
+Mon 16 Nov 2026 draft. UTC and IST. Words are in `OWNER-STEPS-realrun-v12.md`. **FREEZE** = type nothing more, close nothing, send the studio lead what the screen shows, wait. **STOP** = this step ends, go on to nothing. `[UNVERIFIED]` = the writer never ran this command; a different screen means FREEZE. "Row N" = run card row. **Run window** = the WSL window of the program. **You type in the run window only**: the start line, `y`, the confirmation line, `end`, `echo $?`. The studio lead shuts down and starts n8n itself; you never do.
 
 ## Before E (tick each)
 - [ ] Go message for this run name received; it states all 9 go items (items 5 and 6 included). One missing: no E.
@@ -10,7 +10,7 @@ Mon 16 Nov 2026 draft. UTC and IST. Words are in `OWNER-STEPS-realrun-v12.md`. *
 - [ ] `sha256sum scripts/run_real_check_n8n.py` equals row 19 [UNVERIFIED].
 - [ ] `pgrep -af "<model program name, row 23>"` prints exactly one line with the process number from the go message [UNVERIFIED]. `date` within 2 minutes of the Windows clock [UNVERIFIED].
 - [ ] Start is at least 20 minutes before the latest start time (row 3).
-- [ ] Person on row 8 has the second window open (if that is you: type `echo SECOND WINDOW` in it now, never in the run window). Row 9 holds the exact words of the program's printed line that tells to stop n8n and of the line that tells to start it. **Not confirmed that the program prints a stop-n8n line: UNVERIFIED, PENDING LEAD ANSWER Q20.1. No words on row 9: no run.**
+- [ ] The studio lead says in writing that n8n is up and that it will shut down and start n8n itself during the run with `n8n_kill.py` and `n8n_start.sh`. You do nothing for n8n. Lead checks at re-pin that the program prints no extra cue: UNVERIFIED.
 - [ ] Persons on rows 4, 5, 7 ready. `clear` in the run window. [ ] Recording ON (person on row 5).
 
 ## E. Start
@@ -20,7 +20,7 @@ Mon 16 Nov 2026 draft. UTC and IST. Words are in `OWNER-STEPS-realrun-v12.md`. *
 4. Type the 6-digit number from the notice, a space, the run name, Enter. Faster than 2 seconds: exit code 2, nothing sent. Wrong line: exit code 1, nothing sent. Then send "run started".
 
 ## While it runs (you type nothing in the run window)
-- The program makes 13 sends and 3 paid model calls. The person on row 8 acts only on the program's printed stop-n8n line and its printed start line, with the lines on row 9, in the second window [UNVERIFIED]. Neither line comes within row 16 minutes: person on row 8 tells the studio lead; the studio lead decides (no one guesses).
+- The program makes 13 sends and 3 paid model calls. The studio lead shuts down and starts n8n during the sends; you do nothing.
 - Nothing new printed for row 16 minutes: FREEZE. No Ctrl-C, no closing the window.
 - Contacts appear in HubSpot, mails under label `demo`. The model program keeps running during the film pause.
 

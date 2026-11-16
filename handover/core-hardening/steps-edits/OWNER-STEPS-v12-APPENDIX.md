@@ -11,20 +11,20 @@ Written Mon 16 Nov 2026. UTC and IST (IST = UTC + 5:30). The sheet is `OWNER-STE
 - Three lists: **run card** (section 2), **order table** (section 6), **result list** (PASS/FAIL/SKIPPED lines of step 0). The word "table" means nothing else; the database's table is "the database".
 
 ## 2. The run card (23 rows; no card, no run)
-A go message needs all 23 rows. A row changes only by a new complete card. **Every name on rows 4 to 8 is a human person; a row that names an agent, a Claude session, a script or a helper window makes the card incomplete.** Rows 20 and 21 "kept on purpose" count only with the owner's written yes (reason, end date UTC and IST).
+A go message needs all 23 rows. A row changes only by a new complete card. **Every name on rows 4 to 7 is a human person; a row that names an agent, a Claude session, a script or a helper window makes the card incomplete.** Rows 20 and 21 "kept on purpose" count only with the owner's written yes (reason, end date UTC and IST).
 
 | Row | The card holds | If missing |
 |---|---|---|
 | 1 | run date; how many days before it steps B to D start | ask |
 | 2 | run name confirmed | ask |
-| 3 | latest start time (UTC, IST); normal run length in minutes; lease length in minutes | ask |
+| 3 | latest start time (UTC, IST); normal run length in minutes; lease length | ask |
 | 4 | person who films | no run |
 | 5 | person who starts the recording and says "recording" | no run |
 | 6 | person who edits and crops | no run |
 | 7 | person who says "filmed" | no run |
-| 8 | person who shuts down and restarts n8n (may be the owner) | no run |
-| 9 | the exact words of the program's printed line that tells to stop n8n, and of the line that tells to start it; the exact lines the person types (take scripts `n8n_kill.py`, `n8n_start.sh`, take branch, local only). The program prints cue lines for y, challenge and end only; the stop-n8n cue is not confirmed (UNVERIFIED, Q20.1) | no run |
-| 10 | trial run: yes or no (paid; its own yes) | no trial |
+| 8 | not used (the studio lead shuts down and starts n8n itself with `n8n_kill.py` and `n8n_start.sh`; no owner step) | none |
+| 9 | not used (kept so row numbers stay the same as in the sheet) | none |
+| 10 | trial run: yes or no (paid; its own yes); retake count: lead computes (how many runs the cumulative backstop covers; UNVERIFIED, from the ledger code and cost per run at re-pin) | no trial |
 | 11 | deadlines (UTC, IST): watch the video (H), clean-up (I), cancel the model key (I.0), latest post time | ask |
 | 12 | paths: run folder, run settings file, model settings file and its setting names, secret folder and file names (which are n8n connection files, which is the model key file), the local flow copy file name | ask |
 | 13 | the address to sign in to n8n, with the run's own port | do not open n8n |
@@ -33,7 +33,7 @@ A go message needs all 23 rows. A row changes only by a new complete card. **Eve
 | 16 | minutes with no new line before the owner tells the studio lead | tell and wait |
 | 17 | longest film pause in minutes | ask |
 | 18 | I.3 cropped screenshots: yes or no | skip I.3 |
-| 19 | step 0 and E data: folder of `hubspot_probe.py`; checksums of every file used and of `scripts/run_real_check_n8n.py`; commit id; HubSpot key file path; exact HubSpot permission names; number of calls `--plan` prints; the one host | no step 0 |
+| 19 | step 0 and E data: folder of `hubspot_probe.py`; checksums of every file used and of `scripts/run_real_check_n8n.py`; commit id; HubSpot probe key file path (the key the take uses is read-only; the probe key is separate); exact HubSpot permission names of the probe key; number of calls `--plan` prints; the one host | no step 0 |
 | 20 | HubSpot key and each app password: deleted or revoked in clean-up, or kept (reason, end date) | delete nothing |
 | 21 | model key: cancelled in I.0 (default) or kept (reason, end date) | cancel |
 | 22 | yes or no for each: label `demo` and its Gmail filter; the separate sender Gmail account | no start |
@@ -54,15 +54,15 @@ A path or name may hold only A-Z a-z 0-9 . _ / - and a full path starts `/home/`
   Person A: 1 contact, 1 mail      Person B: 1 contact, 1 mail
   Person C: unknown (could not tell whether it got a contact and a mail)
   Model calls made: 3              Sends made: 13
-  Exit code will be: 3 (a count or verdict failed)
+  (an exit code line may follow; its value for C "unknown" is not stated here)
 ```
-C "unknown" gives exit code 3 only if that is what the code does (PENDING LEAD ANSWER Q20.4); then it counts as success only if the studio lead said so in writing (go item 7).
+The exit code for C "unknown" is UNVERIFIED: the studio lead reads it from `scripts/run_real_check_n8n.py` at the final head; it counts as success only if the studio lead said so in writing (go item 7).
 
 ## 6. Order table
 | No. | Who | What | Where | Expected |
 |---|---|---|---|---|
 | 1 | studio lead | run card | message | 23 rows |
-| 2 | studio lead | clean start (fresh person ids, empties rehearsal table) | own session | "clean start done" (database role: Q20.2) |
+| 2 | studio lead | clean start at take prep: fresh person ids; empties `mf_leads` with the take database's admin role; fresh container, same schema (one Postgres server, two databases); names UNVERIFIED, filled at re-pin | own session | "clean start done" |
 | 3 | owner | run name, proof screen | message | confirmed |
 | 4 | studio lead | "go step 0" with the owner's quoted yes and HubSpot account name | message | |
 | 5 | owner | step 0 | browser, WSL | PASS/FAIL/SKIPPED lines |
@@ -72,7 +72,7 @@ C "unknown" gives exit code 3 only if that is what the code does (PENDING LEAD A
 | 9 | owner | B, C.1 to C.3, D | Windows, Gmail, Chrome, n8n | "label and inbox empty"; "profile ready" |
 | 10 | studio lead | go message for the run | message | |
 | 11 | owner | day card: before E, E | WSL | "run started" |
-| 12 | person on row 8 | stop and start lines on the program's cue | second window | |
+| 12 | studio lead | shuts down and starts n8n with the take scripts (section 10) | own session | n8n down once, back while C is sent |
 | 13 | person on row 4 | films the contact list | | |
 | 14 | owner | F: `end`, `echo $?`, usage page, delete listed contacts | WSL, HubSpot | "contacts deleted" |
 | 15 | studio lead | shuts down the model program; "model program shut down"; "no more runs" | message | |
@@ -86,17 +86,15 @@ C "unknown" gives exit code 3 only if that is what the code does (PENDING LEAD A
 Before a run: run name; proof screen; written yes for step 0; "HubSpot is the test account"; step 0 lines and exit code, or filter counts; "I veto the exposure" only if so; the model key's name and path; decisions on older keys; the written yes with numbers; money figures; "receiver, sender and HubSpot are the throwaway accounts". Run day: "label and inbox empty"; "profile ready"; "run started"; any problem line. End of a run: exit code, last printed line, balance and money used before and after; "contacts deleted" and the number. After: "model key cancelled", the figure and key names left; "accepted" or bad seconds; "an address is visible". After a failed or trial run: "demo mails deleted" and contacts count; new yes and run name. Clean-up: names left alone or deleted; retire-check words and code; "secret files erased". Posting: the text, then "posted".
 
 ## 8. Post ban (the post must NOT say)
-1. that nothing can start or spend before the owner's typed answers (the model program and flows start earlier with a live key; no closed gate exists); 2. that the same person through two doors is one contact; 3. that no contact data stays in n8n, that recovery takes within 60 seconds, or an alert within 30 seconds; 4. that a portal, approval step or audit trail exists, or that a person approves each action; 5. that n8n cannot reach the internet; 6. that the run is crash-safe or no mail goes out twice after a crash; 7. that the count is made by a "separate check" or "separate login"; 8. that everything is in one database (aim: one Postgres server with two databases; not proven until the rehearsal shows it); 9. that the spend is capped by a hard limit (a setting a person checks); 10. that test data was "deleted permanently" or "erased", or that the program deletes or does not delete contacts unless the studio lead's go item 5 statement and the printed result both show it; 11. a lead sent twice is processed once without the lease words; 12. anything about which permissions a part has.
+1. that nothing can start or spend before the owner's typed answers (the model program and flows start earlier with a live key; no closed gate exists); 2. that the same person through two doors is one contact; 3. that no contact data stays in n8n, that recovery takes within 60 seconds, or an alert within 30 seconds; 4. that a portal, approval step or audit trail exists, or that a person approves each action; 5. that n8n cannot reach the internet; 6. that the run is crash-safe or no mail goes out twice after a crash; 7. that the count is made by a "separate check" or "separate login"; 8. that everything is in one database (aim: one Postgres server with two databases; not proven until the rehearsal shows it); 9. that the spend is capped by a hard limit (a setting a person checks); 10. that test data was "deleted permanently" or "erased", or that the program deletes or does not delete contacts unless the studio lead's go item 5 statement and the printed result both show it; 11. the claim without the one honest sentence of the sheet's step J; 12. anything about which permissions a part has; 13. "Postgres is the one store" (the caption says "one Postgres server, two databases"; the model program's journal file is a second record).
 
 ## 9. Exit codes and refusals
 0 success. 1 the answer was not `y` or the confirmation line did not match. 2 the program refused to start or go on (a setting, a failed login check, no keyboard, closed input, an answer faster than 2 seconds, a used run name or key, a lock file, the window end too close, a second mailbox, Ctrl-C before the first send). 3 a count or verdict failed after the run, or Ctrl-C after the sends began. If cut off at the very end the number may be 3, 120 or another and the lock file may stay: do not run again. Retire check codes: 0 both refused (good); 3 a login still works; 2 could not tell. Any number other than 0 in a run: day card FREEZE.
 > **WARNING before removing the run lock file: it cannot be undone. Remove only the one file the studio lead names, after it says so.**
 Lock file `take-<run name>.lock` beside the run folder: `ls -l`, `readlink -f` (must equal the path), compare with rule 10, then `rm -- "<path>"`. **Start deadline:** the program needs about 14 minutes before the window end; at the default setting the latest start is before Mon 23 Nov 2026 18:14:40 UTC = 23:44:40 IST; row 3 has the exact time.
 
-## 10. n8n stop and start
-The person on row 8 types only these forms, in the second window, only after the program's own printed line (or the card words, row 9) tells them to. **UNVERIFIED.** The studio lead replaces the forms below with the real lines of the take scripts `n8n_kill.py` and `n8n_start.sh` (take branch, local; the kill script checks the process's identity itself) and rehearses them before the card is sent. The stop-n8n cue is not confirmed to be printed by the program (PENDING LEAD ANSWER Q20.1). No process number comes from the card for n8n; the script finds it.
-- Stop: the exact `n8n_kill.py` line on row 9. Start again: the exact `n8n_start.sh` line on row 9 (it begins with `cd "<run folder>"`, holds only rule 10 characters, no `;` or `|`).
-Nothing else in that window; nothing from it in the run window; never the owner's everyday n8n on ports 5678 or 5679.
+## 10. n8n shutdown and start (studio lead only)
+The owner never stops or starts n8n. The studio lead does it with the take scripts `n8n_kill.py` (identity check on the process, no process number from any card) and `n8n_start.sh` (take branch, local only), against the run's own n8n port only, never the owner's everyday n8n on ports 5678 or 5679. The program prints cue lines for `y`, the challenge and `end` only; that it prints no extra cue is UNVERIFIED (lead checks at re-pin). How the studio lead times the shutdown while person C is sent is the studio lead's step and is rehearsed before the card is sent; the owner has no part in it.
 
 ## 11. Step T. Trial run (owner step; only if row 10 says yes; happens BEFORE the real run)
 A trial run is a real, paid run: its own written "yes step T" quoting why, its own `go trial run <run name>`, its own step A (new yes, new run name, A.0 to A.6, money rule redone), the boxed warnings of E and F. Nothing is filmed or posted; at F.1 you look at the contact list yourself, then type `end`; afterwards step G. The trial's money counts in the next A reading and in the ledger total. The key is not cancelled after a trial unless you decide so at A.0b. The real run then needs a new yes, a new run name, a fresh C.1.
@@ -129,12 +127,15 @@ Cannot succeed (code 2 twice, a row missing): keep every secret file, remove not
 5. **Paste empty or short:** the key is still on the browser page: copy it again, `rm -- "<model key file>"` (after rule 10 checks; it holds nothing valid), repeat step 3. Page closed: cancel that key and make another.
 6. The key passes through the clipboard and browser; the studio lead shares your Linux user (accepted exposure, A.0), so the guard is that the key is yours, limited, and cancelled in I.0.
 
-## 16. Screenshots (I.3; only if row 18 says yes)
-After I.1 and I.2, one screenshot of each list, cropping any address or name (Snipping Tool: Start, type `Snipping`). Save in `C:\Users\<your Windows user name>\Downloads\Hadavin_local\real-run\` (the user name is the folder under `C:\Users`) under the names the studio lead gives. Delete the uncropped originals the same day (Pictures, `Screenshots`) and empty the Recycle Bin (and OneDrive's).
+7. **Check the model program (A.0b, go item 6)**, in WSL (UNVERIFIED): `ls -l --time-style=full-iso "<model settings file>" "<model key file>"`, `ps -o pid=,lstart=,args= -p <process number>`, `pgrep -af "<model program name from row 23>"`, `date`. Needed: `ps` shows that process number and the command line written on row 23; `pgrep` prints exactly one line; the start time is later than both file times; `date` is within 2 minutes of the Windows clock (WSL can drift after sleep). Example: files changed 14:02 and 14:05, start 14:11: passes; start 14:04: fails.
+
+## 16. Screenshots (I.3) and the erase tests (I.6)
+**Erase tests (I.6):** each path starts with the secret folder of row 12 (the flow copy: with the run folder of row 12), ends in a name listed on row 12, does not end `.used`, is not the run settings file, is not kept on purpose; the model key file only after I.0.
+**Screenshots (only if row 18 says yes).** After I.1 and I.2, one screenshot of each list, cropping any address or name (Snipping Tool: Start, type `Snipping`). Save in `C:\Users\<your Windows user name>\Downloads\Hadavin_local\real-run\` (the user name is the folder under `C:\Users`) under the names the studio lead gives. Delete the uncropped originals the same day (Pictures, `Screenshots`) and empty the Recycle Bin (and OneDrive's).
 
 ## 17. For the studio lead: not proven, and open answers
 **Not proven (nothing in the sheet, card or here was run):** all new commands (`ls -l --time-style=full-iso`, `ps -o pid=,lstart=,args=`, `pgrep -af`, `read -rs`, `set -C`, `wc -c`, `python3 -I -c`, `cut`) are standard but UNVERIFIED on this laptop. The rehearsal is written, not run; the code never ran against live Gmail, HubSpot or a model call; the loopback re-smoke is "real-v5 minus one node" (the HubSpot contact step is a stand-in); never call it "real run passed". The row 19 commit is a provisional head on a local-only branch: checksums prove only equality with the card. Not shown: that nothing can spend before both typed answers (the model program and flows start earlier; no closed gate; the fallback "the studio lead switches on flows after the typed `y`" is not accepted: lead's default decision 5 of 2026-11-16). Not shown: that the program prints the masked sender and receiver on the notice; that it ends the film pause with `end` and ends early on a wrong line or closed terminal (assumed); that the program runs under `python3 -I`; that the stop-n8n cue is printed (Q20.1); that the program accepts the key file form; that the start time and key file times prove which key loaded; that the settings file is not re-read after start (do not edit after start; lead verifies at re-pin).
 **Scope sheet text to rewrite (lead; I may not edit inputs):** AGENT-SCOPE section 3 should read "no delete call exists in the take program; leftovers are listed; the owner deletes by hand" (`run_real_check_n8n.py`, read-only HubSpot identity, archive_contacts "no"); its older text that the take archives contacts by a DELETE call (`run_real_check_n8n.py:1051`, `crm_hubspot.py:504-509`, review finding on contact archiving) describes the old desk harness. Go item 5 is given only after the lead's final-head check. Also stale: scope lines 5, 9, 13, 20 and decisions lines 2 and 9 (Q20.5).
 **Figures:** the notes name US$180 and US$189; the facts file says "US$180 of 189 in-code backstop". Which is the backstop and which the credit is not clear; neither is used in the sheet; the step A message names backstop, credit, ledger total.
-**Open answers (PENDING LEAD ANSWER):** Q20.1 stop-n8n cue; Q20.2 clean-start database role and database; Q20.3 HubSpot key scopes per app; Q20.4 exit code when C ends "unknown"; Q20.5 decision 8 vs step 0. Unlisted new question: what do `DESK_*` and `MF_*` hold (I.6 treats the flow copy as a secret).
+**Open items:** None of Q19.1 to Q19.5, Q20.1 to Q20.5 and Q21.1 to Q21.4 is still marked PENDING in the sheet; items the lead has not re-read are marked UNVERIFIED or "lead verifies at re-pin" (stop/start cue, role and database names, exit code for C "unknown", lease and index claims, retake count, key scopes, the settings re-read). Unlisted new question: what do `DESK_*` and `MF_*` hold (I.6 treats the flow copy as a secret).
 **Decision labels:** "decision N of 2026-11-16" always means the studio lead's default decisions (the owner may veto), never an owner decision.
