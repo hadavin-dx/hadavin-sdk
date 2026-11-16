@@ -1,0 +1,11 @@
+# Owner sheet v33 security review, round 1 (egm-design, condensed copy of the inline report), 2026-11-16T18:48:38Z
+Read-only, nothing run. Verdict: 0 blockers, 2 majors, 9 minors. v32 M1 (near-deadline last resort) and M2 (cd line) are really fixed in the owner pages.
+## MAJOR
+- M1 A failed helper cancel ends with no last-resort step, no person and no time (HP item 6; card line 17; appendix part 10 "the helper has none"). Owner unreachable at 23:39 IST Mon 23 Nov, helper cancel fails twice: key can spend past 18:29 UTC = 23:59 IST up to the balance. The typed yes names only "helper none". Fix: give the helper the last-resort step on its paper, or name a second person and a time, or state this case in the yes.
+- M2 Lead pages still say the claim is "two sentences" against L-Q22c (LEAD-RELEASE-NOTE-v17 line 147; v33-OPEN-FOR-LEAD row 7); LN line 8 still lists the lease wording (G12) as open; ban item 11 says "unless approved in writing". Risk: the lease sentence reaches the public post. Fix: strike those.
+## MINOR
+1 appendix part 10 "a reminder never cancels a live run key" contradicts 7.11 (cancel a valid older key / L1 key); 2 "backstop time" defined only as Mon 23 Nov, the Sunday reminder uses 18:19 UTC = 23:49 IST without the day; 3 helper has no alarm instruction, and the card has no phone-number blank or first/second helper times; 4 near-deadline card line drops the phone fallback; 5 7.11 mismatch (name or date differs) is a dead end: no cancel failed, no person, no time; 6 LN line 219 "B is worse than A for money" stale, LN line 163 A row lacks the fall-through to 7.11, so "fixed in note" in v33-CHANGES is false; 7 7-day rule worded differently on lead pages (more than / less than / over / under) vs the sheet (at or before, 168 hours); 8 yes binds the owner to cancel even when something else uses the older key (disclosed; keep L7/delete criterion owner-open); 9 near-deadline at-once is OWNER-OPEN row 114 but already in the typed yes: keep pattern identical.
+## Checked
+Weekdays and all UTC/IST pairs correct; key read by read -rs under umask 077 and set -C; delete rules conservative; lease text absent from owner pages; routes A and B carry condition and 7-day line.
+## Not checked
+Vendor pages; cancel-only role; built pages equal SOURCE; scripts and their output; word counts; G1-G42 beyond cites.
