@@ -11,3 +11,18 @@ UNVERIFIED as banned (no file lists them, but the files do not support them): "d
 
 ## When watching the edited video (twice)
 Real address on screen: reply "an address is visible" with the minute and second. Words from the not-allowed list: reply the minute and second. Say "accepted" only if no further run will be needed. [v5 step H] Checking the words against this list is added by this session and is UNVERIFIED as expected of the owner.
+
+## Added 16 Nov 2026 (independent read of post wording): words an owner could say by accident
+Treat every phrase below as NOT allowed in the post, the caption or the video, unless the studio lead names a result file that proves it. Source: a read-only review of this file, OWNER-VIEW.md row 6, the run-day card, decisions/D04-D05.md and v5 step J (UNVERIFIED beyond those files).
+- Counting and duplicates: "never loses a lead", "no duplicates", "exactly once", "exactly one mail per person" (the one allowed claim is only: the same lead id sent a second time, inside one take folder, is processed once).
+- Strength words: "safe", "secure", "locked down", "tamper-proof", "guaranteed", "always", "never fails", "mistakes cannot happen".
+- Speed words: "real-time", "instant", "immediately", "live", any recovery or alert time, the caption number 60.1 to 61.9 s.
+- Test claims: "fully tested", "tested end to end", "proven", "verified", "production-ready", "enterprise-grade", "ready for clients", "tested with real accounts", "real run".
+- Recovery claims: "crash-safe" (only as D-05 says), "survives restarts", "self-healing", "recovers automatically", "resilient".
+- Money claims: "spending cap", "budget limit", "cannot overspend", "cost-controlled", "nothing can spend before the typed answers".
+- People and records: "human in the loop", "a person approves every run", "every call is logged", "full record", "traceable", "ledger", anything about a portal, an approval step or an audit trail.
+- Data claims: "no data stored", "private", "GDPR-safe", "compliant", "we never see your data", "permanently deleted", "erased", "wiped", "keys revoked", "no credentials left".
+- Ease claims: "works first time", "one click", "no code", "fully automatic" (the run needs typed answers and a typed `end`).
+- Anything from scenes 5 to 11 (decision 1: not in this video).
+If a phrase is not on any list, ask the studio lead before you use it.
+Open: mirror this list into OWNER-VIEW row 6 and run-day step 18 once the studio lead says "D-04 apply"; v5 step J (lines 163 to 172) still allows wider claims (spending cap, separate count) and is owned by core-hardening.
