@@ -24,3 +24,13 @@ Backup of the folder before any edit: scratchpad `bak-f8r5/` (not in the repo). 
 - `bash run_all.sh`: rc 0; self-test 629 as expected, 0 not, 62 skipped (r4: 577/0/58). take_check.sh rc 0, missing lines: none.
 - Round-4 checker against the new self-test (`raw/selftest-oldchecker-r4.txt`): 592 as expected, 37 NOT (all new round-5 cases).
 - `ruff check` rc 0 (All checks passed); `ruff format --check` rc 0 (25 files); `bandit -ll -r` rc 0 (No issues, 0 nosec); grep noqa|nosec|type: ignore|pragma: none (rc 1).
+
+
+---
+# Round 5b (reviewer line, joined letters), 2026-11-16 (UTC; IST = UTC + 5:30)
+**Failed / not checked first:** nothing failed in the final runs. Not checked: real names beyond the five tried by hand and four in the test; `Zed Smith` passes by design (3 letters, looks human; a script cannot tell it from a real name; said so in README.md). No commit made. Note: git showed my edits to `take_check.sh` as already committed (HEAD c79f8074...), so some other process commits in this folder; not mine.
+**Cause:** `reviewer_ok` in `take_check.sh` cut names at every non-letter, so `O.L.L.M.` became the words o, l, l, m and the stand-in word `llm` was never seen.
+**Fix at the choke point (`reviewer_ok`):** per space-separated part of the name, each run of one-letter pieces is joined; the run is refused when it equals a stand-in word or contains one of 3+ letters. Only one-letter runs are searched, so `Aiden`, `Botha`, `Pat Smith`, `O'Brien`, `Jane Q. Roe-Smith` are not hit. The `Testonly` test allowance is unchanged.
+**By hand (function alone):** `Pat O.L.L.M.` refused, `P.a.t C.l.a.u.d.e` refused, `Pat Smith`, `O'Brien`, `Aiden Botha`, `Zed Smith`, `J.R.R. Tolkien`, `Jane Q. Roe-Smith` accepted.
+**Tests added to test_take_check.sh:** two refusals (exit 4, reviewer-line message) in the M1 loop; four accepted names (exit 5 with the test override, i.e. not refused as a stand-in): Pat Smith, O'Brien, Aiden Botha, Zed Smith. Not run against the old code (no mutation proof); the old code's result for `Pat O.L.L.M.` is the exit 0 in evidence-f8-r4b.md section (5).
+**Runs (exit codes taken directly):** bash -n take_check.sh / test_take_check.sh / run_all.sh: 0 / 0 / 0. `bash test_take_check.sh` on a patched copy: exit 0, "100 of 100 cases as expected, 0 not as expected". `bash run_all.sh`: exit 0. ruff check: 0. ruff format --check: 0. check_secrets.py: 0. check_refs.py: 0. After run_all: `git checkout -- raw selftest-output` done; status then clean for raw and selftest-output.
