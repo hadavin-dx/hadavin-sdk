@@ -1088,3 +1088,12 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 788 PLAN-002 r20: void too wide, owner meanings, gate. FIXED by RULINGS r20.
 - 789 t19 r14: no usable content, terms. FIXED by FOLDING: page rewritten short, history moved to work/t19-history.md; table all TO DO.
 - 790 L4c r10: who rules, DECISION lines, counts. FIXED by CURRENT r10; markers TO DO.
+
+- 791 L5b r11: stores undefined, stacked paras, severity cells. FIXED by CURRENT r11; cells TO DO.
+- 792 L2c r13: ambiguous NOT RUN, no paths or command. FIXED by STEPS r14; step 3 NOT SET.
+- 793 rehearsal-limits r9: not self-contained, pass rule NOT SET, numbering. FIXED by CURRENT r9 (sendable draft); rule NOT SET.
+- 794 banned-claims r8: studio head meaning unsettled. RECORDED as open question first in CURRENT r8.
+- 795 decision-list r14: patch stack, undefined ids, unsplit rows. PARTLY FIXED by CURRENT r14; table split TO DO; ids NOT RECORDED.
+- 796 end-delete r13: not self-contained, no VERIFIED owner. FIXED by CURRENT r13; owner NOT SET.
+- 797 FINAL-CROSSCHECK r15: decisions status contradicts. FIXED by STATUS r15.
+- 798 BRIEF-LANE r15: effective rule set. FIXED by BINDING r15.
