@@ -468,7 +468,7 @@ Every item: command, output file under `handover/core-hardening/audit-r460/evide
 
 ## 8. Evidence saved this pass (`evidence-handoff-v18/`; `evidence-handoff-v16/` and the older folders stay and are named where carried)
 
-**New in v18 (hashes of every file in `evidence-handoff-v18/`, 31 lines incl. `raw/` and `secdef_guard_v16.py`, which v17 left out of its list; the held files again in the table below).** Run `sha256sum -c sha256-v18.txt` in `evidence-handoff-v18/`.
+**New in v18 (hashes of every file in `evidence-handoff-v18/`, 33 lines incl. `raw/` and `secdef_guard_v16.py`, which v17 left out of its list; the held files again in the table below).** Run `sha256sum -c sha256-v18.txt` in `evidence-handoff-v18/`.
 
 | Held file (`evidence-handoff-v18/held-sql/`) | sha256 | Same as v17? |
 |---|---|---|

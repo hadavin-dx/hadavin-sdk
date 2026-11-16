@@ -4,5 +4,6 @@ Guard: secdef_guard_v18.py (deny by default, one tokenizer), allow_v18.py (per-f
 Start-up audit: secdef_audit_v18.py (the query over pg_proc, pg_roles, aclexplode, pg_depend, plus the prototype of the `function` kind of grants).
 Postgres: run_pg_v18.sh, pg_v18.py (114 checks incl. 19 CONTROL lines), pg_v16_regress.py (175 v16 checks on the v18 files).
 Secrets: run_secrets_v18.sh (12 checks), agent_probe_v18.py. gate4_v18.sh (copy; NOT run).
-Raw: raw/ (pg v18 run1/run2 114 of 114; v16 checks run1/run2 175 of 175; secdef mutants 96 checks 0 failed; secrets 12 of 12; PG version lines). The one line that differs between runs is the timing line (+0.072 ms and +0.061 ms per lowering).
+Builder of the main text: patch_v18_main.py (read-only on v17, writes CORE-PR-HANDOFF-v18.md).
+Raw: raw/ (banned-string count 0 hits; pg v18 run1/run2 114 of 114; v16 checks run1/run2 175 of 175; secdef mutants 96 checks 0 failed; secrets 12 of 12; PG version lines). The one line that differs between runs is the timing line (+0.072 ms and +0.061 ms per lowering).
 sha256-v18.txt lists every file here (raw/ included) except itself. Not run: PG 14 and 17.10, gate4, product tests, mutation scripts of the repo.

@@ -1,0 +1,16 @@
+requirepass zqKv71xw9
+requirepass zqKv71xw9 extra
+masterauth zqKv71xw9
+masterauth zqKv71xw9 extra
+  requirepass zqKv71xw9
+  requirepass zqKv71xw9 extra
+  masterauth zqKv71xw9
+  masterauth zqKv71xw9 extra
+# requirepass zqKv71xw9
+# requirepass zqKv71xw9 extra
+# masterauth zqKv71xw9
+# masterauth zqKv71xw9 extra
+- requirepass zqKv71xw9
+- requirepass zqKv71xw9 extra
+- masterauth zqKv71xw9
+- masterauth zqKv71xw9 extra
