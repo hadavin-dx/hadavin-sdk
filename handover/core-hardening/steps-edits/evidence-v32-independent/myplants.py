@@ -36,14 +36,14 @@ P = [
 ('H31',HL,'16:30 UTC = 22:00 IST','16:30 UTC = 22:30 IST','helper (c) IST wrong',0),
 ('H32',HL,'(at most three:','(at most thirty:','helper scope count widened',1),
 ('H33',SA,'never in your normal profile','or in your normal profile','sender gmail in normal profile allowed',1),
-('H34',SA,'delete only exact','delete any','n/a probe',0),
+('H34',SA,'delete only made-up contacts','delete any made-up contacts or real ones','delete only exact address probe',1),
 ('H35',HL,'tell the owner it appeared','keep it','helper keeps appeared key text',1),
-('H36',AA,'Wed 25 Nov 2026 15:00 UTC = 20:30 IST','Thu 25 Nov 2026 15:00 UTC = 20:30 IST','post-by weekday wrong (if present in appendix)',0),
+('H36',CA,'Mon 23 Nov 2026 18:29 UTC','Tue 23 Nov 2026 18:29 UTC','card A deadline weekday wrong',0),
 ('H37',SA,'Wed 25 Nov 2026 15:00 UTC = 20:30 IST','Wed 25 Nov 2026 15:00 UTC = 20:00 IST','post-by IST wrong (sheet A)',0),
 ('H38',CA,'by steps 2 to 4, even if a run was in progress','by steps 2 to 4, unless a run is in progress','backstop waits for a run',1),
 ]
 def run(d):
-    r = subprocess.run([sys.executable,'-B',d+'check-v32.py'],capture_output=True,text=True,env=dict(os.environ,V27_DIR=d))
+    r = subprocess.run([sys.executable,'-B',d+'check-v32.py'],capture_output=True,text=True,env=dict(os.environ,V27_DIR=d,V31_BANNED_TEST='/home/user/hadavin-sdk/tests/test_no_reference_material.py'))
     return [l for l in r.stdout.split('\n') if l.startswith('FAIL')], r.returncode
 rows=[]
 for pid,f,old,new,desc,rev in P:
@@ -54,7 +54,7 @@ for pid,f,old,new,desc,rev in P:
     open(d+f,'w',encoding='utf-8').write(t.replace(old,new,1))
     fl,rc = run(d)
     codes = sorted(set(l.split()[1] for l in fl))
-    non = [c for c in codes if c!='C01']
+    non = [c for c in codes if c not in ('C01','C06')]
     st = 'CAUGHT-CONTENT' if non else ('ONLY-C01(generator-compare)' if codes else 'MISSED')
     rows.append((pid,st+' '+','.join(non[:6]),desc,rev,f)); shutil.rmtree(d)
 for r in rows: print('%s | %s | rev=%s | %s | %s'%(r[0],r[1],r[3],r[2],r[4]))
