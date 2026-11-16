@@ -1,0 +1,7 @@
+0b3b49d8d69f1a31c80ab57c9fe21da505c077005ecde8ec5d9a0ea8a1859c9a  EDITS.md
+7c4012377c2b3dd467ec8eb213368ca5333e4d9331c4d1e550300efb82ad3e6e  ../inputs/AGENT-SCOPE-DO-AND-DONT.md
+c77fca75d17f56079d683cc2e07f5ab98df39fe4fcfa477edcbb85c1736f8e82  ../inputs/DECISION-one-store.md
+338773535ac3f1eba02e3408b1b570600e707d414e674d805197ad1a79687dd2  ../inputs/DECISIONS-2026-11-16.md
+041f084e97dffea22b364316ccd8f47a0a60f7b69d480f2cc9c4083bafa643eb  ../inputs/FACTS-ALREADY-DONE.md
+3f6f64b8df3baf43b2bf8d2e00be3bdc4aafc3b71f948328153ff1d4180bcefd  ../inputs/OWNER-STEPS-realrun-v3.md
+67a0a195537de8754ef80bd3bd8d8a4d78a507ca8418bec8f835a0e99abb41f1  ../inputs/plan-wp6-resmoke-v5.md

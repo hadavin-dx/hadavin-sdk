@@ -211,7 +211,7 @@ def run(edits, inputs, quiet=False):
     def newtxt(rid, only_applied=False):
         return '\n'.join(b['text'] for b in byid[rid]['blocks'] if b['kind'] == 'NEW') if rid in byid else ''
     anchors = [
-        ('E-52', 'the take after which you write `no more takes`'), ('E-52', 'reply `no more takes` or `more takes`; no reply counts as `more takes`'),
+        ('E-52', '**The last take that you accept**'), ('E-52', 'the take after which you write `no more takes`'), ('E-52', 'reply `no more takes` or `more takes`; no reply counts as `more takes`'),
         ('E-52', 'there you reply `cut accepted` or list the bad seconds'), ('E-52', '**How you reply**'), ('E-52', 'for `ok` and `no`: no'),
         ('E-52', 'for the secret key questions: `not sure`'),
         ('E-48', 'Reply `yes`, `no, other things use it` or `not sure`'), ('E-48', 'Reply `same key`, `different key` or `not sure`'),
@@ -246,13 +246,13 @@ def run(edits, inputs, quiet=False):
         for m in re.finditer(pat, txt): F('personal path: ' + m.group(0))
     # ---- banned vendor list (counts only)
     try:
-        bt = open(os.path.join(os.path.dirname(os.path.abspath(edits)), '../../../tests/test_no_reference_material.py'), encoding='utf-8').read()
+        bt = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../../tests/test_no_reference_material.py'), encoding='utf-8').read()
         ban = ast.literal_eval('(' + re.search(r'BANNED = \((.*?)\n\)', bt, re.S).group(1) + ')')
         hits = sum(1 for b in ban if b.lower() in txt.lower())
         info.append(f'banned scan: {len(ban)} entries, {hits} found in this file')
         if hits: F(f'banned vendor strings found: {hits} entries')
     except Exception as e:
-        info.append('banned scan not run: ' + type(e).__name__)
+        F('banned scan could not run: ' + type(e).__name__)
     if not quiet:
         for i in info: print('INFO', i)
         print(f'rows={len(rows)} old_blocks={nold} apply_now={stc["Apply now"]} hold={stc["Hold"]} hold_blocks={hb} fences={nfence}')

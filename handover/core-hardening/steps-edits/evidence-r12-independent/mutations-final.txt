@@ -1,0 +1,51 @@
+M01 change a UTC revoke time 18:19->18:18 (one place, E-48) | CAUGHT | E-48 NEW pair not +5:30: 18:18 UTC = 23:49 IST
+M02 change an IST revoke time 23:49->23:50 (E-48) | CAUGHT | E-48 NEW pair not +5:30: 18:19 UTC = 23:50 IST
+M03 revoke deadline set to 18:29 pair in E-48 ("in every case by") | CAUGHT | context "revoke by" expects 18:19 but pair is 18:29: s `more takes`. In every case you revoke by Mon 23 Nov 2026 
+M04 swap revoke/latest-start pairs in E-12 sentence | CAUGHT | context "no start later than" expects 18:04 but pair is 18:19: s for a take on Mon 23 Nov, it asks for no start later than 
+M05 revoke order swap in E-48: "by 18:19 ... rest by 18:29" -> reversed | CAUGHT | context "rest of the retirement by" expects 18:29 but pair is 18:19: (the last time to revoke). Do the rest of the retirement by 
+M06 latest start 18:04 -> 18:05 pair broken (IST kept 23:34) | CAUGHT | prose pair not +5:30: 18:05 UTC = 23:34 IST
+M07 latest start IST wrong 23:34->23:44 | CAUGHT | prose pair not +5:30: 18:04 UTC = 23:44 IST
+M08 window end IST wrong 23:59->23:29 | CAUGHT | prose pair not +5:30: 18:29 UTC = 23:29 IST
+M09 remove IST from a UTC time in NEW text (E-12) | CAUGHT | E-12 NEW time outside a UTC/IST pair:  asks for no start later than 18:04 UTC on any day
+M10 bare time without UTC/IST in NEW text (E-12) | CAUGHT | E-12 NEW time outside a UTC/IST pair:  asks for no start later than 18:04 on any day, be
+M11 drop one hold marker (E-04 NEW label) | CAUGHT | E-04 Hold row has NEW block without hold marker
+M12 drop hold marker in G5 row E-50 | CAUGHT | E-50 Hold row has NEW block without hold marker
+M13 hold label text DO NOT APPLY -> DO APPLY (E-41) | CAUGHT | E-41 Hold row has NEW block without hold marker
+M14 hold gate label differs from header (E-42 label G1->G2) | CAUGHT | E-42 marker G2 vs header G1
+M15 remove second hold block of E-13 (count 12) | CAUGHT | hold-marked NEW blocks 12 != 13
+M16 apply-now row flipped to Hold in header (E-14) | CAUGHT | status counts text ('44', '12', '0') vs headers {'Apply now': 43, 'Hold': 13}
+M17 hold row flipped to Apply now in header (E-45) | CAUGHT | status counts text ('44', '12', '0') vs headers {'Apply now': 45, 'Hold': 11}
+M18 counts text Apply now 44->45 | CAUGHT | status counts text ('45', '12', '0') vs headers {'Apply now': 44, 'Hold': 12}
+M19 counts text Hold 12->13 | CAUGHT | status counts text ('44', '13', '0') vs headers {'Apply now': 44, 'Hold': 12}
+M20 total rows text 56->57 | CAUGHT | rows-in-total text differs
+M21 break an OLD text (one character, E-20) | CAUGHT | E-20 OLD occurs 0 times in OWNER-STEPS-realrun-v3.md
+M22 stated line number changed (E-21 line 164->165) | CAUGHT | E-21 OLD at line 164, stated [165]
+M23 duplicate row id (E-30 header renamed E-29) | CAUGHT | duplicate row ids: ['E-29']
+M24 delete a whole row (E-33) | CAUGHT | row count 55 != 56
+M25 weekday wrong: Wed 18 Nov -> Thu 18 Nov (first) | CAUGHT | weekday wrong: Thu 18 Nov (is Wed)
+M26 weekday wrong: Mon 23 Nov 2026 -> Tue 23 Nov 2026 (in E-48) | CAUGHT | weekday wrong: Tue 23 Nov 2026 (is Mon)
+M27 date wrong: Mon 23 Nov 2026 -> Mon 24 Nov 2026 (in E-55) | CAUGHT | weekday wrong: Mon 24 Nov 2026 (is Tue)
+M28 year wrong: Mon 16 Nov 2026 -> Mon 16 Nov 2027 (E-37 NEW) | CAUGHT | weekday wrong: Mon 16 Nov 2027 (is Tue)
+M29 delete reply definition: "last take that you accept" bullet (E-52) | CAUGHT | reply-phrase definition missing in E-52: **The last take that you accept**
+M30 delete `cut accepted` definition sentence (E-52) | CAUGHT | reply-phrase definition missing in E-52: there you reply `cut accepted` or list the bad seconds
+M31 delete "How you reply" bullet name (E-52) | CAUGHT | reply-phrase definition missing in E-52: **How you reply**
+M32 delete "same key / different key / not sure" definition (E-48) | CAUGHT | reply-phrase definition missing in E-48: Reply `same key`, `different key` or `not sure`
+M33 delete `key kept` (E-58) | CAUGHT | reply-phrase definition missing in E-58: `key kept`
+M34 delete `end` definition (E-37) | CAUGHT | reply-phrase definition missing in E-37: `end`, when the assistant tells you
+M35 delete the exact reply `Yes, remove the container only` (E-16) | CAUGHT | reply-phrase definition missing in E-16: Reply with exactly `Yes, remove the container only` or `No`
+M36 delete `Yes, send the one enquiry on` (E-49) | CAUGHT | reply-phrase definition missing in E-49: Yes, send the one enquiry on
+M37 internal code E-12 in owner NEW (E-14) | CAUGHT | E-14 owner NEW text has E-nn: (see E-12) (4) the n8n l
+M38 internal code gate G3 in owner NEW (E-15) | CAUGHT | E-15 owner NEW text has G-nn: (gate G3) (5) the count
+M39 internal code R12 in owner NEW (E-17) | CAUGHT | E-17 owner NEW text has R-nn: (rule R12) **a lead sent
+M40 e-mail address in NEW (E-19) | CAUGHT | e-mail address with non-example domain: ann...@gmail.com
+M41 secret-shaped string in NEW (E-22) | CAUGHT | secret-shaped (sk-shaped): sk-A1b2C3d4A...
+M42 delete a fence line (odd fence count) | CAUGHT | unterminated fence
+M43 OLD of E-02 replaced by a string that occurs many times in input | CAUGHT | E-02 OLD occurs 413 times in OWNER-STEPS-realrun-v3.md
+M44 NEW block removed (E-25 row has OLD only) | CAUGHT | E-25 no NEW block
+M45 banned-list entry planted (read at run time) | CAUGHT | banned vendor strings found: 2 entries
+I01 input OWNER-STEPS: change first word of the OLD text of E-06 | CAUGHT | E-06 OLD occurs 0 times in OWNER-STEPS-realrun-v3.md
+I02 input AGENT-SCOPE: change middle char of the OLD text of E-28 | CAUGHT | E-28 OLD occurs 0 times in AGENT-SCOPE-DO-AND-DONT.md
+I03 input OWNER-STEPS: blank line inserted at top (all line numbers shift) | CAUGHT | E-01 OLD at line 4, stated [3]
+I04 input AGENT-SCOPE: OLD text of E-28 appended a second time (count 2) | CAUGHT | E-28 OLD occurs 2 times in AGENT-SCOPE-DO-AND-DONT.md
+I05 input DECISION-one-store: file emptied | CAUGHT | E-39 OLD occurs 0 times in DECISION-one-store.md
+TOTAL 50 caught 50 missed 0 setup-errors 0

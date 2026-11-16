@@ -1,0 +1,6 @@
+## 2026-11-16T16:22:48Z C-10a (c6q, fresh run): grep -il -E 'DELETE|archive' on the four real-v5 flow files (names only), files read from the read-only copy of origin/cloud/flows-audit
+file modified (UTC): 2026-11-16T09:00:41Z /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6/tree/handover/demo/n8n-flows-real-v5/mf-form.json
+file modified (UTC): 2026-11-16T09:00:41Z /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6/tree/handover/demo/n8n-flows-real-v5/mf-hook.json
+file modified (UTC): 2026-11-16T09:00:41Z /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6/tree/handover/demo/n8n-flows-real-v5/mf-recovery.json
+file modified (UTC): 2026-11-16T09:00:41Z /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6/tree/handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json
+grep exit code: 1 (1 = no file matched)
