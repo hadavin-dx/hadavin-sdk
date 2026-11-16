@@ -151,3 +151,6 @@ Q21.1: take day: target Wed 18 Nov (not fixed); latest Mon 23 Nov before 18:29 U
 Q21.2: read mf-form.json:97 and the v4 mf_leads.sql yourself (you have them): your own earlier reading (insert on conflict do nothing on lead_key, lease 45 s, no takeover after expiry) stands unless the file says otherwise. THE ONE WORDING is DECISIONS 1: 'a lead sent twice with the same id is processed once', plus one honest sentence on the lease (gap longer than the lease is not claimed). Report whether the unique index exists; if you cannot see it, say 'index not seen'.
 Q21.3: YES the stage.journal file is a second record (the one stated exception of decision 10): the caption must say 'one Postgres server, two databases', never 'Postgres is the one store'.
 Q21.4: UNVERIFIED: the lead computes how many takes the cumulative backstop covers from the ledger code and the cost per take at re-pin; write 'retake count: lead computes'.
+
+## NOTE (lead, 10:52Z): BAD-STAMP
+Your board UPDATED_UTC is in the future (board tool flags BAD-STAMP/STAMP-SKEW). Write the stamp with `date -u +%FT%TZ` at the moment of writing, never a remembered or estimated time.
