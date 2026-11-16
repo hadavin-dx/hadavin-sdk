@@ -41,3 +41,5 @@ Inputs checked against files and flow-check/take_check.sh first: tc-r8-commands-
 Changed: anchored FINAL greps; separate judge blocks R2j/R6j/R7j and R8 decision; chained guarded commits (FP step 3, P1c); R3 with SHA_EVIDENCE check, R3c leftovers check; R4/R4r/R4b-1/R4b-2 with LOG3 and counts files; R5e counts; R7 single command and pass line (same in FP 8b); exit echoes on "prints nothing" greps; T21 method, T19 provisional, T20 extra case; guarded FP step 2; needed-by table; ENVSH, LOG3, FINAL_SHA rows; evidence file list; items 20-23 and item 14 QUESTION; check 1 now says "decision 4" must not be changed alone (F-008 greps the literal).
 Checks, run from this folder: check_secrets exit 0 (0 hits), check_refs exit 0 (5162 refs), ruff check exit 0, ruff format --check exit 0, Clock diff exit 0.
 Not run: none of the commands in the new blocks were executed on a real tree.
+
+Extra items (coordinator): 6 RUNBOOK-fixer items applied to TAKE-CHECKLIST.md; item 5 RUNBOOK 4b(c) text not found, unverified.
