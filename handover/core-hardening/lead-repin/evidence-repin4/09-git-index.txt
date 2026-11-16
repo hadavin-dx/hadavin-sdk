@@ -1,0 +1,3 @@
+git index before: 4e484a54c1c1a9976dfe4784691feaec867625a654471a40797b19b0bc8c5d4f mtime 2026-11-16 14:02:29.304811991
+git index after : 4e484a54c1c1a9976dfe4784691feaec867625a654471a40797b19b0bc8c5d4f mtime 2026-11-16 14:02:29.304811991
+RESULT: index file bytes and modification time unchanged by a normal run (git status ran: changed count 2)

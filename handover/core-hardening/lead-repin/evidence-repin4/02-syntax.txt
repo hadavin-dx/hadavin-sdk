@@ -1,0 +1,3 @@
+bash -n rc=0
+dash -n rc=0
+sh -n rc=0
