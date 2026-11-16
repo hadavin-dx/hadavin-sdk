@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T13:39:30Z
+UPDATED_UTC: 2026-11-16T13:40:06Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 30
-PERCENT: 82
-AGENTS_RUNNING: 5
-CAPACITY: 0.35 load of 4 cores, mem 0/15 GB, RAM 927/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 5 (light+heavy per list)
+PERCENT: 83
+AGENTS_RUNNING: 6
+CAPACITY: 0.19 load of 4 cores, mem 0/15 GB, RAM 931/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: TC/FP fixer, REVIEW r16, claims fixer, F8 r8
-PUSHED_UTC: 2026-11-16T13:39:30Z
+NEXT: TC/FP fixer, REVIEW r16 x2, claims fixer, F8 r8, REPORT fixer
+PUSHED_UTC: 2026-11-16T13:40:06Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -35,14 +35,15 @@ PUSHED_UTC: 2026-11-16T13:39:30Z
 | a494960 | fixer | sonnet | RUNBOOK/TC/FP round 12 Majors | 13:45Z | 14:25Z | running | log fix-tcfp8.md |
 | a044860 | reviewer | sonnet | REVIEW.md round 16 design (uncapped) | 13:50Z | 14:10Z | running | findings inline |
 | a57a3a0 | reviewer | sonnet | REVIEW.md round 16 facts (uncapped) | 13:50Z | 14:10Z | running | findings inline |
+| a107e04 | fixer | sonnet | REPORT.md drift items and ORDER 037 file list | 13:41Z | 14:00Z | running | log fix-report3.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. Fix REPORT.md old counts (lines 82, 100) and board ITEMS counts (drift-007)
-2. Evidence runner + fresh F8 review after a83d02c reports
-3. Facts + second-angle review of CLAIMS-TABLE after a7b9b54
-4. Citation-fix pass (41 MISMATCH) after TC/FP/RUNBOOK fixer a494960 settles
+1. Evidence runner + fresh F8 review after a83d02c reports
+2. Facts + second-angle review of CLAIMS-TABLE after a7b9b54
+3. Citation-fix pass (41 MISMATCH) after TC/FP/RUNBOOK fixer a494960 settles
+4. Fixer for REVIEW.md round 16 findings (after a044860, a57a3a0)
 5. Post-twice script review (waits on lead, Q29-4)
-Missing lanes (3 of 8): each waits on a running agent's report (rows 2-4) or a lead answer (row 5); row 1 can start now.
+Missing lanes (2 of 8): rows 1-4 each wait on a running agent's report; row 5 waits on a lead answer.
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

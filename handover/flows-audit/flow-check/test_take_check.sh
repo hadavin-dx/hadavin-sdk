@@ -6,6 +6,8 @@
 # is still wired (no orphan); round 10b adds M-1 (no deletion promise), M-2 (sha256 of the four flow files), M-3 (pin header must be read by a person; no pin is written when the run has other problems). Round 10d adds A1 (pin comment), B1 (enforced flows sha256), B2 (reviewer line grammar), B3 (exit 5, both folder sources, printed source), B4 (run_all.sh lock), a snapshot-order case, a sha256sum failure case and the refusal of the run_all.sh test hooks. Made-up data only. Exit 0 = every case behaved as expected; exit 1 = at least one did not (each is listed).
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); TAKE="${TEST_TAKE_SCRIPT:-$HERE/take_check.sh}"   # TEST_TAKE_SCRIPT: only to run these cases against an older copy of the script (it must sit in a mirror folder like the one built below)
+# f8-r8: the two quick-run hooks below must never leak from an environment into a real run (a leaked RV_DUMP used to make the whole suite exit 0 before any case ran): like the RUN_ALL_* hooks of run_all.sh they are REFUSED (exit 2) unless TEST_TAKE_DEV=1 is set on purpose
+if { [ -n "${RV_DUMP:-}" ] || [ -n "${RV_ONLY:-}" ]; } && [ "${TEST_TAKE_DEV:-}" != 1 ]; then echo "REFUSED: RV_DUMP / RV_ONLY are quick-run hooks for editing the word list; they are accepted only with TEST_TAKE_DEV=1 (a leaked variable must not end this suite early)"; exit 2; fi
 P=${1:-}; [ -d "$P" ] || { echo "usage: bash test_take_check.sh PATCHED_REAL_DIR [SCRATCH_DIR]"; exit 2; }
 P=$(cd "$P" && pwd)
 if [ -n "${2:-}" ]; then
@@ -28,6 +30,7 @@ PD=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN"
 TODAY=$(date -u +%Y-%m-%d); YESTERDAY=$(date -u -d "$TODAY -1 day" +%Y-%m-%d); TOMORROW=$(date -u -d "$TODAY +1 day" +%Y-%m-%d); IN2DAYS=$(date -u -d "$TODAY +2 days" +%Y-%m-%d)   # computed ONCE here; the word-check cases below give TODAY to the helper as its fixed today, so none of them can race UTC midnight
 OLDDATE=$(date -u -d "$TODAY -400 days" +%Y-%m-%d)   # dates for the old-date cases are computed, never typed
 [ -n "$PD" ] || { echo "no date line in the pin"; exit 2; }
+LONGX=$(head -c 1100 /dev/zero | tr '\0' x)
 BEFOREPIN=$(date -u -d "$PD -1 day" +%Y-%m-%d)
 # round 10c (Q1): the committed pin keeps a reviewer line that names a session, so a bare take exits 4 until the lead edits it. Cases that need exit 0 use LEADPIN (same WARN lines, a person's reviewer line); SESSPIN keeps the session wording
 { echo "# reviewed by: Testonly Reviewer, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
@@ -63,7 +66,7 @@ ok|Jo To Do, {TODAY}
 ok|Claudette Smith, {TODAY}
 ok|Claudel Dupont, {TODAY}
 ok|Pat Robotham, {TODAY}
-ok|Pat Llamas, {TODAY}
+no|Pat Llamas, {TODAY}|rule: listed word llama
 ok|Pat Geminiani, {TODAY}
 ok|Aiden Botha, {TODAY}
 ok|Sara Gentile, {TODAY}
@@ -72,12 +75,12 @@ ok|Sam Pleasant, {TODAY}
 ok|Bill Lamar, {TODAY}
 ok|Magenta Jones, {TODAY}
 ok|Pat Klaude, {TODAY}
-ok|Pat Cla.ude, {TODAY}
+no|Pat Cla.ude, {TODAY}|rule: listed word claude
 ok|José Müller, {TODAY}
 ok|Zoë Nguyễn, {TODAY}
 ok|Søren Ørsted, {TODAY}
 ok|Иван Петров, {TODAY}
-ok|Pat O L L M, {TODAY}
+no|Pat O L L M, {TODAY}|rule: name word too short
 ok|Pat Smith, {TODAY}, read via O p e n A I
 ok|Pat Smith, {TODAY}, read it, all of it
 no|Pat Smith|rule: shape
@@ -185,6 +188,109 @@ no|Pat Smith, {TODAY}, read it later|rule: note says not read
 no|Pat Smith, {TODAY}, to be read|rule: note says not read
 no|Pat Smith, {TODAY}, unread|rule: note says not read
 no|Pat Smith, {TODAY}, have not read it|rule: note says not read
+ok|Pat Botty, {TODAY}
+ok|Pat Agentic, {TODAY}
+ok|Pat Possession, {TODAY}
+ok|Jane Q. Roe, {TODAY}
+ok|Pat Smith, {TODAY}, read-only copy and me@home.net
+ok|Pat Smith, {TODAY}, the owner and the team read it
+ok|Pat Smith, {TODAY}, checked all lines, none missing words
+ok|Pat Smith, {TODAY}, 11111111111111111111 lines
+ok|Jose{MN} Mu{MN}ller, {TODAY}
+no|Pat Q Roe, {TODAY}|rule: name word too short
+no|Pat Smith -, {TODAY}|rule: name word too short
+no|Pat Cl{U034F}aude, {TODAY}|rule: hidden character
+no|Pat Smith, {TODAY}, read Cl{U034F}aude|rule: hidden character
+no|Pat Smith, {TODAY}, ok{UFE0F}|rule: hidden character
+no|Pat{UFE0F} Smith, {TODAY}|rule: hidden character
+no|{U3164}{U3164}{U3164}, {TODAY}|rule: hidden character
+no|Pat Smith{U3164}, {TODAY}|rule: hidden character
+no|Pat Smith, {TODAY}, note{U3164}here|rule: hidden character
+no|Pat Smith, {TODAY}, a{U2028}b|rule: hidden character
+no|Pat{U115F} Smith, {TODAY}|rule: hidden character
+no|Pat{SHY} Smith, {TODAY}|rule: hidden character
+no|Pat {MN}{MN}{MN}, {TODAY}|rule: hidden character
+no|{MN}{MN}{MN}, {TODAY}|rule: hidden character
+no|Pat Smith, {TODAY}, {MN} x|rule: hidden character
+no|Pat Smith, {TODAY}, 5{MN}|rule: hidden character
+no|Pat Smith, {TODAY}, {LONGX}|rule: too long
+no|Pat Cl-aude, {TODAY}|rule: listed word claude
+no|Pat Cla'ude, {TODAY}|rule: listed word claude
+no|Pat Bo.t, {TODAY}|rule: listed word bot
+no|Pat A-I, {TODAY}|rule: listed word ai
+no|Pat G-P-T, {TODAY}|rule: listed word gpt
+no|Pat L-L-M, {TODAY}|rule: listed word llm
+no|Pat Smith, {TODAY}, Cl@ude|rule: listed word claude
+no|Pat Smith, {TODAY}, Cl_aude|rule: listed word claude
+no|Pat Smith, {TODAY}, Cl-aude|rule: listed word claude
+no|ВОТ Smith, {TODAY}|rule: listed word bot
+no|Pat ΑΙ, {TODAY}|rule: listed word ai
+no|КІМІ Smith, {TODAY}|rule: listed word kimi
+no|Pat Smith, {TODAY}, read by КІМІ|rule: listed word kimi
+no|Pat Cłaude, {TODAY}|rule: listed word claude
+no|Pat Clauđe, {TODAY}|rule: listed word claude
+no|Pat Clɑude, {TODAY}|rule: listed word claude
+no|Pat Opuѕ, {TODAY}|rule: mixed alphabets
+no|John Doe, {TODAY}|rule: listed words john doe
+no|Jane Doe, {TODAY}|rule: listed words jane doe
+no|Foo Bar, {TODAY}|rule: listed words foo bar
+no|Firstname Lastname, {TODAY}|rule: listed word firstname
+no|Lorem Ipsum, {TODAY}|rule: listed word ipsum
+no|Pat Asdf, {TODAY}|rule: listed word asdf
+no|Pat Xxxx, {TODAY}|rule: listed word xxxx
+no|Pat Noone, {TODAY}|rule: listed word noone
+no|Pat Tba, {TODAY}|rule: listed word tba
+no|Pat Tbc, {TODAY}|rule: listed word tbc
+no|Pat Pending, {TODAY}|rule: listed word pending
+no|Pat Unspecified, {TODAY}|rule: listed word unspecified
+no|Pat Owner, {TODAY}|rule: listed word owner
+no|Pat Approver, {TODAY}|rule: listed word approver
+no|Pat Operator, {TODAY}|rule: listed word operator
+no|Pat Maintainer, {TODAY}|rule: listed word maintainer
+no|Pat Author, {TODAY}|rule: listed word author
+no|Pat Team, {TODAY}|rule: listed word team
+no|Pat System, {TODAY}|rule: listed word system
+no|Pat Service, {TODAY}|rule: listed word service
+no|Pat Support, {TODAY}|rule: listed word support
+no|Pat Root, {TODAY}|rule: listed word root
+no|Pat Dependabot, {TODAY}|rule: listed word dependabot
+no|Pat Renovate, {TODAY}|rule: listed word renovate
+no|Pat Jenkins, {TODAY}|rule: listed word jenkins
+no|Pat Github, {TODAY}|rule: listed word github
+no|Pat Bard, {TODAY}|rule: listed word bard
+no|Pat Perplexity, {TODAY}|rule: listed word perplexity
+no|Pat Siri, {TODAY}|rule: listed word siri
+no|Pat Alexa, {TODAY}|rule: listed word alexa
+no|Pat Cortana, {TODAY}|rule: listed word cortana
+no|Pat Jarvis, {TODAY}|rule: listed word jarvis
+no|Pat Windsurf, {TODAY}|rule: listed word windsurf
+no|Pat Aider, {TODAY}|rule: listed word aider
+no|Pat Manus, {TODAY}|rule: listed word manus
+no|Pat Bing, {TODAY}|rule: listed word bing
+no|Pat Smith, {TODAY}, read with Perplexity|rule: listed word perplexity
+no|Pat Claudes, {TODAY}|rule: listed word claude
+no|Pat Sonnets, {TODAY}|rule: listed word sonnet
+no|Pat Opuses, {TODAY}|rule: listed word opus
+no|Pat Haikus, {TODAY}|rule: listed word haiku
+no|Pat Chatbots, {TODAY}|rule: listed word chatbot
+no|Pat Copilots, {TODAY}|rule: listed word copilot
+no|Pat Geminis, {TODAY}|rule: listed word gemini
+no|Pat Codexes, {TODAY}|rule: listed word codex
+no|Pat Smith, {TODAY}, written by Claudes|rule: listed word claude
+no|Pat Smith, {TODAY}, m1stra1|rule: listed word mistral
+no|Pat Smith, {TODAY}, Cop11ot|rule: listed word copilot
+no|Pat Smith, {TODAY}, c1aude|rule: listed word claude
+no|Pat Smith, {TODAY}, did not read it|rule: note says not read
+no|Pat Smith, {TODAY}, will review|rule: note says not read
+no|Pat Smith, {TODAY}, to be reviewed|rule: note says not read
+no|Pat Smith, {TODAY}, didn't read|rule: note says not read
+no|Pat Smith, {TODAY}, haven't read|rule: note says not read
+no|Pat Smith, {TODAY}, not checked|rule: note says not read
+no|Pat Smith, {TODAY}, skimmed only|rule: note says not read
+no|Pat Smith, {TODAY}, pending|rule: note says not read
+no|Pat Sessions, {TODAY}|rule: listed word sessions
+no|Audit Session, {TODAY}|rule: listed word session
+no|Pat Smith, {TODAY}, lead to confirm|rule: lead to confirm
 EOF
 )
 rv_n=0
@@ -192,6 +298,7 @@ while IFS='|' read -r want line why pd envx; do
   case "$want" in ok|no) ;; *) continue;; esac
   for tok in TODAY:"$TODAY" YESTERDAY:"$YESTERDAY" TOMORROW:"$TOMORROW" IN2:"$IN2DAYS" PD:"$PD"; do line=${line//\{${tok%%:*}\}/${tok#*:}}; pd=${pd//\{${tok%%:*}\}/${tok#*:}}; done
   line=${line//\{TAB\}/$'\t'}; line=${line//\{ESC\}/$'\033'}; line=${line//\{ZW\}/$'\342\200\213'}; line=${line//\{CR\}/$'\r'}
+  line=${line//\{U034F\}/$'\315\217'}; line=${line//\{UFE0F\}/$'\357\270\217'}; line=${line//\{U3164\}/$'\343\205\244'}; line=${line//\{U2028\}/$'\342\200\250'}; line=${line//\{U115F\}/$'\341\205\237'}; line=${line//\{SHY\}/$'\302\255'}; line=${line//\{MN\}/$'\314\201'}; line=${line//\{LONGX\}/$LONGX}
   if [ -n "${RV_DUMP:-}" ]; then printf '%s\037%s\037%s\037%s\037%s\n' "$want" "$line" "$why" "$pd" "$envx" >> "$RV_DUMP"; continue; fi
   rv_n=$((rv_n+1))
   # shellcheck disable=SC2086
