@@ -1,0 +1,22 @@
+PASS A1 old shape INSERT..ON CONFLICT with delta -1 on a row of 2 fails 23514 (INSERT arm checks the -1 before conflict)  [CheckViolation/23514]
+PASS A2 nothing changed after A1
+PASS A3 UPDATE shape with delta -1 works  [(Decimal('1'),)]
+PASS A4 UPDATE shape that would go below 0 fails 23514  [CheckViolation/23514]
+PASS A5 UPDATE of a missing row returns no row (no insert)
+PASS A6 old shape with delta +1 (positive) still works
+PASS B1 v14 function: with a temp table of the same name the REAL log gets the row and the temp table none  [real=1 temp=0]
+PASS B3 v14: a lowering by the migration role writes a real row too (2 rows in all)
+PASS B4 v14: runtime role cannot call the trigger function directly (42501)  [InsufficientPrivilege/42501]
+PASS D1 REVOKE TEMPORARY FROM PUBLIC: runtime role had TEMP before, has none after; migration role keeps it  [True False True]
+PASS D2 after REVOKE a NEW runtime session cannot create a temp table (42501)  [InsufficientPrivilege/42501]
+PASS D3 an already-open runtime session before REVOKE: its existing temp table is unaffected (info of the order of operations)  [see D2 (new session); the old session kept its temp table spend_decrease_log2]
+PASS B2 NEGATIVE CONTROL v13 function (real v13 file): the same attack bypasses the log (real 0, temp 1)  [real=0 temp=1]
+PASS C1 held file 1 while another session holds ROW SHARE on spend: fails 55P03 after about 5 s  [55P03 5.00s]
+PASS C2 rolled back: no constraint left
+PASS C3 NEGATIVE CONTROL: without the SET LOCAL line the file waits (here stopped by my 8 s statement_timeout, 57014, not 55P03)  [57014 8.00s]
+PASS C4 after file 1: runtime INSERT -0.01 into spend -> 23514
+PASS C4 after file 1: runtime INSERT 'NaN' into spend -> 23514
+PASS C4 after file 1: runtime INSERT 'Infinity' into spend -> 23514
+PASS C4 after file 1: runtime INSERT '-Infinity' into spend -> 23514
+INFO 20 of 20 checks passed
+rc=0
