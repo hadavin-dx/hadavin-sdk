@@ -21,17 +21,17 @@ STRICT_IDS=""; ARGS=(); LOCKONLY=""
 for a in "$@"; do case "$a" in --strict) STRICT_IDS="--require-real-credential-ids";; --lock-only) LOCKONLY=1;; *) ARGS+=("$a");; esac; done
 # round 10d (Q: review f8-r10c): the test hooks are refused (not silently ignored) when RUN_ALL_NESTED is not set, so a stray variable in a person's shell can never change what is checked
 if [ -z "${RUN_ALL_NESTED:-}" ]; then
-  for v in RUN_ALL_TAKE_FLOWS RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT RUN_ALL_LOCKFILE; do
+  for v in RUN_ALL_TAKE_FLOWS RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT; do
     [ -z "${!v:-}" ] || { echo "REFUSED: $v is a test hook of the nested failure tests and is only honoured together with RUN_ALL_NESTED=1; unset it."; exit 2; }
   done
 fi
-# round 10d (B4): one run at a time per raw folder. The raw folder is shared, so two runs at once would overwrite each other's files and mix their results. A lock (flock) is held until this script ends; a second run on the same raw folder is refused (exit 2). The lock file is in the temporary folder, so nothing is left in the raw folder.
-RAWABS=$(case $RAW in /*) printf '%s' "$RAW";; *) printf '%s/%s' "$PWD" "$RAW";; esac)
-command -v flock >/dev/null 2>&1 || { echo "REFUSED: flock is not installed, so this script cannot make sure that no second run uses $RAWABS at the same time"; exit 2; }
-LOCKF="${RUN_ALL_LOCKFILE:-${TMPDIR:-/tmp}/run_all-$(printf '%s' "$RAWABS" | sha256sum | cut -c1-16).lock}"
-exec 9>"$LOCKF" || { echo "REFUSED: cannot open the lock file $LOCKF"; exit 2; }
-flock -n 9 || { echo "REFUSED: another run_all.sh holds the lock for the raw folder $RAWABS (lock file $LOCKF); wait for it to end, or use another raw folder (RUN_ALL_RAW is for the nested tests only)"; exit 2; }
-[ -z "$LOCKONLY" ] || { echo "lock acquired: $LOCKF (--lock-only: nothing else was run)"; exit 0; }
+# round 10d (B4) + f8-r4 (M2): one run at a time per raw folder. The raw folder is shared, so two runs at once would overwrite each other's files and mix their results. The lock (flock) is taken on the raw FOLDER ITSELF (opened read-only; Linux allows a lock on a folder), after mkdir -p, and is held until this script ends. So the lock belongs to the physical folder: it does not depend on TMPDIR, on how the path is written (relative, absolute, through a symbolic link, with .. or a double slash) or on the current folder, and no lock file is left anywhere. A second run on the same raw folder is refused (exit 2).
+command -v flock >/dev/null 2>&1 || { echo "REFUSED: flock is not installed, so this script cannot make sure that no second run uses the raw folder $RAW at the same time"; exit 2; }
+mkdir -p -- "$RAW" || { echo "REFUSED: cannot make the raw folder $RAW"; exit 2; }
+RAWABS=$(cd -- "$RAW" && pwd -P) || { echo "REFUSED: cannot enter the raw folder $RAW"; exit 2; }
+exec 9< "$RAWABS" || { echo "REFUSED: cannot open the raw folder $RAWABS to lock it"; exit 2; }
+flock -n 9 || { echo "REFUSED: another run_all.sh holds the lock for the raw folder $RAWABS; wait for it to end, or use another raw folder (RUN_ALL_RAW is for the nested tests only)"; exit 2; }
+[ -z "$LOCKONLY" ] || { echo "lock acquired: $RAWABS (--lock-only: nothing else was run)"; exit 0; }
 if [ -n "${ARGS[0]:-}" ]; then
   W=${ARGS[0]}
   if [ -e "$W" ] && [ -n "$(ls -A -- "$W" 2>/dev/null)" ]; then echo "REFUSED: $W exists and is not empty; this script never deletes a folder it did not make"; exit 2; fi
@@ -87,7 +87,7 @@ T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 # the take runs on the PATCHED copy (F-002 and F-008 applied, lead answers Q17-4 and Q18): exit 0 required, and the run-saving block must hold ACCEPTED lines only (no WARN)
 # round 10c (Q1): the committed take-warns.pin keeps the flows-audit reviewer line, so a bare take exits 4 ("pin not yet confirmed by the lead") until the lead edits it. This script tests the FILES, so it runs the take with a copy of the pin whose reviewer line is a stand-in (same WARN lines, same hash); the committed pin's own state is printed near the end.
-mkdir -p "$W/tc" && { echo "# reviewed by: Runall Standin, $(date -u +%Y-%m-%d)"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
+mkdir -p "$W/tc" && { echo "# reviewed by: Testonly Runall, $(date -u +%Y-%m-%d)"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
 env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$TESTPIN" bash "$HERE/take_check.sh" --flows "${RUN_ALL_TAKE_FLOWS:-$W/g/real}" > "$RAW/take-check.txt" 2>&1; TC=$?   # round 10d (B3): this call has an override (the stand-in pin), so a pass is exit 5, never 0; exit 5 is what is required below   # --flows is the documented way for the folder; the pin override needs the test flag (round 10, M1)
 TCMISS=""   # set BEFORE the first use below (round 7 fix: it used to be set after the first two checks, so a failing take script ended this script with "TCMISS: unbound variable" and the first two checks were thrown away)
 # the FINAL line of take_check.sh must print the same number as its real exit status (a line that always says 0 would hide a failure)
@@ -121,6 +121,15 @@ tcfail() { # name expected-line env-assignments...
   nm=$1; want=$2; shift 2
   # round 10c (Q4): clean TAKE_CHECK_* environment (env -u), the stand-in pin by default (a case may give its own TAKE_CHECK_WARN_PIN after it), TAKE_CHECK_TEST=1 = the documented test flag (round 10, M1)
   env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$TESTPIN" "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
+  # f8-r4 (A2): the stand-in pin names the flows sha256 of the PATCHED folder, so a planted fault in another folder would be exit 4 for that reason alone and the case would prove nothing. Unless the case gives its own pin, the run is repeated with a copy of the stand-in pin whose flows sha256 line holds the sha of the folder that was run (read from the first output), so the exit 4 has to come from the planted fault; the output must then NOT contain the flows-sha mismatch line.
+  case " $* " in *" TAKE_CHECK_WARN_PIN="*) ;; *)
+    fsha=$(grep -m 1 -E '^  combined: [0-9a-f]{64}$' "$RAW/take-check-$nm.txt" | sed 's/^  combined: //')
+    if [ -n "$fsha" ]; then
+      sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$fsha/" "$TESTPIN" > "$W/tc/pin-$nm.pin"
+      env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$W/tc/pin-$nm.pin" "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
+      if grep -q -F "THE FLOW FILES DO NOT MATCH THE SHA-256" "$RAW/take-check-$nm.txt"; then TCMISS="$TCMISS [take_check $nm: the exit 4 still comes partly from the flows sha256 mismatch although the pin was matched to the folder]"; fi
+    else TCMISS="$TCMISS [take_check $nm: no flows sha256 in the first output, the case cannot be matched to a pin]"; fi;;
+  esac
   first=$(grep -m 1 -E '^FAIL ' "$RAW/take-check-$nm.txt" | cut -c1-240); [ -n "$first" ] || first=$(grep -m 1 -E '^!!! ' "$RAW/take-check-$nm.txt" | cut -c1-240); first=${first:-none}   # a FAIL (a definite fault in a file) is shown before a !!! line (a problem of this script)
   # say which condition failed and show the first FAIL or !!! line of the raw output (the output file is written by the redirect above, so no guess about another run is made)
   if [ "$x" != 4 ]; then TCMISS="$TCMISS [take_check $nm: want exit 4, got exit $x; first FAIL or !!! line of $RAW/take-check-$nm.txt: $first]"

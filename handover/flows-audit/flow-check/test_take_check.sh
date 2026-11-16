@@ -25,7 +25,7 @@ cmp_pins() { cmp -s <(grep -v '^#' "$1") <(grep -v '^#' "$2"); }
 PIN="$HERE/take-warns.pin"
 PINSUM=$(sha256sum < "$PIN" | cut -d' ' -f1)
 # round 10c (Q1): the committed pin keeps a reviewer line that names a session, so a bare take exits 4 until the lead edits it. Cases that need exit 0 use LEADPIN (same WARN lines, a person's reviewer line); SESSPIN keeps the session wording
-{ echo "# reviewed by: Test Reviewer, 2026-11-16"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
+{ echo "# reviewed by: Testonly Reviewer, 2026-11-16"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
 { echo "# reviewed by: flows-audit session, 2026-11-16, content read by that session only, lead to confirm"; grep -v '^# reviewed by' "$PIN"; } > "$S/sess.pin"
 
 # the control: the plain take on the patched copy. Exit 0 only when the committed pin carries a reviewer line that is not a session (round 10c); until then exit 4 with the plain reason
@@ -34,7 +34,7 @@ CRL=$(sed -n 's/^# reviewed by: //p' "$PIN" | head -n 1)
 { [ "$RC" = 0 ] || { [ "$RC" = 4 ] && has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
 # Q1: with a person's reviewer line the same take is exit 0, and the output never says a person read the pin
 tk q1ok TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
-[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Test Reviewer, 2026-11-16" && ! has q1ok "a person read"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
+[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, 2026-11-16" && ! has q1ok "a person read"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
 tk q1a TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/sess.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has q1a "pin not yet confirmed by the lead" && has q1a "as written: flows-audit session" && ! has q1a "a person read and accepted"; ok $? "Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit $RC)"
 for pair in "only-session:# reviewed by: Audit Session B, 2026-11-16" "only-confirm:# reviewed by: A. Person, 2026-11-16, Lead To Confirm"; do
@@ -53,7 +53,7 @@ tk b1b -- --flows "$P" --write-warn-pin "$S/new.pin"
 # a pin written by the script is NOT valid until a person replaces the placeholder in its header (round 10b, M-3); reviewed.pin stands for that person's edit
 grep -q '^# flows sha256 (the four flow files, combined, as printed in the top block of take_check.sh): [0-9a-f]\{64\}$' "$S/new.pin"; ok $? "B1: the written pin carries the '# flows sha256' line"
 grep -q 'PLACEHOLDER' "$S/new.pin" && grep -q 'NOT YET READ BY A PERSON' "$S/new.pin"; ok $? "M-3: the written pin says it is not yet read and holds the placeholder line"
-sed 's/^# reviewed by: .*/# reviewed by: Test Reviewer, 2026-11-16/' "$S/new.pin" > "$S/reviewed.pin"
+sed 's/^# reviewed by: .*/# reviewed by: Testonly Reviewer, 2026-11-16/' "$S/new.pin" > "$S/reviewed.pin"
 tk m3p1 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/new.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has m3p1 "STILL HAS THE PLACEHOLDER"; ok $? "M-3: a pin whose header still has the placeholder is exit 4 (got exit $RC)"
 grep -v '^# reviewed by' "$S/reviewed.pin" > "$S/norev.pin"
@@ -205,7 +205,7 @@ grep -v '^# flows sha256' "$LEADPIN" > "$S/noflowsha.pin"
 tk b1nosha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/noflowsha.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has b1nosha "THE PIN HEADER HAS NO '# flows sha256 ...' LINE"; ok $? "B1: a pin without the flows sha256 line is exit 4 (got exit $RC)"
 # B2: the reviewer line must read NAME, YYYY-MM-DD (optional note); stand-ins are exit 4
-for pair in "b2-agent:claude agent, 2026-11-16" "b2-tbd:TBD" "b2-x:x, 2026-11-16" "b2-nodate:Test Reviewer" "b2-baddate:Test Reviewer, 2026-13-45" "b2-future:Test Reviewer, 2999-01-01" "b2-empty-name:, 2026-11-16" "b2-digits:R2D2 4, 2026-11-16" "b2-ai:Some Assistant, 2026-11-16" "b2-placeholder-word:Name Placeholder, 2026-11-16"; do
+for pair in "b2-agent:claude agent, 2026-11-16" "b2-tbd:TBD" "b2-x:x, 2026-11-16" "b2-nodate:Testonly Reviewer" "b2-baddate:Testonly Reviewer, 2026-13-45" "b2-future:Testonly Reviewer, 2999-01-01" "b2-empty-name:, 2026-11-16" "b2-digits:R2D2 4, 2026-11-16" "b2-ai:Some Assistant, 2026-11-16" "b2-placeholder-word:Name Placeholder, 2026-11-16"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && grep -q -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed)" "$S/$nm.txt"; ok $? "B2: reviewer line '${pair#*:}' is exit 4 (got exit $RC)"
@@ -213,6 +213,31 @@ done
 { echo "# reviewed by: Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
 tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
+# f8-r4 (M1): the bypasses of review f8-r3 (words joined by dots or hyphens, two stand-in words, a repeated letter, the script's own stand-in names, a date far in the past or before the pin's own date). Each must be exit 4 with the reviewer-line message, even with the test flag and the pin override (a name that is not "Testonly ..." gets no test allowance)
+for pair in "m1-tbd-dot:TBD., 2026-11-16" "m1-claude-code:Claude-Code, 2026-11-16" "m1-agent-dot:Agent., 2026-11-16" "m1-unknown-dash:Unknown-, 2026-11-16" "m1-sonnet-opus:Sonnet Opus, 2026-11-16" "m1-aaa:Aaa, 2026-11-16" "m1-runall:Runall Standin, 2026-11-16" "m1-test-reviewer:Test Reviewer, 2026-11-16" "m1-testonly-no-flag-name:Testonly Reviewer, 2026-11-16" "m1-model-in-name:Jane Gemini, 2026-11-16" "m1-llm:Pat O.L.L.M., 2026-11-16" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15"; do
+  nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
+  [ "$nm" = m1-testonly-no-flag-name ] && tk "$nm" TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"   # the test allowance needs BOTH the flag and the override
+  [ "$RC" = 4 ] && grep -q -E "^!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON" "$S/$nm.txt"; ok $? "M1: reviewer line '${pair#*:}' is exit 4 with the reviewer-line message (got exit $RC)"
+done
+# the test allowance: flag + override + first word Testonly = exit 5 (never 0); the same name without the flag was refused above
+{ echo "# reviewed by: Testonly Runall, 2026-11-16"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"
+tk m1-allow TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/m1-allow.pin" -- --flows "$P"
+[ "$RC" = 5 ] && ! has m1-allow "NOT A PERSON"; ok $? "M1: with the test flag AND a pin override, a 'Testonly ...' name is accepted and the run is exit 5, never 0 (got exit $RC)"
+# the real bypass: the script's own stand-in pin copied in as THE pin (no override, no test flag) must not give exit 0. A mirror folder holds copies of the scripts, the real checker and the pin; demo/ is a link to the real demo folder
+MIR="$S/mirror"; mkdir -p "$MIR/flows-audit/flow-check" "$MIR/flows-audit/patches" && ln -s "$HERE/../../demo" "$MIR/demo" && cp -- "$HERE/take_check.sh" "$HERE/check_flows.py" "$PIN" "$MIR/flows-audit/flow-check/"
+mir() { local nm=$1; shift; env -u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT bash "$MIR/flows-audit/flow-check/take_check.sh" --flows "$P" > "$S/$nm.txt" 2>&1; RC=$?; }
+mir mirbase
+MIRSHA=$(sed -n 's/^  combined: \([0-9a-f]\{64\}\)$/\1/p' "$S/mirbase.txt" | head -n 1)
+[ -n "$MIRSHA" ]; ok $? "M1: the mirror run printed the combined flows sha256 (needed to build the stand-in pins below)"
+for pair in "mir-testrev:Testonly Reviewer, 2026-11-16" "mir-test-reviewer:Test Reviewer, 2026-11-16" "mir-runall:Runall Standin, 2026-11-16" "mir-tbd:TBD., 2026-11-16" "mir-claudecode:Claude-Code, 2026-11-16"; do
+  nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
+  mir "$nm"
+  [ "$RC" = 4 ] && grep -q "NOT A PERSON" "$S/$nm.txt"; ok $? "M1: '${pair#*:}' in the real pin place, no override, no test flag: exit 4, never 0 (got exit $RC)"
+done
+{ echo "# reviewed by: Jane Q. Roe-Smith, 2026-11-16, read all WARN lines"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
+mir mir-human
+[ "$RC" = 0 ]; ok $? "M1 (honesty check): a made-up human-looking name in the real pin place IS accepted, exit 0: the script cannot know who read the pin; it only turns away stand-ins (got exit $RC)"
 # B3: a would-be pass with a leaked override and the test flag is exit 5, never 0; a copy of the real checker given by TAKE_CHECK_CK is shown
 tk b3ck TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/ck-copy.py" -- --flows "$P"
 [ "$RC" = 5 ] && has b3ck "ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_CK=$S/ck-copy.py" && has b3ck "a run that would pass exits 5, never 0" && grep -q '^FINAL: take_check exit status 5\.' "$S/b3ck.txt"; ok $? "B3: test flag plus a leaked TAKE_CHECK_CK (and the pin override) is exit 5 with the FINAL line saying 5, not exit 0 (got exit $RC)"
@@ -233,12 +258,26 @@ tk snapord TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stubpy:$PAT
 mkdir "$S/stub3"; printf '#!/bin/bash\n[ $# -eq 0 ] && exit 1\nexec %s "$@"\n' "$(command -v sha256sum)" > "$S/stub3/sha256sum"; chmod +x "$S/stub3/sha256sum"
 tk shafail TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/stub3:$PATH" -- --flows "$P"
 [ "$RC" = 4 ] && has shafail "UNAVAILABLE (sha256sum failed)" && grep -q '^!!! sha256sum FAILED' "$S/shafail.txt"; ok $? "sha256sum failure: exit 4 with a loud line, no empty hash (got exit $RC)"
-# B4: run_all.sh holds a lock per raw folder; a second run on the same raw folder is refused (exit 2). --lock-only takes the lock and stops. RUN_ALL_LOCKFILE is the test hook for the lock file name
-RA="$HERE/run_all.sh"; LK="$S/rl.lock"; mkdir "$S/rl-cwd"
-( cd "$S/rl-cwd" && exec 9>"$LK" && flock -n 9 && RUN_ALL_NESTED=1 RUN_ALL_LOCKFILE="$LK" RUN_ALL_RAW="$S/rl-raw" timeout 20 bash "$RA" --lock-only > "$S/b4held.txt" 2>&1; echo $? > "$S/b4held.rc" )
-[ "$(cat "$S/b4held.rc" 2>/dev/null)" = 2 ] && grep -q "REFUSED: another run_all.sh holds the lock" "$S/b4held.txt"; ok $? "B4: a second run_all.sh on a locked raw folder is refused, exit 2 (got exit $(cat "$S/b4held.rc" 2>/dev/null))"
-( cd "$S/rl-cwd" && RUN_ALL_NESTED=1 RUN_ALL_LOCKFILE="$LK" RUN_ALL_RAW="$S/rl-raw" timeout 20 bash "$RA" --lock-only > "$S/b4free.txt" 2>&1; echo $? > "$S/b4free.rc" )
-[ "$(cat "$S/b4free.rc" 2>/dev/null)" = 0 ] && grep -q "lock acquired" "$S/b4free.txt"; ok $? "B4: with nobody holding the lock, run_all.sh --lock-only takes it and exits 0 (got exit $(cat "$S/b4free.rc" 2>/dev/null))"
+# B4 + f8-r4 (M2): run_all.sh locks the raw FOLDER itself (physical path, pwd -P), so the lock does not depend on TMPDIR, on how the path is written (relative, symbolic link) or on the current folder. The test holds a lock on the folder and starts --lock-only runs in other ways
+RA="$HERE/run_all.sh"; mkdir -p "$S/rl-cwd" "$S/rl-raw" "$S/tmpA" "$S/tmpB"; ln -s "$S/rl-raw" "$S/rl-link"
+ra() { local nm=$1 cwd=$2 tmpd=$3 raw=$4; ( cd "$cwd" && TMPDIR="$tmpd" RUN_ALL_NESTED=1 RUN_ALL_RAW="$raw" timeout 20 bash "$RA" --lock-only > "$S/$nm.txt" 2>&1; echo $? > "$S/$nm.rc" ); RC=$(cat "$S/$nm.rc" 2>/dev/null); }
+# nobody holds the lock: acquired, exit 0, and no lock file is left in either TMPDIR
+ra b4free "$S/rl-cwd" "$S/tmpA" "$S/rl-raw"
+[ "$RC" = 0 ] && grep -q "lock acquired" "$S/b4free.txt" && [ -z "$(ls -A "$S/tmpA")" ]; ok $? "B4: with nobody holding the lock, run_all.sh --lock-only takes it, exits 0 and leaves no lock file in TMPDIR (got exit $RC)"
+# someone holds the lock on the folder (the test itself, on the physical folder)
+(
+  exec 9< "$S/rl-raw" && flock -n 9 || exit 9
+  ra b4held "$S/rl-cwd" "$S/tmpA" "$S/rl-raw";            [ "$RC" = 2 ] && grep -q "REFUSED: another run_all.sh holds the lock" "$S/b4held.txt"; echo $? > "$S/m2a.r"
+  ra b4tmp "$S/rl-cwd" "$S/tmpB" "$S/rl-raw";             [ "$RC" = 2 ] && grep -q "REFUSED: another run_all.sh holds the lock" "$S/b4tmp.txt";  echo $? > "$S/m2b.r"
+  ra b4link "$S/rl-cwd" "$S/tmpB" "$S/rl-link";           [ "$RC" = 2 ] && grep -q "REFUSED: another run_all.sh holds the lock" "$S/b4link.txt"; echo $? > "$S/m2c.r"
+  ra b4rel "$S/rl-cwd" "$S/tmpA" "../rl-raw";             [ "$RC" = 2 ] && grep -q "REFUSED: another run_all.sh holds the lock" "$S/b4rel.txt";  echo $? > "$S/m2d.r"
+  ra b4dots "$S/rl-cwd" "$S/tmpB" "$S//rl-link/../rl-raw/"; [ "$RC" = 2 ] && grep -q "REFUSED: another run_all.sh holds the lock" "$S/b4dots.txt"; echo $? > "$S/m2e.r"
+  ra b4other "$S/rl-cwd" "$S/tmpA" "$S/rl-raw-other";     [ "$RC" = 0 ] && grep -q "lock acquired" "$S/b4other.txt"; echo $? > "$S/m2f.r"
+)
+for pair in "m2a:a second run_all.sh on a locked raw folder is refused, exit 2" "m2b:the same raw folder with a DIFFERENT TMPDIR is refused, exit 2" "m2c:the same raw folder given through a symbolic link (and another TMPDIR) is refused, exit 2" "m2d:the same raw folder given as a relative path from another folder is refused, exit 2" "m2e:the same raw folder given with a double slash, a link and .. is refused, exit 2" "m2f:a DIFFERENT raw folder is not blocked by that lock (exit 0)"; do
+  [ "$(cat "$S/${pair%%:*}.r" 2>/dev/null)" = 0 ]; ok $? "M2: ${pair#*:}"
+done
+[ -z "$(ls -A "$S/tmpA" "$S/tmpB")" ]; ok $? "M2: no lock file was left in either TMPDIR"
 # minor: the run_all.sh test hooks are refused without RUN_ALL_NESTED
 ( cd "$S/rl-cwd" && env -u RUN_ALL_NESTED RUN_ALL_TAKE_FLOWS="$S/b1flow" RUN_ALL_RAW="$S/rl-raw2" timeout 20 bash "$RA" --lock-only > "$S/hook.txt" 2>&1; echo $? > "$S/hook.rc" )
 [ "$(cat "$S/hook.rc" 2>/dev/null)" = 2 ] && grep -q "REFUSED: RUN_ALL_TAKE_FLOWS is a test hook" "$S/hook.txt"; ok $? "RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook.rc" 2>/dev/null))"

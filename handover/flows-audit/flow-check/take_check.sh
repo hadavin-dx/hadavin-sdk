@@ -216,18 +216,30 @@ if [ "$NRC" -ne 0 ]; then echo "!!! THE WARN-LINE HELPER FAILED (exit status $NR
 grep . "$NORM" | LC_ALL=C sort > "$NORM.now"
 echo "--- (6) Checker result and the WARN baseline ---"
 echo "${RESULTLINE:-RESULT line missing}. WARN lines that rest on an n8n rule nobody verified: $UNVN."
-# round 10d (B2): the reviewer line grammar: NAME, YYYY-MM-DD[, note]. NAME = letters, spaces, dots, apostrophes, hyphens, at least 3 letters, not a stand-in word; the date must be real and not in the future
+# round 10d (B2) + round f8-r4 (M1): the reviewer line grammar: NAME, YYYY-MM-DD[, note]. NAME = letters, spaces, dots, apostrophes, hyphens. The name is cut into words at EVERY character that is not a letter (so "Claude-Code", "TBD." and "Unknown-" are cut like "Claude Code"), lower-cased, and refused when ANY word is in the stand-in list below, when it has fewer than 3 letters in all, or when a word is one letter repeated (aaa, xxx). The date must be real, not in the future and not older than the pin's own date line. A SCRIPT CANNOT KNOW WHO READ THE PIN: this only turns away names that are obviously not a person. A made-up human-looking name passes; that is why the output prints the line as written and why the pin must be looked at in the git diff.
+# Test-only way (exit 5 only, never 0): when the test flag TAKE_CHECK_TEST=1 AND a pin override TAKE_CHECK_WARN_PIN are both active, a name whose FIRST word is "testonly" skips the stand-in list. A run with an override can never be exit 0, so no stand-in name can give exit 0 without a human. "testonly" itself is on the list, so without both the flag and the override it is refused like any stand-in.
+REVIEWER_STANDINS=" tbd todo name placeholder unknown nobody someone anonymous claude agent session bot assistant gpt model lead person xxx abc standin stand test reviewer runall dummy example sample fake sonnet opus haiku gemini llm ai code user admin testonly "
 reviewer_ok() {
-  local r=$1 name date lc
+  local r=$1 pindate=${2:-} name date words w first c
   case $r in *,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]|*,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9],\ *) ;; *) return 1;; esac
   name=${r%%,*}; date=${r#*, }; date=${date%%,*}
   case $name in [A-Za-z]*) ;; *) return 1;; esac
   case $name in *[!A-Za-z\ .\'-]*) return 1;; esac
   [ "$(printf '%s' "$name" | tr -cd 'A-Za-z' | wc -c)" -ge 3 ] || return 1
-  lc=$(printf '%s' "$name" | tr 'A-Z' 'a-z')
-  case " $lc " in *" tbd "*|*" todo "*|*" name "*|*" placeholder "*|*" unknown "*|*" nobody "*|*" someone "*|*" anonymous "*|*" claude "*|*" agent "*|*" session "*|*" bot "*|*" assistant "*|*" gpt "*|*" model "*|*" lead "*|*" person "*|*" xxx "*|*" abc "*) return 1;; esac
+  words=$(printf '%s' "$name" | tr 'A-Z' 'a-z' | tr -cs 'a-z' ' ')
+  first=${words# }; first=${first%% *}
+  if ! { [ "${TAKE_CHECK_TEST:-}" = 1 ] && [ -n "${TAKE_CHECK_WARN_PIN:-}" ] && [ "$first" = testonly ]; }; then
+    for w in $words; do
+      case "$REVIEWER_STANDINS" in *" $w "*) return 1;; esac
+    done
+  fi
+  for w in $words; do
+    c=${w:0:1}
+    [ ${#w} -ge 2 ] && [ -z "$(printf '%s' "$w" | tr -d "$c")" ] && return 1
+  done
   [ "$(date -u -d "$date" +%Y-%m-%d 2>/dev/null)" = "$date" ] || return 1
   [ "$date" \> "$(date -u +%Y-%m-%d)" ] && return 1
+  [ -n "$pindate" ] && [ "$date" \< "$pindate" ] && return 1
   return 0
 }
 PINNED=0
@@ -248,7 +260,7 @@ else
   if [ -z "$HDRREV" ]; then echo "!!! THE PIN HEADER HAS NO '# reviewed by: NAME, DATE' LINE: nobody has said that a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no reviewer line")
   elif printf '%s' "$HDRREV" | grep -q -F "PLACEHOLDER"; then echo "!!! THE PIN HEADER STILL HAS THE PLACEHOLDER IN ITS 'reviewed by' LINE: the file was written by the script and no person has read it. Read every line, then replace that line. This script exits 4."; PROBLEMS+=("pin not reviewed (placeholder)")
   elif printf '%s' "$HDRREV" | grep -q -i -E "session|lead to confirm"; then echo "!!! pin not yet confirmed by the lead: the 'reviewed by' line of the pin (as written: $HDRREV) names a session or says the lead still has to confirm. A session is not a person who read the WARN lines. The lead reads every WARN line and replaces that line with: # reviewed by: NAME, YYYY-MM-DD. This script exits 4."; PROBLEMS+=("pin not yet confirmed by the lead")
-  elif ! reviewer_ok "$HDRREV"; then echo "!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON'S NAME AND A DATE (as written: $HDRREV): it must read '# reviewed by: NAME, YYYY-MM-DD' (optionally followed by ', a note'), with a real date that is not in the future and a name that is not a stand-in such as TBD, x, a placeholder or an agent or session. This script exits 4."; PROBLEMS+=("pin reviewer line malformed or a stand-in"); fi
+  elif ! reviewer_ok "$HDRREV" "$HDRDATE"; then echo "!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON'S NAME AND A DATE (as written: $HDRREV): it must read '# reviewed by: NAME, YYYY-MM-DD' (optionally followed by ', a note'), with a real date that is not in the future and not older than the pin's own date line, and a name that is not a stand-in (no word of it may be TBD, test, reviewer, a placeholder, an agent, a model name, a session and so on, however it is joined with dots or hyphens). A script cannot know who read the pin. This script exits 4."; PROBLEMS+=("pin reviewer line malformed or a stand-in"); fi
   if [ -z "$HDRFLOWS" ]; then echo "!!! THE PIN HEADER HAS NO '# flows sha256 ...' LINE: a changed flow file with the same step counts and WARN lines would pass. This script exits 4."; PROBLEMS+=("pin has no flows sha")
   elif [ -n "$FLOWSHA_HEX" ] && [ "$HDRFLOWS" != "$FLOWSHA_HEX" ]; then echo "!!! THE FLOW FILES DO NOT MATCH THE SHA-256 WRITTEN IN THE PIN (pin $HDRFLOWS, files $FLOWSHA_HEX): a flow file differs from the one a person pinned. If the change is intended, a person reads it, writes a NEW pin (--write-warn-pin) and installs it by hand. This script exits 4."; PROBLEMS+=("flow files differ from the pinned sha"); fi
   if [ -z "$HDRDATE" ]; then echo "!!! THE PIN HEADER HAS NO DATE ('# date (UTC): YYYY-MM-DD'): nobody can tell when a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no date"); fi
