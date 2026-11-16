@@ -62,6 +62,7 @@ for _k in ("S-F4g-sheet-v31-exists", "S-F4h-release-note-v15-exists", "S-F4i-v30
     M.pop(_k, None)
 run_block(open(E + "neg_new_c6u.py", encoding="utf-8").read(), "neg_new_c6u.py")
 out = []
+BASE = set()
 bad = 0
 for name, text in M.items():
     envd = ENV.get(name)
@@ -75,10 +76,15 @@ for name, text in M.items():
     open(E + "neg/" + name + ".txt", "w").write(r.stdout[-6000:] + r.stderr[-1500:] + "\nEXIT CODE %d\n" % r.returncode)
     failed = [l for l in r.stdout.split("\n") if l.startswith("FAIL")]
     want_zero = name.startswith("V0")
-    ok = (r.returncode == 0) if want_zero else (r.returncode != 0)
+    # c6u: a changed copy counts as CAUGHT only if it makes a check fail that the unchanged copy (V0) does not fail (a baseline failure, for example a sheet rewritten
+    # by another session after the check time, must not make every control look caught)
+    if want_zero:
+        BASE = set(l.split(" :: ")[0] for l in failed)
+    newfail = [l for l in failed if l.split(" :: ")[0] not in BASE] if not want_zero else failed
+    ok = (r.returncode == 0) if want_zero else (r.returncode != 0 and len(newfail) >= 1)
     if not ok:
         bad += 1
-    out.append("%-48s exit %d  %s  failed checks: %d; first: %s" % (name, r.returncode, "OK" if ok else "WRONG", len(failed), (failed[0][:110] if failed else "none")))
+    out.append("%-48s exit %d  %s  failed checks: %d (new vs unchanged: %d); first new: %s" % (name, r.returncode, "OK" if ok else "WRONG", len(failed), len(newfail), ((newfail[0][:110] if newfail else "none") if not want_zero else (failed[0][:110] if failed else "none"))))
 out += ["PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): " + s_ for s_ in SKIPPED_PORT]
 out.append("SUMMARY: %d copies, %d wrong" % (len(M), bad))
 open(E + "neg-output.txt", "w").write("\n".join(out) + "\n")

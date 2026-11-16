@@ -39,7 +39,7 @@ M = [
 ("n01", "  if (s ~ /[\\001-\\010\\013-\\037\\177]/) {", "  if (0) {"),
 ("n02", "  line = ctl_strip(line)  ", "  line = line  "),
 ("n03", "s/</%s/g\\n", "s/<</%s/g\\n"),
-("n04", L("s/(^${PFX0}[[:space:]]*(- +)?[\"']?[A-Za-z0-9_.-]*${STRONG}"), "\n"),
+("n04", L("s/(^${PFX0}[[:space:]]*([#;]+|\\/\\/+)?[[:space:]]*(- +)?[\"']?[A-Za-z0-9_.-]*${STRONG}"), "\n"),
 ("n05", "printf '%s %s\\n' \"$1\" \"$ms_rc\" >> \"$WORK/mask.fail\" 2>/dev/null", ":"),
 ("n06", "    elif [ \"$LEAD_REPIN_GIT_STATUS\" != 1 ]; then", "    elif false; then"),
 ("n07", "do unset \"$env_v\" 2>/dev/null; done", "do :; done"),
