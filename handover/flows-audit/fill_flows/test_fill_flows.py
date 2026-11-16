@@ -2766,5 +2766,96 @@ class Round8(Base):
         self.assertNotIn("cannot say where", se)
 
 
+class Round9(Base):
+    """Evidence round 7: tests for the three mutants that survived, and the link-parent case."""
+
+    def full_vals(self):
+        write_values(self.vf, {**VALS, **PH_VALS})
+
+    def two_flows(self):
+        d = self.flow_dir({"u": "={{ $env.DESK_URL }}"})
+        shutil.copy(os.path.join(d, "mf-x.json"), os.path.join(d, "mf-y.json"))
+        return d
+
+    def done_copy(self, name="out"):
+        self.full_vals()
+        out = self.out(name)
+        self.assertEqual(self.fill(src=self.two_flows(), out=out)[0], 0)
+        return out
+
+    # ---- mutant 9: --tokens-only must not list placeholders
+    def test_tokens_only_lists_no_placeholder_and_the_plain_check_does(self):
+        src = self.copy_flows("real")  # the real flows carry placeholder names
+        code, so, _ = self.cli("check", src)
+        self.assertEqual(code, 1, so)
+        self.assertIn("mf-form.json: placeholder PG_CREDENTIAL_ID x2", so)
+        code, so, _ = self.cli("check", src, "--tokens-only")
+        self.assertEqual(code, 1, so)  # still a problem count: no marker, tokens left
+        self.assertNotIn(": placeholder ", so)
+        self.assertIn("placeholders: not checked (--tokens-only)", so)
+        self.assertIn("token $env DESK_ALERT_TO", so)  # the token scan still ran
+
+    # ---- mutant 12: --remove-others never takes a file of another user
+    def _as_other_user(self, name):
+        real_lstat = os.lstat
+
+        def lstat(path, *a, **k):
+            st = real_lstat(path, *a, **k)
+            if os.fspath(path) == name and k.get("dir_fd") is not None:
+                return os.stat_result(tuple(st)[:4] + (4242,) + tuple(st)[5:])
+            return st
+
+        return mock.patch.object(ff.os, "lstat", lstat)
+
+    def test_remove_others_refuses_a_stray_file_owned_by_another_user(self):
+        for extra in ((), ("--no-manifest",)):
+            out = self.done_copy("out" + str(len(extra)))
+            stray = os.path.join(out, ".DS_Store")
+            wtext(stray, "x")
+            with self._as_other_user(".DS_Store"):
+                code, _, se = self.inproc("delete", "--out", out, *extra, "--remove-others")
+            self.assertEqual((code, ".DS_Store: not a plain file of yours" in se), (1, True), se)
+            self.assertTrue(os.path.exists(stray))
+            self.assertTrue(os.path.isdir(out))
+            code, so, _ = self.inproc("delete", "--out", out, *extra, "--remove-others")
+            self.assertEqual(code, 0, so)  # the same file as ours is taken along
+            self.assertFalse(os.path.exists(out))
+
+    # ---- mutant 17: the JSON size cap is 32 MiB, pinned
+    def test_the_json_size_cap_is_32_mib_and_a_file_one_byte_over_is_refused(self):
+        self.assertEqual(ff.MAX_JSON_BYTES, 32 * 1024 * 1024)
+        cap = ff.MAX_JSON_BYTES
+        d = os.path.join(self.t, "big")
+        os.mkdir(d)
+        big = os.path.join(d, "a.json")
+        with open(big, "wb") as fh:
+            fh.truncate(cap + 1)  # sparse: no real data is written
+        code, so, _ = self.cli("check", d, "--tokens-only")
+        self.assertEqual(code, 1, so)
+        self.assertIn(f"a.json: a.json is larger than {cap} bytes", so)
+        with open(big, "r+b") as fh:
+            fh.truncate(cap)  # exactly the cap is read, then judged as (invalid) JSON
+        code, so, _ = self.cli("check", d, "--tokens-only")
+        self.assertNotIn("is larger than", so)
+        self.assertIn("a.json: not valid JSON", so)
+
+    # ---- the link-parent case: documented current behaviour (a link made by you is accepted)
+    def test_an_output_path_through_a_link_made_by_you_is_accepted_and_writes_to_its_target(self):
+        real = os.path.join(self.t, "real-parent")
+        os.mkdir(real, 0o700)
+        link = os.path.join(self.t, "link-parent")
+        os.symlink(real, link)
+        self.full_vals()
+        out = os.path.join(link, "o5")
+        code, so, se = self.fill(src=self.two_flows(), out=out)
+        self.assertEqual(code, 0, se)
+        self.assertEqual(sorted(os.listdir(real)), ["o5", "o5.manifest.json"])
+        self.assertEqual(self.inproc("check", out)[0], 0)
+        code, so, _ = self.inproc("delete", "--out", out)
+        self.assertEqual(code, 0, so)
+        self.assertEqual(os.listdir(real), [])
+        self.assertTrue(os.path.islink(link))
+
+
 if __name__ == "__main__":
     unittest.main()
