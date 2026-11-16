@@ -37,3 +37,5 @@ M17 [NOT STARTED; owner: lead (applies text to v5, card, notice, TAKE-BLOCKERS);
 M18 [CLOSED: settled by decisions 4 and 5 of 16 Nov; archive the draft decisions/D04-D05.md, never delete; was: WRITTEN, awaiting lead; owner: lead; due Tue 17 Nov 12:00 UTC / 17:30 IST; 90%] decisions/D04-D05.md (one page).
 M19 [round 2 cold reads done; owner: system-map; due Tue 17 Nov 12:00 UTC / 17:30 IST; 60%] Independent reader pass over the final owner-steps page (stranger test, 10 minutes of steps, no jargon).
 M20 [BLOCKED 2026-11-16; owner: lead; needs SESSION-HANDOFF pasted into inputs/ by Tue 17 Nov 12:00 UTC / 17:30 IST, or M20 is dropped from the take] Re-verify every number and date in SESSION-HANDOFF live state against files (claims check), list mismatches.
+
+Legend (digest 382): a percentage on a row means the share of that row's acceptance checks that have a command and output on file; it is not confidence. M14 fix: owner core-hardening; the fix must not touch the licence copies under handover/promotion-inputs (decision 11). M16 is CLOSED by decision 1: no flow-set switch; archive the flowset report. "Z" times are UTC; add IST (+5:30) when a row is next edited.
