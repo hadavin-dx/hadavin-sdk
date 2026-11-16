@@ -1,17 +1,17 @@
 == T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker
-evidence-r7/t76-86-derived.sh: line 50: 17870 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+evidence-r7/t76-86-derived.sh: line 51: 21834 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: marker file: 'src/mod.py' passes through a symbolic link (src): refused
   FAIL: T76a symbolic link on the way to the target at --restore: exit 3 (got 2), text says RESTORE FAILED, marker and backup kept, the planted file behind it still planted
   PASS: T76a the kept marker still allows a genuine restore
-evidence-r7/t76-86-derived.sh: line 50: 17981 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+evidence-r7/t76-86-derived.sh: line 51: 21937 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d6/toy/root/src/mod.py is not a regular file with exactly one name (links: 2): not written
   FAIL: T76b file with two names that still holds the planted text: exit 3 (got 2), marker and backup kept, the other name untouched
   PASS: T76b genuine restore afterwards
-evidence-r7/t76-86-derived.sh: line 50: 18027 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+evidence-r7/t76-86-derived.sh: line 51: 21983 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: cannot write src/mod.py back: Permission denied: refused
   FAIL: T76c unwritable target (restore_target raises PermissionError): exit 3 (got 2), file still planted, marker and backup kept
   PASS: T76c genuine restore afterwards
-evidence-r7/t76-86-derived.sh: line 50: 18129 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+evidence-r7/t76-86-derived.sh: line 51: 22089 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T76d guard: a forged backup (hash differs) is still exit 2 and nothing is written (got 2)
 == T77 (review r6 M2) the baseline is the DEFAULT; --no-control gives exit 5 and never says COMPLETE
 SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; COMPLETE (every mutant has a clean KILLED or SURVIVED verdict)
@@ -23,7 +23,7 @@ tree diff: 0 difference(s)
   FAIL: T77e --no-control after --control: no baseline, exit 5 (got 2)
   FAIL: T77f guard: exit 4 (tree not clean) still wins over the no-baseline exit 5 (got 2)
 == T78 (review r6 nit 2) --restore is signal-guarded: a signal in the middle of the write-back does not leave the file planted
-evidence-r7/t76-86-derived.sh: line 50: 18304 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+evidence-r7/t76-86-derived.sh: line 51: 22304 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 INTERRUPTED (signal 15): a marker exists (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d6/tmpstate/hadavin-mutation-lane-0/c60247c76a835306.planted.json); not touched here,
   FAIL: T78a SIGTERM inside the restore write: the restore finishes (file back, marker and backup gone), exit 0 (got 143), the signal is reported (r6: unwound, exit 143, file still planted)
     raise KeyboardInterrupt(SIG.first)  # unwinds through the `finally` that restores the file
@@ -85,5 +85,4 @@ tree diff: 0 difference(s)
 tree diff: 0 difference(s)
 INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
   FAIL: T86 a surviving mutant with the caller's -q: verdict SURVIVED, 'pytest summary line: 1 passed', exit 0 (got 5); the baseline counts the passed test too
-evidence-r7/t76-86-derived.sh: line 217: syntax error near unexpected token `}'
-evidence-r7/t76-86-derived.sh: line 217: `}'
+FAILED CHECKS: 31 (of 36 checks run; skipped: none)

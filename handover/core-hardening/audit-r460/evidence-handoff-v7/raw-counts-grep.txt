@@ -1,0 +1,66 @@
+## direct network-kind constructions in tests/ and demos/ and src/
+tests/contracts/kinds/llm_wire.py:66:        return AnthropicLLM(client, routes, 3, sleep=lambda s: None)
+tests/contracts/kinds/llm_wire.py:91:        return OpenAICompatLLM(
+tests/contracts/kinds/llm_wire.py:119:        llm = gemini.GeminiLLM(lambda: KEY, routes, 5.0, 3, sleep=lambda s: None)
+tests/contracts/kinds/llm_wire.py:192:        return BedrockLLM(self.client, routes, 3, sleep=lambda s: None)
+tests/test_p5_llm.py:248:        llm = GeminiLLM(lambda: keys[-1], ROUTES, 5.0, 1)
+src/hadavin_sdk/llm/anthropic.py:83:    return AnthropicLLM(
+src/hadavin_sdk/llm/anthropic.py:91:class AnthropicLLM(NetworkLLM):
+src/hadavin_sdk/llm/bedrock.py:56:    return BedrockLLM(client, pinned(dict(deps.routes), floating), settings.max_attempts)
+src/hadavin_sdk/llm/bedrock.py:113:class BedrockLLM(NetworkLLM):
+src/hadavin_sdk/llm/gemini.py:32:    return GeminiLLM(
+src/hadavin_sdk/llm/gemini.py:40:class GeminiLLM(NetworkLLM):
+src/hadavin_sdk/llm/openai_compat.py:54:    return OpenAICompatLLM(
+src/hadavin_sdk/llm/openai_compat.py:74:class OpenAICompatLLM(NetworkLLM):
+## make("llm" sites
+tests/warden_port/test_bedrock_provider_r16.py:74:        make("llm", BedrockSettings(kind="bedrock", region="contract-region-1"), routes=routes)
+tests/warden_port/test_bedrock_provider_r16.py:79:    client = make("llm", settings, routes=ROUTES)._client
+tests/warden_port/test_bedrock_provider_r16.py:90:    client = make("llm", settings, routes=ROUTES)._client
+tests/warden_port/test_providers.py:65:    llm = make("llm", settings, routes=ROUTES)
+tests/warden_port/test_providers.py:123:    llm = make("llm", settings, FakeSecretProvider({"k": KEY}), routes=ROUTES)
+tests/warden_port/test_providers.py:148:    llm = make("llm", settings, FakeSecretProvider({"g": KEY}), routes=ROUTES)
+tests/warden_port/test_providers.py:172:    llm = make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
+tests/warden_port/test_providers.py:198:        make("llm", settings, routes=routes)
+tests/test_p5p6_followups.py:300:        make("llm", settings, provider, routes=_route(moving))
+tests/test_p5p6_followups.py:302:        make("llm", settings, provider, routes=_route(pinned_id)).routes["default"].model_id
+tests/test_p5p6_followups.py:417:        make("llm", settings, routes=_route(model_id))
+tests/contracts/kinds/builtin.py:53:    llm = make("llm", FakeLLMSettings(kind="fake", recorded_dir=tmp_path), routes=ROUTES)
+tests/test_p5_llm.py:230:    llm = make("llm", settings, routes=ROUTES)
+tests/test_p5_llm.py:301:        make("llm", settings, FakeSecretProvider({"a": KEY}), routes=ROUTES)
+src/hadavin_sdk/cli.py:150:            make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+src/hadavin_sdk/cli.py:221:    llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes)
+src/hadavin_sdk/app.py:162:    llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+## .chat( real call sites in src
+grep: src/hadavin_sdk/guard/__pycache__/producers.cpython-313.pyc: binary file matches
+src/hadavin_sdk/k1b/loop.py:94:            box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+src/hadavin_sdk/runtime/agent_loop.py:425:                reply = self.llm.chat(
+src/hadavin_sdk/extract.py:47:        reply = llm.chat(
+src/hadavin_sdk/evals.py:73:            reply = llm.chat(
+src/hadavin_sdk/guard/producers.py:5:that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` before it is
+src/hadavin_sdk/guard/judge.py:72:        reply = self.llm.chat(
+## Limits( sites
+src/hadavin_sdk/cli.py:209:    return kill_switch(Limits(store, audit, reg), args.action, args.by)
+src/hadavin_sdk/app.py:171:    limits = Limits(store, audit, reg)
+tests/demo_askdata/test_pgsource_layers.py:136:        PgSource(db.ro_dsn, limits=Limits(statement_timeout_s=timeout)).run("SELECT pg_sleep(30)")
+tests/demo_askdata/test_pgsource_layers.py:152:        "SELECT g FROM generate_series(1, 1000000) AS g", limits=Limits(max_rows=500)
+tests/demo_askdata/test_pgsource_layers.py:156:        "SELECT g FROM generate_series(1, 500) AS g", limits=Limits(max_rows=500)
+tests/demo_askdata/test_pgsource_layers.py:167:        limits=Limits(max_bytes=450_000, batch=5, statement_timeout_s=120.0),
+tests/demo_askdata/test_pgsource_layers.py:225:        PgSource(db.ro_dsn, limits=Limits(statement_timeout_s=20.0)).run(
+tests/test_k5_round5.py:241:            reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+tests/k5_support.py:206:        Limits(store, audit, reg),
+tests/test_k5_postgres.py:58:        Limits(pg_store, audit, reg),
+tests/test_k5_tools.py:1133:        reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+tests/test_k5_tools.py:1269:        Limits(store, audit, reg),
+tests/test_k3_pilot.py:104:        Limits(store, audit, reg),
+tests/test_s5_runtime.py:28:    limits = Limits(store, audit, reg)
+demos/ask-your-data/askdata/config.py:56:    limits: Limits = Limits()
+demos/ask-your-data/askdata/pgsource.py:103:        self.limits = limits or Limits()
+## self._retry( in src/llm
+src/hadavin_sdk/llm/anthropic.py:122:        got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+src/hadavin_sdk/llm/bedrock.py:156:        got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+src/hadavin_sdk/llm/gemini.py:86:        got = self._retry(
+src/hadavin_sdk/llm/openai_compat.py:119:            got = self._retry(
+## apply_guardrail
+src/hadavin_sdk/guard/producers.py:5:that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` before it is
+src/hadavin_sdk/guard/bedrock_guardrail.py:101:        resp = self._client.apply_guardrail(
+grep: src/hadavin_sdk/guard/__pycache__/producers.cpython-313.pyc: binary file matches
