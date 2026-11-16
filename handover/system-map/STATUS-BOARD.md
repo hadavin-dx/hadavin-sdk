@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC 2026-11-16T14:05:12Z
-PUSHED_UTC 2026-11-16T14:05:12Z
+UPDATED_UTC 2026-11-16T14:05:48Z
+PUSHED_UTC 2026-11-16T14:05:48Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1381 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1389 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,16 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a8c7ebbe15b1cdddb | cold read result-resolve-r2 | ~14:12 | ~14:22 | running | nothing yet |
-| ab2cf21cbb8d35a45 | cold read M17-end-never-deletes | ~14:12 | ~14:22 | running | nothing yet |
-| a9c508364f5227a5a | cold read v5-edits-for-M17 | ~14:12 | ~14:22 | running | nothing yet |
-| a5130bcf42c80a4ed | cold read ARCHITECTURE-AUDIT-CHECKLIST | ~14:12 | ~14:22 | running | nothing yet |
-| a51ba3538ce2258d9 | cold read STATUS-BOARD | ~14:12 | ~14:22 | running | nothing yet |
-| ac37b80dd68f365c6 | cold read o7-review-R2-design-r1 | ~14:12 | ~14:22 | running | nothing yet |
-| acdae651c669ac3c8 | cold read banned-claims-review-r1 | ~14:12 | ~14:22 | running | nothing yet |
-| a90ef0e063c1cc022 | cold read drift-report-revisions | ~14:12 | ~14:22 | running | nothing yet |
+| a77af774a28353d7e | readiness read rehearsal-limits-draft | ~14:16 | ~14:26 | running | nothing yet |
+| a44c9594c43198b91 | readiness read t19-and-stored-data-steps | ~14:16 | ~14:26 | running | nothing yet |
+| a4b76c1cc1ec5dcac | readiness read row1-builder-brief | ~14:16 | ~14:26 | running | nothing yet |
+| acdca44268e11dab9 | zoom-out read open-items-table | ~14:16 | ~14:26 | running | nothing yet |
+| af48a026c161a7a92 | zoom-out read not-checked-r2 | ~14:16 | ~14:26 | running | nothing yet |
+| ae1e1ba19cfe79b66 | style read banned-claims-clean | ~14:16 | ~14:26 | running | nothing yet |
+| af3397819dca38c4a | style read BRIEF-EVIDENCE-1 | ~14:16 | ~14:26 | running | nothing yet |
+| a05822b8d982df9a5 | style read owner-timeline-draft | ~14:16 | ~14:26 | running | nothing yet |
 
-CAPACITY: 8 running. Next 5: fix BRIEF-EVIDENCE-1/2; banned-claims stub; open-items-table How-to-read; evidence file headers; GLOSSARY shrink. Every work/ file has now had a cold read; fixes are the open rows.
+CAPACITY: 8 running. Next 5: fix BRIEF-EVIDENCE-1/2; banned-claims stub; open-items-table How-to-read; evidence file headers; GLOSSARY shrink. Every work/ file has had a cold read; the open rows are my own page fixes.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
