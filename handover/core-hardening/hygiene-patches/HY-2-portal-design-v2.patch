@@ -1,10 +1,10 @@
 diff --git a/handover/demo/portal/portal-design-v2.md b/handover/demo/portal/portal-design-v2.md
-index 3de94b2..de39a73 100644
---- a/handover/demo/portal/portal-design-v2.md
-+++ b/handover/demo/portal/portal-design-v2.md
-@@ -231,4 +231,4 @@ Clock (real, honest): A, F, B start together; C1/C2 at +1 h; A+F done +2.5 h; C
- | Close | recorded mutation-test clip, labelled "recorded test output, not live" (harness, unchanged) | none |
- 
- ## 7. Not claimed
--Port.io/Datadog parity (judged by reviewers on images); full WCAG (axe + contrast + keyboard only); a per-lead history (the lead book stores latest state and times only); any pilot readiness (no login, localhost, made-up data); portal load under the README burst numbers (close the portal during load runs).
-+[vendor-inspired name removed]/Datadog parity (judged by reviewers on images); full WCAG (axe + contrast + keyboard only); a per-lead history (the lead book stores latest state and times only); any pilot readiness (no login, localhost, made-up data); portal load under the README burst numbers (close the portal during load runs).
+index 3de94b2f1d256ee95e7b81c88be47007e7ed4b7b..de39a731e20325383b590329ad8c81d94638dee8 100644
+GIT binary patch
+delta 45
+zcmZqq$vFEb<A#80x#+Ugyp;SR-ORk=g3O}S6otIR+*F04)ZF~C)RfrG;nli~0JkF&
+A1ONa4
+
+delta 22
+dcmbRJld<I|<A#80_JI7N61~j)&3V<ji~w^62@3!K
+
