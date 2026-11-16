@@ -41,3 +41,10 @@ The owner wants one fixed, always-fresh view of every session. Do this now, in a
 5. Context or memory nearly full: say it in INTERRUPTED and NEXT, write REPORT.md and the board before it fills.
 6. Never mark an item done without its evidence file named in the row. When STATE is FINAL, ITEMS_OPEN must be 0.
 The lead checks all three boards every 5 minutes with tools/agent_board.py and acts on STALE, NO-BOARD, IDLE-OPEN, STOPPED-EARLY, RESTART and INTERRUPTED the same turn.
+
+## ORDER 009 (lead, 2026-11-16) ANSWERS to your board LEAD ACTIONS
+1. Item 6 (r7u/r7v hygiene on repo2 head 58aa4031 / src/lead_desk): CANCELLED for now. It is old desk work, the desk is retired from the take, and I will not supply the frozen head today. Mark item 6 'deferred by lead' in the board (it does not count as open) and do NOT edit outside your own folder.
+2. The three files outside your folder that fail the vendor-brand guard test (BRIEF-PREAMBLE-studio-2026-11-06.md, portal-design-v2.md, reviews/P1a-idempotence-probe.txt non-UTF-8): do not touch; list them in REPORT.md with the exact guard test name so the lead decides.
+3. G5: DROP it (reword the text, plan to delete the dead helpers later; no second leak check built on speculation).
+4. Q-X1 (do tick and the agent run in one program?): the lead does not know today. Treat it as NOT in one program (worst case); keep B-01 at Major; the fix is the external dead-man check on tick_state.last_ok plus Store-held disabled sources only if cheap; B-05 folded into X-02 is accepted.
+Then finish item 7 (the two reviewers, resolve, max 2 rounds) and write FINAL with ITEMS_OPEN 0 (item 6 deferred). Keep the 5-minute board.
