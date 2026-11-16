@@ -394,3 +394,4 @@ ok   f8-r6: reviewer line 'Claudette Smith, 2026-11-16, pin sha256 378e1121' is 
 ok   f8-r6: reviewer line 'Jane Q. Roe-Smith, 2026-11-16, pin sha256 378e1121' is accepted (would-be pass with the override: exit 5) (got exit 5)
 ok   f8-r6: reviewer line 'Pat Smith, 2026-11-16, pin sha256 378e1121, read all 4 WARN lines and the code' is accepted (would-be pass with the override: exit 5) (got exit 5)
 ok   f8-r6: reviewer line 'Pat Smith, 2026-11-16, pin sha256 378e1121' is accepted (would-be pass with the override: exit 5) (got exit 5)
+ok   f8-r6: reviewer line 'Pat O’Neil, 2026-11-16, pin sha256 378e1121' is accepted (would-be pass with the override: exit 5) (got exit 5)
