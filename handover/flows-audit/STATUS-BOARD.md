@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:39:01Z
+UPDATED_UTC: 2026-11-16T20:39:52Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 7
-CAPACITY: 3.74 load of 4 cores, mem 1/15 GB, RAM 1129/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 7 (light+heavy per list)
+AGENTS_RUNNING: 3
+CAPACITY: 2.41 load of 4 cores, mem 1/15 GB, RAM 1136/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: cut list: finish running agents only
-PUSHED_UTC: 2026-11-16T20:39:01Z
+NEXT: after F8 evidence runner ends: ONE F8 fixer for the Major (swallowed stop in --refresh), video path
+PUSHED_UTC: 2026-11-16T20:39:52Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,12 +31,8 @@ PUSHED_UTC: 2026-11-16T20:39:01Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | a3e1970f | F8 EVIDENCE RUNNER r13 (HEAVY) | sonnet | flow-check run_all + stop test; video path: YES (take check) | 20:33Z | 21:00Z | running | raw output pending |
-| af9239e4 | F8 design reviewer r13 | sonnet | flow-check review; video path: YES | 20:33Z | 21:10Z | running | none yet |
-| a4b5d2d7 | F8 codebase reviewer r13 | sonnet | flow-check review; video path: YES | 20:33Z | 21:10Z | running | none yet |
-| a5e0ccb1 | REVIEW.md fixer r56 | sonnet | core patch review (security); video path: NO, finishing only | 20:35Z | 21:20Z | running | none yet |
 | ad0e03dc | FIX-PLAN fixer r65 | sonnet | fix plan; video path: YES (Tue re-pin), finishing only | 20:35Z | 21:20Z | running | none yet |
 | a26f78a9 | RUNSHEET-WORDING fixer r42 | sonnet | run sheet wording; video path: YES, finishing only | 20:35Z | 21:20Z | running | none yet |
-| a8af5aed | patch-copies pass 28 fixer | sonnet | patch copies; video path: NO, finishing only | 20:37Z | 21:10Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
