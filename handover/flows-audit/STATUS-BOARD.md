@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:49:40Z
+UPDATED_UTC: 2026-11-16T09:49:46Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
 PERCENT: 83
-AGENTS_RUNNING: 7
-CAPACITY: 1.08 load of 4 cores, mem 0/15 GB, disk free 28G, agents 7 (light+heavy per list)
+AGENTS_RUNNING: 6
+CAPACITY: 0.91 load of 4 cores, mem 0/15 GB, disk free 28G, agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: $env nodes, 2 webhooks without auth, 7 false-pass Majors (fixer running)
 F3: independent rerun clean (91 tests on 3.11-3.13, 14/14 mutants killed, hostile inputs refused); NOT run: Python 3.9/3.10, macOS, WSL, live n8n import; fresh security review still running
@@ -15,7 +15,7 @@ ROLES: script FAILS repo gate (ruff 21 errors, format, bandit B608), crashes on 
 claims: reviews found 16 Majors (swapped rows 13/18 cites, wrong OWNER-STEPS line, "lead" word, undefined labels, 114 SUPPORTED includes rows needing a run); r4 fixer running; F-01 still unreadable
 F5: round 4 reviews found 4 Blockers + about 20 Majors incl. false "not in this checkout" reason (programs ARE in handover/demo); r4 fixer running
 NEXT: collect F8, F3 security, F5 r4, claims r4, ROLES doc review, ROLES script r5
-PUSHED_UTC: 2026-11-16T09:49:40Z
+PUSHED_UTC: 2026-11-16T09:49:46Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
