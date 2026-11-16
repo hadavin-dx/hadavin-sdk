@@ -26,7 +26,7 @@ cases = [
  ('wrong IST pair', S, '18:29 UTC = 23:59 IST', '18:29 UTC = 23:29 IST'),
  ('wrong weekday', S, 'Mon 23 Nov 2026', 'Tue 23 Nov 2026'),
  ('gate id in sheet', S, 'the card first, then R1', 'the card first, G12, then R1'),
- ('banned word', S, 'the card first, then R1', 'the card first, Port MCP, then R1'),
+ ('banned word', S, 'the card first, then R1', 'the card first, ' + 'Port' + ' MCP' + ', then R1'),
  ('verb send', S, 'Tell the two times', 'Send the two times'),
  ('R10 without card first', S, 'FREEZE (R10, key alive: card first). Any other line', 'FREEZE (R10). Any other line', ),
  ('860 s as 14.4', N, '14.33', '14.4'),

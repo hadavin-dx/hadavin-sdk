@@ -1,0 +1,9 @@
+PTY normal + Enter                   output='paste key, Enter: exit 0' key_echoed=False exists=True mode=0o600 size=26
+PTY Enter only                       output='paste key, Enter: exit 1' key_echoed=False exists=False
+PTY Ctrl-D only                      output='paste key, Enter: exit 1' key_echoed=False exists=False
+PTY text then one Ctrl-D             output='paste key, Enter:' key_echoed=False exists=False
+PTY text then two Ctrl-D             output='paste key, Enter: exit 1' key_echoed=False exists=False
+PTY existing file                    output='paste key, Enter: bash: line 1: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratc' key_echoed=False exists=True mode=0o644 size=4
+PTY missing folder                   output='paste key, Enter: bash: line 1: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratc' key_echoed=False exists=False
+PTY multi-line paste (2 lines)       output='paste key, Enter: exit 0' key_echoed=False exists=True mode=0o600 size=26
+PTY Ctrl-C at the prompt             output='paste key, Enter:' key_echoed=False exists=False
