@@ -1,0 +1,59 @@
+MUTANT A-01-m28  VERDICT: KILLED
+description: M4: a raising step is no longer recorded as failed
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wA   file: src/hadavin_sdk/runtime/tick.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/c8/wA)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 6 failed, 98 passed in 22.35s
+first failing test: tests/test_p7_tick.py::test_one_failing_step_lets_the_others_run_and_exits_1
+all failing tests (6): tests/test_p7_tick.py::test_one_failing_step_lets_the_others_run_and_exits_1; tests/test_p7_tick.py::test_a_store_blip_inside_a_step_fails_only_that_step; tests/test_p7_tick.py::test_driver_errors_keep_their_details_out_of_tick_state; tests/test_p7_tick.py::test_store_dropping_mid_tick_exits_4_not_1; tests/test_p7_tick.py::test_a_failing_step_with_a_reachable_store_still_exits_1; tests/test_p7_tick.py::test_reprobe_error_from_an_answering_store_keeps_exit_1
+--- OLD TEXT (full) ---
+        error = f"{type(exc).__name__}: {_message(exc)}"
+
+--- NEW TEXT (full) ---
+        error = None
+
+--- PYTEST OUTPUT (full) ---
+......F...................FF..........FF....F........................... [ 69%]
+................................                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 0 == 1
+     +  where 0 = run_tick(App(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'...da90>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fb68581c910>), steps=[TickStep(name='first', every_s=0, fn=<function test_one_failing_step_lets_the_others_run_and_exits_1.<locals>.boom at...n=<function test_one_failing_step_lets_the_others_run_and_exits_1.<locals>.<lambda> at 0x7fb685673880>, interval=None)])
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.tick:tick.py:328 step=first error_kind=RuntimeError message=broken with <APIKEY_1> second line
+INFO     hadavin_sdk.tick:tick.py:256 tick ok=True failed=-
+/tmp/c8/wA/tests/test_p7_tick.py:109: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = run_tick(App(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'...d650>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fb685814350>), steps=[TickStep(name='first', every_s=0, fn=<function test_a_store_blip_inside_a_step_fails_only_that_step.<locals>.<lambda>...fn=<function test_a_store_blip_inside_a_step_fails_only_that_step.<locals>.<lambda> at 0x7fb6867f00e0>, interval=None)])
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.tick:tick.py:328 step=first error_kind=OSError message=(driver error; details withheld)
+/tmp/c8/wA/tests/test_p7_tick.py:415: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = run_tick(App(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'...58b0>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fb68ba2e810>), steps=[TickStep(name='net', every_s=0, fn=<function test_driver_errors_keep_their_details_out_of_tick_state.<locals>.boom at 0x7fb6856d5620>, interval=None)])
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.tick:tick.py:328 step=net error_kind=URLError message=(driver error; details withheld)
+/tmp/c8/wA/tests/test_p7_tick.py:425: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 4
+     +  where 0 = run_tick(App(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'...2c10>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fb685816c90>), steps=[TickStep(name='x', every_s=0, fn=<function test_store_dropping_mid_tick_exits_4_not_1.<locals>.<lambda> at 0x7fb6867f2d40>, interval=None)])
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.tick:tick.py:328 step=x error_kind=OSError message=(driver error; details withheld)
+/tmp/c8/wA/tests/test_p7_tick.py:590: AssertionError: assert 0 == 4
+E   AssertionError: assert 0 == 1
+     +  where 0 = run_tick(App(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'...8190>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fb6867f50d0>), steps=[TickStep(name='x', every_s=0, fn=<function test_a_failing_step_with_a_reachable_store_still_exits_1.<locals>.boom at 0x7fb6867f36a0>, interval=None)])
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.tick:tick.py:328 step=x error_kind=RuntimeError message=step broke
+/tmp/c8/wA/tests/test_p7_tick.py:597: AssertionError: assert 0 == 1
+E   AssertionError: assert 0 == 1
+     +  where 0 = run_tick(App(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'...9090>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7fb68ba2f410>), steps=[TickStep(name='x', every_s=0, fn=<function test_reprobe_error_from_an_answering_store_keeps_exit_1.<locals>.boom at 0x7fb685709120>, interval=None)])
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.tick:tick.py:328 step=x error_kind=InsufficientPrivilege message=(driver error; details withheld)
+/tmp/c8/wA/tests/test_p7_tick.py:657: AssertionError: assert 0 == 1
+=========================== short test summary info ============================
+FAILED tests/test_p7_tick.py::test_one_failing_step_lets_the_others_run_and_exits_1
+FAILED tests/test_p7_tick.py::test_a_store_blip_inside_a_step_fails_only_that_step
+FAILED tests/test_p7_tick.py::test_driver_errors_keep_their_details_out_of_tick_state
+FAILED tests/test_p7_tick.py::test_store_dropping_mid_tick_exits_4_not_1 - As...
+FAILED tests/test_p7_tick.py::test_a_failing_step_with_a_reachable_store_still_exits_1
+FAILED tests/test_p7_tick.py::test_reprobe_error_from_an_answering_store_keeps_exit_1
+6 failed, 98 passed in 22.35s
+
