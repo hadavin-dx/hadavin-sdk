@@ -1097,6 +1097,63 @@ self_test() {
     v7; printf 'echo %s | ssh-add -\n' "$vv"; v7_reg 'echo piped into ssh-add' LS
     printf 'kept_v7_line mkdir -p /tmp/x\n'
 
+    # ---- v8 additions: classes found by the v7 reviews (every value is built from parts; first 6 and last 6 characters are checked)
+    v8n=300
+    v8() { v8n=$((v8n + 1)); hd=$(printf 'zs%03dv' "$v8n"); tl=$(printf 'xo%03dd' "$v8n"); vv=$hd$tl; }
+    v8_reg() { printf '%s|%s|%s|%s\n' "$1" "$hd" "$tl" "$2" >> "$WORK/st-pt.txt"; }
+    # (MAJ-1) control bytes and bidi controls: removed and counted; a delete or archive word beside them stays visible
+    printf 'a\033[2Kb kept_esc_word\n'
+    printf 'row1\rkept_cr_word\n'
+    printf 'kept_crlf_line\r\n'
+    printf 'back\010space kept_bs_word\n'
+    printf 'vt\013ff\014del\177x kept_vtff_word\n'
+    printf 'bidi \342\200\256kept_bidi_word \342\201\246 \330\234 \342\200\216x\n'
+    printf 'tab\there kept_tab_word\n'
+    # (MIN-1) a control byte inside a secret name
+    v8; printf 'pass\001word = %s\n' "$vv"; v8_reg 'control byte 0x01 inside the name password' ""
+    v8; printf 'pass\033word = %s\n' "$vv"; v8_reg 'ESC inside the name password' ""
+    v8; printf 'api_\010key: %s\n' "$vv"; v8_reg 'backspace inside the name api_key' ""
+    v8; printf 'pass\000word = %s\n' "$vv"; v8_reg 'NUL inside the name password' ""
+    v8; printf 'tok\342\200\256en = %s\n' "$vv"; v8_reg 'bidi control inside the name token' ""
+    v8; printf 'secret\r= %s\n' "$vv"; v8_reg 'CR between the name and the equals sign' ""
+    # (MIN-2) a value that starts with < or with the beginning of our own mark: only the exact mark may pass as already hidden
+    v8; printf 'password = <masked>%s\n' "$vv"; v8_reg 'value that starts with the exact mark and goes on' ""
+    v8; printf 'password = <massive%s>\n' "$vv"; v8_reg 'value <massive...>' ""
+    v8; printf 'the token is <ma%s>\n' "$vv"; v8_reg 'prose: token is <ma...>' ""
+    v8; printf 'run --token <m%s>\n' "$vv"; v8_reg 'flag --token <m...>' ""
+    v8; printf 'Bearer <e%s>\n' "$vv"; v8_reg 'Bearer <e...>' ""
+    v8; printf 'name: <email-masked>%s\n' "$vv"; v8_reg 'YAML value that starts with the exact email mark and goes on' ""
+    v8; printf 'secret is <MASKED>%s\n' "$vv"; v8_reg 'upper case mark with a value' ""
+    # (MIN-5) other spellings of the same text
+    v8; printf 'x &quot;password&quot;: &quot;%s&quot; y\n' "$vv"; v8_reg 'HTML entities for the quotes' ""
+    v8; printf '{&#34;api_key&#34;:&#34;%s&#34;}\n' "$vv"; v8_reg 'numeric HTML entities for the quotes' ""
+    v8; printf 'GET /x?password%%3D%s&y=1\n' "$vv"; v8_reg 'URL-encoded equals sign' ""
+    v8; printf 'x %s%s"password%s%s": %s%s"%s%s"\n' "$BS" "$BS" "$BS" "$BS" "$BS" "$BS" "$vv" "$BS$BS"; v8_reg 'double-escaped quotes' LS
+    v8; printf '<password><![CDATA[%s]]></password>\n' "$vv"; v8_reg 'CDATA text of an XML element' LS
+    v8; printf '&lt;password&gt;%s&lt;/password&gt;\n' "$vv"; v8_reg 'XML element written with entities' ""
+    v8; printf '<connection user="u" password="%s"/>\n' "$vv"; v8_reg 'XML attribute named password' LS
+    v8; printf '<add key="password" value="%s"/>\n' "$vv"; v8_reg 'XML key and value attributes' LS
+    # (MIN-6) a value given by position, or compared with a literal
+    v8; printf 'smtp.login("bob", "%s")\n' "$vv"; v8_reg 'login(user, "value")' LS
+    v8; printf 'if api_key == "%s":\n' "$vv"; v8_reg 'api_key == "value"' LS
+    v8; printf 'client.set_password("%s")\n' "$vv"; v8_reg 'set_password("value")' LS
+    # (evidence) a name followed only by white space and the value
+    v8; printf 'password %s\n' "$vv"; v8_reg 'bare password VALUE (one space)' LS
+    v8; printf 'password\t%s\n' "$vv"; v8_reg 'bare password TAB VALUE' LS
+    v8; printf 'db_password\t%s\n' "$vv"; v8_reg 'bare db_password TAB VALUE' LS
+    v8; printf 'secret\t%s\n' "$vv"; v8_reg 'bare secret TAB VALUE' LS
+    v8; printf 'token\t%s\n' "$vv"; v8_reg 'bare token TAB VALUE' LS
+    v8; printf 'Password   %s\n' "$vv"; v8_reg 'bare Password, several spaces' LS
+    v8; printf '  password  \t %s tail_kept_bare\n' "$vv"; v8_reg 'bare password, indented, mixed white space' LS
+    v8; printf 'user alice\npassword %s\n' "$vv"; v8_reg 'netrc style: user line, then password line' LS
+    v8; printf 'http -a alice:%s example.test\n' "$vv"; v8_reg 'http -a user:password' LS
+    v8; printf 'wget --user bob:%s url\n' "$vv"; v8_reg 'wget --user user:password' LS
+    v8; printf 'http --proxy-user bob:%s x\n' "$vv"; v8_reg 'http --proxy-user user:password' LS
+    printf 'the token counter and a secret handshake are kept_prose_line\n'
+    printf -- '-----BEGIN ENCRYPTED DATA-----\n%s_70a_\n%s_70b_\n-----END ENCRYPTED DATA-----\nkept_after_enc_pem\n' "$base" "$base"
+    v8; printf '{%s"password%s": %s"%s%s"}\n' "$BS" "$BS" "$BS" "$vv" "$BS"
+    v8; printf '{%s'"'"'token%s'"'"': %s'"'"'%s%s'"'"'}\n' "$BS" "$BS" "$BS" "$vv" "$BS"
+
   } > "$in"
   if [ -n "${SELFTEST_FILTER:-}" ]; then
     # shellcheck disable=SC2086
@@ -1302,8 +1359,28 @@ self_test() {
   chk_kept 'dotted CamelCase name stays' 'com.example.MyClass2.HandlerFactory'
   chk_kept 'file name with dots stays' 'tests/test_qs_37_refuses_after_window_end.py'
   chk_kept 'a name followed by a full stop stays' 'kept_sentence_end.'
-  chk_kept 'a NUL byte is shown as ? (tr stage)' 'a?b kept_nul_line'
+  chk_kept 'a NUL byte is removed and the removal is shown (tr stage and pre-stage)' 'ab kept_nul_line [control bytes removed: 1]'
   chk_kept 'mkdir -p with a path stays' 'kept_v7_line mkdir -p /tmp/x'
+  chk_kept 'a word after an ESC sequence stays and the removal is shown' 'kept_esc_word [control bytes removed: 1]'
+  chk_kept 'a word after a bare CR stays (the CR is removed, not shown raw)' 'row1kept_cr_word [control bytes removed: 1]'
+  chk_kept 'a CRLF line end is removed without a notice' 'kept_crlf_line'
+  chk_kept 'backspace removed' 'backspace kept_bs_word [control bytes removed: 1]'
+  chk_kept 'vertical tab, form feed and DEL removed' 'kept_vtff_word [control bytes removed: 3]'
+  chk_kept 'bidi controls removed and counted' 'bidi kept_bidi_word   x [control bytes removed: 4]'
+  chk_kept 'a TAB stays' "tab$(printf '\011')here kept_tab_word"
+  chk_kept 'a line with the word token or secret in prose is not hidden' 'the token counter and a secret handshake are kept_prose_line'
+  chk_kept 'text after a hidden bare password value stays' 'tail_kept_bare'
+  chk_kept 'text after a block of ENCRYPTED DATA stays' 'kept_after_enc_pem'
+  chk_kept 'the escaped closing quote stays after a hidden JSON value' '<masked>'"$BS"'"}'
+  chk_kept 'the escaped closing single quote stays after a hidden value' "<masked>${BS}'}"
+  chk_hidden 'ENCRYPTED DATA block line 1' "${base}_70a_" S
+  chk_hidden 'ENCRYPTED DATA block line 2' "${base}_70b_" S
+  # no control byte of any kind reaches the screen (full filter and final belt)
+  st_ctlre=$(printf '[\001-\010\013-\037\177]')
+  for st_v in "$res" "$res2"; do
+    if grep -a -q -- "$st_ctlre" "$st_v"; then fail=$((fail + 1)); printf 'FAIL (a control byte reaches the output)\n'; else pass=$((pass + 1)); say "PASS (no control byte in the output)"; fi
+    if grep -a -q -E -- "$(printf '\342\200[\216\217\252-\256]|\342\201[\246-\251]|\330\234')" "$st_v"; then fail=$((fail + 1)); printf 'FAIL (a bidi control reaches the output)\n'; else pass=$((pass + 1)); say "PASS (no bidi control in the output)"; fi
+  done
   st_leak=0
   grep -a -q -F -- "$base" "$res" && st_leak=1
   [ "$st_leak" -eq 0 ] || printf 'FAIL (the secret base string is still visible somewhere in the output)\n'

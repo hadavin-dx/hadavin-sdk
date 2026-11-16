@@ -167,12 +167,16 @@ def _intro_problems(toks):
         if not _pct_i(toks, nxt): out.append(f"{w} without %I. right after it")
     return out
 def _sql_of(strtok): return strtok[1][1:-1].replace("''", "'")
-def _body_problems(source, fn):
+def _body_source(tk):
+    if tk[0] == "str": return _sql_of(tk)
+    tag = _DOLLAR.match(tk[1]).group(0)
+    return tk[1][len(tag):len(tk[1]) - len(tag)] if tk[1].endswith(tag) and len(tk[1]) >= 2 * len(tag) else tk[1][len(tag):]
+def _body_problems(source, fn, strict=True):
     p = []
     toks = tokenize(source)
     for k, tk in enumerate(toks):
-        if _is(tk, "EXECUTE"):
-            ok = k + 3 < len(toks) and _is(toks[k + 1], "format") and toks[k + 2] == ("punct", "(") and toks[k + 3][0] == "str"
+        if strict and _is(tk, "EXECUTE"):
+            ok = k + 3 < len(toks) and _is(toks[k + 1], "FORMAT") and toks[k + 2] == ("punct", "(") and toks[k + 3][0] == "str"
             if not ok: p.append(f"{fn} has an EXECUTE that is not EXECUTE format('literal', TG_TABLE_SCHEMA ...)"); continue
             lit = _sql_of(toks[k + 3])
             if re.search(r"%(?!I|%)", lit.replace("%%", "")): p.append(f"{fn} format string uses a substitution other than %I")
@@ -194,7 +198,7 @@ def _body_problems(source, fn):
     for tk in toks:
         if tk[0] == "str" and _BODY_BAD.search(_sql_of(tk)) and re.match(r"\s*(ALTER|GRANT|REVOKE|CREATE|DROP|SET)\b", _sql_of(tk), re.I):
             p.append(f"{fn} string starts a forbidden statement")
-    p += [f"{fn} {x}" for x in _intro_problems(toks)]
+    if strict: p += [f"{fn} {x}" for x in _intro_problems(toks)]
     return p
 
 _DENY_CREATE = {"PROCEDURE", "ROUTINE", "AGGREGATE", "OPERATOR", "CAST", "LANGUAGE", "EXTENSION", "TRANSFORM", "EVENT", "RULE", "ROLE", "USER", "GROUP", "SCHEMA"}
@@ -228,7 +232,7 @@ def check_sql_text(name, text, allowed, grants_allowed=()):
                     if na: revoked.add(sigkey(na[0], na[1]))
             continue
         if lead[:1] == ["CREATE"]:
-            rest = lead[2:] if lead[1:3] == ["OR", "REPLACE"] else lead[1:]
+            rest = lead[3:] if lead[1:3] == ["OR", "REPLACE"] else lead[1:]
             kind = (rest or [""])[0]
             if kind in _DENY_CREATE:
                 problems.append(pre + f"CREATE {kind} is not allowed: {flat[:60]!r}"); continue
@@ -258,7 +262,7 @@ def check_sql_text(name, text, allowed, grants_allowed=()):
                     sets = [k for k in range(len(a2)) if _is(a2[k], "SET")]
                     paths = []
                     for k in sets:
-                        if k + 1 < len(a2) and _is(a2[k + 1], "search_path"):
+                        if k + 1 < len(a2) and _is(a2[k + 1], "SEARCH_PATH"):
                             items, m = [], k + 3 if k + 2 < len(a2) and (a2[k + 2] == ("punct", "=") or _is(a2[k + 2], "TO")) else None
                             while m is not None and m < len(a2):
                                 items.append(a2[m][1].strip('"').strip("'").lower()); m += 1
@@ -268,9 +272,9 @@ def check_sql_text(name, text, allowed, grants_allowed=()):
                         else: problems.append(pre + f"{key}: a SET attribute other than search_path")
                     if paths != [["pg_catalog", "pg_temp"]]: problems.append(pre + f"{key}: search_path must be exactly pg_catalog, pg_temp (found {paths})")
                     if not atomic:
-                        for b in bodies: problems += [pre + x for x in _body_problems(b[1][2:-2] if b[0] == "str" is False else (_sql_of(b) if b[0] == "str" else b[1][b[1].index("$", 1) + 1:b[1].rindex("$", 0, len(b[1]) - 1 - (len(b[1]) - 1 - b[1].rindex("$", 0, len(b[1]) - 1)))]), key)]
+                        for b in bodies: problems += [pre + x for x in _body_problems(_body_source(b), key)]
                 else:
-                    for b in bodies: problems += [pre + x for x in _body_problems(_sql_of(b) if b[0] == "str" else b[1][b[1].index("$", 1) + 1:b[1].rindex("$", 0, len(b[1]) - 1)], key) if "forbidden" in x or "ALTER, GRANT" in x]
+                    for b in bodies: problems += [pre + x for x in _body_problems(_body_source(b), key, strict=False)]
                 continue
         if any(_is(a, "SECURITY") and _is(b, "DEFINER") for a, b in zip(st, st[1:])):
             problems.append(pre + f"SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: {flat[:60]!r}")
