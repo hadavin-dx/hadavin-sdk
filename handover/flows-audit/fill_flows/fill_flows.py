@@ -130,15 +130,48 @@ def _check_open_place(fd: int, lexical: str, what: str) -> None:
         raise Refused(f"{what} is inside a git repository (a parent folder has .git)")
 
 
+class _Stopped(BaseException):
+    """The tool was asked to stop by a signal (terminate or hang-up). It is raised so the
+    clean-up runs; a kill that cannot be caught (SIGKILL, power loss) skips it."""
+
+
+_STOP_SIGNALS = tuple(
+    getattr(signal, n) for n in ("SIGINT", "SIGTERM", "SIGHUP") if hasattr(signal, n)
+)
+
+
+@contextlib.contextmanager
+def _stop_signals():
+    """While a fill or delete runs, a terminate or hang-up signal ends it through the normal
+    clean-up path (like Ctrl-C does) instead of killing the process on the spot."""
+
+    def handler(signum, _frame):
+        raise _Stopped(signum)
+
+    old: dict = {}
+    try:
+        for n in ("SIGTERM", "SIGHUP"):
+            if hasattr(signal, n):
+                old[getattr(signal, n)] = signal.signal(getattr(signal, n), handler)
+    except ValueError:  # not the main thread: handlers cannot be set
+        pass
+    try:
+        yield
+    finally:
+        for sig, prev in old.items():
+            signal.signal(sig, prev)
+
+
 @contextlib.contextmanager
 def _sigint_blocked():
-    """Hold Ctrl-C back for a few lines, so 'create the file' and 'write it down for clean-up'
-    cannot be split by it. A Ctrl-C that comes in is delivered right after."""
+    """Hold Ctrl-C, terminate and hang-up back for a few lines, so 'create the file' and 'write
+    it down for clean-up' (and the clean-up itself) cannot be split by them. A signal that comes
+    in is delivered right after."""
     mask = getattr(signal, "pthread_sigmask", None)
     if mask is None:
         yield
         return
-    old = mask(signal.SIG_BLOCK, {signal.SIGINT})
+    old = mask(signal.SIG_BLOCK, set(_STOP_SIGNALS))
     try:
         yield
     finally:
@@ -165,6 +198,8 @@ def read_values(path: str) -> dict[str, str]:
             raise Refused("values file is under /mnt (Windows drive): file modes do not protect it")
         if inside_git(os.path.dirname(real)):
             raise Refused("values file is inside a git repository (move it out; it holds secrets)")
+        if st.st_uid != os.getuid():
+            raise Refused("values file is not owned by you (a file of another user cannot be trusted)")
         if st.st_mode & 0o077:
             raise Refused("values file can be read by other users (run: chmod 600 on it)")
         with os.fdopen(fd, "rb") as fh:
@@ -232,6 +267,22 @@ def read_values(path: str) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------- substitution
+
+
+ESCAPE = re.compile(r"\\u\{([0-9a-fA-F]{1,6})\}|\\u([0-9a-fA-F]{4})|\\x([0-9a-fA-F]{2})")
+
+
+def _unescaped(s: str) -> str:
+    """The text with JavaScript \\uXXXX, \\u{X} and \\xXX escapes decoded: n8n might read an
+    identifier written this way as the same name, so `$env` could hide behind an escape."""
+
+    def one(m: re.Match) -> str:
+        try:
+            return chr(int(m.group(1) or m.group(2) or m.group(3), 16))
+        except (ValueError, OverflowError):
+            return m.group(0)
+
+    return ESCAPE.sub(one, s)
 
 
 def _js_literal(value: str) -> str:
@@ -333,6 +384,8 @@ class Subst:
             self.ph_used.add(s)
             return self.values[s]
         if "$env" not in s:
+            if "$env" in _unescaped(s):
+                raise Refused("a $env name is written with an escape (\\u or \\x form; not filled)")
             return s
         if ctx in CODE_KEYS:
             raise Refused(f"a $env token sits in a {ctx} field (program code; not filled)")
@@ -524,7 +577,7 @@ def _marker_bytes(folder_name: str) -> bytes:
     return f"{MARKER_FORMAT}\n{folder_name}\n".encode("utf-8", "surrogateescape")
 
 
-def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
+def do_fill(in_dir: str, values_path: str, out_dir: str, allow_placeholders: bool = False) -> int:
     out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
     manifest_path = out_dir + MANIFEST_SUFFIX
     if under_mnt(os.path.dirname(out_dir)) or under_mnt(out_dir):
@@ -559,7 +612,7 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     for n in names:
         obj = read_json_file(in_dir, n)
         before = shape(obj)
-        if any(ANY_ENV.search(t) for t in iter_strings(obj)):
+        if any(ANY_ENV.search(_unescaped(t)) for t in iter_strings(obj)):
             found_any = True
         try:
             new = sub.walk(obj)
@@ -571,7 +624,7 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
             bad_names = ", ".join(_a(b) for b in sorted(sub.bad))
             raise Refused(f"{_a(n)}: " + _CANNOT_FILL + bad_names)
         data = dump(new)
-        if ANY_ENV.search(data.decode("utf-8")):
+        if ANY_ENV.search(_unescaped(data.decode("utf-8"))):
             raise Refused(f"{_a(n)}: a $env token is left after substitution (dynamic or odd form)")
         ph_left += sum(len(PH_RE.findall(t)) for t in iter_strings(new))
         outputs[n] = data
@@ -581,6 +634,12 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
             file=sys.stderr,
         )
         return EXIT_NOTHING
+    if ph_left and not allow_placeholders:
+        raise Refused(
+            f"{ph_left} placeholder name(s) would be left in the copy because the values file "
+            "has no value for them; add the values, or add --allow-placeholders to write a "
+            "copy that is marked NOT READY (for the credential walk-through); nothing written"
+        )
     for k in sorted(set(values) - sub.used - sub.ph_used):
         print(f"warning: key {k} in the values file is not used by any node", file=sys.stderr)
 
@@ -588,8 +647,9 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     marker = _marker_bytes(folder_name)
     hashes = {n: hashlib.sha256(d).hexdigest() for n, d in outputs.items()}
     hashes[MARKER_NAME] = hashlib.sha256(marker).hexdigest()
-    if ph_left:
-        hashes[NOT_READY_NAME] = hashlib.sha256(_not_ready_bytes()).hexdigest()
+    # the not-ready note is always listed: it is written first and removed last (a copy that
+    # was cut short by a kill is then still marked), so `delete` must know it
+    hashes[NOT_READY_NAME] = hashlib.sha256(_not_ready_bytes()).hexdigest()
     manifest = {"format": MANIFEST_FORMAT, "files": dict(sorted(hashes.items()))}
     manifest_bytes = (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode()
     manifest_name = folder_name + MANIFEST_SUFFIX
@@ -614,22 +674,28 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
                 "file modes do not hold on this disk (the new folder is not private); "
                 "use a folder on a normal Linux or macOS disk"
             )
+        # the "not ready" note goes in first and comes out last: a copy cut short by a kill
+        # that nothing can catch is still marked, and `check` refuses a folder with the note
+        _write_new(NOT_READY_NAME, _not_ready_bytes(), dfd, created)
         _write_new(MARKER_NAME, marker, dfd, created)
-        if ph_left:
-            _write_new(NOT_READY_NAME, _not_ready_bytes(), dfd, created)
         for n, d in outputs.items():
             _write_new(n, d, dfd, created)
+        if not ph_left:
+            with _sigint_blocked():
+                os.unlink(NOT_READY_NAME, dir_fd=dfd)
+                created.remove((dfd, NOT_READY_NAME))
     except BaseException:
-        for fd, nm in reversed(created):
-            try:
-                os.unlink(nm, dir_fd=fd)
-            except OSError:
-                pass
-        if made_dir:
-            try:
-                os.rmdir(folder_name, dir_fd=pfd)
-            except OSError:
-                pass
+        with _sigint_blocked():  # a second Ctrl-C must not cut the clean-up short
+            for fd, nm in reversed(created):
+                try:
+                    os.unlink(nm, dir_fd=fd)
+                except OSError:
+                    pass
+            if made_dir:
+                try:
+                    os.rmdir(folder_name, dir_fd=pfd)
+                except OSError:
+                    pass
         raise
     finally:
         if dfd >= 0:
@@ -648,11 +714,58 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     return EXIT_OK
 
 
+def _check_against_manifest(directory: str) -> int:
+    """When the manifest that fill wrote sits next to the folder, compare the folder with it:
+    every listed file present (the not-ready note may be gone) with the same fingerprint, and
+    nothing else in the folder. Returns the number of problems; no manifest means 0 (an input
+    folder has none)."""
+    d = os.path.abspath(directory.rstrip("/") or "/")
+    folder_name = os.path.basename(d)
+    manifest_name = folder_name + MANIFEST_SUFFIX
+    if not os.path.lexists(os.path.join(os.path.dirname(d), manifest_name)):
+        return 0
+    pfd = os.open(os.path.dirname(d), DIR_FLAGS & ~os.O_NOFOLLOW)
+    bad = 0
+    try:
+        try:
+            files = _load_manifest(manifest_name, pfd)
+        except Refused as e:
+            print(f"manifest: {e}")
+            return 1
+        dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
+        try:
+            present = set(os.listdir(dfd))
+            for n in sorted(present - set(files)):
+                print(f"{_a(n)}: not in the manifest (a file that fill did not write)")
+                bad += 1
+            for n, h in sorted(files.items()):
+                if n not in present:
+                    if n != NOT_READY_NAME:
+                        print(f"{_a(n)}: listed in the manifest but missing")
+                        bad += 1
+                    continue
+                try:
+                    same = sha256_at(n, dfd) == h
+                except OSError:
+                    same = False
+                if not same:
+                    print(f"{_a(n)}: differs from the manifest (changed since fill wrote it)")
+                    bad += 1
+        finally:
+            os.close(dfd)
+    except OSError:
+        print("manifest: the folder cannot be compared with it")
+        bad += 1
+    finally:
+        os.close(pfd)
+    return bad
+
+
 def do_check(directory: str, tokens_only: bool) -> int:
     names = list_json(directory)
     if not names:
         raise Refused("no .json files in the folder (nothing was checked)")
-    bad = 0
+    bad = _check_against_manifest(directory)
     for n in names:
         try:
             obj = read_json_file(directory, n)
@@ -665,7 +778,7 @@ def do_check(directory: str, tokens_only: bool) -> int:
             for m in TOKEN.finditer(text):
                 print(f"{_a(n)}: token $env {_a(m.group(1) or m.group(3))}")
                 bad += 1
-            c = len(ANY_ENV.findall(TOKEN.sub("", text)))
+            c = len(ANY_ENV.findall(_unescaped(TOKEN.sub("", text))))
             if c:
                 print(f"{_a(n)}: {c} other $env use(s) (dynamic form)")
                 bad += c
@@ -792,8 +905,10 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
         if not no_manifest and not has_man:
             raise Refused(
                 "manifest is missing; nothing deleted (to remove the folder anyway, use "
-                "--no-manifest: it removes only the files this tool writes)"
+                "--no-manifest: it removes only the marker, the not-ready note and .json files "
+                "that look like this tool's output: mode 0600, yours, valid JSON)"
             )
+        manifest_loaded = False
         if has_man:
             # A manifest we rely on or remove must be valid, unless --force-hash says the person
             # knows it is cut short (a kill during its write); then it must at least be a plain
@@ -803,6 +918,7 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
                     raise Refused("manifest is not owned by you; nothing deleted")
             else:
                 files = _load_manifest(manifest_name, pfd)
+                manifest_loaded = True
         if not has_dir:  # a fill was stopped after the manifest and before the folder
             os.unlink(manifest_name, dir_fd=pfd)
             print("deleted the manifest (the folder was not there)")
@@ -814,6 +930,13 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
         present = set(os.listdir(dfd))
         todo: list[str] = []
         if no_manifest:
+            if manifest_loaded:  # a good manifest exists: the folder must hold nothing beyond it
+                extra = sorted(present - set(files))
+                if extra:
+                    raise Refused(
+                        f"folder holds files not in the manifest: "
+                        f"{', '.join(_a(e) for e in extra)}; nothing deleted"
+                    )
             _signature_ok(dfd, folder_name, present, force_hash)
             todo = sorted(present)
         else:
@@ -839,11 +962,16 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
                         "nothing deleted"
                     )
                 todo.append(n)
-        for n in todo:
-            os.unlink(n, dir_fd=dfd)
-        os.rmdir(folder_name, dir_fd=pfd)
-        if has_man:
-            os.unlink(manifest_name, dir_fd=pfd)
+        # the not-ready note and the marker go last: a delete that is cut short leaves a folder
+        # that is still marked, so a re-run finds it and `check` still refuses it
+        last = (NOT_READY_NAME, MARKER_NAME)
+        todo = [n for n in todo if n not in last] + [n for n in last if n in todo]
+        with _sigint_blocked():
+            for n in todo:
+                os.unlink(n, dir_fd=dfd)
+            os.rmdir(folder_name, dir_fd=pfd)
+            if has_man:
+                os.unlink(manifest_name, dir_fd=pfd)
         count = len([n for n in todo if n not in (MARKER_NAME, NOT_READY_NAME)])
         print(f"deleted {count} files, the folder and the manifest")
         return EXIT_OK
@@ -867,6 +995,11 @@ def main(argv=None) -> int:
     f.add_argument("--in", dest="in_dir", required=True)
     f.add_argument("--values", required=True)
     f.add_argument("--out", required=True)
+    f.add_argument(
+        "--allow-placeholders",
+        action="store_true",
+        help="write a copy marked NOT READY when placeholder values are missing",
+    )
     c = sp.add_parser("check")
     c.add_argument("dir")
     c.add_argument("--tokens-only", action="store_true", help="do not list placeholders")
@@ -876,11 +1009,15 @@ def main(argv=None) -> int:
     d.add_argument("--no-manifest", action="store_true", help="folder has no usable manifest")
     a = ap.parse_args(argv)
     try:
-        if a.mode == "fill":
-            return do_fill(a.in_dir, a.values, a.out)
-        if a.mode == "check":
-            return do_check(a.dir, a.tokens_only)
-        return do_delete(a.out, a.force_hash, a.no_manifest)
+        with _stop_signals():
+            if a.mode == "fill":
+                return do_fill(a.in_dir, a.values, a.out, a.allow_placeholders)
+            if a.mode == "check":
+                return do_check(a.dir, a.tokens_only)
+            return do_delete(a.out, a.force_hash, a.no_manifest)
+    except _Stopped:
+        print("refused: stopped by a signal; what this run created was removed", file=sys.stderr)
+        return EXIT_REFUSED
     except Refused as e:
         print(f"refused: {e}", file=sys.stderr)
         return EXIT_REFUSED

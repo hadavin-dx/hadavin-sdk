@@ -5,7 +5,9 @@
 #   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
 # Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line.
 # FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
-# "Known open problems" (closing block) counts WARN lines that are real defects we already know: no password on a web address,
+# WARN-LEAD-DECISION = an open decision for the lead or owner (no password on a web address, $env reads). Exit stays 0, so exit 0 does NOT mean authentication was checked: read 'OPEN LEAD DECISIONS' in the closing block.
+# A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
+# "Known open problems" (closing block) counts WARN and WARN-LEAD-DECISION lines that are real defects we already know: no password on a web address,
 #   a step whose failure leaves the caller with no answer (reply gap), $env reads, and F-002 (repeat lead key, unproven).
 #   Unpatched flows ("pristine") give 6; patched flows give 8 because patch F-002 adds 2 lines (one per flow file mf-form and mf-hook) saying F-002 is unproven.
 # Three decisions are open (details in REPORT.md, box "Start here"):
@@ -17,6 +19,7 @@
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json webhook Receive has no authentication (anyone who knows the address can post)
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
   [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
   error settings [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json]:
     node               type               onError                retry      alwaysOutputData
@@ -40,6 +43,7 @@ mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none s
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-hook.json webhook Receive has no authentication (anyone who knows the address can post)
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-hook.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
   [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-hook.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-hook.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-hook.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
   error settings [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-hook.json]:
     node               type               onError                retry      alwaysOutputData
@@ -61,6 +65,7 @@ mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none s
   placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
   placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json node AlertSend reads $env.DESK_ALERT_TO; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: n8n rule UNVERIFIED) this node stops working
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json 7 id(s) are still placeholders and must be replaced in n8n before import: AlertBackoff credential postgres id PG_CREDENTIAL_ID; AlertClaim credential postgres id PG_CREDENTIAL_ID; AlertMark credential postgres id PG_CREDENTIAL_ID; AlertSend credential smtp id SMTP_CREDENTIAL_ID; ClaimStuck credential postgres id PG_CREDENTIAL_ID; MarkFailed credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json external-call nodes without retryOnFail: ['AlertBackoff', 'AlertClaim', 'AlertMark', 'AlertSend', 'ClaimStuck', 'MarkFailed', 'RunSub']
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json external-call nodes with onError=continueRegularOutput (an error becomes normal-looking data): ['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed', 'RunSub']
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json write node AlertSend has upstream external call(s) that continue on error: ['AlertClaim']
@@ -87,6 +92,7 @@ mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=no
   placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['AlertSend']
   placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-sub-crm-mail.json node Qualify reads $env.DESK_TIMEOUT_MS, $env.DESK_URL; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: n8n rule UNVERIFIED) this node stops working
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-sub-crm-mail.json 7 id(s) are still placeholders and must be replaced in n8n before import: CrmUpsert credential hubspotAppToken id HS_CRED_PLACEHOLDER; MailClaim credential postgres id PG_CREDENTIAL_ID; MarkDone credential postgres id PG_CREDENTIAL_ID; MarkUnknownA credential postgres id PG_CREDENTIAL_ID; MarkUnknownB credential postgres id PG_CREDENTIAL_ID; SendMail credential smtp id SMTP_CREDENTIAL_ID; SetCrmId credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-sub-crm-mail.json external-call nodes without retryOnFail: ['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SendMail', 'SetCrmId']
   error settings [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-sub-crm-mail.json]:
     node               type               onError                retry      alwaysOutputData
@@ -119,7 +125,8 @@ mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=
   placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
   placeholder/env PLACEHOLDER                        count=3 nodes=['CrmUpsert', 'SendMail']
   placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
-RESULT: 4 FAIL, 10 WARN
+RESULT: 4 FAIL, 14 WARN
+OPEN LEAD DECISIONS: 2 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
 Known open problems: 2
   - /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
   - /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-hook.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
@@ -133,7 +140,9 @@ exit=1
 #   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
 # Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line.
 # FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
-# "Known open problems" (closing block) counts WARN lines that are real defects we already know: no password on a web address,
+# WARN-LEAD-DECISION = an open decision for the lead or owner (no password on a web address, $env reads). Exit stays 0, so exit 0 does NOT mean authentication was checked: read 'OPEN LEAD DECISIONS' in the closing block.
+# A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
+# "Known open problems" (closing block) counts WARN and WARN-LEAD-DECISION lines that are real defects we already know: no password on a web address,
 #   a step whose failure leaves the caller with no answer (reply gap), $env reads, and F-002 (repeat lead key, unproven).
 #   Unpatched flows ("pristine") give 6; patched flows give 8 because patch F-002 adds 2 lines (one per flow file mf-form and mf-hook) saying F-002 is unproven.
 # Three decisions are open (details in REPORT.md, box "Start here"):
@@ -145,6 +154,7 @@ exit=1
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-form.json webhook Receive has no authentication (anyone who knows the address can post)
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-form.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
   [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-form.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
   error settings [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-form.json]:
     node               type               onError                retry      alwaysOutputData
@@ -168,6 +178,7 @@ mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none s
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-hook.json webhook Receive has no authentication (anyone who knows the address can post)
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-hook.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
   [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-hook.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-hook.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-hook.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
   error settings [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-hook.json]:
     node               type               onError                retry      alwaysOutputData
@@ -188,6 +199,7 @@ mf-hook.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none s
   types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x3; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
   placeholder/env PG_CREDENTIAL_ID                   count=2 nodes=['Claim', 'Stored']
   placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-recovery.json 7 id(s) are still placeholders and must be replaced in n8n before import: AlertBackoff credential postgres id PG_CREDENTIAL_ID; AlertClaim credential postgres id PG_CREDENTIAL_ID; AlertMark credential postgres id PG_CREDENTIAL_ID; AlertSend credential smtp id SMTP_CREDENTIAL_ID; ClaimStuck credential postgres id PG_CREDENTIAL_ID; MarkFailed credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-recovery.json external-call nodes without retryOnFail: ['AlertBackoff', 'AlertClaim', 'AlertMark', 'AlertSend', 'ClaimStuck', 'MarkFailed', 'RunSub']
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-recovery.json external-call nodes with onError=continueRegularOutput (an error becomes normal-looking data): ['AlertBackoff', 'AlertClaim', 'AlertMark', 'ClaimStuck', 'MarkFailed', 'RunSub']
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-recovery.json write node AlertSend has upstream external call(s) that continue on error: ['AlertClaim']
@@ -213,6 +225,7 @@ mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=no
   placeholder/env SUB_WORKFLOW_ID                    count=1 nodes=['RunSub']
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-sub-crm-mail.json node Qualify reads $env.MF_STAGE_TIMEOUT_MS, $env.MF_STAGE_URL; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: n8n rule UNVERIFIED) this node stops working
 FAIL /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-sub-crm-mail.json node CrmUpsert reads $env.MF_CRM_URL; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: n8n rule UNVERIFIED) this node stops working
+WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-sub-crm-mail.json 6 id(s) are still placeholders and must be replaced in n8n before import: MailClaim credential postgres id PG_CREDENTIAL_ID; MarkDone credential postgres id PG_CREDENTIAL_ID; MarkUnknownA credential postgres id PG_CREDENTIAL_ID; MarkUnknownB credential postgres id PG_CREDENTIAL_ID; SendMail credential smtp id SMTP_CREDENTIAL_ID; SetCrmId credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-sub-crm-mail.json external-call nodes without retryOnFail: ['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SendMail', 'SetCrmId']
   error settings [/home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-sub-crm-mail.json]:
     node               type               onError                retry      alwaysOutputData
@@ -244,7 +257,8 @@ mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=
   placeholder/env $env.MF_STAGE_URL                  count=1 nodes=['Qualify']
   placeholder/env PG_CREDENTIAL_ID                   count=5 nodes=['MailClaim', 'MarkDone', 'MarkUnknownA', 'MarkUnknownB', 'SetCrmId']
   placeholder/env SMTP_CREDENTIAL_ID                 count=1 nodes=['SendMail']
-RESULT: 4 FAIL, 10 WARN
+RESULT: 4 FAIL, 14 WARN
+OPEN LEAD DECISIONS: 2 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
 Known open problems: 2
   - /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
   - /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-film-v5/mf-hook.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
