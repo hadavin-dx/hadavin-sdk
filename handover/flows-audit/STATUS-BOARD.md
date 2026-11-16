@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:05:42Z
+UPDATED_UTC: 2026-11-16T10:05:52Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
 PERCENT: 85
-AGENTS_RUNNING: 7
-CAPACITY: 2.42 load of 4 cores, mem 0/15 GB, disk free 27G, agents 7 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 2.12 load of 4 cores, mem 0/15 GB, disk free 27G, agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: second reviewer found 5 Majors (no-auth webhook only WARN, webhook credential kind unchecked, HubSpot credential uncovered, placeholder ids pass quietly, alwaysOutputData WARN only) + wrong doc lines; r3 fixer running after the evidence runner; $env nodes may fail on n8n default (unverified); 2 webhooks without auth are lead decisions
 F3: r5 fixer done (113 tests, 3.11 to 3.13 only; its own numbers); NOT run: Python 3.9, 3.10, macOS (F_GETPATH branch never executed), a real n8n, non-root; n8n folder import may ignore NOT-READY note file; independent rerun and fresh security review running
@@ -17,8 +17,8 @@ F5: r4 facts review 3 Majors (wrong line cites, wrong file named for stand-in st
 F2: C-1 Major withdrawn and now independently confirmed (Route and load_config both refuse NaN/Infinity on pydantic 2.14.1; zero, -1 and tiny prices are accepted, so the price-above-0 check is still a real gap); now 0 Blocker, 5 Major, 14 Nit; patches deferred by lead
 ROLES folder marked NOT FOR THE TAKE in its README (lead decision 3); necessity review: RUNSHEET and CLAIMS still carry the 11-scene plan until r5 fixers finish
 claims lane B cite check: 127 of 226 B rows, 123 OK, 4 WRONG (B-107, B-155, B-114, B-184) sent to the r5 fixer; 99 B rows unchecked
-NEXT: collect F3 evidence+security, F8 ev+r3, F5 r5, claims r5, cl-rd2
-PUSHED_UTC: 2026-11-16T10:05:42Z
+NEXT: collect F3 evidence+security, F8 ev+r3, F5 r5, claims r5, cl-rd2, cite lane A
+PUSHED_UTC: 2026-11-16T10:05:52Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -44,6 +44,7 @@ PUSHED_UTC: 2026-11-16T10:05:42Z
 | cl-fix5 | claims r5 fixer (scope + Majors) | sonnet | triage OUT rows, fix facts+reader Majors | 10:20 | 10:38 | 5 | running | reviews-f1/fix-f1-r5.md |
 | f3-ev5 | EVIDENCE RUNNER F3 r5 | sonnet | rerun 3 pythons, gate, old-code, 20 mutants, e2e | 10:27 | 10:42 | 5 | running | fill_flows/evidence-f3-r5.md |
 | f3-sec3 | F3 fresh security reviewer r3 | sonnet | find real leaks/escapes | 10:27 | 10:40 | 5 | running | (report inline) |
+| cl-cite2 | claims lane A + rest of B cite checker | sonnet | 97 A rows + 99 B rows | 10:30 | 10:45 | 5 | running | reviews-f1/citations-laneA-and-rest.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
