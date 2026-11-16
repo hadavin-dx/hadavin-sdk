@@ -88,6 +88,7 @@ import json
 import os
 import pathlib
 import re
+import shlex
 import shutil
 import signal
 import stat
@@ -251,7 +252,9 @@ def check_single_link(path: pathlib.Path, what: str) -> None:
         )
 
 
-def _open_parent(root: pathlib.Path | None, path: pathlib.Path, create_dirs: bool) -> tuple[int, str]:
+def _open_parent(
+    root: pathlib.Path | None, path: pathlib.Path, create_dirs: bool
+) -> tuple[int, str]:
     """Open the folder that holds `path` one component at a time with O_NOFOLLOW and dir_fd, starting at `root`
     (or, with no root, at the parent folder itself): a folder swapped for a symbolic link after the path checks
     is refused, never followed (review r4 nit 3). Returns (fd of the parent folder, last name)."""
@@ -328,7 +331,9 @@ def write_target(
                 f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written"
             )
         if created:
-            os.fchmod(fh.fileno(), mode)  # the umask of the caller must not change the recorded mode
+            os.fchmod(
+                fh.fileno(), mode
+            )  # the umask of the caller must not change the recorded mode
         if on_open is not None:
             on_open()
         fh.truncate(0)
@@ -351,9 +356,7 @@ def write_out(path: pathlib.Path, text: str) -> None:
     """Write an output file (raw file, baseline, tree diff, --out-json): never through a symbolic link, only to a
     regular file (review r4 nit 11)."""
     try:
-        fd = os.open(
-            path, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o644
-        )
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o644)
     except OSError as e:
         raise Refused(f"output file {path} cannot be written safely ({e.strerror}): refused") from e
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
@@ -614,7 +617,12 @@ def unreaped_child(pid: int) -> bool:
 def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
     """Process groups that are provably this run's test group (a killed run may leave several things behind)."""
     pgid, rec_start, rec_argv = m.get("pgid"), m.get("start_ticks"), m.get("argv")
-    if isinstance(pgid, int) and pgid > 1 and isinstance(rec_start, int) and isinstance(rec_argv, list):
+    if (
+        isinstance(pgid, int)
+        and pgid > 1
+        and isinstance(rec_start, int)
+        and isinstance(rec_argv, list)
+    ):
         st = proc_stat(pgid)
         if (
             st and st["state"] != "Z"
@@ -775,7 +783,9 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     mode = m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
     try:
         try:
-            already = read_regular(target) == saved  # the file already holds the original: nothing to write
+            already = (
+                read_regular(target) == saved
+            )  # the file already holds the original: nothing to write
         except (Refused, FileNotFoundError):
             already = False
         if not already:
@@ -1079,7 +1089,9 @@ def run_tests(
             rc = proc.returncode
         except subprocess.TimeoutExpired:
             SIG.allow = False  # first: nothing in the cleanup below may be cut short by a signal
-            stop_or_kill(proc)  # a failure to stop the group is no reason to lose the result (review r4 T46)
+            stop_or_kill(
+                proc
+            )  # a failure to stop the group is no reason to lose the result (review r4 T46)
             rest = reap(proc)  # a second communicate() returns everything printed so far
             out = f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
             rc = None
@@ -1179,7 +1191,9 @@ def one(a, tests, m, results, ref) -> list[str]:
                 planted = decode_text(orig, m["file"]).replace(m["old"], m["new"], 1).encode()
                 try:
                     write_target(p, planted, root=root)
-                except OSError as e:  # e.g. a read-only file: a refusal, the restore below checks the bytes
+                except (
+                    OSError
+                ) as e:  # e.g. a read-only file: a refusal, the restore below checks the bytes
                     raise Refused(f"cannot plant into {m['file']}: {e.strerror or e}") from e
                 cmd, rc, out, sweep = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
             finally:
@@ -1289,14 +1303,23 @@ def tree_check(a, root, fresh, marker) -> list[str]:
     """Differences between the scratch tree and a fresh archive; written to raw/<prefix>-tree-diff.txt."""
     diffs = diff_trees(fresh, root, set(a.extra))
     leftover = marker.exists()
-    (pathlib.Path(a.raw) / f"{a.prefix}-tree-diff.txt").write_text(
+    write_out(
+        pathlib.Path(a.raw) / f"{a.prefix}-tree-diff.txt",
         f"TREE CHECK after the loop\ncompared: <fresh git archive {a.sha} + patches {a.patch}> against {a.root} "
         f"(skipping {sorted(SKIP_TOP)} directly under the root only and {sorted(SKIP_ANY)} anywhere; symbolic links compared by target; special files recorded, never read)\n"
         f"declared extra files (allowed as 'only in root'): {a.extra}\n"
         f"differing files ({len(diffs)}; 0 = clean): {diffs}\nmarker left behind: {leftover}\n",
-        encoding="utf-8",
     )
     return [*diffs, *(["<marker left behind>"] if leftover else [])]
+
+
+def restore_args(a, repo_given: bool) -> str:
+    """The extra words of the restore command that make it equal to this run's own checks (--repo and
+    --real-repo are what refuse a root inside the real repository), review r4 nit 10."""
+    words = (["--repo", a.repo] if repo_given else []) + [
+        w for x in a.real_repo for w in ("--real-repo", x)
+    ]
+    return "".join(f" {shlex.quote(w)}" for w in words)
 
 
 def main():
@@ -1319,8 +1342,9 @@ def main():
     )
     ap.add_argument(
         "--repo",
-        default=str(pathlib.Path(__file__).resolve().parent),
-        help="a folder inside the repository that holds --sha (default: this script's folder)",
+        default=None,
+        help="a folder inside the repository that holds --sha (default: this script's folder; "
+        "--restore needs no repository unless --repo is given)",
     )
     ap.add_argument(
         "--real-repo",
@@ -1351,6 +1375,17 @@ def main():
         help="restore a file left planted by a killed run, then exit",
     )
     a = ap.parse_args(argv[: argv.index("--")] if "--" in argv else argv)
+    if not sys.platform.startswith("linux") or not pathlib.Path("/proc/self/stat").is_file():
+        print(
+            "REFUSED: this tool works on Linux only (it reads /proc to identify and stop an orphaned test run "
+            "and uses waitid); on this system a --restore could not stop a leftover test run: refused",
+            file=sys.stderr,
+        )
+        sys.exit(EXIT_REFUSED)
+    repo_given = a.repo is not None
+    default_repo = str(pathlib.Path(__file__).resolve().parent)
+    if not a.restore or repo_given:
+        a.repo = a.repo or default_repo
     root = pathlib.Path(a.root)
     if not root.is_dir():
         print(f"REFUSED: --root {root} is not a folder", file=sys.stderr)
@@ -1360,7 +1395,10 @@ def main():
     if not a.restore and not (a.prefix and a.raw and a.sha):
         ap.error("--sha, --prefix and --raw are required")
     for signum in HANDLED_SIGNALS:
-        signal.signal(signum, _term)
+        try:
+            signal.signal(signum, _term)
+        except (OSError, ValueError):  # a signal the C library keeps for itself (32, 33 on Linux)
+            pass
     marker = STATE / f"{key_for(root)}.planted.json"
     tmpref = pathlib.Path(tempfile.mkdtemp(prefix="mutation-ref-"))
     try:
@@ -1384,15 +1422,21 @@ def main():
                 sys.exit(0 if ok else EXIT_RESTORE_FAILED)
             check_test_args(tests, root)
             check_pytest_config(root, tests)
+            refuse_hard_links(root)
             if not NAME_RE.fullmatch(a.prefix):
                 raise Refused(f"--prefix is not a plain name: {a.prefix!r}")
             for x in a.extra:
                 safe_rel(root, x, "--extra", must_exist=False)
+            if os.path.lexists(control_marker_path(key_for(root))):
+                raise Refused(
+                    f"a control run on {root} was killed and its test group may still run. Restore with: "
+                    f"python3 {sys.argv[0]} --root {root} --restore{restore_args(a, repo_given)}"
+                )
             if os.path.lexists(marker):
                 m = load_marker(marker)
                 raise Refused(
                     f"a mutant ({m['mutant']}) is still planted in {m['file']} from an earlier run that was killed. "
-                    f"Restore with: python3 {sys.argv[0]} --root {root} --restore   "
+                    f"Restore with: python3 {sys.argv[0]} --root {root} --restore{restore_args(a, repo_given)}   "
                     f"(stops a leftover test run, copies {m['backup']} back and checks the hash); then run again"
                 )
             ref = tmpref / "ref"
@@ -1417,25 +1461,61 @@ def main():
                 if a.skip_import_check
                 else import_check(root, a.pythonpath, [m["file"] for m in ms])
             )
-            pathlib.Path(a.raw).mkdir(parents=True, exist_ok=True)
+            rawdir = pathlib.Path(a.raw)
+            if rawdir.is_symlink():
+                raise Refused(f"--raw {rawdir} is a symbolic link: refused")
+            rawdir.mkdir(parents=True, exist_ok=True)
+            outs = [rawdir / f"{a.prefix}-{n}.txt" for n in ("baseline", "tree-diff")]
+            outs += [rawdir / f"{a.prefix}-{m['id']}.txt" for m in ms]
+            outs += [pathlib.Path(a.out_json)] if a.out_json else []
+            for o in outs:  # before anything is planted (review r4 nit 11)
+                check_out_path(o)
             results = []
+            a.ref_files = tree_files(ref)
             if a.control:
-                cmd, rc, out = run_tests(root, tests, a.pythonpath, a.timeout)
+                control = control_marker_path(key_for(root))
+                cinfo = {
+                    "root": str(root),
+                    "cmd_head": [str(root / ".venv/bin/python"), "-m", "pytest"],
+                    "cmd_argv": pytest_cmd(root, tests),
+                    "run_start_ticks": (proc_stat(os.getpid()) or {}).get("start"),
+                }
+
+                def note_control(pgid: int) -> None:
+                    write_state(
+                        control, json.dumps({**cinfo, "pgid": pgid, **proc_identity(pgid)}).encode()
+                    )
+
+                try:
+                    write_state(control, json.dumps(cinfo).encode())
+                    cmd, rc, out, sweep = run_tests(
+                        root, tests, a.pythonpath, a.timeout, note_control
+                    )
+                finally:
+                    # reached only after the group was stopped or ended (a SIGKILL skips it: the marker stays)
+                    control.unlink(missing_ok=True)
                 last, _ = summary(out)
-                (pathlib.Path(a.raw) / f"{a.prefix}-baseline.txt").write_text(
-                    f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nenvironment: {', '.join(sorted(test_env(a.pythonpath)))} only\nimport check: {a.imports}\nrc: {rc}\nsummary: {last}\n\n{out}",
-                    encoding="utf-8",
+                write_out(
+                    rawdir / f"{a.prefix}-baseline.txt",
+                    f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nenvironment: {', '.join(sorted(test_env(a.pythonpath)))} only\nimport check: {a.imports}\nrc: {rc}\ntest group after the leader ended: {sweep}\nsummary: {last}\n\n{out}",
                 )
                 print("baseline", rc, last)
+            dirty: list[str] = []
             for m in ms:
-                one(a, tests, m, results, ref)
+                dirty = one(a, tests, m, results, ref)
+                if dirty:  # this mutant's tests changed the tree: the next mutant would run on a changed tree
+                    print(
+                        f"STOPPED after mutant {m['id']}: its test run changed the scratch tree: {dirty[:5]}",
+                        file=sys.stderr,
+                    )
+                    break
             if a.out_json:
-                pathlib.Path(a.out_json).write_text(json.dumps(results, indent=1), encoding="utf-8")
+                write_out(pathlib.Path(a.out_json), json.dumps(results, indent=1))
             # proof the scratch tree is unchanged: compare with a FRESH archive extract
             fresh = tmpref / "fresh"
             fresh.mkdir()
             build_reference(a.repo, a.sha, a.patch, fresh)
-            bad = tree_check(a, root, fresh, marker)
+            bad = tree_check(a, root, fresh, marker) or dirty
             print("tree diff:", len(bad), "difference(s)")
             if bad:
                 print("TREE NOT CLEAN after the loop:", bad[:5], file=sys.stderr)
