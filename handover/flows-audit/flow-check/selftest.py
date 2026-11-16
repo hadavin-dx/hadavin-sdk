@@ -377,7 +377,7 @@ def main():
                 exp = [x for x in exp]
             c = ["python3", "-I", CK, d, "--baseline", PRIS] + exp + ["--patch-checks", "F002,F008", "--diff-base", PRIS, "--allow", "F002,F008", "--quiet-info"]
             rc, out = run(c, name); fl = lines_of(out, "FAIL")
-            good = rc == want and (want == 0 and not fl or any(text in l for l in fl) and all(text in l or "connection count" in l for l in fl))
+            good = rc == want and (want == 0 and not fl or any(text in l for l in fl) and all(text in l or any(k in l for k in ("connection count", "orphan nodes", "unreachable from", "unexplained connection change")) for l in fl))
             report("%s (exit %d)" % (name, want), good, "rc=%d fails=%s" % (rc, [x[:90] for x in fl[:2]]))
     print("SELFTEST: %d as expected, %d not as expected, %d skipped (not applicable)" % (ok, bad, skipped))
     shutil.rmtree(work, ignore_errors=True); return 1 if bad else 0

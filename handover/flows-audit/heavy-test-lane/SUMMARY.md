@@ -6,7 +6,7 @@ The full test run fails 2 of about 9,850 tests, with or without the patches. Bot
 
 ## What failed or is unverified (first)
 1. Red gate. The repo rules say all checks must be green before a pull request, so a pull request for the patches is blocked until the two checks below are settled.
-   - Check 1 (`test_no_vendor_brand_string_is_tracked`) looks for banned product-name strings in tracked files. It finds "Port.io" in `handover/BRIEF-PREAMBLE-studio-2026-11-06.md` and `handover/demo/portal/portal-design-v2.md`, and cannot read `handover/reviews/P1a-idempotence-probe.txt` (not UTF-8 text).
+   - Check 1 (`test_no_vendor_brand_string_is_tracked`) looks for banned product-name strings in tracked files. It finds "[vendor-brand-string]" in `handover/BRIEF-PREAMBLE-studio-2026-11-06.md` and `handover/demo/portal/portal-design-v2.md`, and cannot read `handover/reviews/P1a-idempotence-probe.txt` (not UTF-8 text).
    - Check 2 (`test_licences_are_proprietary`) checks every LICENSE file carries the studio's own licence text. It lists 10 files under `handover/promotion-inputs/` (first: `apexc/LICENSE`).
 2. Evidence for "same 2 failures": both reports name the same two tests and the same files (counts 10 and 1 match). The per-item lists were not compared line by line.
 3. Why the patches cannot cause this: the baseline (no patches) fails the same two tests. In addition, the three patch files change only 11 files, all under `src/hadavin_sdk/` and `tests/` (checked in `git show origin/cloud/core-hardening:handover/core-hardening/patches-ready/*.patch`). I found no source for any claim about the flows-audit folder, so I make none.
@@ -23,6 +23,9 @@ The full test run fails 2 of about 9,850 tests, with or without the patches. Bot
 - All three patches apply with `git apply --check` and `git apply`, in order.
 
 ## What the studio head must decide (recommendation: option A)
-- Option A, fix the files: remove or reword the two "Port.io" mentions, convert or exclude the one non-UTF-8 probe file, and put the studio licence text in the 10 LICENSE files (or move those inputs out of the repo if they are copies of other projects' files and must keep their own licence). Keeps the public-repo guard whole.
+- Option A, fix the files: remove or reword the two "[vendor-brand-string]" mentions, convert or exclude the one non-UTF-8 probe file, and put the studio licence text in the 10 LICENSE files (or move those inputs out of the repo if they are copies of other projects' files and must keep their own licence). Keeps the public-repo guard whole.
 - Option B, exclude `handover/` from both checks: fast, but it lets a banned product name into a folder that is in the public repository, which is what check 1 exists to stop. Not recommended.
 - Owner of the files: the studio head (these files are not from the flows-audit session).
+
+## Correction 09:45 UTC (main session)
+A fresh clone of the branch (evidence-fresh-clone.md, head 0c0715e) showed the vendor-brand guard test failing ONLY because our own evidence files in this folder quoted the brand string the test forbids. The string is now replaced by `[vendor-brand-string]` in all four files here (raw evidence edited for that one token only). So part of what the earlier text called "not caused by us" was caused by our own quoted output. The licence guard test passed in the fresh clone. Not re-run since the replacement: re-run the two tests once to confirm green.

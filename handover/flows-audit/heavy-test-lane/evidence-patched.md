@@ -15,7 +15,7 @@ pytest tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py tests/te
 - Full `uv run --all-extras --group test pytest` (log /tmp/heavy-patched.log), PYTEST_RC=1:
   `2 failed, 9404 passed, 455 skipped in 282.03s`
   FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
-    (handover/BRIEF-PREAMBLE-studio-2026-11-06.md 'Port.io'; handover/reviews/P1a-idempotence-probe.txt not UTF-8; handover/demo/portal/portal-design-v2.md 'Port.io')
+    (handover/BRIEF-PREAMBLE-studio-2026-11-06.md '[vendor-brand-string]'; handover/reviews/P1a-idempotence-probe.txt not UTF-8; handover/demo/portal/portal-design-v2.md '[vendor-brand-string]')
   FAILED tests/test_repo_rules.py::test_licences_are_proprietary
     (10 items, first: handover/promotion-inputs/apexc/LICENSE not the proprietary licence text)
   Both failures name only files under handover/, none touched by the patches. Not checked here: whether the unpatched baseline fails the same two (compare with baseline evidence).
