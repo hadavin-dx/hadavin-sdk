@@ -1,4 +1,4 @@
-# fix-review10 (round 9 of REVIEW.md; static, nothing run, nothing committed)
+# fix-review10 (round 10 of REVIEW.md; static, nothing run, nothing committed)
 
 Findings: section G of reviews/round-16z-findings.md (reviewer words, unverified; each item opened by me in src, tests and the demo before editing). Backup of the file before this round: scratchpad bak-rev10.md and pre-fix10.md. EGM skipped: fixer role.
 
