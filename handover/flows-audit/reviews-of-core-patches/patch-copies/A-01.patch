@@ -78,7 +78,7 @@ index 24e5102..0e8ae52 100644
              return None
  
 diff --git a/src/hadavin_sdk/runtime/tick.py b/src/hadavin_sdk/runtime/tick.py
-index b580c24..ef46ded 100644
+index b580c24..6366a2f 100644
 --- a/src/hadavin_sdk/runtime/tick.py
 +++ b/src/hadavin_sdk/runtime/tick.py
 @@ -1,7 +1,7 @@
@@ -90,24 +90,25 @@ index b580c24..ef46ded 100644
    **append** a ``TickStep``.
  * Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
    message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
-@@ -181,6 +181,16 @@ def checkpoint(ctx: TickContext) -> None:
+@@ -181,6 +181,17 @@ def checkpoint(ctx: TickContext) -> None:
          fn()
  
  
 +def audit_reconcile(ctx: TickContext) -> None:
 +    """Drain the audit outbox: events that could not be appended after their side effect wait there (or in memory)
-+    until this runs. Logs how many were written, so a growing backlog is visible (audit A-01). A kind without a
-+    `reconcile` has nothing to drain."""
++    until this runs. Logs how many were written, so a growing backlog is visible (audit A-01). The audit contract
++    (`audit/protocol.py`) requires `reconcile`; a kind without one FAILS this step, so `tick_state` shows it and the
++    dead-man check alarms, instead of the step recording a success that drained nothing."""
 +    fn = getattr(ctx.app.audit, "reconcile", None)
 +    if fn is None:
-+        return
++        raise RuntimeError("the audit kind has no reconcile: its outbox is never drained")
 +    _LOG.info("audit_reconcile drained=%d", fn())
 +
 +
  def purge_evidence(ctx: TickContext) -> None:
      """Delete tool calls and redaction maps past their retention, at most about every `retention.purge_every_s`.
  
-@@ -263,6 +273,7 @@ STEPS: list[TickStep] = [
+@@ -263,6 +274,7 @@ STEPS: list[TickStep] = [
          reprobe_sources,
          interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
      ),
@@ -117,7 +118,7 @@ index b580c24..ef46ded 100644
  STORE_NOT_READY = (
 diff --git a/tests/test_a01_audit_reconcile.py b/tests/test_a01_audit_reconcile.py
 new file mode 100644
-index 0000000..7a1b4af
+index 0000000..1bdf91c
 --- /dev/null
 +++ b/tests/test_a01_audit_reconcile.py
 @@ -0,0 +1,122 @@
@@ -194,15 +195,15 @@ index 0000000..7a1b4af
 +    assert app.store.saved["audit_reconcile"].last_ok_at == NOW
 +
 +
-+def test_a_kind_without_reconcile_is_skipped(caplog):
++def test_a_kind_without_reconcile_fails_the_step_instead_of_recording_a_success(caplog):
 +    caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
 +    app = _FakeApp(object())
-+    assert _run_only_the_audit_step(app) == 0
++    assert _run_only_the_audit_step(app) == 1
 +    saved = app.store.saved.get("audit_reconcile")
 +    assert (
-+        saved is not None and saved.last_ok_at == NOW and saved.last_error is None
-+    )  # ran, found nothing to do
-+    assert "audit_reconcile drained" not in caplog.text
++        saved is not None and saved.last_ok_at is None
++    )  # never a green row for a step that drained nothing
++    assert "no reconcile" in saved.last_error
 +
 +
 +def test_a_failed_outcome_write_logs_type_and_id_but_never_the_body(caplog):
