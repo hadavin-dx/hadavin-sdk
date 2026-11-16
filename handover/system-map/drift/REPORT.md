@@ -107,7 +107,7 @@ Counts (rechecked by a reader of the severity cells): Blockers 8 (D-01 to D-05, 
 |---|---|
 | v3 / OS | inputs/OWNER-STEPS-realrun-v3.md (stale) |
 | v4 difflist | inputs/OWNER-STEPS-v4-difflist-core-hardening.md (historical list of edits) |
-| v5 / OS5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md (current owner steps, steps lettered A to J) |
+| v5 / OS5 (use OS5 from here on) | inputs/OWNER-STEPS-realrun-v5-core-hardening.md (current owner steps, steps lettered A to J) |
 | SC | inputs/AGENT-SCOPE-DO-AND-DONT.md |
 | DE | inputs/DECISION-one-store.md |
 | PL | inputs/plan-wp6-resmoke-v5.md (558 lines) |
@@ -120,7 +120,7 @@ Result: v5 (inputs/OWNER-STEPS-realrun-v5-core-hardening.md, from cloud/core-har
 | 1 | Blocker | README.md and the lead page still cite v3 ("OS"); re-point the owner rows to v5 steps A to J (written yes A, laptop settings B, run day C, film content D, type y E, end F, failed run G, watch H, clean-up I, post J) | OWNER-VIEW and README re-pointed 2026-11-16; LEAD-PAGE.md still cites v3 lines (marked stale) |
 | 2 | Blocker | v5 has no take date (only Mon 23 Nov stop time 18:29 UTC / 23:59 IST and post Wed 25 Nov 15:00 UTC / 20:30 IST); Wed 18 appears only in QUEUE.md:2, README, OWNER-VIEW and DECISION-one-store.md:17 | owner view now says "not yet fixed, target Wed 18, lead sends date 3 hours ahead"; the lead must put one date in v5 |
 | 3 | Blocker | clean-up deadline: v3 owner view said by Mon 23 Nov 18:29 UTC; v5:46 says watching (H) and clean-up (I) have their own deadlines, not tied to the stop time | OWNER-VIEW row 6 fixed |
-| 4 | Blocker | Docker has no owner: v5 silent (v5:23 only says it runs in a container); plan line 48 says the lead starts Docker Desktop; README says the laptop lead does the first trial; the studio rule says never touch Docker Desktop itself | OPEN, lead decision (QUESTIONS.md item 1) |
+| 4 | Blocker | Docker has no owner: v5 silent (v5:22 only says it runs in a container); plan line 48 says the lead starts Docker Desktop; README says the laptop lead does the first trial; the studio rule says never touch Docker Desktop itself | OPEN, lead decision (QUESTIONS.md item 1) |
 | 5 | Major | HubSpot key delete rights: v5:130 owner deletes leftover contacts by hand; v3-based text said recreate the key; v5 E.1 "HubSpot login: still works" is a read check and does not prove delete rights | OPEN, lead decision (one wording needed after v5 step F) |
 | 6 | Major | v5 C.3 (line 90) asks to retype three n8n connections although FACTS lists them done; it is conditional ("only if the studio lead asks") and should say it repeats a done item only because the run starts in a new empty n8n | for the v5 author |
 | 7 | Major | v5 I.2 asks the owner to delete the HubSpot apps made for the run; FACTS:4 lists only the app-password revoke as owner-only | add to FACTS or v5 |
@@ -129,7 +129,7 @@ Result: v5 (inputs/OWNER-STEPS-realrun-v5-core-hardening.md, from cloud/core-har
 | 10 | Major | post wording differs: v5:164 allows "our code caps the spend ... counts with a separate check of ours" and v5:171 forbids "independent login"; the lead page says leave the spend wording out | one list in v5 J |
 | 11 | Major | names: v5 uses "studio lead" and "Rehearsal" versus "Trial run" (v5:26); our files said "laptop lead" and "laptop trial" | OWNER-VIEW uses "studio lead" and "rehearsal"; README still says laptop lead |
 | 12 | Nit | latest start 18:15 UTC / 23:45 IST (v5:17) versus 18:14 UTC / 23:44 IST (v4 difflist:49); difflist cites files not in inputs/ | mark difflist historical |
-Not checked: plan lines 183 to 559 (keyword search only); drift/REPORT, board, orders, questions for a take date or Docker answer (read by the comparison above only through README, QUEUE and OWNER-VIEW).
+Not checked: plan lines 183 to 558 (keyword search only); drift/REPORT, board, orders, questions for a take date or Docker answer (read by the comparison above only through README, QUEUE and OWNER-VIEW).
 
 
 ## 9. Security and least-privilege angle on sections 7 and 8 (second reviewer, 16 Nov 2026 10:10 UTC / 15:40 IST)
@@ -178,3 +178,35 @@ No hard conflict in ports, exit codes, send counts or dates. Real disagreements 
 - TW-8 (Nit) "take" (DL, PL, program screens) and "run" (v5:10): say once that they mean the same.
 In one document only, to add: the owner's own n8n ports (PL:121, 489: leave the owner's n8n alone) as one line in v5 C.3; the name of the rehearsal result file (PL:112 evidence-2\INDEX.md) in v5:74; the rehearsal duration (PL:445, 3.5 to 4.5 hours, US$0) in v5:26; whether the `.lock` file of v5:28 is the same as n8n.lock of PL:312 (not confirmed).
 Not checked: the program code (exit codes, 2-second rule, 14-minute limit), the review files behind v5, and PL's internal arithmetic.
+
+## 13. Work list for the studio lead (sections 8 to 12 in one table), 16 Nov 2026 about 10:50 UTC / 16:20 IST
+Structural review round 1 said sections 8 to 10 were not a usable work list. This table gives file, line, decider and deadline for each row. "Decides": SL = studio lead; OWN = owner; V5 = the core-hardening session that writes v5. Deadline: nothing in the inputs gives the rehearsal or take time, so each is "before the first rehearsal starts: PLACEHOLDER UTC / IST, set by the studio lead"; the fixed dates are the stop time Mon 23 Nov 18:29 UTC / 23:59 IST and the post Wed 25 Nov 15:00 UTC / 20:30 IST. Ids: R8-n = section 8 row n; S9-n = security item n of section 9 (not the S- series); C10 = section 10; DT, DN = section 11; TW = section 12. Overlaps with older ids: S9-1 = L-05 (re-rated, L-05 now closed into S9-1); S9-3 = S-01 (reopened: the model key is not revoked by any step); S9-7 = D-17; S9-9 = D-06; R8-2 = D-10 and DT-3; R8-8 = D-07 (exact text there); R8-10 = D-04 + D-05 + D-18; R8-6 = T-01 + T-03. Section 10 items C10-1, C10-2, C10-3, C10-4 are applied above (Wed 18 wording, plan line count, v5:22) except C10-5 (README "first trial") which stays open.
+| id | sev | state | file:line | what to change (new text) | decides | deadline |
+|---|---|---|---|---|---|---|
+| S9-5 | Blocker | open | v5:3 | replace "the studio lead's instructions win" with "steps A, E, F, I and rules 1 to 5 cannot be changed by a message; only by the owner's written yes naming the rule" | SL, owner confirms | before first rehearsal: PLACEHOLDER |
+| S9-1 | Blocker | open | v5 step E (after v5:114), SC:13-14 | add "the studio lead does not activate the flows until the program has printed its confirmation line"; add test: a post to the stage and the n8n hook before `y` gives zero model calls and zero sends | SL | before first rehearsal: PLACEHOLDER |
+| S9-2 | Blocker | open | v5:72, v5:52 | change "you may open that file" to "you must open `stage.env` and the ledger and compare the figures; your yes quotes the backstop and the money spent so far from the files" | SL, owner confirms | before the first written yes |
+| S9-3 | Blocker | open | v5 step A/B and step I.1 (v5:149-153) | use a dedicated model key with a provider-side limit equal to the approved total; add "revoke that key in the provider console, screenshot" to step I | SL, owner does it | before the first paid run |
+| S9-4 | Blocker | open | v5:109, SC:23 | the notice prints a masked mailbox user and the HubSpot portal number; owner stops on any other account | SL | before first rehearsal: PLACEHOLDER |
+| R8-1 | Blocker | partly done | README.md, LEAD-PAGE.md (stale v3 cites) | README re-pointed; LEAD-PAGE.md still cites v3 lines: re-point its rows to v5 steps A to J | SL | before first rehearsal |
+| R8-2 / DT-3 | Blocker | open | v5:46 | "Target take: Wed 18 Nov 2026; exact start time in UTC and IST sent by the studio lead at least 3 hours ahead; fallback any day until Mon 23 Nov before about 18:15 UTC / 23:45 IST" | SL | before the owner is told a date |
+| R8-3 | Blocker | done in OWNER-VIEW; v5 unchanged | v5:46, v5:149 | v5 already says clean-up has its own deadline from the studio lead; owner view fixed | n/a | n/a |
+| R8-4 | Blocker | open | v5:22, PL:48, QUESTIONS.md item 1 | name one person or session who starts Docker and runs the first rehearsal; studio rule: never touch Docker Desktop settings | SL | Tue 17 Nov 12:29 UTC / 17:59 IST (suggested decide-by) |
+| R8-5 | Major | open | v5:130, v5 E.1 | say whether the HubSpot key can delete contacts; if not, the owner deletes by hand (v5:130) | SL | before first rehearsal |
+| R8-6 | Major | open | v5:90 | add "your n8n account already exists; this screen appears only because the take uses a new, empty n8n database" | V5 | before first rehearsal |
+| R8-7 | Major | open | v5 I.2 (v5:152), FACTS:4 | add the HubSpot private-app deletion to FACTS:4 or to the v5 owner list (decide where) | SL | before first rehearsal |
+| R8-9 | Major | open | v5:213 | change "one database" to "one Postgres server with a separate database for n8n and one for the claim rows; stage.journal is the one exception" | V5 | before first rehearsal |
+| R8-10 | Major | open | v5:164, v5:171 | one list of allowed and forbidden post words in step J (owner view already carries it) | V5 | before the post: Wed 25 Nov 15:00 UTC / 20:30 IST |
+| R8-11 | Major | open | v5:26, README.md:3,8 | one name for each role: "studio lead" and "rehearsal"; README says "laptop lead" | SL | before first rehearsal |
+| R8-12 / TW-5 | Nit | open | v5:17, v4 difflist:49 | use v5 wording; mark the difflist v4-only | SL | none |
+| S9-6 | Major | open | n8n env template, PL:505 | add the n8n listen address set to loopback; Postgres bound to 127.0.0.1; `ss -ltn` check before C.3 | SL | before C.3 |
+| S9-7 | Major | open | v5:11 vs v5:120 | masked list of every recipient setting before step A; rehearsal checks all equal the receiver address | SL | before the first written yes |
+| S9-8 | Major | open | v5:15, 90, 159 | owner rule: run only `cat <file>` and `shred -u <file>` on paths in the take-secrets folder | SL | before first rehearsal |
+| S9-9 | Major | open | SC:9, PL:125, v5:158 | rehearsal with a canary token; delete executions before the run folder | SL | rehearsal |
+| S9-10 | Major | open | v5:5, SC:23 | scan published workflow files; substituted copy stays gitignored in the take folder; removed in step I | SL | before the first take |
+| S9-11 | Major | open | v5:153, SC:27 | crop before saving; put screenshots in a subfolder on the agent deny list | SL | before step I |
+| DT-1, DT-2 | Blocker, Major | open | QUEUE.md:26, ORDERS.md:74, demo/ORDERS.md:356, demo/REPORT.md:58 | see section 11 | lead, owner | now |
+| DN-1, DN-2 | Blocker, Major | open | inputs v3 line 1, lines 27-83, 136, 144 | see section 11 | SL | now |
+| TW-1 to TW-4, TW-6 to TW-8 | Major, Nit | open | see section 12 | see section 12 | V5 | before first rehearsal |
+Counts after sections 8 to 12 and after removing the duplicates above: Blockers 11 (R8-1, R8-2, R8-4, S9-1 to S9-5, DT-1, DN-1, and R8-3 which is already done in the owner view), Majors about 24, Nits about 8. This line supersedes the counts at the top of this file and in section 7; they were not recounted one by one, so treat the figures as approximate.
+Open here: the exact "old text" cell for most rows is not copied in; the studio lead or the v5 author must read the cited line before editing.
