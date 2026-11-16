@@ -36,6 +36,22 @@ os.environ["AWS_SECRET_ACCESS_KEY"] = "fake" + "-secret-key"
 os.environ["AWS_EC2_METADATA_DISABLED"] = "true"
 
 
+@pytest.fixture(autouse=True)
+def _test_database_address_is_left_as_found():
+    """Every test must leave ``HADAVIN_TEST_PG_DSN`` as it found it (use ``monkeypatch``, never a direct ``os.environ`` write): a test that
+    deletes or overwrites it would make every later database test skip or run against the wrong database."""
+    name = "HADAVIN_TEST_PG_DSN"
+    before = os.environ.get(name)
+    yield
+    after = os.environ.get(name)
+    if after != before:
+        if before is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = before
+        pytest.fail(f"a test changed or removed {name} and did not put it back (use monkeypatch)")
+
+
 def make_cfg(tmp_path: Path, port: int = 0) -> Path:
     for name in ("config", "recorded", "inputs", "golden"):
         shutil.copytree(FIXTURES / name, tmp_path / name, dirs_exist_ok=True)

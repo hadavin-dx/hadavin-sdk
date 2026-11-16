@@ -1,7 +1,8 @@
 """Meta-tests of the mutant list of the mutation runner: the list names real killers, and every search string is usable.
 
 These tests read ``tests/mutation_runner_mutants.py`` (the mutants) and the files the mutants target. They are NOT in the test
-list the mutants run against (a mutant tree holds only the runner's own test file), so they are checked on the real tree only.
+list the mutants run against (a mutant tree holds the runner's own test file, the keyword test file and the conftest the keyword tests use,
+but not this file), so they are checked on the real tree only.
 Checks: (a) the list is the test placement table and every killer exists, (g) every search string occurs exactly once in the file it
 targets; the script that runs the list exits 2 when its filter selects nothing.
 """
@@ -15,6 +16,7 @@ from tests import mutation_runner_mutants as mm
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER_TESTS = ROOT / "tests" / "test_mutation_runner.py"
+KEYWORD_TESTS = ROOT / "tests" / "test_mutation_runner_keywords.py"
 
 # every test of the runner file (the first 21 came from an earlier version, with the refuses-paths test split one per guard; later fixes added
 # the rest); the manifest test is the last function of the file and has no mutant
@@ -78,7 +80,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 62
+EXPECTED_MUTANTS = 299
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -106,12 +108,27 @@ def test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each()
     assert tests[-1] == MANIFEST_TEST, "the manifest test stays last on purpose"
 
 
+def test_a_no_test_name_is_defined_twice_in_the_keyword_test_file():
+    """A second ``def`` of the same name replaces the first, so the first test (and the mutants that name it as their killer) would never run."""
+    names = [n for n in _functions(KEYWORD_TESTS) if n.startswith("test_")]
+    assert len(names) > 100, "the keyword test file was not read"
+    twice = sorted({n for n in names if names.count(n) > 1})
+    assert not twice, f"defined twice in the keyword test file: {twice}"
+
+
 def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
     names = [m.name for m in mm.M]
     assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
-    assert {m.file for m in mm.M} == {mm.MU, mm.MR}
-    assert sum(m.file == mm.MU for m in mm.M) == 6
-    assert sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 6
+    assert {m.file for m in mm.M} == {
+        mm.MU,
+        mm.MR,
+        "tests/conftest.py",
+    }  # the guard fixture of the database address is mutated too
+    assert sum(m.file == mm.MU for m in mm.M) == 13
+    assert sum(m.file == "tests/conftest.py" for m in mm.M) == 4
+    assert (
+        sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 13 - 4
+    )  # not the judge, not the conftest
 
 
 def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists():
@@ -122,7 +139,14 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
         assert path.is_file(), (m.name, m.test_file)
         defined.setdefault(m.test_file, _functions(path))
         assert m.only_test in defined[m.test_file], (m.name, m.only_test, "is not in", m.test_file)
-        assert m.only_test in MOVED, (m.name, m.only_test, "is not one of the runner file's tests")
+        if m.test_file == mm.TEST:
+            assert m.only_test in MOVED, (
+                m.name,
+                m.only_test,
+                "is not one of the runner file's tests",
+            )
+        else:  # the only other killer file: the keyword tests
+            assert m.test_file == mm.KW, (m.name, m.test_file)
         # the judge looks for ``expect`` in the first E line only (not in the test id). A fragment of the killer's own name is
         # still forbidden, so a mutant that breaks another guard of the same test is never counted: ``expect`` must come from the
         # assertion message of the guard
@@ -140,17 +164,19 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
                 "expect is in no string of the killer",
             )
         # and every mutant pins its own killer, so another failing test is OTHER_TEST and not a kill
-        assert m.pinned == mm.PIN + m.only_test, (m.name, m.pinned)
+        pin = mm.PIN if m.test_file == mm.TEST else mm.KWPIN
+        assert m.pinned == pin + m.only_test, (m.name, m.pinned)
 
 
-def test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not():
+def test_a_the_four_crash_mutants_declare_their_exception_class_and_the_others_do_not():
     crash = {m.name: m.crash_type for m in mm.M if m.allow_crash}
     assert crash == {
         "runner: a failing tree kill is not caught": "PermissionError",
         "b2: a refused junit stops the run": "ValueError",
         "runner: a truncated junit stops the run": "ParseError",
+        "runner: a JUnit file that cannot be read stops the run": "PermissionError",
     }
-    assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 3
+    assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 4
 
 
 def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
