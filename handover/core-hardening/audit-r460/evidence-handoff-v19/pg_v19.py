@@ -194,10 +194,33 @@ check("G7 a settle with actual NaN refused 23514 and the total is unchanged", st
 # unbounded inputs (coordinator item 4)
 check("G12 a reserve of 1000000000000 (the ceiling) refused 23514, 999999999999 accepted", st(lambda: rt.execute("SELECT * FROM spend_reserve('big', %s, %s)", (D, Decimal("1000000000000")))) == "23514" and st(lambda: rt.execute("SELECT * FROM spend_reserve('big', %s, %s)", (D, Decimal("999999999999")))) is None)
 check("G12 an agent_id of length 0 or 201 refused 23514", st(lambda: rt.execute("SELECT * FROM spend_reserve('', %s, %s)", (D, Decimal("1")))) == "23514" and st(lambda: rt.execute("SELECT * FROM spend_reserve(%s, %s, %s)", ("x" * 201, D, Decimal("1")))) == "23514")
-check("G12 a settle for an agent that has no row changes nothing and writes no row", st(lambda: rt.execute("SELECT * FROM spend_settle('nobody', %s, %s, %s)", (D, Decimal("1"), Decimal("0")))) is not None or mg.execute("SELECT count(*) FROM spend WHERE agent_id='nobody'").fetchone()[0] == 0)
+r_nob = rt.execute("SELECT * FROM spend_settle('nobody', %s, %s, %s)", (D, Decimal("1"), Decimal("0"))).fetchall()
+check("G12 a settle for an agent that has no row returns no row and writes no row in spend or spend_month (v18 passed this check through an `or True` for a no-op; v19 checks the rows)", r_nob == [] and mg.execute("SELECT (SELECT count(*) FROM spend WHERE agent_id='nobody'), (SELECT count(*) FROM spend_month WHERE agent_id='nobody')").fetchone() == (0, 0), str(r_nob))
 a_before = mg.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone(); rt.execute("SELECT * FROM spend_reserve('victim', %s, %s)", (D, Decimal("5")))
 rt.execute("SELECT * FROM spend_settle('victim', %s, %s, %s)", (D, Decimal("5"), Decimal("0")))
 stated("G12 the runtime login can settle (give back) a reservation it made under ANY agent_id name, e.g. 'victim' (the control is per-agent logins, L-4, and the invoice comparison)", mg.execute("SELECT usd FROM spend WHERE agent_id='victim'").fetchone()[0] == 0)
+
+# ---- v19 m2: a settle for a DAY that has no row must not change the MONTH row
+rt.execute("SELECT * FROM spend_reserve('m2a', %s, %s)", (D, Decimal("5"))); D2 = date(2026, 11, 20)
+mb = mg.execute("SELECT usd, open_usd FROM spend_month WHERE agent_id='m2a'").fetchone()
+r2 = rt.execute("SELECT * FROM spend_settle('m2a', %s, %s, %s)", (D2, Decimal("5"), Decimal("0"))).fetchall()
+ma = mg.execute("SELECT usd, open_usd FROM spend_month WHERE agent_id='m2a'").fetchone()
+check("G12 m2 a settle for another day of the same month that has no day row returns no row and leaves the month row (usd and open) unchanged", r2 == [] and ma == mb == (Decimal("5"), Decimal("5")), f"before {mb} after {ma}")
+rt.execute("SELECT * FROM spend_settle('m2a', %s, %s, %s)", (D, Decimal("5"), Decimal("0")))
+check("G12 m2 the honest settle of the real day still works afterwards (month back to 0 and open 0)", mg.execute("SELECT usd, open_usd FROM spend_month WHERE agent_id='m2a'").fetchone() == (Decimal("0"), Decimal("0")))
+# ---- v19 independent-runner observations: day window, amount 0, agent id spellings
+for lbl, dv in (("infinity", "infinity"), ("-infinity", "-infinity"), ("1999-01-01", "1999-01-01"), ("0001-01-01", "0001-01-01"), ("2100-01-01", "2100-01-01")):
+    check(f"G12 a reserve for the day {lbl} is refused 23514", st(lambda: rt.execute("SELECT * FROM spend_reserve('dw', %s::date, %s)", (dv, Decimal("1")))) == "23514")
+check("G12 a reserve of 0 writes no row and returns no row", rt.execute("SELECT * FROM spend_reserve('zero0', %s, %s)", (D, Decimal("0"))).fetchall() == [] and mg.execute("SELECT count(*) FROM spend WHERE agent_id='zero0'").fetchone()[0] == 0)
+import unicodedata
+for lbl, nm in (("NFD cafe + combining accent", unicodedata.normalize("NFD", "caf\u00e9")), ("whitespace only", "   "), ("leading blank", " a1"), ("newline", "a\nb"), ("tab and quote", "a\t\"b")):
+    check(f"G12 the agent id {lbl} is refused 23514", st(lambda: rt.execute("SELECT * FROM spend_reserve(%s, %s, %s)", (nm, D, Decimal("1")))) == "23514")
+check("G12 the NFC spelling of the same name is accepted (one budget)", st(lambda: rt.execute("SELECT * FROM spend_reserve(%s, %s, %s)", (unicodedata.normalize("NFC", "caf\u00e9"), D, Decimal("1")))) is None)
+rt.execute("SELECT * FROM spend_reserve('Case', %s, %s)", (D, Decimal("1"))); rt.execute("SELECT * FROM spend_reserve('case', %s, %s)", (D, Decimal("1")))
+stated("G12 agent ids that differ only in letter case ('Case' and 'case') are two budgets (names come from configuration in our code; a hostile login can pick any name anyway)", mg.execute("SELECT count(*) FROM spend WHERE lower(agent_id)='case'").fetchone()[0] == 2)
+tb = mg.execute("SELECT usd FROM spend WHERE agent_id='victim'").fetchone()
+rt.execute("SELECT * FROM spend_settle('victim', %s, %s, %s)", (D, Decimal("0"), Decimal("5")))
+stated("G12 a settle with worst 0 and actual 5 RAISES a total with no reservation (it can only over-report spend, never hide it; ceiling 1e12 still holds)", mg.execute("SELECT usd FROM spend WHERE agent_id='victim'").fetchone()[0] == tb[0] + 5)
 # fuzz
 rnd = random.Random(1717); bad = 0
 for i in range(400):
@@ -226,6 +249,9 @@ rows = mg.execute("SELECT old_on, new_on, who FROM kill_switch_log ORDER BY at")
 check("G9 with DB-2 also applied the record has the changes with the invoking login in `who`", rows[:2] == [(False, True, "rt17"), (True, False, "op17")], str(rows))
 mg.execute("DELETE FROM kill_switch"); rt.execute("SELECT kill_switch_engage()")
 check("G9 m2 engage with the row missing creates it and switches ON (a missing row was a silent no-op)", mg.execute('SELECT "on", "by" FROM kill_switch').fetchone() == (True, "rt17"))
+
+lr = mg.execute("SELECT old_on, new_on, old_by, new_by, who FROM kill_switch_log ORDER BY at DESC LIMIT 1").fetchone()
+check("G9 m1 the INSERT of a missing switch row is recorded (old state read as ON, new ON, who = rt17)", lr == (True, True, None, "rt17", "rt17"), str(lr))
 # temp-table attack against the BEGIN ATOMIC bodies
 rt.execute("CREATE TEMP TABLE spend (agent_id text, day date, usd numeric, open_usd numeric DEFAULT 0)")
 rt.execute("CREATE TEMP TABLE spend_month (agent_id text, month date, usd numeric, open_usd numeric DEFAULT 0)")
@@ -316,5 +342,63 @@ control("G1/G4 v16 design: the runtime role zeroes a settled total of 10 by dire
 mg3.execute('UPDATE kill_switch SET "on" = TRUE'); rt3.execute('UPDATE kill_switch SET "on" = FALSE, "by" = \'chosen-by-caller\'')
 s3 = mg3.execute('SELECT "on", "by" FROM kill_switch').fetchone()
 control("G9 v16 design: the runtime role switches the kill switch OFF and picks the `by` text", s3 == (False, "chosen-by-caller"), str(s3))
+
+# ------------------------------------------------------------------ controls on the v18 files (each v19 change must FAIL on the v18 file)
+db8 = "c8_" + secrets.token_hex(3); build(db8, [(HOLD18 / "spend_decrease_log.sql", "0006_dec"), (HOLD18 / "spend_guarded_writes.sql", "0007_guard")])
+mg8 = psycopg.connect(dsn("migr17", db8), autocommit=True); mg8.execute("GRANT EXECUTE ON FUNCTION spend_reserve(text,date,numeric), spend_settle(text,date,numeric,numeric), kill_switch_engage() TO rt17"); rt8 = psycopg.connect(dsn("rt17", db8), autocommit=True)
+rt8.execute("SELECT * FROM spend_reserve('m2a', %s, %s)", (D, Decimal("5"))); rt8.execute("SELECT * FROM spend_settle('m2a', %s, %s, %s)", (D2, Decimal("5"), Decimal("0")))
+control("G12 m2 v18 DB-3 file: a settle for a day without a row LOWERS the month row (usd 5 -> 0) while the day row stays 5", mg8.execute("SELECT usd FROM spend_month WHERE agent_id='m2a'").fetchone()[0] == 0 and mg8.execute("SELECT usd FROM spend WHERE agent_id='m2a'").fetchone()[0] == 5)
+control("G12 v18 DB-3 file: a reserve for the day 'infinity' is accepted", st(lambda: rt8.execute("SELECT * FROM spend_reserve('dw', 'infinity'::date, %s)", (Decimal("1"),))) is None)
+control("G12 v18 DB-3 file: a reserve of 0 creates a row", (rt8.execute("SELECT * FROM spend_reserve('zero0', %s, %s)", (D, Decimal("0"))).fetchall() or True) and mg8.execute("SELECT count(*) FROM spend WHERE agent_id='zero0'").fetchone()[0] == 1)
+control("G12 v18 DB-3 file: an NFD agent id and a newline agent id are accepted", st(lambda: rt8.execute("SELECT * FROM spend_reserve(%s, %s, %s)", (unicodedata.normalize("NFD", "caf\u00e9"), D, Decimal("1")))) is None and st(lambda: rt8.execute("SELECT * FROM spend_reserve(%s, %s, %s)", ("a\nb", D, Decimal("1")))) is None)
+n0 = mg8.execute("SELECT count(*) FROM kill_switch_log").fetchone()[0]; mg8.execute("DELETE FROM kill_switch"); rt8.execute("SELECT kill_switch_engage()")
+control("G9 m1 v18 DB-2 file: the INSERT of a missing switch row writes no record", mg8.execute("SELECT count(*) FROM kill_switch_log").fetchone()[0] == n0)
+# K-insert: the record never stops a switch ON that arrives by INSERT; a switch OFF by INSERT is refused when the record cannot be written
+dbi = "ki_" + secrets.token_hex(3); build(dbi, [(H17 / "spend_decrease_log.sql", "0006_dec")])
+mgi = psycopg.connect(dsn("migr17", dbi), autocommit=True); rti = psycopg.connect(dsn("rt17", dbi), autocommit=True)
+mgi.execute("DELETE FROM kill_switch"); mgi.execute("ALTER TABLE kill_switch_log RENAME TO kill_switch_log_x")
+e_on = st(lambda: rti.execute("INSERT INTO kill_switch (id, schema_version, \"on\", \"by\", ts) VALUES (1, 1, true, 'x', now())"))
+check("K m1 with the record unwritable, an INSERT of a switch row that is ON still works", e_on is None and mgi.execute('SELECT "on" FROM kill_switch').fetchone()[0] is True, f"err={e_on}")
+mgi.execute("DELETE FROM kill_switch")
+e_off = st(lambda: rti.execute("INSERT INTO kill_switch (id, schema_version, \"on\", \"by\", ts) VALUES (1, 1, false, 'x', now())"))
+check("K m1 with the record unwritable, an INSERT of a switch row that is OFF is refused (fail closed) and no row exists", e_off is not None and mgi.execute("SELECT count(*) FROM kill_switch").fetchone()[0] == 0, f"err={e_off}")
+mgi.execute("ALTER TABLE kill_switch_log_x RENAME TO kill_switch_log")
+rti.execute("INSERT INTO kill_switch (id, schema_version, \"on\", \"by\", ts) VALUES (1, 1, false, 'x', now())")
+check("K m1 with the record writable, an INSERT of a switch row that is OFF is recorded as old ON, new OFF", mgi.execute("SELECT old_on, new_on, who FROM kill_switch_log ORDER BY at DESC LIMIT 1").fetchone() == (True, False, "rt17"))
+# m7: SET LOCAL statement_timeout lasts for the migration transaction only
+cx = psycopg.connect(dsn("migr17", dbi)); cx.execute("SET LOCAL statement_timeout = '60s'"); in_tx = cx.execute("SHOW statement_timeout").fetchone()[0]; cx.commit(); after_tx = cx.execute("SHOW statement_timeout").fetchone()[0]
+check("L m7 SET LOCAL statement_timeout = '60s' holds inside the transaction and is gone after it (so it cannot leak to the next file or the runtime)", in_tx == "1min" and after_tx == "0", f"{in_tx} then {after_tx}")
+check("L m7 text: the DB-3 file has SET LOCAL statement_timeout as its second statement, after the lock_timeout line", [l for l in open(H17 / "spend_guarded_writes.sql").read().splitlines() if l.strip() and not l.lstrip().startswith("--")][1].strip() == "SET LOCAL statement_timeout = '60s';")
+
+# ------------------------------------------------------------------ MA1 and MA2 of the v18 review: the bypasses are REAL on this server (16.15), the v18 guard passes them, the v19 guard flags them
+dbp = "ma_" + secrets.token_hex(3); build(dbp, []); mgp = psycopg.connect(dsn("migr17", dbp), autocommit=True)
+def both(text, allowed, file="x.sql"):
+    return (bool(g18.check_sql_text(file, text, allowed)), bool(g19.check_sql_text(file, text, allowed, atomic_tables=ATOMIC_TABLES_BY_FILE.get(file))))
+for lbl, stmt, probe in (('SET "role" TO rt17 (quoted name)', 'SET "role" TO rt17', None), ("SET session_authorization rt17 (one underscore word)", "SET session_authorization rt17", None), ("SELECT set_config('role','rt17',false)", "SELECT set_config('role','rt17',false)", None)):
+    admin.execute("RESET ALL"); admin.execute(stmt); cu = admin.execute("SELECT current_user, session_user").fetchone(); admin.execute("RESET ALL")
+    f18, f19 = both(stmt + ";\n", {})
+    check(f"MA1 real server: {lbl} changes the session identity on 16.15 (current_user, session_user = {cu}); v18 guard flags it = {f18}; v19 guard flags it = {f19}", (cu[0] == "rt17" or cu[1] == "rt17") and f19)
+    stated_ok = True
+    if f18: info(f"MA1 note: the v18 guard already flagged: {lbl}")
+admin.execute("CREATE ROLE ma_probe NOLOGIN"); admin.execute("SET ROLE ma_probe"); admin.execute("RESET ROLE")
+mgp.execute("CREATE TABLE public.secret_t (v text)"); mgp.execute("INSERT INTO public.secret_t VALUES ('made-up-secret')")
+LEAK = "CREATE OR REPLACE FUNCTION leak(q text) RETURNS xml LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT query_to_xml(q, true, false, '') $f$;\nREVOKE ALL ON FUNCTION leak(text) FROM PUBLIC;\nGRANT EXECUTE ON FUNCTION leak(text) TO rt17;\n"
+mgp.execute(LEAK.split("\nGRANT")[0].replace("\n", " ").replace("REVOKE", "; REVOKE") if False else LEAK.split("\n")[0]); mgp.execute("REVOKE ALL ON FUNCTION leak(text) FROM PUBLIC"); mgp.execute("GRANT EXECUTE ON FUNCTION leak(text) TO rt17")
+rtp = psycopg.connect(dsn("rt17", dbp), autocommit=True)
+direct = st(lambda: rtp.execute("SELECT * FROM public.secret_t")); via = rtp.execute("SELECT leak('select * from public.secret_t')").fetchone()[0]
+f18, f19 = both(LEAK.replace("\nGRANT EXECUTE ON FUNCTION leak(text) TO rt17;\n", "\n"), {"leak(text)": "definer"})
+check(f"MA1d real server: the runtime role cannot read secret_t directly ({direct}) but a definer function calling query_to_xml hands it the row; v18 guard flags the function = {f18}; v19 guard flags it = {f19}", direct == "42501" and "made-up-secret" in str(via) and f19 and not f18)
+mgp.execute("CREATE OR REPLACE FUNCTION pf() RETURNS int LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT 1 $f$"); mgp.execute("REVOKE ALL ON FUNCTION pf() FROM PUBLIC")
+before = rtp.execute("SELECT has_function_privilege('rt17', 'pf()', 'EXECUTE')").fetchone()[0]
+mgp.execute("DROP FUNCTION pf()"); mgp.execute("CREATE OR REPLACE FUNCTION pf() RETURNS int LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT 1 $f$")
+after = rtp.execute("SELECT has_function_privilege('rt17', 'pf()', 'EXECUTE')").fetchone()[0]
+DR = "REVOKE ALL ON FUNCTION pf() FROM PUBLIC;\nDROP FUNCTION pf();\nCREATE OR REPLACE FUNCTION pf() RETURNS int LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT 1 $f$;\n"
+f18, f19 = both(DR, {"pf()": "definer"})
+check(f"MA1a real server: after REVOKE, DROP, CREATE OR REPLACE the runtime role may run the function (before {before}, after {after}); v18 guard flags the text = {f18}; v19 guard flags it = {f19}", before is False and after is True and f19 and not f18)
+mgp.execute("CREATE SCHEMA other_schema"); mgp.execute("CREATE OR REPLACE FUNCTION other_schema.spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS int LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT 1 $f$")
+mgp.execute("GRANT USAGE ON SCHEMA other_schema TO rt17"); runs = rtp.execute("SELECT other_schema.spend_reserve('a', '2026-11-16', 1)").fetchone()[0]
+SP2 = "CREATE OR REPLACE FUNCTION other_schema.spend_reserve(p_agent text, p_day date, p_worst numeric) RETURNS void LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp BEGIN ATOMIC SELECT 1; END;\nREVOKE ALL ON FUNCTION spend_reserve(text, date, numeric) FROM PUBLIC;\n"
+f18, f19 = both(SP2, {"spend_reserve(text,date,numeric)": "definer"}, "spend_guarded_writes.sql")
+check(f"MA2 real server: a definer function in another schema with the listed name has default PUBLIC execute and the runtime role runs it ({runs}); v18 guard flags the text = {f18}; v19 guard flags it = {f19}", runs == 1 and f19 and not f18)
 print(f"SUMMARY safety checks {sum(res)} of {len(res)} passed; controls {sum(resc)} of {len(resc)} showed the old behaviour; stated exploits shown {sum(ress)} of {len(ress)}")
 sys.exit(0 if all(res) and all(resc) and all(ress) else 1)

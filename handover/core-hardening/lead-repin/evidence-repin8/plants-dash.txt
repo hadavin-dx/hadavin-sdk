@@ -16,3 +16,5 @@ m15 [/bin/dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-
 m16 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=5 SELF-TEST: passed=1578 failed=4 (the made-up input and output files were deleted) (2s)
 m17 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=1570 failed=12 (the made-up input and output files were deleted) (3s)
 m18 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1578 failed=4 (the made-up input and output files were deleted) (3s)
+m19 [/bin/dash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (134s)
+m20 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=7 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (3s)

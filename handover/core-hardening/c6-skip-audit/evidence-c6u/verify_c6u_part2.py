@@ -2,7 +2,8 @@
 # 14 c6q content checks
 import glob
 bylead = {r["i"]: r for r in rows}
-boxs = full[full.index("## Start here"):full.index("## Start here, part 2")]   # the start box proper (part 2 holds the printed words and is counted apart)
+boxs = full[full.index("## Start here"):full.index("## Start here, part 2")]
+part2 = full[full.index("## Start here, part 2"):full.index("## 0. Failures")]   # the start box proper (part 2 holds the printed words and is counted apart)
 sec1c = full[full.index("## 1c."):full.index("## 2. Numbers")]   # the detail moved out of it
 box = boxs + "\n" + sec1c   # the presence checks of c6s look in both
 intro = box[:box.index("WORDS YOU NEED (")]
@@ -300,13 +301,13 @@ check("naive: the order of the reviewer names is explained", "ORDER of the two r
 check("naive: the 'does not do' list comes before the answer line", box.index("does NOT do") < box.index("## ANSWER ("), "")
 check("naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers", "never answers for him" in raw and all(any(l.startswith(k) and "OWNER ONLY" in l for l in txt) for k in ("| L-SAVEERR |", "| L-SHEET (was Q10)")) and "studio lead may answer for him" not in raw, "")
 check("naive: the answer form puts L-SHEET and L-SAVEERR on separate OWNER lines", "L-SHEET v30A" in box and "L-SAVEERR yes" in box and "Neither can be put on the line of step 2" in box, "")
-check("naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'", "Q27 (a), (b), (c) = your plan's three questions" in box and "G12 = YOUR gate" in box and "You are the STUDIO LEAD" in box, "")
+check("naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'", "Q27 (a), (b), (c) = your plan's three questions" in box and "G12 = YOUR gate" in box and "STUDIO LEAD = you" in box, "")
 steps = sec1c[sec1c.index("1c-F"):]
 check("naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)", all(x in steps for x in ["applies row 23", "applies rows 58 and 59", "TASK (9) A QUESTION TO YOU", "TASK (10) approve the lease wording (G12)"]), "")
 check("naive: the C-9 part 2 circle is explained", "THE CIRCLE IN C-9 PART 2" in box and "the approval rests on that look" in box, "")
 check("naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation", "may take it again" not in raw and not [l for l in txt if "reserved for the run that took it first" in l and "the plain sense of 'take'" not in l] and "THE TWO CLAIMS" not in raw and "unlimited claim" not in raw and "takes the 45-second limit out" not in raw, "")
 check("naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact", "a warning mail the system is built to send" in box and "a warning mail the system is built to send" in raw.split("| alert |")[1][:300], "")
-check("naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')", raw.startswith("# REPORT-c6u:") and "supersedes REPORT-c6s.md" in raw.split("\n")[0] and "L-SAVE, L-SAVEERR, L-PAGE" in raw, "")
+check("naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')", raw.startswith("# REPORT-c6u:") and "supersedes REPORT-c6t.md" in raw.split("\n")[0] and "L-SAVE, L-SAVEERR, L-PAGE" in raw, "")
 check("naive: table 5a lists row 11 and says the 37 rows are a different group from the 36", any(l.startswith("| 11 | run sheet") for l in a5.split("\n")) and "37 rows of the run sheet" in a5 and "different group from the 36 rows" in a5, "")
 check("naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)", raw.index("## 1b.") > raw.index("## 1. ") and raw.index("## 1b.") < raw.index("## 2. ") and "HISTORY, c6q" in sec1b and "HISTORY, c6q" not in sec0 and "HISTORY, c6r" in sec1b, "")
 check("naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box", all(x in box for x in ["EGM = ", "KEY = ", "FINAL = ", "RUN = ", "CHECK = ", "ROW = "]), "")
@@ -327,7 +328,7 @@ _dflt = sum(1 for r in rows if "on the default of" in r["st"] and "after check" 
 _chk = sum(1 for r in rows if "after check" in r["st"])
 _own = sum(1 for r in rows if "waits for the answer of L-SAVEERR" in r["st"])
 _w1 = N - _chk - _own
-_pats = [(r"holds (\d+) proposed text changes", N), (r"Of the (\d+) rows", N), (r"(\d+) are ready", _ready), (r"(\d+) apply on the default", _dflt), (r"(\d+) wait for a check", _chk), (r"(\d+) wait for the owner", _own), (r"(\d+) wave 1 rows", _w1)]
+_pats = [(r"holds (\d+) proposed text changes", N), (r"READY \((\d+):", _ready), (r"ON DEFAULT \((\d+):", _dflt), (r"WAITS FOR A CHECK \((\d+):", _chk), (r"WAITS FOR THE OWNER \((\d+):", _own), (r"READY \+ ON DEFAULT = (\d+) of the", _w1), (r"of the (\d+) rows\.", N), (r"applies the (\d+) wave 1 rows", _w1), (r"leaves unapplied the (\d+) rows that wait for a check", _chk), (r"and the (\d+) that wait for the owner", _own)]
 _bad = [(p_, [int(x) for x in re.findall(p_, boxs)], want) for p_, want in _pats if not re.findall(p_, boxs) or any(int(x) != want for x in re.findall(p_, boxs))]
 check("E-numbers: every row count in the start box (all %d, ready %d, default %d, check %d, owner %d, wave 1 %d) equals the recount from the table, in every place it is printed" % (N, _ready, _dflt, _chk, _own, _w1), not _bad and N == _ready + _dflt + _chk + _own, _bad)
 # E-defaults: the default of each question in the start box equals the default in section 3
@@ -363,7 +364,7 @@ check("E-rnum: the start box holds no R-number, WP number or ledger id (they are
 # E-cardwords: the word counts printed next to the card lines equal the real counts, in the box and in 1c
 _cw = [len(q.split()) for q in Q]
 _pr = re.findall(r"line (\d) \((\d+) words\)", sec1c)
-check("E-cardwords: every '(N words)' printed after a card line equals the real count of the quoted line (%s), and the short box prints the same four numbers" % _cw, len(_cw) == 4 and [int(n) for _, n in _pr[:4]] == _cw and ("lines of %d, %d, %d and %d words" % tuple(_cw)) in boxs, (_pr[:4], _cw))
+check("E-cardwords: every '(N words)' printed after a card line equals the real count of the quoted line (%s), and the short box prints the same four numbers" % _cw, len(_cw) == 4 and [int(n) for _, n in _pr[:4]] == _cw and all(("line %d (%d words)" % (i_ + 1, c_)) in part2 for i_, c_ in enumerate(_cw)), (_pr[:4], _cw))
 # E-firstfile: every file name in the start box exists (or is a file this work creates)
 _names = set(re.findall(r"\b[A-Za-z0-9][A-Za-z0-9_.-]*\.(?:md|py|json|sh|txt)\b", boxs))
 _known = set()
@@ -375,7 +376,7 @@ for _root in (STEPS, H + "/handover", H + "/handover/core-hardening", H + "/hand
 _unk = sorted(n for n in _names if n not in _known and n not in ("c6u-APPLIED-ROWS.md", "c6u-CHANGES.md"))
 check("E-files: every file name in the start box is a real file (or the one this work writes, c6u-APPLIED-ROWS.md): %d names" % len(_names), len(_names) >= 6 and not _unk, _unk)
 # E-owneronly: OWNER ONLY stays on L-SHEET and L-SAVEERR in the box and in section 3
-_oo_box = sorted(set(re.findall(r"^\| (L-[A-Z0-9]+)[^|]*\| OWNER ONLY", boxs, re.M)))
+_oo_box = sorted(set(re.findall(r"^\| (L-[A-Z0-9]+) \|.*\| OPEN \(OWNER ONLY\)", boxs, re.M)))
 _oo_s3 = sorted(set(re.findall(r"^\| (L-[A-Z0-9]+)[^|]*\|[^|]*\| OWNER ONLY|^\| (L-[A-Z0-9]+)[^|]*\| OWNER ONLY", "\n".join(_s3lines), re.M) and [x or y for x, y in re.findall(r"^\| (L-[A-Z0-9]+)[^|]*\|[^|]*\| OWNER ONLY|^\| (L-[A-Z0-9]+)[^|]*\| OWNER ONLY", "\n".join(_s3lines), re.M)]))
 check("E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does", _oo_box == ["L-SAVEERR", "L-SHEET"] and _oo_s3 == ["L-SAVEERR", "L-SHEET"], (_oo_box, _oo_s3))
 # E-kept: every statement of the number of kept stand-in crash runs says 18
@@ -433,12 +434,12 @@ check("N3: in the start box 'row' means a row of the edit table (the box defines
 # N4: scenes 5 to 11 are explained
 check("N4: the start box says the run sheet holds scenes 1 to 4 and a closing card, and that scenes 5 to 11 are an older plan listed but not filmed", "scenes 1 to 4 and a closing card" in boxs and "scenes 5 to 11" in boxs and "not filmed" in boxs, "")
 # N6: option (b) of L-CARDLEN is shown in the start box with its dropped items
-check("N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops", "OPTION (b) OF L-CARDLEN, 74 words" in boxs and "'fully', 'sent to n8n', 'own', 'customer-record', 'our own runs'" in boxs, "")
+check("N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the five items it drops", "OPTION (b) OF L-CARDLEN, 74 words" in part2 and "'fully', 'sent to n8n', 'own', 'customer-record', 'our own runs'" in part2, "")
 # m6: the scanner reader is named
 check("m6: every 'second person' says who (someone who did not write the scan)", raw.count("a second person") == raw.count("a second person (someone who did not write the scan)"), raw.count("a second person"))
 
 # E-defs: each definition the start box and section 1c rely on is present where it is used (the c6s checks looked at box and 1c together, so one copy could vanish unseen)
-_need_box = ["G12 = YOUR gate", "MY ASSUMPTION", "LRN14:33", "this report's own reading", "You are the STUDIO LEAD"]
+_need_box = ["G12 = YOUR gate", "MY ASSUMPTION", "LRN14:33", "this report's own reading", "STUDIO LEAD = you"]
 _need_1c = ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", "KEY = a secret code", "a warning mail the system is built to send to a person", "this report's own reading"]
 check("E-defs: the start box itself holds %s and section 1c holds %s" % (_need_box, _need_1c), all(x in boxs for x in _need_box) and all(x in sec1c for x in _need_1c) and "the one warning mail the system sends" not in raw, [x for x in _need_box if x not in boxs] + [x for x in _need_1c if x not in sec1c])
 _r6 = bylead[6]["new"] if 6 in bylead else ""

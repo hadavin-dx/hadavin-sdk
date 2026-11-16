@@ -499,3 +499,29 @@ evidence-r12/frozen/safety-tests.sh: line 574: 30694 Killed                  ( e
 process 2279 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/full2/tmpstate/hadavi
   PASS: T51a identical command line, other start time: stranger left alone, file restored (rc 0)
 evidence-r12/frozen/safety-tests.sh: line 574:  5760 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 9867; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/full2/tmpstate/hadavin-mutation-lane-0/a7fa50bcc6ce6285.backup
+evidence-r12/frozen/safety-tests.sh: line 574:  9867 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
+  PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
+evidence-r12/frozen/safety-tests.sh: line 587: 12838 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b outside-root setup: the member of the dead leader's group runs
+process 13885 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/full2/tmpstate/hadav
+  PASS: T51b outside-root: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+evidence-r12/frozen/safety-tests.sh: line 587: 13976 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b early-start setup: the member of the dead leader's group runs
+process 16936 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/full2/tmpstate/hadav
+  PASS: T51b early-start: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+evidence-r12/frozen/safety-tests.sh: line 587: 18344 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b control setup: the member of the dead leader's group runs
+stopped orphaned test group 22177; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/full2/tmpstate/hadavin-mutation-lane-0/a7fa50bcc6ce6285.backu
+  PASS: T51b control (member works in root, started after the recorded start): stopped (rc 0)
+works_in wrong: []
+  PASS: T51c works_in matches whole path parts: /root2/x is not inside /root
+== T52 (review r4 nit 1) a plant that fails on the open file is a clean refusal, not RESTORE FAILED; --restore with the file already original clears the marker
+REFUSED: cannot plant into src/mod.py: Permission denied
+  PASS: T52a read-only target: exit 2 (got 2) with 'cannot plant', no 'RESTORE FAILED', file unchanged, state empty
+evidence-r12/frozen/safety-tests.sh: line 2114: 25450 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/full2/tmpstate/hadavin-mutation-lane-0/a7fa50bcc6ce6285.backup (it alre
+  PASS: T52b file already equals the backup (two names): --restore exit 0 (got 0), marker and backup cleared, nothing written
+== T53 (review r4 nit 2) a FIFO in place of the target: --restore refuses instead of hanging
+evidence-r12/frozen/safety-tests.sh: line 2114: 29754 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T53 FIFO as the target at --restore (valid marker): exit 3 (restore failed, r6 review M1; r6 code: 2), no hang (got 3; 124 or 137 = hung), marker and backup kept

@@ -90,7 +90,7 @@ s/(^|[^A-Za-z0-9_])whsec_[A-Za-z0-9]{8,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])AIza[A-Za-z0-9_-]{20,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])(ghp|gho|ghs|ghu)_[A-Za-z0-9]{10,}/\1<masked>/g
 s/(^|[^A-Za-z0-9_])github_pat_[A-Za-z0-9_]{10,}/\1<masked>/g
-s/(^|[^A-Za-z0-9_])xox[abprs]-[A-Za-z0-9-]{8,}/\1<masked>/g
+s/(^|[^A-Za-z0-9_])xox[abprs]-[A-Za-z0-9-]{80,}/\1<masked>/g
 s/AKIAIOSFODNN7EXAMPLE/<<EXAMPLE-KEY>>/g
 s/(AKIA|ASIA)[0-9A-Z]{16}/<masked>/g
 s/<<EXAMPLE-KEY>>/AKIAIOSFODNN7EXAMPLE/g

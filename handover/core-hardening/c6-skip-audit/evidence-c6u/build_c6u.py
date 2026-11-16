@@ -429,6 +429,8 @@ def c6u_stage(L, find, patch):
     rep_all("| No (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only). Say yes only if a failed run must be filmed;",
             "| OPEN (OWNER ONLY). Until he answers, failed runs stay unsaved (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only); this is what is done meanwhile, not an answer for him. Say yes only if a failed run must be filmed;", 1)
     rep_all("2026-11-16T18:05:00Z = 23:35:00 IST", "2026-11-16T18:50:00Z = 2026-11-17T00:20:00 IST")
+    rep_all("Row 11 writes the defaults, not the cut case; you apply the cut case by hand.",
+            "Row 11 writes the defaults, not the cut case; you apply the cut case by hand. The card's Time cell on run sheet line 41 (row 96): Old cell text: 30 s EST. New cell text: 40 s EST (the defaults); 35 s EST when scene 3 and card line 1 are cut (card lines 2 to 4 = 79 words, budget 35 s); the other cut cases: Table B.", 1)
     return L
 
 
