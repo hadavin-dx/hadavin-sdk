@@ -1,0 +1,15 @@
+src/hadavin_sdk/config.py
+live-kind price check removed entirely
+OLD: if self.backends.llm.kind != "fake":
+            # A zero
+NEW: if False:
+            # A zero
+
+F
+=================================== FAILURES ===================================
+E   Failed: DID NOT RAISE ConfigError
+/tmp/c8/wC/tests/test_c01_route_limits.py:28: Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-input_usd_per_mtok]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.07s

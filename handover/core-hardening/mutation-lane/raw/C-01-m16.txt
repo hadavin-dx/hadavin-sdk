@@ -1,0 +1,11 @@
+src/hadavin_sdk/config.py
+(no-op control: identical text)
+OLD: sorted(
+                n
+                for n, r
+NEW: sorted(
+                n
+                for n, r
+
+..........                                                               [100%]
+10 passed in 0.17s
