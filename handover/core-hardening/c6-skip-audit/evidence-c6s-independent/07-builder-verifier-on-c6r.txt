@@ -1,0 +1,174 @@
+PASS short names found (at least 30) :: 39
+PASS rows parsed (at least 90) :: 94
+PASS C-1 old text occurs once on its stated line (94 rows) :: []
+PASS ids are exactly 1..N, no duplicate :: N=94
+PASS C-1b all rows apply in table order on copies, no mismatch :: []
+PASS C-1b table order is bottom-up within each file (highest line first) :: []
+PASS each file's rows form one block in the table :: ['handover/demo/VIDEO-RUNSHEET.md', 'handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md', 'handover/demo/n8n-flows/N8N-START.md', 'handover/demo/n8n-mainframe/mf.py', 'handover/demo/n8n-flows-real-v5/mf-form.json', 'handover/demo/n8n-flows-real-v5/mf-hook.json', 'handover/demo/n8n-flows-real-v5/mf-recove
+PASS cites exist (403 checked) :: 0
+PASS every cite key is defined in section 1 :: []
+PASS no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no file excluded) :: []
+PASS no stale phrase in new texts :: []
+PASS banned vendor strings in report: count 0 of 10 listed (names not printed) :: count=0
+PASS no secret-like or e-mail string in report :: 0
+PASS F1 C-4a on the DEFAULT rows the four flow files give success all, failed none, manual false, once each (4 files) :: []
+PASS F1 C-4a after L-SAVEERR yes (all rows applied) the four flow files give all/all/manual-false once each (4 files) :: []
+PASS recount: ready + defaults + check + waiting = N, none NOT FILMABLE; the waiting rows are exactly 53, 55, 62, 64, 66, 68 :: (49, 36, 3, 6, 0, 94)
+PASS table 3b equals the recount (14 lines) :: (14, 14)
+PASS 3b TOTAL line equals the recount :: ['| TOTAL | all rows | 94 | ready 49, on defaults only 36, with a check 3, waiting for the answer of L-SAVEERR 6 (default no), NOT FILMABLE until an answer 0 | |']
+PASS section 3 'rows tied to it' column equals the recount
+PASS figure 60.1 to 61.9 exact everywhere (20 occurrences) :: []
+PASS no '61.1' or other upper bound next to 60.1
+PASS figure 52.8 to 54.9 exact everywhere (5 occurrences) :: []
+PASS 61.9 only after 60.1 to
+PASS 18 kept runs split: every '<n> runs done' is 10 and every '<n> runs unknown' is 8 :: (['10', '10'], ['8', '8'])
+PASS K1 5 and K2 5 everywhere :: [('5', '5'), ('5', '5'), ('5', '5')]
+PASS K3B 5 and K3 3 everywhere :: [('5', '3'), ('5', '3'), ('5', '3'), ('5', '3')]
+PASS 18 kept runs = K1 5 + K2 5 + K3B 5 + K3 3
+PASS every 'UTC = IST' pair is exactly UTC + 5:30 (55 pairs) :: []
+PASS every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: []
+PASS every new text with UTC also has IST :: []
+PASS in every new text each UTC has its own IST (UTC count <= IST count) :: []
+PASS IST given with the money stop
+PASS report prose lines with '18 runs' name both voided runs :: []
+PASS new texts with '18 runs' name both voided runs :: []
+PASS reason cells with '18 runs' name both voided runs unless the new text does :: []
+PASS box says the row count of the table :: ('94', 94)
+PASS section 0 says the row count of the table :: ('94', 94)
+PASS box says the ready count :: 49
+PASS action box first (before section 0)
+FAIL part 2 statement at line 6 could not run on this report (ValueError: substring not found)
+PASS no row is NOT FILMABLE :: []
+PASS rows 13+14 hold 4 spoken lines of 90 words :: [11, 35, 22, 22]
+PASS box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 40 s)
+PASS row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 
+PASS one construction in the length table: no 24-word rewrite of line 1 anywhere (c6q design review M-F)
+PASS table of lengths in the box (6 rows) equals the recomputation from the quoted card lines and lease sentences :: ([('none', '(a)', 90, '36.0', 40, 190), ('none', '(b)', 74, '29.6', 30, 180)], [('none', '(a)', 90, '36.0', 40, 190), ('none', '(b)', 74, '29.6', 30, 180)])
+PASS answer 2 replaces answer 1: net +15 words and no 'add 16' wording
+PASS L-POST exists in the box table and in section 3, with a default
+PASS rows 11, 13, 14(not), 21 tie to L-POST and L-LEASE (13, 21) and the tied column lists them
+PASS section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, replacement, recommendation :: []
+PASS L-LEASE definition is the true one (takeover only; repeat refused while the row exists)
+PASS rows 17 and 81 say 'may' about the 45 s setting
+PASS rows 13 and 21 carry the plain statement and no 45-second sentence by default
+PASS C-10b: pass and fail cells agree (all of (a), (b) and (c) shown / any not shown)
+PASS the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in the box once, with 18:04 UTC = 23:34 IST once as a plan fact
+PASS no 'Tuesday evening' or 'Tue evening' inference
+PASS every line that names plan line 1051 says it is UNVERIFIED :: []
+PASS departure from ORD:147 stated in section 0, in the L-DEL row and in row 8
+PASS fresh container wording (ORD:146) in row 8, C-9 and the box
+PASS L-SCENES appears only in coverage lines (section 8), never in a live table or row
+PASS row 6 item 11 has no 'needs n8n and is not run yet'
+PASS row 6 item 15 says what the second scan searches for (real key values read from the key file, not printed, counts only)
+PASS no stale card word count (103, 75, 71) outside history lines :: []
+PASS row 6 item 13: the 30 s rule applies only if the card or caption carries the 45-second limit
+PASS row 6 keeps items 11 to 16, no blank, no builder note
+PASS row 6 item 16 does not claim that deleting erases the data
+PASS row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: atabases: the claim database and, for n8n's own state, a SEPARATE database `n8n`
+PASS row 91 says the stage journal and some bookkeeping files stay files
+PASS row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP
+PASS row 76 is tagged design intent, rows 25, 37, 38 say 'stored' not 'delivered'
+PASS every new text with 144.3 labels it as from n8n coming back up :: []
+PASS no 'row N' reference in any new text :: []
+PASS no 'accepted' exit slip in any new text :: []
+PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
+PASS 5a lists exactly the 36 viewer-visible run-sheet and page rows :: (36, 36)
+PASS 5a text equals each row's own 'what the viewer sees' cell
+FAIL report names the check time 2026-11-16T17:13:05Z and the newest sheet version on disk (v30) :: [30, 30, 30]
+PASS no owner sheet changed after the stated check time (C-10c is current) :: []
+PASS no claim that v25 or v26 is the newest
+FAIL L-SHEET reads 'confirm the one final sheet' and names v30 A, B and SOURCE
+PASS section 9 has no duplicate bullet (26 bullets) :: []
+PASS G12 named as open with the studio lead in section 9
+FAIL part 2 statement at line 122 could not run on this report (ValueError: substring not found)
+FAIL part 2 statement at line 124 could not run on this report (NameError: name 'wyn' is not defined)
+PASS every word the box defines is defined in the word list and first used before that only inside the WHAT TO TYPE block, which points to the lists (22 terms) :: []
+FAIL part 2 statement at line 132 could not run on this report (NameError: name 'intro' is not defined)
+FAIL the box begins with the roles (2 lines) and the what-to-type block precedes the first word list
+PASS question labels are first used in the table of questions, except in the what-to-type block that names the two OWNER ONLY ones :: ['L-CARD']
+FAIL whole box is under 3,490 words (the c6r box was 3,490; 3490 words now; the naive review asked for more explanation, so a lead question is whether it may grow) :: 3490
+PASS box names no n8n setting :: []
+FAIL box has one answer line with seconds, three free names, the exception form and L-SHEET apart
+PASS box wave 1 count equals ready + defaults (85) :: 85
+FAIL box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or release note by the rows
+PASS box says steps 4 to 6 have no duration
+PASS L-SCENES question is gone
+PASS rows 25, 37, 38 and 76 exist as rows
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+PASS section 8 has the coverage of the c6p, c6o and c6n reviews
+PASS every weekday written with a date is the true weekday (20 pairs; year 2026 unless written; no pair outside old-text quotes is skipped) :: []
+PASS no 'Tue 23 Nov' and no 'Thu 18 Nov' anywhere
+PASS row 21 (scene 3 caption) carries no lease sentence (no 'lease', no '45', no 'longer than', no 'claim') :: Caption: "a lead sent twice with the same id is processed once". The screen is the evidence; the rehearsal must show the repeat reply and th
+PASS every 'N apply on the default', 'N wave 1 rows' and 'N rows in all' equals the computed value (36 default-only, 85 wave 1) :: []
+PASS no stale count 91 or 42 stated as a wave 1 or default-only count :: []
+PASS the box does not carry the old '58 s' card length
+PASS row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'
+PASS 'one alert' is not stated as a fact about the take's flows in any new text (rows 13, 14, 74 and the box card text)
+PASS M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and makes the repeat sent more than 45 seconds after the first mandatory
+PASS M-A: the stop rules table has the lease wording approval entry
+PASS M-C: Q27 reading labelled as the report's own assumption and OWNER-OPEN (ORD:232) in the box, row 8 and section 9
+PASS M-C: L-DEL rows say 'ANSWERED' only for the part that is answered and say the delete-path criterion is open :: 2
+PASS M-D: the key reaches the scan by a pattern file in memory or standard input from the key store; never a command line; never on disk; a hit means cancel or replace the key and treat the runs as compromised
+FAIL M-D: item 16 repeats the search for real key values
+PASS M-E: rows 53, 55, 62, 64, 66, 68 wait for L-SAVEERR; row 92 keeps the failed-run setting none; row 44 says successful runs
+FAIL M-E: L-SAVEERR is in the box and in section 3 with default No
+PASS C-4a (defaults only): the four flow files then save successful runs (all) and not failed runs, manual false, once each :: [('mf-form.json', 1, 0, 1), ('mf-hook.json', 1, 0, 1), ('mf-recovery.json', 1, 0, 1), ('mf-sub-crm-mail.json', 1, 0, 1)]
+PASS M-F: one construction (checked above); the box says so
+PASS naive M1: 'take' is defined as the filmed run and 'the recovery flow claims the contact again' is used instead of 'takes over' :: (1, 1)
+PASS naive M5: the claim table is named in the box and every code word of the box is explained or replaced (K3B, K3, C-3 to C-9, G12 are defined)
+FAIL naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list
+FAIL every '23:30' example time in the box has 'IST' within 40 characters (0 places) :: 0
+FAIL the real v30 files on disk are ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-B.md', 'OWNER-SHEET-v30-SOURCE.md'] and the report names every one of them :: ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-B.md', 'OWNER-SHEET-v30-SOURCE.md']
+INFO OWNER-SHEET-v30-A.md last written 17:12:09 UTC; check time of the report 2026-11-16T17:13:05Z
+INFO OWNER-SHEET-v30-B.md last written 17:12:09 UTC; check time of the report 2026-11-16T17:13:05Z
+INFO OWNER-SHEET-v30-SOURCE.md last written 17:12:09 UTC; check time of the report 2026-11-16T17:13:05Z
+PASS source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 89 of the 94 rows cannot be read in the repository
+PASS 89 rows of 94 name a file that is not in the repository (recounted: 5 rows readable in the repo) :: 5
+PASS no row old or new text holds a raw '|' (it would break its table cell) :: []
+PASS REPORT-c6q.md was not changed by this run (it is older than the build of REPORT-c6s.md and holds its own title line)
+PASS REPORT-c6p.md was not changed by this run (it is older than the build of REPORT-c6s.md and holds its own title line)
+PASS row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction
+FAIL the box line of L-SHEET and the section 0 bullet each print every real v30 file with its real written time (UTC): [('OWNER-SHEET-v30-A.md', '17:12:09'), ('OWNER-SHEET-v30-B.md', '17:12:09'), ('OWNER-SHEET-v30-SOURCE.md', '17:12:09')] :: [('OWNER-SHEET-v30-A.md', '17:12:09'), ('OWNER-SHEET-v30-B.md', '17:12:09'), ('OWNER-SHEET-v30-SOURCE.md', '17:12:09')]
+FAIL part 2 statement at line 254 could not run on this report (ValueError: substring not found)
+FAIL F4 the report names the newest owner sheet version (v30) and release note (v14) on disk, and the check time :: (None, 30, 14)
+PASS F4 no owner sheet or release note has a version higher than the one named :: []
+FAIL F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is defined
+FAIL F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumption in the box, row 8 and section 9
+PASS F4 the owner-sheet check covers v19 and later (static-checks.sh globs v19 and v2x to v9x and lists a v31+ check)
+FAIL F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes
+FAIL F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none
+FAIL F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68)
+FAIL F1 L-SAVE (section 3), the box and section 9 say the plan is OVERRIDDEN on failed runs
+FAIL F1 the glossary says the take uses all for successful and none for failed runs
+FAIL F2 card line 2 gate in row 8 (item 12) and in the stop-rule table
+FAIL F2 the box and row 14 say card line 2 waits for an alert mail seen in the loopback re-smoke
+FAIL F3 item 15 runs after EVERY rehearsal with real accounts
+FAIL F3 the scanner is read by a second person and tested with a fake key before it touches a real key
+FAIL F3 counts only; no file holds the key or matched lines; not in the process list or shell history
+FAIL F3 searches in place or on a dump that is deleted and counted to 0
+FAIL F3 swap point named
+FAIL part 2 statement at line 285 could not run on this report (ValueError: substring not found)
+FAIL F3 the stop-rule row and check C-6 carry the same rules
+FAIL F3 row 6 reason says items 11 to 16
+FAIL m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail
+FAIL m2 row 13 says 'expected to be true until C-9 part 2'
+FAIL m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer :: 1
+FAIL m4 every example answer time in the box is later than the check time 2026-11-16T17:13:05Z (and has its IST) :: ['2026-11-16T16:40:00Z', '2026-11-16T16:45:00Z']
+FAIL naive: the order of the reviewer names is explained
+FAIL part 2 statement at line 297 could not run on this report (ValueError: substring not found)
+FAIL naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers
+FAIL naive: the answer form puts L-SHEET and L-SAVEERR on separate OWNER lines
+FAIL naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'
+FAIL naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)
+FAIL naive: the C-9 part 2 circle is explained
+FAIL naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation
+FAIL naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact
+FAIL naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')
+FAIL naive: table 5a lists row 11 and says the 37 rows are a different group from the 36
+FAIL part 2 statement at line 308 could not run on this report (ValueError: substring not found)
+FAIL naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box
+FAIL section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
+FAIL section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only)
+FAIL section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+FAIL REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
+SUMMARY: 170 checks, 56 FAILED: part 2 statement at line 6 could not run on this report (ValueError: substring not found); report names the check time 2026-11-16T17:13:05Z and the newest sheet version on disk (v30); L-SHEET reads 'confirm the one final sheet' and names v30 A, B and SOURCE; part 2 statement at line 122 could not run on this report (ValueError: substring not found); part 2 statement at line 124 could not run on this report (NameError: name 'wyn' is not defined); part 2 statement at line 132 could not run on this report (NameError: name 'intro' is not defined); the box begins with the roles (2 lines) and the what-to-type block precedes the first word list; whole box is under 3,490 words (the c6r box was 3,490; 3490 words now; the naive review asked for more explanation, so a lead question is whether it may grow); box has one answer line with seconds, three free names, the exception form and L-SHEET apart; box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or release note by the rows; M-D: item 16 repeats the search for real key values; M-E: L-SAVEERR is in the box and in section 3 with default No; naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list; every '23:30' example time in the box has 'IST' within 40 characters (0 places); the real v30 files on disk are ['OWNER-SHEET-v30-A.md', 'OWNER-SHEET-v30-B.md', 'OWNER-SHEET-v30-SOURCE.md'] and the report names every one of them; the box line of L-SHEET and the section 0 bullet each print every real v30 file with its real written time (UTC): [('OWNER-SHEET-v30-A.md', '17:12:09'), ('OWNER-SHEET-v30-B.md', '17:12:09'), ('OWNER-SHEET-v30-SOURCE.md', '17:12:09')]; part 2 statement at line 254 could not run on this report (ValueError: substring not found); F4 the report names the newest owner sheet version (v30) and release note (v14) on disk, and the check time; F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is defined; F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumption in the box, row 8 and section 9; F1 C-4a says failed-run saving is none on the defaults, all only after L-SAVEERR yes; F1 C-11 says PLAN:125 is overridden on failed runs and the lead sets ON_ERROR=none; F1 C-4 row list is rows 63, 65, 67, 69 and 92 (not 62 to 68); F1 L-SAVE (section 3), the box and section 9 say the plan is OVERRIDDEN on failed runs; F1 the glossary says the take uses all for successful and none for failed runs; F2 card line 2 gate in row 8 (item 12) and in the stop-rule table; F2 the box and row 14 say card line 2 waits for an alert mail seen in the loopback re-smoke; F3 item 15 runs after EVERY rehearsal with real accounts; F3 the scanner is read by a second person and tested with a fake key before it touches a real key; F3 counts only; no file holds the key or matched lines; not in the process list or shell history; F3 searches in place or on a dump that is deleted and counted to 0; F3 swap point named; part 2 statement at line 285 could not run on this report (ValueError: substring not found); F3 the stop-rule row and check C-6 carry the same rules; F3 row 6 reason says items 11 to 16; m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail; m2 row 13 says 'expected to be true until C-9 part 2'; m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer; m4 every example answer time in the box is later than the check time 2026-11-16T17:13:05Z (and has its IST); naive: the order of the reviewer names is explained; part 2 statement at line 297 could not run on this report (ValueError: substring not found); naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers; naive: the answer form puts L-SHEET and L-SAVEERR on separate OWNER lines; naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'; naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who); naive: the C-9 part 2 circle is explained; naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation; naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact; naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16'); naive: table 5a lists row 11 and says the 37 rows are a different group from the 36; part 2 statement at line 308 could not run on this report (ValueError: substring not found); naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box; section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id; section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only); section 9 old items are closed or rewritten, not left stale (3,490-word box, history order); REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run

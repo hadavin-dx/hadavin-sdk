@@ -492,7 +492,7 @@ sm2.set_kill_switch(KillSwitch(on=True, by="op:t4"))
 n_real = mm_.execute("SELECT count(*) FROM kill_switch_log").fetchone()[0]; n_tmp = rtm.execute("SELECT count(*) FROM pg_temp.kill_switch_log").fetchone()[0]
 check("M6 temporary-table attack on the kill-switch log: the REAL log gets the 3rd row, the temporary table none", n_real == 3 and n_tmp == 0, f"real={n_real} temp={n_tmp}")
 v_old = re.search(r"CREATE OR REPLACE FUNCTION kill_switch_log_change\(\).*?END \$f\$;", (HELD / "spend_decrease_log.sql").read_text(), re.S).group(0)
-v_bad = v_old.replace("SET search_path = pg_catalog, pg_temp", "SET search_path = pg_catalog, public").replace("EXECUTE format('INSERT INTO %I.kill_switch_log (old_on, new_on, old_by, new_by) VALUES ($1, $2, $3, $4)', TG_TABLE_SCHEMA)\n    USING", "INSERT INTO kill_switch_log (old_on, new_on, old_by, new_by) VALUES (").replace("OLD.\"on\", NEW.\"on\", OLD.\"by\", NEW.\"by\";", "OLD.\"on\", NEW.\"on\", OLD.\"by\", NEW.\"by\");")
+v_bad = v_old.replace("SET search_path = pg_catalog, pg_temp", "SET search_path = pg_catalog, public").replace("INSERT INTO %I.kill_switch_log", "INSERT INTO kill_switch_log")  # v17: adapted to the v17 function text (the v16 text replace no longer matches)
 mm_.execute(v_bad)
 sm2.set_kill_switch(KillSwitch(on=False, by="op:t5"))
 check("M7 NEGATIVE CONTROL: with the unsafe function shape (public in the path, bare table name) the same attack DIVERTS the row to the temporary table (real log stays 3, temporary table 1)", mm_.execute("SELECT count(*) FROM kill_switch_log").fetchone()[0] == 3 and rtm.execute("SELECT count(*) FROM pg_temp.kill_switch_log").fetchone()[0] == 1)

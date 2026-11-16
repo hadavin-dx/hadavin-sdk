@@ -3,3 +3,10 @@ rows parsed 59
 counts text (59, 40, 15, 4) computed (59, 40, 15, 4)
 round 15 checks done
 FAILURES 0
+NEG lines caught: 129
+== verify15.py r15 checks on EDITS.round14.md (NO_NEG=1): r15 failure count ==
+54
+== chk15.py on EDITS.md ==
+FAILS 0
+{}
+== banned-string hits (counts only): 0 over 9 files, 10 terms ==
