@@ -17,15 +17,15 @@ Sources, and only these for commands: `inputs/plan-wp6-resmoke-v5.md` (called "t
 - **WSL**: Windows Subsystem for Linux, the Linux (Ubuntu) that runs inside this Windows laptop. Every `wsl.exe` command below runs there.
 - **HEAD_PIN**: the plan's name for the one code version (a short commit id) the run tests; the lead re-pins it to the merged head (step 3).
 - **PROGRESS**, **INDEX**, **ENV**: three evidence files in the run's evidence folder `evidence-2\` (section 6). `PROGRESS.md` gets one line per step, with the time in UTC and IST. `INDEX.md` holds the pass/fail table (Part B, plus Part A filled). `ENV.md` records the environment (versions, addresses, ports).
-- **evidence-2**: the plan's evidence folder for this run (plan line 112; section 6 gives the path). The plan calls it `evidence-2` because an earlier smoke run made `evidence-1`.
-- **register**: the file `agents-register.md` in the folder `_local` under the Windows root `C:\Users\<USER>\Downloads\Hadavin\` (plan line 241 writes it as `_local\agents-register.md`; the root prefix is my reading, UNVERIFIED). One row per started program, written BEFORE each start (see the rules box).
+- **evidence-2**: the plan's evidence folder for this run (plan line 112; section 6 gives the path). The plan gives the name and does not explain the number 2 (my reading: an earlier smoke run used evidence-1; UNVERIFIED).
+- **register**: the file `agents-register.md` in the folder `_local` under the Windows root `C:\Users\<USER>\Downloads\Hadavin\` (plan line 241 writes it as `_local\agents-register.md`; the root prefix is my reading, UNVERIFIED). One row per started program, written BEFORE each start (see the rules box; the row fields come from the studio's supervision rule, not from the plan).
 - **board item 1**: item 1 of the lead's answers in `work/LEAD-ANSWERS.md` (line 87): the first rehearsal of the changed flows, which is this re-smoke.
 - **R1, R2, R4, R5**: the plan's own rule names (plan section 1, lines 108-112). R1 = no fallback kill for n8n, a failure is a STOP; R2 = the labelled clean-up kill after a STOP; R4 = the step classes and the time limit; R5 = how a paste reaches WSL and how evidence is saved. The rules box below restates the ones the lead needs.
 
 ## Rules box (plan section 1; applies to every step)
 
 - **Stop rule (R1).** A STOP stops the run: write PROGRESS and INDEX, then do section 4. Nothing after a STOP counts as evidence (plan line 108).
-- **Step classes (R4).** STOP = the run ends; GO = a finding, the run goes on; REC = record only. Time limit per step = 2 x the minutes the plan gives for that step; a step that runs longer is a STOP (plan line 111).
+- **Step classes (R4).** STOP = the run ends; GO = a finding, the run goes on; REC = record only. Time limit per step = 2 x the minutes the plan gives for that step (plan line 111); the plan names `exit=124` (the time limit hit) as a STOP only for the n8n start and kill steps (R1, plan line 109), so for other steps the class of a time-out is the step's own class.
 - **Register (plan line 241).** Write a row in the register BEFORE each start: keep-alive, sampler, control n8n, take n8n, the Postgres container, the 4 stub services, and each detached driver (B2, C, D, E). Row fields: id, purpose, started, expected end, last checked, state, next action. Close each row when the item ends (section 4).
 - **PROGRESS (plan line 112).** After every step the runner writes ONE line in `evidence-2\PROGRESS.md`: step id, result, time in UTC and IST (IST = UTC + 5 h 30 min), written with the Write or Edit tool.
 - **PowerShell variable.** Every step below that uses `$RS` is a PowerShell call, and the variable does not survive between calls: set `$RS` (section 3) at the start of EVERY PowerShell call (plan line 112 gives the path inline).
@@ -48,23 +48,25 @@ Wording for the lead to send, plain words:
 > - Slot 3: Wed 18 Nov, start 09:00 UTC = 14:30 IST; realistic end by 13:30 UTC = 19:00 IST.
 > - Or name another time. No slot starts before Tue 17 Nov 09:00 UTC.
 
-Rules from the lead's board item 1 (LEAD-ANSWERS line 87): not by Tue 17 Nov 03:30 UTC; the lead does not wait on it; the earliest start is Tue 17 Nov about 09:00 UTC / 14:30 IST. The owner's answer is a yes or no plus one slot. No answer = no run. The end times above are start + 4.5 h (plan line 445), my arithmetic, UNVERIFIED.
+Rules from the lead's board item 1 (LEAD-ANSWERS line 87): "Not by Tue 17 Nov 03:30 UTC" is NOT a deadline for the lead to ask and NOT a deadline for the owner to answer; my reading (UNVERIFIED, the source gives no more words) is that the re-smoke result is not needed by then and the board must not wait on it; the lead does not wait on it; the earliest start is Tue 17 Nov about 09:00 UTC / 14:30 IST. The owner's answer is a yes or no plus one slot. No answer = no run. The end times above are start + 4.5 h (plan line 445), my arithmetic, UNVERIFIED.
 
 What the owner does during the run: nothing the plan names. The lead starts Docker Desktop before the run (plan line 240, P-4); whether that needs the owner at the laptop is [LEAD FILLS: the plan gives no command].
 
 ## 2. Pre-checks (all must hold before step 3; any failure = do not start)
 
-1. **evidence-final passed on the merged head.** [LEAD FILLS: the plan gives no command] (the plan says only that the run follows evidence-final, LEAD-ANSWERS line 87). Write the merged head sha and the evidence file name in the run log.
+1. **evidence-final passed on the merged head.** Meaning (my reading, UNVERIFIED): the saved raw output of the evidence-final run names the merged head's commit id and shows every check passed, with no failure line. [LEAD FILLS: the plan gives no command] (the plan says only that the run follows evidence-final; the rule is in `work/LEAD-ANSWERS.md` line 87, which is board item 1: the lead's answer that the re-smoke starts only after evidence-final). Write the merged head sha and the evidence file name in the run log.
 2. **Owner said yes with a slot** (section 1). Write the quoted yes and time in PROGRESS.
 3. **Run folder absent (P-1).** Plan line 231 and 275: `$HOME/hadavin-smoke` must be absent at the start (P-1 prints `absent`), and 1.5 expects every file mode 600, directories 700, owned by the runner (the Linux user that runs the lead's commands). My reading: the run folder belongs to the runner only. UNVERIFIED reading; P-1 and 1.5 are the plan's checks.
 4. **Ports.** Rehearsal n8n uses 5690 (broker 5691) and the control n8n 5692 (5693); stage 8765; fake model 48767; stub CRM 8771; mail catcher 2526; Postgres 55433 (plan line 121). The owner's own n8n on 5678 and 5679 is recorded in P-1 and 13.7 and is never touched (plan lines 121, 231, 421, 489). P-1 prints a count of listeners on the rehearsal ports; the expected value is `0`.
 5. **Docker Desktop running** and the image `postgres:16` already local (P-4 expects image count `1`; no pull, ever; plan line 240).
+6. **Register file ready** (plan line 241). The register is `_local\agents-register.md` (see the Words box for the folder). Before EACH start of keep-alive, sampler, control n8n, take n8n, the Postgres container, the 4 stub services and each detached driver (B2, C, D, E) the lead writes its row first. A start without a row = do not start.
+7. **PROGRESS file ready** (plan line 112). `evidence-2\PROGRESS.md` takes one line per step with the time in UTC and IST; `run.sh` makes the folder at P-1 (that it exists at P-2 is UNVERIFIED), so the first PROGRESS line is written after P-1.
 
 ## 3. Steps, in order
 
 How every WSL step runs (plan line 112, R5): the lead writes the step's paste file with the Write tool, then runs it from the PowerShell tool as shown. The verdict is the `exit=<n>` line in the output, never the tool status (`wsl.exe` returns `tee`'s exit code). Never call `wsl.exe` from the Git Bash tool. Each paste body is the code span after the step id in the plan, verbatim, at the plan line given; this file does not copy the bodies so they cannot drift from the plan. **PowerShell blocks are wrapped so that the evidence is saved (plan line 112, R5).** Every PowerShell block below (P-2, P-5, 9.0k, 11.0k, 13.5k and the tail of 13.9) is run as `& { <block> } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\<log>.log`, with the log name of its section: `p` for P-2 and P-5, `s9` for 9.0k, `s11` for 11.0k, `s13` for 13.5k and the 13.9 tail. The blocks below are already written in this wrapped form. The folder `evidence-2\` is made by `run.sh` (plan line 112), so it exists once P-1 has run; that it exists at P-2 is UNVERIFIED. A STOP stops the run: write PROGRESS and INDEX, go to section 4 (plan line 108, R1). If a result differs from "expected", the plan's classes are STOP (end the run), GO (finding, carry on) and REC (record only) (plan line 111); the class is named per step in the plan.
 
-Set once (PowerShell). The path is the plan's `run.sh` location (plan lines 112, 212):
+Set at the START OF EVERY PowerShell call (the variable does not survive between calls; about 60 later commands use it). The path is the plan's `run.sh` location (plan lines 112, 212); plan line 112 writes the same path inline, so the lead may also paste the path in place of `$RS`:
 
 ```powershell
 $RS = '/mnt/c/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/run.sh'
