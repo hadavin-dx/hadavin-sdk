@@ -7,7 +7,7 @@ BOOT_ID: 5cbee216
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 15
 PERCENT: 83 (the mean of the per-row percent column in the ITEMS table; only 5 of 20 items are fully done; the lead's tool reads this key, so it keeps the name)
-STATE: STOPPED (owner order 20:41Z; see STOP-REPORT.md)
+STATE: STOPPED (owner order 20:41Z; push sha 70e91cd48; see STOP-REPORT.md)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
 NEEDS_YOU, in this order (for the lead session to answer or pass to the studio lead; item 3 may need the owner; paths start at handover/system-map/; times UTC / IST):
   0. CORRECTION 16:12Z: the v4.2 runbook (inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md) and LANE-D-13o/13p/13q/13r/13s.md ARE in the checkout; my earlier 'missing' claim was wrong. Nothing missing now except laptop-only files (run program, run sheet). Patch rebuilt against v4.2 (agents below).
