@@ -1426,6 +1426,13 @@ FILE=src/__pycache__/m2.py mut -- tests/test_fast.py >"$S/t96i1.out" 2>&1; rc1=$
 FILE=.pytest_cache/c.py mut -- tests/test_fast.py >"$S/t96i2.out" 2>&1; rc2=$?
 mut --extra src/__pycache__/m2.py -- tests/test_fast.py >"$S/t96i3.out" 2>&1; rc3=$?
 chk "T96h a mutant file inside __pycache__ (exit $rc1) or .pytest_cache (exit $rc2), or an --extra there (exit $rc3): all exit 2 (r8: planted them: not 2), nothing planted, state empty" "[ $rc1 -eq 2 ] && [ $rc2 -eq 2 ] && [ $rc3 -eq 2 ] && grep -q 'does not look at' '$S/t96i1.out' && grep -q 'return 1' '$T/root/src/__pycache__/m2.py' && [ -z '$(state_files)' ]"
+FILE=. mut -- tests/test_fast.py >"$S/t96i4.out" 2>&1; rc=$?
+chk "T96h2 GUARD (passes on r8 too): --file . is a clean refusal, exit 2 (got $rc), no INTERNAL ERROR" "[ $rc -eq 2 ] && ! grep -q 'INTERNAL ERROR' '$S/t96i4.out'"
+fresh_root; mkdir -p -m 700 "$STATE"; KEYF=$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16)
+printf '{"root": "/nowhere/else", "backup": "x", "file": "src/mod.py", "orig_sha256": "%s", "mutant": "m1"}' "$(printf 0%.0s $(seq 64))" > "$STATE/$KEYF.planted.json"
+python3 "$RUN" --root "$T/root" --restore >"$S/t96n.out" 2>&1; rc=$?; cut -c1-300 "$S/t96n.out"
+chk "T96h3 a marker that names another root (forged): exit 2 (got $rc), and the text says that exit 2 does NOT mean nothing is planted and names --sha (r8: no such warning)" "[ $rc -eq 2 ] && grep -q 'does NOT mean nothing is planted' '$S/t96n.out' && grep -q -- '--sha COMMIT' '$S/t96n.out'"
+rm -f "$STATE/$KEYF.planted.json"
 # i) an output file in the state folder could pose as a marker
 fresh_root; mkdir -p -m 700 "$STATE"
 mut --out-json "$STATE/zz.planted.json" -- tests/test_fast.py >"$S/t96j1.out" 2>&1; rc1=$?
