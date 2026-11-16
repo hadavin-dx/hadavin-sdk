@@ -50,7 +50,7 @@ You asked why there are so many duplicates, idle parts and inconsistencies. The 
 21. Lead decision 2 (the take never deletes contacts; the owner deletes leftovers by hand in HubSpot after the take) has no flow row and no fix item: it is a take-day fact, not a flow change (Q13).
 
 22. (review notchecked-lane-r1, G1 to G9; checked against FIX-PLAN item 3, which now carries the lines) The take start state (0 rows for the take keys, empty mailbox and run list, empty HubSpot search) has not been checked; no gate has run. Next: lead, at re-pin, time TBD.
-23. 'Processed once' has not been proved on any run: the proof is mailbox 1 mail + mf_leads row in state done + POST 2 reply under 10 s (Q22-4); no run exists yet. Who: lead, at re-pin, time TBD.
+23. 'Processed once' has not been proved on any run: the proof is the mailbox count (exactly 1 mail after a stated wait) plus the mf_leads row in state done; the POST 2 reply time is not proof (lead answer Q25-3, 12:35Z; wait and expected attempts value set by the lead at the rehearsal); no run exists yet. [Replaces 'POST 2 reply under 10 s' from Q22-4.] Who: lead, at re-pin, time TBD.
 24. The run list and the moment of POST 2 are not written down or rehearsed; whether the sender retries on a non-200 answer is unknown (sender not in the repo). Who: lead, at re-pin, time TBD.
 25. The 45 s lease against the Qualify and CRM durations is unmeasured (no n8n run). Next: time both in the rehearsal. Who: lead.
 26. What the camera shows has not been scanned for personal data or secrets (shown-not-opened list, one full watch not done); the abort-and-retake rule is the lead's call. Who: lead.
