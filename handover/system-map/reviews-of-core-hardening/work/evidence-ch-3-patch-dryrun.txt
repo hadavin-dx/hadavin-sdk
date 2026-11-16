@@ -1,0 +1,5 @@
+checking file handover/core-hardening/AUDIT-FINDINGS.md  <- patches/A-02.patch
+checking file handover/core-hardening/AUDIT-FINDINGS.md  <- patches/B-01.patch
+checking file handover/core-hardening/AUDIT-FINDINGS.md  <- patches/C-01.patch
+checking file handover/core-hardening/AUDIT-FINDINGS.md  <- patches/D2-01.patch
+checking file handover/core-hardening/AUDIT-FINDINGS.md  <- patches/D2-11-12.patch
