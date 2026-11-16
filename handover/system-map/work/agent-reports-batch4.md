@@ -1078,3 +1078,9 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 781 L4c r9: live counts, who the lead is, quarantine owner. FIXED by CURRENT r9; markers TO DO.
 - 782 t19 r13: purpose, undefined terms, owners. FIXED by TERMS r13; owner NOT SET.
+
+- 783 rehearsal-limits r8: unassemblable message, passed rule, terms. FIXED by CURRENT r8; text TO DO; passed rule NOT SET.
+- 784 banned-claims r7: lines in force, approvals, terms. FIXED by CURRENT r7; roles/unlock NOT DECIDED.
+- 785 L5b r10: stage.journal undefined, history range. FIXED by CURRENT STATE r10.
+- 786 L2c r12: contradictions, purpose, steps. FIXED by STEPS r13; not run.
+- 787 decision-list r13: A2 options, undefined ids, patch stack. FIXED by CURRENT r13; fold TO DO.
