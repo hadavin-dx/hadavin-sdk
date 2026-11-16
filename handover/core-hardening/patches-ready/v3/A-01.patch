@@ -98,7 +98,7 @@
          # Checkpoints whose anchor put failed: retried by the next checkpoint() (ponytail: in-process only; a
          # restart drops the list and `verify` then reports "never anchored", which is the truth).
          self._unanchored: dict[int, tuple[str, str]] = {}
-@@ -218,33 +226,106 @@
+@@ -218,33 +226,102 @@
              return self._append(event)
          except DuplicateEvent:
              return event.event_id
@@ -178,7 +178,6 @@
              return done
          for event_id, body in queued:
 -            if self._drain(AuditEvent.model_validate_json(body)):
--                self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
 +            try:
 +                event = AuditEvent.model_validate_json(body)
 +            except ValueError as exc:
@@ -190,13 +189,9 @@
 +                )
 +                continue
 +            if self._drain(event):
-+                try:
-+                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
-+                except Exception as exc:  # noqa: BLE001 - written but not deleted: a duplicate is absorbed next time
-+                    _LOG.warning(
-+                        "audit outbox row not deleted (%s): event %s", type(exc).__name__, event_id
-+                    )
-+                    continue
++                # A failing DELETE is not caught: the step fails loudly, nothing is lost (the event is already in
++                # the chain) and the next tick absorbs the duplicate (DuplicateEvent) and deletes the row.
+                 self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
                  done += 1
          return done
  
@@ -211,7 +206,7 @@
      def _drain(self, event: AuditEvent) -> bool:
          try:
              self._append(event)
-@@ -544,4 +625,5 @@
+@@ -544,4 +621,5 @@
      if deps.anchor is not None and deps.signer is None:
          raise ConfigError("audit chain: an anchor needs a signer (backends.signer)")
      # The anchor is its own capability (backends.anchor), built before the audit and handed in through Deps.
@@ -426,7 +421,7 @@
              run_id=run_id,
 --- a/tests/test_a01_audit_reconcile.py
 +++ b/tests/test_a01_audit_reconcile.py
-@@ -0,0 +1,513 @@
+@@ -0,0 +1,514 @@
 +"""Audit A-01: nothing drained the audit outbox, and a failed audit write left no log line.
 +
 +The tick step `audit_drain` calls the audit kind's `reconcile`, logs drained, remaining and corrupt counts, and
@@ -920,8 +915,8 @@
 +    assert ChainSettings(kind="chain", spill_dir=tmp_path).spill_dir == tmp_path
 +
 +
-+def test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting(
-+    caplog, monkeypatch
++def test_a_row_that_was_written_but_cannot_be_deleted_fails_the_step_and_is_absorbed_next_tick(
++    monkeypatch,
 +):
 +    log = _chain_with_outbox(monkeypatch, _event(14), _event(15))
 +    real_run = log._db.run
@@ -932,14 +927,15 @@
 +        return real_run(sql, params)
 +
 +    monkeypatch.setattr(log._db, "run", no_delete)
-+    with caplog.at_level(logging.WARNING):
-+        assert log.reconcile() == 0  # both rows are in the chain, neither counted as drained
-+    assert log.backlog() == 2  # still in the table: a duplicate is absorbed next tick
-+    assert ERROR_DETAIL not in caplog.text
++    with pytest.raises(OSError, match=ERROR_DETAIL):  # the step fails loudly, nothing is hidden
++        tick.audit_drain(_ctx(log))
++    assert log.backlog() == 2  # rows still in the table, so still counted
 +    monkeypatch.setattr(log._db, "run", real_run)
-+    assert log.reconcile() == 2  # DuplicateEvent path, then the deletes succeed
++    assert (
++        log.reconcile() == 2
++    )  # DuplicateEvent path (already in the chain), then the deletes succeed
 +    assert log.backlog() == 0
-+    assert len(log.events()) == 2
++    assert len(log.events()) == 2  # no duplicate in the chain
 --- a/tests/test_p7_tick.py
 +++ b/tests/test_p7_tick.py
 @@ -86,10 +86,12 @@

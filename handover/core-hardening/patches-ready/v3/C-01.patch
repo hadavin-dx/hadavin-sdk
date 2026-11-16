@@ -23,7 +23,7 @@
 +
 +    A price of 0 makes every reply cost 0, so no spend limit could ever fire. Exactly 0 is allowed only when the
 +    route sets `price_is_zero_by_design` AND the model is keyless loopback (a local model with no key, on this
-+    machine; the scheme does not matter, https://localhost counts). Returns one text per problem, empty if fine."""
++    machine; the scheme does not matter, so a local address over https counts). Returns one text per problem, empty if fine."""
 +    out: list[str] = []
 +    if route.price_is_zero_by_design and not keyless_loopback:
 +        out.append("price_is_zero_by_design needs a keyless loopback model")

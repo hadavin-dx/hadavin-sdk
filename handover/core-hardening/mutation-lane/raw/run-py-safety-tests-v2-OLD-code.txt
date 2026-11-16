@@ -29,3 +29,9 @@ no marker: nothing to restore
   PASS: T6 file restored
   PASS: T6 state empty
 == T7 SIGINT likewise, exit code read directly from $?
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 44: kill: (17058) - No such process
+  exit code 0
+  FAIL: T7 exit 130
+  PASS: T7 file restored
+  PASS: T7 state empty
+== T8 two runs at once: the second is refused by the lock, and the first is still alive
