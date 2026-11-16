@@ -131,7 +131,7 @@ Usage:
 mutants.json: [{"id": "m01", "file": "...", "old": "...", "new": "...", "desc": "..."}, ...]
 The unmutated tree is run once first (default; `--no-control` turns it off) and recorded as <prefix>-baseline.txt.
 TESTS are pytest arguments (paths / -k ...). The command run is, with only the environment named above:
-  <root>/.venv/bin/python -m pytest -q -p no:cacheprovider --rootdir=<root> --confcutdir=<root> --tb=line -rf TESTS
+  <root>/.venv/bin/python -m pytest -q -p no:cacheprovider --rootdir=<root> --confcutdir=<root> --tb=line -rfp TESTS
 """
 
 from __future__ import annotations
@@ -1346,8 +1346,10 @@ def pytest_cmd(root: pathlib.Path, tests: list[str]) -> list[str]:
         f"--rootdir={root}",
         f"--confcutdir={root}",
         "--tb=line",
-        "-rf",
-        *(t for t in tests if t != "-q"),  # the command already says -q: a second -q drops pytest's summary line
+        "-rfp",
+        *(
+            t for t in tests if t != "-q"
+        ),  # the command already says -q: a second -q drops pytest's summary line
     ]
 
 
@@ -1473,6 +1475,14 @@ def passed_count(last: str) -> int:
     """Number of passed tests in pytest's last line (`2 passed, 1 skipped in 0.1s`); 0 when the word is not there."""
     mt = re.search(r"\b(\d+) passed\b", last)
     return int(mt.group(1)) if mt else 0
+
+
+def passed_total(out: str) -> int:
+    """Passed tests in the whole pytest output: the larger of the count in the last line and the number of
+    `PASSED ...` lines (`-rp`). A doubled `-q` (one from an ini file's addopts) drops the last line's count, so
+    the `PASSED` lines are the second witness."""
+    n_lines = sum(1 for x in out.splitlines() if x.startswith("PASSED "))
+    return max(passed_count(summary(out)[0]), n_lines)
 
 
 VERDICT_KINDS = ("KILLED", "SURVIVED", "TIMEOUT", "COULD-NOT-PLANT", "NO-TEST-PASSED", "ERROR")
@@ -1610,7 +1620,7 @@ def one(a, tests, m, results, ref) -> list[str]:
             if rc == 1
             else f"ERROR rc={rc}"
         )
-        if verdict == "SURVIVED" and passed_count(summary(out)[0]) == 0:
+        if verdict == "SURVIVED" and passed_total(out) == 0:
             # exit 0 without one passed test (all skipped, nothing selected): nothing was checked (review r5 M1)
             verdict = "NO-TEST-PASSED"
     # integrity of the whole scratch tree after this mutant (review r4 M3): every file but .venv and the caches
@@ -2005,7 +2015,7 @@ def main():
                     else f"it exited with {rc}, not 0"
                     if rc != 0
                     else f"no test passed (summary line: {last!r}): everything was skipped or nothing was selected"
-                    if passed_count(last) == 0
+                    if passed_total(out) == 0
                     else None
                 )
                 write_out(
@@ -2021,7 +2031,7 @@ def main():
                         f"see {a.prefix}-baseline.txt"
                     )
                 a.baseline_failed = bfailed
-                a.baseline_note = f"rc 0, {passed_count(last)} passed (see {a.prefix}-baseline.txt)"
+                a.baseline_note = f"rc 0, {passed_total(out)} passed (see {a.prefix}-baseline.txt)"
                 stop_if_dirty(a, root, "the control run")
             dirty: list[str] = []
             for m in ms:

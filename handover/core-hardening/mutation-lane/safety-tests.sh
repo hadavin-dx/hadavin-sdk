@@ -426,7 +426,7 @@ for window in ("plant", "restore"):
                 return orig(path, data, *a, **k)
             r.write_target = wt2
         else: r.write_target = wt
-        S = r.SIG; S.critical = S.allow = S.fired = False; S.first = None
+        S = r.SIG; S.critical = S.allow = S.fired = S.exiting = False; S.first = None
         sys.argv = ["run.py", "--root", root, "--sha", sha, "--repo", repo, "--prefix", "X", *([__import__("os").environ.get("NCF", "--no-control")] if __import__("os").environ.get("NCF", "--no-control") else []), "--raw", raw, "--pythonpath", root + "/src", "--id", "m1", "--file", "src/mod.py", "--old", "return 1", "--new", "return 2", "--", "tests/test_fast.py"]
         try: r.main(); code = 0
         except SystemExit as e: code = e.code
