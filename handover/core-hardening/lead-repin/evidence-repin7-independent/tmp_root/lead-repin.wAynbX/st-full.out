@@ -1294,12 +1294,12 @@ PASS (hidden, sed stage alone): closing bracket inside a mid-line value (first 6
 PASS (hidden): closing bracket inside a mid-line value (last 6 characters)
 PASS (hidden, line-only final filter): closing bracket inside a mid-line value (last 6 characters)
 PASS (hidden, sed stage alone): closing bracket inside a mid-line value (last 6 characters)
-PASS (hidden): web address, token as user part, host without a dot (first 6 characters)
-PASS (hidden, line-only final filter): web address, token as user part, host without a dot (first 6 characters)
-PASS (hidden, sed stage alone): web address, token as user part, host without a dot (first 6 characters)
-PASS (hidden): web address, token as user part, host without a dot (last 6 characters)
-PASS (hidden, line-only final filter): web address, token as user part, host without a dot (last 6 characters)
-PASS (hidden, sed stage alone): web address, token as user part, host without a dot (last 6 characters)
+FAIL (secret still visible): web address, token as user part, host without a dot (first 6 characters)
+FAIL (secret still visible in the line-only final filter): web address, token as user part, host without a dot (first 6 characters)
+FAIL (secret still visible after the sed stage alone): web address, token as user part, host without a dot (first 6 characters)
+FAIL (secret still visible): web address, token as user part, host without a dot (last 6 characters)
+FAIL (secret still visible in the line-only final filter): web address, token as user part, host without a dot (last 6 characters)
+FAIL (secret still visible after the sed stage alone): web address, token as user part, host without a dot (last 6 characters)
 PASS (hidden): web address with escaped slashes (first 6 characters)
 PASS (hidden, line-only final filter): web address with escaped slashes (first 6 characters)
 PASS (hidden, sed stage alone): web address with escaped slashes (first 6 characters)
@@ -1376,22 +1376,14 @@ PASS (machinery): filter_ready refuses the useless rule file st-bad1.sed
 PASS (machinery): filter_ready refuses the useless rule file st-bad2.sed
 PASS (machinery): filter_ready refuses a useless awk program
 PASS (machinery): --mask with a damaged filter prints nothing, exits 3 and leaves no folder
-PASS (machinery): --mask passes the canary, hides the value and exits 0
-PASS (machinery): a normal run on a one-file folder ends with exit 0 and a SUMMARY line
-PASS (machinery): a normal run keeps exactly one work folder (the masked output copy)
-PASS (machinery): the kept folder holds only the output copy and the rule files (4 files, no file name list)
+FAIL (machinery): --mask must hide the value (exit=3)
+FAIL (machinery): a normal run must end with exit 0 and a SUMMARY line (exit=3)
+FAIL (machinery): a normal run must keep exactly one work folder (found 0)
 PASS (machinery): a failure that only the return value of the self-test shows is a non-zero return
 PASS (machinery): the filter runs with LC_ALL=C (byte-wise matching)
 PASS (machinery): each judge refuses a result whose number of passed cases is not the planned number (a forged shorter list)
 PASS (machinery): each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return
 PASS (machinery): the left-out report counts one name with a line break and one symbolic link
-PASS (machinery): a file name with # & and a backslash is printed as file:line:word (no sed expression is built from names)
+FAIL (machinery): a file name with # & and a backslash must be printed as file:line:word (exit=3)
 PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
 PASS (machinery): sh -x does not print a value (the script turns the trace off)
-PASS (machinery): signal TERM in the main phase: exit 143, no program of the run left running, no folder left
-Hangup
-PASS (machinery): signal HUP in the main phase: exit 129, no program of the run left running, no folder left
-PASS (machinery): signal TERM while the file lists are made: exit 143 within 5 seconds, no program left
-PASS (machinery): the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left
-PASS (machinery): every git call carries the settings log.showSignature=false, gpg.program=/bin/false, core.hooksPath=/dev/null and core.fsmonitor=false
-PASS (machinery): a relative TMPDIR is refused with exit 2
