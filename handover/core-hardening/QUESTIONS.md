@@ -35,3 +35,11 @@ Real-v5's CrmUpsert is n8n's HubSpot node, which calls the internet, so the loop
 
 ## Q18 (2026-11-16 10:30Z, lane c "not checked" read; lead decision needed)
 The zoom-out lane suggests: (1) stop C8 (mutation lane, run.py) and the C5 v5/C7 re-runs because decision 4 and necessity-r1.md say they are not in the take path; keep G5 wording + dead-man note only; (2) make the loopback re-smoke cases A and B (same id twice) plus one psql count on mf_leads the explicit pass/fail gate; (3) collapse C9/C10/C11/C4b into one who-types-what sheet; (4) QUEUE header rule 6 "ONE database" is stale vs decision 10. Default if no answer: I finish the rounds already running (run.py r2, C5 v5, C7b fix), start nothing new on C8/C5/C7, and keep v11 as the single owner sheet. Answer needed: stop C8/C5/C7 now? yes / no.
+
+## Q19 (2026-11-16 10:45Z, v11 security review; lead decision needed, money/secret path)
+1. The take's final clean-up archives contacts with a DELETE call inside a finally (AGENT-SCOPE section 3), which breaks decision 2. Can the program be changed (or the call removed) before the take? Until then go condition 5 cannot be given, and "close the terminal" is not a safe exit.
+2. Which counter does the backstop use (account total from the usage page, or the program's own ledger), and does the ledger reset between a trial run and the real run?
+3. The model program runs as the same Linux user as the lead, so the lead can read the key file and edit the backstop. Accept this in writing, or run the program as a separate user? v11 currently says the owner makes and cancels the key, which limits damage but does not remove access.
+4. Real n8n stop and start commands, and whether the program prints cue lines. Does the model program re-read its settings file after it starts?
+5. Default for old model keys: cancel all except the run key unless the owner writes a reason and an end date. OK?
+Source: steps-edits/review-v11-security.md; builder questions Q1-Q11 in steps-edits/v11-NOTES-FOR-LEAD.md.
