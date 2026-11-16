@@ -19,7 +19,7 @@ P18 CAUGHT no clock for the notice window | FAIL C14i A lacks 'minutes of the ti
 P19 CAUGHT run that never started | FAIL C14j A lacks 'if 7.4 never happened, tell "none"'
 P20 CAUGHT SAMPLE label removed | FAIL C14k A lacks 'SAMPLE (made-up values'
 P21 CAUGHT HubSpot rotate allowed | FAIL C14m A lacks 'never use rotate'
-P22 MISSED set phrase differs
+P22 CAUGHT set phrase differs | FAIL C21 sheetA: quoted words 'no key made' look like the set phrase 'no key was made' but
 P23 CAUGHT full date check weakened | FAIL C14q A lacks 'weekday, month, day and year must equal the run day'
 P24 CAUGHT balance re-check weakened | FAIL C14r A lacks 'balance and auto-reload equal your yes'
 P25 CAUGHT last-resort step out of the yes | FAIL C14o A lacks 'last-resort step <step>'
@@ -30,7 +30,7 @@ P30 CAUGHT card term renamed | FAIL C10 A card term 'Key liszt' defined but not 
 P31 CAUGHT delete guard removed | FAIL C14s A lacks 'Never "Select all", never empty Trash'
 P32 CAUGHT STOP RULE renamed | FAIL C23 A lacks the fixed sentence '**STOP RULE.**'
 P33 CAUGHT R8 character list gets a character | FAIL C23 A lacks the fixed sentence 'letters, digits, single spaces and `. _ / - : = @ + ,
-P34 CAUGHT yes pattern gets a bracket char | FAIL C13 A yes pattern has characters {';', '(', ')'}
+P34 CAUGHT yes pattern gets a bracket char | FAIL C13 A yes pattern has characters {'(', ')', ';'}
 P35 CAUGHT key-save line loses exit report | FAIL C15 A key-save line not found
 P36 CAUGHT key-save line breaks bash -n | FAIL C15 A key-save line not found
 P37 CAUGHT stale word back in note | FAIL C05 LEAD-RELEASE-NOTE-v8.md stale text 're-pin'
@@ -102,4 +102,4 @@ M51 CAUGHT unlisted set phrase told in 8.5 | FAIL C12 A told phrase not in list:
 M52 CAUGHT Open 91 in a list form | FAIL C16 note: Open 91 does not exist (75 rows)
 M53 CAUGHT expected total in note | FAIL C17 note: 'expected total 0.80' says 0.80, expected 0.81
 M54 CAUGHT yes deadline IST pair | FAIL C04 OWNER-SHEET-v24-A.md bad pair 18:29 UTC = 23:29 IST
-TOTAL plants 96: caught 94, missed 1, anchor-not-found 1
+TOTAL plants 96: caught 95, missed 0, anchor-not-found 1

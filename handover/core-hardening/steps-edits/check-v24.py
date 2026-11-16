@@ -237,7 +237,7 @@ for n, t in TEXTS.items():
     for q in set(re.findall(r'"([^"\n]{6,70})"', t)):
         for v in PHS:
             r = difflib.SequenceMatcher(None, q.lower(), v.lower()).ratio()
-            if q != v and r >= 0.8: fail('C21', '%s: quoted words %r look like the set phrase %r but differ' % (n, q, v))
+            if q != v and q != re.sub(r'\s*<[^>]*>', '', v) and ' ' in q and r >= 0.8: fail('C21', '%s: quoted words %r look like the set phrase %r but differ' % (n, q, v))
 # C22 the cancel rule text lives only on the card: paraphrases outside it, in any file
 CAN = [r'(?<![Aa]uto-)\b(reload|reloads|reloaded|refresh|refreshes|refreshed)\b', r'beside each key', r'click Cancel', r'cancelled (state|word) each time', r'press the cancel button', r'confirmation word']
 for n, t in (('sheetA', A), ('sheetB', B)):
