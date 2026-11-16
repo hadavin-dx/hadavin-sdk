@@ -1,3 +1,5 @@
+Which text controls: the last paragraph (r15, 'BINDING') decides which lines are in force; everything else is history. Also in force: never open, list or grep a path in OWNER-ONLY.txt, and the 10-line reply limit (line 30). ORDER 002 = the studio's audit order; method in PLAN-002.md. The OUT-OF-SCOPE label and r15's waiver list replace the 'UNVERIFIED terms' and NOT VISIBLE labels and waiver lists of the older paragraphs. r11 is replaced by r12.
+
 FINAL RULES (16 Nov 2026), the only live rules; lines 29-53 are history. The launch message's first line must be `LANE: <name>; FILE: <path>`, otherwise reply 'no LANE line' and stop. Scope = the Coverage table in your lane file; the launch message supplies it if the lane file lacks it. Write OUT-OF-SCOPE: <name> for film-v5 (scenes 5-11), group L and the roles proposal. Write NOT VISIBLE only for files missing from the checkout. Cite no R-numbers. Terms: lane = one read-only audit slice; take = the filmed run; EGM = the studio's review method; the lead = the Claude session; real-v5 = the version-5 n8n flows and steps files for scenes 1-4.
 
 STUDIO-PREAMBLE v1
