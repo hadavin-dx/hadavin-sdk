@@ -11,8 +11,8 @@
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 SUT=${1:-}; [ -n "$SUT" ] || SUT=$HERE/run_all.sh; [ -f "$SUT" ] || { echo "usage: bash test_run_all_stop.sh [run_all.sh to test] [scratch dir (must not exist)]"; exit 2; }
-SD=$(cd "$(dirname "$SUT")" && pwd)
-if [ -n "${2:-}" ]; then [ -e "$2" ] && { echo "REFUSED: $2 exists"; exit 2; }; T=$2; mkdir -p -- "$T" || exit 2; else T=$(mktemp -d "${TMPDIR:-/tmp}/trs.XXXXXX") || exit 2; fi
+SD=$(cd "$(dirname "$SUT")" && pwd); SUT=$SD/$(basename "$SUT")   # f8-r13: absolute paths (the patterns below are matched against command lines)
+if [ -n "${2:-}" ]; then [ -e "$2" ] && { echo "REFUSED: $2 exists"; exit 2; }; T=$(realpath -m -- "$2"); mkdir -p -- "$T" || exit 2; else T=$(mktemp -d "${TMPDIR:-/tmp}/trs.XXXXXX") || exit 2; fi
 TMADE=""; [ -n "${2:-}" ] || TMADE=1
 RUNPID=""
 cleanup_all() { [ -z "$RUNPID" ] || kill -KILL "$RUNPID" 2>/dev/null; pkill -KILL -f "$T/(tmp|work|raw|mirror)" 2>/dev/null; [ -z "$TMADE" ] || rm -rf -- "$T"; }
