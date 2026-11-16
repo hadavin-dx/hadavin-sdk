@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T14:43:25Z
+UPDATED_UTC: 2026-11-16T14:50:04Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,12 +7,12 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 4.36 load of 4 cores, mem 1/15 GB, RAM 1423/16087 MB, disk 21G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 5.7G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 6.55 load of 4 cores, mem 1/15 GB, RAM 1485/16087 MB, disk 20G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 7.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running abfcd0a); check_secrets FAIL 1 hit flow-check/raw/test-take-check.txt:178; run_all.sh rc 1 (reviews/evidence-run-all-2.md)
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T14:43:25Z
+PUSHED_UTC: 2026-11-16T14:50:04Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,21 +31,21 @@ PUSHED_UTC: 2026-11-16T14:43:25Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| abfcd0a | F8 fixer r9 (uncapped) | sonnet | check_secrets hit, run_all.sh exit 1 | 13:55Z | 14:55Z | running | fix-f8-r9.md in progress |
-| a1e940f | patch-copies fixer (uncapped) | sonnet | B1-B3, M4-M8 | 14:34Z | 14:55Z | running | fix-patchcopies1.md in progress |
-| ac6c38b | REVIEW.md r20 fixer (uncapped) | sonnet | design r20, reader r20, roles premise | 14:38Z | 15:10Z | running | fix-review13.md in progress |
-| a0fef16 | RW + claims fixer r13 | sonnet | RW r6 11 Majors, claims r5 7 Majors, cites | 14:42Z | 15:05Z | running | fix-rswording13.md in progress |
-| a5945e9 | plan files round 17 read | sonnet | unread parts of FIX-PLAN, TAKE-CHECKLIST, RUNBOOK | 14:42Z | 14:58Z | running | report pending |
-| a19377c | Q31 fixer round 4 | sonnet | 4 Majors of Q31 r4 + post-twice script item | 14:43Z | 15:00Z | running | fix-q31-4.md in progress |
-| aee099d | structural read of findings set | sonnet | counts, ids, cites across FINDINGS/CUT-LIST/EXCEPTIONS/LEDGER | 14:44Z | 14:58Z | running | report pending |
-| a3bfd85 | second-angle read of F8 code | sonnet | take_check.sh, tests, run_all.sh | 14:44Z | 14:58Z | running | report pending |
+| abfcd0a | fixer F8 r9 (uncapped) | sonnet | take_check/run_all fixes, secret hit, second-angle Majors | 13:55Z | 15:30Z | running | WIP raw files |
+| a7111608 | fixer patch-copies r2 (uncapped) | sonnet | B1 pass rule, recipe, dead-man hardening | 14:47Z | 15:20Z | running | none yet |
+| ad15e02 | fixer plan files r17 | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST 6 Majors | 14:50Z | 15:15Z | running | none yet |
+| a612be1 | fixer RW r7 + claims r6 | sonnet | 9 + 14 Majors, counts | 14:50Z | 15:20Z | running | none yet |
+| ad4db55 | fixer REVIEW.md r21 (uncapped) | sonnet | 7 Majors design + cite minors | 14:50Z | 15:30Z | running | none yet |
+| a0d8ae8 | reader Q31 round 5 | sonnet | Blockers/Majors only | 14:50Z | 15:05Z | running | none yet |
+| second1 | reader plan files unread parts | sonnet | RUNBOOK 1-62, steps 1-10, FIX-PLAN 1-77, TC 1-138 | 14:51Z | 15:10Z | running | none yet |
+| second2 | checker T19-T21 text and R6 awk | sonnet | FINDINGS vs step 18 | 14:51Z | 15:10Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. F8 evidence runner on final head plus fresh uncapped review (after abfcd0a)
-2. Fresh REVIEW.md round 21 review (after ac6c38b)
-3. Fresh claims and RW read after a0fef16 (checkers first)
-4. Fresh patch-copies review (uncapped, after a1e940f)
-5. Fix findings of a5945e9, aee099d, a3bfd85
+1. F8 evidence runner + fresh uncapped review after abfcd0a (check_secrets PASS, run_all exit code)
+2. Fresh uncapped patch-copies review after a7111608
+3. Round 22 REVIEW.md reviewers if Blockers/Majors remain
+4. Independent verification of fixer edits (checkers, claims-count, clock diff)
+5. drift-007 refresh and grep of trigger words before FINAL
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
