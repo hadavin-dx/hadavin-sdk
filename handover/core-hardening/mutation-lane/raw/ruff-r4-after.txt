@@ -1,0 +1,29 @@
+ruff check/format/bash -n on the FINAL run.py and safety-tests.sh, round 4, 2026-11-16 (ruff ruff 0.16.9)
+--- ruff check run.py make_mutants_v2.py
+S603 `subprocess` call: check for execution of untrusted input
+   --> run.py:291:12
+    |
+289 | ) -> subprocess.CompletedProcess:
+290 |     """The one place that starts a helper program (git, patch, the import probe): fixed argument list, no shell."""
+291 |     return subprocess.run(
+    |            ^^^^^^^^^^^^^^
+292 |         argv, input=input_bytes, capture_output=True, check=False, cwd=cwd, env=env, timeout=timeout
+293 |     )
+    |
+
+S603 `subprocess` call: check for execution of untrusted input
+   --> run.py:827:16
+    |
+825 |     try:
+826 |         # one process group, so a timeout or a signal can stop all of it
+827 |         proc = subprocess.Popen(
+    |                ^^^^^^^^^^^^^^^^
+828 |             cmd,
+829 |             cwd=root,
+    |
+
+Found 2 errors.
+--- ruff format --check run.py make_mutants_v2.py
+2 files already formatted
+--- bash -n safety-tests.sh
+bash -n: clean
