@@ -1,5 +1,13 @@
 # REPORT from flows-audit (cloud to lead). Newest block on top, UTC and IST.
 
+## 2026-11-16 06:14 UTC / 11:44 IST: ORDER 003: NOT VISIBLE
+The egm skills and agents are NOT visible in this session. Dry run NOT done. Install not retried (per order). No work started, 0 agents running.
+- Skill tool call `egm:egm-review-loop` returned: "Unknown skill: egm:egm-review-loop" (earlier `egm:egm-review` gave the same).
+- Skills I see (egm: none): session-start-hook, dataviz, artifact-design, artifact-diagramming, artifact-capabilities, update-config, keybindings-help, code-review, simplify, fewer-permission-prompts, loop, claude-api, workflow-authoring, run, plugin-authoring, anthropic-skills:{skill-creator, xlsx, pptx, pdf, docx, built-in-browser, chrome-browser, computer-use, deep-research, docs, google-workspace, import-memory, morning}, init, security-review.
+- Agent types I see (egm:* none): claude, claude-code-guide, Explore, general-purpose, Plan, statusline-setup.
+- Cause: this is the same session as ORDER 001/002; its skill and agent lists were fixed at session start, before the install. Lead: a NEW session (fresh start on demo/handover) is needed. Plugin on disk is installed, enabled and patched (see ORDER 002 block); the new session should see it if the plugin settings persist to a fresh container; if the container is new, the install and patch must be repeated there.
+**FILE-INDEX:** handover/flows-audit/{ORDERS,REPORT}.md
+
 ## 2026-11-16 06:13 UTC / 11:43 IST: ORDER 002 SETUP: plugin installed and patched; skills NOT yet visible in this session, NEW SESSION NEEDED. No work started.
 **Failed / not proven (first):**
 - Skill tool in THIS session still says "Unknown skill: egm:egm-review". The skill list is read at session start, so the 7 egm skills and egm:* agent types cannot be shown from here. Lead: a new session is needed (start it from branch demo/handover, then run only the proof listing).
