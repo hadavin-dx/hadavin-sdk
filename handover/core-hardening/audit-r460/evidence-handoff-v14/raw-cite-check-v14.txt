@@ -1,0 +1,303 @@
+=== /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v14/../CORE-PR-HANDOFF-v14.md
+L19 src/hadavin_sdk/approvals/requests.py:37-37 | flagged = detector is not None and injection_check(detector, inputs, "approval_summary").f | ANCHOR ok
+L19 src/hadavin_sdk/approvals/cards.py:79-79 | and injection_check(detector, diagnosis, "shadow_card").flagged | ANCHOR ok
+L23 src/hadavin_sdk/llm/retry.py:83-108 | def with_retry[T]( | ANCHOR ok
+L23 src/hadavin_sdk/llm/openai_compat.py:117-129 | started, used = time.monotonic(), [0, 0] | CHECK words=chat,max_attempts
+L24 src/hadavin_sdk/store/protocol.py:107-107 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: .. | ANCHOR ok
+L30 src/hadavin_sdk/config.py:317-317 | environment: Literal["dev", "pilot", "prod"] | CHECK words=demo
+L31 src/hadavin_sdk/models.py:294-294 | cost_usd: Decimal = Decimal(0) | ANCHOR ok
+L31 src/hadavin_sdk/models.py:305-305 | cost_usd: Decimal = Decimal( | ANCHOR ok
+L31 src/hadavin_sdk/config.py:57-58 | input_usd_per_mtok: Money | ANCHOR ok
+L31 src/hadavin_sdk/registry.py:33-36 | class Budget(BaseModel): | ANCHOR ok
+L31 src/hadavin_sdk/store/migrations/0001_core.sql:87-92 | CREATE TABLE spend ( | ANCHOR ok
+L31 src/hadavin_sdk/store/migrations/0003_approvals_tick.sql:15-20 | CREATE TABLE spend_month ( | ANCHOR ok
+L31 src/hadavin_sdk/models.py:98-98 | cost_usd: Decimal = Decimal(0) | ANCHOR ok
+L39 demos/ask-your-data/askdata/meter.py:1-17 | """The cost meter (design 13, amendments A-03): one JSON file shared with the Replay Check | ANCHOR ok
+L39 demos/ask-your-data/askdata/meter.py:211-229 | def reserve(self, worst_case: Decimal, *, live: bool = True) -> None: | ANCHOR ok
+L40 demos/ask-your-data/askdata/pipeline.py:147-147 | self.meter.reserve(worst, live=self.s.live) | ANCHOR ok
+L40 demos/ask-your-data/askdata/pipeline.py:155-155 | reply = self.llm.chat( | ANCHOR ok
+L40 demos/ask-your-data/askdata/pipeline.py:232-236 | """Replace the reservation with the real cost. False (and the question ends over budget) i | ANCHOR ok
+L40 tests/demo_askdata/test_meter.py:30-170 | def test_worst_case_is_input_estimate_plus_max_tokens_at_the_output_rate(): | ANCHOR ok
+L40 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | ANCHOR ok
+L41 demos/ask-your-data/askdata/meter.py:48-55 | def worst_case_usd(route: Route, prompt_chars: int) -> Decimal: | ANCHOR ok
+L41 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | ANCHOR ok
+L41 src/hadavin_sdk/k1b/loop.py:170-170 | budget.charge(worst_case_usd(route_prices, system, messages)) | ANCHOR ok
+L41 src/hadavin_sdk/k1b/loop.py:179-179 | budget.charge(reply.cost_usd) | ANCHOR ok
+L41 src/hadavin_sdk/k1b/loop.py:206-206 | budget.charge(verdict.cost_usd) | ANCHOR ok
+L41 src/hadavin_sdk/llm/common.py:164-172 | tokens_in = tokens[0] or estimate_tokens(sent) | CHECK words=reply
+L41 src/hadavin_sdk/llm/common.py:59-62 | def estimate_tokens(text: str) -> int: | CHECK words=reply
+L42 src/hadavin_sdk/store/postgres.py:416-431 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | ANCHOR ok
+L42 src/hadavin_sdk/store/memory.py:196-204 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | ANCHOR ok
+L42 src/hadavin_sdk/store/migrations/0001_core.sql:87-92 | CREATE TABLE spend ( | ANCHOR ok
+L43 src/hadavin_sdk/limits.py:18-18 | return self.store.add_spend(agent_id, now().date(), usd) | ANCHOR ok
+L43 src/hadavin_sdk/limits.py:24-24 | day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write | ANCHOR ok
+L43 src/hadavin_sdk/models.py:19-20 | def now() -> datetime: | CHECK words=Limits,store,audit,registry
+L43 src/hadavin_sdk/limits.py:23-35 | reasons.append("kill_switch") | ANCHOR ok
+L43 src/hadavin_sdk/app.py:171-171 | limits = Limits(store, audit, reg) | ANCHOR ok
+L43 src/hadavin_sdk/cli.py:209-209 | return kill_switch(Limits(store, audit, reg), args.action, args.by) | ANCHOR ok
+L44 src/hadavin_sdk/llm/retry.py:95-96 | except ProviderError: | ANCHOR ok
+L44 src/hadavin_sdk/llm/retry.py:97-99 | except Exception as exc:  # every failure is classified below, never swallowed | ANCHOR ok
+L44 src/hadavin_sdk/llm/retry.py:100-103 | if attempt == max_attempts: | ANCHOR ok
+L44 src/hadavin_sdk/llm/common.py:233-241 | def _retry(self, call: Callable[[], Answer]) -> Answer: | ANCHOR ok
+L44 src/hadavin_sdk/llm/anthropic.py:122-122 | got = self._retry(lambda: self._parse(self._current().messages.create(**request))) | ANCHOR ok
+L44 src/hadavin_sdk/llm/bedrock.py:156-156 | got = self._retry(lambda: self._parse(self._client.converse(**request), in_text)) | ANCHOR ok
+L44 src/hadavin_sdk/llm/gemini.py:86-86 | got = self._retry( | ANCHOR ok
+L44 src/hadavin_sdk/llm/openai_compat.py:119-119 | got = self._retry( | ANCHOR ok
+L44 src/hadavin_sdk/llm/common.py:208-220 | def chat( | ANCHOR ok
+L44 src/hadavin_sdk/llm/common.py:200-206 | def __init__( | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:325-541 | def handle( | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:425-425 | reply = self.llm.chat( | CHECK words=Runtime,handle
+L45 src/hadavin_sdk/runtime/agent_loop.py:432-432 | except ( | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:440-440 | self.limits.charge(agent_id, reply.cost_usd) | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:441-441 | self.store.add_cost(run.run_id, reply.cost_usd) | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:310-316 | def _screen(self, run: Run, text: str, source: str): | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:239-250 | def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:359-359 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:421-421 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:460-460 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:569-597 | def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run: | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:87-87 | _REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"} | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:574-574 | label = _REASON_TEXT.get(reason or "", reason or "no proposal") | ANCHOR ok
+L45 src/hadavin_sdk/runtime/agent_loop.py:520-520 | verdict = self._screen(run, out.text, f"tool:{call.name}") | CHECK words=calls,errors,sent_bytes,tools
+L46 src/hadavin_sdk/extract.py:47-47 | reply = llm.chat( | ANCHOR ok
+L46 src/hadavin_sdk/evals.py:73-73 | reply = llm.chat( | ANCHOR ok
+L46 src/hadavin_sdk/guard/judge.py:72-72 | reply = self.llm.chat( | ANCHOR ok
+L46 src/hadavin_sdk/runtime/agent_loop.py:425-425 | reply = self.llm.chat( | ANCHOR ok
+L46 src/hadavin_sdk/k1b/loop.py:94-94 | box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type] | ANCHOR ok
+L46 demos/ask-your-data/askdata/pipeline.py:155-155 | reply = self.llm.chat( | ANCHOR ok
+L46 src/hadavin_sdk/guard/bedrock_guardrail.py:101-101 | resp = self._client.apply_guardrail( | CHECK words=chat,extract,chat
+L47 src/hadavin_sdk/guard/bedrock_guardrail.py:95-101 | def check(self, text: str, source: str) -> Verdict: | ANCHOR ok
+L47 src/hadavin_sdk/guard/bedrock_guardrail.py:61-61 | def make(settings: Any, deps: Any) -> GuardrailDetector: | ANCHOR ok
+L47 src/hadavin_sdk/guard/injection.py:85-101 | def injection_check(detector: Detector, text: str, source: str) -> Verdict: | ANCHOR ok
+L47 src/hadavin_sdk/guard/injection.py:85-101 | def injection_check(detector: Detector, text: str, source: str) -> Verdict: | ANCHOR ok
+L48 src/hadavin_sdk/backends/factory.py:17-54 | @dataclass(frozen=True) | ANCHOR ok
+L48 src/hadavin_sdk/backends/table.py:570-579 | ALLOWED: dict[str, frozenset[str]] = { | ANCHOR ok
+L48 src/hadavin_sdk/llm/anthropic.py:80-88 | def make(settings: Any, deps: Any) -> AnthropicLLM: | ANCHOR ok
+L49 src/hadavin_sdk/config.py:55-59 | class Route(_Strict): | ANCHOR ok
+L49 src/hadavin_sdk/config.py:47-47 | Money = Annotated[Decimal, BeforeValidator(_money)] | ANCHOR ok
+L49 src/hadavin_sdk/config.py:40-44 | def _money(v: object) -> object: | ANCHOR ok
+L49 src/hadavin_sdk/config.py:317-317 | environment: Literal["dev", "pilot", "prod"] | ANCHOR ok
+L49 src/hadavin_sdk/config.py:349-349 | @model_validator(mode="after") | ANCHOR ok
+L49 src/hadavin_sdk/backends/table.py:593-602 | DEV_ONLY: frozenset[tuple[str, str]] = frozenset( | ANCHOR ok
+L49 src/hadavin_sdk/config.py:36-59 | "url_allowed", | ANCHOR ok
+L50 src/hadavin_sdk/store/migrate.py:46-67 | GRANTS: dict[str, Grant] = { | ANCHOR ok
+L50 src/hadavin_sdk/store/migrate.py:80-85 | _SAFE_CREATE = re.compile( | ANCHOR ok
+L50 src/hadavin_sdk/store/migrate.py:87-90 | _UNREAD = re.compile( | ANCHOR ok
+L50 src/hadavin_sdk/store/migrate.py:93-94 | def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | ANCHOR ok
+L50 src/hadavin_sdk/store/migrate.py:97-97 | def check_ledger(paths: list[Path]) -> list[str]: | ANCHOR ok
+L51 src/hadavin_sdk/store/postgres.py:146-146 | conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra) | ANCHOR ok
+L51 src/hadavin_sdk/store/postgres.py:192-197 | class PostgresStore: | ANCHOR ok
+L51 src/hadavin_sdk/store/postgres.py:416-431 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | ANCHOR ok
+L52 src/hadavin_sdk/models.py:289-297 | class Reply(Shape): | ANCHOR ok
+L52 src/hadavin_sdk/models.py:300-307 | class Verdict(Shape): | ANCHOR ok
+L52 src/hadavin_sdk/guard/injection.py:77-77 | cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)), | ANCHOR ok
+L52 src/hadavin_sdk/guard/judge.py:72-97 | reply = self.llm.chat( | ANCHOR ok
+L53 src/hadavin_sdk/llm/anthropic.py:136-136 | # Thinking blocks are the model's working, never its answer: only text and tool calls are  | ANCHOR ok
+L53 src/hadavin_sdk/llm/gemini.py:98-98 | # Thinking is billed as output; candidatesTokenCount leaves it out. | ANCHOR ok
+L53 src/hadavin_sdk/llm/gemini.py:98-100 | # Thinking is billed as output; candidatesTokenCount leaves it out. | ANCHOR ok
+L53 src/hadavin_sdk/llm/gemini.py:96-100 | def _parse(resp: dict[str, Any]) -> Answer: | ANCHOR ok
+L54 tests/k5_support.py:160-211 | def build_runtime( | ANCHOR ok
+L54 tests/test_p5p6_followups.py:101-101 | rt.detector = AnyOf([RegexDetector(0.5), judge(model)]) | ANCHOR ok
+L54 tests/test_p6_detectors.py:186-186 | with_judge.detector = AnyOf([RegexDetector(0.5), judge()]) | ANCHOR ok
+L54 tests/test_k5_tools.py:608-608 | rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}]) | CHECK words=detector
+L54 tests/test_k5_round5.py:241-241 | reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg), | ANCHOR ok
+L54 tests/k5_support.py:206-206 | Limits(store, audit, reg), | ANCHOR ok
+L54 tests/test_k5_postgres.py:58-58 | Limits(pg_store, audit, reg), | ANCHOR ok
+L54 tests/test_k5_tools.py:1133-1133 | reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg), | ANCHOR ok
+L54 tests/test_k5_tools.py:1269-1269 | Limits(store, audit, reg), | ANCHOR ok
+L54 tests/test_k3_pilot.py:104-104 | Limits(store, audit, reg), | ANCHOR ok
+L54 tests/test_s5_runtime.py:28-28 | limits = Limits(store, audit, reg) | ANCHOR ok
+L54 src/hadavin_sdk/app.py:171-171 | limits = Limits(store, audit, reg) | ANCHOR ok
+L54 src/hadavin_sdk/cli.py:209-209 | return kill_switch(Limits(store, audit, reg), args.action, args.by) | ANCHOR ok
+L54 src/hadavin_sdk/llm/fake.py:21-21 | class FakeLLM: | ANCHOR ok
+L58 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | ANCHOR ok
+L65 src/hadavin_sdk/runtime/agent_loop.py:440-440 | self.limits.charge(agent_id, reply.cost_usd) | CHECK words=add_spend,Limits
+L79 src/hadavin_sdk/cli.py:115-117 | rep.add_argument( | CHECK words=ProcessCap,Budget
+L89 src/hadavin_sdk/config.py:349-349 | @model_validator(mode="after") | ANCHOR ok
+L90 src/hadavin_sdk/config.py:400-415 | class _UniqueKeyLoader(yaml.SafeLoader): | CHECK words=window_owner,null,None,NONE
+L92 src/hadavin_sdk/llm/common.py:59-62 | def estimate_tokens(text: str) -> int: | CHECK words=route,max_tokens
+L95 src/hadavin_sdk/app.py:166-169 | detector = combine(members) | ANCHOR ok
+L96 src/hadavin_sdk/config.py:55-59 | class Route(_Strict): | ANCHOR ok
+L96 src/hadavin_sdk/config.py:40-44 | def _money(v: object) -> object: | ANCHOR ok
+L96 src/hadavin_sdk/registry.py:33-36 | class Budget(BaseModel): | ANCHOR ok
+L98 src/hadavin_sdk/config.py:451-454 | except ConfigError: | ANCHOR ok
+L102 src/hadavin_sdk/k1b/replay.py:85-91 | def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None: | ANCHOR ok
+L103 src/hadavin_sdk/registry.py:41-41 | id: str | ANCHOR ok
+L104 tests/test_k3_pilot_env.py:61-61 | "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"}, | CHECK words=evidence,handoff,greps
+L104 tests/test_p5p6_followups.py:82-82 | llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"} | CHECK words=evidence,handoff,greps
+L104 tests/test_p5p6_followups.py:392-392 | "kind": "anthropic", | CHECK words=evidence,handoff,greps
+L104 tests/test_p5_llm.py:38-46 | api = _llm(cfg_dir, {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"}) | CHECK words=evidence,handoff,greps
+L104 tests/test_p1a_fixes.py:117-117 | update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})} | CHECK words=evidence,handoff,greps
+L105 tests/warden_port/test_bedrock_provider_r16.py:74-74 | make("llm", BedrockSettings(kind="bedrock", region="contract-region-1"), routes=routes) | ANCHOR ok
+L105 tests/warden_port/test_providers.py:65-65 | llm = make("llm", settings, routes=ROUTES) | ANCHOR ok
+L105 tests/test_p5p6_followups.py:300-300 | make("llm", settings, provider, routes=_route(moving)) | ANCHOR ok
+L105 tests/contracts/kinds/builtin.py:53-53 | llm = make("llm", FakeLLMSettings(kind="fake", recorded_dir=tmp_path), routes=ROUTES) | ANCHOR ok
+L105 tests/test_p5_llm.py:230-230 | llm = make("llm", settings, routes=ROUTES) | ANCHOR ok
+L105 tests/contracts/kinds/llm_wire.py:66-66 | return AnthropicLLM(client, routes, 3, sleep=lambda s: None) | CHECK words=unmetered,ALLOWED,unmetered,True
+L109 src/hadavin_sdk/models.py:19-20 | def now() -> datetime: | CHECK words=CallGate,admit,clock,Limits
+L109 src/hadavin_sdk/app.py:73-73 | clock: Callable[[], datetime] = now, | ANCHOR ok
+L112 src/hadavin_sdk/llm/retry.py:95-96 | except ProviderError: | ANCHOR ok
+L112 src/hadavin_sdk/k1b/loop.py:176-176 | except ProviderError: | ANCHOR ok
+L112 src/hadavin_sdk/runtime/agent_loop.py:432-433 | except ( | ANCHOR ok
+L113 src/hadavin_sdk/llm/fake.py:21-21 | class FakeLLM: | ANCHOR ok
+L113 src/hadavin_sdk/backends/table.py:593-602 | DEV_ONLY: frozenset[tuple[str, str]] = frozenset( | ANCHOR ok
+L113 src/hadavin_sdk/config.py:366-369 | if self.environment != "dev": | ANCHOR ok
+L114 src/hadavin_sdk/llm/retry.py:23-23 | MAX_DELAY_S = 8.0 | ANCHOR ok
+L122 src/hadavin_sdk/runtime/agent_loop.py:425-425 | reply = self.llm.chat( | ANCHOR ok
+L122 src/hadavin_sdk/runtime/agent_loop.py:432-432 | except ( | ANCHOR ok
+L122 src/hadavin_sdk/runtime/agent_loop.py:359-359 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L123 src/hadavin_sdk/runtime/agent_loop.py:310-310 | def _screen(self, run: Run, text: str, source: str): | ANCHOR ok
+L123 src/hadavin_sdk/guard/judge.py:72-72 | reply = self.llm.chat( | ANCHOR ok
+L123 src/hadavin_sdk/guard/injection.py:85-101 | def injection_check(detector: Detector, text: str, source: str) -> Verdict: | ANCHOR ok
+L124 src/hadavin_sdk/k1b/loop.py:176-176 | except ProviderError: | ANCHOR ok
+L125 src/hadavin_sdk/evals.py:73-73 | reply = llm.chat( | ANCHOR ok
+L125 src/hadavin_sdk/extract.py:47-47 | reply = llm.chat( | CHECK words=hadavin,gate
+L125 src/hadavin_sdk/cli.py:146-146 | if args.cmd == "gate": | ANCHOR ok
+L127 tests/k5_support.py:160-211 | def build_runtime( | ANCHOR ok
+L163 src/hadavin_sdk/audit/protocol.py:23-23 | def write_outcome(self, event: AuditEvent) -> str | None: | ANCHOR ok
+L165 src/hadavin_sdk/llm/common.py:59-62 | def estimate_tokens(text: str) -> int: | CHECK words=spend,models,errors,Decimal
+L165 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | ANCHOR ok
+L169 src/hadavin_sdk/app.py:62-62 | def build( | ANCHOR ok
+L169 src/hadavin_sdk/app.py:161-161 | audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor) | ANCHOR ok
+L169 src/hadavin_sdk/app.py:171-171 | limits = Limits(store, audit, reg) | ANCHOR ok
+L169 src/hadavin_sdk/app.py:162-162 | llm = llm or make("llm", b.llm, secrets, routes=cfg.routes) | ANCHOR ok
+L169 src/hadavin_sdk/app.py:165-165 | members = [make("detector", d, secrets, llm=llm) for d in b.detector] | ANCHOR ok
+L169 src/hadavin_sdk/backends/table.py:570-579 | ALLOWED: dict[str, frozenset[str]] = { | ANCHOR ok
+L169 src/hadavin_sdk/cli.py:150-150 | make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes), | ANCHOR ok
+L169 src/hadavin_sdk/cli.py:221-222 | llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes) | ANCHOR ok
+L169 src/hadavin_sdk/cli.py:209-209 | return kill_switch(Limits(store, audit, reg), args.action, args.by) | CHECK words=ALLOWED,frozenset,routes,gate
+L175 tests/k5_support.py:160-211 | def build_runtime( | ANCHOR ok
+L177 tests/test_s5_runtime.py:107-111 | def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): | ANCHOR ok
+L177 tests/test_s5_runtime.py:114-119 | def test_budget_already_spent_stops_before_the_model(cfg_dir): | ANCHOR ok
+L177 src/hadavin_sdk/runtime/agent_loop.py:572-572 | if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or aud | ANCHOR ok
+L177 tests/test_k5_tools.py:723-731 | def test_k5_run_budget_stops_run(tmp_path): | CHECK words=NetworkStub,test_budget_already_spent_stops_before_the_model,_limits_stop,Hooks
+L179 src/hadavin_sdk/llm/common.py:208-220 | def chat( | ANCHOR ok
+L179 src/hadavin_sdk/llm/openai_compat.py:117-129 | started, used = time.monotonic(), [0, 0] | CHECK words=gate,deps,gate,max_requests
+L181 src/hadavin_sdk/llm/common.py:233-241 | def _retry(self, call: Callable[[], Answer]) -> Answer: | ANCHOR ok
+L206 src/hadavin_sdk/llm/common.py:184-189 | class Answer: | ANCHOR ok
+L206 src/hadavin_sdk/llm/bedrock.py:108-108 | code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") | ANCHOR ok
+L206 src/hadavin_sdk/llm/bedrock.py:104-104 | def retryable(exc: BaseException) -> bool | None: | ANCHOR ok
+L206 src/hadavin_sdk/llm/anthropic.py:67-67 | def retryable(exc: BaseException) -> bool | None: | ANCHOR ok
+L206 src/hadavin_sdk/llm/retry.py:31-36 | def status(exc: BaseException) -> int | None: | ANCHOR ok
+L210 src/hadavin_sdk/limits.py:26-26 | if day >= budget.daily: | ANCHOR ok
+L211 src/hadavin_sdk/llm/retry.py:63-63 | return isinstance(exc, OSError)  # URLError, socket timeouts, connection resets | ANCHOR ok
+L227 src/hadavin_sdk/models.py:289-297 | class Reply(Shape): | ANCHOR ok
+L227 src/hadavin_sdk/guard/injection.py:77-77 | cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)), | ANCHOR ok
+L227 src/hadavin_sdk/llm/common.py:164-172 | tokens_in = tokens[0] or estimate_tokens(sent) | CHECK words=booked_usd,JudgeDetector,check,reply
+L227 src/hadavin_sdk/llm/openai_compat.py:131-131 | got.tokens = (used[0] or None, used[1] or None) | ANCHOR ok
+L227 src/hadavin_sdk/llm/openai_compat.py:117-129 | started, used = time.monotonic(), [0, 0] | ANCHOR ok
+L235 src/hadavin_sdk/store/postgres.py:416-431 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | ANCHOR ok
+L235 src/hadavin_sdk/store/memory.py:196-204 | def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: | ANCHOR ok
+L240 src/hadavin_sdk/app.py:166-169 | detector = combine(members) | CHECK words=daily,monthly,Budget,max_call
+L240 src/hadavin_sdk/approvals/cards.py:79-79 | and injection_check(detector, diagnosis, "shadow_card").flagged | CHECK words=Limits,unattributed_scope,requester,max_call
+L240 src/hadavin_sdk/approvals/cards.py:79-79 | and injection_check(detector, diagnosis, "shadow_card").flagged | CHECK words=ScopedDetector,_REQUESTER,scope_missing,approvals
+L240 src/hadavin_sdk/tools.py:1122-1122 | worker = threading.Thread(target=work, daemon=True, name="hadavin-tool") | CHECK words=token,_SCOPE,scope,finally
+L240 src/hadavin_sdk/guard/http.py:93-93 | worker = threading.Thread(target=lookup, daemon=True, name="hadavin-resolve") | CHECK words=token,_SCOPE,scope,finally
+L241 src/hadavin_sdk/runtime/agent_loop.py:440-440 | self.limits.charge(agent_id, reply.cost_usd) | ANCHOR ok
+L241 src/hadavin_sdk/runtime/agent_loop.py:314-314 | self.limits.charge(run.agent_id, verdict.cost_usd) | ANCHOR ok
+L241 tests/test_s4_llm_guard.py:39-39 | assert reply.cost_usd == Decimal("0.00225") | ANCHOR ok
+L241 tests/test_s5_runtime.py:76-76 | assert rt.store.get_run(run.run_id).cost_usd == Decimal("0.00225") | CHECK words=Limits,charge,booked,reply
+L243 src/hadavin_sdk/runtime/agent_loop.py:325-351 | def handle( | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:352-541 | rmap: dict[str, str] = runmap.RunMap(mapping or {}) | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:403-403 | manifest = self.registry.tools.get(agent_id, {}) | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:405-405 | for name in self.registry.tools_for(agent_id, set(self.hooks.tools) | box_names): | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:418-418 | system = self.registry.prompt(agent_id) + (f"\n\n{_TOOL_RULE}" if tooled else "") | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:440-440 | self.limits.charge(agent_id, reply.cost_usd) | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:432-433 | except ( | ANCHOR ok
+L243 src/hadavin_sdk/guard/injection.py:85-85 | def injection_check(detector: Detector, text: str, source: str) -> Verdict: | ANCHOR ok
+L243 src/hadavin_sdk/approvals/requests.py:37-37 | flagged = detector is not None and injection_check(detector, inputs, "approval_summary").f | ANCHOR ok
+L243 src/hadavin_sdk/approvals/cards.py:79-79 | and injection_check(detector, diagnosis, "shadow_card").flagged | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:312-312 | verdict = injection_check(self.detector, text, source) | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:239-250 | def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None: | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:359-359 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:421-421 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L243 src/hadavin_sdk/runtime/agent_loop.py:460-460 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L244 src/hadavin_sdk/guard/injection.py:81-81 | def combine(detectors: list[Detector]) -> Detector: | ANCHOR ok
+L244 src/hadavin_sdk/guard/injection.py:69-70 | def check(self, text: str, source: str) -> Verdict: | ANCHOR ok
+L244 src/hadavin_sdk/k1b/loop.py:205-205 | verdict = injection_check(detector, shown, "k1b-tool-result") | ANCHOR ok
+L244 src/hadavin_sdk/guard/judge.py:100-108 | def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]: | ANCHOR ok
+L244 src/hadavin_sdk/evals.py:109-109 | ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path) | ANCHOR ok
+L244 src/hadavin_sdk/guard/judge.py:108-108 | passed += v.reason_code != "guard_unavailable" and v.flagged == case["injection"] | ANCHOR ok
+L244 src/hadavin_sdk/evals.py:104-110 | for d in cfg.backends.detector: | ANCHOR ok
+L245 src/hadavin_sdk/approvals/requests.py:30-30 | WARNING = "WARNING: the inputs read like instructions to an AI. Check them before approvin | ANCHOR ok
+L245 src/hadavin_sdk/approvals/requests.py:37-37 | flagged = detector is not None and injection_check(detector, inputs, "approval_summary").f | CHECK words=reason_code,spend_refused,WARNING
+L245 src/hadavin_sdk/approvals/cards.py:79-79 | and injection_check(detector, diagnosis, "shadow_card").flagged | CHECK words=reason_code,spend_refused,WARNING
+L247 src/hadavin_sdk/runtime/agent_loop.py:318-322 | def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run: | CHECK words=reason_code
+L248 src/hadavin_sdk/runtime/agent_loop.py:359-359 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L248 src/hadavin_sdk/runtime/agent_loop.py:421-421 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L248 src/hadavin_sdk/runtime/agent_loop.py:460-460 | if (stopped := self._limits_stop(run, cited)) is not None: | ANCHOR ok
+L248 tests/test_s5_runtime.py:107-111 | def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir): | ANCHOR ok
+L258 src/hadavin_sdk/runtime/agent_loop.py:83-83 | GUARD_STOP_REASONS = frozenset( | ANCHOR ok
+L260 src/hadavin_sdk/runtime/agent_loop.py:87-87 | _REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"} | ANCHOR ok
+L260 src/hadavin_sdk/runtime/agent_loop.py:574-574 | label = _REASON_TEXT.get(reason or "", reason or "no proposal") | ANCHOR ok
+L269 src/hadavin_sdk/store/postgres.py:194-194 | # A dropped connection fails the call (the run ends safely); reconnect-on-error arrives wi | ANCHOR ok
+L273 .github/workflows/ci.yml:40-40 | image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93 | CHECK words=Infinity,Infinity,Infinity,real
+L273 src/hadavin_sdk/store/migrate.py:80-85 | _SAFE_CREATE = re.compile( | ANCHOR ok
+L273 src/hadavin_sdk/store/migrate.py:150-166 | def check_grants(paths: list[Path]) -> list[str]: | ANCHOR ok
+L273 src/hadavin_sdk/store/migrate.py:55-55 | "kill_switch": Grant("table", _RW), | CHECK words=DELETE,TRUNCATE,UPDATE,UPDATE
+L273 src/hadavin_sdk/store/migrate.py:93-94 | def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | CHECK words=Infinity,Infinity,store,migrations
+L273 src/hadavin_sdk/store/migrate.py:304-304 | files = _migration_files() | ANCHOR ok
+L273 src/hadavin_sdk/store/migrate.py:93-93 | def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | ANCHOR ok
+L273 src/hadavin_sdk/store/migrate.py:97-107 | def check_ledger(paths: list[Path]) -> list[str]: | ANCHOR ok
+L274 src/hadavin_sdk/store/postgres.py:192-197 | class PostgresStore: | ANCHOR ok
+L274 src/hadavin_sdk/store/postgres.py:146-146 | conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra) | ANCHOR ok
+L278 src/hadavin_sdk/store/migrate.py:53-54 | "spend": Grant("table", _RW), | ANCHOR ok
+L278 src/hadavin_sdk/store/migrate.py:55-55 | "kill_switch": Grant("table", _RW), | ANCHOR ok
+L282 src/hadavin_sdk/guard/bedrock_guardrail.py:61-61 | def make(settings: Any, deps: Any) -> GuardrailDetector: | ANCHOR ok
+L282 src/hadavin_sdk/guard/bedrock_guardrail.py:101-101 | resp = self._client.apply_guardrail( | ANCHOR ok
+L282 src/hadavin_sdk/guard/bedrock_guardrail.py:98-106 | text = runmap.redact_text( | ANCHOR ok
+L282 src/hadavin_sdk/guard/bedrock_guardrail.py:28-28 | def _client(service: str, region: str) -> Any: | ANCHOR ok
+L286 src/hadavin_sdk/evals.py:73-73 | reply = llm.chat( | ANCHOR ok
+L286 src/hadavin_sdk/extract.py:47-47 | reply = llm.chat( | CHECK words=hadavin,gate
+L286 src/hadavin_sdk/k1b/loop.py:94-94 | box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type] | CHECK words=hadavin,gate
+L286 src/hadavin_sdk/cli.py:90-92 | g = sub.add_parser("gate", help="run an agent's golden set") | ANCHOR ok
+L286 src/hadavin_sdk/cli.py:146-146 | if args.cmd == "gate": | ANCHOR ok
+L286 src/hadavin_sdk/cli.py:115-117 | rep.add_argument( | ANCHOR ok
+L287 src/hadavin_sdk/k1b/loop.py:84-107 | def _chat_bounded(llm: LLM, wait_s: float, /, *args: object, **kwargs: object) -> Reply: | ANCHOR ok
+L287 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | CHECK words=_chat_bounded,max_requests
+L287 src/hadavin_sdk/k1b/loop.py:170-172 | budget.charge(worst_case_usd(route_prices, system, messages)) | CHECK words=_chat_bounded,max_requests
+L309 src/hadavin_sdk/models.py:23-24 | def new_id(prefix: str) -> str: | ANCHOR ok
+L328 src/hadavin_sdk/backends/table.py:543-551 | "detector": { | CHECK words=window_only,False
+L335 tests/test_k2_migrations.py:108-108 | monkeypatch.setattr(mig, "_migration_files", lambda: files) | ANCHOR ok
+L335 tests/test_k5_fixes2.py:300-300 | monkeypatch.setattr(mig, "_migration_files", lambda: files) | ANCHOR ok
+L337 tests/test_p6_detectors.py:339-339 | v = injection_check(GuardrailDetector(Odd(), "g", "1", 0.5), CLEAN, "document") | ANCHOR ok
+L337 tests/test_k5_round9.py:74-74 | GuardrailDetector(Client(), "g", "1", 0.5).check(f"a {s} b", "t") | CHECK words=unmetered,True
+L337 tests/contracts/kinds/detectors.py:92-92 | return GuardrailDetector(client or GuardrailClient(), "contract-guardrail", "1", 0.5) | CHECK words=unmetered,True
+L337 tests/contracts/kinds/llm_wire.py:54-54 | from hadavin_sdk.llm.anthropic import AnthropicLLM | CHECK words=unmetered,True,guardrail,guardrail_settings
+L339 src/hadavin_sdk/llm/common.py:164-164 | tokens_in = tokens[0] or estimate_tokens(sent) | CHECK words=reply,clean_tokens
+L340 tests/test_p5p6_followups.py:62-67 |  | ANCHOR ok
+L341 src/hadavin_sdk/k1b/loop.py:205-205 | verdict = injection_check(detector, shown, "k1b-tool-result") | ANCHOR ok
+L342 tests/test_p5p6_followups.py:121-121 | "kind": "bedrock_guardrail", | ANCHOR ok
+L344 tests/test_lockin_guard.py:642-646 | def test_no_vendor_literal_in_migrations(): | CHECK words=role,date,sha256,check_owner_gates
+L345 src/hadavin_sdk/backends/table.py:543-551 | "detector": { | ANCHOR ok
+L348 .github/workflows/ci.yml:108-144 | checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645" | ANCHOR ok
+L349 src/hadavin_sdk/app.py:163-171 | summary_detector = detector | ANCHOR ok
+L356 src/hadavin_sdk/runtime/agent_loop.py:425-425 | reply = self.llm.chat( | CHECK words=Runtime,handle
+L357 src/hadavin_sdk/guard/judge.py:72-72 | reply = self.llm.chat( | ANCHOR ok
+L358 src/hadavin_sdk/guard/bedrock_guardrail.py:101-101 | resp = self._client.apply_guardrail( | ANCHOR ok
+L359 src/hadavin_sdk/evals.py:73-73 | reply = llm.chat( | ANCHOR ok
+L360 src/hadavin_sdk/extract.py:47-47 | reply = llm.chat( | ANCHOR ok
+L361 src/hadavin_sdk/k1b/loop.py:94-94 | box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type] | ANCHOR ok
+L363 demos/ask-your-data/askdata/pipeline.py:155-155 | reply = self.llm.chat( | ANCHOR ok
+L367 src/hadavin_sdk/app.py:162-162 | llm = llm or make("llm", b.llm, secrets, routes=cfg.routes) | ANCHOR ok
+L367 src/hadavin_sdk/cli.py:150-150 | make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes), | ANCHOR ok
+L367 src/hadavin_sdk/llm/common.py:233-233 | def _retry(self, call: Callable[[], Answer]) -> Answer: | ANCHOR ok
+L377 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | CHECK words=window,clock,make,SpendWindow
+L414 .github/workflows/ci.yml:79-79 | run: ruff check src tests demos | ANCHOR ok
+L414 .github/workflows/ci.yml:81-81 | run: ruff format --check src tests demos | ANCHOR ok
+L414 .github/workflows/ci.yml:88-88 | run: pytest -q -m "not live and not perf" -rs | ANCHOR ok
+L414 .github/workflows/ci.yml:94-94 | run: pytest -q -m perf -rs | ANCHOR ok
+L414 .github/workflows/ci.yml:119-119 | run: bandit -q -r src demos -ll | ANCHOR ok
+L414 .github/workflows/ci.yml:86-87 | HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres | ANCHOR ok
+L414 .github/workflows/ci.yml:93-93 | HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs  | ANCHOR ok
+L414 .github/workflows/ci.yml:77-77 | run: uv sync --locked --no-build --all-extras --group test | ANCHOR ok
+L414 .github/workflows/ci.yml:83-83 | run: psql --version | ANCHOR ok
+L417 src/hadavin_sdk/k1b/loop.py:115-122 | def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal: | ANCHOR ok
+L424 src/hadavin_sdk/llm/bedrock.py:108-108 | code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") | ANCHOR ok
+L429 src/hadavin_sdk/guard/injection.py:92-97 | _LOG.warning( | CHECK words=SpendRefused,code,AKIAIOSFODNN7EXAMPLE,settle
+L445 src/hadavin_sdk/k1b/loop.py:176-176 | except ProviderError: | ANCHOR ok
+L445 src/hadavin_sdk/runtime/agent_loop.py:432-433 | except ( | ANCHOR ok
+L478 src/hadavin_sdk/guard/bedrock_guardrail.py:36-36 | retries={"total_max_attempts": 2, "mode": "standard"}, | CHECK words=statement_timeout,transaction,tcp_user_timeout,migrate
+L478 tests/demo_askdata/test_meter.py:121-170 | def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path): | CHECK words=statement_timeout,transaction,tcp_user_timeout,migrate
+L478 src/hadavin_sdk/guard/judge.py:107-107 | v = injection_check(judge, case["text"], "golden") | CHECK words=migrate,gemini,build,NetworkLLM
+TOTAL cites=301 missing_or_range=0 anchor_check=54

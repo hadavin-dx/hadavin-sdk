@@ -1,5 +1,5 @@
 #!/bin/sh
-# lead-repin-verify.sh (version 6): checklist printer for the lead at re-pin.
+# lead-repin-verify.sh (version 7): checklist printer for the lead at re-pin.
 #
 # WHAT IT DOES TO YOUR MACHINE (exact):
 #   - reads files: grep, sed, awk, tr, wc, find, sha256sum, git rev-parse / log / status
@@ -65,6 +65,7 @@ umask 077
 # ---------------------------------------------------------------- work folder, signals, clean-up
 SELF=$0
 case ${1:-} in --self-test) ;; *) unset SELFTEST_FILTER ;; esac
+case ${TMPDIR:-/tmp} in /*) ;; *) echo "TMPDIR must be an absolute path (it is: ${TMPDIR})" >&2; exit 2 ;; esac
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/lead-repin.XXXXXX") || { echo "cannot make the private work folder with mktemp" >&2; exit 2; }
 MASKSED=$WORK/mask.sed        # full filter: line rules AND multi-line rules (used on every search result)
 MASKLINE=$WORK/mask-line.sed  # line rules only (the final belt over the whole output: it can never hide a following line)
@@ -102,7 +103,8 @@ kill_tree() {
 MAINPID=$$; WDPID=
 start_watchdog() { # ends the whole run (as a TERM signal) after LEAD_REPIN_MAX_SECONDS (default 1200); stopped again by cleanup
   MAXSEC=${LEAD_REPIN_MAX_SECONDS:-1200}
-  ( sleep "$MAXSEC"; : > "$WORK/timeout.flag"; kill -TERM "$MAINPID" 2>/dev/null ) &
+  case $MAXSEC in ''|*[!0-9]*) MAXSEC=1200 ;; esac   # not a whole number: the default
+  ( wd_i=0; while [ "$wd_i" -lt "$MAXSEC" ]; do kill -0 "$MAINPID" 2>/dev/null || exit 0; sleep 1; wd_i=$((wd_i + 1)); done; : > "$WORK/timeout.flag"; kill -TERM "$MAINPID" 2>/dev/null ) &
   WDPID=$!
 }
 on_signal() { [ -f "$WORK/timeout.flag" ] && echo "STOP: the run took longer than ${MAXSEC:-1200} seconds (LEAD_REPIN_MAX_SECONDS) and was ended; the work folder was removed" >&2; CLEAN=1; trap '' INT TERM HUP PIPE QUIT; [ -n "$BGPID" ] && kill_tree "$BGPID"; kill_tree "$MAINPID" kids; cleanup; exit "$1"; }
@@ -159,7 +161,7 @@ write_mask_sed() {
   #      cert, ...) at a separator or at the start, also followed by value, string, data, text, hash, bytes or material
   #      (keyValue, saltHash), or
   #  (c) it ENDS in key, token, secret, password, pwd, credential (apiKey, accessToken).
-  STRONG='(secret|passw[o0]?r?d|passphrase|credential|token|apikey)'
+  STRONG='(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))'
   W='(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?)'
   WS='(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)'
   SUF='(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)'
@@ -175,6 +177,7 @@ write_mask_sed() {
   DQ='"([^"\\]|\\.)*"'                         # a double-quoted string that may hold \" inside
   SQ="'([^'\\\\]|\\\\.)*'"                     # the same with single quotes
   STR="(${DQ}|${SQ})([[:space:]]*\\+?[[:space:]]*(${DQ}|${SQ}))*"   # one or more strings in a row ("a" "b", 'a' + "b")
+  BQ='\\["'"'"']'                           # a backslash followed by a quote character (a quote escaped inside JSON that sits inside a string)
   UNQ='[^][{},[:space:]<"'"'"'][^,}[:space:]]*'  # an unquoted value (does not start a container or a mask mark)
   {
     cat <<EOF
@@ -250,11 +253,17 @@ s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
 /(${ID})${PRE}[[:space:]]*'''.*'''/I!s/((${ID})${PRE}[[:space:]]*''').*/\1<masked>/I
 s/(-----BEGIN [A-Z ]*(PRIVATE|SECRET|ENCRYPTED)[A-Z ]*-----).*/\1<masked>/
 s/(["'](${IDQ})["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
+s/(${BQ}(${IDQ})${BQ}[[:space:]]*:[[:space:]]*${BQ})([^\\\\]|\\\\[^"'])*${BQ}/\1<masked>/Ig
+s/(${BQ}(${IDQ})${BQ}[[:space:]]*:[[:space:]]*)[^\\\\[:space:],}<][^,}[:space:]]*/\1<masked>/Ig
+s/(["'][^"']*\\\\u[0-9A-Fa-f]{4}[^"']*["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/g
 s/(["'](name|key|var|variable|env)["'][[:space:]]*:[[:space:]]*["'](${IDQ})["'][[:space:]]*,[[:space:]]*["'][A-Za-z_]*["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
 s/([{,][[:space:]]*(${IDB})[[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1<masked>/Ig
 s#(//[^:/@[:space:]]*:)[^[:space:]]*@#\1<masked>@#g
-s#(://)[^:/@[:space:]]{16,}@#\1<masked>@#g
-s#(Bearer)[[:space:]]+[A-Za-z0-9._~+/=-]{6,}#\1 <masked>#Ig
+s#(://)[^:/@[:space:]]{4,}@#\1<masked>@#g
+s#((\\\\/){2}[^:/@\\\\[:space:]]*:)[^[:space:]]*@#\1<masked>@#g
+s#((\\\\/){2})[^:/@\\\\[:space:]]{4,}@#\1<masked>@#g
+s#(^|[[:space:]"'=(])([A-Za-z0-9._-]+:)[^[:space:]@/:"']+@([A-Za-z0-9-]+)#\1\2<masked>@\3#g
+s#(Bearer)[[:space:]]+[^[:space:]<"',;)]{4,}#\1 <masked>#Ig
 s#(Basic)[[:space:]]+[A-Za-z0-9+/=]{16,}#\1 <masked>#Ig
 s/((authorization|proxy-authorization)["']?[[:space:]]*:[[:space:]]*[A-Za-z][A-Za-z0-9-]*[[:space:]]+)[^[:space:]"'<]+/\1<masked>/Ig
 s/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_.-]+/<masked>/g
@@ -272,25 +281,32 @@ s/<<EXAMPLE-KEY>>/AKIAIOSFODNN7EXAMPLE/g
 s/(^${PFX0}[[:space:]]*(ENV|ARG|SET|SETENV|EXPORT|DECLARE)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*${IDB}[[:space:]]+)[^=[:space:]<].*/\1<masked>/I
 s/((${ID})${PRE}[[:space:]]*)(${STR})/\1<masked>/Ig
 s/((${ID})${PRE}[[:space:]]*)["'].*/\1<masked>/I
-s/((${ID})${PRE}[[:space:]]*)[^=[:space:]<"'].*/\1<masked>/I
+s/((${ID})${PRE}[[:space:]]*)([^=[:space:]<"']|<[^em[:space:]]|<m[^a]|<e[^m]).*/\1<masked>/I
 s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)(${STR})/\1<masked>/I
 s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)["'].*/\1<masked>/I
-s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)[^][{[:space:]<"'|>].*/\1<masked>/I
+s/(${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*)([^][{[:space:]<"'|>]|<[^em[:space:]]|<m[^a]|<e[^m]).*/\1<masked>/I
 s/((${ID})["']?[[:space:]]*,[[:space:]]*)(${STR})/\1<masked>/Ig
 s/((${ID})[[:space:]]+)(${STR})/\1<masked>/Ig
-s/((${ID})[[:space:]]+(is|was|are|equals|set to|of)[[:space:]]+)[^[:space:]<"'][^]"')}]*/\1<masked>/Ig
-s/((${ID})["']?[[:space:]]*:[[:space:]]*)(${STR}|[^][{}[:space:]<"'][^]"')}]*)/\1<masked>/Ig
+s/((${ID})[[:space:]]+(is|was|are|equals|set to|of)[[:space:]]+)[^[:space:]<"']([^]"')}]|[]"')}][^[:space:]])*/\1<masked>/Ig
+s/((${ID})["']?[[:space:]]*:[[:space:]]*)(${STR}|[^][{}[:space:]<"']([^]"')}]|[]"')}][^[:space:]])*)/\1<masked>/Ig
 s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw[o0]?r?d|passphrase|pass|passin|passout|pwd|pw|psw|pswd|pat|credentials?|creds?|userpass|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
 s/((^|[[:space:]])(machine|default)([[:space:]].*)?[[:space:]](password|passwd|passw0rd|account)[[:space:]]+)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
 :pwl
 s/(((^|[^A-Za-z0-9_])(${PWCMDS})[^|;&]*[[:space:]]-(p|P))[[:space:]]*)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
 s/(((^|[^A-Za-z0-9_])(${PWCMDS})[^|;&]*[[:space:]]-(a|w|k|pw|pass))[[:space:]]+)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
 tpwl
-s@(^${PFX0}[[:space:]]*([\$]|#|>|RUN|CMD|run:|-)?[[:space:]]*[a-z][a-z0-9._-]*[[:space:]]([^|;&]*[[:space:]])?-(p|P|w)[[:space:]]+)[0-9:.]*[^0-9:.[:space:]<~/-][^[:space:]]{2,}@\1<masked>@I
+s@(((^${PFX0}[[:space:]]*([\$]|#|>|RUN|CMD|run:|-)?|[;&|(]|\\\$\\()[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*([^[:space:]|;&]*/)?[a-z][a-z0-9._-]*[[:space:]]([^|;&]*[[:space:]])?-(p|P|w)[[:space:]]+))(${STR}|[0-9:.]*[^0-9:.[:space:]<~/-][^[:space:]]{2,})@\1<masked>@I
+s@(^${PFX0}[[:space:]]+-(p|P|w)[[:space:]]+)(${STR}|[0-9:.]*[^0-9:.[:space:]<~/-][^[:space:]]{2,})@\1<masked>@I
 s/((^|[[:space:]])(-U|--user|--username)(=|[[:space:]]+)[^[:space:]%<]*%)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
 s/((^|[^A-Za-z0-9_])htpasswd[^|;&]*[[:space:]]-[A-Za-z]*b[A-Za-z]*([[:space:]]+[^[:space:]|;&<-][^[:space:]|;&]*)*[[:space:]]+)[^[:space:]|;&<-][^[:space:]|;&]*/\1<masked>/I
-s/((^|[^A-Za-z0-9_])(echo|printf)([[:space:]]+-[A-Za-z]+)*[[:space:]]+)[^[:space:]<|;&-][^[:space:]|;&]*([[:space:]]*\|[^|].*(stdin|passwd|password|login|chpasswd))/\1<masked>\5/I
+s/((^|[^A-Za-z0-9_])(echo|printf)([[:space:]]+-[A-Za-z]+)*[[:space:]]+)[^[:space:]<|;&-][^[:space:]|;&]*([[:space:]]*\|[^|].*(stdin|passwd|password|login|chpasswd|sudo[[:space:]]+-S|kinit|ssh-add|passphrase-fd|cryptsetup))/\1<masked>\5/I
 s/((${ID})([[:space:]]+[A-Za-z0-9_]+){1,2}[[:space:]]*:[[:space:]]*)[^[:space:]<"'].*/\1<masked>/Ig
+s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<\//\1<masked><\//Ig
+s/((${ID})[[:space:]]*:=[[:space:]]*)(${STR}|[^[:space:]<"'][^[:space:]]*)/\1<masked>/Ig
+s/((^|[^A-Za-z0-9])[A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|apikey)[A-Za-z0-9_.-]*[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
+s/(<masked>[[:space:]]*(\|\||\?\?|or|:-)[[:space:]]*)(${STR})/\1<masked>/Ig
+s/(IDENTIFIED[[:space:]]+(WITH[[:space:]]+[A-Za-z_]+[[:space:]]+)?BY[[:space:]]+)(${STR}|[^[:space:];<][^[:space:];]*)/\1<masked>/Ig
+s/(^${PFX0}[[:space:]]*(requirepass|masterauth|auth-pass|bindpw|rootpw)[[:space:]]+)[^[:space:]<=].*/\1<masked>/I
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
 EOF
 }
@@ -425,10 +441,11 @@ function secret_name(k,   n, w, i, x, joined) {
     if (x ~ /^tokeniz|^tokenis/) continue
     joined = joined x
     if (x in SW) return 1
+    if (x ~ /^(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd)$/) return 1
     if (x ~ /(key|keys|token|tokens|secret|secrets|password|passwords|passwd|passwds|pwd|credential|credentials)$/) return 1
     if (x ~ /^(key|keys|pass|pwd|pw|pat|auth|cookie|cookies|session|sessions|signature|hmac|dsn|webhook|salt|otp|cert|certs)(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)$/) return 1
   }
-  if (joined ~ /(secret|passw(or)?d|passphrase|credential|token|apikey)/) return 1
+  if (joined ~ /(secret|passw(or)?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid)/) return 1
   return 0
 }
 # find the bracket that closes a container; CD/CQ keep the depth and quote when the line ends first
@@ -971,6 +988,50 @@ self_test() {
     printf 'nul?b %s\n' x >/dev/null
     printf 'a\000b kept_nul_line\n'
 
+    # ---- v7 additions: classes found by the v6 security review (value built from parts; first 6 and last 6 characters are checked)
+    v7n=200
+    v7() { v7n=$((v7n + 1)); hd=$(printf 'zr%03dv' "$v7n"); tl=$(printf 'xn%03dd' "$v7n"); vv=$hd$tl; }
+    v7_reg() { printf '%s|%s|%s|%s\n' "$1" "$hd" "$tl" "$2" >> "$WORK/st-pt.txt"; }
+    BS=$(printf '\134')
+    # (M1) quotes escaped inside JSON that sits inside a string; a JSON key written with a \u escape
+    v7; printf 'body {%s"password%s": %s"%s%s"}\n' "$BS" "$BS" "$BS" "$vv" "$BS"; v7_reg 'escaped quotes: name and string value' LS
+    v7; printf 'body {%s"password%s": %s}\n' "$BS" "$BS" "$vv"; v7_reg 'escaped quotes: name and plain value' LS
+    v7; printf "x %s'token%s': %s'%s%s'\n" "$BS" "$BS" "$BS" "$vv" "$BS"; v7_reg 'escaped single quotes: name and value' LS
+    v7; printf '{"pa%su0073sword": "%s"}\n' "$BS" "$vv"; v7_reg 'JSON key written with a unicode escape' LS
+    # (M2) password flag after other text: after && ; | $( , a path, a variable assignment, on a continuation line, a quoted value with spaces
+    v7; printf 'cd x && mytool -p %s now\n' "$vv"; v7_reg 'password flag after &&' LS
+    v7; printf 'cat f | mytool -P %s\n' "$vv"; v7_reg 'password flag after a pipe' LS
+    v7; printf 'echo $(mytool -w %s)\n' "$vv"; v7_reg 'password flag inside $( )' LS
+    v7; printf './bin/mytool -p %s go\n' "$vv"; v7_reg 'password flag, command given with a path' LS
+    v7; printf 'FOO=1 mytool -p %s go\n' "$vv"; v7_reg 'password flag after a variable assignment' LS
+    v7; printf 'mytool run \\\n  -p %s\n' "$vv"; v7_reg 'password flag on a continuation line' LS
+    v7; printf 'mytool -p "abc %s"\n' "$vv"; v7_reg 'password flag, quoted value with a space' LS
+    # (M3) names glued to a prefix, XML text, a value that starts with <, comparison, :=, SQL, a second literal, a bracket inside the value
+    v7; printf 'DBPASS=%s\n' "$vv"; v7_reg 'glued name DBPASS' LS
+    v7; printf 'ROOTPW=%s\n' "$vv"; v7_reg 'glued name ROOTPW' LS
+    v7; printf 'requirepass %s\n' "$vv"; v7_reg 'config line requirepass' LS
+    v7; printf 'masterauth %s\n' "$vv"; v7_reg 'config line masterauth' LS
+    v7; printf 'jsessionid=%s\n' "$vv"; v7_reg 'session id name jsessionid' LS
+    v7; printf '<password>%s</password>\n' "$vv"; v7_reg 'XML element text' LS
+    v7; printf 'password = <%s>\n' "$vv"; v7_reg 'value that starts with an angle bracket' LS
+    v7; printf 'if password == "%s":\n' "$vv"; v7_reg 'comparison of a password with a text' LS
+    v7; printf 'x := password := "%s"\n' "$vv"; v7_reg 'name := value in the middle of a line' LS
+    v7; printf "CREATE USER u IDENTIFIED BY '%s';\n" "$vv"; v7_reg 'SQL IDENTIFIED BY' LS
+    v7; printf 'password = "a" or "%s"\n' "$vv"; v7_reg 'second text after a hidden one' LS
+    v7; printf 'note password is %s]%s end\n' "$hd" "$tl"; v7_reg 'closing bracket inside a mid-line value' LS
+    # (M5) user part of a web address
+    v7; printf 'x https://%s@localhost/p\n' "$vv"; v7_reg 'web address, token as user part, host without a dot' LS
+    v7; printf 'x https:%s/%s/bob:%s@h/p\n' "$BS" "$BS" "$vv"; v7_reg 'web address with escaped slashes' LS
+    v7; printf 'x https:%s/%s/%s@h/p\n' "$BS" "$BS" "$vv"; v7_reg 'web address with escaped slashes, no colon' LS
+    v7; printf 'conn bob:%s@db port\n' "$vv"; v7_reg 'user:password@host without a scheme' LS
+    # (minor 2) tokens with characters outside the plain set, short Bearer values, more password readers
+    v7; printf 'Bearer %s#%s end\n' "$hd" "$tl"; v7_reg 'Bearer value with a hash sign' LS
+    hd=kq7z2; tl=kq7z2; v7_reg 'Bearer value of 5 characters' LS; printf 'Bearer %s\n' "$hd"
+    v7; printf 'echo %s | sudo -S ls\n' "$vv"; v7_reg 'echo piped into sudo -S' LS
+    v7; printf 'echo %s | kinit bob\n' "$vv"; v7_reg 'echo piped into kinit' LS
+    v7; printf 'echo %s | ssh-add -\n' "$vv"; v7_reg 'echo piped into ssh-add' LS
+    printf 'kept_v7_line mkdir -p /tmp/x\ncd a && ls -p kept_v7_flag\n'
+
   } > "$in"
   if [ -n "${SELFTEST_FILTER:-}" ]; then
     # shellcheck disable=SC2086
@@ -1177,6 +1238,8 @@ self_test() {
   chk_kept 'file name with dots stays' 'tests/test_qs_37_refuses_after_window_end.py'
   chk_kept 'a name followed by a full stop stays' 'kept_sentence_end.'
   chk_kept 'a NUL byte is shown as ? (tr stage)' 'a?b kept_nul_line'
+  chk_kept 'mkdir -p with a path stays' 'kept_v7_line mkdir -p /tmp/x'
+  chk_kept 'ls -p after && stays' 'cd a && ls -p kept_v7_flag'
   st_leak=0
   grep -a -q -F -- "$base" "$res" && st_leak=1
   [ "$st_leak" -eq 0 ] || printf 'FAIL (the secret base string is still visible somewhere in the output)\n'
@@ -1316,6 +1379,20 @@ self_test_meta() {
   if [ "$st_r" -eq 143 ] && [ "$st_stray" -eq 0 ] && [ "$st_left" -eq 0 ] && grep -a -q 'took longer than 2 seconds' "$WORK/st-wd.err"; then mt_ok "the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left"
   else mt_bad "the time limit did not end a stuck run cleanly (exit=$st_r, programs left=$st_stray, folders left=$st_left)"; fi
   rm -rf "$st_child"/lead-repin.?????? "$WORK/st-wd.err"
+  # v7: git is started with settings that stop the folder's own signature program, hook folder and file-system monitor
+  cat > "$st_fake/git" <<EOF
+#!/bin/sh
+printf '%s\\n' "\$*" >> "$st_fake/git.args"
+exit 0
+EOF
+  chmod +x "$st_fake/git"; rm -f "$st_fake/git.args"
+  PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2>&1
+  if [ -s "$st_fake/git.args" ] && grep -q -F 'log.showSignature=false' "$st_fake/git.args" && grep -q -F 'gpg.program=/bin/false' "$st_fake/git.args" && grep -q -F 'core.hooksPath=/dev/null' "$st_fake/git.args" && grep -q -F 'core.fsmonitor=false' "$st_fake/git.args"; then mt_ok "every git call carries the settings log.showSignature=false, gpg.program=/bin/false, core.hooksPath=/dev/null and core.fsmonitor=false"
+  else mt_bad "a git call is missing one of the safety settings (log.showSignature, gpg.program, core.hooksPath, core.fsmonitor)"; fi
+  rm -rf "$st_child"/lead-repin.?????? "$st_fake/git" "$st_fake/git.args"
+  # v7: a relative TMPDIR is refused (exit 2)
+  st_o=$(TMPDIR=relative_dir LEAD_REPIN_NO_META=1 sh "$st_sa" --mask < /dev/null 2>&1); st_r=$?
+  if [ "$st_r" -eq 2 ] && printf '%s\n' "$st_o" | grep -a -q -F 'TMPDIR must be an absolute path'; then mt_ok "a relative TMPDIR is refused with exit 2"; else mt_bad "a relative TMPDIR must be refused (exit=$st_r)"; fi
   st_pf=$WORK/st-pid; sh -c 'echo $$ > "$1"; exec sleep 29' sh "$st_pf" | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask > /dev/null 2>&1 &
   st_p=$!; sleep 3
   kill -s TERM "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?; sleep 1
@@ -1584,7 +1661,7 @@ list_info() { # list_info LABEL LISTFILE
   if [ "${li_n:-0}" -eq 0 ]; then printf '   <<< 0 FILES SEARCHED: the searches below looked at nothing; check TAKE_DIR / FLOWS_DIR / MODEL_DIR'; fi
   printf '\n'
 }
-g() { git --no-optional-locks -c core.fsmonitor=false -C "$TAKE_DIR" "$@"; }
+g() { git --no-optional-locks -c core.fsmonitor=false -c log.showSignature=false -c gpg.program=/bin/false -c core.hooksPath=/dev/null -C "$TAKE_DIR" "$@"; }
 model_notice() {
   if [ -z "$MODEL_DIR" ] || [ ! -d "$MODEL_DIR" ]; then
     printf '*** MODEL_DIR is not set (or not a folder): the MODEL PROGRAM IS NOT SEARCHED. This is "not looked at", not "absent". %s cannot be answered by this run: set MODEL_DIR and run again.\n' "$1"

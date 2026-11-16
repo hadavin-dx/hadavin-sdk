@@ -64,7 +64,7 @@ chk("A old text occurs exactly once on its stated line (%d rows)" % len(rows), n
 
 # B ids contiguous
 ids = [r["i"] for r in rows]
-chk("B ids are 1..N contiguous, unique, in order", ids == list(range(1, len(rows) + 1)), (len(rows), [i for i in ids if ids.count(i) > 1]))
+chk("B ids are exactly 1..N, no duplicate (table order is by file, so sorted before comparing)", sorted(ids) == list(range(1, len(rows) + 1)), (len(rows), [i for i in ids if ids.count(i) > 1]))
 
 # C apply in table order on copies, with the live (edited) lines
 texts = {}
@@ -111,8 +111,8 @@ chk("D2 NOT FILMABLE rows are 13,21 and check rows are 23,58,59", nfids == [13, 
 # ready list in section 0 equals recount
 m = re.search(r"49 are 'ready' \(no open question and no open check; rows ([0-9, ]+)\)", text)
 rl = [int(x) for x in re.findall(r"\d+", m.group(1))] if m else None
-chk("D3 section 0 ready list equals the rows whose status is ready", rl == [r["i"] for r in rows if cnt and r["st"].strip().endswith("ready") and "default" not in r["st"] and "NOT FILMABLE" not in r["st"] and "after check" not in r["st"]], rl)
-for pat, val in [(r"table \(section 5\) holds (\d+) proposed", 94), (r"Of the (\d+) rows", 94), (r"(\d+) are 'ready'", 49), (r"(\d+) apply on the default", 40), (r"and (\d+) wait for a check", 3), (r"(\d+) more rows are NOT FILMABLE|(\d+) \(rows 13, 21\) are NOT FILMABLE", 2)]:
+chk("D3 section 0 ready list equals the rows whose status is ready", sorted(rl or []) == sorted(r["i"] for r in rows if cnt and r["st"].strip().endswith("ready") and "default" not in r["st"] and "NOT FILMABLE" not in r["st"] and "after check" not in r["st"]), rl)
+for pat, val in [(r"table \(section 5\) holds (\d+) proposed", 94), (r"Of the (\d+) rows", 94), (r"(\d+) are 'ready'", 49), (r"(\d+) apply on the default", 40), (r"(\d+) wait for a check", 3), (r"(\d+) more rows are NOT FILMABLE|(\d+) \(rows 13, 21\) are NOT FILMABLE", 2)]:
     mm = re.findall(pat, text)
     flat = [int(x) for t in mm for x in (t if isinstance(t, tuple) else (t,)) if x]
     chk("D4 prose '%s' always %d" % (pat[:30], val), bool(flat) and all(x == val for x in flat), flat)
@@ -133,8 +133,14 @@ oldcells = set()
 for r in rows:
     oldcells.add(r["rawold"])
 utc_re = re.compile(r"(?<![\d:])(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(?:UTC|Z)\b|T(\d{2}):(\d{2})(?::(\d{2}))?Z")
-ist_re = re.compile(r"(?<![\d:])(\d{1,2}):(\d{2})(?::(\d{2}))?\s*IST")
+ist_re = re.compile(r"(?<![\d:])(\d{1,2}):(\d{2})(?::(\d{2}))?\s*IST|IST \((\d{1,2}):(\d{2})")
 pair_re = re.compile(r"(?<![\d:])(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*UTC|Z)?\s*(?:=|\()\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*IST")
+
+
+def istmin(m):
+    g = m.groups()
+    h, mi = (g[0], g[1]) if g[0] is not None else (g[3], g[4])
+    return (int(h) * 60 + int(mi)) % 1440
 
 
 def strip_old(l):
@@ -163,7 +169,7 @@ for ln, l in enumerate(lines, 1):
         else:
             utcs.append((int(g[3]), int(g[4]), g[5]))
     if utcs:
-        ists = [((int(m.group(1)) * 60 + int(m.group(2))) % 1440) for m in ist_re.finditer(l2)]
+        ists = [istmin(m) for m in ist_re.finditer(l2)]
         for (h, mi, s) in utcs:
             nutc += 1
             if ((h * 60 + mi + 330) % 1440) not in ists:
@@ -175,7 +181,7 @@ bad_new = []
 for r in rows:
     nl = r["new"]
     us = [(int(m.group(1)), int(m.group(2))) if m.group(1) else (int(m.group(4)), int(m.group(5))) for m in utc_re.finditer(nl)]
-    isl = [((int(m.group(1)) * 60 + int(m.group(2))) % 1440) for m in ist_re.finditer(nl)]
+    isl = [istmin(m) for m in ist_re.finditer(nl)]
     for h, mi in us:
         if ((h * 60 + mi + 330) % 1440) not in isl:
             bad_new.append((r["i"], "%02d:%02d" % (h, mi)))

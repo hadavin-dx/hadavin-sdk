@@ -1,0 +1,8 @@
+banned strings loaded: 10
+handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v14.md: 0
+handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v14-other-tracks.md: 0
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v14/banned_count_v14.py", line 15, in <module>
+    t = open(p, encoding="utf-8", errors="replace").read().lower()
+        ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/user/hadavin-sdk/handover/core-hardening/audit-r460/v14-CHANGES.md'

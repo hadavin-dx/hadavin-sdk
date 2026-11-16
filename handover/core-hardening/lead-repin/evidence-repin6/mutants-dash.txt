@@ -1,0 +1,16 @@
+v01-no-pre-stage dash: rc=1 SELF-TEST: passed=1146 failed=21 (the made-up input and outp | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v02-pwcmds-list-unused dash: rc=1 SELF-TEST: passed=1137 failed=30 (the made-up input and outp | first: FAIL (secret still visible): mysql (first 6 characters)
+v03-nonascii-noop dash: rc=1 SELF-TEST: passed=1161 failed=6 (the made-up input and outpu | first: FAIL (secret still visible): zero-width space inside a name (assignment) (first 6 characters)
+v04-ml-start-off dash: rc=1 SELF-TEST: passed=1153 failed=14 (the made-up input and outp | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v05-length-guard-off dash: rc=1 SELF-TEST: passed=1166 failed=1 (the made-up input and outpu | first: FAIL (evidence was hidden): a 30000-character line carries a cut notice with its true length
+v06-url-userinfo-off dash: rc=1 SELF-TEST: passed=1122 failed=45 (the made-up input and outp | first: FAIL (secret still visible): at6 (first 6 characters)
+v07-canary-count-off-by-one dash: rc=1 SELF-TEST: passed=1167 failed=0 (the made-up input and outpu | first: 
+v08-selftest-count-off-by-one dash: rc=0 SELF-TEST: passed=1167 failed=0 (the made-up input and outpu | first: 
+v10-bearer-rule-off dash: rc=1 SELF-TEST: passed=1164 failed=3 (the made-up input and outpu | first: FAIL (secret still visible): bare Bearer value
+v11-jwt-rule-off dash: rc=1 SELF-TEST: passed=1164 failed=3 (the made-up input and outpu | first: FAIL (secret still visible): JWT-shaped value
+v15-dotted-camel-rule-reverted dash: rc=1 SELF-TEST: passed=1166 failed=1 (the made-up input and outpu | first: FAIL (evidence was hidden): dotted CamelCase name stays
+v16-ml-continue-off dash: rc=1 SELF-TEST: passed=1155 failed=12 (the made-up input and outp | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v09-signal-kids-not-killed dash: rc=1 SELF-TEST: passed=1190 failed=1 (the made-up input and outpu | first: FAIL (machinery): signal HUP in the main phase (exit=0 wanted 129, programs left=0, folders left=1)
+v12-recount-always-ok dash: rc=1 SELF-TEST: passed=1188 failed=3 (the made-up input and outpu | first: FAIL (machinery): a judge accepted a result with the wrong number of cases
+v13-watchdog-off dash: TIMEOUT
+v14-premain-not-background dash: rc=1 SELF-TEST: passed=1189 failed=2 (the made-up input and outpu | first: FAIL (machinery): signal HUP in the main phase (exit=0 wanted 129, programs left=0, folders left=1)

@@ -1,0 +1,7 @@
+main lines: 496 other lines: 206
+mentions of 'v12' in main: 35 in other: 4
+evidence names cited: 36 missing from evidence-handoff-v14: 4
+  MISSING patch_other_v14.py
+  MISSING raw-import-graph-v13*.txt
+  MISSING raw-pg-b1-v13.txt
+  MISSING raw-pg-m1-v14.txt

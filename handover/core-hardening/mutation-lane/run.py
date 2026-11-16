@@ -222,6 +222,42 @@ import tempfile
 import time
 import traceback
 
+
+def _early_term(signum, frame):
+    """r10 (independent r9 run: a signal 0 to 0.05 s after the start killed run.py with the default action): from the first
+    lines of this file until main() installs the real handlers nothing has been written, no marker exists and no file is
+    planted, so a signal simply ends the run with 128+N. (A signal while Python itself starts and loads the standard modules
+    imported above, about 20 to 50 ms, still has the default action and ends the process by that signal, shell status 128+N,
+    or a KeyboardInterrupt for Ctrl-C: nothing exists yet that could be left behind.)"""
+    os._exit(128 + signum)
+
+
+def _install_early() -> None:
+    for signum in signal.valid_signals():
+        if signum in (
+            signal.SIGKILL,
+            signal.SIGSTOP,
+            signal.SIGCHLD,
+            signal.SIGCONT,
+            signal.SIGWINCH,
+            signal.SIGURG,
+            signal.SIGTSTP,
+            signal.SIGTTIN,
+            signal.SIGTTOU,
+            signal.SIGPIPE,
+            signal.SIGXFSZ,
+        ):
+            continue
+        try:
+            signal.signal(signum, _early_term)
+        except (OSError, ValueError):
+            pass
+
+
+if __name__ == "__main__":
+    _install_early()
+
+
 # skipped in the tree comparison: `.venv` ONLY directly under the root (the scratch environment); the two
 # cache folders at any depth. A `.venv` deeper in the tree is compared like any other folder.
 SKIP_TOP = {".venv"}
@@ -321,6 +357,12 @@ def shown(x, limit: int = 200) -> str:
 
 
 _CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f]")
+
+
+class Child(subprocess.Popen):
+    """The ONE way this tool starts another program: a fixed argument list (never a shell string), the program found by `tool()`
+    or the scratch `.venv`, a clean environment, its own process group. A named subclass so that this single class is where the
+    start happens; the arguments are built by this tool, never taken as one string from the caller (see run_cmd and run_tests)."""
 
 
 class SafeOut:
@@ -826,7 +868,7 @@ def run_cmd(
     limit = HELPER_TIMEOUT if timeout is None else timeout
     # r10 m8: the helper gets its OWN process group; on a timeout (or a signal that unwinds the run) the WHOLE group is killed,
     # not only the leader (a wrapper script's children and the import probe's children used to stay alive)
-    proc = subprocess.Popen(
+    proc = Child(
         argv,
         stdin=subprocess.PIPE
         if input_bytes is not None
@@ -873,7 +915,9 @@ def text_of(cp: subprocess.CompletedProcess) -> str:
 def safe_rel(base: pathlib.Path, rel, what: str, must_exist: bool = True) -> pathlib.Path:
     """A relative path inside `base`: no absolute path, no `..`, no symbolic link on the way."""
     if not isinstance(rel, str) or not rel or "\0" in rel or "\\" in rel:
-        raise Refused(f"{what}: not a usable relative path: {rel!r}")
+        raise Refused(f"{what}: not a usable relative path: {rel!r}"[:300])
+    if too_long(rel):
+        raise Refused(f"{what}: not a usable relative path: {too_long(rel)}")
     pp = pathlib.PurePosixPath(rel)
     if pp.is_absolute() or ".." in pp.parts:
         raise Refused(f"{what}: must be relative to the root and contain no '..': {rel!r}")
@@ -1883,7 +1927,7 @@ def run_tests(
     SIG.critical = True
     try:
         # one process group, so a timeout or a signal can stop all of it
-        proc = subprocess.Popen(
+        proc = Child(
             cmd,
             cwd=root,
             env=env,
@@ -2393,12 +2437,35 @@ def other_run_check(root: pathlib.Path, key: str) -> None:
                 ) from e
 
 
+PATH_MAX_BYTES, NAME_MAX_BYTES = (
+    4096,
+    255,
+)  # Linux limits: a longer path or name can never be opened
+
+
+def too_long(v: str) -> str | None:
+    """r10 (independent r9 run: a root over 4096 bytes ended in Python's own exit 1): the reason a path text can never be
+    used, or None. Checked where a value enters (argparse, safe_rel, the test paths) so no later call can raise ENAMETOOLONG."""
+    try:
+        raw = os.fsencode(v)
+    except UnicodeEncodeError:
+        return "it is not valid text for a file name"
+    if len(raw) > PATH_MAX_BYTES:
+        return f"it is {len(raw)} bytes long (the limit is {PATH_MAX_BYTES})"
+    if any(len(part) > NAME_MAX_BYTES for part in raw.split(b"/")):
+        return f"one name in it is longer than {NAME_MAX_BYTES} bytes"
+    return None
+
+
 def nonempty(v: str) -> str:
-    """argparse type: an empty value is an error, never "not given" (r10 M2)."""
+    """argparse type: an empty value is an error, never "not given" (r10 M2), and so is a text no path can be (too long)."""
     if v == "":
         raise argparse.ArgumentTypeError(
             "an empty value is not allowed (is a shell variable unset?)"
         )
+    bad = too_long(v)
+    if bad:
+        raise argparse.ArgumentTypeError(f"not usable as a path or name: {bad}")
     return v
 
 
@@ -2483,18 +2550,21 @@ def main():
         "--real-repo",
         action="append",
         default=[],
+        type=nonempty,
         help="a folder that must never be used as --root or inside it; repeatable",
     )
     ap.add_argument(
         "--patch",
         action="append",
         default=[],
+        type=nonempty,
         help="patch applied (-p1) on top of the git archive to get the expected tree; repeatable",
     )
     ap.add_argument(
         "--extra",
         action="append",
         default=[],
+        type=nonempty,
         help="path (relative to root) of a file that may exist in root beyond the reference, e.g. proof tests; repeatable",
     )
     ap.add_argument(
@@ -2547,11 +2617,20 @@ def main():
     default_repo = str(pathlib.Path(__file__).resolve().parent)
     if not a.restore or repo_given or a.sha is not None:
         a.repo = a.repo or default_repo
+    for t in tests:  # the test paths and words after `--`
+        if too_long(t) or "\0" in t:
+            ap.error(
+                f"a test argument is not usable as a path or word: {too_long(t) or 'it holds a NUL'}"
+            )
     root = pathlib.Path(a.root)
-    if not root.is_dir():
-        print(f"REFUSED: --root {root} is not a folder", file=sys.stderr)
+    try:
+        is_folder = root.is_dir()
+        root = root.resolve() if is_folder else root
+    except (OSError, RuntimeError, ValueError):
+        is_folder = False
+    if not is_folder:
+        print(f"REFUSED: --root {shown(a.root)} is not a folder", file=sys.stderr)
         sys.exit(EXIT_REFUSED)
-    root = root.resolve()
     a.root = str(root)
     global ROOT_IDENT
     rst = os.stat(root)

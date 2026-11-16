@@ -1,0 +1,26 @@
+01-old-text-altered-row1                         exit 1 OK FAIL A old text occurs exactly once on its stated line (94 rows) :: [(1, 0)]
+02-row5-line-number-off-by-one                   exit 1 OK FAIL A old text occurs exactly once on its stated line (94 rows) :: [(5, 0)]
+03-row50-deleted                                 exit 1 OK FAIL B ids are exactly 1..N, no duplicate (table order is by file, so sorted before comparing) :: (93, [])
+04-duplicate-id-19                               exit 1 OK FAIL B ids are exactly 1..N, no duplicate (table order is by file, so sorted before comparing) :: (94, [19, 19
+05-ready-row2-turned-default                     exit 1 OK FAIL D1 row counts total/ready/default/check/NOT FILMABLE = 94/49/40/3/2 :: (94, {'ready': 48, 'default': 41, 
+06-NOT-FILMABLE-row13-made-default               exit 1 OK FAIL D1 row counts total/ready/default/check/NOT FILMABLE = 94/49/40/3/2 :: (94, {'ready': 49, 'default': 41, 
+07-IST-pair-one-minute-off                       exit 1 OK FAIL E1 every explicit 'UTC = IST' pair is exactly +5:30 (21 pairs) :: [(6, '18:29 UTC = 23:58 IST')]
+08-UTC-changed-IST-kept                          exit 1 OK FAIL E1 every explicit 'UTC = IST' pair is exactly +5:30 (21 pairs) :: [(6, '18:09 UTC = 23:49 IST')]
+09-IST-removed-after-UTC                         exit 1 OK FAIL E2 every UTC/Z clock time (22, outside old-text quotes) has its +5:30 IST on the same line :: [(71, '15:0
+10-weekday-wrong-Mon-to-Tue                      exit 1 OK FAIL F1 weekday/date strings correct for 2026 (15 found) :: [(6, 'Tue 23 Nov 2026', 'Mon')]
+11-date-wrong-Wed-26-Nov                         exit 1 OK FAIL F1 weekday/date strings correct for 2026 (15 found) :: [(6, 'Wed 26 Nov 2026', 'Thu')]
+12-60.1-to-61.8-once                             exit 1 OK FAIL G1 every '60.1 to X' has X = 61.9 (23) :: Counter({'60.1 to 61.9': 22, '60.1 to 61.8': 1})
+13-52.8-to-54.8-once                             exit 1 OK FAIL G2 every '52.8 to X' has X = 54.9 (5) :: Counter({'52.8 to 54.9': 4, '52.8 to 54.8': 1})
+14-10-runs-done-to-9                             exit 1 OK FAIL G4 '<n> runs done' always 10, 'runs unknown' always 8 :: (Counter({'9': 1, '10': 1}), Counter({'8': 2}))
+15-one-void-label-dropped-in-prose               exit 1 OK FAIL G5 non-table lines with '18 runs' name both voided runs :: [77]
+16-fake-aws-key-in-prose                         exit 1 OK FAIL H secret-shaped strings or e-mail addresses (counts only) :: {'aws': 1}
+17-fake-sk-key-in-prose                          exit 1 OK FAIL H secret-shaped strings or e-mail addresses (counts only) :: {'sk': 1}
+18-fake-ghp-in-new-text                          exit 1 OK FAIL H secret-shaped strings or e-mail addresses (counts only) :: {'ghp': 1}
+19-email-address-in-prose                        exit 1 OK FAIL H secret-shaped strings or e-mail addresses (counts only) :: {'email': 1}
+20-prose-row-count-93                            exit 1 OK FAIL D4 prose 'table \(section 5\) holds (\d+' always 94 :: [93]
+21-3b-TOTAL-ready-48                             exit 1 OK FAIL D5 3b TOTAL line :: | TOTAL | all rows | 94 | ready 48, on defaults only 40, with a check 3, NOT FILMABLE
+22-two-rows-swapped-breaks-bottom-up-order       exit 1 OK FAIL C2 within a file lines never increase down the table :: [3, 2]
+23-section0-ready-list-drops-6                   exit 1 OK FAIL D3 section 0 ready list equals the rows whose status is ready :: [1, 2, 5, 7, 8, 9, 10, 16, 17, 18, 19, 2
+24-row6-IST-dropped-from-new-text                exit 1 OK FAIL E2 every UTC/Z clock time (22, outside old-text quotes) has its +5:30 IST on the same line :: [(314, '09:
+25-control-unchanged                             exit 0 OK 
+SUMMARY: 25 copies, 0 wrong
