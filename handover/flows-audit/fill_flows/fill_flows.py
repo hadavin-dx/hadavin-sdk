@@ -270,12 +270,23 @@ def sha256_nofollow(path: str) -> str:
 def list_json(directory: str) -> list[str]:
     if os.path.islink(directory) or not os.path.isdir(directory):
         raise Refused("input folder: not a real folder (missing, or a symlink)")
-    names = sorted(n for n in os.listdir(directory) if n.endswith(".json"))
+    names = sorted(n for n in os.listdir(directory) if n.lower().endswith(".json"))
     for n in names:
         p = os.path.join(directory, n)
+        if not n.endswith(".json"):
+            raise Refused(f"input file {n}: the ending must be lower case .json")
         if os.path.islink(p) or not os.path.isfile(p):
             raise Refused(f"input file {n}: symlink or not a regular file")
     return names
+
+
+def read_json_file(directory: str, n: str):
+    try:
+        fd = os.open(os.path.join(directory, n), os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as fh:
+            return load_json(fh.read())
+    except (OSError, ValueError) as e:
+        raise Refused(f"{n}: not valid JSON ({type(e).__name__})") from None
 
 
 def inside_git(path: str) -> bool:
@@ -298,9 +309,15 @@ def _write_new(path: str, data: bytes) -> None:
 # ---------------------------------------------------------------- modes
 
 
+def _plain_name(n) -> bool:
+    return isinstance(n, str) and n not in ("", ".", "..") and not any(c in n for c in "/\\\0")
+
+
 def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
     manifest_path = out_dir + MANIFEST_SUFFIX
+    if under_mnt(os.path.dirname(out_dir)) or under_mnt(out_dir):
+        raise Refused("output path is under /mnt (Windows drive): file modes do not protect it")
     if inside_git(out_dir) or inside_git(os.path.dirname(out_dir)):
         raise Refused("output path is inside a git repository (a parent folder has .git)")
     if os.path.lexists(out_dir) or os.path.lexists(manifest_path):
@@ -317,35 +334,36 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     sub = Subst(values)
     outputs: dict[str, bytes] = {}
     found_any = False
+    ph_left = 0
     for n in names:
-        try:
-            with open(os.path.join(in_dir, n), "rb") as fh:
-                obj = json.loads(fh.read().decode("utf-8"))
-        except (OSError, ValueError) as e:
-            raise Refused(f"{n}: not valid JSON ({type(e).__name__})") from None
+        obj = read_json_file(in_dir, n)
         before = shape(obj)
-        if ANY_ENV.search(json.dumps(obj)):
+        if any(ANY_ENV.search(t) for t in iter_strings(obj)):
             found_any = True
-        new = sub.walk(obj)
+        try:
+            new = sub.walk(obj)
+        except Refused as e:
+            raise Refused(f"{n}: {e}") from None
         if shape(new) != before:
             raise Refused(f"{n}: node count or connections changed (internal check)")
         data = dump(new)
         if ANY_ENV.search(data.decode("utf-8")):
             left = sorted(set(sub.bad)) or ["<dynamic $env use>"]
             raise Refused(f"{n}: a $env token is left after substitution ({', '.join(left)})")
+        ph_left += sum(1 for t in iter_strings(new) if t in PLACEHOLDERS)
         outputs[n] = data
     if sub.bad:
         raise Refused(
             "cannot fill these names (missing or empty in the values file, or not a "
             "DESK_/MF_ name): " + ", ".join(sorted(sub.bad))
         )
-    if not found_any:
+    if not found_any and not sub.ph_used:
         print(
             "nothing to fill: no $env token in the input (already filled, or wrong folder)",
             file=sys.stderr,
         )
         return EXIT_NOTHING
-    for k in sorted(set(values) - sub.used):
+    for k in sorted(set(values) - sub.used - sub.ph_used):
         print(f"warning: key {k} in the values file is not used by any node", file=sys.stderr)
 
     manifest = {
@@ -353,29 +371,37 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
         "files": {n: hashlib.sha256(d).hexdigest() for n, d in sorted(outputs.items())},
     }
     created: list[str] = []
+    made_dir = False
     try:
+        # the manifest goes first: if this stops half way, `delete` can still find every file
+        _write_new(manifest_path, (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode())
+        created.append(manifest_path)
         os.mkdir(out_dir, 0o700)
+        made_dir = True
         os.chmod(out_dir, 0o700)
         for n, d in outputs.items():
             _write_new(os.path.join(out_dir, n), d)
             created.append(os.path.join(out_dir, n))
-        _write_new(manifest_path, (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode())
     except BaseException:
-        for p in created:
+        for p in reversed(created):
             try:
                 os.unlink(p)
             except OSError:
                 pass
-        try:
-            os.rmdir(out_dir)
-        except OSError:
-            pass
+        if made_dir:
+            try:
+                os.rmdir(out_dir)
+            except OSError:
+                pass
         raise
-    left_ph = sum(d.decode("utf-8").count(p) for d in outputs.values() for p in PLACEHOLDERS)
-    print(
-        f"filled {len(outputs)} files, {len(sub.used)} names used, "
-        f"{left_ph} placeholder strings still present (filled by a later step)"
-    )
+    print(f"filled {len(outputs)} files, {len(sub.used)} names and {len(sub.ph_used)} placeholders")
+    if ph_left:
+        print(
+            f"NOT READY TO IMPORT: {ph_left} placeholders left "
+            "(create the credentials, import the sub-flow, fill again, then run check)"
+        )
+    else:
+        print("no placeholders left; run check before importing")
     return EXIT_OK
 
 
@@ -383,35 +409,35 @@ def do_check(directory: str, tokens_only: bool) -> int:
     names = list_json(directory)
     bad = 0
     for n in names:
-        with open(os.path.join(directory, n), "rb") as fh:
-            text = fh.read().decode("utf-8", errors="replace")
-        for m in TOKEN.finditer(text):
-            print(f"{n}: token $env {m.group(1) or m.group(3)}")
+        try:
+            obj = read_json_file(directory, n)
+        except Refused as e:
+            print(f"{n}: {e}")
             bad += 1
-        rest = TOKEN.sub("", text)
-        c = len(ANY_ENV.findall(rest))
-        if c:
-            print(f"{n}: {c} other $env use(s) (dynamic form)")
-            bad += c
+            continue
+        ph: dict[str, int] = {}
+        for text in iter_strings(obj):
+            for m in TOKEN.finditer(text):
+                print(f"{n}: token $env {m.group(1) or m.group(3)}")
+                bad += 1
+            c = len(ANY_ENV.findall(TOKEN.sub("", text)))
+            if c:
+                print(f"{n}: {c} other $env use(s) (dynamic form)")
+                bad += c
+            if text in PLACEHOLDERS:
+                ph[text] = ph.get(text, 0) + 1
         if not tokens_only:
-            for p in PLACEHOLDERS:
-                c = text.count(p)
-                if c:
-                    print(f"{n}: placeholder {p} x{c}")
-                    bad += c
+            for p, c in sorted(ph.items()):
+                print(f"{n}: placeholder {p} x{c}")
+                bad += c
     print(f"check: {len(names)} files, {bad} problem(s)")
     return EXIT_REFUSED if bad else EXIT_OK
 
 
-def do_delete(out_dir: str, force_hash: bool) -> int:
-    out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
-    manifest_path = out_dir + MANIFEST_SUFFIX
-    if os.path.islink(out_dir) or not os.path.isdir(out_dir):
-        raise Refused("output folder is missing or a symlink")
-    if os.path.islink(manifest_path) or not os.path.isfile(manifest_path):
-        raise Refused("manifest is missing or a symlink; nothing deleted")
+def _load_manifest(manifest_path: str) -> dict:
     try:
-        with open(manifest_path, "rb") as fh:
+        fd = os.open(manifest_path, os.O_RDONLY | os.O_NOFOLLOW)
+        with os.fdopen(fd, "rb") as fh:
             man = json.loads(fh.read().decode("utf-8"))
         files = man["files"]
         if man.get("format") != MANIFEST_FORMAT or not isinstance(files, dict):
@@ -419,32 +445,66 @@ def do_delete(out_dir: str, force_hash: bool) -> int:
     except (OSError, ValueError, KeyError, AttributeError, TypeError):
         raise Refused("manifest is not a valid fill_flows manifest; nothing deleted") from None
     for n, h in files.items():
-        if not isinstance(n, str) or n in ("", ".", "..") or "/" in n or "\\" in n or "\0" in n:
+        if not _plain_name(n):
             raise Refused("manifest names a path that is not a plain file name; nothing deleted")
         if not isinstance(h, str):
             raise Refused("manifest has a bad hash entry; nothing deleted")
-    present = set(os.listdir(out_dir))
-    extra = sorted(present - set(files))
-    if extra:
-        raise Refused(
-            f"folder holds files not in the manifest: {', '.join(extra)}; nothing deleted"
-        )
-    todo = []
-    for n, h in sorted(files.items()):
-        p = os.path.join(out_dir, n)
-        if not os.path.lexists(p):
-            continue
-        if os.path.islink(p) or not os.path.isfile(p):
-            raise Refused(f"{n}: symlink or not a regular file; nothing deleted")
-        if sha256_nofollow(p) != h and not force_hash:
+    return files
+
+
+def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
+    out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
+    manifest_path = out_dir + MANIFEST_SUFFIX
+    has_dir = os.path.lexists(out_dir)
+    has_man = os.path.lexists(manifest_path)
+    if has_dir and (os.path.islink(out_dir) or not os.path.isdir(out_dir)):
+        raise Refused("output folder is a symlink or not a folder; nothing deleted")
+    if has_man and (os.path.islink(manifest_path) or not os.path.isfile(manifest_path)):
+        raise Refused("manifest is a symlink or not a file; nothing deleted")
+    if not has_dir and not has_man:
+        raise Refused("output folder and manifest are both missing; nothing to delete")
+    files: dict = {}
+    if not no_manifest:
+        if not has_man:
             raise Refused(
-                f"{n}: content changed since it was written (use --force-hash); nothing deleted"
+                "manifest is missing; nothing deleted (to remove the folder anyway, use "
+                "--no-manifest: it removes only plain .json files)"
             )
-        todo.append(p)
+        files = _load_manifest(manifest_path)
+    if not has_dir:  # a fill was stopped after the manifest and before the folder
+        os.unlink(manifest_path)
+        print("deleted the manifest (the folder was not there)")
+        return EXIT_OK
+    present = set(os.listdir(out_dir))
+    todo = []
+    if no_manifest:
+        for n in sorted(present):
+            p = os.path.join(out_dir, n)
+            if not n.endswith(".json") or os.path.islink(p) or not os.path.isfile(p):
+                raise Refused(f"{n}: not a plain .json file; nothing deleted")
+            todo.append(p)
+    else:
+        extra = sorted(present - set(files))
+        if extra:
+            raise Refused(
+                f"folder holds files not in the manifest: {', '.join(extra)}; nothing deleted"
+            )
+        for n, h in sorted(files.items()):
+            p = os.path.join(out_dir, n)
+            if not os.path.lexists(p):
+                continue
+            if os.path.islink(p) or not os.path.isfile(p):
+                raise Refused(f"{n}: symlink or not a regular file; nothing deleted")
+            if sha256_nofollow(p) != h and not force_hash:
+                raise Refused(
+                    f"{n}: content changed since it was written (use --force-hash); nothing deleted"
+                )
+            todo.append(p)
     for p in todo:
         os.unlink(p)
     os.rmdir(out_dir)
-    os.unlink(manifest_path)
+    if has_man:
+        os.unlink(manifest_path)
     print(f"deleted {len(todo)} files, the folder and the manifest")
     return EXIT_OK
 
@@ -462,13 +522,14 @@ def main(argv=None) -> int:
     d = sp.add_parser("delete")
     d.add_argument("--out", required=True)
     d.add_argument("--force-hash", action="store_true")
+    d.add_argument("--no-manifest", action="store_true", help="folder has no usable manifest")
     a = ap.parse_args(argv)
     try:
         if a.mode == "fill":
             return do_fill(a.in_dir, a.values, a.out)
         if a.mode == "check":
             return do_check(a.dir, a.tokens_only)
-        return do_delete(a.out, a.force_hash)
+        return do_delete(a.out, a.force_hash, a.no_manifest)
     except Refused as e:
         print(f"refused: {e}", file=sys.stderr)
         return EXIT_REFUSED
