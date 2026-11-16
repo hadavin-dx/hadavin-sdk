@@ -344,12 +344,12 @@ while IFS='|' read -r want line why pd envx; do
 done <<< "$RV_CASES"
 [ -n "${RV_DUMP:-}" ] && exit 0
 # f8-r8: the number of word-check cases is pinned EXACTLY (a floor let 16 cases be deleted without a sound). Change RV_EXPECT together with the case list, and say so in the fix log.
-RV_EXPECT=249
+RV_EXPECT=275
 RV_LISTED=$(grep -c -E '^(ok|no)\|' <<< "$RV_CASES")
 [ "$rv_n" -eq "$RV_EXPECT" ] && [ "$RV_LISTED" -eq "$RV_EXPECT" ]; ok $? "reviewer line: exactly $RV_EXPECT word-check cases ran (ran $rv_n, listed $RV_LISTED)"
 # the word list lives in take_check.sh only; the README must print exactly the same two lines
 RVW=$(bash "$TAKE" --reviewer-words); RVWRC=$?
-[ "$RVWRC" = 0 ] && [ "$(printf '%s\n' "$RVW" | wc -l)" = 3 ]; ok $? "word list: take_check.sh --reviewer-words prints three lines and exits 0 (got exit $RVWRC)"
+[ "$RVWRC" = 0 ] && [ "$(printf '%s\n' "$RVW" | wc -l)" = 6 ]; ok $? "word list: take_check.sh --reviewer-words prints six lines and exits 0 (got exit $RVWRC)"
 while IFS= read -r l; do grep -q -x -F -- "$l" "$HERE/README.md"; ok $? "word list: README has this line exactly as take_check.sh prints it: ${l:0:60}..."; done <<< "$RVW"
 # the other scripts that call take_check.sh must not hold a copy of the list or of its rules. f8-r8: (a) no variable of the list, (b) the script's own test name appears nowhere, (c) no line holds three or more different listed words (a copy such as grep -E "session|lead to confirm|PLACEHOLDER" holds three), (d) the stand-in name and the pin line check come from take_check.sh
 no_list_copy() { # $1 = the script file to look at; prints the offending lines; status 1 when there is a copy. A copy is: a line holding two or more different tool or model names; a line that joins two or more listed words with | (a grep pattern); the script's own test name; a REVIEWER_ variable
@@ -514,14 +514,14 @@ tk m4d TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/short.pin" -- --flows "$P"
 cat > "$S/wrap.py" <<PYEOF
 import os, subprocess, sys
 r = subprocess.run([sys.executable, "-I", "$HERE/check_flows.py"] + sys.argv[1:])
-t = os.path.join(sys.argv[1], os.environ["WRAP_TARGET"])
+t = os.path.join(os.environ["WRAP_DIR"], os.environ["WRAP_TARGET"])
 with open(t, "a", encoding="utf-8") as f:
     f.write("\n")   # the checker has finished; the file changes before this script reads the folder again
 sys.exit(r.returncode)
 PYEOF
 for t in mf-hook.json extra.json; do
   cp -r -- "$P" "$S/chg-$t"; [ "$t" = extra.json ] && printf '%s\n' '{"settings": {"saveDataSuccessExecution": "all", "saveDataErrorExecution": "all", "saveManualExecutions": true}}' > "$S/chg-$t/extra.json"
-  tk "q2-$t" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/wrap.py" WRAP_TARGET="$t" -- --flows "$S/chg-$t"
+  tk "q2-$t" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/wrap.py" WRAP_TARGET="$t" WRAP_DIR="$S/chg-$t" -- --flows "$S/chg-$t"
   [ "$RC" = 4 ] && has "q2-$t" "A FLOW FILE CHANGED WHILE THIS CHECK RAN"; ok $? "Q2: $t written after the checker ran is exit 4 with the loud line (got exit $RC)"
 done
 cp -r -- "$P" "$S/extra-ok"; printf '%s\n' '{"settings": {"saveDataSuccessExecution": "all", "saveDataErrorExecution": "all", "saveManualExecutions": true}}' > "$S/extra-ok/extra.json"
@@ -743,5 +743,68 @@ PYEOF
   tk "count-$f" -- --flows "$S/count-$f"
   [ "$RC" = 1 ] && grep -q "^FAIL .*$f node count 16 != expected 15" "$S/count-$f.txt" && ! grep -q -E "^FAIL .*(unreachable|orphan)" "$S/count-$f.txt"; ok $? "count: $f with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit $RC)"
 done
+
+# ---------------------------------------------------------------------------------------------
+# f8-r9 (review f8-r8): receipt, bad pin date, helper fault, remedy text, hazards, read-once, test-script guard
+# M1: the receipt. A reviewer line without it, or with another pin's receipt, is refused in a take (exit 4).
+{ echo "# reviewed by: Pat Smith, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/r9-norcpt.pin"
+tk r9-norcpt TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/r9-norcpt.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-norcpt "rule: receipt missing"; ok $? "f8-r9 M1: a reviewer line with no 'pin sha256' receipt is exit 4 (rule: receipt missing) (got exit $RC)"
+{ echo "# reviewed by: Pat Smith, $PD, pin sha256 00000000"; grep -v '^# reviewed by' "$PIN"; } > "$S/r9-badrcpt.pin"
+tk r9-badrcpt TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/r9-badrcpt.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-badrcpt "rule: receipt wrong"; ok $? "f8-r9 M1: a reviewer line with another pin's receipt is exit 4 (rule: receipt wrong) (got exit $RC)"
+{ echo "# reviewed by: Pat Smith, $RD"; grep -v '^# reviewed by' "$PIN" | sed '0,/^WARN /s/^\(WARN .*\)$/\1 changed/'; } > "$S/r9-edited.pin"
+tk r9-edited TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/r9-edited.pin" -- --flows "$P"
+[ "$RC" = 4 ]; ok $? "f8-r9 M1: a pin whose WARN lines were edited after the line was written is exit 4 (got exit $RC)"
+tk r9-good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
+[ "$RC" = 5 ] && has r9-good "pin sha256 ${RCPT}"; ok $? "f8-r9 M1: the top block prints the sha256 whose first 8 characters the reviewer line must carry, and a line with the right receipt is accepted (exit 5, test run) (got exit $RC)"
+# the helper itself, with the receipt as third argument
+for rc in "ok:$RCPT:0" "no:00000000:1" "no:${RCPT^^}:1"; do
+  out=$(TAKE_CHECK_TEST=1 TAKE_CHECK_TODAY="$TODAY" bash "$TAKE" --check-reviewer-line "Pat Smith, $TODAY, pin sha256 ${rc#*:}" "" "$RCPT" 2>&1 | head -c 200); x=$?
+  case "$rc" in ok:*) [ "$out" = ok ];; *) case "$out" in *"receipt wrong"*|*"receipt missing"*) true;; *) false;; esac;; esac; ok $? "f8-r9 M1: helper with the receipt ${RCPT} and a line carrying ${rc#*:}: want ${rc%%:*} (got: ${out:0:70})"
+done
+# M3: a bad pin date is the pin's fault and says so (not a refusal of the person)
+{ echo "# reviewed by: Pat Smith, $RD"; grep -v '^# reviewed by' "$PIN" | sed 's/^# date (UTC): .*/# date (UTC): 2026-99-99/'; } > "$S/r9-baddate.pin"
+tk r9-baddate TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/r9-baddate.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-baddate "THE PIN'S OWN DATE LINE IS NOT A REAL DATE" && ! has r9-baddate "NOT A PERSON"; ok $? "f8-r9: a pin with an impossible date line is exit 4 with a message about the pin, not about the person (got exit $RC)"
+# a helper that crashes is its own message (a python3 stub that fails on the date parser)
+mkdir "$S/pystub"; REALPY=$(command -v python3); printf '#!/bin/bash\ncase "$*" in *fromisoformat*) echo "stub crash" >&2; exit 9;; esac\nexec %s "$@"\n' "$REALPY" > "$S/pystub/python3"; chmod +x "$S/pystub/python3"
+tk r9-crash TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" PATH="$S/pystub:$PATH" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-crash "THE REVIEWER-LINE HELPER BROKE" && ! has r9-crash "NOT A PERSON"; ok $? "f8-r9: a crashing reviewer-line helper is exit 4 with a helper message, never read as a refusal of the person (got exit $RC)"
+# M3 remedy: the refusal for a listed word says how to write the name, and the remedy forms are accepted in a take
+{ echo "# reviewed by: Pat Alexa, $RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/r9-alexa.pin"
+tk r9-alexa TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/r9-alexa.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-alexa "A. Jones" && has r9-alexa "Q31"; ok $? "f8-r9 M3: a refused listed word in a take prints the remedy (an initial plus the rest; Q31) (got exit $RC)"
+for nm in "A. Jones" "Pat J."; do
+  { echo "# reviewed by: $nm, $RD"; grep -v '^# reviewed by' "$PIN"; } > "$S/r9-rem.pin"
+  tk r9-rem TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/r9-rem.pin" -- --flows "$P"
+  [ "$RC" = 5 ] && ! has r9-rem "NOT A PERSON"; ok $? "f8-r9 M3: the remedy form '$nm' is accepted in a take (exit 5, test run) (got exit $RC)"
+done
+# the pin writer prints the receipt and the new line format
+tk r9-write TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/r9-nopin-here" -- --flows "$P" --write-warn-pin "$S/r9-written.pin"
+if [ -e "$S/r9-written.pin" ]; then WH=$(sed -n 's/^# sha256 of the WARN lines below.*: \([0-9a-f]\{64\}\)$/\1/p' "$S/r9-written.pin" | head -n 1); has r9-write "pin sha256 ${WH:0:8}" && grep -q -F "NAME, YYYY-MM-DD, pin sha256 XXXXXXXX" "$S/r9-written.pin"; ok $? "f8-r9 M1: --write-warn-pin prints the receipt (pin sha256 ${WH:0:8}) and the placeholder line states the new format"; else ok 1 "f8-r9 M1: --write-warn-pin wrote no file (exit $RC)"; fi
+# environment hazards: named in the output, a take with one is exit 4
+printf 'true\n' > "$S/benv.sh"
+tk r9-benv TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" BASH_ENV="$S/benv.sh" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-benv "BASH_ENV"; ok $? "f8-r9: BASH_ENV set is named and is exit 4 (got exit $RC)"
+tk r9-ldp TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" LD_PRELOAD="$S/none.so" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-ldp "LD_PRELOAD"; ok $? "f8-r9: LD_PRELOAD set is named and is exit 4 (got exit $RC)"
+r9fn() { :; }; export -f r9fn
+tk r9-fn TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
+[ "$RC" = 4 ] && has r9-fn "r9fn"; ok $? "f8-r9: an exported shell function is named and is exit 4 (got exit $RC)"
+export -nf r9fn 2>/dev/null; unset -f r9fn
+# M4: the test-script guard (the suite itself is started as a child process)
+out=$(env -u TEST_TAKE_DEV TEST_TAKE_SCRIPT="$TAKE" bash "$HERE/test_take_check.sh" "$P" 2>&1); x=$?
+[ "$x" = 2 ] && case "$out" in *"REFUSED: TEST_TAKE_SCRIPT is accepted only with TEST_TAKE_DEV=1"*) true;; *) false;; esac; ok $? "f8-r9 M4: TEST_TAKE_SCRIPT without TEST_TAKE_DEV=1 is refused with exit 2 (got exit $x)"
+# read-once: a flow file that changes after the take copied the folder does not change what the checker read (the copy is hashed against the original again at the end)
+cp -r -- "$P" "$S/ro"; cat > "$S/ro.py" <<PYEOF
+import os, subprocess, sys
+r = subprocess.run([sys.executable, "-I", "$HERE/check_flows.py"] + sys.argv[1:])
+with open(os.path.join("$S/ro", "mf-hook.json"), "a", encoding="utf-8") as f:
+    f.write("\n")
+sys.exit(r.returncode)
+PYEOF
+tk r9-ro TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/ro.py" -- --flows "$S/ro"
+[ "$RC" = 4 ] && has r9-ro "A FLOW FILE CHANGED WHILE THIS CHECK RAN"; ok $? "f8-r9: a file changed in the ORIGINAL folder while the checker read the private copy is still caught at the end (exit 4) (got exit $RC)"
 echo "test_take_check: $((N-BAD)) of $N cases as expected, $BAD not as expected"
 [ "$BAD" = 0 ]

@@ -86,70 +86,89 @@ export TAKE_FOLDER="REPLACE_ME_I3" && . "$TAKE_FOLDER/shas.env"
 The first time, the lead makes the folder (`mkdir -p -m 700 "$TAKE_FOLDER"`) and saves the skeleton as `shas.env` in it. Every `REPLACE_ME_...` word is a value only the lead can supply (the I-number is the row of section 10 that says what it is); the last lines of the file print the names that still hold such a word, so an unfilled value is seen, not silently used. `SHA_EVIDENCE` and `FINAL_SHA` are NOT in the skeleton either (round 11, TAKE-CHECKLIST/FIX-PLAN review M2): Block R3 appends both lines, so a skeleton line would give a second line; Block R3 must therefore refuse to run when `grep -q '^SHA_EVIDENCE=' "$ENVSH"` already matches, and must print that it refused (this file states the need; the text of Block R3 is in TAKE-CHECKLIST, which this round does not edit). The four shas of section 4 (`SHA_FOLDER`, `SHA_PIN1`, `SHA_PIN`, `SHA_SCRIPTS`) are NOT in the skeleton: the command that makes each one appends its line (`SHA_X=` and 40 hex characters, written once, never edited). The two passwords of step 18 (T21) are not in this file either (see step 18). Mine, not run in n8n; the skeleton was checked with `bash -n` only:
 ```
 # shas.env (skeleton). Typed by hand before it: export TAKE_FOLDER="REPLACE_ME_I3" && . "$TAKE_FOLDER/shas.env"
+# Every example in a comment is made up. Replace each REPLACE_ME word with the real value (edit with: nano "$TAKE_FOLDER/shas.env").
 : "${TAKE_FOLDER:?unset: type the one-line bootstrap first}"
 ENVSH="$TAKE_FOLDER/shas.env"
-REPO="REPLACE_ME_I2"
-STUDIO="REPLACE_ME_I2"
-NEW="REPLACE_ME_I3"
+REPO="${REPO:-REPLACE_ME_I2}"   # example: /home/me/hadavin-sdk (the make command writes the real value here)
+STUDIO="REPLACE_ME_I2"   # example: /home/me/studio (must hold egm/tools/ledger_check.py and egm/BLOCKER-LEDGER.md)
+NEW="REPLACE_ME_I3"   # example: n8n-flows-real-v5-take (a folder name under handover/demo, not n8n-flows-real-v5)
 KEEP="$HOME/keep"
 TOOL="$REPO/handover/flows-audit/fill_flows/fill_flows.py"
 TAKE_TREE="$TAKE_FOLDER/take-tree"
 RUNSHEET="$REPO/handover/demo/VIDEO-RUNSHEET.md"
-RECORDING="REPLACE_ME_I39"
+RECORDING="REPLACE_ME_I39"   # set at step 26; example: /home/me/take-2026-11-18/take.mp4
 LOG="${LOG:-$TAKE_FOLDER/log-1.txt}"
 LOG2="${LOG2:-$TAKE_FOLDER/log-2.txt}"
 LOG3="${LOG3:-$TAKE_FOLDER/log-3.txt}"
 EXPORT="${EXPORT:-$TAKE_FOLDER/export-1}"
 N8N_PORT="5690"
-BRANCH="REPLACE_ME_I5"
+BRANCH="REPLACE_ME_I5"   # example: take/nlite-merge-m1
 # SHA_EVIDENCE and FINAL_SHA are NOT lines of this file: Block R3 appends both (round 11)
-PATCH_BRANCH="REPLACE_ME_I5"
+PATCH_BRANCH="REPLACE_ME_I5"   # example: take/repin-2026-11-17
 FLOWS="$REPO/handover/demo/$NEW"
 PIN_FILE="$REPO/handover/flows-audit/flow-check/take-warns.pin"
 NEW_PIN="${NEW_PIN:-$TAKE_FOLDER/unfilled-warns.pin}"
 EXPORT_PIN="${EXPORT_PIN:-$TAKE_FOLDER/export-warns-1.pin}"
-PIN_NAME="REPLACE_ME_I36"
+PIN_NAME="REPLACE_ME_I36"   # example: Anna Smith (a real person who reads the WARN lines; not a session or agent)
 PIN_DATE="$(date -u +%Y-%m-%d)"
-COMMIT_MSG="REPLACE_ME_I5"
-TRAILER="REPLACE_ME_I5"
+COMMIT_MSG="REPLACE_ME_I5"   # example: Re-pin: patched take flows (F-002, F-008)
+TRAILER="${TRAILER:-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>}"
 ROW1="${ROW1:-$TAKE_FOLDER/row1.log}"
 EVLOG="${EVLOG:-$TAKE_FOLDER/evidence.log}"
 GREPOUT="${GREPOUT:-$TAKE_FOLDER/grepout.txt}"
 ACTLOG="${ACTLOG:-$TAKE_FOLDER/actlog.txt}"
+INSERTLOG="${INSERTLOG:-$TAKE_FOLDER/insert-test.txt}"
 VALUES="$KEEP/flow-values.env"
 FILLED1="$KEEP/filled-1"
 FILLED="$KEEP/filled"
-SRC_TAKE="REPLACE_ME_I1"
-KEY="${KEY:-REPLACE_ME_KEY}"
+SRC_TAKE="REPLACE_ME_I1"   # example: /home/me/take-scripts-repo
+KEY="${KEY:-REPLACE_ME_KEY}"   # typed fresh at step 16, example: KEY="L$(openssl rand -hex 8)"
 KEYS="${KEYS:-}"   # example (made-up lead keys, each in single quotes, comma between): 'L3f9a1c2d4e5b6a70','L9b8c7d6e5f4a3b2c'
 LEDGER_OUT="${LEDGER_OUT:-$TAKE_FOLDER/ledger.txt}"
 JUDGELOG="${JUDGELOG:-$TAKE_FOLDER/judged.log}"
 TESTLOG="${TESTLOG:-$TAKE_FOLDER/test.log}"
 GATELOG="${GATELOG:-$TAKE_FOLDER/gate.log}"
-BODY="REPLACE_ME_I14"
-HOOK_URL="REPLACE_ME_I14"
 POSTLOG="${POSTLOG:-$TAKE_FOLDER/post-twice.log}"
-SHA_R20="REPLACE_ME_I48"
-SHA_R21="REPLACE_ME_I48"
-SHA_R22="REPLACE_ME_I48"
-SHA_R23="REPLACE_ME_I48"
-REPORT="${REPORT:-REPLACE_ME_I48}"
-JUDGE_WHO="REPLACE_ME_I48"
-PGADMIN="REPLACE_ME_I13"
-FLOWS_ROLE="REPLACE_ME_I13"
-TAKE_DB="REPLACE_ME_I6"
-PGHOST="REPLACE_ME_I6"
-PGPORT="REPLACE_ME_I6"
+WAIT_S="${WAIT_S:-REPLACE_ME_I13}"   # the mailbox wait in seconds, set at step 18; example: 90
+export PGPASSFILE="${PGPASSFILE:-$KEEP/pgpass}"   # the password route of the audit (psql reads it; no password on a command line); the lead confirms in Q31 item 41
+TAKE_DB="REPLACE_ME_I6"   # example: mf_take
+PGHOST="REPLACE_ME_I6"   # example: 127.0.0.1
+PGPORT="REPLACE_ME_I6"   # example: 5432
 export PGHOST PGPORT
-PGCONN_SERVER="REPLACE_ME_I6"
-PGCONN_TAKE="REPLACE_ME_I6"
+PGCONN_SERVER="REPLACE_ME_I6"   # example: dbname=postgres user=mf_admin
+PGCONN_TAKE="REPLACE_ME_I6"   # example: dbname=mf_take user=mf_owner
 PGCONN="$PGCONN_TAKE"
-PGCONN_SELECT_ONLY="REPLACE_ME_I6"
-RESULT_JSON="REPLACE_ME_I18"
-for V in TAKE_FOLDER REPO STUDIO NEW RECORDING BRANCH PATCH_BRANCH PIN_NAME COMMIT_MSG TRAILER BODY HOOK_URL SHA_R20 SHA_R21 SHA_R22 SHA_R23 REPORT JUDGE_WHO PGADMIN FLOWS_ROLE TAKE_DB PGHOST PGPORT PGCONN_SERVER PGCONN_TAKE PGCONN_SELECT_ONLY RESULT_JSON SRC_TAKE KEY; do
-  case "${!V}" in REPLACE_ME*) echo "still a placeholder: $V";; esac
+PGCONN_SELECT_ONLY="REPLACE_ME_I6"   # example: dbname=mf_take user=flows_ro
+PGADMIN="REPLACE_ME_I13"   # example: mf_admin (a login NAME)
+FLOWS_ROLE="REPLACE_ME_I13"   # example: flows_rw
+# Values that are set LATER (not needed to start; each says the step that sets it):
+BODY="REPLACE_ME_I14"   # step 16: a made-up body file outside the repository; example: /home/me/keep/body.json
+HOOK_URL="REPLACE_ME_I14"   # step 16: the entry address of the INSTANCE; example: http://127.0.0.1:5690/webhook/mf-hook
+SHA_R20="REPLACE_ME_I48"   # step 17 / Block R1: the merge sha; example (made up): 0123456789abcdef0123456789abcdef01234567
+SHA_R21="REPLACE_ME_I48"   # same kind as SHA_R20
+SHA_R22="REPLACE_ME_I48"   # same kind as SHA_R20
+SHA_R23="REPLACE_ME_I48"   # same kind as SHA_R20
+REPORT="${REPORT:-REPLACE_ME_I48}"   # step 17: one review report file; example: /home/me/studio/egm/take/review-1.md
+JUDGE_WHO="REPLACE_ME_I48"   # step 17 / Block R1: who judges, a person; example: Asha Rao (TAKE-CHECKLIST Inputs item 24)
+RESULT_JSON="REPLACE_ME_I18"   # step 26: the take program's result file, a NEW path per take; example: /home/me/take-2026-11-18/result-take1.json
+input_ready() { if test -s "$TAKE_FOLDER/inputs/$1.sh"; then echo "ready-$1"; else local v="${!1:-}"; case "$v" in ''|REPLACE_ME*) echo "BLOCKED-$1";; *) echo "ready-$1";; esac; fi; }   # prints ready-NAME or BLOCKED-NAME (the answer cell: a value in this file, or a file inputs/NAME.sh)
+for F in "$TAKE_FOLDER"/inputs/*.sh; do test -s "$F" && . "$F"; done   # answer files the lead wrote (see "Answer cells" below)
+MISSING=""
+for V in TAKE_FOLDER REPO STUDIO NEW BRANCH PATCH_BRANCH COMMIT_MSG SRC_TAKE TAKE_DB PGHOST PGPORT PGCONN_SERVER PGCONN_TAKE PGCONN_SELECT_ONLY PGADMIN FLOWS_ROLE; do
+  case "${!V}" in REPLACE_ME*) echo "still a placeholder: $V"; MISSING=1;; esac
 done
+if test -z "$MISSING"; then echo bootstrap-ok; else echo "bootstrap-BLOCKED: fill the names above (examples are in the comments) and source this file again"; fi
+for V in BODY HOOK_URL SHA_R20 SHA_R21 SHA_R22 SHA_R23 REPORT JUDGE_WHO RESULT_JSON RECORDING WAIT_S KEY PIN_NAME; do
+  case "${!V}" in REPLACE_ME*) echo "set later (not a Tuesday-start blocker): $V";; esac
+done
+# end of shas.env
 ```
+**Words used in this file (round 14).** The operator is whoever types the commands (a person, or the lead session when it types for the person); the lead is the person who decides and supplies inputs. A step is always written with its file: RUNBOOK step 13, FIX-PLAN item 3. The gate is the start-state gate only (checks (a) to (e) of step 24). The pin file is the committed file `take-warns.pin`; the reviewer line is the `# reviewed by:` line inside it. Three number lists exist and are never mixed: `I<n>` is a row of RUNBOOK section 10; "Inputs item n" is a numbered item of TAKE-CHECKLIST; "Q31 item n" is an item of QUESTIONS.md Q31 (the question list, append only).
+
+**Answer cells: how a BLOCKED input gets its value (round 14, stranger B3).** QUESTIONS.md Q31 is the question list and is never edited, so it does not hold answers. The answer goes in the owner's reply in ORDERS.md and the lead copies it into ONE cell: either the matching `REPLACE_ME` word in `shas.env` (a value), or, when the answer is a command or several lines, a file `$TAKE_FOLDER/inputs/NAME.sh` (made with `mkdir -p -m 700 "$TAKE_FOLDER/inputs"`; sourced by `shas.env`). The operator checks a cell with `input_ready NAME`, which prints `ready-NAME` or `BLOCKED-NAME`; on `BLOCKED-NAME` the operator does not start the step, and tells the lead which Q31 item it is. Example: `input_ready PIN_NAME` prints `BLOCKED-PIN_NAME` until a real name is written.
+
+**The log wrapper (round 14).** In a paragraph: `{ COMMAND; echo "exit $?"; } 2>&1 | tee -a "$TESTLOG"`. In a table cell a pipe character breaks the table, so the same wrapper is written without it: `{ COMMAND; echo "exit $?"; } >> "$TESTLOG" 2>&1; tail -n 20 "$TESTLOG"`. Both write the same file; a pass line names the file it is read from.
+
 **Per-run names survive re-sourcing (round 12, M3).** The skeleton assigns every per-run name as `${NAME:-default}` (LOG, LOG2, LOG3, EXPORT, EXPORT_PIN, NEW_PIN, ROW1, EVLOG, GREPOUT, ACTLOG, LEDGER_OUT, POSTLOG, REPORT, KEY, KEYS, JUDGELOG, TESTLOG, GATELOG), so a value typed in the same shell, before or after the bootstrap line, is kept when a block sources `$ENVSH` again; a repeat types a NEW path (`LOG2="$TAKE_FOLDER/log-2b.txt"`) in the call that uses it. A name that holds a fixed value (REPO, NEW, FLOWS, PIN_FILE and the others) is NOT typed per call: change it in `shas.env`.
 
 **One set of names for the database logins and keys (round 12, M7).** `PGADMIN` = the admin login NAME (used as `psql -U "$PGADMIN"`; never a connection text, never a password); `PGADMIN_PW` and `FLOWS_PW` = the two passwords, loaded for one shell with `. "$KEEP/pg-secrets.env"` (step 18) and never stored in `shas.env`, a log or the repository; `FLOWS_ROLE` = the database login the flows use; `KEYF` and `KEYH` = the lead ID of the form leg and of the hook leg of T19 (step 18); `KEY` = the lead ID of T20, T21 and the other steps. FINDINGS.md F-002 writes `$KEY` and `$PGADMIN` in its typed commands: read its `$KEY` as `KEYF` in the form leg and its `$PGADMIN` as the login name above (FINDINGS.md is not edited here; lead decides whether to align it, listed in fix-tcfp8.md).
