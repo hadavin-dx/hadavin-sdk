@@ -9,7 +9,7 @@ Made-up data only: the demo uses invented people and a test mailbox. The owner r
 - Studio lead = the Claude session that does the technical steps. Older pages say "lead". Sales lead = a made-up customer enquiry the demo handles; never write "lead" alone.
 - core-hardening = another Claude session, on its own branch. It writes v5 and, per the lead's orders, the text-only security edits (S9-5, S9-12, S9-3, S9-2).
 - v5 = the owner steps file inputs/OWNER-STEPS-realrun-v5-core-hardening.md. It replaces the older v3, which is archived, never deleted.
-- Scope sheet = the file describing the model program (the `stage` that answers `/qualify`). Exact file name: `inputs/AGENT-SCOPE-DO-AND-DONT.md` (named "SC" in drift/REPORT.md:11; it mentions `/qualify` at lines 12 and 14).
+- Scope sheet = the file describing the model program (the `stage` that answers `/qualify`). Exact file name: `inputs/AGENT-SCOPE-DO-AND-DONT.md` (named "SC" in drift/REPORT.md:11; it mentions `/qualify` at line 14; line 12 is the heading "Desk qualify stage").
 - n8n = the workflow tool the take runs through. A flow = one n8n workflow. A flow set = the flows imported together.
 - real-v5 = the flow set that talks to the real test accounts (HubSpot contacts, a real mailbox). It is the ONLY flow set in this video (scenes 1 to 4).
 - film-v5 = a second flow set that talks to stand-in programs. OUT of this video (decision 1). Scenes 5 to 11 are cut.
