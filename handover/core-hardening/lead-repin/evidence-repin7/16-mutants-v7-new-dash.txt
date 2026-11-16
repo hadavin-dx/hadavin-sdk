@@ -1,0 +1,4 @@
+v17-escaped-quote-string-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1348 failed=12 (the made-up input and output files w | first: FAIL (secret still visible): escaped quotes: name and string value (first 6 characters)
+v18-unicode-escape-key-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): JSON key written with a unicode escape (first 6 characters)
+v19-shape-rule-separators-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1342 failed=18 (the made-up input and output files w | first: FAIL (secret still visible): password flag after && (first 6 characters)
+v20-glued-names-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1342 failed=18 (the made-up input and output files w | first: FAIL (secret still visible): glued name DBPASS (first 6 characters)

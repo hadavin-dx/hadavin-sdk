@@ -87,3 +87,59 @@ M21 CAUGHT by C19 | R7 to R9 in 5.4
 M22 CAUGHT by C23 | check 3 changed
 M23 CAUGHT by C03,C18 | margin changed in facts (sums)
 M24 CAUGHT by BUILD | nested marker left
+M25 CAUGHT by BUILD | stray marker left
+M26 CAUGHT by C06 | banned word in note
+M27 CAUGHT by C16 | open list numbering gap
+M28 CAUGHT by C19 | note G pointer G12 to G32
+M29 CAUGHT by C19 | note Open 51 to 15
+M30 CAUGHT by C19 | note section 4 to 3
+M31 CAUGHT by BUILD | run length 15 to 14 (below 860 s)
+M32 CAUGHT by C03 | need minutes 14.33 to 14.4
+M33 CAUGHT by C04 | deadline weekday in glossary
+M34 CAUGHT by C23 | R8 loses "A key alive: the card first"
+M35 CAUGHT by C23 | tolerated item dropped from note
+M36 CAUGHT by C22 | cancel rule paraphrased in note
+M37 CAUGHT by C03 | program limit 13.22 in facts
+M38 CAUGHT by C17,C49,C77 | settings TOKENS_OUT 12000
+M39 CAUGHT by C21 | card step 5 phrase spelled differently
+M40 CAUGHT by C17,C23 | B submitted 12 times
+M41 CAUGHT by C17 | IST definition in note
+M42 CAUGHT by C17 | open list minutes figure
+M43 CAUGHT by C19 | note G33 to G38
+M44 CAUGHT by C19 | R8 pointer go (5.8) to 5.7
+M45 CAUGHT by C11 | R4 pointer 6.7 to 6.8
+M46 CAUGHT by C19 | 8.1 card step 3 to 5
+M47 CAUGHT by C04,C73 | post-by IST in sheet
+M48 CAUGHT by C19 | CHANGES table pointer 8.5 to 8.9
+M49 CAUGHT by C19 | open row pointer 7.8 to 7.7
+M50 CAUGHT by C17 | note worked price
+M51 CAUGHT by C12,C21 | unlisted set phrase sent in 8.5
+M52 CAUGHT by C16 | Open 199 in a list form (no such row)
+M53 CAUGHT by C17 | expected total in note
+M54 CAUGHT by C04,C79 | yes deadline IST pair
+Q01 CAUGHT by C48 | wrong price per call hardcoded
+Q02 CAUGHT by C48 | wrong total hardcoded
+Q03 CAUGHT by C49,C77 | wrong output tokens in the sample
+Q08 CAUGHT by C50 | STOP RULE step 1 deleted
+Q09 CAUGHT by C51 | stray backtick in card gate W1
+Q10 CAUGHT by C52 | card cancel step changed
+Q11 CAUGHT by C53 | card gate W6 deleted
+Q12 CAUGHT by C54 | R4 auto-reload flipped to on
+Q13 CAUGHT by C55 | secret-shaped string (built from parts) in the sheet
+Q15 CAUGHT by C56 | sample give-up minutes changed
+Q16 CAUGHT by C56 | sample silence minutes changed
+Q18 CAUGHT by C57 | one delete-domain guard changed
+Q20 CAUGHT by C58 | lead note limit wrong
+Q22 CAUGHT by C59 | accepted exit codes widened
+Q24 CAUGHT by C60 | R8 word count changed
+N01 CAUGHT by C70 | IST offset label wrong (v25 plant N01)
+N05 CAUGHT by C71 | R5 archived turned into deleted (N05)
+N10 CAUGHT by C72 | warning before the start-line step removed (N10)
+N11 CAUGHT by C73 | post-by date moved with a consistent weekday (N11)
+N12 CAUGHT by C74 | R7 second person turned passive (N12)
+N14 CAUGHT by C75 | shortened command date -u to date (N14)
+M4a CAUGHT by C76 | price line swap (security M4)
+M4b CAUGHT by C77 | tokens swap in the sample (security M4)
+M4c CAUGHT by C78 | DEADLINE line wrong (security M4)
+M4d CAUGHT by C79 | yes-line deadline pair changed to another valid pair (security M4)
+M4e CAUGHT by C55 | secret-shaped text with a slash, 47 characters (C55 slash gap)
