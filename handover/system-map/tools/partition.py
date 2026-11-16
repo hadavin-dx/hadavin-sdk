@@ -52,11 +52,12 @@ def main(root, out):
         mp = os.path.join(out, f"manifest-{lane}.tsv")
         status = {}
         if os.path.exists(mp):  # keep the read status already recorded, but only for a file whose size is unchanged
-            for line in open(mp, encoding="utf-8"):
+            for line in open(mp, encoding="utf-8", errors="surrogateescape"):
                 c = line.rstrip("\n").split("\t")
                 if len(c) == 4:  # file, size, status, sha256 of the content when the status was recorded
                     status[c[0]] = (c[1], c[2], c[3])
-        with open(mp, "w", encoding="utf-8") as fh:
+        tmp = mp + ".tmp"
+        with open(tmp, "w", encoding="utf-8", errors="surrogateescape") as fh:
             for f in fs:
                 fp = os.path.join(root, f)
                 size = os.path.getsize(fp) if os.path.isfile(fp) else -1
@@ -65,6 +66,7 @@ def main(root, out):
                 # keep READ only if size AND content hash are unchanged; a missing file is never kept
                 keep = old[1] if old and old[0] == str(size) and old[2] == digest and digest != "missing" else "NOT-READ"
                 fh.write(f"{f}\t{size}\t{keep}\t{digest}\n")
+        os.replace(tmp, mp)
     total = sum(len(v) for v in lanes.values())
     print({k: len(v) for k, v in sorted(lanes.items())}, "total", total, "of", len(files),
           "problems", len(problems))

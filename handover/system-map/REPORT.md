@@ -1,3 +1,5 @@
+ORDER 023/024: the model sed of ORDER 023 was never run (the session's permission check denied it); so nothing to undo. Checked 16 Nov 2026 10:12Z: grep -rh '^model:' ~/.claude/plugins/*/egm* | sort | uniq -c = 6 claude-opus-5-5, 64 claude-sonnet-5-5, 0 fable.
+
 # REPORT from system-map (newest on top, UTC and IST)
 
 ## 10:45 UTC / 16:15 IST - failures first: the two baseline test failures are REAL on core-hardening; ORDER 019 closed

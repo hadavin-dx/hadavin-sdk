@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:11:31Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:13:24Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-021; lead DECISIONS 10:02Z (video is real-v5 only) read, being applied
 STATE: WORKING
@@ -7,10 +7,10 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 6 (rehearsal-rule trim check; cleanup order read; flow-file choice facts; tool fix spec; README structure read; TAKE-BLOCKERS style read) plus 1 detached pytest (M14).
+AGENTS_RUNNING: 0 right now (all 6 reported: README read, banned-claims read, cleanup card check, QUESTIONS/TAKE-BLOCKERS check, style read, tool spec); refilling this turn. M14 pytest finished.
 INTERRUPTED: none
-NEXT: ORDER 023 NOT DONE: the sed on ~/.claude/plugins (6 files: egm-brainstorm, egm-draft, egm-resolve, cache and marketplace copy) was DENIED by the session's permission check (reason: destructive or unwanted action). Before the command: 6 opus, 64 sonnet; unchanged. Nothing worked around; EGM planning skills keep their current model. The lead or owner must allow that one command or run it. Other lanes continue: README, LEAD-PAGE, cleanup card fixed; reports from 17 read agents applied or saved in work/. HELD for the lead: does `end` delete (QUESTIONS 1); who edits v5 step J; D-04/D-05 apply; trim of the rehearsal.
-CAPACITY: 4 cores, load 0.97, memory 1 of 15 GB used, disk 40 percent used; heavy slots 1 of 3 (pytest M14)
+NEXT: ORDER 024 (owner) cancelled ORDER 023. The sed never ran (denied), nothing to undo; egm model counts 6 opus, 64 sonnet, 0 fable (REPORT.md line 1). M14 (core-hardening b6c40a9bd, fresh clone): 1 failed (test_licences_are_proprietary, branch artefact per decision 11), 9390 passed, 455 skipped, rc=1 (not a clean pass). partition.py fix done, 70 tests OK. Cleanup card order fixes applied. HELD for the lead: does `end` delete (QUESTIONS 1); who edits v5 step J; D-04/D-05; rehearsal trim; one vs two rehearsals; row 1 builder and date.
+CAPACITY: nproc 4, load 0.26, mem 15 GB total 0 used, disk 40 percent
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
 PUSHED_UTC: 2026-11-16T10:11:31Z
 
