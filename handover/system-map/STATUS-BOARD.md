@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:39:20Z
+UPDATED_UTC: 2026-11-16T11:40:54Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
@@ -7,9 +7,9 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 15 (rows below 100 percent: M2-M10, M14, M15, M17-M20; 5 rows are at 100). CORRECTION: my earlier "14" and "6 at 100" were wrong; recounted by script at 11:36Z over the 20 rows. PERCENT mean of the table is 83.1 (sum 1662 over 20 rows), not 83.6. M3, M4, M6 queue tags now match the board (checked 11:26Z, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
 PERCENT: 83.1 (script recount: 1662 / 20; the earlier 83.6 was wrong)
-AGENTS_RUNNING: 8 running (ORDER 028), new this beat: adfafd7b58537f33c (decision list round 3), afd2d3e9c5823d4a0 (SWEEP 1-200), a4b4d02e7bc7a8f84 (MASTER-MAP 200-400), ac34e7d9abcbb68c1 (MASTER-MAP 400-600), acfe0da0671228746 (ONE-PLACE-TABLE 185-end), a572d62f91a6cef1a (MAP-ADDITIONS), aa090570da7c0d3f6 (run-day card vs v5 fact check), a2702ad784fc4178e (TAKE-BLOCKERS cold read)
+AGENTS_RUNNING: 8 running (ORDER 028), named: acb507430dd4a3d93 (delete wording v4/v5), a2a6da63db3691215 (cleanup-card-held-edits), ace88c5a6cf406079 (banned-claims round 2), a821a88744c3e9157 (FACTS-ALREADY-DONE), a19617c654e509133 (QUESTIONS round 3), a9861d4e61cf99fd6 (critical-path-r1), a4609b5b1ca1dff2a (FINAL-CROSSCHECK round 2), plus the cleanup-card fact check just launched
 INTERRUPTED: none
-NEXT: digested through 295. Collect the 8 running hand-backs as 296 on, refill to 8 in the same turn one ends. Then finish decision-list gaps (A13, C1-C9, D3, E9, F rows, G1, terms), open-items-table fixes, CORRECTIONS item 7. Cold read of this board (digest 291) found: agent table lacks item and last-checked columns; licence count 7+2 vs 11 unexplained; M5/M10/M19 have no agent running now.
+NEXT: digested through 308. Collect hand-backs as 308 on, refill to 8 in the same turn one ends. Then: open-items-table fixes, decision-list rows still lacking names, CORRECTIONS item 7, end-delete-cases case B closed by decision 2.
 CAPACITY: nproc 4, load 0.22, RAM 840/16087 MB used, disk / 44% used (22G free); top disk users: /tmp/claude-0 about 1.3 GB, /home/user/hadavin-sdk about 312 MB, /home/user/duplicate-proof-lead-desk-n8n about 5 MB
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
 PUSHED_UTC: 2026-11-16T11:34:33Z
@@ -38,17 +38,18 @@ PUSHED_UTC: 2026-11-16T11:34:33Z
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (ORDER 028: 8 running; started 2026-11-16T11:39:20Z; expected end within 10 minutes; last checked 2026-11-16T11:39:20Z)
+## AGENTS (ORDER 028: 8 running; last checked 2026-11-16T11:40:42Z)
 | agent id | item | purpose | state |
 |---|---|---|---|
-| adfafd7b58537f33c | M19 | cold read decision-list-for-lead, round 3 | running, read-only |
-| afd2d3e9c5823d4a0 | M6 | cold read SWEEP 1-200 | running, read-only |
-| a4b4d02e7bc7a8f84 | M2 | cold read MASTER-MAP 200-400 | running, read-only |
-| ac34e7d9abcbb68c1 | M2 | cold read MASTER-MAP 400-600 | running, read-only |
-| acfe0da0671228746 | M2 | cold read ONE-PLACE-TABLE 185-end | running, read-only |
-| a572d62f91a6cef1a | M2 | cold read MAP-ADDITIONS | running, read-only |
-| aa090570da7c0d3f6 | M19 | fact check run-day card vs v5 steps C-H | running, read-only |
-| a2702ad784fc4178e | M5 | cold read TAKE-BLOCKERS | running, read-only |
+| acb507430dd4a3d93 | M17 | list delete wording in v4 and v5 | running, read-only |
+| a2a6da63db3691215 | M17 | cold read cleanup-card-held-edits | running, read-only |
+| ace88c5a6cf406079 | M5 | cold read banned-claims round 2 | running, read-only |
+| a821a88744c3e9157 | M2 | cold read FACTS-ALREADY-DONE | running, read-only |
+| (cleanup card fact check) | M17 | fact check cleanup card vs v5 step I | just launched |
+| a19617c654e509133 | M6 | cold read QUESTIONS round 3 | running, read-only |
+| a9861d4e61cf99fd6 | M6 | cold read critical-path-r1 | running, read-only |
+| a4609b5b1ca1dff2a | M6 | cold read FINAL-CROSSCHECK round 2 | running, read-only |
+
 
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
