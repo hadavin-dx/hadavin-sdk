@@ -20,3 +20,4 @@ m19 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up in
 m20 [bash]: KILLED-phase1 exit=1 fail_lines=7 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (6s)
 m21 [bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (5s)
 m22 [bash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (7s)
+--- same

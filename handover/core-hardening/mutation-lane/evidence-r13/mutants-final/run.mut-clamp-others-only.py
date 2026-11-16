@@ -1808,7 +1808,7 @@ def restore_from_marker(
                 f"{LIMIT_D_NOTE}"
             )
             mode &= 0o777
-        if mode & 0o002:
+        if mode & 0o022:
             # r12 m5, r13: a plain --restore never writes a file that the group or every user may change, whatever a (possibly
             # forged) marker says; git never gives those bits. The content is still restored; the text says so
             mode_note += (
@@ -1816,7 +1816,7 @@ def restore_from_marker(
                 f"the file got {oct(mode & ~0o022)} (a file that really was group-writable must be changed back by hand)"
                 f"{LIMIT_D_NOTE}"
             )
-            mode &= ~0o022
+            mode &= ~0o002
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)
             if (now.st_dev, now.st_ino) != (m["root_dev"], m["root_ino"]):

@@ -20,3 +20,4 @@ m19 [dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up in
 m20 [dash]: KILLED-phase1 exit=1 fail_lines=7 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (3s)
 m21 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (4s)
 m22 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1595 failed=6 (the made-up input and output files were deleted) (2s)
+--- killed by me at 18:57Z on lead order (m23 phase 2 was in flight in both shells, rerun wrapped)

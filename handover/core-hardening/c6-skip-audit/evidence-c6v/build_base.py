@@ -211,7 +211,7 @@ def build(words):
                          ("v19 to v30 (all variants", "v19 to v%d (all variants" % NEWV),
                          ("v29-B, v30-A, v30-B; two mentions in v29-SOURCE, v30-SOURCE", "v29-B, " + ", ".join("v%d-A, v%d-B" % (v, v) for v in INTER + [NEWV]) + "; two mentions in v29-SOURCE, " + ", ".join("v%d-SOURCE" % v for v in INTER + [NEWV])),
                          ("v30-A and v30-B are the newest rendered sheets at", "v%d-A and v%d-B are the newest rendered sheets at" % (NEWV, NEWV)),
-                         ("17:13:05 UTC = 22:43:05 IST are v30-A and v30-B)", "17:13:05 UTC = 22:43:05 IST are v30-A and v30-B)")):
+                         ("17:13:05 UTC = 22:43:05 IST are v30-A and v30-B)", "17:13:05 UTC = 22:43:05 IST are v%d-A and v%d-B)" % (NEWV, NEWV))):
             c = txt.count(old)
             txt = sub(txt, old, new, c) if c else (FAILS.append("no match: " + old[:60]) or txt)
     for old, new in (("%s UTC = %s IST" % (OLDCT, OLDCTI), "%s UTC = %s IST" % (CT, CTI)), ("2026-11-16T%sZ = %s IST" % (OLDCT, OLDCTI), "%s = %s IST" % (CTFULL, CTI))):

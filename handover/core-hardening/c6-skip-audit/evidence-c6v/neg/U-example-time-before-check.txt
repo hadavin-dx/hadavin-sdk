@@ -29,13 +29,13 @@ PASS class 1: the L-LEASE row of section 3 shows 'No' in the Confirmed? column a
 PASS class 1: every line that quotes the G12 approval answer quotes 'I do not approve it' and never 'I approve it' (3 lines) :: 3
 PASS class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57, 95, 99, 104] (history lines excepted) :: []
 PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v34) :: {'34'}
-PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:52:51']) :: {'18:52:51'}
+PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:57:08']) :: {'18:57:08'}
 PASS class 2: 'to N files' is 10 everywhere (found ['10']) and the number of TASKS is twelve everywhere (found ['twelve']) :: (['10'], ['twelve'])
 PASS class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')]) :: ([('five', ' items'), ('two', ' (OWNER ONLY) questions')], 2)
 PASS class 2: no TASK number above twelve (the list has 12 tasks) :: 12
 PASS class 4: every place that quotes a card line (from its first eight words; the shorter option (b) of L-CARDLEN differs earlier and is a different text on purpose) quotes it whole and equal to the line in rows 13 and 14 (4 lines) :: []
 PASS class 1: 'changes no running n8n' appears in the box and in section 1c :: (1, 1)
 PASS class 6: every old text shorter than 40 characters occurs exactly once in the whole file (chained rows excepted) :: []
-SUMMARY: 236 checks, 3 FAILED: box has one answer line with seconds, three free names, the exception form and L-SHEET apart; every example time of day (the IST of the first example)  in the box has 'IST' within 40 characters (0 places); m4 every example answer time in the box is later than the check time 2026-11-16T18:52:51Z (and has its IST)
+SUMMARY: 236 checks, 3 FAILED: box has one answer line with seconds, three free names, the exception form and L-SHEET apart; every example time of day (the IST of the first example)  in the box has 'IST' within 40 characters (0 places); m4 every example answer time in the box is later than the check time 2026-11-16T18:57:08Z (and has its IST)
 
 EXIT CODE 1

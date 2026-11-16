@@ -25,7 +25,7 @@ M["T-E13-card-words-11-to-12"] = rep_once("line 1 (11 words)", "line 1 (12 words
 M["T-E14-R-number-in-box"] = box_sub("WHAT TO TYPE (capital-letter", "WHAT TO TYPE (R447; capital-letter")
 M["T-E15-stated-count-wrong"] = re.sub(r"This box holds (\d+) words", lambda m: "This box holds %d words" % (int(m.group(1)) + 7), rep, count=1)
 M["T-E16-box-too-long"] = rep[:box_end] + ("filler words here " * 20) + rep[box_end:]
-M["T-E17-newest-note-time-wrong"] = re.sub(r"(LEAD-RELEASE-NOTE-v16\.md was written )\d\d:\d\d:\d\d", r"\g<1>10:00:00", rep, count=1)
+M["T-E17-newest-note-time-wrong"] = re.sub(r"(LEAD-RELEASE-NOTE-v\d+\.md was written )\d\d:\d\d:\d\d", r"\g<1>10:00:00", rep, count=1)
 M["T-E18-LRN-short-table-gone"] = "\n".join(l for l in rep.split("\n") if not l.startswith("| LRN14 |"))
 M["T-M1-sheets-carry-sentence"] = rep + "\n- The sheets carry the 45-second sentence.\n"
 M["T-M1b-task9-instruction"] = rep_once("TASK (9), A QUESTION TO YOU", "TASK (9) add it")
@@ -54,11 +54,11 @@ env_variant("T-E20-release-note-v16-newer", _late_file("LEAD-RELEASE-NOTE-v16.md
 env_variant("T-E20b-release-note-v16-SOURCE-newer", _late_file("LEAD-RELEASE-NOTE-v16-SOURCE.md"))
 env_variant("T-E21-release-note-v17-exists", lambda d: open(d + "/LEAD-RELEASE-NOTE-v17.md", "w").write("x"))
 env_variant("T-E22-sheet-v33-exists", lambda d: open(d + "/OWNER-SHEET-v33-A.md", "w").write("x"))
-env_variant("T-E23-sheet-v32-B-missing", lambda d: os.remove(d + "/OWNER-SHEET-v32-B.md"))
+env_variant("T-E23-sheet-v32-B-missing", lambda d: os.remove(d + "/OWNER-SHEET-v%s-B.md" % re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1)))
 for _n in ENV:
     if _n.startswith("T-"):
         M[_n] = rep
-M["T-E17b-sheet-v32-time-wrong"] = re.sub(r"(OWNER-SHEET-v32-A\.md \(written )\d\d:\d\d:\d\d", r"\g<1>10:00:00", rep, count=1)
+M["T-E17b-sheet-v32-time-wrong"] = re.sub(r"(OWNER-SHEET-v\d+-A\.md \(written )\d\d:\d\d:\d\d", r"\g<1>10:00:00", rep, count=1)
 M["T-E24-EGM-undefined-1c"] = rep_once("EGM = the studio's review method", "EGM is the studio's review method")
 M["T-E25-assumption-label-gone-box"] = box_sub("MY ASSUMPTION", "THE RULE")
 M["T-E26-own-reading-gone-box"] = box_sub("this report's own reading", "a fact")
@@ -94,10 +94,10 @@ M["U-two-statuses-L-SAVEERR-sec3-default-no"] = rep_once("| OPEN (OWNER ONLY). U
 M["U-B4-unverified-gone"] = box_sub("equality with the real files is UNVERIFIED", "all is fine")
 M["U-B5-defaults-leave-gone"] = box_sub("WHAT THE DEFAULTS LEAVE", "NOTE")
 M["U-part2-card-words-wrong"] = rep_once("line 2 (35 words)", "line 2 (36 words)")
-M["U-L-SHEET-v32-time-missing"] = re.sub(r"(OWNER-SHEET-v32-B\.md) \(written [^)]*\)", r"\1", rep, count=1)
+M["U-L-SHEET-v32-time-missing"] = re.sub(r"(OWNER-SHEET-v\d+-B\.md) \(written [^)]*\)", r"\1", rep, count=1)
 M["U-steps-5-to-9-back"] = rep_once("after TASKS (5) to (9) of the list", "after steps 5 to 9 of the list")
 M["U-example-time-before-check"] = rep_once(EX1TXT, "2026-11-16T16:40:00Z = 22:10:00 IST")
 M["U-row96-old-text-not-once"] = line_sub("| 96 | NOT APPLIED", "`own runs. \\| 30 s EST`", "`own runs. \\| 31 s EST`")
-M["U-stale-evidence-c6t-name"] = rep_once("evidence-c6v/contact-grep-output.txt", "evidence-c6u/contact-grep-output.txt")
-M["U-applied-rows-c6t-name"] = rep_once("writes the applied row numbers to c6v-APPLIED-ROWS.md next to this report", "writes the applied row numbers to c6u-APPLIED-ROWS.md next to this report")
+M["U-stale-evidence-c6t-name"] = rep.replace("evidence-c6v/contact-grep-output.txt", "evidence-c6u/contact-grep-output.txt", 1)
+M["U-applied-rows-c6t-name"] = rep.replace("c6v-APPLIED-ROWS.md", "c6u-APPLIED-ROWS.md", 1)
 M["U-evidence-file-missing"] = rep_once("evidence-c6v/contact-grep-output.txt", "evidence-c6v/no-such-file.txt")

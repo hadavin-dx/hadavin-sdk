@@ -24,7 +24,7 @@ M["N4-accepted-exit-in-row8"] = mut_row(rep, 8, "new", lambda s: s + " The lease
 i5 = [i for i, l in enumerate(rep.split("\n")) if l.startswith("| 87 | page statements, line")][0]
 ls = rep.split("\n"); del ls[i5]
 M["N5-5a-page-row-missing"] = "\n".join(ls)
-M["N6-newest-sheet-claim-stale-v27"] = rep.replace("v30", "v27")
+M["N6-newest-sheet-claim-stale-v27"] = rep.replace("v%s-A and v%s-B are the newest" % ((re.search(r"OWNER-SHEET-v(\d+)-A\.md \(written", rep).group(1),)*2), "v27-A and v27-B are the newest")
 M["N7-row90-broken-sentence-and-third-place"] = mut_row(rep, 90, "new", lambda s: s.rstrip() + " owned by a third place")
 M["N8-row6-claims-deletion-erases"] = mut_row(rep, 6, "new", lambda s: s.replace("NOT verified that deleting a run erases it", "Deleting a run erases it", 1))
 M["N9-row8-latest-start-missing"] = mut_row(rep, 8, "new", lambda s: s.replace("18:04 UTC = 23:34 IST", "18:29 UTC = 23:59 IST", 1))
@@ -85,10 +85,10 @@ M["R7-M-E-row53-ready-again"] = mut_row(rep, 53, "st", lambda s: "NOT APPLIED; r
 M["R8-M-F-24-word-rewrite-back"] = rep + "\nWith answer 1 and option (b), line 1 is a 24-word rewrite.\n"
 M["R9-take-over-back-in-box"] = once("TO REVERSE A DEFAULT", "the recovery flow takes over the contact\nTO REVERSE A DEFAULT") if False else rep.replace("claim the contact again", "take over the contact", 1)
 M["R10-pipe-in-row-text"] = mut_row(rep, 15, "new", lambda s: s + " a | b")
-M["R11-source-copy-statement-gone"] = rep.replace("91 of 96 rows", "most rows")
+M["R11-source-copy-statement-gone"] = rep.replace("99 of 104 rows", "most rows")
 M["R12-L-SAVEERR-default-yes"] = "\n".join(l.replace("| No |", "| Yes |") if l.startswith("| L-SAVEERR | OWNER ONLY") else l for l in rep.split("\n"))
 M["R13-item12-made-up-domain-check-gone"] = mut_row(rep, 6, "new", lambda s: s.replace("made-up e-mail domain and the name marker", "made-up domain", 1))
-M["R14-IST-missing-next-to-22-10-example"] = rep.replace("00:10:00 IST", "00:10:00", 1)
+M["R14-IST-missing-next-to-22-10-example"] = re.sub(r"(2026-11-16T\d\d:\d\d:\d\dZ = 2026-11-17T\d\d:\d\d:\d\d) IST", r"\1", rep, count=1)
 M["O-REPORT-c6q-itself-must-fail"] = open(D + "REPORT-c6q.md", encoding="utf-8").read()
 M["O-REPORT-c6r-itself-must-fail"] = open(D + "REPORT-c6r.md", encoding="utf-8").read()
 

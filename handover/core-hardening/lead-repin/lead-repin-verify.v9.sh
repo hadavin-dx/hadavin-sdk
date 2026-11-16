@@ -1,5 +1,5 @@
 #!/bin/sh
-# lead-repin-verify.sh (version 8): checklist printer for the lead at re-pin.
+# lead-repin-verify.v9.sh (version 9): checklist printer for the lead at re-pin.
 #
 # WHAT IT DOES TO YOUR MACHINE (exact):
 #   - reads files: grep, sed, awk, tr, wc, find, sha256sum, git rev-parse / log / status
@@ -34,10 +34,10 @@
 # still a safety net, not a guarantee: THE LEAD READS THE OUTPUT BEFORE SHARING IT.
 #
 # usage:
-#   sh lead-repin-verify.sh [TAKE_DIR]        run the checklist (TAKE_DIR defaults to the current folder)
-#   sh lead-repin-verify.sh --self-test       test the masking filter with made-up secrets, print PASS/FAIL
-#   <command> | sh lead-repin-verify.sh --mask   pass any text through the same masking filter
-#   (test aid, --self-test only) SELFTEST_FILTER="sh other-version.sh --mask" sh lead-repin-verify.sh --self-test
+#   sh lead-repin-verify.v9.sh [TAKE_DIR]        run the checklist (TAKE_DIR defaults to the current folder)
+#   sh lead-repin-verify.v9.sh --self-test       test the masking filter with made-up secrets, print PASS/FAIL
+#   <command> | sh lead-repin-verify.v9.sh --mask   pass any text through the same masking filter
+#   (test aid, --self-test only) SELFTEST_FILTER="sh other-version.sh --mask" sh lead-repin-verify.v9.sh --self-test
 #              runs the same test cases against another filter, to show that an old filter fails them.
 #              In every other mode SELFTEST_FILTER is removed from the environment.
 #
@@ -1602,7 +1602,7 @@ self_test_meta() {
   # v9 (F11): a caller that is bash with its options or functions exported. Skipped (and counted as passed with a note) when bash is not installed.
   if command -v bash >/dev/null 2>&1; then
     st_o=$(printf 'password %s_62_ tail\n' "$base" | env SHELLOPTS=posix:xtrace LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash --posix "$SELF" --mask 2>&1); st_r=$?
-    if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_62_" && ! printf '%s' "$st_o" | grep -a -q '^+'; then mt_ok "bash --posix with SHELLOPTS=posix:xtrace: the value is hidden, nothing is traced, exit 0"
+    if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_62_" && [ "$(printf '%s\n' "$st_o" | grep -a '^+' | grep -a -v -F -x -- '+ set +x +v' | wc -l | tr -d ' ')" = 0 ]; then mt_ok "bash --posix with SHELLOPTS=posix:xtrace: the value is hidden, only the one trace line of the trace-off command itself shows, exit 0"
     else mt_bad "bash --posix with SHELLOPTS=posix:xtrace must hide the value and print no trace (exit=$st_r)"; fi
     st_o=$(printf 'API_KEY=%s_63_\n' "$base" | env 'BASH_FUNC_sed%%=() { echo PWNED; }' 'BASH_FUNC_myfn%%=() { echo PWNED; }' LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1); st_r=$?
     if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q 'PWNED' && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_63_"; then mt_ok "functions exported from bash (sed and another name) are removed: the value is hidden, exit 0"

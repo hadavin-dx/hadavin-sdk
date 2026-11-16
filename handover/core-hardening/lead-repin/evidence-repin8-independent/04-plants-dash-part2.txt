@@ -1,0 +1,2 @@
+== dash start 18:56:34 load 6.75 7.28 5.92
+heavy-slot: slot 2 taken at 2026-11-16T18:56:34Z

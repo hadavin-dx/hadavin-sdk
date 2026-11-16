@@ -2163,10 +2163,10 @@ PY
 cat "$S/t100g.out"
 chk "T100g T99g cause: no import of argparse, tarfile, subprocess or json stands before the first signal.signal call in the source (TEXT CHECK of the cause; T99g is the behaviour) (exit $rc; r10: fails)" "[ $rc -eq 0 ]"
 # h) m5: a forged marker mode with a write bit for others, plain --restore: written without it; --sha refuses with the right text
-for MODEV in 438 511; do   # 0666 0777
+for MODEV in 438 511 436 504; do   # 0666 0777 0664 0770 (r13: the group write bit alone is cut as well)
   kill_planted; forge97; setmarker97 mode=$MODEV
   python3 "$RUN" --root "$T/root" --restore >"$S/t99h.out" 2>&1; rc=$?; GOT=$(stat -c %a "$T/root/src/mod.py"); cut -c1-300 "$S/t99h.out" | tail -1
-  chk "T99h m5 forged marker mode $(printf '%o' $MODEV) (plain --restore): exit 0 (got $rc), file written WITHOUT the write bit for others (mode $GOT has no 2 in the last digit), the text says NOTE (r11: written as recorded)" "[ $rc -eq 0 ] && [ \"\${GOT: -1}\" != 6 ] && [ \"\${GOT: -1}\" != 7 ] && [ \"\${GOT: -1}\" != 2 ] && [ \"\${GOT: -1}\" != 3 ] && grep -q 'writable by the group or by others' '$S/t99h.out'"
+  chk "T99h m5 forged marker mode $(printf '%o' $MODEV) (plain --restore): exit 0 (got $rc), file written WITHOUT the write bit for the group or others (mode $GOT has no write bit in the last two digits), the text says NOTE (r11: written as recorded)" "[ $rc -eq 0 ] && [ \"\${GOT: -1}\" != 6 ] && [ \"\${GOT: -1}\" != 7 ] && [ \"\${GOT: -1}\" != 2 ] && [ \"\${GOT: -1}\" != 3 ] && [ \"\${GOT:(-2):1}\" != 2 ] && [ \"\${GOT:(-2):1}\" != 3 ] && [ \"\${GOT:(-2):1}\" != 6 ] && [ \"\${GOT:(-2):1}\" != 7 ] && grep -q 'writable by the group or by others' '$S/t99h.out'"
   chmod 644 "$T/root/src/mod.py"
 done
 git -C "$T/repo" config tar.umask 022

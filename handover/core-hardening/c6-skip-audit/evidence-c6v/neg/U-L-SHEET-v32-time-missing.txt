@@ -1,6 +1,4 @@
-own reading"] :: []
-PASS E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key
-PASS E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (4, 3), none of them reworded
+ reading of G12 stands whole in every place it is given (1), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (4, 3), none of them reworded
 PASS c6v TIE card total words, seconds, budget (recomputed from the four quoted lines): every copy (3 found) equals the source value 90/36/40 :: []
 PASS c6v TIE card total words 'spoken card holds': every copy (1 found) equals the source value 90 :: []
 PASS c6v TIE card seconds 'at 150 words a minute': every copy (4 found) equals the source value 36 :: []
@@ -31,13 +29,13 @@ PASS class 1: the L-LEASE row of section 3 shows 'No' in the Confirmed? column a
 PASS class 1: every line that quotes the G12 approval answer quotes 'I do not approve it' and never 'I approve it' (3 lines) :: 3
 PASS class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57, 95, 99, 104] (history lines excepted) :: []
 PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v34) :: {'34'}
-PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:52:51']) :: {'18:52:51'}
+PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:57:08']) :: {'18:57:08'}
 PASS class 2: 'to N files' is 10 everywhere (found ['10']) and the number of TASKS is twelve everywhere (found ['twelve']) :: (['10'], ['twelve'])
 PASS class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')]) :: ([('five', ' items'), ('two', ' (OWNER ONLY) questions')], 2)
 PASS class 2: no TASK number above twelve (the list has 12 tasks) :: 12
 PASS class 4: every place that quotes a card line (from its first eight words; the shorter option (b) of L-CARDLEN differs earlier and is a different text on purpose) quotes it whole and equal to the line in rows 13 and 14 (4 lines) :: []
 PASS class 1: 'changes no running n8n' appears in the box and in section 1c :: (1, 1)
 PASS class 6: every old text shorter than 40 characters occurs exactly once in the whole file (chained rows excepted) :: []
-SUMMARY: 236 checks, 0 FAILED
+SUMMARY: 236 checks, 1 FAILED: the box line of L-SHEET and the section 0 bullet each print every real v34 file with its real written time (UTC): [('OWNER-SHEET-v34-A.md', '18:56:54'), ('OWNER-SHEET-v34-B.md', '18:56:54'), ('OWNER-SHEET-v34-SOURCE.md', '18:54:55')]
 
-EXIT CODE 0
+EXIT CODE 1
