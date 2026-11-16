@@ -1,3 +1,5 @@
+> READ FIRST (added 16 Nov 2026 by system-map, because cold readers could not follow this note). This is a working note, not a finished page. Words: "take" = the one filmed run of the lead-intake demo (made-up data, run through n8n); "lead session" = the Claude session that gives orders; "studio lead" = the Claude session that does the technical steps; "owner" = the human; "studio head" = a role name in older notes, meaning unknown (UNVERIFIED). Short prefixes in older notes (my reading, UNVERIFIED): PL = inputs/plan-wp6-resmoke-v5.md, OS = inputs/OWNER-STEPS-realrun-v3.md, SC = inputs/AGENT-SCOPE-DO-AND-DONT.md, DE = DECISION-one-store.md. Ids like D-01 are drift rows in drift/REPORT.md; ids like L6-J-005 are rows in work/L6.md; M1, B1, Z-1 are finding numbers inside the note that uses them. One-line meanings of other terms: work/GLOSSARY.md. Nothing in this note was run or verified.
+
 # Drift report (egm-drift-report, headless; run by the session lead, not a fresh agent)
 Checked: numbers in REPORT.md and PLAN-002.md against the regenerated outputs; ONE-PLACE-TABLE proposals against PLAN-002 5.3; Fix plan against DECISION lines 14 and 16.
 

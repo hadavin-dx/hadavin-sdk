@@ -2241,3 +2241,13 @@ CLASS NOTE (1896-1911): L-pages share 5 classes: (1) legacy status labels vs 3-w
 1918 | work/review-m8-factcheck.md (ae76ba479c4bc53a6): 4-line note; 1 Blocker (rows A..M, register.md, r11/r13 undefined) + 3 Majors. TO FIX: purpose line + legend.
 1919 | work/review-m6-r460.md (a342d1ed75882eb8f): 5-line note; 0 Blockers + 4 Majors (counts 18/218/86 vs 315; M1-M9 unreadable; Nits not listed; 1020 of 1020 source). TO FIX.
 CLASS NOTE 2 (1912-1919): every condensed work/ note fails cold-read on the same thing: no legend. Fix once: add a 3-line header (what this is, source file per prefix, what a row id means) to each. Readers on further condensed scratch notes add no new information; stop reading scratch, read only deliverables.
+1920 | work/resolve-crosscheck-1.md (acfe7681767261c8f): 0 Blockers + 3 Majors (status 'resolved' vs M3 open; terms; open items vague). Scratch note: legend added.
+1921 | work/result-review-r1.md (af10794e37556fd6f): 3 Blockers (nothing defined; shorthand ids; verdict columns) + 5 Majors. Scratch note: legend added.
+1922 | work/plan-review-r1.md (a26e92e0f69c2935c): 1 Blocker (no link to PLAN-002, no goal) + 4 Majors. Scratch note: legend added.
+1923 | work/o7-resolve-1.md (ad6fdb17b1b6f681d): 2 Blockers (status 'applied' vs PROPOSE FIX; ids and roles undefined) + 4 Majors. Scratch note: legend added.
+ACTION 1920-1923: prepended a READ FIRST legend (terms, prefixes marked UNVERIFIED) to 12 scratch notes (backups *-history-legend2.md) and the plain headline rule to rehearsal-passed-limits-draft.md.
+1924 | work/o7-review-R2-design-r1.md (a7b69ee51b870ae2b): 2 Blockers (ORDER 007, R2, rung, prefixes undefined; findings are semicolon fragments) + 3 Majors (0 Blockers vs L7-FD-005 'should be Blocker'). Legend added; contradiction 0 vs >=1 Blocker needs lead (ORDERS ORDER 007).
+1925 | work/plan-resolve-r1.md (a489f903f2b5e25d2): 1 Blocker (PLAN-002 goal undefined) + 4 Majors. Legend added.
+1926 | work/o7-review-R1-codebase-r1.md (aaf6519afb8077216): 1 Blocker (nothing defined; document under review unnamed) + 3 Majors. Legend added.
+1927 | work/o7-review-R4-zoomout-r2.md (adc3b48d213561a70): 1 Blocker (not self-contained) + 4 Majors (F9/F11 which count is right: 314/307 vs 322/315). Legend added; count ruling needs lead.
+CLASS NOTE 3: scratch notes now carry a READ FIRST legend. Re-reading 8 of them (limits draft, m6-r460, plan-review-r1, drift-report, premortem, trim-notes, lens-dependency, drift-readiness) to test whether the legend removes the 'nothing defined' Blocker.

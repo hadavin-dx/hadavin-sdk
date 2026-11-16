@@ -1,3 +1,5 @@
+> Headline rule in plain words: write "rehearsal passed with stand-in services" only if the crash test ran, both tries stopped the program right after it sent the mail and before it saved that it sent it, and each try gave exactly 1 mail. If the test did not run or never stopped the program, write "rehearsal not completed". If it gave any other mail count, write "rehearsal did not pass". Stand-in services = a fake mail service and a fake contact list on the laptop; no real Gmail or HubSpot was used. The owner decides this rule: reply "rule OK" or give a new rule. Not verified by any run.
+
 # Message the studio lead sends the owner after the rehearsal (one clean draft; NOT SENT)
 Status: DRAFT, written 16 Nov 2026 by the system-map session. No rehearsal has run, so nothing below is checked against a result. Old stacked versions are in rehearsal-passed-limits-history.md (ignore them).
 

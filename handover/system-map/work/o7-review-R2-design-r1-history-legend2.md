@@ -1,0 +1,9 @@
+# ORDER 007 review R2 (egm:egm-design), round 1, saved condensed by system-map. VERDICT NOT CLEAN: 0 Blockers by its scale, 7 Majors, 7 Nits.
+M1 leftover COUNTER contradictions: ONE-PLACE-TABLE L6-J-005 reason still says duplicate of stage.journal; SWEEP L3c-FD-009 says the take keeps its money guard in stage.journal; L6-J-034 state OK though independence unverified (stand-in only); the desk-row fragment "no counter question gates this row" is a leftover; Headline lists the dollar cap as open for the laptop lead.
+M2 "independent" has two meanings; "independent count" and "proof count" undefined in both word lists.
+M3 fix-plan row 2: action is a decision, person wrong (studio head), verification would itself spend money; option 2 only after the video.
+M4 Decisions A-E: unexplained words (provider, journal count, worst-case price, SMTP, heartbeat, cron job, rotate, untrack, history rewrite, sha, role, migrations identity); C has no options list; D no cost; B circular on who watches; "owner" used for studio head in E and row 13; rung per option missing; the 5 USD suggestion has no basis.
+M5 rows 5, 6, 7, 13: wrong people or before/after; row 7 verification wrong (old values stay in public history; rotation is the real protection; split 7a rotate+untrack, 7b rewrite decision); row 13 says rename paths but E lists text only.
+M6 rows 15-17, 8: row 16 names a vendor-inspired word and L4c-FD-002 is not confirmed here; row 17 holds two actions; row 8 lacks order (after rows 15-17); rows 18-23 repeat the gate.
+M7 L7-FD-001..007 have no fix-plan row; L7-FD-005 (webhook entry starts a paid model call) should be Blocker; row 12 negative tests must add model account, webhook, n8n API scope.
+Nits: L6-EX-10 (b) still says move to archive/; "no rotation before yes" vs "rotate now"; rewrite does not remove clones/forks; row 22 cut mid-clause; L7-FD-008 wording "this session"; "1 rows"; define journal count.
