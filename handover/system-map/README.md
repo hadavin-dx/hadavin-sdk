@@ -21,7 +21,7 @@ Read OWNER-VIEW.md (one page, owner-only items). The lead brings you any decisio
 4. QUESTIONS.md: only item 2 (D-04, D-05) is open; item 8 (film pause) is answered (lead 10:23Z).
 
 ## Reference (not needed for the take)
-SWEEP.md (findings and fix plan), ONE-PLACE-TABLE.md (one place per job), MASTER-MAP.md (every component), ARCHIVE-CUT-LIST.md (what to archive after the take, never delete), REPORT.md and QUEUE.md (this session's logs), work/ (evidence).
+SWEEP.md (findings and fix plan), ONE-PLACE-TABLE.md (one place per job), MASTER-MAP.md (every component), ARCHIVE-CUT-LIST.md (what to archive after the take, never delete), the top-level REPORT.md and QUEUE.md (this session's logs), work/ (evidence).
 Role of this folder: cloud session system-map writes only here, on branch cloud/system-map. ORDERS.md is written by the lead.
 
 ## Words used on these pages (one meaning each)
