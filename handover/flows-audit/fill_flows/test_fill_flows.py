@@ -40,6 +40,12 @@ PH_VALS = {  # made-up values for the six placeholder names
 }
 
 
+def stat_is(st, kind):
+    import stat as _s
+
+    return (_s.S_ISREG if kind == "reg" else _s.S_ISDIR)(st.st_mode)
+
+
 def rtext(path):
     with open(path, encoding="utf-8") as fh:
         return fh.read()
@@ -184,9 +190,7 @@ class Positive(Base):
             out = self.out("o-" + flavor)
             code, so, se = self.fill(src=src, out=out)
             self.assertEqual(code, 3, se)  # written, but placeholders are left
-            self.assertEqual(
-                sorted(os.listdir(out)), sorted([*os.listdir(src), ff.MARKER_NAME])
-            )
+            self.assertEqual(sorted(os.listdir(out)), sorted([*os.listdir(src), ff.MARKER_NAME]))
             for n in os.listdir(src):
                 a = jload(os.path.join(src, n))
                 b = jload(os.path.join(out, n))
@@ -1040,6 +1044,226 @@ class Hardening(Base):
             d = self.flow_dir({"a": name})
             code, so, _ = self.cli("check", d)
             self.assertEqual((code, f"placeholder {name} x1" in so), (1, True), name)
+
+    # ---- round 4: values file must be a regular file (a pipe must not hang the tool)
+    def test_values_file_pipe_is_refused_without_hanging(self):
+        fifo = os.path.join(self.t, "vpipe")
+        os.mkfifo(fifo, 0o600)
+        code, _, se = self.fill(vf=fifo)
+        self.assertEqual((code, "not a regular file" in se), (1, True), se)
+        self.assertFalse(os.path.exists(self.out()))
+
+    # ---- security review M1: modes are checked on the written file and folder
+    def _fake_modes(self, kind):
+        real = os.fstat
+
+        def fake(fd):
+            st = real(fd)
+            if kind == "file" and stat_is(st, "reg") and st.st_size == 0:
+                return os.stat_result((st.st_mode | 0o077,) + tuple(st)[1:])
+            if kind == "dir" and stat_is(st, "dir"):
+                return os.stat_result((st.st_mode | 0o077,) + tuple(st)[1:])
+            return st
+
+        return fake
+
+    def test_modes_that_do_not_hold_on_the_disk_refuse_and_leave_nothing(self):
+        for kind in ("file", "dir"):
+            out = self.out(kind)
+            with mock.patch.object(ff.os, "fstat", self._fake_modes(kind)):
+                code, _, se = self.inproc(
+                    "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out
+                )
+            self.assertEqual((code, "modes do not hold" in se), (1, True), (kind, se))
+            self.assertFalse(os.path.exists(out), kind)
+            self.assertFalse(os.path.exists(out + ".manifest.json"), kind)
+
+    # ---- security review M2: the folder is opened once; swapping the path later changes nothing
+    def test_fill_folder_swapped_for_a_link_after_mkdir_writes_nothing_there(self):
+        victim = os.path.join(self.t, "victim")
+        os.mkdir(victim)
+        out = self.out()
+        real_mkdir = os.mkdir
+
+        def swap(path, mode=0o777, *, dir_fd=None):
+            real_mkdir(path, mode, dir_fd=dir_fd)
+            if os.path.basename(str(path)) == "out":
+                os.rmdir(os.path.join(self.t, "out"))
+                os.symlink(victim, os.path.join(self.t, "out"))
+
+        with mock.patch.object(ff.os, "mkdir", swap):
+            code, _, _ = self.inproc(
+                "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(os.listdir(victim), [])
+
+    def test_delete_path_swapped_for_a_link_after_opening_leaves_the_decoy_alone(self):
+        out = self.made()
+        decoy = os.path.join(self.t, "decoy")
+        shutil.copytree(out, decoy)
+        before = tree_hash(decoy)
+        real_listdir = os.listdir
+
+        def swap(arg):
+            res = real_listdir(arg)
+            if isinstance(arg, int):  # the folder was opened once; now swap the path
+                os.rename(out, out + ".moved")
+                os.symlink(decoy, out)
+            return res
+
+        with mock.patch.object(ff.os, "listdir", swap):
+            self.inproc("delete", "--out", out)
+        self.assertEqual(tree_hash(decoy), before)
+
+    # ---- security review M3: --no-manifest needs the marker file
+    def test_no_manifest_needs_the_marker_file(self):
+        out = self.made()
+        os.unlink(out + ".manifest.json")
+        marker = os.path.join(out, ff.MARKER_NAME)
+        os.unlink(marker)
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest", "--force-hash")
+        self.assertEqual((code, "no marker file" in se), (1, True), se)
+        self.assertEqual(len(os.listdir(out)), 4)
+
+    def test_no_manifest_refuses_a_marker_for_another_folder_or_format(self):
+        out = self.made()
+        os.unlink(out + ".manifest.json")
+        marker = os.path.join(out, ff.MARKER_NAME)
+        for text in (
+            ff.MARKER_FORMAT + "\nother-name\n",
+            "wrong-format\n" + os.path.basename(out) + "\n",
+        ):
+            os.unlink(marker)
+            fd = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            os.write(fd, text.encode())
+            os.close(fd)
+            code, _, se = self.cli("delete", "--out", out, "--no-manifest", "--force-hash")
+            self.assertEqual((code, "marker file is not" in se), (1, True), se)
+            self.assertEqual(len(os.listdir(out)), 5)
+
+    def test_hand_made_folder_of_json_files_is_not_deleted_without_manifest(self):
+        d = os.path.join(self.t, "mine")
+        os.mkdir(d, 0o700)
+        fd = os.open(os.path.join(d, "a.json"), os.O_WRONLY | os.O_CREAT, 0o600)
+        os.write(fd, b"{}")
+        os.close(fd)
+        code, _, _ = self.cli("delete", "--out", d, "--no-manifest", "--force-hash")
+        self.assertEqual(code, 1)
+        self.assertTrue(os.path.exists(os.path.join(d, "a.json")))
+
+    # ---- security review nits
+    def test_names_from_disk_are_printed_safely(self):
+        d = os.path.join(self.t, "esc")
+        os.mkdir(d)
+        name = "mf-\x1b[31mred.json"
+        jdump(
+            {"nodes": [{"name": "n", "parameters": {"a": "PG_CREDENTIAL_ID"}}]},
+            os.path.join(d, name),
+        )
+        code, so, se = self.cli("check", d)
+        self.assertEqual(code, 1)
+        self.assertNotIn("\x1b", so + se)
+        self.assertIn("\\x1b[31mred.json", so)
+
+    def test_two_keys_that_become_one_are_refused(self):
+        self.refuse({"MF_STAGE_URL": 1, "$env.MF_STAGE_URL": 2}, "same key")
+
+    def test_placeholder_name_inside_a_code_field_is_refused(self):
+        write_values(self.vf, {**VALS, "SMTP_CREDENTIAL_ID": "phv-smtp-2"})
+        self.refuse({"jsCode": "SMTP_CREDENTIAL_ID"}, "jsCode")
+
+    def test_no_manifest_with_no_folder_still_validates_the_manifest(self):
+        out = self.out()
+        wtext(out + ".manifest.json", "not json")
+        os.chmod(out + ".manifest.json", 0o600)
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest")
+        self.assertEqual((code, "not a valid fill_flows manifest" in se), (1, True), se)
+        self.assertTrue(os.path.exists(out + ".manifest.json"))
+
+    def test_manifest_delete_refuses_a_folder_that_is_not_yours(self):
+        out = self.made()
+        with mock.patch.object(ff.os, "getuid", return_value=os.getuid() + 1):
+            code, _, se = self.inproc("delete", "--out", out)
+        self.assertEqual((code, "not owned by you" in se), (1, True), se)
+        self.assertEqual(len(os.listdir(out)), 5)
+
+    # ---- security review minor 4: the expression lexer against a real JavaScript engine
+    @unittest.skipUnless(shutil.which("node"), "node (a JavaScript engine) is not installed")
+    def test_lexer_agrees_with_a_real_js_engine(self):
+        rnd = random.Random(20261116)
+        frags = [
+            "1",
+            "+",
+            "-",
+            "* 2",
+            '"a"',
+            "'b'",
+            "`t`",
+            '"\\""',
+            "'\\''",
+            "/* c */",
+            "// c\n",
+            "/r/",
+            " / 2",
+            "(",
+            ")",
+            "[",
+            "]",
+            "{",
+            "}",
+            ",",
+            "?",
+            ":",
+            "0",
+            "x",
+            '"',
+            "'",
+            "`",
+            "\\",
+            "${",
+            "/*",
+            "//",
+        ]
+        value = "v\"'`\\${}/*//x"
+        cases = []
+        for _ in range(600):
+            a = " ".join(rnd.choice(frags) for _ in range(rnd.randint(0, 5)))
+            b = " ".join(rnd.choice(frags) for _ in range(rnd.randint(0, 5)))
+            cases.append(a + " $env.MF_STAGE_URL " + b)
+        accepted = []
+        for part in cases:
+            sub = ff.Subst({"MF_STAGE_URL": value})
+            try:
+                out = sub._expr_part(part)
+            except ff.Refused:
+                continue
+            accepted.append((part.replace("$env.MF_STAGE_URL", "__T"), out))
+        self.assertGreater(len(accepted), 20)
+        self.assertLess(len(accepted), len(cases) - 20)
+        script = (
+            "const c=JSON.parse(require('fs').readFileSync(0,'utf8'));const v=c.v;"
+            "const run=(src,args)=>{try{return JSON.stringify(new Function('__T','return ('+src+')')(args))}"
+            "catch(e){return 'ERR:'+e.name}};"
+            "console.log(JSON.stringify(c.p.map(([o,n])=>[run(o,v),run(n,v)])))"
+        )
+        p = subprocess.run(  # noqa: S603
+            ["node", "-e", script],  # noqa: S607
+            input=json.dumps({"v": value, "p": accepted}),
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+        self.assertEqual(p.returncode, 0, p.stderr[:300])
+        results = json.loads(p.stdout)
+        compared = 0
+        for (orig, out), (r_orig, r_out) in zip(accepted, results):
+            if r_orig.startswith("ERR:SyntaxError"):
+                continue  # the unfilled text was not valid JavaScript; nothing to compare
+            compared += 1
+            self.assertEqual(r_orig, r_out, (orig, out))
+        self.assertGreater(compared, 10)
 
 
 if __name__ == "__main__":
