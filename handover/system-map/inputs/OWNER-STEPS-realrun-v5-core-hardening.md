@@ -137,7 +137,7 @@ You should see HubSpot still show this run's contacts, and the program print its
 - Stop and tell the studio lead: you closed the terminal or pressed Ctrl-C early. The filming pause ends; nothing is deleted by the program. If the printed list is lost, tell the studio lead; do not guess.
 - The program's own HubSpot key is read-only: it cannot create or delete contacts. n8n's key (a different key) is the one that creates them. So the program never deletes contacts (status: UNVERIFIED until the studio lead's check on the final program). You delete this run's contacts yourself, from the filtered list, in step F2.
 
-> **WARNING before step F2. You cannot undo the deletes in step F2 yourself. Delete ONLY HubSpot contacts found by the search text below, and ONLY demo mails in the receiver account. Never delete the marker file `~/.hadavin-take-tags/<run name>.used`.**
+> **WARNING before step F2. You cannot undo the deletes in step F2 yourself. Delete ONLY HubSpot contacts found by the three search texts below, only after the three counts add up to the program's printed number, and ONLY demo mails in the receiver account. Never delete the marker file `~/.hadavin-take-tags/<run name>.used`.**
 
 ### Step F2. Delete this run's contacts and demo mails (you)
 *The studio lead has not yet confirmed this step. Use F2 after you typed `end` and the program printed its list of contacts left behind, whatever the exit code. Use step G only when nothing was created or the studio lead says the run failed.*
