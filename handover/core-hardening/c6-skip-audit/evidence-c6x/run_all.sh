@@ -42,7 +42,9 @@ rm -rf "$E/steps-snapshot" && mkdir "$E/steps-snapshot" && cp -p "$S"/OWNER-SHEE
 python3 -B -I build_c6x.py || exit 1
 C6V_MAKE_CENSUS=1 python3 -B -I verify-c6x.py | tail -n 1
 python3 -B -I scan_c6x.py > /dev/null 2>&1; scrc=$?; echo "scan exit $scrc"; tail -n 1 scan-c6x-output.txt
-C6V_SNAPSHOT="$E/steps-snapshot" C6V_STEPS="$E/steps-snapshot" python3 -B -I neg_controls_c6x.py > /dev/null 2>&1; nrc=$?; echo "neg exit $nrc"; tail -n 1 neg-output.txt
+C6V_SNAPSHOT="$E/steps-snapshot" C6V_STEPS="$E/steps-snapshot" sh "$(dirname "$E")/../heavy-slot.sh" python3 -B -I neg_controls_c6x.py > /dev/null 2>&1; nrc=$?; echo "neg exit $nrc"; tail -n 1 neg-output.txt
 rm -rf "$E/steps-snapshot"   # a temporary copy of the sheets for the negative controls
 python3 -B -I verify-c6x.py > verify-c6x-output.txt 2>&1; vrc=$?; echo "verify exit $vrc"; tail -n 1 verify-c6x-output.txt | cut -c1-200
+echo "run $(grep -c "run_all.sh start" run-log.txt): scan exit $scrc, neg exit $nrc, verify exit $vrc ($(date -u +%FT%TZ))" >> run-log-exits.txt
+{ rt=$(stat -c %Y "$E/../REPORT-c6x.md"); echo "REPORT-c6x.md modified $(stat -c %y "$E/../REPORT-c6x.md")"; ok=1; for f in verify-c6x-output.txt neg-output.txt scan-c6x-output.txt; do ft=$(stat -c %Y "$f"); echo "$f modified $(stat -c %y "$f")"; [ "$ft" -ge "$rt" ] || ok=0; done; echo "ORDER OK (every output file is not older than the report): $ok"; } > order-check-output.txt
 [ "$vrc" -eq 0 ] && [ "$nrc" -eq 0 ] && [ "$scrc" -eq 0 ]

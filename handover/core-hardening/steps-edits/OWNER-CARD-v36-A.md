@@ -27,7 +27,7 @@ After the deadline (Mon 23 Nov 2026 18:29 UTC = 23:59 IST): the older key (its n
 
 By the **backstop time** (Sun 22 Nov 2026 18:19 UTC = 23:49 IST or Mon 23 Nov 2026 18:19 UTC = 23:49 IST; the 7-day rule does not apply to it) the older key (name and creation date equal the blanks) and every key of L1 you made are cancelled by steps 2 to 4, even if a run was in progress (no run is planned on Mon 23 Nov; a run on Sun 22 Nov is allowed only under numbers check 2); any other valid key: describe its name, cancel nothing.
 
-The planned cancel: at 6.7, after 6.6 passed (new key saved, size checked), and only if the 7-day rule of 5.1 holds (read the older key's last-used time again right before the cancel; the list may show a use late: any use after your first reading means no cancel at 6.7, describe it; 7.11 still cancels it by the older-key time, even if it was used just now) (else describe it: no run). If the run ends before 6.7 the older key is still valid: you cancel it at 7.11 by the older-key time of the message on the run day, even if the lead is silent (no lead message is needed or accepted for it).
+The planned cancel: at 6.7, after 6.6 passed, and only if the 7-day rule of 5.1 holds (a use after your first reading: no cancel at 6.7, describe it). Otherwise you cancel it at 7.11 by the older-key time of the message on the run day, even if the lead is silent (no lead message is needed or accepted for it).
 
 
 

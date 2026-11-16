@@ -102,7 +102,7 @@ def patches(t, ct):
     t = move_out(t, "The old texts were checked only against a scratchpad copy (evidence-c6x/tree/): equality with the real files is UNVERIFIED, so the builder confirms each old text occurs once in the real file first and stops at any row where it does not.",
                  "The old texts were checked only against a copy (evidence-c6x/tree/): UNVERIFIED against the real files; the builder confirms each old text first and stops at any row where it does not match.")
     t = move_out(t, "- TIMES are UTC with IST (UTC + 5:30). CITES (all under handover/core-hardening/): ORD:150 = line 150 of ORDERS.md; LRN14 = steps-edits/LEAD-RELEASE-NOTE-v14.md (its lines 33 and 150 equal the newest note, v18; its lines 8 and 149 differ, section 0); LREP = REPORT.md; PLAN = inputs/plan-wp6-resmoke-v5.md; ONE = inputs/DECISION-one-store.md; DEC = inputs/DECISIONS-2026-11-16.md. THE CUT NUMBER = the 60.1 to 61.9 s recovery time of 18 stand-in runs, removed by your decision 1. Q27 = your answer in ORDERS.md about reading the take script.",
-                 "- TIMES are UTC with IST (UTC + 5:30). CITES (all under handover/core-hardening/): ORD:150 = line 150 of ORDERS.md; LRN14 = steps-edits/LEAD-RELEASE-NOTE-v14.md (its lines 33 and 150 equal the notes v18 and v19; its lines 8 and 149 differ, section 0); LREP = REPORT.md; PLAN = inputs/plan-wp6-resmoke-v5.md; ONE = inputs/DECISION-one-store.md; DEC = inputs/DECISIONS-2026-11-16.md. THE CUT NUMBER = the 60.1 to 61.9 s recovery time of 18 stand-in runs, removed by your decision 1. Q27 = your answer ORD:191 about reading the take script (its open part: L-Q27).")
+                 "- TIMES are UTC with IST (UTC + 5:30). CITES (all under handover/core-hardening/): ORD:150 = line 150 of ORDERS.md; LRN14 = steps-edits/LEAD-RELEASE-NOTE-v14.md (its lines 33 and 150 equal the notes v18 and v19; its lines 8 and 149 differ, section 0); LREP = REPORT.md; PLAN = inputs/plan-wp6-resmoke-v5.md; ONE = inputs/DECISION-one-store.md; DEC = inputs/DECISIONS-2026-11-16.md. THE CUT NUMBER = the 60.1 to 61.9 s recovery time of 18 stand-in runs, removed by your decision 1. Q27 = your answer ORD:191 about reading the take script (its open part: the first row of the table below).")
     # the dates: 'tonight' (naive m)
     t = sub(t, "DEC:13 gives only the re-smoke target: tonight or tomorrow morning IST.", "DEC:13 gives only the re-smoke target, written on Mon 16 Nov 2026 as 'tonight or tomorrow morning IST' (that is Mon 16 Nov at night or Tue 17 Nov 2026 in the morning, IST).")
     return t
@@ -160,6 +160,9 @@ def patches3(t, ct):
     g(" Every question has ONE status: ANSWERED BY DEFAULT (you may change it), ANSWERED or OPEN.", " Every question is ANSWERED BY DEFAULT, ANSWERED or OPEN.")
     g(" The post is due Wed 25 Nov 2026 15:00 UTC = 20:30 IST (ORD:150).", " Post due Wed 25 Nov 2026 15:00 UTC = 20:30 IST (ORD:150).")
     g(" (estimates until the stopwatch run)", " (estimates)")
+    g(" runs no check; spends nothing;", "")
+    g(" writes no card line about the owner's HubSpot key;", "")
+    g("one split, one name each: ", "")
     g("Cut the old card lines about '80 kills' and the recovery time (older flows; an estimate no data of this take backs)?", "Cut the old card lines about '80 kills' and the recovery time (no data of this take backs them)?")
     g("Does the take make n8n save every SUCCESSFUL run, so that the past runs filmed in scenes 1 and 2 show runs? (The owner approved this on made-up data, ONE:22-27.)", "Does the take make n8n save every SUCCESSFUL run, so scenes 1 and 2 show past runs? (The owner approved this on made-up data, ONE:22-27.)")
     g(" L-LEASE 1 or 2 counts only if L-POST is 'no' and G12 is approved; with L-POST 'yes' (the default) it is ignored.", " L-LEASE 1 or 2 counts only if L-POST is 'no' and G12 is approved.")
@@ -252,8 +255,10 @@ def finish(t):
 def run_statement():
     p = E + "run1-summary.txt"
     n = len(open(E + "run-log.txt").read().split("\n")) - 1 if os.path.exists(E + "run-log.txt") else 0
-    s1 = open(p, encoding="utf-8").read().strip() if os.path.exists(p) else "run 1 has not ended when this text is built"
-    return "I ran the full pipeline run_all.sh 2 time(s) (cap 2; heavy-slot order). STATEMENT OF EACH RUN (written by hand from the exit lines; a run that did not end clean is called so here): " + s1 + " The second run is the one that built this file; its result is the last lines of verify-c6x-output.txt and neg-output.txt in evidence-c6x/ and is quoted in c6x-CHANGES.md. WHICH BUILD WROTE THIS REPORT: evidence-c6x/build_c6x.py, in the second run; the output files of that run are written after REPORT-c6x.md (c6x-CHANGES.md lists both modification times; a reviewer checks that each output file is not older than the report)."
+    n = max(n, 1)
+    s1 = open(p, encoding="utf-8").read().strip() if (n >= 2 and os.path.exists(p)) else ("this is run 1; its own exit lines are in run-log-exits.txt, written after this report" if n == 1 else "run 1 summary missing")
+    ordn = {1: "first", 2: "second"}.get(n, str(n))
+    return ("I ran the full pipeline run_all.sh %d time(s) (cap 2; the negative controls go through heavy-slot.sh). STATEMENT OF EACH RUN (written by hand from the exit lines; a run that did not end clean is called so here): " % n) + s1 + " The latest run is the one that built this file; its result is the last lines of verify-c6x-output.txt and neg-output.txt in evidence-c6x/ and is quoted in c6x-CHANGES.md. WHICH BUILD WROTE THIS REPORT: evidence-c6x/build_c6x.py, in the %s run; the output files of that run are written after REPORT-c6x.md (order-check-output.txt lists both modification times; a reviewer checks that each output file is not older than the report)." % ordn
 
 
 def main():

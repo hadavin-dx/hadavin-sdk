@@ -66,12 +66,20 @@ for _k in ("S-F4g-sheet-v31-exists", "S-F4h-release-note-v15-exists", "S-F4i-v30
     ENV.pop(_k, None)
     M.pop(_k, None)
 run_block(open(E + "neg_new_c6u.py", encoding="utf-8").read(), "neg_new_c6u.py")
+ENVL = {}
+INTENT = {}
 run_block(open(E + "neg_new_c6x.py", encoding="utf-8").read(), "neg_new_c6x.py")
+STATE = ("D-late", "E-mtime", "C-10c", "V13")
+NOOP = []
 out = []
 BASE = set()
 bad = 0
 for name, text in M.items():
     envd = ENV.get(name)
+    if text == rep and name not in ENVL and not name.startswith("V0") and name not in ENV:
+        out.append("%-48s NOOP (the copy equals the report)" % name)
+        bad += 1
+        continue
     if text is None:
         out.append("%-48s SKIPPED (mutation target absent)" % name)
         bad += 1
@@ -80,7 +88,7 @@ for name, text in M.items():
     p = os.path.join(_td, "REPORT-c6x.md")   # the real file name (the check D-B1 compares the typed answer line with it); c6x-CHANGES.md is copied next to it for V12 and V13
     shutil.copy(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "c6x-CHANGES.md"), os.path.join(_td, "c6x-CHANGES.md"))
     open(p, "w", encoding="utf-8").write(text)
-    r = subprocess.run([sys.executable, "-B", "-I", E + "verify-c6x.py", p], capture_output=True, text=True, env=(dict(os.environ, C6V_STEPS=envd) if envd else None))
+    r = subprocess.run([sys.executable, "-B", "-I", E + "verify-c6x.py", p], capture_output=True, text=True, env=dict(os.environ, **(dict(C6V_STEPS=envd) if envd else {}), **(dict(C6V_STEPS_LIVE=ENVL[name]) if name in ENVL else {})))
     open(E + "neg/" + name + ".txt", "w").write(r.stdout[-6000:] + r.stderr[-1500:] + "\nEXIT CODE %d\n" % r.returncode)
     failed = [l for l in r.stdout.split("\n") if l.startswith("FAIL")]
     want_zero = name.startswith("V0")
@@ -89,12 +97,19 @@ for name, text in M.items():
     if want_zero:
         BASE = set(l.split(" :: ")[0] for l in failed)
     newfail = [l for l in failed if l.split(" :: ")[0] not in BASE] if not want_zero else failed
-    ok = (r.returncode == 0) if want_zero else (r.returncode != 0 and len(newfail) >= 1)
+    _real = [l for l in newfail if not l[5:].lstrip().startswith(STATE) and not l[5:].lstrip().startswith("V13")]
+    if want_zero:
+        ok = (r.returncode == 0)
+    elif name in INTENT:
+        ok = r.returncode != 0 and any(INTENT[name] in l for l in newfail)   # the INTENDED check must fail
+    else:
+        ok = r.returncode != 0 and len(_real) >= 1   # a state-only failure (D-late, E-mtime, C-10c, V13) never counts as caught
     if not ok:
         bad += 1
     out.append("%-48s exit %d  %s  failed checks: %d (new vs unchanged: %d); first new: %s" % (name, r.returncode, "OK" if ok else "WRONG", len(failed), len(newfail), ((newfail[0][:110] if newfail else "none") if not want_zero else (failed[0][:110] if failed else "none"))))
 out += ["PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): " + s_ for s_ in SKIPPED_PORT]
-out.append("SUMMARY: %d copies, %d wrong" % (len(M), bad))
+_nch = len([n for n in M if not n.startswith("V0")])
+out.append("SUMMARY: %d copies, %d wrong" % (_nch, bad))
 open(E + "neg-output.txt", "w").write("\n".join(out) + "\n")
 print("\n".join(out))
 sys.exit(1 if bad else 0)

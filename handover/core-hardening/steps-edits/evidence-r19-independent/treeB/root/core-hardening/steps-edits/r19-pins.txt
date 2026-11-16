@@ -2494,7 +2494,8 @@
 1	if the alarms are missed the key stays alive, together with its copy in the take folder, n8n's encryption key and the saved credentials on the laptop;
 1	if the answer is A, the studio lead first rewrites item (a) of E-49 and does not apply E-53.
 1	if the assistant's path differs, it removes nothing and tells you.
-5	if the key is still live at 18:19 UTC = 23:49 IST it comes first.
+4	if the key is still live at 18:19 UTC = 23:49 IST it comes first.
+1	if the key is still live at 18:19 UTC = 23:49 IST it comes second.
 1	if the program writes another form, the owner deletes nothing and tells the assistant, which fails closed.
 1	if the studio lead edits one copy, every other copy of that sentence must be edited the same way (the checker `verify19.py` counts every copy of each safety sentence in the sheet, the day sheet and the appendix, and fails when a day sheet line is not in the sheet);
 1	if you are not sure which app a key belongs to, tell the assistant and do not say yes).

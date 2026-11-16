@@ -110,3 +110,38 @@ M["W-C7-L-LEASE-reversal-sentence-deleted"] = _nth("THE DEFAULT REVERSES YOUR AN
 
 M["W-C7-late-file-unnamed"] = _nth("LEAD-RELEASE-NOTE-v19.md was written", "LEAD-RELEASE-NOTE-v19.md was seen", 0)
 M["W-C7-late-file-time-deleted"] = _nth("OWNER-SHEET-v35-A.md was written", "OWNER-SHEET-v35-A.md exists", 0)
+
+# ---- c6x (round 4): the six misses of the independent run on c6w, mutated in EVERY copy position (class: first-copy-only edits of repeated numbers or phrases),
+# with the intended check named in INTENT (the harness fails a copy whose intended check does not fail; a state-only failure never counts)
+INTENT = {}
+def _boxpos():
+    return rep.index("## Start here: what I need"), rep.index("## Start here, part 2")
+def _inbox(a, b):
+    s, e = _boxpos()
+    i = rep.find(a, s, e)
+    return None if i < 0 else rep[:i] + b + rep[i + len(a):]
+for _a, _b, _tag in (("90 words", "91 words", "card-words-90"), ("about 36 s", "about 37 s", "card-seconds-36"), ("budget 40 s", "budget 45 s", "budget-40"),
+                     ("87 words", "88 words", "card-words-87"), ("lease wording approved", "lease wording seen", "gate-phrase")):
+    for _n in range(rep.count(_a)):
+        _k = "X-%s-copy%d" % (_tag, _n)
+        M[_k] = _nth(_a, _b, _n)
+        INTENT[_k] = "class 1:"
+M["X-row19-G12-hold-removed-in-new-cell"] = mut_row(rep, 19, "new", lambda s_: s_.replace("allowed only after G12 is approved", "allowed"))
+INTENT["X-row19-G12-hold-removed-in-new-cell"] = "D-M2"
+M["X-C8-1-box-no-reviewer-sentence"] = _inbox("NO REVIEWER HAS READ THIS REPORT", "THE REVIEWERS HAVE READ THIS REPORT"); INTENT["X-C8-1-box-no-reviewer-sentence"] = "C8-1"
+M["X-C8-2-box-76-to-75"] = _inbox("76 words", "75 words"); INTENT["X-C8-2-box-76-to-75"] = "C8-2"
+M["X-C8-4-box-closed-form-deleted"] = _inbox("closed: line 33 of release note v14 is my approval`", "closed`"); INTENT["X-C8-4-box-closed-form-deleted"] = "C8-4"
+M["X-C8-5-box-keyline-label"] = _inbox("| L-KEYLINE |", "| L-KEYLINX |"); INTENT["X-C8-5-box-keyline-label"] = "C8-5"
+M["X-C8-7-box-names-sentence"] = _inbox("NAMES YOU CHOOSE", "NAMES"); INTENT["X-C8-7-box-names-sentence"] = "C8-7"
+M["X-C8-8-eleven-to-ten"] = _nth("ELEVEN GATE ROWS", "TEN GATE ROWS", 0); INTENT["X-C8-8-eleven-to-ten"] = "C8-8"
+M["X-C8-14-newest-at-check-time"] = _nth("The newest version before the freeze", "The newest at the check time", 0); INTENT["X-C8-14-newest-at-check-time"] = "C8-14"
+M["X-C8-11-different-to-equal"] = _nth(" IST; DIFFERENT from", " IST; equal to", 0); INTENT["X-C8-11-different-to-equal"] = "C8-11"
+_i50 = rep.index("\n| 50 | NOT APPLIED")
+M["X-C8-10-row50-deleted"] = rep[:_i50] + rep[rep.index("\n", _i50 + 1):]; INTENT["X-C8-10-row50-deleted"] = "C8-10"
+# a late file planted in the live late folder after the freeze (state check D-late, named as the intended check)
+import tempfile as _tf
+_ld = _tf.mkdtemp()
+for _f in os.listdir(E + "late-pinned"):
+    shutil.copy2(E + "late-pinned/" + _f, _ld + "/" + _f)
+open(_ld + "/OWNER-SHEET-v36-A.md", "w").write("planted late file\n")
+M["X-late-extra-file-planted"] = rep; INTENT["X-late-extra-file-planted"] = "D-late"; ENVL = {"X-late-extra-file-planted": _ld}
