@@ -1,5 +1,16 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## STATUS 08:25 UTC / 13:55 IST - ORDER 007 items 1-5 edited, review round 1 starting
+Failed, not checked or open (first): nothing from items 1-5 has been reviewed yet; no runtime; the take repository is not visible; the dollar, alert and Postgres numbers in Decisions are UNVERIFIED estimates; L6-FD-026 downstream nodes NOT traced (needs laptop reader).
+Done (evidence: citation check 1020 of 1020 FOUND on SWEEP.md and ONE-PLACE-TABLE.md; grep finds 0 "which counter the take proof reads"):
+- Item 1: COUNTER owner = independent count; stage.journal = per-lead guard only; the false "ARCHIVE BLOCKED until counter" gate removed from rows J-004, 016, 029, 036, 044, 054 and fix-plan row 8; real gate = L6-EX-11.
+- Item 2: new section "Decisions for the studio head" (A dollar cap, B second alert channel and heartbeat, C rotation and history, D Postgres identities, E owner name) with options, cost, recommendation; fix-plan rows 2, 5, 6, 7, 13 rewritten.
+- Item 3: L1c-FD-001 and L1c-FD-021 re-rated Major; L6-FD-026 cell fixed; L6-FD-001, 002, 017 merged into twins; L6-FD-003 marked arguable; L6-FD-004 now cites WP6 P11 (Major); rows 15-17 are one imperative action plus verification; LOG audit relabelled (no audit owner); counts 314 raw (311 rated + 3 merged), 307 deduplicated; scope stated truthfully.
+- Item 4: rows L7-FD-001..007 (single dependency, lock-in, least privilege, webhook entry, SMTP login, stage.journal independence = UNVERIFIED).
+- Item 5: L4c-FD-001 and 003 are readable here and CONFIRMED (row L7-FD-008); patch status needs laptop reader.
+Agents registered (start 08:25 UTC / 13:55 IST, expected end 08:40 UTC / 14:10 IST): R1 egm:egm-codebase-details (sonnet; citations and facts of the edited rows); R2 egm:egm-design (sonnet; decisions, owners, wording). Both read-only, report inline. Running 2 after launch.
+Critical path: reviewers, then egm-resolve, then FINAL (round 2 only for Blockers and Majors).
+
 ## FINAL 08:20 UTC / 13:50 IST - ORDER 005 (independent review of core-hardening) done; waiting for the lead
 Failed, not checked or open (first):
 - Not checked: the 65 Nits; the MASTER-MAP rows one by one (183 of 473 have no path:line); anything that needs a running system (n8n, database, scheduler). Code facts were read from snapshot b4cce5b, not from today's head (22 src files differ; 18 are cited by the target).
