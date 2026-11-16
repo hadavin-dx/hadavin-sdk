@@ -362,7 +362,7 @@ MODE == "pre" { pre_line(); next }
 {
   line = $0
   gsub(/\001/, "", line)
-  gsub(/\002/, "<", line)          # v8: the sed stage turned every raw < into STX (see write_mask_sed); it is turned back here
+  gsub(/\002/, "", line)          # v8: the sed stage turned every raw < into STX (see write_mask_sed); it is turned back here
   nmark = 0
   if (match(line, /\005[0-9]+\005$/)) { nmark = substr(line, RSTART + 1, RLENGTH - 2) + 0; line = substr(line, 1, RSTART - 1) }
   line = ctl_strip(line)             # v8: the same control-byte removal in the final stage (also the final belt over the whole output)
