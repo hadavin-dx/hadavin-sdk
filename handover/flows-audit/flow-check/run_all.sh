@@ -87,7 +87,9 @@ T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 # the take runs on the PATCHED copy (F-002 and F-008 applied, lead answers Q17-4 and Q18): exit 0 required, and the run-saving block must hold ACCEPTED lines only (no WARN)
 # round 10c (Q1): the committed take-warns.pin keeps the flows-audit reviewer line, so a bare take exits 4 ("pin not yet confirmed by the lead") until the lead edits it. This script tests the FILES, so it runs the take with a copy of the pin whose reviewer line is a stand-in (same WARN lines, same hash); the committed pin's own state is printed near the end.
-mkdir -p "$W/tc" && { echo "# reviewed by: Testonly Runall, $(date -u +%Y-%m-%d)"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
+STANDIN=$(bash "$HERE/take_check.sh" --standin-name) && [ -n "$STANDIN" ] || { echo "ABORT: take_check.sh --standin-name gave no name (round f8-r8: the stand-in name and the word lists live in take_check.sh only)"; exit 3; }
+PINDATE=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$HERE/take-warns.pin" | head -n 1)   # round f8-r8: the stand-in line carries the pin's own date (never older than the pin), not the clock date
+mkdir -p "$W/tc" && { echo "# reviewed by: $STANDIN, ${PINDATE:-$(date -u +%Y-%m-%d)}"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
 env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$TESTPIN" bash "$HERE/take_check.sh" --flows "${RUN_ALL_TAKE_FLOWS:-$W/g/real}" > "$RAW/take-check.txt" 2>&1; TC=$?   # round 10d (B3): this call has an override (the stand-in pin), so a pass is exit 5, never 0; exit 5 is what is required below   # --flows is the documented way for the folder; the pin override needs the test flag (round 10, M1)
 TCMISS=""   # set BEFORE the first use below (round 7 fix: it used to be set after the first two checks, so a failing take script ended this script with "TCMISS: unbound variable" and the first two checks were thrown away)
 # the FINAL line of take_check.sh must print the same number as its real exit status (a line that always says 0 would hide a failure)
@@ -281,7 +283,10 @@ case $LW in
   *) LEADMSG="OPEN LEAD DECISIONS (real-v5, the take): unknown (the real-v5 checker run did not finish; see raw/pristine.txt)"; RC=1;;
 esac
 PINREV=$(sed -n 's/^# reviewed by: \(.*\)$/\1/p' "$HERE/take-warns.pin" | head -n 1)
-if printf '%s' "$PINREV" | grep -q -i -E "session|lead to confirm|PLACEHOLDER" || [ -z "$PINREV" ]; then PINMSG="COMMITTED PIN (take-warns.pin) reviewer line, as written: '${PINREV:-none}'. NOT confirmed by the lead: a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass)."; else PINMSG="COMMITTED PIN (take-warns.pin) reviewer line, as written: '$PINREV' (this script cannot tell who really read it)."; fi
+PINSHOWN=$(bash "$HERE/take_check.sh" --safe-text "$PINREV")   # round f8-r8: the word rules (session, lead to confirm, placeholder, stand-ins, hidden characters) are asked of take_check.sh, never copied here
+if [ -z "$PINREV" ]; then PINMSG="COMMITTED PIN (take-warns.pin) has no reviewer line. NOT confirmed by the lead: a bare take_check.sh exits 4 until the lead adds one (this run used a stand-in line, so its take check could pass)."
+elif PINWHY=$(env -u TAKE_CHECK_TEST -u TAKE_CHECK_WARN_PIN bash "$HERE/take_check.sh" --check-reviewer-line "$PINREV" "$PINDATE"); then PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN' (this script cannot tell who really read it)."
+else PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN'. NOT confirmed by the lead: take_check.sh refuses it ($(printf '%s' "$PINWHY" | cut -c1-120)), so a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass)."; fi
 echo "run_all exit status (real-v5 default runs + self-test): $RC"
 echo "real-v5 placeholder ids: $(grep -c 'still placeholders' "$RAW/pristine.txt") file(s) warn in the committed flows (pass --strict to make that a failure)"
 echo "$PINMSG"
