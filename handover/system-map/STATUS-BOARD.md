@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 16:11Z
+UPDATED_UTC: 16:12Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
@@ -10,7 +10,7 @@ PERCENT: 83 (the mean of the per-row percent column in the ITEMS table; only 5 o
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
 NEEDS_YOU, in this order (for the lead session to answer or pass to the studio lead; item 3 may need the owner; paths start at handover/system-map/; times UTC / IST):
-  0. MISSING SOURCES for runbook v4.3 (lead order 16:04Z): not in this checkout, please push from the laptop: egm/duplicate-proof-lead-desk/wp6/fix-p13/review-fix-13o/LANE-D-REPORT-SUMMARY.md, review-fix-13p (round 32 money additions), review-fix-13q (round 33 marks), review-fix-13r/LANE-D-REPORT-SUMMARY.md, review-fix-13s/LANE-D-REPORT-SUMMARY.md, and the take-day runbook v4.2 file itself (no file with that name found). Without them the patch has rows marked SOURCE MISSING.
+  0. CORRECTION 16:12Z: the v4.2 runbook (inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md) and LANE-D-13o/13p/13q/13r/13s.md ARE in the checkout; my earlier 'missing' claim was wrong. Nothing missing now except laptop-only files (run program, run sheet). Patch rebuilt against v4.2 (agents below).
   1. Start Docker and run the first rehearsal of the changed flows (steps: work/t19-and-stored-data-steps.md; about 1.5 h, my estimate, unverified). Start by Tue 17 Nov 03:30 UTC / 09:00 IST (decision 12).
   2. Yes or no. The one check that fails (M14) requires every licence file to be proprietary, but three folders under handover/promotion-inputs hold Apache-2.0 copies. YES = I change only the test so it accepts Apache-2.0 there; the licence files stay unchanged (decision 11: licence files are never changed). NO = the test keeps failing and the take can still go ahead, but the test keeps failing by it. Whether those folders may be relicensed is a separate question for the owner and is NOT asked here. Reply by Tue 17 Nov 06:00 UTC / 11:30 IST.
   3. Yes or no: will you paste the SESSION-HANDOFF text (the notes about live state that exist only on your laptop) into inputs/? Row M20 checks the pages against it; without it M20 cannot be done and I drop it. Reply by Tue 17 Nov 12:00 UTC / 17:30 IST.
@@ -49,15 +49,15 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- MERGER | MERGE patch parts 1-3 into work/RUNBOOK-V4.3-PATCH.md | started 16:11Z | running | next: fresh reader on the merged file
-- a52daf4f8e2cd2ac0 | READER: work/RUNBOOK-V4.3-PATCH-part3-timing.md | running | next: digest
-- READER-DL | READER: work/decision-list-for-lead.md after fixes (round 2) | started 16:11Z | running | next: digest
-- READER-CP2 | READER: work/critical-path-r2.md (round 1) | started 16:11Z | running | next: digest
-- aaf7afcfd58446272 | FIXER owner-timeline-draft, open-items-table, critical-path-r1 to 17:40Z | running | next: one fresh reader
-- ad49732d974688a4a | WRITER LEAD-NOTICE timing items (a to h) | running | next: digest
-- ae5692590ae2e7d21 | FIXER work/t19-and-stored-data-steps.md to decisions 5-12 | running | next: scan
-- EMPTY SLOT (1 of 8): reason: no further independent open row; D-01..D-08 done pending reader, the four round-2 pages are at the cap, remaining items need the studio lead (LEAD-NOTICE)
-Finished since last push: patch A (a3798a0064132a398), fixer af3ad78c54c926614, patch C (a0e8520fb4404f483).
+- a27e267924e11c1f0 | MERGER: old patch parts 1-3 (v5-based) -> work/RUNBOOK-V4.3-PATCH.md | running | next: will be redone with the v4.2 parts below
+- PATCH-D | RUNBOOK PATCH D: LANE-D-13o + 13p (rounds 28, 32) vs v4.2 lines -> work/RUNBOOK-V4.3-PATCH-laneD-28-32.md | started 16:12Z | running | next: merge
+- PATCH-E | RUNBOOK PATCH E: LANE-D-13q + 13r (rounds 33, 36) -> work/RUNBOOK-V4.3-PATCH-laneD-33-36.md | started 16:12Z | running | next: merge
+- PATCH-F | RUNBOOK PATCH F: LANE-D-13s (round 34) -> work/RUNBOOK-V4.3-PATCH-laneD-34.md | started 16:12Z | running | next: merge
+- PATCH-G | RUNBOOK PATCH G: decision edits retargeted to real v4.2 lines -> work/RUNBOOK-V4.3-PATCH-part1-v42.md | started 16:12Z | running | next: merge
+- TIMING-H1 | 49-minute check of v4.2 lines 1-320 -> work/timing-check-v42-part1.md | started 16:12Z | running | next: merge into patch
+- TIMING-H2 | 49-minute check of v4.2 lines 321-628 -> work/timing-check-v42-part2.md | started 16:12Z | running | next: merge into patch
+- EMPTY SLOT (1 of 8): reason: fixes for the decision list and critical-path-r2 (reader findings) are queued behind this launch; they start when the merger a27e267924e11c1f0 hands back
+Finished since last push: fixers aaf7afcfd58446272, ae5692590ae2e7d21, writer ad49732d974688a4a, readers a52daf4f8e2cd2ac0, ab017803cad657613, a5b8f886070cc0492.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
