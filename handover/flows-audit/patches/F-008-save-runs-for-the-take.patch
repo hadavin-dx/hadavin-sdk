@@ -1,12 +1,25 @@
+diff --git a/handover/demo/n8n-mainframe/build_mainframe.py b/handover/demo/n8n-mainframe/build_mainframe.py
+index 2b59bf9..8d8a16f 100644
 --- a/handover/demo/n8n-mainframe/build_mainframe.py
 +++ b/handover/demo/n8n-mainframe/build_mainframe.py
-@@ -41,7 +41,8 @@
+@@ -41,7 +41,10 @@ def link(con, a, b, out=0):
      con.setdefault(a, {"main": []}); m = con[a]["main"]
      while len(m) <= out: m.append([])
      m[out].append({"node": b, "type": "main", "index": 0})
 -ST = {"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": False}
-+# Owner 2026-11-16 (ORDER 004): runs are saved for the take only (made-up data) and deleted at clean-up (delete the executions and run n8n execution pruning off the take database).
++# Saved runs (owner 2026-11-16, ORDER 004): ON for the take, for the two entry flows and the sub-workflow only, because the take shows the run list. Made-up data only: a saved run holds the lead's key, e-mail and name.
++# The recovery flow fires every 30 s (about 2,880 runs a day, each carrying lead keys and e-mails), so it stays at none. The clean-up step of the take must delete every saved run from the take database (how: UNVERIFIED here, n8n is not installed; the lead picks the delete step on the laptop and tests it).
 +ST = {"executionOrder": "v1", "saveDataSuccessExecution": "all", "saveDataErrorExecution": "all", "saveManualExecutions": False}
++ST_NONE = {"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecutions": False}   # recovery flow: never saved
  KEY = "$('SubIn').first().json.lead_key"; TOK = "$('SubIn').first().json.claim_token"
  def sub():
      n = [N("SubIn", "n8n-nodes-base.executeWorkflowTrigger", 1.1, {"inputSource": "passthrough"}, [0, 0]),
+@@ -114,7 +117,7 @@ def recovery():
+     # the Postgres node returns ONE item {success: true} when a non-SELECT statement matches no row (n8n source, Postgres v2 helpers/utils.js): only an item that carries a lead id is work
+     c = {}; link(c, "Every30s", "MarkFailed"); link(c, "Every30s", "ClaimStuck"); link(c, "ClaimStuck", "StuckRow"); link(c, "StuckRow", "RunSub", 0); link(c, "Every30s", "AlertClaim"); link(c, "AlertClaim", "AlertRow"); link(c, "AlertRow", "AlertSend", 0); link(c, "AlertSend", "AlertMark", 0)
+     if V4: link(c, "AlertSend", "AlertBackoff", 1)
+-    return {"name": "Lead desk main frame: recovery (every 30 s)", "nodes": n, "connections": c, "settings": ST}
++    return {"name": "Lead desk main frame: recovery (every 30 s)", "nodes": n, "connections": c, "settings": ST_NONE}
+ os.makedirs(OUT, exist_ok=True)
+ for fn, w in (("mf-sub-crm-mail.json", sub()),
+               ("mf-form.json", main_flow("Lead desk main frame: form entry", "mf-form", "mf-form-wh", "submission_id", "email", "name")),

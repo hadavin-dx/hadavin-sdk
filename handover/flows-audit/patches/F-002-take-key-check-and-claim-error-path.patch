@@ -1,24 +1,26 @@
+diff --git a/handover/demo/n8n-mainframe/build_mainframe.py b/handover/demo/n8n-mainframe/build_mainframe.py
+index 2b59bf9..20f71ae 100644
 --- a/handover/demo/n8n-mainframe/build_mainframe.py
 +++ b/handover/demo/n8n-mainframe/build_mainframe.py
-@@ -76,11 +76,15 @@
+@@ -76,11 +76,15 @@ def call_sub(name, pos, **x): return N(name, "n8n-nodes-base.executeWorkflow", 1
  VERDICT = "{ done: 'new', unknown: 'unknown', stage_failed: 'processing', lost_claim: 'processing' }[$json.outcome] || 'processing'"
  def main_flow(name, path, wid, ref, em, nm):
      EMV = "/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test($json.email)"
-+    # Sender contract: 422 rejected = never retry (no lead_key); 503 retry = the store did not confirm, resend with the SAME lead_key (the INSERT is idempotent: ON CONFLICT DO NOTHING).
++    # Sender contract: 422 rejected = never retry (lead_key missing or not 1 to 64 letters, digits, - or _; the key is stored exactly as sent, no trimming); 503 retry = the store did not confirm, resend with the SAME lead_key (the INSERT is idempotent: ON CONFLICT DO NOTHING).
      n = [N("Receive", "n8n-nodes-base.webhook", 2, {"httpMethod": "POST", "path": path, "responseMode": "responseNode", "options": {}}, [0, 0], webhookId=wid),
           setf("Item", {"lead_key": ("={{ $json.body.%s }}" % ref, "string"), "email": ("={{ $json.body.%s }}" % em, "string"), "name": ("={{ $json.body.%s }}" % nm, "string")}, [220, 0]),
 -         setf("Valid", {"lead_key": ("={{ $json.lead_key }}", "string"), "email": ("={{ $json.email }}", "string"), "name": ("={{ $json.name }}", "string"), "valid": ("={{ %s }}" % EMV, "boolean")}, [440, 0]),
-+         setf("Valid", {"lead_key": ("={{ String($json.lead_key || '').trim() }}", "string"), "email": ("={{ $json.email }}", "string"), "name": ("={{ $json.name }}", "string"), "valid": ("={{ %s }}" % EMV, "boolean")}, [440, 0]),
-+         iff("KeyOk", "={{ $json.lead_key }}", "string", "notEmpty", None, [550, 0]),
-+         N("ReplyBadKey", "n8n-nodes-base.respondToWebhook", 1.4, {"respondWith": "json", "responseBody": "={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing' } }}", "options": {"responseCode": 422}}, [550, 180]),
++         setf("Valid", {"lead_key": ("={{ String($json.lead_key || '') }}", "string"), "email": ("={{ $json.email }}", "string"), "name": ("={{ $json.name }}", "string"), "valid": ("={{ %s }}" % EMV, "boolean")}, [440, 0]),
++         iff("KeyOk", "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "boolean", "true", None, [550, 0]),
++         N("ReplyBadKey", "n8n-nodes-base.respondToWebhook", 1.4, {"respondWith": "json", "responseBody": "={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing or not valid (1 to 64 letters, digits, - or _)' } }}", "options": {"responseCode": 422}}, [550, 180]),
 +         N("ReplyStoreFail", "n8n-nodes-base.respondToWebhook", 1.4, {"respondWith": "json", "responseBody": "={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'retry', reason: 'store not confirmed; resend with the same lead_key is safe' } }}", "options": {"responseCode": 503}}, [880, 180]),
           pg("Claim", "INSERT INTO mf_leads(lead_key,email,name,state,claimed_until,claim_token,attempts) VALUES ($1,$2,$3, CASE WHEN $4::boolean THEN 'processing' ELSE 'review' END, now() + interval '%d seconds', gen_random_uuid()::text, CASE WHEN $4::boolean THEN 1 ELSE 0 END) "
 -            "ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;" % LEASE, "={{ [$json.lead_key, $json.email, $json.name, $json.valid] }}", [660, 0]),
-+            "ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;" % LEASE, "={{ [$json.lead_key, $json.email, $json.name, $json.valid] }}", [660, 0], onError="continueErrorOutput"),
++            "ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;" % LEASE, "={{ [$json.lead_key, $json.email, $json.name, $json.valid] }}", [660, 0], always=False, onError="continueErrorOutput"),   # always=False: an error goes ONLY to output 1 (ReplyStoreFail); test T-F002b must show a repeat key still gets its answer
           iff("Claimed", "={{ $json.lead_key }}", "string", "notEmpty", None, [880, 0]),
           iff("IsProcessing", "={{ $json.state }}", "string", "equals", "processing", [1100, -100]),
           setf("SubInput", {"lead_key": ("={{ $json.lead_key }}", "string"), "claim_token": ("={{ $json.claim_token }}", "string"), "email": ("={{ $('Valid').item.json.email }}", "string")}, [1320, -160]),
-@@ -90,7 +94,7 @@
+@@ -90,7 +94,7 @@ def main_flow(name, path, wid, ref, em, nm):
           pg("Stored", "SELECT state FROM mf_leads WHERE lead_key=$1;", "={{ [$('Valid').item.json.lead_key] }}", [1100, 240]),
           respond("ReplyStored", "={{ { n8n_error: false, lead_key: $('Valid').item.json.lead_key, verdict: ({ done: 'done', processing: 'processing', new: 'processing', review: 'review', unknown: 'unknown', failed: 'failed' })[$json.state] || 'processing', repeat: true } }}", [1320, 240])]
      c = {}
