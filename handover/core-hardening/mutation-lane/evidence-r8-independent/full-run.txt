@@ -185,3 +185,60 @@ REFUSED: import check: `import mod` loads '/tmp/claude-0/-home-user/957f9d59-4d7
   PASS: T25 -p no:mark (core plugin) refused by the argument check (rc 2, hits 1)
   PASS: T25 -p no:assertion (core plugin) refused by the argument check (rc 2, hits 1)
   PASS: T25 -p no:capture (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:fixtures (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:logging (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:main (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:warnings (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:debugging (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:setuponly (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:setupplan (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:unittest (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:faulthandler (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:doctest (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:monkeypatch (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:recwarn (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:stepwise (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:junitxml (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:pastebin (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -pno:runner (attached form) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:RANDOMLY (plugin names are exact) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:randomly.runner refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no: (empty name) refused by the argument check (rc 2, hits 1)
+  PASS: T25 path ../ outside root refused by the argument check (rc 2, hits 1)
+  PASS: T25 absolute path outside root refused by the argument check (rc 2, hits 1)
+  PASS: T25 path through a link out of the root refused by the argument check (rc 2, hits 1)
+  PASS: T25 -- terminator refused by the argument check (rc 2, hits 1)
+  PASS: T25 file unchanged, state empty
+  PASS: T25 the allowed forms still run (-q -x -p no:NAME -k -m path::node) (got 0)
+== T26 the start hook fails after the tests were started: the test group is still stopped (review 4 M2)
+RuntimeError as expected: start hook failed
+  PASS: T26 no orphan pytest left
+== T27 a mutant whose new text equals the old text is refused (exit 2)
+REFUSED: mutant m1: old text is empty or equal to new text (a no-op)
+  PASS: T27 exit 2 (got 2)
+== T28 a clean run leaves no temporary file in the state folder
+  PASS: T28 state empty (ls -A)
+== T29 stopping the test group fails (no permission): the leader is still stopped and signals stay disarmed (review r2 nit)
+raised as expected: RuntimeError
+SIG.allow after: False
+  PASS: T29 SIG.allow is False afterwards
+  PASS: T29 no orphan pytest left although stop_group failed
+== T30 import check fails closed: a target that is not a .py module is refused unless --skip-import-check (recorded)
+REFUSED: import check: 'docs/note.txt' is not a plain .py module path, so the check cannot tell which file the tests import; pass --skip-import-check if that is intended (it is recorded in the raw fil
+  PASS: T30a refused (rc 2, 'import check' hits 1)
+  PASS: T30a file unchanged
+  PASS: T30b with --skip-import-check it runs (rc 0) and the raw file says so
+== T31 a timeout keeps the output printed before it
+  PASS: T31 raw file says TIMEOUT and holds the early output
+--- output printed before the timeout ---
+.
+  PASS: T31 file restored
+== T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang
+  PASS: T32a FIFO in the tree refused, no hang (got 2; 124 or 137 = hung)
+  PASS: T32b FIFO as marker refused, no hang, exit 3 (got 3; 124 or 137 = hung)
+== T33 a .venv folder deeper than the top is compared like any other folder (exit 2)
+  PASS: T33 nested .venv refused (got 2)
+== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)
+  PASS: T34 run ends normally (rc 5: 5 = INCOMPLETE because of --no-control, r7) with verdict KILLED in the raw file
+  PASS: T34 file restored
+== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted
