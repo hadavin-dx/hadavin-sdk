@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:16:09Z
+UPDATED_UTC: 2026-11-16T11:16:42Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags still contradict QUEUE.md (digest 117), lead to decide
 PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
-AGENTS_RUNNING: 0 at 2026-11-16T11:16:09Z (all 8 finished and digested as batches 143-150); 8 started again right after this beat (ORDER 028), named in the next beat. Digested through batch 150.
+AGENTS_RUNNING: 8 at 2026-11-16T11:16:42Z (ORDER 028), all started 11:16Z: TAKE-BLOCKERS cold read, 12-decisions contradiction check, run-day card steps 17-end read, LEAD-PAGE cold read, QUEUE vs board vs REPORT M-row check, banned-claims read, own-digest cite check, DECISION-one-store read. Digested through batch 150.
 INTERRUPTED: none
 NEXT: collect and digest the 6 new hand-backs (stranger reads of run-day card steps 15-28, OWNER-VIEW rows 4-7, TAKE-BLOCKERS rows 6-9, LEAD-PAGE, README; cite check of batches 91-98); send the lead the decision list (work/open-items-table.md, digest batches 26 and 65-98); find the arguments for tools/check_citations.py
-CAPACITY: nproc 4, load 0.16 0.27 0.20, RAM 864/16087 MB used, disk / 42% used, 23G free, top3: work 2.1MB, flowcheck 0.5MB, reviews-of-core-hardening 0.4MB
+CAPACITY: nproc 4, load 0.22 0.25 0.21, RAM 893/16087 MB used, disk / 42% used (23G free), my folder 4.4 MB. Top disk users: not measured this beat.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:16:09Z
+PUSHED_UTC: 2026-11-16T11:16:42Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -38,8 +38,14 @@ PUSHED_UTC: 2026-11-16T11:16:09Z
 | M20 | SESSION-HANDOFF live state | IMPOSSIBLE-NOW (file is on the studio laptop, not in the repo) | 0 | | needs the lead's text |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (from the real agent list at the last beat)
+## AGENTS (from the real agent list at 2026-11-16T11:16:42Z)
 | id | role | what it does | state |
 |---|---|---|---|
-| a554e500db276cac4 | comprehension | M17 page stranger read | running |
-| (7 started this turn, see AGENTS_RUNNING) | | | |
+| a66c801452024bf91 | comprehension | TAKE-BLOCKERS cold read | running |
+| ac3408d98b0302db2 | codebase-details | 12 decisions vs pages | running |
+| ad7add30332beb9c7 | comprehension | run-day card steps 17-end | running |
+| a121e292a84ceebe3 | comprehension | LEAD-PAGE cold read | running |
+| abb503f24a1a31e93 | codebase-details | QUEUE/board/REPORT M-rows | running |
+| a3ace85900bc68628 | comprehension | banned-claims read | running |
+| abe76ec56b28d8ff6 | codebase-details | own digest cite check | running |
+| a066fe1f80f8c340a | comprehension | DECISION-one-store read | running |
