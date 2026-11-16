@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:53:55Z
+UPDATED_UTC: 2026-11-16T10:54:15Z
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
 PERCENT: 85
-AGENTS_RUNNING: 3 (a78791 run-day card step order; af188c clean-up card round 2; aa8ec7 card overlap check). Three more being launched.
+AGENTS_RUNNING: 5 (af188c clean-up card round 2; aa8ec7 card overlap check; ac805f row 6 plain rewrite draft; a015da MAP-ADDITIONS L8-X check; ae08bd drift report cite recheck). One more being launched.
 INTERRUPTED: none
 NEXT: collect the 6 hand-backs, grep-verify, apply safe fixes; send the lead the decision list (23 items, work/agent-reports-batch4.md BATCH 26), the row 1 generator-vs-JSON finding, T19 not runnable, the zoom-out finding, and the F1 deadline self-release conflict in the clean-up card; MASTER-MAP L8-X-020..024 rows wait for the lead.
 CAPACITY: nproc 4, load 0.15, RAM 856/16087 MB used, DISK 24G free of 252G (41% used); top3 /tmp/claude-0 1.3G, /tmp/sm-fresh 624M, /tmp/pytest-of-root 616M; nothing removed
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:53:55Z
+PUSHED_UTC: 2026-11-16T10:54:15Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
