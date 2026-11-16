@@ -1162,3 +1162,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 855 merged-findings r14: DECISION source conflict. UNRESOLVED; needs the lead.
 - 856 L4c r12: line cites, quarantine list, terms. FIXED by block; row markers TO DO.
 - 857 BRIEF-LANE r17: r15 revived and dropped lines. FIXED by control block.
+- 858 BRIEF-LANE r17 and t19 r3, PLAN-002 r26, open-items r19, premortem r18, L1c r18, decision-list r16: same finding (stacked history). premortem FOLDED for real (history in work/premortem-history.md); the others still carry history; fold TO DO.
+- 859 L3c r12: glossary stack. FOLDED for real (history in work/L3c-history.md); severity cells TO DO.
