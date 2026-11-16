@@ -83,11 +83,12 @@ Needs: `git`, `uv` (it installs the Python and the packages), and either network
 `requires-python`; CI uses 3.12 and 3.13). Repository source: the GitHub repository `https://github.com/hadavin-dx/hadavin-sdk` (the commit is on its branch
 `cloud/core-hardening`), or, as the fallback, the checkout this working copy lives in (`/home/user/hadavin-sdk` in the session that wrote this).
 Use a clone, not a plain `git archive` of the files: the repository rule tests ask git for the list of tracked files (`tests/test_repo_rules.py`, `tracked_files`), which a folder without
-git data cannot answer (the first pass ran in such a folder, so its numbers are not comparable with this recipe).
+git data cannot answer. Whatever the patches add must be in that list too, hence the `git add -A` line below (nothing is committed).
 ```
 P=/home/user/hadavin-sdk/handover/flows-audit/reviews-of-core-patches/patch-copies   # absolute path of THIS folder
 SRC=https://github.com/hadavin-dx/hadavin-sdk                                         # or the fallback path of a local checkout
 SHA=b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c
+C=C-01-price-only.patch           # DEFAULT: price check only, +30 tests with A-01. The alternative is C=C-01.patch (price check plus ceiling, +32); the studio head decides (decision table, rows 2 and 3)
 W=$(mktemp -d)                    # new empty working folder
 for t in unpatched patched; do
   git clone -q "$SRC" "$W/$t"
@@ -95,54 +96,64 @@ for t in unpatched patched; do
   git -C "$W/$t" checkout -q "$SHA"
 done
 cd "$W/patched"
-git apply --check "$P/C-01.patch"; echo "check C-01 exit=$?"     # saw 0
-git apply --check "$P/A-01.patch"; echo "check A-01 exit=$?"     # saw 0
-git apply "$P/C-01.patch" && git apply "$P/A-01.patch"; echo "apply exit=$?"   # saw 0
+for f in "$C" A-01.patch; do git apply --check "$P/$f"; echo "check $f exit=$?"; done   # expect 0 and 0 (both patches apply to b4cce5b, one after the other)
+git apply "$P/$C" && git apply "$P/A-01.patch"; echo "apply exit=$?"                     # expect 0
+git add -A                         # new test files must appear in `git ls-files`; this stages, it does not commit
 ```
-For the price check alone, put `C-01-price-only.patch` in place of `C-01.patch` in the last line (`git apply --check` on it: saw 0). It cannot be applied together with `C-01.patch`
-(both change `config.py` at the same place); choose one. In the checks below the expected number of new tests is 32 with `C-01.patch` and 30 with `C-01-price-only.patch`.
-(`git apply` writes the files; nothing is committed. Add `--offline` after `uv run` below only if the machine has no network and a warm `uv` cache; add
+`C-01-price-only.patch` and `C-01.patch` cannot be applied together (both change `config.py` at the same place): choose one. The expected number of new tests is **30 with the default `C-01-price-only.patch`**
+and 32 with `C-01.patch`. (`git apply` writes the files; nothing is committed. Add `--offline` after `uv run` below only if the machine has no network and a warm `uv` cache; add
 `HTTPS_PROXY="$HTTPS_PROXY"` after `env -i` if the network needs a proxy.)
 
-### Gates on the patched copy (each must end with the exit code shown)
-Run each command with no cloud settings in the environment (repository rule `.claude/rules/verify-tests-and-evals.md`), which `env -i` gives. Gate on the
-exit code of the command itself, never on a `| tail` pipe.
-```
-cd "$W/patched"
-E="env -i PATH=$PATH HOME=$HOME"
-$E uv run --all-extras --group test ruff check;                 echo "ruff check exit=$?"          # expect 0
-$E uv run --all-extras --group test ruff format --check;        echo "ruff format exit=$?"         # expect 0
-$E uv run --all-extras --group test bandit -q -r src demos tools -ll; echo "bandit exit=$?"        # expect 0 (the form of ci.yml:181 at head)
-```
+### Expected exit codes (ONE table; the gate commands, run with no cloud settings in the environment as `.claude/rules/verify-tests-and-evals.md` asks, which `env -i` gives)
+Gate on the exit code of the command itself, never on a `| tail` pipe. `E="env -i PATH=$PATH HOME=$HOME"`; run each command in the folder named in the column head.
+| Command (all start with `$E uv run --all-extras --group test`) | unpatched copy | patched copy |
+|---|---|---|
+| `ruff check` | 0 | 0 |
+| `ruff format --check` | 0 | 0 |
+| `bandit -q -r src demos -ll` (the form of `ci.yml:119` at `b4cce5b`; the form at head adds `tools`, a folder that does not exist at `b4cce5b`; bandit prints one `nosec` warning, which is not a failure) | 0 | 0 |
+| `pytest -q -p no:cacheprovider -m "not live and not perf" -rf` (the full run, below) | **1** while the two baseline failures exist, 0 after they are fixed | **1** while the two baseline failures exist, 0 after they are fixed |
+| `pytest` on the two new test files copied onto the unpatched copy (proof section) | 1 (the new tests fail on old code) | not run |
 
 ### Baseline, then the patched run (the full test run)
 The markers `live` and `perf` come from `pyproject.toml`; CI leaves them out of the main run (`ci.yml:88` at `b4cce5b`, `:92` at head) and runs `perf` in its own step
-(`:94`, head `:100`), which this pass did not run.
+(`:94`, head `:100`), which is not part of this recipe.
 ```
 run() {  # $1 = folder, $2 = tag
   ( cd "$1" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider -m "not live and not perf" -rf > "$W/$2.log" 2>&1; echo "$2 exit=$?" )
   tail -n 1 "$W/$2.log"
   grep '^FAILED' "$W/$2.log" | sed 's/ - .*//' | sort > "$W/$2-failed.txt"
 }
-run "$W/unpatched" baseline        # 1. the baseline FIRST, on the unpatched copy; exit 1 is expected while failure 1 below exists
+run "$W/unpatched" baseline        # 1. the baseline FIRST, on the unpatched copy; exit 1 is expected while the two baseline failures below exist
 run "$W/patched"   patched         # 2. the patched copy
-diff "$W/baseline-failed.txt" "$W/patched-failed.txt" && echo "same failed tests"
+diff "$W/baseline-failed.txt" "$W/patched-failed.txt" && echo "(a) same failed tests"
+# (d1) the number of licence problems, from both logs; each must print a number, and the two must be equal
+n1=$(grep -o 'Left contains [0-9]* more items' "$W/baseline.log"); n2=$(grep -o 'Left contains [0-9]* more items' "$W/patched.log")
+echo "baseline: [$n1]  patched: [$n2]"; [ -n "$n1" ] && [ "$n1" = "$n2" ] && echo "(d1) ok" || echo "(d1) FAILED"
+# (d2) the files the vendor-name test lists (paths only; the banned strings are cut off and never printed)
+offenders() { grep -m1 '^E *AssertionError: vendor brand strings' "$1" | sed 's/^E *AssertionError: [^:]*: //' | tr ';' '\n' | sed -E 's/^ *//; s/: .*//' | sort; }
+offenders "$W/baseline.log" > "$W/o-base.txt"; offenders "$W/patched.log" > "$W/o-pat.txt"
+[ -s "$W/o-base.txt" ] && diff "$W/o-base.txt" "$W/o-pat.txt" && echo "(d2) ok" || echo "(d2) FAILED"
 ```
-**Pass criterion (all of (a) to (e)):** (a) the `diff` prints nothing (the patched run fails exactly the tests the baseline fails, no others); (b) the patched count line shows
-the baseline's `passed` plus 32 (`C-01.patch` with `A-01.patch`) or plus 30 (`C-01-price-only.patch` with `A-01.patch`), with the same `skipped` and `deselected`; (c) the two exit codes are equal;
-(d) the problem count of `test_licences_are_proprietary` is equal: run `grep -A3 'Left contains' "$W/baseline.log" "$W/patched.log"` and both must say the same number (10 at `b4cce5b`), because a name-level `diff`
-cannot see a new problem inside a test that is already red; (e) **all guard tests are green** (`CLAUDE.md`, gate list), which needs failures 1 and 2 below fixed (decision table, row 9).
-**Until (e) holds, the result is "NOT PASSED: no new failure was added, but the repository gate is red"** and no pull request with these patches may be merged. (a) to (d) alone only show that the patch adds no new failure.
+**Pass rule.** Clauses (a) to (d) say "this patch adds no new failure"; they are all needed because the two guard tests that are already red can hide a new problem inside them.
+(a) the `diff` prints nothing: the patched run fails exactly the tests the baseline fails, no others.
+(b) the patched count line shows the baseline's `passed` plus 30 (default `C-01-price-only.patch` with `A-01.patch`) or plus 32 (`C-01.patch` with `A-01.patch`), the same `skipped` and `deselected`, and the same number of `failed`.
+(c) the exit codes of all four gate commands are the ones in the table above, and the two `pytest` exit codes are equal.
+(d) the two red guard tests do not hide a new problem: (d1) both logs print a NUMBER after "Left contains" (an empty result is a failure, not a match) and the two numbers are equal (10 at `b4cce5b`), for `test_licences_are_proprietary`; (d2) the list of offending files in the message of `test_no_vendor_brand_string_is_tracked` is not empty and is the same in both logs (3 files at `b4cce5b`, see the baseline failures below), because that test scans untracked files too, so a banned string inside a patch or a new test file would add an entry while (a) to (c) stay silent.
+The **guard tests** are the 99 tests in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` and `tests/test_lockin_guard.py` (`CLAUDE.md` says "the repo guard tests" without a list; this is this folder's definition). Today exactly two of them are red: `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked` and `tests/test_repo_rules.py::test_licences_are_proprietary`.
+The three **verdicts** (use exactly these names):
+- **PASSED**: (a) to (d) hold, and the full run of the patched copy has no failed test at all (so the two baseline failures are fixed, decision table row 9, and its exit code is 0).
+- **ADDS NO NEW FAILURE**: (a) to (d) hold, but the baseline failures still exist, so the repository gate is still red. The patch is clean; no pull request with it may be merged until row 9 is done. **This is the verdict today.**
+- **NOT PASSED**: any other result: a lint or bandit exit code that differs from the table, a failed test the baseline does not have, a wrong count, a (d) check that prints nothing or differs.
+Only the four local gate commands count here. CodeQL, SonarCloud and CodeRabbit (named in `CLAUDE.md`) run on the pull request on GitHub, cannot be run in this recipe, and are not part of any verdict above.
 
-Known baseline failures at `b4cce5b` (seen in this pass in a real clone, so not a git problem; see "Results"). Both are caused by files under `handover/` and neither is touched by the patches:
-1. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`: two files hold a banned vendor name (the list `BANNED`, `tests/test_no_reference_material.py:19-30`):
-   `handover/demo/portal/portal-design-v2.md` and `handover/BRIEF-PREAMBLE-studio-2026-11-06.md`. I do not print the banned string here.
+Known baseline failures at `b4cce5b` (seen in this pass in a repository with one commit made from a fresh `git archive b4cce5b`; the earlier passes also saw them in real clones). Both are caused by files under `handover/` and neither is touched by the patches:
+1. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`: THREE files are listed (the earlier text said two): `handover/demo/portal/portal-design-v2.md` and `handover/BRIEF-PREAMBLE-studio-2026-11-06.md` hold a banned vendor name (the list `BANNED`, `tests/test_no_reference_material.py:19-30`);
+   `handover/reviews/P1a-idempotence-probe.txt` is "not UTF-8 text, cannot be scanned". I do not print the banned string here.
 2. `tests/test_repo_rules.py::test_licences_are_proprietary`: 10 problems, all in copies of other projects under `handover/promotion-inputs/`: the `LICENSE` file of `apexc`, `dealdesk`, `helios`,
    `killswitch`, `portal-kit`, `refunds` and `warden` is not the proprietary licence text, and the `pyproject.toml` of `killswitch` (licence and authors) and of `portal-kit` (authors) is not
    the studio's.
 **Correction of my own earlier text:** the first and second pass said failure 2 came only from running in a folder without git history. That was wrong: it also fails in a real clone, for the reason above.
-Who must fix both: the lead (change or remove those studio copies, or tell the test to skip `handover/`, in a separate change); I did not edit them (my files were limited to this folder).
-Until then the repository gate cannot be fully green at `b4cce5b`, so the pass criterion above reads "NOT PASSED" (clause (e)); (a) to (d) still show whether a patch adds a failure.
+Who must fix both: the lead (change or remove those studio copies, or tell the tests to skip `handover/`, in a separate change); I did not edit them (my files were limited to this folder).
 
 ### Proof that the new tests fail on the old code
 Run on the unpatched copy with only the two new test files copied in (copied from the patched copy):
