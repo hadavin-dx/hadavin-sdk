@@ -1101,3 +1101,9 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 799 premortem r13: no single winning paragraph, owners. FIXED by STATE r13.
 - 800 row1-builder-brief r10: history revived, exit code, result location. FIXED by CURRENT ONLY r10.
 - 801 M17 r10: HOLD r9 unusable alone, terms. FIXED by HOLD r10; replacement text TO DO.
+
+- 802 ARCHIVE-CUT-LIST r12: stale opening, unordered steps. FIXED by VERDICT r13; names NOT SET.
+- 803 PLAN-002 r20: gate lacks pass, owner words. FIXED by RULINGS r21.
+- 804 merged-findings r10: terms undefined, stacked legends. PARTLY FIXED by LEGEND r11; cells TO DO.
+- 805 critical-path r20: row 2a wrong, glossary. FIXED by CURRENT ANSWER r21.
+- 806 open-items r13: bare row numbers, deadlines. PARTLY FIXED by CURRENT r13; cells TO DO.
