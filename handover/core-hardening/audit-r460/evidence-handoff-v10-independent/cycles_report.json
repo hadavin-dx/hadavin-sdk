@@ -54,12 +54,12 @@
     "hadavin_sdk.approvals.requests"
    ],
    [
-    "hadavin_sdk.audit",
-    "hadavin_sdk.audit.local_dir"
-   ],
-   [
     "hadavin_sdk.store",
     "hadavin_sdk.store.memory"
+   ],
+   [
+    "hadavin_sdk.audit",
+    "hadavin_sdk.audit.local_dir"
    ]
   ],
   "planned": [
@@ -74,12 +74,12 @@
     "hadavin_sdk.approvals.requests"
    ],
    [
-    "hadavin_sdk.audit",
-    "hadavin_sdk.audit.local_dir"
-   ],
-   [
     "hadavin_sdk.store",
     "hadavin_sdk.store.memory"
+   ],
+   [
+    "hadavin_sdk.audit",
+    "hadavin_sdk.audit.local_dir"
    ]
   ]
  },
@@ -113,12 +113,12 @@
     "hadavin_sdk.k1b.score"
    ],
    [
-    "hadavin_sdk.audit",
-    "hadavin_sdk.audit.local_dir"
-   ],
-   [
     "hadavin_sdk.store",
     "hadavin_sdk.store.memory"
+   ],
+   [
+    "hadavin_sdk.audit",
+    "hadavin_sdk.audit.local_dir"
    ]
   ],
   "planned": [
@@ -152,12 +152,12 @@
     "hadavin_sdk.k1b.score"
    ],
    [
-    "hadavin_sdk.audit",
-    "hadavin_sdk.audit.local_dir"
-   ],
-   [
     "hadavin_sdk.store",
     "hadavin_sdk.store.memory"
+   ],
+   [
+    "hadavin_sdk.audit",
+    "hadavin_sdk.audit.local_dir"
    ]
   ]
  },
