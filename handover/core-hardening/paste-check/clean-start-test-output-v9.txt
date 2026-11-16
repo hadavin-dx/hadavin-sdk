@@ -1,0 +1,91 @@
+=== a. WRONG database (PGURL points at n8n_db, expected take_db): must STOP, rows stay 4, no OUT file
+WRONG DATABASE: current_database() is not the expected name. STOP, nothing was changed.
+ERROR:  division by zero
+psql rc=3
+rows now: 4  OUT exists: no
+=== b. export line count cannot match (a fake wc says 99): must STOP, rows stay 4; the half-failed attempt leaves OUT behind
+rows before: 4
+EXPORT LINE COUNT (99) DOES NOT MATCH ROW COUNT (4). STOP, nothing was emptied.
+ERROR:  division by zero
+psql rc=3
+rows now: 4  OUT exists: yes lines: 4
+=== c. second run on the same OUT: must STOP at the guard, nothing changed
+OUT exists: STOP, nothing was changed. Read step 4a before doing anything.
+rows now: 4  OUT sha 8bac96f9b3a4 -> 8bac96f9b3a4
+=== d. recovery for b/c (table still has rows, OUT is from a failed attempt): move OUT aside with mv, run again
+rows before: 4
+OK: exported 4 rows to the file, table emptied, count now 0
+psql rc=0
+rows now: 0  OUT lines: 4  aside kept: yes
+--- OUT content (the key with a line break stays on ONE line):
+made-up-1	101
+made-up-2	\N
+made-up-3	
+made-up-line\nbreak	104
+=== e1. copy OUT somewhere safe (exact line of step 4b)
+copy ok
+=== e2. the same line a second time refuses to overwrite the copy
+OUT_COPY exists: STOP, nothing copied
+=== f. OLD v7 paste (no guard) on the same OUT, table now empty: this is finding V7-1
+rows before: 0
+OK: exported 0 rows to the file, table emptied, count now 0
+psql rc=0
+OUT lines now: 0  sha e3b0c44298fc (was 8bac96f9b3a4): THE LIST IS GONE
+=== g. NEW v8 paste, table has 1 new row, same OUT: must STOP at the guard; list intact
+OUT exists: STOP, nothing was changed. Read step 4a before doing anything.
+rows now: 1  OUT sha 8bac96f9b3a4 (kept list: 8bac96f9b3a4)
+=== h. interrupted attempt: psql killed (kill -9) after the file was written, before COMMIT
+rows now: 4 (killed run rolled back)  OUT lines: 4  lock left behind: 0
+--- rerun on the same OUT stops; recovery by mv; run again:
+OUT exists: STOP, nothing was changed. Read step 4a before doing anything.
+rows before: 4
+OK: exported 4 rows to the file, table emptied, count now 0
+psql rc=0
+rows now: 0  OUT lines: 4
+=== i. password file: wrong password in the file, then file mode 644 (psql ignores such a file); both must STOP with no prompt, rows stay
+psql: error: connection to server at "127.0.0.1", port 55489 failed: FATAL:  password authentication failed for user "own_t"
+password retrieved from file "/tmp/tmp.o0r3BtcU3m/badpass"
+psql rc=2
+rows now: 4 OUT exists: no
+WARNING: password file "/tmp/tmp.o0r3BtcU3m/loose" has group or world access; permissions should be u=rw (0600) or less
+psql: error: connection to server at "127.0.0.1", port 55489 failed: fe_sendauth: no password supplied
+psql rc=2
+rows now: 4 OUT exists: no
+=== j. step 2 (state of the prep record) and step 5 (count) as the read-only role
+step 2, key made-up-2 (state unknown): unknown
+step 2, key made-up-1 (state done): done
+step 2, key not stored: [] (empty = no such row)
+step 2, key with a quote char: [] (no error, the quote was passed as data)
+step 5 before the paste: 4
+OK: exported 4 rows to the file, table emptied, count now 0
+psql rc=0
+step 5 after the paste: 0
+step 5 with the count role cannot empty the table: ERROR:  permission denied for table mf_leads
+=== k. step 3 check: nothing answers on the health address (curl prints 000)
+server up   : 200 curl exit=0
+server down : 000 curl exit=7
+=== l. step 2 (v9): fresh prep key, state read BEFORE sending must be an empty line; a leftover row with the same key gives a false pass
+fresh key made-up-prep-20261116105136: rc=0 before=[] (pass: empty)
+leftover key made-up-1: rc=0 before=[done] (not empty = STOP, take a new key)
+--- why: the stored row wins (ON CONFLICT DO NOTHING, as in mf-form.json), so a resend of a used key never changes the state and the read after sending would show the OLD 'done':
+state after the (ignored) resend: [done]  <- false pass if step 2a were skipped
+fresh key after sending: [new] (new = not final, wait)
+fresh key after processing: [done] (done = pass)
+=== m. step 6 (v9): deletion list = union of OUT and every OUT.attemptN, duplicates removed; split case
+OUT has 3 lines, attempt1 3, attempt2 2; union (5 distinct + 1 line-break key = 6 expected: a b c d line e):
+lines in deletion list: 6
+k-a	11
+k-b	
+k-c	\N
+k-d	14
+k-e	16
+k-line\nbreak	15
+second run refuses:
+deletion-list exists: STOP
+--- no attempt files at all, OUT only:
+lines: 1
+=== n. real recovery path of test h then step 6: killed run leaves OUT; mv to OUT.attempt1; rerun; union must hold all 4 rows
+OK: exported 4 rows to the file, table emptied, count now 0
+psql rc=0
+OUT lines: 4 attempt1 lines: 4; count now 0
+lines in deletion list: 4 (expected 4)
