@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T12:17:13Z
+UPDATED_UTC: 2026-11-16T12:17:52Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 9
 PERCENT: 85
-AGENTS_RUNNING: 6
-CAPACITY: 0.85 load of 4 cores, mem 0/15 GB, RAM 969/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.3G /tmp/claude-0 , agents 6 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 1.33 load of 4 cores, mem 1/15 GB, RAM 1063/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.4G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
@@ -20,8 +20,8 @@ core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason,
 TAKE-CHECKLIST/FIX-PLAN: step 4 pass grep never matches; GO rows 1,2,3,5 have no runnable command; IST pair wrong in FIX-PLAN L70
 F8 evidence: run_all exit 0 twice (57 s), but root cannot test chmod 000; bandit -ll flags tools/scratch (B602, B608); ruff format fails only on lead file
 F8: take_check passes a changed flow with same counts (no enforced sha); pin reviewer line accepts any text; TAKE_CHECK_TEST leak exit 0; run_all.sh shared raw dir
-NEXT: collect 6 agents; refill
-PUSHED_UTC: 2026-11-16T12:17:13Z
+NEXT: collect agents; refill; F8 waits
+PUSHED_UTC: 2026-11-16T12:17:52Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -46,6 +46,8 @@ PUSHED_UTC: 2026-11-16T12:17:13Z
 | a73312e | reviewer | sonnet | egm-design REVIEW.md round 6 | 12:17 | 12:40 | running | - |
 | acefb5f | reviewer | sonnet | stranger read QUESTIONS r5 | 12:17 | 12:35 | running | - |
 | a7d3565 | reviewer | sonnet | stranger read owner part r10 | 12:17 | 12:35 | running | - |
+| a211669 | reviewer | sonnet | citation lane F-003 patch r4 | 12:17 | 12:40 | running | - |
+| a1dfd30 | reviewer | sonnet | citation lane RW/CT round 3 | 12:17 | 12:40 | running | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. Citation lane on F-003 r4 patch + new RW/CT (after fixers settle)
