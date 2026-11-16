@@ -53,8 +53,61 @@ Plant verdicts (final): see "Plant table" below.
 
 The runner is `evidence-repin8/mutate8.py`. Verdict words: KILLED-phase1 (a filter case fails), KILLED-phase2 (a machinery case fails), KILLED-startcheck (the script refuses to run), SURVIVED (not caught; I treat it as a test gap unless a written proof says it is equivalent). **No plant is marked equivalent.** m16 and m17 are "not equivalent": both are killed.
 
-PLANT_TABLE_PLACEHOLDER
+| plant | dash (first run) | bash (first run) | dash (delivered script, rerun) | bash (delivered script, rerun) |
+|---|---|---|---|---|
+| m01 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m02 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m03 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m04 | KILLED-phase1 | KILLED-phase1 | KILLED-phase1 | KILLED-phase1 |
+| m05 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m06 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m07 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m08 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m09 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m10 | KILLED-startcheck | KILLED-startcheck | - | - |
+| m11 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m12 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m13 | KILLED-phase2 | KILLED-phase2 | - | - |
+| m14 | KILLED-phase2 | KILLED-phase2 | - | - |
+| m15 | KILLED-phase2 | KILLED-phase2 | - | - |
+| m16 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m17 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m18 | KILLED-phase1 | KILLED-phase1 | KILLED-phase1 | KILLED-phase1 |
+| m19 | SURVIVED | SURVIVED | KILLED-phase2 | KILLED-phase2 |
+| m20 | KILLED-phase1 | KILLED-phase1 | - | - |
+| m21 | SURVIVED | SURVIVED | KILLED-phase1 | KILLED-phase1 |
+| m22 | SURVIVED | SURVIVED | KILLED-phase1 | KILLED-phase1 |
+| m23 | KILLED-phase2 | KILLED-phase2 | - | - |
+| m24 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n01 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n02 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n03 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n04 | - | - | KILLED-phase1 | KILLED-phase1 |
+| n05 | KILLED-phase2 | KILLED-phase2 | - | - |
+| n06 | KILLED-phase2 | KILLED-phase2 | - | - |
+| n07 | KILLED-phase2 | KILLED-phase2 | - | - |
+| n08 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n09 | KILLED-phase2 | KILLED-phase2 | - | - |
+| n10 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n11 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n12 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n13 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n14 | KILLED-phase2 | KILLED-phase2 | - | - |
+| n15 | SURVIVED | SURVIVED | KILLED-phase1 | KILLED-phase1 |
+| n16 | KILLED-phase1 | KILLED-phase1 | - | - |
+| n17 | KILLED-phase1 | KILLED-phase1 | KILLED-phase1 | KILLED-phase1 |
+| n18 | SURVIVED | SURVIVED | KILLED-phase1 | KILLED-phase1 |
+
+n04 gave PLANT-FAILED (text not found) in the first run; it ran only in the rerun.
 
 ## Self-test results (final script, sha256 in `evidence-repin8/final-sha256.txt`)
 
-SELFTEST_PLACEHOLDER
+| shell | user | result | file |
+|---|---|---|---|
+| dash | root | SELF-TEST: passed=1635 failed=0, exit code 0 | `evidence-repin8/selftest-v8-dash-root.txt` |
+| bash | root | passed=1635 failed=0, exit code 0 | `selftest-v8-bash-root.txt` |
+| dash | uid 65534 (setpriv) | passed=1635 failed=0, exit code 0 | `selftest-v8-dash-uid65534.txt` |
+| bash | uid 65534 (setpriv) | passed=1635 failed=0, exit code 0 | `selftest-v8-bash-uid65534.txt` |
+
+Started with nohup, so the HUP case printed NOT TESTED in these four runs. The last change to the script (a one-line fix so bash no longer prints `unset: BASHOPTS: cannot unset`) came after the plant runs; the four self-tests above ran after it (sha256 in `final-sha256.txt`). The plants were not rerun after that one line. The v7 independent run had the same plant list at 1398 cases; its files are in `evidence-repin7-independent/`.
+Also: I ran `chmod 755` on `/home/user` and `/home/user/hadavin-sdk` to let uid 65534 read the script (earlier mode unknown; the lead may want to check it). The uid 65534 copy lived in `/tmp/hd8-nonroot` (removed).

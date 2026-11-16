@@ -1,4 +1,4 @@
--- HELD FILE 3 (v19) = PR DB-3 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L22). Design of L-2
+-- HELD FILE 3 (v20) = PR DB-3 (NOT part of lead's answer Q34; needs the OWNER's own yes, question L22). Design of L-2
 -- (security major M1 of the v16 review). Needs Postgres 14 or newer: the function bodies use BEGIN ATOMIC, which Postgres
 -- parses AND binds at creation time, so a SECURITY DEFINER body names its tables by object, never by a name searched at
 -- call time (no search_path or temporary-table lookup is possible, and no schema name is written into this file). The
@@ -26,19 +26,27 @@ SET LOCAL lock_timeout = '5s';
 -- were two budgets); a reserve of 0 writes no row. NOT closed: names that differ only in case or by an inner space are separate agent ids (agent ids come from
 -- configuration in our code; a hostile login can name anything, see (b)), and a settle with actual above worst can raise a total (safe direction; it
 -- can only over-report spend, never hide it).
+-- v20 (security minors m4 and m6, readiness): (1) the agent-id rule is now an ASCII allow-list, `^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$` (1 to 200 characters; my set, the lead checks it
+-- against the real agent names): v19 used btrim (strips spaces only), [[:cntrl:]] (depends on the database locale) and IS NFC NORMALIZED (raises an error on every insert in a database whose
+-- encoding is not UTF8), so lookalike and invisible spellings were separate budgets and a non-UTF8 database refused every agent. The allow-list depends on neither locale nor encoding.
+-- (2) The agent and day/month checks are no longer NOT VALID: the file now refuses at APPLY time (23514, the whole transaction rolls back) when an old row breaks a rule. v19 let such a file
+-- apply and then refused every later settle of that row (a NOT VALID check is tested on every new row version), so a reservation could never be given back. Pre-check before the cutover:
+-- SELECT count(*) FROM spend WHERE agent_id !~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$' OR day < DATE '2020-01-01' OR day >= DATE '2100-01-01' (same for spend_month); it must be 0.
+-- (3) Cutover: existing rows get open_usd = 0 (the file cannot know what is open), so a reservation that is open at the moment of the cutover cannot be settled afterwards (23514, safe
+-- direction: the total stays high). The cutover is therefore done with the kill switch ON and no call in flight (5.6 item 1(o3)); pg_v20.py shows both outcomes.
 -- v19 (security minor m7): the ADD CONSTRAINT ... CHECK lines below scan each table under an exclusive lock; lock_timeout bounds only the wait for the lock, so this
 -- second line bounds the scan itself (60 seconds is my number; the file fails and rolls back instead of holding the lock for ever).
 SET LOCAL statement_timeout = '60s';
 ALTER TABLE spend ADD COLUMN open_usd numeric NOT NULL DEFAULT 0;
 ALTER TABLE spend ADD CONSTRAINT spend_open_ok CHECK (open_usd >= 0 AND open_usd < 1000000000000::numeric);
 ALTER TABLE spend ADD CONSTRAINT spend_guarded_ok CHECK (usd >= 0 AND usd < 1000000000000::numeric);
-ALTER TABLE spend ADD CONSTRAINT spend_agent_len CHECK (length(agent_id) BETWEEN 1 AND 200 AND agent_id = btrim(agent_id) AND agent_id !~ '[[:cntrl:]]' AND agent_id IS NFC NORMALIZED) NOT VALID;
-ALTER TABLE spend ADD CONSTRAINT spend_day_window CHECK (day >= DATE '2020-01-01' AND day < DATE '2100-01-01') NOT VALID;
+ALTER TABLE spend ADD CONSTRAINT spend_agent_len CHECK (agent_id ~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$');
+ALTER TABLE spend ADD CONSTRAINT spend_day_window CHECK (day >= DATE '2020-01-01' AND day < DATE '2100-01-01');
 ALTER TABLE spend_month ADD COLUMN open_usd numeric NOT NULL DEFAULT 0;
 ALTER TABLE spend_month ADD CONSTRAINT spend_month_open_ok CHECK (open_usd >= 0 AND open_usd < 1000000000000::numeric);
 ALTER TABLE spend_month ADD CONSTRAINT spend_month_guarded_ok CHECK (usd >= 0 AND usd < 1000000000000::numeric);
-ALTER TABLE spend_month ADD CONSTRAINT spend_month_agent_len CHECK (length(agent_id) BETWEEN 1 AND 200 AND agent_id = btrim(agent_id) AND agent_id !~ '[[:cntrl:]]' AND agent_id IS NFC NORMALIZED) NOT VALID;
-ALTER TABLE spend_month ADD CONSTRAINT spend_month_window CHECK (month >= DATE '2020-01-01' AND month < DATE '2100-01-01') NOT VALID;
+ALTER TABLE spend_month ADD CONSTRAINT spend_month_agent_len CHECK (agent_id ~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$');
+ALTER TABLE spend_month ADD CONSTRAINT spend_month_window CHECK (month >= DATE '2020-01-01' AND month < DATE '2100-01-01');
 
 -- Reserve: adds the worst case to the total and to the open reservation of the day row and of the month row (the month is
 -- the first day of the month of p_day).
@@ -55,7 +63,7 @@ BEGIN ATOMIC
 END;
 -- Settle: replaces one earlier reserve of p_worst by the actual cost (a give-back is p_actual = 0). It refuses
 -- (23514) when p_worst is larger than what is open for that agent-day or month, so the total can fall by at most
--- the open reservation and never below the money already settled. v19 (security minor m2): the month row is changed only when the DAY row exists, so a
+-- the open reservation and never below the money already settled. v19 (security minor m2): v20 (security minor m6): the day row is changed only when the MONTH row exists too (v19 changed the day row alone when the month row was missing and committed it). v19: the month row is changed only when the DAY row exists, so a
 -- settle for a day that has no row changes nothing at all (v18 changed the month row, which let a login lower a month by up to its open amount); the
 -- function then returns no row, and the store code (L-2) must treat an empty result as an error.
 CREATE OR REPLACE FUNCTION spend_settle(p_agent text, p_day date, p_worst numeric, p_actual numeric)
@@ -63,7 +71,8 @@ RETURNS TABLE (day_usd numeric, month_usd numeric)
 LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp
 BEGIN ATOMIC
   UPDATE spend SET usd = usd - p_worst + p_actual, open_usd = open_usd - p_worst
-    WHERE agent_id = p_agent AND day = p_day AND p_worst >= 0 AND p_actual >= 0;
+    WHERE agent_id = p_agent AND day = p_day AND p_worst >= 0 AND p_actual >= 0
+      AND EXISTS (SELECT 1 FROM spend_month y WHERE y.agent_id = p_agent AND y.month = date_trunc('month', p_day)::date);
   UPDATE spend_month SET usd = usd - p_worst + p_actual, open_usd = open_usd - p_worst
     WHERE agent_id = p_agent AND month = date_trunc('month', p_day)::date AND p_worst >= 0 AND p_actual >= 0
       AND EXISTS (SELECT 1 FROM spend x WHERE x.agent_id = p_agent AND x.day = p_day);

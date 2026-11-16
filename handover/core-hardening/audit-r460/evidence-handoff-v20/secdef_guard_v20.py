@@ -1,4 +1,6 @@
-"""v19 class guard for SECURITY DEFINER and everything that can change who may run, who owns, or what a session is, in a .sql file
+"""v20 class guard (v19 plus the round-6 findings, see the N-rules at the end of this docstring; the v19 text follows unchanged)
+
+v19 class guard for SECURITY DEFINER and everything that can change who may run, who owns, or what a session is, in a .sql file
 (security majors MA1 and MA2 of the v18 review). Reference for the DB-1 builder, not product code.
 Class (v16, v17, v18 all had it): a guard that lists the bad shapes passes every shape not on the list. v18 said "deny by default"
 and was not: only CREATE FUNCTION was checked for what it is, every other statement passed unless a deny branch matched its lead
@@ -30,18 +32,41 @@ New in v19:
  N3 (MA1d) a BEGIN ATOMIC body is scanned (v18 never scanned it): only the relations pinned for that file (`atomic_tables`), no ALTER, GRANT, CREATE, DROP, SET
     that is not part of an UPDATE, RESET, CALL, DO, EXECUTE; and in EVERY definer body (atomic, plpgsql or sql) a called function must be on a short
     list (CALLS_OK): set_config, query_to_xml and its relatives, dblink, pg_read_file and every other name are refused because they are not listed.
+
+New in v20 (security review of v19, round 6, and the independent runner of v19, F1 and F2):
+ B1 a definer is scannable or it is a problem: the head after the attributes must be BEGIN ATOMIC, RETURN <expr> (the expression is scanned like an atomic body) or EXACTLY one
+    string/dollar body; a head with none of these, or with a body string next to ATOMIC/RETURN, is refused. LEAKPROOF, SUPPORT, TRANSFORM, WINDOW are refused in the head.
+ M1 `%I.name(` hides nothing any more: it is skipped only right after INTO (the column list of an INSERT); everywhere else it is a schema-qualified call. A function in FROM/JOIN is a call.
+ M2 triggers are pinned per file (`trigger_pins`: name -> fingerprint of the whole CREATE TRIGGER statement: timing, events, table, WHEN, function). A trigger that is not pinned, or whose
+    statement differs from the pin, is a problem; a pinned trigger that the file does not create is a problem; DROP TRIGGER IF EXISTS is allowed only for a pinned name AND only if the
+    same file creates it again later (a drop that leaves the table without its trigger is a problem).
+ M3 in atomic and RETURN bodies a relation after MERGE INTO, USING, TABLE, TRUNCATE, LOCK, COPY and SELECT ... INTO is checked against the pinned relations like FROM; in EXECUTE strings
+    USING <relation>, TABLE x and SELECT INTO need %I. like the others.
+ M4 every listed function has a pinned fingerprint (`fn_pins`: signature -> fingerprint of the whole CREATE FUNCTION statement, head and body). The pin is TEXT level (the guard reads .sql files);
+    the catalog level is the start-up query (names from pg_proc). A hash of pg_proc.prosrc is NOT used: for BEGIN ATOMIC the stored text is a parse tree and its stability across 14, 16 and 17 is untested.
+ F1 (runner) statement kinds are pinned per definer (`kinds`: signature -> set of INSERT, UPDATE, SELECT ...): DELETE, TRUNCATE, MERGE, COPY and WITH (a CTE can hide a DELETE) are problems
+    unless the function lists them; this is checked in atomic bodies, RETURN expressions, plpgsql/sql bodies and inside EXECUTE strings.
+ m1/F2 expressions inside allowed shapes are read: every call in ALTER TABLE, CREATE TABLE, CREATE INDEX and CREATE TRIGGER (WHEN) must be on EXPR_CALLS_OK; OPERATOR(...) is refused.
+ m2 the SET that is exempt from the "SET ROLE" rule is the one that follows `UPDATE [ONLY] name [AS alias]` or `DO UPDATE` directly (structural, not "an UPDATE within 4 tokens").
+ m3 one tokenizer that follows the server: only space, tab, newline, CR, FF and VT separate words (NBSP and other Unicode spaces do not), identifier characters are A-Z a-z _ and any non-ASCII
+    character including characters above U+FFFF; digits are ASCII only. Checked against a real server in `tok_vs_server_v20.py`.
+ PIN_ANY (for unit mutants only): a value that switches one pin check off. A real caller passes dicts; None means "nothing is pinned" and every listed function or trigger is a problem.
 """
 import re, hashlib
 
+class _Any:
+    def __repr__(self): return "PIN_ANY"
+PIN_ANY = _Any()
+
 # ---------------------------------------------------------------- one tokenizer for everything (class fix for spellings A and F)
-_WORD = re.compile(r"[A-Za-z_\u0080-￿][A-Za-z0-9_$\u0080-￿]*")
-_DOLLAR = re.compile(r"\$([A-Za-z_\u0080-￿][A-Za-z0-9_\u0080-￿]*)?\$")
+_WORD = re.compile(r"[A-Za-z_\u0080-\U0010FFFF][A-Za-z0-9_$\u0080-\U0010FFFF]*")
+_DOLLAR = re.compile(r"\$([A-Za-z_\u0080-\U0010FFFF][A-Za-z0-9_\u0080-\U0010FFFF]*)?\$")
 def tokenize(t):
     """list of (kind, text): word, qid (double-quoted name, quotes kept), str, dollar, num, punct. Comments are dropped."""
     out, i, n = [], 0, len(t)
     while i < n:
         c = t[i]
-        if c.isspace(): i += 1
+        if c in " \t\n\r\f\v": i += 1
         elif t.startswith("--", i):
             j = t.find("\n", i); i = n if j < 0 else j
         elif t.startswith("/*", i):
@@ -73,9 +98,9 @@ def tokenize(t):
             out.append(("dollar", t[i:j])); i = j
         elif m := _WORD.match(t, i):
             out.append(("word", m.group(0))); i = m.end()
-        elif c.isdigit():
+        elif c in "0123456789":
             j = i
-            while j < n and (t[j].isalnum() or t[j] == "."): j += 1
+            while j < n and (t[j] in "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_." ): j += 1
             out.append(("num", t[i:j])); i = j
         else:
             out.append(("punct", c)); i += 1
@@ -230,33 +255,62 @@ _DENY_NOTE = {"ALTER": "ALTER of anything but ADD on a table", "GRANT": "GRANT (
 
 # ---------------------------------------------------------------- body scans new in v19 (N3)
 CALLS_OK = {"date_trunc", "clock_timestamp", "now", "format", "coalesce", "least", "greatest", "length"}
+EXPR_CALLS_OK = CALLS_OK | {"btrim", "char_length"}   # calls a CHECK, DEFAULT, index or WHEN expression may use (v20 m1)
 _SYNTAX_BEFORE_PAREN = {"IN", "VALUES", "AS", "AND", "OR", "NOT", "EXISTS", "ANY", "ALL", "SOME", "WHEN", "THEN", "ELSE", "CASE", "ON", "USING", "SELECT", "WHERE", "FROM", "JOIN", "SET", "INTO",
     "UPDATE", "DELETE", "INSERT", "RETURNING", "BETWEEN", "LIKE", "IS", "DISTINCT", "ONLY", "TABLE", "WITH", "IF", "ELSIF", "LOOP", "WHILE", "RETURN", "CONFLICT", "DO", "BY", "HAVING", "LIMIT",
     "UNION", "EXCEPT", "INTERSECT", "OVER", "FILTER", "TO", "END", "BEGIN", "DEFAULT", "CHECK", "UNIQUE", "KEY", "NULL", "TRUE", "FALSE", "EXECUTE", "RETURNS", "NUMERIC", "VARCHAR", "CHAR",
-    "CHARACTER", "TIMESTAMP", "TIME", "INTERVAL", "DECIMAL", "BIT", "VARYING", "PRECISION", "NOTHING", "SESSION_USER", "CURRENT_USER"}
-def _call_problems(toks, fn):
+    "CHARACTER", "TIMESTAMP", "TIMESTAMPTZ", "TIMETZ", "TIME", "INTERVAL", "DECIMAL", "BIT", "VARYING", "PRECISION", "NOTHING", "SESSION_USER", "CURRENT_USER"}
+def _call_problems(toks, fn, ddl=False, ok=None):
+    ok = CALLS_OK if ok is None else ok
     out = []
     for k in range(len(toks) - 1):
         tk = toks[k]
+        if _is(tk, "OPERATOR") and toks[k + 1] == ("punct", "("): out.append(f"{fn} uses OPERATOR(...), which can name any operator"); continue
         if toks[k + 1] != ("punct", "(") or tk[0] not in ("word", "qid"): continue
         if tk[0] == "qid": out.append(f"{fn} body calls a quoted name {tk[1]}"); continue
         if tk[1].upper() in _SYNTAX_BEFORE_PAREN: continue
-        if k >= 3 and toks[k - 1] == ("punct", ".") and toks[k - 2] == ("word", "I") and toks[k - 3] == ("punct", "%"): continue  # %I.name ( : a relation in an EXECUTE string
-        if k and _is(toks[k - 1], "INTO", "UPDATE", "FROM", "JOIN", "ONLY", "TABLE"): continue  # a relation name followed by a column list
+        # v20 M1: `%I.name (` is a relation with a column list ONLY right after INTO (v19 skipped it everywhere, which hid EXECUTE format('SELECT %I.evil_fn($1)', ...))
+        if k >= 3 and toks[k - 1] == ("punct", ".") and toks[k - 2] == ("word", "I") and toks[k - 3] == ("punct", "%"):
+            if k >= 4 and _is(toks[k - 4], "INTO"): continue
+            out.append(f"{fn} body calls a schema-qualified function %I.{tk[1]}(): only `INSERT INTO %I.name (columns)` may have a bracket after %I.name"); continue
+        # v20: a name after INTO is a relation with a column list; after FROM, JOIN, UPDATE, ONLY, TABLE it is a function call (a set-returning function in FROM) except in DDL
+        if k and _is(toks[k - 1], "INTO"): continue
+        if k > 1 and _is(toks[k - 1], "ONLY") and _is(toks[k - 2], "INTO"): continue
+        if ddl and k and _is(toks[k - 1], "TABLE", "EXISTS", "ON", "REFERENCES", "USING", "INCLUDE", "FUNCTION", "PROCEDURE", "INDEX", "ONLY"): continue
         if k and toks[k - 1] == ("punct", "."): out.append(f"{fn} body calls a schema-qualified function ...{tk[1]}"); continue
-        if tk[1].lower() not in CALLS_OK: out.append(f"{fn} body calls {tk[1]}(), which is not on the short list of calls a definer body may use ({sorted(CALLS_OK)})")
+        if tk[1].lower() not in ok: out.append(f"{fn} body calls {tk[1]}(), which is not on the short list of calls a definer body may use ({sorted(ok)})")
+    return out
+def _set_follows_update(toks, k):
+    """v20 m2: True when the SET at toks[k] directly follows `UPDATE [ONLY] name [AS alias]` or `DO UPDATE` (no ';' or other punctuation between)."""
+    for j in range(k - 1, max(-1, k - 6), -1):
+        t = toks[j]
+        if _is(t, "UPDATE"): return True
+        if t[0] not in ("word", "qid") and t != ("punct", "."): return False
+        if _is(t, "SET", "SELECT", "WHERE", "FROM", "RETURNING", "VALUES", "AND", "OR"): return False
+    return False
+KIND_WORDS = {"INSERT", "UPDATE", "DELETE", "TRUNCATE", "MERGE", "COPY", "SELECT", "WITH", "VALUES"}
+def _kind_problems(toks, fn, kinds):
+    """v20 F1: the statement kinds a body may use are pinned per function. A kind word counts unless it is part of ON CONFLICT DO UPDATE / FOR UPDATE / ON DELETE."""
+    if kinds is PIN_ANY: return []
+    if kinds is None: return [f"{fn} has no statement kinds pinned for this file"]
+    out, seen = [], set()
+    for k, tk in enumerate(toks):
+        if tk[0] != "word" or tk[1].upper() not in KIND_WORDS: continue
+        w = tk[1].upper()
+        if w == "UPDATE" and k and _is(toks[k - 1], "FOR", "KEY", "NO"): continue
+        if w not in kinds and w not in seen: seen.add(w); out.append(f"{fn} body uses a {w} statement; the statement kinds pinned for it are {sorted(kinds)}")
     return out
 def _extra_body_problems(toks, fn, definer):
     out = []
     for k, tk in enumerate(toks):
-        if _is(tk, "SET") and not any(_is(x, "UPDATE") for x in toks[max(0, k - 4):k]):
+        if _is(tk, "SET") and not _set_follows_update(toks, k):
             out.append(f"{fn} body has a SET that is not part of an UPDATE (SET ROLE, SET \"role\", SET session_authorization or SET search_path)")
         if _is(tk, "DO") and not (k + 1 < len(toks) and _is(toks[k + 1], "UPDATE", "NOTHING")): out.append(f"{fn} body has a DO block")
         if _is(tk, "RESET"): out.append(f"{fn} body has RESET")
     if definer: out += _call_problems(toks, fn)
     return out
 _STOP = {"WHERE", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "CROSS", "ON", "GROUP", "ORDER", "LIMIT", "HAVING", "RETURNING", "SET", "VALUES", "USING", "UNION", "FOR", "WINDOW", "DO", "SELECT", "LATERAL", "NATURAL"}
-def _atomic_problems(toks, fn, tables):
+def _atomic_problems(toks, fn, tables, kinds=PIN_ANY):
     """toks = tokens of BEGIN ATOMIC ... END. Relations must be unqualified and pinned for the file; no EXECUTE; the extra rules of every body."""
     out, n = [], len(toks)
     if tables is None: return [f"{fn} has a BEGIN ATOMIC body but no `atomic_tables` are pinned for this file (a body that is not scanned is refused)"]
@@ -283,17 +337,32 @@ def _atomic_problems(toks, fn, tables):
                 while i < n and toks[i] == ("punct", ",") and not _is(toks[i - 1], "VALUES"): i = take(i + 1)
                 continue
             if w == "JOIN": i = take(i + 1); continue
+            if w == "INTO" and not (prev and _is(prev, "INSERT", "MERGE")): i = take(i + 1); continue   # SELECT ... INTO newtable
+            if w == "INTO" and prev and _is(prev, "MERGE"): i = take(i + 1); continue
+            if w == "USING": i = take(i + 1); continue          # MERGE ... USING x, DELETE ... USING x, JOIN ... USING (col) (a bracket is skipped by take)
+            if w == "TABLE": i = take(i + 1); continue           # TABLE x
+            if w in ("TRUNCATE", "LOCK", "COPY"):
+                j = i + 1
+                if j < n and _is(toks[j], "TABLE"): j += 1
+                i = take(j); continue
             if w == "EXECUTE": out.append(f"{fn} body has EXECUTE")
         i += 1
     if _BODY_BAD.search(" ".join(tk[1] for tk in toks if tk[0] == "word")): out.append(f"{fn} body contains ALTER, GRANT, REVOKE, CREATE, DROP, SET ROLE, RESET, CALL or SESSION AUTHORIZATION")
-    return out + _extra_body_problems(toks, fn, True)
-def _body_problems_v19(source, fn, strict):
+    return out + _extra_body_problems(toks, fn, True) + _kind_problems(toks, fn, kinds)
+def _body_problems_v19(source, fn, strict, kinds=PIN_ANY):
     p = _body_problems(source, fn, strict)
     toks = tokenize(source)
     p += _extra_body_problems(toks, fn, strict)
+    if strict:
+        p += _kind_problems(toks, fn, kinds)
     if strict:  # the SQL held in EXECUTE format('...') strings is scanned for calls too
         for k, tk in enumerate(toks):
-            if _is(tk, "EXECUTE") and k + 3 < len(toks) and toks[k + 3][0] == "str": p += _call_problems(tokenize(_sql_of(toks[k + 3])), fn + " EXECUTE string")
+            if _is(tk, "EXECUTE") and k + 3 < len(toks) and toks[k + 3][0] == "str":
+                lt = tokenize(_sql_of(toks[k + 3]))
+                p += _call_problems(lt, fn + " EXECUTE string") + _kind_problems(lt, fn + " EXECUTE string", kinds)
+                for q, t2 in enumerate(lt):   # v20 M3: USING x, TABLE x, SELECT ... INTO x in an EXECUTE string need %I. right after
+                    if _is(t2, "USING", "TABLE") and q + 1 < len(lt) and lt[q + 1] != ("punct", "(") and not _pct_i(lt, q + 1): p.append(f"{fn} EXECUTE string: {t2[1]} without %I. right after it")
+                    if _is(t2, "INTO") and q and not _is(lt[q - 1], "INSERT", "MERGE") and not _pct_i(lt, q + 1): p.append(f"{fn} EXECUTE string: INTO without %I. right after it")
     return p
 
 def fingerprint(st): return hashlib.sha256(" ".join(tk[1] for tk in st).encode()).hexdigest()[:16]
@@ -307,16 +376,19 @@ def _sigs(part_toks, name, problems, pre, kind):
         keys.append(sigkey(na[0], na[2]))
     return keys
 
-def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), atomic_tables=None):
+def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), atomic_tables=None, trigger_pins=None, fn_pins=None, kinds=None):
     """allowed: {"fname(type,type)": "definer" | "invoker"} for THIS file only; extra_statements: fingerprints pinned for this file; atomic_tables: the relations a
     BEGIN ATOMIC body of this file may use. Returns a list of problems (empty = clean). Anything that matches no shape (module docstring) is a problem."""
     problems, created_at, revoked_at, definer_keys = [], {}, {}, set()
+    trig_created, trig_dropped = {}, {}
     fn_names = {k.split("(")[0] for k in allowed}
     pre = f"{name}: "
     for idx, st in enumerate(split_statements(tokenize(text))):
         lead, flat = _lead(st), _flat(st)
         short = flat[:70]
         if fingerprint(st) in extra_statements: continue
+        if lead[:1] in (["ALTER"], ["CREATE"]) and any(w in lead for w in ("TABLE", "INDEX", "TRIGGER")) and "FUNCTION" not in lead:
+            problems += [pre + x for x in _call_problems(st, "DDL expression", ddl=True, ok=EXPR_CALLS_OK)]   # v20 m1 / runner F2
         if any(_is(a, "OWNER") and _is(b, "TO") for a, b in zip(st, st[1:])):
             problems.append(pre + f"OWNER TO is not allowed: {short!r}"); continue
         first = lead[:1]
@@ -334,7 +406,12 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
                 if not acts or not all(_is(a[0], "ADD") for a in acts): problems.append(pre + f"ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP CONSTRAINT, SET, OWNER, ENABLE are refused): {short!r}")
             continue
         if first == ["COMMENT"] and lead[1:2] == ["ON"]: continue
-        if first == ["DROP"] and len(st) == 7 and _is(st[1], "TRIGGER") and _is(st[2], "IF") and _is(st[3], "EXISTS") and st[4][0] in ("word", "qid") and _is(st[5], "ON") and st[6][0] in ("word", "qid"): continue
+        if first == ["DROP"] and len(st) == 7 and _is(st[1], "TRIGGER") and _is(st[2], "IF") and _is(st[3], "EXISTS") and st[4][0] in ("word", "qid") and _is(st[5], "ON") and st[6][0] in ("word", "qid"):
+            tn = _fold(st[4])   # v20 M2: only a trigger pinned for this file may be dropped, and the file must create it again later
+            if trigger_pins is not PIN_ANY:
+                if not trigger_pins or tn not in trigger_pins: problems.append(pre + f"DROP TRIGGER of {tn}, which is not a trigger pinned for this file")
+                else: trig_dropped[tn] = idx
+            continue
         if first == ["REVOKE"]:
             fi = [k for k, tk in enumerate(st) if _is(tk, "FROM")]
             fk = [k for k, tk in enumerate(st) if _is(tk, "FUNCTION")]
@@ -364,6 +441,13 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
                 if ex and ex[-1] + 4 < len(st) and _is(st[ex[-1] + 1], "FUNCTION", "PROCEDURE") and st[ex[-1] + 2][0] in ("word", "qid") and st[ex[-1] + 3] == ("punct", "(") and ex[-1] + 4 <= len(st):
                     ok = _fold(st[ex[-1] + 2]) in fn_names and st[ex[-1] + 3 - 0] == ("punct", "(") and not (ex[-1] + 3 < len(st) and st[ex[-1] + 2 + 1] == ("punct", "."))
                 if not ok: problems.append(pre + f"CREATE TRIGGER must end with EXECUTE FUNCTION <a function listed for this file>(): {short!r}")
+                ti = next((k for k, tk in enumerate(st) if _is(tk, "TRIGGER")), None)
+                if trigger_pins is not PIN_ANY:
+                    tn = _fold(st[ti + 1]) if ti is not None and ti + 1 < len(st) else "?"
+                    fp = fingerprint(st)
+                    if not trigger_pins or tn not in trigger_pins: problems.append(pre + f"trigger {tn} is not pinned for this file (fingerprint {fp})")
+                    elif trigger_pins[tn] != fp: problems.append(pre + f"trigger {tn} differs from its pin (timing, events, table, WHEN or function changed; fingerprint {fp})")
+                    trig_created[tn] = idx
                 continue
             if kind == "FUNCTION":
                 i0 = next(i for i, tk in enumerate(st) if _is(tk, "FUNCTION")) + 1
@@ -378,8 +462,19 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
                 if key in created_at: problems.append(pre + f"{key} is created twice in this file")
                 created_at[key] = idx
                 head = st[after:]
-                cut = next((k for k, tk in enumerate(head) if _is(tk, "BEGIN") and k + 1 < len(head) and _is(head[k + 1], "ATOMIC")), None)
-                attrs, atomic = (head if cut is None else head[:cut]), cut is not None
+                cutA = next((k for k, tk in enumerate(head) if _is(tk, "BEGIN") and k + 1 < len(head) and _is(head[k + 1], "ATOMIC")), None)
+                cutR = next((k for k, tk in enumerate(head) if _is(tk, "RETURN")), None)   # v20 B1: SQL-standard `RETURN <expr>` body
+                cut = min([c for c in (cutA, cutR) if c is not None], default=None)
+                attrs, atomic = (head if cut is None else head[:cut]), cutA is not None and cut == cutA
+                retexpr = head[cutR + 1:] if cut is not None and cut == cutR else None
+                nb = len([tk for tk in attrs if tk[0] in ("str", "dollar")])
+                if cut is None and nb != 1: problems.append(pre + f"{key}: the head after the attributes is not BEGIN ATOMIC, RETURN <expression> or exactly one string or dollar body (found {nb} bodies): the function would not be scanned")
+                if cut is not None and nb: problems.append(pre + f"{key}: a string or dollar body next to BEGIN ATOMIC or RETURN")
+                if any(_is(tk, "LEAKPROOF", "SUPPORT", "TRANSFORM", "WINDOW") for tk in attrs): problems.append(pre + f"{key}: LEAKPROOF, SUPPORT, TRANSFORM and WINDOW are not allowed")
+                if fn_pins is not PIN_ANY:
+                    fp = fingerprint(st)
+                    if not fn_pins or key not in fn_pins: problems.append(pre + f"{key} has no pinned fingerprint for this file (fingerprint {fp})")
+                    elif fn_pins[key] != fp: problems.append(pre + f"{key} differs from its pin (head or body changed; fingerprint {fp})")
                 a2 = [("str", "<body>") if tk[0] in ("str", "dollar") else tk for tk in attrs]
                 definer_here = [k for k in range(len(st) - 1) if _is(st[k], "SECURITY") and _is(st[k + 1], "DEFINER")]
                 has_def = any(_is(a2[k], "SECURITY") and k + 1 < len(a2) and _is(a2[k + 1], "DEFINER") for k in range(len(a2) - 1))
@@ -404,11 +499,17 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
                             paths.append(items)
                         else: problems.append(pre + f"{key}: a SET attribute other than search_path")
                     if paths != [["pg_catalog", "pg_temp"]]: problems.append(pre + f"{key}: search_path must be exactly pg_catalog, pg_temp (found {paths})")
-                if atomic: problems += [pre + x for x in _atomic_problems(head[cut:], key, atomic_tables)]
+                kd = kinds if kinds is PIN_ANY else (kinds or {}).get(key)
+                if atomic: problems += [pre + x for x in _atomic_problems(head[cut:], key, atomic_tables, kd if definer else PIN_ANY)]
+                elif retexpr is not None: problems += [pre + x for x in _atomic_problems([("word", "BEGIN"), ("word", "ATOMIC")] + retexpr, key + " RETURN expression", atomic_tables, kd if definer else PIN_ANY)]
                 else:
-                    for b in bodies: problems += [pre + x for x in _body_problems_v19(_body_source(b), key, definer)]
+                    for b in bodies: problems += [pre + x for x in _body_problems_v19(_body_source(b), key, definer, kd if definer else PIN_ANY)]
                 continue
         problems.append(pre + f"statement is not on the allow-list of shapes ({_DENY_NOTE.get(first[0], ' '.join(lead[:2])) if first else 'unreadable'}): {short!r}")
+    if trigger_pins is not PIN_ANY:   # v20 M2: every pinned trigger exists after the file; a drop is followed by a create
+        for tn in sorted(trigger_pins or {}):
+            if tn not in trig_created: problems.append(f"{name}: pinned trigger {tn} is not created by this file")
+            elif tn in trig_dropped and trig_created[tn] < trig_dropped[tn]: problems.append(f"{name}: trigger {tn} is dropped after its last CREATE (the table would be left without it)")
     for key in sorted(definer_keys):
         if key not in revoked_at: problems.append(f"{name}: {key} has no REVOKE ALL ON FUNCTION {key} FROM PUBLIC for this signature")
         elif revoked_at[key] < created_at[key]: problems.append(f"{name}: the REVOKE of {key} comes BEFORE its last CREATE (a re-created function would get PUBLIC execute back): put the REVOKE after the CREATE")

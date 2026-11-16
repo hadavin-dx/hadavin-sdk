@@ -1,0 +1,428 @@
+{
+ "name": "Lead desk main frame: form entry",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "mf-form",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "name": "Receive",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "webhookId": "mf-form-wh"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "lead_key",
+       "name": "lead_key",
+       "value": "={{ $json.body.submission_id }}",
+       "type": "string"
+      },
+      {
+       "id": "email",
+       "name": "email",
+       "value": "={{ $json.body.email }}",
+       "type": "string"
+      },
+      {
+       "id": "name",
+       "name": "name",
+       "value": "={{ $json.body.name }}",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "name": "Item",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "lead_key",
+       "name": "lead_key",
+       "value": "={{ $json.lead_key }}",
+       "type": "string"
+      },
+      {
+       "id": "email",
+       "name": "email",
+       "value": "={{ $json.email }}",
+       "type": "string"
+      },
+      {
+       "id": "name",
+       "name": "name",
+       "value": "={{ $json.name }}",
+       "type": "string"
+      },
+      {
+       "id": "valid",
+       "name": "valid",
+       "value": "={{ /^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test($json.email) }}",
+       "type": "boolean"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "name": "Valid",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    440,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "INSERT INTO mf_leads(lead_key,email,name,state,claimed_until,claim_token,attempts) VALUES ($1,$2,$3, CASE WHEN $4::boolean THEN 'processing' ELSE 'review' END, now() + interval '45 seconds', gen_random_uuid()::text, CASE WHEN $4::boolean THEN 1 ELSE 0 END) ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;",
+    "options": {
+     "queryReplacement": "={{ [$json.lead_key, $json.email, $json.name, $json.valid] }}"
+    }
+   },
+   "name": "Claim",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    660,
+    0
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.lead_key }}",
+       "rightValue": null,
+       "operator": {
+        "type": "string",
+        "operation": "notEmpty",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Claimed",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    880,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $json.state }}",
+       "rightValue": "processing",
+       "operator": {
+        "type": "string",
+        "operation": "equals"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "IsProcessing",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    1100,
+    -100
+   ]
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "lead_key",
+       "name": "lead_key",
+       "value": "={{ $json.lead_key }}",
+       "type": "string"
+      },
+      {
+       "id": "claim_token",
+       "name": "claim_token",
+       "value": "={{ $json.claim_token }}",
+       "type": "string"
+      },
+      {
+       "id": "email",
+       "name": "email",
+       "value": "={{ $('Valid').item.json.email }}",
+       "type": "string"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "name": "SubInput",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    1320,
+    -160
+   ]
+  },
+  {
+   "parameters": {
+    "source": "database",
+    "workflowId": {
+     "__rl": true,
+     "value": "SUB_WORKFLOW_ID",
+     "mode": "id"
+    },
+    "mode": "each",
+    "options": {
+     "waitForSubWorkflow": true
+    }
+   },
+   "name": "RunSub",
+   "type": "n8n-nodes-base.executeWorkflow",
+   "typeVersion": 1.2,
+   "position": [
+    1540,
+    -160
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ { n8n_error: false, lead_key: $json.lead_key, verdict: { done: 'new', unknown: 'unknown', stage_failed: 'processing', lost_claim: 'processing' }[$json.outcome] || 'processing' } }}",
+    "options": {
+     "responseCode": 200
+    }
+   },
+   "name": "ReplyRan",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1760,
+    -160
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ { n8n_error: false, lead_key: $('Valid').item.json.lead_key, verdict: 'review' } }}",
+    "options": {
+     "responseCode": 200
+    }
+   },
+   "name": "ReplyReview",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1320,
+    20
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT state FROM mf_leads WHERE lead_key=$1;",
+    "options": {
+     "queryReplacement": "={{ [$('Valid').item.json.lead_key] }}"
+    }
+   },
+   "name": "Stored",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    1100,
+    240
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_CREDENTIAL_ID",
+     "name": "n8n-publish-pg"
+    }
+   },
+   "alwaysOutputData": true
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ { n8n_error: false, lead_key: $('Valid').item.json.lead_key, verdict: ({ done: 'done', processing: 'processing', new: 'processing', review: 'review', unknown: 'unknown', failed: 'failed' })[$json.state] || 'processing', repeat: true } }}",
+    "options": {
+     "responseCode": 200
+    }
+   },
+   "name": "ReplyStored",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    1320,
+    240
+   ]
+  }
+ ],
+ "connections": {
+  "Receive": {
+   "main": [
+    [
+     {
+      "node": "Item",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Item": {
+   "main": [
+    [
+     {
+      "node": "Valid",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Valid": {
+   "main": [
+    [
+     {
+      "node": "Claim",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Claim": {
+   "main": [
+    [
+     {
+      "node": "Claimed",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Claimed": {
+   "main": [
+    [
+     {
+      "node": "IsProcessing",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Stored",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "IsProcessing": {
+   "main": [
+    [
+     {
+      "node": "SubInput",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "ReplyReview",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "SubInput": {
+   "main": [
+    [
+     {
+      "node": "RunSub",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "RunSub": {
+   "main": [
+    [
+     {
+      "node": "ReplyRan",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Stored": {
+   "main": [
+    [
+     {
+      "node": "ReplyStored",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "saveDataSuccessExecution": "none",
+  "saveDataErrorExecution": "none",
+  "saveManualExecutions": false
+ }
+}

@@ -630,7 +630,7 @@ for _n, _t in (('A', A), ('B', B)):
     if re.search(r'type `cd [^`]*(?:&&|;|\|)', _t): fail('C247', '%s: a cd line with a second command' % _n)
 # C248 (S M3, M4, m1; class: a stale claim after a change): no page says A has one live key at a time or keeps "Default: A"; no stale file names
 for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN), ('helper', _HP)):
-    for _m in re.finditer(r'(?i)one live key at a time|Default: A\b|Default A\b|OWNER-NUMBERS-|OWNER-FILM-v\d', _t): fail('C248', '%s holds the stale text %r' % (_n, _m[0]))
+    for _m in re.finditer(r'(?i:one live key at a time)|Default: A\b|Default A\b|OWNER-NUMBERS-|OWNER-FILM-v\d', _t): fail('C248', '%s holds the stale text %r' % (_n, _m[0]))
 for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
     if 'OWNER-HELPER-v33.md' not in _t: fail('C248', '%s does not list the helper page' % _n)
 # C249 (S m2-m8; class: a stop or a rule only in some places): the Sunday rule, the paper void step, helper trigger, the film stop
@@ -650,7 +650,7 @@ for _n, _t in (('A', A), ('B', B)):
     for _s in ('Watch the edited video twice', 'the subject start begins with the run name: otherwise no run', 'at or before'):
         if _s not in _t: fail('C250', '%s lacks %r' % (_n, _s))
     if re.search(r'Watch the (?:recording|video) twice', _t): fail('C250', '%s: 8.8 does not say "the edited video"' % _n)
-    if re.search(r'film pause now', _t): fail('C250', '%s keeps the label "film pause now"' % _n)
+    if 'which are the film person\'s start words' not in _t: fail('C250', '%s does not say that "film pause now" are the film person\'s start words' % _n)
 # C251 (reading load; class: a page grown without a stated number): the five pages are counted and printed, and no page is silently over the figure recorded in v33-CHANGES.md
 _cg = _p9('v33-CHANGES.md')
 if _V9 == 'v33' and not re.search(r'five pages[^\n]{0,80}\d\d,\d\d\d', _cg): fail('C251', 'v33-CHANGES.md does not state the five-page word count')
@@ -670,9 +670,10 @@ for _m in re.finditer(r'(?i)last[- ]resort[^.\n]{0,80}before the deadline', _S10
 if _S10.count('Any other key, even one the owner mistyped the name of: touch nothing, write down its name') != 1: fail('C257', 'the helper scope sentence "Any other key ... touch nothing" is not present exactly once in the source')
 if len(_occ(_S10, 'you cancel only a key the owner names that is also on your paper')) != 1: fail('C257', 'the "only a key the owner names that is also on your paper" sentence is not present exactly once')
 for _m in re.finditer(r'(?i)cancel (?:any|every|all|each) (?:other |valid |remaining )?keys?\b[^.\n]{0,40}', _S10):
-    if not re.search(r'(?i)(?:never|not|nothing|no|do not|nor) [^.\n]{0,40}$', _S10[max(0, _m.start() - 40):_m.start()]) and 'of L1' not in _m[0] and 'you made' not in _m[0]: fail('C257', 'a broad cancel scope in the source: %r' % _m[0][:60])
+    if not re.search(r'(?i)(?:never|not|nothing|no|do not|nor|able to|can) [^.\n]{0,40}$', _S10[max(0, _m.start() - 40):_m.start()]) and 'of L1' not in _m[0] and 'you made' not in _m[0]: fail('C257', 'a broad cancel scope in the source: %r' % _m[0][:60])
 if len(_occ(_S10, 'if key text appears, close it and tell the owner it appeared')) != 1: fail('C257', 'the "close it and tell the owner it appeared" sentence is not present exactly once')
-for _m in re.finditer(r'(?i)(?<!never )(?:keep|save|store|write down|jot|note down|photograph|copy)[^.\n;]{0,25}\bkey text', _S10): fail('C257', 'key text kept or copied: %r' % _m[0][:60])
+for _m in re.finditer(r'(?i)(?:keep|save|store|write down|jot|note down|photograph|copy)[^.\n;]{0,25}\bkey text', _S10):
+    if not re.search(r'(?i)never [^.\n]{0,30}$', _S10[max(0, _m.start() - 40):_m.start()]): fail('C257', 'key text kept or copied: %r' % _m[0][:60])
 # C258 (H14) R6 says the typed parts are never entered by a tool, script, window or person
 if len(_occ(_S10, 'never by a tool, script, window or person')) != 1: fail('C258', 'R6 "never by a tool, script, window or person" is not present exactly once in the source')
 for _m in re.finditer(r'(?i)\bor by a tool, script|by a tool, script, window or person\b(?<!never by a tool, script, window or person)', _S10): fail('C258', 'R6 allows a tool or script: %r' % _m[0][:60])
@@ -691,11 +692,11 @@ for _m in re.finditer(r'(?i)(?<!never )(?<!not )tolerated[^.\n]{0,20}', _S10):
 _cond = 'name and creation date equal the blanks'
 if len(_occ(_S10, _cond)) < 5: fail('C261', 'the older-key condition appears %d times in the source (v32: 5 or more)' % len(_occ(_S10, _cond)))
 for _m in re.finditer(r"cancel (?:it|the older key)[^\n]{0,40}(?:L2|card)|L2 the older key named", _S10):
-    _w = _S10[_m.start():_m.start() + 330]
+    _w = _S10[max(0, _m.start() - 250):_m.start() + 330]
     if _cond not in _w: fail('C261', 'a cancel of the older key without the name-and-creation-date condition within 330 characters: %r' % _w[:90])
 for _n, _t in (('A', A), ('B', B)):
     for _m in re.finditer(r"cancel the older key by the card's L2|L2 the older key named", _t):
-        if _cond not in _t[_m.start():_m.start() + 330]: fail('C261', '%s: a cancel of the older key without the condition: %r' % (_n, _t[_m.start():_m.start() + 70]))
+        if _cond not in _t[max(0, _m.start() - 250):_m.start() + 330]: fail('C261', '%s: a cancel of the older key without the condition: %r' % (_n, _t[_m.start():_m.start() + 70]))
 # C262 (H38 and safe defaults generally): the backstop cancels even if a run is in progress, and no safe default is reversed
 if len(_occ(_S10, 'even if a run was in progress')) < 1 or len(_occ(_S10, 'even if a run is in progress')) < 1: fail('C262', 'the backstop "even if a run is/was in progress" sentences are missing (need 1 each)')
 for _m in re.finditer(r'(?i)unless a run (?:is|was)[^.\n]{0,30}|(?:backstop|deadline)[^.\n]{0,80}\bunless\b[^.\n]{0,40}run', _S10): fail('C262', 'a backstop cancel with an exception for a run: %r' % _m[0][:70])

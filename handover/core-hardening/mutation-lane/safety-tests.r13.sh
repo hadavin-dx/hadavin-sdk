@@ -1792,7 +1792,7 @@ for name, (args, kw) in bad.items():
         fails.append(f"{name}: {type(e).__name__} instead of a refusal")
 try:
     p = r.Child(GV, env=GE, start_new_session=True, stdout=-3); rc0 = p.wait()
-    if rc0 != 0: fails.append("a good call failed")
+    if rc0 not in (0, 128): fails.append(f"a good call failed (rc {rc0})")   # r13: the good call is git -C / rev-parse ..., which git itself answers with 128 (not a repository): it ran
 except BaseException as e:
     fails.append(f"a good call refused: {e}")
 src = inspect.getsource(r.Child.__init__)

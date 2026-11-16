@@ -139,3 +139,5 @@ round 17 checks done
 r18 applied sheet words (wc -w method): 21492; day sheet 2020; appendix 1272
 r18 checks: 102 count/pair/forbidden checks; 0 failures in the section
 round 18 checks done
+r18 plants (planted, caught): {'occurrence': (167, 167), 'pair': (71, 71), 'reversal': (10, 10), 'day sheet': (10, 10), 'appendix': (9, 9)}
+FAILURES 0

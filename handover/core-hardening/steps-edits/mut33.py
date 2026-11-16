@@ -475,6 +475,34 @@ Z = [
 ]
 P += Z
 EXPECT.update({'Z01':['C235'],'Z02':['C237'],'Z03':['C238'],'Z04':['C236'],'Z05':['C236'],'Z06':['C236'],'Z07':['C212'],'Z08':['C240'],'Z09':['C240'],'Z10':['C240'],'Z11':['C241'],'Z12':['C242'],'Z13':['C228'],'Z14':['C229'],'Z15':['C230'],'Z16':['C230'],'Z17':['C230'],'Z18':['C233'],'Z19':['C232'],'Z20':['C233'],'Z21':['C234'],'Z22':['C244'],'Z23':['C244'],'Z24':['C245'],'Z25':['C237'],'Z26':['C237'],'Z27':['C240'],'Z28':['C238'],'Z29':['C230'],'Z30':['C230']})
+
+V33 = [
+('AA01', S, 'or until about {{bt_end}} if it starts', 'or until about 18:21 UTC = 23:51 IST if it starts', 'H04: last-resort end changed to an earlier consistent pair'),
+('AA02', S, 'both after the deadline (the two cases of the yes)', 'both before the deadline (the two cases of the yes)', 'H05: "after the deadline" changed to "before"'),
+('AA03', S, 'Any other key, even one the owner mistyped the name of: touch nothing, write down its name', 'Any other key, even one the owner mistyped the name of: cancel it, write down its name', 'H07: helper told to cancel any other key'),
+('AA04', S, 'never by a tool, script, window or person', 'or by a tool, script, window or person', 'H14: R6 allows a tool or script'),
+('AA05', S, 'Right after `exit 0`, copy one harmless word such as `clear` (it replaces the clipboard).', '', 'H17: the clear clipboard step removed'),
+('AA06', S, 'Paste once (Ctrl+Shift+V', 'Paste as often as you like (Ctrl+Shift+V', 'H18: paste once changed'),
+('AA07', S, 'starts `-rw-------`', 'starts `-rw-r--r--`', 'H19: key file mode made world readable'),
+('AA08', S, 'time or key state is never tolerated.\n- **Lead** = the AI session (an AI, not a person) in the chat where you got this sheet, ', 'time or key state is tolerated.\n- **Lead** = the AI session (an AI, not a person) in the chat where you got this sheet, ', 'H20 first copy: never tolerated changed'),
+('AA09', S, 'time or key state is never tolerated.\n- **Lead** = the AI session (an AI, not a person) in the chat where you got this sheet; ', 'time or key state is tolerated.\n- **Lead** = the AI session (an AI, not a person) in the chat where you got this sheet; ', 'H20 second copy: never tolerated changed'),
+('AA10', S, "then cancel the older key by the card's L2, steps 2 to 4, only if its name and creation date equal the blanks", "then cancel the older key by the card's L2, steps 2 to 4", 'H23: older-key cancel without the name and date condition (7.11)'),
+('AA11', S, 'L2 the older key named in the numbers message, only if its name and creation date equal the blanks;', 'L2 the older key named in the numbers message;', 'H23 second place: card list L2 without the condition'),
+('AA12', S, 'if key text appears, close it and tell the owner it appeared', 'if key text appears, keep it and tell the owner it appeared', 'H35: helper told to keep key text'),
+('AA13', S, 'even if a run was in progress (no run is planned on that day)', 'unless a run was in progress (no run is planned on that day)', 'H38: backstop with an exception for a run'),
+('AA14', S, 'do the last-resort step at once after your first "{{ph_cf}}" (retry', 'wait the 10 and 10 minutes after your first "{{ph_cf}}" (retry', 'M1: card waits the ordinary chain near the deadline'),
+('AA15', S, 'type `cd ` and the Take folder of the message, nothing more', 'type `cd ` and the Take folder of the message', 'M2: cd line may hold more'),
+('AA16', S, 'the `cd` line of 7.2 is exactly `cd ` plus the Take folder, nothing else (no `&&`, `;`, `|`, second command or space-separated word after the folder)', 'the `cd` line of 7.2 is checked', 'M2: R6 cd rule dropped'),
+('AA17', 'v33-OPEN-FOR-LEAD-SOURCE.md', "No default pick: A or B is the owner's choice (row 71) |", 'Default: A |', 'M3: Default A back in the open list'),
+('AA18', S, '(write VOID on it; a new paper replaces it)', '(write nothing on it)', 'helper paper VOID step removed'),
+('AA19', S, 'and Mon 23 Nov 2026 {{rv23}}.', 'and {{rv23}}.', 'helper backstop date dropped'),
+('AA20', S, ' or the film person says "stop"', '', 'W3 film person stop removed'),
+('AA21', S, 'press cancel again on the same named row and reload', 'press cancel again and reload', 'card step 4 same named row removed'),
+('AA22', S, 'Watch the edited video twice', 'Watch the video twice', '8.8 edited video wording'),
+('AA23', S, 'Never copy, type or photograph key text; ', 'Copy, type or photograph key text; ', 'key text rule reversed'),
+]
+P = P + V33
+EXPECT.update({'AA01': ['C255'], 'AA02': ['C256'], 'AA03': ['C257'], 'AA04': ['C258'], 'AA05': ['C259'], 'AA06': ['C259'], 'AA07': ['C260'], 'AA08': ['C260'], 'AA09': ['C260'], 'AA10': ['C261'], 'AA11': ['C261'], 'AA12': ['C257'], 'AA13': ['C262'], 'AA14': ['C246'], 'AA15': ['C247'], 'AA16': ['C247'], 'AA17': ['C248'], 'AA18': ['C249'], 'AA19': ['C249'], 'AA20': ['C249'], 'AA21': ['C250'], 'AA22': ['C250'], 'AA23': ['C257', 'C262']})
 def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'

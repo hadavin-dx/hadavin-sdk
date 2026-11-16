@@ -68,7 +68,7 @@ def check18(ap, day=None, app=None, tag=''):
             if l_ not in apl: out.append('day sheet line is not in the applied sheet: ' + l_[:70])
     if app is not None:
         ap_k = ap
-        for l_ in _norm18(app.split('\n', 2)[2] if app.count('\n') > 2 else app):
+        for l_ in _norm18(app):
             if l_.startswith('#') or len(l_) < 60: continue
             if l_ not in set(_norm18(ap)) and l_ not in set(_norm18(txt)): out.append('appendix line is not in the applied sheet or in EDITS: ' + l_[:70])
     return out
