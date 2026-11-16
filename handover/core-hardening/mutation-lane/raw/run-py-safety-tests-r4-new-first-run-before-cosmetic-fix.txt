@@ -1,3 +1,6 @@
+HEADER (added by hand after the run, 2026-11-16 UTC): NEW run.py BEFORE one cosmetic message fix (the 'already gone' wording when the leader is a zombie): superseded by r4-new-final, kept for the record
+environment: linux, root user, python 3.13.18, pytest 9.1.1 in the venv used by the tests, toy repository with made-up files, no real mutants
+-----
 == T1 the real repository as --root is refused (exit 2)
 REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/new1/toy/repo is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-
   exit code 2

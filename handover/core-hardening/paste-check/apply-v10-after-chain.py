@@ -1,5 +1,5 @@
 import re,sys
-H='/home/user/hadavin-sdk/handover/core-hardening/paste-check/'
+import os; H=os.path.dirname(os.path.abspath(__file__))+'/'
 rx=r'## Edit (\d+): .*?\n~~~~old\n(.*?)\n~~~~\n~~~~new\n(.*?)\n~~~~\n'
 rx2=r'## Edit (\d+) \(corrected[^\n]*\n~~~~old\n(.*?)\n~~~~\n~~~~new\n(.*?)\n~~~~\n'
 old=re.findall(rx,open(H+'plan-v10-real-v5-edits.md').read(),re.S)

@@ -1,3 +1,6 @@
+HEADER (added by hand after the run, 2026-11-16 UTC): ROUND 3 run.py (raw/.codecopies/run-r3.py) with the NEW safety-tests.sh: every new test must FAIL here unless noted in REPORT-runpy5.md
+environment: linux, root user, python 3.13.18, pytest 9.1.1 in the venv used by the tests, toy repository with made-up files, no real mutants
+-----
 == T1 the real repository as --root is refused (exit 2)
 REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/old3/toy/repo is, contains or lies inside the real repository /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-
   exit code 2

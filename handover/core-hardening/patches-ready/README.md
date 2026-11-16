@@ -73,3 +73,6 @@ The kept-scope result of the 23 new tests on the unpatched tree: 19 failed, 4 pa
 
 ## Where to read more
 `v5/README.md` (full detail), `v5/REPORT-v5.md`, `v5/SHA256SUMS.txt`, `review/` (all review rounds), `v6-extra/README.md`. Cross-check source for this index: `../cross-read/one-place-sweep-r1.md:21` (item 8).
+
+## Banner files now written (2026-11-16)
+`v2/SUPERSEDED-NOTE.md`, `v3/SUPERSEDED-NOTE.md` and `v4/SUPERSEDED-NOTE.md` exist with the banner wording above (v4: note only, because `v4/SHA256SUMS.txt` covers its README). `v2/README.md`, `v3/README.md`, `DEAD-MAN-CHECK.md` and `unverified-claims-check.md` also carry a banner at the end of line 1. Index of all superseded files: `../paste-check/SUPERSEDED-INDEX.md`. The full list of open C7b gaps is in `v6-extra/DESCRIBE-ONLY-flaky-id-test.md` (described, not fixed).
