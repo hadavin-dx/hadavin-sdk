@@ -29,3 +29,6 @@ M28 log: key guard ignores day change: CAUGHT (SUMMARY pass=121 fail=1) failing_
 M29 log: key guard ERRCODE 42501 becomes P0001: CAUGHT (SUMMARY pass=119 fail=3) failing_checks: K1 [spend.agent_id] key column change refused 42501 ; K1 [spend.day] key column change refused 42501 ; K3 key guard even for the table owner (trigger not role-spec
 M30 log: drop the index: CAUGHT (SUMMARY pass=121 fail=1) failing_checks: L3c index spend_decrease_log_by_agent on (agent_id, period, 
 M31 log: key guard function gets search_path pg_temp first: CAUGHT (SUMMARY pass=121 fail=1) failing_checks: L1c spend_keep_keys: search_path exactly pg_catalog, pg_temp
+M32 log: month scope row stores NEW as old (month insert): CAUGHT (SUMMARY pass=121 fail=1) failing_checks: L5d lowering (month) row content
+M33 log: audit-relevant: log column scope stores wrong period (day for month): CAUGHT (SUMMARY pass=121 fail=1) failing_checks: L5d lowering (month) row content
+TOTAL mutations=33 caught=33

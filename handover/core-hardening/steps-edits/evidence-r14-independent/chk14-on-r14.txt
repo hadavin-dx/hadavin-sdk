@@ -1,0 +1,11 @@
+INFO OLD blocks 57
+INFO UTC=IST pairs 110
+INFO weekday/date pairs 61
+INFO banned found (count only) 0 of 10
+FAILS 5
+{'bare-time': 4, 'keyend': 1}
+FAIL bare-time | E-12 NEW time without UTC/IST label: 'late, and a take that ends at 18:18 leaves you no time '
+FAIL bare-time | E-12 NEW time without UTC/IST label: ' time to watch the cut before 18:19 in route B. The ass'
+FAIL bare-time | E-57 NEW time without UTC/IST label: ' <a few words>` (for example `1:05 to 1:12 sound drops'
+FAIL bare-time | E-57 NEW time without UTC/IST label: 'words>` (for example `1:05 to 1:12 sound drops`).\nTwo '
+FAIL keyend | E-12 NEW stray key/stop time:  cut before 18:19 in route B. T

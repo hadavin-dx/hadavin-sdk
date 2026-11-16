@@ -1,0 +1,8 @@
+## repo vs source copy
+handover/core-hardening/inputs/DECISION-one-store.md: in repo; the source copy has no core-hardening folder, so no comparison is possible (the 5 rows on it are checked against the repo file)
+handover/demo/VIDEO-RUNSHEET.md: not in repo; source copy exists=yes
+handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md: not in repo; source copy exists=yes
+handover/demo/n8n-flows/N8N-START.md: not in repo; source copy exists=yes
+handover/demo/n8n-mainframe/mf.py: not in repo; source copy exists=yes
+handover/demo/n8n-mainframe/build_mainframe.py: not in repo; source copy exists=yes
+handover/demo/n8n-flows-real-v5/mf-form.json: not in repo; source copy exists=yes
