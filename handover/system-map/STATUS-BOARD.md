@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:30:48Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:31:33Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 4
 PERCENT: 85
-AGENTS_RUNNING: 3 running (T19 gap facts; film-v5 leftovers in QUEUE and one-store; blanks in owner files) and 4 reported. Applied: README top block, real-v5-only rows, LP-1..LP-5 labels, drift revision note. Refilling now.
+AGENTS_RUNNING: 6 (date check; banned-claims check; decision contradictions; rehearsal preflight list; orders vs board; cleanup card read). Evidence run: scan no defects, 74 tests OK, secret-pattern grep shows only the one allowed example literal. Applied: T19 gap facts (work/t19-gap-facts.md), M16 closed in QUEUE, one-store line 7.
 INTERRUPTED: none
 NEXT: patched-copy answer already applied everywhere; next: apply the 6 agent reports' wording fixes (STATUS-BOARD, OWNER-VIEW row 3, REPORT.md, README/LEAD-PAGE structure); scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: v5 step J editor; D-04/D-05 (post only); QUESTIONS 8 (film pause); rehearsal trim; row 1 builder and date.
 CAPACITY: nproc 4, load 0.20, RAM 0.9 GB used of 16 GB, DISK / 24 GB free of 252 GB (40 percent used); top 3: /tmp/pytest-of-root 616M, /tmp/sm-fresh 624M, /tmp/claude-0 1.3G; nothing removed.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:30:48Z
+PUSHED_UTC: 2026-11-16T10:31:33Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
