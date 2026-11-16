@@ -48,3 +48,24 @@ stopped orphaned test group 19406; restored src/mod.py from /tmp/claude-0/-home-
 /tmp/safety-only.daw34B.sh: line 110: 19406 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
   PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
 /tmp/safety-only.daw34B.sh: line 123: 25070 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b outside-root setup: the member of the dead leader's group runs
+process 1386 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/r8cmp/tmpstate/had
+  PASS: T51b outside-root: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+/tmp/safety-only.daw34B.sh: line 123:  4729 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b early-start setup: the member of the dead leader's group runs
+process 7840 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/r8cmp/tmpstate/had
+  PASS: T51b early-start: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+/tmp/safety-only.daw34B.sh: line 123:  9648 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b control setup: the member of the dead leader's group runs
+stopped orphaned test group 9858; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/r8cmp/tmpstate/hadavin-mutation-lane-0/1b9385e3f253eff5.bac
+  PASS: T51b control (member works in root, started after the recorded start): stopped (rc 0)
+works_in wrong: []
+  PASS: T51c works_in matches whole path parts: /root2/x is not inside /root
+== T68 (review r5 nit 3) --restore with no marker anywhere says it CANNOT TELL, not 'nothing to restore'
+no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/r8cmp/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT T
+  FAIL: T68 text says 'CANNOT TELL' and no longer 'nothing to restore' (exit 0; r9: 2, was 0: the files are unknown, so exit 0 would claim nothing is planted)
+== T96 (r9: review r8 B1 and M1, class: an exit code that says nothing is planted while planted-ness is unknown; docs must match code) --restore with NO marker, --restore --sha, other TMPDIR, documented exit codes
+no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/r8cmp/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT TELL whether a file is still planted (a lost marker, or a run
+  FAIL: T96a --restore with no marker anywhere and no --sha: exit 2 (got 0; r8: 0), text says CANNOT TELL and names both ways out (TMPDIR of the killed run, --sha), file untouched
+no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9-indep/r8cmp/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT TELL whether a file is still planted (a lost marker, or a run
+  FAIL: T96b --restore --sha COMMIT, no marker, tree equals git: exit 0 (got 0), text says the tree equals the git archive (r8: ignored --sha, said CANNOT TELL)

@@ -153,12 +153,36 @@ check("log: the who column holds the login role (session_user) of the runtime co
 rtc = connect(dsn("rtr_v14"))
 mig.execute("DELETE FROM spend_decrease_log")
 rtc.execute("CREATE TEMP TABLE spend_decrease_log (agent_id text, period date, scope text, old_usd numeric, new_usd numeric, at timestamptz DEFAULT clock_timestamp(), who text DEFAULT session_user)")
-check("B1 attack set-up: the runtime role CAN create a temporary table (PUBLIC default) before the REVOKE", True)
+rtc.execute("GRANT ALL ON pg_temp.spend_decrease_log TO PUBLIC")
+check("B1 attack set-up: the runtime role CAN create a temporary table (PUBLIC default) and grant on it before the REVOKE", True)
 store_rt = PostgresStore(rtc)
 add_spend_v14(store_rt, "a", DAY, Decimal("-0.5"))
 n_temp = rtc.execute("SELECT count(*) FROM pg_temp.spend_decrease_log").fetchone()[0]
 n_real = mig.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0]
 check("B1 fix: with the temporary table present, the REAL log still gets both rows (day and month) and the temporary table none", n_real == 2 and n_temp == 0, f"real={n_real} temp={n_temp}")
+# negative control (the test must FAIL on the v13 function): put the v13 function back, repeat, then restore v14
+import re
+v14_fn = re.search(r"CREATE OR REPLACE FUNCTION spend_log_decrease\(\).*?END \$f\$;", (HERE / "held-sql" / "spend_decrease_log.sql").read_text(), re.S).group(0)
+v13_fn = """CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = pg_catalog, public AS $f$
+BEGIN
+  IF TG_TABLE_NAME = 'spend' THEN
+    INSERT INTO spend_decrease_log (agent_id, period, scope, old_usd, new_usd) VALUES (OLD.agent_id, OLD.day, TG_TABLE_NAME, OLD.usd, NEW.usd);
+  ELSE
+    INSERT INTO spend_decrease_log (agent_id, period, scope, old_usd, new_usd) VALUES (OLD.agent_id, OLD.month, TG_TABLE_NAME, OLD.usd, NEW.usd);
+  END IF;
+  RETURN NULL;
+END $f$;"""
+mig.execute(v13_fn)
+mig.execute("DELETE FROM spend_decrease_log")
+add_spend_v14(store_rt, "a", DAY, Decimal("-0.25"))
+n_temp_old = rtc.execute("SELECT count(*) FROM pg_temp.spend_decrease_log").fetchone()[0]
+n_real_old = mig.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0]
+check("B1 negative control: on the v13 function the same test FAILS (real log 0 rows, temporary table 2 rows: the bypass works)", n_real_old == 0 and n_temp_old == 2, f"real={n_real_old} temp={n_temp_old}")
+mig.execute(v14_fn)
+rtc.execute("DELETE FROM pg_temp.spend_decrease_log")
+add_spend_v14(store_rt, "a", DAY, Decimal("-0.25"))
+check("B1 restored: the v14 function is back and the real log gets the rows again", mig.execute("SELECT count(*) FROM spend_decrease_log").fetchone()[0] == 2 and rtc.execute("SELECT count(*) FROM pg_temp.spend_decrease_log").fetchone()[0] == 0)
 rtc.close()
 # REVOKE TEMP FROM PUBLIC as the operator would; the check proposed for effective_problems
 def can_temp(role): return mig.execute("SELECT has_database_privilege(%s, current_database(), 'TEMP')", (role,)).fetchone()[0]

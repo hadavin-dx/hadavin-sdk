@@ -22,12 +22,18 @@ SET ROLE rt14;
 INSERT INTO spend VALUES ('a', '2026-11-16', 5);
 \echo 'runtime role creates a temporary table of the same name as the log (PUBLIC may create temporary tables by default):'
 CREATE TEMP TABLE spend_decrease_log (agent_id text, period date, scope text, old_usd numeric, new_usd numeric, at timestamptz DEFAULT clock_timestamp(), who text DEFAULT session_user);
+\echo 'T0a without a GRANT on its temporary table the attack FAILS CLOSED: the function runs as the migration role, which may not write the attacker table (expect 42501 and the total unchanged):'
+UPDATE spend SET usd = usd - 3 WHERE agent_id = 'a' RETURNING usd;
+\echo 'T0b the owner of a temporary table may grant on it; with one GRANT the function (running as the migration role) writes there:'
+GRANT ALL ON pg_temp.spend_decrease_log TO PUBLIC;
 UPDATE spend SET usd = usd - 3 WHERE agent_id = 'a' RETURNING usd;
 SELECT 'temp table rows (the attacker sees the row here):', count(*) FROM pg_temp.spend_decrease_log;
 DROP TABLE pg_temp.spend_decrease_log;
 RESET ROLE;
 SELECT 'REAL log rows after the lowering (v13 function; expect 0 = the bypass works):', count(*) FROM public.spend_decrease_log;
-DROP TABLE public.spend_decrease_log CASCADE;
+DROP TRIGGER spend_log_decrease ON spend;
+DROP FUNCTION spend_log_decrease();
+DROP TABLE public.spend_decrease_log;
 \echo '=== T1 the v14 held file 2 (schema-qualified through TG_TABLE_SCHEMA, search_path pg_catalog, pg_temp) with the same attack'
 SET ROLE mig14;
 \i spend_decrease_log.sql
@@ -35,6 +41,7 @@ RESET ROLE;
 REVOKE ALL ON TABLE spend_decrease_log FROM rt14;
 SET ROLE rt14;
 CREATE TEMP TABLE spend_decrease_log (agent_id text, period date, scope text, old_usd numeric, new_usd numeric, at timestamptz DEFAULT clock_timestamp(), who text DEFAULT session_user);
+GRANT ALL ON pg_temp.spend_decrease_log TO PUBLIC;
 UPDATE spend SET usd = usd - 1 WHERE agent_id = 'a' RETURNING usd;
 SELECT 'temp table rows (expect 0):', count(*) FROM pg_temp.spend_decrease_log;
 DROP TABLE pg_temp.spend_decrease_log;
