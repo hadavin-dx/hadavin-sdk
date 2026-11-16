@@ -1,0 +1,3 @@
+# fix-runbook6: RUNBOOK.md round 6 (fixer log)
+Backup: scratchpad/bak-rb6.md. Applied: round-16z-findings.md section A (M1 to M5, minors) and ORDER 037 item 3. Details: RUNBOOK.md failure 18. Nothing was run in n8n; checks run: check_secrets, check_refs, ruff check, ruff format --check RUNBOOK.md.
+Changed times (python3 -I): Wednesday block with start-state gates 127 min, ends 09:37 UTC (15:07 IST); case A take 10:07 to 11:07 UTC; case B (repeat of step 13) block 09:47, re-export to 10:32, take 11:02 to 12:02 UTC; spare to the 15:00 post 93 and 38 min. "234 min" -> 269 in section 6. Dated clocks (06:00, 07:30, 10:00) are kept.
