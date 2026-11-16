@@ -1,0 +1,29 @@
+MUTANT A-01-proof-m22  VERDICT: KILLED
+description: M4: chain write_outcome returns None for a duplicate instead of the event id
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8b/kA   file: src/hadavin_sdk/audit/chain.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/c8b/kA/src /tmp/c8b/kA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_extra_proof.py   (cwd=/tmp/c8b/kA)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 1 failed, 9 passed in 1.37s
+first failing test: tests/test_a01_extra_proof.py::test_chain_duplicate_outcome_is_not_an_outage
+all failing tests (1): tests/test_a01_extra_proof.py::test_chain_duplicate_outcome_is_not_an_outage
+--- OLD TEXT (full) ---
+        except DuplicateEvent:
+            return event.event_id
+
+--- NEW TEXT (full) ---
+        except DuplicateEvent:
+            return None
+
+--- PYTEST OUTPUT (full) ---
+....F.....                                                               [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert None == 'evt-a80de7e26bbf4d8ea1d2d95fddd43bb0'
+     +  where None = write_outcome(AuditEvent(schema_version=1, event_id='evt-a80de7e26bbf4d8ea1d2d95fddd43bb0', ts=datetime.datetime(2026, 11, 16, 9, 32...sion=None, rule_id=None, result='OK', error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None))
+     +    where write_outcome = <hadavin_sdk.audit.chain.ChainAudit object at 0x7fb7c7be4c20>.write_outcome
+     +  and   'evt-a80de7e26bbf4d8ea1d2d95fddd43bb0' = AuditEvent(schema_version=1, event_id='evt-a80de7e26bbf4d8ea1d2d95fddd43bb0', ts=datetime.datetime(2026, 11, 16, 9, 32...sion=None, rule_id=None, result='OK', error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None).event_id
+/tmp/c8b/kA/tests/test_a01_extra_proof.py:73: AssertionError: assert None == 'evt-a80de7e26bbf4d8ea1d2d95fddd43bb0'
+=========================== short test summary info ============================
+FAILED tests/test_a01_extra_proof.py::test_chain_duplicate_outcome_is_not_an_outage
+1 failed, 9 passed in 1.37s
+
