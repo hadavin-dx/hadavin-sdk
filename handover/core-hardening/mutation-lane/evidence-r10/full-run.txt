@@ -265,3 +265,17 @@ REFUSED: pytest would take its settings from /tmp/claude-0/-home-user/957f9d59-4
   PASS: T37b pyproject.toml with a pytest section above the root refused (rc 2, hits 1)
   PASS: T37c a setup.cfg above WITHOUT a pytest section is no setting: the run goes ahead (rc 0)
 == T38 --restore re-creates a deleted target with its recorded mode (review r3 minor)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1753: 11760 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash mat
+  PASS: T38 exit 0 and the file is back with the original text (rc 0)
+  PASS: T38 mode 640 restored
+  PASS: T38 state empty
+== T39 the orphan cannot be stopped (no permission) during --restore: the file is still restored (review r3 minor)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 1753: 12003 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+False could NOT stop test group 12016 (Operation not permitted): file restored anyway; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash m
+  PASS: T39 file restored although stop_group raised PermissionError, and the result is NOT ok (the orphan may still run; r8 N2) (rc 1)
+  PASS: T39 the report says the orphan was not stopped
+== T40 a signal right after the leader was reaped must not signal its (maybe reused) number (review r3 minor)
+stop_group calls: []
+  PASS: T40 no signal was sent to the reaped leader's number
+== T41 control run: a signal right after the fork, before the handle is stored, must not leak the test group (review r3 minor)
