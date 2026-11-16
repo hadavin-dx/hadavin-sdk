@@ -1,0 +1,3 @@
+# fix-q20 (fixer log)
+Not verified (could not read from here): where TAKE_FOLDER is; the names of the take program's settings that hold the two addresses; whether v3 step 8 still exists as written; where DESK_ALERT_TO is set; whether the intake address is the receiving mailbox. All are written in OWNER-STEPS-q16-rows.md as "the lead verifies at the re-check of the take scripts" (intake address: UNCONFIRMED).
+Done: backup in scratchpad bak-q20; edited only OWNER-STEPS-q16-rows.md; three open points converted to statements (take folder, address source, owner-must-give-addresses); DESK_ALERT_TO kept as one line. Nothing run, nothing committed.
