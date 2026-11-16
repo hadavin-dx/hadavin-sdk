@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T09:35:13Z
+UPDATED_UTC: 2026-11-16T09:41:32Z
 SESSION: core-hardening
-ORDER: 019
+ORDER: 020
 STATE: WORKING
 BOOT_ID: 3dcae981
 ITEMS_TOTAL: 13
 ITEMS_OPEN: 8
 PERCENT: 80
-AGENTS_RUNNING: 7
-CAPACITY: load 1.25 of 4 cores (below target: all unblocked lanes run), mem 2 of 15 GB, disk 22 GB free, 7 light + 0 heavy agents
+AGENTS_RUNNING: 5
+CAPACITY: load 0.1 of 4 cores (idle; heavy C5 v3 suite run about to start), mem 0 of 15 GB used, disk 20 GB free, 5 light + 0 heavy agents
 INTERRUPTED: none
-FAILED: lead answered question 13 (edit hygiene files on our branch, licence items are branch artefact): fix lane running; C7 report rated blocker by design reviewer (tested old patches only), rerun on v2 after C5 v2; C3b re-pin v1 blocker (P-4b), v2 running; C4b v5 major, v6 now in review; C5 v1 had real defects, v2 running
-NEXT: hygiene fix lane then clean-sdk-tree run; v6 reviews then v7 (S9 decisions when pushed); C5 v2 then two reviewers then C7b and C8c on v2
-PUSHED_UTC: 2026-11-16T09:35:13Z
+FAILED: C5 v2 rated NOT READY: BLOCKER route refusals dropped in pilot and prod (zero price loads), 4 majors (replay rule clash, corrupt-folder green, K1b false green, memory-only audit gap needs owner decision); fix lane C5 v3 running. C3b v2 naive: P-4b has no command (lead-fill) plus 9 majors; v3 running with LEAD-FILL list. C4b v6: 5 majors, v7 running. C8b not merge evidence (v1 only); run.py hardening running. Hygiene: vendor guard passes in fresh clone, licence test fails as BRANCH ARTEFACT (10 problems in promotion-inputs, untouched)
+NEXT: C5 v3 then 2 fresh reviewers then C7b/C8c on v3; C3b v3 then reviewers; v7 then naive+security reviewers; C9 blocked on APPLIED-S9.md
+PUSHED_UTC: 2026-11-16T09:41:32Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
@@ -33,10 +33,8 @@ PUSHED_UTC: 2026-11-16T09:35:13Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a2eb9b312c9733f7b | builder (C5 v2) | sonnet | rework patches | 09:22Z | 10:15Z | 60 | running | patches-ready/v2/ |
-| afae9a5e1b7c054dc | builder (C3b v2) | sonnet | fix re-pin patch | 09:38Z | 10:00Z | 20 | running | none yet |
-| a69a6064c3ea10336 | reviewer naive (C4b v6) | sonnet | v6 as owner | 09:42Z | 10:00Z | 20 | running | none yet |
-| aaa06fb4560b15a2d | reviewer design (C4b v6) | sonnet | v6 vs inputs | 09:42Z | 10:00Z | 20 | running | none yet |
-| a3e14bf5bfb2d057f | reviewer facts (C8b) | sonnet | mutation report vs raw | 09:47Z | 10:05Z | 10 | running | none yet |
-| a4572a0c8b45a97f7 | reviewer design (C8b) | sonnet | mutation design | 09:47Z | 10:05Z | 10 | running | none yet |
-| abc13c08a5b9b3778 | builder (hygiene fix) | sonnet | reword vendor word, UTF-8, clean sdk run | 09:35Z | +30 min | 5 | running | none yet |
+| a24a61032fba7c19e | builder (C5 v3 money patches) | sonnet | fix blocker and 4 majors, rerun suite+mutants | 09:52Z | 10:55Z | 5 | running | none yet |
+| a79c53fe959119e0d | builder (C3b v3 repin patch) | sonnet | fix naive findings, LEAD-FILL list | 09:52Z | 10:35Z | 5 | running | none yet |
+| aabb105129bf75528 | builder (C4b v7 owner sheet) | sonnet | fix v6 reviews | 09:46Z | 10:30Z | 10 | running | none yet |
+| a27e8f1ea9ed32f0f | builder (C8c run.py + v2 mutant plan) | sonnet | mutation-lane fixes | 09:37Z | 10:20Z | 30 | running | none yet |
+| af229971cfa993364 | citation checker (v6 numbers) | sonnet | every number vs source | 09:52Z | 10:15Z | 5 | running | none yet |

@@ -1,0 +1,15 @@
+banned_count 10
+non_utf8_under_handover ['handover/bundles/p73-rewritten-rw.bundle', 'handover/core/fix/core-fix-on-frozen-r7b-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7c-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7d-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7e-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7f-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7g-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7h-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7i-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7j-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7k-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7l-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7n-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7o-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7p-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7q-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7r-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7s-crlf.patch.gz', 'handover/core/fix/core-fix-on-frozen-r7t-crlf.patch.gz', 'handover/core/fix/core-fix-r7-to-r7b-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7b-to-r7c-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7c-to-r7d-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7g-to-r7h-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7h-to-r7i-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7i-to-r7j-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7j-to-r7k-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7j-to-r7l-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7m-to-r7n-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7n-to-r7o-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7o-to-r7p-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7p-to-r7q-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7q-to-r7r-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7r-to-r7s-delta-crlf.patch.gz', 'handover/core/fix/core-fix-r7s-to-r7t-delta-crlf.patch.gz', 'handover/demo/dpld-fix1-aed689a.tar.gz', 'handover/demo/dpld-fix3-303127b.tar.gz', 'handover/demo/dpld-fix7-00e30c5.tar.gz']
+files_with_hits 12 total 30
+13 tests/test_no_reference_material.py
+7 handover/reviews/market-scan-2.md
+1 handover/bible/REAL-WORLD.md
+1 handover/bible/_agent-brief.md
+1 handover/bible/topics/11-tool-calling.md
+1 handover/bible/topics/12-conversation-state.md
+1 handover/promotion-inputs/warden/tests/test_gate_render.py
+1 handover/promotion-inputs/warden/tests/test_gate_review8.py
+1 handover/promotion-inputs/warden/tests/test_mcp_output_schema.py
+1 handover/promotion-inputs/warden/tests/test_redaction_review.py
+1 handover/promotion-inputs/warden/tests/test_split_helpers_s19.py
+1 handover/reviews/market-scan-1.md
