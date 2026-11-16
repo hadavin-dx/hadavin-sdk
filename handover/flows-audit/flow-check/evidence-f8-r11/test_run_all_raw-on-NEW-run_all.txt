@@ -1,0 +1,6 @@
+ok   run exits 0 while another process truncates every file of its raw folder (got exit 0)
+ok   no 'summary line missing' text in the run output
+ok   the untouched sentinel file in the raw folder is unchanged
+ok   the raw folder holds exactly the same file names as before the run (before: apply.log gen-real.log selftest-new.txt sentinel.txt take-check.txt | after: apply.log gen-real.log selftest-new.txt sentinel.txt take-check.txt )
+test_run_all_raw: 4 of 4 cases as expected, 0 not as expected
+rc=0

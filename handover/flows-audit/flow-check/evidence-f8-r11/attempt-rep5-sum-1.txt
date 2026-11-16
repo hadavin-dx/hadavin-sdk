@@ -1,0 +1,23 @@
+RESULT: 0 FAIL, 23 WARN
+exit=0
+RESULT: 0 FAIL, 22 WARN
+exit=0
+RESULT: 4 FAIL, 19 WARN
+exit=1
+RESULT: 4 FAIL, 18 WARN
+exit=1
+RESULT: 2 FAIL, 23 WARN
+exit=1
+RESULT: 0 FAIL, 21 WARN
+exit=0
+RESULT: 0 FAIL, 20 WARN
+exit=0
+RESULT: 4 FAIL, 17 WARN
+exit=1
+RESULT: 4 FAIL, 16 WARN
+exit=1
+[selftest exit=0] SELFTEST: 725 as expected, 0 not as expected, 62 skipped (not applicable)
+COUNTS match expected-counts.pin: self-test 725 as expected / 0 not / 62 skipped; take suite 555 of 555 cases
+[take_check.sh exit=5] missing lines: none
+run_all exit status (real-v5 default runs + self-test): 0
+OPEN LEAD DECISIONS (real-v5, the take): 2 webhook(s) without auth, 2 $env node(s); n8n's env-access setting is NOT visible to any static check

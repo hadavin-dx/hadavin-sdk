@@ -1,0 +1,12 @@
+FAIL run exits 0 while another process truncates every file of its raw folder (got exit 1)
+FAIL no 'summary line missing' text in the run output
+ok   the untouched sentinel file in the raw folder is unchanged
+FAIL the raw folder holds exactly the same file names as before the run (before: apply.log gen-real.log selftest-new.txt sentinel.txt take-check.txt | after: apply.log diff-film.txt diff-real.txt gen-film.log gen-real.log nested-take-failure-b.txt nested-take-failure-c.txt nested-take-failure-d.txt nested-take-failure.txt patched-film.txt patched-flows-list.txt patched-strict-film.txt patched-strict.txt patched.txt pristine-film.txt pristine-no-baseline.txt pristine-strict-film.txt pristine-strict.txt pristine.txt selftest-new.txt sentinel.txt take-check-bad-ddl.txt take-check-disabled-send.txt take-check-exit3.txt take-check-form-run-saving-odd-word.txt take-check-form-run-saving-off.txt take-check-hook-run-saving-block-empty.txt take-check-key-check-absent-is-exit-4.txt take-check-keyok-gone.txt take-check-new-warn-changes-the-pin.txt take-check-no-table-file.txt take-check-old-table.txt take-check-recovery-accept-idle.txt take-check-sub-run-saving-key-missing.txt take-check-sub-run-saving-off.txt take-check-unpatched-run-saving.txt take-check-warn-pin-file-missing.txt take-check-zero-queries.txt take-check.txt test-take-check.txt timing.txt )
+test_run_all_raw: 1 of 4 cases as expected, 3 not as expected
+last lines of the run output:
+[take_check.sh exit=5] missing lines: [NOTHING RAN IN n8n] [READ THIS BLOCK BEFORE ANYTHING ELSE] [Query strings read AND compared:] [GATE BEFORE THE FIRST SEND] [Is saving of past runs off] [key chec
+run_all exit status (real-v5 default runs + self-test): 1
+real-v5 placeholder ids: 0 file(s) warn in the committed flows (pass --strict to make that a failure)
+COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: 
+OPEN LEAD DECISIONS (real-v5, the take): unknown (the real-v5 checker run did not finish; see raw/pristine.txt)
+rc=1
