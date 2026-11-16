@@ -3,10 +3,13 @@
 Usage: python3 tools/write_outputs.py <dir>"""
 import re, sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
-from safe_write import safe_write
+from safe_write import safe_write, refused
 OVERWRITE_OK = "--force" in sys.argv
 from collections import Counter
 base = sys.argv[1]
+for _n in ("SWEEP.md", "ONE-PLACE-TABLE.md"):
+    if refused(base, _n, OVERWRITE_OK):
+        print("REFUSED: %s was edited by hand or has no record of being generated; nothing written; use --force to overwrite" % _n); sys.exit(1)
 esc = lambda s: s.replace(" | ", " / ").replace("|", "/")
 
 KEY_TEXT = """## How to read this file
@@ -92,6 +95,7 @@ for l in open(os.path.join(base, "work/L6.md"), encoding="utf-8"):
     if m:
         rows[int(m.group(2))] = [x.strip() for x in l.strip().strip("|").split(" | ")]
 RANGES = [("STORE", 1, 12), ("LOG", 13, 23), ("FILTER", 24, 33), ("COUNTER", 34, 40), ("RETRY", 41, 50), ("NOTICE", 51, 57), ("OTHER", 58, 59)]
+assert sorted(rows) == list(range(1, 60)), "work/L6.md job rows are not exactly L6-J-001..059: %s" % sorted(set(range(1, 60)) ^ set(rows))
 APPX = {12, 18, 22, 33, 39, 40, 49, 50, 57, 59}
 OWNERLINE = {
  "STORE": "Postgres table mf_leads in the single Postgres of the take (written by the n8n Postgres nodes)",

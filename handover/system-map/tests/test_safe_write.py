@@ -23,3 +23,26 @@ class SafeWrite(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SafeWriteHardening(unittest.TestCase):
+    def test_name_outside_base_is_rejected(self):
+        import tempfile
+        d = tempfile.mkdtemp()
+        for bad in ("../x.md", "/tmp/x.md", "hand-kept/.generated-hashes.json"):
+            with self.assertRaises(ValueError):
+                safe_write(d, bad, "x")
+
+    def test_damaged_registry_gives_a_clear_error(self):
+        import tempfile, os
+        d = tempfile.mkdtemp(); os.makedirs(os.path.join(d, "hand-kept"))
+        open(os.path.join(d, "hand-kept", ".generated-hashes.json"), "w").write("{trunc")
+        with self.assertRaises(ValueError):
+            safe_write(d, "a.md", "x")
+
+    def test_force_keeps_a_backup(self):
+        import tempfile, os
+        d = tempfile.mkdtemp()
+        open(os.path.join(d, "a.md"), "w").write("hand edit")
+        self.assertTrue(safe_write(d, "a.md", "new", force=True))
+        self.assertEqual(open(os.path.join(d, "a.md.bak")).read(), "hand edit")

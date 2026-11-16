@@ -33,3 +33,18 @@ class Part(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PartitionKeepsStatus(unittest.TestCase):
+    def test_rerun_keeps_read_status(self):
+        import os, subprocess, tempfile
+        root = tempfile.mkdtemp(); out = tempfile.mkdtemp()
+        subprocess.check_call(["git", "init", "-q", root])
+        os.makedirs(os.path.join(root, "src")); open(os.path.join(root, "src", "a.py"), "w").write("x")
+        subprocess.check_call(["git", "-C", root, "add", "."])
+        import partition
+        partition.main(root, out)
+        mf = [f for f in os.listdir(out) if f.startswith("manifest-")][0]
+        p = os.path.join(out, mf); s = open(p).read().replace("NOT-READ", "READ"); open(p, "w").write(s)
+        partition.main(root, out)
+        self.assertIn("\tREAD\n", open(p).read())

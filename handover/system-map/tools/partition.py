@@ -29,7 +29,7 @@ def lanes_for(path):
 
 
 def list_files(root):
-    out = subprocess.check_output(["git", "-C", root, "ls-files"], text=True).splitlines()
+    out = [x for x in subprocess.check_output(["git", "-C", root, "ls-files", "-z"]).decode("utf-8", "surrogateescape").split("\0") if x]
     return [p for p in out if not p.startswith("handover/system-map/")]
 
 
@@ -49,10 +49,17 @@ def main(root, out):
     lanes, problems = partition(files)
     os.makedirs(out, exist_ok=True)
     for lane, fs in sorted(lanes.items()):
-        with open(os.path.join(out, f"manifest-{lane}.tsv"), "w") as fh:
+        mp = os.path.join(out, f"manifest-{lane}.tsv")
+        status = {}
+        if os.path.exists(mp):  # keep the read status already recorded; never reset it to NOT-READ
+            for line in open(mp, encoding="utf-8"):
+                c = line.rstrip("\n").split("\t")
+                if len(c) == 3:
+                    status[c[0]] = c[2]
+        with open(mp, "w", encoding="utf-8") as fh:
             for f in fs:
                 size = os.path.getsize(os.path.join(root, f)) if os.path.exists(os.path.join(root, f)) else -1
-                fh.write(f"{f}\t{size}\tNOT-READ\n")
+                fh.write(f"{f}\t{size}\t{status.get(f, 'NOT-READ')}\n")
     total = sum(len(v) for v in lanes.values())
     print({k: len(v) for k, v in sorted(lanes.items())}, "total", total, "of", len(files),
           "problems", len(problems))
