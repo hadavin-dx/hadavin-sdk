@@ -1,0 +1,9 @@
+# CLAIMS-TABLE round 3 stranger read (agent ac2e548), Blockers and Majors only. Saved by flows-audit, condensed. Reviewer words unverified. 0 Blockers, 5 Majors.
+Clean: new section (CT 643-659) has 13 bullets/13 ids, all in RW, statuses match RW (N-6, X-6a-c PASTE; other 9 HELD), quoted strings word for word.
+M1 (CT 645): section never says which bullets belong to the take; N-4c, N-2, S5-voice, S5-a, S5-b are scenes 5-10 (later video, RW section 7): mark them "later video, not for the take".
+M2 (CT 255 row 15): stale: says PLAN-4:194 has no RW string and is HELD; RW now has X-6a (PASTE) for it; R:51/R:79 covered by X-6b/X-6c but row 15 does not cite them. Minor: X-6a "same wording as B-056" but X-6a ends with a full stop, B-056 does not.
+M3 (CT 258 row 18): note says row "changes only 'seven safe columns'" but RW strings replace the whole phrase (B-085 also ", no name or address"); row gives no RW status (A-040, A-040b, B-085, B-085b all HELD; A-040b, B-085b have hold-back rule).
+M4 (CT 259 row 19): per-id statuses missing (A-023a DELETE live; A-023b, A-075, A-088 HELD for D2). RW A-023b and A-088 still say CT "still says 2 runs": stale on the RW side (CT fixed round 8). Minor: "RELAYED-INDEPENDENT", "KS", "lane3" not among the five verdict words/defined only in RW: add "quoted old text, not a verdict".
+M5 (CT 275 row 33, also 33b-33d): condition cell "none before the take (the text is safe now)" contradicts status HELD until the re-pin check: reword "no decision needed; still HELD until the re-pin".
+M6: "RW" defined only at CT 645 (used from 255); "R:NN"/"P:NN" never defined (R = VIDEO-RUNSHEET.md, P = PAGE-STATEMENTS-V4.md): define near line 13. RW itself uses unqualified "ORDERS.md" (RW 29-30).
+Not checked: rows other than 15, 18, 19, 23-25, 32-33; CT 1-254 and 279-640 bodies; AGENT-SCOPE:20, PLAN-4:111; RW status counts; CT header counts.
