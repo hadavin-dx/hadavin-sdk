@@ -59,6 +59,8 @@ This sheet lists only what ONLY YOU can do. Things you already did are left out 
 7. F2 (the program printed its list and you typed `end`): count this run's contacts with three searches (a, b, c), compare with the program's printed list, and only then delete them and the demo mails (after the studio lead says filming is finished).
 8. After the run: G (only when the rule at the top of F2 sends you there: you did not type `end`, or the program printed no list; it uses the same three searches and the same count-first-then-delete order as F2), H (watch the edited video), I (clean-up), J (post).
 
+**Open questions (STUDIO LEAD TO FILL lines).** Do not start any step until none is left. They are, in order of the sheet: the lead id on resubmission and who creates it (Words box); how the mails reach the receiver (Words box); the run name pattern and allowed characters, and whether a run name is used up by a wrong typed answer or by `n` (Words box, step E); the company address (Words box); the latest launch time (Words box, Refusals); who checks the spending backstop (Words box, What the run can cost); the worst case if the write-down of calls fails (What the run can cost); where the paid model key sits (step A); who films, the proof-screen list and its date (step D); what the From column shows (step D); the post date (Date paragraph); the deadlines for steps H and I; which browser profile the sender account uses (step I); how n8n's HubSpot key is shown as ended (step I); who types the n8n stop (step E); the F2 search text (step F2); how the studio lead knows the contact count when no list was printed (step G); where you post, and the crash test details: which run, who types the stop, who notes the result, and whether n8n writes the note (step J).
+
 **Date:** the studio lead gives the run date. Until it does, do nothing. Planned times: stop time 18:29 UTC = 23:59 IST on Mon 23 Nov 2026. The stop time limits only the start and the spending of the run. Watching (H) and clean-up (I) have their own deadlines. STUDIO LEAD TO FILL: the deadline for step H and the deadline for step I. They are not tied to the stop time. The post is planned for Wed 25 Nov 2026, 15:00 UTC = 20:30 IST. STUDIO LEAD TO FILL: the studio lead's notes of 2026-11-16 give the take and post day as Wed 18 Nov 2026 (post 15:00 UTC = 20:30 IST) as the main plan, with Mon 23 Nov as the last-resort window; which post date is right?
 
 ## What the run can cost
@@ -193,38 +195,46 @@ Starts when the studio lead says the last run is done. STUDIO LEAD TO FILL: the 
 - n8n's HubSpot connection holds a copy of the HubSpot key; it ends when you delete the private app in step 2. STUDIO LEAD TO FILL: how is n8n's HubSpot key shown as ended (a screen in n8n, or only the retire check for the program's own key)?
 
 ### Step J. Post on Wed 25 Nov 2026, 15:00 UTC = 20:30 IST (you)
-You post; Claude never posts. The post says only: contacts arrive through n8n; n8n writes the HubSpot contact and sends the mail; **"the same lead id sent twice is processed once"** ("lead id" here is the number of one test person, the same on every resend of that person: A is sent twice and B ten times, each with one lead id; see the Words box; keep this claim wording exactly); plus the crash line the studio lead gives you (see "The crash line" below).
+You post; the studio lead's session never posts. STUDIO LEAD TO FILL: where you post (platform and account). Do not post the claim below until the studio lead has answered the lead-id question in the Words box. The post says only: contacts arrive through n8n; n8n writes the HubSpot contact and sends the mail; **"the same lead id sent twice is processed once"** ("lead id" here is the number of one test person, the same on every resubmission of that person: A is submitted twice and B ten times, each with one lead id; see the Words box; keep this claim wording exactly); plus the crash line the studio lead gives you (see "The crash line" below).
 It must NOT say:
-- that the same person through two doors is one contact;
-- that no contact data stays in n8n, or that recovery takes within 60 seconds, or that an alert comes within 30 seconds;
+- that the same person through two doors (n8n's main web address and its hook door; see the Words box) is one contact;
+- that no contact data stays in n8n;
+- that n8n recovers by itself within any stated time, or that an alert arrives within any stated time;
 - that a portal, an approval step or an audit trail exists or shows these rows;
-- that n8n cannot reach the internet (its outgoing traffic is switched off by settings and only watched, not blocked);
-- any of the claims taken out of the post: a spending cap enforced by the program, that the AI model is asked once per test person, that a separate checking account or program counts the mails and contacts on its own, or that the mails and contacts are counted by our own independent check (until such a checking account or program is built and shown to work).
+- that n8n cannot reach the internet (its outgoing traffic is switched off by settings; it is only watched, nothing blocks it);
+- any of the claims taken out of the post:
+  - a spending cap enforced by the program;
+  - that the AI model is asked once per test person;
+  - that an independent count exists, meaning a separate checking account or program that counts the mails and contacts on its own (until such a count is built and shown to work).
 
-**The crash line (it must be in the post, whatever the test result).** The post must not call the run crash-safe. A crash test checks a stop between the mail being sent and the program noting it as done. The studio lead gives you the test result and the exact words. Three results each have a crash line; a fourth case means you do not post:
+**The crash line (it must be in the post whenever you post, whatever the test result; row 4 below means you do not post yet).** The post must not call the run crash-safe. A crash test checks a stop between a mail being sent and n8n noting in its table that the lead is done (STUDIO LEAD TO FILL: confirm that n8n, not the checking program, writes that note).
+- **Which program is stopped:** n8n, not the checking program. This sheet already says (step E, "During the run") that the studio lead's session stops and restarts n8n while person C is submitted.
+- **When:** STUDIO LEAD TO FILL: in the rehearsal or in the filmed run (the files here do not say).
+- **Who types the stop and who notes the result:** STUDIO LEAD TO FILL.
+The studio lead gives you the test result and the exact words. Three results each have a crash line; a fourth case means you do not post yet:
 
 | Test result | What the post may say |
 |---|---|
-| 2 or more mails were sent | The post says that "processed once" does NOT hold for a crash between sending the mail and the program noting it was sent. |
-| The test ran twice and missed that moment both times ("missed the moment" means the stop did not land in the gap between the mail being sent and the program noting it) | The post says that window is "untested". |
+| 2 or more mails were sent for one test person, and the stop was between the mail being sent and n8n's note | The post says that "processed once" does NOT hold for a crash between sending the mail and n8n noting it was sent. |
+| The test ran twice and missed that moment both times ("missed the moment" means the stop did not land in the gap between the mail being sent and n8n noting it) | The post says that window is "untested". |
 | The mail-crash test passed (the stop landed in that gap and exactly 1 mail was sent) | The post says that "processed once" also covers a crash between sending the mail and noting it was sent, in the studio lead's exact words, and nothing more. |
-| None of these (for example: the test ran once and missed that moment; it missed once and passed once; 0 or 1 mail with a different failure; any result the studio lead has not put in writing) | Do not post. Ask the studio lead what the result is and what the crash line is. |
+| None of these (for example: the test ran once and missed that moment; it missed once and passed once; 0 or 1 mail with a different failure; any result the studio lead has not put in writing) | Do not post yet. Ask the studio lead what the result is and what the crash line is. Why "missed once and passed once" is here: the two tests disagree, and this sheet does not let anyone pick the better one. When you do post, the crash line is in it. |
 
-For results 1 and 2 you may accept the limit in writing. Your written acceptance covers both wordings, and the post is not published without it. Send that written acceptance to the studio lead together with the post text (see the send table, "Before posting").
-The exact final words come from the studio lead after the rehearsal. Until you have them, do not post. Someone other than the author of the words should check the post against this list before you post (the studio lead names who).
+For results 1 and 2 you may accept the limit in writing, or refuse (then there is no post). To accept, type this sentence: "Yes, I accept the crash limit: the post of Wed 25 Nov 2026 says <the exact crash line from the studio lead> and does not call the run crash-safe." To refuse, type: "No." Your written acceptance covers both wordings, and the post is not published without it. Send that written acceptance to the studio lead together with the post text (see the send table, "Before posting").
+The exact final words come from the studio lead after the rehearsal. Until you have them, do not post. The check of the post words against this list is not done by you: the studio lead reads the final post against the studio's written rules and the test evidence, and you approve and post it yourself.
 
 ## What to send the studio lead (never a secret)
 
 | When | Send |
 |---|---|
-| Before a run | your answer on the run date; the run name you picked before step A (a word, no secret); your written answer on the password risk (step A, part 1) and your written yes with numbers (step A, part 2) |
+| Before a run | your answer on the run date; the run name you picked before step A, after the studio lead told you the pattern (no secret); your written answer on the password risk (step A, part 1) and your written yes with numbers (step A, part 2) |
 | Run day | "label and inbox empty"; "profile ready"; "done" for n8n, only if asked; any problem line from step C |
-| During a run | the exit code and the last printed line if the run stops; "closed the terminal early" if it happens; the proof screen you picked |
+| During a run | the last printed line if the run stops, and the exit code only if the studio lead asked for it; "closed the terminal early" if it happens; the proof screen you picked |
 | After step F2 (the program printed its list and you typed `end`) | "step F2: demo mails deleted, <number> contacts deleted" (the number is the sum of the three search counts); if the three counts did not match the number in the program's printed list, the three counts and that number, before you delete |
 | Any stop condition | which stop condition it was (any "Stop and tell the studio lead" in this sheet), in one short sentence, and the last printed line if there is one |
 | After the edited video | "accepted" or the bad seconds; "an address is visible" if you see one |
 | After step G | "step G: demo mails deleted, <number> contacts deleted" (the sum of the three search counts, or 0); if they did not match the studio lead's count, the three counts and that count, before you delete; a new risk answer and a new written yes with numbers |
-| Clean-up | the names of the HubSpot private apps you made; the screenshots; the retire-check output (words and exit code only); "retire check passed"; "secret files deleted" |
+| Clean-up | the names of the HubSpot private apps you made; the file names of the screenshots (the files stay on your PC); the retire-check output (words and exit code only); "retire check passed"; "secret files deleted" |
 | Before posting | the post text, for comparison with the final claim; your written acceptance of the crash limit when the crash table gives result 1 or 2 |
 
 ## Refusals and exit codes you may meet
@@ -240,20 +250,21 @@ Exit codes of the retire check (step I) are different:
 - 3: a login still works.
 - 2: anything else ("could not tell").
 
+Other refusals:
+
 > **WARNING: `rm` deletes the run lock file for good and you cannot undo it yourself. Type it only when the studio lead sends you the exact line. Never delete the marker file `~/.hadavin-take-tags/<run name>.used`.**
 
-Other refusals:
 - **Run lock file:** if the program stops hard it may leave a `.lock` file beside the run folder; the next run with the same name is refused. Delete it by hand ONLY when the studio lead says so, with the line the studio lead sends you (its form: `rm <lock file name>`, typed in the folder the studio lead names; the studio lead gives the exact name; you type it yourself, see rule 2).
-- **Start deadline (the run start, after your typed answers):** the program refuses to begin its run unless it can finish its own run (about 49 minutes; UNVERIFIED) before the stop time. With stop time 18:29 UTC, the hard latest run start is 17:40 UTC (23:10 IST). If the program checks the 49 minutes again after your typed answers, a run start at 17:40 UTC fails that second check, so 17:30 UTC (23:00 IST) is the safe latest run start (UNVERIFIED). The launch must come early enough that your typing (5 minutes allowed) ends before then; this sheet gives no launch time (STUDIO LEAD TO FILL: the latest launch time, see the Words box). The film pause is planned at 10 minutes at most, is outside the 49 minutes, and is not limited by the program. The studio lead gives the exact times.
+- **Start deadline (the run start, after your typed answers):** the program refuses to begin unless it can finish its own work (about 49 minutes; UNVERIFIED) before the stop time. With stop time 18:29 UTC, the hard latest run start is 17:40 UTC (23:10 IST). If the program checks the 49 minutes again after your typed answers, a run start at 17:40 UTC fails that second check, so 17:30 UTC (23:00 IST) is the safe latest run start (UNVERIFIED). The launch must come early enough that your typing (5 minutes allowed) ends before then; this sheet gives no launch time (STUDIO LEAD TO FILL: the latest launch time, see the Words box). The film pause is planned at 10 minutes at most, is outside the 49 minutes, and is not limited by the program. The studio lead gives the exact times.
 
 ## What is not proven yet (plain words)
 
-- The rehearsal is written and has NOT been run. No evidence for it exists yet.
+- The rehearsal is written and has NOT been tried. No evidence for it exists yet.
 - The code has never run against a live Gmail, HubSpot or model call. It ran once against a real n8n with stand-in programs for everything else (that first run left items open).
-- Not yet shown: how Gmail applies the label to a mail sent from another Gmail account, and how fast; whether the program sees the label `demo` as a folder named `demo`; whether Gmail accepts the company address as the shown sender without a "mailed-by" line (a line in the mail header saying which account really sent it).
+- Not yet shown: how Gmail applies the label to a mail sent from another Gmail account, and how fast; whether the program sees the label `demo` as a folder named `demo`; whether Gmail accepts the company address (see the Words box) as the shown sender without a "mailed-by" line (a line in the mail header saying which account really sent it).
 - Not yet shown: that n8n keeps its own records in the same Postgres as our table of test people (the aim; in the first run it used its default file database), and that removing saved executions at clean-up works.
-- Not yet shown: that a crash between sending the mail and noting it in the table sends no second mail.
-- The program does not check by itself: the alert mail, mail in any folder other than `demo`, the contact id read back from HubSpot (only checked to be all digits), the manual n8n stop and restart, and the hook door.
+- Not yet shown: that stopping n8n between sending the mail and n8n noting it in the table sends no second mail (n8n is what is stopped in the crash test, not the checking program).
+- The checking program does not check by itself: the alert mail, mail in any folder other than `demo`, the contact id read back from HubSpot (only checked to be all digits), the manual n8n stop and restart, and the hook door.
 - Click paths in Google, HubSpot, Chrome, Windows and n8n were not checked on your accounts. If a screen differs from a step, stop and tell the studio lead what you see.
 - Your two written answers of step A (the risk answer and the yes with numbers) do not exist yet. No paid run happens without them.
 - Not enforced by any program: the limit of 3 model calls, the total, and the 10-minute film pause.

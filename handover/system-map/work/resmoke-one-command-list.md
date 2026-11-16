@@ -64,7 +64,7 @@ What the owner does during the run: nothing the plan names. The lead starts Dock
 
 ## 3. Steps, in order
 
-How every WSL step runs (plan line 112, R5): the lead writes the step's paste file with the Write tool, then runs it from the PowerShell tool as shown. The verdict is the `exit=<n>` line in the output, never the tool status (`wsl.exe` returns `tee`'s exit code). Never call `wsl.exe` from the Git Bash tool. Each paste body is the code span after the step id in the plan, verbatim, at the plan line given; this file does not copy the bodies so they cannot drift from the plan. **PowerShell blocks are wrapped so that the evidence is saved (plan line 112, R5).** Every PowerShell block below (P-2, P-5, 9.0k, 11.0k, 13.5k and the tail of 13.9) is run as `& { <block> } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\<log>.log`, with the log name of its section: `p` for P-2 and P-5, `s9` for 9.0k, `s11` for 11.0k, `s13` for 13.5k and the 13.9 tail. The blocks below are already written in this wrapped form. The folder `evidence-2\` is made by `run.sh` (plan line 112), so it exists once P-1 has run; that it exists at P-2 is UNVERIFIED. A STOP stops the run: write PROGRESS and INDEX, go to section 4 (plan line 108, R1). If a result differs from "expected", the plan's classes are STOP (end the run), GO (finding, carry on) and REC (record only) (plan line 111); the class is named per step in the plan.
+How every WSL step runs (plan line 112, R5): the lead writes the step's paste file with the Write tool, then runs it from the PowerShell tool as shown. The verdict is the `exit=<n>` line in the output, never the tool status (`wsl.exe` returns `tee`'s exit code). Never call `wsl.exe` from the Git Bash tool: every block below that starts with `wsl.exe` is PowerShell, and the only Git Bash commands in this file are the two plan line 3 commands in step 3. Each paste body is the code span after the step id in the plan, verbatim, at the plan line given; this file does not copy the bodies so they cannot drift from the plan. **PowerShell blocks are wrapped so that the evidence is saved (plan line 112, R5).** Every PowerShell block below (P-2, P-5, 9.0k, 11.0k, 13.5k and the tail of 13.9) is run as `& { <block> } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\<log>.log`, with the log name of its section: `p` for P-2 and P-5, `s9` for 9.0k, `s11` for 11.0k, `s13` for 13.5k and the 13.9 tail. The blocks below are already written in this wrapped form. The folder `evidence-2\` is made by `run.sh` (plan line 112), so it exists once P-1 has run; that it exists at P-2 is UNVERIFIED. A STOP stops the run: write PROGRESS and INDEX, go to section 4 (plan line 108, R1). If a result differs from "expected", the plan's classes are STOP (end the run), GO (finding, carry on) and REC (record only) (plan line 111); the class is named per step in the plan.
 
 Set at the START OF EVERY PowerShell call (the variable does not survive between calls; about 60 later commands use it). The path is the plan's `run.sh` location (plan lines 112, 212); plan line 112 writes the same path inline, so the lead may also paste the path in place of `$RS`:
 
@@ -74,23 +74,23 @@ $RS = '/mnt/c/Users/<USER>/Downloads/Hadavin/_local/scratch/wp6-smoke/run.sh'
 
 ### 3.1 Preconditions (outside the clock; order P-3a, P-1, P-2, P-3b, P-4, P-5; plan line 228)
 
-**1. P-3a** write glue and paste files with the Write tool, no WSL (plan line 229; glue text plan lines 132-223). Expected: every file written; nothing run.
+**1. P-3a** write glue and paste files with the Write tool, no WSL (plan line 229). The glue text is in the plan at lines 132-223 and each paste body is the code span after its step id in the plan; the lead copies them from the plan, not from this list. Expected: every file written; nothing run.
 
 ```bash
-[LEAD FILLS: the plan gives no command]  # P-3a is the Write tool, not a shell command
+# P-3a is the Write tool, not a shell command: nothing to type here; bodies are in the plan (lines 132-223 for the glue)
 ```
 
 **2. P-1** (plan line 230; body at line 230). Expected (plan line 231): `absent`; a path under `.../node_modules/n8n/`; `2.46.6`; `v24.22.2`; no assert; `8`; `BASH_ENV=unset ENV=unset`; at least 2 GB free; `0`; owner-port count is record-only. Differs: any other value = STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS P-1 p
 ```
 
-**3. P-2** PowerShell block, body at plan lines 233-237. Before running, the lead re-pins the four values on its first line to the merged head (RE-PIN line, plan line 3). The re-pin is an edit of the LEAD'S OWN working copy of the plan, in three places that must change together: the header HEAD_PIN line (plan line 2), the section 2 `code` row (plan line 120) and the first line of P-2 (plan line 3, item 3). It touches no steps v5 file, no core-hardening file and no file outside the lead's plan copy. Plan line 3 then asks for two more things at the final head `<F>` (worktree `<WT>`), both copied in full below with the owner's user-folder name written `<USER>`: (a) regenerate the section 11 part A line column in Git Bash after P-3a wrote `strings.txt` (an empty column = the string is gone: edit the plan before the run); (b) read the changed output wording of the two scripts, and check that the new exit 3 cannot be returned on a real kill (`gone` needs `kill exit=0` and `confirmed gone`). UNVERIFIED: whether plan lines 233-237 already contain every value to re-pin. Expected (plan line 238): `full=` the expected sha; `ancestor exit=0`; the tar commit id equals it. Differs: STOP.
+**3. P-2** PowerShell block, body at plan lines 233-237 (the code is on lines 234-236; lines 233 and 237 are the code fence marks). Before running, the lead re-pins the four values on its first line to the merged head (RE-PIN line, plan line 3). The re-pin is an edit of the LEAD'S OWN working copy of the plan, in three places that must change together: the header HEAD_PIN line (plan line 2), the section 2 `code` row (plan line 120) and the first line of P-2 (plan line 3, item 3). It touches no steps v5 file, no core-hardening file and no file outside the lead's plan copy. Plan line 3 then asks for two more things at the final head `<F>` (worktree `<WT>`), both copied in full below with the owner's user-folder name written `<USER>`: (a) regenerate the section 11 part A line column in Git Bash after P-3a wrote `strings.txt` (an empty column = the string is gone: edit the plan before the run); (b) read the changed output wording of the two scripts, and check that the new exit 3 cannot be returned on a real kill (`gone` needs `kill exit=0` and `confirmed gone`). UNVERIFIED: whether plan lines 234-236 already contain every value to re-pin. Expected (plan line 238): `full=` the expected sha; `ancestor exit=0`; the tar commit id equals it. Differs: STOP.
 
 ```powershell
 # Wrapped form, log `p`: & { <P-2 body, plan lines 233-237, re-pinned> } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\p.log
-[LEAD FILLS: re-pin values (HEAD_PIN, FULL_EXPECTED, BR, WT) for the merged head; body is plan lines 234-236]
+[LEAD FILLS: re-pin values only (HEAD_PIN, FULL_EXPECTED, BR, WT) for the merged head; the body itself is plan lines 234-236, pasted from the plan]
 ```
 
 Plan line 3, command (a), Git Bash, copied in full:
@@ -107,13 +107,13 @@ git -C <WT> diff eec6ba4 <F> -- scripts/n8n_start.sh scripts/n8n_kill.py | grep 
 
 **4. P-3b** scan the written files (plan line 239; body at line 239). Expected: grep prints nothing and `scan exit=1`; `compile exit=0`; no `syntax:` line; no `bad strings line`; `20`. Differs: a carriage return found = run the `sed -i 's/\r$//'` fix in plan line 239 per listed file, then P-3b again; another non-ASCII byte = rewrite that file, then P-3b again.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS P-3b p
 ```
 
 **5. P-4** check only (plan line 240). Expected: a server version; `1`; the container-name list is the clean-up baseline. Differs: `docker info failed` or an image count other than `1` = STOP; the lead starts Docker Desktop and re-runs P-4.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS P-4 p
 ```
 
@@ -127,19 +127,19 @@ wsl.exe -d Ubuntu -e bash $RS P-4 p
 
 **7. 0.1** (one paste; line 244-254). Expected (line 255): derived-copy counts `1 1 1 1 1 0`; every string row of section 11 part A prints a count of at least 1 (H1, H2 count 0 = record only; any other 0, empty count or error text = STOP, the lead re-pins or edits the plan); probe hash `bcad19e92f65d9804c06d3514e3767ea838881c4f06dbc3fb9853e900ee90ccc`. Differs: STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0.1 s0
 ```
 
 **8. 0.2** baseline and sampler (line 256). Expected: the second line count is larger than the first. Differs: STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0.2 s0
 ```
 
 **9. 0.3** parser positive control (line 257). Expected: exactly one line `NONLOOP 1 ours tcp ESTAB 192.0.2.10:443 999001` and count `1`. Differs: STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0.3 s0
 ```
 
@@ -147,29 +147,29 @@ wsl.exe -d Ubuntu -e bash $RS 0.3 s0
 
 **10. 0c.1** (line 260). Expected: `1` then `3`. Differs: STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0c.1 s0c
 ```
 
 **11. 0c.2** (line 261). Expected: `import exit=0` and `publish exit=0`. Differs: STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0c.2 s0c
 ```
 
-**12. 0c.3** (line 262-266). Expected: readiness under 120 s, `registry=0 unknown=0`, then run `0c.3a` (line 263). The control reads `env_canary`, `env_path`, `expr_path` as `READABLE`. Differs: run `0c.3r` (line 264) once, as `wsl.exe -d Ubuntu -e bash $RS 0c.3r s0c`, and repeat 0c.2-0c.3; a second refusal = STOP; a field not `READABLE` = STOP; a file read not `READABLE` = label, not STOP; any `ours` egress line = STOP.
+**12. 0c.3** (line 262-266). Expected: readiness under 120 s, `registry=0 unknown=0`, then run `0c.3a` (line 263). The control reads `env_canary`, `env_path`, `expr_path` as `READABLE`. The last command of 0c.3 is `eg ctl3` (line 266): its `fd lines` count is above 0 and it prints `EGRESS-OK` (an `ours` line = STOP; the unattributed list is record only, a new `:443` peer is a GO finding). Differs: run `0c.3r` (line 264) once, as `wsl.exe -d Ubuntu -e bash $RS 0c.3r s0c`, and repeat 0c.2-0c.3; a second refusal = STOP; a field not `READABLE` = STOP; a file read not `READABLE` = label, not STOP; any `ours` egress line = STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0c.3 s0c
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0c.3a s0c
 ```
 
 **13. 0c.4** first real kill by the pinned script (line 267). Expected: `GONE-OK`, `EGRESS-OK`. Differs: STOP (no fallback kill).
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 0c.4 s0c
 ```
 
@@ -177,27 +177,27 @@ wsl.exe -d Ubuntu -e bash $RS 0c.4 s0c
 
 **14-19.** Run in order. Expected per step: 1.1 prints `8`; 1.2 prints `0`; 1.2b prints `6`; 1.3 prints `grep exit=0` with every count at least 1 (rule for a 0 and for `exit=124` at plan line 273). Conditional step when plan line 273 says to remove a name from the env file: `wsl.exe -d Ubuntu -e bash $RS 1.3d s1 <NAME>` (plan line 273; `pastes/1.3d.sh` removes that name from the take's env file and prints a count that must be `0`; `<NAME>` is the variable name the plan names; an `EXECUTIONS_*` removal makes E5 UNVERIFIED). UNVERIFIED: the exact condition is at plan line 273, not copied here; 1.4 prints `0`; 1.5 shows files 600 and directories 700. Differs: per plan lines 270-275, STOP unless the plan says GO or record only.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1.1 s1
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1.2 s1
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1.2b s1
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1.3 s1
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1.4 s1
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1.5 s1
 ```
 
@@ -205,15 +205,15 @@ wsl.exe -d Ubuntu -e bash $RS 1.5 s1
 
 **20-22.** Expected: 1b.1 a container id, `dk port` exactly `5432/tcp -> 127.0.0.1:55433`, ready under 60 s, `tcp 55433 ok`, `P55=<n>`, `pg=Up ...`; 1b.2 `roles exit=0`, `pg log marker lines: 0`; 1b.3 ten denials N1-N10 and the P checks as listed at plan line 293, `roles.txt` exactly `smk_app|f|f|f|f`, `smk_count|f|f|f|f`, `smk_n8n|f|f|f|f`. Differs: STOP (least privilege not proven).
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1b.1 s1b
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1b.2 s1b
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 1b.3 s1b
 ```
 
@@ -221,59 +221,59 @@ wsl.exe -d Ubuntu -e bash $RS 1b.3 s1b
 
 **23-30.** Expected: 2.0 `config-absent` and `probe-absent`; 2.1 `filled film 4 object`; 2.2 all `0`; 2.3 `creds written array`, `exit=0`; 2.4 five `exit=0`; 2.5 six workflow ids, three credentials each `True`; 2.6 five `exit=0` (exec line record only); 2.7 `0`; above 0; exactly `smk_n8n`; `3`. Differs: STOP on the first non-zero exit in 2.3-2.6; run `2.err` (line 296), as `wsl.exe -d Ubuntu -e bash $RS 2.err s2`, and tell the lead; there is no second form in this run.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.0 s2
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.1 s2
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.2 s2
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.3 s2
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.4 s2
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.5 s2
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.6 s2
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 2.7 s2
 ```
 
 ### 3.7 S3 and S4 stub services and the take n8n (plan lines 306-313; logs `s3`, `s4`; STOP class)
 
-**31-35.** Expected: 3.3 four `python3` lines; 3.4 the printed listener count (`4 + P55`), `0`, `T0 rows {}`, `stubs=4/4`; 4.1 readiness under 120 s and pid equals pgid; 4.2 `0`, `0`, group listens on 127.0.0.1:5690 and :5691 only, `0`, `600 ... n8n.lock`, no `postgres` row with a client address; 4.4 `EGRESS-OK`. Differs: STOP (`NOT-UP` = STOP).
+**31-35.** Expected: 3.3 four `python3` lines; 3.4 the printed listener count (`4 + P55`), `0`, `T0 rows {}`, `stubs=4/4`; 4.1 readiness under 120 s, pid equals pgid and `stubs=4/4`; 4.2 `0`, `0`, group listens on 127.0.0.1:5690 and :5691 only, `0`, `600 ... n8n.lock`, no `postgres` row with a client address, then the pg-hba comparison (plan line 312; the runner writes it in PROGRESS): the first matching `host` row for the `smk_n8n` client address is `scram-sha-256` = a password is the only gate (as planned); the first matching row is `trust` (for example `127.0.0.1/32`) = the roles are NOT password-gated on loopback: a GO finding, written in L4 and in `ENV.md`; 4.4 `EGRESS-OK`. Differs: STOP (`NOT-UP` = STOP).
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 3.3 s3
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 3.4 s3
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 4.1 s4
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 4.2 s4
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 4.4 s4
 ```
 
@@ -281,19 +281,19 @@ wsl.exe -d Ubuntu -e bash $RS 4.4 s4
 
 **36-39.** Expected: S6 every probe field a string, none equal to `READABLE`, `denial-class` all `True`, marker count `0`, exec result 404 or error with `smk-exec-ran` `0`, `EGRESS-OK`; S7 other group members' marker count `0`, `kindof` main = `start`, no missing name, `DB_` count `6`; 8.1 one line `refused: n8n is already running (process <PID>); stop it with n8n_kill.py first`, `exit=2`, same `n8n.pid`, readiness 200; 8.4 `refused: ...`, `exit=2`, `N-IS-REAL`, `n8n.pid named a dead process; found this take's live n8n as process <REAL> by its identity`, `killed n8n process <REAL> (process group), confirmed gone`, `kill exit=0`, `GONE-OK`. Differs: STOP; `exit=124`, `STOP` or `GONE-FAIL` = STOP (R1).
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 6 s6
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 7 s7
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 8.1 s8
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 8.4 s8
 ```
 
@@ -307,15 +307,15 @@ wsl.exe -d Ubuntu -e bash $RS 8.4 s8
 
 **41-43.** 9.1 round 1 (line 334), 9.4 burst B2 killed in flight then restart (line 335), 9.5 wait for the B2 driver (line 336). Expected: two rounds with `h`, `r`, `w` set and pid equal pgid; `GONE-OK`; one JSON line with 10 replies. Differs: `NOT-UP` or `w` empty in a round whose line says 0 published workflows = STOP; a positive `webhook-ready` in round 1 = GO finding.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 9.round s9
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 9.4 s9
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 9.5 s9
 ```
 
@@ -323,7 +323,7 @@ wsl.exe -d Ubuntu -e bash $RS 9.5 s9
 
 **44.** Expected: listeners equal to the printed `6 + P55`; `stubs=4/4`; A two replies, status 200, second repeat true; P `"precondition": "PASS"`; B ten replies, at most one with repeat false; no `SUPERUSER-PASSWORD-LOGIN`; `EGRESS-OK`. Differs: STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 10 s10
 ```
 
@@ -335,61 +335,63 @@ wsl.exe -d Ubuntu -e bash $RS 10 s10
 & { try { $q = Get-Process -Id <n> -ErrorAction Stop; if ($q.ProcessName -eq 'wsl') { 'keepalive alive' } else { 'KEEPALIVE-DEAD (pid reused): STOP' } } catch { 'KEEPALIVE-DEAD: STOP' } } *>&1 | Tee-Object -Append -FilePath C:\Users\<USER>\Downloads\Hadavin\egm\duplicate-proof-lead-desk\wp6\evidence-2\s11.log
 ```
 
-**46. 11.1** (line 345). Expected: the listener count equals the printed expected number; every line `"ok": true`; the control answer shows 8000. Differs: a not-ok line = STOP, except the B2 rule: when the B2 line is the only not-ok line, run 11.1b (line 346-353); `B2 GO rule met` = run 9.4 and 9.5 once more, then 11.1 again; `B2 GO rule not met` = STOP.
+**46. 11.1** (line 345). Expected: the listener count equals the printed expected number; every line `"ok": true`; the control answer shows 8000. Differs: a not-ok line = STOP, except the B2 rule: ONLY IF 11.1 shows exactly one not-ok line and that line is B2, run 11.1b (plan lines 346-353); `B2 GO rule met` = run 9.4 and 9.5 once more, then 11.1 again; `B2 GO rule not met` = STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.1 s11
 ```
 
-```bash
+**11.1b is CONDITIONAL: run it ONLY IF 11.1 shows exactly one not-ok line, B2 (plan line 346). After a clean 11.1 do NOT run it: it would print a false `B2 GO rule not met: STOP` and would clear the CRM hold (the 8000 ms delay) that 11.1 armed.**
+
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.1b s11
 ```
 
 **47-51. Case C** (default case; plan lines 354-376). Expected: 11.2 the key, `GONE-OK`, readiness under 120 s; 11.3 `HIT`; 11.4 driver alive or ended with a JSON line, status 200, `tries >= 2`; 11.5 `final=done` (or `unknown` with an alert); 11.6 `created true 1`, `mails == 1`, `model_calls == 1`, `"ok": true`. Differs: MISSED or `tries == 1` = run 11.7 (line 377), as `wsl.exe -d Ubuntu -e bash $RS 11.7 s11`, then repeat 11.2-11.6 once with argument `D`, for example `wsl.exe -d Ubuntu -e bash $RS 11.2 s11 D` and `... 11.6 s11 D` (plan line 226: a paste that takes the case reads it as `$1`); mails, model calls or ok wrong = STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.2 s11 C
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.3 s11 C
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.4 s11 C
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.5 s11 C
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.6 s11 C
 ```
 
 **52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 378; the E2 repeat is plan line 397) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C. Differs: E MISSED = one repeat as `E2`: run E.0 again WITHOUT an argument, then `run.sh E.1 s11 E2` and `run.sh E.2 s11 E2`, then 11.4 and 11.5 with `E2` (plan lines 397-398); a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2 or C line = STOP.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS E.0 s11
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS E.1 s11 E
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS E.2 s11 E
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.4 s11 E
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.5 s11 E
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 11.8 s11
 ```
 
@@ -397,23 +399,22 @@ wsl.exe -d Ubuntu -e bash $RS 11.8 s11
 
 **58-61.** Expected: 12.2 `marker-files.txt` lists only the nine files named at plan line 402, `n8n.out` `0`, per database `dump exit=0` size above 0 count `0`, Postgres log count equal to the 1b.2 count; 12.5 `600 <user>` and `1`; 12.5b `0` SQLite files, exactly two prefixes `postgres:app` (1 table) and `n8n:public`, owners as at line 404, execution status total above 0; 12.3 `EGRESS-OK` and the unattributed list recorded. 12.4 has no paste: the runner writes the verdict wording at plan line 406. Differs: STOP, except the GO and record-only items the plan names at lines 404-406.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 12.2 s12
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 12.5 s12
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 12.5b s12
 ```
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 12.3 s12
 ```
 
-Then the evidence write-up (INDEX.md, PROGRESS.md, ENV.md; plan lines 112, 442) is written BEFORE 13.9.
 
 ## 4. Stop and clean-up commands (plan lines 408-423; run after the last step or at once after a STOP; log `s13`; every step skips what does not exist)
 
@@ -421,31 +422,31 @@ Each S13 paste starts with the fallback prefix from plan line 409. A STOP never 
 
 **S13-0 (13.0)** sets the stop flag: ends the sampler within 0.5 s and the keep-alive within 5 s. Expected `stop-flag-set`.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.0 s13
 ```
 
 **S13-1 (13.1)** take n8n through the pinned kill (line 411). Expected: no line, or `gone` prints `GONE-OK`. If `GONE-FAIL`: the labelled CLEAN-UP kill R2 (plan line 109): check `tr '\0' '\n' < /proc/<pid>/environ | grep -cFx "N8N_USER_FOLDER=<folder>/n8n"` equals 1 for the exact pid of this run (register row), then `/bin/kill -TERM -- -<pid>`, wait 30 s, `/bin/kill -KILL -- -<pid>`. Never kill by name or pattern; never kill a process this run did not start.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.1 s13
 ```
 
 **S13-3 (13.3)** control home (line 412). Expected `control-gone` or `no control pid: skip`.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.3 s13
 ```
 
 **S13-4 (13.4)** stub services, drivers and sampler, by exact pid after an args check (line 414-417). Expected: nothing listed before `end-13.4`.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.4 s13
 ```
 
 **S13-5 (13.5)** leftover check (line 418). Expected: nothing before `end-n8n-list` (anything listed = STOP: run 13.1 again, then R2) and nothing before `end-p5-list` (a listed process is reported, never killed; the lead decides).
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.5 s13
 ```
 
@@ -457,25 +458,27 @@ wsl.exe -d Ubuntu -e bash $RS 13.5 s13
 
 **S13-6 (13.6)** Postgres container removal, which also deletes the saved executions (line 420). Expected `hadavin-smoke-pg` or `no container: skip`, then `docker-baseline-equal`.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.6 s13
 ```
 
 **S13-7 (13.7)** ports free and the owner's n8n untouched (line 421). Expected: an empty list, then `owner-ports-unchanged` (both empty means "not visible from WSL", record only).
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.7 s13
 ```
 
 **S13-8 (13.8)** copy to `evidence-2\raw\` and scan for secret markers (line 422). Expected: NO file listed before `ev-marker-scan done`. A listed file = STOP: the lead redacts it before any commit.
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.8 s13
 ```
 
+**Evidence write-up (between 13.8 and 13.9; plan lines 423 and 442).** After 13.8 and BEFORE 13.9 the runner writes `INDEX.md` (Part B table and Part A filled), `ENV.md` and finishes `PROGRESS.md` in `evidence-2\`. This is the position the plan gives; it is NOT right after 12.3.
+
 **S13-9 (13.9)** delete the run folder. Run ONLY after INDEX.md, PROGRESS.md and ENV.md exist (line 423). Expected: `ev-marker-scan-clean`, then `removed`. A marker hit refuses the delete: redact, then re-run. After the run folder is gone, delete the two tar files with the PowerShell command of plan line 423, copied in full (wrapped, log `s13`; `<USER>` stands for the user-folder name the plan spells out):
 
-```bash
+```powershell
 wsl.exe -d Ubuntu -e bash $RS 13.9 s13
 ```
 
