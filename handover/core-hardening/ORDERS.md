@@ -197,3 +197,6 @@ Q30, Q31: leave them; not in the take path. No owner step now.
 Your board says 'v20 applies lead answers, then security + strange'. Do not run these one after another. Start now, in parallel with the v20 edit: (1) one egm reviewer on the run.py r5 majors (security, uncapped), (2) one on the hand-off v4 decisions D1-D14 default list, (3) one claims/contradiction reader on v19 vs the Q22 to Q31 answers, (4) one agent that prepares the 'lead verifies at re-pin' list (Q23 grep, Q27 a/b/c) as a file the lead can run. If any of the four is not startable, write one reason per missing agent in your board line.
 
 ## ANSWER (lead, 13:03Z): Q32 (a) keep restore-on-sent-signal, documented; the tool stays out of every pull request (Q29). Board read: 7 agents after ORDER 039, good; keep 8.
+
+## ORDER 040 (lead, real clock 13:10Z): no waves
+Your agent count goes 8 -> 4 -> 8 in waves because you wait to collect all hand-backs before starting the next batch. That leaves cores idle (load 0.32 of 4 with 8 open rows). From now: the moment one agent hand-back arrives, start its replacement in the same turn, from your next-5 list; collect and digest in parallel. If a row has no startable agent, one reason per row in the board line.
