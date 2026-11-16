@@ -1,13 +1,13 @@
 # Core patch copies A-01 and C-01 (ORDER 012 item 2): a ready copy, NOT to be applied now
 
 **STATUS (read this first).** `REVIEW.md:5` (in the folder above this one) says, word for word: "A-01 is DEFERRED, the C-01 extras (the token ceiling)
-are CUT, the G5 wording patch is KEPT (text only)", and `REVIEW.md` item 3 of its list (line 62) says "C-01: DO NOT APPLY NOW ... The file as written carries the
+are CUT, the G5 wording patch is KEPT (text only)", and `REVIEW.md` item 3 of its list (line 64) says "C-01: DO NOT APPLY NOW ... The file as written carries the
 token ceiling (cut by the lead's default) and does not apply to this checkout." Those three are the lead's default of 2026-11-16, not a confirmed decision of the
 studio head; he may veto them. So: **do not apply `A-01.patch` or `C-01.patch` today.** Everything below is the ready copy, kept so that it can be applied
-quickly if the studio head decides to bring A-01 back or to keep the price check of C-01. `C-01.patch` as it stands still carries the token ceiling that was cut; to
-apply only the price check, delete the `max_tokens` line (hunk 1) and the `defaults.py` hunk first (see the decision table, row 2).
+quickly if the studio head decides to bring A-01 back or to keep the price check of C-01. `C-01.patch` as it stands still carries the token ceiling that was cut. For the price check alone use the separate file
+`C-01-price-only.patch` (same price rule, no `max_tokens` ceiling, no `defaults.py` change, 24 tests instead of 26; decision table, rows 2 and 3). Do not edit `C-01.patch` by hand.
 
-Date of this text: 2026-11-16, third fixer pass. Static for databases (no database was started); the tests, lint and `git apply --check` were re-run in this pass.
+Date of this text: 2026-11-16, fourth fixer pass. Static for databases (no database was started); the tests, lint and `git apply --check` were re-run in this pass.
 
 ## Words used here (plain meanings; each word keeps this one meaning in this folder)
 | Word | Meaning here |
@@ -32,8 +32,8 @@ Date of this text: 2026-11-16, third fixer pass. Static for databases (no databa
 | # | Decision | Who decides | Blocks a merge? | Default if nobody decides |
 |---|---|---|---|---|
 | 1 | Bring A-01 back at all (it is deferred) | studio head (may veto the lead's default) | yes: nothing of A-01 is applied while it is deferred | stays deferred |
-| 2 | Keep only the price check of C-01 and where it lives (`REVIEW.md` rows C-3 and Decision 18) | studio head | yes for C-01 | C-01 stays "do not apply now" |
-| 3 | The `max_tokens` ceiling (`200_000` in `defaults.py`) | studio head; the number is my placeholder, not from a provider page | only if the ceiling comes back; it is cut today | ceiling cut; delete the hunk |
+| 2 | Keep only the price check of C-01 and where it lives (`REVIEW.md` rows C-3 and Decision 18) | studio head | yes for C-01 | C-01 stays "do not apply now"; if it is applied, it is `C-01-price-only.patch` |
+| 3 | The `max_tokens` ceiling (`200_000` in `defaults.py`) | studio head; the number is my placeholder, not from a provider page | only if the ceiling comes back; it is cut today | ceiling cut; use `C-01-price-only.patch`, which has no ceiling |
 | 4 | Self-hosted model price: the RECORDED decision (`REVIEW.md` row C-8) is: the only exemption is the kind `fake`; a self-hosted model sets a positive stand-in price. The number of that price | studio head (Decision 19) | no (the rule is recorded); each config that has price 0 must be changed first (see "Rollout note") | none: a config with price 0 refuses to start |
 | 5 | Which database login the tick runs under, and whether the drain gets its own login (`REVIEW.md` rows X-2, X-5, X-6) | studio head | yes for A-01 (rating "Major, conditional") | one runtime login, accepted in writing by the studio head |
 | 6 | Per-row guard in the chain drain (`REVIEW.md` row A-6) before A-01 goes live | studio head decides; a builder writes it | yes for A-01 (see "A-01 precondition") | not applied: one bad row turns the step red on every tick |
@@ -51,10 +51,10 @@ Date of this text: 2026-11-16, third fixer pass. Static for databases (no databa
 | Everything marked "run on the real store" | the lead asks the studio head for a test database | not available to this static review |
 
 ## Where the files are, and which commit they fit
-- This folder: `handover/flows-audit/reviews-of-core-patches/patch-copies/`: `C-01.patch`, `A-01.patch`, `DEAD-MAN-CHECK.md`, this file. The earlier
-  G5 patch file is gone on purpose and must NOT be recreated (see "G5 wording drop"). So there is no four-file set: two patches, one note, one hand-edit list.
+- This folder: `handover/flows-audit/reviews-of-core-patches/patch-copies/`: `C-01.patch` (price check plus ceiling), `C-01-price-only.patch` (price check only), `A-01.patch`, `DEAD-MAN-CHECK.md`, this file. The earlier
+  G5 patch file is gone on purpose and must NOT be recreated (see "G5 wording drop"). So there is no G5 patch file: three patch files, one note, one hand-edit list.
 - `git apply --check` of both patches on fresh `git archive` copies, run 2026-11-16 in this pass:
-  at `b4cce5b`: `C-01.patch` exit 0, `A-01.patch` exit 0; at head (`f05790e42`): `C-01.patch` exit 1 (`error: patch failed: src/hadavin_sdk/config.py:362`),
+  at `b4cce5b`: `C-01.patch` exit 0, `C-01-price-only.patch` exit 0, `A-01.patch` exit 0; at head (`f05790e42`): `C-01.patch` exit 1 (`error: patch failed: src/hadavin_sdk/config.py:362`),
   `A-01.patch` exit 0. C-01 fails at head because the stage check was rewritten after `b4cce5b`: hunk 2's context line is
   `if self.environment != "dev":` (at `b4cce5b`, `config.py:366`) but at head the line is `if is_live(self.environment):` (`config.py:394`).
   `C-01.patch` therefore must be rebuilt from the text of its hunks before it can go onto head; not done (C-01 is "do not apply now").
@@ -85,6 +85,8 @@ git apply --check "$P/C-01.patch"; echo "check C-01 exit=$?"     # saw 0
 git apply --check "$P/A-01.patch"; echo "check A-01 exit=$?"     # saw 0
 git apply "$P/C-01.patch" && git apply "$P/A-01.patch"; echo "apply exit=$?"   # saw 0
 ```
+For the price check alone, put `C-01-price-only.patch` in place of `C-01.patch` in the last line (`git apply --check` on it: saw 0). It cannot be applied together with `C-01.patch`
+(both change `config.py` at the same place); choose one. In the checks below the expected number of new tests is 32 with `C-01.patch` and 30 with `C-01-price-only.patch`.
 (`git apply` writes the files; nothing is committed. Add `--offline` after `uv run` below only if the machine has no network and a warm `uv` cache; add
 `HTTPS_PROXY="$HTTPS_PROXY"` after `env -i` if the network needs a proxy.)
 
@@ -112,9 +114,11 @@ run "$W/unpatched" baseline        # 1. the baseline FIRST, on the unpatched cop
 run "$W/patched"   patched         # 2. the patched copy
 diff "$W/baseline-failed.txt" "$W/patched-failed.txt" && echo "same failed tests"
 ```
-**Pass criterion:** (a) the `diff` prints nothing (the patched run fails exactly the tests the baseline fails, no others); (b) the patched count line shows
-the baseline's `passed` plus 32, with the same `skipped` and `deselected`; (c) the two exit codes are equal (both 1 while the baseline failures exist, both 0 once they are
-fixed). This is "no new failure", not "all green": all guard tests must be green before a real merge (`CLAUDE.md`, gate list), which needs failures 1 and 2 fixed (decision table, row 9).
+**Pass criterion (all of (a) to (e)):** (a) the `diff` prints nothing (the patched run fails exactly the tests the baseline fails, no others); (b) the patched count line shows
+the baseline's `passed` plus 32 (`C-01.patch` with `A-01.patch`) or plus 30 (`C-01-price-only.patch` with `A-01.patch`), with the same `skipped` and `deselected`; (c) the two exit codes are equal;
+(d) the problem count of `test_licences_are_proprietary` is equal: run `grep -A3 'Left contains' "$W/baseline.log" "$W/patched.log"` and both must say the same number (10 at `b4cce5b`), because a name-level `diff`
+cannot see a new problem inside a test that is already red; (e) **all guard tests are green** (`CLAUDE.md`, gate list), which needs failures 1 and 2 below fixed (decision table, row 9).
+**Until (e) holds, the result is "NOT PASSED: no new failure was added, but the repository gate is red"** and no pull request with these patches may be merged. (a) to (d) alone only show that the patch adds no new failure.
 
 Known baseline failures at `b4cce5b` (seen in this pass in a real clone, so not a git problem; see "Results"). Both are caused by files under `handover/` and neither is touched by the patches:
 1. `tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked`: two files hold a banned vendor name (the list `BANNED`, `tests/test_no_reference_material.py:19-30`):
@@ -124,7 +128,7 @@ Known baseline failures at `b4cce5b` (seen in this pass in a real clone, so not 
    the studio's.
 **Correction of my own earlier text:** the first and second pass said failure 2 came only from running in a folder without git history. That was wrong: it also fails in a real clone, for the reason above.
 Who must fix both: the lead (change or remove those studio copies, or tell the test to skip `handover/`, in a separate change); I did not edit them (my files were limited to this folder).
-Until then the repository gate cannot be fully green at `b4cce5b`, so the pass criterion below is "no new failure".
+Until then the repository gate cannot be fully green at `b4cce5b`, so the pass criterion above reads "NOT PASSED" (clause (e)); (a) to (d) still show whether a patch adds a failure.
 
 ### Proof that the new tests fail on the old code
 Run on the unpatched copy with only the two new test files copied in (copied from the patched copy):
@@ -133,18 +137,27 @@ cp "$W/patched/tests/test_a01_audit_reconcile.py" "$W/patched/tests/test_c01_rou
 cd "$W/unpatched" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider \
   tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py -rf ; echo "exit=$?"     # expected exit 1
 ```
-Seen in the first pass and again in the third pass: exit 1, `13 failed, 19 passed`. Each failure is about behaviour, not a missing name:
+Seen in the first pass and again in the third pass with `C-01.patch`: exit 1, `13 failed, 19 passed`. With `C-01-price-only.patch` (fourth pass, same recipe): exit 1, `12 failed, 18 passed` (no ceiling test, so 6 price + 6 A-01 failures). Each failure is about behaviour, not a missing name:
 - 6 price cases: `Failed: DID NOT RAISE ConfigError` (a price of 0 or -1 loads on old code).
-- `test_max_tokens_above_the_ceiling_is_refused`: `DID NOT RAISE ConfigError` (200_001 loads on old code).
+- `test_max_tokens_above_the_ceiling_is_refused` (only in `C-01.patch`): `DID NOT RAISE ConfigError` (200_001 loads on old code).
 - `test_the_step_is_in_the_tick_list`: `'audit_reconcile' in [...]` is false.
 - `test_the_step_drains_the_outbox_and_logs_the_count`: the real tick loop ran and logged only `tick ok=True failed=-`; nothing drained.
 - `test_a_kind_without_reconcile_fails_the_step_instead_of_recording_a_success`: `assert 0 == 1` (no step ran, so no failure was recorded).
 - 3 log tests (`..._never_the_body`, `..._an_error_line_is_logged`, `local_dir_sink_logs...`): the captured log text is empty.
-The 19 that pass on old code are controls: the priced live route and the fake model still load, `max_tokens=200_000` loads and `0` is refused (both true on old code),
+The 19 that pass on old code (18 with the price-only file) are controls: the priced live route and the fake model still load, `max_tokens=200_000` loads and `0` is refused (both true on old code),
 and 16 NaN and Infinity price cases, which pydantic already refuses (pydantic 2.14.1 in `uv.lock`; `match="finite"` depends on that library's message text, so a library
 upgrade may need that one word changed). Those 16 pin today's behaviour and cannot fail on old code.
 
-### Results of the runs of this pass (2026-11-16, third pass)
+### Results of the fourth pass (2026-11-16): price-only patch and the stricter criterion
+Seen in this pass, fresh `git archive b4cce5b` folders turned into a git repository with one commit (not a clone; `uv run --offline`, warm cache, `env -i`):
+- `git apply --check`: `C-01.patch` rc 0, `C-01-price-only.patch` rc 0, `A-01.patch` rc 0.
+- `C-01-price-only.patch` then `A-01.patch`, full run `-m "not live and not perf"`: `2 failed, 9394 passed, 454 skipped, 26 deselected in 248.76s`, exit 1; 9394 = 9364 + 30; failed: the same two guard tests. `test_licences_are_proprietary`: `Left contains 10 more items` (baseline: 10). Verdict by the criterion above: **NOT PASSED** (clause (e)).
+- The three test files `test_a01_audit_reconcile.py`, `test_c01_route_limits.py`, `test_p7_tick.py` on that copy: `71 passed` (24 + 6 + 41).
+- The same two new test files on unpatched code: `12 failed, 18 passed`. The price-only test file alone on unpatched code: `6 failed, 18 passed`; patched: `24 passed`.
+- `ruff check` (src and the test file) `All checks passed!`; `ruff format --check`: `104 files already formatted`. `bandit` was not re-run in this pass (the price-only patch adds no code that bandit has not seen in `C-01.patch`).
+- Not re-run in this pass: the full run with `C-01.patch` (the third-pass numbers below still stand for it), the `perf` tests, and the baseline (the third-pass baseline numbers are reused).
+
+### Results of the runs of the third pass (2026-11-16)
 All numbers below were seen in this pass, in real clones checked out at `b4cce5b` (with `uv run --offline`, from a warm `uv` cache; Python 3.13.18, pydantic 2.14.1 from `uv.lock`):
 - `git apply --check` on a fresh `git archive b4cce5b` extracted into a new folder, run with `env -i`: `C-01.patch` exit 0, `A-01.patch` exit 0 (final text of both files).
 - Baseline, unpatched clone, full run: `2 failed, 9364 passed, 454 skipped, 26 deselected in 239.30s`, exit 1. Failed: `test_no_vendor_brand_string_is_tracked`, `test_licences_are_proprietary` (causes above).
@@ -159,6 +172,7 @@ All numbers below were seen in this pass, in real clones checked out at `b4cce5b
 ## What each patch is
 | Patch | Files | RUNG (tool ladder) | Tests added |
 |---|---|---|---|
+| `C-01-price-only.patch` | `config.py`, `tests/test_c01_route_limits.py` | as `C-01.patch`, without the ceiling | 24 cases (the 26 of `C-01.patch` minus the 2 `max_tokens` cases) |
 | `C-01.patch` | `config.py`, `defaults.py`, `tests/test_c01_route_limits.py` | existing code (the `Route` field and the `Config` validator already exist) + one documented default in `defaults.py`; CODE-LAST holds: a safety guarantee (no spend limit may be bypassed by price 0) | 26 cases (6 zero or negative price, 16 NaN or Infinity price, 1 priced route, 1 fake model, 2 `max_tokens`) |
 | `A-01.patch` | `runtime/tick.py`, `audit/chain.py`, `audit/local_dir.py`, `tests/test_a01_audit_reconcile.py`, `tests/test_p7_tick.py` | existing code (`reconcile()` exists on the audit Protocol, `audit/protocol.py:27`; nothing in `src` calls it) + a short tick step and log lines | 6 new tests; `test_p7_tick.py` gets one hunk with 2 changed assertions |
 | (G5 wording, no patch file) | `guard/redact.py`, `approvals/gate.py`, `tests/warden_port/test_gate.py` | text only: comments and docstrings, no behaviour | none needed |
@@ -184,7 +198,7 @@ All numbers below were seen in this pass, in real clones checked out at `b4cce5b
   so a negative price passes replay while C-01 refuses it at load (C-4); a tiny positive price such as 0.000001 passes both and still makes a cap useless (C-4).
 - NaN and Infinity: a price such as `NaN`, `sNaN`, `Infinity` or `-Infinity` never reaches that check; the existing field check of pydantic refuses it first ("Input should be a
   finite number") and `load_config` turns that into a `ConfigError` (16 cases in the test file; pydantic 2.14.1).
-- `max_tokens`: `Field(gt=0, le=defaults.MAX_ROUTE_TOKENS)`; ceiling `200_000` in `defaults.py`: this part is CUT today (decision table, row 3). If it returns, the studio head
+- `max_tokens`: `Field(gt=0, le=defaults.MAX_ROUTE_TOKENS)`; ceiling `200_000` in `defaults.py`: this part is CUT today (decision table, row 3) and exists only in `C-01.patch`, not in `C-01-price-only.patch`. If it returns, the studio head
   confirms the number; change that one line and the two test lines that write 200_000 and 200_001. Existing fixtures use 64 and 1024; `demos/` has no route config.
 - The test config for a live model is `{kind: anthropic, platform: api, api_key_secret_name: <name>}` (matches `AnthropicSettings`, `backends/table.py:43-61`).
   `test_a_priced_live_route_still_loads` asserts those settings parsed. The fixture environment is `dev` at `b4cce5b` (`demo` at head), which the environment table does not refuse.

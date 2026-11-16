@@ -1,7 +1,7 @@
 # External dead-man check on `tick_state.last_ok_at` (note only: no core code)
 
 **STATUS OF THE PATCH THIS NOTE DEPENDS ON (read first).** `../REVIEW.md:5` says: "A-01 is DEFERRED, the C-01 extras (the token ceiling) are CUT, the G5 wording patch is KEPT (text only)",
-and `REVIEW.md` item 3 of its list (line 62) says C-01 is "DO NOT APPLY NOW". These are the lead's defaults of 2026-11-16; the studio head may veto them. So today
+and `REVIEW.md` item 3 of its list (line 64) says C-01 is "DO NOT APPLY NOW". These are the lead's defaults of 2026-11-16; the studio head may veto them. So today
 `A-01.patch` is NOT applied, and **the query below must be used in its four-name form** (delete the `('audit_reconcile')` entry; see "Which names to check"). What follows is
 the ready copy for when the studio head decides to bring A-01 back. Words (tick, step, outbox, audit kind, reconcile, studio head, lead): see the box in `README.md` of this folder.
 All line cites are at commit `b4cce5b`, unless marked "head" (`f05790e42`).

@@ -430,3 +430,69 @@ ok   f8-r7: the FINAL line says 'The reviewer line is text; not verified.'
 ok   M1: with the test flag AND a pin override, a 'Testonly ...' name is accepted and the run is exit 5, never 0 (got exit 5)
 ok   M1: the mirror run printed the combined flows sha256 (needed to build the stand-in pins below)
 ok   M1: 'Testonly Reviewer, 2026-11-16, pin sha256 378e1121' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'Test Reviewer, 2026-11-16, pin sha256 378e1121' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'Runall Standin, 2026-11-16, pin sha256 378e1121' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'TBD., 2026-11-16, pin sha256 378e1121' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1: 'Claude-Code, 2026-11-16, pin sha256 378e1121' in the real pin place, no override, no test flag: exit 4, never 0 (got exit 4)
+ok   M1 (honesty check): a made-up human-looking name in the real pin place IS accepted, exit 0: the script cannot know who read the pin; it only turns away stand-ins (got exit 0)
+ok   f8-r8 M1: with 'REVIEWER_TODAY=2999-01-01' exported, a pin line dated 2998-01-02 is exit 4 'rule: future date' and OVERRIDES says none (got exit 4)
+ok   f8-r8 M1: with 'TAKE_CHECK_TODAY=2999-01-01' exported, a pin line dated 2998-01-02 is exit 4 'rule: future date' and OVERRIDES says none (got exit 4)
+ok   f8-r8 M1: with 'REVIEWER_TODAY=2999-01-01 TAKE_CHECK_TODAY=2999-01-01' exported, a pin line dated 2998-01-02 is exit 4 'rule: future date' and OVERRIDES says none (got exit 4)
+ok   f8-r8 M1: even with the test flag, TAKE_CHECK_TODAY and REVIEWER_TODAY do not move the date rule in a take (they are read only by --check-reviewer-line) (got exit 4)
+ok   f8-r8 M1: the README names REVIEWER_TODAY and says it has no effect
+ok   f8-r8: a reviewer line of 200 KiB is exit 4 with 'rule: too long', printed cut at 300 characters with its length (got exit 4)
+ok   f8-r8: a note holding $(...), backticks and quotes is accepted as plain text (exit 5 with the override) and nothing is executed (got exit 5)
+ok   f8-r8: a 400-character note is accepted and printed cut at 300 with '[cut: 300 of 444 characters shown]' (got exit 5)
+ok   f8-r8 M2: hidden-character line #1 is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit 4)
+ok   f8-r8 M2: hidden-character line #2 is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit 4)
+ok   f8-r8 M2: hidden-character line #3 is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit 4)
+ok   f8-r8 M2: hidden-character line #4 is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit 4)
+ok   f8-r8 M2: hidden-character line #5 is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit 4)
+ok   f8-r8 M2: hidden-character line #6 is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit 4)
+ok   f8-r8 m2: 'Pat Possession' is not read as the word session (exit 5 with the override) (got exit 5)
+ok   f8-r8: --safe-text removes line separators and control characters
+ok   f8-r8: --safe-text cuts at 300 characters and says the length
+ok   f8-r8: the README says the list is a short blacklist and that the printed line is cut at 300 characters
+ok   f8-r8 m4: neither the README nor the script says the reviewer line is printed 'exactly as written'
+ok   B3: test flag plus a leaked TAKE_CHECK_CK (and the pin override) is exit 5 with the FINAL line saying 5, not exit 0 (got exit 5)
+ok   B3: TAKE_CHECK_FLOWS and --flows both set is exit 2 (got exit 2)
+ok   B3: a folder taken from TAKE_CHECK_FLOWS is printed as coming from the variable (got exit 5)
+ok   B3: a folder given with --flows is printed as given with --flows
+ok   snapshot order: a flow file written by the first python3 read is caught (got exit 4)
+ok   sha256sum failure: exit 4 with a loud line, no empty hash (got exit 4)
+ok   B4: with nobody holding the lock, run_all.sh --lock-only takes it, exits 0 and leaves no lock file in TMPDIR (got exit 0)
+ok   M2: a second run_all.sh on a locked raw folder is refused, exit 2
+ok   M2: the same raw folder with a DIFFERENT TMPDIR is refused, exit 2
+ok   M2: the same raw folder given through a symbolic link (and another TMPDIR) is refused, exit 2
+ok   M2: the same raw folder given as a relative path from another folder is refused, exit 2
+ok   M2: the same raw folder given with a double slash, a link and .. is refused, exit 2
+ok   M2: a DIFFERENT raw folder is not blocked by that lock (exit 0)
+ok   M2: no lock file was left in either TMPDIR
+ok   RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit 2)
+ok   Q5: a checker that exits 3 is shown as 3 and the take exits 3 (got exit 3)
+ok   Q5: a checker that exits 4 is shown as 4 and the take exits 3 (got exit 3)
+ok   Q5: a checker that exits 127 is shown as 127 and the take exits 3 (got exit 3)
+ok   Q5: a checker that exits 137 is shown as 137 and the take exits 3 (got exit 3)
+ok   Q5: --write-warn-pin with a checker that exits 127 writes nothing and exits 3 (got exit 3)
+ok   count: mf-form.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+ok   count: mf-hook.json with one extra wired step is exit 1 with a node-count FAIL and no orphan FAIL (got exit 1)
+ok   f8-r9 M1: a reviewer line with no 'pin sha256' receipt is exit 4 (rule: receipt missing) (got exit 4)
+ok   f8-r9 M1: a reviewer line with another pin's receipt is exit 4 (rule: receipt wrong) (got exit 4)
+ok   f8-r9 M1: a pin whose WARN lines were edited after the line was written is exit 4 (got exit 4)
+ok   f8-r9 M1: the top block prints the sha256 whose first 8 characters the reviewer line must carry, and a line with the right receipt is accepted (exit 5, test run) (got exit 5)
+ok   f8-r9 M1: helper with the receipt 378e1121 and a line carrying 378e1121: want ok (got: ok)
+ok   f8-r9 M1: helper with the receipt 378e1121 and a line carrying 00000000: want no (got: REFUSED (rule: receipt wrong): the 8 characters after 'pin sha256' are)
+ok   f8-r9 M1: helper with the receipt 378e1121 and a line carrying 378E1121z: want no (got: REFUSED (rule: receipt missing): after the date the line must say ', p)
+ok   f8-r9: a pin with an impossible date line is exit 4 with a message about the pin, not about the person (got exit 4)
+ok   f8-r9: a crashing reviewer-line helper is exit 4 with a helper message, never read as a refusal of the person (got exit 4)
+ok   f8-r9 M3: a refused listed word in a take prints the remedy (an initial plus the rest; Q31) (got exit 4)
+ok   f8-r9 M3: the remedy form 'A. Jones' is accepted in a take (exit 5, test run) (got exit 5)
+ok   f8-r9 M3: the remedy form 'Pat J.' is accepted in a take (exit 5, test run) (got exit 5)
+ok   f8-r9 M1: --write-warn-pin prints the receipt (pin sha256 378e1121) and the placeholder line states the new format
+ok   f8-r9: BASH_ENV set is named and is exit 4 (got exit 4)
+ok   f8-r9: LD_PRELOAD set is named and is exit 4 (got exit 4)
+ok   f8-r9: an exported shell function is named and is exit 4 (got exit 4)
+ok   f8-r9 M4: TEST_TAKE_SCRIPT without TEST_TAKE_DEV=1 is refused with exit 2 (got exit 2)
+ok   f8-r9: a file changed in the ORIGINAL folder while the checker read the private copy is still caught at the end (exit 4) (got exit 4)
+ok   f8-r9 M1(second angle): a mail field filled with a made-up bad value is reported by name only: the value is absent from stdout, stderr and the written pin (planted: 0, exit 4)
+test_take_check: 496 of 496 cases as expected, 0 not as expected

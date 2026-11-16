@@ -1,0 +1,7 @@
+# fix-patchcopies4 (fixer, round 4 code review findings; uncapped security path)
+Each finding checked by me first. Files changed: patch-copies/README.md, DEAD-MAN-CHECK.md, new C-01-price-only.patch. A-01.patch and C-01.patch unchanged. Nothing committed.
+- M1 confirmed (criterion passed with two red guard tests; name diff hides 10 -> 11 problems). Fixed: README criterion now (a)-(e); (d) compares the "Left contains N more items" count of test_licences_are_proprietary (10 at b4cce5b, 10 patched); (e) all guard tests green, else the result reads "NOT PASSED". The patched run in this pass reads NOT PASSED.
+- M2 confirmed (old text left two ceiling tests that fail; +32/13-19 wrong for price-only). Fixed by shipping C-01-price-only.patch (hunk header -362,6 +362,16; test file +1,51, 24 tests; counts +30 and 12 failed/18 passed). README states both counts.
+- Cite: REVIEW.md line 64 (checked: item 3) in README:4 and DEAD-MAN-CHECK.md:4.
+- Proofs (fresh git archive b4cce5b): git apply --check C-01 rc 0, C-01-price-only rc 0, A-01 rc 0. Price-only + A-01 full run: 2 failed, 9394 passed, 454 skipped, 26 deselected (9364+30), exit 1, same two guard failures; the 3 test files 71 passed; old code 12 failed, 18 passed; ruff check/format clean.
+- Not verified: full run with C-01.patch repeated (third-pass numbers reused); baseline not re-run; bandit and perf not run; run in a git-init copy, not a clone.
