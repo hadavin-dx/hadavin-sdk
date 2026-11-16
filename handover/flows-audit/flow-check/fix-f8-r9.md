@@ -28,3 +28,9 @@ Started 13:58 UTC (19:28 IST). Uncapped path (security/redaction). Backups of th
 - Old script from commit 44229c549 (git show): 451 of 492 cases as expected, 41 FAIL.
 - Pre-change r8 script (backup): 451 of 492 as expected, 41 FAIL.
 - New script: 495 of 495 as expected, 0 FAIL (standalone run on the patched real-v5 copy).
+
+## CHECKPOINT 14:49 UTC (20:19 IST), after 50 minutes (time box passed; the coordinator asked for a checkpoint and more work)
+Done: M1 receipt, M2 scripts, M3 names with remedy, M4 guard, minors/nits, README, Q31 addendum, secrets-check input cut, old-script proof (41 FAIL of 492 on both old scripts, new 495 of 495 standalone), ruff check and ruff format --check clean, bash -n clean on the three scripts.
+run_all.sh results so far (exact: `bash run_all.sh`, `bash run_all.sh --strict`): plain run exit 0 (selftest 682 as expected, take missing lines: none); two --strict runs exit 1 (strict is meant to exit 1 when placeholder ids remain; both also showed lost raw output: `take_check exit3` file empty, `old-table` file empty); one later plain run exit 1 with "SELFTEST summary line missing in raw/selftest-new.txt" (the raw file stops mid-list). The same fault as the old "--strict SELFTEST summary missing" report: raw files are cut while a run is going. Cause NOT yet confirmed. Lead hypothesis (coordinator): lock fd 9 inherited by background children. Next: confirm with evidence, fix.
+Blockers: another session ran run_all in the same folder at 14:18-14:27 UTC.
+Next (coordinator additions): M1 value-leak in check_flows.py, M2 fd 9, M3-M5 README, tighten weak tests.

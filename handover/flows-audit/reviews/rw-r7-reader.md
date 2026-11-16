@@ -1,0 +1,12 @@
+# RUNSHEET-WORDING round 7 comprehension read (agent ac69dcd), saved by flows-audit; reviewer words unverified. 0 Blockers, 9 Majors. NOT read: CLAIMS-TABLE (too big), QUESTIONS.md, VIDEO-RUNSHEET, PAGE-STATEMENTS-V4, other sources, ORDERS 1-129; Q31 item numbers not checked.
+1 RW lines 67, 143, 451: "no Q31 item, see fix log input 3" for Q-D, Q-G, Q-I, Q-J is wrong: they are in fix-rswording13.md input 1 (input 3 = min wait and attempts, items 25/45). Q22 item 3 (who runs the select, line 386) not listed either way.
+2 RW line 414 says 86 flagged, 48 UNTRACED, SUPPORTED 119/OVERSTATED 62/UNTRACED 49 = 327; line 30 and fix log say 330 (115/64/54, 88 flagged). Two totals in one file.
+3 RW 140, 223: A-016a ("Here one lead ID is sent twice.") spoken before A-016d defines lead ID; no earlier viewer row defines it. Swap or merge.
+4 RW 472 (A-021) paste says "The table row for the lead ends unknown": breaks rule line 21 (viewer text never "the lead"). Use "that lead".
+5 RW 21, 29, 143, 229: caption proof wait has no lower bound; B-011/B-156/step 8 say 45 s lease + 30 s check (~75 s, margin 3 min) could send a second message; short wait could show 1 early. Require wait > lease+check margin or state why not.
+6 RW 27, 143: pane label "intake mailbox" has no row/step that adds it (step 5 silent; step 10 treats it as existing). Add row with exact label text and place.
+7 RW 134, 135, 13 vs 207, 247, 419: do DELETE rows wait for the re-pin? line 13/A-016c/419 say never; step 1a(a) says every FILE EDIT row waits; A-002, A-016e, A-020 are FILE EDIT DELETE rows. State plainly.
+8 RW 323 (B-045): HELD until qualify_stage.py exists and qs_01 passes, but then the string "single flight is not built" becomes false; B-046 tied; section 5 (406) lists them under "say nothing".
+9 RW 311, 312, 247, 284: B-016 and B-019 give one-two sentences but say type five (or three) cells by hand with no cell boundaries (B-024 uses slashes); A-019a says delete four sentences but shows three; A-083 old total 18 vs statements 1-20 and A-076a/b empty statement 20 while A-076c HELD: give exact count per combination.
+Also: N-11a (238) deletes "sped up" label phrase N-9/N-10 require (delete only "with the real wait from the overlay"); step 3 (136) [LEAD] step says "tell the lead"; A-010, A-010b, A-010c join gives comma splice; line 29 rehearsal 07:40Z vs ORDERS 171 07:30Z; N-5a "second worker" undefined.
+Passed: time conversions, ORDERS cites Q21-Q30, A-016f wording vs Q25 item 2 + Q28 item 1, counts PASTE 53 DELETE 30 SUPERSEDED 12 total 185.
