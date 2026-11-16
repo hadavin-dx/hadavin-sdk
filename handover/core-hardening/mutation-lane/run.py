@@ -424,11 +424,15 @@ def restore_target(
         if not stat.S_ISREG(st.st_mode):
             raise Refused(f"{path} is not a regular file: not written")
         if created:
-            os.fchmod(fh.fileno(), mode)  # the umask of the caller must not change the recorded mode
+            os.fchmod(
+                fh.fileno(), mode
+            )  # the umask of the caller must not change the recorded mode
         already = fh.read() == saved
         if not already:
             if not writable:
-                raise PermissionError(errno.EACCES, "the file is read-only and differs from the original")
+                raise PermissionError(
+                    errno.EACCES, "the file is read-only and differs from the original"
+                )
             if st.st_nlink != 1:
                 raise Refused(
                     f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written"
@@ -847,16 +851,22 @@ def stop_orphan(m: dict, root: pathlib.Path) -> tuple[str, bool]:
             and isinstance(m.get("argv"), list)
         )
         want = m.get("cmd_argv") if isinstance(m.get("cmd_argv"), list) else m.get("cmd_head")
-        has_command = isinstance(want, list) and bool(want) and isinstance(m.get("run_start_ticks"), int)
+        has_command = (
+            isinstance(want, list) and bool(want) and isinstance(m.get("run_start_ticks"), int)
+        )
         leader = proc_stat(pgid) if isinstance(pgid, int) else None
         gone = leader is None or leader["state"] == "Z"
         if isinstance(pgid, int) and gone and not group_members(pgid):
             return "test group already gone", True
         what = f"process {pgid}" if isinstance(pgid, int) else "no process"
         text = f"{what} is not this run's pytest (or cannot be verified): left alone"
-        if has_identity and not gone:  # another process now has that number: a group number is never reused while it has members
+        if (
+            has_identity and not gone
+        ):  # another process now has that number: a group number is never reused while it has members
             return text, True
-        if not isinstance(pgid, int) and has_command:  # searched by the recorded command: nothing matches
+        if (
+            not isinstance(pgid, int) and has_command
+        ):  # searched by the recorded command: nothing matches
             return text, True
         return text, False
     notes = []
@@ -935,7 +945,9 @@ def restore_control(root: pathlib.Path, key: str) -> tuple[bool, str]:
     try:
         m = json.loads(read_state(path))
     except ValueError as e:
-        raise Refused(f"control marker {path} is not valid JSON: refused (remove it by hand)") from e
+        raise Refused(
+            f"control marker {path} is not valid JSON: refused (remove it by hand)"
+        ) from e
     if not isinstance(m, dict) or m.get("root") != str(root):
         raise Refused(f"control marker {path} is not for this root: refused")
     note, settled = stop_orphan(m, root)
@@ -1275,12 +1287,16 @@ def run_tests(
                 out, _ = proc.communicate(timeout=timeout)
                 rc = proc.returncode
             except subprocess.TimeoutExpired:
-                SIG.allow = False  # first: nothing in the cleanup below may be cut short by a signal
+                SIG.allow = (
+                    False  # first: nothing in the cleanup below may be cut short by a signal
+                )
                 stop_or_kill(
                     proc
                 )  # a failure to stop the group is no reason to lose the result (review r4 T46)
                 rest = reap(proc)  # a second communicate() returns everything printed so far
-                out = f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
+                out = (
+                    f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
+                )
                 rc = None
             SIG.allow = False
             try:
@@ -1295,7 +1311,9 @@ def run_tests(
             SIG.allow = False
             SIG.critical = True
         SIG.critical = was_critical
-        if not was_critical:  # a control run: nothing is planted, so a remembered signal is delivered now
+        if (
+            not was_critical
+        ):  # a control run: nothing is planted, so a remembered signal is delivered now
             deliver_pending()
         return result
     except (
@@ -1332,6 +1350,28 @@ def summary(out: str):
     return last, failed
 
 
+def passed_count(last: str) -> int:
+    """Number of passed tests in pytest's last line (`2 passed, 1 skipped in 0.1s`); 0 when the word is not there."""
+    mt = re.search(r"\b(\d+) passed\b", last)
+    return int(mt.group(1)) if mt else 0
+
+
+VERDICT_KINDS = ("KILLED", "SURVIVED", "TIMEOUT", "COULD-NOT-PLANT", "NO-TEST-PASSED", "ERROR")
+
+
+def kind_of(verdict: str) -> str:
+    return next((k for k in VERDICT_KINDS if verdict.startswith(k)), "ERROR")
+
+
+def file_diffs(ref_files: dict[str, str], now: dict[str, str], extra: set[str]) -> list[str]:
+    """Files whose hash differs between the reference and the tree now; declared --extra files may exist beyond it."""
+    return [
+        f
+        for f in sorted(set(ref_files) | set(now))
+        if ref_files.get(f) != now.get(f) and not (f in extra and f not in ref_files)
+    ]
+
+
 def tree_digest(files: dict[str, str]) -> str:
     return sha256(json.dumps(sorted(files.items())).encode())[:16]
 
@@ -1358,9 +1398,30 @@ def one(a, tests, m, results, ref) -> list[str]:
     marker = STATE / f"{key}.planted.json"
     n = decode_text(orig, m["file"]).count(m["old"])
     sweep = "not run"
+    # review r5 nit 5: the import check is made again before EACH mutant (a test of an earlier mutant could have changed
+    # `.venv` or a .pth file, which are not compared); a failure gives COULD-NOT-PLANT, nothing is planted
+    imp_line = a.imports.get(m["file"], "not run")
+    recheck_error = None
+    if n == 1 and not a.skip_import_check:
+        try:
+            imp_line = (
+                import_check(root, a.pythonpath, [m["file"]])[m["file"]]
+                + " (checked again before this mutant)"
+            )
+        except Refused as e:
+            recheck_error = str(e)
     if n != 1:
         verdict, out, cmd, rc = f"COULD-NOT-PLANT (old text occurs {n} times)", "", [], None
         restore = "no change made"
+    elif recheck_error is not None:
+        verdict, out, cmd, rc = (
+            f"COULD-NOT-PLANT (import check failed just before this mutant: {recheck_error[:300]})",
+            "",
+            [],
+            None,
+        )
+        restore = "no change made"
+        imp_line = recheck_error[:300]
     else:
         info = {
             "root": str(root),
@@ -1397,11 +1458,9 @@ def one(a, tests, m, results, ref) -> list[str]:
             finally:
                 try:
                     p2 = safe_rel(root, m["file"], f"mutant {m['id']} file (before restore)")
-                    # write only if the bytes differ (review r4 nit 1): a file that was never touched (refused
-                    # open, read-only) is not written again, so a refusal is not reported as a failed restore
-                    if read_regular(p2) != orig:
-                        write_target(p2, orig, root=root)
-                    back = read_regular(p2)
+                    # compare, write (only if the bytes differ: review r4 nit 1, a file that was never touched is not
+                    # written again) and verify on ONE open file (review r5 M3), never by path
+                    _, back = restore_target(p2, orig, root)
                     same_hash = back == orig and back == ref_bytes
                 except (Refused, OSError) as e:
                     print("RESTORE ERROR:", e, file=sys.stderr)
@@ -1430,26 +1489,36 @@ def one(a, tests, m, results, ref) -> list[str]:
             if rc == 1
             else f"ERROR rc={rc}"
         )
+        if verdict == "SURVIVED" and passed_count(summary(out)[0]) == 0:
+            # exit 0 without one passed test (all skipped, nothing selected): nothing was checked (review r5 M1)
+            verdict = "NO-TEST-PASSED"
     # integrity of the whole scratch tree after this mutant (review r4 M3): every file but .venv and the caches
     # against the fresh git archive; a test that wrote a conftest.py, an ini file or data would contaminate the
     # next mutant. Files declared with --extra are allowed to exist (their content is not compared).
-    now, extra = tree_files(root), set(a.extra)
-    diffs = [
-        f
-        for f in sorted(set(a.ref_files) | set(now))
-        if a.ref_files.get(f) != now.get(f) and not (f in extra and f not in a.ref_files)
-    ]
+    now = tree_files(root)
+    diffs = file_diffs(a.ref_files, now, set(a.extra))
     integrity = (
         f"{len(now)} files compared with the git archive (all but .venv directly under the root and the cache "
         f"folders), digest {tree_digest(now)}; differing files ({len(diffs)}; 0 = clean): {diffs}"
     )
     last, failed = summary(out)
+    flags = []
+    if (
+        verdict == "KILLED"
+        and a.baseline_failed is not None
+        and set(failed) == set(a.baseline_failed)
+    ):
+        flags.append(
+            "the failing tests are the same as the baseline's (here: none named): the failure may not come from the mutant"
+        )
     text = (
         f"MUTANT {a.prefix}-{m['id']}  VERDICT: {verdict}\n"
         f"description: {m.get('desc', '')}\n"
-        f"base commit: {a.sha}   root: {a.root}   file: {m['file']}\n"
+        f"base commit: {a.sha_full}{' (given as ' + a.sha + ')' if a.sha != a.sha_full else ''}   root: {a.root}   file: {m['file']}\n"
         f"command: {' '.join(cmd)}   (cwd={a.root}; environment: {', '.join(sorted(test_env(a.pythonpath)))} only)\n"
-        f"import check: {a.imports.get(m['file'], 'not run')}\n"
+        f"baseline: {a.baseline_note}\n"
+        f"flags: {'; '.join(flags) if flags else 'none'}\n"
+        f"import check: {imp_line}\n"
         f"rc: {rc}\n"
         f"restore check: {restore}\n"
         f"tree integrity after this mutant: {integrity}\n"
@@ -1465,6 +1534,8 @@ def one(a, tests, m, results, ref) -> list[str]:
             "id": m["id"],
             "desc": m.get("desc", ""),
             "verdict": verdict,
+            "kind": kind_of(verdict),
+            "flags": flags,
             "rc": rc,
             "first": failed[0] if failed else "",
             "n_failed": len(failed),
@@ -1472,7 +1543,13 @@ def one(a, tests, m, results, ref) -> list[str]:
             "tree_differences": diffs,
         }
     )
-    print(m["id"], verdict, failed[0] if failed else "", flush=True)
+    print(
+        m["id"],
+        verdict,
+        failed[0] if failed else "",
+        *(["FLAGGED:"] + flags if flags else []),
+        flush=True,
+    )
     return diffs
 
 
@@ -1489,8 +1566,11 @@ def load_mutants(a) -> list[dict]:
             isinstance(m.get(k), str) for k in ("id", "file", "old", "new")
         ):
             raise Refused(f"mutant needs string fields id, file, old, new: {str(m)[:120]}")
-        if not NAME_RE.fullmatch(m["id"]) or m["id"] in seen:
-            raise Refused(f"mutant id is not a plain unique name: {m['id']!r}")
+        if not NAME_RE.fullmatch(m["id"]) or m["id"] in seen or m["id"] in RESERVED_IDS:
+            raise Refused(
+                f"mutant id is not a plain unique name (and not one of {sorted(RESERVED_IDS)}, which name other raw files): "
+                f"{m['id']!r}"
+            )
         seen.add(m["id"])
         if m["old"] == m["new"] or not m["old"]:
             raise Refused(f"mutant {m['id']}: old text is empty or equal to new text (a no-op)")
@@ -1503,12 +1583,45 @@ def tree_check(a, root, fresh, marker) -> list[str]:
     leftover = marker.exists()
     write_out(
         pathlib.Path(a.raw) / f"{a.prefix}-tree-diff.txt",
-        f"TREE CHECK after the loop\ncompared: <fresh git archive {a.sha} + patches {a.patch}> against {a.root} "
+        f"TREE CHECK after the loop\ncompared: <fresh git archive {a.sha_full} + patches {a.patch}> against {a.root} "
         f"(skipping {sorted(SKIP_TOP)} directly under the root only and {sorted(SKIP_ANY)} anywhere; symbolic links compared by target; special files recorded, never read)\n"
         f"declared extra files (allowed as 'only in root'): {a.extra}\n"
         f"differing files ({len(diffs)}; 0 = clean): {diffs}\nmarker left behind: {leftover}\n",
     )
     return [*diffs, *(["<marker left behind>"] if leftover else [])]
+
+
+def stop_if_dirty(a, root: pathlib.Path, after: str) -> None:
+    """The tree must equal the git archive before the first mutant is planted; if running the import check or the control
+    tests changed it, stop with exit 4 (review r5 nit 6). Files declared with --extra may exist."""
+    diffs = file_diffs(a.ref_files, tree_files(root), set(a.extra))
+    if diffs:
+        print(
+            f"STOPPED before the first mutant: {after} changed the scratch tree: {diffs[:5]}",
+            file=sys.stderr,
+        )
+        sys.exit(EXIT_TREE_NOT_CLEAN)
+
+
+def summarize(results: list[dict], planned: int) -> tuple[str, bool]:
+    """The SUMMARY line (review r5 M2): one count per verdict kind, flagged and not run. `complete` is True only when
+    every planned mutant ran and has a clean KILLED or SURVIVED verdict without a flag."""
+    count = {k: sum(1 for r in results if r["kind"] == k) for k in VERDICT_KINDS}
+    flagged = sum(1 for r in results if r["flags"])
+    not_run = planned - len(results)
+    complete = (
+        not_run == 0 and flagged == 0 and all(r["kind"] in ("KILLED", "SURVIVED") for r in results)
+    )
+    parts = ", ".join(f"{count[k]} {k}" for k in VERDICT_KINDS)
+    line = (
+        f"SUMMARY: {planned} mutant(s) planned, {len(results)} ran: {parts}; {flagged} flagged; {not_run} not run; "
+        + (
+            "COMPLETE (every mutant has a clean KILLED or SURVIVED verdict)"
+            if complete
+            else f"INCOMPLETE (exit {EXIT_INCOMPLETE} unless the tree is not clean: then exit {EXIT_TREE_NOT_CLEAN})"
+        )
+    )
+    return line, complete
 
 
 def restore_args(a, repo_given: bool) -> str:
@@ -1521,6 +1634,15 @@ def restore_args(a, repo_given: bool) -> str:
 
 
 def main():
+    if (
+        tuple(sys.version_info[:3]) < MIN_PYTHON
+    ):  # before anything else, on every option including --restore (review r5 nit 8)
+        print(
+            f"REFUSED: this tool needs Python {'.'.join(map(str, MIN_PYTHON))} or newer (tomllib, tarfile filters); "
+            f"this is {'.'.join(map(str, tuple(sys.version_info[:3])))}",
+            file=sys.stderr,
+        )
+        sys.exit(EXIT_REFUSED)
     argv = sys.argv[1:]
     tests = argv[argv.index("--") + 1 :] if "--" in argv else []
     ap = argparse.ArgumentParser()
@@ -1638,13 +1760,16 @@ def main():
                     f"Restore with: python3 {sys.argv[0]} --root {root} --restore{restore_args(a, repo_given)}   "
                     f"(stops a leftover test run, copies {m['backup']} back and checks the hash); then run again"
                 )
+            a.sha_full = resolve_commit(a.repo, a.sha)  # the full id of a COMMIT (review r5 nit 9)
+            a.baseline_failed = None
+            a.baseline_note = "NOT RUN (no --control): a tree that already fails would make every mutant look KILLED"
             ref = tmpref / "ref"
             ref.mkdir()
-            build_reference(a.repo, a.sha, a.patch, ref)
+            build_reference(a.repo, a.sha_full, a.patch, ref)
             diffs = diff_trees(ref, root, set(a.extra))
             if diffs:
                 raise Refused(
-                    f"scratch tree differs from git archive {a.sha} + patches in {len(diffs)} file(s), first: {diffs[:3]}: it may hold a planted change; rebuild it from the archive"
+                    f"scratch tree differs from git archive {a.sha_full} + patches in {len(diffs)} file(s), first: {diffs[:3]}: it may hold a planted change; rebuild it from the archive"
                 )
             ms = load_mutants(a)
             for m in ms:  # every path is checked before anything is planted
@@ -1664,13 +1789,16 @@ def main():
             if rawdir.is_symlink():
                 raise Refused(f"--raw {rawdir} is a symbolic link: refused")
             rawdir.mkdir(parents=True, exist_ok=True)
-            outs = [rawdir / f"{a.prefix}-{n}.txt" for n in ("baseline", "tree-diff")]
+            outs = [rawdir / f"{a.prefix}-{n}.txt" for n in sorted(RESERVED_IDS)]
             outs += [rawdir / f"{a.prefix}-{m['id']}.txt" for m in ms]
             outs += [pathlib.Path(a.out_json)] if a.out_json else []
             for o in outs:  # before anything is planted (review r4 nit 11)
                 check_out_path(o)
             results = []
             a.ref_files = tree_files(ref)
+            # review r5 nit 6: the tree must still equal the archive after the import check (it runs the target module)
+            # and after the control run, BEFORE the first mutant is planted
+            stop_if_dirty(a, root, "the import check")
             if a.control:
                 control = control_marker_path(key_for(root))
                 cinfo = {
@@ -1693,12 +1821,31 @@ def main():
                 finally:
                     # reached only after the group was stopped or ended (a SIGKILL skips it: the marker stays)
                     control.unlink(missing_ok=True)
-                last, _ = summary(out)
+                last, bfailed = summary(out)
+                bad_reason = (
+                    "it timed out"
+                    if rc is None
+                    else f"it exited with {rc}, not 0"
+                    if rc != 0
+                    else f"no test passed (summary line: {last!r}): everything was skipped or nothing was selected"
+                    if passed_count(last) == 0
+                    else None
+                )
                 write_out(
                     rawdir / f"{a.prefix}-baseline.txt",
-                    f"UNMUTATED BASELINE\nbase commit: {a.sha} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nenvironment: {', '.join(sorted(test_env(a.pythonpath)))} only\nimport check: {a.imports}\nrc: {rc}\ntest group after the leader ended: {sweep}\nsummary: {last}\n\n{out}",
+                    f"UNMUTATED BASELINE\nbase commit: {a.sha_full}{' (given as ' + a.sha + ')' if a.sha != a.sha_full else ''} (+ the patch under test)   root: {a.root}\ncommand: {' '.join(cmd)}\nenvironment: {', '.join(sorted(test_env(a.pythonpath)))} only\nimport check: {a.imports}\nrc: {rc}\ntest group after the leader ended: {sweep}\nsummary: {last}\nbaseline usable: {'NO: ' + bad_reason if bad_reason else 'yes (exit 0, at least one test passed)'}\n\n{out}",
                 )
                 print("baseline", rc, last)
+                if (
+                    bad_reason
+                ):  # review r5 M1: a failing baseline would make every mutant look KILLED
+                    raise Refused(
+                        f"the baseline (unmutated tree, --control) is not usable: {bad_reason}; no mutant was planted; "
+                        f"see {a.prefix}-baseline.txt"
+                    )
+                a.baseline_failed = bfailed
+                a.baseline_note = f"rc 0, {passed_count(last)} passed (see {a.prefix}-baseline.txt)"
+                stop_if_dirty(a, root, "the control run")
             dirty: list[str] = []
             for m in ms:
                 dirty = one(a, tests, m, results, ref)
@@ -1710,15 +1857,25 @@ def main():
                     break
             if a.out_json:
                 write_out(pathlib.Path(a.out_json), json.dumps(results, indent=1))
+            line, complete = summarize(results, len(ms))
+            print(line, flush=True)
+            write_out(rawdir / f"{a.prefix}-summary.txt", line + "\n")
             # proof the scratch tree is unchanged: compare with a FRESH archive extract
             fresh = tmpref / "fresh"
             fresh.mkdir()
-            build_reference(a.repo, a.sha, a.patch, fresh)
+            build_reference(a.repo, a.sha_full, a.patch, fresh)
             bad = tree_check(a, root, fresh, marker) or dirty
             print("tree diff:", len(bad), "difference(s)")
             if bad:
                 print("TREE NOT CLEAN after the loop:", bad[:5], file=sys.stderr)
                 sys.exit(EXIT_TREE_NOT_CLEAN)
+            if not complete:
+                print(
+                    f"INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit {EXIT_INCOMPLETE}); "
+                    f"see the SUMMARY line and the raw files",
+                    file=sys.stderr,
+                )
+                sys.exit(EXIT_INCOMPLETE)
     except Refused as e:
         print("REFUSED:", e, file=sys.stderr)
         sys.exit(EXIT_REFUSED)
