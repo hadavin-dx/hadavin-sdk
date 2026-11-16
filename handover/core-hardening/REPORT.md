@@ -1,5 +1,18 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:03 UTC / 12:33 IST: T+3 approx. Evidence done, 6 lane builders running
+Failed or weak first (evidence runner's own list, parts/evidence-1.md): registry-string matching resolves only exact names, so short kind names (for example "aws") are listed as candidates only; method-level dead code under-reported; sections 5 and 6 are broad (words like token match plain identifiers); credential, port and external-system rows are not generated and builders must add them; the sampler was only tested on an empty pool. I have NOT yet checked the evidence myself beyond its headline counts (16780 tracked files, 472 in scope, 289 python files parsed, 0 parse failures; 88 of 102 src modules reachable, 14 reached only by tests). The 5 weak points above are builder-visible.
+Agents running: 6 language-model builders (lanes A, B, C, D1, D2, D3), 0 script lanes. Each is read-only except its parts/ files.
+Register (id | purpose | start | expected end | state | next):
+- builder A (sonnet) | security lane + approval-path walk | 07:03Z | 08:03Z | running | read report, check files exist
+- builder B (sonnet) | state/runtime lane + agent-loop walk | 07:03Z | 08:03Z | running | same
+- builder C (sonnet) | models/top-level lane + llm and k1b walks | 07:03Z | 08:03Z | running | same
+- builder D1 (sonnet) | tests lane | 07:03Z | 08:03Z | running | same
+- builder D2 (sonnet) | demos vs core lane | 07:03Z | 08:03Z | running | same
+- builder D3 (sonnet) | docs/CI/hooks/root files/claims lane | 07:03Z | 08:03Z | running | same
+Closed: evidence runner (reported; outputs in parts/).
+Next: checkpoint files at +30 min (07:33Z); then cross-lane builder. Next block: 07:13 UTC.
+
 ## STATUS 06:55 UTC / 12:25 IST: BUILD START (T+0). ORDER 002 step 2, evidence runner starting
 Failed or open first: plan rounds hit the cap of 3 with findings still coming (round 3: 1 Blocker, 17 Major combined); all were written into AUDIT-PLAN.md "Rulings v4" but v4 was NOT re-reviewed by a fresh egm pass (cap reached). Plan took about 45 min, more than I budgeted. Result review will also judge plan fitness. No audit finding exists yet. Hard stop for part 1: T+135 = 09:10 UTC.
 Agents running: 1 language-model (evidence runner), 0 script lanes.
