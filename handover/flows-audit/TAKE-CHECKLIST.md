@@ -228,6 +228,53 @@ Block R4f (row 4, the counts of the second run on the exported copy; the log `$L
 . "${ENVSH:?unset}" && : "${LOG2:?unset}"
 test ! -e "$LOG2.final.counts" && test -s "$LOG2.final" && { for P in 'key check present (F-002 applied)' 'key check ABSENT' '^INFO: .* run saving is ON' '^!!!' '^WARN set equals the pinned set' '^FINAL: take_check exit status 0\.' '^FINAL: .*RESULT: 0 FAIL' '^ACCEPTED: recovery flow not part of the take'; do printf '%s = ' "$P"; grep -c -e "$P" "$LOG2.final"; done; } > "$LOG2.final.counts"; cat "$LOG2.final.counts"
 ```
+Block R5e (row 5, fallback post-twice; the same bytes twice; the sha256 is printed before and after so a changed body shows; the loop sends POST 2 only after reply 1 has arrived, so it can show the repeat case only, never the race case (FIX-PLAN rule (d)); the content type and any status other than 200 for a repeat: LEAD FILLS): The key inside `$BODY` must equal `$KEY`: the block checks it with `grep -q -F -- "$KEY" "$BODY"` before it posts, and Block R5f reads the row for the same `$KEY`.
+```
+. "${ENVSH:?unset}" && : "${BODY:?unset}" "${HOOK_URL:?unset}" "${POSTLOG:?unset}" "${KEY:?unset}"
+test ! -e "$POSTLOG" && test -f "$BODY" && grep -q -F -- "$KEY" "$BODY" && echo "log path is new; key is in the body" && { sha256sum "$BODY"; for N in 1 2; do date -u +%Y-%m-%dT%H:%M:%SZ; curl -sS -m 60 -X POST -H 'Content-Type: application/json' --data-binary @"$BODY" -w '\nHTTP %{http_code} %{time_total}s\n' "$HOOK_URL"; echo "curl exit $?"; done; sha256sum "$BODY"; } > "$POSTLOG" 2>&1
+test ! -e "$POSTLOG.counts" && test -s "$POSTLOG" && { grep -c '^HTTP 200 ' "$POSTLOG"; grep -c '^curl exit 0$' "$POSTLOG"; grep -c '^[0-9a-f]\{64\}  ' "$POSTLOG"; grep '^[0-9a-f]\{64\}  ' "$POSTLOG" | cut -c1-64 | sort -u | wc -l; } > "$POSTLOG.counts"; cat "$POSTLOG.counts"
+```
+Expected in the order printed: 2, 2, 2, 1 (the first number is `grep -c '^HTTP 200 '` on `$POSTLOG`). The only exit codes shown are the labelled `curl exit` lines, one per POST; no bare `exit $?` is printed (a bare one would be the last `sha256sum`'s, not curl's). If the line `log path is new` is not printed, stop: the old log would be overwritten.
+
+Block R5f (row 5, the count proof; run only after the positive control of check 5b passed on the same mailbox and filter):
+```
+. "${ENVSH:?unset}" && : "${PGCONN_SELECT_ONLY:?unset}" "${KEY:?unset}" "${POSTLOG:?unset}"
+test ! -e "$POSTLOG.row" && psql "$PGCONN_SELECT_ONLY" -c "select state, attempts from mf_leads where lead_key = '$KEY'" > "$POSTLOG.row" 2>&1; echo "psql exit $?"; cat "$POSTLOG.row"
+# LEAD FILLS: the mailbox count command (tool, filter on the made-up address, the wait); its output goes to "$POSTLOG.mail"
+```
+Block R6 (row 6; the two awk lists are kept in `"$LEDGER_OUT.counted"` and `"$LEDGER_OUT.decides"`):
+```
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${STUDIO:?unset}" "${LEDGER_OUT:?unset}"
+test ! -e "$LEDGER_OUT" && echo "log path is new" && ( cd "$STUDIO" && python3 egm/tools/ledger_check.py --topic duplicate-proof-lead-desk > "$LEDGER_OUT" 2>&1; echo "exit $?" )
+test ! -e "$LEDGER_OUT.counted" && awk -F' [|] ' '$1 ~ /^[|] F-/ && $3 ~ /^(Blocker|Major)/ && $4 ~ /GO row 6: counts/ && $6 != "FIXED-VERIFIED" {print $1, $3, $6}' "$REPO/handover/flows-audit/LEDGER-ROWS.md" > "$LEDGER_OUT.counted"; echo "awk exit $?"; cat "$LEDGER_OUT.counted"
+test ! -e "$LEDGER_OUT.decides" && awk -F' [|] ' '$1 ~ /^[|] F-/ && $3 ~ /^(Blocker|Major)/ && $4 ~ /GO row 6: lead decides/ {print $1, $3, $6}' "$REPO/handover/flows-audit/LEDGER-ROWS.md" > "$LEDGER_OUT.decides"; echo "awk exit $?"; cat "$LEDGER_OUT.decides"
+grep -c '^| F-' "$REPO/handover/flows-audit/LEDGER-ROWS.md"
+```
+Block R6j (row 6, once per `lead decides` row, for example F-003, ONLY after the lead has read the row and decided; `$JUDGE_FILE` is the file read):
+```
+. "${ENVSH:?unset}" && : "${JUDGE_WHO:?unset}" "${JUDGE_FILE:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 6 F-003 "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$JUDGE_FILE" >> "$JUDGELOG"
+grep '^JUDGED row 6 ' "$JUDGELOG" | sed 's/.* from file //' | sort -u | wc -l
+```
+On the tree read on 2026-11-16 the first awk lists F-037, F-008, F-011, F-029, F-041 and F-018 (all OPEN; so row 6 is NOT PASSED today, which is the true state), the second lists F-003. The real ledger is outside this repository; the lead keeps LEDGER-ROWS.md in step with it or runs the same filter on the real ledger (LEAD FILLS).
+
+Block R7 (row 7, F-041; ONE command set and ONE pass line; FIX-PLAN item 8b uses the same text). First the two files the viewer sees, then every markdown file under the audit and demo folders, with the audit's own text, logs and finding texts filtered out by path:
+```
+. "${ENVSH:?unset}" && : "${REPO:?unset}" "${GREPOUT:?unset}"
+grep -n -i -E 'one database|single database' "$REPO/handover/demo/VIDEO-RUNSHEET.md" "$REPO/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md"; echo "grep exit $?"
+test ! -e "$GREPOUT" && echo "log path is new" && grep -rli -E 'one database|single database' --include='*.md' "$REPO/handover/flows-audit" "$REPO/handover/demo" > "$GREPOUT" 2>&1; echo "grep exit $?"
+test ! -e "$GREPOUT.read" && grep -v -E '/flows-audit/(FINDINGS|EXCEPTIONS|LEDGER-ROWS|CLAIMS-TABLE|CITATION-CHECK|CITATION-FIXES|CITATION-TRIAGE|QUESTIONS|ORDERS|REPORT|FLOWS-AUDIT|ROLES-PROPOSAL|RUNSHEET-WORDING|OWNER-STEPS-q16-rows|TAKE-CHECKLIST|FIX-PLAN|RUNBOOK|LESSONS|README)\.md$|/flows-audit/(fix|evidence|review|checkpoint|STATUS|PLAN|ANSWER)[^/]*\.md$|/flows-audit/(reviews|lanes|patches|tools|scratch|snapshot|roles|heavy|patch-apply|inputs|handover)[^/]*/' "$GREPOUT" > "$GREPOUT.read"; echo "filter exit $?"; cat "$GREPOUT.read"
+```
+Pass line (the same in FIX-PLAN item 8b): the first grep prints no line and `grep exit 1`; `"$GREPOUT.read"` is empty (`filter exit 1`) or lists only files the lead has read once, each with its `JUDGED row 7 item F-041` line from Block R7j. A hit in the run sheet, the page statements or an owner sheet is a failure unless the lead reads it, finds it harmless and records it. A SUPERSEDED mark does not remove a hit.
+Block R7j (row 7, once per listed file, ONLY after the lead has read it):
+```
+. "${ENVSH:?unset}" && : "${JUDGE_WHO:?unset}" "${JUDGE_FILE:?unset}" "${JUDGELOG:?unset}" && printf 'JUDGED row %s item %s by %s at %s from file %s\n' 7 F-041 "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" "$JUDGE_FILE" >> "$JUDGELOG"
+grep '^JUDGED row 7 ' "$JUDGELOG" | sed 's/.* from file //' | sort -u | wc -l
+```
+Block R8 (the decision; written once per GO / NO-GO round into that round's `$JUDGELOG`):
+```
+. "${ENVSH:?unset}" && : "${JUDGE_WHO:?unset}" "${JUDGELOG:?unset}" && printf 'DECISION %s by %s at %s\n' NO-GO "$JUDGE_WHO" "$(date -u +%Y-%m-%dT%H:%MZ)" >> "$JUDGELOG"
+```
+(type `GO` in place of `NO-GO` when all seven rows passed). After a NO-GO the failed rows are fixed, run again with new log paths and a NEW `$JUDGELOG`, and a new decision line is written.
 
 **Raw output files (Form 1 needs the raw output saved; every file is outside the repository):** `$ROW1` and `$ROW1.counts` (row 1); `$EVLOG`, `$EVLOG.git` (row 3); `$LOG`, `$LOG.counts`, `$LOG.pin1` (row 4 part 2 and pin 1); `$LOG2`, `$LOG2.counts`, `$LOG2.pin`, `$LOG2.final`, `$LOG2.final.counts` (row 4, exported copy); `$ACTLOG` (FIX-PLAN step 8a); `$POSTLOG`, `$POSTLOG.counts`, `$POSTLOG.row`, `$POSTLOG.mail` (row 5); `$LEDGER_OUT`, `$LEDGER_OUT.counted`, `$LEDGER_OUT.decides` (row 6); `$GREPOUT`, `$GREPOUT.read` (row 7); `$JUDGELOG` (rows 2, 6, 7 and the decision). The lead pastes the path of each file into the report of the Tuesday decision.
 
