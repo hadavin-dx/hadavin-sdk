@@ -43,3 +43,15 @@ Checks, run from this folder: check_secrets exit 0 (0 hits), check_refs exit 0 (
 Not run: none of the commands in the new blocks were executed on a real tree.
 
 Extra items (coordinator): 6 RUNBOOK-fixer items applied to TAKE-CHECKLIST.md; item 5 RUNBOOK 4b(c) text not found, unverified.
+
+## Round 10 (TAKE-CHECKLIST.md and FIX-PLAN.md only; static text edits; not committed)
+Source: reviews/tc-r9-fresh-findings.md (0 Blockers, Majors 1 to 10, Nits 1 to 5). Every finding was checked against the files first; none was untrue. RUNBOOK.md, FINDINGS.md and QUESTIONS.md were not edited. Clock blocks: no clock time changed.
+- Major 1: one identical gates line added after the Wednesday table in both files (dated times, no gates; with gates Case A take 10:07 to 11:07, ready about 11:27; Case B take 11:02 to 12:02, ready about 12:22; RUNBOOK section 6 wins).
+- Major 2: FIX-PLAN got Step 4c (copy take scripts, RUNBOOK 6), Step 4d (start n8n, F-011 decision first, readiness check on `$N8N_PORT`) and Step 8a (activation plus a GET probe; the 404 wording is UNVERIFIED); step map and slot paragraph updated.
+- Major 3: all log guards in TAKE-CHECKLIST are now chained (`test ! -e ... && ... > log; echo "exit $?"`), the `git switch` lines are chained, pin restore goes through a temp file.
+- Major 4: `$ENVSH` row rewritten (`ENVSH="$TAKE_FOLDER/shas.env"`), skeleton printed, `. "${ENVSH:?unset}"` plus `:?` guards at the top of every block, rows added for `$N8N_PORT`/`$TAKE_PORT`, `$TAKE_DB`, `$PGADMIN`, `$FLOWS_ROLE`, `$FLOWS_PW` (and `$SRC_TAKE`, `$ACTLOG`, the shas); Block R3 appends `SHA_EVIDENCE` and `FINAL_SHA`.
+- Major 5: Block R2 uses `"${SHA_SCRIPTS:?unset}"`. Major 6: P2a, P2b, P2c printed in full. Major 7: exit echoes added (FP steps 1 and 6) and a positive control in R6. Major 8: reader window 04:26Z to 04:51Z and 07:14Z to 07:44Z everywhere. Major 9: written as QUESTION, Inputs item 24, "planned by the audit, lead to confirm"; no JUDGED line until answered. Major 10: branch base is `$FINAL_SHA` with a printed merge-base test.
+- Nits 1 to 4 applied (typed T19 to T21 pointers, T21 step 3 and INVALID line, P1b guards, key-in-body check, 16-row total). Nit 5 acknowledged, no change.
+Port name: RUNBOOK says `TAKE_PORT`, FINDINGS says `N8N_PORT`; this round writes `$N8N_PORT` and defines `N8N_PORT="$TAKE_PORT"` in the skeleton.
+Not run: no command was executed against n8n, Postgres or the network. The 23 fences of TAKE-CHECKLIST and the 6 new inline FIX-PLAN commands passed `bash -n`; Step 4c was run once in a scratch folder on made-up files (found, found, MISSING as expected).
+Needs the lead: item 24 ($JUDGE_WHO); LOG3 and REPORT naming differences inside RUNBOOK.md (section 4 drops LOG3, input I2 names it; RUNBOOK set-once holds REPORT, here it is typed per call); port name; the mailbox count command; whether `/healthz/readiness` and the GET-404 wording hold for the take's n8n version.

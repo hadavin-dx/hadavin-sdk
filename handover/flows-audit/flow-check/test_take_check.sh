@@ -24,9 +24,9 @@ has() { grep -q -F -- "$2" "$S/$1.txt"; }
 cmp_pins() { cmp -s <(grep -v '^#' "$1") <(grep -v '^#' "$2"); }
 PIN="$HERE/take-warns.pin"
 PINSUM=$(sha256sum < "$PIN" | cut -d' ' -f1)
-OLDDATE=$(date -u -d "$TODAY -400 days" +%Y-%m-%d)   # dates for the old-date cases are computed, never typed
 PD=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN" | head -n 1)   # f8-r6: the date used in every reviewer line below is the pin's own date line (never older than the pin, never in the future while the pin is not), so no test breaks when the calendar moves on
 TODAY=$(date -u +%Y-%m-%d); YESTERDAY=$(date -u -d "$TODAY -1 day" +%Y-%m-%d); TOMORROW=$(date -u -d "$TODAY +1 day" +%Y-%m-%d); IN2DAYS=$(date -u -d "$TODAY +2 days" +%Y-%m-%d)   # computed ONCE here; the word-check cases below give TODAY to the helper as its fixed today, so none of them can race UTC midnight
+OLDDATE=$(date -u -d "$TODAY -400 days" +%Y-%m-%d)   # dates for the old-date cases are computed, never typed
 [ -n "$PD" ] || { echo "no date line in the pin"; exit 2; }
 BEFOREPIN=$(date -u -d "$PD -1 day" +%Y-%m-%d)
 # round 10c (Q1): the committed pin keeps a reviewer line that names a session, so a bare take exits 4 until the lead edits it. Cases that need exit 0 use LEADPIN (same WARN lines, a person's reviewer line); SESSPIN keeps the session wording
@@ -425,6 +425,30 @@ for pair in "f8r6-al-lee:Al Lee, $PD" "f8r6-bo-ng:Bo Ng, $PD" "f8r6-mary-jane:Ma
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r6: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 done
+# f8-r7: the refusal message names the rule that fired (review f8-r6, design N2), and the cases of the two f8-r6 reviews run through the whole take, not only the helper
+for tr in "e7-comma:Pat,Claude Bot, $PD|rule: shape" "e7-comma-gpt:Pat,Gptbot, $PD|rule: shape" "e7-comma-note:Pat,Claude, $PD, read all lines|rule: shape" "e7-roe:Roe, Jane, $PD|rule: shape" "e7-jr-comma:John Smith, Jr., $PD|rule: shape" "e7-chatbot:Pat Chatbot, $PD|rule: listed word chatbot" "e7-future:Pat Smith, 2999-01-01|rule: future date" "e7-before-pin:Pat Smith, $BEFOREPIN|rule: old date" "e7-short:Li, $PD|rule: name too short" "e7-notread:Pat Smith, $PD, not yet read|rule: note says not read" "e7-leet:Pat Smith, $PD, read Cl4ude|rule: listed word claude" "e7-accent-note:Pat Smith, $PD, read Cl$(printf '\303\241')ude|rule: listed word claude" "e7-llm-dots:Pat Smith, $PD, an L.L.M. read it|rule: listed word llm" "e7-ai-dots:Pat Smith, $PD, A.I. wrote it|rule: listed word ai" "e7-fable:Pat Fable, $PD|rule: listed word fable" "e7-bad-date:Pat Smith, 2026-13-45|rule: bad date" "e7-hidden:Pat Cla$(printf '\342\200\213')ude, $PD|rule: hidden character" "e7-cyrillic:Cl$(printf '\320\260')ude Smith, $PD|rule: mixed alphabets" "e7-placeholder-case:Pat Smith, $PD, placeholder|THE PIN HEADER STILL HAS THE PLACEHOLDER"; do
+  nm=${tr%%:*}; rest=${tr#*:}; line=${rest%|*}; why=${rest##*|}
+  { echo "# reviewed by: $line"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
+  [ "$RC" = 4 ] && grep -q -F -- "$why" "$S/$nm.txt"; ok $? "f8-r7: reviewer line '$line' is exit 4 and the message names '$why' (got exit $RC)"
+done
+# the same refusals with a lower-case placeholder word in the line (placeholder match is not case sensitive any more)
+# a trailing space, and a pin saved with Windows line ends (CR LF), are read like the plain form
+{ printf '# reviewed by: Pat Smith, %s   \n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-trail.pin"
+tk e7-trail TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-trail.pin" -- --flows "$P"
+[ "$RC" = 5 ] && ! has e7-trail "NOT A PERSON" && has e7-trail "WARN set equals the pinned set"; ok $? "f8-r7: a reviewer line with trailing spaces is accepted (exit 5 with the override) (got exit $RC)"
+sed 's/$/\r/' "$LEADPIN" > "$S/e7-crlf.pin"
+tk e7-crlf TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-crlf.pin" -- --flows "$P"
+[ "$RC" = 5 ] && ! has e7-crlf "NOT A PERSON" && ! has e7-crlf "DOES NOT MATCH ITS OWN SHA-256" && has e7-crlf "WARN set equals the pinned set"; ok $? "f8-r7: a whole pin with CR LF line ends is read like the plain pin (exit 5 with the override) (got exit $RC)"
+# a reviewer line holding a terminal control character is refused, and the output never repeats that character
+{ printf '# reviewed by: Pat \033[31mSmith, %s\n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc.pin"
+tk e7-esc TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-esc.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has e7-esc "rule: hidden character" && ! grep -q -a "$(printf '\033')" "$S/e7-esc.txt"; ok $? "f8-r7: a reviewer line with an escape character is exit 4 and the output holds no escape character (got exit $RC)"
+{ printf '# reviewed by: Audit \033[31mSession, %s\n' "$PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/e7-esc2.pin"
+tk e7-esc2 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/e7-esc2.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has e7-esc2 "pin not yet confirmed by the lead" && ! grep -q -a "$(printf '\033')" "$S/e7-esc2.txt"; ok $? "f8-r7: the session message also prints the line without control characters (got exit $RC)"
+# the FINAL line says that the reviewer line is only text
+grep '^FINAL:' "$S/control.txt" | grep -q -F "The reviewer line is text; not verified."; ok $? "f8-r7: the FINAL line says 'The reviewer line is text; not verified.'"
 # the test allowance: flag + override + first word Testonly = exit 5 (never 0); the same name without the flag was refused above
 { echo "# reviewed by: Testonly Runall, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"
 tk m1-allow TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/m1-allow.pin" -- --flows "$P"
