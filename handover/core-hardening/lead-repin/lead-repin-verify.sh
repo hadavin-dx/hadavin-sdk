@@ -149,7 +149,7 @@ write_mask_sed() {
   #  (c) it ENDS in key, token, secret, password, pwd, credential (apiKey, accessToken).
   STRONG='(secret|passw[o0]?r?d|passphrase|credential|token|apikey)'
   W='(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?)'
-  WS='(value|string|data|text|hash|bytes|material)'
+  WS='(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)'
   SUF='(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)'
   # IDB: an identifier that contains a secret word; IDQ: the same inside quotes (spaces count as separators)
   IDB="(([A-Za-z0-9_.-]*$STRONG[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?$W)(([_.-]|$WS)[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*$SUF([_.-][A-Za-z0-9_.-]*)?))"
@@ -377,7 +377,7 @@ function secret_name(k,   n, w, i, x, joined) {
     joined = joined x
     if (x in SW) return 1
     if (x ~ /(key|keys|token|tokens|secret|secrets|password|passwords|passwd|passwds|pwd|credential|credentials)$/) return 1
-    if (x ~ /^(key|keys|pass|pwd|pw|pat|auth|cookie|cookies|session|sessions|signature|hmac|dsn|webhook|salt|otp|cert|certs)(value|string|data|text|hash|bytes|material)$/) return 1
+    if (x ~ /^(key|keys|pass|pwd|pw|pat|auth|cookie|cookies|session|sessions|signature|hmac|dsn|webhook|salt|otp|cert|certs)(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)$/) return 1
   }
   if (joined ~ /(secret|passw(or)?d|passphrase|credential|token|apikey)/) return 1
   return 0
@@ -689,6 +689,71 @@ self_test() {
     printf 'max_tokens = 100\nprompt_tokens: 12\ncompletion_tokens=4\ntotal_tokens = 9\nnum_tokens=3\ninput_tokens: 5\noutput_tokens = 6\nmax_output_tokens = 7\n'
     printf 'name: kept_name_line\nvalue: kept_value_line_alone\n'
 
+    # ---- v5 additions: classes the v4 filter missed (every value is built from parts; a check looks at its first 6 and last 6 characters)
+    : > "$WORK/st-pt.txt"
+    vn=0
+    for cls in at sl sc cm sp up dg; do
+      for ctx in 1 2 3 4 5 6 7; do
+        case $cls$ctx in sp6) continue ;; esac
+        vn=$((vn + 1))
+        case $cls in
+          up) hd=$(printf 'KQ%02dZV' "$vn"); tl=$(printf 'WM%02dXD' "$vn"); vv=$hd$tl ;;
+          dg) hd=$(printf '48%02d71' "$vn"); tl=$(printf '33%02d95' "$vn"); vv=$hd$tl ;;
+          *) hd=$(printf 'kq%02dzv' "$vn"); tl=$(printf 'wm%02dxd' "$vn")
+             case $cls in at) sep=@ ;; sl) sep=/ ;; sc) sep=';' ;; cm) sep=, ;; sp) sep=' ' ;; esac
+             vv=$hd$sep$tl ;;
+        esac
+        case $ctx in
+          1) printf 'API_KEY=%s\n' "$vv" ;;
+          2) printf 'note Password: %s end\n' "$vv" ;;
+          3) printf 'the password is %s ok\n' "$vv" ;;
+          4) printf 'password: %s\n' "$vv" ;;
+          5) printf 'passphrase = %s\n' "$vv" ;;
+          6) printf 'url https://user:%s@host.example/p\n' "$vv" ;;
+          7) printf '{"api_key": "%s"}\n' "$vv" ;;
+        esac
+        printf '%s|%s|%s|%s\n' "$cls$ctx" "$hd" "$tl" LS >> "$WORK/st-pt.txt"
+      done
+    done
+    # names with the secret word anywhere (also cookie, session, signature, hmac, dsn, webhook, salt, otp, cert)
+    for nm in secretValue tokenString passwordHash authTokenValue keyValue secretdata cookie session_id sessionId signature hmac dsn webhookUrl salt otp certFile Passw0rd; do
+      for ctx in 1 2 3; do
+        vn=$((vn + 1)); hd=$(printf 'kq%02dzv' "$vn"); tl=$(printf 'wm%02dxd' "$vn"); vv=$hd-$tl
+        case $ctx in 1) printf '%s = %s\n' "$nm" "$vv" ;; 2) printf '"%s": "%s"\n' "$nm" "$vv" ;; 3) printf '%s: %s\n' "$nm" "$vv" ;; esac
+        printf 'name %s %s|%s|%s|%s\n' "$nm" "$ctx" "$hd" "$tl" LS >> "$WORK/st-pt.txt"
+      done
+    done
+    # YAML block scalar header forms (body lines are short on purpose: under the 24 character blob limit)
+    yn=0
+    for hdr in '| # note' '|2' '!!binary |' '&a |' '|-' '>+' '|2-' '&anc !!str |' '|+1 # c' '>'; do
+      yn=$((yn + 1)); hd=$(printf 'kq%02dyb' "$yn"); tl=$(printf 'wm%02dyc' "$yn")
+      printf 'secret: %s\n  %s\n  %s\nkept_after_header_%s: ok\n' "$hdr" "$hd" "$tl" "$yn"
+      printf 'yaml header %s|%s|%s|%s\n' "$yn" "$hd" "$tl" S >> "$WORK/st-pt.txt"
+    done
+    printf 'secret: "kq91mq\n  wm91mq"\nkept_after_mq: ok\n'
+    printf 'secret: kq92mp\n  wm92mp more\nkept_after_mp: ok\n'
+    printf 'yaml multi-line quoted|kq91mq|wm91mq|M\nyaml multi-line plain|kq92mp|wm92mp|M\n' >> "$WORK/st-pt.txt"
+    # a secret container longer than 100 lines is hidden to its end (fail closed)
+    { printf '"api_keys": [\n'; i=0; while [ "$i" -lt 150 ]; do i=$((i + 1)); printf '  "kq%03dcz",\n' "$i"; done; printf '  "wm150cz"\n],\n"kept_after_big": "ok"\n'; } 
+    printf 'big container line 120|kq120cz|kq150cz|A\n' >> "$WORK/st-pt.txt"
+    # classes found by the independent run on v4
+    printf 'mysql -u root -pkq93mr%s\n' wm93mr
+    printf "sshpass -p 'kq94ms%s' ssh host\n" wm94ms
+    printf 'config = %s\nline one\n%s\n%s\n' "$q3" "a1b2c3d4e5f6a7b8c9d0" "$q3"
+    printf '<add key="ApiKey" value="kq96mu%s"/>\n' wm96mu
+    printf 'machine h login bob password kq97mv%s\n' wm97mv
+    printf 'Passw0rd list: alice=kq98mw%s, bob=kq99mx%s\n' wm98mw wm99mx
+    printf 'mysql|kq93mr|wm93mr|LS\nsshpass|kq94ms|wm94ms|LS\nxml attribute pair|kq96mu|wm96mu|LS\nnetrc|kq97mv|wm97mv|LS\nPassw0rd list|kq98mw|wm99mx|LS\n' >> "$WORK/st-pt.txt"
+    printf '20 hex characters in a triple-quote body|a1b2c3d4e5f6|b7b8c9d0|S\n' >> "$WORK/st-pt.txt"
+    # only the web-address rule hides these (no secret name stands near them)
+    printf 'see https://bob:kq90pw%s@host.example/p for details\n' wm90pw
+    printf 'see https://bob:kq91pw@wm91pw@host.example/p for details\n'
+    printf 'web address only|kq90pw|wm90pw|LS\nweb address password with an at sign|kq91pw|wm91pw|LS\n' >> "$WORK/st-pt.txt"
+    printf -- '-----BEGIN PRIVATE KEY----- kq92pk%s\n' wm92pk
+    printf 'private key block opener with the body on the same line|kq92pk|wm92pk|S\n' >> "$WORK/st-pt.txt"
+    printf 'nul?b %s\n' x >/dev/null
+    printf 'a\000b kept_nul_line\n'
+
   } > "$in"
   if [ -n "${SELFTEST_FILTER:-}" ]; then
     # shellcheck disable=SC2086
@@ -865,6 +930,21 @@ self_test() {
   chk_kept 'name: alone is not a pair' 'kept_name_line'
   chk_kept 'value: alone is not hidden' 'kept_value_line_alone'
   chk_kept 'private key block markers stay' '-----END PRIVATE KEY-----'
+  # ---- v5 checks: first 6 and last 6 characters of every value, per view
+  chk_pt() { # label head tail flags
+    chk_hidden "$1 (first 6 characters)" "$2" "$4"
+    chk_hidden "$1 (last 6 characters)" "$3" "$4"
+  }
+  while IFS='|' read -r pt_l pt_h pt_t pt_f; do
+    [ -n "$pt_l" ] && chk_pt "$pt_l" "$pt_h" "$pt_t" "$pt_f"
+  done < "$WORK/st-pt.txt"
+  rm -f "$WORK/st-pt.txt"
+  chk_kept 'text after a block value header stays (1)' 'kept_after_header_1: ok'
+  chk_kept 'text after a block value header stays (10)' 'kept_after_header_10: ok'
+  chk_kept 'text after a multi-line quoted value stays' 'kept_after_mq: ok'
+  chk_kept 'text after a multi-line plain value stays' 'kept_after_mp: ok'
+  chk_kept 'text after a long hidden container stays' '"kept_after_big": "ok"'
+  chk_kept 'a NUL byte is shown as ? (tr stage)' 'a?b kept_nul_line'
   st_leak=0
   grep -a -q -F -- "$base" "$res" && st_leak=1
   [ "$st_leak" -eq 0 ] || printf 'FAIL (the secret base string is still visible somewhere in the output)\n'
