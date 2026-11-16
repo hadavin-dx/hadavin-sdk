@@ -2,7 +2,7 @@
 
 STATUS: NOT ACCEPTED until the owner replies. Nobody may treat this as accepted. Written Mon 16 Nov 2026 18:51 UTC / Tue 17 Nov 2026 00:21 IST; reworded after five reviews (this version carries the round 5 fixes).
 
-**VERSION STAMP of the approved sentence: @@STAMP@@** (the time of the last edit of the sentence or of the reply lines below). Your reply counts only if the stamp in your reply is exactly the stamp printed here AND the stamp in the sentence the lead printed in the chat before your reply. If this page is edited again, the stamp changes, an older reply no longer counts, and the lead asks you again.
+**VERSION STAMP of the approved sentence: 2026-11-16 19:16 UTC / 2026-11-17 00:46 IST** (the time of the last edit of the sentence or of the reply lines below). Your reply counts only if the stamp in your reply is exactly the stamp printed here AND the stamp in the sentence the lead printed in the chat before your reply. If this page is edited again, the stamp changes, an older reply no longer counts, and the lead asks you again.
 
 **How to read the marks on this page.** **UNVERIFIED** = nobody has checked this yet; it may be wrong, and you must not rely on it. **[LEAD FILLS: ...]** = a fact only the lead can give and has not given yet. **[OWNER FILLS: ...]** = a fact only you can give.
 
@@ -58,7 +58,7 @@ STATUS: NOT ACCEPTED until the owner replies. Nobody may treat this as accepted.
 - If the key answer says the key is in a readable file, or the money answer gives a figure you would not accept losing, or the source of the figure is a guess: reply `no`, or ask the lead for option (a) first (the lead then tells you the hours, see below), and reply after that. Sending the approve line means you accept losing up to your figure, and more if top-up is on or a card is on file.
 - If the key answer says the key sits somewhere else, the lead must name where and say whether the checking program or the lead can read that place. If it cannot say, treat it as readable.
 
-**The one sentence to approve, in numbered clauses (money first).** This full set of clauses is what the approve line approves, not only the shorter line below. The lead prints these clauses with the stamp (@@STAMP@@) in the chat BEFORE you reply.
+**The one sentence to approve, in numbered clauses (money first).** This full set of clauses is what the approve line approves, not only the shorter line below. The lead prints these clauses with the stamp (2026-11-16 19:16 UTC / 2026-11-17 00:46 IST) in the chat BEFORE you reply.
 1. The paid model key is real money. The most I can lose is the HIGHER of the figure the lead wrote and the figure I read myself in the provider console; it can be more if the model account tops up by itself or has a card on file, and no program stops a model call that goes over it.
 2. A password or key that was copied or read stays valid until I revoke it. The exposure lasts until each password or key is revoked or deleted at clean-up, not only until the files are deleted.
 3. On my laptop, nothing technical stops the checking program I start, or the studio lead's session, from reading the take's secret files and using the passwords and keys in them (and likely from decrypting the logins that n8n stores), and nothing afterwards proves it did not.
@@ -69,8 +69,8 @@ STATUS: NOT ACCEPTED until the owner replies. Nobody may treat this as accepted.
 8. Sending the approve line means I choose option (b), accepting this by procedure, and not option (a).
 
 **The exact reply you write in the chat** (letter for letter; copy the angle-bracket parts as the notes say). Only the approve line accepts. A reply that is a typo, a paraphrase, a different stamp, a different clause number or has "my own console check: no" inside the approve line accepts nothing.
-- Approve line (accepts): `yes, I approve clauses 1 to 8 of work/L01-owner-acceptance-line.md, version @@STAMP@@ (option (b), by procedure only); model key: <the lead's key answer>; secret files exist now: <the lead's files answer>; money at risk: US$<digits only, the higher of the lead's figure and my own console reading>; automatic top-up: <on, off or not known>; card on file: <yes, no or not known>; my own console check: yes`
-- Refusal line (accepts nothing, true whatever you checked): `no, I do not approve clauses 1 to 8 of work/L01-owner-acceptance-line.md, version @@STAMP@@; my own console check: <yes or no>`
+- Approve line (accepts): `yes, I approve clauses 1 to 8 of work/L01-owner-acceptance-line.md, version 2026-11-16 19:16 UTC / 2026-11-17 00:46 IST (option (b), by procedure only); model key: <the lead's key answer>; secret files exist now: <the lead's files answer>; money at risk: US$<digits only, the higher of the lead's figure and my own console reading>; automatic top-up: <on, off or not known>; card on file: <yes, no or not known>; my own console check: yes`
+- Refusal line (accepts nothing, true whatever you checked): `no, I do not approve clauses 1 to 8 of work/L01-owner-acceptance-line.md, version 2026-11-16 19:16 UTC / 2026-11-17 00:46 IST; my own console check: <yes or no>`
 
 You may send the refusal line, or a bare `no`, at any time, even before the lead has written its answers: it needs none of the lead's answers. A bare `no` counts as a refusal. Only the approve line needs the lead's answers; if one of its angle-bracket parts has no lead answer, you cannot write the approve line: wait. The lead repeats your reply back in chat and prints the full clauses beside it, with the stamp, so that you see what the reply stands for.
 
