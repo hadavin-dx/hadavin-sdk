@@ -1,0 +1,2 @@
+lines 208
+banned-word hits 0
