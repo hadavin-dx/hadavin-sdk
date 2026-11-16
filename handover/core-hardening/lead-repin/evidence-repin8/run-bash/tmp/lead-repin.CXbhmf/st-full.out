@@ -1608,3 +1608,6 @@ PASS (machinery): the time limit (2 seconds here) ends a stuck run: exit 143, a 
 PASS (machinery): every git call carries all four safety settings and --no-optional-locks, GIT_DIR and GIT_WORK_TREE of the caller are not passed on, and git status runs only with LEAD_REPIN_GIT_STATUS=1
 PASS (machinery): a failing stage of the masking filter is recorded, and --mask then stops with exit 4 and says so
 PASS (machinery): a time limit of 26 digits falls back to the default and the run ends normally
+PASS (machinery): ten hostile lines of 20000 characters are masked in under 60 seconds (took 3)
+FAIL (machinery): an exported bash function named sed replaced the real sed or the run failed (exit=3)
+PASS (machinery): a relative TMPDIR is refused with exit 2

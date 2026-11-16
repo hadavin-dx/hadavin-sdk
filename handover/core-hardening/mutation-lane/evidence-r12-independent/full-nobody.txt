@@ -1,0 +1,2 @@
+bash: line 1: cd: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/nobody: Permission denied
+bash: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r12/nobody/safety-tests.r12.sh: Permission denied
