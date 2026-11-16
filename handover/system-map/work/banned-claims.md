@@ -1,3 +1,5 @@
+# Do not use this file. Read work/banned-claims-clean.md. This file is kept only as the record of passes 1 to 7.
+
 SUPERSEDED. Use work/banned-claims-clean.md. Everything below is history; passes that say "wins" no longer do.
 
 # Post and video check-list (draft, from an independent read; made-up data only)
