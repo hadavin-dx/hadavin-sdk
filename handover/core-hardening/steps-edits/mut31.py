@@ -78,8 +78,8 @@ V = [
 ('V10', S, 'Test program asks you to type a figure: no', 'Test program asks you to type a figure: yes', 'typed-figure line changed'),
 ('V11', S, 'first read its last-used time in the key list and describe it to the lead (a use after', 'first read its time and describe it to the lead (a use after', 'B 7.11 last-used time dropped'),
 ('V12', S, 'a model key stored in n8n would spend without the spend lock', 'a model key in n8n is fine', 'n8n model key reason removed'),
-('V13', O, 'Safe default if you do not answer: A', 'Safe default if you do not answer: B', 'open list names B as default'),
-('V14', N, 'sheet B has a fourth alarm at', 'sheet B has an alarm at', 'note G30 loses the fourth alarm'),
+('V13', O, 'Money-safe default: A (one live key at a time)', 'Money-safe default: B (one live key at a time)', 'open list names B as default'),
+('V14', N, 'both sheets have four alarms, the fourth at', 'both sheets have alarms, the fourth at', 'note G30 loses the fourth alarm'),
 ('V15', O, 'WHEN IT FAILS (v31)', 'WHEN IT FAILS', 'A 7-day failure handling removed from open list'),
 ('V16', O, 'MET for the sheet page alone by', 'Word target not stated by', 'open list says word target met'),
 ('V17', S, 'If the run ends before 6.7 the older key is still valid: you cancel it at 7.11', 'If the run ends before 6.7 nothing more happens: 7.11', 'A older key: what happens after an early end no longer said'),
@@ -381,15 +381,15 @@ ALLCOPIES |= {'W05', 'W11', 'W12', 'W14', 'W15', 'W07', 'W06', 'W03'}
 
 X = [
 ('X01', S, 'The key list may show a last use hours late', 'The key list shows every use at once', '7-day lag sentence removed'),
-('X02', S, 'then cancel anyway: the yes covers the cancel', 'then cancel anyway unless you know something else uses it: the yes covers the cancel', '7.11 escape put back'),
-('X03', S, 'Deadline backstop (an owner action through Sun 22 Nov)', 'Deadline note', 'deadline backstop removed from the sheet'),
+('X02', S, 'then cancel anyway (the yes covers the cancel)', 'then cancel anyway unless you know something else uses it (the yes covers the cancel)', '7.11 escape put back'),
+('X03', S, '**Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov):**', '**Deadline note:**', 'deadline backstop removed from the sheet'),
 ('X04', N, 'does NOT wait for a message from you', 'waits for a message from you', 'note says the older key in A waits for the lead'),
 ('X05', N, 'A passes only if the older key was last used before {{sevenback}}', 'A passes only if the older key was last used long ago', '7-day warning removed from the default line'),
 ('X06', S, 'if there is no such page this is a STOP', 'if there is no such page go on', 'Recall page no longer a stop'),
 ('X07', S, 'no clipboard manager, remote-access or screen-capture tool running', 'no other program running', 'clipboard manager rule removed'),
 ('X08', S, 'never a file manager, a second terminal window or the clipboard (no copy and paste)', 'never a password', 'film person restrictions removed'),
 ('X09', S, 'the film person does not stop for', 'the film person stops for', 'film person stops for the From column'),
-('X10', S, '**Name rule (8.3, 8.4):** revoke only an item whose exact name contains the run name', '**Name rule (8.3, 8.4):** revoke any item', 'revoke name rule removed'),
+('X10', S, '**Name rule (8.3, 8.4):** revoke only an entry whose exact name', '**Name rule (8.3, 8.4):** revoke any entry whose exact name', 'revoke name rule removed'),
 ('X11', FA, 'GAP_MAX = 60', 'GAP_MAX = 90', 'gap cap changed in facts'),
 ('X12', S, 'after 18:30 UTC = 00:00 IST', 'after 18:30 UTC', 'UTC time without its IST pair'),
 ('X13', S, 'the three waits of the message added', 'the waits added', 'three waits not named'),
@@ -402,11 +402,11 @@ X = [
 ('X20', S, 'what "at re-pin" means', 'what the brackets mean', 'at re-pin not explained'),
 ('X21', O, '`[OWNER FILLS: ...]`', '`[OWNER FILLS ...]`', 'placeholder spelling in the open list'),
 ('X22', O, '| 109 | Still OWNER-OPEN', '| 110 | Still OWNER-OPEN', 'open row 109 missing'),
-('X23', S, 'set the **deadline reminder**', 'set a reminder', 'deadline reminder not set after the yes'),
+('X23', S, 'Right after the yes, set the two **deadline reminders** (7.11)', 'Right after the yes, do nothing more (7.11)', 'deadline reminder not set after the yes'),
 ('X24', N, '18:04 is a plan fact', '18:04 is a time', '18:04 plan-fact sentence removed from the note'),
 ('X25', S, 'and only if the 7-day rule of 5.1 holds', 'and only if the 7-day rule holds (at least 168 hours (7 days) before)', '7-day rule worded twice'),
 ('X26', S, 'send "{{ph_older711}}", then cancel', 'send "{{ph_older}}", then cancel', '7.11 forced cancel uses the claim phrase'),
-('X27', S, 'at least 5 minutes before the latest start (the longest planned path', 'at least 4 minutes before the latest start (the longest planned path', '5-minute rule worded differently in 6.2'),
+('X27', S, 'press Enter at least 5 minutes before the latest start', 'press Enter at least 4 minutes before the latest start', '5-minute rule worded differently in 6.2'),
 ]
 P += X
 EXPECT.update({'X01':['C185'],'X02':['C186'],'X03':['C187'],'X04':['C188'],'X05':['C189'],'X06':['C190'],'X07':['C191'],'X08':['C192'],'X09':['C192'],'X10':['C193'],'X11':['C194'],'X12':['C195'],'X13':['C196'],'X14':['C197'],'X15':['C198'],'X16':['C199'],'X17':['C200'],'X18':['C201'],'X19':['C202'],'X20':['C203'],'X21':['C206'],'X22':['C207'],'X23':['C187'],'X24':['C209'],'X25':['C185'],'X26':['C186'],'X27':['C196']})

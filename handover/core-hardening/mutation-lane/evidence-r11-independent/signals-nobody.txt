@@ -103,3 +103,23 @@ ROW|S34|uid=65534|rep=3|sig=INT|delay=0.12|exit=0 elapsed=0.121|traceback_lines=
     followup_exit=0 final_file=return1
 /tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9:  9952 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
 ROW|S35|uid=65534|rep=3|sig=INT|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r11indep-nobody.k5jqEu/neg/tmpstate/hadavin-mutation- 
+    followup_exit=0 final_file=return1
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9: 10119 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S36|uid=65534|rep=3|sig=TERM|delay=0|exit=-15 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9: 10363 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S37|uid=65534|rep=3|sig=TERM|delay=0.01|exit=-15 elapsed=0.012|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9: 10654 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S38|uid=65534|rep=3|sig=TERM|delay=0.02|exit=-15 elapsed=0.022|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9: 12636 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S39|uid=65534|rep=3|sig=TERM|delay=0.05|exit=0 elapsed=0.068|traceback_lines=0|marker=gone|file_after=return1|msg=signal 15 arrived during the restore: the restore was finished first 
+    followup_exit=0 final_file=return1
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9: 12761 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S40|uid=65534|rep=3|sig=TERM|delay=0.08|exit=0 elapsed=0.081|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r11indep-nobody.k5jqEu/neg/tmpstate/hadavin-mutation- 
+    followup_exit=0 final_file=return1
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9: 12935 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S41|uid=65534|rep=3|sig=TERM|delay=0.12|exit=0 elapsed=0.129|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/r11indep-nobody.k5jqEu/neg/tmpstate/hadavin-mutation- 
+    followup_exit=0 final_file=return1
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9: 13191 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )

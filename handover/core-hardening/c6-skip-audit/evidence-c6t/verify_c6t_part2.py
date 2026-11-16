@@ -2,7 +2,9 @@
 # 14 c6q content checks
 import glob
 bylead = {r["i"]: r for r in rows}
-box = full[full.index("## Start here"):full.index("## 0. Failures")]
+boxs = full[full.index("## Start here"):full.index("## 0. Failures")]   # the short start box (order, words, labels)
+sec1c = full[full.index("## 1c."):full.index("## 2. Numbers")]   # the detail moved out of it
+box = boxs + "\n" + sec1c   # the presence checks of c6s look in both
 intro = box[:box.index("WORDS YOU NEED (")]
 check("no row is NOT FILMABLE", not nofilm, nofilm)
 # card lines, recomputed from rows 13 and 14
