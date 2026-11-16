@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:14:32Z
+UPDATED_UTC: 2026-11-16T11:16:55Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
-PERCENT: 90
-AGENTS_RUNNING: 8
-CAPACITY: 5.56 load of 4 cores, mem 1/15 GB, RAM 1046/16087 MB, disk 27G free of 252G, top3 312M /tmp/fresh19 327M /tmp/core-venv 1.3G /tmp/claude-0 , agents 8 (light+heavy per list)
+PERCENT: 91
+AGENTS_RUNNING: 4
+CAPACITY: 1.31 load of 4 cores, mem 0/15 GB, RAM 928/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.3G /tmp/claude-0 , agents 4 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -55,8 +55,13 @@ gap lane G1-G9 (reviews/notchecked-lane-r1.md): take start-state gate, 'processe
 F8 r7 fixer: ruff format not reproduced (passes with repo config); TCMISS, M2 M3 M7 M12 fixed per own report, my rerun run_all rc 0, check_patches PASS; M10 equivalent; independent evidence on final head running (f8ev)
 owner sheet r6 stranger read: 3 Blockers 11 Majors (owner could not yet do their part safely: no stop-until-recheck line inside owner block, which contact Step D deletes, cost line unreadable); r7 fixer running, no third review (round cap)
 F-002 patch second review: 2 Majors (Claim always=False may emit no item on a repeat key so POST 2 could hang: T19 is the only test; ReplyStoreFail uses $('Valid').item on an error path: use .first()); F-002 stays Blocker; fixer running
-NEXT: 8 running (ORDER 028): F8 evidence, sweep2 cites, branch cross-read, Q22 claims, patch fixer, gate fixer, drift lane, F8 design r3
-PUSHED_UTC: 2026-11-16T11:14:32Z
+F-002 Major 1 (Claim always=False: repeat-key reply depends on the Postgres node emitting one item for a no-row INSERT) not changed, UNVERIFIED; T19 on the laptop decides; array/number keys pass the shape check by String()
+FAILED: F8 independent evidence on final head: mutants N04 (check_flows.py:1200) and N11 (:604, value_is_safe) survive; M10 equivalence unverified by runner; ruff 0.16.9 here vs repo pin 0.17.1; fixer f8fix8 running
+F8 design review r3: 0 Blocker, 4 Majors (no WARN baseline so exit 0 hides a new WARN; run-saving check is a blacklist and take_check does not require all/all/True; key check present = node name only, patch checks never run on the filmed files; no documented way to run take_check on the patched copy); fixer to follow after f8fix8
+sweep2 citation check: 7 wrong (QUESTIONS.md:5 still says deleted at clean-up; EXCEPTIONS.md:8 row numbers; role-count sources disagree; stale FINDINGS line cites; two Q22 headings); pointer fixer launching
+drift lane 008: 8 contradictions between audit files (DESK_ALERT_TO still open in FINDINGS/LEDGER, F-013 OPEN in LEDGER, 'deleted at clean-up' in QUESTIONS:5 and REPORT:51, RW Q-A/D1/port lines, CT:447 Q7 NOT DONE); fixers running (cite5, drift8fix); sweep3 found 13 one-place conflicts, 9 questions for the lead (reviews/sweep3-one-place.md) to go into QUESTIONS Q25 after cite5
+NEXT: running: F8 fixer r8, cite5, drift8 fixer, branch cross-read; next: F8 design Majors fixer, Q25 for lead, refill to 8, FINAL search
+PUSHED_UTC: 2026-11-16T11:16:55Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -75,14 +80,10 @@ PUSHED_UTC: 2026-11-16T11:14:32Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| f8ev | EVIDENCE RUNNER F8 final | sonnet | gates, 15 new mutants, hostile inputs | 11:20 | 11:45 | 5 | running | flow-check/evidence-f8-r7.md
-| cite4 | citation checker sweep2 | sonnet | check fix-sweep2 edits | 11:20 | 11:35 | 5 | running | reviews/citations-sweep2-r1.md
 | xread2 | cross-read system-map+core-hardening branches | sonnet | contradictions with our files | 11:27 | 11:40 | 5 | running | reviews/crossread-branches-r1.md
-| q22c | claims-table Q22 proof wording | sonnet | CT/RW | 11:40 | 11:52 | 5 | running | fix-q22-claims.md
-| patfix2 | F-002 patch review fixer | sonnet | Major 1-2, nit 3 | 11:44 | 11:55 | 5 | running | fix-patch-r2.md
-| gate2 | adversarial gate items to plan | sonnet | FIX-PLAN, FINDINGS NC, README | 11:44 | 11:55 | 5 | running | fix-gate2.md
-| drift8 | drift lane (read-only) | sonnet | audit docs vs each other, limitation search | 11:47 | 12:00 | 5 | running | reviews/drift-008.md
-| f8des3 | F8 design review round 3 (egm-design) | sonnet | false all-clear angle | 11:47 | 12:00 | 5 | running | (inline)
+| f8fix8 | F8 fixer r8 (N04 N11) | sonnet | surviving mutants | 11:58 | 12:10 | 5 | running | flow-check/fix-f8-r8.md
+| cite5 | pointer fixer sweep2+drift8 | sonnet | QUESTIONS EXCEPTIONS FINDINGS REPORT LEDGER | 12:02 | 12:15 | 5 | running | fix-cite5.md
+| drift8fix | claims files drift fixes | sonnet | RW CT items 4-6,8 | 12:03 | 12:15 | 5 | running | fix-drift8.md
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
