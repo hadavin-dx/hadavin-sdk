@@ -79,7 +79,7 @@ for n, t in (('A', A), ('B', B)):
     if '[[' in t or ']]' in t or '{{' in t: fail('C08', n + ' has a marker')
 if 'I will cancel the older key myself' not in A or 'stays valid during the run and I understand' in A: fail('C08', 'A yes sentence wrong')
 if 'stays valid during the run and I understand' not in B or 'I will cancel the older key myself' in B: fail('C08', 'B yes sentence wrong')
-if 'cancel the older key <its name>' not in B or 'Without (i) or (ii) the older key stays valid' not in B: fail('C08', 'B older key route missing')
+if 'cancel the older key <its name>' not in B or 'always (the deadline forbids a valid paid key after it)' not in B: fail('C08', 'B older key route missing')
 # C09 the cancel rule lives only on the card
 for n, t in (('A', A), ('B', B)):
     i = t.find('### THE CARD'); j = t.find('### The rules')
@@ -121,11 +121,11 @@ for n, t in (('A', A), ('B', B)):
     for k, v in F.items():
         if k.startswith('ph_') and v not in lst and not (k == 'ph_older' and n == 'B'): fail('C12', '%s set phrase missing from list: %s' % (n, v))
     if n == 'B' and F['ph_older'] in t: fail('C12', 'B holds the older-key phrase')
-    for m in re.finditer(r'tell(?:ing)? "([^"]+)"', t):
+    for m in re.finditer(r'(?:tell(?:ing)?|[Ss]end) "([^"]+)"', t):
         if m[1] not in [v for k, v in F.items() if k.startswith('ph_')] and m[1] != 'none': fail('C12', '%s told phrase not in list: %s' % (n, m[1]))
 # C13 yes pattern characters
 for n, t in (('A', A), ('B', B)):
-    m = re.search(r'follows this pattern, each `<\.\.\.>` filled: "(.*?)" \*\*Filled example', t, re.S)
+    m = re.search(r'follows this pattern, each `<\.\.\.>` filled: "(.*?)" Amounts have two decimals', t, re.S)
     if not m: fail('C13', n + ' yes pattern not found'); continue
     y = re.sub(r'<[^>]*>', 'x', m[1])
     bad = set(re.sub(r"[A-Za-z0-9 .:,_/=@+\-]", '', y))
@@ -135,7 +135,7 @@ for n, t in (('A', A), ('B', B)):
 INV = [('C14a', 'the key\'s own one-time display at 6.3 and the paste at 6.4'), ('C14b', 'switch it OFF yourself at once'), ('C14c', 'Three phone alarms'),
        ('C14d', 'Text between backticks is typed without the backticks'), ('C14e', 'only if the window\'s last line is `paste key, Enter:`'),
        ('C14f', '"READ" and "TEST"'), ('C14g', 'ignore a `.used` ending'), ('C14h', 'reverses the order of `end` and the card'), ('C14i', 'minutes of the time `date -u` shows'),
-       ('C14j', 'if 7.4 never happened, tell "none"'), ('C14k', 'SAMPLE (made-up values'), ('C14l', 'no key was made'), ('C14m', 'never use rotate'),
+       ('C14j', 'if 7.4 never happened, send "none"'), ('C14k', 'SAMPLE (made-up values'), ('C14l', 'no key was made'), ('C14m', 'never use rotate'),
        ('C14n', 'set -C; umask 077; read -rs'), ('C14o', 'last-resort step <step>'), ('C14p', 'one line only'), ('C14q', 'weekday, month, day and year must equal the run day'),
        ('C14r', 'balance and auto-reload equal your yes'), ('C14s', 'Never "Select all", never empty Trash'.replace('Never "Select all", never empty Trash', 'Never "Select all", never empty Trash')),
        ('C14t', 'STOP RULE'), ('C14u', 'FREEZE'), ('C14v', 'the card: cancel'.replace('the card: cancel', 'THE CARD'))]
@@ -213,7 +213,7 @@ else:
 # C20 angle-bracket placeholders in the sheet come from one list
 PH_OK = {'<amount or none>', '<call ceiling>', '<date>', '<expected total>', '<in words>', '<its name or none>', '<its name>', '<key file>', "<lead's answer>", '<model settings file>',
          '<name and how>', '<name>', '<number or none>', '<number>', '<page address>', '<path from the message>', '<range>', '<run name>', '<setting name>', '<step>',
-         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>'}
+         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>'}
 for n, t in (('A', A), ('B', B)):
     for m in set(re.findall(r'<[A-Za-z][^<>\n]{0,45}>', t)):
         if m not in PH_OK: fail('C20', '%s: placeholder not in the list: %s' % (n, m))
@@ -230,9 +230,9 @@ for n, t in (('A', A), ('B', B)):
     for k, ph in OWN.items():
         if '"%s"' % F[ph] not in steps.get(k, ''): fail('C21', '%s: step %s does not tell its set phrase %r' % (n, k, F[ph]))
         for k2, v2 in F.items():
-            if k2.startswith('ph_') and k2 != ph and k2 not in ('ph_mkc', 'ph_nokey', 'ph_rs', 'ph_cf', 'ph_ksf', 'ph_tp', 'ph_msg') and 'tell "%s"' % v2 in steps.get(k, ''): fail('C21', '%s: step %s tells the phrase of another step: %s' % (n, k, v2))
+            if k2.startswith('ph_') and k2 != ph and k2 not in ('ph_mkc', 'ph_nokey', 'ph_rs', 'ph_cf', 'ph_ksf', 'ph_tp', 'ph_msg') and 'send "%s"' % v2 in steps.get(k, ''): fail('C21', '%s: step %s tells the phrase of another step: %s' % (n, k, v2))
     i = t.find('### THE CARD'); card = t[i:t.find('### The rules')]
-    if 'Tell the lead exactly: %s. Only now' % F['ph_mkc'] not in card: fail('C21', n + ': card step 5 lacks its exact phrase')
+    if 'Send exactly: %s. Only now' % F['ph_mkc'] not in card: fail('C21', n + ': card step 5 lacks its exact phrase')
 PHS = [v for k, v in F.items() if k.startswith('ph_')]
 for n, t in TEXTS.items():
     for q in set(re.findall(r'"([^"\n]{6,70})"', t)):
@@ -262,7 +262,7 @@ mr = re.search(r'single spaces and `([^`]+)` only', A)
 if mr:
     allowed = set(mr[1].replace(' ', '')) | set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ')
     for n, t in (('A', A), ('B', B)):
-        m = re.search(r'follows this pattern, each `<\.\.\.>` filled: "(.*?)" \*\*Filled example', t, re.S)
+        m = re.search(r'follows this pattern, each `<\.\.\.>` filled: "(.*?)" Amounts have two decimals', t, re.S)
         if m and set(re.sub(r'<[^>]*>', 'x', m[1])) - allowed: fail('C24', n + ': yes pattern holds a character R8 does not allow')
 else: fail('C24', 'R8 character list not found')
 # C25 the three window facts of 5.1 and the three alarms agree (set once in the card words and in 6.2)

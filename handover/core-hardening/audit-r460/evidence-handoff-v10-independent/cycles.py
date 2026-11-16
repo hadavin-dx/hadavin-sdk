@@ -62,6 +62,8 @@ def edges_of(name):
             cand = mod + "." + n if n else None
             if cand and cand in mods:
                 res.append(cand)
+                if os.environ.get("A2") and mod in mods:
+                    res.append(mod)   # reading A2: `from X import Y` also names X explicitly
             elif mod in mods:
                 res.append(mod)
         return res

@@ -781,6 +781,9 @@ self_test() {
     printf 'web address only|kq90pw|wm90pw|LS\nweb address password with an at sign|kq91pw|wm91pw|LS\n' >> "$WORK/st-pt.txt"
     printf -- '-----BEGIN PRIVATE KEY----- kq92pk%s -----END PRIVATE KEY-----\n' wm92pk
     printf 'private key block opener with the body on the same line|kq92pk|wm92pk|S\n' >> "$WORK/st-pt.txt"
+    # only the line-start YAML rule hides the whole rest of the line (the value holds a closing bracket and a quote)
+    printf 'secret: kq80ya%s) and "more" wm80ya\n' x
+    printf 'yaml name at the start of a line hides the whole rest|kq80ya|wm80ya|S\n' >> "$WORK/st-pt.txt"
     printf 'nul?b %s\n' x >/dev/null
     printf 'a\000b kept_nul_line\n'
 
