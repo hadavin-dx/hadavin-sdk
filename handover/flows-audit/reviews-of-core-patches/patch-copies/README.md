@@ -7,7 +7,7 @@
 **STATUS (read this first).** `../REVIEW.md:5` (the file one folder up) says, word for word: "A-01 is DEFERRED, the C-01 extras (the token ceiling)
 are CUT, the G5 wording patch is KEPT (text only)", and item 3 of its list (`../REVIEW.md:67`) says "C-01: DO NOT APPLY NOW". Those three are the lead's default of 2026-11-16, not a confirmed decision of the
 studio head; he may veto them. Plain meanings, for the first read: "the studio head" is the person who owns the studio and decides; "the lead" is the AI session that directs the other sessions (not a person); "DEFERRED" = kept as a ready copy and not applied; "CUT" = left out; "the C-01 extras" = the ceiling on `max_tokens` (the largest number of words a model may write in one answer); "C-01" = the patch that refuses a model price of 0 or less; "A-01" = the patch that makes the tick drain the audit outbox; "G5" = a leak check that an old comment claims exists and the code does not have (section "G5 wording drop"). So today: **apply nothing from this folder to the repository**, and when something is applied later, only on a copy of the commit `b4cce5b`, never on the newest commit
-(section "Which commit these patches fit"). If any command below fails or prints something this file does not expect, stop and send the full output to the lead, after you have removed from it every address that holds a user name or a password (a proxy address of the form `https://name:password@host` is printed by some tools) and every token; do not change a file to make it pass.
+(section "Which commit these patches fit"). If any command below fails or prints something this file does not expect, stop and send the full output to the lead, after you have removed from it every web address that has a user name and a password written in front of the host name (some tools print a proxy address in that form) and every token; do not change a file to make it pass.
 - **Price check (C-01):** the default, if the studio head keeps it, is `C-01-price-only.patch` (price rule only, no `max_tokens` ceiling, no `defaults.py` change, 24 new tests, plus 6 of A-01 = 30 in the recipe).
   `C-01.patch` is the alternative that also carries the ceiling that was cut (26 new tests; 32 with A-01). Use one of the two, never both. Do not edit either file by hand.
 - **A-01 (the tick drains the audit outbox):** there is NO applicable A-01 today. Even if the studio head says yes to row 1 of the decision table, `A-01.patch` must stay off until rows 5 and 6 are decided,
@@ -90,14 +90,15 @@ A patch for the newest commit would have to be rebuilt from the text of its hunk
 
 ### Fingerprints of the three patch files (sha256)
 Recorded by the audit on 2026-11-16 with `sha256sum` (the eleventh pass computed them; the round-10 citation check printed the same three values), lead to confirm. The recipe's part `setup` compares the chosen files with these values and stops when one differs; a patch file with another value is not the file this folder describes.
-| File | sha256 |
-|---|---|
-| `A-01.patch` | `64fdf315221fb9d653fe8defc844aa438c39c56bc32c5a86c70d8aab67892095` |
-| `C-01-price-only.patch` | `e7ff677e70d0c1fd61e9c4e2f1024c58fd35b83bc715abd3d0449202038dae01` |
-| `C-01.patch` | `ca4982ebb9daef2d5c96e1538d2cdde5291d2d9a948c70553b5661a0a17fded0` |
+The three lines, in the form that `sha256sum` prints (value, two spaces, file name):
+```
+64fdf315221fb9d653fe8defc844aa438c39c56bc32c5a86c70d8aab67892095  A-01.patch
+e7ff677e70d0c1fd61e9c4e2f1024c58fd35b83bc715abd3d0449202038dae01  C-01-price-only.patch
+ca4982ebb9daef2d5c96e1538d2cdde5291d2d9a948c70553b5661a0a17fded0  C-01.patch
+```
 
 ## Apply and test recipe (NOT yet run end to end as written; written 2026-11-16, rewritten in the tenth and eleventh pass; run in ONE terminal so the variables stay set)
-Run the whole recipe in ONE terminal window: the lines below use variables (`P`, `SRC`, `SHA`, `C`, `HA`, `HC`, `W`) and shell functions (`E`, `need_w`, `setup`, `gates`, `run`, `verdict`, `proof`, and inside the verdict `count`, `sumline`, `lines`, `red`, `offenders`) that exist only in that window; if you close it, start again from the top. Needs: `git`, `sha256sum` (macOS: `shasum -a 256`), `uv` (it installs the Python and the packages), and network access: the `uv` cache and the Python installs are inside the temporary folder, so every run downloads them again (UNVERIFIED how long that takes; it adds to the 5 minutes below). Without network, copy a warm `uv` cache into `$W/uv-cache` after `setup` made the folder (`cp -R <your uv cache folder> "$W/uv-cache"`, NOT RUN) and add `UV_OFFLINE=1` inside `E`. Python 3.12 or newer, and `bash` (`pyproject.toml`
+Run the whole recipe in ONE terminal window: the lines below use variables (`P`, `SRC`, `SHA`, `C`, `W`) and shell functions (`E`, `need_w`, `setup`, `gates`, `run`, `verdict`, `proof`, and inside the verdict `count`, `sumline`, `lines`, `red`, `offenders`) that exist only in that window; if you close it, start again from the top. Needs: `git`, `sha256sum` (macOS: `shasum -a 256`), `uv` (it installs the Python and the packages), and network access: the `uv` cache and the Python installs are inside the temporary folder, so every run downloads them again (UNVERIFIED how long that takes; it adds to the 5 minutes below). Without network, copy a warm `uv` cache into `$W/uv-cache` after `setup` made the folder (`cp -R <your uv cache folder> "$W/uv-cache"`, NOT RUN) and add `UV_OFFLINE=1` inside `E`. Python 3.12 or newer, and `bash` (`pyproject.toml`
 `requires-python`; the CI file at `b4cce5b` runs Python 3.13 only, `ci.yml:73` and `:109`; the extra job on Python 3.12, `tests-py312`, exists only at the newest commit, `ci.yml:105`). Plan about 5 minutes for each full test run (four-core machine), plus the download. Repository source: the GitHub repository `https://github.com/hadavin-dx/hadavin-sdk` (the commit is on its branch
 `cloud/core-hardening`), or, as the fallback, a local checkout that holds the commit (on the machine that wrote this it is `/home/user/hadavin-sdk`; on yours, give the path of your own checkout, or ask the lead for the repository address). If the GitHub address refuses you, `git fetch` of a bare commit id is often refused: the line below then tries the branch name instead; if both fail, stop and send the error text to the lead (the commit is then not reachable from your machine).
 Use a clone, not a plain `git archive` of the files: the repository rule tests ask git for the list of tracked files (`tests/test_repo_rules.py`, `tracked_files`), which a folder without
@@ -107,23 +108,23 @@ P=/home/user/hadavin-sdk/handover/flows-audit/reviews-of-core-patches/patch-copi
 SRC=https://github.com/hadavin-dx/hadavin-sdk                                         # or the path of a local checkout that holds the commit
 SHA=b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c
 C=C-01-price-only.patch           # DEFAULT: price check only, +30 tests with A-01. The alternative is C=C-01.patch (price check plus ceiling, +32); the studio head decides (decision table, rows 2 and 3)
-HA=64fdf315221fb9d653fe8defc844aa438c39c56bc32c5a86c70d8aab67892095   # sha256 of A-01.patch, recorded by the audit on 2026-11-16, lead to confirm
-case "$C" in                      # sha256 of the chosen C patch file, recorded by the audit on 2026-11-16, lead to confirm
-  C-01-price-only.patch) HC=e7ff677e70d0c1fd61e9c4e2f1024c58fd35b83bc715abd3d0449202038dae01 ;;
-  C-01.patch)            HC=ca4982ebb9daef2d5c96e1538d2cdde5291d2d9a948c70553b5661a0a17fded0 ;;
-  *)                     HC= ;;
-esac
+case "$C" in C-01-price-only.patch|C-01.patch) ;; *) echo "STOP: C must be C-01-price-only.patch or C-01.patch" ;; esac
 W=$(mktemp -d) || echo "STOP: mktemp failed; do not go on"      # new empty working folder
+[ -n "$W" ] && [ -d "$W" ] && cat > "$W/patch.sha256.all" <<'EOF'      # recorded by the audit on 2026-11-16, lead to confirm (the same three lines as in "Fingerprints of the three patch files")
+64fdf315221fb9d653fe8defc844aa438c39c56bc32c5a86c70d8aab67892095  A-01.patch
+e7ff677e70d0c1fd61e9c4e2f1024c58fd35b83bc715abd3d0449202038dae01  C-01-price-only.patch
+ca4982ebb9daef2d5c96e1538d2cdde5291d2d9a948c70553b5661a0a17fded0  C-01.patch
+EOF
 E() { env -i PATH="$PATH" HOME="$W/home" XDG_CACHE_HOME="$W/home/.cache" XDG_CONFIG_HOME="$W/home/.config" XDG_DATA_HOME="$W/home/.local/share" UV_CACHE_DIR="$W/uv-cache" UV_PYTHON_INSTALL_DIR="$W/uv-python" "$@"; }   # the ONE place that sets the environment of every test and lint command: the home folder, the uv cache and the uv Python installs are inside $W; add HTTPS_PROXY="$HTTPS_PROXY" (and SSL_CERT_FILE="$SSL_CERT_FILE" if your network has its own certificate file) after env -i if needed; add UV_OFFLINE=1 only if you first copied a warm uv cache into $W/uv-cache
 need_w() { [ -n "$W" ] && [ -d "$W/unpatched" ] && [ -d "$W/patched" ] || { echo "STOP: W is not set, or setup did not finish; start again from the top of the recipe"; return 1; }; }
 setup() {   # every failing command ends the function with return 1, so nothing after a failure runs; the only commands that change files run inside "$W/patched", checked below
   [ -n "$W" ] && [ -d "$W" ] || { echo "STOP: W is empty or not a folder (mktemp failed, or the variable was unset)"; return 1; }
   if git -C "$W" rev-parse --is-inside-work-tree > /dev/null 2>&1; then echo "STOP: $W is inside a git work tree; nothing may be written there"; return 1; fi
-  [ -n "$HC" ] || { echo "STOP: C must be C-01-price-only.patch or C-01.patch"; return 1; }
+  case "$C" in C-01-price-only.patch|C-01.patch) ;; *) echo "STOP: C must be C-01-price-only.patch or C-01.patch"; return 1 ;; esac
   [ -d "$P" ] || { echo "STOP: P is not a folder: $P"; return 1; }
   mkdir -p "$W/home" "$W/uv-cache" "$W/uv-python" || { echo "STOP: cannot make the folders in $W"; return 1; }
   ( cd "$P" && sha256sum C-01-price-only.patch C-01.patch A-01.patch ) || { echo "STOP: cannot read the patch files in $P"; return 1; }   # prints the three fingerprints (macOS: use shasum -a 256 in both lines)
-  printf '%s  %s\n%s  %s\n' "$HC" "$C" "$HA" A-01.patch > "$W/patch.sha256"
+  grep -E "  ($C|A-01.patch)$" "$W/patch.sha256.all" > "$W/patch.sha256" || { echo "STOP: no recorded fingerprint"; return 1; }
   ( cd "$P" && sha256sum -c "$W/patch.sha256" ) || { echo "STOP: a patch file differs from its recorded fingerprint (table 'Fingerprints of the three patch files'), or sha256sum is missing"; return 1; }
   for t in unpatched patched; do
     git clone -q "$SRC" "$W/$t" || { echo "STOP: cannot clone $SRC"; return 1; }
