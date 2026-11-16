@@ -1136,3 +1136,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 829 premortem r16: two gates confused. FIXED by Gate A/B block.
 - 830 PLAN-002 r24: stale line cites, REMAINDER vs STOP. FIXED by prepended block.
 - 831 L1c r16: line cites off by 2, history unmarked. FIXED by prepended block.
+- 832 t19: all cells TO DO, F8 rule unset. PARTLY FIXED by proposal block; commands and names NOT SET.
+- 833 premortem r17: stacked paragraphs. PARTLY FIXED by live-text block; deletion TO DO.
+- 834 open-items r18: row meaning, note count. FIXED by block; cells TO DO.
+- 835 L3c r10: nine glossaries. PARTLY FIXED by single GLOSSARY r11; terms pending.
+- 836 PLAN-002 r25: line cites, REMAINDER. FIXED by correction r23; fold TO DO.

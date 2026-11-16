@@ -1,3 +1,5 @@
+GLOSSARY r11 (one only; every other glossary paragraph below is history). desk, take, lead, job keys, claim types, fix-N rM, cap 2, 'DECISION line N', head, main, E marks, stage.journal, egm: gloss pending, ask the studio lead. Severity cells of FD-001, 009, 010, 014, 032 read as Unrated (terms undefined). FD-001 conflicts cell: f3c39cf8 ('public main', crash-soak.md:3) vs 61ded9e ('main', failures.md:4); ignore the suite-pr14 cite.
+
 # Lane L3c
 
 ## Coverage

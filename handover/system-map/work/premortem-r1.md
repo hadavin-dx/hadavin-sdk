@@ -1,3 +1,5 @@
+Live text: STATE r15 only; it replaces everything from line 16 to line 44. Gate B (the take) still applies and is blocked until the lead rules on M17. Cut list: unknown; treat all ten fixes as live until the lead confirms each cut. journal, hook door, T19, Step I, retire check, take-prep: meaning not recorded here (see PLAN-002.md and work/t19-and-stored-data-steps.md).
+
 Gate A (blocks lane reads of files; PLAN-002 r21/r22 steps 0-4): FAIL. Gate B (blocks the take): program text and V5 both say `end` deletes nothing: UNVERIFIED. Lines 16-42 are history. Fixes 1-10 stand unless cut; none cut is confirmed. 'On HOLD' = the lead has not ruled on M17 (decisions/M17-end-never-deletes.md); it unblocks when the lead rules. Terms: studio lead, studio head, V5, M17, owner-only paths, C-01, decision 2/4/5, lane are defined in PLAN-002.md and LEAD-NOTICE-batch-1.md.
 
 # Pre-mortem of the take (independent design read, 16 Nov 2026). Facts about the program are UNVERIFIED: the program (scripts/run_real_check_n8n.py), flows and settings file were not read.
