@@ -1,5 +1,18 @@
 # Glossary for the lane pages (L1, L2, L3, L4, L5b, t19 pages, critical-path-r1). Written 16 Nov 2026 by the system-map session. Only meanings found in files are given; the rest say "meaning not recorded".
 
+## Who is who (one place; details in the lines below)
+| name | what it is | owner |
+|---|---|---|
+| lead session | the Claude session that gives the system-map session its orders | Claude session |
+| studio lead | the Claude session that does the technical steps on the take and messages the owner | Claude session |
+| core-hardening | a separate Claude session that owns V5 and the held pages | Claude session |
+| studio head | the human who runs the studio (whether this is the owner is NOT SETTLED) | human |
+| owner | the human at the laptop | human |
+
+## Terms whose meaning is not recorded (ask the lead session)
+D-04, D-05, F-008, LP-n, GO-1, k1b, KeyOk, Claim, WARDEN, film-v5, Mode A, stage.journal, job keys (STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER). Nobody has filled these in yet.
+
+
 - **lane** = one helper Claude session given one slice of the review to read; its output file is a **lane page** (L1, L2, L3, L4, L5b are the lane names). **held pages** = pages the lead session or core-hardening own; this session only records digests of reads of them and does not edit them. **t19 pages** = the work/t19-*.md pages about test T19 (send the same made-up lead twice; expect 1 mail, 1 HubSpot write, 1 stored row). **critical-path-r1** = work/critical-path-r1.md, the page that answers when the first filmed take can happen. **system-map session** = this Claude session, which writes only inside handover/system-map/.
 - **OWNER-ONLY** = a file the owner may open and nobody else; it may hold secrets, so helpers never open it (work/OWNER-ONLY.txt lists them; that file does not exist yet).
 - **Where to ask** for any term marked 'meaning not recorded': the lead session (the Claude session that gives this session its orders). The lead session passes studio-specific terms on to the studio lead.
