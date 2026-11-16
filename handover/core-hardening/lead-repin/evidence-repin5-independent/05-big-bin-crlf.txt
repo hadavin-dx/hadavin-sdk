@@ -1,0 +1,6 @@
+big.txt dash rc=0 shows=0 in=1000026 out=306 real	0m6.806s
+big.txt bash rc=0 shows=0 in=1000026 out=306 real	0m7.265s
+bin.bin dash rc=0 shows=0 in=12822 out=15175 real	0m1.456s
+bin.bin bash rc=0 shows=0 in=12822 out=15175 real	0m1.735s
+crlf.txt dash rc=0 shows=0 in=50 out=36 real	0m1.367s
+crlf.txt bash rc=0 shows=0 in=50 out=36 real	0m1.816s

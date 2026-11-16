@@ -1,0 +1,80 @@
+id	where_cited	claim	points_to	what_it_says	verdict
+1	guide l.8,93; v5-CHANGES l.24	self-test prints passed=1022 failed=0	lead-repin-verify.sh --self-test (my run, bash and dash)	SELF-TEST: passed=1022 failed=0 (both shells, rc 0)	match
+2	guide l.93	1022 under dash and bash in evidence-repin5/03-selftest-*.txt	evidence-repin5/03-selftest-dash.txt, 03-selftest-bash.txt	SELF-TEST: passed=1022 failed=0	match
+3	guide none; v5-CHANGES none	sha256 prefix of the script as given by the guide	LEAD-REPIN-VERIFY.md, v5-CHANGES.md	neither file states a sha256 of the script (only the word sha256 in a definition)	cannot-find
+4	evidence-repin5/08-hashes-and-scan.txt (outside the two files)	script sha256 3dfebbce...	lead-repin-verify.sh recomputed	3dfebbce5c14ac2b... equals the prefix in evidence 08	match
+5	v5-CHANGES l.24	388 of the v5 checks fail against the v4 filter	evidence-repin5/01-v5-tests-against-v4-filter.txt	passed=610 failed=388; FAIL lines: 388	match
+6	v5-CHANGES l.24	v5 self-test has 1022 checks	my --self-test run	passed=1022 failed=0	match
+7	guide l.93	49-line probe in 02-probe-49-lines.txt	evidence-repin5/02-probe-49-lines.txt	PROBE: 49 new lines ... 2 lines still showing a fragment	match
+8	guide l.87	probe left exactly two showing: passwd NAME and -p VALUE	02-probe-49-lines.txt	passwd <FRAG> / -p <FRAG> (dash and bash)	match
+9	guide l.93	1 MB single line about 10.7 s (10.66, 10.77, 10.75)	evidence-repin5/07-timing-1mb.txt	run 1: 10.66 s; run 2: 10.77 s; run 3: 10.75 s	match
+10	guide l.93	start-up canary alone about 1.3 s	07-timing-1mb.txt	tiny input: 1.36, 1.28, 1.40 s	match
+11	guide l.93	v4 guide said 0.57 to 0.70 s for 1 MB	LEAD-REPIN-VERIFY.v4.md and review-repin4-citations.md l.16	v4 guide says about 0.5 seconds; evidence shows 0.567-0.697 s (range 0.57 to 0.70 is the review's, not v4 text)	no-match
+12	guide l.95	14 damages under both shells (28 runs), all caught	evidence-repin5/04-mutants.txt l.2	14 damages x 2 shells = 28 runs. 28 of 28 non-zero	match
+13	guide l.95; v5-CHANGES l.16	survivors m09, m09a, two judges, left-out count each got a new case	04-mutants.txt l.34	m09 killed by line-start YAML case; m09a kept-text check; m19,mF,mR forged results; m28 report check	match
+14	guide l.95; v5-CHANGES l.22	old v4 check ran 7 damages x 2 shells = 14 runs	evidence-repin4/06-mutations.txt	m1..m7, each under dash and bash (14 lines)	match
+15	guide l.95	independent run found 3 of the v4 seven missed or mis-read	evidence-repin4-independent/00-TABLE.md	not caught: m05,m09,m13,m26,m27,m28,m19; those are the independent's own 28 mutants, no mapping of 3 of the builder's 7	cannot-find
+16	guide l.95; v5-CHANGES l.20	m3 was wrongly called equivalent; independent run showed v4 tests catch it	evidence-repin4/06-mutations.txt l.15; 00-TABLE.md l.27	NOTE m3: ... an equivalent mutant; independent x2: exit 1	match
+17	guide l.95	no-FAIL-check variant plus forged tally still exited 1 with passed=6	evidence-repin4-independent/08b-mutations-forged-tally.txt	x4 st_verdict ignores FAIL-line check ... self-test rc=1 ... passed=6 failed=0	match
+18	guide l.111	non-root run: exit 0, no Permission denied, R00 UNREADABLE line, STOP-SIGNAL lines	evidence-repin5/06-nonroot.txt	exit code: 0; Permission denied 0; UNREADABLE (checksum not made...); STOP-SIGNAL lines	match
+19	guide l.77	index sha256 and mtime unchanged (evidence-repin4/09-git-index.txt)	evidence-repin4/09-git-index.txt	index before and after identical hash and mtime	match
+20	guide l.91	evidence-repin5/05 python launcher (v5-CHANGES l.18)	evidence-repin5/05-signals-python-launcher.txt	file exists	match
+21	v5-CHANGES l.5-6	evidence-repin5/01, 03, 04, 05 named	evidence-repin5/	01-,03-,04-,05- files exist	match
+22	v5-CHANGES l.3	review files review-repin4-security.md, -naive.md, -citations.md, evidence-repin4-independent/00-TABLE.md	lead-repin/	all four exist	match
+23	guide l.14-27	exit codes 0,2,3,4,129,130,131,141,143; self-test 0/1	lead-repin-verify.sh header l.42-46	0 ran to end; 2 setup; 3 filter; 4 pipeline; 129/130/131/141/143; self-test 0 or 1	match
+24	guide l.101	searched at most 4 parts below folder; 5 or more left out	script l.1189-1192, l.570	find -maxdepth 4 ; mindepth 5 counted as left out	match
+25	guide l.116	delete words: delet archiv purg remov trash gdpr clean unlink rmtree method=delete/patch	script l.1180 DELETE_RE	delet|archiv|purg|remov|trash|gdpr|clean.?up|unlink|rmtree|method...(delete|patch)	no-match
+26	guide l.97	settings TAKE_PY CRM_PY DRIVE_PY N8N_PY FLOWS_DIR MODEL_DIR MODEL_SETTINGS ONE_STORE LEAD_REPIN_NO_STATUS END_RE MODEL_RE DELETE_RE	script	every name occurs in the script	match
+27	guide l.91	test aids SELFTEST_FILTER, LEAD_REPIN_TEST_BREAK_FILTER, LEAD_REPIN_TEST_LATE_FAIL, LEAD_REPIN_NO_META	script	all four occur	match
+28	guide l.132,172-179	block names R00 Q23-1..4 Q27a Q27b Q27c G35 G06 G04 G07 G18 G36 G37-38 G20	script l.1384-1529	all 16 begin lines present (R00,Q23-1..4,Q27a-c,G35,G06,G04,G18,G36,G37-38,G07,G20)	match
+29	guide l.172-179 (G07)	ports 5678, 5679, 5690 to 5693	script l.1514	also lists 5701, 5702; guide row omits them (not a false claim)	match
+30	guide l.133-139	Q23-2 prints run_real_check_n8n.py 1045-1056 and crm_hubspot.py 500-512	script l.1421	lines 1045-1056 and 500-512	match
+31	guide l.63	AGENT-SCOPE line 20 says DELETE call at run_real_check_n8n.py:1051 and crm_hubspot.py:504-509, finding F-01	inputs/AGENT-SCOPE-DO-AND-DONT.md l.20	ARCHIVE the take's own HubSpot contacts ... DELETE call (run_real_check_n8n.py:1051, crm_hubspot.py:504-509, review-codebase-1.md F-01)	match
+32	guide l.63	AGENT-SCOPE says the owner's HubSpot key is read-only so archive fails only after sends	inputs/AGENT-SCOPE-DO-AND-DONT.md l.20	OWNER-STEPS:69 sets HubSpot app 1 to read-only, but the archive is a DELETE: a read-only token passes the ...	match
+33	guide l.63,182	review-codebase-1.md	core-hardening/ (find)	file not present; named in guide as not openable	cannot-find
+34	guide l.64; v5-CHANGES	ORDERS Q23: r17 review found no delete path, only rows_with_prefix, line 1051 UNVERIFIED stale	ORDERS.md l.187	Q23: ... r17 review ... no delete/archive path ... only rows_with_prefix GET ... Line 1051 ... UNVERIFIED stale text	match
+35	guide l.49,68	ORDERS answers on lines 185 to 194	ORDERS.md l.185-194	l.185 header ANSWER (lead, 12:50Z); l.194 Q30, Q31	match
+36	guide l.69	Q23 text	ORDERS.md l.187	decision 2 stays: the take never deletes ... Do not widen the HubSpot key	match
+37	guide l.70	Q25 cancel-by 18:19 UTC (23:49 IST); target Wed 18 Nov; no take on 23 Nov unless Q27 shown	ORDERS.md l.189	cancel-by 18:19 UTC (23:49 IST) ... Target take is Wed 18 Nov ... no take on 23 Nov unless Q27 is shown	match
+38	guide l.71	Q27 (a)(b)(c) UNVERIFIED; lead reads final head; write 'lead verifies at re-pin'	ORDERS.md l.191	UNVERIFIED ... lead verifies at re-pin; use your defaults	match
+39	guide l.58	decision 2: test program never deletes (ORDERS Q23)	ORDERS.md l.187	decision 2 stays: the take never deletes	match
+40	guide l.53	release note G12 line 33 says a gap longer than the lease is not claimed	RN l.33; l.123	l.33 says only 'the ban list and lease sentence of section 5 decided'; the lease sentence is on l.123	no-match
+41	guide (G row cite)	release note v8 G1 is at line 22	steps-edits/LEAD-RELEASE-NOTE-v8.md l.22	Final check: one commit id for the test program and the files it uses	match
+42	guide (G row cite)	release note v8 G16 is at line 61	steps-edits/LEAD-RELEASE-NOTE-v8.md l.61	numbers-message line End-date refusal is written in 1a	match
+43	guide (G row cite)	release note v8 G26 is at line 63	steps-edits/LEAD-RELEASE-NOTE-v8.md l.63	Immediately before the run you read the test program's checksum again	match
+44	guide (G row cite)	release note v8 G27 is at line 69	steps-edits/LEAD-RELEASE-NOTE-v8.md l.69	Contact list: only made-up contacts of this run	match
+45	guide (G row cite)	release note v8 G34 is at line 48	steps-edits/LEAD-RELEASE-NOTE-v8.md l.48	Cancel race: the test program never calls the model after end	match
+46	guide (G row cite)	release note v8 G33 is at line 47	steps-edits/LEAD-RELEASE-NOTE-v8.md l.47	Spend lock: the model program makes no paid call until the test program has accepted	match
+47	guide (G row cite)	release note v8 G35 is at line 49	steps-edits/LEAD-RELEASE-NOTE-v8.md l.49	Typed figure: whether the test program asks the owner to type anything besides y	match
+48	guide (G row cite)	release note v8 G36 is at line 50	steps-edits/LEAD-RELEASE-NOTE-v8.md l.50	Film cue and the lead's n8n timing	match
+49	guide (G row cite)	release note v8 G37 is at line 51	steps-edits/LEAD-RELEASE-NOTE-v8.md l.51	Key file per run: the path contains the run name	match
+50	guide (G row cite)	release note v8 G38 is at line 52	steps-edits/LEAD-RELEASE-NOTE-v8.md l.52	Demo mail and prep contact	match
+51	guide (G row cite)	release note v8 G6 is at line 27	steps-edits/LEAD-RELEASE-NOTE-v8.md l.27	Exit-code rule (person C unknown ...)	match
+52	guide (G row cite)	release note v8 G4 is at line 25	steps-edits/LEAD-RELEASE-NOTE-v8.md l.25	Call ceiling with file and line	match
+53	guide (G row cite)	release note v8 G14 is at line 35	steps-edits/LEAD-RELEASE-NOTE-v8.md l.35	Money figures: model name; tokens in and out per call	match
+54	guide (G row cite)	release note v8 G18 is at line 38	steps-edits/LEAD-RELEASE-NOTE-v8.md l.38	What the test program does on a wrong line after end	match
+55	guide (G row cite)	release note v8 G7 is at line 28	steps-edits/LEAD-RELEASE-NOTE-v8.md l.28	Ports: rehearsal uses 5690 with its broker 5691	match
+56	guide (G row cite)	release note v8 G20 is at line 40	steps-edits/LEAD-RELEASE-NOTE-v8.md l.40	DECISION-one-store line 14 (ONE database) edited	match
+57	guide (G row cite)	release note v8 G10 is at line 31	steps-edits/LEAD-RELEASE-NOTE-v8.md l.31	Times by the formula of section 2 on the run date	match
+58	guide l.49	Ban list at release note line 122; item 10 forbids saying the program deletes or does not delete contacts unless G1 and result show it	steps-edits/LEAD-RELEASE-NOTE-v8.md l.122	Ban list ... 10 that test data was deleted permanently ... or that the test program deletes or does not delete contacts, unless G1 and the printed result both show it	match
+59	guide l.49	numbers message is release note section 3	steps-edits/LEAD-RELEASE-NOTE-v8.md l.83	## 3. Template of the numbers message	match
+60	guide l.49	release note numbered gates G1 to G38	steps-edits/LEAD-RELEASE-NOTE-v8.md	gates run G1 to G42 (G39-G42 exist)	no-match
+61	guide l.112	not covered by script: G2,G3,G5,G8,G9,G11-G15,G19,G21,G22-25,G27-32 (these ids exist)	steps-edits/LEAD-RELEASE-NOTE-v8.md	all of G2,G3,G5,G8,G9,G11-G15,G19,G21,G22-G25,G27-G32 rows exist	match
+62	guide l.132,144	G17 and G21 exist (notice wording; HubSpot identities)	steps-edits/LEAD-RELEASE-NOTE-v8.md l.37, l.41	G17 Notice and printed result ...; G21 HubSpot identities	match
+63	guide l.5	release note v9 and owner sheet v25-A exist in ../steps-edits/	steps-edits/	both exist; also v10 note, OWNER-SHEET-v26-A exist (newer still, not mentioned)	match
+64	guide l.49	owner sheet v24-A rules R1 and R4-R10; R2, R3 not used	steps-edits/OWNER-SHEET-v24-A.md l.44-51	rows R1, R4, R5, R6, R7, R8, R9, R10; no R2/R3 row	match
+65	guide l.49	R4 is money (most the owner can lose)	steps-edits/OWNER-SHEET-v24-A.md l.45	R4 | Money. The most you can lose is the whole balance	match
+66	guide l.49	R5 compare every number in the notice with the numbers message	steps-edits/OWNER-SHEET-v24-A.md l.46	R5 | Compare every number and name in the notice with the numbers message	match
+67	guide l.49	R6 owner types y, the challenge line and end by hand	steps-edits/OWNER-SHEET-v24-A.md l.47	R6 | You type y or n, the challenge line and end by hand	match
+68	guide l.54,49	R10 is the FREEZE rule	steps-edits/OWNER-SHEET-v24-A.md l.51	R10 | A FREEZE starts when: a screen, command or number differs	match
+69	guide l.160; v5-CHANGES l.22	owner sheet line 62 already carries NOT SHOWN	steps-edits/OWNER-SHEET-v24-A.md l.62	Spend lock: shown (or NOT SHOWN)	match
+70	guide l.144	owner-sheet R5 then sends n if wording changes (G17)	steps-edits/OWNER-SHEET-v24-A.md l.46,99	R5 compare; l.99 'else type n'	match
+71	guide l.13 (Q27 b outcome)	numbers message line reads 'End-date refusal: shown'	steps-edits/LEAD-RELEASE-NOTE-v8.md	v8 l.87 holds 'Spend lock: shown' fields; l.61 names 'End-date refusal' line; exact 'End-date refusal: shown' text not found	cannot-find
+72	guide l.142	AGENT-SCOPE line 20 stays marked stale; G27 sentence 'the test program made no delete call'	steps-edits/LEAD-RELEASE-NOTE-v8.md l.6,69	l.6 and G27 carry that sentence	match
+73	guide l.172 (G35)	AGENT-SCOPE line 22 still speaks (typed figure)	inputs/AGENT-SCOPE-DO-AND-DONT.md l.22	cite appears in release note G35, not in guide	cannot-find
+74	guide l.179	DECISION-one-store line 14 says ONE database	inputs/DECISION-one-store.md l.14	1. ONE database for everything we own: the single Postgres instance	match
+75	guide l.3,70	Mon 16 Nov 2026; 14:00 UTC = 19:30 IST; 18:19 UTC = 23:49 IST; Wed 18 Nov; Mon 23 Nov	calendar	16 Nov 2026 Monday; 18 Nov Wednesday; 23 Nov Monday; +5:30 sums correct	match
+76	guide l.3,5,182	test program, model program, flows, review-codebase-1.md, real test program not in checkout	core-hardening/	not present (confirmed for review-codebase-1.md; run_real_check_n8n.py not found)	match
+77	guide l.129-140 (Q23-2 targets)	what stands at run_real_check_n8n.py 1045-1056, crm_hubspot.py 500-512	not in checkout	code files absent; cannot check what the lines say	cannot-find
+78	guide l.58	BL-wp6-G1 row in studio open-problem list	handover/ (grep)	not found in core-hardening or lead-repin (only in unrelated files not matched)	cannot-find
+79	guide l.93 / v5-CHANGES	evidence-repin4/ and evidence-repin5/ file names quoted (09-git-index, 02-probe, 03, 04, 06, 07)	evidence dirs	all quoted files exist	match
