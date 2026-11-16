@@ -7,7 +7,7 @@ Agents running: 6 language-model agents (sonnet builders, see register), 0 scrip
 ## AGENT REGISTER (id | purpose | started UTC/IST | expected end | last checked | state | next)
 | L1 (abc27aedaacbaf16c) | real-v5 + film-v5 full tables, hunts | 06:59/12:29 | +60 min | 06:59 | running | checkpoint 30 min |
 | L2a (ab8d57b118be6e605) | table-screen-v2, desk doors, scripts inventory | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
-| L2b-1 (a1cf3a69d8895a4c8) | real family Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
+| L2b-1 (a1cf3a69d8895a4c8) | real family Tier B | 06:59/12:29 | +60 min | 06:59 | reported, spot-checked (SetCrmId grep, check_names PASS) | checkpoint |
 | L2b-2 (a00b41f23f1263f79) | film family Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
 | L2b-3 (a5f74ac38268fb2e4) | plain/v1/table-screen Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
 | L3 (a67e3bbe8d590c17a) | claims + store table | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |

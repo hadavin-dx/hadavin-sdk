@@ -1,0 +1,29 @@
+# Lane L2b-2 (Tier B): older versions of the "film" flows. Written 2026-11-16 (UTC), static reading only; nothing was run.
+Chain: n8n-flows-film -> n8n-flows-film-v3 -> n8n-flows-film-v4 -> n8n-flows-film-v5 (v5 is in lane L1). "Full judgement" rows = nodes named by any REMOVED, ADDED or CHANGED line or edge line of the diff file; every other row says `same as <successor>/<file>:<node> (machine diff identical)`. The set was computed by script and compared with my hand-written rows (equal).
+## Inputs read (paths under handover/demo)
+- 12 flow files: n8n-flows-film/, n8n-flows-film-v3/, n8n-flows-film-v4/ x (mf-form, mf-hook, mf-recovery, mf-sub-crm-mail). Node counts: 51 + 52 + 53 = 156 (matches PLAN-002 section 1).
+- 12 diff files handover/flows-audit/tools/out/diff__<folder>__<file>__TO__<successor>__<file>.txt and the 12 table files in tools/out.
+- READMEs as unverified claims: n8n-flows-film/FILM-README.md, n8n-flows-v3/V3-README.md, n8n-flows-v4/V4-README.md. Also n8n-flows-v3/mf_leads.sql and n8n-flows-v4/mf_leads.sql (identical, checked with diff) and n8n-flows/mf_leads.sql (no alert_ columns).
+- Absent: n8n-flows-film-v3 and n8n-flows-film-v4 have NO README and NO mf_leads.sql of their own (their README text sits in n8n-flows-v3 and n8n-flows-v4). Absent file DECISION-one-store.md (PLAN-002 section 1). Not read on purpose: earlier audits.
+## README claims checked against the diff
+- V3-README "form and hook flows identical": CONFIRMED (diff film -> film-v3 for mf-form and mf-hook is only `settings equal: True`; the same for v3 -> v4 and v4 -> v5).
+- V3-README "REMOVED AlertUnknown, the two IF nodes kept, both outputs lead to OutUnknown": CONFIRMED (diff lines REMOVED node AlertUnknown, ADDED edges UnknownNew/UnknownNewA -> OutUnknown).
+- V3-README "REMOVED FailedRow and AlertFailed, MarkFailed state unknown when mail_sent, ADDED AlertClaim, AlertRow, AlertSend, AlertMark": CONFIRMED.
+- V3-README "AlertClaim backoff 60 s x (1+min(attempts,4))": CONFIRMED in film-v3/mf-recovery.json:AlertClaim. "AlertSend error output goes nowhere": CONFIRMED (no connection from output 1 in v3).
+- V4-README "AlertClaim 720 s, NEW AlertBackoff on the error output of AlertSend, everything else as v3": CONFIRMED by the v3 -> v4 diff (one CHANGED, one ADDED node, one ADDED edge). The 12 minute basis (nodemailer timeouts) and "AlertMark pairing with $('AlertRow').item" are UNVERIFIED: need a runtime.
+- FILM-README "Edits against the design flows: 2 tries, 10 s, lease 45; nothing else": CONFIRMED by a read-only run of dump_nodes.py diff n8n-flows/<file> against n8n-flows-film/<file> (only Claim, ClaimStuck, Qualify, CrmUpsert parameters and maxTries changed). FILM-README measures nothing; its worst-case arithmetic is marked "NOT measured" and is UNVERIFIED.
+- Flow settings equal in every pair (settings equal: True). No settings.errorWorkflow is set in any of the 12 files.
+## Per-folder summary
+- n8n-flows-film (51 nodes, v1 of the film build, lease 45 s): alerts for failed and unknown leads are sent by fire-and-forget mail nodes (AlertFailed, AlertUnknown) AFTER the state is final; a failed send loses the alert; MarkFailed writes state failed even when the mail may have been sent. 8 full rows (Every30s, MarkFailed, FailedRow, AlertFailed in mf-recovery; UnknownNewA, UnknownNew, AlertUnknown, OutUnknown in mf-sub-crm-mail).
+- n8n-flows-film-v3 (52 nodes): alert as stored state (alert_sent, alert_token, alert_until, alert_attempts) with a sweep (AlertClaim, AlertRow, AlertSend, AlertMark); MarkFailed gives unknown when mail_sent. Needs the v3 table (n8n-flows-v3/mf_leads.sql). 2 full rows (AlertClaim, AlertSend).
+- n8n-flows-film-v4 (53 nodes): AlertClaim lease 720 s plus AlertBackoff on the send error output (fixes the duplicate alert the V4-README reproduced). SetCrmId still stores String($json.id). 3 full rows (SetCrmId, OwnsClaim1, OutStage).
+- Totals: 156 rows, 13 full-judgement rows, 143 same-as rows.
+## LIVE-REFERENCE verdict (regex (?<![\w-])NAME(?![\w-]) over *.md *.txt *.py *.sh *.json under handover/, excluding handover/flows-audit/)
+- n8n-flows-film: LIVE-REFERENCE. Hits: demo/n8n-flows-real/README.md:2 and :5 (built from it, diff against it); demo/ORDERS.md:652; demo/REPORT.md:34, :334, :348. All hits are prose; no script, Execute Workflow node or errorWorkflow value points at the folder.
+- n8n-flows-film-v3: LIVE-REFERENCE. Hits: demo/n8n-flows-v3/V3-README.md:3; demo/REPORT.md:227 ("reference copies of what the builder writes"); demo/REPORT.md:34 names it as "n8n-flows-film/-v3/-v4/-v5" (a shorthand that the regex matches only for the first name; counted by me as a reading of REPORT.md:34).
+- n8n-flows-film-v4: LIVE-REFERENCE. Hits: demo/n8n-flows-v4/V4-README.md:6 (and the REPORT.md:34 shorthand).
+- Note for the lead: the hits are documents only. No script reads the three folders; build_mainframe.py regenerates the flows at test time (REPORT.md:227 says the tests do not import the pushed json). So "LIVE-REFERENCE" here means named in documents, not used by code. SUPERSEDED in function by film-v5 (successor named in PLAN-002 section 1); the lead decides on archiving (owner yes first, move, never delete). See finding L2b2-9.
+## Secrets and personal data in the 12 json
+None found. Only credential NAMES (n8n-publish-pg, mf-mail-smtp), placeholder ids (PG_CREDENTIAL_ID, SMTP_CREDENTIAL_ID, SUB_WORKFLOW_ID), made-up addresses on example.test (desk@, alerts@, intake@) and environment variable NAMES (MF_STAGE_URL, MF_STAGE_TIMEOUT_MS, MF_CRM_URL). A grep for token, secret, password, apikey, authorization, Bearer and connection strings found no hit in the film, film-v3 and film-v4 files.
+## Not checked
+Everything that needs a running n8n or Postgres (branch order of the fan-out from Every30s, paired-item lookups, SMTP timeouts, what the CRM stub returns) is marked UNVERIFIED in the cells or findings.
