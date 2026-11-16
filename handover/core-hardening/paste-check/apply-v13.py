@@ -125,6 +125,8 @@ new = 'hbok && { n=$(grep -v \'^NOTE lead\' "$EV/PROGRESS.md" 2>/dev/null | grep
 sub(old, new)
 
 # ---------- C4 fill ----------
+sub('grep "^| $sid |" "$PF" | grep -q -F -e "$ss"', 'grep "^| $sid |" "$PF" | tr -d \'\\\\\' | grep -q -F -e "$ss"')
+
 sub('hbok && { if [ "$(cat "$W/rows.rc" 2>/dev/null)" != 0 ]; then echo "STOP C4: the rows block above has not run clean',
     'hbok && { if ! pfok; then false; elif [ "$(cat "$W/rows.rc" 2>/dev/null)" != 0 ]; then echo "STOP C4: the rows block above has not run clean')
 sub('echo "ok C4: now run: accept 6"; fi; fi; }', 'echo "ok C4: now run: accept 6"; else echo "STOP C4: the rows are not all filled (open $o, bad $bad) or H1 or H2 is FILE-MISSING; question 6 stays closed. Next: tell the builder; C4 stays open."; fi; fi; }')
