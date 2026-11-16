@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T15:38:30Z
+UPDATED_UTC: 2026-11-16T15:43:22Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,12 +7,12 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 2.72 load of 4 cores, mem 1/15 GB, RAM 1378/16087 MB, disk 8.4G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 17G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 3.66 load of 4 cores, mem 1/15 GB, RAM 1382/16087 MB, disk 11G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 14G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running abfcd0a); check_secrets FAIL 1 hit flow-check/raw/test-take-check.txt:178; run_all.sh rc 1 (reviews/evidence-run-all-2.md)
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T15:38:30Z
+PUSHED_UTC: 2026-11-16T15:43:22Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,21 +31,21 @@ PUSHED_UTC: 2026-11-16T15:38:30Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a419eeb7 | F8 evidence runner, final head | sonnet | run flow-check suite alone, save raw output | 15:10Z | 15:50Z | running | raw/* rewritten |
-| a686df56 | patch-copies round 5 fixer | sonnet | fix 3 Majors + 7 reader Majors | 15:29Z | 15:50Z | running | none yet |
+| a419eeb7 | F8 evidence runner, final head | sonnet | run flow-check suite alone, save raw output | 15:10Z | 15:55Z | running | raw/* rewritten |
 | a8c5404d | plan-files round 21 fixer | sonnet | fix 22 findings in RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 15:33Z | 16:00Z | running | none yet |
 | ad333466 | Q31 round 9 fixer | sonnet | fix 2 Blockers + 11 Majors in QUESTIONS Q31 | 15:35Z | 16:00Z | running | none yet |
-| aa0d1f51 | FINDINGS/LEDGER round 6 fixer | sonnet | fix 2 Blockers + 9 Majors | 15:36Z | 16:00Z | running | none yet |
 | a056f463 | RW/CT round 10 fixer | sonnet | fix 4 Blockers + 8 Majors | 15:37Z | 16:05Z | running | none yet |
-| a548f03c | citation checker REVIEW.md | sonnet | check cites/numbers in REVIEW.md rows | 15:37Z | 15:50Z | running | none yet |
-| ad98d89f | REVIEW.md round 25 fixer | sonnet | fix 14 Majors (uncapped) | 15:38Z | 16:05Z | running | none yet |
+| ad98d89f | REVIEW.md round 25 fixer | sonnet | fix 14 Majors + 4 cite mismatches (uncapped) | 15:38Z | 16:05Z | running | none yet |
+| aa160e75 | FINDINGS/LEDGER round 6 reader | sonnet | fresh read of 45 rows | 15:41Z | 15:53Z | running | none yet |
+| a8b08932 | patch-copies round 6 code review | sonnet | accuracy of README/patches/SQL (uncapped) | 15:43Z | 15:55Z | running | none yet |
+| a55a9e87 | patch-copies stranger read r2 | sonnet | operator read of README + DEAD-MAN-CHECK (uncapped) | 15:43Z | 15:55Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 F8 round 11 fixer (after a419eeb): review-f8-r10 M1-M5 and tests F1-F12
 2 Fresh plan-files round 22 stranger read (after a8c5404)
-3 Patch-copies round 6 code + reader (after a686df5)
-4 Q31 round 10 fresh reader (after ad33346)
-5 RW/CT round 11 + FINDINGS/LEDGER round 6 fresh readers (after fixers)
+3 Q31 round 10 fresh reader (after ad33346)
+4 RW/CT round 11 reader (after a056f46)
+5 REVIEW.md round 26 reader + design (after ad98d89)
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
